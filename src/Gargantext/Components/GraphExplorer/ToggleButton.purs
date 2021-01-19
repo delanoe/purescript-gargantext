@@ -40,7 +40,7 @@ toggleButtonCpt = R.hooksComponentWithModule thisModule "toggleButton" cpt
     cpt {state, onMessage, offMessage, onClick} _ = do
       let (toggled /\ _) = state
 
-      pure $ H.button { className: "btn btn-outline-primary " <> cls toggled
+      pure $ H.button { className: "btn btn-outline-light " <> cls toggled
                       , on: {click: onClick}
                       } [ R2.small {} [ H.text (text onMessage offMessage toggled) ] ]
 
@@ -69,7 +69,7 @@ edgesToggleButtonCpt :: R.Component EdgesButtonProps
 edgesToggleButtonCpt = R.hooksComponentWithModule thisModule "edgesToggleButton" cpt
   where
     cpt {state: (state /\ setState)} _ = do
-      pure $ H.button { className: "btn btn-outline-primary " <> cls state
+      pure $ H.button { className: "btn btn-outline-light " <> cls state
                       , on: { click: onClick setState }
                       } [ R2.small {} [ H.text (text state) ] ]
 
@@ -110,7 +110,7 @@ pauseForceAtlasButtonCpt :: R.Component ForceAtlasProps
 pauseForceAtlasButtonCpt = R.hooksComponentWithModule thisModule "forceAtlasToggleButton" cpt
   where
     cpt {state: (state /\ setState)} _ = do
-      pure $ H.button { className: "btn btn-outline-primary " <> cls state
+      pure $ H.button { className: "btn btn-outline-light " <> cls state
                       , on: { click: onClick setState }
                       } [ R2.small {} [ H.text (text state) ] ]
 
@@ -139,7 +139,7 @@ sidebarToggleButton (state /\ setState) = R.createElement el {} []
   where
     el = R.hooksComponentWithModule thisModule "sidebarToggleButton" cpt
     cpt {} _ = do
-      pure $ H.button { className: "btn btn-outline-primary " <> cls state
+      pure $ H.button { className: "btn btn-outline-light " <> cls state
                       , on: { click: onClick}
                       } [ R2.small {} [ H.text (text onMessage offMessage state) ] ]
 
