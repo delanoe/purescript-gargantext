@@ -26,9 +26,10 @@ import Gargantext.Data.Array as GDA
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI, Children))
 import Gargantext.Sessions (Session, get, put, sessionId)
-import Gargantext.Types (NodeType(..), AffTableResult, ReloadS)
+import Gargantext.Types (NodeType(..), AffTableResult)
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Corpus"
@@ -62,14 +63,14 @@ corpusLayoutWithKeyCpt :: R.Component KeyProps
 corpusLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "corpusLayoutWithKey" cpt
   where
     cpt { nodeId, session } _ = do
-      reload <- R.useState' 0
+      reload <- GUR.new
 
-      useLoader {nodeId, reload: fst reload, session} loadCorpusWithReload $
+      useLoader {nodeId, reload: GUR.value reload, session} loadCorpusWithReload $
         \corpus -> corpusLayoutView {corpus, nodeId, reload, session}
 
 type ViewProps =
   ( corpus  :: NodePoly Hyperdata
-  , reload  :: ReloadS
+  , reload  :: GUR.ReloadS
   | Props
   )
 
@@ -123,15 +124,15 @@ corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" c
 
     onClickSave :: forall e. { fields :: R.State FTFieldsWithIndex
                        , nodeId :: Int
-                       , reload :: ReloadS
+                       , reload :: GUR.ReloadS
                        , session :: Session } -> e -> Effect Unit
-    onClickSave {fields: (fieldsS /\ _), nodeId, reload: (_ /\ setReload), session} _ = do
+    onClickSave {fields: (fieldsS /\ _), nodeId, reload, session} _ = do
       log2 "[corpusLayoutViewCpt] onClickSave fieldsS" fieldsS
       launchAff_ do
         saveCorpus $ { hyperdata: Hyperdata {fields: (\(Tuple _ f) -> f) <$> fieldsS}
                      , nodeId
                      , session }
-        liftEffect $ setReload $ (+) 1
+        liftEffect $ GUR.bump reload
 
     onClickAdd :: forall e. R.State FTFieldsWithIndex -> e -> Effect Unit
     onClickAdd (_ /\ setFieldsS) _ = do
@@ -173,12 +174,12 @@ fieldsCodeEditorCpt = R.hooksComponentWithModule thisModule "fieldsCodeEditorCpt
         fromMaybe fields $
           List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { typ = typ })) fields
 
-    onMoveDown :: ReloadS -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
+    onMoveDown :: GUR.ReloadS -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
     onMoveDown (_ /\ setMasterKey) (fs /\ setFields) idx _ = do
       setMasterKey $ (+) 1
       setFields $ recomputeIndices <<< (GDA.swapList idx (idx + 1))
 
-    onMoveUp :: ReloadS -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
+    onMoveUp :: GUR.ReloadS -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
     onMoveUp (_ /\ setMasterKey) (_ /\ setFields) idx _ = do
       setMasterKey $ (+) 1
       setFields $ recomputeIndices <<< (GDA.swapList idx (idx - 1))
@@ -401,7 +402,7 @@ loadCorpus' :: Record LoadProps -> Aff (NodePoly Hyperdata)
 loadCorpus' {nodeId, session} = get session $ NodeAPI Corpus (Just nodeId) ""
 
 -- Just to make reloading effective
-loadCorpusWithReload :: {reload :: Int  | LoadProps} -> Aff (NodePoly Hyperdata)
+loadCorpusWithReload :: {reload :: GUR.Reload  | LoadProps} -> Aff (NodePoly Hyperdata)
 loadCorpusWithReload {nodeId, session} = loadCorpus' {nodeId, session}
 
 type SaveProps = (
@@ -452,7 +453,7 @@ loadCorpusWithChild { nodeId: childId, session } = do
 
 type LoadWithReloadProps =
   (
-    reload :: Int
+    reload :: GUR.Reload
   | LoadProps
   )
 

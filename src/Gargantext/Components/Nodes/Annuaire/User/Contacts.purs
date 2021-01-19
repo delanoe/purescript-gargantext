@@ -25,8 +25,9 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, const, discard, pure, show, unit, ($), (+), (<$>), (<<<), (<>), (==))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, get, put, sessionId)
-import Gargantext.Types (NodeType(..), ReloadS)
+import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Annuaire.User.Contacts"
@@ -150,12 +151,12 @@ listElement :: Array R.Element -> R.Element
 listElement = H.li { className: "list-group-item justify-content-between" }
 
 type LayoutProps = (
-    appReload     :: ReloadS
+    appReload     :: GUR.ReloadS
   , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , frontends     :: Frontends
   , nodeId        :: Int
   , session       :: Session
-  , treeReloadRef :: R.Ref (Maybe ReloadS)
+  , treeReloadRef :: GUR.ReloadWithInitializeRef
   )
 
 type KeyLayoutProps = (
@@ -189,13 +190,13 @@ userLayoutWithKeyCpt :: R.Component KeyLayoutProps
 userLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "userLayoutWithKey" cpt
   where
     cpt { appReload, asyncTasksRef, frontends, nodeId, session, treeReloadRef } _ = do
-      reload <- R.useState' 0
+      reload <- GUR.new
 
       cacheState <- R.useState' LT.CacheOn
 
       sidePanelTriggers <- LT.emptySidePanelTriggers
 
-      useLoader {nodeId, reload: fst reload, session} getContactWithReload $
+      useLoader {nodeId, reload: GUR.value reload, session} getContactWithReload $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" } [
             display { title: fromMaybe "no name" name } (contactInfos hyperdata (onUpdateHyperdata reload))
@@ -212,11 +213,11 @@ userLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "userLayoutWithKey"
                }
           ]
       where
-        onUpdateHyperdata :: ReloadS -> HyperdataUser -> Effect Unit
-        onUpdateHyperdata (_ /\ setReload) hd = do
+        onUpdateHyperdata :: GUR.ReloadS -> HyperdataUser -> Effect Unit
+        onUpdateHyperdata reload hd = do
           launchAff_ $ do
             _ <- saveContactHyperdata session nodeId hd
-            liftEffect $ setReload $ (+) 1
+            liftEffect $ GUR.bump reload
 
 -- | toUrl to get data
 getContact :: Session -> Int -> Aff ContactData
@@ -231,7 +232,7 @@ getContact session id = do
   --    throwError $ error "Missing default list"
   pure {contactNode, defaultListId: 424242}
 
-getContactWithReload :: {nodeId :: Int, reload :: Int, session :: Session} -> Aff ContactData
+getContactWithReload :: {nodeId :: Int, reload :: GUR.Reload, session :: Session} -> Aff ContactData
 getContactWithReload {nodeId, session} = getContact session nodeId
 
 saveContactHyperdata :: Session -> Int -> HyperdataUser -> Aff Int

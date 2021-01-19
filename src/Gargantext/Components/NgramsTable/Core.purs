@@ -70,9 +70,7 @@ module Gargantext.Components.NgramsTable.Core
   -- Reset Button TODO put elsewhere this file is too big
   , SyncResetButtonsProps
   , syncResetButtons
-  , syncResetButtonsCpt
   , chartsAfterSync
-  , syncResetBtns
   )
   where
 
@@ -136,8 +134,9 @@ import Gargantext.Components.Table.Types as T
 import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, post, put)
-import Gargantext.Types (AsyncTaskType(..), AsyncTaskWithType(..), CTabNgramType(..), ListId, OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize(..), ReloadS)
+import Gargantext.Types (AsyncTaskType(..), AsyncTaskWithType(..), CTabNgramType(..), ListId, OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize(..))
 import Gargantext.Utils.KarpRabin (indicesOfAny)
+import Gargantext.Utils.Reload as GUR
 
 thisModule :: String
 thisModule = "Gargantext.Components.NgramsTable.Core"
@@ -1099,10 +1098,10 @@ type SyncResetButtonsProps =
 
 syncResetButtons :: Record SyncResetButtonsProps -> R.Element
 syncResetButtons p = R.createElement syncResetButtonsCpt p []
-
-syncResetButtonsCpt :: R.Component SyncResetButtonsProps
-syncResetButtonsCpt = R.hooksComponentWithModule thisModule "syncResetButtons" cpt
   where
+    syncResetButtonsCpt :: R.Component SyncResetButtonsProps
+    syncResetButtonsCpt = R.hooksComponentWithModule thisModule "syncResetButtons" cpt
+
     cpt { afterSync, ngramsLocalPatch, performAction } _ = do
       synchronizing@(s /\ setSynchronizing) <- R.useState' false
 
@@ -1121,13 +1120,17 @@ syncResetButtonsCpt = R.hooksComponentWithModule thisModule "syncResetButtons" c
           afterSync x
           liftEffect $ setSynchronizing $ const false
 
-      pure $ H.div {} [
-        H.button { className: "btn btn-danger " <> hasChangesClass
-                 , on: { click: resetClick }
-                 } [ H.text "Reset" ]
-      , H.button { className: "btn btn-primary " <> hasChangesClass
+      pure $ H.div { className: "btn-toolbar" }
+        [ H.div { className: "btn-group mr-2" }
+          [ H.button { className: "btn btn-danger " <> hasChangesClass
+                     , on: { click: resetClick }
+                     } [ H.text "Reset" ]
+          ]
+        , H.div { className: "btn-group mr-2" }
+          [ H.button { className: "btn btn-primary " <> hasChangesClass
                  , on: { click: synchronizeClick }
                  } [ H.text "Sync" ]
+          ]
         ]
 
 
@@ -1135,14 +1138,6 @@ type ResetButton = (Unit -> Aff Unit)
                -> { ngramsPatches :: PatchMap NgramsTerm NgramsPatch }
                -> (Action -> Effect Unit)
                -> Array R.Element
-
-syncResetBtns  :: ResetButton
-syncResetBtns chartsAfterSync' ngramsLocalPatch performAction = [ syncResetButtons 
-                            { afterSync: chartsAfterSync'
-                            , ngramsLocalPatch
-                            , performAction: performAction <<< CoreAction
-                            }
-                          ]
 
 chartsAfterSync :: forall props discard.
   { listIds :: Array Int
@@ -1153,7 +1148,7 @@ chartsAfterSync :: forall props discard.
   }
   -> R.Ref (Maybe GAT.Reductor)
   -> Int
-  -> R.Ref (Maybe ReloadS)
+  -> GUR.ReloadWithInitializeRef
   -> discard
   -> Aff Unit
 chartsAfterSync path' asyncTasksRef nodeId treeReloadRef _ = do
@@ -1164,11 +1159,7 @@ chartsAfterSync path' asyncTasksRef nodeId treeReloadRef _ = do
       Nothing -> log "[chartsAfterSync] asyncTasksRef is Nothing"
       Just asyncTasks -> do
         snd asyncTasks $ GAT.Insert nodeId task
-        case R.readRef treeReloadRef of
-          Nothing -> log "[chartsAfterSync] can't reload tree: ref empty"
-          Just treeReload -> do
-            snd treeReload $ (_ + 1)
-            -- snd appReload $ (_ + 1)
+        GUR.bumpI treeReloadRef
 
 postNgramsChartsAsync :: forall s. CoreParams s -> Aff AsyncTaskWithType
 postNgramsChartsAsync { listIds, nodeId, session, tabType } = do

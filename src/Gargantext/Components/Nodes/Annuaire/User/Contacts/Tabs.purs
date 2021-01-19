@@ -20,7 +20,8 @@ import Gargantext.Components.Nodes.Lists.Types as LTypes
 import Gargantext.Components.Nodes.Texts.Types as TTypes
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType(..), NodeID, PTabNgramType(..), ReloadS, TabType(..), TabSubType(..))
+import Gargantext.Types (CTabNgramType(..), NodeID, PTabNgramType(..), TabType(..), TabSubType(..))
+import Gargantext.Utils.Reload as GUR
 
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs"
@@ -47,7 +48,7 @@ modeTabType' Books = CTabAuthors
 modeTabType' Communication = CTabAuthors
 
 type TabsProps = (
-    appReload         :: ReloadS
+    appReload         :: GUR.ReloadS
   , asyncTasksRef     :: R.Ref (Maybe GAT.Reductor)
   , cacheState        :: R.State LTypes.CacheState
   , contactData       :: ContactData
@@ -55,7 +56,7 @@ type TabsProps = (
   , nodeId            :: Int
   , session           :: Session
   , sidePanelTriggers :: Record LTypes.SidePanelTriggers
-  , treeReloadRef     :: R.Ref (Maybe ReloadS)
+  , treeReloadRef     :: GUR.ReloadWithInitializeRef
   )
 
 tabs :: Record TabsProps -> R.Element
@@ -129,7 +130,7 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
 
 
 type NgramsViewTabsProps = (
-    appReload         :: ReloadS
+    appReload         :: GUR.ReloadS
   , asyncTasksRef     :: R.Ref (Maybe GAT.Reductor)
   , cacheState        :: R.State LTypes.CacheState
   , defaultListId     :: Int
@@ -137,7 +138,7 @@ type NgramsViewTabsProps = (
   , nodeId            :: Int
   , session           :: Session
   , sidePanelTriggers :: Record LTypes.SidePanelTriggers
-  , treeReloadRef     :: R.Ref (Maybe ReloadS)
+  , treeReloadRef     :: GUR.ReloadWithInitializeRef
   )
 
 ngramsView :: Record NgramsViewTabsProps -> R.Element

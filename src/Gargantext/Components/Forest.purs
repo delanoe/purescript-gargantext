@@ -17,14 +17,15 @@ import Gargantext.Ends (Frontends, Backend(..))
 import Gargantext.Prelude
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session(..), Sessions, OpenNodes, unSessions)
-import Gargantext.Types (Reload, ReloadS, Handed(..))
+import Gargantext.Types (Handed(..))
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 
 thisModule :: String
 thisModule = "Gargantext.Components.Forest"
 
 type Props = (
-    appReload     :: ReloadS
+    appReload     :: GUR.ReloadS
   , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
   , currentRoute  :: AppRoute
@@ -32,7 +33,7 @@ type Props = (
   , handed        :: Handed
   , sessions      :: Sessions
   , showLogin     :: R.Setter Boolean
-  , treeReloadRef :: R.Ref (Maybe ReloadS)
+  , treeReloadRef :: GUR.ReloadWithInitializeRef
   )
 
 forest :: R2.Component Props
@@ -51,16 +52,14 @@ forest = R.createElement forestCpt
         , showLogin
         , treeReloadRef } _ = do
       -- NOTE: this is a hack to reload the tree view on demand
-      reload     <- R.useState' (0 :: Reload)
+      reload     <- GUR.new
       asyncTasks <- GAT.useTasks appReload reload
       openNodes  <- R2.useLocalStorageState R2.openNodesKey (Set.empty :: OpenNodes)
 
       -- TODO If `treeReloadRef` is set, `reload` state should be updated
       R.useEffect' $ do
         R.setRef asyncTasksRef $ Just asyncTasks
-        case R.readRef treeReloadRef of
-          Nothing -> R.setRef treeReloadRef $ Just reload
-          Just _  -> pure unit
+        GUR.initializeI treeReloadRef reload
 
       R2.useCache (
           frontends
@@ -112,7 +111,7 @@ plus handed showLogin backend = H.div { className: "row" } [
 
 -------------------------
 type ForestLayoutProps = (
-    appReload     :: ReloadS
+    appReload     :: GUR.ReloadS
   , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
   , currentRoute  :: AppRoute
@@ -120,7 +119,7 @@ type ForestLayoutProps = (
   , handed        :: R.State Handed
   , sessions      :: Sessions
   , showLogin     :: R.Setter Boolean
-  , treeReloadRef :: R.Ref (Maybe ReloadS)
+  , treeReloadRef :: GUR.ReloadWithInitializeRef
   )
 
 forestLayout :: R2.Component ForestLayoutProps

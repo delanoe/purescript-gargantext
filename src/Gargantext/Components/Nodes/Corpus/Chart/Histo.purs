@@ -64,7 +64,7 @@ chartOptions (HistoMetrics { dates: dates', count: count'}) = Options
   , series    : [seriesBarD1 {name: "Number of publication / year"} $
                  map (\n -> dataSerie {value: n, itemStyle : itemStyle {color:grey}}) count'] }
 
-getMetricsHash :: Session -> Tuple Reload (Record Path) -> Aff String
+getMetricsHash :: Session -> ReloadPath -> Aff String
 getMetricsHash session (_ /\ { corpusId, limit, listId, tabType }) = do
   get session $ ChartHash { chartType: Histo, listId: mListId, tabType } (Just corpusId)
   where

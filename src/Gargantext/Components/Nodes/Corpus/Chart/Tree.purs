@@ -56,7 +56,7 @@ scatterOptions nodes = Options
 
   }
 
-getMetricsHash :: Session -> Tuple Reload (Record Path) -> Aff String
+getMetricsHash :: Session -> ReloadPath -> Aff String
 getMetricsHash session (_ /\ { corpusId, limit, listId, tabType }) = do
   get session $ ChartHash { chartType: ChartTree, listId: mListId, tabType } (Just corpusId)
   where

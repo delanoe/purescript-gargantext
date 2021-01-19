@@ -36,13 +36,14 @@ import Gargantext.Types (Name, ID)
 import Gargantext.Types as GT
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 
 thisModule :: String
 thisModule = "Gargantext.Components.Forest.Tree.Node"
 
 -- Main Node
 type NodeMainSpanProps = (
-    appReload     :: GT.ReloadS
+    appReload     :: GUR.ReloadS
   , asyncTasks    :: GAT.Reductor
   , currentRoute  :: Routes.AppRoute
   , folderOpen    :: R.State Boolean
@@ -151,7 +152,7 @@ nodeMainSpan = R.createElement nodeMainSpanCpt
         where
           onTaskFinish id t _ = do
             dispatchAsyncTasks $ GAT.Finish id t
-            snd appReload $ (_ + 1)
+            GUR.bump appReload
 
           SettingsBox {show: showBox} = settingsBox nodeType
           onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
