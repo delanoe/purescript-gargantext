@@ -5,7 +5,6 @@ import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Nullable (null)
 import Data.Newtype (over)
 import Data.Set as Set
-import Data.String (length)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
@@ -24,6 +23,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Search.Frame (searchIframes
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField"
 
 defaultSearch :: Search
@@ -78,18 +78,24 @@ searchField p = R.createElement searchFieldComponent p []
                              , if isCNRS s.datafield
                                  then componentCNRS search
                                  else H.div {} []
- 
-                             , H.div {} [ searchIframes { iframeRef, search } ]
 
                              , if needsLang s.datafield
                                 then langNav search props.langs
                                 else H.div {} []
+ 
+                             , H.div {} [ searchIframes { iframeRef, search } ]
                              ]
 
                 ]
       let button =  submitButton {onSearch, search, session: props.session}
 
-      pure $ panel params button
+      pure $ H.div { className: "search-field" }
+        [ H.div { className: "row" }
+          [ H.div { className: "col-12" } params ]
+        , H.div { className: "row" }
+          [ H.div { className: "col-12" } [ button ] ]
+        ]
+      --pure $ panel params button
 
 
 componentIMT (search /\ setSearch) =
@@ -252,27 +258,6 @@ dataFieldNav ({datafield} /\ setSearch) datafields =
           isActive = show (Just df') == show datafield
 
 ------------------------------------------------------------------------
-{-
-databaseNav  :: R.State Search
-              -> Array Database
-              -> R.Element
-databaseNav ({datafield} /\ setSearch) dbs =
-  R.fragment [ H.div {className: "text-primary center"} [H.text "with DataField"]
-             , H.div { className: "nav nav-tabs"} (liItem <$> dbs)
-             , H.div {className:"center"} [ H.text $ maybe "" doc db ]
-             ]
-    where
-
-      db = case datafield of
-        (Just (External (Just x))) -> Just x
-        _                          -> Nothing
-
-      liItem :: Database -> R.Element
-      liItem  df' =
-        H.div { className : "nav-item nav-link" <> if (Just $ External $ Just df') == datafield then " active" else ""
-            , on: { click: \_ -> setSearch $ _ { datafield = Just $ External $ Just df' } }
-            } [ H.text (show df') ]
-            -}
 
 type DatabaseInputProps = (
     databases :: Array Database
@@ -352,10 +337,10 @@ type SearchInputProps =
   )
 
 searchInput :: Record SearchInputProps -> R.Element
-searchInput p = R.createElement searchInputComponent p []
+searchInput p = R.createElement searchInputCpt p []
   where
-    searchInputComponent :: R.Component SearchInputProps
-    searchInputComponent = R.hooksComponentWithModule thisModule "searchInput" cpt
+    searchInputCpt :: R.Component SearchInputProps
+    searchInputCpt = R.hooksComponentWithModule thisModule "searchInput" cpt
 
     cpt {search: (search@{ term } /\ setSearch)} _ = do
       valueRef <- R.useRef term

@@ -14,8 +14,8 @@ import Gargantext.Components.Lang (Lang)
 import Gargantext.Prelude (Unit, pure, ($))
 import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
-import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar"
 
 type Props = ( langs     :: Array Lang

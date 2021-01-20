@@ -455,11 +455,13 @@ performAction (UploadArbitraryFile mName blob) { asyncTasks: (_ /\ dispatch)
 performAction DownloadNode _ = do
     liftEffect $ log "[performAction] DownloadNode"
 -------
-performAction (MoveNode {params}) p@{session} =
+performAction (MoveNode {params}) p@{ openNodes: (_ /\ setOpenNodes)
+                                    , session } =
   case params of
     Nothing -> performAction NoAction p
     Just (SubTreeOut {in:in',out}) -> do
       void $ moveNodeReq session in' out
+      liftEffect $ setOpenNodes (Set.insert (mkNodeId session out))
       performAction RefreshTree p
 
 performAction (MergeNode {params}) p@{session} =
