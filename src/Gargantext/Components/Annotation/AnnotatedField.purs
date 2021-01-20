@@ -132,4 +132,5 @@ annotatedRunComponent = R.staticComponent "AnnotatedRun" cpt
           case list of
              Nothing -> HTML.span { on: { mouseUp: cb } }
              Just l  -> HTML.span { className: "annotation-run bg-" <> termBootstrapClass l
-                                  , on: { click: cb } }
+                                  , on: { click: cb } 
+                                  }

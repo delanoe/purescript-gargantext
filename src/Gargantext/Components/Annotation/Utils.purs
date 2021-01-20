@@ -10,4 +10,4 @@ termClass CandidateTerm = "candidate-term"
 termBootstrapClass :: TermList -> String
 termBootstrapClass MapTerm = "success"
 termBootstrapClass StopTerm = "danger"
-termBootstrapClass CandidateTerm = "warning"
+termBootstrapClass CandidateTerm = "secondary"
