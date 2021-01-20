@@ -2,6 +2,7 @@ module Gargantext.Components.Forest.Tree.Node.Action where
 
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
+
 import Gargantext.Prelude (class Show, Unit)
 import Gargantext.Sessions (Session)
 import Gargantext.Types  as GT
