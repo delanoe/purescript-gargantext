@@ -119,7 +119,7 @@ chooserCpt = R.staticComponent "G.C.Login.chooser" cpt where
         search = [ H.input {className: "form-control", type:"text", placeholder: "Search for your institute"}]
         new    = [ H.h3 {} [ H.text "Last connection(s)" ]
                  , H.table { className : "table" }
-                           [ H.thead { className: "thead-dark" }
+                           [ H.thead { className: "thead-light" }
                                      [ H.tr {} [ H.th {} [ H.text "" ]
                                                , H.th {} [ H.text "Label of instance" ]
                                                , H.th {} [ H.text "Gargurl" ]
