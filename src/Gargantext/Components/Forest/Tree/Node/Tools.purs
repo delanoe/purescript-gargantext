@@ -35,20 +35,20 @@ type Footer  = R.Element
 
 panel :: Body -> Footer -> R.Element
 panel bodies submit =
-  R.fragment [ panelBody bodies, footer submit ]
+  R.fragment [ panelBody, footer ]
     where
-      panelBody bs =
+      panelBody =
           H.div { className: "card-body" }
           [ H.div { className: "row" }
-                  [ H.div { className: "col-12" } bs
+                  [ H.div { className: "col-12" } bodies
                           -- TODO add type for text or form here
-                          -- [ H.form {className: "form-horizontal"} bs ]
+                          -- [ H.form {className: "form-horizontal"} bodies ]
                   ]
             ]
-      footer sb = 
+      footer =
         H.div {className: "card-footer"}
           [ H.div { className: "row" }
-              [ H.div { className: "mx-auto"} [ sb ]
+              [ H.div { className: "mx-auto"} [ submit ]
               ]
           ]
 
