@@ -115,7 +115,7 @@ nodeMainSpan = R.createElement nodeMainSpanCpt
                            , name: name' props
                            , nodeType
                            , session
-                           }
+                           } []
 
                 , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType }
                 , H.div {} (map (\t -> asyncProgressBar { asyncTask: t

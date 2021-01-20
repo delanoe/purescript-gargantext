@@ -20,8 +20,8 @@ import Gargantext.Sessions (Session, post)
 import Gargantext.Types (ID)
 import Gargantext.Types as GT
 import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson)
-import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Forest.Tree.Node.Action.Share"
 
 ------------------------------------------------------------------------
@@ -34,7 +34,7 @@ shareAction username = Action.ShareTeam username
 
 ------------------------------------------------------------------------
 textInputBox :: Record Tools.TextInputBoxProps -> R.Element
-textInputBox  = Tools.textInputBox
+textInputBox p = Tools.textInputBox p []
 
 ------------------------------------------------------------------------
 data ShareNodeParams = ShareTeamParams   { username :: String }

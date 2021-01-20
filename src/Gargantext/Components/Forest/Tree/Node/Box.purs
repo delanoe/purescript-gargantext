@@ -100,7 +100,7 @@ nodePopupView p = R.createElement nodePopupCpt p []
                                  , id
                                  , text: name
                                  , isOpen: renameIsOpen
-                                 }
+                                 } []
                   else
                     H.span { className: "text-primary center" } [H.text p.name]
                 ]
@@ -291,18 +291,18 @@ panelAction p = R.createElement panelActionCpt p []
                                   , id
                                   , text: "username"
                                   , isOpen
-                                  }
+                                  } []
                    ] $ H.div {} []
 
     cpt {action : AddingContact, dispatch, id, name } _ = do
       isOpen <- R.useState' true
       pure $ Contact.textInputBox { id
-                           , dispatch
-                           , isOpen
-                           , boxName:"addContact"
-                           , params : {firstname:"First Name", lastname: "Last Name"}
-                           , boxAction: \p -> AddContact p
-                           }
+                                  , dispatch
+                                  , isOpen
+                                  , boxName:"addContact"
+                                  , params : {firstname:"First Name", lastname: "Last Name"}
+                                  , boxAction: \p -> AddContact p
+                                  }
 
 
 

@@ -64,22 +64,23 @@ type TextInputBoxProps =
   , boxAction :: String -> Action
   )
 
-textInputBox :: Record TextInputBoxProps -> R.Element
-textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen) } = R.createElement el p []
+textInputBox :: R2.Component TextInputBoxProps
+textInputBox props@{ boxName } = R.createElement el props
   where
+    el :: R.Component TextInputBoxProps
     el = R.hooksComponentWithModule thisModule (boxName <> "Box") cpt
 
-    cpt {id, text} _ = do
+    cpt p@{ boxAction, dispatch, id, isOpen: (true /\ setIsOpen), text } _ = do
       renameNodeNameRef <- R.useRef text
 
-      pure $ H.div {className: "from-group row"}
+      pure $ H.div { className: "from-group row" }
         [ textInput renameNodeNameRef
         , submitBtn renameNodeNameRef
         , cancelBtn
         ]
       where
         textInput renameNodeNameRef =
-          H.div {className: "col-8"}
+          H.div { className: "col-8" }
             [ inputWithEnter {
                  onEnter: submit renameNodeNameRef
                , onValueChanged: R.setRef renameNodeNameRef
@@ -90,23 +91,15 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen) } = R
                , placeholder: (boxName <> " Node")
                , type: "text"
                }
-          -- [ H.input { type: "text"
-          --           , placeholder: (boxName <> " Node")
-          --           , defaultValue: text
-          --           , className: "form-control"
-          --           , on: { input: setRenameNodeName
-          --                      <<< const
-          --                      <<< R.unsafeEventValue }
-          --           }
-          ]
+            ]
         submitBtn renameNodeNameRef =
-          H.a {className: "col-2 " <>  glyphicon "floppy-o"
+          H.a { className: "col-2 " <> glyphicon "floppy-o"
               , type: "button"
               , on: { click: submit renameNodeNameRef }
               , title: "Submit"
               } []
         cancelBtn =
-          H.a {className: "text-danger col-2 " <> glyphicon "times"
+          H.a { className: "text-danger col-2 " <> glyphicon "times"
               , type: "button"
               , on: { click: \_ -> setIsOpen $ const false }
               , title: "Cancel"
@@ -114,10 +107,7 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen) } = R
         submit renameNodeNameRef _ = do
           setIsOpen $ const false
           launchAff_ $ dispatch ( boxAction $ R.readRef renameNodeNameRef )
-textInputBox p@{ boxName, isOpen: (false /\ _) } = R.createElement el p []
-  where
-    el = R.hooksComponentWithModule thisModule (boxName <> "Box") cpt
-    cpt {text} _ = pure $ H.div {} []
+    cpt { isOpen: (false /\ _) } _ = pure $ H.div {} []
 
 -- | END Rename Box
 
@@ -300,12 +290,12 @@ type NodeLinkProps = (
   , handed     :: GT.Handed
   )
 
-nodeLink :: Record NodeLinkProps -> R.Element
-nodeLink p = R.createElement nodeLinkCpt p []
-
-nodeLinkCpt :: R.Component NodeLinkProps
-nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
+nodeLink :: R2.Component NodeLinkProps
+nodeLink = R.createElement nodeLinkCpt
   where
+    nodeLinkCpt :: R.Component NodeLinkProps
+    nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
+
     cpt { folderOpen: (_ /\ setFolderOpen)
         , frontends
         , handed
@@ -358,10 +348,10 @@ type NodeTextProps =
 
 nodeText :: Record NodeTextProps -> R.Element
 nodeText p = R.createElement nodeTextCpt p []
-
-nodeTextCpt :: R.Component NodeTextProps
-nodeTextCpt = R.hooksComponentWithModule thisModule "nodeText" cpt
   where
+    nodeTextCpt :: R.Component NodeTextProps
+    nodeTextCpt = R.hooksComponentWithModule thisModule "nodeText" cpt
+
     cpt { isSelected: true, name } _ = do
       pure $ H.u {} [
         H.b {} [
