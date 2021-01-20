@@ -15,6 +15,7 @@ import Gargantext.Sessions (Session)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Corpus.Chart.Common"
 
 type MetricsLoadViewProps a = (
@@ -28,10 +29,10 @@ cacheName = "metrics"
 
 metricsLoadView :: forall a. Record (MetricsLoadViewProps a) -> R.Element
 metricsLoadView p = R.createElement metricsLoadViewCpt p []
-
-metricsLoadViewCpt :: forall a. R.Component (MetricsLoadViewProps a)
-metricsLoadViewCpt = R.hooksComponentWithModule thisModule "metricsLoadView" cpt
   where
+    metricsLoadViewCpt :: R.Component (MetricsLoadViewProps a)
+    metricsLoadViewCpt = R.hooksComponentWithModule thisModule "metricsLoadView" cpt
+
     cpt { getMetrics, loaded, path, reload, session } _ = do
       useLoader (fst reload /\ path) (getMetrics session) $ \l ->
         loaded { path, reload, session } l
@@ -47,11 +48,10 @@ type MetricsWithCacheLoadViewProps res ret = (
 metricsWithCacheLoadView :: forall res ret. DecodeJson res =>
                             Record (MetricsWithCacheLoadViewProps res ret) -> R.Element
 metricsWithCacheLoadView p = R.createElement metricsWithCacheLoadViewCpt p []
-
-metricsWithCacheLoadViewCpt :: forall res ret. DecodeJson res =>
-                               R.Component (MetricsWithCacheLoadViewProps res ret)
-metricsWithCacheLoadViewCpt = R.hooksComponentWithModule thisModule "metricsWithCacheLoadView" cpt
   where
+    metricsWithCacheLoadViewCpt :: R.Component (MetricsWithCacheLoadViewProps res ret)
+    metricsWithCacheLoadViewCpt = R.hooksComponentWithModule thisModule "metricsWithCacheLoadView" cpt
+
     cpt { getMetricsHash, handleResponse, loaded, mkRequest, path, reload, session } _ = do
       useLoaderWithCacheAPI { cacheEndpoint: (getMetricsHash session)
                             , handleResponse

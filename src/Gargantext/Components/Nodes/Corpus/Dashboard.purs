@@ -125,17 +125,22 @@ renderChartCpt :: R.Component PredefinedChartProps
 renderChartCpt = R.hooksComponentWithModule thisModule "renderChart" cpt
   where
     cpt { chart, corpusId, defaultListId, onChange, onRemove, session } _ = do
-      pure $ H.div { className: "row" } [
-          H.div {} [
-            R2.select { defaultValue: show chart
-                      , on: { change: onSelectChange }
-                      } (option <$> P.allPredefinedCharts)
+      pure $ H.div { className: "chart" }
+        [ H.div { className: "row" }
+          [ H.div { className: "col-2" }
+            [ R2.select { defaultValue: show chart
+                        , on: { change: onSelectChange }
+                        } (option <$> P.allPredefinedCharts)
+            ]
+          , H.div { className: "col-1" }
+            [ H.span { className: "btn btn-danger"
+                     , on: { click: onRemoveClick }} [ H.span { className: "fa fa-trash" } [] ]
+            ]
           ]
-        , H.div {} [
-            H.span { className: "btn btn-danger"
-                   , on: { click: onRemoveClick }} [ H.span { className: "fa fa-trash" } [] ]
+        , H.div { className: "row" }
+          [ H.div { className: "col-12 chart" }
+            [ P.render chart params ]
           ]
-        , P.render chart params
         ]
       where
         option pc =

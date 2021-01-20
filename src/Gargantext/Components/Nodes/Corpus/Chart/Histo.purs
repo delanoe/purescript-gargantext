@@ -3,7 +3,6 @@ module Gargantext.Components.Nodes.Corpus.Chart.Histo where
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
 import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Maybe (Maybe(..))
-import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
@@ -14,17 +13,16 @@ import Gargantext.Components.Charts.Options.Data (dataSerie)
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Series (seriesBarD1)
-import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView, metricsWithCacheLoadView)
-import Gargantext.Components.Nodes.Corpus.Chart.Types
-import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
+import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsWithCacheLoadView)
+import Gargantext.Components.Nodes.Corpus.Chart.Types (MetricsProps, Path, Props, ReloadPath)
 import Gargantext.Hooks.Loader (HashedResponse(..))
-import Gargantext.Prelude
+import Gargantext.Prelude (bind, map, pure, ($), (==))
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
-import Gargantext.Types (ChartType(..), TabType(..))
+import Gargantext.Types (ChartType(..))
 import Gargantext.Utils.CacheAPI as GUC
-import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Corpus.Chart.Histo"
 
 newtype ChartMetrics = ChartMetrics {
@@ -83,10 +81,10 @@ mkRequest session (_ /\ path@{ corpusId, limit, listId, tabType }) = GUC.makeGet
 
 histo :: Record Props -> R.Element
 histo props = R.createElement histoCpt props []
-
-histoCpt :: R.Component Props
-histoCpt = R.hooksComponentWithModule thisModule "histo" cpt
   where
+    histoCpt :: R.Component Props
+    histoCpt = R.hooksComponentWithModule thisModule "histo" cpt
+
     cpt { path, session } _ = do
       reload <- R.useState' 0
       pure $ metricsWithCacheLoadView {
@@ -100,10 +98,10 @@ histoCpt = R.hooksComponentWithModule thisModule "histo" cpt
         }
 
 loaded :: Record MetricsProps -> HistoMetrics -> R.Element
-loaded { path, reload, session } loaded =
+loaded { path, reload, session } l =
   H.div {} [
   {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: Histo, path, reload, session }
-  , -} chart $ chartOptions loaded
+  , -} chart $ chartOptions l
   ]
   -- TODO: parametrize ngramsType above
