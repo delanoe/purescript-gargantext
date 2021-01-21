@@ -28,6 +28,7 @@ type Props = (
     state :: R.State Boolean
   , onMessage :: String
   , offMessage :: String
+  , style      :: String
   , onClick :: forall e. e -> Effect Unit
   )
 
@@ -37,10 +38,10 @@ toggleButton props = R.createElement toggleButtonCpt props []
 toggleButtonCpt :: R.Component Props
 toggleButtonCpt = R.hooksComponentWithModule thisModule "toggleButton" cpt
   where
-    cpt {state, onMessage, offMessage, onClick} _ = do
+    cpt {state, onMessage, offMessage, onClick, style} _ = do
       let (toggled /\ _) = state
 
-      pure $ H.button { className: "btn btn-outline-light " <> cls toggled
+      pure $ H.button { className: "btn btn-outline-" <> style <> " " <> cls toggled
                       , on: {click: onClick}
                       } [ R2.small {} [ H.text (text onMessage offMessage toggled) ] ]
 
@@ -56,6 +57,7 @@ controlsToggleButton state =
     , onMessage: "Hide Controls"
     , offMessage: "Show Controls"
     , onClick: \_ -> snd state not
+    , style: "light"
     }
 
 type EdgesButtonProps = (
@@ -69,14 +71,14 @@ edgesToggleButtonCpt :: R.Component EdgesButtonProps
 edgesToggleButtonCpt = R.hooksComponentWithModule thisModule "edgesToggleButton" cpt
   where
     cpt {state: (state /\ setState)} _ = do
-      pure $ H.button { className: "btn btn-outline-light " <> cls state
+      pure $ H.button { className: "btn btn-outline-primary " <> cls state
                       , on: { click: onClick setState }
                       } [ R2.small {} [ H.text (text state) ] ]
 
     text s = if SigmaxTypes.edgeStateHidden s then "Show edges" else "Hide edges"
 
-    cls SigmaxTypes.EShow = "active"
-    cls _ = ""
+    cls SigmaxTypes.EShow = ""
+    cls _ = "active"
 
     -- TODO: Move this to Graph.purs to the R.useEffect handler which renders nodes/edges
     onClick setState _ = setState SigmaxTypes.toggleShowEdgesState
@@ -88,6 +90,7 @@ louvainToggleButton state =
     , onMessage: "Louvain off"
     , offMessage: "Louvain on"
     , onClick: \_ -> snd state not
+    , style: "primary"
     }
 
 multiSelectEnabledButton :: R.State Boolean -> R.Element
@@ -97,6 +100,7 @@ multiSelectEnabledButton state =
     , onMessage: "Single-node"
     , offMessage: "Multi-node"
     , onClick: \_ -> snd state not
+    , style : "primary"
     }
 
 type ForceAtlasProps = (
@@ -110,7 +114,7 @@ pauseForceAtlasButtonCpt :: R.Component ForceAtlasProps
 pauseForceAtlasButtonCpt = R.hooksComponentWithModule thisModule "forceAtlasToggleButton" cpt
   where
     cpt {state: (state /\ setState)} _ = do
-      pure $ H.button { className: "btn btn-outline-light " <> cls state
+      pure $ H.button { className: "btn btn-outline-primary " <> cls state
                       , on: { click: onClick setState }
                       } [ R2.small {} [ H.text (text state) ] ]
 
@@ -132,6 +136,7 @@ treeToggleButton state =
     , onMessage: "Hide Tree"
     , offMessage: "Show Tree"
     , onClick: \_ -> snd state not
+    , style: "light"
     }
 
 sidebarToggleButton :: R.State GET.SidePanelState -> R.Element
