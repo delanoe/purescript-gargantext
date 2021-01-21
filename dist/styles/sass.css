@@ -362,6 +362,7 @@ body > .tree ul > li:first-child::before {
 li .leaf {
   display: flex;
   flex-direction: row;
+  color: #005a9aff;
 }
 li .leaf .folder-icon {
   padding: 0 2 0 2;
@@ -474,7 +475,6 @@ li .leaf:hover a.settings {
   margin-top: 1px;
 }
 .tree .node.node-type-valid .text {
-  color: blue;
   text-decoration: underline;
 }
 
@@ -690,6 +690,9 @@ li .leaf:hover a.settings {
   top: 50%;
 }
 
+.table tr td {
+  color: #005a9aff;
+}
 .table tr td .active {
   font-weight: bold;
   text-decoration: underline;
@@ -714,6 +717,10 @@ li .leaf:hover a.settings {
 
 .search-bar {
   margin: 10px;
+}
+
+.body ul li {
+  color: #005a9aff;
 }
 
 .range {
