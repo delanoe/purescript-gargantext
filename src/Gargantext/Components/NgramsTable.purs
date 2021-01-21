@@ -298,10 +298,10 @@ type Props = (
 
 loadedNgramsTable :: Record Props -> R.Element
 loadedNgramsTable p = R.createElement loadedNgramsTableCpt p []
-
-loadedNgramsTableCpt :: R.Component Props
-loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable" cpt
   where
+    loadedNgramsTableCpt :: R.Component Props
+    loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable" cpt
+
     cpt { afterSync
         , appReload
         , asyncTasksRef
@@ -522,10 +522,10 @@ type MainNgramsTableProps = (
 
 mainNgramsTable :: Record MainNgramsTableProps -> R.Element
 mainNgramsTable props = R.createElement mainNgramsTableCpt props []
-
-mainNgramsTableCpt :: R.Component MainNgramsTableProps
-mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
   where
+    mainNgramsTableCpt :: R.Component MainNgramsTableProps
+    mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
+
     cpt props@{ afterSync
               , appReload
               , asyncTasksRef
@@ -625,10 +625,10 @@ type MainNgramsTablePaintProps = (
 
 mainNgramsTablePaint :: Record MainNgramsTablePaintProps -> R.Element
 mainNgramsTablePaint p = R.createElement mainNgramsTablePaintCpt p []
-
-mainNgramsTablePaintCpt :: R.Component MainNgramsTablePaintProps
-mainNgramsTablePaintCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaint" cpt
   where
+    mainNgramsTablePaintCpt :: R.Component MainNgramsTablePaintProps
+    mainNgramsTablePaintCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaint" cpt
+
     cpt props@{ afterSync
               , appReload
               , asyncTasksRef
