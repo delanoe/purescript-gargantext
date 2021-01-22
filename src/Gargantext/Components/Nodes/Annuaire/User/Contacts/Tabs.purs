@@ -21,6 +21,7 @@ import Gargantext.Components.Nodes.Texts.Types as TTypes
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType(..), NodeID, PTabNgramType(..), TabType(..), TabSubType(..))
+import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
 
 thisModule :: String
@@ -80,9 +81,9 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
       where
         tabs' trg =
           [ "Documents"     /\ docs trg
-          , "Patents"       /\ ngramsView patentsView
-          , "Books"         /\ ngramsView booksView
-          , "Communication" /\ ngramsView commView
+          , "Patents"       /\ ngramsView patentsView []
+          , "Books"         /\ ngramsView booksView []
+          , "Communication" /\ ngramsView commView []
           , "Trash"         /\ docs trg -- TODO pass-in trash mode
           ]
           where
@@ -141,12 +142,12 @@ type NgramsViewTabsProps = (
   , treeReloadRef     :: GUR.ReloadWithInitializeRef
   )
 
-ngramsView :: Record NgramsViewTabsProps -> R.Element
-ngramsView props = R.createElement ngramsViewCpt props []
-
-ngramsViewCpt :: R.Component NgramsViewTabsProps
-ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
+ngramsView :: R2.Component NgramsViewTabsProps
+ngramsView = R.createElement ngramsViewCpt
   where
+    ngramsViewCpt :: R.Component NgramsViewTabsProps
+    ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
+
     cpt { appReload
         , asyncTasksRef
         , cacheState
@@ -172,7 +173,7 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
         , tabNgramType
         , treeReloadRef
         , withAutoUpdate: false
-        }
+        } []
       where
         tabNgramType = modeTabType' mode
         tabType      = TabPairing $ TabNgramType $ modeTabType mode

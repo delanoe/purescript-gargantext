@@ -130,7 +130,7 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
                                 , tabType
                                 , treeReloadRef
                                 , withAutoUpdate: false
-                                }
+                                } []
            ]
         )
       where
