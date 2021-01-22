@@ -132,6 +132,7 @@ settingsBox Team =
                                 , NodeFrameCalc
                                 , NodeFrameNotebook
                                 , Team
+                                , FolderShared
                                 ]
                           , Share
                           , Delete
