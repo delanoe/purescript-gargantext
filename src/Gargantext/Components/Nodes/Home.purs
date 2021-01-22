@@ -84,7 +84,7 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
                                                                           }
                                                            ]
 
-           , H.div {className:"center"}
+           , H.div {className:"col-12 d-flex justify-content-center"}
                    [ H.h1 {} [ -- H.span {className: "fa fa-star-o"} []
                               H.text ""
                              ]
@@ -281,7 +281,7 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
                       --}
 
 
-        video fileDuration = H.div {className:"center"}
+        video fileDuration = H.div {className:"col-12 d-flex justify-content-center"}
                                    [ H.video { src: "http://dl.gargantext.org/" <> fileDuration
                                      , title: "tutorial video here"
                                      , id: "source_" <> fileDuration
@@ -292,7 +292,7 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
                                    } [H.text "Sorry your browser is not compatible: use Firefox or Chromium instead."]
                                    ]
 
-        joinButton = H.div { className:"flex-space-around center" 
+        joinButton = H.div { className:"flex-space-around d-flex justify-content-center" 
                        , paddingTop: "100px"
                        , paddingBottom: "100px"
                        }
