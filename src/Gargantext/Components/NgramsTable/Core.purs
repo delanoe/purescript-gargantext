@@ -18,9 +18,13 @@ module Gargantext.Components.NgramsTable.Core
   , findNgramTermList
   , Version
   , Versioned(..)
+  , Count
+  , VersionedWithCount(..)
+  , toVersioned
   , VersionedNgramsPatches
   , AsyncNgramsChartsUpdate
   , VersionedNgramsTable
+  , VersionedWithCountNgramsTable
   , NgramsTablePatch
   , NgramsPatch(..)
   , CoreState
@@ -164,6 +168,32 @@ instance decodeJsonVersioned :: DecodeJson a => DecodeJson (Versioned a) where
     version <- obj .: "version"
     data_   <- obj .: "data"
     pure $ Versioned {version, data: data_}
+------------------------------------------------------------------------
+type Count = Int
+
+newtype VersionedWithCount a = VersionedWithCount
+  { version :: Version
+  , count   :: Count
+  , data    :: a
+  }
+
+instance encodeJsonVersionedWithCount :: EncodeJson a => EncodeJson (VersionedWithCount a) where
+  encodeJson (VersionedWithCount {count, version, data: data_})
+     = "version" := version
+    ~> "count" := count
+    ~> "data" := data_
+    ~> jsonEmptyObject
+
+instance decodeJsonVersionedWithCount :: DecodeJson a => DecodeJson (VersionedWithCount a) where
+  decodeJson json = do
+    obj     <- decodeJson json
+    count   <- obj .: "count"
+    data_   <- obj .: "data"
+    version <- obj .: "version"
+    pure $ VersionedWithCount {count, version, data: data_}
+
+toVersioned :: forall a. VersionedWithCount a -> Tuple Count (Versioned a)
+toVersioned (VersionedWithCount { count, data: d, version }) = Tuple count $ Versioned { data: d, version }
 
 ------------------------------------------------------------------------
 -- TODO replace by NgramsPatches directly
@@ -535,6 +565,7 @@ highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
 -----------------------------------------------------------------------------------
 
 type VersionedNgramsTable = Versioned NgramsTable
+type VersionedWithCountNgramsTable = VersionedWithCount NgramsTable
 
 -----------------------------------------------------------------------------------
 data Replace a

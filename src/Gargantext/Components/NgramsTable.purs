@@ -14,7 +14,7 @@ import Data.Lens.Index (ix)
 import Data.Lens.Record (prop)
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), isNothing, maybe)
+import Data.Maybe (Maybe(..), fromMaybe, isNothing, maybe)
 import Data.Monoid.Additive (Additive(..))
 import Data.Ord.Down (Down(..))
 import Data.Sequence (Seq, length) as Seq
@@ -290,14 +290,15 @@ type CommonProps = (
   )
 
 type Props = (
-    path              :: R.State PageParams
+    mTotalRows        :: Maybe Int
+  , path              :: R.State PageParams
   , state             :: R.State State
   , versioned         :: VersionedNgramsTable
   | CommonProps
   )
 
-loadedNgramsTable :: Record Props -> R.Element
-loadedNgramsTable p = R.createElement loadedNgramsTableCpt p []
+loadedNgramsTable :: R2.Component Props
+loadedNgramsTable = R.createElement loadedNgramsTableCpt
   where
     loadedNgramsTableCpt :: R.Component Props
     loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable" cpt
@@ -305,6 +306,7 @@ loadedNgramsTable p = R.createElement loadedNgramsTableCpt p []
     cpt { afterSync
         , appReload
         , asyncTasksRef
+        , mTotalRows
         , path: path@(path'@{ listIds, nodeId, params, searchQuery, scoreType, termListFilter, termSizeFilter } /\ setPath)
         , sidePanelTriggers
         , state: (state@{ ngramsChildren
@@ -399,7 +401,7 @@ loadedNgramsTable p = R.createElement loadedNgramsTableCpt p []
               commitPatch (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
         performAction (CoreAction a) = coreDispatch path' (state /\ setState) a
 
-        totalRecords = Seq.length rows
+        totalRecords = fromMaybe (Seq.length rows) mTotalRows
         filteredConvertedRows :: T.Rows
         filteredConvertedRows = convertRow <$> filteredRows
         filteredRows :: PreConversionRows
@@ -520,8 +522,8 @@ type MainNgramsTableProps = (
   | CommonProps
   )
 
-mainNgramsTable :: Record MainNgramsTableProps -> R.Element
-mainNgramsTable props = R.createElement mainNgramsTableCpt props []
+mainNgramsTable :: R2.Component MainNgramsTableProps
+mainNgramsTable = R.createElement mainNgramsTableCpt
   where
     mainNgramsTableCpt :: R.Component MainNgramsTableProps
     mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
@@ -552,7 +554,7 @@ mainNgramsTable props = R.createElement mainNgramsTableCpt props []
                                                       , tabNgramType
                                                       , treeReloadRef
                                                       , versioned
-                                                      , withAutoUpdate }
+                                                      , withAutoUpdate } []
           useLoaderWithCacheAPI {
               cacheEndpoint: versionEndpoint props
             , handleResponse
@@ -562,22 +564,23 @@ mainNgramsTable props = R.createElement mainNgramsTableCpt props []
             }
         (NT.CacheOff /\ _) -> do
           -- pathS <- R.useState' path
-          let render versioned = mainNgramsTablePaintNoCache { afterSync
-                                                             , appReload
-                                                             , asyncTasksRef
-                                                             , pathS
-                                                             , sidePanelTriggers
-                                                             , tabNgramType
-                                                             , treeReloadRef
-                                                             , versioned
-                                                             , withAutoUpdate }
+          let render versionedWithCount = mainNgramsTablePaintNoCache { afterSync
+                                                                      , appReload
+                                                                      , asyncTasksRef
+                                                                      , pathS
+                                                                      , sidePanelTriggers
+                                                                      , tabNgramType
+                                                                      , treeReloadRef
+                                                                      , versionedWithCount
+                                                                      , withAutoUpdate } []
           useLoader (fst pathS) loader render
 
+    -- NOTE With cache on
     versionEndpoint :: Record MainNgramsTableProps -> PageParams -> Aff Version
     versionEndpoint { defaultListId, nodeId, session, tabType } _ = get session $ R.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
 
     -- NOTE With cache off
-    loader :: PageParams -> Aff VersionedNgramsTable
+    loader :: PageParams -> Aff VersionedWithCountNgramsTable
     loader path@{ listIds
                 , nodeId
                 , params: { limit, offset, orderBy }
@@ -623,8 +626,8 @@ type MainNgramsTablePaintProps = (
   | CommonProps
   )
 
-mainNgramsTablePaint :: Record MainNgramsTablePaintProps -> R.Element
-mainNgramsTablePaint p = R.createElement mainNgramsTablePaintCpt p []
+mainNgramsTablePaint :: R2.Component MainNgramsTablePaintProps
+mainNgramsTablePaint = R.createElement mainNgramsTablePaintCpt
   where
     mainNgramsTablePaintCpt :: R.Component MainNgramsTablePaintProps
     mainNgramsTablePaintCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaint" cpt
@@ -643,6 +646,7 @@ mainNgramsTablePaint p = R.createElement mainNgramsTablePaintCpt p []
       pure $ loadedNgramsTable { afterSync
                                , appReload
                                , asyncTasksRef
+                               , mTotalRows: Nothing
                                , path: pathS
                                , sidePanelTriggers
                                , state
@@ -650,20 +654,20 @@ mainNgramsTablePaint p = R.createElement mainNgramsTablePaintCpt p []
                                , treeReloadRef
                                , versioned
                                , withAutoUpdate
-                               }
+                               } []
 
 type MainNgramsTablePaintNoCacheProps =
-  ( pathS             :: R.State PageParams
-  , versioned         :: VersionedNgramsTable
+  ( pathS              :: R.State PageParams
+  , versionedWithCount :: VersionedWithCountNgramsTable
   | CommonProps
   )
 
-mainNgramsTablePaintNoCache :: Record MainNgramsTablePaintNoCacheProps -> R.Element
-mainNgramsTablePaintNoCache p = R.createElement mainNgramsTablePaintNoCacheCpt p []
-
-mainNgramsTablePaintNoCacheCpt :: R.Component MainNgramsTablePaintNoCacheProps
-mainNgramsTablePaintNoCacheCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaintNoCache" cpt
+mainNgramsTablePaintNoCache :: R2.Component MainNgramsTablePaintNoCacheProps
+mainNgramsTablePaintNoCache = R.createElement mainNgramsTablePaintNoCacheCpt
   where
+    mainNgramsTablePaintNoCacheCpt :: R.Component MainNgramsTablePaintNoCacheProps
+    mainNgramsTablePaintNoCacheCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaintNoCache" cpt
+
     cpt props@{ afterSync
               , appReload
               , asyncTasksRef
@@ -671,14 +675,17 @@ mainNgramsTablePaintNoCacheCpt = R.hooksComponentWithModule thisModule "mainNgra
               , sidePanelTriggers
               , tabNgramType
               , treeReloadRef
-              , versioned
+              , versionedWithCount
               , withAutoUpdate } _ = do
+      let count /\ versioned = toVersioned versionedWithCount
+
       state <- R.useState' $ initialState versioned
 
       pure $ loadedNgramsTable {
         afterSync
       , appReload
       , asyncTasksRef
+      , mTotalRows: Just count
       , path: pathS
       , sidePanelTriggers
       , state
@@ -686,35 +693,7 @@ mainNgramsTablePaintNoCacheCpt = R.hooksComponentWithModule thisModule "mainNgra
       , treeReloadRef
       , versioned
       , withAutoUpdate
-      }
-
--- type MainNgramsTablePaintWithStateProps = (
---     afterSync      :: Unit -> Aff Unit
---   , asyncTasksRef  :: R.Ref (Maybe GAT.Reductor)
---   , path           :: R.State PageParams
---   , tabNgramType   :: CTabNgramType
---   , versioned      :: VersionedNgramsTable
---   , withAutoUpdate :: Boolean
---   )
-
--- mainNgramsTablePaintWithState :: Record MainNgramsTablePaintWithStateProps -> R.Element
--- mainNgramsTablePaintWithState p = R.createElement mainNgramsTablePaintWithStateCpt p []
-
--- mainNgramsTablePaintWithStateCpt :: R.Component MainNgramsTablePaintWithStateProps
--- mainNgramsTablePaintWithStateCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaintWithState" cpt
---   where
---     cpt { afterSync, asyncTasksRef, path, tabNgramType, versioned, withAutoUpdate } _ = do
---       state <- R.useState' $ initialState versioned
-
---       pure $ loadedNgramsTable {
---         afterSync
---       , asyncTasksRef
---       , path
---       , state
---       , tabNgramType
---       , versioned
---       , withAutoUpdate
---       }
+      } []
 
 type NgramsOcc = { occurrences :: Additive Int, children :: Set NgramsTerm }
 
