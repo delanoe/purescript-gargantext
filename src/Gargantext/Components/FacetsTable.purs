@@ -117,11 +117,14 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
           [ chart
           , H.div { className: "col-md-12" }
             [ pageLayout { deletions, frontends, totalRecords, container, session, path } ]
-          , H.div { className: "col-md-12" }
+   {-     , H.div { className: "col-md-12" }
             [ H.button { style: buttonStyle, on: { click: trashClick deletions } }
               [ H.i { className: "glyphitem fa fa-trash"
                     , style: { marginRight : "9px" }} []
-              , H.text "Delete document!" ] ] ] ]
+            , H.text "Delete document!" ] 
+            ] 
+    -}      ] 
+       ]
         where
           buttonStyle =
             { backgroundColor: "peru", padding: "9px", color: "white"
