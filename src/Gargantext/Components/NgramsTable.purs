@@ -23,24 +23,23 @@ import Data.Set as Set
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Reactix (Component, Element, Ref, State, createElement, fragment, hooksComponentWithModule, unsafeEventValue, useEffect', useState') as R
+import Reactix (Component, Element, Ref, State, createElement, fragment, hooksComponentWithModule, unsafeEventValue, useState') as R
 import Reactix.DOM.HTML as H
 import Unsafe.Coerce (unsafeCoerce)
 
-import Gargantext.Prelude (class Show, Unit, bind, const, discard, identity, map, mempty, not, otherwise, pure, read, show, unit, (#), ($), (&&), (/=), (<$>), (<<<), (<>), (=<<), (==), (||))
+import Gargantext.Prelude
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Components.Table.Types (ColumnName(..), Rows, TableContainerProps) as T
+import Gargantext.Components.Table as T
+import Gargantext.Components.Table.Types as T
 import Gargantext.Components.NgramsTable.Components as NTC
 import Gargantext.Components.NgramsTable.Core (Action(..), CoreAction(..), CoreState, Dispatch, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTerm, PageParams, PatchMap(..), Version, Versioned(..), VersionedNgramsTable, VersionedWithCountNgramsTable, _NgramsElement, _NgramsRepoElement, _NgramsTable, _children, _list, _ngrams, _ngrams_repo_elements, _ngrams_scores, _occurrences, _root, addNewNgramA, applyNgramsPatches, applyPatchSet, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, fromNgramsPatches, ngramsRepoElementToNgramsElement, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncResetButtons, toVersioned)
 import Gargantext.Components.NgramsTable.Loader (useLoaderWithCacheAPI)
 import Gargantext.Components.Nodes.Lists.Types as NT
-import Gargantext.Components.Table (filterRows, table) as T
 import Gargantext.Routes (SessionRoute(..)) as R
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
@@ -48,7 +47,7 @@ import Gargantext.Utils (queryMatchesLabel, toggleSet, sortWith)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
-import Gargantext.Utils.Seq (mapMaybe) as Seq
+import Gargantext.Utils.Seq as Seq
 
 thisModule :: String
 thisModule = "Gargantext.Components.NgramsTable"
@@ -314,7 +313,7 @@ loadedNgramsTable = R.createElement loadedNgramsTableCpt
                                               , syncResetButton: [ syncResetButton ]
                                               , tabNgramType
                                               }
-                  , params: params /\ setParams -- TODO-LENS
+                  , params: paramsS -- TODO-LENS
                   , rows: filteredConvertedRows
                   , syncResetButton: [ syncResetButton ]
                   , totalRecords
@@ -411,13 +410,16 @@ loadedNgramsTable = R.createElement loadedNgramsTableCpt
         wrapColElts _       (T.ColumnName "Score")  = (_ <> [H.text ("(" <> show scoreType <> ")")])
         wrapColElts _       _                       = identity
         setParams f = setPath $ \p@{params: ps} -> p {params = f ps}
+        paramsS = params /\ setParams
 
         search :: R.Element
         search = NTC.searchInput { key: "search-input"
                                  , onSearch: setSearchQuery
                                  , searchQuery: searchQuery }
         setSearchQuery :: String -> Effect Unit
-        setSearchQuery x    = setPath $ _ { searchQuery    = x }
+        setSearchQuery x    = do
+          setPath $ _ { searchQuery    = x }
+          T.changePage 1 paramsS
 
 type MkDispatchProps = (
     filteredRows :: PreConversionRows

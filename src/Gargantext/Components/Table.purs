@@ -1,31 +1,29 @@
 module Gargantext.Components.Table where
 
-import Prelude
 import Data.Array as A
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
 import Data.Tuple (fst, snd)
-import Effect.Aff (Aff, launchAff_)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import Effect (Effect)
-import Gargantext.Sessions (Session, get)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-import Gargantext.Components.Table.Types
+import Gargantext.Prelude
+
+import Gargantext.Components.Table.Types (ColumnName, OrderBy, OrderByDirection(..), Params, Props, TableContainerProps, columnName)
 import Gargantext.Components.Nodes.Lists.Types as NT
-import Gargantext.Components.Search
+import Gargantext.Components.Search (SearchType(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reactix (effectLink)
 
 thisModule :: String
 thisModule = "Gargantext.Components.Table"
 
+type Page = Int
+
 type State =
-  { page       :: Int
+  { page       :: Page
   , pageSize   :: PageSizes
   , orderBy    :: OrderBy
   , searchType :: SearchType
@@ -223,8 +221,12 @@ textDescription currPage pageSize totalRecords =
     end  = if end' > totalRecords then totalRecords else end'
     msg = "Showing " <> show start <> " to " <> show end <> " of " <> show totalRecords
 
+changePage :: Page -> R.State Params -> Effect Unit
+changePage page (_ /\ setParams) =
+  setParams $ \p -> stateParams $ (paramsState p) { page = page }
+
 pagination :: R.State Params -> Int -> R.Element
-pagination (params /\ setParams) tp =
+pagination p@(params /\ setParams) tp =
   H.span {} $
     [ H.text " ", prev, first, ldots]
     <>
@@ -237,7 +239,6 @@ pagination (params /\ setParams) tp =
     [ rdots, last, next ]
     where
       {page} = paramsState params
-      changePage page = setParams $ \p -> stateParams $ (paramsState p) { page = page }
       prev = if page == 1 then
                H.text " Prev. "
              else
@@ -269,7 +270,7 @@ pagination (params /\ setParams) tp =
       changePageLink i s =
         H.span {}
           [ H.text " "
-          , effectLink (changePage i) s
+          , effectLink (changePage i p) s
           , H.text " "
           ]
 
