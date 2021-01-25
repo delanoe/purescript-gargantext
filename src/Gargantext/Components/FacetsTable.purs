@@ -336,7 +336,7 @@ pageCpt = R.hooksComponentWithModule thisModule "page" cpt
             T.makeRow [
               H.div {} [ H.a { className: gi category, on: {click: markClick} } [] ]
               -- TODO show date: Year-Month-Day only
-              , maybeStricken delete [ H.text $ publicationDate dv ]
+              -- , maybeStricken delete [ H.text $ publicationDate dv ]
               , maybeStricken delete [ H.a {target: "_blank", href: documentUrl id} [ H.text title ] ]
               , maybeStricken delete [ H.text source ]
               -- , maybeStricken delete [ H.text authors ]
