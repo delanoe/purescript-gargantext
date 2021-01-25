@@ -104,8 +104,7 @@ annuaireCpt = R.hooksComponentWithModule thisModule "annuaire" cpt
                               , title: name
                               , user: "" }
           , H.p {} []
-          , H.div {className: "col-md-3"}
-            [ H.text "    Filter ", H.input { className: "form-control", style } ]
+          -- , H.div {className: "col-md-3"} [ H.text "    Filter ", H.input { className: "form-control", style } ]
           , H.br {}
           , pageLayout { info, session, pagePath, frontends} ]
       where
@@ -199,13 +198,14 @@ contactCellsCpt = R.hooksComponentWithModule thisModule "contactCells" cpt
                        ]
     cpt { annuaireId
         , contact: (CT.NodeContact { id
-                               , hyperdata: ( CT.HyperdataContact { who : Just (CT.ContactWho { firstName
-                                                                                              , lastName
-                                                                                              }
-                                                                               )
-                                                                  }
-                                            )
-                               }
+                                   , hyperdata: ( CT.HyperdataContact
+                                                  { who : Just (CT.ContactWho { firstName
+                                                                              , lastName
+                                                                              }
+                                                               )
+                                                  }
+                                                )
+                                   }
                    )
         , frontends
         , session } _ = do
@@ -214,7 +214,7 @@ contactCellsCpt = R.hooksComponentWithModule thisModule "contactCells" cpt
           H.text ""
           , H.text $ fromMaybe "First Name" firstName
           , H.text $ fromMaybe "First Name" lastName
-          , H.text  "CNRS"
+          , H.text  "IMT"
           -- , H.a { href } [ H.text $ fromMaybe "name" contact.title ]
             --, H.a { href, target: "blank" } [ H.text $ fromMaybe "name" contact.title ]
           --, H.text $ maybe "No ContactWhere" contactWhereOrg  (A.head $ ou)
