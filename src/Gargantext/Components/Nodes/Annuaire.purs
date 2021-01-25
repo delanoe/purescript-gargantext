@@ -163,7 +163,7 @@ pageCpt = R.hooksComponentWithModule thisModule "page" cpt
                                      , session }
                    , delete: false }) <$> Seq.fromFoldable docs
         container = T.defaultContainer { title: "Annuaire" } -- TODO
-        colNames = T.ColumnName <$> [ "", "First Name", "Last Name", "Company", "Lab", "Role"]
+        colNames = T.ColumnName <$> [ "", "First Name", "Last Name", "Company", "Role"]
         wrapColElts = const identity
         setParams f = snd pagePath $ \pp@{params: ps} ->
           pp {params = f ps}
@@ -203,6 +203,7 @@ contactCellsCpt = R.hooksComponentWithModule thisModule "contactCells" cpt
                                                                               , lastName
                                                                               }
                                                                )
+                                                  , ou  : ou
                                                   }
                                                 )
                                    }
@@ -214,11 +215,10 @@ contactCellsCpt = R.hooksComponentWithModule thisModule "contactCells" cpt
           H.text ""
           , H.text $ fromMaybe "First Name" firstName
           , H.text $ fromMaybe "First Name" lastName
-          , H.text  "IMT"
           -- , H.a { href } [ H.text $ fromMaybe "name" contact.title ]
             --, H.a { href, target: "blank" } [ H.text $ fromMaybe "name" contact.title ]
-          --, H.text $ maybe "No ContactWhere" contactWhereOrg  (A.head $ ou)
-         -- , H.text $ maybe "No ContactWhereDept" contactWhereDept (A.head $ ou)
+          , H.text $ maybe "No ContactWhere"     contactWhereOrg  (A.head $ ou)
+          , H.text $ maybe "No ContactWhereDept" contactWhereDept (A.head $ ou)
          -- , H.div {className: "nooverflow"} [
          --     H.text $ maybe "No ContactWhereRole" contactWhereRole (A.head $ ou)
             ]
