@@ -70,7 +70,7 @@ sidebar props = R.createElement sidebarCpt props []
 
 sideTabNav :: R.State SidePanelState -> Array SideTab -> R.Element
 sideTabNav (sidePanel /\ setSidePanel) sideTabs =
-  R.fragment [ H.div { className: "text-primary center"} [H.text "SideTab"]
+  R.fragment [ H.div { className: "text-primary center"} [H.text ""]
                      , H.div {className: "nav nav-tabs"} (liItem <$> sideTabs)
                      -- , H.div {className: "center"} [ H.text "Doc sideTabs"]
              ]

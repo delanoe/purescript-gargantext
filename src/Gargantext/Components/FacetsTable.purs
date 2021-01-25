@@ -215,12 +215,12 @@ doc2view :: Document -> DocumentsView
 doc2view ( Document { id
                     , created: date
                     , hyperdata:  HyperdataRowDocument { authors
-                                                  , title
-                                                  , source
-                                                  , publication_year
-                                                  , publication_month
-                                                  , publication_day
-                                                  }
+                                                       , title
+                                                       , source
+                                                       , publication_year
+                                                       , publication_month
+                                                       , publication_day
+                                                       }
                     , category
                     , score
                     }
@@ -242,14 +242,14 @@ contact2view :: Contact -> DocumentsView
 contact2view (Contact { c_id
                       , c_created: date
                       , c_hyperdata: HyperdataRowContact { firstname
-                                                    , lastname
-                                                    , labs
-                                                    }
+                                                         , lastname
+                                                         , labs
+                                                         }
                       , c_score
                       }
         ) = DocumentsView { id: c_id
-                          , date
-                          , title : firstname <> lastname
+                          , date: ""
+                          , title : firstname <> " " <> lastname
                           , source: labs
                           , score: c_score
                           , authors: labs
@@ -263,11 +263,11 @@ contact2view (Contact { c_id
 
 err2view message =
   DocumentsView { id: 1
-                , date: "2020-01-01"
+                , date: ""
                 , title : "SearchNoResult"
-                , source: "Source"
+                , source: ""
                 , score: 1
-                , authors: "Authors"
+                , authors: ""
                 , category: decodeCategory 1
                 , pairs: []
                 , delete: false
@@ -315,7 +315,8 @@ pageCpt = R.hooksComponentWithModule thisModule "page" cpt
       where
         setParams f = setPath $ \p@{params: ps} -> p {params = f ps}
         params = (fst path).params /\ setParams
-        colNames = T.ColumnName <$> [ "", "Date", "Title", "Source", "Authors", "Delete" ]
+        -- colNames = T.ColumnName <$> [ "", "Date", "Title", "Source", "Authors", "Delete" ]
+        colNames = T.ColumnName <$> [ "", "Search", "Result", "", "", "" ]
         wrapColElts = const identity
         -- TODO: how to interprete other scores?
         gi Favorite = "fa fa-star-empty"
@@ -338,12 +339,13 @@ pageCpt = R.hooksComponentWithModule thisModule "page" cpt
               , maybeStricken delete [ H.text $ publicationDate dv ]
               , maybeStricken delete [ H.a {target: "_blank", href: documentUrl id} [ H.text title ] ]
               , maybeStricken delete [ H.text source ]
-              , maybeStricken delete [ H.text authors ]
+              -- , maybeStricken delete [ H.text authors ]
                 -- , maybeStricken $ intercalate [comma] (pairUrl <$> pairs)
-              , H.input { defaultChecked: isChecked id
+              {-, H.input { defaultChecked: isChecked id
                         , on: { click: toggleClick }
                         , type: "checkbox"
                         }
+              -}
               ]
           , delete: true }
           where
