@@ -122,7 +122,7 @@ listsLayoutWithKey props = R.createElement listsLayoutWithKeyCpt props []
         , treeReloadRef } _ = do
       let path = { nodeId, session }
 
-      cacheState <- R.useState' $ getCacheState CacheOn session nodeId
+      cacheState <- R.useState' $ getCacheState CacheOff session nodeId
 
       useLoader path loadCorpusWithChild $
         \corpusData@{ corpusId, corpusNode: NodePoly poly, defaultListId } ->
