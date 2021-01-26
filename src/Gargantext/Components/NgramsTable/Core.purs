@@ -1129,10 +1129,10 @@ type SyncResetButtonsProps =
 
 syncResetButtons :: Record SyncResetButtonsProps -> R.Element
 syncResetButtons p = R.createElement syncResetButtonsCpt p []
-  where
-    syncResetButtonsCpt :: R.Component SyncResetButtonsProps
-    syncResetButtonsCpt = R.hooksComponentWithModule thisModule "syncResetButtons" cpt
 
+syncResetButtonsCpt :: R.Component SyncResetButtonsProps
+syncResetButtonsCpt = R.hooksComponentWithModule thisModule "syncResetButtons" cpt
+  where
     cpt { afterSync, ngramsLocalPatch, performAction } _ = do
       synchronizing@(s /\ setSynchronizing) <- R.useState' false
 

@@ -60,19 +60,19 @@ type IsLeaf = Boolean
 
 nodeSpan :: R2.Component NodeMainSpanProps
 nodeSpan = R.createElement nodeSpanCpt
-  where
-    nodeSpanCpt :: R.Component NodeMainSpanProps
-    nodeSpanCpt = R.hooksComponentWithModule thisModule "nodeSpan" cpt
 
+nodeSpanCpt :: R.Component NodeMainSpanProps
+nodeSpanCpt = R.hooksComponentWithModule thisModule "nodeSpan" cpt
+  where
     cpt props children = do
       pure $ H.div {} ([ nodeMainSpan props [] ] <> children)
 
 nodeMainSpan :: R2.Component NodeMainSpanProps
 nodeMainSpan = R.createElement nodeMainSpanCpt
-  where
-    nodeMainSpanCpt :: R.Component NodeMainSpanProps
-    nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
 
+nodeMainSpanCpt :: R.Component NodeMainSpanProps
+nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
+  where
     cpt props@{ appReload
               , asyncTasks: (asyncTasks /\ dispatchAsyncTasks)
               , currentRoute
@@ -249,10 +249,10 @@ type NodeActionsProps =
 
 nodeActions :: Record NodeActionsProps -> R.Element
 nodeActions p = R.createElement nodeActionsCpt p []
-  where
-    nodeActionsCpt :: R.Component NodeActionsProps
-    nodeActionsCpt = R.hooksComponentWithModule thisModule "nodeActions" cpt
 
+nodeActionsCpt :: R.Component NodeActionsProps
+nodeActionsCpt = R.hooksComponentWithModule thisModule "nodeActions" cpt
+  where
     cpt { id
         , nodeType: GT.Graph
         , session

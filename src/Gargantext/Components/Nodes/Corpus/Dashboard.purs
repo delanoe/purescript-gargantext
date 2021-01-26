@@ -33,10 +33,10 @@ type Props =
 
 dashboardLayout :: R2.Component Props
 dashboardLayout = R.createElement dashboardLayoutCpt
-  where
-    dashboardLayoutCpt :: R.Component Props
-    dashboardLayoutCpt = R.hooksComponentWithModule thisModule "dashboardLayout" cpt
 
+dashboardLayoutCpt :: R.Component Props
+dashboardLayoutCpt = R.hooksComponentWithModule thisModule "dashboardLayout" cpt
+  where
     cpt { nodeId, session } _ = do
       let sid = sessionId session
 
@@ -49,10 +49,10 @@ type KeyProps = (
 
 dashboardLayoutWithKey :: R2.Component KeyProps
 dashboardLayoutWithKey = R.createElement dashboardLayoutWithKeyCpt
-  where
-    dashboardLayoutWithKeyCpt :: R.Component KeyProps
-    dashboardLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "dashboardLayoutWithKey" cpt
 
+dashboardLayoutWithKeyCpt :: R.Component KeyProps
+dashboardLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "dashboardLayoutWithKey" cpt
+  where
     cpt { nodeId, session } _ = do
       reload <- GUR.new
 
@@ -90,10 +90,10 @@ type LoadedProps =
 
 dashboardLayoutLoaded :: R2.Component LoadedProps
 dashboardLayoutLoaded = R.createElement dashboardLayoutLoadedCpt
-  where
-    dashboardLayoutLoadedCpt :: R.Component LoadedProps
-    dashboardLayoutLoadedCpt = R.hooksComponentWithModule thisModule "dashboardLayoutLoaded" cpt
 
+dashboardLayoutLoadedCpt :: R.Component LoadedProps
+dashboardLayoutLoadedCpt = R.hooksComponentWithModule thisModule "dashboardLayoutLoaded" cpt
+  where
     cpt props@{ charts, corpusId, defaultListId, fields, nodeId, onChange, session } _ = do
       pure $ H.div {}
         [ H.div { className: "row" }
@@ -201,10 +201,10 @@ type PredefinedChartProps =
 
 renderChart :: R2.Component PredefinedChartProps
 renderChart = R.createElement renderChartCpt
-  where
-    renderChartCpt :: R.Component PredefinedChartProps
-    renderChartCpt = R.hooksComponentWithModule thisModule "renderChart" cpt
 
+renderChartCpt :: R.Component PredefinedChartProps
+renderChartCpt = R.hooksComponentWithModule thisModule "renderChart" cpt
+  where
     cpt { chart, corpusId, defaultListId, onChange, onRemove, session } _ = do
       pure $ H.div { className: "row chart card" }
         [ H.div { className: "card-header" }

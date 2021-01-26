@@ -81,10 +81,10 @@ mkRequest session (_ /\ path@{ corpusId, limit, listId, tabType }) = GUC.makeGet
 
 histo :: Record Props -> R.Element
 histo props = R.createElement histoCpt props []
-  where
-    histoCpt :: R.Component Props
-    histoCpt = R.hooksComponentWithModule thisModule "histo" cpt
 
+histoCpt :: R.Component Props
+histoCpt = R.hooksComponentWithModule thisModule "histo" cpt
+  where
     cpt { path, session } _ = do
       reload <- R.useState' 0
       pure $ metricsWithCacheLoadView {

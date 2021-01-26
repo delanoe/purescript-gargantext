@@ -48,10 +48,10 @@ type CommonProps =
 
 nodePopupView :: Record NodePopupProps -> R.Element
 nodePopupView p = R.createElement nodePopupCpt p []
-  where
-    nodePopupCpt :: R.Component NodePopupProps
-    nodePopupCpt = R.hooksComponentWithModule thisModule "nodePopupView" cpt
 
+nodePopupCpt :: R.Component NodePopupProps
+nodePopupCpt = R.hooksComponentWithModule thisModule "nodePopupView" cpt
+  where
     cpt p _ = do
       renameIsOpen    <- R.useState' false
 
@@ -254,10 +254,10 @@ type PanelActionProps =
 
 panelAction :: Record PanelActionProps -> R.Element
 panelAction p = R.createElement panelActionCpt p []
-  where
-    panelActionCpt :: R.Component PanelActionProps
-    panelActionCpt = R.hooksComponentWithModule thisModule "panelAction" cpt
 
+panelActionCpt :: R.Component PanelActionProps
+panelActionCpt = R.hooksComponentWithModule thisModule "panelAction" cpt
+  where
     cpt {action: Documentation nodeType}                  _ = actionDoc      nodeType
     cpt {action: Download, id, nodeType, session}         _ = actionDownload nodeType id session
     cpt {action: Upload, dispatch, id, nodeType, session} _ = actionUpload   nodeType id session dispatch

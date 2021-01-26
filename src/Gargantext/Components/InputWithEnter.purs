@@ -25,10 +25,9 @@ type Props a = (
 
 inputWithEnter :: forall a. Record (Props a) -> R.Element
 inputWithEnter props = R.createElement inputWithEnterCpt props []
+inputWithEnterCpt :: forall a. R.Component (Props a)
+inputWithEnterCpt = R.hooksComponentWithModule thisModule "inputWithEnter" cpt
   where
-    inputWithEnterCpt :: forall a. R.Component (Props a)
-    inputWithEnterCpt = R.hooksComponentWithModule thisModule "inputWithEnter" cpt
-
     cpt props@{ onEnter, onValueChanged
               , autoFocus, autoSave, className, defaultValue, placeholder } _ = do
       pure $ H.input { on: { blur: \_ -> if autoSave then onEnter unit else pure unit

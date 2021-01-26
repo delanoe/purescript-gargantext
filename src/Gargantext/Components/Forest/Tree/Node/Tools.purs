@@ -292,10 +292,10 @@ type NodeLinkProps = (
 
 nodeLink :: R2.Component NodeLinkProps
 nodeLink = R.createElement nodeLinkCpt
-  where
-    nodeLinkCpt :: R.Component NodeLinkProps
-    nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
 
+nodeLinkCpt :: R.Component NodeLinkProps
+nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
+  where
     cpt { folderOpen: (_ /\ setFolderOpen)
         , frontends
         , handed
@@ -348,10 +348,10 @@ type NodeTextProps =
 
 nodeText :: Record NodeTextProps -> R.Element
 nodeText p = R.createElement nodeTextCpt p []
-  where
-    nodeTextCpt :: R.Component NodeTextProps
-    nodeTextCpt = R.hooksComponentWithModule thisModule "nodeText" cpt
 
+nodeTextCpt :: R.Component NodeTextProps
+nodeTextCpt = R.hooksComponentWithModule thisModule "nodeText" cpt
+  where
     cpt { isSelected: true, name } _ = do
       pure $ H.u {} [
         H.b {} [

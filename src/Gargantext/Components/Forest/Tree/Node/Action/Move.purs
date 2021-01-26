@@ -24,10 +24,10 @@ moveNodeReq session fromId toId =
 
 moveNode :: Record SubTreeParamsIn -> R.Element
 moveNode p = R.createElement moveNodeCpt p []
-  where
-    moveNodeCpt :: R.Component SubTreeParamsIn
-    moveNodeCpt = R.hooksComponentWithModule thisModule "moveNode" cpt
 
+moveNodeCpt :: R.Component SubTreeParamsIn
+moveNodeCpt = R.hooksComponentWithModule thisModule "moveNode" cpt
+  where
     cpt { dispatch, handed, id, nodeType, session, subTreeParams } _ = do
       action@(valAction /\ setAction) :: R.State Action <- R.useState' (MoveNode {params: Nothing})
 
