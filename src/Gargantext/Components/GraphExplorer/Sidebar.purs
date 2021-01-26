@@ -133,36 +133,44 @@ sideTab _ _  = H.div {} []
 -------------------------------------------
 -- TODO
 -- selectedNodes :: Record Props -> Map.Map String Nodes -> R.Element
-selectedNodes props nodesMap = R2.row [ R2.col 12
-                  [ RH.ul { id: "myTab", className: "nav nav-tabs", role: "tablist"}
-                    [ RH.div { className: "tab-content" }
-                      [ RH.div { className: "", role: "tabpanel" }
-                               ( Seq.toUnfoldable
-                               $ ( Seq.map (badge              props.selectedNodeIds)
-                                           (badges props.graph props.selectedNodeIds)
-                                 )
-                               )
-                      ]
-                    , RH.div { className: "tab-content flex-space-between" }
-                             [ removeButton "Move as candidate" CandidateTerm props nodesMap
-                             , removeButton "Move as stop"      StopTerm      props nodesMap
-                             ]
-                    ]
-                   ]
-               ]
+selectedNodes props nodesMap =
+  R2.row [ R2.col 12
+          [ RH.ul { id: "myTab", className: "nav nav-tabs", role: "tablist"}
+            [ RH.div { className: "tab-content" }
+              [ RH.div { className: ""
+                       , role: "tabpanel" }
+                       ( Seq.toUnfoldable
+                       $ ( Seq.map (badge              props.selectedNodeIds)
+                                   (badges props.graph props.selectedNodeIds)
+                         )
+                       )
+              , H.br {}
+              ]
+            ]
+            , RH.div { className: "tab-content flex-space-between" }
+                     [ removeButton "primary" "Move as candidate" CandidateTerm props nodesMap
+                     , H.br {}
+                     , removeButton "danger"  "Move as stop"      StopTerm      props nodesMap
+                     ]
+           ]
+       ]
 neighborhood props = RH.div { className: "tab-content", id: "myTabContent" }
-                            [ RH.div { className: "", id: "home", role: "tabpanel" }
+                            [ RH.div { -- className: "flex-space-around d-flex justify-content-center"
+                                       className: "flex-space-around d-flex"
+                                     , id: "home"
+                                     , role: "tabpanel"
+                                     }
                               (Seq.toUnfoldable $ Seq.map (badge props.selectedNodeIds)
                                                 $ neighbourBadges props.graph props.selectedNodeIds
                                )
                             ]
 
 
-removeButton text rType props' nodesMap' =
+removeButton btnType text rType props' nodesMap' =
   if Set.isEmpty $ fst props'.selectedNodeIds then
     RH.div {} []
   else
-    RH.button { className: "btn btn-info"
+    RH.button { className: "btn btn-" <> btnType
               , on: { click: onClickRemove rType props' nodesMap' }
               }
               [ RH.text text ]

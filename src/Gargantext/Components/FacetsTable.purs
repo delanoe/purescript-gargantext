@@ -323,7 +323,6 @@ pageCpt = R.hooksComponentWithModule thisModule "page" cpt
       where
         setParams f = setPath $ \p@{params: ps} -> p {params = f ps}
         params = (fst path).params /\ setParams
-        -- colNames = T.ColumnName <$> [ "", "Date", "Title", "Source", "Authors", "Delete" ]
         colNames = case rowsLoaded of
             Docs     _ -> T.ColumnName <$> [ "", "Date", "Title", "Journal", "", "" ]
             Contacts _ -> T.ColumnName <$> [ "", "Contact", "Organization", "", "", "" ]
