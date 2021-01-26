@@ -200,11 +200,11 @@ neighbourBadges graph (selectedNodeIds /\ _) = SigmaxT.neighbours graph selected
 
 
 type DeleteNodes =
-  ( graphId :: Int
-  , metaData :: GET.MetaData
-  , nodes :: Array (Record SigmaxT.Node)
-  , session :: Session
-  , termList :: TermList
+  ( graphId    :: Int
+  , metaData   :: GET.MetaData
+  , nodes      :: Array (Record SigmaxT.Node)
+  , session    :: Session
+  , termList   :: TermList
   , treeReload :: GUR.ReloadS
   )
 
@@ -331,7 +331,4 @@ Global/local view:
     The 'change level' button allows to change between global view and node centered view,
     To explore the neighborhood of a selection click on the 'change level' button.
 -}
-
-
-
 

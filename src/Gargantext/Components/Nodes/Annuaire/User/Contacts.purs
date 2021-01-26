@@ -150,8 +150,8 @@ contactInfoItemCpt = R.hooksComponentWithModule thisModule "contactInfoItem" cpt
 listElement :: Array R.Element -> R.Element
 listElement = H.li { className: "list-group-item justify-content-between" }
 
-type LayoutProps = (
-    appReload     :: GUR.ReloadS
+type LayoutProps =
+  ( appReload     :: GUR.ReloadS
   , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , frontends     :: Frontends
   , nodeId        :: Int
@@ -219,7 +219,7 @@ userLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "userLayoutWithKey"
             _ <- saveContactHyperdata session nodeId hd
             liftEffect $ GUR.bump reload
 
--- | toUrl to get data
+-- | toUrl to get data XXX
 getContact :: Session -> Int -> Aff ContactData
 getContact session id = do
   contactNode <- get session $ Routes.NodeAPI Node (Just id) ""
@@ -240,9 +240,8 @@ saveContactHyperdata session id h = do
   put session (Routes.NodeAPI Node (Just id) "") h
 
 
-type AnnuaireLayoutProps = (
-    annuaireId :: Int
-  | LayoutProps )
+type AnnuaireLayoutProps = ( annuaireId :: Int | LayoutProps )
+type AnnuaireKeyLayoutProps = ( key :: String | AnnuaireLayoutProps )
 
 
 annuaireUserLayout :: Record AnnuaireLayoutProps -> R.Element
@@ -252,6 +251,21 @@ annuaireUserLayoutCpt :: R.Component AnnuaireLayoutProps
 annuaireUserLayoutCpt = R.hooksComponentWithModule thisModule "annuaireUserLayout" cpt
   where
     cpt { annuaireId, appReload, asyncTasksRef, frontends, nodeId, session, treeReloadRef } _ = do
+      let sid = sessionId session
+
+      pure $ annuaireUserLayoutWithKey { annuaireId,
+          appReload
+        , asyncTasksRef
+        , frontends
+        , key: show sid <> "-" <> show nodeId
+        , nodeId
+        , session
+        , treeReloadRef
+        }
+
+
+{-
+    cpt { annuaireId, appReload, asyncTasksRef, frontends, nodeId, session, treeReloadRef } _ = do
       cacheState <- R.useState' LT.CacheOn
 
       sidePanelTriggers <- LT.emptySidePanelTriggers
@@ -260,6 +274,40 @@ annuaireUserLayoutCpt = R.hooksComponentWithModule thisModule "annuaireUserLayou
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" } [
             display { title: fromMaybe "no name" name } (contactInfos hyperdata onUpdateHyperdata)
+          , Tabs.tabs { appReload
+                      , asyncTasksRef
+                      , cacheState
+                      , contactData
+                      , frontends
+                      , nodeId
+                      , session
+                      , sidePanelTriggers
+                      , treeReloadRef
+                      }
+          ]
+
+      where
+        onUpdateHyperdata :: HyperdataUser -> Effect Unit
+        onUpdateHyperdata _ = pure unit
+        -}
+
+annuaireUserLayoutWithKey :: Record AnnuaireKeyLayoutProps -> R.Element
+annuaireUserLayoutWithKey props = R.createElement annuaireUserLayoutWithKeyCpt props []
+
+annuaireUserLayoutWithKeyCpt :: R.Component AnnuaireKeyLayoutProps
+annuaireUserLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "annuaireUserLayoutWithKey" cpt
+  where
+    cpt { annuaireId, appReload, asyncTasksRef, frontends, nodeId, session, treeReloadRef } _ = do
+      reload <- GUR.new
+
+      cacheState <- R.useState' LT.CacheOn
+
+      sidePanelTriggers <- LT.emptySidePanelTriggers
+
+      useLoader nodeId (getAnnuaireContact session annuaireId) $
+        \contactData@{contactNode: Contact {name, hyperdata}} ->
+          H.ul { className: "col-md-12 list-group" } [
+            display { title: fromMaybe "no name" name } (contactInfos hyperdata (onUpdateHyperdata reload))
           , Tabs.tabs {
                  appReload
                , asyncTasksRef
@@ -272,14 +320,20 @@ annuaireUserLayoutCpt = R.hooksComponentWithModule thisModule "annuaireUserLayou
                , treeReloadRef
                }
           ]
-
       where
-        onUpdateHyperdata :: HyperdataUser -> Effect Unit
-        onUpdateHyperdata _ = pure unit
+        onUpdateHyperdata :: GUR.ReloadS -> HyperdataUser -> Effect Unit
+        onUpdateHyperdata reload hd = do
+          launchAff_ $ do
+            _ <- saveContactHyperdata session nodeId hd
+            liftEffect $ GUR.bump reload
+
+
+
+
 
 getAnnuaireContact :: Session -> Int -> Int -> Aff ContactData
 getAnnuaireContact session annuaireId id = do
-  contactNode <- get session $ Routes.NodeAPI Annuaire (Just annuaireId) $ "contact/" <> (show id)
+  contactNode <- get session $ Routes.NodeAPI Annuaire (Just annuaireId) $ show id
   -- TODO: we need a default list for the pairings
   --defaultListIds <- get $ toUrl endConfigStateful Back (Children NodeList 0 1 Nothing) $ Just id
   --case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
