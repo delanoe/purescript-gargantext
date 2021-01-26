@@ -119,7 +119,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
             documentMainLayout { listId, mCorpusId: Just corpusId,  nodeId, session } []
           ]
           Dashboard sid nodeId       -> withSession sid $ \session -> forested [
-            dashboardLayout { nodeId, session }
+            dashboardLayout { nodeId, session } []
           ]
           Document sid listId nodeId ->
             withSession sid $

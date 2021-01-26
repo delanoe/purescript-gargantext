@@ -533,7 +533,9 @@ li .leaf:hover a.settings {
 }
 
 .code-editor-heading {
-  display: flex;
+  /* .buttons-right */
+  /*   display: flex */
+  /*   justify-content: flex-end */
 }
 .code-editor-heading .renameable {
   flex-grow: 2;
@@ -541,20 +543,7 @@ li .leaf:hover a.settings {
 .code-editor-heading .renameable .text {
   padding-right: 10px;
 }
-.code-editor-heading .buttons-right {
-  display: flex;
-  justify-content: flex-end;
-}
 
-.code-editor .toolbar {
-  display: flex;
-  justify-content: flex-start;
-  width: 100%;
-}
-.code-editor .editor {
-  display: flex;
-  width: 100%;
-}
 .code-editor .editor .code-area {
   flex-grow: 1;
   max-height: 200px;
