@@ -42,7 +42,10 @@ inputWithEnter props = R.createElement inputWithEnterCpt props []
 
       where
         onInput e = do
-           onValueChanged $ R.unsafeEventValue e
+           if autoSave then
+             onValueChanged $ R.unsafeEventValue e
+           else
+             pure unit
 
         onKeyPress e = do
           char <- R2.keyCode e

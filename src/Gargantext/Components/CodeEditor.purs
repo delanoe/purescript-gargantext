@@ -117,25 +117,24 @@ codeEditorCpt = R.hooksComponentWithModule thisModule "codeEditor" cpt
         setCodeOverlay controls code'
         renderHtml code' controls
 
-      pure $ H.div { className: "code-editor" } [
-          toolbar {controls, onChange}
-        , H.div { className: "row error" } [
-           errorComponent {error: controls.error}
-        ]
-        , H.div { className: "row editor" } [
-           H.div { className: "code-area " <> (codeHidden $ fst controls.viewType) } [
-             H.div { className: "code-container" } [
-               H.textarea { defaultValue: code
-                          , on: { change: onEditChange controls onChange }
-                          , placeholder: "Type some code..."
-                          , ref: controls.codeElRef } [ ]
-               , H.pre  { className: (langClass $ fst controls.codeType)
-                          -- , contentEditable: "true"
-                        , ref: controls.codeOverlayElRef
-                        , rows: 30
-                          --, on: { input: onEditChange (fst codeType) codeElRef htmlRef codeRef error }
-                        } []
-               ]
+      pure $ H.div { className: "code-editor" }
+        [ toolbar {controls, onChange}
+        , H.div { className: "row error" }
+          [ errorComponent {error: controls.error} ]
+        , H.div { className: "row editor" }
+          [ H.div { className: "code-area " <> (codeHidden $ fst controls.viewType) }
+            [ H.div { className: "code-container" }
+              [ H.textarea { defaultValue: code
+                           , on: { change: onEditChange controls onChange }
+                           , placeholder: "Type some code..."
+                           , ref: controls.codeElRef } [ ]
+              , H.pre  { className: (langClass $ fst controls.codeType)
+                         -- , contentEditable: "true"
+                       , ref: controls.codeOverlayElRef
+                       , rows: 30
+                         --, on: { input: onEditChange (fst codeType) codeElRef htmlRef codeRef error }
+                       } []
+              ]
              ]
            , H.div { className: "v-divider " <> (dividerHidden $ fst controls.viewType) } [ H.text " " ]
            , H.div { className: "html " <> (langClass $ fst controls.codeType) <> (previewHidden $ fst controls.viewType)
@@ -208,13 +207,16 @@ toolbarCpt = R.hooksComponentWithModule thisModule "toolbar" cpt
   where
     cpt props@{controls: {codeType, error, viewType}} _ = do
       pure $
-        H.div { className: "row toolbar" } [
-             codeTypeSelector {
-                  codeType
-                , onChange: onChangeCodeType props
-                }
-           , viewTypeSelector {state: viewType}
-           ]
+        H.div { className: "row toolbar" }
+          [ H.div { className: "col-2" }
+               [ codeTypeSelector {
+                   codeType
+                 , onChange: onChangeCodeType props
+                 }
+               ]
+          , H.div { className: "col-1" }
+             [ viewTypeSelector {state: viewType} ]
+          ]
 
     -- Handle rerendering of preview when viewType changed
     onChangeCodeType :: forall e. Record ToolbarProps -> e -> Effect Unit

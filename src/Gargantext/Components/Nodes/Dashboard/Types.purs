@@ -1,9 +1,12 @@
 module Gargantext.Components.Nodes.Dashboard.Types where
 
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, (.:), (.:?), (:=), (~>), jsonEmptyObject)
+import Data.List as List
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
+
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
+import Gargantext.Components.Nodes.Types (FTField, Field(..), FieldType(..), isJSON)
 import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, get, put)
@@ -14,17 +17,20 @@ type Preferences = Maybe String
 newtype Hyperdata =
   Hyperdata
   { charts :: Array P.PredefinedChart
+  , fields :: List.List FTField
   , preferences :: Preferences
   }
 instance decodeHyperdata :: DecodeJson Hyperdata where
   decodeJson json = do
     obj <- decodeJson json
     charts <- obj .: "charts"
+    fields <- obj .: "fields"
     preferences <- obj .:? "preferences"
-    pure $ Hyperdata {charts, preferences}
+    pure $ Hyperdata {charts, fields, preferences}
 instance encodeHyperdata :: EncodeJson Hyperdata where
-  encodeJson (Hyperdata {charts, preferences}) = do
+  encodeJson (Hyperdata {charts, fields, preferences}) = do
        "charts"  := charts
+    ~> "fields"  := fields
     ~> "preferences"  := preferences
     ~> jsonEmptyObject
 
