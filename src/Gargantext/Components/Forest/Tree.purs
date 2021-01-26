@@ -313,10 +313,10 @@ type ChildNodeFirstLevelPaintProps = (
   )
 
 childNodeFirstLevelPaint :: R2.Component ChildNodeFirstLevelPaintProps
-childNodeFirstLevelPaint = R.createElement childNodeFirstLevelPainCpt
+childNodeFirstLevelPaint = R.createElement childNodeFirstLevelPaintCpt
 
-childNodeFirstLevelPainCpt :: R.Component ChildNodeFirstLevelPaintProps
-childNodeFirstLevelPainCpt = R.hooksComponentWithModule thisModule "childNodeFirstLevelPaint" cpt
+childNodeFirstLevelPaintCpt :: R.Component ChildNodeFirstLevelPaintProps
+childNodeFirstLevelPaintCpt = R.hooksComponentWithModule thisModule "childNodeFirstLevelPaint" cpt
   where
     -- TODO folderOpen is unused
 

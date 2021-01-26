@@ -30,7 +30,7 @@ cacheName = "metrics"
 metricsLoadView :: forall a. Record (MetricsLoadViewProps a) -> R.Element
 metricsLoadView p = R.createElement metricsLoadViewCpt p []
 
-metricsLoadViewCpt :: R.Component (MetricsLoadViewProps a)
+metricsLoadViewCpt :: forall a. R.Component (MetricsLoadViewProps a)
 metricsLoadViewCpt = R.hooksComponentWithModule thisModule "metricsLoadView" cpt
   where
     cpt { getMetrics, loaded, path, reload, session } _ = do
@@ -49,7 +49,8 @@ metricsWithCacheLoadView :: forall res ret. DecodeJson res =>
                             Record (MetricsWithCacheLoadViewProps res ret) -> R.Element
 metricsWithCacheLoadView p = R.createElement metricsWithCacheLoadViewCpt p []
 
-metricsWithCacheLoadViewCpt :: R.Component (MetricsWithCacheLoadViewProps res ret)
+metricsWithCacheLoadViewCpt :: forall res ret. DecodeJson res =>
+                               R.Component (MetricsWithCacheLoadViewProps res ret)
 metricsWithCacheLoadViewCpt = R.hooksComponentWithModule thisModule "metricsWithCacheLoadView" cpt
   where
     cpt { getMetricsHash, handleResponse, loaded, mkRequest, path, reload, session } _ = do
