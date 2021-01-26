@@ -255,7 +255,7 @@ sigmaSettings =
   --, labelSize : "proportional" -- alt : proportional, fixed
   , labelSize: "fixed"
   , labelSizeRatio: 2.0               -- label size in ratio of node size
-  , labelThreshold: 7.0               -- min node cam size to start showing label
+  , labelThreshold: 5.0               -- min node cam size to start showing label
   , maxEdgeSize: 1.0
   , maxNodeSize: 8.0
   , minEdgeSize: 0.5              -- in fact used in tina as edge size
