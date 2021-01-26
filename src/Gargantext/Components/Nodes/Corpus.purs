@@ -105,7 +105,7 @@ corpusLayoutView props = R.createElement corpusLayoutViewCpt props []
         , H.div {}
           [ fieldsCodeEditor { fields: fieldsS
                              , nodeId
-                             , session } ]
+                             , session } [] ]
         , H.div { className: "row" }
           [ H.div { className: "btn btn-secondary"
                   , on: { click: onClickAdd fieldsS }
@@ -139,14 +139,14 @@ type FieldsCodeEditorProps =
     | LoadProps
   )
 
-fieldsCodeEditor :: Record FieldsCodeEditorProps -> R.Element
-fieldsCodeEditor props = R.createElement fieldsCodeEditorCpt props []
+fieldsCodeEditor :: R2.Component FieldsCodeEditorProps
+fieldsCodeEditor = R.createElement el
   where
-    fieldsCodeEditorCpt :: R.Component FieldsCodeEditorProps
-    fieldsCodeEditorCpt = R.hooksComponentWithModule thisModule "fieldsCodeEditorCpt" cpt
+    el :: R.Component FieldsCodeEditorProps
+    el = R.hooksComponentWithModule thisModule "fieldsCodeEditorCpt" cpt
 
     cpt {nodeId, fields: fS@(fields /\ _), session} _ = do
-      masterKey <- R.useState' 0
+      masterKey <- GUR.new
 
       pure $ H.div {} $ List.toUnfoldable (editors masterKey)
       where
@@ -170,13 +170,13 @@ fieldsCodeEditor props = R.createElement fieldsCodeEditorCpt props []
           List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { typ = typ })) fields
 
     onMoveDown :: GUR.ReloadS -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
-    onMoveDown (_ /\ setMasterKey) (fs /\ setFields) idx _ = do
-      setMasterKey $ (+) 1
+    onMoveDown masterKey (_ /\ setFields) idx _ = do
+      GUR.bump masterKey
       setFields $ recomputeIndices <<< (GDA.swapList idx (idx + 1))
 
     onMoveUp :: GUR.ReloadS -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
-    onMoveUp (_ /\ setMasterKey) (_ /\ setFields) idx _ = do
-      setMasterKey $ (+) 1
+    onMoveUp masterKey (_ /\ setFields) idx _ = do
+      GUR.bump masterKey
       setFields $ recomputeIndices <<< (GDA.swapList idx (idx - 1))
 
     onRemove :: R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit

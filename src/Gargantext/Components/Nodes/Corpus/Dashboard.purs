@@ -1,6 +1,9 @@
 module Gargantext.Components.Nodes.Corpus.Dashboard where
 
-import DOM.Simple.Console (log2)
+import Gargantext.Components.Nodes.Types
+import Gargantext.Prelude
+
+import DOM.Simple.Console (log, log2)
 import Data.Array as A
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -9,19 +12,16 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
 import Gargantext.Components.Nodes.Corpus (fieldsCodeEditor)
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
 import Gargantext.Components.Nodes.Dashboard.Types as DT
-import Gargantext.Components.Nodes.Types
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (NodeID)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Corpus.Dashboard"
@@ -68,10 +68,11 @@ dashboardLayoutWithKey = R.createElement dashboardLayoutWithKeyCpt
                                 , onChange: onChange nodeId reload (DT.Hyperdata h)
                                 , session } []
       where
-        onChange :: NodeID -> GUR.ReloadS -> DT.Hyperdata -> Array P.PredefinedChart -> Effect Unit
-        onChange nodeId' reload (DT.Hyperdata h) charts = do
+        onChange :: NodeID -> GUR.ReloadS -> DT.Hyperdata -> { charts :: Array P.PredefinedChart
+                                                         , fields :: List.List FTField } -> Effect Unit
+        onChange nodeId' reload (DT.Hyperdata h) { charts, fields } = do
           launchAff_ do
-            DT.saveDashboard { hyperdata: DT.Hyperdata $ h { charts = charts }
+            DT.saveDashboard { hyperdata: DT.Hyperdata $ h { charts = charts, fields = fields }
                              , nodeId:nodeId'
                              , session }
             liftEffect $ GUR.bump reload
@@ -82,7 +83,8 @@ type LoadedProps =
   , defaultListId :: Int
   , fields :: List.List FTField
   , key :: String
-  , onChange :: Array P.PredefinedChart -> Effect Unit
+  , onChange :: { charts :: Array P.PredefinedChart
+               , fields :: List.List FTField } -> Effect Unit
   | Props
   )
 
@@ -93,6 +95,49 @@ dashboardLayoutLoaded = R.createElement dashboardLayoutLoadedCpt
     dashboardLayoutLoadedCpt = R.hooksComponentWithModule thisModule "dashboardLayoutLoaded" cpt
 
     cpt props@{ charts, corpusId, defaultListId, fields, nodeId, onChange, session } _ = do
+      pure $ H.div {}
+        [ H.div { className: "row" }
+          [ H.div { className: "col-12" }
+            ([ H.h1 {} [ H.text "Board" ]
+             , H.p {}  [ H.text "Summary of all your charts here" ]
+             ] <> chartsEls <> [addNew])
+          ]
+        , dashboardCodeEditor { fields
+                              , nodeId
+                              , onChange: \fs -> onChange { charts, fields: fs }
+                              , session } []
+        ]
+      where
+        addNew = H.div { className: "row" } [
+          H.span { className: "btn btn-secondary"
+                 , on: { click: onClickAddChart }} [ H.span { className: "fa fa-plus" } [] ]
+          ]
+          where
+            onClickAddChart _ = onChange { charts: A.cons P.CDocsHistogram charts
+                                         , fields }
+        chartsEls = A.mapWithIndex chartIdx charts
+        chartIdx idx chart =
+          renderChart { chart, corpusId, defaultListId, onChange: onChangeChart, onRemove, session } []
+          where
+            onChangeChart c = do
+              onChange { charts: fromMaybe charts (A.modifyAt idx (\_ -> c) charts)
+                       , fields }
+            onRemove _ = onChange { charts: fromMaybe charts $ A.deleteAt idx charts
+                                  , fields }
+
+type CodeEditorProps =
+  ( fields :: List.List FTField
+  , onChange :: List.List FTField -> Effect Unit
+  | Props
+  )
+
+dashboardCodeEditor :: R2.Component CodeEditorProps
+dashboardCodeEditor = R.createElement el
+  where
+    el :: R.Component CodeEditorProps
+    el = R.hooksComponentWithModule thisModule "dashboardCodeEditor" cpt
+
+    cpt props@{ fields, nodeId, onChange, session } _ = do
       let fieldsWithIndex = List.mapWithIndex (\idx -> \t -> Tuple idx t) fields
       fieldsS <- R.useState' fieldsWithIndex
       fieldsRef <- R.useRef fields
@@ -105,18 +150,20 @@ dashboardLayoutLoaded = R.createElement dashboardLayoutLoadedCpt
           R.setRef fieldsRef fields
           snd fieldsS $ const fieldsWithIndex
 
-      pure $ H.div {}
+      pure $ R.fragment
         [ H.div { className: "row" }
-          [ H.div { className: "col-12" }
-            ([ H.h1 {} [ H.text "Board" ]
-             , H.p {}  [ H.text "Summary of all your charts here" ]
-             ] <> chartsEls <> [addNew])
+          [ H.div { className: "btn btn-secondary " <> (saveEnabled fieldsWithIndex fieldsS)
+                  , on: { click: onClickSave fieldsS }
+                  }
+            [ H.span { className: "fa fa-floppy-o" } [  ]
+            ]
           ]
         , H.div { className: "row" }
           [ H.div { className: "col-12" }
             [ fieldsCodeEditor { fields: fieldsS
                                , nodeId
-                               , session } ]
+                               , session} []
+            ]
           ]
         , H.div { className: "row" }
           [ H.div { className: "btn btn-secondary"
@@ -127,19 +174,18 @@ dashboardLayoutLoaded = R.createElement dashboardLayoutLoadedCpt
           ]
         ]
       where
-        addNew = H.div { className: "row" } [
-          H.span { className: "btn btn-secondary"
-                 , on: { click: onClickAddChart }} [ H.span { className: "fa fa-plus" } [] ]
-          ]
-          where
-            onClickAddChart _ = onChange $ A.cons P.CDocsHistogram charts
-        chartsEls = A.mapWithIndex chartIdx charts
-        chartIdx idx chart =
-          renderChart { chart, corpusId, defaultListId, onChange: onChangeChart, onRemove, session } []
-          where
-            onChangeChart c = do
-              onChange $ fromMaybe charts (A.modifyAt idx (\_ -> c) charts)
-            onRemove _ = onChange $ fromMaybe charts $ A.deleteAt idx charts
+        saveEnabled :: FTFieldsWithIndex -> R.State FTFieldsWithIndex -> String
+        saveEnabled fs (fsS /\ _) = if fs == fsS then "disabled" else "enabled"
+
+        onClickSave :: forall e. R.State FTFieldsWithIndex -> e -> Effect Unit
+        onClickSave (fields /\ _) _ = do
+          log "[dashboardCodeEditor] saving (TODO)"
+          onChange $ snd <$> fields
+          -- launchAff_ do
+            -- saveCorpus $ { hyperdata: Hyperdata {fields: (\(Tuple _ f) -> f) <$> fieldsS}
+            --             , nodeId
+            --             , session }
+
         onClickAddField :: forall e. R.State FTFieldsWithIndex -> e -> Effect Unit
         onClickAddField (_ /\ setFieldsS) _ = do
           setFieldsS $ \fieldsS -> List.snoc fieldsS $ Tuple (List.length fieldsS) defaultField
@@ -168,6 +214,7 @@ renderChart = R.createElement renderChartCpt
                           , on: { change: onSelectChange }
                           } (option <$> P.allPredefinedCharts)
               ]
+            , H.div { className: "col-9" } []
             , H.div { className: "col-1" }
               [ H.span { className: "btn btn-danger"
                        , on: { click: onRemoveClick }} [ H.span { className: "fa fa-trash" } [] ]

@@ -24,6 +24,7 @@ import Gargantext.Prelude
 import Gargantext.Utils.HighlightJS as HLJS
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.CodeEditor"
 
 type Code = String
