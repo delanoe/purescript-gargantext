@@ -71,10 +71,10 @@ type UploadFile =
 
 uploadFileView :: Record Props -> R.Element
 uploadFileView props = R.createElement uploadFileViewCpt props []
-  where
-    uploadFileViewCpt :: R.Component Props
-    uploadFileViewCpt = R.hooksComponentWithModule thisModule "uploadFileView" cpt
 
+uploadFileViewCpt :: R.Component Props
+uploadFileViewCpt = R.hooksComponentWithModule thisModule "uploadFileView" cpt
+  where
     cpt {dispatch, id, nodeType} _ = do
       mFile    :: R.State (Maybe UploadFile) <- R.useState' Nothing
       fileType@(_ /\ setFileType)   <- R.useState'  CSV

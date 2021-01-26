@@ -63,11 +63,11 @@ type Props = (
   )
 
 treeView :: R2.Component Props
-treeView = R.createElement elCpt
-  where
-    elCpt :: R.Component Props
-    elCpt = R.hooksComponentWithModule thisModule "treeView" cpt
+treeView = R.createElement treeViewCpt
 
+treeViewCpt :: R.Component Props
+treeViewCpt = R.hooksComponentWithModule thisModule "treeView" cpt
+  where
     cpt { appReload
         , asyncTasks
         , currentRoute
@@ -90,11 +90,11 @@ treeView = R.createElement elCpt
                           } []
 
 treeLoadView :: R2.Component Props
-treeLoadView = R.createElement elCpt
-  where
-    elCpt :: R.Component Props
-    elCpt = R.hooksComponentWithModule thisModule "treeLoadView" cpt
+treeLoadView = R.createElement treeLoadViewCpt
 
+treeLoadViewCpt :: R.Component Props
+treeLoadViewCpt = R.hooksComponentWithModule thisModule "treeLoadView" cpt
+  where
     cpt { appReload
         , asyncTasks
         , currentRoute
@@ -135,11 +135,11 @@ type TreeViewProps = (
   )
 
 loadedTreeViewFirstLevel :: R2.Component TreeViewProps
-loadedTreeViewFirstLevel = R.createElement elCpt
-  where
-    elCpt :: R.Component TreeViewProps
-    elCpt = R.hooksComponentWithModule thisModule "loadedTreeViewFirstLevel" cpt
+loadedTreeViewFirstLevel = R.createElement loadedTreeViewFirstLevelCpt
 
+loadedTreeViewFirstLevelCpt :: R.Component TreeViewProps
+loadedTreeViewFirstLevelCpt = R.hooksComponentWithModule thisModule "loadedTreeViewFirstLevel" cpt
+  where
     cpt { appReload
         , asyncTasks
         , currentRoute
@@ -180,11 +180,11 @@ type ToHtmlProps = (
   )
 
 toHtmlFirstLevel :: R2.Component ToHtmlProps
-toHtmlFirstLevel = R.createElement elCpt
-  where
-    elCpt :: R.Component ToHtmlProps
-    elCpt = R.hooksComponentWithModule thisModule "toHtmlFirstLevel" cpt
+toHtmlFirstLevel = R.createElement toHtmlFirstLevelCpt
 
+toHtmlFirstLevelCpt :: R.Component ToHtmlProps
+toHtmlFirstLevelCpt = R.hooksComponentWithModule thisModule "toHtmlFirstLevel" cpt
+  where
     cpt p@{ appReload
           , asyncTasks
           , currentRoute
@@ -268,11 +268,11 @@ type ChildNodeFirstLevelProps = (
   )
 
 childNodeFirstLevel :: R2.Component ChildNodeFirstLevelProps
-childNodeFirstLevel = R.createElement elCpt
-  where
-    elCpt :: R.Component ChildNodeFirstLevelProps
-    elCpt = R.hooksComponentWithModule thisModule "childNodeFirstLevel" cpt
+childNodeFirstLevel = R.createElement childNodeFirstLevelCpt
 
+childNodeFirstLevelCpt :: R.Component ChildNodeFirstLevelProps
+childNodeFirstLevelCpt = R.hooksComponentWithModule thisModule "childNodeFirstLevel" cpt
+  where
     cpt props@{ appReload
               , asyncTasks
               , currentRoute
@@ -313,11 +313,11 @@ type ChildNodeFirstLevelPaintProps = (
   )
 
 childNodeFirstLevelPaint :: R2.Component ChildNodeFirstLevelPaintProps
-childNodeFirstLevelPaint = R.createElement elCpt
-  where
-    elCpt :: R.Component ChildNodeFirstLevelPaintProps
-    elCpt = R.hooksComponentWithModule thisModule "childNodeFirstLevelPaint" cpt
+childNodeFirstLevelPaint = R.createElement childNodeFirstLevelPainCpt
 
+childNodeFirstLevelPainCpt :: R.Component ChildNodeFirstLevelPaintProps
+childNodeFirstLevelPainCpt = R.hooksComponentWithModule thisModule "childNodeFirstLevelPaint" cpt
+  where
     -- TODO folderOpen is unused
 
     cpt props@{ asyncTasks

@@ -144,10 +144,10 @@ type NgramsViewTabsProps = (
 
 ngramsView :: R2.Component NgramsViewTabsProps
 ngramsView = R.createElement ngramsViewCpt
-  where
-    ngramsViewCpt :: R.Component NgramsViewTabsProps
-    ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
 
+ngramsViewCpt :: R.Component NgramsViewTabsProps
+ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
+  where
     cpt { appReload
         , asyncTasksRef
         , cacheState

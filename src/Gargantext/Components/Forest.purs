@@ -38,10 +38,10 @@ type Props = (
 
 forest :: R2.Component Props
 forest = R.createElement forestCpt
-  where
-    forestCpt :: R.Component Props
-    forestCpt = R.hooksComponentWithModule thisModule "forest" cpt
 
+forestCpt :: R.Component Props
+forestCpt = R.hooksComponentWithModule thisModule "forest" cpt
+  where
     cpt { appReload
         , asyncTasksRef
         , backend
@@ -124,10 +124,10 @@ type ForestLayoutProps = (
 
 forestLayout :: R2.Component ForestLayoutProps
 forestLayout props = R.createElement forestLayoutCpt props
-  where
-    forestLayoutCpt :: R.Component ForestLayoutProps
-    forestLayoutCpt = R.hooksComponentWithModule thisModule "forestLayout" cpt
 
+forestLayoutCpt :: R.Component ForestLayoutProps
+forestLayoutCpt = R.hooksComponentWithModule thisModule "forestLayout" cpt
+  where
     cpt props@{ handed } children = do
       pure $ R.fragment [ topBar { handed } [], forestLayoutMain props children ]
 
@@ -135,10 +135,10 @@ forestLayout props = R.createElement forestLayoutCpt props
 -- while the remaining ones are put into the main view
 forestLayoutWithTopBar :: R2.Component ForestLayoutProps
 forestLayoutWithTopBar props = R.createElement forestLayoutWithTopBarCpt props
-  where
-    forestLayoutWithTopBarCpt :: R.Component ForestLayoutProps
-    forestLayoutWithTopBarCpt = R.hooksComponentWithModule thisModule "forestLayoutWithTopBar" cpt
 
+forestLayoutWithTopBarCpt :: R.Component ForestLayoutProps
+forestLayoutWithTopBarCpt = R.hooksComponentWithModule thisModule "forestLayoutWithTopBar" cpt
+  where
     cpt props@{ handed } children = do
       let { head: topBarChild, tail: mainChildren } =
             fromMaybe { head: H.div {} [], tail: [] } $ A.uncons children
@@ -149,10 +149,10 @@ forestLayoutWithTopBar props = R.createElement forestLayoutWithTopBarCpt props
 
 forestLayoutMain :: R2.Component ForestLayoutProps
 forestLayoutMain props = R.createElement forestLayoutMainCpt props
-  where
-    forestLayoutMainCpt :: R.Component ForestLayoutProps
-    forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" cpt
 
+forestLayoutMainCpt :: R.Component ForestLayoutProps
+forestLayoutMainCpt = R.hooksComponentWithModule thisModule "forestLayoutMain" cpt
+  where
     cpt props children = do
       pure $ forestLayoutRaw props [
           mainPage {} children
@@ -160,10 +160,10 @@ forestLayoutMain props = R.createElement forestLayoutMainCpt props
 
 forestLayoutRaw :: R2.Component ForestLayoutProps
 forestLayoutRaw props = R.createElement forestLayoutRawCpt props
-  where
-    forestLayoutRawCpt :: R.Component ForestLayoutProps
-    forestLayoutRawCpt = R.hooksComponentWithModule thisModule "forestLayoutRaw" cpt
 
+forestLayoutRawCpt :: R.Component ForestLayoutProps
+forestLayoutRawCpt = R.hooksComponentWithModule thisModule "forestLayoutRaw" cpt
+  where
     cpt { appReload
         , asyncTasksRef
         , backend
@@ -194,10 +194,10 @@ forestLayoutRaw props = R.createElement forestLayoutRawCpt props
 
 mainPage :: R2.Component ()
 mainPage = R.createElement mainPageCpt
-  where
-    mainPageCpt :: R.Component ()
-    mainPageCpt = R.hooksComponentWithModule thisModule "mainPage" cpt
 
+mainPageCpt :: R.Component ()
+mainPageCpt = R.hooksComponentWithModule thisModule "mainPage" cpt
+  where
     cpt {} children = do
       pure $ H.div {className: "col-md-10"} [
         H.div {id: "page-wrapper"} [

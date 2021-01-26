@@ -54,10 +54,10 @@ type DocViewProps = (
 
 docView :: R2.Component DocViewProps
 docView = R.createElement docViewCpt
-  where
-    docViewCpt :: R.Component DocViewProps
-    docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
 
+docViewCpt :: R.Component DocViewProps
+docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
+  where
     cpt { path
         , loaded: loaded@{ ngramsTable: Versioned { data: initTable }, document }
         , state: state@({ ngramsVersion: version, ngramsLocalPatch } /\ _)
