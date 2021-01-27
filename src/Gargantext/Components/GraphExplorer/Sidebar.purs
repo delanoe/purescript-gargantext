@@ -135,9 +135,11 @@ sideTab _ _  = H.div {} []
 -- selectedNodes :: Record Props -> Map.Map String Nodes -> R.Element
 selectedNodes props nodesMap =
   R2.row [ R2.col 12
-          [ RH.ul { id: "myTab", className: "nav nav-tabs", role: "tablist"}
+          [ RH.ul { className: "nav nav-tabs d-flex justify-content-center"
+                  , id: "myTab"
+                  , role: "tablist" }
             [ RH.div { className: "tab-content" }
-              [ RH.div { className: ""
+              [ RH.div { className: "d-flex flex-wrap justify-content-center"
                        , role: "tabpanel" }
                        ( Seq.toUnfoldable
                        $ ( Seq.map (badge              props.selectedNodeIds)
@@ -156,7 +158,7 @@ selectedNodes props nodesMap =
        ]
 neighborhood props = RH.div { className: "tab-content", id: "myTabContent" }
                             [ RH.div { -- className: "flex-space-around d-flex justify-content-center"
-                                       className: "flex-space-around d-flex"
+                                       className: "d-flex flex-wrap flex-space-around"
                                      , id: "home"
                                      , role: "tabpanel"
                                      }
@@ -170,7 +172,7 @@ removeButton btnType text rType props' nodesMap' =
   if Set.isEmpty $ fst props'.selectedNodeIds then
     RH.div {} []
   else
-    RH.button { className: "btn btn-" <> btnType
+    RH.button { className: "btn btn-sm btn-" <> btnType
               , on: { click: onClickRemove rType props' nodesMap' }
               }
               [ RH.text text ]
