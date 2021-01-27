@@ -185,6 +185,12 @@ toHtmlFirstLevel = R.createElement toHtmlFirstLevelCpt
 toHtmlFirstLevelCpt :: R.Component ToHtmlProps
 toHtmlFirstLevelCpt = R.hooksComponentWithModule thisModule "toHtmlFirstLevel" cpt
   where
+    cpt p _ = do
+      pure $ H.div {} []
+
+toHtmlFirstLevelCpt' :: R.Component ToHtmlProps
+toHtmlFirstLevelCpt' = R.hooksComponentWithModule thisModule "toHtmlFirstLevel" cpt
+  where
     cpt p@{ appReload
           , asyncTasks
           , currentRoute
@@ -269,10 +275,10 @@ type ChildNodeFirstLevelProps = (
 
 childNodeFirstLevel :: R2.Component ChildNodeFirstLevelProps
 childNodeFirstLevel = R.createElement childNodeFirstLevelCpt
-
-childNodeFirstLevelCpt :: R.Component ChildNodeFirstLevelProps
-childNodeFirstLevelCpt = R.hooksComponentWithModule thisModule "childNodeFirstLevel" cpt
   where
+    childNodeFirstLevelCpt :: R.Component ChildNodeFirstLevelProps
+    childNodeFirstLevelCpt = R.hooksComponentWithModule thisModule "childNodeFirstLevel" cpt
+
     cpt props@{ appReload
               , asyncTasks
               , currentRoute
@@ -314,10 +320,9 @@ type ChildNodeFirstLevelPaintProps = (
 
 childNodeFirstLevelPaint :: R2.Component ChildNodeFirstLevelPaintProps
 childNodeFirstLevelPaint = R.createElement childNodeFirstLevelPaintCpt
-
-childNodeFirstLevelPaintCpt :: R.Component ChildNodeFirstLevelPaintProps
-childNodeFirstLevelPaintCpt = R.hooksComponentWithModule thisModule "childNodeFirstLevelPaint" cpt
   where
+    childNodeFirstLevelPaintCpt :: R.Component ChildNodeFirstLevelPaintProps
+    childNodeFirstLevelPaintCpt = R.hooksComponentWithModule thisModule "childNodeFirstLevelPaint" cpt
     -- TODO folderOpen is unused
 
     cpt props@{ asyncTasks
