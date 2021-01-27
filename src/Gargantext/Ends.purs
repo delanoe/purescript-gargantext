@@ -222,6 +222,7 @@ sessionPath (R.ChartHash { chartType, listId, tabType } i) =
     <> defaultListAddMaybe listId
 -- sessionPath (R.NodeAPI (NodeContact s a i) i) = sessionPath $ "annuaire/" <> show a <> "/contact/" <> show i
 
+
 ------- misc routing stuff
 
 defaultList :: Int -> String

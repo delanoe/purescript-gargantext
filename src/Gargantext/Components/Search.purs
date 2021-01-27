@@ -58,9 +58,8 @@ instance encodeJsonSearchResult :: Argonaut.EncodeJson SearchResult where
 
 
 ------------------------------------------------------------------------
-data SearchResultTypes = 
-                        SearchResultDoc     { docs     :: Array Document}
-                       | SearchNoResult      { message  :: String }
+data SearchResultTypes = SearchResultDoc     { docs     :: Array Document}
+                       | SearchNoResult      { message  :: String        }
                        | SearchResultContact { contacts :: Array Contact }
 
 derive instance eqSearchResultTypes :: Eq SearchResultTypes
@@ -132,6 +131,7 @@ data Contact =
            , c_created    :: String
            , c_hyperdata  :: HyperdataRowContact
            , c_score      :: Int
+           , c_annuaireId :: Int
            }
 
 derive instance eqContact :: Eq Contact

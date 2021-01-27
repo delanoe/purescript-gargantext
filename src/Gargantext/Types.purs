@@ -333,8 +333,11 @@ nodeTypePath (NodePublic nt) = nodeTypePath nt
 nodeTypePath NodeFile        = "file"
 
 ------------------------------------------------------------
-
-type ListId = Int
+type CorpusId   = Int
+type DocId      = Int
+type ListId     = Int
+type AnnuaireId = Int
+type ContactId  = Int
 
 data ScoreType = Occurrences
 
