@@ -14,7 +14,7 @@ thisModule = "Gargantext.Components.Tab"
 
 type TabsProps = (
     selected :: Int
-  , tabs :: Array (Tuple String R.Element)
+  , tabs     :: Array (Tuple String R.Element)
   )
 
 tabs :: Record TabsProps -> R.Element
@@ -29,17 +29,23 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
       pure $
         H.div {}
         [ H.nav {}
-          [ H.div { className: "nav nav-tabs"
-                  , title    : "Tab for ngrams"
-                  }
-            (mapWithIndex (button setActiveTab activeTab) props.tabs) ]
-        , H.div { className: "tab-content" } $ mapWithIndex (item activeTab) props.tabs ]
+        [ H.br {}
+        , H.div { className: "nav nav-tabs"
+                  , title    : "Search result"
+                  } -- [H.text "" ]
+               (mapWithIndex (button setActiveTab activeTab) props.tabs) 
+          ]
+        , H.div { className: "tab-content" }
+                $ mapWithIndex (item activeTab) props.tabs
+        ]
+    --{-
     button setActiveTab selected index (name /\ _) =
       H.a { className, on: { click } } [ H.text name ]
       where
         eq = index == selected
         className = "nav-item nav-link" <> (if eq then " active" else "")
         click e = setActiveTab (const index)
+    --}
     item selected index (_ /\ cpt') = tab { selected, index } [ cpt' ]
 
 -- TODO: document what these are (selection, item indices)

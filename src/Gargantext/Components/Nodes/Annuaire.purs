@@ -213,7 +213,7 @@ contactCellsCpt = R.hooksComponentWithModule thisModule "contactCells" cpt
 
         pure $ T.makeRow [
           H.text ""
-          , H.text $ fromMaybe "First Name" firstName
+          , H.a { target: "_blank", href: contactUrl annuaireId id} [H.text $ fromMaybe "First Name" firstName]
           , H.text $ fromMaybe "First Name" lastName
           -- , H.a { href } [ H.text $ fromMaybe "name" contact.title ]
             --, H.a { href, target: "blank" } [ H.text $ fromMaybe "name" contact.title ]
@@ -226,6 +226,7 @@ contactCellsCpt = R.hooksComponentWithModule thisModule "contactCells" cpt
             --nodepath = NodePath (sessionId session) NodeContact (Just id)
             nodepath = Routes.ContactPage (sessionId session) annuaireId id
             href = url frontends nodepath
+            contactUrl aId id = url frontends $ Routes.ContactPage (sessionId session) annuaireId id
 
             contactWhereOrg (CT.ContactWhere { organization: [] }) = "No Organization"
             contactWhereOrg (CT.ContactWhere { organization: orga }) =
