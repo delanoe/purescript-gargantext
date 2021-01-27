@@ -181,16 +181,13 @@ type ToHtmlProps = (
 
 toHtmlFirstLevel :: R2.Component ToHtmlProps
 toHtmlFirstLevel = R.createElement toHtmlFirstLevelCpt
-
-toHtmlFirstLevelCpt :: R.Component ToHtmlProps
-toHtmlFirstLevelCpt = R.hooksComponentWithModule thisModule "toHtmlFirstLevel" cpt
   where
-    cpt p _ = do
-      pure $ H.div {} []
+    -- TODO This shouldn't be here: make it a top-level function but be careful
+    -- about cyclic defines
+    -- https://discourse.purescript.org/t/strange-compiler-error-with-an-undefined-reference/2060/3
+    toHtmlFirstLevelCpt :: R.Component ToHtmlProps
+    toHtmlFirstLevelCpt = R.hooksComponentWithModule thisModule "toHtmlFirstLevel" cpt
 
-toHtmlFirstLevelCpt' :: R.Component ToHtmlProps
-toHtmlFirstLevelCpt' = R.hooksComponentWithModule thisModule "toHtmlFirstLevel" cpt
-  where
     cpt p@{ appReload
           , asyncTasks
           , currentRoute
@@ -276,6 +273,9 @@ type ChildNodeFirstLevelProps = (
 childNodeFirstLevel :: R2.Component ChildNodeFirstLevelProps
 childNodeFirstLevel = R.createElement childNodeFirstLevelCpt
   where
+    -- TODO This shouldn't be here: make it a top-level function but be careful
+    -- about cyclic defines
+    -- https://discourse.purescript.org/t/strange-compiler-error-with-an-undefined-reference/2060/3
     childNodeFirstLevelCpt :: R.Component ChildNodeFirstLevelProps
     childNodeFirstLevelCpt = R.hooksComponentWithModule thisModule "childNodeFirstLevel" cpt
 
@@ -321,6 +321,9 @@ type ChildNodeFirstLevelPaintProps = (
 childNodeFirstLevelPaint :: R2.Component ChildNodeFirstLevelPaintProps
 childNodeFirstLevelPaint = R.createElement childNodeFirstLevelPaintCpt
   where
+    -- TODO This shouldn't be here: make it a top-level function but be careful
+    -- about cyclic defines
+    -- https://discourse.purescript.org/t/strange-compiler-error-with-an-undefined-reference/2060/3
     childNodeFirstLevelPaintCpt :: R.Component ChildNodeFirstLevelPaintProps
     childNodeFirstLevelPaintCpt = R.hooksComponentWithModule thisModule "childNodeFirstLevelPaint" cpt
     -- TODO folderOpen is unused
