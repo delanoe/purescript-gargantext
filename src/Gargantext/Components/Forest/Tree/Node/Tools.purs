@@ -65,12 +65,12 @@ type TextInputBoxProps =
   )
 
 textInputBox :: R2.Component TextInputBoxProps
-textInputBox props@{ boxName } = R.createElement el props
-  where
-    el :: R.Component TextInputBoxProps
-    el = R.hooksComponentWithModule thisModule (boxName <> "Box") cpt
+textInputBox = R.createElement textInputBoxCpt
 
-    cpt p@{ boxAction, dispatch, id, isOpen: (true /\ setIsOpen), text } _ = do
+textInputBoxCpt :: R.Component TextInputBoxProps
+textInputBoxCpt = R.hooksComponentWithModule thisModule "textInputBox" cpt
+  where
+    cpt p@{ boxAction, boxName, dispatch, id, isOpen: (true /\ setIsOpen), text } _ = do
       renameNodeNameRef <- R.useRef text
 
       pure $ H.div { className: "from-group row" }
@@ -85,7 +85,6 @@ textInputBox props@{ boxName } = R.createElement el props
                  onEnter: submit renameNodeNameRef
                , onValueChanged: R.setRef renameNodeNameRef
                , autoFocus: true
-               , autoSave: false
                , className: "form-control"
                , defaultValue: text
                , placeholder: (boxName <> " Node")
@@ -105,8 +104,8 @@ textInputBox props@{ boxName } = R.createElement el props
               , title: "Cancel"
               } []
         submit renameNodeNameRef _ = do
-          setIsOpen $ const false
           launchAff_ $ dispatch ( boxAction $ R.readRef renameNodeNameRef )
+          setIsOpen $ const false
     cpt { isOpen: (false /\ _) } _ = pure $ H.div {} []
 
 -- | END Rename Box

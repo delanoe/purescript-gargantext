@@ -349,7 +349,6 @@ searchInputCpt = R.hooksComponentWithModule thisModule "searchInput" cpt
         inputWithEnter { onEnter: onEnter valueRef setSearch
                        , onValueChanged: onValueChanged valueRef
                        , autoFocus: false
-                       , autoSave: true
                        , className: "form-control"
                        , defaultValue: R.readRef valueRef
                        , placeholder: "Your query here"
@@ -380,10 +379,10 @@ type SubmitButtonProps =
 
 submitButton :: Record SubmitButtonProps -> R.Element
 submitButton p = R.createElement submitButtonComponent p []
-  where
-    submitButtonComponent :: R.Component SubmitButtonProps
-    submitButtonComponent = R.hooksComponentWithModule thisModule "submitButton" cpt
 
+submitButtonComponent :: R.Component SubmitButtonProps
+submitButtonComponent = R.hooksComponentWithModule thisModule "submitButton" cpt
+  where
     cpt {onSearch, search: (mySearch /\ _), session} _ =
       pure $
         H.button { className: "btn btn-primary"

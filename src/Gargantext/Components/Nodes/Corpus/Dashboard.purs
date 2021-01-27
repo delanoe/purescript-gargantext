@@ -132,11 +132,11 @@ type CodeEditorProps =
   )
 
 dashboardCodeEditor :: R2.Component CodeEditorProps
-dashboardCodeEditor = R.createElement el
-  where
-    el :: R.Component CodeEditorProps
-    el = R.hooksComponentWithModule thisModule "dashboardCodeEditor" cpt
+dashboardCodeEditor = R.createElement dashboardCodeEditorCpt
 
+dashboardCodeEditorCpt :: R.Component CodeEditorProps
+dashboardCodeEditorCpt = R.hooksComponentWithModule thisModule "dashboardCodeEditor" cpt
+  where
     cpt props@{ fields, nodeId, onChange, session } _ = do
       let fieldsWithIndex = List.mapWithIndex (\idx -> \t -> Tuple idx t) fields
       fieldsS <- R.useState' fieldsWithIndex

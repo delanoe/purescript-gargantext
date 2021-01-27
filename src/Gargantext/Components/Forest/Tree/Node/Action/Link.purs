@@ -55,8 +55,8 @@ linkNodeType (Just GT.Annuaire) = GT.Corpus
 linkNodeType  _   = GT.Error
 
 
-linkNode :: Record SubTreeParamsIn -> R.Element
-linkNode p = R.createElement linkNodeCpt p []
+linkNode :: R2.Component SubTreeParamsIn
+linkNode = R.createElement linkNodeCpt
 
 linkNodeCpt :: R.Component SubTreeParamsIn
 linkNodeCpt = R.hooksComponentWithModule thisModule "linkNode" cpt

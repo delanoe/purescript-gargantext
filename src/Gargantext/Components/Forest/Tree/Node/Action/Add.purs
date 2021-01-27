@@ -86,7 +86,6 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
                               onEnter: \_ -> launchAff_ $ dispatch (AddNode name' nt')
                             , onValueChanged: \val -> setNodeName $ const val
                             , autoFocus: true
-                            , autoSave: false
                             , className: "form-control"
                             , defaultValue: name'
                             , placeholder: name'

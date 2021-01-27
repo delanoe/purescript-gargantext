@@ -274,13 +274,13 @@ panelActionCpt = R.hooksComponentWithModule thisModule "panelAction" cpt
 -----------
     -- Functions using SubTree
     cpt {action: Merge {subTreeParams}, dispatch, id, nodeType, session, handed} _ = do
-      pure $ mergeNode {dispatch, id, nodeType, session, subTreeParams, handed}
+      pure $ mergeNode {dispatch, id, nodeType, session, subTreeParams, handed} []
 
     cpt {action: Move {subTreeParams}, dispatch, id, nodeType, session, handed} _ = do
-      pure $ moveNode {dispatch, id, nodeType, session, subTreeParams, handed}
+      pure $ moveNode {dispatch, id, nodeType, session, subTreeParams, handed} []
 
     cpt {action: Link {subTreeParams}, dispatch, id, nodeType, session, handed} _ = do
-      pure $ linkNode {dispatch, id, nodeType, session, subTreeParams, handed}
+      pure $ linkNode {dispatch, id, nodeType, session, subTreeParams, handed} []
 -----------
 
     cpt {action : Share, dispatch, id, name } _ = do
