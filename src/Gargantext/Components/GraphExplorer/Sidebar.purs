@@ -193,9 +193,9 @@ onClickRemove rType props' nodesMap' e = do
 
 badge :: R.State SigmaxT.NodeIds -> Record SigmaxT.Node -> R.Element
 badge (_ /\ setNodeIds) {id, label} =
-  RH.a { className: "badge badge-light"
+  RH.a { className: "badge badge-pill badge-light"
        , on: { click: onClick }
-       } [ RH.text label ]
+       } [ RH.h6 {} [ RH.text label ] ]
   where
     onClick e = do
       setNodeIds $ const $ Set.singleton id
