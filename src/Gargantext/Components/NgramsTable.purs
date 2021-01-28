@@ -274,10 +274,9 @@ type Props = (
 
 loadedNgramsTable :: R2.Component Props
 loadedNgramsTable = R.createElement loadedNgramsTableCpt
+loadedNgramsTableCpt :: R.Component Props
+loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable" cpt
   where
-    loadedNgramsTableCpt :: R.Component Props
-    loadedNgramsTableCpt = R.hooksComponentWithModule thisModule "loadedNgramsTable" cpt
-
     cpt props@{ afterSync
               , appReload
               , asyncTasksRef
@@ -524,10 +523,9 @@ type MainNgramsTableProps = (
 
 mainNgramsTable :: R2.Component MainNgramsTableProps
 mainNgramsTable = R.createElement mainNgramsTableCpt
+mainNgramsTableCpt :: R.Component MainNgramsTableProps
+mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
   where
-    mainNgramsTableCpt :: R.Component MainNgramsTableProps
-    mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
-
     cpt props@{ afterSync
               , appReload
               , asyncTasksRef
@@ -631,10 +629,10 @@ type MainNgramsTablePaintProps = (
 
 mainNgramsTablePaint :: R2.Component MainNgramsTablePaintProps
 mainNgramsTablePaint = R.createElement mainNgramsTablePaintCpt
-  where
-    mainNgramsTablePaintCpt :: R.Component MainNgramsTablePaintProps
-    mainNgramsTablePaintCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaint" cpt
 
+mainNgramsTablePaintCpt :: R.Component MainNgramsTablePaintProps
+mainNgramsTablePaintCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaint" cpt
+  where
     cpt props@{ afterSync
               , appReload
               , asyncTasksRef
@@ -670,10 +668,10 @@ type MainNgramsTablePaintNoCacheProps = (
 
 mainNgramsTablePaintNoCache :: R2.Component MainNgramsTablePaintNoCacheProps
 mainNgramsTablePaintNoCache = R.createElement mainNgramsTablePaintNoCacheCpt
-  where
-    mainNgramsTablePaintNoCacheCpt :: R.Component MainNgramsTablePaintNoCacheProps
-    mainNgramsTablePaintNoCacheCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaintNoCache" cpt
 
+mainNgramsTablePaintNoCacheCpt :: R.Component MainNgramsTablePaintNoCacheProps
+mainNgramsTablePaintNoCacheCpt = R.hooksComponentWithModule thisModule "mainNgramsTablePaintNoCache" cpt
+  where
     cpt props@{ afterSync
               , appReload
               , asyncTasksRef

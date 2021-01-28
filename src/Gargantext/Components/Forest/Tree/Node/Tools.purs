@@ -65,12 +65,12 @@ type TextInputBoxProps =
   )
 
 textInputBox :: R2.Component TextInputBoxProps
-textInputBox props@{ boxName } = R.createElement el props
-  where
-    el :: R.Component TextInputBoxProps
-    el = R.hooksComponentWithModule thisModule (boxName <> "Box") cpt
+textInputBox = R.createElement textInputBoxCpt
 
-    cpt p@{ boxAction, dispatch, id, isOpen: (true /\ setIsOpen), text } _ = do
+textInputBoxCpt :: R.Component TextInputBoxProps
+textInputBoxCpt = R.hooksComponentWithModule thisModule "textInputBox" cpt
+  where
+    cpt p@{ boxAction, boxName, dispatch, id, isOpen: (true /\ setIsOpen), text } _ = do
       renameNodeNameRef <- R.useRef text
 
       pure $ H.div { className: "from-group row" }
@@ -85,7 +85,6 @@ textInputBox props@{ boxName } = R.createElement el props
                  onEnter: submit renameNodeNameRef
                , onValueChanged: R.setRef renameNodeNameRef
                , autoFocus: true
-               , autoSave: false
                , className: "form-control"
                , defaultValue: text
                , placeholder: (boxName <> " Node")
@@ -105,8 +104,8 @@ textInputBox props@{ boxName } = R.createElement el props
               , title: "Cancel"
               } []
         submit renameNodeNameRef _ = do
-          setIsOpen $ const false
           launchAff_ $ dispatch ( boxAction $ R.readRef renameNodeNameRef )
+          setIsOpen $ const false
     cpt { isOpen: (false /\ _) } _ = pure $ H.div {} []
 
 -- | END Rename Box
@@ -292,10 +291,10 @@ type NodeLinkProps = (
 
 nodeLink :: R2.Component NodeLinkProps
 nodeLink = R.createElement nodeLinkCpt
-  where
-    nodeLinkCpt :: R.Component NodeLinkProps
-    nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
 
+nodeLinkCpt :: R.Component NodeLinkProps
+nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
+  where
     cpt { folderOpen: (_ /\ setFolderOpen)
         , frontends
         , handed
@@ -348,10 +347,10 @@ type NodeTextProps =
 
 nodeText :: Record NodeTextProps -> R.Element
 nodeText p = R.createElement nodeTextCpt p []
-  where
-    nodeTextCpt :: R.Component NodeTextProps
-    nodeTextCpt = R.hooksComponentWithModule thisModule "nodeText" cpt
 
+nodeTextCpt :: R.Component NodeTextProps
+nodeTextCpt = R.hooksComponentWithModule thisModule "nodeText" cpt
+  where
     cpt { isSelected: true, name } _ = do
       pure $ H.u {} [
         H.b {} [

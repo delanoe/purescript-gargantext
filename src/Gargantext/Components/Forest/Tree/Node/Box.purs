@@ -48,10 +48,10 @@ type CommonProps =
 
 nodePopupView :: Record NodePopupProps -> R.Element
 nodePopupView p = R.createElement nodePopupCpt p []
-  where
-    nodePopupCpt :: R.Component NodePopupProps
-    nodePopupCpt = R.hooksComponentWithModule thisModule "nodePopupView" cpt
 
+nodePopupCpt :: R.Component NodePopupProps
+nodePopupCpt = R.hooksComponentWithModule thisModule "nodePopupView" cpt
+  where
     cpt p _ = do
       renameIsOpen    <- R.useState' false
 
@@ -254,10 +254,10 @@ type PanelActionProps =
 
 panelAction :: Record PanelActionProps -> R.Element
 panelAction p = R.createElement panelActionCpt p []
-  where
-    panelActionCpt :: R.Component PanelActionProps
-    panelActionCpt = R.hooksComponentWithModule thisModule "panelAction" cpt
 
+panelActionCpt :: R.Component PanelActionProps
+panelActionCpt = R.hooksComponentWithModule thisModule "panelAction" cpt
+  where
     cpt {action: Documentation nodeType}                  _ = actionDoc      nodeType
     cpt {action: Download, id, nodeType, session}         _ = actionDownload nodeType id session
     cpt {action: Upload, dispatch, id, nodeType, session} _ = actionUpload   nodeType id session dispatch
@@ -274,13 +274,13 @@ panelAction p = R.createElement panelActionCpt p []
 -----------
     -- Functions using SubTree
     cpt {action: Merge {subTreeParams}, dispatch, id, nodeType, session, handed} _ = do
-      pure $ mergeNode {dispatch, id, nodeType, session, subTreeParams, handed}
+      pure $ mergeNode {dispatch, id, nodeType, session, subTreeParams, handed} []
 
     cpt {action: Move {subTreeParams}, dispatch, id, nodeType, session, handed} _ = do
-      pure $ moveNode {dispatch, id, nodeType, session, subTreeParams, handed}
+      pure $ moveNode {dispatch, id, nodeType, session, subTreeParams, handed} []
 
     cpt {action: Link {subTreeParams}, dispatch, id, nodeType, session, handed} _ = do
-      pure $ linkNode {dispatch, id, nodeType, session, subTreeParams, handed}
+      pure $ linkNode {dispatch, id, nodeType, session, subTreeParams, handed} []
 -----------
 
     cpt {action : Share, dispatch, id, name } _ = do

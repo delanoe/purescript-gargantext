@@ -41,10 +41,10 @@ type SearchIFramesProps = (
 
 searchIframes :: Record SearchIFramesProps -> R.Element
 searchIframes props = R.createElement searchIframesCpt props []
-  where
-    searchIframesCpt :: R.Component SearchIFramesProps
-    searchIframesCpt = R.hooksComponentWithModule thisModule "searchIframes" cpt
 
+searchIframesCpt :: R.Component SearchIFramesProps
+searchIframesCpt = R.hooksComponentWithModule thisModule "searchIframes" cpt
+  where
     cpt { iframeRef, search: search@(search' /\ _) } _ = do
       pure $ if isIsTex_Advanced search'.datafield
          then divIframe { frameSource: Istex, iframeRef, search }
@@ -62,10 +62,10 @@ type IFrameProps = (
 
 divIframe :: Record IFrameProps -> R.Element
 divIframe props = R.createElement divIframeCpt props []
-  where
-    divIframeCpt :: R.Component IFrameProps
-    divIframeCpt = R.hooksComponentWithModule thisModule "divIframe" cpt
 
+divIframeCpt :: R.Component IFrameProps
+divIframeCpt = R.hooksComponentWithModule thisModule "divIframe" cpt
+  where
     cpt { frameSource, iframeRef, search: search@(search' /\ _) } _ = do
       pure $ H.div { className: "frame-search card" }
                    [ iframeWith { frameSource, iframeRef, search } ]
@@ -77,10 +77,10 @@ frameUrl Searx = "https://searx.frame.gargantext.org" -- 192.168.1.4:8080"
 
 iframeWith :: Record IFrameProps -> R.Element
 iframeWith props = R.createElement iframeWithCpt props []
-  where
-    iframeWithCpt :: R.Component IFrameProps
-    iframeWithCpt = R.hooksComponentWithModule thisModule "iframeWith" cpt
 
+iframeWithCpt :: R.Component IFrameProps
+iframeWithCpt = R.hooksComponentWithModule thisModule "iframeWith" cpt
+  where
     cpt { frameSource, iframeRef, search: (search /\ setSearch) } _ =
       pure $ H.iframe { src: src frameSource search.term
                       , width: "100%"

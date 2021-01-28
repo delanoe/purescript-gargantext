@@ -1,7 +1,7 @@
 module Gargantext.Utils.Reload where
 
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple.Nested((/\))
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Reactix as R
 

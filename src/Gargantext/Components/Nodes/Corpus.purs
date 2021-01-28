@@ -47,10 +47,10 @@ type KeyProps =
 
 corpusLayout :: Record Props -> R.Element
 corpusLayout props = R.createElement corpusLayoutCpt props []
-  where
-    corpusLayoutCpt :: R.Component Props
-    corpusLayoutCpt = R.hooksComponentWithModule thisModule "corpusLayout" cpt
 
+corpusLayoutCpt :: R.Component Props
+corpusLayoutCpt = R.hooksComponentWithModule thisModule "corpusLayout" cpt
+  where
     cpt { nodeId, session } _ = do
       let sid = sessionId session
 
@@ -59,10 +59,9 @@ corpusLayout props = R.createElement corpusLayoutCpt props []
 
 corpusLayoutWithKey :: Record KeyProps -> R.Element
 corpusLayoutWithKey props = R.createElement corpusLayoutWithKeyCpt props []
+corpusLayoutWithKeyCpt :: R.Component KeyProps
+corpusLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "corpusLayoutWithKey" cpt
   where
-    corpusLayoutWithKeyCpt :: R.Component KeyProps
-    corpusLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "corpusLayoutWithKey" cpt
-
     cpt { nodeId, session } _ = do
       reload <- GUR.new
 
@@ -77,10 +76,10 @@ type ViewProps =
 
 corpusLayoutView :: Record ViewProps -> R.Element
 corpusLayoutView props = R.createElement corpusLayoutViewCpt props []
-  where
-    corpusLayoutViewCpt :: R.Component ViewProps
-    corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" cpt
 
+corpusLayoutViewCpt :: R.Component ViewProps
+corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" cpt
+  where
     cpt {corpus: (NodePoly {hyperdata: Hyperdata {fields}}), nodeId, reload, session} _ = do
       let fieldsWithIndex = List.mapWithIndex (\idx -> \t -> Tuple idx t) fields
       fieldsS <- R.useState' fieldsWithIndex
@@ -105,7 +104,7 @@ corpusLayoutView props = R.createElement corpusLayoutViewCpt props []
         , H.div {}
           [ fieldsCodeEditor { fields: fieldsS
                              , nodeId
-                             , session } ]
+                             , session } [] ]
         , H.div { className: "row" }
           [ H.div { className: "btn btn-secondary"
                   , on: { click: onClickAdd fieldsS }
@@ -139,14 +138,14 @@ type FieldsCodeEditorProps =
     | LoadProps
   )
 
-fieldsCodeEditor :: Record FieldsCodeEditorProps -> R.Element
-fieldsCodeEditor props = R.createElement fieldsCodeEditorCpt props []
-  where
-    fieldsCodeEditorCpt :: R.Component FieldsCodeEditorProps
-    fieldsCodeEditorCpt = R.hooksComponentWithModule thisModule "fieldsCodeEditorCpt" cpt
+fieldsCodeEditor :: R2.Component FieldsCodeEditorProps
+fieldsCodeEditor = R.createElement fieldsCodeEditorCpt
 
+fieldsCodeEditorCpt :: R.Component FieldsCodeEditorProps
+fieldsCodeEditorCpt = R.hooksComponentWithModule thisModule "fieldsCodeEditorCpt" cpt
+  where
     cpt {nodeId, fields: fS@(fields /\ _), session} _ = do
-      masterKey <- R.useState' 0
+      masterKey <- GUR.new
 
       pure $ H.div {} $ List.toUnfoldable (editors masterKey)
       where
@@ -170,13 +169,13 @@ fieldsCodeEditor props = R.createElement fieldsCodeEditorCpt props []
           List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { typ = typ })) fields
 
     onMoveDown :: GUR.ReloadS -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
-    onMoveDown (_ /\ setMasterKey) (fs /\ setFields) idx _ = do
-      setMasterKey $ (+) 1
+    onMoveDown masterKey (_ /\ setFields) idx _ = do
+      GUR.bump masterKey
       setFields $ recomputeIndices <<< (GDA.swapList idx (idx + 1))
 
     onMoveUp :: GUR.ReloadS -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
-    onMoveUp (_ /\ setMasterKey) (_ /\ setFields) idx _ = do
-      setMasterKey $ (+) 1
+    onMoveUp masterKey (_ /\ setFields) idx _ = do
+      GUR.bump masterKey
       setFields $ recomputeIndices <<< (GDA.swapList idx (idx - 1))
 
     onRemove :: R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
@@ -210,10 +209,10 @@ type FieldCodeEditorProps =
 
 fieldCodeEditorWrapper :: Record FieldCodeEditorProps -> R.Element
 fieldCodeEditorWrapper props = R.createElement fieldCodeEditorWrapperCpt props []
-  where
-    fieldCodeEditorWrapperCpt :: R.Component FieldCodeEditorProps
-    fieldCodeEditorWrapperCpt = R.hooksComponentWithModule thisModule "fieldCodeEditorWrapperCpt" cpt
 
+fieldCodeEditorWrapperCpt :: R.Component FieldCodeEditorProps
+fieldCodeEditorWrapperCpt = R.hooksComponentWithModule thisModule "fieldCodeEditorWrapperCpt" cpt
+  where
     cpt props@{canMoveDown, canMoveUp, field: Field {name, typ}, onMoveDown, onMoveUp, onRemove, onRename} _ = do
       pure $ H.div { className: "row card" } [
         H.div { className: "card-header" } [
@@ -259,10 +258,10 @@ type RenameableProps =
 
 renameable :: Record RenameableProps -> R.Element
 renameable props = R.createElement renameableCpt props []
-  where
-    renameableCpt :: R.Component RenameableProps
-    renameableCpt = R.hooksComponentWithModule thisModule "renameableCpt" cpt
 
+renameableCpt :: R.Component RenameableProps
+renameableCpt = R.hooksComponentWithModule thisModule "renameableCpt" cpt
+  where
     cpt {onRename, text} _ = do
       isEditing <- R.useState' false
       state <- R.useState' text
@@ -289,10 +288,10 @@ type RenameableTextProps =
 
 renameableText :: Record RenameableTextProps -> R.Element
 renameableText props = R.createElement renameableTextCpt props []
-  where
-    renameableTextCpt :: R.Component RenameableTextProps
-    renameableTextCpt = R.hooksComponentWithModule thisModule "renameableTextCpt" cpt
 
+renameableTextCpt :: R.Component RenameableTextProps
+renameableTextCpt = R.hooksComponentWithModule thisModule "renameableTextCpt" cpt
+  where
     cpt {isEditing: (false /\ setIsEditing), state: (text /\ _)} _ = do
       pure $ H.div { className: "input-group" }
         [ H.input { className: "form-control"
@@ -308,7 +307,6 @@ renameableText props = R.createElement renameableTextCpt props []
       pure $ H.div { className: "input-group" }
         [ inputWithEnter {
             autoFocus: false
-          , autoSave: false
           , className: "form-control text"
           , defaultValue: text
           , onEnter: submit
@@ -328,10 +326,10 @@ renameableText props = R.createElement renameableTextCpt props []
 
 fieldCodeEditor :: Record FieldCodeEditorProps -> R.Element
 fieldCodeEditor props = R.createElement fieldCodeEditorCpt props []
-  where
-    fieldCodeEditorCpt :: R.Component FieldCodeEditorProps
-    fieldCodeEditorCpt = R.hooksComponentWithModule thisModule "fieldCodeEditorCpt" cpt
 
+fieldCodeEditorCpt :: R.Component FieldCodeEditorProps
+fieldCodeEditorCpt = R.hooksComponentWithModule thisModule "fieldCodeEditorCpt" cpt
+  where
     cpt {field: Field {typ: typ@(Haskell {haskell})}, onChange} _ = do
       pure $ CE.codeEditor {code: haskell, defaultCodeType: CE.Haskell, onChange: changeCode onChange typ}
 

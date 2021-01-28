@@ -57,10 +57,10 @@ instance encodeJsonShareNodeParams :: Argonaut.EncodeJson ShareNodeParams where
 ------------------------------------------------------------------------
 shareNode :: Record SubTreeParamsIn -> R.Element
 shareNode p = R.createElement shareNodeCpt p []
-  where
-    shareNodeCpt :: R.Component SubTreeParamsIn
-    shareNodeCpt = R.hooksComponentWithModule thisModule "shareNode" cpt
 
+shareNodeCpt :: R.Component SubTreeParamsIn
+shareNodeCpt = R.hooksComponentWithModule thisModule "shareNode" cpt
+  where
     cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
       action@(valAction /\ setAction) :: R.State Action <- R.useState' (Action.SharePublic {params: Nothing})
 

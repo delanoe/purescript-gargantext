@@ -151,10 +151,10 @@ type MenuButtonProps = (
 
 menuButton :: R2.Component MenuButtonProps
 menuButton = R.createElement menuButtonCpt
-  where
-    menuButtonCpt :: R.Component MenuButtonProps
-    menuButtonCpt = R.hooksComponentWithModule thisModule "menuButton" cpt
 
+menuButtonCpt :: R.Component MenuButtonProps
+menuButtonCpt = R.hooksComponentWithModule thisModule "menuButton" cpt
+  where
     cpt { element: LiNav { title, href, icon, text }, show: (_ /\ setShow) } _ = do
       pure $ H.a { className: "dropdown-toggle navbar-text"
                 -- , data: {toggle: "dropdown"}
@@ -173,10 +173,10 @@ type MenuElementsProps = (
 
 menuElements :: R2.Component MenuElementsProps
 menuElements = R.createElement menuElementsCpt
-  where
-    menuElementsCpt :: R.Component MenuElementsProps
-    menuElementsCpt = R.hooksComponentWithModule thisModule "menuElements" cpt
 
+menuElementsCpt :: R.Component MenuElementsProps
+menuElementsCpt = R.hooksComponentWithModule thisModule "menuElements" cpt
+  where
     cpt { show: false /\ _ } _ = do
       pure $ H.div {} []
     cpt { elements, show: (true /\ setShow) } _ = do

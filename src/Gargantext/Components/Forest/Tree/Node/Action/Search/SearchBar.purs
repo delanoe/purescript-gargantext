@@ -26,10 +26,10 @@ type Props = ( langs     :: Array Lang
 
 searchBar :: Record Props -> R.Element
 searchBar props = R.createElement searchBarCpt props []
-  where
-    searchBarCpt :: R.Component Props
-    searchBarCpt = R.hooksComponentWithModule thisModule "searchBar" cpt
 
+searchBarCpt :: R.Component Props
+searchBarCpt = R.hooksComponentWithModule thisModule "searchBar" cpt
+  where
     cpt {langs, onSearch, search: search@(s /\ _), session} _ = do
       --onSearchChange session s
       pure $ H.div { className: "search-bar" }

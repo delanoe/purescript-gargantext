@@ -63,11 +63,11 @@ type Props = (
   )
 
 treeView :: R2.Component Props
-treeView = R.createElement elCpt
-  where
-    elCpt :: R.Component Props
-    elCpt = R.hooksComponentWithModule thisModule "treeView" cpt
+treeView = R.createElement treeViewCpt
 
+treeViewCpt :: R.Component Props
+treeViewCpt = R.hooksComponentWithModule thisModule "treeView" cpt
+  where
     cpt { appReload
         , asyncTasks
         , currentRoute
@@ -90,11 +90,11 @@ treeView = R.createElement elCpt
                           } []
 
 treeLoadView :: R2.Component Props
-treeLoadView = R.createElement elCpt
-  where
-    elCpt :: R.Component Props
-    elCpt = R.hooksComponentWithModule thisModule "treeLoadView" cpt
+treeLoadView = R.createElement treeLoadViewCpt
 
+treeLoadViewCpt :: R.Component Props
+treeLoadViewCpt = R.hooksComponentWithModule thisModule "treeLoadView" cpt
+  where
     cpt { appReload
         , asyncTasks
         , currentRoute
@@ -135,11 +135,11 @@ type TreeViewProps = (
   )
 
 loadedTreeViewFirstLevel :: R2.Component TreeViewProps
-loadedTreeViewFirstLevel = R.createElement elCpt
-  where
-    elCpt :: R.Component TreeViewProps
-    elCpt = R.hooksComponentWithModule thisModule "loadedTreeViewFirstLevel" cpt
+loadedTreeViewFirstLevel = R.createElement loadedTreeViewFirstLevelCpt
 
+loadedTreeViewFirstLevelCpt :: R.Component TreeViewProps
+loadedTreeViewFirstLevelCpt = R.hooksComponentWithModule thisModule "loadedTreeViewFirstLevel" cpt
+  where
     cpt { appReload
         , asyncTasks
         , currentRoute
@@ -153,54 +153,64 @@ loadedTreeViewFirstLevel = R.createElement elCpt
       } _ = do
       pure $ H.ul { className: "tree " <> if handed == GT.RightHanded then "mr-auto" else "ml-auto" } [
         H.div { className: if handed == GT.RightHanded then "righthanded" else "lefthanded" } [
-          toHtmlFirstLevel { appReload
-                           , asyncTasks
-                           , currentRoute
-                           , frontends
-                           , handed
-                           , openNodes
-                           , reload
-                           , reloadTree: reload
-                           , session
-                             -- , tasks
-                           , tree
-                           } []
+          toHtmlFirstLevel (ToHtmlProps { appReload
+                                        , asyncTasks
+                                        , currentRoute
+                                        , frontends
+                                        , handed
+                                        , openNodes
+                                        , reload
+                                        , reloadTree: reload
+                                        , render: toHtmlFirstLevel
+                                        , session
+                                          -- , tasks
+                                        , tree
+                                        }) []
             ]
         ]
 
 ------------------------------------------------------------------------
 
 
-type ToHtmlProps = (
+newtype ToHtmlProps = ToHtmlProps {
     asyncTasks :: GAT.Reductor
   , reloadTree :: GUR.ReloadS
+  , render       :: ToHtmlProps -> Array R.Element -> R.Element
   -- , tasks      :: Record Tasks
   , tree       :: FTree
-  | CommonProps
-  )
+  -- | CommonProps
+  , appReload     :: GUR.ReloadS
+  , currentRoute  :: AppRoute
+  , frontends     :: Frontends
+  , handed        :: GT.Handed
+  , openNodes     :: R.State OpenNodes
+  , reload        :: GUR.ReloadS
+  , session       :: Session
+  }
 
-toHtmlFirstLevel :: R2.Component ToHtmlProps
-toHtmlFirstLevel = R.createElement elCpt
+toHtmlFirstLevel :: ToHtmlProps -> Array R.Element -> R.Element
+toHtmlFirstLevel = R2.ntCreateElement toHtmlFirstLevelCpt
+
+toHtmlFirstLevelCpt :: R2.NTComponent ToHtmlProps
+toHtmlFirstLevelCpt = R2.ntHooksComponentWithModule thisModule "toHtmlFirstLevel" cpt
   where
-    elCpt :: R.Component ToHtmlProps
-    elCpt = R.hooksComponentWithModule thisModule "toHtmlFirstLevel" cpt
-
-    cpt p@{ appReload
-          , asyncTasks
-          , currentRoute
-          , frontends
-          , handed
-          , openNodes
-          , reload
-          , reloadTree
-          , session
-          , tree: tree@(NTree (LNode { id
-                                      , name
-                                      , nodeType
-                                      }
-                              ) ary
-                        )
-          } _ = do
+    cpt (ToHtmlProps p@{ appReload
+                       , asyncTasks
+                       , currentRoute
+                       , frontends
+                       , handed
+                       , openNodes
+                       , reload
+                       , reloadTree
+                       , render
+                       , session
+                       , tree: tree@(NTree (LNode { id
+                                                  , name
+                                                  , nodeType
+                                                  }
+                                           ) ary
+                                    )
+                       }) _ = do
       setPopoverRef <- R.useRef Nothing
 
       let pAction a   = performAction a (RecordE.pick (Record.merge p { setPopoverRef }) :: Record PerformActionProps)
@@ -250,6 +260,7 @@ toHtmlFirstLevel = R.createElement elCpt
                                         , handed
                                         , id: cId
                                         , reloadTree
+                                        , render
                                         }
                                       ) []
                 ) $ sorted publicizedChildren
@@ -264,15 +275,19 @@ type ChildNodeFirstLevelProps = (
   , folderOpen   :: R.State Boolean
   , id           :: ID
   , reloadTree   :: GUR.ReloadS
+  , render       :: ToHtmlProps -> Array R.Element -> R.Element
   | CommonProps
   )
 
 childNodeFirstLevel :: R2.Component ChildNodeFirstLevelProps
-childNodeFirstLevel = R.createElement elCpt
-  where
-    elCpt :: R.Component ChildNodeFirstLevelProps
-    elCpt = R.hooksComponentWithModule thisModule "childNodeFirstLevel" cpt
+childNodeFirstLevel = R.createElement childNodeFirstLevelCpt
 
+-- TODO This shouldn't be here: make it a top-level function but be careful
+-- about cyclic defines
+-- https://discourse.purescript.org/t/strange-compiler-error-with-an-undefined-reference/2060/3
+childNodeFirstLevelCpt :: R.Component ChildNodeFirstLevelProps
+childNodeFirstLevelCpt = R.hooksComponentWithModule thisModule "childNodeFirstLevel" cpt
+  where
     cpt props@{ appReload
               , asyncTasks
               , currentRoute
@@ -283,6 +298,7 @@ childNodeFirstLevel = R.createElement elCpt
               , openNodes
               , reload
               , reloadTree
+              , render
               , session } _ = do
       cptReload <- GUR.new
 
@@ -296,6 +312,7 @@ childNodeFirstLevel = R.createElement elCpt
                                                   , openNodes
                                                   , reload: cptReload
                                                   , reloadTree
+                                                  , render
                                                   , session
                                                   , tree: loaded } []
 
@@ -308,28 +325,33 @@ type ChildNodeFirstLevelPaintProps = (
     asyncTasks   :: GAT.Reductor
   , folderOpen   :: R.State Boolean
   , reloadTree   :: GUR.ReloadS
+  , render       :: ToHtmlProps -> Array R.Element -> R.Element
   , tree         :: FTree
   | CommonProps
   )
 
 childNodeFirstLevelPaint :: R2.Component ChildNodeFirstLevelPaintProps
-childNodeFirstLevelPaint = R.createElement elCpt
+childNodeFirstLevelPaint = R.createElement childNodeFirstLevelPaintCpt
+
+-- TODO This shouldn't be here: make it a top-level function but be careful
+-- about cyclic defines
+-- https://discourse.purescript.org/t/strange-compiler-error-with-an-undefined-reference/2060/3
+childNodeFirstLevelPaintCpt :: R.Component ChildNodeFirstLevelPaintProps
+childNodeFirstLevelPaintCpt = R.hooksComponentWithModule thisModule "childNodeFirstLevelPaint" cpt
+-- TODO folderOpen is unused
   where
-    elCpt :: R.Component ChildNodeFirstLevelPaintProps
-    elCpt = R.hooksComponentWithModule thisModule "childNodeFirstLevelPaint" cpt
-
-    -- TODO folderOpen is unused
-
     cpt props@{ asyncTasks
               , handed
               , reload
               , reloadTree
+              , render
               , tree: ctree@(NTree (LNode { id }) _) } _ = do
       pure $ H.ul {} [
-        toHtmlFirstLevel (Record.merge commonProps { asyncTasks
-                                                   , handed
-                                                   , reloadTree
-                                                   , tree: ctree }
+        render (ToHtmlProps (Record.merge commonProps { asyncTasks
+                                                      , handed
+                                                      , reloadTree
+                                                      , render
+                                                      , tree: ctree })
                         ) []
         ]
       -- pure $ H.div { } [ H.text $ "[closed] Node id " <> show id ]
