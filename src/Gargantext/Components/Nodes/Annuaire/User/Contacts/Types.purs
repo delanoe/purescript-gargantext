@@ -23,14 +23,14 @@ newtype NodeContact =
 
 instance decodeNodeContact :: DecodeJson NodeContact where
   decodeJson json = do
-    obj <- decodeJson json
-    date <- obj .?| "date"
+    obj       <- decodeJson json
+    date      <- obj .?| "date"
     hyperdata <- obj .: "hyperdata"
-    id <- obj .: "id"
-    name <- obj .:! "name"
-    parentId <- obj .?| "parentId"
-    typename <- obj .?| "typename"
-    userId <- obj .:! "userId"
+    id        <- obj .: "id"
+    name      <- obj .:! "name"
+    parentId  <- obj .?| "parentId"
+    typename  <- obj .?| "typename"
+    userId    <- obj .:! "userId"
 
     pure $ NodeContact { id
                    , date
@@ -42,6 +42,40 @@ instance decodeNodeContact :: DecodeJson NodeContact where
                    }
 
 derive instance newtypeNodeContact :: Newtype NodeContact _
+
+----------------------------------------------------------------------------
+
+newtype Contact' =
+  Contact'
+  { id :: Int
+  , date :: Maybe String
+  , hyperdata :: HyperdataContact
+  , name :: Maybe String
+  , parentId :: Maybe Int
+  , typename :: Maybe Int
+  , userId :: Maybe Int
+  }
+
+
+instance decodeContact' :: DecodeJson Contact' where
+  decodeJson json = do
+    obj       <- decodeJson json
+    date      <- obj .?| "date"
+    hyperdata <- obj .: "hyperdata"
+    id        <- obj .: "id"
+    name      <- obj .:! "name"
+    parentId  <- obj .?| "parentId"
+    typename  <- obj .?| "typename"
+    userId    <- obj .:! "userId"
+
+    pure $ Contact' { id
+                   , date
+                   , hyperdata
+                   , name
+                   , parentId
+                   , typename
+                   , userId
+                   }
 
 
 
@@ -57,17 +91,16 @@ newtype Contact =
   }
 
 
-
-instance decodeUser :: DecodeJson Contact where
+instance decodeContact :: DecodeJson Contact where
   decodeJson json = do
-    obj <- decodeJson json
-    date <- obj .?| "date"
+    obj       <- decodeJson json
+    date      <- obj .?| "date"
     hyperdata <- obj .: "hyperdata"
-    id <- obj .: "id"
-    name <- obj .:! "name"
-    parentId <- obj .?| "parentId"
-    typename <- obj .?| "typename"
-    userId <- obj .:! "userId"
+    id        <- obj .: "id"
+    name      <- obj .:! "name"
+    parentId  <- obj .?| "parentId"
+    typename  <- obj .?| "typename"
+    userId    <- obj .:! "userId"
 
     pure $ Contact { id
                    , date
@@ -78,7 +111,40 @@ instance decodeUser :: DecodeJson Contact where
                    , userId
                    }
 
-derive instance newtypeContact :: Newtype Contact _
+
+----------------------------------------------------------------------------
+newtype User =
+  User
+  { id :: Int
+  , date :: Maybe String
+  , hyperdata :: HyperdataUser
+  , name :: Maybe String
+  , parentId :: Maybe Int
+  , typename :: Maybe Int
+  , userId :: Maybe Int
+  }
+
+
+instance decodeUser :: DecodeJson User where
+  decodeJson json = do
+    obj       <- decodeJson json
+    date      <- obj .?| "date"
+    hyperdata <- obj .: "hyperdata"
+    id        <- obj .: "id"
+    name      <- obj .:! "name"
+    parentId  <- obj .?| "parentId"
+    typename  <- obj .?| "typename"
+    userId    <- obj .:! "userId"
+
+    pure $ User { id
+                , date
+                , hyperdata
+                , name
+                , parentId
+                , typename
+                , userId
+                }
+
 
 newtype ContactWho =
   ContactWho
@@ -130,15 +196,15 @@ newtype ContactWhere =
   ContactWhere
   { organization :: (Array String)
   , labTeamDepts :: (Array String)
-                  
+
   , role         :: Maybe String
-                    
+
   , office       :: Maybe String
   , country      :: Maybe String
   , city         :: Maybe String
-                    
+
   , touch        :: Maybe ContactTouch
-                    
+
   , entry        :: Maybe String
   , exit         :: Maybe String }
 
@@ -226,15 +292,15 @@ defaultContactTouch =
 
 
 newtype HyperdataContact =
-     HyperdataContact { bdd :: Maybe String
+     HyperdataContact { bdd            :: Maybe String
                       , lastValidation :: Maybe String
-                      , ou  :: (Array ContactWhere)
-                      , source :: Maybe String
-                      , title :: Maybe String
-                      , uniqId :: Maybe String
-                      , uniqIdBdd :: Maybe String
-                      , who :: Maybe ContactWho
-                    }
+                      , ou             :: (Array ContactWhere)
+                      , source         :: Maybe String
+                      , title          :: Maybe String
+                      , uniqId         :: Maybe String
+                      , uniqIdBdd      :: Maybe String
+                      , who            :: Maybe ContactWho
+                      }
 derive instance newtypeHyperdataContact :: Newtype HyperdataContact _
 
 instance decodeHyperdataContact :: DecodeJson HyperdataContact
@@ -321,6 +387,7 @@ defaultHyperdataUser =
 --     pure $ HyperData {common, shared, specific}
 
 type ContactData = {contactNode :: Contact, defaultListId :: Int}
+type ContactData' = {contactNode :: Contact', defaultListId :: Int}
 
 _shared :: Lens' HyperdataUser HyperdataContact
 _shared = lens getter setter
