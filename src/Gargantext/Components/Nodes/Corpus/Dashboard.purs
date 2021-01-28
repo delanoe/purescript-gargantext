@@ -63,7 +63,6 @@ dashboardLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "dashboardLayo
                                 , corpusId: parentId
                                 , defaultListId: 0
                                 , fields
-                                , key: show $ GUR.value reload
                                 , nodeId
                                 , onChange: onChange nodeId reload (DT.Hyperdata h)
                                 , session } []
@@ -82,7 +81,6 @@ type LoadedProps =
   , corpusId :: NodeID
   , defaultListId :: Int
   , fields :: List.List FTField
-  , key :: String
   , onChange :: { charts :: Array P.PredefinedChart
                , fields :: List.List FTField } -> Effect Unit
   | Props
