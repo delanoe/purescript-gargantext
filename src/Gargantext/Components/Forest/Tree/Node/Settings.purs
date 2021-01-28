@@ -130,7 +130,7 @@ settingsBox Team =
                                 , Annuaire
                                 , NodeFrameWrite
                                 , NodeFrameCalc
-                                , NodeFrameNotebook
+                                -- , NodeFrameNotebook
                                 , Team
                                 , FolderShared
                                 ]

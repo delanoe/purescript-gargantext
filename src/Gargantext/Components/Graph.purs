@@ -249,15 +249,15 @@ sigmaSettings =
   , edgeHoverPrecision: 2.0
   , edgeHoverSizeRatio: 2.0
   , enableHovering: true
-  , font: "arial"                -- font params
-  , fontStyle: "bold"
+  , font: "arial"
+  , fontStyle: ""
   , hideEdgesOnMove: true
   , labelSize : "proportional" -- alt : proportional, fixed
   -- , labelSize: "fixed"
-  , labelSizeRatio: 3.0               -- label size in ratio of node size
-  , labelThreshold: 6.0               -- min node cam size to start showing label
+  , labelSizeRatio: 2.0               -- label size in ratio of node size
+  , labelThreshold: 9.0 -- 5.0 for more labels              -- min node cam size to start showing label
   , maxEdgeSize: 1.0
-  , maxNodeSize: 8.0
+  , maxNodeSize: 10.0
   , minEdgeSize: 0.5              -- in fact used in tina as edge size
   , minNodeSize: 1.0
   , mouseEnabled: true
@@ -278,7 +278,7 @@ sigmaSettings =
   , verbose : true
   , zoomMax: 1.7
   , zoomMin: 0.0
-  , zoomingRatio: 1.7
+  , zoomingRatio: 1.4
   }
   
 type ForceAtlas2Settings =
@@ -306,11 +306,11 @@ forceAtlas2Settings =
   , barnesHutOptimize   : true
   , edgeWeightInfluence : 1.0
     -- fixedY : false
-  , gravity : 1.0
-  , iterationsPerRender : 10.0
+  , gravity : 0.01
+  , iterationsPerRender : 50.0 -- 10.0
   , linLogMode : false  -- false
   , outboundAttractionDistribution: false
-  , scalingRatio : 10.0
+  , scalingRatio : 1000.0
   , skipHidden: false
   , slowDown : 1.0
   , startingIterations : 10.0
