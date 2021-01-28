@@ -78,7 +78,8 @@ instance decodeContact' :: DecodeJson Contact' where
                    }
 
 
-
+-- | TODO rename Contact with User
+-- and fix shared decodeJson
 newtype Contact =
   Contact
   { id :: Int
@@ -110,7 +111,6 @@ instance decodeContact :: DecodeJson Contact where
                    , typename
                    , userId
                    }
-
 
 ----------------------------------------------------------------------------
 newtype User =
