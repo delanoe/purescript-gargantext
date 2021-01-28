@@ -51,8 +51,8 @@ labelSizeButton sigmaRef state =
   sizeButton {
       state
     , caption: "Label Size"
-    , min: 2.0
-    , max: 15.0
+    , min: 1.0
+    , max: 30.0
     , onChange: \e -> do
       let sigma = R.readRef sigmaRef
       let newValue = readFloat $ R.unsafeEventValue e
@@ -61,7 +61,8 @@ labelSizeButton sigmaRef state =
         Sigma.setSettings s {
           defaultLabelSize: newValue
         , drawLabels: true
-        , labelSizeRatio: newValue / 2.5
+        , maxNodeSize: newValue / 2.5
+        --, labelSizeRatio: newValue / 2.5
         }
       setValue $ const newValue
     }

@@ -255,9 +255,9 @@ sigmaSettings =
   , labelSize : "proportional" -- alt : proportional, fixed
   -- , labelSize: "fixed"
   , labelSizeRatio: 2.0               -- label size in ratio of node size
-  , labelThreshold: 7.0 -- 5.0 for more labels              -- min node cam size to start showing label
+  , labelThreshold: 9.0 -- 5.0 for more labels              -- min node cam size to start showing label
   , maxEdgeSize: 1.0
-  , maxNodeSize: 8.0
+  , maxNodeSize: 10.0
   , minEdgeSize: 0.5              -- in fact used in tina as edge size
   , minNodeSize: 1.0
   , mouseEnabled: true
@@ -306,11 +306,11 @@ forceAtlas2Settings =
   , barnesHutOptimize   : true
   , edgeWeightInfluence : 1.0
     -- fixedY : false
-  , gravity : 0.1
+  , gravity : 0.01
   , iterationsPerRender : 50.0 -- 10.0
   , linLogMode : false  -- false
   , outboundAttractionDistribution: false
-  , scalingRatio : 100.0
+  , scalingRatio : 1000.0
   , skipHidden: false
   , slowDown : 1.0
   , startingIterations : 10.0
