@@ -51,8 +51,8 @@ labelSizeButton sigmaRef state =
   sizeButton {
       state
     , caption: "Label Size"
-    , min: 5.0
-    , max: 30.0
+    , min: 2.0
+    , max: 15.0
     , onChange: \e -> do
       let sigma = R.readRef sigmaRef
       let newValue = readFloat $ R.unsafeEventValue e
