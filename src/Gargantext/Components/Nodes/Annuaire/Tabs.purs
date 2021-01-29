@@ -1,5 +1,5 @@
 -- TODO copy of Gargantext.Components.Nodes.Corpus.Tabs.Specs
-module Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs where
+module Gargantext.Components.Nodes.Annuaire.User.Tabs where
 
 import Prelude hiding (div)
 import Data.Generic.Rep (class Generic)
@@ -15,7 +15,7 @@ import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Components.Tab as Tab
-import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (ContactData')
+import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (ContactData)
 import Gargantext.Components.Nodes.Lists.Types as LTypes
 import Gargantext.Components.Nodes.Texts.Types as TTypes
 import Gargantext.Ends (Frontends)
@@ -52,7 +52,7 @@ type TabsProps = (
     appReload         :: GUR.ReloadS
   , asyncTasksRef     :: R.Ref (Maybe GAT.Reductor)
   , cacheState        :: R.State LTypes.CacheState
-  , contactData       :: ContactData'
+  , contactData       :: ContactData
   , frontends         :: Frontends
   , nodeId            :: Int
   , session           :: Session

@@ -21,7 +21,8 @@ import Gargantext.Prelude
 import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
-import Gargantext.Components.Nodes.Corpus.Types (CorpusData, FTField, Field(..), FieldType(..), Hash, Hyperdata(..), defaultField, defaultHaskell', defaultPython', defaultJSON', defaultMarkdown')
+import Gargantext.Components.Nodes.Types
+import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..))
 import Gargantext.Data.Array as GDA
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI, Children))
@@ -58,7 +59,6 @@ corpusLayoutCpt = R.hooksComponentWithModule thisModule "corpusLayout" cpt
 
 corpusLayoutWithKey :: Record KeyProps -> R.Element
 corpusLayoutWithKey props = R.createElement corpusLayoutWithKeyCpt props []
-
 corpusLayoutWithKeyCpt :: R.Component KeyProps
 corpusLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "corpusLayoutWithKey" cpt
   where
@@ -73,12 +73,6 @@ type ViewProps =
   , reload  :: GUR.ReloadS
   | Props
   )
-
--- We need FTFields with indices because it's the only way to identify the
--- FTField element inside a component (there are no UUIDs and such)
-type Index = Int
-type FTFieldWithIndex = Tuple Index FTField
-type FTFieldsWithIndex = List.List FTFieldWithIndex
 
 corpusLayoutView :: Record ViewProps -> R.Element
 corpusLayoutView props = R.createElement corpusLayoutViewCpt props []
@@ -99,24 +93,25 @@ corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" c
           R.setRef fieldsRef fields
           snd fieldsS $ const fieldsWithIndex
 
-      pure $ H.div {} [
-        H.div { className: "row" } [
-           H.div { className: "btn btn-secondary " <> (saveEnabled fieldsWithIndex fieldsS)
-                 , on: { click: onClickSave {fields: fieldsS, nodeId, reload, session} }
-                 } [
-              H.span { className: "fa fa-floppy-o" } [  ]
-              ]
-           ]
-        , H.div {} [ fieldsCodeEditor { fields: fieldsS
-                                      , nodeId
-                                      , session } ]
-        , H.div { className: "row" } [
-           H.div { className: "btn btn-secondary"
-                 , on: { click: onClickAdd fieldsS }
-                 } [
-              H.span { className: "fa fa-plus" } [  ]
-              ]
-           ]
+      pure $ H.div {}
+        [ H.div { className: "row" }
+          [ H.div { className: "btn btn-secondary " <> (saveEnabled fieldsWithIndex fieldsS)
+                  , on: { click: onClickSave {fields: fieldsS, nodeId, reload, session} }
+                  }
+            [ H.span { className: "fa fa-floppy-o" } [  ]
+            ]
+          ]
+        , H.div {}
+          [ fieldsCodeEditor { fields: fieldsS
+                             , nodeId
+                             , session } [] ]
+        , H.div { className: "row" }
+          [ H.div { className: "btn btn-secondary"
+                  , on: { click: onClickAdd fieldsS }
+                  }
+            [ H.span { className: "fa fa-plus" } [  ]
+            ]
+          ]
         ]
 
     saveEnabled :: FTFieldsWithIndex -> R.State FTFieldsWithIndex -> String
@@ -127,7 +122,6 @@ corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" c
                        , reload :: GUR.ReloadS
                        , session :: Session } -> e -> Effect Unit
     onClickSave {fields: (fieldsS /\ _), nodeId, reload, session} _ = do
-      log2 "[corpusLayoutViewCpt] onClickSave fieldsS" fieldsS
       launchAff_ do
         saveCorpus $ { hyperdata: Hyperdata {fields: (\(Tuple _ f) -> f) <$> fieldsS}
                      , nodeId
@@ -144,14 +138,14 @@ type FieldsCodeEditorProps =
     | LoadProps
   )
 
-fieldsCodeEditor :: Record FieldsCodeEditorProps -> R.Element
-fieldsCodeEditor props = R.createElement fieldsCodeEditorCpt props []
+fieldsCodeEditor :: R2.Component FieldsCodeEditorProps
+fieldsCodeEditor = R.createElement fieldsCodeEditorCpt
 
 fieldsCodeEditorCpt :: R.Component FieldsCodeEditorProps
 fieldsCodeEditorCpt = R.hooksComponentWithModule thisModule "fieldsCodeEditorCpt" cpt
   where
     cpt {nodeId, fields: fS@(fields /\ _), session} _ = do
-      masterKey <- R.useState' 0
+      masterKey <- GUR.new
 
       pure $ H.div {} $ List.toUnfoldable (editors masterKey)
       where
@@ -175,13 +169,13 @@ fieldsCodeEditorCpt = R.hooksComponentWithModule thisModule "fieldsCodeEditorCpt
           List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { typ = typ })) fields
 
     onMoveDown :: GUR.ReloadS -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
-    onMoveDown (_ /\ setMasterKey) (fs /\ setFields) idx _ = do
-      setMasterKey $ (+) 1
+    onMoveDown masterKey (_ /\ setFields) idx _ = do
+      GUR.bump masterKey
       setFields $ recomputeIndices <<< (GDA.swapList idx (idx + 1))
 
     onMoveUp :: GUR.ReloadS -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
-    onMoveUp (_ /\ setMasterKey) (_ /\ setFields) idx _ = do
-      setMasterKey $ (+) 1
+    onMoveUp masterKey (_ /\ setFields) idx _ = do
+      GUR.bump masterKey
       setFields $ recomputeIndices <<< (GDA.swapList idx (idx - 1))
 
     onRemove :: R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
@@ -223,19 +217,17 @@ fieldCodeEditorWrapperCpt = R.hooksComponentWithModule thisModule "fieldCodeEdit
       pure $ H.div { className: "row card" } [
         H.div { className: "card-header" } [
           H.div { className: "code-editor-heading row" } [
-              H.div { className: "col-sm-4" } [
+              H.div { className: "col-4" } [
                 renameable {onRename, text: name}
               ]
-            , H.div { className: "col-sm-7" } []
-            , H.div { className: "buttons-right col-sm-1" } [
+            , H.div { className: "col-7" } []
+            , H.div { className: "buttons-right col-1" } ([
                 H.div { className: "btn btn-danger"
                       , on: { click: \_ -> onRemove unit }
                       } [
                   H.span { className: "fa fa-trash" } [  ]
                   ]
-              , moveDownButton canMoveDown
-              , moveUpButton canMoveUp
-              ]
+              ] <> moveButtons)
             ]
          ]
         , H.div { className: "card-body" } [
@@ -243,15 +235,15 @@ fieldCodeEditorWrapperCpt = R.hooksComponentWithModule thisModule "fieldCodeEdit
            ]
         ]
       where
-        moveDownButton false = H.div {} []
-        moveDownButton true =
+        moveButtons = [] <> (if canMoveDown then [moveDownButton] else [])
+                         <> (if canMoveUp then [moveUpButton] else [])
+        moveDownButton =
           H.div { className: "btn btn-secondary"
                 , on: { click: \_ -> onMoveDown unit }
                 } [
             H.span { className: "fa fa-arrow-down" } [  ]
             ]
-        moveUpButton false = H.div {} []
-        moveUpButton true =
+        moveUpButton =
           H.div { className: "btn btn-secondary"
                 , on: { click: \_ -> onMoveUp unit }
                 } [
@@ -301,32 +293,31 @@ renameableTextCpt :: R.Component RenameableTextProps
 renameableTextCpt = R.hooksComponentWithModule thisModule "renameableTextCpt" cpt
   where
     cpt {isEditing: (false /\ setIsEditing), state: (text /\ _)} _ = do
-      pure $ H.div { className: "input-group" } [
-        H.input { className: "form-control"
-                , defaultValue: text
-                , disabled: 1
-                , type: "text" }
+      pure $ H.div { className: "input-group" }
+        [ H.input { className: "form-control"
+                  , defaultValue: text
+                  , disabled: 1
+                  , type: "text" }
         , H.div { className: "btn input-group-append"
-                , on: { click: \_ -> setIsEditing $ const true } } [
-           H.span { className: "fa fa-pencil" } []
-           ]
+                , on: { click: \_ -> setIsEditing $ const true } }
+          [ H.span { className: "fa fa-pencil" } []
+          ]
         ]
     cpt {isEditing: (true /\ setIsEditing), onRename, state: (text /\ setText)} _ = do
-      pure $ H.div { className: "input-group" } [
-          inputWithEnter {
-              autoFocus: false
-             , autoSave: false
-             , className: "form-control text"
-             , defaultValue: text
-             , onEnter: submit
-             , onValueChanged: setText <<< const
-             , placeholder: ""
-             , type: "text"
-             }
+      pure $ H.div { className: "input-group" }
+        [ inputWithEnter {
+            autoFocus: false
+          , className: "form-control text"
+          , defaultValue: text
+          , onEnter: submit
+          , onValueChanged: setText <<< const
+          , placeholder: ""
+          , type: "text"
+          }
         , H.div { className: "btn input-group-append"
-                 , on: { click: submit } } [
-           H.span { className: "fa fa-floppy-o" } []
-           ]
+                , on: { click: submit } }
+          [ H.span { className: "fa fa-floppy-o" } []
+          ]
         ]
       where
         submit _ = do

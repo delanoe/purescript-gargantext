@@ -36,10 +36,10 @@ type SubTreeParamsProps =
 
 subTreeView :: Record SubTreeParamsProps -> R.Element
 subTreeView props = R.createElement subTreeViewCpt props []
-  where
-    subTreeViewCpt :: R.Component SubTreeParamsProps
-    subTreeViewCpt = R.hooksComponentWithModule thisModule "subTreeView" cpt
 
+subTreeViewCpt :: R.Component SubTreeParamsProps
+subTreeViewCpt = R.hooksComponentWithModule thisModule "subTreeView" cpt
+  where
     cpt params@{ action
                , dispatch
                , handed

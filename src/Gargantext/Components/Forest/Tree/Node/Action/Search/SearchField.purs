@@ -266,10 +266,10 @@ type DatabaseInputProps = (
 
 databaseInput :: R2.Component DatabaseInputProps
 databaseInput = R.createElement databaseInputCpt
-  where
-    databaseInputCpt :: R.Component DatabaseInputProps
-    databaseInputCpt = R.hooksComponentWithModule thisModule "databaseInput" cpt
 
+databaseInputCpt :: R.Component DatabaseInputProps
+databaseInputCpt = R.hooksComponentWithModule thisModule "databaseInput" cpt
+  where
     cpt { databases
         , search: (search /\ setSearch) } _ = do
       pure $
@@ -338,10 +338,10 @@ type SearchInputProps =
 
 searchInput :: Record SearchInputProps -> R.Element
 searchInput p = R.createElement searchInputCpt p []
-  where
-    searchInputCpt :: R.Component SearchInputProps
-    searchInputCpt = R.hooksComponentWithModule thisModule "searchInput" cpt
 
+searchInputCpt :: R.Component SearchInputProps
+searchInputCpt = R.hooksComponentWithModule thisModule "searchInput" cpt
+  where
     cpt {search: (search@{ term } /\ setSearch)} _ = do
       valueRef <- R.useRef term
 
@@ -349,7 +349,6 @@ searchInput p = R.createElement searchInputCpt p []
         inputWithEnter { onEnter: onEnter valueRef setSearch
                        , onValueChanged: onValueChanged valueRef
                        , autoFocus: false
-                       , autoSave: true
                        , className: "form-control"
                        , defaultValue: R.readRef valueRef
                        , placeholder: "Your query here"
@@ -380,10 +379,10 @@ type SubmitButtonProps =
 
 submitButton :: Record SubmitButtonProps -> R.Element
 submitButton p = R.createElement submitButtonComponent p []
-  where
-    submitButtonComponent :: R.Component SubmitButtonProps
-    submitButtonComponent = R.hooksComponentWithModule thisModule "submitButton" cpt
 
+submitButtonComponent :: R.Component SubmitButtonProps
+submitButtonComponent = R.hooksComponentWithModule thisModule "submitButton" cpt
+  where
     cpt {onSearch, search: (mySearch /\ _), session} _ =
       pure $
         H.button { className: "btn btn-primary"

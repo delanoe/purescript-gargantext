@@ -225,60 +225,60 @@ type SigmaSettings =
   -- selected nodes <=> special label
 sigmaSettings :: {|SigmaSettings}
 sigmaSettings =
-  { animationsTime: 30000.0
-  , autoRescale: true
-  , autoResize: true
-  , batchEdgesDrawing: true
-  , borderSize: 1.0                   -- for ex, bigger border when hover
-  , defaultEdgeHoverColor: "#f00"
-  , defaultEdgeType: "curve"          -- 'curve' or 'line' (curve iff ourRendering)
-  , defaultHoverLabelBGColor: "#fff"
-  , defaultHoverLabelColor: "#000"
-  , defaultLabelColor: "#000"         -- labels text color
-  , defaultLabelSize: 15.0                -- (old tina: showLabelsIfZoom)
-  , defaultNodeBorderColor : "#000"   -- <- if nodeBorderColor = 'default'
-  , defaultNodeColor: "#FFF"
-  , doubleClickEnabled: false -- indicates whether or not the graph can be zoomed on double-click
-  , drawEdgeLabels: true
-  , drawEdges: true
-  , drawLabels: true
-  , drawNodes: true
-  , enableEdgeHovering: false
-  , edgeHoverExtremities: true
-  , edgeHoverColor: "edge"
-  , edgeHoverPrecision: 2.0
-  , edgeHoverSizeRatio: 2.0
-  , enableHovering: true
-  , font: "arial"                -- font params
-  , fontStyle: "bold"
-  , hideEdgesOnMove: true
-  --, labelSize : "proportional" -- alt : proportional, fixed
-  , labelSize: "fixed"
-  , labelSizeRatio: 2.0               -- label size in ratio of node size
-  , labelThreshold: 7.0               -- min node cam size to start showing label
-  , maxEdgeSize: 1.0
-  , maxNodeSize: 8.0
-  , minEdgeSize: 0.5              -- in fact used in tina as edge size
-  , minNodeSize: 1.0
-  , mouseEnabled: true
-  , mouseSelectorSize: 15.0
-  , mouseZoomDuration: 150.0
-  , nodeBorderColor: "default"           -- choices: "default" color vs. "node" color
-  --, nodesPowRatio : 10.8
-  , rescaleIgnoreSize : false
-  , singleHover : true
-  , touchEnabled : true
-  , twBorderGreyColor : "rgba(100, 100, 100, 0.9)"
-  , twEdgeDefaultOpacity : 0.4       -- initial opacity added to src/tgt colors
-  , twEdgeGreyColor : "rgba(100, 100, 100, 0.25)"
-  , twNodeRendBorderColor : "#FFF"
-  , twNodeRendBorderSize : 2.5          -- node borders (only iff ourRendering)
-  , twNodesGreyOpacity : 5.5           -- smaller value: more grey
-  , twSelectedColor : "node"     -- "node" for a label bg like the node color, "default" for white background
-  , verbose : true
-  , zoomMax: 1.7
-  , zoomMin: 0.0
-  , zoomingRatio: 1.7
+  { animationsTime : 30000.0
+  , autoRescale : true
+  , autoResize : true
+  , batchEdgesDrawing : true
+  , borderSize : 1.0                   -- for ex, bigger border when hover
+  , defaultEdgeHoverColor : "#f00"
+  , defaultEdgeType : "curve"          -- 'curve' or 'line' (curve iff ourRendering)
+  , defaultHoverLabelBGColor : "#fff"
+  , defaultHoverLabelColor : "#000"
+  , defaultLabelColor : "#000"         -- labels text color
+  , defaultLabelSize : 15.0                -- (old tina: showLabelsIfZoom)
+  , defaultNodeBorderColor  : "#000"   -- <- if nodeBorderColor = 'default'
+  , defaultNodeColor : "#FFF"
+  , doubleClickEnabled : false -- indicates whether or not the graph can be zoomed on double-click
+  , drawEdgeLabels : true
+  , drawEdges : true
+  , drawLabels : true
+  , drawNodes : true
+  , enableEdgeHovering : false
+  , edgeHoverExtremities : true
+  , edgeHoverColor : "edge"
+  , edgeHoverPrecision : 2.0
+  , edgeHoverSizeRatio : 2.0
+  , enableHovering : true
+  , font : "arial"
+  , fontStyle : ""
+  , hideEdgesOnMove : true
+  , labelSize  : "proportional" -- alt : proportional, fixed
+  -- , labelSize : "fixed"
+  , labelSizeRatio : 2.0               -- label size in ratio of node size
+  , labelThreshold : 9.0 -- 5.0 for more labels              -- min node cam size to start showing label
+  , maxEdgeSize : 1.0
+  , maxNodeSize : 10.0
+  , minEdgeSize : 0.5              -- in fact used in tina as edge size
+  , minNodeSize : 1.0
+  , mouseEnabled : true
+  , mouseSelectorSize : 15.0
+  , mouseZoomDuration : 150.0
+  , nodeBorderColor : "default"           -- choices: "default" color vs. "node" color
+  --, nodesPowRatio  : 10.8
+  , rescaleIgnoreSize  : false
+  , singleHover  : true
+  , touchEnabled  : true
+  , twBorderGreyColor  : "rgba(100, 100, 100, 0.9)"
+  , twEdgeDefaultOpacity  : 0.4       -- initial opacity added to src/tgt colors
+  , twEdgeGreyColor  : "rgba(100, 100, 100, 0.25)"
+  , twNodeRendBorderColor  : "#FFF"
+  , twNodeRendBorderSize  : 2.5          -- node borders (only iff ourRendering)
+  , twNodesGreyOpacity  : 5.5           -- smaller value: more grey
+  , twSelectedColor  : "node"     -- "node" for a label bg like the node color, "default" for white background
+  , verbose  : true
+  , zoomMax : 1.7
+  , zoomMin : 0.0
+  , zoomingRatio : 1.4
   }
   
 type ForceAtlas2Settings =
@@ -306,11 +306,11 @@ forceAtlas2Settings =
   , barnesHutOptimize   : true
   , edgeWeightInfluence : 1.0
     -- fixedY : false
-  , gravity : 1.0
-  , iterationsPerRender : 10.0
+  , gravity : 0.01
+  , iterationsPerRender : 50.0 -- 10.0
   , linLogMode : false  -- false
   , outboundAttractionDistribution: false
-  , scalingRatio : 10.0
+  , scalingRatio : 1000.0
   , skipHidden: false
   , slowDown : 1.0
   , startingIterations : 10.0

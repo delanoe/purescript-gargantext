@@ -22,12 +22,12 @@ mergeNodeReq :: Session -> GT.ID -> GT.ID -> Aff (Array GT.ID)
 mergeNodeReq session fromId toId =
   put_ session $ NodeAPI GT.Node (Just fromId) ("merge/" <> show toId)
 
-mergeNode :: Record SubTreeParamsIn -> R.Element
-mergeNode p = R.createElement mergeNodeCpt p []
-  where
-    mergeNodeCpt :: R.Component SubTreeParamsIn
-    mergeNodeCpt = R.hooksComponentWithModule thisModule "mergeNode" cpt
+mergeNode :: R2.Component SubTreeParamsIn
+mergeNode = R.createElement mergeNodeCpt
 
+mergeNodeCpt :: R.Component SubTreeParamsIn
+mergeNodeCpt = R.hooksComponentWithModule thisModule "mergeNode" cpt
+  where
     cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
       action@(valAction /\ setAction) :: R.State Action <- R.useState' (MergeNode {params:Nothing})
 

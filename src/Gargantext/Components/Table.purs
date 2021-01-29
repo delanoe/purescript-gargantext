@@ -58,10 +58,9 @@ initialParams = stateParams {page: 1, pageSize: PS10, orderBy: Nothing, searchTy
 
 tableHeaderLayout :: Record TableHeaderLayoutProps -> R.Element
 tableHeaderLayout props = R.createElement tableHeaderLayoutCpt props []
+tableHeaderLayoutCpt :: R.Component TableHeaderLayoutProps
+tableHeaderLayoutCpt = R.hooksComponentWithModule thisModule "tableHeaderLayout" cpt
   where
-    tableHeaderLayoutCpt :: R.Component TableHeaderLayoutProps
-    tableHeaderLayoutCpt = R.hooksComponentWithModule thisModule "tableHeaderLayout" cpt
-
     cpt { afterCacheStateChange, cacheState, date, desc, query, title, user } _ =
       pure $ R.fragment
       [ R2.row
@@ -115,10 +114,9 @@ tableHeaderLayout props = R.createElement tableHeaderLayoutCpt props []
   
 table :: Record Props -> R.Element
 table props = R.createElement tableCpt props []
+tableCpt :: R.Component Props
+tableCpt = R.hooksComponentWithModule thisModule "table" cpt
   where
-    tableCpt :: R.Component Props
-    tableCpt = R.hooksComponentWithModule thisModule "table" cpt
-
     cpt {container, syncResetButton, colNames, wrapColElts, totalRecords, rows, params} _ = do
       let
         state = paramsState $ fst params
@@ -194,10 +192,10 @@ type SizeDDProps =
 
 sizeDD :: Record SizeDDProps -> R.Element
 sizeDD p = R.createElement sizeDDCpt p []
-  where
-    sizeDDCpt :: R.Component SizeDDProps
-    sizeDDCpt = R.hooksComponentWithModule thisModule "sizeDD" cpt
 
+sizeDDCpt :: R.Component SizeDDProps
+sizeDDCpt = R.hooksComponentWithModule thisModule "sizeDD" cpt
+  where
     cpt {params: params /\ setParams} _ = do
       pure $ H.span {} [
         R2.select { className, defaultValue: show pageSize, on: {change} } sizes

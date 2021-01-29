@@ -35,10 +35,10 @@ type ListsWithForest = (
 
 listsWithForest :: R2.Component ListsWithForest
 listsWithForest = R.createElement listsWithForestCpt
-  where
-    listsWithForestCpt :: R.Component ListsWithForest
-    listsWithForestCpt = R.hooksComponentWithModule thisModule "listsWithForest" cpt
 
+listsWithForestCpt :: R.Component ListsWithForest
+listsWithForestCpt = R.hooksComponentWithModule thisModule "listsWithForest" cpt
+  where
     cpt { forestProps
         , listsProps: listsProps@{ session } } _ = do
       controls <- initialControls
@@ -58,10 +58,10 @@ type TopBarProps = (
 
 topBar :: R2.Component TopBarProps
 topBar = R.createElement topBarCpt
-  where
-    topBarCpt :: R.Component TopBarProps
-    topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
 
+topBarCpt :: R.Component TopBarProps
+topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
+  where
     cpt { controls } _ = do
       -- empty for now because the button is moved to the side panel
       pure $ H.div {} []
@@ -93,10 +93,10 @@ type WithTreeProps = (
 
 listsLayout :: R2.Component Props
 listsLayout = R.createElement listsLayoutCpt
-  where
-    listsLayoutCpt :: R.Component Props
-    listsLayoutCpt = R.hooksComponentWithModule thisModule "listsLayout" cpt
 
+listsLayoutCpt :: R.Component Props
+listsLayoutCpt = R.hooksComponentWithModule thisModule "listsLayout" cpt
+  where
     cpt path@{ nodeId, session } _ = do
       let sid = sessionId session
 
@@ -109,10 +109,10 @@ type KeyProps = (
 
 listsLayoutWithKey :: Record KeyProps -> R.Element
 listsLayoutWithKey props = R.createElement listsLayoutWithKeyCpt props []
-  where
-    listsLayoutWithKeyCpt :: R.Component KeyProps
-    listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKey" cpt
 
+listsLayoutWithKeyCpt :: R.Component KeyProps
+listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKey" cpt
+  where
     cpt { appReload
         , asyncTasksRef
         , controls
@@ -122,7 +122,7 @@ listsLayoutWithKey props = R.createElement listsLayoutWithKeyCpt props []
         , treeReloadRef } _ = do
       let path = { nodeId, session }
 
-      cacheState <- R.useState' $ getCacheState CacheOff session nodeId
+      cacheState <- R.useState' $ getCacheState CacheOn session nodeId
 
       useLoader path loadCorpusWithChild $
         \corpusData@{ corpusId, corpusNode: NodePoly poly, defaultListId } ->
@@ -164,10 +164,10 @@ type SidePanelProps = (
 
 sidePanel :: R2.Component SidePanelProps
 sidePanel = R.createElement sidePanelCpt
-  where
-    sidePanelCpt :: R.Component SidePanelProps
-    sidePanelCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
 
+sidePanelCpt :: R.Component SidePanelProps
+sidePanelCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
+  where
     cpt { controls: { triggers: { toggleSidePanel
                                 , triggerSidePanel
                                 } }
@@ -208,10 +208,10 @@ type SidePanelDocView = (
 
 sidePanelDocView :: R2.Component SidePanelDocView
 sidePanelDocView = R.createElement sidePanelDocViewCpt
-  where
-    sidePanelDocViewCpt :: R.Component SidePanelDocView
-    sidePanelDocViewCpt = R.hooksComponentWithModule thisModule "sidePanelDocView" cpt
 
+sidePanelDocViewCpt :: R.Component SidePanelDocView
+sidePanelDocViewCpt = R.hooksComponentWithModule thisModule "sidePanelDocView" cpt
+  where
     cpt { session } _ = do
       -- pure $ H.h4 {} [ H.text txt ]
       pure $ H.div {} [ H.text "Hello ngrams" ]

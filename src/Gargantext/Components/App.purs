@@ -13,7 +13,8 @@ import Gargantext.Components.GraphExplorer (explorerLayout)
 import Gargantext.Components.Lang (LandingLang(..))
 import Gargantext.Components.Login (login)
 import Gargantext.Components.Nodes.Annuaire (annuaireLayout)
-import Gargantext.Components.Nodes.Annuaire.User.Contacts (annuaireUserLayout, userLayout)
+import Gargantext.Components.Nodes.Annuaire.User (userLayout)
+import Gargantext.Components.Nodes.Annuaire.User.Contact (contactLayout)
 import Gargantext.Components.Nodes.Corpus (corpusLayout)
 import Gargantext.Components.Nodes.Corpus.Dashboard (dashboardLayout)
 import Gargantext.Components.Nodes.Corpus.Document (documentMainLayout)
@@ -101,17 +102,6 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
           Annuaire sid nodeId        -> withSession sid $ \session -> forested [
             annuaireLayout { frontends, nodeId, session }
           ]
-          ContactPage sid aId nodeId                -> withSession sid $ \session -> forested [
-            annuaireUserLayout {
-                annuaireId: aId
-              , appReload
-              , asyncTasksRef
-              , frontends
-              , nodeId
-              , session
-              , treeReloadRef
-              }
-            ]
           Corpus sid nodeId        -> withSession sid $ \session -> forested [
             corpusLayout { nodeId, session }
           ]
@@ -119,7 +109,7 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
             documentMainLayout { listId, mCorpusId: Just corpusId,  nodeId, session } []
           ]
           Dashboard sid nodeId       -> withSession sid $ \session -> forested [
-            dashboardLayout { nodeId, session }
+            dashboardLayout { nodeId, session } []
           ]
           Document sid listId nodeId ->
             withSession sid $
@@ -204,6 +194,8 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
                     , sessionUpdate
                 }
               } []
+----------------------------------------------------------------------------------------
+-- | TODO refact UserPage and ContactPage
           UserPage sid nodeId        -> withSession sid $ \session -> forested [
             userLayout {
                 appReload
@@ -214,3 +206,17 @@ appCpt = R.hooksComponentWithModule thisModule "app" cpt where
               , treeReloadRef
               }
             ]
+
+          ContactPage sid aId nodeId                -> withSession sid $ \session -> forested [
+            contactLayout {
+                annuaireId: aId
+              , appReload
+              , asyncTasksRef
+              , frontends
+              , nodeId
+              , session
+              , treeReloadRef
+              }
+            ]
+
+

@@ -5,38 +5,35 @@ import Prelude
 import Data.Maybe (Maybe(..))
 
 import Gargantext.Types (ChartOpts, ChartType, CorpusMetricOpts, CTabNgramType, Id, Limit,
-                         ListId, NgramsGetOpts, NgramsGetTableAllOpts, NodeType,
+                         ListId, DocId, ContactId, NgramsGetOpts, NgramsGetTableAllOpts, NodeType,
                          Offset, OrderBy, SearchOpts, SessionId, TabSubType, TabType, TermList)
 import Gargantext.Types as GT
 
 data AppRoute
-  = Annuaire SessionId Int
+  = Annuaire       SessionId Int
   | ContactPage    SessionId Int Int
-  | Corpus SessionId Int
+  | Corpus         SessionId Int
   | CorpusDocument SessionId Int Int Int
   | Dashboard      SessionId Int
   | Document       SessionId Int Int
-  | Folder SessionId Int
-  | FolderPrivate SessionId Int
-  | FolderPublic SessionId Int
-  | FolderShared SessionId Int
+  | Folder         SessionId Int
+  | FolderPrivate  SessionId Int
+  | FolderPublic   SessionId Int
+  | FolderShared   SessionId Int
   | Home
   | Lists          SessionId Int
   | Login
-  | PGraphExplorer SessionId Int
+  | PGraphExplorer  SessionId Int
   | RouteFile       SessionId Int
   | RouteFrameCalc  SessionId Int
   | RouteFrameCode  SessionId Int
   | RouteFrameWrite SessionId Int
-  | Team SessionId Int
-  | Texts          SessionId Int
-  | UserPage       SessionId Int
+  | Team            SessionId Int
+  | Texts           SessionId Int
+  | UserPage        SessionId Int
 
 
 derive instance eqAppRoute :: Eq AppRoute
-
-type AnnuaireId = Int
-type ContactId = Int
 
 data SessionRoute
   = Tab TabType (Maybe Id)
@@ -53,12 +50,13 @@ data SessionRoute
   | TreeFirstLevel (Maybe Id) String
   | GraphAPI      Id String
   | ListsRoute    ListId
-  | ListDocument (Maybe ListId) (Maybe Id)
+  | ListDocument (Maybe ListId) (Maybe DocId)
   | Search        SearchOpts (Maybe Id)
   | CorpusMetrics CorpusMetricOpts  (Maybe Id)
   | CorpusMetricsHash { listId :: ListId, tabType :: TabType }  (Maybe Id)
   | Chart ChartOpts (Maybe Id)
   | ChartHash { chartType :: ChartType, listId :: Maybe ListId, tabType :: TabType } (Maybe Id)
+  -- | AnnuaireContact AnnuaireId DocId
 
 instance showAppRoute :: Show AppRoute where
   show Home                     = "Home"
