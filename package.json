@@ -7,7 +7,7 @@
         "install-ps": "psc-package install",
         "compile": "pulp build",
         "build": "pulp browserify -t dist/bundle.js",
-        "css": "sass src/sass/sass.sass:dist/styles/sass.css",
+        "css": "sass src/sass/sass.sass:dist/styles/sass.css && sass src/sass/bootstrap/bootstrap.sass:dist/styles/bootstrap-custom.css",
         "docs": "pulp docs -- --format html",
         "repl": "pulp repl",
         "clean": "rm -Rf output node_modules",
@@ -24,6 +24,7 @@
     "dependencies": {
         "aes-js": "^3.1.1",
         "base-x": "^3.0.2",
+        "bootstrap": "^4.6.0",
         "create-react-class": "^15.6.3",
         "echarts": "^4.1.0",
         "echarts-for-react": "^2.0.14",
