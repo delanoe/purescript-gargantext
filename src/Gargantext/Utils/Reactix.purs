@@ -234,8 +234,6 @@ appendChild n c = delay unit $ \_ -> pure $ n ... "appendChild" $ [c]
 appendChildToParentId :: forall c. IsNode c => String -> c -> Effect Unit
 appendChildToParentId ps c = delay unit $ \_ -> do
   parentEl <- getElementById ps
-  log2 "[appendChildToParentId] ps" ps
-  log2 "[appendChildToParentId] parentEl" parentEl
   case parentEl of
     Nothing -> pure unit
     Just el -> appendChild el c

@@ -4,11 +4,14 @@ import Data.Array (reverse)
 import Data.Foldable (intercalate)
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import Gargantext.Prelude
-import Gargantext.Types (Handed(..))
-import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
+
+import Gargantext.Prelude
+
+import Gargantext.Components.Themes (themeSwitcher, defaultTheme, allThemes)
+import Gargantext.Types (Handed(..))
+import Gargantext.Utils.Reactix as R2
 
 thisModule :: String
 thisModule = "Gargantext.Components.TopBar"
@@ -34,6 +37,8 @@ topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
                        divDropdownLeft {} []
                      , handButton handed
                      , smiley
+                     , H.li { className: "nav-item" } [ themeSwitcher { theme: defaultTheme
+                                                                      , themes: allThemes } [] ]
                      ]
                    ]
           where
