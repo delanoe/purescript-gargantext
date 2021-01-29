@@ -719,7 +719,28 @@ li .leaf:hover a.settings {
   margin: 10px;
 }
 
+/* */
 .body ul li {
+  color: #005a9aff;
+}
+.body ul .nav {
+  color: #005a9aff;
+}
+
+.btn-primary {
+  color: white;
+  background-color: #005a9aff;
+  border-color: black;
+}
+
+.a {
+  color: #005a9aff;
+}
+
+ul .nav {
+  color: #005a9aff;
+}
+ul li {
   color: #005a9aff;
 }
 
