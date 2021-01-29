@@ -1,7 +1,5 @@
 module Gargantext.Components.InputWithEnter where
 
-import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -9,6 +7,7 @@ import Reactix.DOM.HTML as H
 import Gargantext.Prelude
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.InputWithEnter"
 
 type Props a = (
@@ -30,8 +29,7 @@ inputWithEnterCpt = R.hooksComponentWithModule thisModule "inputWithEnter" cpt
   where
     cpt props@{ onEnter, onValueChanged
               , autoFocus, className, defaultValue, placeholder } _ = do
-      pure $ H.input { on: { blur: \_ -> onEnter unit
-                           , input: onInput
+      pure $ H.input { on: { input: onInput
                            , keyPress: onKeyPress }
                      , autoFocus
                      , className
