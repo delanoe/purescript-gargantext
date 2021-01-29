@@ -778,7 +778,7 @@ li .leaf:hover a.settings {
 }
 .annotation-run.candidate-term {
   color: #000;
-  background-color: #B8B8B893;
+  background-color: #B8B8B876;
 }
 .annotation-run.graph-term {
   color: #000;
@@ -786,12 +786,12 @@ li .leaf:hover a.settings {
 }
 .annotation-run.stop-term {
   color: #000;
-  background-color: #F5949993;
+  background-color: #F5949931;
 }
 
 .context-menu .candidate-term {
   color: #000;
-  background-color: #B8B8B893;
+  background-color: #B8B8B876;
 }
 .context-menu .graph-term {
   color: #000;
@@ -799,7 +799,7 @@ li .leaf:hover a.settings {
 }
 .context-menu .stop-term {
   color: #000;
-  background-color: #F5949993;
+  background-color: #F5949931;
 }
 
 /*# sourceMappingURL=sass.css.map */
