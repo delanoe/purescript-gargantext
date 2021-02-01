@@ -108,7 +108,7 @@ dashboardLayoutLoadedCpt = R.hooksComponentWithModule thisModule "dashboardLayou
       where
 
         addNew = H.div { className: "row" } [
-          H.span { className: "btn btn-secondary"
+          H.span { className: "btn btn-primary"
                  , on: { click: onClickAddChart }} [ H.span { className: "fa fa-plus" } [] ]
           ]
           where
@@ -151,7 +151,7 @@ dashboardCodeEditorCpt = R.hooksComponentWithModule thisModule "dashboardCodeEdi
 
       pure $ R.fragment
         [ H.div { className: "row" }
-          [ H.div { className: "btn btn-secondary " <> (saveEnabled fieldsWithIndex fieldsS)
+          [ H.div { className: "btn btn-primary " <> (saveEnabled fieldsWithIndex fieldsS)
                   , on: { click: onClickSave fieldsS }
                   }
             [ H.span { className: "fa fa-floppy-o" } [  ]
@@ -165,7 +165,7 @@ dashboardCodeEditorCpt = R.hooksComponentWithModule thisModule "dashboardCodeEdi
             ]
           ]
         , H.div { className: "row" }
-          [ H.div { className: "btn btn-secondary"
+          [ H.div { className: "btn btn-primary"
                   , on: { click: onClickAddField fieldsS }
                   }
             [ H.span { className: "fa fa-plus" } [  ]

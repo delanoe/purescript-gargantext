@@ -220,7 +220,7 @@ tableContainerCpt { dispatch
                    , H.button { className: "btn btn-primary"
                               , on: {click: (const $ dispatch AddTermChildren)}
                               } [H.text "Save"]
-                   , H.button { className: "btn btn-secondary"
+                   , H.button { className: "btn btn-primary"
                               , on: {click: (const $ dispatch $ SetParentResetChildren Nothing)}
                               } [H.text "Cancel"]
                    ]

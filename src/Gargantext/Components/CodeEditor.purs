@@ -300,7 +300,7 @@ viewTypeSelectorCpt = R.hooksComponentWithModule thisModule "viewTypeSelector" c
         ]
 
     viewTypeButton viewType (state /\ setState) =
-      H.button { className: "btn btn-secondary" <> active
+      H.button { className: "btn btn-primary" <> active
                , on: { click: onClick }
                , type: "button"
                } [

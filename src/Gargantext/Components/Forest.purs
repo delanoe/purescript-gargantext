@@ -90,7 +90,7 @@ forestCpt = R.hooksComponentWithModule thisModule "forest" cpt
 
 plus :: Handed -> R.Setter Boolean -> R.State (Maybe Backend) -> R.Element
 plus handed showLogin backend = H.div { className: "row" } [
-  H.button { className: "btn btn-secondary col-5 " <> if handed == RightHanded then "ml-1 mr-auto" else "ml-auto mr-1"
+  H.button { className: "btn btn-primary col-5 " <> if handed == RightHanded then "ml-1 mr-auto" else "ml-auto mr-1"
            , on: {click}
            , title: "Add or remove connections to the server(s)."
            }

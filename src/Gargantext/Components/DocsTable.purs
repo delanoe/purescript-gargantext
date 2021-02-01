@@ -181,7 +181,7 @@ searchBar (query /\ setQuery) = R.createElement el {} []
 
     searchButton (queryText /\ _) =
       H.button { type: "submit"
-               , className: "btn btn-secondary"
+               , className: "btn btn-primary"
                , on: {click: \e -> setQuery $ const queryText}}
       [ H.span {className: "fa fa-search"} [] ]
 
