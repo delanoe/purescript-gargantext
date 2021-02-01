@@ -673,6 +673,9 @@ li .leaf:hover a.settings {
 .simple-layout {
   height: 100%;
 }
+.simple-layout .license {
+  padding-top: 10px;
+}
 .simple-layout .spinner {
   position: absolute;
   left: 50%;

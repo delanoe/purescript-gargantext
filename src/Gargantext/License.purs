@@ -4,7 +4,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 license :: R.Element
-license = H.p {}
+license = H.p { className: "license" }
             [ H.text "Gargantext "
             , H.span { className: "fa fa-registered"} []
             , H.text " is made by "
