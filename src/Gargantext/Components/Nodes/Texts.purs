@@ -52,13 +52,15 @@ textsWithForestCpt = R.hooksComponentWithModule thisModule "textsWithForest" cpt
         , textsProps: textProps@{ session } } _ = do
       controls <- initialControls
 
-      pure $ Forest.forestLayoutWithTopBar forestProps [
-        topBar { controls } []
-      , textsLayout (Record.merge textProps { controls }) []
-      , H.div { className: "side-panel" } [
-          sidePanel { controls, session } []
-        ]
-      ]
+      pure $ Forest.forestLayoutWithTopBar forestProps
+           [ topBar { controls } []
+           , textsLayout (Record.merge textProps { controls }) []
+           -- TODO remove className "side-panel" is preview is not triggered
+           -- , H.div { className: "" }
+           , H.div { className: "side-panel" }
+                   [ sidePanel { controls, session } []
+                   ]
+           ]
 
 --------------------------------------------------------
 
@@ -338,7 +340,6 @@ docViewLayoutRec { cacheState
 
 
 --------------------------------------------------------
-
 type SidePanelProps = (
     controls :: Record TextsLayoutControls
   , session  :: Session
