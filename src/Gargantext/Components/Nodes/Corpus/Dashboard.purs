@@ -94,18 +94,19 @@ dashboardLayoutLoadedCpt = R.hooksComponentWithModule thisModule "dashboardLayou
   where
     cpt props@{ charts, corpusId, defaultListId, fields, nodeId, onChange, session } _ = do
       pure $ H.div {}
-        [ H.div { className: "row" }
+        [ dashboardCodeEditor { fields
+                              , nodeId
+                              , onChange: \fs -> onChange { charts, fields: fs }
+                              , session } []
+        ,  H.div { className: "row" }
           [ H.div { className: "col-12" }
             ([ H.h1 {} [ H.text "Board" ]
              , H.p {}  [ H.text "Summary of all your charts here" ]
              ] <> chartsEls <> [addNew])
           ]
-        , dashboardCodeEditor { fields
-                              , nodeId
-                              , onChange: \fs -> onChange { charts, fields: fs }
-                              , session } []
         ]
       where
+
         addNew = H.div { className: "row" } [
           H.span { className: "btn btn-secondary"
                  , on: { click: onClickAddChart }} [ H.span { className: "fa fa-plus" } [] ]
