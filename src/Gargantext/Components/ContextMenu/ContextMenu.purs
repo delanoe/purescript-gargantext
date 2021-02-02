@@ -48,7 +48,7 @@ contextMenuCpt = R.hooksComponentWithModule thisModule "contextMenu" cpt
       R.useLayoutEffect2 root rect (contextMenuEffect onClose root)
       let cs = [
             HTML.div { className: "popover-content" }
-            [ HTML.div { className: "panel panel-default" }
+            [ HTML.div { className: "card" }
               [ HTML.ul { className: "list-group" }
                 children
               ]

@@ -17,6 +17,7 @@ import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types as CT
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as T
+import Gargantext.Components.Table.Types as T
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
@@ -103,8 +104,7 @@ annuaireCpt = R.hooksComponentWithModule thisModule "annuaire" cpt
                               , title: name
                               , user: "" }
           , H.p {} []
-          , H.div {className: "col-md-3"}
-            [ H.text "    Filter ", H.input { className: "form-control", style } ]
+          -- , H.div {className: "col-md-3"} [ H.text "    Filter ", H.input { className: "form-control", style } ]
           , H.br {}
           , pageLayout { info, session, pagePath, frontends} ]
       where
@@ -149,7 +149,11 @@ pageCpt = R.hooksComponentWithModule thisModule "page" cpt
   where
     cpt { session, pagePath, frontends
         , table: ({count: totalRecords, docs})} _ = do
-      pure $ T.table { rows, params, container, colNames, totalRecords, wrapColElts }
+      pure $ T.table { syncResetButton : [ H.div {} [] ]
+                     , rows, params, container
+                     , colNames, totalRecords
+                     , wrapColElts
+                     }
       where
         path = fst pagePath
         rows = (\c -> {
@@ -159,7 +163,7 @@ pageCpt = R.hooksComponentWithModule thisModule "page" cpt
                                      , session }
                    , delete: false }) <$> Seq.fromFoldable docs
         container = T.defaultContainer { title: "Annuaire" } -- TODO
-        colNames = T.ColumnName <$> [ "", "First Name", "Last Name", "Company", "Lab", "Role"]
+        colNames = T.ColumnName <$> [ "", "First Name", "Last Name", "Company", "Role"]
         wrapColElts = const identity
         setParams f = snd pagePath $ \pp@{params: ps} ->
           pp {params = f ps}
@@ -194,26 +198,27 @@ contactCellsCpt = R.hooksComponentWithModule thisModule "contactCells" cpt
                        ]
     cpt { annuaireId
         , contact: (CT.NodeContact { id
-                               , hyperdata: ( CT.HyperdataContact { who : Just (CT.ContactWho { firstName
-                                                                                              , lastName
-                                                                                              }
-                                                                               )
-                                                                  }
-                                            )
-                               }
+                                   , hyperdata: ( CT.HyperdataContact
+                                                  { who : Just (CT.ContactWho { firstName
+                                                                              , lastName
+                                                                              }
+                                                               )
+                                                  , ou  : ou
+                                                  }
+                                                )
+                                   }
                    )
         , frontends
         , session } _ = do
 
         pure $ T.makeRow [
           H.text ""
-          , H.text $ fromMaybe "First Name" firstName
+          , H.a { target: "_blank", href: contactUrl annuaireId id} [H.text $ fromMaybe "First Name" firstName]
           , H.text $ fromMaybe "First Name" lastName
-          , H.text  "CNRS"
           -- , H.a { href } [ H.text $ fromMaybe "name" contact.title ]
             --, H.a { href, target: "blank" } [ H.text $ fromMaybe "name" contact.title ]
-          --, H.text $ maybe "No ContactWhere" contactWhereOrg  (A.head $ ou)
-         -- , H.text $ maybe "No ContactWhereDept" contactWhereDept (A.head $ ou)
+          , H.text $ maybe "No ContactWhere"     contactWhereOrg  (A.head $ ou)
+          , H.text $ maybe "No ContactWhereDept" contactWhereDept (A.head $ ou)
          -- , H.div {className: "nooverflow"} [
          --     H.text $ maybe "No ContactWhereRole" contactWhereRole (A.head $ ou)
             ]
@@ -221,6 +226,7 @@ contactCellsCpt = R.hooksComponentWithModule thisModule "contactCells" cpt
             --nodepath = NodePath (sessionId session) NodeContact (Just id)
             nodepath = Routes.ContactPage (sessionId session) annuaireId id
             href = url frontends nodepath
+            contactUrl aId id = url frontends $ Routes.ContactPage (sessionId session) annuaireId id
 
             contactWhereOrg (CT.ContactWhere { organization: [] }) = "No Organization"
             contactWhereOrg (CT.ContactWhere { organization: orga }) =

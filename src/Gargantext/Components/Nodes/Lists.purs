@@ -23,6 +23,7 @@ import Gargantext.Prelude
 import Gargantext.Sessions (Session, sessionId, getCacheState, setCacheState)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Lists"
@@ -72,12 +73,12 @@ topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
 --------------------------------------------------------
 
 type CommonProps = (
-    appReload     :: GT.ReloadS
+    appReload     :: GUR.ReloadS
   , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , nodeId        :: Int
   , session       :: Session
   , sessionUpdate :: Session -> Effect Unit
-  , treeReloadRef :: R.Ref (Maybe GT.ReloadS)
+  , treeReloadRef :: GUR.ReloadWithInitializeRef
   )
 
 type Props = (

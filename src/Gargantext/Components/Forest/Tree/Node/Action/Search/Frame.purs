@@ -67,7 +67,7 @@ divIframeCpt :: R.Component IFrameProps
 divIframeCpt = R.hooksComponentWithModule thisModule "divIframe" cpt
   where
     cpt { frameSource, iframeRef, search: search@(search' /\ _) } _ = do
-      pure $ H.div { className: "frame-search panel panel-default" }
+      pure $ H.div { className: "frame-search card" }
                    [ iframeWith { frameSource, iframeRef, search } ]
 
 frameUrl :: FrameSource -> String

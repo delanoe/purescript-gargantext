@@ -1,13 +1,13 @@
 {
     "name": "Gargantext",
-    "version": "0.0.2.0",
+    "version": "0.0.2.7.1",
     "scripts": {
         "rebase-set": "spago package-set-upgrade && spago psc-package-insdhall",
         "rebuild-set": "spago psc-package-insdhall",
         "install-ps": "psc-package install",
         "compile": "pulp build",
         "build": "pulp browserify -t dist/bundle.js",
-        "css": "sass src/sass/sass.sass:dist/styles/sass.css",
+        "css": "sass src/sass/sass.sass:dist/styles/sass.css && sass src/sass/bootstrap/default.sass:dist/styles/bootstrap-default.css && cp node_modules/bootstrap-dark/src/bootstrap-dark.css dist/styles/bootstrap-dark.css && sass src/sass/bootstrap/greyson.scss:dist/styles/bootstrap-greyson.css && sass src/sass/bootstrap/monotony.scss:dist/styles/bootstrap-monotony.css",
         "docs": "pulp docs -- --format html",
         "repl": "pulp repl",
         "clean": "rm -Rf output node_modules",
@@ -24,6 +24,8 @@
     "dependencies": {
         "aes-js": "^3.1.1",
         "base-x": "^3.0.2",
+        "bootstrap": "4.4.1",
+        "bootstrap-dark": "^1.0.3",
         "create-react-class": "^15.6.3",
         "echarts": "^4.1.0",
         "echarts-for-react": "^2.0.14",

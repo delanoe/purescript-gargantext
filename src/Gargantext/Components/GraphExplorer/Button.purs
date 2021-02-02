@@ -43,13 +43,9 @@ simpleButtonCpt :: R.Component Props
 simpleButtonCpt = R.hooksComponentWithModule thisModule "simpleButton" cpt
   where
     cpt {onClick, text} _ = do
-      pure $
-        H.span {}
-          [
-            H.button
-              { className: "btn btn-primary", on: {click: onClick} }
-              [ H.text text ]
-          ]
+      pure $ H.button { className: "btn btn-outline-primary"
+                      , on: {click: onClick}
+                      } [ R2.small {} [ H.text text ] ]
 
 centerButton :: R.Ref Sigmax.Sigma -> R.Element
 centerButton sigmaRef = simpleButton {

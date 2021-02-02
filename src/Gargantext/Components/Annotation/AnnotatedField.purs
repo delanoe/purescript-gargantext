@@ -23,8 +23,8 @@ import Reactix.DOM.HTML as HTML
 import Reactix.SyntheticEvent as E
 
 import Gargantext.Types (CTabNgramType(..), TermList)
-import Gargantext.Components.Annotation.Utils ( termBootstrapClass )
-import Gargantext.Components.NgramsTable.Core (NgramsTable, NgramsTerm, findNgramTermList, highlightNgrams, normNgram)
+import Gargantext.Components.Annotation.Utils ( termBootstrapClass, termClass )
+import Gargantext.Components.NgramsTable.Core
 import Gargantext.Components.Annotation.Menu ( annotationMenu, MenuType(..) )
 import Gargantext.Utils.Selection as Sel
 
@@ -131,5 +131,7 @@ annotatedRunComponent = R.staticComponent "AnnotatedRun" cpt
         elt =
           case list of
              Nothing -> HTML.span { on: { mouseUp: cb } }
-             Just l  -> HTML.span { className: "annotation-run bg-" <> termBootstrapClass l
-                                  , on: { click: cb } }
+             Just l  -> HTML.span { -- className: "annotation-run bg-" <> termBootstrapClass l
+                                    className: "annotation-run " <> termClass l
+                                  , on: { click: cb } 
+                                  }

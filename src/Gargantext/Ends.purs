@@ -172,6 +172,8 @@ sessionPath (R.PostNgramsChartsAsync i) =
 sessionPath (R.NodeAPI nt i p) = nodeTypePath nt
                               <> (maybe "" (\i' -> "/" <> show i') i)
                               <> (if p == "" then "" else "/" <> p)
+sessionPath (R.TreeFirstLevel nId p) = nodeTypePath Tree
+                                    <> (maybe "" (\nId' -> "/" <> show nId') nId) <> "/first-level" <> p
 sessionPath (R.Search {listId, limit, offset, orderBy} Nothing) =
   sessionPath $ R.NodeAPI Corpus Nothing
      $ "search?list_id=" <> show listId
@@ -219,6 +221,7 @@ sessionPath (R.ChartHash { chartType, listId, tabType } i) =
     <> "&listType=" <> show MapTerm -- listId
     <> defaultListAddMaybe listId
 -- sessionPath (R.NodeAPI (NodeContact s a i) i) = sessionPath $ "annuaire/" <> show a <> "/contact/" <> show i
+
 
 ------- misc routing stuff
 

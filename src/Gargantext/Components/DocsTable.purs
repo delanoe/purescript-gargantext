@@ -7,7 +7,7 @@ import Data.Lens ((^.))
 import Data.Lens.At (at)
 import Data.Lens.Record (prop)
 import Data.Map (Map)
-import Data.Maybe (Maybe(..), fromMaybe, isJust)
+import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
 import Data.Ord.Down (Down(..))
 import Data.Set (Set)
 import Data.Set as Set
@@ -19,13 +19,15 @@ import DOM.Simple.Console (log, log2)
 import DOM.Simple.Event as DE
 import Effect (Effect)
 import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 ------------------------------------------------------------------------
 import Gargantext.Prelude
-import Gargantext.Components.Category (caroussel)
-import Gargantext.Components.Category.Types (Category(..), decodeCategory)
+import Gargantext.Components.Category (caroussel, rating)
+import Gargantext.Components.Category.Types (Category(..), decodeCategory, Star(..), decodeStar)
 import Gargantext.Components.DocsTable.Types
+import Gargantext.Components.Table.Types as T
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Nodes.Texts.Types (SidePanelTriggers)
 import Gargantext.Components.Table as T
@@ -34,11 +36,12 @@ import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, sessionId, get, delete)
-import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), ReloadS, TableResult, TabSubType, TabType, showTabType')
+import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), TableResult, TabSubType, TabType, showTabType')
 import Gargantext.Utils (sortWith)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParamS, queryParam, queryParamS)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 
 thisModule :: String
 thisModule = "Gargantext.Components.DocsTable"
@@ -152,17 +155,17 @@ searchBar (query /\ setQuery) = R.createElement el {} []
     cpt {} _children = do
       queryText <- R.useState' query
 
-      pure $ H.div {className: "row"}
-        [ H.div {className: "col col-md-3"} []
-        , H.div {className: "col col-md-1"} [if query /= "" then clearButton else H.div {} []]
-        , H.div {className: "col col-md-3 form-group"}
+      pure $ H.div {className: "col-md-12 row"}
+        [ H.div {className: "col-md-3"} []
+        , H.div {className: "col-md-1"} [if query /= "" then clearButton else H.div {} []]
+        , H.div {className: "col-md-3 form-group"}
           [ H.input { type: "text"
                     , className: "form-control"
                     , on: {change: onSearchChange queryText, keyUp: onSearchKeyup queryText}
                     , placeholder: query
                     , defaultValue: query}
           ]
-        , H.div {className: "col col-md-1"} [searchButton queryText]
+        , H.div {className: "col-md-1"} [searchButton queryText]
         ]
 
     onSearchChange :: forall e. R.State Query -> e -> Effect Unit
@@ -178,14 +181,14 @@ searchBar (query /\ setQuery) = R.createElement el {} []
 
     searchButton (queryText /\ _) =
       H.button { type: "submit"
-               , className: "btn btn-default"
+               , className: "btn btn-primary"
                , on: {click: \e -> setQuery $ const queryText}}
-      [ H.span {className: "glyphicon glyphicon-search"} [] ]
+      [ H.span {className: "fa fa-search"} [] ]
 
     clearButton =
       H.button { className: "btn btn-danger"
                , on: {click: \e -> setQuery $ const ""}}
-      [ H.span {className: "glyphicon glyphicon-remove"} [] ]
+      [ H.span {className: "fa fa-times"} [] ]
 
 mock :: Boolean
 mock = false
@@ -215,12 +218,13 @@ convOrderBy _ = Nothing
 res2corpus :: Response -> DocumentsView
 res2corpus (Response r) =
   DocumentsView { _id : r.cid
-  , url    : ""
-  , date   : (\(Hyperdata hr) -> hr.pub_year) r.hyperdata
-  , title  : (\(Hyperdata hr) -> hr.title) r.hyperdata
-  , source : (\(Hyperdata hr) -> hr.source) r.hyperdata
-  , category : r.category
+  , category   : r.category
+  , date       : (\(Hyperdata hr) -> hr.pub_year) r.hyperdata
   , ngramCount : r.ngramCount
+  , score      : r.score
+  , source     : (\(Hyperdata hr) -> hr.source) r.hyperdata
+  , title      : (\(Hyperdata hr) -> hr.title) r.hyperdata
+  , url        : ""
 }
 
 filterDocs :: Query -> Array Response -> Array Response
@@ -271,10 +275,14 @@ pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt where
           , renderer: paint
           }
       (NT.CacheOff /\ _) -> do
-        localCategories <- R.useState' (mempty :: LocalCategories)
+        localCategories <- R.useState' (mempty :: LocalUserScore)
         paramsS <- R.useState' params
         let loader p = do
-              res <- get session $ tableRouteWithPage (p { params = fst paramsS, query = query })
+              let route = tableRouteWithPage (p { params = fst paramsS, query = query })
+              res <- get session $ route
+              liftEffect $ do
+                log2 "[pageLayout] table route" route
+                log2 "[pageLayout] table res" res
               pure $ handleResponse res
             render (Tuple count documents) = pagePaintRaw { documents
                                                           , layout: props { params = fst paramsS
@@ -311,7 +319,7 @@ pagePaintCpt :: R.Component PagePaintProps
 pagePaintCpt = R.hooksComponentWithModule thisModule "pagePaintCpt" cpt
   where
     cpt { documents, layout, params } _ = do
-      localCategories <- R.useState' (mempty :: LocalCategories)
+      localCategories <- R.useState' (mempty :: LocalUserScore)
       pure $ pagePaintRaw { documents: A.fromFoldable filteredRows
                           , layout
                           , localCategories
@@ -332,7 +340,7 @@ pagePaintCpt = R.hooksComponentWithModule thisModule "pagePaintCpt" cpt
 type PagePaintRawProps = (
     documents :: Array DocumentsView
   , layout :: Record PageLayoutProps
-  , localCategories :: R.State LocalCategories
+  , localCategories :: R.State LocalUserScore
   , params :: R.State T.Params
   )
 
@@ -355,7 +363,8 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
     reload <- R.useState' 0
 
     pure $ T.table
-      { colNames
+      { syncResetButton : [ H.div {} [] ]
+      , colNames
       , container: T.defaultContainer { title: "Documents" }
       , params
       , rows: rows reload localCategories
@@ -364,15 +373,15 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
       }
       where
         sid = sessionId session
-        gi Favorite  = "glyphicon glyphicon-star"
-        gi _ = "glyphicon glyphicon-star-empty"
-        trashClassName Trash _ = "trash"
+        gi Star_1  = "fa fa-star"
+        gi _ = "fa fa-star-empty"
+        trashClassName Star_0 _ = "trash"
         trashClassName _ true = "active"
         trashClassName _ false = ""
         corpusDocument
           | Just cid <- mCorpusId = Routes.CorpusDocument sid cid listId
           | otherwise = Routes.Document sid listId
-        colNames = T.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source"]
+        colNames = T.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source", "Score" ]
         wrapColElts = const identity
         getCategory (lc /\ _) {_id, category} = fromMaybe category (lc ^. at _id)
         rows reload lc@(_ /\ setLocalCategories) = row <$> A.toUnfoldable documents
@@ -380,9 +389,10 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
             row dv@(DocumentsView r) =
               { row:
                 T.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
-                            H.div { className: "column-tag flex" } [ docChooser { listId, mCorpusId, nodeId: r._id, selected, sidePanelTriggers, tableReload: reload } []
+                            H.div { className: "" } [ docChooser { listId, mCorpusId, nodeId: r._id, selected, sidePanelTriggers, tableReload: reload } []
                                                                    ]
-                          , H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
+                          --, H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
+                          , H.div { className: "column-tag flex" } [ rating { score: cat, nodeId, row: dv, session, setLocalCategories } [] ]
                 --, H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only
                 , H.div { className: tClassName } [ R2.showText r.date ]
@@ -390,11 +400,12 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
                    H.a { href: url frontends $ corpusDocument r._id, target: "_blank"} [ H.text r.title ]
                  ]
                 , H.div { className: tClassName } [ H.text $ if r.source == "" then "Source" else r.source ]
+                , H.div {} [ H.text $ maybe "-" show r.ngramCount ]
                 ]
               , delete: true }
               where
                 cat         = getCategory lc r
-                checked    = Trash == cat
+                checked    = Star_1 == cat
                 tClassName = trashClassName cat selected
                 className  = gi cat
                 selected   = R.readRef currentDocIdRef == Just r._id
@@ -405,7 +416,7 @@ type DocChooser = (
   , nodeId            :: NodeID
   , selected          :: Boolean
   , sidePanelTriggers :: Record SidePanelTriggers
-  , tableReload       :: ReloadS
+  , tableReload       :: GUR.ReloadS
   )
 
 docChooser :: R2.Component DocChooser
@@ -422,11 +433,11 @@ docChooserCpt = R.hooksComponentWithModule thisModule "docChooser" cpt
         , nodeId
         , selected
         , sidePanelTriggers: { triggerAnnotatedDocIdChange }
-        , tableReload: (_ /\ setReload) } _ = do
+        , tableReload } _ = do
 
       let eyeClass = if selected then "fa-eye" else "fa-eye-slash"
 
-      pure $ H.div { className: "doc-chooser" } [
+      pure $ H.div { className: "btn" } [
         H.span { className: "fa " <> eyeClass
                , on: { click: onClick } } []
       ]
@@ -436,7 +447,7 @@ docChooserCpt = R.hooksComponentWithModule thisModule "docChooser" cpt
           -- log2 "[docChooser] onClick, corpusId" corpusId
           -- log2 "[docChooser] onClick, nodeId" nodeId
           R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
-          setReload $ (_ + 1)
+          GUR.bump tableReload
 
 
 newtype SearchQuery = SearchQuery {

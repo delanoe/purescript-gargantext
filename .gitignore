@@ -30,3 +30,5 @@ bundle.js
 # docker
 /.bash_history
 /.lesshst
+/dist/js/**/*.map
+/dist/styles/**/*.map

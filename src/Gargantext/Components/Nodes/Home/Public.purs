@@ -116,27 +116,19 @@ publicLayoutCpt = R.hooksComponentWithModule thisModule "publicLayout" cpt
                      [ H.div { className:"container1"
                              , style: { marginBottom : "15px"}
                              }
-                             [ H.h2 {} [H.text "Public Maps"]
-                             , H.p { className: "lead text-muted"}
-                                   [ H.text "Discover maps made with "
-                                   , H.span {className: "fa fa-heart"} []
-                                   ]
-                             , H.div { className:"flex-space-around" }
-                                   [ H.button { className: "btn btn-primary my-2"
-                                              , on : { click }
-                                              , title: "Connect to the server"
-                                              } [ H.text "Join"
-                                                ]
-                                   ]
+                             [ H.h2 {} [ H.text "Discover knowledge"
+                                       , H.p { className: "lead text-muted center"}
+                                             [ H.text "maps made with "
+                                             , H.span {className: "fa fa-heart"} []
+                                             ]
+                                       ]
                              ]
                      ]
              -- | TODO browse maps
              -- | TODO random maps
              , album publicDatas
              ]
-        where
-          click _ = log "click!" *> (snd backend) (const $ Just publicBackend)
-                                 *> (snd visible) (const true)
+
 
 album :: Array PublicData -> R.Element
 album pds = H.div {className: "album py-5 bg-light"}
@@ -166,11 +158,11 @@ tableau (PublicData {title, abstract, img, url, date, database, author}) =
                         [ H.div { className: "btn-group" }
                                 [ 
 {- TODO
-                                H.button { className : "btn btn-default flex-between"
+                                H.button { className : "btn btn-primary flex-between"
                                            , href : url
                                            , role : "button"
                                            } [ H.text "View the map" ]
-                                , H.button { className : "btn btn-default flex-start"
+                                , H.button { className : "btn btn-primary flex-start"
                                            , href : url
                                            , role : "button"
                                            } [ H.text "More like this" ]

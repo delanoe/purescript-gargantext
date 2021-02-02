@@ -3,7 +3,6 @@ module Gargantext.Components.Forest.Tree.Node.Tools.SubTree where
 import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
-import Effect.Uncurried (mkEffectFn1)
 import Effect.Aff (Aff)
 import React.SyntheticEvent     as E
 import Reactix as R
@@ -19,8 +18,8 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
 import Gargantext.Types as GT
-import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Forest.Tree.Node.Tools.SubTree"
 
 type SubTreeParamsIn =

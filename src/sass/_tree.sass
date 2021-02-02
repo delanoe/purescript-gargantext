@@ -5,8 +5,15 @@ li
   .leaf
     display: flex
     flex-direction: row
+    color: #005a9aff
+
     .folder-icon
       padding: 0 2 0 2
+      cursor: pointer
+
+    .node-link
+      cursor: pointer
+
     a.settings
       cursor: pointer
       display: block
@@ -99,7 +106,6 @@ li
     margin-top: 1px
     &.node-type-valid
       .text
-        color: blue
         text-decoration: underline
 
 // based on https://codeburst.io/how-to-pure-css-pie-charts-w-css-variables-38287aea161e
@@ -147,3 +153,11 @@ li
     .children
       .node
         padding-left: 15px
+
+.panel-actions
+  .almost-useable
+    color: orange
+  .development-in-progress
+    color: red
+  .ok-to-use
+    color: black

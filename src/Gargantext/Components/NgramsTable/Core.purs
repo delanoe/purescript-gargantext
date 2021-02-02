@@ -6,10 +6,9 @@ module Gargantext.Components.NgramsTable.Core
   , NgramsRepoElement(..)
   , _NgramsRepoElement
   , ngramsRepoElementToNgramsElement
-  , NgramsPatch(..)
   , NgramsTable(..)
-  , NgramsTablePatch
   , NewElems
+  , NgramsPatch
   , NgramsPatches
   , _NgramsTable
   , NgramsTerm
@@ -19,9 +18,15 @@ module Gargantext.Components.NgramsTable.Core
   , findNgramTermList
   , Version
   , Versioned(..)
+  , Count
+  , VersionedWithCount(..)
+  , toVersioned
   , VersionedNgramsPatches
   , AsyncNgramsChartsUpdate
   , VersionedNgramsTable
+  , VersionedWithCountNgramsTable
+  , NgramsTablePatch
+  , NgramsPatch(..)
   , CoreState
   , highlightNgrams
   , initialPageParams
@@ -65,9 +70,11 @@ module Gargantext.Components.NgramsTable.Core
   , coreDispatch
   , isSingleNgramsTerm
   , filterTermSize
+
+  -- Reset Button TODO put elsewhere this file is too big
   , SyncResetButtonsProps
   , syncResetButtons
-  , syncResetButtonsCpt
+  , chartsAfterSync
   )
   where
 
@@ -113,7 +120,7 @@ import Data.Traversable (for, traverse_)
 import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
+import DOM.Simple.Console (log, log2)
 import Effect.Aff (Aff, launchAff_)
 import Effect (Effect)
 import Effect.Class (liftEffect)
@@ -126,17 +133,106 @@ import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
 
 import Gargantext.AsyncTasks as GAT
-import Gargantext.Components.Table as T
+import Gargantext.Components.Table       as T
+import Gargantext.Components.Table.Types as T
 import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, post, put)
 import Gargantext.Types (AsyncTaskType(..), AsyncTaskWithType(..), CTabNgramType(..), ListId, OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize(..))
 import Gargantext.Utils.KarpRabin (indicesOfAny)
+import Gargantext.Utils.Reload as GUR
 
 thisModule :: String
 thisModule = "Gargantext.Components.NgramsTable.Core"
 
 type Endo a = a -> a
+
+
+-- | Main Types
+type Version = Int
+
+newtype Versioned a = Versioned
+  { version :: Version
+  , data    :: a
+  }
+
+instance encodeJsonVersioned :: EncodeJson a => EncodeJson (Versioned a) where
+  encodeJson (Versioned {version, data: data_})
+     = "version" := version
+    ~> "data" := data_
+    ~> jsonEmptyObject
+
+instance decodeJsonVersioned :: DecodeJson a => DecodeJson (Versioned a) where
+  decodeJson json = do
+    obj     <- decodeJson json
+    version <- obj .: "version"
+    data_   <- obj .: "data"
+    pure $ Versioned {version, data: data_}
+------------------------------------------------------------------------
+type Count = Int
+
+newtype VersionedWithCount a = VersionedWithCount
+  { version :: Version
+  , count   :: Count
+  , data    :: a
+  }
+
+instance encodeJsonVersionedWithCount :: EncodeJson a => EncodeJson (VersionedWithCount a) where
+  encodeJson (VersionedWithCount {count, version, data: data_})
+     = "version" := version
+    ~> "count" := count
+    ~> "data" := data_
+    ~> jsonEmptyObject
+
+instance decodeJsonVersionedWithCount :: DecodeJson a => DecodeJson (VersionedWithCount a) where
+  decodeJson json = do
+    obj     <- decodeJson json
+    count   <- obj .: "count"
+    data_   <- obj .: "data"
+    version <- obj .: "version"
+    pure $ VersionedWithCount {count, version, data: data_}
+
+toVersioned :: forall a. VersionedWithCount a -> Tuple Count (Versioned a)
+toVersioned (VersionedWithCount { count, data: d, version }) = Tuple count $ Versioned { data: d, version }
+
+------------------------------------------------------------------------
+-- TODO replace by NgramsPatches directly
+type NgramsTablePatch = { ngramsPatches :: NgramsPatches }
+
+newtype PatchMap k p = PatchMap (Map k p)
+
+type NgramsPatches = PatchMap NgramsTerm NgramsPatch
+
+data NgramsPatch
+  = NgramsReplace
+      { patch_old :: Maybe NgramsRepoElement
+      , patch_new :: Maybe NgramsRepoElement
+      }
+  | NgramsPatch
+      { patch_children :: PatchSet NgramsTerm
+      , patch_list     :: Replace TermList
+      }
+
+------------------------------------------------------------------------
+newtype NgramsTerm = NormNgramsTerm String
+derive instance genericNgramsTerm :: Generic NgramsTerm _
+instance eqNgramsTerm  :: Eq NgramsTerm where
+  eq = genericEq
+instance ordNgramsTerm :: Ord NgramsTerm where
+  compare = genericCompare
+instance showNgramsTerm :: Show NgramsTerm where
+  show = genericShow
+
+instance encodeJsonNgramsTerm :: EncodeJson NgramsTerm where
+  encodeJson (NormNgramsTerm s) = encodeJson s
+
+-- TODO we assume that the ngrams are already normalized.
+instance decodeJsonNgramsTerm :: DecodeJson NgramsTerm where
+  decodeJson = map NormNgramsTerm <<< decodeJson
+
+
+
+------------------------------------------------------------------------
 
 type CoreParams s =
   { nodeId  :: Int
@@ -171,22 +267,8 @@ initialPageParams session nodeId listIds tabType =
   where
     params = T.initialParams { orderBy = Just (T.DESC $ T.ColumnName "Score") }
 
-newtype NgramsTerm = NormNgramsTerm String
 
-derive instance genericNgramsTerm :: Generic NgramsTerm _
-instance eqNgramsTerm  :: Eq NgramsTerm where
-  eq = genericEq
-instance ordNgramsTerm :: Ord NgramsTerm where
-  compare = genericCompare
-instance showNgramsTerm :: Show NgramsTerm where
-  show = genericShow
 
-instance encodeJsonNgramsTerm :: EncodeJson NgramsTerm where
-  encodeJson (NormNgramsTerm s) = encodeJson s
-
--- TODO we assume that the ngrams are already normalized.
-instance decodeJsonNgramsTerm :: DecodeJson NgramsTerm where
-  decodeJson = map NormNgramsTerm <<< decodeJson
 
 ngramsTermText :: NgramsTerm -> String
 ngramsTermText (NormNgramsTerm t) = t
@@ -341,26 +423,6 @@ ngramsRepoElementToNgramsElement ngrams occurrences (NgramsRepoElement { childre
   }
 
 -----------------------------------------------------------------------------------
-type Version = Int
-
-newtype Versioned a = Versioned
-  { version :: Version
-  , data    :: a
-  }
-
-instance encodeJsonVersioned :: EncodeJson a => EncodeJson (Versioned a) where
-  encodeJson (Versioned {version, data: data_})
-     = "version" := version
-    ~> "data" := data_
-    ~> jsonEmptyObject
-
-instance decodeJsonVersioned :: DecodeJson a => DecodeJson (Versioned a) where
-  decodeJson json = do
-    obj     <- decodeJson json
-    version <- obj .: "version"
-    data_   <- obj .: "data"
-    pure $ Versioned {version, data: data_}
-
 {-
   NgramsRepoElement does not have the occurrences field.
   Instead NgramsTable has a ngrams_scores map.
@@ -503,6 +565,7 @@ highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
 -----------------------------------------------------------------------------------
 
 type VersionedNgramsTable = Versioned NgramsTable
+type VersionedWithCountNgramsTable = VersionedWithCount NgramsTable
 
 -----------------------------------------------------------------------------------
 data Replace a
@@ -593,26 +656,12 @@ patchSetFromMap m = PatchSet { rem: Map.keys (Map.filter not m)
                              , add: Map.keys (Map.filter identity m) }
   -- TODO Map.partition would be nice here
 
-data NgramsPatch
-  = NgramsReplace
-      { patch_old :: Maybe NgramsRepoElement
-      , patch_new :: Maybe NgramsRepoElement
-      }
-  | NgramsPatch
-      { patch_children :: PatchSet NgramsTerm
-      , patch_list     :: Replace TermList
-      }
-
 -- TODO shall we normalise as in replace? shall we make a type class Replaceable?
 ngramsReplace :: Maybe NgramsRepoElement -> Maybe NgramsRepoElement -> NgramsPatch
 ngramsReplace patch_old patch_new = NgramsReplace {patch_old, patch_new}
 
 derive instance eqNgramsPatch  :: Eq NgramsPatch
 derive instance eqPatchSetNgramsTerm  :: Eq (PatchSet NgramsTerm)
-
--- TODO
-invert :: forall a. a -> a
-invert _ = unsafeThrow "invert: TODO"
 
 instance semigroupNgramsPatch :: Semigroup NgramsPatch where
   append (NgramsReplace p) (NgramsReplace q)
@@ -624,6 +673,13 @@ instance semigroupNgramsPatch :: Semigroup NgramsPatch where
     }
   append (NgramsPatch p) (NgramsReplace q) = ngramsReplace q.patch_old (q.patch_new # _Just <<< _Newtype %~ applyNgramsPatch' p)
   append (NgramsReplace p) (NgramsPatch q) = ngramsReplace (p.patch_old # _Just <<< _Newtype %~ applyNgramsPatch' (invert q)) p.patch_new
+
+-- TODO
+invert :: forall a. a -> a
+invert _ = unsafeThrow "invert: TODO"
+
+
+
 
 instance monoidNgramsPatch :: Monoid NgramsPatch where
   mempty = NgramsPatch { patch_children: mempty, patch_list: mempty }
@@ -670,7 +726,6 @@ applyNgramsPatch :: NgramsPatch -> Maybe NgramsRepoElement -> Maybe NgramsRepoEl
 applyNgramsPatch (NgramsReplace {patch_new}) _ = patch_new
 applyNgramsPatch (NgramsPatch p)           m = m # _Just <<< _Newtype %~ applyNgramsPatch' p
 
-newtype PatchMap k p = PatchMap (Map k p)
 
 fromMap :: forall k p. Ord k => Eq p => Monoid p => Map k p -> PatchMap k p
 fromMap = PatchMap <<< Map.filter (\v -> v /= mempty)
@@ -744,14 +799,20 @@ mergeMap f m1 m2 = Map.mapMaybeWithKey f (Map.unionWith g (This <$> m1) (That <$
     g x _ = x -- impossible
 
 applyPatchMap :: forall k p v. Ord k => (p -> Maybe v -> Maybe v) -> PatchMap k p -> Map k v -> Map k v
+{-
 applyPatchMap applyPatchValue (PatchMap pm) m = mergeMap f pm m
   where
     f _ (This pv)   = applyPatchValue pv Nothing
     f _ (That v)    = Just v
     f _ (Both pv v) = applyPatchValue pv (Just v)
+-}
+applyPatchMap applyPatchValue (PatchMap pm) m =
+    foldl go m (Map.toUnfoldable pm :: List (Tuple k p))
+  where
+    go m (Tuple k pv) = Map.alter (applyPatchValue pv) k m
 
-type NgramsPatches = PatchMap NgramsTerm NgramsPatch
 type VersionedNgramsPatches = Versioned NgramsPatches
+
 newtype AsyncNgramsChartsUpdate = AsyncNgramsChartsUpdate {
     listId  :: Maybe ListId
   , tabType :: TabType
@@ -764,9 +825,7 @@ instance encodeAsyncNgramsChartsUpdate :: EncodeJson AsyncNgramsChartsUpdate whe
 
 type NewElems = Map NgramsTerm TermList
 
--- TODO replace by NgramsPatches directly
-type NgramsTablePatch = { ngramsPatches :: NgramsPatches }
-
+----------------------------------------------------------------------------------
 isEmptyNgramsTablePatch :: NgramsTablePatch -> Boolean
 isEmptyNgramsTablePatch {ngramsPatches} = isEmptyPatchMap ngramsPatches
 
@@ -916,15 +975,6 @@ putNgramsPatches :: forall s. CoreParams s -> VersionedNgramsPatches -> Aff Vers
 putNgramsPatches { listIds, nodeId, session, tabType } = put session putNgrams
   where putNgrams = PutNgrams tabType (head listIds) Nothing (Just nodeId)
 
-postNgramsChartsAsync :: forall s. CoreParams s -> Aff AsyncTaskWithType
-postNgramsChartsAsync { listIds, nodeId, session, tabType } = do
-    task <- post session putNgramsAsync acu
-    pure $ AsyncTaskWithType { task, typ: UpdateNgramsCharts }
-  where
-    acu = AsyncNgramsChartsUpdate { listId: head listIds
-                                  , tabType }
-    putNgramsAsync = PostNgramsChartsAsync (Just nodeId)
-
 syncPatches :: forall p s. CoreParams p -> R.State (CoreState s) -> (Unit -> Aff Unit) -> Effect Unit
 syncPatches props ({ ngramsLocalPatch: ngramsLocalPatch@{ ngramsPatches }
                    , ngramsStagePatch
@@ -1068,10 +1118,13 @@ filterTermSize (Just MonoTerm)  nt = isSingleNgramsTerm nt
 filterTermSize (Just MultiTerm) nt = not $ isSingleNgramsTerm nt
 filterTermSize _                _  = true
 
+
+------------------------------------------------------------------------
+-- | Reset Button
 type SyncResetButtonsProps =
-  ( afterSync :: Unit -> Aff Unit
+  ( afterSync        :: Unit -> Aff Unit
   , ngramsLocalPatch :: NgramsTablePatch
-  , performAction :: CoreDispatch
+  , performAction    :: CoreDispatch
   )
 
 syncResetButtons :: Record SyncResetButtonsProps -> R.Element
@@ -1098,11 +1151,53 @@ syncResetButtonsCpt = R.hooksComponentWithModule thisModule "syncResetButtons" c
           afterSync x
           liftEffect $ setSynchronizing $ const false
 
-      pure $ H.div {} [
-        H.button { className: "btn btn-danger " <> hasChangesClass
-                 , on: { click: resetClick }
-                 } [ H.text "Reset" ]
-      , H.button { className: "btn btn-primary " <> hasChangesClass
+      pure $ H.div { className: "btn-toolbar" }
+        [ H.div { className: "btn-group mr-2" }
+          [ H.button { className: "btn btn-danger " <> hasChangesClass
+                     , on: { click: resetClick }
+                     } [ H.text "Reset" ]
+          ]
+        , H.div { className: "btn-group mr-2" }
+          [ H.button { className: "btn btn-primary " <> hasChangesClass
                  , on: { click: synchronizeClick }
                  } [ H.text "Sync" ]
+          ]
         ]
+
+
+type ResetButton = (Unit -> Aff Unit)
+               -> { ngramsPatches :: PatchMap NgramsTerm NgramsPatch }
+               -> (Action -> Effect Unit)
+               -> Array R.Element
+
+chartsAfterSync :: forall props discard.
+  { listIds :: Array Int
+  , nodeId  :: Int
+  , session :: Session
+  , tabType :: TabType
+  | props
+  }
+  -> R.Ref (Maybe GAT.Reductor)
+  -> Int
+  -> GUR.ReloadWithInitializeRef
+  -> discard
+  -> Aff Unit
+chartsAfterSync path' asyncTasksRef nodeId treeReloadRef _ = do
+  task <- postNgramsChartsAsync path'
+  liftEffect $ do
+    log2 "[chartsAfterSync] Synchronize task" task
+    case R.readRef asyncTasksRef of
+      Nothing -> log "[chartsAfterSync] asyncTasksRef is Nothing"
+      Just asyncTasks -> do
+        snd asyncTasks $ GAT.Insert nodeId task
+        GUR.bumpI treeReloadRef
+
+postNgramsChartsAsync :: forall s. CoreParams s -> Aff AsyncTaskWithType
+postNgramsChartsAsync { listIds, nodeId, session, tabType } = do
+    task <- post session putNgramsAsync acu
+    pure $ AsyncTaskWithType { task, typ: UpdateNgramsCharts }
+  where
+    acu = AsyncNgramsChartsUpdate { listId: head listIds
+                                  , tabType }
+    putNgramsAsync = PostNgramsChartsAsync (Just nodeId)
+

@@ -1,4 +1,4 @@
-module Gargantext.Prelude (module Prelude, logs, logExceptions, id, class Read, read)
+module Gargantext.Prelude (module Prelude, logs, logExceptions, id, class Read, read, xor)
   where
 
 import Data.Maybe (Maybe)
@@ -35,4 +35,7 @@ logExceptions message f x =
                              throwException e) do
       pure $ f x
 
-
+xor :: Boolean -> Boolean -> Boolean
+xor true false = true
+xor false true = true
+xor _      _   = false

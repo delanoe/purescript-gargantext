@@ -22,6 +22,8 @@
 
 .simple-layout
   height: 100%
+  .license
+    padding-top: 10px
   .spinner
     position: absolute
     left: 50%
@@ -30,14 +32,10 @@
 .table
   tr
     td
+      color: #005a9aff
       .active
         font-weight: bold
         text-decoration: underline
-      .column-tag
-        align-items: center
-        .doc-chooser
-          cursor: pointer
-          padding: 10px
       .ngrams-selector
         display: flex
         .ngrams-chooser
@@ -45,5 +43,31 @@
       .trash
         text-decoration: line-through
 
+.action-search
+  margin: 10px
+
 .context-menu
   position: fixed
+
+.search-bar
+  margin: 10px
+
+/* */
+.body
+  ul
+    li
+      color: #005a9aff
+    .nav
+      color: #005a9aff
+
+.btn-primary
+  color: white
+  background-color: #005a9aff
+  border-color: black
+
+
+ul
+  .nav
+    color: #005a9aff
+  li
+    color: #005a9aff

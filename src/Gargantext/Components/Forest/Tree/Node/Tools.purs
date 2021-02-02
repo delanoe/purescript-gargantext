@@ -21,7 +21,7 @@ import Gargantext.Ends (Frontends, url)
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (ID, Name)
 import Gargantext.Types as GT
-import Gargantext.Utils (toggleSet)
+import Gargantext.Utils (glyphicon, toggleSet)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.ReactTooltip as ReactTooltip
 
@@ -35,21 +35,22 @@ type Footer  = R.Element
 
 panel :: Body -> Footer -> R.Element
 panel bodies submit =
-  H.div {} [ panelBody bodies, footer submit ]
+  R.fragment [ panelBody, footer ]
     where
-      panelBody bs =
-          H.div {className: "panel-body"}
-          [ H.div { className: "row spacer" }
-                  [ H.div { className: "col-md-12" } bs
+      panelBody =
+          H.div { className: "card-body" }
+          [ H.div { className: "row" }
+                  [ H.div { className: "col-12" } bodies
                           -- TODO add type for text or form here
-                          -- [ H.form {className: "form-horizontal"} bs ]
+                          -- [ H.form {className: "form-horizontal"} bodies ]
                   ]
             ]
-      footer sb = 
-        H.div {className: "panel-footer"}
-            [ H.div {} []
-            , H.div { className: "center"} [ sb ]
-            ]
+      footer =
+        H.div {className: "card-footer"}
+          [ H.div { className: "row" }
+              [ H.div { className: "mx-auto"} [ submit ]
+              ]
+          ]
 
 
 ------------------------------------------------------------------------
@@ -63,58 +64,49 @@ type TextInputBoxProps =
   , boxAction :: String -> Action
   )
 
-textInputBox :: Record TextInputBoxProps -> R.Element
-textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen) } = R.createElement el p []
+textInputBox :: R2.Component TextInputBoxProps
+textInputBox = R.createElement textInputBoxCpt
+
+textInputBoxCpt :: R.Component TextInputBoxProps
+textInputBoxCpt = R.hooksComponentWithModule thisModule "textInputBox" cpt
   where
-    el = R.hooksComponentWithModule thisModule (boxName <> "Box") cpt
-    cpt {id, text} _ = do
-      renameNodeName <- R.useState' text
-      pure $ H.div {className: "from-group row-no-padding"}
-        [ textInput renameNodeName
-        , submitBtn renameNodeName
+    cpt p@{ boxAction, boxName, dispatch, id, isOpen: (true /\ setIsOpen), text } _ = do
+      renameNodeNameRef <- R.useRef text
+
+      pure $ H.div { className: "from-group row" }
+        [ textInput renameNodeNameRef
+        , submitBtn renameNodeNameRef
         , cancelBtn
         ]
       where
-        textInput (newName /\ setNewName) =
-          H.div {className: "col-md-8"}
-          [
-            inputWithEnter {
-                 onEnter: submit newName
-               , onValueChanged: setNewName <<< const
-               , autoFocus: false
+        textInput renameNodeNameRef =
+          H.div { className: "col-8" }
+            [ inputWithEnter {
+                 onEnter: submit renameNodeNameRef
+               , onValueChanged: R.setRef renameNodeNameRef
+               , autoFocus: true
                , className: "form-control"
                , defaultValue: text
                , placeholder: (boxName <> " Node")
                , type: "text"
                }
-          -- [ H.input { type: "text"
-          --           , placeholder: (boxName <> " Node")
-          --           , defaultValue: text
-          --           , className: "form-control"
-          --           , on: { input: setRenameNodeName
-          --                      <<< const
-          --                      <<< R.unsafeEventValue }
-          --           }
-          ]
-        submitBtn (newName /\ _) =
-          H.a {className: "btn glyphitem glyphicon glyphicon-ok col-md-2 pull-left"
+            ]
+        submitBtn renameNodeNameRef =
+          H.a { className: "col-2 " <> glyphicon "floppy-o"
               , type: "button"
-              , on: { click: submit newName }
+              , on: { click: submit renameNodeNameRef }
               , title: "Submit"
               } []
         cancelBtn =
-          H.a {className: "btn text-danger glyphitem glyphicon glyphicon-remove col-md-2 pull-left"
+          H.a { className: "text-danger col-2 " <> glyphicon "times"
               , type: "button"
               , on: { click: \_ -> setIsOpen $ const false }
               , title: "Cancel"
               } []
-        submit newName _ = do
+        submit renameNodeNameRef _ = do
+          launchAff_ $ dispatch ( boxAction $ R.readRef renameNodeNameRef )
           setIsOpen $ const false
-          launchAff_ $ dispatch ( boxAction newName )
-textInputBox p@{ boxName, isOpen: (false /\ _) } = R.createElement el p []
-  where
-    el = R.hooksComponentWithModule thisModule (boxName <> "Box") cpt
-    cpt {text} _ = pure $ H.div {} []
+    cpt { isOpen: (false /\ _) } _ = pure $ H.div {} []
 
 -- | END Rename Box
 
@@ -207,7 +199,6 @@ submitButton :: Action -> (Action -> Aff Unit) -> R.Element
 submitButton action dispatch =
   H.button { className : "btn btn-primary fa fa-" <> icon action
            , type: "button"
-           , style : { width: "50%" }
            , id: S.toLower $ show action
            , title: show action
            , on: {click: \_ -> launchAff $ dispatch action}
@@ -219,7 +210,6 @@ type Href  = String
 submitButtonHref :: Action -> Href -> R.Element
 submitButtonHref action href =
   H.a { className : "btn btn-primary fa fa-" <> icon action
-      , style : { width: "50%" }
       , href
       , target: "_blank"
       }
@@ -232,10 +222,9 @@ submitButtonHref action href =
 
 checkbox :: R.State Boolean -> R.Element
 checkbox ( val /\ set ) =
-  H.input { id: "checkbox-id"
+  H.input { className : "form-check-input"
           , type: "checkbox"
           , value: val
-          , className : "checkbox"
           , on: { click: \_ -> set $ const $ not val}
           }
 
@@ -248,18 +237,38 @@ checkboxes :: forall a
            -> R.State (Set a)
            -> R.Element
 checkboxes xs (val /\ set) =
-  H.fieldset {} $ map (
-    \a -> H.div {} [
-      H.input { type: "checkbox"
-              , checked: Set.member a val
-              , on: { click: \_ -> set
-                                   $ const
-                                   $ toggleSet a val
-                    }
-              }
-      , H.div {} [H.text $ show a]
-      ]
-    ) xs
+  H.fieldset {} $ map (\a -> H.div {} [ H.input { type: "checkbox"
+                                           , defaultChecked: Set.member a val
+                                           , on: { click: \_ -> set
+                                                             $ const
+                                                             $ toggleSet a val
+                                                 }
+                                           }
+                                 , H.div {} [H.text $ show a]
+                                 ]
+                  ) xs
+
+checkboxesListGroup :: forall a
+           .  Ord   a
+           => Show  a
+           => Array a
+           -> R.State (Set a)
+           -> Array R.Element
+checkboxesListGroup xs (val /\ set) =
+  map (\a -> H.li { className: "list-group-item" }
+             [ H.div { className: "form-check" }
+               [ H.input { type: "checkbox"
+                         , className: "form-check-input"
+                         , defaultChecked: Set.member a val
+                         , on: { click: \_ -> set
+                                            $ const
+                                            $ toggleSet a val
+                             }
+                       }
+               , H.label { className: "form-check-label" } [ H.text $ show a ]
+               ]
+             ]
+      ) xs
 
 
 
@@ -275,8 +284,8 @@ type NodeLinkProps = (
   , handed     :: GT.Handed
   )
 
-nodeLink :: Record NodeLinkProps -> R.Element
-nodeLink p = R.createElement nodeLinkCpt p []
+nodeLink :: R2.Component NodeLinkProps
+nodeLink = R.createElement nodeLinkCpt
 
 nodeLinkCpt :: R.Component NodeLinkProps
 nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
@@ -293,7 +302,8 @@ nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
       popoverRef <- R.useRef null
 
       pure $
-        H.div { on: { click: onClick } }
+        H.div { className: "node-link"
+              , on: { click: onClick } }
               [ H.a { data: { for: tooltipId
                             , tip: true
                             }
@@ -313,11 +323,12 @@ nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
 
       where
         -- NOTE Don't toggle tree if it is not selected
-        -- This prevents some irritating behaviour
+        -- click on closed -> open
+        -- click on open   -> ?
         onClick _ = if isSelected then
-                      setFolderOpen not
+                      setFolderOpen (const true)
                     else
-                      pure unit
+                      setFolderOpen (const true)
         tooltipId = "node-link-" <> show id
 -- END node link
 

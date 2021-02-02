@@ -1,82 +1,29 @@
 module Gargantext.Components.Table where
 
-import Prelude
 import Data.Array as A
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
+import Gargantext.Prelude
+
+import Gargantext.Components.Table.Types (ColumnName, OrderBy, OrderByDirection(..), Params, Props, TableContainerProps, columnName)
 import Gargantext.Components.Nodes.Lists.Types as NT
-import Gargantext.Components.Search
+import Gargantext.Components.Search (SearchType(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reactix (effectLink)
 
 thisModule :: String
 thisModule = "Gargantext.Components.Table"
 
-type TableContainerProps =
-  ( pageSizeControl     :: R.Element
-  , pageSizeDescription :: R.Element
-  , paginationLinks     :: R.Element
-  , tableHead           :: R.Element
-  , tableBody           :: Array R.Element
-  )
-
-type Row = { row :: R.Element, delete :: Boolean }
-type Rows = Seq.Seq Row
-
-type OrderBy = Maybe (OrderByDirection ColumnName)
-
-type Params = { limit      :: Int
-              , offset     :: Int
-              , orderBy    :: OrderBy
-              , searchType :: SearchType
-              }
-
-newtype ColumnName = ColumnName String
-
-derive instance genericColumnName :: Generic ColumnName _
-
-instance showColumnName :: Show ColumnName where
-  show = genericShow
-
-derive instance eqColumnName :: Eq ColumnName
-
-columnName :: ColumnName -> String
-columnName (ColumnName c) = c
-
-data OrderByDirection a = ASC a | DESC a
-
-derive instance genericOrderByDirection :: Generic (OrderByDirection a) _
-
-instance showOrderByDirection :: Show a => Show (OrderByDirection a) where
-  show = genericShow
-
-derive instance eqOrderByDirection :: Eq a => Eq (OrderByDirection a)
-
-orderByToForm :: OrderByDirection ColumnName -> String
-orderByToForm (ASC (ColumnName x)) = x <> "Asc"
-orderByToForm (DESC (ColumnName x)) = x <> "Desc"
-
-type Props =
-  ( colNames     :: Array ColumnName
-  , container    :: Record TableContainerProps -> R.Element
-  , params       :: R.State Params
-  , rows         :: Rows
-  , totalRecords :: Int
-  , wrapColElts  :: ColumnName -> Array R.Element -> Array R.Element
-                 -- ^ Use `const identity` as a default behavior.
-  )
+type Page = Int
 
 type State =
-  { page       :: Int
+  { page       :: Page
   , pageSize   :: PageSizes
   , orderBy    :: OrderBy
   , searchType :: SearchType
@@ -111,7 +58,6 @@ initialParams = stateParams {page: 1, pageSize: PS10, orderBy: Nothing, searchTy
 
 tableHeaderLayout :: Record TableHeaderLayoutProps -> R.Element
 tableHeaderLayout props = R.createElement tableHeaderLayoutCpt props []
-
 tableHeaderLayoutCpt :: R.Component TableHeaderLayoutProps
 tableHeaderLayoutCpt = R.hooksComponentWithModule thisModule "tableHeaderLayout" cpt
   where
@@ -123,31 +69,29 @@ tableHeaderLayoutCpt = R.hooksComponentWithModule thisModule "tableHeaderLayout"
           [ H.hr {style: {height: "2px", backgroundColor: "black"}} ]
         ]
       , R2.row
-        [ H.div {className: "jumbotron1", style: {padding: "12px 0px 20px 12px"}}
-          [ H.div {className: "col-md-8 content"}
-            [ H.p {}
-              [ H.span {className: "fa fa-globe"} []
-              , H.text $ " " <> desc
-              ]
-            , H.p {}
-              [ H.span {className: "fa fa-search-plus"} []
-              , H.text $ " " <> query
-              ]
-            , H.p { className: "cache-toggle"
-                  , on: { click: cacheClick cacheState afterCacheStateChange } }
-              [ H.span { className: "fa " <> (cacheToggle cacheState) } []
-              , H.text $ cacheText cacheState
-              ]
+        [ H.div {className: "col-md-8 content"}
+          [ H.p {}
+            [ H.span {className: "fa fa-globe"} []
+            , H.text $ " " <> desc
             ]
-          , H.div {className: "col-md-4 content"}
-            [ H.p {}
-              [ H.span {className: "fa fa-calendar"} []
-              , H.text $ " " <> date
-              ]
-            , H.p {}
-              [ H.span {className: "fa fa-user"} []
-              , H.text $ " " <> user
-              ]
+          , H.p {}
+            [ H.span {className: "fa fa-search-plus"} []
+            , H.text $ " " <> query
+            ]
+          , H.p { className: "cache-toggle"
+                , on: { click: cacheClick cacheState afterCacheStateChange } }
+            [ H.span { className: "fa " <> (cacheToggle cacheState) } []
+            , H.text $ cacheText cacheState
+            ]
+          ]
+        , H.div {className: "col-md-4 content"}
+          [ H.p {}
+            [ H.span {className: "fa fa-calendar"} []
+            , H.text $ " " <> date
+            ]
+          , H.p {}
+            [ H.span {className: "fa fa-user"} []
+            , H.text $ " " <> user
             ]
           ]
         ]
@@ -170,11 +114,10 @@ tableHeaderLayoutCpt = R.hooksComponentWithModule thisModule "tableHeaderLayout"
   
 table :: Record Props -> R.Element
 table props = R.createElement tableCpt props []
-
 tableCpt :: R.Component Props
 tableCpt = R.hooksComponentWithModule thisModule "table" cpt
   where
-    cpt {container, colNames, wrapColElts, totalRecords, rows, params} _ = do
+    cpt {container, syncResetButton, colNames, wrapColElts, totalRecords, rows, params} _ = do
       let
         state = paramsState $ fst params
         ps = pageSizes2Int state.pageSize
@@ -187,11 +130,12 @@ tableCpt = R.hooksComponentWithModule thisModule "table" cpt
             cs =
               wrapColElts c $
               case state.orderBy of
-                Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "ASC ", lnk Nothing (columnName c)]
-                Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "DESC ",  lnk Nothing (columnName c)]
+                Just (ASC d)  | c == d -> [lnk (Just (DESC c)) "ASC " , lnk Nothing (columnName c)]
+                Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "DESC ", lnk Nothing (columnName c)]
                 _ -> [lnk (Just (ASC c)) (columnName c)]
       pure $ container
-        { pageSizeControl: sizeDD { params }
+        { syncResetButton
+        , pageSizeControl: sizeDD { params }
         , pageSizeDescription: textDescription state.page state.pageSize totalRecords
         , paginationLinks: pagination params totalPages
         , tableBody: map _.row $ A.fromFoldable rows
@@ -213,24 +157,27 @@ filterRows { params: { limit, offset, orderBy } } rs = newRs
     newRs = Seq.take limit $ Seq.drop offset $ rs
 
 defaultContainer :: {title :: String} -> Record TableContainerProps -> R.Element
-defaultContainer {title} props = R.fragment
-  [ R2.row
-    [ H.div {className: "col-md-4"} [ props.pageSizeDescription ]
-    , H.div {className: "col-md-4"} [ props.paginationLinks ]
-    , H.div {className: "col-md-4"} [ props.pageSizeControl ]
-    ]
-  , H.table {className: "table"}
-    [ H.thead {className: "thead-dark"} [ props.tableHead ]
-    , H.tbody {} props.tableBody
-    ]
-  ]
+defaultContainer {title} props = R.fragment $ props.syncResetButton <> controls
+  where
+    controls = [ R2.row
+                 [ H.div {className: "col-md-4"} [ props.pageSizeDescription ]
+                 , H.div {className: "col-md-4"} [ props.paginationLinks ]
+                 , H.div {className: "col-md-4"} [ props.pageSizeControl ]
+                 ]
+               , R2.row [
+                   H.table {className: "col-md-12 table"}
+                   [ H.thead {className: ""} [ props.tableHead ]
+                   , H.tbody {} props.tableBody
+                   ]
+                 ]
+               ]
 
 -- TODO: this needs to be in Gargantext.Pages.Corpus.Graph.Tabs
 graphContainer :: {title :: String} -> Record TableContainerProps -> R.Element
 graphContainer {title} props =
   -- TODO title in tabs name (above)
   H.table {className: "table"}
-  [ H.thead {className: "thead-dark"} [ props.tableHead ]
+  [ H.thead {className: ""} [ props.tableHead ]
   , H.tbody {} props.tableBody
   ]
    -- TODO better rendering of the paginationLinks
@@ -272,8 +219,12 @@ textDescription currPage pageSize totalRecords =
     end  = if end' > totalRecords then totalRecords else end'
     msg = "Showing " <> show start <> " to " <> show end <> " of " <> show totalRecords
 
+changePage :: Page -> R.State Params -> Effect Unit
+changePage page (_ /\ setParams) =
+  setParams $ \p -> stateParams $ (paramsState p) { page = page }
+
 pagination :: R.State Params -> Int -> R.Element
-pagination (params /\ setParams) tp =
+pagination p@(params /\ setParams) tp =
   H.span {} $
     [ H.text " ", prev, first, ldots]
     <>
@@ -286,7 +237,6 @@ pagination (params /\ setParams) tp =
     [ rdots, last, next ]
     where
       {page} = paramsState params
-      changePage page = setParams $ \p -> stateParams $ (paramsState p) { page = page }
       prev = if page == 1 then
                H.text " Prev. "
              else
@@ -318,7 +268,7 @@ pagination (params /\ setParams) tp =
       changePageLink i s =
         H.span {}
           [ H.text " "
-          , effectLink (changePage i) s
+          , effectLink (changePage i p) s
           , H.text " "
           ]
 
@@ -356,3 +306,11 @@ string2PageSize "50" = PS50
 string2PageSize "100" = PS100
 string2PageSize "200" = PS200
 string2PageSize _    = PS10
+
+
+
+
+
+
+
+

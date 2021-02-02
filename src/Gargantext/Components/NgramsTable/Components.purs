@@ -17,12 +17,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
-import Gargantext.Components.NgramsTable.Core ( Action(..), Dispatch, NgramsElement, NgramsPatch(..)
-                                              , NgramsTable, NgramsTablePatch, NgramsTerm, Replace
-                                              , _NgramsElement, _NgramsRepoElement, _PatchMap, _children
-                                              , _list, _ngrams, _occurrences, ngramsTermText, replace
-                                              , singletonNgramsTablePatch, setTermListA
-                                              )
+import Gargantext.Components.NgramsTable.Core
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as Tbl
 import Gargantext.Types as T
@@ -30,10 +25,8 @@ import Gargantext.Utils.Reactix as R2
 
 thisModule = "Gargantext.Components.NgramsTable.Components"
 
-
 type SearchInputProps =
-  (
-    key :: String  -- to prevent refreshing & losing input
+  ( key :: String  -- to prevent refreshing & losing input
   , onSearch :: String -> Effect Unit
   , searchQuery :: String
   )
@@ -44,23 +37,39 @@ searchInput props = R.createElement searchInputCpt props []
 searchInputCpt :: R.Component SearchInputProps
 searchInputCpt = R.hooksComponentWithModule thisModule "searchInput" cpt
   where
-    cpt { onSearch, searchQuery } _ = do
-      pure $ H.div { className: "input-group" } [
-        H.div { className: "input-group-addon" } [
-           H.span { className: "fa fa-search" } []
-         ]
-      , H.input { className: "form-control"
-                , defaultValue: searchQuery
-                , name: "search"
-                , on: { input: onSearch <<< R.unsafeEventValue }
-                , placeholder: "Search"
-                , type: "value" }
+    cpt { onSearch, searchQuery } _ = 
+      pure $ R2.row [
+        H.div { className: "col-12" } [
+          H.div { className: "input-group" } [
+            searchButton
+            , fieldInput
+            ]
+          ]
         ]
+        where
+          searchButton = 
+            H.div { className: "input-group-prepend" }
+                  [
+                   if searchQuery /= ""
+                       then removeButton
+                       else H.span { className: "fa fa-search input-group-text" } []
+                  ]
+          removeButton =
+            H.button { className: "btn btn-danger"
+                     , on: {click: \e -> onSearch ""}}
+                     [ H.span {className: "fa fa-times"} []]
 
+          fieldInput  = 
+            H.input { className: "form-control"
+                    , defaultValue: searchQuery
+                    , name: "search"
+                    , on: { input: onSearch <<< R.unsafeEventValue }
+                    , placeholder: "Search"
+                    , type: "value"
+                    }
 
 type SelectionCheckboxProps =
-  (
-    allNgramsSelected :: Boolean
+  ( allNgramsSelected :: Boolean
   , dispatch          :: Dispatch
   , ngramsSelection   :: Set NgramsTerm
   )
@@ -106,7 +115,7 @@ renderNgramsTree p = R.createElement renderNgramsTreeCpt p []
 renderNgramsTreeCpt :: R.Component RenderNgramsTree
 renderNgramsTreeCpt = R.hooksComponentWithModule thisModule "renderNgramsTree" cpt
   where
-    cpt { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit } _ =
+    cpt { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit} _ =
       pure $ H.ul {} [
         H.span { className: "tree" } [
           H.span { className: "righthanded" } [
@@ -124,13 +133,26 @@ renderNgramsTreeCpt = R.hooksComponentWithModule thisModule "renderNgramsTree" c
 type NgramsDepth = {ngrams :: NgramsTerm, depth :: Int}
 type NgramsClick = NgramsDepth -> Maybe (Effect Unit)
 
-type TreeProps =
-  (
-    ngramsClick :: NgramsClick
+type TagProps =
+  ( ngramsClick :: NgramsClick
   , ngramsDepth :: NgramsDepth
-  , ngramsEdit  :: NgramsClick
   , ngramsStyle :: Array DOM.Props
+  )
+
+{- TODO refactor here
+-- tag :: TagProps -> Array R.Element -> R.Element
+tag tagProps =
+  case tagProps.ngramsClick tagProps.ngramsDepth of
+    Just effect ->
+      a (tagProps.ngramsStyle <> [DOM.onClick $ const effect])
+    Nothing ->
+      span tagProps.ngramsStyle
+-}
+
+type TreeProps =
+  ( ngramsEdit  :: NgramsClick
   , ngramsTable :: NgramsTable
+  | TagProps
   )
 
 tree :: Record TreeProps -> R.Element
@@ -145,7 +167,8 @@ treeCpt = R.hooksComponentWithModule thisModule "tree" cpt
           ([ H.i { className, style } [] ]
            <> [ R2.buff $ tag [ text $ " " <> ngramsTermText ngramsDepth.ngrams ] ]
            <> maybe [] edit (ngramsEdit ngramsDepth)
-           <> [ forest cs ])
+           <> [ forest cs ]
+          )
       where
         tag =
           case ngramsClick ngramsDepth of
@@ -154,11 +177,11 @@ treeCpt = R.hooksComponentWithModule thisModule "tree" cpt
             Nothing ->
               span ngramsStyle
         edit effect = [ H.text " "
-                      , H.i { className: "glyphicon glyphicon-pencil"
+                      , H.i { className: "fa fa-pencil"
                             , on: { click: const effect } } []
                       ]
         leaf = L.null cs
-        className = "glyphicon glyphicon-chevron-" <> if open then "down" else "right"
+        className = "fa fa-chevron-" <> if open then "down" else "right"
         style = if leaf then {color: "#adb5bd"} else {color: ""}
         open = not leaf || false {- TODO -}
         cs   = ngramsTable ^.. ix ngramsDepth.ngrams <<< _NgramsRepoElement <<< _children <<< folded
@@ -206,18 +229,23 @@ renderNgramsItemCpt = R.hooksComponentWithModule thisModule "renderNgramsItem" c
         , selected
         , checkbox T.MapTerm
         , checkbox T.StopTerm
-        , H.div {} [
-          if ngramsParent == Nothing
-            then renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit }
-            else
-              H.a { on: { click: const $ dispatch $ ToggleChild true ngrams } } [
-                  H.i { className: "glyphicon glyphicon-plus" } []
-                , (R2.buff $ span ngramsStyle [text $ " " <> ngramsTermText ngrams])
-              ]
-        ]
+        , H.div {} ( if ngramsParent == Nothing
+                       then [renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit }]
+                       else [H.a { on: { click: const $ dispatch $ ToggleChild true ngrams } }
+                                 [ H.i { className: "fa fa-plus" } []]
+                            , R2.buff $ tag [ text $ " " <> ngramsTermText ngramsDepth.ngrams ]
+                            ]
+                   )
         , H.text $ show (ngramsElement ^. _NgramsElement <<< _occurrences)
       ]
       where
+        ngramsDepth= {ngrams, depth: 0 }
+        tag =
+          case ngramsClick ngramsDepth of
+            Just effect ->
+              a (ngramsStyle <> [DOM.onClick $ const effect])
+            Nothing ->
+              span ngramsStyle
         onClick _ = do
           R2.callTrigger toggleSidePanel unit
         termList    = ngramsElement ^. _NgramsElement <<< _list
