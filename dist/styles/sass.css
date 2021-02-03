@@ -532,18 +532,6 @@ li .leaf:hover a.settings {
   color: black;
 }
 
-.code-editor-heading {
-  /* .buttons-right */
-  /*   display: flex */
-  /*   justify-content: flex-end */
-}
-.code-editor-heading .renameable {
-  flex-grow: 2;
-}
-.code-editor-heading .renameable .text {
-  padding-right: 10px;
-}
-
 .code-editor .editor .code-area {
   flex-grow: 1;
   max-height: 200px;
