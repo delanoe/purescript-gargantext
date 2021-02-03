@@ -11,7 +11,8 @@ thisModule :: String
 thisModule = "Gargantext.Components.InputWithEnter"
 
 type Props a = (
-    onEnter :: Unit -> Effect Unit
+    onBlur :: String -> Effect Unit
+  , onEnter :: Unit -> Effect Unit
   , onValueChanged :: String -> Effect Unit
 
   , autoFocus :: Boolean
@@ -27,9 +28,10 @@ inputWithEnter props = R.createElement inputWithEnterCpt props []
 inputWithEnterCpt :: forall a. R.Component (Props a)
 inputWithEnterCpt = R.hooksComponentWithModule thisModule "inputWithEnter" cpt
   where
-    cpt props@{ onEnter, onValueChanged
+    cpt props@{ onBlur, onEnter, onValueChanged
               , autoFocus, className, defaultValue, placeholder } _ = do
-      pure $ H.input { on: { input: onInput
+      pure $ H.input { on: { blur: onBlur'
+                           , input: onInput
                            , keyPress: onKeyPress }
                      , autoFocus
                      , className
@@ -38,6 +40,7 @@ inputWithEnterCpt = R.hooksComponentWithModule thisModule "inputWithEnter" cpt
                      , type: props.type }
 
       where
+        onBlur' e = onBlur $ R.unsafeEventValue e
         onInput e = onValueChanged $ R.unsafeEventValue e
 
         onKeyPress e = do
