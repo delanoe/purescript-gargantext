@@ -82,7 +82,8 @@ textInputBoxCpt = R.hooksComponentWithModule thisModule "textInputBox" cpt
         textInput renameNodeNameRef =
           H.div { className: "col-8" }
             [ inputWithEnter {
-                 onEnter: submit renameNodeNameRef
+                 onBlur: R.setRef renameNodeNameRef
+               , onEnter: submit renameNodeNameRef
                , onValueChanged: R.setRef renameNodeNameRef
                , autoFocus: true
                , className: "form-control"
