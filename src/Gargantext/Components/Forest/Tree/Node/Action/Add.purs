@@ -72,8 +72,11 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
 
       let
           SettingsBox {edit} = settingsBox nt
+          setNodeType' nt = do
+            setNodeName $ const $ GT.prettyNodeType nt
+            setNodeType $ const nt
           (maybeChoose /\ nt') = if length nodeTypes > 1
-                           then ([ formChoiceSafe nodeTypes Error setNodeType ] /\ nt)
+                           then ([ formChoiceSafe nodeTypes Error setNodeType' ] /\ nt)
                            else ([H.div {} [H.text $ "Creating a node of type "
                                                   <> show defaultNt
                                                   <> " with name:"
