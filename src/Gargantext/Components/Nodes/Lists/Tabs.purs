@@ -21,6 +21,7 @@ import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
 import Gargantext.Components.Nodes.Corpus.Chart (getChartFunction)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils (mNgramsTypeFromTabType)
 import Gargantext.Components.Nodes.Lists.Types
+import Gargantext.Components.Search as S
 import Gargantext.Components.Tab as Tab
 import Gargantext.Sessions (Session)
 import Gargantext.Types (ChartType(..), CTabNgramType(..), Mode(..), TabSubType(..), TabType(..), chartTypeFromString, modeTabType)
@@ -77,12 +78,12 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
                                , mode
                                , session
                                , sidePanelTriggers
-                               , treeReloadRef }
+                               , treeReloadRef } []
 
 type NgramsViewProps = ( mode :: Mode | Props )
 
-ngramsView :: Record NgramsViewProps -> R.Element
-ngramsView props = R.createElement ngramsViewCpt props []
+ngramsView :: R2.Component NgramsViewProps
+ngramsView = R.createElement ngramsViewCpt
 
 ngramsViewCpt :: R.Component NgramsViewProps
 ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
@@ -100,19 +101,12 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
 
       chartType <- R.useState' Histo
       chartsReload <- GUR.new
-      pathS <- R.useState' $ NTC.initialPageParams session initialPath.corpusId [initialPath.listId] initialPath.tabType
-      let listId' = fromMaybe defaultListId $ A.head (fst pathS).listIds
-      let path = {
-          corpusId: (fst pathS).nodeId
-        , limit: (fst pathS).params.limit
-        , listId: listId'
-        , tabType: (fst pathS).tabType
-        }
+      let path = NTC.initialPageParams session corpusId [listId] tabType
       let chartParams = {
-          corpusId: path.corpusId
-        , limit: Just path.limit
-        , listId: path.listId
-        , tabType: path.tabType
+          corpusId
+        , limit: Just path.params.limit
+        , listId
+        , tabType
         }
 
       pure $ R.fragment
@@ -122,12 +116,9 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
                                 , asyncTasksRef
                                 , cacheState
                                 , defaultListId
-                                , nodeId: corpusId
-                                , pathS
-                                , session
+                                , path
                                 , sidePanelTriggers
                                 , tabNgramType
-                                , tabType
                                 , treeReloadRef
                                 , withAutoUpdate: false
                                 } []

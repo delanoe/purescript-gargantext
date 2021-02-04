@@ -157,7 +157,7 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
         , session
         , sidePanelTriggers
         , treeReloadRef } _ = do
-      pathS <- R.useState' $ NTC.initialPageParams session nodeId [defaultListId] (TabDocument TabDocs)
+      let path = NTC.initialPageParams session nodeId [defaultListId] (TabDocument TabDocs)
 
       pure $ NT.mainNgramsTable {
           appReload
@@ -165,10 +165,7 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
         , asyncTasksRef
         , cacheState
         , defaultListId
-        , nodeId
-        , pathS
-        , tabType
-        , session
+        , path
         , sidePanelTriggers
         , tabNgramType
         , treeReloadRef

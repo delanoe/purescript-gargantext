@@ -513,11 +513,8 @@ selectNgramsOnFirstPage rows = Set.fromFoldable $ (view $ _NgramsElement <<< _ng
 type MainNgramsTableProps = (
     cacheState        :: R.State NT.CacheState
   , defaultListId     :: Int
-  , nodeId            :: Int
     -- ^ This node can be a corpus or contact.
-  , pathS             :: R.State PageParams
-  , session           :: Session
-  , tabType           :: TabType
+  , path              :: PageParams
   | CommonProps
   )
 
@@ -531,12 +528,9 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
               , asyncTasksRef
               , cacheState
               , defaultListId
-              , nodeId
-              , pathS
-              , session
+              , path
               , sidePanelTriggers
               , tabNgramType
-              , tabType
               , treeReloadRef
               , withAutoUpdate } _ = do
 
@@ -548,7 +542,7 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
                                                       , appReload
                                                       , asyncTasksRef
                                                       , cacheState: fst cacheState
-                                                      , path: fst pathS
+                                                      , path
                                                       , sidePanelTriggers
                                                       , tabNgramType
                                                       , treeReloadRef
@@ -558,11 +552,11 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
               cacheEndpoint: versionEndpoint props
             , handleResponse
             , mkRequest
-            , path: fst pathS
+            , path
             , renderer: render
             }
         (NT.CacheOff /\ _) -> do
-          -- pathS <- R.useState' path
+          pathS <- R.useState' path
           let render versionedWithCount = mainNgramsTablePaintNoCache { afterSync
                                                                       , appReload
                                                                       , asyncTasksRef
@@ -577,7 +571,7 @@ mainNgramsTableCpt = R.hooksComponentWithModule thisModule "mainNgramsTable" cpt
 
     -- NOTE With cache on
     versionEndpoint :: Record MainNgramsTableProps -> PageParams -> Aff Version
-    versionEndpoint { defaultListId, nodeId, session, tabType } _ = get session $ R.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
+    versionEndpoint { defaultListId, path: { nodeId, tabType, session } } _ = get session $ R.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
 
     -- NOTE With cache off
     loader :: PageParams -> Aff VersionedWithCountNgramsTable
