@@ -100,8 +100,8 @@ tableHeaderLayoutCpt = R.hooksComponentWithModule thisModule "tableHeaderLayout"
     cacheToggle (NT.CacheOn /\ _) = "fa-toggle-on"
     cacheToggle (NT.CacheOff /\ _) = "fa-toggle-off"
 
-    cacheText (NT.CacheOn /\ _) = "Cache On"
-    cacheText (NT.CacheOff /\ _) = "Cache Off"
+    cacheText (NT.CacheOn /\ _) = "Off-line"
+    cacheText (NT.CacheOff /\ _) = "On-line"
 
     cacheClick (cacheState /\ setCacheState) after _ = do
       setCacheState $ const newCacheState

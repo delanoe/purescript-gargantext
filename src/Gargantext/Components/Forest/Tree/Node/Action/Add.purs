@@ -20,6 +20,7 @@ import Gargantext.Types  as GT
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Forest.Tree.Node.Action.Add"
 
 ----------------------------------------------------------------------
@@ -83,7 +84,8 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
                                 defaultNt = (fromMaybe Error $ head nodeTypes)
           maybeEdit   = [ if edit
                           then inputWithEnter {
-                              onEnter: \_ -> launchAff_ $ dispatch (AddNode name' nt')
+                              onBlur: \val -> setNodeName $ const val
+                            , onEnter: \_ -> launchAff_ $ dispatch (AddNode name' nt')
                             , onValueChanged: \val -> setNodeName $ const val
                             , autoFocus: true
                             , className: "form-control"

@@ -138,7 +138,7 @@ tableContainerCpt { dispatch
                                               $ CoreAction
                                               $ addNewNgramA
                                               (normNgram tabNgramType searchQuery)
-                                              CandidateTerm
+                                              MapTerm
                                             }
                                       }
                              [ H.text ("Add " <> searchQuery) ]
