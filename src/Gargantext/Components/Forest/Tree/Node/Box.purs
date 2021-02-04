@@ -2,9 +2,7 @@ module Gargantext.Components.Forest.Tree.Node.Box where
 
 import Data.Array as A
 import Data.Maybe (Maybe(..))
-import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -28,13 +26,14 @@ import Gargantext.Components.Forest.Tree.Node.Action.Merge (mergeNode)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (NodePopupProps, NodePopupS)
 import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Status (Status(..), hasStatus)
-import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT, panel, prettyNodeType)
+import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT, panel)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (Name, ID)
+import Gargantext.Types (Name, ID, prettyNodeType)
 import Gargantext.Types as GT
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Forest.Tree.Node.Box"
 
 

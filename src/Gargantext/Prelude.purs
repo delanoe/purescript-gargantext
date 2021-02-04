@@ -8,7 +8,6 @@ import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Exception (catchException, throwException)
 import Effect.Unsafe (unsafePerformEffect)
 
-
 -- | JL: Astonishingly, not in the prelude
 --   AD: recent Preludes in Haskell much prefer identity
 --   then id can be used as a variable name (in records for instance)
@@ -40,4 +39,3 @@ xor :: Boolean -> Boolean -> Boolean
 xor true false = true
 xor false true = true
 xor _      _   = false
-

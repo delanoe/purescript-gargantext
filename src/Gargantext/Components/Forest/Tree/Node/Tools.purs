@@ -272,11 +272,6 @@ checkboxesListGroup xs (val /\ set) =
       ) xs
 
 
-prettyNodeType :: GT.NodeType -> String
-prettyNodeType nt = S.replace (S.Pattern "Node")   (S.Replacement " ")
-                  $ S.replace (S.Pattern "Folder") (S.Replacement " ")
-                  $ show nt
-
 
 -- START node link
 type NodeLinkProps = (
@@ -321,7 +316,7 @@ nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
                                            ]
                      , ReactTooltip.reactTooltip { id: tooltipId }
                                                  [ R2.row [ H.h4 {className: GT.fldr nodeType true}
-                                                                 [ H.text $ prettyNodeType nodeType ]
+                                                                 [ H.text $ GT.prettyNodeType nodeType ]
                                                           ]
                                                  , R2.row [ H.span {} [ H.text $ name ]]
                                                  ]
