@@ -144,7 +144,8 @@ formChoiceSafe :: forall a b c
                => Show  a
                => Array a
                -> a
-               -> ((b -> a) -> Effect c)
+               -> (a -> Effect c)
+               -- -> ((b -> a) -> Effect c)
                -> R.Element
 formChoiceSafe [] _ _ = H.div {} []
 
@@ -160,16 +161,13 @@ formChoice :: forall a b c d
            => Show d
            => Array d
            -> b
-           -> ((c -> b) -> Effect a)
+           -> (b -> Effect a)
+           -- -> ((c -> b) -> Effect a)
            -> R.Element
 formChoice nodeTypes defaultNodeType setNodeType = 
   H.div { className: "form-group"}
         [ R2.select { className: "form-control"
-                    , on: { change: setNodeType
-                                      <<< const
-                                      <<< fromMaybe defaultNodeType
-                                      <<< read
-                                      <<< R.unsafeEventValue }
+                    , on: { change: \e -> setNodeType $ fromMaybe defaultNodeType $ read $ R.unsafeEventValue e }
                     }
           (map (\opt -> H.option {} [ H.text $ show opt ]) nodeTypes)
          ]
@@ -179,7 +177,8 @@ formChoice nodeTypes defaultNodeType setNodeType =
 formButton :: forall a b c
            . Show a
            =>   a
-           -> ((b -> a) -> Effect c)
+           -> (a -> Effect c)
+           -- -> ((b -> a) -> Effect c)
            -> R.Element
 formButton nodeType setNodeType =
   H.div {} [ H.text $ "Confirm the selection of: " <> show nodeType
@@ -190,7 +189,7 @@ formButton nodeType setNodeType =
                         , type : "button"
                         , title: "Form Button"
                         , style : { width: "100%" }
-                        , on: { click: \_ -> setNodeType ( const nodeType ) }
+                        , on: { click: \_ -> setNodeType nodeType }
                         } [H.text $ "Confirmation"]
 
 ------------------------------------------------------------------------
