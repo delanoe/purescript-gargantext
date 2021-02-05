@@ -720,6 +720,10 @@ ul li {
   color: #005a9aff;
 }
 
+.frame iframe {
+  border: 0;
+}
+
 .range {
   width: 400px;
   /* some space for the right knob */
