@@ -71,10 +71,9 @@ ratingCpt = R.hooksComponentWithModule thisModule "rating" cpt
                                   else "fa fa-star"
 
           onClick score c = \_-> do
-            let c' = if score == Star_0 
-                       && c == Star_0
-                     then Star_1
-                     else c
+            let c' = if score == c
+                      then clickAgain c
+                      else c
 
             setLocalCategories $ Map.insert r._id c'
             void $ launchAff

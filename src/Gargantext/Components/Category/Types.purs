@@ -41,6 +41,12 @@ star2score Star_2 = 2
 star2score Star_3 = 3
 star2score Star_4 = 4
 
+
+clickAgain :: Star -> Star
+clickAgain Star_0 = Star_1
+clickAgain s      = decodeStar (star2score s - 1)
+
+
 ------------------------------------------------------------------------
 data Category = Trash | UnRead | Checked | Topic | Favorite
 
