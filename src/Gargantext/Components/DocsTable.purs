@@ -374,7 +374,7 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
       where
         sid = sessionId session
         gi Star_1  = "fa fa-star"
-        gi _ = "fa fa-star-empty"
+        gi _       = "fa fa-star-empty"
         trashClassName Star_0 _ = "trash"
         trashClassName _ true = "active"
         trashClassName _ false = ""
@@ -389,23 +389,26 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
             row dv@(DocumentsView r) =
               { row:
                 T.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
-                            H.div { className: "" } [ docChooser { listId, mCorpusId, nodeId: r._id, selected, sidePanelTriggers, tableReload: reload } []
+                            H.div { className: "" }
+                                  [ docChooser { listId, mCorpusId, nodeId: r._id, selected, sidePanelTriggers, tableReload: reload } []
                                                                    ]
                           --, H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
-                          , H.div { className: "column-tag flex" } [ rating { score: cat, nodeId, row: dv, session, setLocalCategories } [] ]
+                          , H.div { className: "column-tag flex" }
+                                  [ rating { score: cat, nodeId, row: dv, session, setLocalCategories } [] ]
                 --, H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only
                 , H.div { className: tClassName } [ R2.showText r.date ]
-                , H.div { className: tClassName } [
-                   H.a { href: url frontends $ corpusDocument r._id, target: "_blank"} [ H.text r.title ]
-                 ]
+                , H.div { className: tClassName }
+                        [ H.a { href: url frontends $ corpusDocument r._id, target: "_blank"}
+                              [ H.text r.title ]
+                        ]
                 , H.div { className: tClassName } [ H.text $ if r.source == "" then "Source" else r.source ]
                 , H.div {} [ H.text $ maybe "-" show r.ngramCount ]
                 ]
               , delete: true }
               where
                 cat         = getCategory lc r
-                checked    = Star_1 == cat
+                -- checked    = Star_1 == cat
                 tClassName = trashClassName cat selected
                 className  = gi cat
                 selected   = R.readRef currentDocIdRef == Just r._id
