@@ -23,7 +23,6 @@ import Reactix.DOM.HTML as RH
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Button (centerButton, cameraButton)
 import Gargantext.Components.GraphExplorer.RangeControl (edgeConfluenceControl, edgeWeightControl, nodeSizeControl)
-import Gargantext.Components.GraphExplorer.Search (nodeSearchControl)
 import Gargantext.Components.GraphExplorer.SlideButton (labelSizeButton, mouseSelectorSizeButton)
 import Gargantext.Components.GraphExplorer.ToggleButton (multiSelectEnabledButton, edgesToggleButton, louvainToggleButton, pauseForceAtlasButton)
 import Gargantext.Components.GraphExplorer.Types as GET
@@ -31,8 +30,8 @@ import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
 import Gargantext.Utils.Range as Range
-import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.GraphExplorer.Controls"
 
 type Controls =
@@ -160,9 +159,6 @@ controlsCpt = R.hooksComponentWithModule thisModule "controls" cpt
               -- zoom: 0 -100 - calculate ratio
                    , RH.li { className: "nav-item" } [ multiSelectEnabledButton props.multiSelectEnabled ]  -- toggle multi node selection
               -- save button
-                   , RH.li { className: "nav-item" } [ nodeSearchControl { graph: props.graph
-                                           , multiSelectEnabled: props.multiSelectEnabled
-                                           , selectedNodeIds: props.selectedNodeIds } ]
                    , RH.li { className: "nav-item" } [ mouseSelectorSizeButton props.sigmaRef localControls.mouseSelectorSize ]
                    , RH.li { className: "nav-item" } [ cameraButton { id: props.graphId
                                       , hyperdataGraph: props.hyperdataGraph

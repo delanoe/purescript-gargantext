@@ -17,6 +17,7 @@ import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Utils (queryMatchesLabel)
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.GraphExplorer.Search"
 
 type Props = (
@@ -33,8 +34,8 @@ searchNodes :: String -> Seq.Seq (Record SigmaxT.Node) -> Seq.Seq (Record Sigmax
 searchNodes "" _ = Seq.empty
 searchNodes s nodes = Seq.filter (nodeMatchesSearch s) nodes
 
-nodeSearchControl :: Record Props -> R.Element
-nodeSearchControl props = R.createElement sizeButtonCpt props []
+nodeSearchControl :: R2.Component Props
+nodeSearchControl = R.createElement sizeButtonCpt
 
 sizeButtonCpt :: R.Component Props
 sizeButtonCpt = R.hooksComponentWithModule thisModule "nodeSearchControl" cpt
