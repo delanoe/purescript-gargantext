@@ -26,6 +26,17 @@ let
 
     yarn pulp repl
   '';
+
+  test-ps = pkgs.writeShellScriptBin "test-ps" ''
+    #!/usr/bin/env bash
+    set -e
+
+    echo "Compiling"
+    build-purs
+    echo "Testing"
+    # yarn pulp browserify --skip-compile -t dist/bundle.js --src-path output
+    yarn pulp test --src-path output --test-path output
+  '';
 in
 pkgs.mkShell {
   buildInputs = [
@@ -35,6 +46,7 @@ pkgs.mkShell {
     build
     repl
     pkgs.yarn
+    test-ps
   ];
 
   shellHook = ''

@@ -7,7 +7,7 @@ let
       owner = "justinwoo";
       repo = "easy-dhall-nix";
       rev = "90957969850a44481c6e150350c56e8b53b29e1e";
-      sha256 = "12v4ql1nm1famz8r80k1xkkdgj7285vy2vn16iili0qwvz3i98ah";
+      sha256 = "1hsmp3cb0k554kh0jlfzpdzx2b8ndyh2gdykmw9hw41haaw16mmi";
     }
   ) {
     inherit pkgs;

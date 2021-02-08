@@ -21,11 +21,11 @@
   };
   "affjax" = {
     name = "affjax";
-    version = "v10.1.0";
+    version = "v11.0.0";
     src = pkgs.fetchgit {
       url = "https://github.com/slamdata/purescript-affjax.git";
-      rev = "v10.1.0";
-      sha256 = "129g7x9icaqj158snzl0ilbd0dipl4bmk49is8dh8jvh0z97k700";
+      rev = "v11.0.0";
+      sha256 = "0dfwayw6h49hm5ikq6sic0yi44w8hmqx4nx5xfavqk4ary1z3ifq";
     };
   };
   "ansi" = {
@@ -57,11 +57,11 @@
   };
   "argonaut-core" = {
     name = "argonaut-core";
-    version = "v5.0.2";
+    version = "v5.1.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-contrib/purescript-argonaut-core.git";
-      rev = "v5.0.2";
-      sha256 = "1rfd1brvzp9akx6hypxql2qv9bhlcqks1xwqfqqf31dqvcl7vvhc";
+      rev = "v5.1.0";
+      sha256 = "0x52vz5pdiamwq9cznm5mkhfcgk6raapqwdj7cmiblkflra32lhr";
     };
   };
   "argonaut-traversals" = {
@@ -192,11 +192,11 @@
   };
   "debug" = {
     name = "debug";
-    version = "v4.0.0";
+    version = "v4.0.1";
     src = pkgs.fetchgit {
       url = "https://github.com/garyb/purescript-debug.git";
-      rev = "v4.0.0";
-      sha256 = "0gwjj80akys0h111i74n429fmny992gx0r4rk1n98gqlqm5cmi21";
+      rev = "v4.0.1";
+      sha256 = "03xmchfzx7anks6b3yrrhf5b0bx7n390c814nhhxdl98936wydg4";
     };
   };
   "distributive" = {
@@ -651,11 +651,11 @@
   };
   "parsing" = {
     name = "parsing";
-    version = "v5.0.3";
+    version = "v5.1.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-contrib/purescript-parsing.git";
-      rev = "v5.0.3";
-      sha256 = "0m5xvb5kis28laj3navyyakyq408vw115c2dvngf1vljzh1hk5kj";
+      rev = "v5.1.0";
+      sha256 = "199wjj02hh7wzkvh036vqv3369jrw1dpcb11n0nnqlqvvihfcy87";
     };
   };
   "partial" = {
