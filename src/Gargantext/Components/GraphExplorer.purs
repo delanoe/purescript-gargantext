@@ -155,10 +155,10 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
             [ rowToggle
                     [ col [ spaces [ Toggle.treeToggleButton controls.showTree         ]]
                     , col [ spaces [ Toggle.controlsToggleButton controls.showControls ]]
+                    , col [ spaces [ Toggle.sidebarToggleButton controls.showSidePanel ]]
                     , col [ spaces [ nodeSearchControl { graph
                                                        , multiSelectEnabled: controls.multiSelectEnabled
                                                        , selectedNodeIds: controls.selectedNodeIds } [] ] ]
-                    , col [ spaces [ Toggle.sidebarToggleButton controls.showSidePanel ]]
                     ]
             ]
         , RH.div { className: "graph-container" } [
