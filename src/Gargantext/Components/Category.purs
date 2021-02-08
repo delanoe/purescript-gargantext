@@ -71,10 +71,14 @@ ratingCpt = R.hooksComponentWithModule thisModule "rating" cpt
                                   else "fa fa-star"
 
           onClick score c = \_-> do
-            setLocalCategories $ Map.insert r._id c
+            let c' = if score == c
+                      then clickAgain c
+                      else c
+
+            setLocalCategories $ Map.insert r._id c'
             void $ launchAff
                  $ putRating session nodeId
-                 $ RatingQuery {nodeIds: [r._id], rating: c}
+                 $ RatingQuery {nodeIds: [r._id], rating: c'}
 
 newtype RatingQuery =
   RatingQuery { nodeIds :: Array Int

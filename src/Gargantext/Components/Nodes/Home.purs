@@ -292,10 +292,7 @@ homeLayoutCpt = R.hooksComponentWithModule thisModule "homeLayout" cpt
                                    } [H.text "Sorry your browser is not compatible: use Firefox or Chromium instead."]
                                    ]
 
-        joinButton = H.div { className:"flex-space-around d-flex justify-content-center" 
-                       , paddingTop: "100px"
-                       , paddingBottom: "100px"
-                       }
+        joinButton = H.div { className:"flex-space-around d-flex justify-content-center join-button" }
                        [ H.button { className: "btn btn-primary my-2"
                                   , on : {click}
                                   , title: "Connect to the server"
