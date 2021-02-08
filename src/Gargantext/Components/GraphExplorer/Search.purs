@@ -49,7 +49,7 @@ sizeButtonCpt = R.hooksComponentWithModule thisModule "nodeSearchControl" cpt
             [ inputWithAutocomplete { autocompleteSearch: autocompleteSearch graph
                                     , onAutocompleteClick: \s -> triggerSearch graph s multiSelectEnabled selectedNodeIds
                                     , onEnterPress: \s -> triggerSearch graph s multiSelectEnabled selectedNodeIds
-                                    , state: search }
+                                    , state: search } []
             , H.div { className: "btn input-group-addon"
                     , on: { click: \_ -> triggerSearch graph search' multiSelectEnabled selectedNodeIds }
                     }
