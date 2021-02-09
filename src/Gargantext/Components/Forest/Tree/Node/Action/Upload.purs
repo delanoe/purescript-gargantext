@@ -80,24 +80,36 @@ uploadFileViewCpt = R.hooksComponentWithModule thisModule "uploadFileView" cpt
       fileType@(_ /\ setFileType)   <- R.useState'  CSV
       lang@( _chosenLang /\ setLang) <- R.useState' EN
 
-      let    bodies = [ H.div { className:"col-md-6 flex-space-around"}
-                           [ H.input { type: "file"
-                                        , placeholder: "Choose file"
-                                        , on: {change: onChangeContents mFile}
-                                        }
-                              ]
-                   , H.div {className:"col-md-3 flex-space-around"}
-                           [ formChoiceSafe [ CSV
-                                            , CSV_HAL
-                                            , WOS
-                                            , PresseRIS
-                                            , Arbitrary
-                                            ] CSV setFileType
-                           ]
+      let setFileType' = setFileType <<< const
+      let setLang' = setLang <<< const
 
-                   , H.div {className:"col-md-3 flex-space-around"}
-                           [ formChoiceSafe [EN, FR, No_extraction, Universal] EN setLang ]
-                   ]
+      let bodies =
+            [ R2.row
+              [ H.div { className:"col-12 flex-space-around"}
+                [ H.div { className: "form-group" }
+                  [ H.input { type: "file"
+                            , className: "form-control"
+                            , placeholder: "Choose file"
+                            , on: {change: onChangeContents mFile}
+                            }
+                  ]
+                ]
+              ]
+            , R2.row
+              [ H.div {className:"col-6 flex-space-around"}
+                [ formChoiceSafe [ CSV
+                                 , CSV_HAL
+                                 , WOS
+                                 , PresseRIS
+                                 , Arbitrary
+                                 ] CSV setFileType'
+                ]
+              ]
+            , R2.row
+              [ H.div {className:"col-6 flex-space-around"}
+                [ formChoiceSafe [EN, FR, No_extraction, Universal] EN setLang' ]
+              ]
+            ]
 
       let footer = H.div {} [ uploadButton { dispatch
                                            , fileType
@@ -175,6 +187,7 @@ uploadButtonCpt = R.hooksComponentWithModule thisModule "uploadButton" cpt
               setMFile     $ const $ Nothing
               setFileType  $ const $ CSV
               setLang      $ const $ EN
+            dispatch ClosePopover
 
 -- START File Type View
 type FileTypeProps =
@@ -196,7 +209,7 @@ fileTypeViewCpt = R.hooksComponentWithModule thisModule "fileTypeView" cpt
         , isDragOver: (_ /\ setIsDragOver)
         , nodeType
         } _ = pure
-            $ H.div tooltipProps [ H.div { className: "panel panel-default"}
+            $ H.div tooltipProps [ H.div { className: "card"}
                                          [ panelHeading
                                          , panelBody
                                          , panelFooter
@@ -211,12 +224,12 @@ fileTypeViewCpt = R.hooksComponentWithModule thisModule "fileTypeView" cpt
                                     }
                        }
         panelHeading =
-          H.div {className: "panel-heading"}
+          H.div {className: "card-header"}
           [ H.div {className: "row"}
             [ H.div {className: "col-md-10"}
               [ H.h5 {} [H.text "Choose file type"] ]
             , H.div {className: "col-md-2"}
-              [ H.a {className: "btn glyphitem glyphicon glyphicon-remove-circle"
+              [ H.a {className: "btn glyphitem fa fa-remove-circle"
                     , on: {click: \_ -> do
                               setDroppedFile $ const Nothing
                               setIsDragOver  $ const false
@@ -227,7 +240,7 @@ fileTypeViewCpt = R.hooksComponentWithModule thisModule "fileTypeView" cpt
           ]
 
         panelBody =
-          H.div {className: "panel-body"}
+          H.div {className: "card-body"}
           [ R2.select {className: "col-md-12 form-control"
                       , on: {change: onChange}
                       }
@@ -242,7 +255,7 @@ fileTypeViewCpt = R.hooksComponentWithModule thisModule "fileTypeView" cpt
             renderOption opt = H.option {} [ H.text $ show opt ]
 
         panelFooter =
-          H.div {className: "panel-footer"}
+          H.div {className: "card-footer"}
           [
             case fileType of
               Just ft ->

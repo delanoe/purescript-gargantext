@@ -32,8 +32,9 @@ import Gargantext.Data.Array (mapMaybe)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType, ReloadS, TabSubType(..), TabType(..), TermList(..), modeTabType)
+import Gargantext.Types (CTabNgramType, TabSubType(..), TabType(..), TermList(..), modeTabType)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 import Partial.Unsafe (unsafePartial)
 
 thisModule = "Gargantext.Components.GraphExplorer.Sidebar"
@@ -42,13 +43,13 @@ type Props =
   ( frontends       :: Frontends
   , graph           :: SigmaxT.SGraph
   , graphId         :: Int
-  , graphVersion    :: ReloadS
+  , graphVersion    :: GUR.ReloadS
   , metaData        :: GET.MetaData
   , removedNodeIds  :: R.State SigmaxT.NodeIds
   , selectedNodeIds :: R.State SigmaxT.NodeIds
   , session         :: Session
   , showSidePanel   :: R.State GET.SidePanelState
-  , treeReload      :: ReloadS
+  , treeReload      :: GUR.ReloadS
   )
 
 sidebar :: Record Props -> R.Element
@@ -69,7 +70,7 @@ sidebarCpt = R.hooksComponentWithModule thisModule "sidebar" cpt
 
 sideTabNav :: R.State SidePanelState -> Array SideTab -> R.Element
 sideTabNav (sidePanel /\ setSidePanel) sideTabs =
-  R.fragment [ H.div { className: "text-primary center"} [H.text "SideTab"]
+  R.fragment [ H.div { className: "text-primary center"} [H.text ""]
                      , H.div {className: "nav nav-tabs"} (liItem <$> sideTabs)
                      -- , H.div {className: "center"} [ H.text "Doc sideTabs"]
              ]
@@ -132,36 +133,46 @@ sideTab _ _  = H.div {} []
 -------------------------------------------
 -- TODO
 -- selectedNodes :: Record Props -> Map.Map String Nodes -> R.Element
-selectedNodes props nodesMap = R2.row [ R2.col 12
-                  [ RH.ul { id: "myTab", className: "nav nav-tabs", role: "tablist"}
-                    [ RH.div { className: "tab-content" }
-                      [ RH.div { className: "", role: "tabpanel" }
-                               ( Seq.toUnfoldable
-                               $ ( Seq.map (badge              props.selectedNodeIds)
-                                           (badges props.graph props.selectedNodeIds)
-                                 )
-                               )
-                      ]
-                    , RH.div { className: "tab-content flex-space-between" }
-                             [ removeButton "Move as candidate" CandidateTerm props nodesMap
-                             , removeButton "Move as stop"      StopTerm      props nodesMap
-                             ]
-                    ]
-                   ]
-               ]
+selectedNodes props nodesMap =
+  R2.row [ R2.col 12
+          [ RH.ul { className: "nav nav-tabs d-flex justify-content-center"
+                  , id: "myTab"
+                  , role: "tablist" }
+            [ RH.div { className: "tab-content" }
+              [ RH.div { className: "d-flex flex-wrap justify-content-center"
+                       , role: "tabpanel" }
+                       ( Seq.toUnfoldable
+                       $ ( Seq.map (badge              props.selectedNodeIds)
+                                   (badges props.graph props.selectedNodeIds)
+                         )
+                       )
+              , H.br {}
+              ]
+            ]
+            , RH.div { className: "tab-content flex-space-between" }
+                     [ removeButton "primary" "Move as candidate" CandidateTerm props nodesMap
+                     , H.br {}
+                     , removeButton "danger"  "Move as stop"      StopTerm      props nodesMap
+                     ]
+           ]
+       ]
 neighborhood props = RH.div { className: "tab-content", id: "myTabContent" }
-                            [ RH.div { className: "", id: "home", role: "tabpanel" }
+                            [ RH.div { -- className: "flex-space-around d-flex justify-content-center"
+                                       className: "d-flex flex-wrap flex-space-around"
+                                     , id: "home"
+                                     , role: "tabpanel"
+                                     }
                               (Seq.toUnfoldable $ Seq.map (badge props.selectedNodeIds)
                                                 $ neighbourBadges props.graph props.selectedNodeIds
                                )
                             ]
 
 
-removeButton text rType props' nodesMap' =
+removeButton btnType text rType props' nodesMap' =
   if Set.isEmpty $ fst props'.selectedNodeIds then
     RH.div {} []
   else
-    RH.button { className: "btn btn-info"
+    RH.button { className: "btn btn-sm btn-" <> btnType
               , on: { click: onClickRemove rType props' nodesMap' }
               }
               [ RH.text text ]
@@ -182,9 +193,9 @@ onClickRemove rType props' nodesMap' e = do
 
 badge :: R.State SigmaxT.NodeIds -> Record SigmaxT.Node -> R.Element
 badge (_ /\ setNodeIds) {id, label} =
-  RH.a { className: "badge badge-light"
+  RH.a { className: "badge badge-pill badge-light"
        , on: { click: onClick }
-       } [ RH.text label ]
+       } [ RH.h6 {} [ RH.text label ] ]
   where
     onClick e = do
       setNodeIds $ const $ Set.singleton id
@@ -199,12 +210,12 @@ neighbourBadges graph (selectedNodeIds /\ _) = SigmaxT.neighbours graph selected
 
 
 type DeleteNodes =
-  ( graphId :: Int
-  , metaData :: GET.MetaData
-  , nodes :: Array (Record SigmaxT.Node)
-  , session :: Session
-  , termList :: TermList
-  , treeReload :: ReloadS
+  ( graphId    :: Int
+  , metaData   :: GET.MetaData
+  , nodes      :: Array (Record SigmaxT.Node)
+  , session    :: Session
+  , termList   :: TermList
+  , treeReload :: GUR.ReloadS
   )
 
 deleteNodes :: Record DeleteNodes -> Effect Unit
@@ -215,7 +226,7 @@ deleteNodes { graphId, metaData, nodes, session, termList, treeReload } = do
     case mPatch of
       Nothing -> pure unit
       Just (NTC.Versioned patch) -> do
-        liftEffect $ snd treeReload $ (+) 1
+        liftEffect $ GUR.bump treeReload
 
 -- Why is this called delete node?
 deleteNode :: TermList
@@ -224,7 +235,7 @@ deleteNode :: TermList
            -> Record SigmaxT.Node
            -> Aff NTC.VersionedNgramsPatches
 deleteNode termList session (GET.MetaData metaData) node = do
-    ret <- NTC.putNgramsPatches coreParams versioned
+    ret  <- NTC.putNgramsPatches coreParams versioned
     task <- NTC.postNgramsChartsAsync coreParams  -- TODO add task
     pure ret
   where
@@ -330,7 +341,4 @@ Global/local view:
     The 'change level' button allows to change between global view and node centered view,
     To explore the neighborhood of a selection click on the 'change level' button.
 -}
-
-
-
 

@@ -36,19 +36,20 @@ import Gargantext.Types (Name, ID)
 import Gargantext.Types as GT
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 
 thisModule :: String
 thisModule = "Gargantext.Components.Forest.Tree.Node"
 
 -- Main Node
 type NodeMainSpanProps = (
-    appReload     :: GT.ReloadS
+    appReload     :: GUR.ReloadS
   , asyncTasks    :: GAT.Reductor
+  , currentRoute  :: Routes.AppRoute
   , folderOpen    :: R.State Boolean
   , frontends     :: Frontends
   , id            :: ID
   , isLeaf        :: IsLeaf
-  , mCurrentRoute :: Maybe Routes.AppRoute
   , name          :: Name
   , nodeType      :: GT.NodeType
   , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
@@ -74,13 +75,13 @@ nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
   where
     cpt props@{ appReload
               , asyncTasks: (asyncTasks /\ dispatchAsyncTasks)
+              , currentRoute
               , dispatch
               , folderOpen
               , frontends
               , handed
               , id
               , isLeaf
-              , mCurrentRoute
               , name
               , nodeType
               , session
@@ -100,7 +101,7 @@ nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
               GT.LeftHanded  -> reverse
               GT.RightHanded -> identity
 
-      let isSelected = mCurrentRoute == Routes.nodeTypeAppRoute nodeType (sessionId session) id
+      let isSelected = Just currentRoute == Routes.nodeTypeAppRoute nodeType (sessionId session) id
 
       pure $ H.span (dropProps droppedFile isDragOver)
                 $ ordering
@@ -114,7 +115,7 @@ nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
                            , name: name' props
                            , nodeType
                            , session
-                           }
+                           } []
 
                 , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType }
                 , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
@@ -142,8 +143,8 @@ nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
 
                 , nodeActions { id
                               , nodeType
-                              , refreshTree: const $ dispatch RefreshTree
                               , session
+                              , triggerRefresh: const $ dispatch RefreshTree
                               }
 
 
@@ -151,7 +152,7 @@ nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
         where
           onTaskFinish id t _ = do
             dispatchAsyncTasks $ GAT.Finish id t
-            snd appReload $ (_ + 1)
+            GUR.bump appReload
 
           SettingsBox {show: showBox} = settingsBox nodeType
           onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
@@ -228,7 +229,7 @@ nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
 fldr nt open = if open
                then "fa fa-globe" -- <> color nt
                else "fa fa-folder-globe" -- <> color nt
-               --else "glyphicon glyphicon-folder-close" <> color nt
+               --else "fa fa-folder-close" <> color nt
                  where
                    color GT.NodeUser     = ""
                    color FolderPublic = ""
@@ -242,8 +243,8 @@ fldr nt open = if open
 type NodeActionsProps =
   ( id          :: ID
   , nodeType    :: GT.NodeType
-  , refreshTree :: Unit -> Aff Unit
   , session     :: Session
+  , triggerRefresh :: Unit -> Aff Unit
   )
 
 nodeActions :: Record NodeActionsProps -> R.Element
@@ -254,21 +255,21 @@ nodeActionsCpt = R.hooksComponentWithModule thisModule "nodeActions" cpt
   where
     cpt { id
         , nodeType: GT.Graph
-        , refreshTree
         , session
+        , triggerRefresh
         } _ = do
 
       useLoader id (graphVersions session) $ \gv ->
         nodeActionsGraph { id
                          , graphVersions: gv
                          , session
-                         , triggerRefresh: triggerRefresh refreshTree
+                         , triggerRefresh
                          }
 
     cpt { id
         , nodeType: GT.NodeList
-        , refreshTree
         , session
+        , triggerRefresh
         } _ = do
       useLoader { nodeId: id, session } loadCorpusWithChild $
         \{ corpusId } ->
@@ -276,13 +277,12 @@ nodeActionsCpt = R.hooksComponentWithModule thisModule "nodeActions" cpt
                               , nodeId: corpusId
                               , nodeType: GT.TabNgramType GT.CTabTerms
                               , session
-                              , triggerRefresh: triggerRefresh refreshTree
+                              , triggerRefresh
                               }
     cpt _ _ = do
       pure $ H.div {} []
 
     graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
-    triggerRefresh refreshTree    = refreshTree
 
 
 -- END nodeActions

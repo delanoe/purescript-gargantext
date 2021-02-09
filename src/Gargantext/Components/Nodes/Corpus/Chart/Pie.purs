@@ -84,7 +84,7 @@ chartOptionsPie (HistoMetrics { dates: dates', count: count'}) = Options
   , tooltip   : mkTooltip { formatter: templateFormatter "{b0}" }
   }
 
-getMetricsHash :: Session -> Tuple Reload (Record Path) -> Aff String
+getMetricsHash :: Session -> ReloadPath -> Aff String
 getMetricsHash session (_ /\ { corpusId, limit, listId, tabType }) = do
   get session $ ChartHash { chartType: ChartPie, listId: mListId, tabType } (Just corpusId)
   where

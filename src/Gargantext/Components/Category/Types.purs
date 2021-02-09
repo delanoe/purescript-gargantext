@@ -8,7 +8,46 @@ import Data.Generic.Rep.Show (genericShow)
 import Gargantext.Prelude
 
 ------------------------------------------------------------------------
+data Star = Star_0 | Star_1 | Star_2 | Star_3 | Star_4
 
+stars :: Array Star
+stars = [Star_0, Star_1, Star_2, Star_3, Star_4]
+
+derive instance genericStar :: Generic Star _
+
+instance showStar :: Show Star where
+  show = genericShow
+instance eqStar :: Eq Star where
+  eq = genericEq
+instance decodeJsonStar :: DecodeJson Star where
+  decodeJson json = do
+    obj <- decodeJson json
+    pure $ decodeStar obj
+instance encodeJsonStar :: EncodeJson Star where
+  encodeJson x    = encodeJson (star2score x)
+
+decodeStar :: Int -> Star
+decodeStar 0 = Star_0
+decodeStar 1 = Star_1
+decodeStar 2 = Star_2
+decodeStar 3 = Star_3
+decodeStar 4 = Star_4
+decodeStar _ = Star_4
+
+star2score :: Star -> Int
+star2score Star_0 = 0
+star2score Star_1 = 1
+star2score Star_2 = 2
+star2score Star_3 = 3
+star2score Star_4 = 4
+
+
+clickAgain :: Star -> Star
+clickAgain Star_0 = Star_1
+clickAgain s      = decodeStar (star2score s - 1)
+
+
+------------------------------------------------------------------------
 data Category = Trash | UnRead | Checked | Topic | Favorite
 
 categories :: Array Category

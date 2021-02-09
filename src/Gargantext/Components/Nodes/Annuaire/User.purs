@@ -1,7 +1,7 @@
-module Gargantext.Components.Nodes.Annuaire.User.Contacts
+module Gargantext.Components.Nodes.Annuaire.User
   ( module Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
-  , annuaireUserLayout
-  , userLayout )
+  , userLayout
+  )
   where
 
 import DOM.Simple.Console (log2)
@@ -17,7 +17,7 @@ import Reactix.DOM.HTML as H
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.InputWithEnter (inputWithEnter)
-import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
+import Gargantext.Components.Nodes.Annuaire.User.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
 import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Ends (Frontends)
@@ -25,11 +25,12 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, const, discard, pure, show, unit, ($), (+), (<$>), (<<<), (<>), (==))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, get, put, sessionId)
-import Gargantext.Types (NodeType(..), ReloadS)
+import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 
 thisModule :: String
-thisModule = "Gargantext.Components.Nodes.Annuaire.User.Contacts"
+thisModule = "Gargantext.Components.Nodes.Annuaire.User"
 
 type DisplayProps = (
   title :: String
@@ -102,40 +103,43 @@ contactInfoItemCpt = R.hooksComponentWithModule thisModule "contactInfoItem" cpt
       let value = (L.view cLens hyperdata) :: String
       valueRef <- R.useRef value
 
-      pure $ H.li { className: "list-group-item" } [
-          H.span { className: "badge badge-default badge-pill"} [ H.text label ]
-        , item isEditing valueRef
+      pure $ H.div { className: "form-group row" } [
+        H.span { className: "col-sm-2 col-form-label" } [ H.text label ]
+      , item isEditing valueRef
       ]
+
       where
         cLens = L.cloneLens lens
-        usePlaceholder valueRef =
-          if R.readRef valueRef == "" then
-            Tuple true placeholder
-          else
-            Tuple false $ R.readRef valueRef
         item (false /\ setIsEditing) valueRef =
-          H.span {} [
-              H.span { className: if (fst $ usePlaceholder valueRef) then "text-muted" else "" } [
-                H.text $ snd $ usePlaceholder valueRef
-              ]
-            , H.span { className: "fa fa-pencil"
-                     , on: {click: onClick} } []
+          H.div { className: "input-group col-sm-6" } [
+            H.input { className: "form-control"
+                    , defaultValue: placeholder
+                    , disabled: 1
+                    , type: "text" }
+          , H.div { className: "btn input-group-append"
+                  , on: { click: onClick } } [
+              H.div { className: "input-group-text fa fa-pencil" } []
+            ]
           ]
           where
+            placeholder = R.readRef valueRef
             onClick _ = setIsEditing $ const true
         item (true /\ setIsEditing) valueRef =
-          H.span {} [
-              inputWithEnter {
-                  onEnter: onClick
-                , onValueChanged: R.setRef valueRef
-                , autoFocus: true
-                , className: "form-control"
-                , defaultValue: R.readRef valueRef
-                , placeholder
-                , type: "text"
-                }
-            , H.span { className: "fa fa-floppy-o"
-                     , on: {click: onClick} } []
+          H.div { className: "input-group col-sm-6" } [
+            inputWithEnter {
+                autoFocus: true
+              , className: "form-control"
+              , defaultValue: R.readRef valueRef
+              , onBlur: R.setRef valueRef
+              , onEnter: onClick
+              , onValueChanged: R.setRef valueRef
+              , placeholder
+              , type: "text"
+              }
+          , H.div { className: "btn input-group-append"
+                  , on: { click: onClick } } [
+              H.div { className: "input-group-text fa fa-floppy-o" } []
+            ]
           ]
           where
             onClick _ = do
@@ -143,24 +147,16 @@ contactInfoItemCpt = R.hooksComponentWithModule thisModule "contactInfoItem" cpt
               let newHyperdata = (L.over cLens (\_ -> R.readRef valueRef) hyperdata) :: HyperdataUser
               onUpdateHyperdata newHyperdata
 
-listInfo :: Tuple String String -> R.Element
-listInfo s = listElement $ infoRender s
-
 listElement :: Array R.Element -> R.Element
 listElement = H.li { className: "list-group-item justify-content-between" }
 
-infoRender :: Tuple String String -> Array R.Element
-infoRender (Tuple title content) =
-  [ H.span { className: "badge badge-default badge-pill"} [ H.text title ]
-  , H.span {} [H.text content] ]
-
-type LayoutProps = (
-    appReload     :: ReloadS
+type LayoutProps =
+  ( appReload     :: GUR.ReloadS
   , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , frontends     :: Frontends
   , nodeId        :: Int
   , session       :: Session
-  , treeReloadRef :: R.Ref (Maybe ReloadS)
+  , treeReloadRef :: GUR.ReloadWithInitializeRef
   )
 
 type KeyLayoutProps = (
@@ -194,16 +190,17 @@ userLayoutWithKeyCpt :: R.Component KeyLayoutProps
 userLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "userLayoutWithKey" cpt
   where
     cpt { appReload, asyncTasksRef, frontends, nodeId, session, treeReloadRef } _ = do
-      reload <- R.useState' 0
+      reload <- GUR.new
 
       cacheState <- R.useState' LT.CacheOn
 
       sidePanelTriggers <- LT.emptySidePanelTriggers
 
-      useLoader {nodeId, reload: fst reload, session} getContactWithReload $
+      useLoader {nodeId, reload: GUR.value reload, session} getUserWithReload $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" } [
-            display { title: fromMaybe "no name" name } (contactInfos hyperdata (onUpdateHyperdata reload))
+            display { title: fromMaybe "no name" name }
+                    (contactInfos hyperdata (onUpdateHyperdata reload))
           , Tabs.tabs {
                  appReload
                , asyncTasksRef
@@ -217,16 +214,16 @@ userLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "userLayoutWithKey"
                }
           ]
       where
-        onUpdateHyperdata :: ReloadS -> HyperdataUser -> Effect Unit
-        onUpdateHyperdata (_ /\ setReload) hd = do
+        onUpdateHyperdata :: GUR.ReloadS -> HyperdataUser -> Effect Unit
+        onUpdateHyperdata reload hd = do
           launchAff_ $ do
             _ <- saveContactHyperdata session nodeId hd
-            liftEffect $ setReload $ (+) 1
+            liftEffect $ GUR.bump reload
 
--- | toUrl to get data
+-- | toUrl to get data XXX
 getContact :: Session -> Int -> Aff ContactData
 getContact session id = do
-  contactNode <- get session $ Routes.NodeAPI Node (Just id) ""
+  contactNode :: Contact <- get session $ Routes.NodeAPI Node (Just id) ""
   -- TODO: we need a default list for the pairings
   --defaultListIds <- get $ toUrl endConfigStateful Back (Children NodeList 0 1 Nothing) $ Just id
   --case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
@@ -236,59 +233,10 @@ getContact session id = do
   --    throwError $ error "Missing default list"
   pure {contactNode, defaultListId: 424242}
 
-getContactWithReload :: {nodeId :: Int, reload :: Int, session :: Session} -> Aff ContactData
-getContactWithReload {nodeId, session} = getContact session nodeId
+getUserWithReload :: {nodeId :: Int, reload :: GUR.Reload, session :: Session} -> Aff ContactData
+getUserWithReload {nodeId, session} = getContact session nodeId
 
 saveContactHyperdata :: Session -> Int -> HyperdataUser -> Aff Int
 saveContactHyperdata session id h = do
   put session (Routes.NodeAPI Node (Just id) "") h
 
-
-type AnnuaireLayoutProps = (
-    annuaireId :: Int
-  | LayoutProps )
-
-
-annuaireUserLayout :: Record AnnuaireLayoutProps -> R.Element
-annuaireUserLayout props = R.createElement annuaireUserLayoutCpt props []
-
-annuaireUserLayoutCpt :: R.Component AnnuaireLayoutProps
-annuaireUserLayoutCpt = R.hooksComponentWithModule thisModule "annuaireUserLayout" cpt
-  where
-    cpt { annuaireId, appReload, asyncTasksRef, frontends, nodeId, session, treeReloadRef } _ = do
-      cacheState <- R.useState' LT.CacheOn
-
-      sidePanelTriggers <- LT.emptySidePanelTriggers
-
-      useLoader nodeId (getAnnuaireContact session annuaireId) $
-        \contactData@{contactNode: Contact {name, hyperdata}} ->
-          H.ul { className: "col-md-12 list-group" } [
-            display { title: fromMaybe "no name" name } (contactInfos hyperdata onUpdateHyperdata)
-          , Tabs.tabs {
-                 appReload
-               , asyncTasksRef
-               , cacheState
-               , contactData
-               , frontends
-               , nodeId
-               , session
-               , sidePanelTriggers
-               , treeReloadRef
-               }
-          ]
-
-      where
-        onUpdateHyperdata :: HyperdataUser -> Effect Unit
-        onUpdateHyperdata _ = pure unit
-
-getAnnuaireContact :: Session -> Int -> Int -> Aff ContactData
-getAnnuaireContact session annuaireId id = do
-  contactNode <- get session $ Routes.NodeAPI Annuaire (Just annuaireId) $ "contact/" <> (show id)
-  -- TODO: we need a default list for the pairings
-  --defaultListIds <- get $ toUrl endConfigStateful Back (Children NodeList 0 1 Nothing) $ Just id
-  --case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
-  --  Just (NodePoly { id: defaultListId }) ->
-  --    pure {contactNode, defaultListId}
-  --  Nothing ->
-  --    throwError $ error "Missing default list"
-  pure {contactNode, defaultListId: 424242}

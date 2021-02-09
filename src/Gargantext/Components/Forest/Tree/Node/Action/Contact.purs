@@ -46,7 +46,7 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen), para
       let {firstname, lastname} = params'
       stateFirstname <- R.useState' firstname
       stateLastname  <- R.useState'  lastname
-      pure $ H.div {className: "from-group row-no-padding"}
+      pure $ H.div {className: "from-group row"}
         [ textInput stateFirstname firstname
         , textInput stateLastname  lastname
         , submitBtn stateFirstname stateLastname
@@ -65,7 +65,7 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen), para
                     }
           ]
         submitBtn (val1 /\ _) (val2 /\ _) =
-          H.a {className: "btn glyphitem glyphicon glyphicon-ok col-md-2 pull-left"
+          H.a {className: "btn glyphitem fa fa-ok col-md-2 pull-left"
               , type: "button"
               , on: { click: \_ -> do
                     setIsOpen $ const false
@@ -74,7 +74,7 @@ textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen), para
               , title: "Submit"
               } []
         cancelBtn =
-          H.a {className: "btn text-danger glyphitem glyphicon glyphicon-remove col-md-2 pull-left"
+          H.a {className: "btn text-danger glyphitem fa fa-remove col-md-2 pull-left"
               , on: { click: \_ -> setIsOpen $ const false }
               , title: "Cancel"
               , type: "button"

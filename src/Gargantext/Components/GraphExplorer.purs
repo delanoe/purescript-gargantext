@@ -24,6 +24,7 @@ import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Controls as Controls
+import Gargantext.Components.GraphExplorer.Search (nodeSearchControl)
 import Gargantext.Components.GraphExplorer.Sidebar as Sidebar
 import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
 import Gargantext.Components.GraphExplorer.Types as GET
@@ -37,6 +38,7 @@ import Gargantext.Sessions (Session, Sessions, get)
 import Gargantext.Types as Types
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 
 thisModule :: String
 thisModule = "Gargantext.Components.GraphExplorer"
@@ -44,10 +46,10 @@ thisModule = "Gargantext.Components.GraphExplorer"
 type LayoutProps = (
     asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
+  , currentRoute  :: AppRoute
   , frontends     :: Frontends
   , graphId       :: GET.GraphId
   , handed        :: Types.Handed
-  , mCurrentRoute :: AppRoute
   , session       :: Session
   , sessions      :: Sessions
   , showLogin     :: R.State Boolean
@@ -55,7 +57,7 @@ type LayoutProps = (
 
 type Props =
   ( graph          :: SigmaxT.SGraph
-  , graphVersion   :: Types.ReloadS
+  , graphVersion   :: GUR.ReloadS
   , hyperdataGraph :: GET.HyperdataGraph
   , mMetaData      :: Maybe GET.MetaData
   | LayoutProps
@@ -69,10 +71,10 @@ explorerLayoutCpt :: R.Component LayoutProps
 explorerLayoutCpt = R.hooksComponentWithModule thisModule "explorerLayout" cpt
   where
     cpt props _ = do
-      graphVersion <- R.useState' 0
+      graphVersion <- GUR.new
       pure $ explorerLayoutView graphVersion props
 
-explorerLayoutView :: Types.ReloadS -> Record LayoutProps -> R.Element
+explorerLayoutView :: GUR.ReloadS -> Record LayoutProps -> R.Element
 explorerLayoutView graphVersion p = R.createElement el p []
   where
     el = R.hooksComponentWithModule thisModule "explorerLayoutView" cpt
@@ -94,13 +96,13 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
   where
     cpt props@{ asyncTasksRef
               , backend
+              , currentRoute
               , frontends
               , graph
               , graphId
               , graphVersion
               , handed
               , hyperdataGraph
-              , mCurrentRoute
               , mMetaData
               , session
               , sessions
@@ -115,16 +117,16 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
 
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
-      graphVersionRef       <- R.useRef (fst graphVersion)
-      treeReload <- R.useState' 0
-      treeReloadRef <- R.useRef $ Just treeReload
-      controls   <- Controls.useGraphControls { forceAtlasS
-                                             , graph
-                                             , graphId
-                                             , hyperdataGraph
-                                             , session
-                                             , treeReload: \_ -> (snd treeReload) $ (+) 1
-                                             }
+      graphVersionRef <- R.useRef (GUR.value graphVersion)
+      treeReload <- GUR.new
+      treeReloadRef <- GUR.newIInitialized treeReload
+      controls <- Controls.useGraphControls { forceAtlasS
+                                           , graph
+                                           , graphId
+                                           , hyperdataGraph
+                                           , session
+                                           , treeReload: \_ -> GUR.bump treeReload
+                                           }
       multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
 
       R.useEffect' $ do
@@ -137,7 +139,7 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
           let rSigma = R.readRef controls.sigmaRef
           Sigmax.cleanupSigma rSigma "explorerCpt"
           R.setRef dataRef graph
-          R.setRef graphVersionRef (fst graphVersion)
+          R.setRef graphVersionRef (GUR.value graphVersion)
           -- Reinitialize bunch of state as well.
           snd controls.removedNodeIds  $ const SigmaxT.emptyNodeIds
           snd controls.selectedNodeIds $ const SigmaxT.emptyNodeIds
@@ -147,54 +149,58 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
           snd controls.showSidePanel   $ const GET.InitialClosed
 
       pure $
-        RH.div
-          { id: "graph-explorer" }
-          [ rowToggle
-                  [ col [ spaces [ Toggle.treeToggleButton controls.showTree         ]]
-                  , col [ spaces [ Toggle.controlsToggleButton controls.showControls ]]
-                  , col [ spaces [ Toggle.sidebarToggleButton controls.showSidePanel ]]
-                  ], R2.row
-            [ outer
-              [ inner handed
-                [ rowControls [ Controls.controls controls ]
-                , R2.row $ mainLayout handed $
-                    tree { asyncTasksRef
-                         , backend
-                         , frontends
-                         , handed
-                         , mCurrentRoute
-                         , reload: treeReload
-                         , sessions
-                         , show: fst controls.showTree
-                         , showLogin: snd showLogin
-                         , treeReloadRef
-                         }
-                    /\
-                    RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []
-                    /\
-                    graphView { controls
-                              , elRef: graphRef
-                              , graphId
-                              , graph
-                              , hyperdataGraph
-                              , mMetaData
-                              , multiSelectEnabledRef
-                              }
-                    /\
-                    mSidebar mMetaData { frontends
-                                        , graph
-                                        , graphId
-                                        , graphVersion
-                                        , removedNodeIds : controls.removedNodeIds
-                                        , session
-                                        , selectedNodeIds: controls.selectedNodeIds
-                                        , showSidePanel  :   controls.showSidePanel
-                                        , treeReload
-                                        }
-                ]
-              ]
+        RH.div { className: "graph-meta-container" } [
+          RH.div { className: "fixed-top navbar navbar-expand-lg"
+                 , id: "graph-explorer" }
+            [ rowToggle
+                    [ col [ spaces [ Toggle.treeToggleButton controls.showTree         ]]
+                    , col [ spaces [ Toggle.controlsToggleButton controls.showControls ]]
+                    , col [ spaces [ Toggle.sidebarToggleButton controls.showSidePanel ]]
+                    , col [ spaces [ nodeSearchControl { graph
+                                                       , multiSelectEnabled: controls.multiSelectEnabled
+                                                       , selectedNodeIds: controls.selectedNodeIds } [] ] ]
+                    ]
+            ]
+        , RH.div { className: "graph-container" } [
+            inner handed [
+              rowControls [ Controls.controls controls ]
+            , RH.div { className: "row graph-row" } $ mainLayout handed $
+                tree { asyncTasksRef
+                    , backend
+                    , currentRoute
+                    , frontends
+                    , handed
+                    , reload: treeReload
+                    , sessions
+                    , show: fst controls.showTree
+                    , showLogin: snd showLogin
+                    , treeReloadRef
+                    }
+                /\
+                RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []
+                /\
+                graphView { controls
+                          , elRef: graphRef
+                          , graphId
+                          , graph
+                          , hyperdataGraph
+                          , mMetaData
+                          , multiSelectEnabledRef
+                          }
+                /\
+                mSidebar mMetaData { frontends
+                                  , graph
+                                  , graphId
+                                  , graphVersion
+                                  , removedNodeIds : controls.removedNodeIds
+                                  , session
+                                  , selectedNodeIds: controls.selectedNodeIds
+                                  , showSidePanel  :   controls.showSidePanel
+                                  , treeReload
+                                  }
             ]
           ]
+        ]
 
     mainLayout Types.RightHanded (tree' /\ gc /\ gv /\ sdb) = [tree', gc, gv, sdb]
     mainLayout Types.LeftHanded  (tree' /\ gc /\ gv /\ sdb) = [sdb, gc, gv, tree']
@@ -205,24 +211,27 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
         hClass = case h of
           Types.LeftHanded  -> "lefthanded"
           Types.RightHanded -> "righthanded"
-    rowToggle  = RH.div { id: "toggle-container" }
+    -- rowToggle  = RH.div { id: "toggle-container" }
+    rowToggle  = RH.ul { className: "navbar-nav ml-auto mr-auto" }
     rowControls = RH.div { id: "controls-container" }
-    col       = RH.div { className: "col-md-4" }
+    -- col       = RH.div { className: "col-md-4" }
+    col = RH.li { className: "nav-item" }
     pullLeft  = RH.div { className: "pull-left"  }
     pullRight = RH.div { className: "pull-right" }
-    spaces    = RH.div { className: "flex-space-between" }
+    -- spaces    = RH.div { className: "flex-space-between" }
+    spaces = RH.a { className: "nav-link" }
 
 
     tree :: Record TreeProps -> R.Element
     tree { show: false } = RH.div { id: "tree" } []
-    tree { asyncTasksRef, backend, frontends, handed, mCurrentRoute: route, reload, sessions, showLogin, treeReloadRef } =
+    tree { asyncTasksRef, backend, frontends, handed, currentRoute, reload, sessions, showLogin, treeReloadRef } =
       RH.div {className: "col-md-2 graph-tree"} [
         forest { appReload: reload
                , asyncTasksRef
                , backend
+               , currentRoute
                , frontends
                , handed
-               , route
                , sessions
                , showLogin
                , treeReloadRef } []
@@ -239,26 +248,26 @@ type TreeProps =
   (
     asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
+  , currentRoute  :: AppRoute
   , frontends     :: Frontends
   , handed        :: Types.Handed
-  , mCurrentRoute :: AppRoute
-  , reload        :: Types.ReloadS
+  , reload        :: GUR.ReloadS
   , sessions      :: Sessions
   , show          :: Boolean
   , showLogin     :: R.Setter Boolean
-  , treeReloadRef :: R.Ref (Maybe Types.ReloadS)
+  , treeReloadRef :: GUR.ReloadWithInitializeRef
   )
 
 type MSidebarProps =
   ( frontends       :: Frontends
   , graph           :: SigmaxT.SGraph
   , graphId         :: GET.GraphId
-  , graphVersion    :: Types.ReloadS
+  , graphVersion    :: GUR.ReloadS
   , removedNodeIds  :: R.State SigmaxT.NodeIds
   , showSidePanel   :: R.State GET.SidePanelState
   , selectedNodeIds :: R.State SigmaxT.NodeIds
   , session         :: Session
-  , treeReload      :: Types.ReloadS
+  , treeReload      :: GUR.ReloadS
   )
 
 type GraphProps = (
@@ -366,11 +375,11 @@ modeGraphType Types.Sources = "star"
 modeGraphType Types.Terms = "def"
 
 
-getNodes :: Session -> Types.ReloadS -> GET.GraphId -> Aff GET.HyperdataGraph
-getNodes session (graphVersion /\ _) graphId =
+getNodes :: Session -> GUR.ReloadS -> GET.GraphId -> Aff GET.HyperdataGraph
+getNodes session graphVersion graphId =
   get session $ NodeAPI Types.Graph
                         (Just graphId)
-                        ("?version=" <> show graphVersion)
+                        ("?version=" <> (show $ GUR.value graphVersion))
 
 
 transformGraph :: Record Controls.Controls -> SigmaxT.SGraph -> SigmaxT.SGraph

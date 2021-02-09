@@ -4,9 +4,9 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 license :: R.Element
-license = H.p {}
+license = H.p { className: "license" }
             [ H.text "Gargantext "
-            , H.span { className: "glyphicon glyphicon-registration-mark"} []
+            , H.span { className: "fa fa-registered"} []
             , H.text " is made by "
             , H.a { href: "https://iscpif.fr"
                   , target: "blank"
@@ -16,7 +16,7 @@ license = H.p {}
                   , title: "Legal instructions of the project."
                   }
               [ H.text ", with licences aGPLV3 and CECILL variant Affero compliant, " ]
-            , H.span { className: "glyphicon glyphicon-copyright-mark"   } []
+            , H.span { className: "fa fa-copyright"   } []
             , H.a { href: "https://cnrs.fr", target:"blank"} [H.text " CNRS 2017-Present "]
             , H.text "."
             ]

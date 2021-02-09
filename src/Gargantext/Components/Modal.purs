@@ -34,7 +34,7 @@ modalCpt = R.hooksComponentWithModule thisModule "modal" cpt
       pure $ R.createPortal
         [ H.div { ref: root, className: "modal", data: {toggle: "popover", placement: "right"}}
           [ H.div { className: "popover-content" }
-            [ H.div { className: "panel panel-default" }
+            [ H.div { className: "card" }
               [ H.ul { className: "list-group" } children ]]]]
         host
 

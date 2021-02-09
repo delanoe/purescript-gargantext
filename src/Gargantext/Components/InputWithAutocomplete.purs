@@ -13,6 +13,7 @@ import Reactix.DOM.HTML as H
 
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.InputWithAutocomplete"
 
 
@@ -26,29 +27,32 @@ type Props =
   , state :: R.State String
   )
 
-inputWithAutocomplete :: Record Props -> R.Element
-inputWithAutocomplete props = R.createElement inputWithAutocompleteCpt props []
+inputWithAutocomplete :: R2.Component Props
+inputWithAutocomplete = R.createElement inputWithAutocompleteCpt
 
 inputWithAutocompleteCpt :: R.Component Props
 inputWithAutocompleteCpt = R.hooksComponentWithModule thisModule "inputWithAutocomplete" cpt
   where
-    cpt props@{autocompleteSearch, onAutocompleteClick, onEnterPress, state: state@(state' /\ setState)} _ = do
+    cpt props@{ autocompleteSearch
+              , onAutocompleteClick
+              , onEnterPress
+              , state: state@(state' /\ setState) } _ = do
       inputRef <- R.useRef null
-      completions <- R.useState' $ autocompleteSearch state'
+      completionsS <- R.useState' $ autocompleteSearch state'
 
       pure $
         H.span { className: "input-with-autocomplete" }
         [
-          completionsCpt completions
+          completions { completionsS, onAutocompleteClick, state } []
         , H.input { type: "text"
                   , ref: inputRef
                   , className: "form-control"
                   , value: state'
-                  , on: { blur: onBlur completions
-                        , focus: onFocus completions
-                        , input: onInput completions
-                        , change: onInput completions
-                        , keyUp: onInputKeyUp inputRef completions } }
+                  , on: { blur: onBlur completionsS
+                        , focus: onFocus completionsS
+                        , input: onInput completionsS
+                        , change: onInput completionsS
+                        , keyUp: onInputKeyUp inputRef completionsS } }
         ]
 
       where
@@ -82,19 +86,32 @@ inputWithAutocompleteCpt = R.hooksComponentWithModule thisModule "inputWithAutoc
           else
             pure $ unit
 
-        completionsCpt :: R.State Completions -> R.Element
-        completionsCpt (completions /\ setCompletions) =
-          H.div { className }
-          [
-            H.div { className: "list-group" } (cCpt <$> completions)
-          ]
-          where
-            className = "completions " <> (if completions == [] then "hidden" else "")
+type CompletionsProps = (
+    completionsS :: R.State Completions
+  , onAutocompleteClick :: String -> Effect Unit
+  , state :: R.State String
+)
 
-            cCpt c =
-              H.button { type: "button"
-                       , className: "list-group-item"
-                       , on: { click: onClick c } } [ H.text c ]
-            onClick c _ = do
-              setState $ const c
-              onAutocompleteClick c
+completions :: R2.Component CompletionsProps
+completions = R.createElement completionsCpt
+
+completionsCpt :: R.Component CompletionsProps
+completionsCpt = R.hooksComponentWithModule thisModule "completions" cpt
+  where
+    cpt { completionsS: cmpls /\ setCompletions
+        , onAutocompleteClick
+        , state: _ /\ setState } _ =
+      pure $ H.div { className }
+                   [
+                     H.div { className: "list-group" } (cCpt <$> cmpls)
+                   ]
+      where
+        className = "completions " <> (if cmpls == [] then "d-none" else "")
+
+        cCpt c =
+          H.button { type: "button"
+                    , className: "list-group-item"
+                    , on: { click: onClick c } } [ H.text c ]
+        onClick c _ = do
+          setState $ const c
+          onAutocompleteClick c

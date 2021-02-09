@@ -4,12 +4,15 @@ import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson
 import Data.Argonaut.Decode.Error (JsonDecodeError(..))
 import Data.Array as A
 import Data.Either (Either(..))
+import Data.String as S
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Ord (genericCompare)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
+import Data.Tuple (fst, snd)
+import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Prim.Row (class Union)
 import Reactix as R
@@ -17,18 +20,16 @@ import URI.Query (Query)
 
 import Gargantext.Prelude
 
+-------------------------------------------------------------------------
 data Handed = LeftHanded | RightHanded
 
 derive instance genericHanded :: Generic Handed _
 instance eqHanded :: Eq Handed where
   eq = genericEq
 
-
 -------------------------------------------------------------------------
 type ID      = Int
 type Name    = String
-type Reload  = Int
-type ReloadS = R.State Reload
 
 newtype SessionId = SessionId String
 type NodeID = Int
@@ -333,8 +334,11 @@ nodeTypePath (NodePublic nt) = nodeTypePath nt
 nodeTypePath NodeFile        = "file"
 
 ------------------------------------------------------------
-
-type ListId = Int
+type CorpusId   = Int
+type DocId      = Int
+type ListId     = Int
+type AnnuaireId = Int
+type ContactId  = Int
 
 data ScoreType = Occurrences
 
@@ -595,7 +599,7 @@ modeFromString _            = Nothing
 
 -- corresponds to /add/form/async or /add/query/async
 data AsyncTaskType = AddNode
-                   | Form
+                   | Form  -- this is file upload too
                    | GraphRecompute
                    | Query
                    | UpdateNgramsCharts
@@ -630,6 +634,14 @@ asyncTaskTypePath Query              = "query/"
 asyncTaskTypePath UpdateNgramsCharts = "ngrams/async/charts/update/"
 asyncTaskTypePath UpdateNode         = "update/"
 asyncTaskTypePath UploadFile         = "async/file/add/"
+
+asyncTaskTriggersAppReload :: AsyncTaskType -> Boolean
+asyncTaskTriggersAppReload _ = true
+
+asyncTaskTriggersTreeReload :: AsyncTaskType -> Boolean
+asyncTaskTriggersTreeReload Form       = true
+asyncTaskTriggersTreeReload UploadFile = true
+asyncTaskTriggersTreeReload _          = false
 
 
 type AsyncTaskID = String
@@ -743,3 +755,15 @@ progressPercent (AsyncProgress {log}) = perc
         where
           nom = toNumber $ failed + succeeded
           denom = toNumber $ failed + succeeded + remaining
+
+---------------------------------------------------------------------------
+-- | GarganText Internal Sugar
+
+prettyNodeType :: NodeType -> String
+prettyNodeType nt = S.replace (S.Pattern "Node")   (S.Replacement " ")
+                  $ S.replace (S.Pattern "Folder") (S.Replacement " ")
+                  $ show nt
+
+
+
+

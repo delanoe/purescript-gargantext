@@ -101,7 +101,7 @@ scatterOptions metrics' = Options
                         }
     --}
 
-getMetricsHash :: Session -> Tuple Reload (Record Path) -> Aff String
+getMetricsHash :: Session -> ReloadPath -> Aff String
 getMetricsHash session (_ /\ { corpusId, listId, tabType }) =
   get session $ CorpusMetricsHash { listId, tabType } (Just corpusId)
 

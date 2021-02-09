@@ -43,13 +43,9 @@ simpleButtonCpt :: R.Component Props
 simpleButtonCpt = R.hooksComponentWithModule thisModule "simpleButton" cpt
   where
     cpt {onClick, text} _ = do
-      pure $
-        H.span {}
-          [
-            H.button
-              { className: "btn btn-primary", on: {click: onClick} }
-              [ H.text text ]
-          ]
+      pure $ H.button { className: "btn btn-outline-primary"
+                      , on: {click: onClick}
+                      } [ R2.small {} [ H.text text ] ]
 
 centerButton :: R.Ref Sigmax.Sigma -> R.Element
 centerButton sigmaRef = simpleButton {
@@ -93,7 +89,7 @@ cameraButton { id
         edges <- Sigmax.getEdges s
         nodes <- Sigmax.getNodes s
         let graphData = GET.GraphData $ hyperdataGraph { edges = map GEU.stEdgeToGET edges
-                                                       , nodes = map GEU.stNodeToGET nodes }
+                                                       , nodes = GEU.normalizeNodes $ map GEU.stNodeToGET nodes }
         let cameras = map Sigma.toCamera $ Sigma.cameras s
         let camera = case cameras of
               [c] -> GET.Camera { ratio: c.ratio

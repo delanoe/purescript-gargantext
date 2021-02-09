@@ -1,0 +1,55 @@
+// $annotation-candidate-color: #aaa
+// $annotation-graph-color: #0f0
+// $annotation-stop-color: #f00
+
+// Copied from bootstrap's bg-warning, bg-success, bg-danger:
+$annotation-graph-color: #95D29593
+// $annotation-candidate-color: #B8B8B876
+$annotation-candidate-color: #b8daff
+$annotation-stop-color: #F5949931
+
+@mixin lg1($color)
+    color: #000
+    background-color: $color
+
+@mixin lg2($color1, $color2)
+    color: #000
+    background-image: linear-gradient(rgba($color1, 0.5), rgba($color1, 0.5)), linear-gradient(rgba($color2, 0.5), rgba($color2, 0.5))
+
+@mixin lg3($color1, $color2, $color3)
+    color: #000
+    background-image: linear-gradient(rgba($color1, 0.34), rgba($color1, 0.34)), linear-gradient(rgba($color2, 0.33), rgba($color2, 0.33)), linear-gradient(rgba($color3, 0.33), rgba($color3, 0.33))
+
+.annotation-run
+  cursor: pointer
+
+  &.candidate-term.graph-term.stop-term
+    @include lg3($annotation-candidate-color, $annotation-graph-color, $annotation-stop-color)
+
+  &.candidate-term.graph-term
+    @include lg2($annotation-candidate-color, $annotation-graph-color)
+
+  &.candidate-term.stop-term
+    @include lg2($annotation-candidate-color, $annotation-stop-color)
+
+  &.graph-term.stop-term
+    @include lg2($annotation-graph-color, $annotation-stop-color)
+
+  &.candidate-term
+    @include lg1($annotation-candidate-color)
+
+  &.graph-term
+    @include lg1($annotation-graph-color)
+
+  &.stop-term
+    @include lg1($annotation-stop-color)
+
+.context-menu
+  .candidate-term
+    @include lg1($annotation-candidate-color)
+
+  .graph-term
+    @include lg1($annotation-graph-color)
+
+  .stop-term
+    @include lg1($annotation-stop-color)

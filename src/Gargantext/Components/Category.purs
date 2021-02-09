@@ -29,7 +29,7 @@ import Reactix.DOM.HTML as H
 import Gargantext.Prelude
 
 import Gargantext.Components.Category.Types
-import Gargantext.Components.DocsTable.Types (DocumentsView(..), LocalCategories)
+import Gargantext.Components.DocsTable.Types (DocumentsView(..), LocalCategories, LocalUserScore)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoaderWithCacheAPI, HashedResponse(..))
 import Gargantext.Utils.Reactix as R2
@@ -43,17 +43,72 @@ thisModule :: String
 thisModule = "Gargantext.Components.Category"
 
 ------------------------------------------------------------------------
+type RatingProps =
+  ( score              :: Star
+  , nodeId             :: NodeID
+  , row                :: DocumentsView
+  , session            :: Session
+  , setLocalCategories :: R.Setter LocalUserScore
+  )
+
+rating :: R2.Component RatingProps
+rating = R.createElement ratingCpt
+
+ratingCpt :: R.Component RatingProps
+ratingCpt = R.hooksComponentWithModule thisModule "rating" cpt
+  where
+    cpt { score, nodeId, row: DocumentsView r, session, setLocalCategories } _ = do
+      pure $ H.div {className:"flex"} divs
+        where
+          divs = map (\s -> H.div { className : icon score s
+                                  , on: {click: onClick score s}
+                                  } []) stars
+
+          icon Star_0 Star_0  = "fa fa-times-circle"
+          icon _ Star_0       = "fa fa-times"
+          icon c s            = if star2score c < star2score s
+                                  then "fa fa-star-o"
+                                  else "fa fa-star"
+
+          onClick score c = \_-> do
+            let c' = if score == c
+                      then clickAgain c
+                      else c
+
+            setLocalCategories $ Map.insert r._id c'
+            void $ launchAff
+                 $ putRating session nodeId
+                 $ RatingQuery {nodeIds: [r._id], rating: c'}
+
+newtype RatingQuery =
+  RatingQuery { nodeIds :: Array Int
+              , rating  :: Star
+              }
+
+instance encodeJsonRatingQuery :: EncodeJson RatingQuery where
+  encodeJson (RatingQuery post) =
+    "ntc_nodesId" := post.nodeIds
+    ~> "ntc_category" := encodeJson post.rating
+    ~> jsonEmptyObject
+
+putRating :: Session -> Int -> RatingQuery -> Aff (Array Int)
+putRating session nodeId = put session $ ratingRoute nodeId
+  where
+    ratingRoute :: Int -> SessionRoute
+    ratingRoute nodeId = NodeAPI Node (Just nodeId) "category"
 
 
-type CarousselProps = (
-    category           :: Category
+
+------------------------------------------------------------------------
+type CarousselProps =
+  ( category           :: Category
   , nodeId             :: NodeID
   , row                :: DocumentsView
   , session            :: Session
   , setLocalCategories :: R.Setter LocalCategories
   )
 
--- caroussel :: Category -> R.Element
+
 caroussel :: R2.Component CarousselProps
 caroussel = R.createElement carousselCpt
 
@@ -79,30 +134,32 @@ carousselCpt = R.hooksComponentWithModule thisModule "caroussel" cpt
 
         onClick c = \_-> do
           setLocalCategories $ Map.insert r._id c
-          void $ launchAff $ putCategories session nodeId $ CategoryQuery {nodeIds: [r._id], category: c}
+          void $ launchAff
+               $ putCategories session nodeId
+               $ CategoryQuery {nodeIds: [r._id], category: c}
 
 icon :: Category -> Boolean -> String
-icon cat b = btn b $ "glyphicon glyphicon-" <> (color $ size b $ icon' cat b)
+icon cat b = btn b $ "fa fa-" <> (color $ size b $ icon' cat b)
   where
     icon' :: Category -> Boolean -> String
-    icon' Trash   false = "remove"
-    icon' Trash   true  = "remove-sign"
+    icon' Trash   false = "times"
+    icon' Trash   true  = "times-circle"
 
-    icon' UnRead  true  = "question-sign"
-    icon' UnRead  false = "question-sign"
+    icon' UnRead  false = "question"
+    icon' UnRead  true  = "question-circle"
 
-    icon' Checked true  = "ok-sign"
-    icon' Checked false = "ok"
+    icon' Checked false = "check"
+    icon' Checked true  = "check-circle"
 
+    icon' Topic  false = "star-o"
     icon' Topic  true  = "star"
-    icon' Topic  false = "star-empty"
 
+    icon' Favorite false = "heart-o"
     icon' Favorite true = "heart"
-    icon' Favorite false = "heart-empty"
 
     size :: Boolean -> String -> String
     size true  s = s <> " btn-lg"
-    size false s = s <> " btn-xs"
+    size false s = s <> " btn-sm"
 
     color :: String -> String
     color x = x <> " text-primary"
@@ -111,7 +168,7 @@ icon cat b = btn b $ "glyphicon glyphicon-" <> (color $ size b $ icon' cat b)
     btn true s = s
     btn false s = "btn " <> s
 
-
+-------------------------------------------------------------------------
 newtype CategoryQuery = CategoryQuery {
     nodeIds :: Array Int
   , category :: Category

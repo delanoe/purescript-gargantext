@@ -23,6 +23,7 @@ import Gargantext.Prelude
 import Gargantext.Sessions (Session, sessionId, getCacheState, setCacheState)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Lists"
@@ -42,13 +43,15 @@ listsWithForestCpt = R.hooksComponentWithModule thisModule "listsWithForest" cpt
         , listsProps: listsProps@{ session } } _ = do
       controls <- initialControls
 
-      pure $ Forest.forestLayoutWithTopBar forestProps [
-        topBar { controls } []
-      , listsLayout (Record.merge listsProps { controls }) []
-      , H.div { className: "side-panel" } [
-          sidePanel { controls, session } []
-        ]
-      ]
+      pure $ Forest.forestLayoutWithTopBar forestProps
+           [ topBar { controls } []
+           , listsLayout (Record.merge listsProps { controls }) []
+
+           -- TODO remove className "side-panel" is preview is not triggered
+           -- , H.div { className: "" }
+           , H.div { className: "side-panel" }
+                   [ sidePanel { controls, session } []]
+           ]
 --------------------------------------------------------
 
 type TopBarProps = (
@@ -72,12 +75,12 @@ topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
 --------------------------------------------------------
 
 type CommonProps = (
-    appReload     :: GT.ReloadS
+    appReload     :: GUR.ReloadS
   , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
   , nodeId        :: Int
   , session       :: Session
   , sessionUpdate :: Session -> Effect Unit
-  , treeReloadRef :: R.Ref (Maybe GT.ReloadS)
+  , treeReloadRef :: GUR.ReloadWithInitializeRef
   )
 
 type Props = (
@@ -181,8 +184,8 @@ sidePanelCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
         R2.setTrigger triggerSidePanel triggerSidePanel'
 
       (mCorpusId /\ setMCorpusId) <- R.useState' Nothing
-      (mListId /\ setMListId) <- R.useState' Nothing
-      (mNodeId /\ setMNodeId) <- R.useState' Nothing
+      (mListId   /\ setMListId  ) <- R.useState' Nothing
+      (mNodeId   /\ setMNodeId  ) <- R.useState' Nothing
 
       let mainStyle = case fst showSidePanel of
             Opened -> { display: "block" }

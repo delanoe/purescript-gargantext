@@ -21,7 +21,7 @@ import Gargantext.Ends (Frontends, url)
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (ID, Name)
 import Gargantext.Types as GT
-import Gargantext.Utils (toggleSet)
+import Gargantext.Utils (glyphicon, toggleSet)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.ReactTooltip as ReactTooltip
 
@@ -35,21 +35,22 @@ type Footer  = R.Element
 
 panel :: Body -> Footer -> R.Element
 panel bodies submit =
-  H.div {} [ panelBody bodies, footer submit ]
+  R.fragment [ panelBody, footer ]
     where
-      panelBody bs =
-          H.div {className: "panel-body"}
-          [ H.div { className: "row spacer" }
-                  [ H.div { className: "col-md-12" } bs
+      panelBody =
+          H.div { className: "card-body" }
+          [ H.div { className: "row" }
+                  [ H.div { className: "col-12" } bodies
                           -- TODO add type for text or form here
-                          -- [ H.form {className: "form-horizontal"} bs ]
+                          -- [ H.form {className: "form-horizontal"} bodies ]
                   ]
             ]
-      footer sb = 
-        H.div {className: "panel-footer"}
-            [ H.div {} []
-            , H.div { className: "center"} [ sb ]
-            ]
+      footer =
+        H.div {className: "card-footer"}
+          [ H.div { className: "row" }
+              [ H.div { className: "mx-auto"} [ submit ]
+              ]
+          ]
 
 
 ------------------------------------------------------------------------
@@ -63,58 +64,50 @@ type TextInputBoxProps =
   , boxAction :: String -> Action
   )
 
-textInputBox :: Record TextInputBoxProps -> R.Element
-textInputBox p@{ boxName, boxAction, dispatch, isOpen: (true /\ setIsOpen) } = R.createElement el p []
+textInputBox :: R2.Component TextInputBoxProps
+textInputBox = R.createElement textInputBoxCpt
+
+textInputBoxCpt :: R.Component TextInputBoxProps
+textInputBoxCpt = R.hooksComponentWithModule thisModule "textInputBox" cpt
   where
-    el = R.hooksComponentWithModule thisModule (boxName <> "Box") cpt
-    cpt {id, text} _ = do
-      renameNodeName <- R.useState' text
-      pure $ H.div {className: "from-group row-no-padding"}
-        [ textInput renameNodeName
-        , submitBtn renameNodeName
+    cpt p@{ boxAction, boxName, dispatch, id, isOpen: (true /\ setIsOpen), text } _ = do
+      renameNodeNameRef <- R.useRef text
+
+      pure $ H.div { className: "from-group row" }
+        [ textInput renameNodeNameRef
+        , submitBtn renameNodeNameRef
         , cancelBtn
         ]
       where
-        textInput (newName /\ setNewName) =
-          H.div {className: "col-md-8"}
-          [
-            inputWithEnter {
-                 onEnter: submit newName
-               , onValueChanged: setNewName <<< const
-               , autoFocus: false
+        textInput renameNodeNameRef =
+          H.div { className: "col-8" }
+            [ inputWithEnter {
+                 onBlur: R.setRef renameNodeNameRef
+               , onEnter: submit renameNodeNameRef
+               , onValueChanged: R.setRef renameNodeNameRef
+               , autoFocus: true
                , className: "form-control"
                , defaultValue: text
                , placeholder: (boxName <> " Node")
                , type: "text"
                }
-          -- [ H.input { type: "text"
-          --           , placeholder: (boxName <> " Node")
-          --           , defaultValue: text
-          --           , className: "form-control"
-          --           , on: { input: setRenameNodeName
-          --                      <<< const
-          --                      <<< R.unsafeEventValue }
-          --           }
-          ]
-        submitBtn (newName /\ _) =
-          H.a {className: "btn glyphitem glyphicon glyphicon-ok col-md-2 pull-left"
+            ]
+        submitBtn renameNodeNameRef =
+          H.a { className: "col-2 " <> glyphicon "floppy-o"
               , type: "button"
-              , on: { click: submit newName }
+              , on: { click: submit renameNodeNameRef }
               , title: "Submit"
               } []
         cancelBtn =
-          H.a {className: "btn text-danger glyphitem glyphicon glyphicon-remove col-md-2 pull-left"
+          H.a { className: "text-danger col-2 " <> glyphicon "times"
               , type: "button"
               , on: { click: \_ -> setIsOpen $ const false }
               , title: "Cancel"
               } []
-        submit newName _ = do
+        submit renameNodeNameRef _ = do
+          launchAff_ $ dispatch ( boxAction $ R.readRef renameNodeNameRef )
           setIsOpen $ const false
-          launchAff_ $ dispatch ( boxAction newName )
-textInputBox p@{ boxName, isOpen: (false /\ _) } = R.createElement el p []
-  where
-    el = R.hooksComponentWithModule thisModule (boxName <> "Box") cpt
-    cpt {text} _ = pure $ H.div {} []
+    cpt { isOpen: (false /\ _) } _ = pure $ H.div {} []
 
 -- | END Rename Box
 
@@ -151,7 +144,8 @@ formChoiceSafe :: forall a b c
                => Show  a
                => Array a
                -> a
-               -> ((b -> a) -> Effect c)
+               -> (a -> Effect c)
+               -- -> ((b -> a) -> Effect c)
                -> R.Element
 formChoiceSafe [] _ _ = H.div {} []
 
@@ -167,16 +161,13 @@ formChoice :: forall a b c d
            => Show d
            => Array d
            -> b
-           -> ((c -> b) -> Effect a)
+           -> (b -> Effect a)
+           -- -> ((c -> b) -> Effect a)
            -> R.Element
 formChoice nodeTypes defaultNodeType setNodeType = 
   H.div { className: "form-group"}
         [ R2.select { className: "form-control"
-                    , on: { change: setNodeType
-                                      <<< const
-                                      <<< fromMaybe defaultNodeType
-                                      <<< read
-                                      <<< R.unsafeEventValue }
+                    , on: { change: \e -> setNodeType $ fromMaybe defaultNodeType $ read $ R.unsafeEventValue e }
                     }
           (map (\opt -> H.option {} [ H.text $ show opt ]) nodeTypes)
          ]
@@ -186,7 +177,8 @@ formChoice nodeTypes defaultNodeType setNodeType =
 formButton :: forall a b c
            . Show a
            =>   a
-           -> ((b -> a) -> Effect c)
+           -> (a -> Effect c)
+           -- -> ((b -> a) -> Effect c)
            -> R.Element
 formButton nodeType setNodeType =
   H.div {} [ H.text $ "Confirm the selection of: " <> show nodeType
@@ -197,7 +189,7 @@ formButton nodeType setNodeType =
                         , type : "button"
                         , title: "Form Button"
                         , style : { width: "100%" }
-                        , on: { click: \_ -> setNodeType ( const nodeType ) }
+                        , on: { click: \_ -> setNodeType nodeType }
                         } [H.text $ "Confirmation"]
 
 ------------------------------------------------------------------------
@@ -207,7 +199,6 @@ submitButton :: Action -> (Action -> Aff Unit) -> R.Element
 submitButton action dispatch =
   H.button { className : "btn btn-primary fa fa-" <> icon action
            , type: "button"
-           , style : { width: "50%" }
            , id: S.toLower $ show action
            , title: show action
            , on: {click: \_ -> launchAff $ dispatch action}
@@ -219,7 +210,6 @@ type Href  = String
 submitButtonHref :: Action -> Href -> R.Element
 submitButtonHref action href =
   H.a { className : "btn btn-primary fa fa-" <> icon action
-      , style : { width: "50%" }
       , href
       , target: "_blank"
       }
@@ -232,10 +222,9 @@ submitButtonHref action href =
 
 checkbox :: R.State Boolean -> R.Element
 checkbox ( val /\ set ) =
-  H.input { id: "checkbox-id"
+  H.input { className : "form-check-input"
           , type: "checkbox"
           , value: val
-          , className : "checkbox"
           , on: { click: \_ -> set $ const $ not val}
           }
 
@@ -259,11 +248,28 @@ checkboxes xs (val /\ set) =
                                  ]
                   ) xs
 
+checkboxesListGroup :: forall a
+           .  Ord   a
+           => Show  a
+           => Array a
+           -> R.State (Set a)
+           -> Array R.Element
+checkboxesListGroup xs (val /\ set) =
+  map (\a -> H.li { className: "list-group-item" }
+             [ H.div { className: "form-check" }
+               [ H.input { type: "checkbox"
+                         , className: "form-check-input"
+                         , defaultChecked: Set.member a val
+                         , on: { click: \_ -> set
+                                            $ const
+                                            $ toggleSet a val
+                             }
+                       }
+               , H.label { className: "form-check-label" } [ H.text $ show a ]
+               ]
+             ]
+      ) xs
 
-prettyNodeType :: GT.NodeType -> String
-prettyNodeType nt = S.replace (S.Pattern "Node")   (S.Replacement " ")
-                  $ S.replace (S.Pattern "Folder") (S.Replacement " ")
-                  $ show nt
 
 
 -- START node link
@@ -278,8 +284,8 @@ type NodeLinkProps = (
   , handed     :: GT.Handed
   )
 
-nodeLink :: Record NodeLinkProps -> R.Element
-nodeLink p = R.createElement nodeLinkCpt p []
+nodeLink :: R2.Component NodeLinkProps
+nodeLink = R.createElement nodeLinkCpt
 
 nodeLinkCpt :: R.Component NodeLinkProps
 nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
@@ -296,7 +302,8 @@ nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
       popoverRef <- R.useRef null
 
       pure $
-        H.div { on: { click: onClick } }
+        H.div { className: "node-link"
+              , on: { click: onClick } }
               [ H.a { data: { for: tooltipId
                             , tip: true
                             }
@@ -308,7 +315,7 @@ nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
                                            ]
                      , ReactTooltip.reactTooltip { id: tooltipId }
                                                  [ R2.row [ H.h4 {className: GT.fldr nodeType true}
-                                                                 [ H.text $ prettyNodeType nodeType ]
+                                                                 [ H.text $ GT.prettyNodeType nodeType ]
                                                           ]
                                                  , R2.row [ H.span {} [ H.text $ name ]]
                                                  ]

@@ -26,12 +26,12 @@ import Reactix.SyntheticEvent as E
 
 import Gargantext.Prelude
 
-import Gargantext.Types (CTabNgramType(..), TermList)
+import Gargantext.Components.Annotation.Menu ( annotationMenu, AnnotationMenu, MenuType(..) )
 import Gargantext.Components.Annotation.Utils ( termBootstrapClass, termClass )
 import Gargantext.Components.NgramsTable.Core (NgramsTable, NgramsTerm, findNgramTermList, highlightNgrams, normNgram)
-import Gargantext.Components.Annotation.Menu ( annotationMenu, MenuType(..) )
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Selection as Sel
+import Gargantext.Types (CTabNgramType(..), TermList)
 
 thisModule :: String
 thisModule = "Gargantext.Components.Annotation.AnnotatedField"
@@ -53,55 +53,16 @@ annotatedField = R.createElement annotatedFieldComponent
 annotatedFieldComponent :: R.Component Props
 annotatedFieldComponent = R.hooksComponentWithModule thisModule "annotatedField" cpt
   where
-    cpt {ngrams,setTermList,text: fieldText} _ = do
+    cpt {ngrams, setTermList, text: fieldText} _ = do
       (_ /\ setRedrawMenu) <- R.useState' false
 
-      menuRef <- R.useRef Nothing
+      menuRef <- R.useRef (Nothing :: Maybe AnnotationMenu)
 
       let wrapperProps = { className: "annotated-field-wrapper" }
 
-          redrawMenu = setRedrawMenu not
-
-          hideMenu = do
-            R.setRef menuRef Nothing
-            redrawMenu
-
-          showMenu { event, getList, menuType, ngram } = do
-            let x = E.clientX event
-                y = E.clientY event
-                -- n = normNgram CTabTerms text
-                list = getList ngram
-                setList t = do
-                  setTermList ngram list t
-                  hideMenu
-            E.preventDefault event
-            --range <- Sel.getRange sel 0
-            --log2 "[showMenu] selection range" $ Sel.rangeToTuple range
-            let menu = Just
-                  { x
-                  , y
-                  , list
-                  , menuType
-                  , onClose: hideMenu
-                  , setList
-                  }
-            R.setRef menuRef menu
-            redrawMenu
-
-          onSelect :: Maybe (Tuple NgramsTerm TermList) -> MouseEvent -> Effect Unit
-          onSelect (Just (Tuple ngram list)) event =
-            showMenu { event, getList: const (Just list), menuType: SetTermListItem, ngram }
-          onSelect Nothing event = do
-            s <- Sel.getSelection
-            case s of
-              Just sel -> do
-                case Sel.selectionToString sel of
-                  "" -> hideMenu
-                  sel' -> do
-                    showMenu { event, getList: findNgramTermList ngrams, menuType: NewNgram, ngram: normNgram CTabTerms sel' }
-              Nothing -> hideMenu
-
-          wrap (text /\ list) = {text, list, onSelect}
+          wrap (text /\ list) = { list
+                               , onSelect: onAnnotationSelect { menuRef, ngrams, setRedrawMenu, setTermList }
+                               , text }
 
       pure $ HTML.div wrapperProps
         [ maybe (HTML.div {} []) annotationMenu $ R.readRef menuRef
@@ -113,6 +74,58 @@ compile :: NgramsTable -> Maybe String -> Array (Tuple String (List (Tuple Ngram
 compile ngrams = maybe [] (highlightNgrams CTabTerms ngrams)
 
 -- Runs
+
+onAnnotationSelect { menuRef, ngrams, setRedrawMenu, setTermList } Nothing event = do
+  s <- Sel.getSelection
+  case s of
+    Just sel -> do
+      case Sel.selectionToString sel of
+        "" -> hideMenu { menuRef, setRedrawMenu }
+        sel' -> do
+          showMenu { event
+                   , getList: findNgramTermList ngrams
+                   , menuRef
+                   , menuType: NewNgram
+                   , ngram: normNgram CTabTerms sel'
+                   , setRedrawMenu
+                   , setTermList }
+    Nothing -> hideMenu { menuRef, setRedrawMenu }
+onAnnotationSelect { menuRef, ngrams, setRedrawMenu, setTermList } (Just (Tuple ngram list)) event =
+  showMenu { event
+           , getList: const (Just list)
+           , menuRef
+           , menuType: SetTermListItem
+           , ngram
+           , setRedrawMenu
+           , setTermList }
+
+showMenu { event, getList, menuRef, menuType, ngram, setRedrawMenu, setTermList } = do
+  let x = E.clientX event
+      y = E.clientY event
+      -- n = normNgram CTabTerms text
+      list = getList ngram
+      redrawMenu = setRedrawMenu not
+      setList t = do
+        setTermList ngram list t
+        hideMenu { menuRef, setRedrawMenu }
+  E.preventDefault event
+  --range <- Sel.getRange sel 0
+  --log2 "[showMenu] selection range" $ Sel.rangeToTuple range
+  let menu = Just
+        { x
+        , y
+        , list
+        , menuType
+        , onClose: hideMenu { menuRef, setRedrawMenu }
+        , setList
+        }
+  R.setRef menuRef menu
+  redrawMenu
+
+hideMenu { menuRef, setRedrawMenu } = do
+  let redrawMenu = setRedrawMenu not
+  R.setRef menuRef Nothing
+  redrawMenu
 
 type Run =
   ( list :: List (Tuple NgramsTerm TermList)
@@ -136,3 +149,11 @@ annotatedRunComponent = R.staticComponent "AnnotatedRun" cpt
         bgClasses = joinWith " " $ A.fromFoldable $ termClass <<< snd <$> lst
         -- className = "annotation-run bg-" <> termBootstrapClass list
         className = "annotation-run " <> bgClasses
+        -- cb = onSelect text list
+        -- elt =
+        --   case list of
+        --      Nothing -> HTML.span { on: { mouseUp: cb } }
+        --      Just l  -> HTML.span { -- className: "annotation-run bg-" <> termBootstrapClass l
+        --                             className: "annotation-run " <> termClass l
+        --                           , on: { click: cb }
+        --                           }

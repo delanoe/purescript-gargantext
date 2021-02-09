@@ -1,10 +1,10 @@
 #dafixedtop
   z-index: 999  // correction for the popover
 
-.logoSmall
-  line-height: 15px
-  height: 10px
-  padding: 10px 10px
+//.logoSmall
+//  line-height: 15px
+  // height: 10px
+  // padding: 10px 10px
 
 #logo-designed
   border: 15px
@@ -63,20 +63,21 @@ li#rename
   .popup-container
     display: flex
     flex-direction: colum
-    .panel
+    & > .card
       border: 1px solid rgba(0,0,0,0.2)
       box-shadow: 0 2px 5px rgba(0,0,0,0.2)
       margin-bottom: 0px
-      .glyphicon-pencil
+      width: 34rem
+      .fa-pencil
         color: black
-      .panel-body
+      .card-body
         display: flex
         justify-content: center
         background-color: white
         border: none
         .spacer
           margin: 10px
-    .frame-search.panel
+    .frame-search.card
       border: 1px solid rgba(0,0,0,0.2)
       box-shadow: 0 2px 5px rgba(0,0,0,0.2)
       height: 600px
@@ -90,7 +91,7 @@ li#rename
   background-color: white
   z-index: 1000
 
-  .panel-body
+  .card-body
     input
       min-width: 200px
 
@@ -101,7 +102,7 @@ li#rename
   background-color: white
   z-index: 1000
 
-  .panel-body
+  .card-body
     select
       min-width: 200px
 
@@ -143,10 +144,6 @@ li#rename
     padding: 0 !important
     margin: 0 !important
 
-.row-no-padding > [class*="col-"]
-    padding-left: 0 !important
-    padding-right: 0 !important
-
 .tab-pane
   .reload-btn
     padding-right: 6px
@@ -169,4 +166,3 @@ li#rename
 
 a:focus, a:hover
   cursor: pointer
-

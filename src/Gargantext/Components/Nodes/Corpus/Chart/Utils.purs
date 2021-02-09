@@ -15,22 +15,23 @@ import Gargantext.Components.Nodes.Corpus.Chart.Types (Path)
 import Gargantext.Sessions (Session)
 import Gargantext.Types as T
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 
 thisModule = "Gargantext.Components.Nodes.Corpus.Chart.Utils"
 
-reloadButtonWrap :: T.ReloadS -> R.Element -> R.Element
+reloadButtonWrap :: GUR.ReloadS -> R.Element -> R.Element
 reloadButtonWrap setReload el = H.div {} [
     reloadButton setReload
   , el
   ]
 
-reloadButton :: T.ReloadS -> R.Element
-reloadButton (_ /\ setReload) = H.a { className
-                                   , on: { click: onClick }
-                                   , title: "Reload" } []
+reloadButton :: GUR.ReloadS -> R.Element
+reloadButton reloadS = H.a { className
+                           , on: { click: onClick }
+                           , title: "Reload" } []
   where
     className = "reload-btn fa fa-refresh"
-    onClick _ = setReload $ (_ + 1)
+    onClick _ = GUR.bump reloadS
 
 
 mNgramsTypeFromTabType :: T.TabType -> Maybe T.CTabNgramType
@@ -44,7 +45,7 @@ mNgramsTypeFromTabType (T.TabPairing _)                           = Nothing
 type ChartUpdateButtonProps = (
     chartType :: T.ChartType
   , path :: Record Path
-  , reload :: T.ReloadS
+  , reload :: GUR.ReloadS
   , session :: Session
   )
 
@@ -56,7 +57,8 @@ chartUpdateButtonCpt = R.hooksComponentWithModule thisModule "chartUpdateButton"
   where
     cpt { chartType
         , path: { corpusId, listId, tabType }
-        , reload: (_ /\ setReload), session } _ = do
+        , reload
+        , session } _ = do
 
       pure $ H.a { className: "chart-update-button fa fa-database"
                  , on: { click: onClick }
@@ -68,5 +70,5 @@ chartUpdateButtonCpt = R.hooksComponentWithModule thisModule "chartUpdateButton"
             case mNgramsTypeFromTabType tabType of
               Just ngramsType -> do
                 _ <- recomputeChart session chartType ngramsType corpusId listId
-                liftEffect $ setReload $ (_ + 1)
+                liftEffect $ GUR.bump reload
               Nothing -> pure unit

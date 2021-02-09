@@ -16,9 +16,10 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, get, sessionId)
-import Gargantext.Types (NodeType(..), ReloadS)
+import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Argonaut (genericSumEncodeJson)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 
 thisModule = "Gargantext.Components.Nodes.Frame"
 
@@ -77,14 +78,14 @@ frameLayoutWithKeyCpt :: R.Component KeyProps
 frameLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "frameLayoutWithKey" cpt
   where
     cpt { nodeId, session, nodeType} _ = do
-      reload <- R.useState' 0
+      reload <- GUR.new
 
-      useLoader {nodeId, reload: fst reload, session} loadframeWithReload $
+      useLoader {nodeId, reload: GUR.value reload, session} loadframeWithReload $
         \frame -> frameLayoutView {frame, nodeId, reload, session, nodeType}
 
 type ViewProps =
   ( frame  :: NodePoly Hyperdata
-  , reload  :: ReloadS
+  , reload  :: GUR.ReloadS
   | Props
   )
 
@@ -94,7 +95,7 @@ type FrameId = String
 
 hframeUrl :: NodeType -> Base -> FrameId -> String
 hframeUrl NodeFrameNotebook _    frame_id = frame_id  -- Temp fix : frame_id is currently the whole url created
-hframeUrl _             base frame_id = base <> "/" <> frame_id <> "?both"
+hframeUrl _             base frame_id = base <> "/" <> frame_id <> "?view" -- "?both"
 
 frameLayoutView :: Record ViewProps -> R.Element
 frameLayoutView props = R.createElement frameLayoutViewCpt props []
@@ -103,7 +104,8 @@ frameLayoutViewCpt :: R.Component ViewProps
 frameLayoutViewCpt = R.hooksComponentWithModule thisModule "frameLayoutView" cpt
   where
     cpt {frame: (NodePoly {hyperdata: Hyperdata {base, frame_id}}), nodeId, reload, session, nodeType} _ = do
-      pure $ H.div { className : "frame" }
+      pure $ H.div { className : "frame"
+                   , rows: "100%,*" }
                    [ H.iframe { src: hframeUrl nodeType base frame_id
                               , width: "100%"
                               , height: "100%"
@@ -120,6 +122,6 @@ loadframe' :: Record LoadProps -> Aff (NodePoly Hyperdata)
 loadframe' {nodeId, session} = get session $ NodeAPI Node (Just nodeId) ""
 
 -- Just to make reloading effective
-loadframeWithReload :: {reload :: Int  | LoadProps} -> Aff (NodePoly Hyperdata)
+loadframeWithReload :: {reload :: GUR.Reload  | LoadProps} -> Aff (NodePoly Hyperdata)
 loadframeWithReload {nodeId, session} = loadframe' {nodeId, session}
 

@@ -103,7 +103,7 @@ fileLayoutLoadedCpt = R.hooksComponentWithModule thisModule "fileLayoutLoaded" c
             H.h2 {} [ H.text hyperdata.name ]
           ]
         , H.div { className: "row" } [
-            H.div { className: "btn btn-default" } [
+            H.div { className: "btn btn-primary" } [
                H.a { href: toUrl session ("node/" <> show nodeId <> "/file/download")
                    , target: "_blank"
                    } [ H.text "Download" ]

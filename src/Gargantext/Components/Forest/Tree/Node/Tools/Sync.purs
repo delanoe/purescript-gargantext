@@ -110,7 +110,7 @@ nodeListUpdateButtonCpt = R.hooksComponentWithModule thisModule "nodeListUpdateB
     cpt { listId, nodeId, nodeType, session, triggerRefresh } _ = do
       enabled <- R.useState' true
 
-      pure $ H.div { className: "update-button " 
+      pure $ H.div {} [] {- { className: "update-button " 
                      <> if (fst enabled) then "enabled" else "disabled text-muted"
                    } [ H.span { className: "fa fa-refresh"
                      , on: { click: onClick enabled } } []
@@ -124,3 +124,4 @@ nodeListUpdateButtonCpt = R.hooksComponentWithModule thisModule "nodeListUpdateB
             liftEffect $ setEnabled $ const true
             triggerRefresh unit
           pure unit
+      -}

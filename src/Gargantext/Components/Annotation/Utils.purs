@@ -8,6 +8,7 @@ termClass MapTerm = "graph-term"
 termClass StopTerm = "stop-term"
 
 termBootstrapClass :: TermList -> String
-termBootstrapClass CandidateTerm = "warning"
+-- termBootstrapClass CandidateTerm = "warning"
 termBootstrapClass MapTerm = "success"
 termBootstrapClass StopTerm = "danger"
+termBootstrapClass CandidateTerm = "primary"

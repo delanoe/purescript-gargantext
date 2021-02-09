@@ -35,8 +35,8 @@ sizeButtonCpt = R.hooksComponentWithModule thisModule "sizeButton" cpt
     cpt {state, caption, min, max, onChange} _ = do
       let (value /\ setValue) = state
       pure $
-        H.span {}
-          [ H.label {} [ H.text caption ]
+        H.span { class: "range-simple" }
+          [ H.label {} [ R2.small {} [ H.text caption ] ]
           , H.input { type: "range"
                     , className: "form-control"
                     , min: show min
@@ -51,7 +51,7 @@ labelSizeButton sigmaRef state =
   sizeButton {
       state
     , caption: "Label Size"
-    , min: 5.0
+    , min: 1.0
     , max: 30.0
     , onChange: \e -> do
       let sigma = R.readRef sigmaRef
@@ -61,7 +61,8 @@ labelSizeButton sigmaRef state =
         Sigma.setSettings s {
           defaultLabelSize: newValue
         , drawLabels: true
-        , labelSizeRatio: newValue / 2.5
+        , maxNodeSize: newValue / 2.5
+        --, labelSizeRatio: newValue / 2.5
         }
       setValue $ const newValue
     }

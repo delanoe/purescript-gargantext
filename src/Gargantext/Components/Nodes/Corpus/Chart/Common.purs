@@ -8,13 +8,14 @@ import Reactix as R
 
 import Gargantext.Prelude
 
-import Gargantext.Components.Nodes.Corpus.Chart.Types (Reload, Path, Props, MetricsProps, ReloadPath)
+import Gargantext.Components.Nodes.Corpus.Chart.Types (Path, Props, MetricsProps, ReloadPath)
 import Gargantext.Hooks.Loader (HashedResponse, useLoader, useLoaderWithCacheAPI)
 import Gargantext.Utils.Crypto (Hash)
 import Gargantext.Sessions (Session)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Corpus.Chart.Common"
 
 type MetricsLoadViewProps a = (

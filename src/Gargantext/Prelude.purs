@@ -1,4 +1,4 @@
-module Gargantext.Prelude (module Prelude, logs, logExceptions, id, class Read, read)
+module Gargantext.Prelude (module Prelude, logs, logExceptions, id, class Read, read, xor)
   where
 
 import Data.Maybe (Maybe)
@@ -7,7 +7,6 @@ import Effect.Console (log)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Exception (catchException, throwException)
 import Effect.Unsafe (unsafePerformEffect)
-
 
 -- | JL: Astonishingly, not in the prelude
 --   AD: recent Preludes in Haskell much prefer identity
@@ -35,3 +34,8 @@ logExceptions message f x =
                              logs e
                              throwException e) do
       pure $ f x
+
+xor :: Boolean -> Boolean -> Boolean
+xor true false = true
+xor false true = true
+xor _      _   = false

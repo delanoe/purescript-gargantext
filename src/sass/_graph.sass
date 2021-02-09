@@ -6,49 +6,11 @@
   //z-index: 1
 
 #graph-explorer
-  #toolbar
-    display: flex
-    flex-direction: column
+  margin-left: 20rem
+  margin-right: 20rem
+  padding-top: 0px
 
-    ul
-      display: flex
-      flex-direction: row
-      margin: 0
-      li
-        display: flex
-        max-width: 200px
-
-  #toggle-container
-    position: fixed
-    z-index: 999 // needs to appear above solid menu bar
-    right: 25%
-    top: 10px
-    width: 50%
-    .container-fluid
-      padding-top: 90px
-
-  #controls-container
-    position: fixed
-    z-index: 999 // needs to appear above graph elements
-    backdrop-filter: blur(4px)
-    background: rgba(255,255,255,75%)
-    overflow: auto
-    left: 0
-    right: 0
-    top: 60px
-
-  .graph-tree
-    @include sidePanelCommon
-    background-color: #fff
-    z-index: 1
-  .lefthanded .graph-tree
-    left: 80%
-  .righthanded .graph-tree
-    left: 0%
-
-  #graph-view
-    height: 95%
-
+.graph-container
   #sp-container
     @include sidePanelCommon
     border: 1px white solid
@@ -73,6 +35,44 @@
   .righthanded #sp-container
     left: 70%
 
+  .graph-tree
+    @include sidePanelCommon
+    background-color: #fff
+    z-index: 1
+  .lefthanded .graph-tree
+    left: 80%
+  .righthanded .graph-tree
+    left: 0%
+
+  /* #toggle-container
+  /*   position: fixed
+  /*   z-index: 999 // needs to appear above solid menu bar
+  /*   right: 25%
+  /*   top: 10px
+  /*   width: 50%
+  /*   .container-fluid
+  /*     padding-top: 90px
+
+  #controls-container
+    // position: fixed
+    position: absolute
+    z-index: 999 // needs to appear above graph elements
+    backdrop-filter: blur(4px)
+    background: rgba(255,255,255,75%)
+    // overflow: auto
+    left: 0
+    right: 0
+    top: 60px
+
+    .nav-item
+      padding-left: 0.8rem
+
+  .graph-row
+    height: 100%
+
+    #graph-view
+      height: 95%
+
   #tree
     position: absolute
     z-index: 1
@@ -83,4 +83,4 @@
     max-height: 300px
     overflow-y: scroll
     width: 300px
-    top: 100px
+    top: 50px

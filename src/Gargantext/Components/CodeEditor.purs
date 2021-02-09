@@ -24,6 +24,7 @@ import Gargantext.Prelude
 import Gargantext.Utils.HighlightJS as HLJS
 import Gargantext.Utils.Reactix as R2
 
+thisModule :: String
 thisModule = "Gargantext.Components.CodeEditor"
 
 type Code = String
@@ -117,25 +118,24 @@ codeEditorCpt = R.hooksComponentWithModule thisModule "codeEditor" cpt
         setCodeOverlay controls code'
         renderHtml code' controls
 
-      pure $ H.div { className: "code-editor" } [
-          toolbar {controls, onChange}
-        , H.div { className: "row error" } [
-           errorComponent {error: controls.error}
-        ]
-        , H.div { className: "row editor" } [
-           H.div { className: "code-area " <> (codeHidden $ fst controls.viewType) } [
-             H.div { className: "code-container" } [
-               H.textarea { defaultValue: code
-                          , on: { change: onEditChange controls onChange }
-                          , placeholder: "Type some code..."
-                          , ref: controls.codeElRef } [ ]
-               , H.pre  { className: (langClass $ fst controls.codeType)
-                          -- , contentEditable: "true"
-                        , ref: controls.codeOverlayElRef
-                        , rows: 30
-                          --, on: { input: onEditChange (fst codeType) codeElRef htmlRef codeRef error }
-                        } []
-               ]
+      pure $ H.div { className: "code-editor" }
+        [ toolbar {controls, onChange}
+        , H.div { className: "row error" }
+          [ errorComponent {error: controls.error} ]
+        , H.div { className: "row editor" }
+          [ H.div { className: "code-area " <> (codeHidden $ fst controls.viewType) }
+            [ H.div { className: "code-container" }
+              [ H.textarea { defaultValue: code
+                           , on: { change: onEditChange controls onChange }
+                           , placeholder: "Type some code..."
+                           , ref: controls.codeElRef } [ ]
+              , H.pre  { className: (langClass $ fst controls.codeType)
+                         -- , contentEditable: "true"
+                       , ref: controls.codeOverlayElRef
+                       , rows: 30
+                         --, on: { input: onEditChange (fst codeType) codeElRef htmlRef codeRef error }
+                       } []
+              ]
              ]
            , H.div { className: "v-divider " <> (dividerHidden $ fst controls.viewType) } [ H.text " " ]
            , H.div { className: "html " <> (langClass $ fst controls.codeType) <> (previewHidden $ fst controls.viewType)
@@ -147,11 +147,11 @@ codeEditorCpt = R.hooksComponentWithModule thisModule "codeEditor" cpt
     codeHidden :: ViewType -> String
     codeHidden Code = ""
     codeHidden Both = ""
-    codeHidden _ = " hidden"
+    codeHidden _ = " d-none"
 
     dividerHidden :: ViewType -> String
     dividerHidden Both = ""
-    dividerHidden _ = " hidden"
+    dividerHidden _ = " d-none"
 
     langClass :: CodeType -> String
     langClass Haskell  = " language-haskell"
@@ -162,7 +162,7 @@ codeEditorCpt = R.hooksComponentWithModule thisModule "codeEditor" cpt
     previewHidden :: ViewType -> String
     previewHidden Preview = ""
     previewHidden Both = ""
-    previewHidden _ = " hidden"
+    previewHidden _ = " d-none"
 
     onEditChange :: forall e. Record Controls -> (CodeType -> Code -> Effect Unit) -> e -> Effect Unit
     onEditChange controls@{codeElRef, codeOverlayElRef, codeType: (codeType /\ _), codeS} onChange e = do
@@ -208,13 +208,16 @@ toolbarCpt = R.hooksComponentWithModule thisModule "toolbar" cpt
   where
     cpt props@{controls: {codeType, error, viewType}} _ = do
       pure $
-        H.div { className: "row toolbar" } [
-             codeTypeSelector {
-                  codeType
-                , onChange: onChangeCodeType props
-                }
-           , viewTypeSelector {state: viewType}
-           ]
+        H.div { className: "row toolbar" }
+          [ H.div { className: "col-2" }
+               [ codeTypeSelector {
+                   codeType
+                 , onChange: onChangeCodeType props
+                 }
+               ]
+          , H.div { className: "col-1" }
+             [ viewTypeSelector {state: viewType} ]
+          ]
 
     -- Handle rerendering of preview when viewType changed
     onChangeCodeType :: forall e. Record ToolbarProps -> e -> Effect Unit
@@ -289,18 +292,19 @@ viewTypeSelectorCpt :: R.Component ViewTypeSelectorProps
 viewTypeSelectorCpt = R.hooksComponentWithModule thisModule "viewTypeSelector" cpt
   where
     cpt {state} _ =
-      pure $ H.div { className: "btn-group" } [
+      pure $ H.div { className: "btn-group"
+                   , role: "group" } [
           viewTypeButton Code state
         , viewTypeButton Both state
         , viewTypeButton Preview state
         ]
 
     viewTypeButton viewType (state /\ setState) =
-      H.label {
-        className: "btn btn-default" <> active
-        , on: { click: onClick }
-      } [
-        H.i { className: "glyphicon " <> (icon viewType) } []
+      H.button { className: "btn btn-primary" <> active
+               , on: { click: onClick }
+               , type: "button"
+               } [
+        H.i { className: "fa " <> (icon viewType) } []
       ]
       where
         active = if viewType == state then " active" else ""
@@ -308,9 +312,9 @@ viewTypeSelectorCpt = R.hooksComponentWithModule thisModule "viewTypeSelector" c
         onClick _ = do
           setState $ const viewType
 
-    icon Preview = "glyphicon-eye-open"
-    icon Both = "glyphicon-transfer"
-    icon Code = "glyphicon-pencil"
+    icon Preview = "fa-eye"
+    icon Both = "fa-columns"
+    icon Code = "fa-pencil"
 
 type Controls =
   (

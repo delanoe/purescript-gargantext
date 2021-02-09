@@ -21,14 +21,16 @@ import Gargantext.Prelude
 import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
-import Gargantext.Components.Nodes.Corpus.Types (CorpusData, FTField, Field(..), FieldType(..), Hash, Hyperdata(..), defaultField, defaultHaskell', defaultPython', defaultJSON', defaultMarkdown')
+import Gargantext.Components.Nodes.Types
+import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..))
 import Gargantext.Data.Array as GDA
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI, Children))
 import Gargantext.Sessions (Session, get, put, sessionId)
-import Gargantext.Types (NodeType(..), AffTableResult, ReloadS)
+import Gargantext.Types (NodeType(..), AffTableResult)
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Corpus"
@@ -57,27 +59,20 @@ corpusLayoutCpt = R.hooksComponentWithModule thisModule "corpusLayout" cpt
 
 corpusLayoutWithKey :: Record KeyProps -> R.Element
 corpusLayoutWithKey props = R.createElement corpusLayoutWithKeyCpt props []
-
 corpusLayoutWithKeyCpt :: R.Component KeyProps
 corpusLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "corpusLayoutWithKey" cpt
   where
     cpt { nodeId, session } _ = do
-      reload <- R.useState' 0
+      reload <- GUR.new
 
-      useLoader {nodeId, reload: fst reload, session} loadCorpusWithReload $
+      useLoader {nodeId, reload: GUR.value reload, session} loadCorpusWithReload $
         \corpus -> corpusLayoutView {corpus, nodeId, reload, session}
 
 type ViewProps =
   ( corpus  :: NodePoly Hyperdata
-  , reload  :: ReloadS
+  , reload  :: GUR.ReloadS
   | Props
   )
-
--- We need FTFields with indices because it's the only way to identify the
--- FTField element inside a component (there are no UUIDs and such)
-type Index = Int
-type FTFieldWithIndex = Tuple Index FTField
-type FTFieldsWithIndex = List.List FTFieldWithIndex
 
 corpusLayoutView :: Record ViewProps -> R.Element
 corpusLayoutView props = R.createElement corpusLayoutViewCpt props []
@@ -98,24 +93,25 @@ corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" c
           R.setRef fieldsRef fields
           snd fieldsS $ const fieldsWithIndex
 
-      pure $ H.div {} [
-        H.div { className: "row" } [
-           H.div { className: "btn btn-default " <> (saveEnabled fieldsWithIndex fieldsS)
-                 , on: { click: onClickSave {fields: fieldsS, nodeId, reload, session} }
-                 } [
-              H.span { className: "fa fa-floppy-o" } [  ]
-              ]
-           ]
-        , H.div {} [ fieldsCodeEditor { fields: fieldsS
-                                      , nodeId
-                                      , session } ]
-        , H.div { className: "row" } [
-           H.div { className: "btn btn-default"
-                 , on: { click: onClickAdd fieldsS }
-                 } [
-              H.span { className: "fa fa-plus" } [  ]
-              ]
-           ]
+      pure $ H.div {}
+        [ H.div { className: "row" }
+          [ H.div { className: "btn btn-primary " <> (saveEnabled fieldsWithIndex fieldsS)
+                  , on: { click: onClickSave {fields: fieldsS, nodeId, reload, session} }
+                  }
+            [ H.span { className: "fa fa-floppy-o" } [  ]
+            ]
+          ]
+        , H.div {}
+          [ fieldsCodeEditor { fields: fieldsS
+                             , nodeId
+                             , session } [] ]
+        , H.div { className: "row" }
+          [ H.div { className: "btn btn-primary"
+                  , on: { click: onClickAdd fieldsS }
+                  }
+            [ H.span { className: "fa fa-plus" } [  ]
+            ]
+          ]
         ]
 
     saveEnabled :: FTFieldsWithIndex -> R.State FTFieldsWithIndex -> String
@@ -123,15 +119,14 @@ corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" c
 
     onClickSave :: forall e. { fields :: R.State FTFieldsWithIndex
                        , nodeId :: Int
-                       , reload :: ReloadS
+                       , reload :: GUR.ReloadS
                        , session :: Session } -> e -> Effect Unit
-    onClickSave {fields: (fieldsS /\ _), nodeId, reload: (_ /\ setReload), session} _ = do
-      log2 "[corpusLayoutViewCpt] onClickSave fieldsS" fieldsS
+    onClickSave {fields: (fieldsS /\ _), nodeId, reload, session} _ = do
       launchAff_ do
         saveCorpus $ { hyperdata: Hyperdata {fields: (\(Tuple _ f) -> f) <$> fieldsS}
                      , nodeId
                      , session }
-        liftEffect $ setReload $ (+) 1
+        liftEffect $ GUR.bump reload
 
     onClickAdd :: forall e. R.State FTFieldsWithIndex -> e -> Effect Unit
     onClickAdd (_ /\ setFieldsS) _ = do
@@ -143,14 +138,14 @@ type FieldsCodeEditorProps =
     | LoadProps
   )
 
-fieldsCodeEditor :: Record FieldsCodeEditorProps -> R.Element
-fieldsCodeEditor props = R.createElement fieldsCodeEditorCpt props []
+fieldsCodeEditor :: R2.Component FieldsCodeEditorProps
+fieldsCodeEditor = R.createElement fieldsCodeEditorCpt
 
 fieldsCodeEditorCpt :: R.Component FieldsCodeEditorProps
 fieldsCodeEditorCpt = R.hooksComponentWithModule thisModule "fieldsCodeEditorCpt" cpt
   where
     cpt {nodeId, fields: fS@(fields /\ _), session} _ = do
-      masterKey <- R.useState' 0
+      masterKey <- GUR.new
 
       pure $ H.div {} $ List.toUnfoldable (editors masterKey)
       where
@@ -173,14 +168,14 @@ fieldsCodeEditorCpt = R.hooksComponentWithModule thisModule "fieldsCodeEditorCpt
         fromMaybe fields $
           List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { typ = typ })) fields
 
-    onMoveDown :: ReloadS -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
-    onMoveDown (_ /\ setMasterKey) (fs /\ setFields) idx _ = do
-      setMasterKey $ (+) 1
+    onMoveDown :: GUR.ReloadS -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
+    onMoveDown masterKey (_ /\ setFields) idx _ = do
+      GUR.bump masterKey
       setFields $ recomputeIndices <<< (GDA.swapList idx (idx + 1))
 
-    onMoveUp :: ReloadS -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
-    onMoveUp (_ /\ setMasterKey) (_ /\ setFields) idx _ = do
-      setMasterKey $ (+) 1
+    onMoveUp :: GUR.ReloadS -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
+    onMoveUp masterKey (_ /\ setFields) idx _ = do
+      GUR.bump masterKey
       setFields $ recomputeIndices <<< (GDA.swapList idx (idx - 1))
 
     onRemove :: R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
@@ -219,111 +214,48 @@ fieldCodeEditorWrapperCpt :: R.Component FieldCodeEditorProps
 fieldCodeEditorWrapperCpt = R.hooksComponentWithModule thisModule "fieldCodeEditorWrapperCpt" cpt
   where
     cpt props@{canMoveDown, canMoveUp, field: Field {name, typ}, onMoveDown, onMoveUp, onRemove, onRename} _ = do
-      pure $ H.div { className: "row panel panel-default" } [
-        H.div { className: "panel-heading" } [
-          H.div { className: "code-editor-heading" } [
-              renameable {onRename, text: name}
-            , H.div { className: "buttons-right" } [
+      pure $ H.div { className: "row card" } [
+        H.div { className: "card-header" } [
+          H.div { className: "code-editor-heading row" } [
+              H.div { className: "col-4" } [
+                 inputWithEnter { onBlur: onRename
+                                , onEnter: \_ -> pure unit
+                                , onValueChanged: onRename
+                                , autoFocus: false
+                                , className: "form-control"
+                                , defaultValue: name
+                                , placeholder: "Enter file name"
+                                , type: "text" }
+              ]
+            , H.div { className: "col-7" } []
+            , H.div { className: "buttons-right col-1" } ([
                 H.div { className: "btn btn-danger"
                       , on: { click: \_ -> onRemove unit }
                       } [
                   H.span { className: "fa fa-trash" } [  ]
                   ]
-                ]
-              , moveDownButton canMoveDown
-              , moveUpButton canMoveUp
+              ] <> moveButtons)
             ]
          ]
-        , H.div { className: "panel-body" } [
+        , H.div { className: "card-body" } [
            fieldCodeEditor props
            ]
         ]
       where
-        moveDownButton false = H.div {} []
-        moveDownButton true =
-          H.div { className: "btn btn-default"
+        moveButtons = [] <> (if canMoveDown then [moveDownButton] else [])
+                         <> (if canMoveUp then [moveUpButton] else [])
+        moveDownButton =
+          H.div { className: "btn btn-primary"
                 , on: { click: \_ -> onMoveDown unit }
                 } [
             H.span { className: "fa fa-arrow-down" } [  ]
             ]
-        moveUpButton false = H.div {} []
-        moveUpButton true =
-          H.div { className: "btn btn-default"
+        moveUpButton =
+          H.div { className: "btn btn-primary"
                 , on: { click: \_ -> onMoveUp unit }
                 } [
             H.span { className: "fa fa-arrow-up" } [  ]
             ]
-
-type RenameableProps =
-  (
-    onRename :: String -> Effect Unit
-  , text :: String
-  )
-
-renameable :: Record RenameableProps -> R.Element
-renameable props = R.createElement renameableCpt props []
-
-renameableCpt :: R.Component RenameableProps
-renameableCpt = R.hooksComponentWithModule thisModule "renameableCpt" cpt
-  where
-    cpt {onRename, text} _ = do
-      isEditing <- R.useState' false
-      state <- R.useState' text
-      textRef <- R.useRef text
-
-      -- handle props change of text
-      R.useEffect1' text $ do
-        if R.readRef textRef == text then
-          pure unit
-        else do
-          R.setRef textRef text
-          snd state $ const text
-
-      pure $ H.div { className: "renameable" } [
-        renameableText { isEditing, onRename, state }
-      ]
-
-type RenameableTextProps =
-  (
-    isEditing :: R.State Boolean
-  , onRename :: String -> Effect Unit
-  , state :: R.State String
-  )
-
-renameableText :: Record RenameableTextProps -> R.Element
-renameableText props = R.createElement renameableTextCpt props []
-
-renameableTextCpt :: R.Component RenameableTextProps
-renameableTextCpt = R.hooksComponentWithModule thisModule "renameableTextCpt" cpt
-  where
-    cpt {isEditing: (false /\ setIsEditing), state: (text /\ _)} _ = do
-      pure $ H.div {} [
-        H.span { className: "text" } [ H.text text ]
-        , H.span { className: "btn btn-default"
-                 , on: { click: \_ -> setIsEditing $ const true } } [
-           H.span { className: "fa fa-pencil" } []
-           ]
-        ]
-    cpt {isEditing: (true /\ setIsEditing), onRename, state: (text /\ setText)} _ = do
-      pure $ H.div {} [
-          inputWithEnter {
-               onEnter: submit
-             , onValueChanged: setText <<< const
-             , autoFocus: false
-             , className: "form-control text"
-             , defaultValue: text
-             , placeholder: ""
-             , type: "text"
-             }
-        , H.span { className: "btn btn-default"
-                 , on: { click: submit } } [
-           H.span { className: "fa fa-floppy-o" } []
-           ]
-        ]
-      where
-        submit _ = do
-          setIsEditing $ const false
-          onRename text
 
 fieldCodeEditor :: Record FieldCodeEditorProps -> R.Element
 fieldCodeEditor props = R.createElement fieldCodeEditorCpt props []
@@ -394,7 +326,7 @@ loadCorpus' :: Record LoadProps -> Aff (NodePoly Hyperdata)
 loadCorpus' {nodeId, session} = get session $ NodeAPI Corpus (Just nodeId) ""
 
 -- Just to make reloading effective
-loadCorpusWithReload :: {reload :: Int  | LoadProps} -> Aff (NodePoly Hyperdata)
+loadCorpusWithReload :: {reload :: GUR.Reload  | LoadProps} -> Aff (NodePoly Hyperdata)
 loadCorpusWithReload {nodeId, session} = loadCorpus' {nodeId, session}
 
 type SaveProps = (
@@ -445,7 +377,7 @@ loadCorpusWithChild { nodeId: childId, session } = do
 
 type LoadWithReloadProps =
   (
-    reload :: Int
+    reload :: GUR.Reload
   | LoadProps
   )
 
