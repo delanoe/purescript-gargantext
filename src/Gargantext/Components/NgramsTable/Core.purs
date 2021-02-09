@@ -28,6 +28,7 @@ module Gargantext.Components.NgramsTable.Core
   , NgramsTablePatch
   , NgramsPatch(..)
   , CoreState
+  , HighlightElement
   , highlightNgrams
   , initialPageParams
   , loadNgramsTable

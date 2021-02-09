@@ -1,15 +1,18 @@
 module Gargantext.Components.NgramsTable.Spec where
 
 import Prelude
+import Data.List as L
 import Data.Maybe (Maybe(..))
 import Data.Map as Map
 import Data.Set as Set
 import Data.Tuple (Tuple(..))
 import Test.Spec (Spec, describe, it)
-import Test.Spec.Assertions (shouldEqual)
+-- import Test.Spec.Assertions (shouldEqual)
 -- import Test.Spec.QuickCheck (quickCheck')
 
-import Gargantext.Components.NgramsTable.Core (highlightNgrams, NgramsElement(..), NgramsRepoElement(..), NgramsTable(..), NgramsTerm, normNgram)
+import Test.Utils (shouldEqualArray)
+
+import Gargantext.Components.NgramsTable.Core (highlightNgrams, HighlightElement, NgramsElement(..), NgramsRepoElement(..), NgramsTable(..), NgramsTerm, normNgram)
 import Gargantext.Types (CTabNgramType(..), TermList(..))
 
 
@@ -43,6 +46,15 @@ tnre ngrams list ngramType = Tuple normed (nre ngrams list ngramType)
   where
     normed = normNgram ngramType ngrams
 
+highlightNil :: String -> HighlightElement
+highlightNil s = Tuple s L.Nil
+
+highlightTuple :: String -> CTabNgramType -> TermList -> Tuple NgramsTerm TermList
+highlightTuple s ngramType term = Tuple (normNgram ngramType s) term
+
+highlightSingleton :: String -> CTabNgramType -> TermList -> HighlightElement
+highlightSingleton s ngramType term = Tuple s (L.singleton $ highlightTuple s ngramType term)
+
 spec :: Spec Unit
 spec = do
   describe "NgramsTable.highlightNgrams" do
@@ -55,14 +67,15 @@ spec = do
                                                             ]
                    , ngrams_scores: Map.fromFoldable [] }
           input = "this is a graph about a biography which stops at every candidate"
-          output = [ Tuple "this is a graph about a biography " Nothing
-                   , Tuple "which" (Just StopTerm)
-                   , Tuple " " Nothing
-                   , Tuple "stops" (Just StopTerm)
-                   , Tuple " at every " Nothing
-                   , Tuple "candidate" (Just CandidateTerm)
+          output = [ highlightNil " this is a graph about a biography "
+                   , highlightSingleton " which" ngramType StopTerm
+                   , highlightNil " "
+                   , highlightSingleton " stops" ngramType StopTerm
+                   , highlightNil " at every "
+                   , highlightSingleton " candidate" ngramType CandidateTerm
+                   , highlightNil " "
                    ]
-      highlightNgrams CTabTerms table input `shouldEqual` output
+      highlightNgrams CTabTerms table input `shouldEqualArray` output
 
     it "works when pattern overlaps" do
       let ngramType = CTabSources
@@ -73,15 +86,15 @@ spec = do
                                                              ]
                     , ngrams_scores: Map.fromFoldable [] }
           input = "This is a new state of the"
-          output = [ Tuple "This " Nothing
-                   , Tuple "is" (Just StopTerm)
-                   , Tuple " " Nothing
-                   , Tuple "a" (Just StopTerm)
-                   , Tuple " new state " Nothing
-                   , Tuple "of" (Just StopTerm)
-                   , Tuple " the" Nothing
+          output = [ highlightNil " This "
+                   , highlightSingleton " is" ngramType StopTerm
+                   , highlightNil " "
+                   , highlightSingleton " a" ngramType StopTerm
+                   , highlightNil " new state "
+                   , highlightSingleton " of" ngramType StopTerm
+                   , highlightNil " the "
                    ]
-      highlightNgrams CTabTerms table input `shouldEqual` output
+      highlightNgrams CTabTerms table input `shouldEqualArray` output
 
     it "works when pattern overlaps 2" do
       let ngramType = CTabSources
@@ -92,26 +105,31 @@ spec = do
                                                              ]
                     , ngrams_scores: Map.fromFoldable [] }
           input = "This is from space images"
-          output = [ Tuple "This is " Nothing
-                   , Tuple "from" (Just CandidateTerm)
-                   , Tuple " space " Nothing
-                   , Tuple "images" (Just CandidateTerm)
+          output = [ highlightNil " This is "
+                   , highlightSingleton " from" ngramType CandidateTerm
+                   , highlightNil " space "
+                   , highlightSingleton " images" ngramType CandidateTerm
+                   , highlightNil " "
                    ]
-      highlightNgrams CTabTerms table input `shouldEqual` output
+      highlightNgrams CTabTerms table input `shouldEqualArray` output
 
     it "works when pattern overlaps 3" do
       let ngramType = CTabSources
       let table = NgramsTable
-                    { ngrams_repo_elements: Map.fromFoldable [ tnre "fusion"             MapTerm ngramType
-                                                             , tnre "calculate fusion"   CandidateTerm ngramType
+                    { ngrams_repo_elements: Map.fromFoldable [ tnre "something"             CandidateTerm ngramType
+                                                             , tnre "something different"   MapTerm ngramType
                                                              ]
                     , ngrams_scores: Map.fromFoldable [] }
-          input = "Model has been used to calculate fusion cross sections"
-          output = [ Tuple "Model has been used to " Nothing
-                   , Tuple "calculate fusion" (Just CandidateTerm)
-                   , Tuple " sections " Nothing
+          input = "and now for something different"
+          output = [ highlightNil " and now for "
+                   , Tuple " something" $ L.fromFoldable [
+                         highlightTuple "something different" ngramType MapTerm
+                       , highlightTuple "something" ngramType CandidateTerm
+                       ]
+                   , Tuple " different" $ L.singleton $ highlightTuple "something different" ngramType MapTerm
+                   , highlightNil " "
                    ]
-      highlightNgrams CTabTerms table input `shouldEqual` output
+      highlightNgrams CTabTerms table input `shouldEqualArray` output
 
     it "works with punctuation" do
       let ngramType = CTabSources
@@ -119,8 +137,8 @@ spec = do
                     { ngrams_repo_elements: Map.fromFoldable [ tnre "graph" CandidateTerm ngramType ]
                     , ngrams_scores: Map.fromFoldable [] }
           input = "before graph, after"
-          output = [ Tuple "before " Nothing
-                   , Tuple "graph" (Just CandidateTerm)
-                   , Tuple ", after" Nothing
+          output = [ highlightNil " before "
+                   , highlightSingleton " graph" ngramType CandidateTerm
+                   , highlightNil ", after "
                    ]
-      highlightNgrams CTabTerms table input `shouldEqual` output
+      highlightNgrams CTabTerms table input `shouldEqualArray` output
