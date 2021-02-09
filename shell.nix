@@ -35,7 +35,8 @@ let
     build-purs
     echo "Testing"
     # yarn pulp browserify --skip-compile -t dist/bundle.js --src-path output
-    yarn pulp test --src-path output --test-path output
+    # yarn pulp test --src-path output --test-path output
+    NODE_PATH=output node -e "require('Test.Main').main();"
   '';
 in
 pkgs.mkShell {

@@ -192,6 +192,14 @@ yarn css # for manual setup
 
 A guide to getting set up with the IDE integration is coming soon, I hope.
 
+### Testing
+
+To run unit tests, just run:
+
+``` shell
+test-ps
+```
+
 ### Note to contributors
 
 Please follow CONTRIBUTING.md
