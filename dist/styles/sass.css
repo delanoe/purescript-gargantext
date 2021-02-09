@@ -778,15 +778,15 @@ ul li {
 }
 .annotation-run.candidate-term.graph-term.stop-term {
   color: #000;
-  background-image: linear-gradient(rgba(184, 184, 184, 0.34), rgba(184, 184, 184, 0.34)), linear-gradient(rgba(149, 210, 149, 0.33), rgba(149, 210, 149, 0.33)), linear-gradient(rgba(245, 148, 153, 0.33), rgba(245, 148, 153, 0.33));
+  background-image: linear-gradient(rgba(184, 218, 255, 0.34), rgba(184, 218, 255, 0.34)), linear-gradient(rgba(149, 210, 149, 0.33), rgba(149, 210, 149, 0.33)), linear-gradient(rgba(245, 148, 153, 0.33), rgba(245, 148, 153, 0.33));
 }
 .annotation-run.candidate-term.graph-term {
   color: #000;
-  background-image: linear-gradient(rgba(184, 184, 184, 0.5), rgba(184, 184, 184, 0.5)), linear-gradient(rgba(149, 210, 149, 0.5), rgba(149, 210, 149, 0.5));
+  background-image: linear-gradient(rgba(184, 218, 255, 0.5), rgba(184, 218, 255, 0.5)), linear-gradient(rgba(149, 210, 149, 0.5), rgba(149, 210, 149, 0.5));
 }
 .annotation-run.candidate-term.stop-term {
   color: #000;
-  background-image: linear-gradient(rgba(184, 184, 184, 0.5), rgba(184, 184, 184, 0.5)), linear-gradient(rgba(245, 148, 153, 0.5), rgba(245, 148, 153, 0.5));
+  background-image: linear-gradient(rgba(184, 218, 255, 0.5), rgba(184, 218, 255, 0.5)), linear-gradient(rgba(245, 148, 153, 0.5), rgba(245, 148, 153, 0.5));
 }
 .annotation-run.graph-term.stop-term {
   color: #000;
@@ -794,7 +794,7 @@ ul li {
 }
 .annotation-run.candidate-term {
   color: #000;
-  background-color: #B8B8B876;
+  background-color: #b8daff;
 }
 .annotation-run.graph-term {
   color: #000;
@@ -807,7 +807,7 @@ ul li {
 
 .context-menu .candidate-term {
   color: #000;
-  background-color: #B8B8B876;
+  background-color: #b8daff;
 }
 .context-menu .graph-term {
   color: #000;

@@ -123,7 +123,7 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
           ngrams = applyNgramsPatches (fst state) initTable
           annotate text = AnnotatedField.annotatedField { ngrams
                                                         , setTermList
-                                                        , text }
+                                                        , text } []
           badge s = H.span { className: "badge badge-default badge-pill" } [ H.text s ]
           badgeLi s = H.span { className: "list-group-item-heading" } [
                         H.span { className: "badge-container" } [
