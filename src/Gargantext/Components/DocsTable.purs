@@ -30,6 +30,7 @@ import Gargantext.Components.DocsTable.Types
 import Gargantext.Components.Table.Types as T
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Nodes.Texts.Types (SidePanelTriggers)
+import Gargantext.Components.Score as GCS
 import Gargantext.Components.Table as T
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
@@ -360,7 +361,7 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
       , localCategories
       , params } _ = do
 
-    reload <- R.useState' 0
+    reload <- GUR.new
 
     pure $ T.table
       { syncResetButton : [ H.div {} [] ]
@@ -389,21 +390,22 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
             row dv@(DocumentsView r) =
               { row:
                 T.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
-                            H.div { className: "" }
-                                  [ docChooser { listId, mCorpusId, nodeId: r._id, selected, sidePanelTriggers, tableReload: reload } []
-                                                                   ]
-                          --, H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
-                          , H.div { className: "column-tag flex" }
-                                  [ rating { score: cat, nodeId, row: dv, session, setLocalCategories } [] ]
+                  H.div { className: "" }
+                  [ docChooser { listId, mCorpusId, nodeId: r._id, selected, sidePanelTriggers, tableReload: reload } []
+                  ]
+                --, H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
+                , H.div { className: "column-tag flex" }
+                  [ rating { score: cat, nodeId, row: dv, session, setLocalCategories } [] ]
                 --, H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only
                 , H.div { className: tClassName } [ R2.showText r.date ]
                 , H.div { className: tClassName }
-                        [ H.a { href: url frontends $ corpusDocument r._id, target: "_blank"}
+                        [ H.a { href: url frontends $ corpusDocument r._id, target: "_blank" }
                               [ H.text r.title ]
                         ]
                 , H.div { className: tClassName } [ H.text $ if r.source == "" then "Source" else r.source ]
-                , H.div {} [ H.text $ maybe "-" show r.ngramCount ]
+                -- , H.div {} [ H.text $ maybe "-" show r.score ]
+                , H.div { className: tClassName } [ GCS.scoreEl { docId: r._id, nodeId, score: r.score, session, tableReload: reload } [] ]
                 ]
               , delete: true }
               where
