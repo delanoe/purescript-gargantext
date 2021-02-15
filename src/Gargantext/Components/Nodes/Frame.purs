@@ -104,6 +104,15 @@ frameLayoutViewCpt :: R.Component ViewProps
 frameLayoutViewCpt = R.hooksComponentWithModule thisModule "frameLayoutView" cpt
   where
     cpt {frame: (NodePoly {hyperdata: Hyperdata {base, frame_id}}), nodeId, reload, session, nodeType} _ = do
+      pure $ R2.frameSet { className : "frame"
+                   , rows: "100%,*" }
+                   [ R2.frame { src: hframeUrl nodeType base frame_id
+                              , width: "100%"
+                              , height: "100%"
+                              } []
+                   ]
+
+{-
       pure $ H.div { className : "frame"
                    , rows: "100%,*" }
                    [ H.iframe { src: hframeUrl nodeType base frame_id
@@ -111,7 +120,7 @@ frameLayoutViewCpt = R.hooksComponentWithModule thisModule "frameLayoutView" cpt
                               , height: "100%"
                               } []
                    ]
-
+-}
 
 type LoadProps = 
   ( nodeId  :: Int
