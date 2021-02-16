@@ -26,6 +26,7 @@ thisModule = "Gargantext.Components.Score"
 
 type Props = (
     docId       ::DocID
+  , key :: String
   , nodeId      :: GT.NodeID
   , score       :: Maybe Score
   , session     :: Session

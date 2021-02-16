@@ -405,7 +405,12 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
                         ]
                 , H.div { className: tClassName } [ H.text $ if r.source == "" then "Source" else r.source ]
                 -- , H.div {} [ H.text $ maybe "-" show r.score ]
-                , H.div { className: tClassName } [ GCS.scoreEl { docId: r._id, nodeId, score: r.score, session, tableReload: reload } [] ]
+                , H.div { className: tClassName } [ GCS.scoreEl { docId: r._id
+                                                                , key: show nodeId <> "-" <> show r._id
+                                                                , nodeId
+                                                                , score: r.score
+                                                                , session
+                                                                , tableReload: reload } [] ]
                 ]
               , delete: true }
               where
