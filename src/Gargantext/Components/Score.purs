@@ -14,6 +14,7 @@ import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, sessionId, get, delete, put)
 import Gargantext.Types as GT
+import Gargantext.Utils.Array as GUA
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
 
@@ -56,10 +57,7 @@ scoreElCpt = R.hooksComponentWithModule thisModule "scoreEl" cpt
     option :: Choice -> R.Element
     option c = H.option { value: showChoice c } [ H.text $ showChoice c ]
 
-    choices = [ Nothing
-              , Just 5
-              , Just 10
-              , Just 15 ]
+    choices = [ Nothing ] <> (Just <$> GUA.range 5 100 5)
 
     showChoice :: Choice -> String
     showChoice Nothing = "-"
