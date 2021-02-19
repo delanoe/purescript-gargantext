@@ -43,7 +43,20 @@ import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (Storage, getItem, setItem)
 
+type Module = String
+
 type Component p = Record p -> Array R.Element -> R.Element
+
+type Leaf p = Record p -> R.Element
+
+type Here =
+  { component :: forall p. String -> R.HooksComponent p -> R.Component p
+  , log       :: forall l. l -> Effect Unit }
+
+here :: Module -> Here
+here mod =
+  { component: R.hooksComponentWithModule mod
+  , log:       log2 ("[" <> mod <> "]") }
 
 -- newtypes
 type NTHooksComponent props = props -> Array R.Element -> R.Hooks R.Element
@@ -53,8 +66,9 @@ class NTIsComponent component (props :: Type) children
   | component -> props, component -> children where
   ntCreateElement :: component -> props -> children -> R.Element
 
-instance componentIsNTComponent :: NTIsComponent (NTComponent props) props (Array R.Element) where
-  ntCreateElement = R.rawCreateElement
+instance componentIsNTComponent
+  :: NTIsComponent (NTComponent props) props (Array R.Element) where
+    ntCreateElement = R.rawCreateElement
 
 -- | Turns a `HooksComponent` function into a Component
 ntHooksComponent :: forall props. String -> NTHooksComponent props -> NTComponent props
@@ -63,15 +77,16 @@ ntHooksComponent name c = NTComponent $ named name $ mkEffectFn1 c'
     c' :: props -> Effect R.Element
     c' props = R.runHooks $ c props (children props)
 
-ntHooksComponentWithModule :: forall props. Module -> String -> NTHooksComponent props -> NTComponent props
-ntHooksComponentWithModule module' name c = ntHooksComponent (module' <> "." <> name) c
+ntHooksComponentWithModule
+ :: forall props. Module -> String -> NTHooksComponent props -> NTComponent props
+ntHooksComponentWithModule module' name c =
+  ntHooksComponent (module' <> "." <> name) c
 
 ---------------------------
 -- TODO Copied from reactix, export these:
 children :: forall a. a -> Array R.Element
 children a = react .. "Children" ... "toArray" $ [ (a .. "children") ]
 
-type Module = String
 ---------------------------
 
 newtype Point = Point { x :: Number, y :: Number }
