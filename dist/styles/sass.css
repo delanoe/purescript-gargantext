@@ -367,8 +367,11 @@ li .leaf .folder-icon {
   padding: 0 2 0 2;
   cursor: pointer;
 }
-li .leaf .node-link {
+li .leaf .node-link a {
   cursor: pointer;
+}
+li .leaf .node-link > .node-text {
+  color: #000000;
 }
 li .leaf a.settings {
   cursor: pointer;
@@ -638,7 +641,6 @@ li .leaf:hover a.settings {
   cursor: pointer;
 }
 #page-wrapper .side-panel {
-  background-color: white;
   left: 70%;
   padding: 5px;
   position: fixed;

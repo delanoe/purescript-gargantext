@@ -8,6 +8,7 @@ import Data.String as S
 import Data.String.CodeUnits as DSCU
 import Data.Tuple (snd)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
 import Reactix as R
@@ -18,8 +19,9 @@ import Gargantext.Prelude
 import Gargantext.Components.Forest.Tree.Node.Action
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Ends (Frontends, url)
+import Gargantext.Components.GraphExplorer.API as GraphAPI
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (Session, sessionId)
-import Gargantext.Types (ID, Name)
 import Gargantext.Types as GT
 import Gargantext.Utils (glyphicon, toggleSet)
 import Gargantext.Utils.Reactix as R2
@@ -56,7 +58,7 @@ panel bodies submit =
 ------------------------------------------------------------------------
 -- | START Text input
 type TextInputBoxProps =
-  ( id       :: ID
+  ( id       :: GT.ID
   , dispatch :: Action -> Aff Unit
   , text     :: String
   , isOpen   :: R.State Boolean
@@ -271,17 +273,20 @@ checkboxesListGroup xs (val /\ set) =
       ) xs
 
 
+tooltipId :: GT.NodeID -> String
+tooltipId id = "node-link-" <> show id
 
 -- START node link
+
 type NodeLinkProps = (
     frontends  :: Frontends
-  , id         :: Int
+  , id         :: GT.NodeID
   , folderOpen :: R.State Boolean
+  , handed     :: GT.Handed
   , isSelected :: Boolean
-  , name       :: Name
+  , name       :: GT.Name
   , nodeType   :: GT.NodeType
   , session    :: Session
-  , handed     :: GT.Handed
   )
 
 nodeLink :: R2.Component NodeLinkProps
@@ -304,22 +309,15 @@ nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
       pure $
         H.div { className: "node-link"
               , on: { click: onClick } }
-              [ H.a { data: { for: tooltipId
-                            , tip: true
-                            }
-                     , href: url frontends $ GT.NodePath (sessionId session) nodeType (Just id) }
-                                           [ nodeText { isSelected
-                                                      , name
-                                                      , handed
-                                                      }
-                                           ]
-                     , ReactTooltip.reactTooltip { id: tooltipId }
-                                                 [ R2.row [ H.h4 {className: GT.fldr nodeType true}
-                                                                 [ H.text $ GT.prettyNodeType nodeType ]
-                                                          ]
-                                                 , R2.row [ H.span {} [ H.text $ name ]]
-                                                 ]
+          [ nodeLinkHref { frontends, handed, id, isSelected, name, nodeType, session } []
+          , ReactTooltip.reactTooltip { id: tooltipId id }
+              [ R2.row
+                  [ H.h4 {className: GT.fldr nodeType true}
+                      [ H.text $ GT.prettyNodeType nodeType ]
+                  ]
+              , R2.row [ H.span {} [ H.text $ name ]]
               ]
+          ]
 
       where
         -- NOTE Don't toggle tree if it is not selected
@@ -329,33 +327,82 @@ nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
                       setFolderOpen (const true)
                     else
                       setFolderOpen (const true)
-        tooltipId = "node-link-" <> show id
 -- END node link
+
+-- START node link href
+type NodeLinkHrefProps = (
+    frontends  :: Frontends
+  , handed     :: GT.Handed
+  , id         :: GT.NodeID
+  , isSelected :: Boolean
+  , name       :: GT.Name
+  , nodeType   :: GT.NodeType
+  , session    :: Session
+  )
+
+nodeLinkHref :: R2.Component NodeLinkHrefProps
+nodeLinkHref = R.createElement nodeLinkHrefCpt
+
+nodeLinkHrefCpt :: R.Component NodeLinkHrefProps
+nodeLinkHrefCpt = R.hooksComponentWithModule thisModule "nodeLinkHref" cpt
+  where
+    cpt { frontends
+        , handed
+        , id
+        , isSelected
+        , name
+        , nodeType: nodeType@GT.Graph
+        , session } _ = do
+
+      useLoader id (graphVersions session) renderElement
+
+      where
+        renderElement { gv_graph: Nothing } = nodeText { isSelected, handed, name } []
+        renderElement _ = H.a { data: { for: tooltipId id
+                                      , tip: true
+                                      }
+                              , href: url frontends $ GT.NodePath (sessionId session) nodeType (Just id) }
+                            [ nodeText { isSelected, handed, name} [] ]
+
+    cpt { frontends
+        , handed
+        , id
+        , isSelected
+        , name
+        , nodeType
+        , session } _ = do
+      pure $ H.a { data: { for: tooltipId id
+                         , tip: true
+                         }
+                 , href: url frontends $ GT.NodePath (sessionId session) nodeType (Just id) }
+        [ nodeText { isSelected, handed, name} [] ]
+
+    graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
 
 
 -- START node text
 type NodeTextProps =
   ( isSelected :: Boolean
-  , name       :: Name
   , handed     :: GT.Handed
+  , name       :: GT.Name
   )
 
-nodeText :: Record NodeTextProps -> R.Element
-nodeText p = R.createElement nodeTextCpt p []
+nodeText :: R2.Component NodeTextProps
+nodeText = R.createElement nodeTextCpt
 
 nodeTextCpt :: R.Component NodeTextProps
 nodeTextCpt = R.hooksComponentWithModule thisModule "nodeText" cpt
   where
     cpt { isSelected: true, name } _ = do
-      pure $ H.u {} [
+      pure $ H.u { className } [
         H.b {} [
            H.text ("| " <> name15 name <> " |    ")
          ]
         ]
     cpt {isSelected: false, name, handed} _ = do
       pure $ if handed == GT.RightHanded
-                then H.text "..." <> H.text (name15 name)
-                else H.text (name15 name) <> H.text "..."
+                then H.span { className } [ H.text "..." <> H.text (name15 name) ]
+                else H.span { className} [ H.text (name15 name) <> H.text "..." ]
 
     name len n = if S.length n < len then
                  n
@@ -364,6 +411,7 @@ nodeTextCpt = R.hooksComponentWithModule thisModule "nodeText" cpt
                    Nothing -> "???"
                    Just s  -> s <> "..."
     name15 = name 15
+    className = "node-text"
 -- END node text
 
 ------------------------------------------------------------------------

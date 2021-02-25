@@ -127,7 +127,7 @@ subTreeTreeViewCpt = R.hooksComponentWithModule thisModule "subTreeTreeViewCpt" 
                   nodeText { isSelected: isSelected targetId valAction
                            , name: " " <> name
                            , handed
-                           }
+                           } []
                 , H.span { className: "children" } children
                 ]
               ]
