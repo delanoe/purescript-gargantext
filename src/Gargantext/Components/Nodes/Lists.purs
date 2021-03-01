@@ -73,12 +73,12 @@ topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
 --------------------------------------------------------
 
 type CommonProps = (
-    appReload     :: GUR.ReloadS
-  , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
+    reloadRoot     :: GUR.ReloadS
+  , tasks :: R.Ref (Maybe GAT.Reductor)
   , nodeId        :: Int
   , session       :: Session
   , sessionUpdate :: Session -> Effect Unit
-  , treeReloadRef :: GUR.ReloadWithInitializeRef
+  , reloadForest :: GUR.ReloadWithInitializeRef
   )
 
 type Props = (
@@ -113,13 +113,13 @@ listsLayoutWithKey props = R.createElement listsLayoutWithKeyCpt props []
 listsLayoutWithKeyCpt :: R.Component KeyProps
 listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKey" cpt
   where
-    cpt { appReload
-        , asyncTasksRef
+    cpt { reloadRoot
+        , tasks
         , controls
         , nodeId
         , session
         , sessionUpdate
-        , treeReloadRef } _ = do
+        , reloadForest } _ = do
       let path = { nodeId, session }
 
       cacheState <- R.useState' $ getCacheState CacheOn session nodeId
@@ -140,15 +140,15 @@ listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKe
               , title: "Corpus " <> name
               , user: authors }
           , Tabs.tabs {
-               appReload
-             , asyncTasksRef
+               reloadRoot
+             , tasks
              , cacheState
              , corpusData
              , corpusId
              , key: "listsLayoutWithKey-tabs-" <> (show $ fst cacheState)
              , session
              , sidePanelTriggers: controls.triggers
-             , treeReloadRef
+             , reloadForest
              }
           ]
       where

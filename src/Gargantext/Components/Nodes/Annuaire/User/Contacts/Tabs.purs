@@ -7,8 +7,8 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import Effect (Effect)
 import Reactix as R
+import Toestand as T
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.DocsTable as DT
@@ -20,12 +20,12 @@ import Gargantext.Components.Nodes.Lists.Types as LTypes
 import Gargantext.Components.Nodes.Texts.Types as TTypes
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType(..), NodeID, PTabNgramType(..), TabType(..), TabSubType(..))
+import Gargantext.Types (CTabNgramType(..), PTabNgramType(..), TabType(..), TabSubType(..))
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
+import Gargantext.Utils.Toestand as T2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs"
 
 
 data Mode = Patents | Books | Communication
@@ -49,73 +49,73 @@ modeTabType' Books = CTabAuthors
 modeTabType' Communication = CTabAuthors
 
 type TabsProps = (
-    appReload         :: GUR.ReloadS
-  , asyncTasksRef     :: R.Ref (Maybe GAT.Reductor)
+    reloadRoot        :: T.Cursor T2.Reload
+  , tasks             :: R.Ref (Maybe GAT.Reductor)
   , cacheState        :: R.State LTypes.CacheState
   , contactData       :: ContactData'
   , frontends         :: Frontends
   , nodeId            :: Int
   , session           :: Session
   , sidePanelTriggers :: Record LTypes.SidePanelTriggers
-  , treeReloadRef     :: GUR.ReloadWithInitializeRef
+  , reloadForest      :: T.Cursor (T2.InitReload T.Cursor)
   )
 
 tabs :: Record TabsProps -> R.Element
 tabs props = R.createElement tabsCpt props []
 
 tabsCpt :: R.Component TabsProps
-tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
+tabsCpt = here.component "tabs" cpt
   where
-    cpt { appReload
-        , asyncTasksRef
+    cpt { reloadRoot
+        , tasks
         , cacheState
         , contactData: {defaultListId}
         , frontends
         , nodeId
         , session
         , sidePanelTriggers
-        , treeReloadRef } _ = do
+        , reloadForest } _ = do
       active <- R.useState' 0
       textsSidePanelTriggers <- TTypes.emptySidePanelTriggers
       pure $ Tab.tabs { selected: fst active, tabs: tabs' textsSidePanelTriggers }
       where
         tabs' trg =
-          [ "Documents"     /\ docs trg
+          [ "Documents"     /\ docs
           , "Patents"       /\ ngramsView patentsView []
           , "Books"         /\ ngramsView booksView []
           , "Communication" /\ ngramsView commView []
-          , "Trash"         /\ docs trg -- TODO pass-in trash mode
+          , "Trash"         /\ docs -- TODO pass-in trash mode
           ]
           where
-            patentsView = { appReload
-                          , asyncTasksRef
+            patentsView = { reloadRoot
+                          , tasks
                           , cacheState
                           , defaultListId
                           , mode: Patents
                           , nodeId
                           , session
                           , sidePanelTriggers
-                          , treeReloadRef }
-            booksView   = { appReload
-                          , asyncTasksRef
+                          , reloadForest }
+            booksView   = { reloadRoot
+                          , tasks
                           , cacheState
                           , defaultListId
                           , mode: Books
                           , nodeId
                           , session
                           , sidePanelTriggers
-                          , treeReloadRef }
-            commView    = { appReload, asyncTasksRef
+                          , reloadForest }
+            commView    = { reloadRoot, tasks
                           , cacheState
                           , defaultListId
                           , mode: Communication
                           , nodeId
                           , session
                           , sidePanelTriggers
-                          , treeReloadRef }
+                          , reloadForest }
             chart       = mempty
             totalRecords = 4736 -- TODO
-            docs sidePanelTriggers = DT.docViewLayout
+            docs = DT.docViewLayout
               { cacheState
               , chart
               , frontends
@@ -124,54 +124,54 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
               , nodeId
               , session
               , showSearch: true
-              , sidePanelTriggers
+              , sidePanelTriggers: trg
               , tabType: TabPairing TabDocs
               , totalRecords
               }
 
 
 type NgramsViewTabsProps = (
-    appReload         :: GUR.ReloadS
-  , asyncTasksRef     :: R.Ref (Maybe GAT.Reductor)
+    reloadRoot        :: T.Cursor T2.Reload
+  , tasks             :: R.Ref (Maybe GAT.Reductor)
   , cacheState        :: R.State LTypes.CacheState
   , defaultListId     :: Int
   , mode              :: Mode
   , nodeId            :: Int
   , session           :: Session
   , sidePanelTriggers :: Record LTypes.SidePanelTriggers
-  , treeReloadRef     :: GUR.ReloadWithInitializeRef
+  , reloadForest      :: T.Cursor (T2.InitReload T.Cursor)
   )
 
 ngramsView :: R2.Component NgramsViewTabsProps
 ngramsView = R.createElement ngramsViewCpt
 
 ngramsViewCpt :: R.Component NgramsViewTabsProps
-ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
+ngramsViewCpt = here.component "ngramsView" cpt
   where
-    cpt { appReload
-        , asyncTasksRef
+    cpt { reloadRoot
+        , tasks
         , cacheState
         , defaultListId
         , mode
         , nodeId
         , session
         , sidePanelTriggers
-        , treeReloadRef } _ = do
-      pathS <- R.useState' $ NTC.initialPageParams session nodeId [defaultListId] (TabDocument TabDocs)
+        , reloadForest } _ = do
+      path <- R.useState' $ NTC.initialPageParams session nodeId [defaultListId] (TabDocument TabDocs)
 
       pure $ NT.mainNgramsTable {
-          appReload
+          reloadRoot
         , afterSync: \_ -> pure unit
-        , asyncTasksRef
+        , tasks
         , cacheState
         , defaultListId
         , nodeId
-        , pathS
+        , path
         , tabType
         , session
         , sidePanelTriggers
         , tabNgramType
-        , treeReloadRef
+        , reloadForest
         , withAutoUpdate: false
         } []
       where

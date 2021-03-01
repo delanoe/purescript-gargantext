@@ -54,7 +54,7 @@ type Controls =
   , showSidePanel   :: R.State GET.SidePanelState
   , showTree        :: R.State Boolean
   , sigmaRef        :: R.Ref Sigmax.Sigma
-  , treeReload      :: Unit -> Effect Unit
+  , reloadForest      :: Unit -> Effect Unit
   )
 
 type LocalControls =
@@ -168,7 +168,7 @@ controlsCpt = R.hooksComponentWithModule thisModule "controls" cpt
                                       , hyperdataGraph: props.hyperdataGraph
                                       , session: props.session
                                       , sigmaRef: props.sigmaRef
-                                      , treeReload: props.treeReload } ]
+                                      , reloadForest: props.reloadForest } ]
             ]
           ]
           --   RH.ul {} [ -- change type button (?)
@@ -196,7 +196,7 @@ controlsCpt = R.hooksComponentWithModule thisModule "controls" cpt
           --                             , hyperdataGraph: props.hyperdataGraph
           --                             , session: props.session
           --                             , sigmaRef: props.sigmaRef
-          --                             , treeReload: props.treeReload } ]
+          --                             , reloadForest: props.reloadForest } ]
           --   ]
           -- ]
 
@@ -205,14 +205,14 @@ useGraphControls :: { forceAtlasS :: SigmaxT.ForceAtlasState
                    , graphId :: GET.GraphId
                    , hyperdataGraph :: GET.HyperdataGraph
                    , session :: Session
-                   , treeReload :: Unit -> Effect Unit }
+                   , reloadForest :: Unit -> Effect Unit }
                  -> R.Hooks (Record Controls)
 useGraphControls { forceAtlasS
                  , graph
                  , graphId
                  , hyperdataGraph
                  , session
-                 , treeReload } = do
+                 , reloadForest } = do
   edgeConfluence <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
   edgeWeight <- R.useState' $ Range.Closed {
       min: 0.0
@@ -250,7 +250,7 @@ useGraphControls { forceAtlasS
        , showSidePanel
        , showTree
        , sigmaRef
-       , treeReload
+       , reloadForest
        }
 
 getShowControls :: Record Controls -> Boolean

@@ -4,13 +4,12 @@
 
 ### Social contract
 
-1. Use and promote welcoming behavior to respect the [Code of Conduct](https://gitlab.iscpif.fr/humanities/gargantext/blob/master/CODE_OF_CONDUCT.md)
+1. Be nice, welcome and treat others with respect: [Code of Conduct](https://gitlab.iscpif.fr/humanities/gargantext/blob/master/CODE_OF_CONDUCT.md)
 
-2. We are a team as whole: here to help each others
+2. We are a team as whole: here to help each other
   - knowing the unknown is a value but ignoring the unknown is a failure
     - do not ask to ask: just ask
-    - there is no stupid question(s)
-    - there is no unique solution(s)
+    - there are no stupid questions
 
 3. Watch deadlines individually and collectively
   - at 0% of the time of the task, agree on the /estimate of time to fix the issue.
@@ -82,30 +81,38 @@ Main branches are:
 
 ## Technicals
 
-
-### Code main guidelines
-
-#### Code Design
-
 Please configure your editor accordingly (ask for tips if needed or put your tips here)
 
-##### Line length
-* all line length should be < 120 chars
+### Code guidelines
 
-##### Identation
-* 2 spaces or more if needed by the compiler
-    * i.e. Tab character is avoided
-    * avoid trailing spaces, mostly spaces at the end of lines (remove it)
+#### Basics
+
+Line length:
+
+* Good lines of code are no more than 80 characters long.
+* Acceptable lines of code are no more than 100
+* Bad lines of code are no more than 120.
+
+Whitespace:
+
+* 2 spaces per indentation stop, or more if needed by the compiler
+* Do not use tab characters.
+* Remove trailing whitespace from lines. Includes blank lines.
+
+#### Layout
+
+
 
 * HTML nodes:
 
 ```
-  div []
-  [ div []
-    [ a [] [...]
-    , a [] [...]
-    ]
-  , div []
+  div {...}
+  [ div {...} [ a {} [...], a {...} [...] ]
+  , div {...}
+  , div
+    { ...
+    , ...
+    }
     [ ...
     , ...
     ]

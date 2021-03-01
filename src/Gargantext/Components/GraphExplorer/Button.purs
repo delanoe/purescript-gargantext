@@ -62,7 +62,7 @@ type CameraButtonProps = (
   , hyperdataGraph :: GET.HyperdataGraph
   , session :: Session
   , sigmaRef :: R.Ref Sigmax.Sigma
-  , treeReload :: Unit -> Effect Unit
+  , reloadForest :: Unit -> Effect Unit
   )
 
 
@@ -71,7 +71,7 @@ cameraButton { id
              , hyperdataGraph: GET.HyperdataGraph { graph: GET.GraphData hyperdataGraph }
              , session
              , sigmaRef
-             , treeReload } = simpleButton {
+             , reloadForest } = simpleButton {
     onClick: \_ -> do
       let sigma = R.readRef sigmaRef
       Sigmax.dependOnSigma sigma "[cameraButton] sigma: Nothing" $ \s -> do
@@ -103,7 +103,7 @@ cameraButton { id
         launchAff_ $ do
           clonedGraphId <- cloneGraph { id, hyperdataGraph, session }
           ret <- uploadArbitraryDataURL session clonedGraphId (Just $ nowStr <> "-" <> "screenshot.png") screen
-          liftEffect $ treeReload unit
+          liftEffect $ reloadForest unit
           pure ret
   , text: "Screenshot"
   }

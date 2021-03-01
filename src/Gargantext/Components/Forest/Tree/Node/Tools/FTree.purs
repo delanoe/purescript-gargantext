@@ -13,17 +13,22 @@ type Name = String
 type FTree = NTree LNode
 data NTree a = NTree a (Array (NTree a))
 type Tree = { tree       :: FTree
-            , asyncTasks :: Array GT.AsyncTaskWithType
+            , tasks :: Array GT.AsyncTaskWithType
             }
+
+fTreeID :: FTree -> ID
+fTreeID (NTree (LNode { id }) _) = id
 
 instance ntreeFunctor :: Functor NTree where
   map f (NTree x ary) = NTree (f x) (map (map f) ary)
 
-newtype LNode = LNode { id :: ID
-                      , name :: Name
-                      , nodeType :: GT.NodeType
-                      , parent_id :: Maybe ID
-                      }
+newtype LNode =
+  LNode
+  { id        :: ID
+  , name      :: Name
+  , nodeType  :: GT.NodeType
+  , parent_id :: Maybe ID
+  }
 
 derive instance newtypeLNode :: Newtype LNode _
 

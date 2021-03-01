@@ -2,7 +2,9 @@ module Gargantext.Components.Login.Types where
 
 import Prelude
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (.:!), (:=), (~>))
+import Data.Argonaut
+  ( class DecodeJson, class EncodeJson
+  , decodeJson, jsonEmptyObject, (.:), (.:!), (:=), (~>) )
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Lens (Iso', iso)
@@ -24,8 +26,7 @@ newtype AuthResponse = AuthResponse
   , inval :: Maybe AuthInvalid
   }
 
-newtype AuthInvalid = AuthInvalid
-  { message :: String }
+newtype AuthInvalid = AuthInvalid { message :: String }
 
 newtype AuthData = AuthData
   { token   :: Token
@@ -60,7 +61,7 @@ instance decodeAuthData :: DecodeJson AuthData where
     obj   <- decodeJson json
     token <- obj .: "token"
     tree_id <- obj .: "tree_id"
-    pure $ AuthData {token, tree_id}
+    pure $ AuthData { token, tree_id }
 
 instance encodeAuthRequest :: EncodeJson AuthRequest where
   encodeJson (AuthRequest {username, password}) =

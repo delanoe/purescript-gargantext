@@ -43,9 +43,9 @@ thisModule :: String
 thisModule = "Gargantext.Components.GraphExplorer"
 
 type LayoutProps = (
-    asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
+    tasks :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
-  , currentRoute  :: AppRoute
+  , route  :: AppRoute
   , frontends     :: Frontends
   , graphId       :: GET.GraphId
   , handed        :: Types.Handed
@@ -93,9 +93,9 @@ explorer props = R.createElement explorerCpt props []
 explorerCpt :: R.Component Props
 explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
   where
-    cpt props@{ asyncTasksRef
+    cpt props@{ tasks
               , backend
-              , currentRoute
+              , route
               , frontends
               , graph
               , graphId
@@ -117,14 +117,14 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
       graphVersionRef <- R.useRef (GUR.value graphVersion)
-      treeReload <- GUR.new
-      treeReloadRef <- GUR.newIInitialized treeReload
+      reloadForest <- GUR.new
+      reloadForest <- GUR.newIInitialized reloadForest
       controls <- Controls.useGraphControls { forceAtlasS
                                            , graph
                                            , graphId
                                            , hyperdataGraph
                                            , session
-                                           , treeReload: \_ -> GUR.bump treeReload
+                                           , reloadForest: \_ -> GUR.bump reloadForest
                                            }
       multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
 
@@ -161,16 +161,16 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
             inner handed [
               rowControls [ Controls.controls controls ]
             , RH.div { className: "row graph-row" } $ mainLayout handed $
-                tree { asyncTasksRef
+                tree { tasks
                     , backend
-                    , currentRoute
+                    , route
                     , frontends
                     , handed
-                    , reload: treeReload
+                    , reload: reloadForest
                     , sessions
                     , show: fst controls.showTree
                     , showLogin: snd showLogin
-                    , treeReloadRef
+                    , reloadForest
                     }
                 /\
                 RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []
@@ -192,7 +192,7 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
                                   , session
                                   , selectedNodeIds: controls.selectedNodeIds
                                   , showSidePanel  :   controls.showSidePanel
-                                  , treeReload
+                                  , reloadForest
                                   }
             ]
           ]
@@ -220,17 +220,17 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
 
     tree :: Record TreeProps -> R.Element
     tree { show: false } = RH.div { id: "tree" } []
-    tree { asyncTasksRef, backend, frontends, handed, currentRoute, reload, sessions, showLogin, treeReloadRef } =
+    tree { tasks, backend, frontends, handed, route, reload, sessions, showLogin, reloadForest } =
       RH.div {className: "col-md-2 graph-tree"} [
-        forest { appReload: reload
-               , asyncTasksRef
+        forest { reloadRoot: reload
+               , tasks
                , backend
-               , currentRoute
+               , route
                , frontends
                , handed
                , sessions
                , showLogin
-               , treeReloadRef } []
+               , reloadForest } []
       ]
 
     mSidebar :: Maybe GET.MetaData
@@ -241,17 +241,16 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
       Sidebar.sidebar (Record.merge props { metaData })
 
 type TreeProps =
-  (
-    asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
+  ( tasks :: R.Ref (Maybe GAT.Reductor)
   , backend       :: R.State (Maybe Backend)
-  , currentRoute  :: AppRoute
+  , route  :: AppRoute
   , frontends     :: Frontends
   , handed        :: Types.Handed
   , reload        :: GUR.ReloadS
   , sessions      :: Sessions
   , show          :: Boolean
   , showLogin     :: R.Setter Boolean
-  , treeReloadRef :: GUR.ReloadWithInitializeRef
+  , reloadForest  :: GUR.ReloadWithInitializeRef
   )
 
 type MSidebarProps =
@@ -263,7 +262,7 @@ type MSidebarProps =
   , showSidePanel   :: R.State GET.SidePanelState
   , selectedNodeIds :: R.State SigmaxT.NodeIds
   , session         :: Session
-  , treeReload      :: GUR.ReloadS
+  , reloadForest    :: GUR.ReloadS
   )
 
 type GraphProps = (

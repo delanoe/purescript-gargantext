@@ -8,6 +8,8 @@ import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
+import Record.Extra as RX
+import Toestand as T
 
 import Gargantext.Prelude
 
@@ -26,58 +28,39 @@ import Gargantext.Sessions (Session)
 import Gargantext.Types (ChartType(..), CTabNgramType(..), Mode(..), TabSubType(..), TabType(..), chartTypeFromString, modeTabType)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
+import Gargantext.Utils.Toestand as T2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Nodes.Lists.Tabs"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Lists.Tabs"
 
 type Props = (
-    appReload         :: GUR.ReloadS
-  , asyncTasksRef     :: R.Ref (Maybe GAT.Reductor)
+    reloadRoot        :: T.Cursor T2.Reload
+  , tasks             :: R.Ref (Maybe GAT.Reductor)
   , cacheState        :: R.State CacheState
   , corpusData        :: CorpusData
   , corpusId          :: Int
   , session           :: Session
   , sidePanelTriggers :: Record SidePanelTriggers
-  , treeReloadRef     :: GUR.ReloadWithInitializeRef
+  , reloadForest      :: T.Cursor (T2.InitReload T.Cursor)
   )
 
-type PropsWithKey = (
-  key        :: String
-  | Props
-  )
+type PropsWithKey = ( key :: String | Props )
 
 tabs :: Record PropsWithKey -> R.Element
 tabs props = R.createElement tabsCpt props []
 
 tabsCpt :: R.Component PropsWithKey
-tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
-  where
-    cpt { appReload
-        , asyncTasksRef
-        , cacheState
-        , corpusData
-        , corpusId
-        , session
-        , sidePanelTriggers
-        , treeReloadRef } _ = do
-      (selected /\ setSelected) <- R.useState' 0
-
-      pure $ Tab.tabs { selected, tabs: tabs' }
-      where
-        tabs' = [ "Terms"      /\ view Terms
-                , "Authors"    /\ view Authors
-                , "Institutes" /\ view Institutes
-                , "Sources"    /\ view Sources
-                ]
-        view mode = ngramsView { appReload
-                               , asyncTasksRef
-                               , cacheState
-                               , corpusData
-                               , corpusId
-                               , mode
-                               , session
-                               , sidePanelTriggers
-                               , treeReloadRef }
+tabsCpt = here.component "tabs" cpt where
+  cpt props _ = do
+    (selected /\ setSelected) <- R.useState' 0
+    pure $ Tab.tabs { selected, tabs: tabs' } where
+      tabs' = [ "Terms"      /\ view Terms
+              , "Authors"    /\ view Authors
+              , "Institutes" /\ view Institutes
+              , "Sources"    /\ view Sources
+              ]
+      common = RX.pick props :: Record Props
+      view mode = ngramsView $Record.merge common { mode }
 
 type NgramsViewProps = ( mode :: Mode | Props )
 
@@ -85,50 +68,40 @@ ngramsView :: Record NgramsViewProps -> R.Element
 ngramsView props = R.createElement ngramsViewCpt props []
 
 ngramsViewCpt :: R.Component NgramsViewProps
-ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
-  where
-    cpt { appReload
-        , asyncTasksRef
-        , cacheState
-        , corpusData: { defaultListId }
-        , corpusId
-        , mode
-        , session
-        , sidePanelTriggers
-        , treeReloadRef
-        } _ = do
-
+ngramsViewCpt = here.component "ngramsView" cpt where
+  cpt props@{ reloadRoot, tasks, cacheState, corpusData: { defaultListId }
+            , corpusId, mode, session, sidePanelTriggers, reloadForest } _ = do
       chartType <- R.useState' Histo
       chartsReload <- GUR.new
-      pathS <- R.useState' $ NTC.initialPageParams session initialPath.corpusId [initialPath.listId] initialPath.tabType
-      let listId' = fromMaybe defaultListId $ A.head (fst pathS).listIds
-      let path = {
-          corpusId: (fst pathS).nodeId
-        , limit: (fst pathS).params.limit
+      path <- R.useState' $ NTC.initialPageParams props.session initialPath.corpusId [initialPath.listId] initialPath.tabType
+      let listId' = fromMaybe defaultListId $ A.head (fst path).listIds
+      let path' = {
+          corpusId: (fst path).nodeId
+        , limit: (fst path).params.limit
         , listId: listId'
-        , tabType: (fst pathS).tabType
+        , tabType: (fst path).tabType
         }
       let chartParams = {
-          corpusId: path.corpusId
-        , limit: Just path.limit
-        , listId: path.listId
-        , tabType: path.tabType
+          corpusId: path'.corpusId
+        , limit: Just path'.limit
+        , listId: path'.listId
+        , tabType: path'.tabType
         }
 
       pure $ R.fragment
         ( charts chartParams tabNgramType chartType chartsReload
         <> [ NT.mainNgramsTable { afterSync: afterSync chartsReload
-                                , appReload
-                                , asyncTasksRef
+                                , reloadRoot
+                                , tasks
                                 , cacheState
                                 , defaultListId
                                 , nodeId: corpusId
-                                , pathS
+                                , path
                                 , session
                                 , sidePanelTriggers
                                 , tabNgramType
                                 , tabType
-                                , treeReloadRef
+                                , reloadForest
                                 , withAutoUpdate: false
                                 } []
            ]

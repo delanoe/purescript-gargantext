@@ -150,12 +150,12 @@ listElement :: Array R.Element -> R.Element
 listElement = H.li { className: "list-group-item justify-content-between" }
 
 type LayoutProps =
-  ( appReload     :: GUR.ReloadS
-  , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
+  ( reloadRoot     :: GUR.ReloadS
+  , tasks :: R.Ref (Maybe GAT.Reductor)
   , frontends     :: Frontends
   , nodeId        :: Int
   , session       :: Session
-  , treeReloadRef :: GUR.ReloadWithInitializeRef
+  , reloadForest :: GUR.ReloadWithInitializeRef
   )
 
 type KeyLayoutProps = (
@@ -169,17 +169,17 @@ userLayout props = R.createElement userLayoutCpt props []
 userLayoutCpt :: R.Component LayoutProps
 userLayoutCpt = R.hooksComponentWithModule thisModule "userLayout" cpt
   where
-    cpt { appReload, asyncTasksRef, frontends, nodeId, session, treeReloadRef } _ = do
+    cpt { reloadRoot, tasks, frontends, nodeId, session, reloadForest } _ = do
       let sid = sessionId session
 
       pure $ userLayoutWithKey {
-          appReload
-        , asyncTasksRef
+          reloadRoot
+        , tasks
         , frontends
         , key: show sid <> "-" <> show nodeId
         , nodeId
         , session
-        , treeReloadRef
+        , reloadForest
         }
 
 userLayoutWithKey :: Record KeyLayoutProps -> R.Element
@@ -188,7 +188,7 @@ userLayoutWithKey props = R.createElement userLayoutWithKeyCpt props []
 userLayoutWithKeyCpt :: R.Component KeyLayoutProps
 userLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "userLayoutWithKey" cpt
   where
-    cpt { appReload, asyncTasksRef, frontends, nodeId, session, treeReloadRef } _ = do
+    cpt { reloadRoot, tasks, frontends, nodeId, session, reloadForest } _ = do
       reload <- GUR.new
 
       cacheState <- R.useState' LT.CacheOn
@@ -201,15 +201,15 @@ userLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "userLayoutWithKey"
             display { title: fromMaybe "no name" name }
                     (contactInfos hyperdata (onUpdateHyperdata reload))
           , Tabs.tabs {
-                 appReload
-               , asyncTasksRef
+                 reloadRoot
+               , tasks
                , cacheState
                , contactData
                , frontends
                , nodeId
                , session
                , sidePanelTriggers
-               , treeReloadRef
+               , reloadForest
                }
           ]
       where

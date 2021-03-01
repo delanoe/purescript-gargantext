@@ -10,7 +10,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
 
-import Gargantext.Prelude (bind, pure, show, unit, ($), (<>), (<<<))
+import Gargantext.Prelude (bind, pure, show, unit, ($), (<>), (<$>), (<<<))
 
 import Gargantext.Components.AutoUpdate (autoUpdate)
 import Gargantext.Components.Search (SearchType(..))
@@ -27,8 +27,8 @@ import Gargantext.Types (CTabNgramType(..), ListId, NodeID, NodeType(..), TabSub
 import Gargantext.Utils as U
 import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Nodes.Corpus.Document"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Corpus.Document"
 
 publicationDate :: Document -> String
 publicationDate (Document doc@{publication_year: Nothing}) = ""
@@ -40,7 +40,7 @@ docViewWrapper :: R2.Component Props
 docViewWrapper = R.createElement docViewWrapperCpt
 
 docViewWrapperCpt :: R.Component Props
-docViewWrapperCpt = R.hooksComponentWithModule thisModule "docViewWrapper" cpt
+docViewWrapperCpt = here.component "docViewWrapper" cpt
   where
     cpt props@{ loaded } _ = do
       state <- R.useState' $ initialState { loaded }
@@ -56,7 +56,7 @@ docView :: R2.Component DocViewProps
 docView = R.createElement docViewCpt
 
 docViewCpt :: R.Component DocViewProps
-docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
+docViewCpt = here.component "docView" cpt
   where
     cpt { path
         , loaded: loaded@{ ngramsTable: Versioned { data: initTable }, document }
@@ -65,17 +65,14 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
 
       let
         afterSync = \_ -> pure unit
-        syncResetBtns = [syncResetButtons { afterSync, ngramsLocalPatch
-                                          , performAction: dispatch
-                                          }]
+        syncResetBtns =
+          [ syncResetButtons { afterSync, ngramsLocalPatch, performAction: dispatch } ]
         withAutoUpdate = false
         autoUpd :: Array R.Element
-        autoUpd = if withAutoUpdate then
-                     [ autoUpdate { duration: 5000
-                                  , effect: dispatch $ Synchronize { afterSync }
-                                  }
-                     ]
-                  else []
+        autoUpd =
+          if withAutoUpdate
+          then [ autoUpdate { duration: 5000, effect: dispatch $ Synchronize { afterSync } } ]
+          else []
 
       pure $ H.div {} $
         autoUpd <> syncResetBtns <>
@@ -83,109 +80,79 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
         --[ H.pre { rows: 30 } [
         --    H.text (stringifyWithIndent 2 (encodeJson (fst state)))
         --  ] ] <>
-        [
-        H.div { className: "corpus-doc-view container1" }
-        [
-          R2.row
-          [
-            R2.col 12
-            [ H.h4 {} [
-                H.span {} [
-                   badge "title"
-                 , annotate doc.title
-                ]
-              ]
-            , H.ul { className: "list-group" }
-              [ li' [ badgeLi "source"
-                    , text' doc.source
-                    ]
+        [ H.div { className: "corpus-doc-view container1" }
+          [ R2.row
+            [ R2.col 12
+              [ H.h4 {} [ H.span {} [ badge "title", annotate doc.title ] ]
+              , H.ul { className: "list-group" }
+                [ li' [ badgeLi "source", text' doc.source ]
               -- TODO add href to /author/ if author present in
-              , li' [ badgeLi "authors"
-                    , text' doc.authors
-                    ]
-              , li' [ badgeLi "date"
-                    , H.text $ publicationDate $ Document doc
-                    ]
-              ]
-            , H.span {} [
-                badge "abstract"
-              , annotate doc.abstract
-              ]
-            , H.div { className: "jumbotron" }
-              [ H.p {} [ H.text "Empty Full Text" ]
-              ]
-            ]
-          ]
-        ]
-      ]
-        where
-          dispatch = coreDispatch path state
-          ngrams = applyNgramsPatches (fst state) initTable
-          annotate text = AnnotatedField.annotatedField { ngrams
-                                                        , setTermList
-                                                        , text }
-          badge s = H.span { className: "badge badge-default badge-pill" } [ H.text s ]
-          badgeLi s = H.span { className: "list-group-item-heading" } [
-                        H.span { className: "badge-container" } [
-                          H.span { className: "badge badge-default badge-pill" } [ H.text s ]
-                        ]
-                      ]
-          li' = H.li { className: "list-group-item justify-content-between" }
-          setTermListOrAddA ngram Nothing        = addNewNgramA ngram
-          setTermListOrAddA ngram (Just oldList) = setTermListA ngram <<< replace oldList
-          setTermList ngram mOldList = dispatch <<< setTermListOrAddA (findNgramRoot ngrams ngram) mOldList
-          -- Here the use of findNgramRoot makes that we always target the root of an ngram group.
-          text' x = H.span { className: "list-group-item-text" } [ H.text $ fromMaybe "Nothing" x ]
-          NodePoly {hyperdata: Document doc} = document
+                , li' [ badgeLi "authors", text' doc.authors ]
+                , li' [ badgeLi "date", H.text $ publicationDate $ Document doc ]
+                ]
+              , H.span {} [ badge "abstract", annotate doc.abstract ]
+              , H.div { className: "jumbotron" } [ H.p {} [ H.text "Empty Full Text" ] ]
+              ]]]]
+      where
+        dispatch = coreDispatch path state
+        ngrams = applyNgramsPatches (fst state) initTable
+        annotate text = AnnotatedField.annotatedField { ngrams, setTermList, text }
+        badge s = H.span { className: "badge badge-default badge-pill" } [ H.text s ]
+        badgeLi s =
+          H.span { className: "list-group-item-heading" }
+          [ H.span { className: "badge-container" }
+            [ H.span { className: "badge badge-default badge-pill" } [ H.text s ] ]]
+        li' = H.li { className: "list-group-item justify-content-between" }
+        setTermListOrAddA ngram Nothing        = addNewNgramA ngram
+        setTermListOrAddA ngram (Just oldList) = setTermListA ngram <<< replace oldList
+        setTermList ngram mOldList = dispatch <<< setTermListOrAddA (findNgramRoot ngrams ngram) mOldList
+        -- Here the use of findNgramRoot makes that we always target the root of an ngram group.
+        text' x = H.span { className: "list-group-item-text" } [ H.text $ fromMaybe "Nothing" x ]
+        NodePoly {hyperdata: Document doc} = document
 
-type LayoutProps = (
-    listId         :: ListId
-  , mCorpusId      :: Maybe NodeID
-  , nodeId         :: NodeID
-  , session        :: Session
+type LayoutProps =
+ (  listId   :: ListId
+  , corpusId :: Maybe NodeID
+  , nodeId   :: NodeID
+  , session  :: R.Context Session
   )
 
 documentMainLayout :: R2.Component LayoutProps
 documentMainLayout = R.createElement documentMainLayoutCpt
 
 documentMainLayoutCpt :: R.Component LayoutProps
-documentMainLayoutCpt = R.hooksComponentWithModule thisModule "documentMainLayout" cpt
-  where
-    cpt props _ = do
-      pure $ R2.row [
-        R2.col 10 [
-           documentLayout props []
-           ]
-        ]
+documentMainLayoutCpt = here.component "documentMainLayout" cpt where
+    cpt props _ = pure $ R2.row [ R2.col 10 [ documentLayout props [] ] ]
 
 documentLayout :: R2.Component LayoutProps
 documentLayout = R.createElement documentLayoutCpt
 
 documentLayoutCpt :: R.Component LayoutProps
-documentLayoutCpt = R.hooksComponentWithModule thisModule "documentLayout" cpt
-  where
-    cpt props@{ nodeId, session } _ = do
-      let sid = sessionId session
+documentLayoutCpt = here.component "documentLayout" cpt where
+  cpt { listId, corpusId, nodeId, session } children = cp <$> R.useContext session where
+    cp s = documentLayoutWithKey { key, listId, corpusId, nodeId, session: s } children where
+      key = show (sessionId s) <> "-" <> show nodeId
 
-      pure $ documentLayoutWithKey (Record.merge props { key: show sid <> "-" <> show nodeId }) []
-
-type KeyLayoutProps = (
-  key :: String
-  | LayoutProps
+type KeyLayoutProps =
+  ( key      :: String
+  , listId   :: ListId
+  , corpusId :: Maybe NodeID
+  , nodeId   :: NodeID
+  , session  :: Session
   )
 
 documentLayoutWithKey :: R2.Component KeyLayoutProps
 documentLayoutWithKey = R.createElement documentLayoutWithKeyCpt
 
 documentLayoutWithKeyCpt :: R.Component KeyLayoutProps
-documentLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "documentLayoutWithKey" cpt
+documentLayoutWithKeyCpt = here.component "documentLayoutWithKey" cpt
   where
-    cpt { listId, mCorpusId, nodeId, session } _ = do
+    cpt { listId, corpusId, nodeId, session } _ = do
       useLoader path loadData $ \loaded ->
         docViewWrapper { loaded, path } []
       where
         tabType = TabDocument (TabNgramType CTabTerms)
-        path = { listIds: [listId], mCorpusId, nodeId, session, tabType }
+        path = { listIds: [listId], corpusId, nodeId, session, tabType }
 
 ------------------------------------------------------------------------
 

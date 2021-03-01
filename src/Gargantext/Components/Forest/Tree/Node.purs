@@ -1,9 +1,10 @@
 module Gargantext.Components.Forest.Tree.Node where
 
+import Gargantext.Prelude
 import Data.Array (reverse)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (null)
-import Data.Tuple (snd)
+import Data.Symbol (SProxy(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
@@ -11,8 +12,8 @@ import Effect.Class (liftEffect)
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
-
-import Gargantext.Prelude
+import Record as Record
+import Toestand as T
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
@@ -32,21 +33,21 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
 import Gargantext.Version as GV
 import Gargantext.Sessions (Session, sessionId)
-import Gargantext.Types (Name, ID)
+import Gargantext.Types (Name, ID, reverseHanded)
 import Gargantext.Types as GT
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
+import Gargantext.Utils.Toestand as T2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Forest.Tree.Node"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Forest.Tree.Node"
 
 -- Main Node
-type NodeMainSpanProps = (
-    appReload     :: GUR.ReloadS
-  , asyncTasks    :: GAT.Reductor
-  , currentRoute  :: Routes.AppRoute
-  , folderOpen    :: R.State Boolean
+type NodeMainSpanProps =
+  ( reloadRoot    :: T.Cursor T2.Reload
+  , tasks         :: GAT.Reductor
+  , route         :: Routes.AppRoute
+  , folderOpen    :: T.Cursor Boolean
   , frontends     :: Frontends
   , id            :: ID
   , isLeaf        :: IsLeaf
@@ -62,7 +63,7 @@ nodeSpan :: R2.Component NodeMainSpanProps
 nodeSpan = R.createElement nodeSpanCpt
 
 nodeSpanCpt :: R.Component NodeMainSpanProps
-nodeSpanCpt = R.hooksComponentWithModule thisModule "nodeSpan" cpt
+nodeSpanCpt = here.component "nodeSpan" cpt
   where
     cpt props children = do
       pure $ H.div {} ([ nodeMainSpan props [] ] <> children)
@@ -71,11 +72,11 @@ nodeMainSpan :: R2.Component NodeMainSpanProps
 nodeMainSpan = R.createElement nodeMainSpanCpt
 
 nodeMainSpanCpt :: R.Component NodeMainSpanProps
-nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
+nodeMainSpanCpt = here.component "nodeMainSpan" cpt
   where
-    cpt props@{ appReload
-              , asyncTasks: (asyncTasks /\ dispatchAsyncTasks)
-              , currentRoute
+    cpt props@{ reloadRoot
+              , tasks: (tasks /\ dispatchAsyncTasks)
+              , route
               , dispatch
               , folderOpen
               , frontends
@@ -90,32 +91,17 @@ nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
       -- only 1 popup at a time is allowed to be opened
       droppedFile   <- R.useState' (Nothing :: Maybe DroppedFile)
       isDragOver    <- R.useState' false
-
       popoverRef    <- R.useRef null
-
       R.useEffect' $ do
         R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
-
-      let ordering =
-            case handed of
-              GT.LeftHanded  -> reverse
-              GT.RightHanded -> identity
-
-      let isSelected = Just currentRoute == Routes.nodeTypeAppRoute nodeType (sessionId session) id
+      let isSelected = Just route == Routes.nodeTypeAppRoute nodeType (sessionId session) id
 
       pure $ H.span (dropProps droppedFile isDragOver)
-                $ ordering
-                [ folderIcon  nodeType folderOpen
-                , chevronIcon isLeaf handed nodeType folderOpen
-                , nodeLink { frontends
-                           , handed
-                           , folderOpen
-                           , id
-                           , isSelected
-                           , name: name' props
-                           , nodeType
-                           , session
-                           } []
+        $ switchHanded
+        [ folderIcon  nodeType folderOpen
+        , chevronIcon isLeaf handed nodeType folderOpen
+        , nodeLink { frontends, handed, folderOpen, id, isSelected
+                   , name: name' props, nodeType, session } []
 
                 , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType }
                 , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
@@ -124,7 +110,7 @@ nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
                                                        , onFinish: onTaskFinish id t
                                                        , session
                                                        }
-                                ) $ GAT.getTasks asyncTasks id
+                                ) $ GAT.getTasks tasks id
                            )
                 , if nodeType == GT.NodeUser
                         then GV.versionView {session}
@@ -146,13 +132,11 @@ nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
                               , session
                               , triggerRefresh: const $ dispatch RefreshTree
                               }
-
-
-                ]
+                ] handed
         where
           onTaskFinish id t _ = do
             dispatchAsyncTasks $ GAT.Finish id t
-            GUR.bump appReload
+            T2.reload reloadRoot
 
           SettingsBox {show: showBox} = settingsBox nodeType
           onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
@@ -182,17 +166,12 @@ nodeMainSpanCpt = R.hooksComponentWithModule thisModule "nodeMainSpan" cpt
                 } [] ]
 
     folderIcon nodeType (open /\ setOpen) =
-      H.a { className: "folder-icon"
-          , on: { click: \_ -> setOpen $ not }
-          } [
-              H.i {className: GT.fldr nodeType open} []
-            ]
-
-    popOverIcon = H.a { className: "settings fa fa-cog" 
-                      , title : "Each node of the Tree can perform some actions.\n"
-                             <> "Click here to execute one of them."
-                      } []
-
+      H.a { className: "folder-icon", on: { click: \_ -> setOpen $ not } }
+      [ H.i {className: GT.fldr nodeType open} [] ]
+    popOverIcon =
+      H.a { className: "settings fa fa-cog" 
+          , title : "Each node of the Tree can perform some actions.\n"
+            <> "Click here to execute one of them." } []
     dropProps droppedFile isDragOver =
       { className: "leaf " <> (dropClass droppedFile isDragOver)
       , on: { drop: dropHandler droppedFile
@@ -240,49 +219,44 @@ fldr nt open = if open
 
 -- START nodeActions
 
-type NodeActionsProps =
-  ( id          :: ID
-  , nodeType    :: GT.NodeType
-  , session     :: Session
-  , triggerRefresh :: Unit -> Aff Unit
+type NodeActionsCommon =
+  ( id       :: ID
+  , session  :: Session
+  , refresh  :: Unit -> Aff Unit
   )
+
+type NodeActionsProps = ( nodeType :: GT.NodeType | NodeActionsCommon )
 
 nodeActions :: Record NodeActionsProps -> R.Element
 nodeActions p = R.createElement nodeActionsCpt p []
 
 nodeActionsCpt :: R.Component NodeActionsProps
-nodeActionsCpt = R.hooksComponentWithModule thisModule "nodeActions" cpt
-  where
-    cpt { id
-        , nodeType: GT.Graph
-        , session
-        , triggerRefresh
-        } _ = do
+nodeActionsCpt = here.component "nodeActions" cpt where
+  cpt props _ = pure (child props.nodeType) where
+    nodeActionsP = SProxy :: SProxy "nodeType"
+    childProps = Record.delete nodeActionsP props
+    child GT.NodeList = listNodeActions childProps
+    child GT.Graph = graphNodeActions childProps
+    child _ = H.div {} []
 
-      useLoader id (graphVersions session) $ \gv ->
-        nodeActionsGraph { id
-                         , graphVersions: gv
-                         , session
-                         , triggerRefresh
-                         }
+graphNodeActions :: R2.Leaf NodeActionsCommon
+graphNodeActions props = R.createElement graphNodeActionsCpt props []
 
-    cpt { id
-        , nodeType: GT.NodeList
-        , session
-        , triggerRefresh
-        } _ = do
-      useLoader { nodeId: id, session } loadCorpusWithChild $
-        \{ corpusId } ->
-          nodeActionsNodeList { listId: id
-                              , nodeId: corpusId
-                              , nodeType: GT.TabNgramType GT.CTabTerms
-                              , session
-                              , triggerRefresh
-                              }
-    cpt _ _ = do
-      pure $ H.div {} []
+graphNodeActionsCpt :: R.Component NodeActionsCommon
+graphNodeActionsCpt = here.component "graphNodeActions" cpt where
+  cpt { id, session, refresh } _ =
+    useLoader id (graphVersions session) $ \gv ->
+      nodeActionsGraph { graphVersions: gv, session, id, refresh }
+  graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
 
-    graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
+listNodeActions :: R2.Leaf NodeActionsCommon
+listNodeActions props = R.createElement listNodeActionsCpt props []
 
+listNodeActionsCpt :: R.Component NodeActionsCommon
+listNodeActionsCpt = here.component "listNodeActions" cpt where
+  cpt { id, session, refresh } _ =
+    useLoader { nodeId: id, session } loadCorpusWithChild $ \{ corpusId } ->
+      nodeActionsNodeList
+      { listId: id, nodeId: corpusId, session, refresh: refresh
+      , nodeType: GT.TabNgramType GT.CTabTerms }
 
--- END nodeActions

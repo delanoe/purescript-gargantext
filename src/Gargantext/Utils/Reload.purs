@@ -1,12 +1,11 @@
 module Gargantext.Utils.Reload where
 
+import Gargantext.Prelude
+
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Reactix as R
-
-import Gargantext.Prelude
-
 
 type Reload  = Int
 type ReloadS = R.State Reload

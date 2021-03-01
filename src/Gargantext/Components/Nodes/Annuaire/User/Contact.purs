@@ -1,19 +1,19 @@
 module Gargantext.Components.Nodes.Annuaire.User.Contact
   ( module Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
   , contactLayout
-  )
-  where
+  ) where
 
-import DOM.Simple.Console (log2)
+import Gargantext.Prelude
+  ( Unit, bind, const, discard, pure, show, ($), (<$>), (*>), (<<<), (<>) )
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.InputWithEnter (inputWithEnter)
@@ -22,25 +22,22 @@ import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact'(..), C
 import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (Unit, bind, const, discard, pure, show, unit, ($), (+), (<$>), (<<<), (<>), (==))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, get, put, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
+import Gargantext.Utils.Toestand as T2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Nodes.Annuaire.User.Contacts"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Annuaire.User.Contact"
 
-type DisplayProps = (
-  title :: String
-  )
+type DisplayProps = ( title :: String )
 
 display :: R2.Component DisplayProps
 display = R.createElement displayCpt
 
 displayCpt :: R.Component DisplayProps
-displayCpt = R.hooksComponentWithModule thisModule "display" cpt
+displayCpt = here.component "display" cpt
   where
     cpt { title } children = do
       pure $ H.div { className: "container-fluid" }
@@ -59,14 +56,9 @@ displayCpt = R.hooksComponentWithModule thisModule "display" cpt
 
 -- | TODO format data in better design (UI) shape
 contactInfos :: HyperdataContact -> (HyperdataContact -> Effect Unit) -> Array R.Element
-contactInfos h onUpdateHyperdata = item <$> contactInfoItems
-  where
-    item {label, defaultVal, lens} =
-      contactInfoItem { hyperdata: h
-                      , label
-                      , lens
-                      , onUpdateHyperdata
-                      , placeholder: defaultVal }
+contactInfos h onUpdateHyperdata = item <$> contactInfoItems where
+  item { label, lens, defaultVal: placeholder } =
+    contactInfoItem { label, lens, onUpdateHyperdata, placeholder, hyperdata: h }
 
 contactInfoItems :: Array {label:: String, defaultVal:: String, lens:: HyperdataContactLens}
 contactInfoItems =
@@ -96,52 +88,38 @@ contactInfoItem :: Record ContactInfoItemProps -> R.Element
 contactInfoItem props = R.createElement contactInfoItemCpt props []
 
 contactInfoItemCpt :: R.Component ContactInfoItemProps
-contactInfoItemCpt = R.hooksComponentWithModule thisModule "contactInfoItem" cpt
+contactInfoItemCpt = here.component "contactInfoItem" cpt
   where
     cpt {hyperdata, label, lens, onUpdateHyperdata, placeholder} _ = do
       isEditing <- R.useState' false
       let value = (L.view cLens hyperdata) :: String
       valueRef <- R.useRef value
-
-      pure $ H.div { className: "form-group row" } [
-        H.span { className: "col-sm-2 col-form-label" } [ H.text label ]
-      , item isEditing valueRef
-      ]
-
+      pure $
+        H.div { className: "form-group row" }
+        [ H.span { className: "col-sm-2 col-form-label" } [ H.text label ]
+        , item isEditing valueRef ]
       where
         cLens = L.cloneLens lens
         item (false /\ setIsEditing) valueRef =
-          H.div { className: "input-group col-sm-6" } [
-            H.input { className: "form-control"
-                    , defaultValue: placeholder
-                    , disabled: 1
-                    , type: "text" }
-          , H.div { className: "btn input-group-append"
-                  , on: { click: onClick } } [
-              H.div { className: "input-group-text fa fa-pencil" } []
-            ]
-          ]
+          H.div { className: "input-group col-sm-6" }
+          [ H.input
+            { className: "form-control", type: "text"
+            , defaultValue: placeholder', disabled: true }
+          , H.div { className: "btn input-group-append", on: { click } }
+            [ H.div { className: "input-group-text fa fa-pencil" } [] ]]
           where
-            placeholder = R.readRef valueRef
-            onClick _ = setIsEditing $ const true
+            placeholder' = R.readRef valueRef
+            click _ = setIsEditing $ const true
         item (true /\ setIsEditing) valueRef =
-          H.div { className: "input-group col-sm-6" } [
-            inputWithEnter {
-                autoFocus: true
-              , className: "form-control"
-              , defaultValue: R.readRef valueRef
-              , onEnter: onClick
-              , onValueChanged: R.setRef valueRef
-              , placeholder
-              , type: "text"
-              }
-          , H.div { className: "btn input-group-append"
-                  , on: { click: onClick } } [
-              H.div { className: "input-group-text fa fa-floppy-o" } []
-            ]
-          ]
+          H.div { className: "input-group col-sm-6" }
+          [ inputWithEnter
+            { autoFocus: true, className: "form-control", type: "text"
+            , defaultValue: R.readRef valueRef, onEnter: click
+            , onValueChanged: R.setRef valueRef, placeholder }
+          , H.div { className: "btn input-group-append", on: { click } }
+            [ H.div { className: "input-group-text fa fa-floppy-o" } [] ]]
           where
-            onClick _ = do
+            click _ = do
               setIsEditing $ const false
               let newHyperdata = (L.over cLens (\_ -> R.readRef valueRef) hyperdata) :: HyperdataContact
               onUpdateHyperdata newHyperdata
@@ -149,87 +127,65 @@ contactInfoItemCpt = R.hooksComponentWithModule thisModule "contactInfoItem" cpt
 listElement :: Array R.Element -> R.Element
 listElement = H.li { className: "list-group-item justify-content-between" }
 
-type LayoutProps =
-  ( appReload     :: GUR.ReloadS
-  , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
-  , frontends     :: Frontends
-  , nodeId        :: Int
-  , session       :: Session
-  , treeReloadRef :: GUR.ReloadWithInitializeRef
+type BasicProps =
+  ( frontends :: Frontends
+  , nodeId    :: Int
+  , tasks     :: R.Ref (Maybe GAT.Reductor)
   )
 
-type KeyLayoutProps = (
-    key :: String
-  | LayoutProps
+type ReloadProps =
+  ( reloadForest :: T.Cursor (T2.InitReload T.Cursor)
+  , reloadRoot   :: T.Cursor T2.Reload
+  | BasicProps
   )
 
+type LayoutProps = ( session :: T.Cursor (Maybe Session) | ReloadProps )
+
+type KeyLayoutProps = ( key :: String, session :: Session | ReloadProps )
 
 saveContactHyperdata :: Session -> Int -> HyperdataContact -> Aff Int
-saveContactHyperdata session id h = do
-  put session (Routes.NodeAPI Node (Just id) "") h
+saveContactHyperdata session id = put session (Routes.NodeAPI Node (Just id) "")
 
+type AnnuaireLayoutProps = ( annuaireId :: Int, session :: Session | ReloadProps )
 
-type AnnuaireLayoutProps = ( annuaireId :: Int | LayoutProps )
-type AnnuaireKeyLayoutProps = ( key :: String | AnnuaireLayoutProps )
+type AnnuaireKeyLayoutProps = ( annuaireId :: Int | KeyLayoutProps )
 
-
-contactLayout :: Record AnnuaireLayoutProps -> R.Element
+contactLayout :: R2.Leaf AnnuaireLayoutProps
 contactLayout props = R.createElement contactLayoutCpt props []
 
 contactLayoutCpt :: R.Component AnnuaireLayoutProps
-contactLayoutCpt = R.hooksComponentWithModule thisModule "contactLayout" cpt
-  where
-    cpt { annuaireId, appReload, asyncTasksRef, frontends, nodeId, session, treeReloadRef } _ = do
-      let sid = sessionId session
+contactLayoutCpt = here.component "contactLayout" cpt where
+  cpt { annuaireId, reloadRoot, tasks, frontends, nodeId, session, reloadForest } _ =
+    pure $
+      contactLayoutWithKey
+      { annuaireId, tasks, frontends, key, nodeId
+      , session, reloadForest, reloadRoot }
+    where key = show (sessionId session) <> "-" <> show nodeId
 
-      pure $ contactLayoutWithKey { annuaireId,
-          appReload
-        , asyncTasksRef
-        , frontends
-        , key: show sid <> "-" <> show nodeId
-        , nodeId
-        , session
-        , treeReloadRef
-        }
-
-contactLayoutWithKey :: Record AnnuaireKeyLayoutProps -> R.Element
+contactLayoutWithKey :: R2.Leaf AnnuaireKeyLayoutProps
 contactLayoutWithKey props = R.createElement contactLayoutWithKeyCpt props []
 
 contactLayoutWithKeyCpt :: R.Component AnnuaireKeyLayoutProps
-contactLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "contactLayoutWithKey" cpt
-  where
-    cpt { annuaireId, appReload, asyncTasksRef, frontends, nodeId, session, treeReloadRef } _ = do
-      reload <- GUR.new
-
+contactLayoutWithKeyCpt = here.component "contactLayoutWithKey" cpt where
+    cpt { annuaireId, reloadRoot, tasks, frontends
+        , nodeId, session, reloadForest } _ = do
+      reload <- T.useCell T2.newReload
+      _ <- T.useLive T.unequal reload
       cacheState <- R.useState' LT.CacheOn
-
       sidePanelTriggers <- LT.emptySidePanelTriggers
-
       useLoader nodeId (getAnnuaireContact session annuaireId) $
         \contactData@{contactNode: Contact' {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" }
                [ display { title: fromMaybe "no name" name }
                          (contactInfos hyperdata (onUpdateHyperdata reload))
-               , Tabs.tabs {
-                      appReload
-                    , asyncTasksRef
-                    , cacheState
-                    , contactData
-                    , frontends
-                    , nodeId
-                    , session
-                    , sidePanelTriggers
-                    , treeReloadRef
-                    }
-               ]
+               , Tabs.tabs
+                 { cacheState, contactData, frontends, nodeId, session
+                 , sidePanelTriggers, reloadForest, reloadRoot, tasks } ]
       where
-        onUpdateHyperdata :: GUR.ReloadS -> HyperdataContact -> Effect Unit
-        onUpdateHyperdata reload hd = do
-          launchAff_ $ do
-            _ <- saveContactHyperdata session nodeId hd
-            liftEffect $ GUR.bump reload
-
-
+        onUpdateHyperdata :: T.Cell T2.Reload -> HyperdataContact -> Effect Unit
+        onUpdateHyperdata reload hd =
+          launchAff_ $
+            saveContactHyperdata session nodeId hd *> liftEffect (T2.reload reload)
 
 getAnnuaireContact :: Session -> Int -> Int -> Aff ContactData'
 getAnnuaireContact session annuaireId id = do

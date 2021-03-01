@@ -1,4 +1,6 @@
-module Gargantext.Components.Nodes.Annuaire where
+module Gargantext.Components.Nodes.Annuaire
+ -- ( annuaire )
+ where
 
 import Prelude (bind, const, identity, pure, show, ($), (<$>), (<>))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
@@ -10,7 +12,6 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
-
 import Gargantext.Prelude
 
 import Gargantext.Components.NgramsTable.Loader (clearCache)
@@ -26,53 +27,53 @@ import Gargantext.Sessions (Session, sessionId, get)
 import Gargantext.Types (NodeType(..), AffTableResult, TableResult)
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.Nodes.Annuaire"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Annuaire"
 
 newtype IndividuView =
   CorpusView
   { id      :: Int
   , name    :: String
   , role    :: String
-  , company :: String }
+  , company :: String
+  }
 
 --toRows :: AnnuaireTable -> Array (Maybe Contact)
 --toRows (AnnuaireTable a) = a.annuaireTable
 
 -- | Top level layout component. Loads an annuaire by id and renders
 -- | the annuaire using the result
-type LayoutProps = (
-    frontends :: Frontends
-  , nodeId :: Int
-  , session :: Session
+type LayoutProps =
+  ( frontends :: Frontends
+  , nodeId    :: Int
+  , session   :: R.Context Session
   )
 
-annuaireLayout :: Record LayoutProps -> R.Element
+annuaireLayout :: R2.Leaf LayoutProps
 annuaireLayout props = R.createElement annuaireLayoutCpt props []
 
 annuaireLayoutCpt :: R.Component LayoutProps
-annuaireLayoutCpt = R.hooksComponentWithModule thisModule "annuaireLayout" cpt
-  where
-    cpt { frontends, nodeId, session } _ = do
-      let sid = sessionId session
+annuaireLayoutCpt = here.component "annuaireLayout" cpt where
+  cpt { frontends, nodeId, session } _ = cp <$> R.useContext session where
+    cp s = annuaireLayoutWithKey { frontends, key, nodeId, session: s } where
+      key = show (sessionId s) <> "-" <> show nodeId
 
-      pure $ annuaireLayoutWithKey { frontends, key: show sid <> "-" <> show nodeId, nodeId, session }
-
-type KeyLayoutProps = (
-  key :: String
-  | LayoutProps
+type KeyLayoutProps =
+  ( frontends :: Frontends
+  , nodeId    :: Int
+  , session   :: Session
+  , key       :: String
   )
 
-annuaireLayoutWithKey :: Record KeyLayoutProps -> R.Element
+annuaireLayoutWithKey :: R2.Leaf KeyLayoutProps
 annuaireLayoutWithKey props = R.createElement annuaireLayoutWithKeyCpt props []
 
 annuaireLayoutWithKeyCpt :: R.Component KeyLayoutProps
-annuaireLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "annuaireLayoutWithKey" cpt
-  where
-    cpt { frontends, nodeId, session } _ = do
-      path <- R.useState' nodeId
-
-      useLoader (fst path) (getAnnuaireInfo session) $
-        \info -> annuaire { frontends, info, path, session }
+annuaireLayoutWithKeyCpt = here.component "annuaireLayoutWithKey" cpt where
+  cpt { frontends, nodeId, session } _ = do
+    path <- R.useState' nodeId
+    useLoader (fst path) (getAnnuaireInfo session) $
+      \info -> annuaire { frontends, info, path, session }
 
 type AnnuaireProps =
   ( session   :: Session
@@ -82,28 +83,27 @@ type AnnuaireProps =
   )
 
 -- | Renders a basic table and the page loader
-annuaire :: Record AnnuaireProps -> R.Element
+annuaire :: R2.Leaf AnnuaireProps
 annuaire props = R.createElement annuaireCpt props []
 
 -- Abuses closure to work around the Loader
 annuaireCpt :: R.Component AnnuaireProps
-annuaireCpt = R.hooksComponentWithModule thisModule "annuaire" cpt
+annuaireCpt = here.component "annuaire" cpt
   where
     cpt {session, path, info: info@(AnnuaireInfo {name, date: date'}), frontends} _ = do
       pagePath <- R.useState' $ initialPagePath (fst path)
-
       cacheState <- R.useState' NT.CacheOff
-
       pure $ R.fragment
-        [ T.tableHeaderLayout { afterCacheStateChange: \_ -> launchAff_ $ clearCache unit
-                              , cacheState
-                              , date
-                              , desc: name
-                              , key: "annuaire-" <> (show $ fst cacheState)
-                              , query: ""
-                              , title: name
-                              , user: "" }
-          , H.p {} []
+        [ T.tableHeaderLayout
+          { afterCacheStateChange: \_ -> launchAff_ $ clearCache unit
+            , cacheState
+            , date
+            , desc: name
+            , key: "annuaire-" <> (show $ fst cacheState)
+            , query: ""
+            , title: name
+            , user: "" }
+        , H.p {} []
           -- , H.div {className: "col-md-3"} [ H.text "    Filter ", H.input { className: "form-control", style } ]
           , H.br {}
           , pageLayout { info, session, pagePath, frontends} ]
@@ -112,9 +112,7 @@ annuaireCpt = R.hooksComponentWithModule thisModule "annuaire" cpt
         style = {width: "250px", display: "inline-block"}
         initialPagePath nodeId = {nodeId, params: T.initialParams}
 
-type PagePath = { nodeId :: Int
-                , params :: T.Params
-                }
+type PagePath = { nodeId :: Int, params :: T.Params }
 
 type PageLayoutProps =
   ( session      :: Session
@@ -127,25 +125,25 @@ pageLayout :: Record PageLayoutProps -> R.Element
 pageLayout props = R.createElement pageLayoutCpt props []
 
 pageLayoutCpt :: R.Component PageLayoutProps
-pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt
+pageLayoutCpt = here.component "pageLayout" cpt
   where
-    cpt {info, frontends, pagePath, session} _ = do
+    cpt { info, frontends, pagePath, session } _ = do
       useLoader (fst pagePath) (loadPage session) $
-        \table -> page {session, table, frontends, pagePath}
+        \table -> page { session, table, frontends, pagePath }
 
 type PageProps = 
-  ( session :: Session
+  ( session   :: Session
   , frontends :: Frontends
-  , pagePath :: R.State PagePath
+  , pagePath  :: R.State PagePath
   -- , info :: AnnuaireInfo
-  , table :: TableResult CT.NodeContact
+  , table     :: TableResult CT.NodeContact
   )
 
 page :: Record PageProps -> R.Element
 page props = R.createElement pageCpt props []
 
 pageCpt :: R.Component PageProps
-pageCpt = R.hooksComponentWithModule thisModule "page" cpt
+pageCpt = here.component "page" cpt
   where
     cpt { session, pagePath, frontends
         , table: ({count: totalRecords, docs})} _ = do
@@ -156,12 +154,10 @@ pageCpt = R.hooksComponentWithModule thisModule "page" cpt
                      }
       where
         path = fst pagePath
-        rows = (\c -> {
-                   row: contactCells { annuaireId: (fst pagePath).nodeId
-                                     , frontends
-                                     , contact: c
-                                     , session }
-                   , delete: false }) <$> Seq.fromFoldable docs
+        rows = row <$> Seq.fromFoldable docs
+        row contact = { row: contactCells { annuaireId, frontends, contact, session }
+                      , delete: false } where
+          annuaireId = (fst pagePath).nodeId
         container = T.defaultContainer { title: "Annuaire" } -- TODO
         colNames = T.ColumnName <$> [ "", "First Name", "Last Name", "Company", "Role"]
         wrapColElts = const identity
@@ -175,68 +171,56 @@ type ContactCellsProps =
   ( annuaireId :: AnnuaireId
   , contact    :: CT.NodeContact
   , frontends  :: Frontends
-  , session   :: Session
+  , session    :: Session
   )
 
 contactCells :: Record ContactCellsProps -> R.Element
 contactCells p = R.createElement contactCellsCpt p []
 
 contactCellsCpt :: R.Component ContactCellsProps
-contactCellsCpt = R.hooksComponentWithModule thisModule "contactCells" cpt
-  where
-    cpt { annuaireId
-        , contact: (CT.NodeContact { id, hyperdata: (CT.HyperdataContact {who : Nothing}) })
-        , frontends
-        , session } _ =
-      pure $ T.makeRow [ H.text ""
-                       , H.span {} [ H.text "Name" ]
-                       --, H.a { href, target: "blank" } [ H.text $ fromMaybe "name" contact.title ]
-                       , H.text "No ContactWhere"
-                       , H.text "No ContactWhereDept"
-                       , H.div { className: "nooverflow"}
-                               [ H.text "No ContactWhereRole" ]
-                       ]
-    cpt { annuaireId
-        , contact: (CT.NodeContact { id
-                                   , hyperdata: ( CT.HyperdataContact
-                                                  { who : Just (CT.ContactWho { firstName
-                                                                              , lastName
-                                                                              }
-                                                               )
-                                                  , ou  : ou
-                                                  }
-                                                )
-                                   }
-                   )
-        , frontends
-        , session } _ = do
-
-        pure $ T.makeRow [
-          H.text ""
-          , H.a { target: "_blank", href: contactUrl annuaireId id} [H.text $ fromMaybe "First Name" firstName]
-          , H.text $ fromMaybe "First Name" lastName
-          -- , H.a { href } [ H.text $ fromMaybe "name" contact.title ]
-            --, H.a { href, target: "blank" } [ H.text $ fromMaybe "name" contact.title ]
-          , H.text $ maybe "No ContactWhere"     contactWhereOrg  (A.head $ ou)
-          , H.text $ maybe "No ContactWhereDept" contactWhereDept (A.head $ ou)
-         -- , H.div {className: "nooverflow"} [
-         --     H.text $ maybe "No ContactWhereRole" contactWhereRole (A.head $ ou)
-            ]
-          where
-            --nodepath = NodePath (sessionId session) NodeContact (Just id)
-            nodepath = Routes.ContactPage (sessionId session) annuaireId id
-            href = url frontends nodepath
-            contactUrl aId id = url frontends $ Routes.ContactPage (sessionId session) annuaireId id
-
-            contactWhereOrg (CT.ContactWhere { organization: [] }) = "No Organization"
-            contactWhereOrg (CT.ContactWhere { organization: orga }) =
-              fromMaybe "No orga (list)" (A.head orga)
-            contactWhereDept (CT.ContactWhere { labTeamDepts : [] }) = "Empty Dept"
-            contactWhereDept (CT.ContactWhere { labTeamDepts : dept }) =
-              fromMaybe "No Dept (list)" (A.head dept)
-            contactWhereRole (CT.ContactWhere { role: Nothing }) = "Empty Role"
-            contactWhereRole (CT.ContactWhere { role: Just role }) = role
-
+contactCellsCpt = here.component "contactCells" cpt where
+  cpt { annuaireId, frontends, session
+      , contact: CT.NodeContact
+        { id, hyperdata: CT.HyperdataContact { who : Nothing }}} _ =
+    pure $ T.makeRow
+    [ H.text ""
+    , H.span {} [ H.text "Name" ]
+      --, H.a { href, target: "blank" } [ H.text $ fromMaybe "name" contact.title ]
+    , H.text "No ContactWhere"
+    , H.text "No ContactWhereDept"
+    , H.div { className: "nooverflow" }
+      [ H.text "No ContactWhereRole" ]
+    ]
+  cpt { annuaireId, frontends, session
+      , contact: CT.NodeContact
+        { id, hyperdata: CT.HyperdataContact
+              { who: Just (CT.ContactWho { firstName, lastName })
+              , ou:  ou }}} _ = do
+    pure $ T.makeRow [
+      H.text ""
+      , H.a { target: "_blank", href: contactUrl annuaireId id }
+        [ H.text $ fromMaybe "First Name" firstName ]
+      , H.text $ fromMaybe "First Name" lastName
+        -- , H.a { href } [ H.text $ fromMaybe "name" contact.title ]
+        --, H.a { href, target: "blank" } [ H.text $ fromMaybe "name" contact.title ]
+      , H.text $ maybe "No ContactWhere"     contactWhereOrg  (A.head $ ou)
+      , H.text $ maybe "No ContactWhereDept" contactWhereDept (A.head $ ou)
+        -- , H.div {className: "nooverflow"} [
+        --     H.text $ maybe "No ContactWhereRole" contactWhereRole (A.head $ ou)
+      ]
+      where
+        --nodepath = NodePath (sessionId session) NodeContact (Just id)
+        nodepath = Routes.ContactPage (sessionId session) annuaireId id
+        href = url frontends nodepath
+        contactUrl aId id = url frontends $ Routes.ContactPage (sessionId session) aId id
+        contactWhereOrg (CT.ContactWhere { organization: [] }) = "No Organization"
+        contactWhereOrg (CT.ContactWhere { organization: orga }) =
+          fromMaybe "No orga (list)" (A.head orga)
+        contactWhereDept (CT.ContactWhere { labTeamDepts : [] }) = "Empty Dept"
+        contactWhereDept (CT.ContactWhere { labTeamDepts : dept }) =
+          fromMaybe "No Dept (list)" (A.head dept)
+        contactWhereRole (CT.ContactWhere { role: Nothing }) = "Empty Role"
+        contactWhereRole (CT.ContactWhere { role: Just role }) = role
 
 data HyperdataAnnuaire = HyperdataAnnuaire
   { title :: Maybe String
@@ -250,14 +234,16 @@ instance decodeHyperdataAnnuaire :: DecodeJson HyperdataAnnuaire where
     pure $ HyperdataAnnuaire { title, desc }
 
 ------------------------------------------------------------------------------
-newtype AnnuaireInfo = AnnuaireInfo { id        :: Int
-                                    , typename  :: Int
-                                    , userId    :: Int
-                                    , parentId  :: Int
-                                    , name      :: String
-                                    , date      :: String
-                                    , hyperdata :: HyperdataAnnuaire
-                                    }
+newtype AnnuaireInfo =
+  AnnuaireInfo
+  { id        :: Int
+  , typename  :: Int
+  , userId    :: Int
+  , parentId  :: Int
+  , name      :: String
+  , date      :: String
+  , hyperdata :: HyperdataAnnuaire
+  }
 
 instance decodeAnnuaireInfo :: DecodeJson AnnuaireInfo where
   decodeJson json = do
@@ -269,15 +255,15 @@ instance decodeAnnuaireInfo :: DecodeJson AnnuaireInfo where
     name      <- obj .: "name"
     date      <- obj .: "date"
     hyperdata <- obj .: "hyperdata"
-    pure $ AnnuaireInfo { id : id
-                        , typename : typename
-                        , userId   : userId
-                        , parentId : parentId
-                        , name     : name
-                        , date     : date
-                        , hyperdata: hyperdata
-                        }
-
+    pure $ AnnuaireInfo
+      { id : id
+      , typename : typename
+      , userId   : userId
+      , parentId : parentId
+      , name     : name
+      , date     : date
+      , hyperdata: hyperdata
+      }
 
 --newtype AnnuaireTable  = AnnuaireTable  { annuaireTable :: Array (Maybe Contact)}
 

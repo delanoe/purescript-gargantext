@@ -1,9 +1,8 @@
 module Gargantext.Components.Nodes.Corpus.Dashboard where
 
-import Gargantext.Components.Nodes.Types
 import Gargantext.Prelude
+  ( Unit, bind, const, discard, pure, read, show, unit, ($), (<$>), (<>), (==) )
 
-import DOM.Simple.Console (log, log2)
 import Data.Array as A
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -12,46 +11,43 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
+import Reactix as R
+import Reactix.DOM.HTML as H
 import Gargantext.Components.Nodes.Corpus (fieldsCodeEditor)
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
 import Gargantext.Components.Nodes.Dashboard.Types as DT
+import Gargantext.Components.Nodes.Types (FTField, FTFieldsWithIndex, defaultField)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (NodeID)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
-import Reactix as R
-import Reactix.DOM.HTML as H
 
-thisModule :: String
-thisModule = "Gargantext.Components.Nodes.Corpus.Dashboard"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Corpus.Dashboard"
 
-type Props =
-  ( nodeId :: NodeID
-  , session :: Session
-  )
+type Props = ( nodeId :: NodeID, session :: R.Context Session )
 
 dashboardLayout :: R2.Component Props
 dashboardLayout = R.createElement dashboardLayoutCpt
 
 dashboardLayoutCpt :: R.Component Props
-dashboardLayoutCpt = R.hooksComponentWithModule thisModule "dashboardLayout" cpt
-  where
-    cpt { nodeId, session } _ = do
-      let sid = sessionId session
+dashboardLayoutCpt = here.component "dashboardLayout" cpt where
+  cpt { nodeId, session } content = cp <$> R.useContext session where
+    cp s = dashboardLayoutWithKey { key, nodeId, session: s } content where
+      key = show (sessionId s) <> "-" <> show nodeId
 
-      pure $ dashboardLayoutWithKey { key: show sid <> "-" <> show nodeId, nodeId, session } []
-
-type KeyProps = (
-  key :: String
-  | Props
+type KeyProps =
+  ( key     :: String
+  , nodeId  :: NodeID
+  , session :: Session
   )
 
 dashboardLayoutWithKey :: R2.Component KeyProps
 dashboardLayoutWithKey = R.createElement dashboardLayoutWithKeyCpt
 
 dashboardLayoutWithKeyCpt :: R.Component KeyProps
-dashboardLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "dashboardLayoutWithKey" cpt
+dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
   where
     cpt { nodeId, session } _ = do
       reload <- GUR.new
@@ -77,20 +73,21 @@ dashboardLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "dashboardLayo
             liftEffect $ GUR.bump reload
 
 type LoadedProps =
-  ( charts :: Array P.PredefinedChart
-  , corpusId :: NodeID
+  ( charts        :: Array P.PredefinedChart
+  , corpusId      :: NodeID
   , defaultListId :: Int
-  , fields :: List.List FTField
-  , onChange :: { charts :: Array P.PredefinedChart
-               , fields :: List.List FTField } -> Effect Unit
-  | Props
+  , fields        :: List.List FTField
+  , onChange      :: { charts :: Array P.PredefinedChart
+                     , fields :: List.List FTField } -> Effect Unit
+  , nodeId        :: NodeID
+  , session       :: Session
   )
 
 dashboardLayoutLoaded :: R2.Component LoadedProps
 dashboardLayoutLoaded = R.createElement dashboardLayoutLoadedCpt
 
 dashboardLayoutLoadedCpt :: R.Component LoadedProps
-dashboardLayoutLoadedCpt = R.hooksComponentWithModule thisModule "dashboardLayoutLoaded" cpt
+dashboardLayoutLoadedCpt = here.component "dashboardLayoutLoaded" cpt
   where
     cpt props@{ charts, corpusId, defaultListId, fields, nodeId, onChange, session } _ = do
       pure $ H.div {}
@@ -127,14 +124,15 @@ dashboardLayoutLoadedCpt = R.hooksComponentWithModule thisModule "dashboardLayou
 type CodeEditorProps =
   ( fields :: List.List FTField
   , onChange :: List.List FTField -> Effect Unit
-  | Props
+  , nodeId :: NodeID
+  , session :: Session
   )
 
 dashboardCodeEditor :: R2.Component CodeEditorProps
 dashboardCodeEditor = R.createElement dashboardCodeEditorCpt
 
 dashboardCodeEditorCpt :: R.Component CodeEditorProps
-dashboardCodeEditorCpt = R.hooksComponentWithModule thisModule "dashboardCodeEditor" cpt
+dashboardCodeEditorCpt = here.component "dashboardCodeEditor" cpt
   where
     cpt props@{ fields, nodeId, onChange, session } _ = do
       let fieldsWithIndex = List.mapWithIndex (\idx -> \t -> Tuple idx t) fields
@@ -177,9 +175,9 @@ dashboardCodeEditorCpt = R.hooksComponentWithModule thisModule "dashboardCodeEdi
         saveEnabled fs (fsS /\ _) = if fs == fsS then "disabled" else "enabled"
 
         onClickSave :: forall e. R.State FTFieldsWithIndex -> e -> Effect Unit
-        onClickSave (fields /\ _) _ = do
-          log "[dashboardCodeEditor] saving (TODO)"
-          onChange $ snd <$> fields
+        onClickSave (fields' /\ _) _ = do
+          here.log "saving (TODO)"
+          onChange $ snd <$> fields'
           -- launchAff_ do
             -- saveCorpus $ { hyperdata: Hyperdata {fields: (\(Tuple _ f) -> f) <$> fieldsS}
             --             , nodeId
@@ -190,19 +188,19 @@ dashboardCodeEditorCpt = R.hooksComponentWithModule thisModule "dashboardCodeEdi
           setFieldsS $ \fieldsS -> List.snoc fieldsS $ Tuple (List.length fieldsS) defaultField
 
 type PredefinedChartProps =
-  ( chart :: P.PredefinedChart
-  , corpusId :: NodeID
+  ( chart         :: P.PredefinedChart
+  , corpusId      :: NodeID
   , defaultListId :: Int
-  , onChange :: P.PredefinedChart -> Effect Unit
-  , onRemove :: Unit -> Effect Unit
-  , session :: Session
+  , onChange      :: P.PredefinedChart -> Effect Unit
+  , onRemove      :: Unit -> Effect Unit
+  , session       :: Session
   )
 
 renderChart :: R2.Component PredefinedChartProps
 renderChart = R.createElement renderChartCpt
 
 renderChartCpt :: R.Component PredefinedChartProps
-renderChartCpt = R.hooksComponentWithModule thisModule "renderChart" cpt
+renderChartCpt = here.component "renderChart" cpt
   where
     cpt { chart, corpusId, defaultListId, onChange, onRemove, session } _ = do
       pure $ H.div { className: "row chart card" }

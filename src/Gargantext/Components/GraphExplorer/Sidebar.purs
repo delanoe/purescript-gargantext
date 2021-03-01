@@ -49,7 +49,7 @@ type Props =
   , selectedNodeIds :: R.State SigmaxT.NodeIds
   , session         :: Session
   , showSidePanel   :: R.State GET.SidePanelState
-  , treeReload      :: GUR.ReloadS
+  , reloadForest      :: GUR.ReloadS
   )
 
 sidebar :: Record Props -> R.Element
@@ -185,7 +185,7 @@ onClickRemove rType props' nodesMap' e = do
               , nodes
               , session: props'.session
               , termList: rType
-              , treeReload: props'.treeReload }
+              , reloadForest: props'.reloadForest }
   snd props'.removedNodeIds  $ const $ fst props'.selectedNodeIds
   snd props'.selectedNodeIds $ const SigmaxT.emptyNodeIds
 
@@ -215,18 +215,18 @@ type DeleteNodes =
   , nodes      :: Array (Record SigmaxT.Node)
   , session    :: Session
   , termList   :: TermList
-  , treeReload :: GUR.ReloadS
+  , reloadForest :: GUR.ReloadS
   )
 
 deleteNodes :: Record DeleteNodes -> Effect Unit
-deleteNodes { graphId, metaData, nodes, session, termList, treeReload } = do
+deleteNodes { graphId, metaData, nodes, session, termList, reloadForest } = do
   launchAff_ do
     patches <- (parTraverse (deleteNode termList session metaData) nodes) :: Aff (Array NTC.VersionedNgramsPatches)
     let mPatch = last patches
     case mPatch of
       Nothing -> pure unit
       Just (NTC.Versioned patch) -> do
-        liftEffect $ GUR.bump treeReload
+        liftEffect $ GUR.bump reloadForest
 
 -- Why is this called delete node?
 deleteNode :: TermList

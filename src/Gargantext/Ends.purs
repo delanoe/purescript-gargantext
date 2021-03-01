@@ -3,14 +3,19 @@ module Gargantext.Ends
   -- ( )
   where
 
-import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, (:=), (~>), jsonEmptyObject, (.:))
+import Prelude
+  ( class Eq, class Show, bind, pure, show
+  , ($), (/=), (<<<), (<>), (==) )
+import Data.Argonaut
+  ( class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject
+  , (:=), (~>), (.:) )
 import Data.Foldable (foldMap)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Gargantext.Routes as R
 import Gargantext.Types (ApiVersion, ChartType(..), Limit, NodePath, NodeType(..), Offset, TabType(..), TermSize(..), nodePath, nodeTypePath, showTabType', TermList(MapTerm))
-import Gargantext.Prelude (class Eq, class Show, identity, show, ($), (<>), bind, pure, (<<<), (==), (/=))
+import Prelude (class Eq, class Show, identity, show, ($), (<>), bind, pure, (<<<), (==), (/=))
 
 -- | A means of generating a url to visit, a destination
 class ToUrl conf p where

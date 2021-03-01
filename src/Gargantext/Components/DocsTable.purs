@@ -22,7 +22,8 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
-------------------------------------------------------------------------
+import Toestand as T
+
 import Gargantext.Prelude
 import Gargantext.Components.Category (caroussel, rating)
 import Gargantext.Components.Category.Types (Category(..), decodeCategory, Star(..), decodeStar)
@@ -42,6 +43,7 @@ import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParamS, queryParam, queryParamS)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
+import Gargantext.Utils.Toestand as T2
 
 thisModule :: String
 thisModule = "Gargantext.Components.DocsTable"
@@ -49,16 +51,16 @@ thisModule = "Gargantext.Components.DocsTable"
 
 type TotalRecords = Int
 
-type Path a = (
-    corpusId :: Int
-  , listId :: Int
+type Path a =
+  ( corpusId  :: Int
+  , listId    :: Int
   , frontends :: Frontends
-  , session :: Session
-  , tabType :: TabSubType a
+  , session   :: Session
+  , tabType   :: TabSubType a
   )
 
-type LayoutProps = (
-    cacheState      :: R.State NT.CacheState
+type LayoutProps =
+  ( cacheState      :: R.State NT.CacheState
   , frontends       :: Frontends
   , chart           :: R.Element
   , listId          :: Int
@@ -74,8 +76,8 @@ type LayoutProps = (
   , totalRecords    :: Int
   )
 
-type PageLayoutProps = (
-    cacheState        :: R.State NT.CacheState
+type PageLayoutProps =
+  ( cacheState        :: R.State NT.CacheState
   , frontends         :: Frontends
   , key               :: String  -- NOTE Necessary to clear the component when cache state changes
   , listId            :: Int

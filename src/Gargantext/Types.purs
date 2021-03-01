@@ -10,8 +10,6 @@ import Data.Generic.Rep.Ord (genericCompare)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
-import Data.Tuple (fst, snd)
-import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Prim.Row (class Union)
 import Reactix as R
@@ -19,14 +17,26 @@ import URI.Query (Query)
 
 import Gargantext.Prelude
 
--------------------------------------------------------------------------
 data Handed = LeftHanded | RightHanded
 
-derive instance genericHanded :: Generic Handed _
+switchHanded :: forall a. a -> a -> Handed -> a
+switchHanded l _ LeftHanded = l
+switchHanded _ r RightHanded = r
+
+reverseHanded :: forall a. Array a -> Handed -> Array a
+reverseHanded a LeftHanded = A.reverse a
+reverseHanded a RightHanded = a
+
+flipHanded :: R.Element -> R.Element -> Handed -> R.Element
+flipHanded l r LeftHanded  = R.fragment [r, l]
+flipHanded l r RightHanded = R.fragment [l, r]
+
+derive instance ed :: Generic Handed _
+
 instance eqHanded :: Eq Handed where
   eq = genericEq
 
--------------------------------------------------------------------------
+
 type ID      = Int
 type Name    = String
 
@@ -85,7 +95,7 @@ instance decodeJsonTermList :: DecodeJson TermList where
       "MapTerm"       -> pure MapTerm
       "StopTerm"      -> pure StopTerm
       "CandidateTerm" -> pure CandidateTerm
-      s               -> Left $ AtKey s $ TypeMismatch "Unexpected list name"
+      s'              -> Left (AtKey s' $ TypeMismatch "Unexpected list name")
 
 instance showTermList :: Show TermList where
   show MapTerm       = "MapTerm"

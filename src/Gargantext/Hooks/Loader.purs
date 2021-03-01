@@ -1,25 +1,17 @@
 module Gargantext.Hooks.Loader where
 
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (:=), (~>), jsonEmptyObject)
-import Data.Argonaut.Core (stringify)
-import Data.Argonaut.Parser (jsonParser)
-import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Milkis as M
 import Reactix as R
-import Web.Storage.Storage as WSS
 
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
-import Gargantext.Ends (class ToUrl, toUrl)
 import Gargantext.Prelude
 import Gargantext.Utils.Crypto (Hash)
-import Gargantext.Utils as GU
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 
@@ -49,20 +41,17 @@ useLoaderEffect path state@(state' /\ setState) loader = do
   oPath <- R.useRef path
 
   R.useEffect' $ do
-    if (R.readRef oPath == path) && (isJust state') then
-      pure $ pure unit
+    path' <- R.readRefM oPath
+    if (path' == path) && (isJust state')
+    then pure $ R.nothing
     else do
       R.setRef oPath path
-
       R2.affEffect "G.H.Loader.useLoaderEffect" $ do
         l <- loader path
         liftEffect $ setState $ const $ Just l
 
 
-newtype HashedResponse a =
-  HashedResponse { hash  :: Hash
-                 , value :: a
-                 }
+newtype HashedResponse a = HashedResponse { hash  :: Hash, value :: a }
 
 instance decodeHashedResponse :: DecodeJson a => DecodeJson (HashedResponse a) where
   decodeJson json = do
@@ -136,9 +125,9 @@ useCachedAPILoaderEffect { cacheEndpoint
           pure hr
         else do
           _ <- GUC.deleteReq cache req
-          hr@(HashedResponse { hash, value }) <- GUC.cachedJson cache req
-          if hash == cacheReal then
-            pure hr
+          hr'@(HashedResponse { hash: h }) <- GUC.cachedJson cache req
+          if h == cacheReal then
+            pure hr'
           else
             throwError $ error $ "Fetched clean cache but hashes don't match"
         liftEffect $ do

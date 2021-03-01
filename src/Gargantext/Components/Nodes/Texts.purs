@@ -33,12 +33,12 @@ import Gargantext.Sessions (Session, Sessions, sessionId, getCacheState, setCach
 import Gargantext.Types (CTabNgramType(..), Handed(..), ListId, NodeID, TabSubType(..), TabType(..))
 import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Nodes.Texts"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Texts"
 
 --------------------------------------------------------
-type TextsWithForest = (
-    forestProps :: Record Forest.ForestLayoutProps
+type TextsWithForest a =
+  ( forestProps :: Record (Forest.ForestLayoutProps a)
   , textsProps  :: Record CommonProps
   )
 
@@ -46,25 +46,19 @@ textsWithForest :: R2.Component TextsWithForest
 textsWithForest = R.createElement textsWithForestCpt
 
 textsWithForestCpt :: R.Component TextsWithForest
-textsWithForestCpt = R.hooksComponentWithModule thisModule "textsWithForest" cpt
+textsWithForestCpt = here.component "textsWithForest" cpt
   where
-    cpt { forestProps
-        , textsProps: textProps@{ session } } _ = do
+    cpt { forestProps, textsProps: textProps@{ session } } _ = do
       controls <- initialControls
+      pure $ Forest.forestLayoutWithTopBar forestProps
+        [ topBar { controls } []
+        , textsLayout (Record.merge textProps { controls }) []
+        , H.div { className: "side-panel" }
+          [ sidePanel { controls, session } [] ]]
 
-      pure $ Forest.forestLayoutWithTopBar forestProps [
-        topBar { controls } []
-      , textsLayout (Record.merge textProps { controls }) []
-      , H.div { className: "side-panel" } [
-          sidePanel { controls, session } []
-        ]
-      ]
 
---------------------------------------------------------
 
-type TopBarProps = (
-  controls :: Record TextsLayoutControls
-  )
+type TopBarProps = ( controls :: Record TextsLayoutControls )
 
 topBar :: R2.Component TopBarProps
 topBar = R.createElement topBarCpt
@@ -81,45 +75,42 @@ topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
         --      ]
         --   ]  -- head (goes to top bar)
 
-------------------------------------------------------------------------
-type CommonProps = (
-    frontends     :: Frontends
-  , nodeId        :: Int
-  , session       :: Session
-  , sessionUpdate :: Session -> Effect Unit
+
+
+type CommonProps =
+  ( frontends :: Frontends
+  , nodeId    :: Int
+  , session   :: R.Context Session
   )
 
-type Props = (
-    controls       :: Record TextsLayoutControls
-  | CommonProps
+type Props = ( controls :: Record TextsLayoutControls | CommonProps )
+
+type KeyProps =
+  ( key       :: String
+  , controls  :: Record TextsLayoutControls
+  , frontends :: Frontends
+  , nodeId    :: Int
+  , session   :: Session
   )
 
 textsLayout :: R2.Component Props
 textsLayout = R.createElement textsLayoutCpt
 
 textsLayoutCpt :: R.Component Props
-textsLayoutCpt = R.hooksComponentWithModule thisModule "textsLayout" cpt
-  where
-    cpt { controls, frontends, nodeId, session, sessionUpdate } children = do
-      let sid = sessionId session
-
-      pure $ textsLayoutWithKey { controls
-                                , frontends
-                                , key: show sid <> "-" <> show nodeId
-                                , nodeId
-                                , session
-                                , sessionUpdate } children
-
-type KeyProps = (
-  key :: String
-  | Props
-  )
+textsLayoutCpt = here.component "textsLayout" cpt where
+  cpt { controls, frontends, nodeId, session, sessionUpdate } children = do
+    session' <- R.useContext session
+    pure $
+      textsLayoutWithKey
+      { controls, frontends, key, nodeId, session: session' } children where
+        key = show sid <> "-" <> show nodeId where
+          sid = sessionId session
 
 textsLayoutWithKey :: R2.Component KeyProps
 textsLayoutWithKey = R.createElement textsLayoutWithKeyCpt
 
 textsLayoutWithKeyCpt :: R.Component KeyProps
-textsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "textsLayoutWithKey" cpt
+textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
   where
     cpt { controls, frontends, nodeId, session, sessionUpdate } _children = do
       cacheState <- R.useState' $ getCacheState NT.CacheOff session nodeId
@@ -129,23 +120,13 @@ textsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "textsLayoutWithKe
           let NodePoly { date, hyperdata: Hyperdata h, name } = corpusNode
               CorpusInfo { authors, desc, query } = getCorpusInfo h.fields
               title = "Corpus " <> name
-
-          R.fragment [
-              Table.tableHeaderLayout { afterCacheStateChange
-                                      , cacheState
-                                      , date
-                                      , desc
-                                      , key: "textsLayoutWithKey-" <> (show $ fst cacheState)
-                                      , query
-                                      , title
-                                      , user: authors }
-            , tabs { cacheState
-                   , corpusData
-                   , corpusId
-                   , frontends
-                   , session
+          R.fragment
+            [ Table.tableHeaderLayout
+              { afterCacheStateChange, cacheState, date, desc, query, title, user: authors
+              , key: "textsLayoutWithKey-" <> (show $ fst cacheState) }
+            , tabs { cacheState, corpusData, corpusId, frontends, session
                    , sidePanelTriggers: controls.triggers }
-          ]
+            ]
       where
         afterCacheStateChange cacheState = do
           launchAff_ $ clearCache unit
@@ -164,8 +145,8 @@ modeTabType :: Mode -> CTabNgramType
 modeTabType MoreLikeFav    = CTabAuthors  -- TODO
 modeTabType MoreLikeTrash  = CTabSources  -- TODO
 
-type TabsProps = (
-    cacheState      :: R.State NT.CacheState
+type TabsProps =
+  ( cacheState      :: R.State NT.CacheState
   , corpusData      :: CorpusData
   , corpusId        :: Int
   , frontends       :: Frontends
@@ -410,10 +391,10 @@ sidePanelCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
       ]
 
 type SidePanelDocView = (
-    mCorpusId :: Maybe NodeID
-  , mListId   :: Maybe ListId
-  , mNodeId   :: Maybe NodeID
-  , session   :: Session
+    corpusId :: Maybe NodeID
+  , listId   :: Maybe ListId
+  , nodeId   :: Maybe NodeID
+  , session  :: Session
   )
 
 sidePanelDocView :: R2.Component SidePanelDocView
@@ -422,15 +403,15 @@ sidePanelDocView = R.createElement sidePanelDocViewCpt
 sidePanelDocViewCpt :: R.Component SidePanelDocView
 sidePanelDocViewCpt = R.hooksComponentWithModule thisModule "sidePanelDocView" cpt
   where
-    cpt { mListId: Nothing } _ = do
+    cpt { listId: Nothing } _ = do
       pure $ H.div {} []
-    cpt { mNodeId: Nothing } _ = do
+    cpt { nodeId: Nothing } _ = do
       pure $ H.div {} []
-    cpt { mCorpusId
-        , mListId: Just listId
-        , mNodeId: Just nodeId
+    cpt { corpusId
+        , listId: Just listId
+        , nodeId: Just nodeId
         , session } _ = do
       pure $ D.documentLayout { listId
-                              , mCorpusId
+                              , corpusId
                               , nodeId
                               , session } []

@@ -17,7 +17,7 @@ import Gargantext.Types as GT
 import Gargantext.Utils as GU
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
-
+import Gargantext.Utils.Toestand
 
 localStorageKey :: String
 localStorageKey = "garg-async-tasks"
@@ -49,22 +49,22 @@ removeTaskFromList ts (GT.AsyncTaskWithType { task: GT.AsyncTask { id: id' } }) 
   A.filter (\(GT.AsyncTaskWithType { task: GT.AsyncTask { id: id'' } }) -> id' /= id'') ts
 
 type ReductorProps = (
-    appReload  :: GUR.ReloadS
-  , treeReload :: GUR.ReloadS
-  , storage    :: Storage
+    reloadRoot   :: GUR.ReloadS
+  , reloadForest :: GUR.ReloadS
+  , storage      :: Storage
   )
 
 type Reductor = R2.Reductor (Record ReductorProps) Action
 type ReductorAction = Action -> Effect Unit
 
 useTasks :: GUR.ReloadS -> GUR.ReloadS -> R.Hooks Reductor
-useTasks appReload treeReload = R2.useReductor act initializer unit
+useTasks reloadRoot reloadForest = R2.useReductor act initializer unit
   where
     act :: R2.Actor (Record ReductorProps) Action
     act a s = action s a
     initializer _ = do
       storage <- getAsyncTasks
-      pure { appReload, treeReload, storage }
+      pure { reloadRoot, reloadForest, storage }
 
 data Action =
     Insert GT.NodeID GT.AsyncTaskWithType
@@ -72,19 +72,19 @@ data Action =
   | Remove GT.NodeID GT.AsyncTaskWithType
 
 action :: Record ReductorProps -> Action -> Effect (Record ReductorProps)
-action p@{ treeReload, storage } (Insert nodeId t) = do
-  _ <- GUR.bump treeReload
+action p@{ reloadForest, storage } (Insert nodeId t) = do
+  _ <- GUR.bump reloadForest
   let newStorage = Map.alter (maybe (Just [t]) (\ts -> Just $ A.cons t ts)) nodeId storage
   pure $ p { storage = newStorage }
 action p (Finish nodeId t) = do
   action p (Remove nodeId t)
-action p@{ appReload, treeReload, storage } (Remove nodeId t@(GT.AsyncTaskWithType { typ })) = do
+action p@{ reloadRoot, reloadForest, storage } (Remove nodeId t@(GT.AsyncTaskWithType { typ })) = do
   _ <- if GT.asyncTaskTriggersAppReload typ then
-    GUR.bump appReload
+    GUR.bump reloadRoot
   else
     pure unit
   _ <- if GT.asyncTaskTriggersTreeReload typ then
-    GUR.bump treeReload
+    GUR.bump reloadForest
   else
     pure unit
   let newStorage = Map.alter (maybe Nothing $ (\ts -> Just $ removeTaskFromList ts t)) nodeId storage

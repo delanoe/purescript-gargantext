@@ -35,10 +35,7 @@ instance encodeHyperdata :: EncodeJson Hyperdata where
     ~> jsonEmptyObject
 
 
-type LoadProps = (
-    nodeId  :: Int
-  , session :: Session
-  )
+type LoadProps = ( nodeId  :: Int, session :: Session )
 
 loadDashboard' :: Record LoadProps -> Aff DashboardData
 loadDashboard' {nodeId, session} = get session $ NodeAPI Node (Just nodeId) ""
@@ -47,10 +44,7 @@ loadDashboard' {nodeId, session} = get session $ NodeAPI Node (Just nodeId) ""
 loadDashboardWithReload :: {reload :: Int  | LoadProps} -> Aff DashboardData
 loadDashboardWithReload {nodeId, session} = loadDashboard' {nodeId, session}
 
-type SaveProps = (
-  hyperdata :: Hyperdata
-  | LoadProps
-  )
+type SaveProps = ( hyperdata :: Hyperdata | LoadProps )
 
 saveDashboard :: Record SaveProps -> Aff Unit
 saveDashboard {hyperdata, nodeId, session} = do
