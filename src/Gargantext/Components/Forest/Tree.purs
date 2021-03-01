@@ -152,7 +152,7 @@ childLoader = R.createElement childLoaderCpt
 childLoaderCpt :: R.Component ChildLoaderProps
 childLoaderCpt = here.component "childLoader" cpt where
   cpt p@{ render } _ = do
-    reload <- T.useCell T2.newReload
+    reload <- T2.useCursed T2.newReload
     let reloads = [ reload, p.reloadTree, p.reloadRoot ]
     cache <- (A.cons p.id) <$> traverse (T.useLive T.unequal) reloads
     useLoader cache fetch (paint reload)
