@@ -44,16 +44,16 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node"
 
 -- Main Node
 type NodeMainSpanProps =
-  ( reloadRoot    :: T.Cursor T2.Reload
-  , tasks         :: GAT.Reductor
-  , route         :: Routes.AppRoute
-  , folderOpen    :: T.Cursor Boolean
+  ( folderOpen    :: T.Cursor Boolean
   , frontends     :: Frontends
   , id            :: ID
   , isLeaf        :: IsLeaf
   , name          :: Name
   , nodeType      :: GT.NodeType
+  , reloadRoot    :: T.Cursor T2.Reload
+  , route         :: Routes.AppRoute
   , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
+  , tasks         :: GAT.Reductor
   | CommonProps
   )
 
@@ -97,9 +97,9 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
       let isSelected = Just route == Routes.nodeTypeAppRoute nodeType (sessionId session) id
 
       pure $ H.span (dropProps droppedFile isDragOver)
-        $ switchHanded
-        [ folderIcon  nodeType folderOpen
-        , chevronIcon isLeaf handed nodeType folderOpen
+        $ GT.reverseHanded
+        [ folderIcon  { folderOpen, nodeType } []
+        , chevronIcon { folderOpen, handed, isLeaf, nodeType } []
         , nodeLink { frontends, handed, folderOpen, id, isSelected
                    , name: name' props, nodeType, session } []
 
@@ -129,9 +129,9 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
 
                 , nodeActions { id
                               , nodeType
+                              , refresh: const $ dispatch RefreshTree
                               , session
-                              , triggerRefresh: const $ dispatch RefreshTree
-                              }
+                              } []
                 ] handed
         where
           onTaskFinish id t _ = do
@@ -153,21 +153,6 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
                                               , session
                                               }
 
-    chevronIcon true handed' nodeType (open /\ setOpen) = H.div {} []
-    chevronIcon false handed' nodeType (open /\ setOpen) =
-      H.a { className: "chevron-icon"
-          , on: { click: \_ -> setOpen $ not }
-          }
-        [ H.i { className: if open
-                           then "fa fa-chevron-down"
-                           else if handed' == GT.RightHanded
-                                   then "fa fa-chevron-right"
-                                   else "fa fa-chevron-left"
-                } [] ]
-
-    folderIcon nodeType (open /\ setOpen) =
-      H.a { className: "folder-icon", on: { click: \_ -> setOpen $ not } }
-      [ H.i {className: GT.fldr nodeType open} [] ]
     popOverIcon =
       H.a { className: "settings fa fa-cog" 
           , title : "Each node of the Tree can perform some actions.\n"
@@ -204,6 +189,49 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
       setIsDragOver $ const true
     onDragLeave (_ /\ setIsDragOver) _ = setIsDragOver $ const false
 
+type FolderIconProps = (
+    folderOpen :: T.Cursor Boolean
+  , nodeType   ::  GT.NodeType
+  )
+
+folderIcon :: R2.Component FolderIconProps
+folderIcon = R.createElement folderIconCpt
+
+folderIconCpt :: R.Component FolderIconProps
+folderIconCpt = here.component "folderIcon" cpt
+  where
+    cpt { folderOpen, nodeType } _ = do
+      open <- T.read folderOpen
+      pure $ H.a { className: "folder-icon", on: { click: \_ -> T.modify not folderOpen } }
+        [ H.i { className: GT.fldr nodeType open } [] ]
+
+type ChevronIconProps = (
+    folderOpen :: T.Cursor Boolean
+  , handed     :: GT.Handed
+  , isLeaf     :: Boolean
+  , nodeType   :: GT.NodeType
+  )
+
+chevronIcon :: R2.Component ChevronIconProps
+chevronIcon = R.createElement chevronIconCpt
+
+chevronIconCpt :: R.Component ChevronIconProps
+chevronIconCpt = here.component "chevronIcon" cpt
+  where
+    cpt { folderOpen, handed, isLeaf: true, nodeType } _ = do
+      pure $ H.div {} []
+    cpt { folderOpen, handed, isLeaf: false, nodeType } _ = do
+      open <- T.read folderOpen
+      pure $ H.a { className: "chevron-icon"
+          , on: { click: \_ -> T.modify not folderOpen }
+          }
+        [ H.i { className: if open
+                            then "fa fa-chevron-down"
+                            else if handed == GT.RightHanded
+                                    then "fa fa-chevron-right"
+                                    else "fa fa-chevron-left"
+                } [] ]
+
 {-
 fldr nt open = if open
                then "fa fa-globe" -- <> color nt
@@ -221,14 +249,14 @@ fldr nt open = if open
 
 type NodeActionsCommon =
   ( id       :: ID
-  , session  :: Session
   , refresh  :: Unit -> Aff Unit
+  , session  :: Session
   )
 
 type NodeActionsProps = ( nodeType :: GT.NodeType | NodeActionsCommon )
 
-nodeActions :: Record NodeActionsProps -> R.Element
-nodeActions p = R.createElement nodeActionsCpt p []
+nodeActions :: R2.Component NodeActionsProps
+nodeActions = R.createElement nodeActionsCpt
 
 nodeActionsCpt :: R.Component NodeActionsProps
 nodeActionsCpt = here.component "nodeActions" cpt where

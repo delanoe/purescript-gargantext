@@ -96,7 +96,7 @@ corpus :: Record Props -> SessionId -> NodeId -> R.Element
 corpus props@{ tasks, cursors, views } sessionId nodeId =
   authed props sessionId $
     forested props
-    [ corpusLayout { nodeId, session: views.session  }
+    [ corpusLayout { nodeId, session: views.session  } ]
 
 corpusDocument :: Record Props -> SessionId -> CorpusId -> ListId -> NodeId -> R.Element
 corpusDocument props@{ tasks, cursors, views } sessionId corpusId' listId nodeId =
@@ -127,8 +127,15 @@ lists props@{ tasks
             , views: { backend, route, handed, sessions } } sessionId nodeId =
   authed props sessionId $
     Lists.listsWithForest
-    { forestProps: { tasks, backend, route, handed, sessions,
-                   , reloadForest, reloadRoot, showLogin, frontends }
+    { forestProps: { backend
+                   , frontends
+                   , handed
+                   , reloadForest
+                   , reloadRoot
+                   , route
+                   , sessions
+                   , showLogin
+                   , tasks }
     , listsProps: { tasks, reloadRoot, reloadForest, nodeId, session }
     } []
     where frontends = defaultFrontends

@@ -6,7 +6,7 @@ import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
 import Data.Set as Set
-import Data.Traversable (traverse_)
+import Data.Traversable (traverse_, traverse)
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
@@ -51,8 +51,8 @@ here = R2.here "Gargantext.Components.Forest.Tree"
 
 -- Shared by every component here + performAction + nodeSpan
 type Universal =
-  ( tasks      :: GAT.Reductor
-  , reloadRoot :: T.Cursor T2.Reload )
+  ( reloadRoot :: T.Cursor T2.Reload
+  , tasks      :: GAT.Reductor )
 
 -- Shared by every component here + nodeSpan
 type Global =
@@ -78,7 +78,7 @@ treeLoaderCpt = here.component "treeLoader" cpt where
     app     <- T.useLive T.unequal p.reloadRoot
     reload  <- T.useLive T.unequal p.reload
     let fetch _ = getNodeTree session root
-    useLoader { app, forest, root } fetch (loaded session) where
+    useLoader { app, root } fetch (loaded session) where
       loaded session tree' = tree props [] where
         props = Record.merge common extra where
           common = RecordE.pick p :: Record Common
@@ -168,12 +168,14 @@ type PerformActionProps =
 -- | This thing is basically a hangover from when garg was a thermite
 -- | application. we should slowly get rid of it.
 performAction :: Action -> Record PerformActionProps -> Aff Unit
-performAction (DeleteNode nt) p@{ forestOpen: (_ /\ setOpenNodes), tree: (NTree (LNode {id, parent_id}) _) } = do
+performAction (DeleteNode nt) p@{ forestOpen
+                                , session
+                                , tree: (NTree (LNode {id, parent_id}) _) } = do
   case nt of
     GT.NodePublic GT.FolderPublic -> void $ deleteNode session nt id
     GT.NodePublic _               -> void $ unpublishNode session parent_id id
     _                             -> void $ deleteNode session nt id
-  liftEffect $ setOpenNodes (Set.delete (mkNodeId session id))
+  _ <- liftEffect $ T.modify (Set.delete (mkNodeId session id)) forestOpen
   performAction RefreshTree p
 performAction (DoSearch task) p@{ tree: (NTree (LNode {id}) _) } = liftEffect $ do
   (snd p.tasks) $ GAT.Insert id task
@@ -188,16 +190,17 @@ performAction (RenameNode name) p@{ tree: (NTree (LNode {id}) _) } = do
   performAction RefreshTree p
 performAction (ShareTeam username) p@{ tree: (NTree (LNode {id}) _)} =
   void $ Share.shareReq p.session id $ Share.ShareTeamParams {username}
-performAction (SharePublic { params }) p@{ forestOpen: (_ /\ setOpenNodes)} = traverse_ f params where
+performAction (SharePublic { params }) p@{ forestOpen } = traverse_ f params where
   f (SubTreeOut { in: inId, out }) = do
     void $ Share.shareReq p.session inId $ Share.SharePublicParams { node_id: out }
-    liftEffect $ setOpenNodes (Set.insert (mkNodeId p.session out))
+    _ <- liftEffect $ T.modify (Set.insert (mkNodeId p.session out)) forestOpen
     performAction RefreshTree p
 performAction (AddContact params) p@{ tree: (NTree (LNode {id}) _) } =
     void $ Contact.contactReq p.session id params
-performAction (AddNode name nodeType) p@{ forestOpen: (_ /\ setOpenNodes), tree: (NTree (LNode { id }) _) } = do
+performAction (AddNode name nodeType) p@{ forestOpen
+                                        , tree: (NTree (LNode { id }) _) } = do
   task <- addNode p.session id $ AddNodeValue {name, nodeType}
-  liftEffect $ setOpenNodes (Set.insert (mkNodeId p.session id))
+  _ <- liftEffect $ T.modify (Set.insert (mkNodeId p.session id)) forestOpen
   performAction RefreshTree p
 performAction (UploadFile nodeType fileType mName blob) p@{ tree: (NTree (LNode { id }) _) } = do
   task <- uploadFile p.session nodeType id fileType {mName, blob}
@@ -210,16 +213,17 @@ performAction (UploadArbitraryFile mName blob) p@{ tree: (NTree (LNode { id }) _
     (snd p.tasks) $ GAT.Insert id task
     log2 "[performAction] UploadArbitraryFile, uploaded, task:" task
 performAction DownloadNode _ = liftEffect $ log "[performAction] DownloadNode"
-performAction (MoveNode {params}) p@{ forestOpen: (_ /\ setOpenNodes) } = traverse_ f params where
-  f SubTreeOut { in: in', out } = do
+performAction (MoveNode {params}) p@{ forestOpen
+                                    , session } = traverse_ f params where
+  f (SubTreeOut { in: in', out }) = do
     void $ moveNodeReq p.session in' out
-    liftEffect $ setOpenNodes (Set.insert (mkNodeId session out))
+    _ <- liftEffect $ T.modify (Set.insert (mkNodeId session out)) forestOpen
     performAction RefreshTree p
-performAction (MergeNode { params }) p = traverse f params where
+performAction (MergeNode { params }) p = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     void $ mergeNodeReq p.session in' out
     performAction RefreshTree p
-performAction (LinkNode { nodeType, params }) p = traverse f params where
+performAction (LinkNode { nodeType, params }) p = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     void $ linkNodeReq p.session nodeType in' out
     performAction RefreshTree p

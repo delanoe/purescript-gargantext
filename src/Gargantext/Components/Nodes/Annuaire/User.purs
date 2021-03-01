@@ -14,11 +14,12 @@ import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.InputWithEnter (inputWithEnter)
-import Gargantext.Components.Nodes.Annuaire.User.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
+import Gargantext.Components.Nodes.Annuaire.Tabs as Tabs
 import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
@@ -28,9 +29,10 @@ import Gargantext.Sessions (Session, get, put, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
+import Gargantext.Utils.Toestand as T2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Nodes.Annuaire.User"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Annuaire.User"
 
 type DisplayProps = (
   title :: String
@@ -40,7 +42,7 @@ display :: R2.Component DisplayProps
 display = R.createElement displayCpt
 
 displayCpt :: R.Component DisplayProps
-displayCpt = R.hooksComponentWithModule thisModule "display" cpt
+displayCpt = here.component "display" cpt
   where
     cpt { title } children = do
       pure $ H.div { className: "container-fluid" }
@@ -96,7 +98,7 @@ contactInfoItem :: Record ContactInfoItemProps -> R.Element
 contactInfoItem props = R.createElement contactInfoItemCpt props []
 
 contactInfoItemCpt :: R.Component ContactInfoItemProps
-contactInfoItemCpt = R.hooksComponentWithModule thisModule "contactInfoItem" cpt
+contactInfoItemCpt = here.component "contactInfoItem" cpt
   where
     cpt {hyperdata, label, lens, onUpdateHyperdata, placeholder} _ = do
       isEditing <- R.useState' false
@@ -150,12 +152,12 @@ listElement :: Array R.Element -> R.Element
 listElement = H.li { className: "list-group-item justify-content-between" }
 
 type LayoutProps =
-  ( reloadRoot     :: GUR.ReloadS
-  , tasks :: R.Ref (Maybe GAT.Reductor)
-  , frontends     :: Frontends
-  , nodeId        :: Int
-  , session       :: Session
-  , reloadForest :: GUR.ReloadWithInitializeRef
+  ( frontends    :: Frontends
+  , nodeId       :: Int
+  , reloadForest :: T.Cursor (T2.InitReload T.Cursor)
+  , reloadRoot   :: T.Cursor T2.Reload
+  , session      :: Session
+  , tasks        :: R.Ref (Maybe GAT.Reductor)
   )
 
 type KeyLayoutProps = (
@@ -167,7 +169,7 @@ userLayout :: Record LayoutProps -> R.Element
 userLayout props = R.createElement userLayoutCpt props []
 
 userLayoutCpt :: R.Component LayoutProps
-userLayoutCpt = R.hooksComponentWithModule thisModule "userLayout" cpt
+userLayoutCpt = here.component "userLayout" cpt
   where
     cpt { reloadRoot, tasks, frontends, nodeId, session, reloadForest } _ = do
       let sid = sessionId session
@@ -186,9 +188,9 @@ userLayoutWithKey :: Record KeyLayoutProps -> R.Element
 userLayoutWithKey props = R.createElement userLayoutWithKeyCpt props []
 
 userLayoutWithKeyCpt :: R.Component KeyLayoutProps
-userLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "userLayoutWithKey" cpt
+userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt
   where
-    cpt { reloadRoot, tasks, frontends, nodeId, session, reloadForest } _ = do
+    cpt { frontends, nodeId, reloadForest, reloadRoot, session, tasks } _ = do
       reload <- GUR.new
 
       cacheState <- R.useState' LT.CacheOn
@@ -201,15 +203,15 @@ userLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "userLayoutWithKey"
             display { title: fromMaybe "no name" name }
                     (contactInfos hyperdata (onUpdateHyperdata reload))
           , Tabs.tabs {
-                 reloadRoot
-               , tasks
-               , cacheState
+                 cacheState
                , contactData
                , frontends
                , nodeId
+               , reloadForest
+               , reloadRoot
                , session
                , sidePanelTriggers
-               , reloadForest
+               , tasks
                }
           ]
       where

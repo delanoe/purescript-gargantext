@@ -1,5 +1,5 @@
 -- TODO copy of Gargantext.Components.Nodes.Corpus.Tabs.Specs
-module Gargantext.Components.Nodes.Annuaire.User.Tabs where
+module Gargantext.Components.Nodes.Annuaire.Tabs where
 
 import Prelude hiding (div)
 import Effect.Aff (Aff)
@@ -51,21 +51,16 @@ modeTabType' Books = CTabAuthors
 modeTabType' Communication = CTabAuthors
 
 type TabsProps =
-  ( tasks             :: R.Ref (Maybe GAT.Reductor)
-  , cacheState        :: R.State LTypes.CacheState
+  ( cacheState        :: R.State LTypes.CacheState
   , contactData       :: ContactData
   , frontends         :: Frontends
   , nodeId            :: Int
-  , session           :: Session
-  , sidePanelTriggers :: Record LTypes.SidePanelTriggers
   , reloadForest      :: T.Cursor (T2.InitReload T.Cursor)
   , reloadRoot        :: T.Cursor T2.Reload
+  , session           :: Session
+  , sidePanelTriggers :: Record LTypes.SidePanelTriggers
+  , tasks             :: R.Ref (Maybe GAT.Reductor)
   )
-
-type NgramsViewTabsProps =
-  ( mode          :: Mode
-  , defaultListId :: Int
-  | TabsProps )
 
 tabs :: R2.Leaf TabsProps
 tabs props = R.createElement tabsCpt props []
@@ -83,31 +78,40 @@ tabsCpt = here.component "tabs" cpt where
     , "Communication" /\ ngramsView (viewProps Communication)
     , "Trash"         /\ docs trg -- TODO pass-in trash mode
     ] where
-      viewProps mode = Record.merge dtCommon { mode }
+      viewProps mode = Record.merge props { defaultListId: props.contactData.defaultListId
+                                          , mode }
       totalRecords = 4736 -- TODO lol
-      docs sidePanelTriggers = DT.docViewLayout (Record.merge dtCommon dtExtra)
+      docs sidePanelTriggers = DT.docViewLayout (Record.merge { sidePanelTriggers } $ Record.merge dtCommon dtExtra)
       dtCommon = RX.pick props :: Record DTCommon
-      dtExtra = 
-        { chart: mempty, mCorpusId: Nothing, showSearch: true
+      dtExtra =
+        { chart: mempty
         , listId: props.contactData.defaultListId
-        , tabType: TabPairing TabDocs, totalRecords
+        , mCorpusId: Nothing
+        , showSearch: true
+        , tabType: TabPairing TabDocs
+        , totalRecords
         }
 
 type DTCommon =
   ( cacheState        :: R.State LTypes.CacheState
-  , contactData       :: ContactData
+  -- , contactData       :: ContactData
   , frontends         :: Frontends
   , nodeId            :: Int
   , session           :: Session
-  , sidePanelTriggers :: Record LTypes.SidePanelTriggers
+  -- , sidePanelTriggers :: Record LTypes.SidePanelTriggers
   )
+
+type NgramsViewTabsProps =
+  ( defaultListId :: Int
+  , mode          :: Mode
+  | TabsProps )
 
 ngramsView :: R2.Leaf NgramsViewTabsProps
 ngramsView props = R.createElement ngramsViewCpt props []
 
 ngramsViewCpt :: R.Component NgramsViewTabsProps
 ngramsViewCpt = here.component "ngramsView" cpt where
-  cpt props@{ defaultListId, nodeId, session, mode } _ = do
+  cpt props@{ defaultListId, mode, nodeId, session } _ = do
     path <- R.useState' $
       NTC.initialPageParams session nodeId
       [ defaultListId ] (TabDocument TabDocs)
@@ -123,12 +127,12 @@ ngramsViewCpt = here.component "ngramsView" cpt where
           afterSync _ = pure unit
 
 type NTCommon =
-  ( tasks             :: R.Ref (Maybe GAT.Reductor)
-  , cacheState        :: R.State LTypes.CacheState
+  ( cacheState        :: R.State LTypes.CacheState
+  , defaultListId     :: Int
   , nodeId            :: Int
-  , session           :: Session
-  , sidePanelTriggers :: Record LTypes.SidePanelTriggers
   , reloadForest      :: T.Cursor (T2.InitReload T.Cursor)
   , reloadRoot        :: T.Cursor T2.Reload
-  , defaultListId :: Int
+  , session           :: Session
+  , sidePanelTriggers :: Record LTypes.SidePanelTriggers
+  , tasks             :: R.Ref (Maybe GAT.Reductor)
   )
