@@ -645,6 +645,7 @@ li .leaf:hover a.settings {
   padding: 5px;
   position: fixed;
   top: 60px;
+  background-color: #fff;
   width: 28%;
 }
 #page-wrapper .side-panel .header {
