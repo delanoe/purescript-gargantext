@@ -1,12 +1,13 @@
 module Gargantext.Components.Forest.Tree where
 
 import Gargantext.Prelude
-import DOM.Simple.Console (log, log2)
+
 import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Data.Traversable (traverse_, traverse)
 import Data.Tuple (snd)
+import DOM.Simple.Console (log, log2)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
@@ -15,23 +16,23 @@ import Reactix.DOM.HTML as H
 import Record as Record
 import Record.Extra as RecordE
 import Toestand as T
+import Web.HTML.Event.EventTypes (offline)
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node (nodeSpan)
-import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
-import Gargantext.Components.Forest.Tree.Node.Action.Delete (deleteNode, unpublishNode)
-import Gargantext.Components.Forest.Tree.Node.Action.Move   (moveNodeReq)
-import Gargantext.Components.Forest.Tree.Node.Action.Merge  (mergeNodeReq)
-import Gargantext.Components.Forest.Tree.Node.Action.Link   (linkNodeReq)
-import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
-import Gargantext.Components.Forest.Tree.Node.Action.Share   as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
+import Gargantext.Components.Forest.Tree.Node.Action.Delete (deleteNode, unpublishNode)
+import Gargantext.Components.Forest.Tree.Node.Action.Link (linkNodeReq)
+import Gargantext.Components.Forest.Tree.Node.Action.Merge (mergeNodeReq)
+import Gargantext.Components.Forest.Tree.Node.Action.Move (moveNodeReq)
+import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
+import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Update (updateRequest)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile, uploadArbitraryFile)
-import Gargantext.Components.Forest.Tree.Node.Tools.FTree
-  ( FTree, LNode(..), NTree(..), fTreeID )
+import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (AppRoute)
@@ -48,7 +49,7 @@ here = R2.here "Gargantext.Components.Forest.Tree"
 -- Shared by every component here + performAction + nodeSpan
 type Universal =
   ( reloadRoot :: T.Cursor T2.Reload
-  , tasks      :: GAT.Reductor )
+  , tasks      :: T.Cursor (Maybe GAT.Reductor) )
 
 -- Shared by every component here + nodeSpan
 type Global =
@@ -128,7 +129,7 @@ treeCpt = here.component "tree" cpt where
 --- The properties tree shares in common with performAction
 type PACommon =
   ( forestOpen   :: T.Cursor OpenNodes
-  , reloadTree :: T.Cursor T2.Reload
+  , reloadTree   :: T.Cursor T2.Reload
   , session      :: Session
   , tree         :: FTree
   | Universal )
@@ -173,13 +174,21 @@ performAction (DeleteNode nt) p@{ forestOpen
     _                             -> void $ deleteNode session nt id
   _ <- liftEffect $ T.modify (Set.delete (mkNodeId session id)) forestOpen
   performAction RefreshTree p
-performAction (DoSearch task) p@{ tree: (NTree (LNode {id}) _) } = liftEffect $ do
-  (snd p.tasks) $ GAT.Insert id task
+performAction (DoSearch task) p@{ tasks
+                                , tree: (NTree (LNode {id}) _) } = liftEffect $ do
+  mT <- T.read tasks
+  case mT of
+    Just t -> snd t $ GAT.Insert id task
+    Nothing -> pure unit
   log2 "[performAction] DoSearch task:" task
-performAction (UpdateNode params) p@{ tree: (NTree (LNode {id}) _) } = do
+performAction (UpdateNode params) p@{ tasks
+                                    , tree: (NTree (LNode {id}) _) } = do
   task <- updateRequest params p.session id
   liftEffect $ do
-    (snd p.tasks) $ GAT.Insert id task
+    mT <- T.read tasks
+    case mT of
+      Just t -> snd t $ GAT.Insert id task
+      Nothing -> pure unit
     log2 "[performAction] UpdateNode task:" task
 performAction (RenameNode name) p@{ tree: (NTree (LNode {id}) _) } = do
   void $ rename p.session id $ RenameValue { text: name }
@@ -198,15 +207,23 @@ performAction (AddNode name nodeType) p@{ forestOpen
   task <- addNode p.session id $ AddNodeValue {name, nodeType}
   _ <- liftEffect $ T.modify (Set.insert (mkNodeId p.session id)) forestOpen
   performAction RefreshTree p
-performAction (UploadFile nodeType fileType mName blob) p@{ tree: (NTree (LNode { id }) _) } = do
+performAction (UploadFile nodeType fileType mName blob) p@{ tasks
+                                                          , tree: (NTree (LNode { id }) _) } = do
   task <- uploadFile p.session nodeType id fileType {mName, blob}
   liftEffect $ do
-    (snd p.tasks) $ GAT.Insert id task
+    mT <- T.read tasks
+    case mT of
+      Just t -> snd t $ GAT.Insert id task
+      Nothing -> pure unit
     log2 "[performAction] UploadFile, uploaded, task:" task
-performAction (UploadArbitraryFile mName blob) p@{ tree: (NTree (LNode { id }) _) } = do
+performAction (UploadArbitraryFile mName blob) p@{ tasks
+                                                 , tree: (NTree (LNode { id }) _) } = do
   task <- uploadArbitraryFile p.session id { blob, mName }
   liftEffect $ do
-    (snd p.tasks) $ GAT.Insert id task
+    mT <- T.read tasks
+    case mT of
+      Just t -> snd t $ GAT.Insert id task
+      Nothing -> pure unit
     log2 "[performAction] UploadArbitraryFile, uploaded, task:" task
 performAction DownloadNode _ = liftEffect $ log "[performAction] DownloadNode"
 performAction (MoveNode {params}) p@{ forestOpen

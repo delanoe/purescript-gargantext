@@ -13,7 +13,7 @@ import Reactix.DOM.HTML as H
 import Gargantext.Prelude
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.AutoUpdate"
+here = R2.here "Gargantext.Components.AutoUpdate"
 
 
 data Action = Update
@@ -49,7 +49,7 @@ autoUpdate :: Record PropsRow -> R.Element
 autoUpdate props = R.createElement autoUpdateCpt props []
 
 autoUpdateCpt :: R.Component PropsRow
-autoUpdateCpt = R.hooksComponentWithModule thisModule "autoUpdate" cpt
+autoUpdateCpt = here.component "autoUpdate" cpt
   where
     cpt { duration, effect } _ = do
       intervalRef <- R.useRef Nothing

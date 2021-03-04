@@ -38,7 +38,7 @@ here = R2.here "Gargantext.Components.Nodes.Texts"
 
 --------------------------------------------------------
 type TextsWithForest a =
-  ( forestProps :: Record (Forest.ForestLayoutProps a)
+  ( forestProps :: Record (Forest.LayoutProps a)
   , textsProps  :: Record CommonProps
   )
 
@@ -64,7 +64,7 @@ topBar :: R2.Component TopBarProps
 topBar = R.createElement topBarCpt
 
 topBarCpt :: R.Component TopBarProps
-topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
+topBarCpt = here.component "topBar" cpt
   where
     cpt { controls } _ = do
       -- empty for now because the button is moved to the side panel
@@ -158,7 +158,7 @@ tabs :: Record TabsProps -> R.Element
 tabs props = R.createElement tabsCpt props []
 
 tabsCpt :: R.Component TabsProps
-tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
+tabsCpt = here.component "tabs" cpt
   where
     cpt { cacheState, corpusId, corpusData, frontends, session, sidePanelTriggers } _ = do
       (selected /\ setSelected) <- R.useState' 0
@@ -209,7 +209,7 @@ docView :: forall a. R2.Component (DocViewProps a)
 docView = R.createElement docViewCpt
 
 docViewCpt :: forall a. R.Component (DocViewProps a)
-docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
+docViewCpt = here.component "docView" cpt
   where
     cpt props _children = do
       pure $ DT.docViewLayout $ docViewLayoutRec props
@@ -329,7 +329,7 @@ sidePanel :: R2.Component SidePanelProps
 sidePanel = R.createElement sidePanelCpt
 
 sidePanelCpt :: R.Component SidePanelProps
-sidePanelCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
+sidePanelCpt = here.component "sidePanel" cpt
   where
     cpt { controls: { triggers: { currentDocIdRef
                                 , toggleSidePanel
@@ -401,7 +401,7 @@ sidePanelDocView :: R2.Component SidePanelDocView
 sidePanelDocView = R.createElement sidePanelDocViewCpt
 
 sidePanelDocViewCpt :: R.Component SidePanelDocView
-sidePanelDocViewCpt = R.hooksComponentWithModule thisModule "sidePanelDocView" cpt
+sidePanelDocViewCpt = here.component "sidePanelDocView" cpt
   where
     cpt { listId: Nothing } _ = do
       pure $ H.div {} []

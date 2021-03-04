@@ -1177,7 +1177,7 @@ chartsAfterSync :: forall props discard.
   , tabType :: TabType
   | props
   }
-  -> R.Ref (Maybe GAT.Reductor)
+  -> T.Cursor (Maybe GAT.Reductor)
   -> Int
   -> T.Cursor (T2.InitReload T.Cursor)
   -> discard
@@ -1186,10 +1186,10 @@ chartsAfterSync path' tasks nodeId reloadForest _ = do
   task <- postNgramsChartsAsync path'
   liftEffect $ do
     log2 "[chartsAfterSync] Synchronize task" task
-    case R.readRef tasks of
+    mT <- T.read tasks
+    case mT of
       Nothing -> log "[chartsAfterSync] tasks is Nothing"
-      Just tasks' ->
-        snd tasks' (GAT.Insert nodeId task) *> T2.reload reloadForest
+      Just tasks' -> snd tasks' (GAT.Insert nodeId task) *> T2.reload reloadForest
 
 postNgramsChartsAsync :: forall s. CoreParams s -> Aff AsyncTaskWithType
 postNgramsChartsAsync { listIds, nodeId, session, tabType } = do

@@ -23,8 +23,8 @@ import Gargantext.Components.Forest.Tree.Node.Action.Search.Frame (searchIframes
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField"
 
 defaultSearch :: Search
 defaultSearch = { databases: Empty
@@ -49,9 +49,9 @@ searchField :: Record Props -> R.Element
 searchField p = R.createElement searchFieldComponent p []
   where
     --searchFieldComponent :: R.Memo Props
-    --searchFieldComponent = R.memo (R.hooksComponentWithModule thisModule "searchField" cpt) eqProps
+    --searchFieldComponent = R.memo (here.component "searchField" cpt) eqProps
     searchFieldComponent :: R.Component Props
-    searchFieldComponent = R.hooksComponentWithModule thisModule "searchField" cpt
+    searchFieldComponent = here.component "searchField" cpt
 
     cpt props@{onSearch, search: search@(s /\ _)} _ = do
       iframeRef <- R.useRef    null
@@ -268,7 +268,7 @@ databaseInput :: R2.Component DatabaseInputProps
 databaseInput = R.createElement databaseInputCpt
 
 databaseInputCpt :: R.Component DatabaseInputProps
-databaseInputCpt = R.hooksComponentWithModule thisModule "databaseInput" cpt
+databaseInputCpt = here.component "databaseInput" cpt
   where
     cpt { databases
         , search: (search /\ setSearch) } _ = do
@@ -340,7 +340,7 @@ searchInput :: Record SearchInputProps -> R.Element
 searchInput p = R.createElement searchInputCpt p []
 
 searchInputCpt :: R.Component SearchInputProps
-searchInputCpt = R.hooksComponentWithModule thisModule "searchInput" cpt
+searchInputCpt = here.component "searchInput" cpt
   where
     cpt {search: (search@{ term } /\ setSearch)} _ = do
       valueRef <- R.useRef term
@@ -381,7 +381,7 @@ submitButton :: Record SubmitButtonProps -> R.Element
 submitButton p = R.createElement submitButtonComponent p []
 
 submitButtonComponent :: R.Component SubmitButtonProps
-submitButtonComponent = R.hooksComponentWithModule thisModule "submitButton" cpt
+submitButtonComponent = here.component "submitButton" cpt
   where
     cpt {onSearch, search: (mySearch /\ _), session} _ =
       pure $

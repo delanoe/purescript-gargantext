@@ -20,7 +20,7 @@ import Gargantext.Types  as GT
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.Forest.Tree.Node.Action.Add"
+here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Add"
 
 ----------------------------------------------------------------------
 addNode :: Session -> GT.ID -> AddNodeValue -> Aff (Array GT.ID)
@@ -64,7 +64,7 @@ addNodeView :: Record CreateNodeProps
             -> R.Element
 addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
   where
-    el = R.hooksComponentWithModule thisModule "addNodeView" cpt
+    el = here.component "addNodeView" cpt
     cpt {id, name} _ = do
       nodeName@(name' /\ setNodeName) <- R.useState' "Name"
       nodeType'@(nt /\ setNodeType)   <- R.useState' $ fromMaybe Folder $ head nodeTypes

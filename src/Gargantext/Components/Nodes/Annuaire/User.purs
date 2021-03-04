@@ -157,7 +157,7 @@ type LayoutProps =
   , reloadForest :: T.Cursor (T2.InitReload T.Cursor)
   , reloadRoot   :: T.Cursor T2.Reload
   , session      :: Session
-  , tasks        :: R.Ref (Maybe GAT.Reductor)
+  , tasks        :: T.Cursor (Maybe GAT.Reductor)
   )
 
 type KeyLayoutProps = (

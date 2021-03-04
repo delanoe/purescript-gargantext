@@ -18,9 +18,10 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
 import Gargantext.Types as GT
+import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Forest.Tree.Node.Tools.SubTree"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools.SubTree"
 
 type SubTreeParamsIn =
   ( subTreeParams :: SubTreeParams
@@ -38,7 +39,7 @@ subTreeView :: Record SubTreeParamsProps -> R.Element
 subTreeView props = R.createElement subTreeViewCpt props []
 
 subTreeViewCpt :: R.Component SubTreeParamsProps
-subTreeViewCpt = R.hooksComponentWithModule thisModule "subTreeView" cpt
+subTreeViewCpt = here.component "subTreeView" cpt
   where
     cpt params@{ action
                , dispatch
@@ -86,7 +87,7 @@ subTreeViewLoaded :: Record CorpusTreeProps -> R.Element
 subTreeViewLoaded props = R.createElement subTreeViewLoadedCpt props []
 
 subTreeViewLoadedCpt :: R.Component CorpusTreeProps
-subTreeViewLoadedCpt = R.hooksComponentWithModule thisModule "subTreeViewLoadedCpt" cpt
+subTreeViewLoadedCpt = here.component "subTreeViewLoadedCpt" cpt
   where
     cpt p@{dispatch, id, nodeType, session, tree, handed} _ = do
       pure $ H.div {className:"tree"}
@@ -101,7 +102,7 @@ subTreeTreeView :: Record CorpusTreeProps -> R.Element
 subTreeTreeView props = R.createElement subTreeTreeViewCpt props []
 
 subTreeTreeViewCpt :: R.Component CorpusTreeProps
-subTreeTreeViewCpt = R.hooksComponentWithModule thisModule "subTreeTreeViewCpt" cpt
+subTreeTreeViewCpt = here.component "subTreeTreeViewCpt" cpt
   where
     cpt p@{ id
           , tree: NTree (LNode { id: targetId

@@ -19,6 +19,7 @@ import Effect.Timer (setTimeout)
 import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as RH
+import Toestand as T
 
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Button (centerButton, cameraButton)
@@ -32,40 +33,42 @@ import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 
-thisModule = "Gargantext.Components.GraphExplorer.Controls"
+here :: R2.Here
+here = R2.here "Gargantext.Components.GraphExplorer.Controls"
 
-type Controls =
-  ( edgeConfluence :: R.State Range.NumberRange
-  , edgeWeight :: R.State Range.NumberRange
-  , forceAtlasState :: R.State SigmaxT.ForceAtlasState
-  , graph           :: SigmaxT.SGraph
-  , graphId         :: GET.GraphId
-  , graphStage      :: R.State Graph.Stage
-  , hyperdataGraph  :: GET.HyperdataGraph
-  , multiSelectEnabled :: R.State Boolean
-  , nodeSize        :: R.State Range.NumberRange
-  , removedNodeIds  :: R.State SigmaxT.NodeIds
-  , selectedNodeIds :: R.State SigmaxT.NodeIds
-  , session         :: Session
-  , showControls    :: R.State Boolean
-  , showEdges       :: R.State SigmaxT.ShowEdgesState
-  , showLouvain     :: R.State Boolean
-  , showSidePanel   :: R.State GET.SidePanelState
-  , showTree        :: R.State Boolean
-  , sigmaRef        :: R.Ref Sigmax.Sigma
-  , reloadForest      :: Unit -> Effect Unit
+type Controls = (
+    edgeConfluence     :: T.Cursor Range.NumberRange
+  , edgeWeight         :: T.Cursor Range.NumberRange
+  , forceAtlasState    :: T.Cursor SigmaxT.ForceAtlasState
+  , graph              :: SigmaxT.SGraph
+  , graphId            :: GET.GraphId
+  , graphStage         :: T.Cursor Graph.Stage
+  , hyperdataGraph     :: GET.HyperdataGraph
+  , multiSelectEnabled :: T.Cursor Boolean
+  , nodeSize           :: T.Cursor Range.NumberRange
+  , reloadForest       :: Unit -> Effect Unit
+  , removedNodeIds     :: T.Cursor SigmaxT.NodeIds
+  , selectedNodeIds    :: T.Cursor SigmaxT.NodeIds
+  , session            :: Session
+  , showControls       :: T.Cursor Boolean
+  , showEdges          :: T.Cursor SigmaxT.ShowEdgesState
+  , showLouvain        :: T.Cursor Boolean
+  , showSidePanel      :: T.Cursor GET.SidePanelState
+  , showTree           :: T.Cursor Boolean
+  , sigmaRef           :: R.Ref Sigmax.Sigma
   )
 
-type LocalControls =
-  ( labelSize :: R.State Number
-  , mouseSelectorSize :: R.State Number
+type LocalControls = (
+    labelSize         :: T.Cursor Number
+  , mouseSelectorSize :: T.Cursor Number
   )
 
 initialLocalControls :: R.Hooks (Record LocalControls)
 initialLocalControls = do
-  labelSize <- R.useState' 14.0
-  mouseSelectorSize <- R.useState' 15.0
+  labelSize <- T2.useCursed 14.0
+  mouseSelectorSize <- T2.useCursed 15.0
 
   pure $ {
     labelSize
@@ -76,7 +79,7 @@ controls :: Record Controls -> R.Element
 controls props = R.createElement controlsCpt props []
 
 controlsCpt :: R.Component Controls
-controlsCpt = R.hooksComponentWithModule thisModule "controls" cpt
+controlsCpt = here.component "controls" cpt
   where
     cpt props _ = do
       localControls <- initialLocalControls
@@ -213,22 +216,22 @@ useGraphControls { forceAtlasS
                  , hyperdataGraph
                  , session
                  , reloadForest } = do
-  edgeConfluence <- R.useState' $ Range.Closed { min: 0.0, max: 1.0 }
-  edgeWeight <- R.useState' $ Range.Closed {
+  edgeConfluence <- T2.useCursed $ Range.Closed { min: 0.0, max: 1.0 }
+  edgeWeight <- T2.useCursed $ Range.Closed {
       min: 0.0
     , max: I.toNumber $ Seq.length $ SigmaxT.graphEdges graph
     }
-  forceAtlasState <- R.useState' forceAtlasS
-  graphStage      <- R.useState' Graph.Init
-  multiSelectEnabled <- R.useState' false
-  nodeSize <- R.useState' $ Range.Closed { min: 0.0, max: 100.0 }
-  removedNodeIds <- R.useState' SigmaxT.emptyNodeIds
-  selectedNodeIds <- R.useState' SigmaxT.emptyNodeIds
-  showControls    <- R.useState' false
-  showEdges <- R.useState' SigmaxT.EShow
-  showLouvain <- R.useState' false
-  showSidePanel   <- R.useState' GET.InitialClosed
-  showTree <- R.useState' false
+  forceAtlasState <- T2.useCursed forceAtlasS
+  graphStage      <- T2.useCursed Graph.Init
+  multiSelectEnabled <- T2.useCursed false
+  nodeSize <- T2.useCursed $ Range.Closed { min: 0.0, max: 100.0 }
+  removedNodeIds <- T2.useCursed SigmaxT.emptyNodeIds
+  selectedNodeIds <- T2.useCursed SigmaxT.emptyNodeIds
+  showControls    <- T2.useCursed false
+  showEdges <- T2.useCursed SigmaxT.EShow
+  showLouvain <- T2.useCursed false
+  showSidePanel   <- T2.useCursed GET.InitialClosed
+  showTree <- T2.useCursed false
   sigma <- Sigmax.initSigma
   sigmaRef <- R.useRef sigma
 

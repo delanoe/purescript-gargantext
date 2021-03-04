@@ -256,13 +256,13 @@ tableContainerCpt { dispatch
 
 -- NEXT
 
-type CommonProps =
-  ( afterSync         :: Unit -> Aff Unit
+type CommonProps = (
+    afterSync         :: Unit -> Aff Unit
+  , reloadForest      :: T.Cursor (T2.InitReload T.Cursor)
   , reloadRoot        :: T.Cursor T2.Reload
-  , tasks             :: R.Ref (Maybe GAT.Reductor)
   , sidePanelTriggers :: Record NT.SidePanelTriggers
   , tabNgramType      :: CTabNgramType
-  , reloadForest      :: T.Cursor (T2.InitReload T.Cursor)
+  , tasks             :: T.Cursor (Maybe GAT.Reductor)
   , withAutoUpdate    :: Boolean
   )
 
@@ -281,11 +281,11 @@ loadedNgramsTable = R.createElement loadedNgramsTableCpt
 loadedNgramsTableCpt :: R.Component Props
 loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
   cpt props@{ afterSync
-            , reloadRoot
-            , tasks
             , cacheState
             , mTotalRows
             , path: path@(path'@{ listIds, nodeId, params, searchQuery, scoreType, termListFilter, termSizeFilter } /\ setPath)
+            , reloadForest
+            , reloadRoot
             , sidePanelTriggers
             , state: (state@{ ngramsChildren
                             , ngramsLocalPatch
@@ -293,7 +293,7 @@ loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
                             , ngramsSelection
                             , ngramsVersion } /\ setState)
             , tabNgramType
-            , reloadForest
+            , tasks
             , versioned: Versioned { data: initTable }
             , withAutoUpdate } _ = do
     pure $ R.fragment $
@@ -540,13 +540,13 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
       case cacheState of
         (NT.CacheOn /\ _) -> do
           let render versioned = mainNgramsTablePaint { afterSync
-                                                      , reloadRoot
-                                                      , tasks
                                                       , cacheState: fst cacheState
                                                       , path: fst path
+                                                      , reloadForest
+                                                      , reloadRoot
                                                       , sidePanelTriggers
                                                       , tabNgramType
-                                                      , reloadForest
+                                                      , tasks
                                                       , versioned
                                                       , withAutoUpdate } []
           useLoaderWithCacheAPI {
@@ -559,13 +559,13 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
         (NT.CacheOff /\ _) -> do
           -- path <- R.useState' path
           let render versionedWithCount = mainNgramsTablePaintNoCache { afterSync
-                                                                      , reloadRoot
-                                                                      , tasks
                                                                       , cacheState: fst cacheState
                                                                       , path
+                                                                      , reloadForest
+                                                                      , reloadRoot
                                                                       , sidePanelTriggers
                                                                       , tabNgramType
-                                                                      , reloadForest
+                                                                      , tasks
                                                                       , versionedWithCount
                                                                       , withAutoUpdate } []
           useLoader (fst path) loader render
@@ -629,27 +629,27 @@ mainNgramsTablePaintCpt :: R.Component MainNgramsTablePaintProps
 mainNgramsTablePaintCpt = here.component "mainNgramsTablePaint" cpt
   where
     cpt props@{ afterSync
-              , reloadRoot
-              , tasks
               , cacheState
               , path
+              , reloadForest
+              , reloadRoot
               , sidePanelTriggers
               , tabNgramType
-              , reloadForest
+              , tasks
               , versioned
               , withAutoUpdate } _ = do
       path' <- R.useState' path
       state <- R.useState' $ initialState versioned
       pure $ loadedNgramsTable { afterSync
-                               , reloadRoot
-                               , tasks
                                , cacheState
                                , mTotalRows: Nothing
                                , path: path'
+                               , reloadForest
+                               , reloadRoot
                                , sidePanelTriggers
                                , state
                                , tabNgramType
-                               , reloadForest
+                               , tasks
                                , versioned
                                , withAutoUpdate
                                } []
@@ -668,13 +668,13 @@ mainNgramsTablePaintNoCacheCpt :: R.Component MainNgramsTablePaintNoCacheProps
 mainNgramsTablePaintNoCacheCpt = here.component "mainNgramsTablePaintNoCache" cpt
   where
     cpt props@{ afterSync
-              , reloadRoot
-              , tasks
               , cacheState
               , path
+              , reloadForest
+              , reloadRoot
               , sidePanelTriggers
               , tabNgramType
-              , reloadForest
+              , tasks
               , versionedWithCount
               , withAutoUpdate } _ = do
       let count /\ versioned = toVersioned versionedWithCount
@@ -683,15 +683,15 @@ mainNgramsTablePaintNoCacheCpt = here.component "mainNgramsTablePaintNoCache" cp
 
       pure $ loadedNgramsTable {
         afterSync
-      , reloadRoot
-      , tasks
       , cacheState
       , mTotalRows: Just count
       , path: path
+      , reloadForest
+      , reloadRoot
       , sidePanelTriggers
       , state
       , tabNgramType
-      , reloadForest
+      , tasks
       , versioned
       , withAutoUpdate
       } []

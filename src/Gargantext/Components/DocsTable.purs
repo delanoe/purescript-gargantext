@@ -45,8 +45,8 @@ import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
 import Gargantext.Utils.Toestand as T2
 
-thisModule :: String
-thisModule = "Gargantext.Components.DocsTable"
+here :: R2.Here
+here = R2.here "Gargantext.Components.DocsTable"
 ------------------------------------------------------------------------
 
 type TotalRecords = Int
@@ -98,7 +98,7 @@ docViewLayout :: Record LayoutProps -> R.Element
 docViewLayout props = R.createElement docViewLayoutCpt props []
 
 docViewLayoutCpt :: R.Component LayoutProps
-docViewLayoutCpt = R.hooksComponentWithModule thisModule "docViewLayout" cpt
+docViewLayoutCpt = here.component "docViewLayout" cpt
   where
     cpt layout _children = do
       query <- R.useState' ""
@@ -115,7 +115,7 @@ docView :: R2.Component Props
 docView = R.createElement docViewCpt
 
 docViewCpt :: R.Component Props
-docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt where
+docViewCpt = here.component "docView" cpt where
   cpt { layout: { cacheState
                 , chart
                 , frontends
@@ -153,7 +153,7 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt where
 searchBar :: R.State Query -> R.Element
 searchBar (query /\ setQuery) = R.createElement el {} []
   where
-    el = R.hooksComponentWithModule thisModule "SearchBar" cpt
+    el = here.component "SearchBar" cpt
     cpt {} _children = do
       queryText <- R.useState' query
 
@@ -240,7 +240,7 @@ pageLayout :: Record PageLayoutProps -> R.Element
 pageLayout props = R.createElement pageLayoutCpt props []
 
 pageLayoutCpt :: R.Component PageLayoutProps
-pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt where
+pageLayoutCpt = here.component "pageLayout" cpt where
   cpt props@{ cacheState
             , frontends
             , listId
@@ -303,7 +303,7 @@ page :: R2.Component PageProps
 page = R.createElement pageCpt
 
 pageCpt :: R.Component PageProps
-pageCpt = R.hooksComponentWithModule thisModule "pageCpt" cpt where
+pageCpt = here.component "pageCpt" cpt where
   cpt { documents, layout, params } _ = do
     paramsS <- R.useState' params
     pure $ pagePaint { documents, layout, params: paramsS } []
@@ -318,7 +318,7 @@ pagePaint :: R2.Component PagePaintProps
 pagePaint = R.createElement pagePaintCpt
 
 pagePaintCpt :: R.Component PagePaintProps
-pagePaintCpt = R.hooksComponentWithModule thisModule "pagePaintCpt" cpt
+pagePaintCpt = here.component "pagePaintCpt" cpt
   where
     cpt { documents, layout, params } _ = do
       localCategories <- R.useState' (mempty :: LocalUserScore)
@@ -350,7 +350,7 @@ pagePaintRaw :: R2.Component PagePaintRawProps
 pagePaintRaw = R.createElement pagePaintRawCpt
 
 pagePaintRawCpt :: R.Component PagePaintRawProps
-pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt where
+pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
   cpt { documents
       , layout: { frontends
                 , listId
@@ -425,7 +425,7 @@ docChooser :: R2.Component DocChooser
 docChooser = R.createElement docChooserCpt
 
 docChooserCpt :: R.Component DocChooser
-docChooserCpt = R.hooksComponentWithModule thisModule "docChooser" cpt
+docChooserCpt = here.component "docChooser" cpt
   where
     cpt { mCorpusId: Nothing } _ = do
       pure $ H.div {} []

@@ -20,7 +20,7 @@ import Gargantext.Types  as GT
 import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson)
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.Forest.Tree.Node.Action.Link"
+here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Link"
 
 
 data LinkNodeReq = LinkNodeReq { nodeType :: GT.NodeType
@@ -59,7 +59,7 @@ linkNode :: R2.Component SubTreeParamsIn
 linkNode = R.createElement linkNodeCpt
 
 linkNodeCpt :: R.Component SubTreeParamsIn
-linkNodeCpt = R.hooksComponentWithModule thisModule "linkNode" cpt
+linkNodeCpt = here.component "linkNode" cpt
   where
     cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
 

@@ -17,7 +17,7 @@ import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Utils (queryMatchesLabel)
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.GraphExplorer.Search"
+here = R2.here "Gargantext.Components.GraphExplorer.Search"
 
 type Props = (
     graph           :: SigmaxT.SGraph
@@ -37,7 +37,7 @@ nodeSearchControl :: Record Props -> R.Element
 nodeSearchControl props = R.createElement sizeButtonCpt props []
 
 sizeButtonCpt :: R.Component Props
-sizeButtonCpt = R.hooksComponentWithModule thisModule "nodeSearchControl" cpt
+sizeButtonCpt = here.component "nodeSearchControl" cpt
   where
     cpt {graph, multiSelectEnabled, selectedNodeIds} _ = do
       search@(search' /\ setSearch) <- R.useState' ""

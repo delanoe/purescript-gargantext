@@ -38,7 +38,7 @@ import Gargantext.Utils (toggleSet, zeroPad)
 import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.FacetsTable"
+here = R2.here "Gargantext.Components.FacetsTable"
 ------------------------------------------------------------------------
 
 type Props =
@@ -119,7 +119,7 @@ docView :: Record Props -> R.Element
 docView props = R.createElement docViewCpt props []
 
 docViewCpt :: R.Component Props
-docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
+docViewCpt = here.component "docView" cpt
   where
     cpt {frontends, session, nodeId, listId, query, totalRecords, chart, container} _ = do
       deletions <- R.useState' initialDeletions
@@ -173,7 +173,7 @@ docViewGraph :: Record Props -> R.Element
 docViewGraph props = R.createElement docViewCpt props []
 
 docViewGraphCpt :: R.Component Props
-docViewGraphCpt = R.hooksComponentWithModule thisModule "docViewGraph" cpt
+docViewGraphCpt = here.component "docViewGraph" cpt
   where
     cpt {frontends, session, nodeId, listId, query, totalRecords, chart, container} _ = do
       deletions <- R.useState' initialDeletions
@@ -303,7 +303,7 @@ pageLayout :: Record PageLayoutProps -> R.Element
 pageLayout props = R.createElement pageLayoutCpt props []
 
 pageLayoutCpt :: R.Component PageLayoutProps
-pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt
+pageLayoutCpt = here.component "pageLayout" cpt
   where
     cpt {frontends, totalRecords, deletions, container, session, path} _ = do
       useLoader (fst path) loadPage $ \rowsLoaded ->
@@ -313,7 +313,7 @@ page :: Record PageProps -> R.Element
 page props = R.createElement pageCpt props []
 
 pageCpt :: R.Component PageProps
-pageCpt = R.hooksComponentWithModule thisModule "page" cpt
+pageCpt = here.component "page" cpt
   where
     cpt {frontends, totalRecords, container, deletions, rowsLoaded, session, path: path@({nodeId, listId, query} /\ setPath)} _ = do
       pure $ T.table { syncResetButton : [ H.div {} [] ]

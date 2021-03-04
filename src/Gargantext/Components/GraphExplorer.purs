@@ -19,6 +19,7 @@ import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 import Record as Record
+import Toestand as T
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest (forest)
@@ -33,25 +34,26 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Routes (SessionRoute(NodeAPI), AppRoute)
-import Gargantext.Sessions (Session, Sessions, get)
+import Gargantext.Sessions (OpenNodes, Session, Sessions, get)
 import Gargantext.Types as Types
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
+import Gargantext.Utils.Toestand as T2
 
-thisModule :: String
-thisModule = "Gargantext.Components.GraphExplorer"
+here :: R2.Here
+here = R2.here "Gargantext.Components.GraphExplorer"
 
 type LayoutProps = (
-    tasks :: R.Ref (Maybe GAT.Reductor)
-  , backend       :: R.State (Maybe Backend)
-  , route  :: AppRoute
+    backend       :: T.Cursor Backend
   , frontends     :: Frontends
   , graphId       :: GET.GraphId
-  , handed        :: Types.Handed
+  , handed        :: T.Cursor Types.Handed
+  , route         :: AppRoute
   , session       :: Session
-  , sessions      :: Sessions
-  , showLogin     :: R.State Boolean
+  , sessions      :: T.Cursor Sessions
+  , showLogin     :: T.Cursor Boolean
+  , tasks         :: T.Cursor (Maybe GAT.Reductor)
   )
 
 type Props =
@@ -67,7 +69,7 @@ explorerLayout :: Record LayoutProps -> R.Element
 explorerLayout props = R.createElement explorerLayoutCpt props []
 
 explorerLayoutCpt :: R.Component LayoutProps
-explorerLayoutCpt = R.hooksComponentWithModule thisModule "explorerLayout" cpt
+explorerLayoutCpt = here.component "explorerLayout" cpt
   where
     cpt props _ = do
       graphVersion <- GUR.new
@@ -76,7 +78,7 @@ explorerLayoutCpt = R.hooksComponentWithModule thisModule "explorerLayout" cpt
 explorerLayoutView :: GUR.ReloadS -> Record LayoutProps -> R.Element
 explorerLayoutView graphVersion p = R.createElement el p []
   where
-    el = R.hooksComponentWithModule thisModule "explorerLayoutView" cpt
+    el = here.component "explorerLayoutView" cpt
     cpt props@{ graphId, session } _ = do
       useLoader graphId (getNodes session graphVersion) handler
       where
@@ -91,7 +93,7 @@ explorer :: Record Props -> R.Element
 explorer props = R.createElement explorerCpt props []
 
 explorerCpt :: R.Component Props
-explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
+explorerCpt = here.component "explorer" cpt
   where
     cpt props@{ tasks
               , backend
@@ -107,6 +109,7 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
               , sessions
               , showLogin
               } _ = do
+      handed' <- T.useLive T.unequal handed
 
       let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas }) -> startForceAtlas) mMetaData
 
@@ -117,16 +120,18 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
       graphVersionRef <- R.useRef (GUR.value graphVersion)
-      reloadForest <- GUR.new
-      reloadForest <- GUR.newIInitialized reloadForest
+      reloadForest <- T2.useCursed 0
+      -- reloadForest <- GUR.newIInitialized reloadForest
       controls <- Controls.useGraphControls { forceAtlasS
-                                           , graph
-                                           , graphId
-                                           , hyperdataGraph
-                                           , session
-                                           , reloadForest: \_ -> GUR.bump reloadForest
-                                           }
+                                            , graph
+                                            , graphId
+                                            , hyperdataGraph
+                                            , session
+                                            , reloadForest: \_ -> GUR.bumpCursor reloadForest
+                                            }
       multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
+
+      forestOpen <- T2.useCursed $ Set.empty
 
       R.useEffect' $ do
         let readData = R.readRef dataRef
@@ -158,20 +163,21 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
                     ]
             ]
         , RH.div { className: "graph-container" } [
-            inner handed [
+            inner handed' [
               rowControls [ Controls.controls controls ]
-            , RH.div { className: "row graph-row" } $ mainLayout handed $
-                tree { tasks
-                    , backend
-                    , route
-                    , frontends
-                    , handed
-                    , reload: reloadForest
-                    , sessions
-                    , show: fst controls.showTree
-                    , showLogin: snd showLogin
-                    , reloadForest
-                    }
+            , RH.div { className: "row graph-row" } $ mainLayout handed' $
+                tree { backend
+                     , forestOpen
+                     , frontends
+                     , handed
+                     , reload: reloadForest
+                     , route
+                     , reloadForest
+                     , sessions
+                     , show: fst controls.showTree
+                     , showLogin: showLogin
+                     , tasks
+                     }
                 /\
                 RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []
                 /\
@@ -185,15 +191,15 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
                           }
                 /\
                 mSidebar mMetaData { frontends
-                                  , graph
-                                  , graphId
-                                  , graphVersion
-                                  , removedNodeIds : controls.removedNodeIds
-                                  , session
-                                  , selectedNodeIds: controls.selectedNodeIds
-                                  , showSidePanel  :   controls.showSidePanel
-                                  , reloadForest
-                                  }
+                                   , graph
+                                   , graphId
+                                   , graphVersion
+                                   , removedNodeIds : controls.removedNodeIds
+                                   , session
+                                   , selectedNodeIds: controls.selectedNodeIds
+                                   , showSidePanel  :   controls.showSidePanel
+                                   , reloadForest
+                                   }
             ]
           ]
         ]
@@ -220,17 +226,18 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
 
     tree :: Record TreeProps -> R.Element
     tree { show: false } = RH.div { id: "tree" } []
-    tree { tasks, backend, frontends, handed, route, reload, sessions, showLogin, reloadForest } =
+    tree { backend, forestOpen, frontends, handed, reload, route, sessions, showLogin, reloadForest, tasks } =
       RH.div {className: "col-md-2 graph-tree"} [
-        forest { reloadRoot: reload
-               , tasks
-               , backend
-               , route
+        forest { backend
+               , forestOpen
                , frontends
                , handed
+               , reloadForest
+               , reloadRoot: reload
+               , route
                , sessions
                , showLogin
-               , reloadForest } []
+               , tasks } []
       ]
 
     mSidebar :: Maybe GET.MetaData
@@ -240,17 +247,18 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
     mSidebar (Just metaData) props =
       Sidebar.sidebar (Record.merge props { metaData })
 
-type TreeProps =
-  ( tasks :: R.Ref (Maybe GAT.Reductor)
-  , backend       :: R.State (Maybe Backend)
-  , route  :: AppRoute
-  , frontends     :: Frontends
-  , handed        :: Types.Handed
-  , reload        :: GUR.ReloadS
-  , sessions      :: Sessions
-  , show          :: Boolean
-  , showLogin     :: R.Setter Boolean
-  , reloadForest  :: GUR.ReloadWithInitializeRef
+type TreeProps = (
+    backend      :: T.Cursor Backend
+  , forestOpen :: T.Cursor OpenNodes
+  , frontends    :: Frontends
+  , handed       :: T.Cursor Types.Handed
+  , reload       :: T.Cursor T2.Reload
+  , reloadForest :: T.Cursor T2.Reload
+  , route        :: AppRoute
+  , sessions     :: T.Cursor Sessions
+  , show         :: Boolean
+  , showLogin    :: T.Cursor Boolean
+  , tasks        :: T.Cursor (Maybe GAT.Reductor)
   )
 
 type MSidebarProps =
@@ -258,11 +266,11 @@ type MSidebarProps =
   , graph           :: SigmaxT.SGraph
   , graphId         :: GET.GraphId
   , graphVersion    :: GUR.ReloadS
+  , reloadForest    :: T.Cursor T2.Reload
   , removedNodeIds  :: R.State SigmaxT.NodeIds
-  , showSidePanel   :: R.State GET.SidePanelState
   , selectedNodeIds :: R.State SigmaxT.NodeIds
   , session         :: Session
-  , reloadForest    :: GUR.ReloadS
+  , showSidePanel   :: R.State GET.SidePanelState
   )
 
 type GraphProps = (
@@ -280,7 +288,7 @@ graphView :: Record GraphProps -> R.Element
 graphView props = R.createElement graphViewCpt props []
 
 graphViewCpt :: R.Component GraphProps
-graphViewCpt = R.hooksComponentWithModule thisModule "graphView" cpt
+graphViewCpt = here.component "graphView" cpt
   where
     cpt { controls
         , elRef

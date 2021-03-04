@@ -39,8 +39,8 @@ import Gargantext.Sessions (Session, sessionId, get, delete, put)
 import Gargantext.Types (NodeID, NodeType(..), OrderBy(..), TableResult, TabType, showTabType')
 import Gargantext.Utils.CacheAPI as GUC
 
-thisModule :: String
-thisModule = "Gargantext.Components.Category"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Category"
 
 ------------------------------------------------------------------------
 type RatingProps =
@@ -55,7 +55,7 @@ rating :: R2.Component RatingProps
 rating = R.createElement ratingCpt
 
 ratingCpt :: R.Component RatingProps
-ratingCpt = R.hooksComponentWithModule thisModule "rating" cpt
+ratingCpt = here.component "rating" cpt
   where
     cpt { score, nodeId, row: DocumentsView r, session, setLocalCategories } _ = do
       pure $ H.div {className:"flex"} divs
@@ -109,7 +109,7 @@ caroussel :: R2.Component CarousselProps
 caroussel = R.createElement carousselCpt
 
 carousselCpt :: R.Component CarousselProps
-carousselCpt = R.hooksComponentWithModule thisModule "caroussel" cpt
+carousselCpt = here.component "caroussel" cpt
   where
     cpt { category, nodeId, row: DocumentsView r, session, setLocalCategories } _ = do
       pure $ H.div {className:"flex"} divs

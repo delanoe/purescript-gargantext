@@ -34,14 +34,14 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Lists.Tabs"
 
 type Props = (
-    reloadRoot        :: T.Cursor T2.Reload
-  , tasks             :: R.Ref (Maybe GAT.Reductor)
-  , cacheState        :: R.State CacheState
+    cacheState        :: R.State CacheState
   , corpusData        :: CorpusData
   , corpusId          :: Int
+  , reloadForest      :: T.Cursor (T2.InitReload T.Cursor)
+  , reloadRoot        :: T.Cursor T2.Reload
   , session           :: Session
   , sidePanelTriggers :: Record SidePanelTriggers
-  , reloadForest      :: T.Cursor (T2.InitReload T.Cursor)
+  , tasks             :: T.Cursor (Maybe GAT.Reductor)
   )
 
 type PropsWithKey = ( key :: String | Props )

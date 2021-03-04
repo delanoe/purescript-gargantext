@@ -29,7 +29,7 @@ import Gargantext.Types (ChartType(..), TabType, TermList(..))
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.Nodes.Corpus.Chart.Metrics"
+here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Metrics"
 
 newtype Metric = Metric
   { label :: String
@@ -118,7 +118,7 @@ metrics :: Record Props -> R.Element
 metrics props = R.createElement metricsCpt props []
 
 metricsCpt :: R.Component Props
-metricsCpt = R.hooksComponentWithModule thisModule "etrics" cpt
+metricsCpt = here.component "etrics" cpt
   where
     cpt {path, session} _ = do
       reload <- R.useState' 0

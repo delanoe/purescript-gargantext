@@ -21,9 +21,10 @@ import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (ChartType(..))
 import Gargantext.Utils.CacheAPI as GUC
+import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Nodes.Corpus.Chart.Histo"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Histo"
 
 newtype ChartMetrics = ChartMetrics {
     "data" :: HistoMetrics
@@ -83,7 +84,7 @@ histo :: Record Props -> R.Element
 histo props = R.createElement histoCpt props []
 
 histoCpt :: R.Component Props
-histoCpt = R.hooksComponentWithModule thisModule "histo" cpt
+histoCpt = here.component "histo" cpt
   where
     cpt { path, session } _ = do
       reload <- R.useState' 0

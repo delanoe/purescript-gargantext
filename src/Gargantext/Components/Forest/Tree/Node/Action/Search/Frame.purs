@@ -20,7 +20,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..)
 import Gargantext.Prelude (discard, identity, pure, unit, ($), (<>), (==), class Show, show)
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.Forest.Tree.Node.Action.Search.Frame"
+here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Search.Frame"
 
 --------------------
 
@@ -43,7 +43,7 @@ searchIframes :: Record SearchIFramesProps -> R.Element
 searchIframes props = R.createElement searchIframesCpt props []
 
 searchIframesCpt :: R.Component SearchIFramesProps
-searchIframesCpt = R.hooksComponentWithModule thisModule "searchIframes" cpt
+searchIframesCpt = here.component "searchIframes" cpt
   where
     cpt { iframeRef, search: search@(search' /\ _) } _ = do
       pure $ if isIsTex_Advanced search'.datafield
@@ -64,7 +64,7 @@ divIframe :: Record IFrameProps -> R.Element
 divIframe props = R.createElement divIframeCpt props []
 
 divIframeCpt :: R.Component IFrameProps
-divIframeCpt = R.hooksComponentWithModule thisModule "divIframe" cpt
+divIframeCpt = here.component "divIframe" cpt
   where
     cpt { frameSource, iframeRef, search: search@(search' /\ _) } _ = do
       pure $ H.div { className: "frame-search card" }
@@ -79,7 +79,7 @@ iframeWith :: Record IFrameProps -> R.Element
 iframeWith props = R.createElement iframeWithCpt props []
 
 iframeWithCpt :: R.Component IFrameProps
-iframeWithCpt = R.hooksComponentWithModule thisModule "iframeWith" cpt
+iframeWithCpt = here.component "iframeWith" cpt
   where
     cpt { frameSource, iframeRef, search: (search /\ setSearch) } _ =
       pure $ H.iframe { src: src frameSource search.term

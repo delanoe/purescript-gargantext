@@ -16,7 +16,7 @@ import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.GraphExplorer.SlideButton"
+here = R2.here "Gargantext.Components.GraphExplorer.SlideButton"
 
 type Props = (
     state :: R.State Number
@@ -30,7 +30,7 @@ sizeButton :: Record Props -> R.Element
 sizeButton props = R.createElement sizeButtonCpt props []
 
 sizeButtonCpt :: R.Component Props
-sizeButtonCpt = R.hooksComponentWithModule thisModule "sizeButton" cpt
+sizeButtonCpt = here.component "sizeButton" cpt
   where
     cpt {state, caption, min, max, onChange} _ = do
       let (value /\ setValue) = state

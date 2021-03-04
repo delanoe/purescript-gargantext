@@ -11,7 +11,6 @@
 -- | 2. We will need a more ambitious search algorithm for skipgrams.
 module Gargantext.Components.Annotation.AnnotatedField where
 
-import Prelude
 import Data.Maybe ( Maybe(..), maybe )
 import Data.Tuple ( Tuple )
 import Data.Tuple.Nested ( (/\) )
@@ -22,14 +21,17 @@ import Reactix as R
 import Reactix.DOM.HTML as HTML
 import Reactix.SyntheticEvent as E
 
+import Gargantext.Prelude
+
 import Gargantext.Types (CTabNgramType(..), TermList)
 import Gargantext.Components.Annotation.Utils ( termBootstrapClass, termClass )
 import Gargantext.Components.NgramsTable.Core
 import Gargantext.Components.Annotation.Menu ( annotationMenu, MenuType(..) )
 import Gargantext.Utils.Selection as Sel
+import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Annotation.AnnotatedField"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Annotation.AnnotatedField"
 
 type Props =
   ( ngrams       :: NgramsTable
@@ -46,7 +48,7 @@ annotatedField :: Record Props -> R.Element
 annotatedField p = R.createElement annotatedFieldComponent p []
 
 annotatedFieldComponent :: R.Component Props
-annotatedFieldComponent = R.hooksComponentWithModule thisModule "annotatedField" cpt
+annotatedFieldComponent = here.component "annotatedField" cpt
   where
     cpt {ngrams,setTermList,text: fieldText} _ = do
       (_ /\ setRedrawMenu) <- R.useState' false

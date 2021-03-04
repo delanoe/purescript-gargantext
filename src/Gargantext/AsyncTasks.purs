@@ -1,23 +1,24 @@
 module Gargantext.AsyncTasks where
 
+import Gargantext.Prelude
+
+import DOM.Simple.Console (log2)
 import Data.Argonaut (decodeJson)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
-import Data.Tuple (snd)
-import DOM.Simple.Console (log2)
+import Data.Tuple (fst, snd)
 import Effect (Effect)
-import Reactix as R
-import Web.Storage.Storage as WSS
-
-import Gargantext.Prelude
 import Gargantext.Types as GT
 import Gargantext.Utils as GU
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
-import Gargantext.Utils.Toestand
+import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Toestand as T
+import Web.Storage.Storage as WSS
 
 localStorageKey :: String
 localStorageKey = "garg-async-tasks"
@@ -44,20 +45,25 @@ getAsyncTasks = R2.getls >>= WSS.getItem localStorageKey >>= handleMaybe
 getTasks :: Record ReductorProps -> GT.NodeID -> Array GT.AsyncTaskWithType
 getTasks { storage } nodeId = fromMaybe [] $ Map.lookup nodeId storage
 
+getTasksMaybe :: Maybe Reductor -> GT.NodeID -> Array GT.AsyncTaskWithType
+getTasksMaybe mTasks nodeId = case mTasks of
+    Just tasks -> getTasks (fst tasks) nodeId
+    Nothing -> []
+
 removeTaskFromList :: Array GT.AsyncTaskWithType -> GT.AsyncTaskWithType -> Array GT.AsyncTaskWithType
 removeTaskFromList ts (GT.AsyncTaskWithType { task: GT.AsyncTask { id: id' } }) =
   A.filter (\(GT.AsyncTaskWithType { task: GT.AsyncTask { id: id'' } }) -> id' /= id'') ts
 
 type ReductorProps = (
-    reloadRoot   :: GUR.ReloadS
-  , reloadForest :: GUR.ReloadS
+    reloadForest :: T.Cursor T2.Reload
+  , reloadRoot   :: T.Cursor T2.Reload
   , storage      :: Storage
   )
 
 type Reductor = R2.Reductor (Record ReductorProps) Action
 type ReductorAction = Action -> Effect Unit
 
-useTasks :: GUR.ReloadS -> GUR.ReloadS -> R.Hooks Reductor
+useTasks :: T.Cursor T2.Reload -> T.Cursor T2.Reload -> R.Hooks Reductor
 useTasks reloadRoot reloadForest = R2.useReductor act initializer unit
   where
     act :: R2.Actor (Record ReductorProps) Action
@@ -73,18 +79,18 @@ data Action =
 
 action :: Record ReductorProps -> Action -> Effect (Record ReductorProps)
 action p@{ reloadForest, storage } (Insert nodeId t) = do
-  _ <- GUR.bump reloadForest
+  _ <- GUR.bumpCursor reloadForest
   let newStorage = Map.alter (maybe (Just [t]) (\ts -> Just $ A.cons t ts)) nodeId storage
   pure $ p { storage = newStorage }
 action p (Finish nodeId t) = do
   action p (Remove nodeId t)
 action p@{ reloadRoot, reloadForest, storage } (Remove nodeId t@(GT.AsyncTaskWithType { typ })) = do
   _ <- if GT.asyncTaskTriggersAppReload typ then
-    GUR.bump reloadRoot
+    GUR.bumpCursor reloadRoot
   else
     pure unit
   _ <- if GT.asyncTaskTriggersTreeReload typ then
-    GUR.bump reloadForest
+    GUR.bumpCursor reloadForest
   else
     pure unit
   let newStorage = Map.alter (maybe Nothing $ (\ts -> Just $ removeTaskFromList ts t)) nodeId storage

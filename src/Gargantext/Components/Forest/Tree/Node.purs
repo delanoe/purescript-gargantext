@@ -1,10 +1,12 @@
 module Gargantext.Components.Forest.Tree.Node where
 
 import Gargantext.Prelude
+
 import Data.Array (reverse)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (null)
 import Data.Symbol (SProxy(..))
+import Data.Tuple (snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
@@ -14,30 +16,31 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
 import Toestand as T
+import Web.HTML.Event.EventTypes (offline)
 
 import Gargantext.AsyncTasks as GAT
-import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (DroppedFile(..), fileTypeView)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..))
 import Gargantext.Components.Forest.Tree.Node.Box (nodePopupView)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (CommonProps)
+import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
+import Gargantext.Components.Forest.Tree.Node.Tools (nodeLink)
 import Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar (asyncProgressBar, BarType(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.Sync (nodeActionsGraph, nodeActionsNodeList)
-import Gargantext.Components.Forest.Tree.Node.Tools (nodeLink)
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (Lang(EN))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
-import Gargantext.Version as GV
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (Name, ID, reverseHanded)
 import Gargantext.Types as GT
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Gargantext.Version as GV
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node"
@@ -53,7 +56,7 @@ type NodeMainSpanProps =
   , reloadRoot    :: T.Cursor T2.Reload
   , route         :: Routes.AppRoute
   , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
-  , tasks         :: GAT.Reductor
+  , tasks         :: T.Cursor (Maybe GAT.Reductor)
   | CommonProps
   )
 
@@ -74,10 +77,7 @@ nodeMainSpan = R.createElement nodeMainSpanCpt
 nodeMainSpanCpt :: R.Component NodeMainSpanProps
 nodeMainSpanCpt = here.component "nodeMainSpan" cpt
   where
-    cpt props@{ reloadRoot
-              , tasks: (tasks /\ dispatchAsyncTasks)
-              , route
-              , dispatch
+    cpt props@{ dispatch
               , folderOpen
               , frontends
               , handed
@@ -85,8 +85,11 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
               , isLeaf
               , name
               , nodeType
+              , reloadRoot
+              , route
               , session
               , setPopoverRef
+              , tasks
               } _ = do
       -- only 1 popup at a time is allowed to be opened
       droppedFile   <- R.useState' (Nothing :: Maybe DroppedFile)
@@ -95,6 +98,8 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
       R.useEffect' $ do
         R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
       let isSelected = Just route == Routes.nodeTypeAppRoute nodeType (sessionId session) id
+
+      tasks' <- T.read tasks
 
       pure $ H.span (dropProps droppedFile isDragOver)
         $ GT.reverseHanded
@@ -110,7 +115,7 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
                                                        , onFinish: onTaskFinish id t
                                                        , session
                                                        }
-                                ) $ GAT.getTasks tasks id
+                                ) $ GAT.getTasksMaybe tasks' id
                            )
                 , if nodeType == GT.NodeUser
                         then GV.versionView {session}
@@ -135,7 +140,10 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
                 ] handed
         where
           onTaskFinish id t _ = do
-            dispatchAsyncTasks $ GAT.Finish id t
+            mT <- T.read tasks
+            case mT of
+              Just t' -> snd t' $ GAT.Finish id t
+              Nothing -> pure unit
             T2.reload reloadRoot
 
           SettingsBox {show: showBox} = settingsBox nodeType

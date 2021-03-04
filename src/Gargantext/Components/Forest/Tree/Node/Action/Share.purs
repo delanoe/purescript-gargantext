@@ -20,9 +20,10 @@ import Gargantext.Sessions (Session, post)
 import Gargantext.Types (ID)
 import Gargantext.Types as GT
 import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson)
+import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Forest.Tree.Node.Action.Share"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Share"
 
 ------------------------------------------------------------------------
 shareReq :: Session -> ID -> ShareNodeParams -> Aff ID
@@ -59,7 +60,7 @@ shareNode :: Record SubTreeParamsIn -> R.Element
 shareNode p = R.createElement shareNodeCpt p []
 
 shareNodeCpt :: R.Component SubTreeParamsIn
-shareNodeCpt = R.hooksComponentWithModule thisModule "shareNode" cpt
+shareNodeCpt = here.component "shareNode" cpt
   where
     cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
       action@(valAction /\ setAction) :: R.State Action <- R.useState' (Action.SharePublic {params: Nothing})

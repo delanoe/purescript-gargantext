@@ -22,7 +22,7 @@ import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-thisModule = "Gargantext.Components.GraphExplorer.ToggleButton"
+here = R2.here "Gargantext.Components.GraphExplorer.ToggleButton"
 
 type Props = (
     state :: R.State Boolean
@@ -36,7 +36,7 @@ toggleButton :: Record Props -> R.Element
 toggleButton props = R.createElement toggleButtonCpt props []
 
 toggleButtonCpt :: R.Component Props
-toggleButtonCpt = R.hooksComponentWithModule thisModule "toggleButton" cpt
+toggleButtonCpt = here.component "toggleButton" cpt
   where
     cpt {state, onMessage, offMessage, onClick, style} _ = do
       let (toggled /\ _) = state
@@ -68,7 +68,7 @@ edgesToggleButton :: Record EdgesButtonProps -> R.Element
 edgesToggleButton props = R.createElement edgesToggleButtonCpt props []
 
 edgesToggleButtonCpt :: R.Component EdgesButtonProps
-edgesToggleButtonCpt = R.hooksComponentWithModule thisModule "edgesToggleButton" cpt
+edgesToggleButtonCpt = here.component "edgesToggleButton" cpt
   where
     cpt {state: (state /\ setState)} _ = do
       pure $ H.button { className: "btn btn-outline-primary " <> cls state
@@ -111,7 +111,7 @@ pauseForceAtlasButton :: Record ForceAtlasProps -> R.Element
 pauseForceAtlasButton props = R.createElement pauseForceAtlasButtonCpt props []
 
 pauseForceAtlasButtonCpt :: R.Component ForceAtlasProps
-pauseForceAtlasButtonCpt = R.hooksComponentWithModule thisModule "forceAtlasToggleButton" cpt
+pauseForceAtlasButtonCpt = here.component "forceAtlasToggleButton" cpt
   where
     cpt {state: (state /\ setState)} _ = do
       pure $ H.button { className: "btn btn-outline-primary " <> cls state
@@ -142,7 +142,7 @@ treeToggleButton state =
 sidebarToggleButton :: R.State GET.SidePanelState -> R.Element
 sidebarToggleButton (state /\ setState) = R.createElement el {} []
   where
-    el = R.hooksComponentWithModule thisModule "sidebarToggleButton" cpt
+    el = here.component "sidebarToggleButton" cpt
     cpt {} _ = do
       pure $ H.button { className: "btn btn-outline-light " <> cls state
                       , on: { click: onClick}

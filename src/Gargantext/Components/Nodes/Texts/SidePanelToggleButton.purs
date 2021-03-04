@@ -10,8 +10,8 @@ import Reactix.DOM.HTML as H
 import Gargantext.Components.Nodes.Texts.Types
 import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Nodes.Texts.SidePanelToggleButton"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Texts.SidePanelToggleButton"
 
 type Props = ( state :: R.State SidePanelState )
 
@@ -19,7 +19,7 @@ sidePanelToggleButton :: R2.Component Props
 sidePanelToggleButton = R.createElement sidePanelToggleButtonCpt
 
 sidePanelToggleButtonCpt :: R.Component Props
-sidePanelToggleButtonCpt = R.hooksComponentWithModule thisModule "sidePanelToggleButton" cpt
+sidePanelToggleButtonCpt = here.component "sidePanelToggleButton" cpt
   where
     cpt { state } _ = do
       let (open /\ setOpen) = state

@@ -6,6 +6,7 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Reactix as R
+import Toestand as T
 
 type Reload  = Int
 type ReloadS = R.State Reload
@@ -16,6 +17,11 @@ new = R.useState' 0
 
 bump :: ReloadS -> Effect Unit
 bump (_ /\ setReload) = setReload (_ + 1)
+
+bumpCursor :: T.Cursor Reload -> Effect Unit
+bumpCursor c = do
+  _ <- T.modify (_ + 1) c
+  pure unit
 
 value :: ReloadS -> Reload
 value (val /\ _) = val

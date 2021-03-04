@@ -28,8 +28,8 @@ import Gargantext.Types (ChartType(..), TabType)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Nodes.Corpus.Chart.Pie"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Pie"
 
 newtype ChartMetrics = ChartMetrics {
     "data" :: HistoMetrics
@@ -105,7 +105,7 @@ pie :: Record Props -> R.Element
 pie props = R.createElement pieCpt props []
 
 pieCpt :: R.Component Props
-pieCpt = R.hooksComponentWithModule thisModule "pie" cpt
+pieCpt = here.component "pie" cpt
   where
     cpt { path, session } _ = do
       reload <- R.useState' 0
@@ -133,7 +133,7 @@ bar :: Record Props -> R.Element
 bar props = R.createElement barCpt props []
 
 barCpt :: R.Component Props
-barCpt = R.hooksComponentWithModule thisModule "bar" cpt
+barCpt = here.component "bar" cpt
   where
     cpt {path, session} _ = do
       reload <- R.useState' 0

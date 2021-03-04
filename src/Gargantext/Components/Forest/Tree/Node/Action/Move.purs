@@ -16,8 +16,8 @@ import Gargantext.Sessions (Session, put_)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Forest.Tree.Node.Action.Move"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Move"
 
 moveNodeReq :: Session -> GT.ID -> GT.ID -> Aff (Array GT.ID)
 moveNodeReq session fromId toId =
@@ -27,7 +27,7 @@ moveNode :: R2.Component SubTreeParamsIn
 moveNode = R.createElement moveNodeCpt
 
 moveNodeCpt :: R.Component SubTreeParamsIn
-moveNodeCpt = R.hooksComponentWithModule thisModule "moveNode" cpt
+moveNodeCpt = here.component "moveNode" cpt
   where
     cpt { dispatch, handed, id, nodeType, session, subTreeParams } _ = do
       action@(valAction /\ setAction) :: R.State Action <- R.useState' (MoveNode {params: Nothing})

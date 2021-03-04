@@ -13,7 +13,7 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.Nodes.Corpus.Graph.Tabs"
+here = R2.here "Gargantext.Components.Nodes.Corpus.Graph.Tabs"
 
 type Props =
   ( frontends :: Frontends
@@ -27,7 +27,7 @@ tabs props = R.createElement tabsCpt props []
 
 -- TODO no need for Children here
 tabsCpt :: R.Component Props
-tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
+tabsCpt = here.component "tabs" cpt
   where
     cpt {frontends, query, session, sides} _ = do
       active <- R.useState' 0

@@ -15,7 +15,7 @@ import Gargantext.Types as GT
 import Gargantext.Sessions (Session)
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.Forest.Tree.Node.Tools.Sync"
+here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools.Sync"
 
 
 -- | Sync Node (Graph)
@@ -30,7 +30,7 @@ nodeActionsGraph :: Record NodeActionsGraphProps -> R.Element
 nodeActionsGraph p = R.createElement nodeActionsGraphCpt p []
 
 nodeActionsGraphCpt :: R.Component NodeActionsGraphProps
-nodeActionsGraphCpt = R.hooksComponentWithModule thisModule "nodeActionsGraph" cpt
+nodeActionsGraphCpt = here.component "nodeActionsGraph" cpt
   where
     cpt { id, graphVersions, session, refresh } _ = do
       pure $ H.div { className: "node-actions" } [
@@ -50,7 +50,7 @@ graphUpdateButton :: Record GraphUpdateButtonProps -> R.Element
 graphUpdateButton p = R.createElement graphUpdateButtonCpt p []
 
 graphUpdateButtonCpt :: R.Component GraphUpdateButtonProps
-graphUpdateButtonCpt = R.hooksComponentWithModule thisModule "graphUpdateButton" cpt
+graphUpdateButtonCpt = here.component "graphUpdateButton" cpt
   where
     cpt { id, session, refresh } _ = do
       enabled <- R.useState' true
@@ -86,7 +86,7 @@ nodeActionsNodeList :: Record NodeActionsNodeListProps -> R.Element
 nodeActionsNodeList p = R.createElement nodeActionsNodeListCpt p []
 
 nodeActionsNodeListCpt :: R.Component NodeActionsNodeListProps
-nodeActionsNodeListCpt = R.hooksComponentWithModule thisModule "nodeActionsNodeList" cpt
+nodeActionsNodeListCpt = here.component "nodeActionsNodeList" cpt
   where
     cpt props _ = do
       pure $ H.div { className: "node-actions" } [
@@ -105,7 +105,7 @@ nodeListUpdateButton :: Record NodeListUpdateButtonProps -> R.Element
 nodeListUpdateButton p = R.createElement nodeListUpdateButtonCpt p []
 
 nodeListUpdateButtonCpt :: R.Component NodeListUpdateButtonProps
-nodeListUpdateButtonCpt = R.hooksComponentWithModule thisModule "nodeListUpdateButton" cpt
+nodeListUpdateButtonCpt = here.component "nodeListUpdateButton" cpt
   where
     cpt { listId, nodeId, nodeType, session, refresh } _ = do
       enabled <- R.useState' true

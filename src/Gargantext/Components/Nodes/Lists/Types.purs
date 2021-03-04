@@ -13,8 +13,8 @@ import Gargantext.Prelude
 import Gargantext.Types (ListId, NodeID)
 import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Nodes.Lists.Types"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Lists.Types"
 
 data CacheState = CacheOn | CacheOff
 

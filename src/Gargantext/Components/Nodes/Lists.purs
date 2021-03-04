@@ -8,6 +8,7 @@ import Effect.Aff (launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
+import Toestand as T
 ------------------------------------------------------------------------
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest as Forest
@@ -24,12 +25,13 @@ import Gargantext.Sessions (Session, sessionId, getCacheState, setCacheState)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
+import Gargantext.Utils.Toestand as T2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Nodes.Lists"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Lists"
 ------------------------------------------------------------------------
 type ListsWithForest = (
-    forestProps :: Record Forest.ForestLayoutProps
+    forestProps :: Record Forest.LayoutProps
   , listsProps  :: Record CommonProps
   )
 
@@ -37,7 +39,7 @@ listsWithForest :: R2.Component ListsWithForest
 listsWithForest = R.createElement listsWithForestCpt
 
 listsWithForestCpt :: R.Component ListsWithForest
-listsWithForestCpt = R.hooksComponentWithModule thisModule "listsWithForest" cpt
+listsWithForestCpt = here.component "listsWithForest" cpt
   where
     cpt { forestProps
         , listsProps: listsProps@{ session } } _ = do
@@ -60,7 +62,7 @@ topBar :: R2.Component TopBarProps
 topBar = R.createElement topBarCpt
 
 topBarCpt :: R.Component TopBarProps
-topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
+topBarCpt = here.component "topBar" cpt
   where
     cpt { controls } _ = do
       -- empty for now because the button is moved to the side panel
@@ -73,12 +75,12 @@ topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
 --------------------------------------------------------
 
 type CommonProps = (
-    reloadRoot     :: GUR.ReloadS
-  , tasks :: R.Ref (Maybe GAT.Reductor)
-  , nodeId        :: Int
+    nodeId        :: Int
+  , reloadForest  :: T.Cursor (T2.InitReload T.Cursor)
+  , reloadRoot    :: T.Cursor T2.Reload
   , session       :: Session
   , sessionUpdate :: Session -> Effect Unit
-  , reloadForest :: GUR.ReloadWithInitializeRef
+  , tasks         :: T.Cursor (Maybe GAT.Reductor)
   )
 
 type Props = (
@@ -95,7 +97,7 @@ listsLayout :: R2.Component Props
 listsLayout = R.createElement listsLayoutCpt
 
 listsLayoutCpt :: R.Component Props
-listsLayoutCpt = R.hooksComponentWithModule thisModule "listsLayout" cpt
+listsLayoutCpt = here.component "listsLayout" cpt
   where
     cpt path@{ nodeId, session } _ = do
       let sid = sessionId session
@@ -111,15 +113,15 @@ listsLayoutWithKey :: Record KeyProps -> R.Element
 listsLayoutWithKey props = R.createElement listsLayoutWithKeyCpt props []
 
 listsLayoutWithKeyCpt :: R.Component KeyProps
-listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKey" cpt
+listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt
   where
-    cpt { reloadRoot
-        , tasks
-        , controls
+    cpt { controls
         , nodeId
+        , reloadForest
+        , reloadRoot
         , session
         , sessionUpdate
-        , reloadForest } _ = do
+        , tasks } _ = do
       let path = { nodeId, session }
 
       cacheState <- R.useState' $ getCacheState CacheOn session nodeId
@@ -140,15 +142,15 @@ listsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "listsLayoutWithKe
               , title: "Corpus " <> name
               , user: authors }
           , Tabs.tabs {
-               reloadRoot
-             , tasks
-             , cacheState
+               cacheState
              , corpusData
              , corpusId
              , key: "listsLayoutWithKey-tabs-" <> (show $ fst cacheState)
+             , reloadForest
+             , reloadRoot
              , session
              , sidePanelTriggers: controls.triggers
-             , reloadForest
+             , tasks
              }
           ]
       where
@@ -166,7 +168,7 @@ sidePanel :: R2.Component SidePanelProps
 sidePanel = R.createElement sidePanelCpt
 
 sidePanelCpt :: R.Component SidePanelProps
-sidePanelCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
+sidePanelCpt = here.component "sidePanel" cpt
   where
     cpt { controls: { triggers: { toggleSidePanel
                                 , triggerSidePanel
@@ -210,7 +212,7 @@ sidePanelDocView :: R2.Component SidePanelDocView
 sidePanelDocView = R.createElement sidePanelDocViewCpt
 
 sidePanelDocViewCpt :: R.Component SidePanelDocView
-sidePanelDocViewCpt = R.hooksComponentWithModule thisModule "sidePanelDocView" cpt
+sidePanelDocViewCpt = here.component "sidePanelDocView" cpt
   where
     cpt { session } _ = do
       -- pure $ H.h4 {} [ H.text txt ]

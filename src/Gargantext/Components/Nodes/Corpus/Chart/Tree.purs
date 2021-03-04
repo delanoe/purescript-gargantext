@@ -24,7 +24,7 @@ import Gargantext.Types (ChartType(..), TabType)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.Nodes.Corpus.Chart.Tree"
+here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Tree"
 
 newtype Metrics = Metrics {
     "data" :: Array TreeNode
@@ -77,7 +77,7 @@ tree :: Record Props -> R.Element
 tree props = R.createElement treeCpt props []
 
 treeCpt :: R.Component Props
-treeCpt = R.hooksComponentWithModule thisModule "tree" cpt
+treeCpt = here.component "tree" cpt
   where
     cpt {path, session} _ = do
       reload <- R.useState' 0

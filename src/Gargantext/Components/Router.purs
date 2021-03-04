@@ -33,10 +33,10 @@ import Gargantext.Utils.Toestand as T2
 here :: R2.Here
 here = R2.here "Gargantext.Components.Router"
 
-type Props =
-  ( cursors :: App.Cursors
+type Props = (
+    cursors :: App.Cursors
+  , tasks   :: T.Cursor (Maybe GAT.Reductor)
   , views   :: App.Views
-  , tasks   :: R.Ref (Maybe GAT.Reductor)
   )
 
 router :: R2.Leaf Props

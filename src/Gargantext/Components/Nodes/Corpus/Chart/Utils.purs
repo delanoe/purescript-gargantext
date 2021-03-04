@@ -17,7 +17,7 @@ import Gargantext.Types as T
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
 
-thisModule = "Gargantext.Components.Nodes.Corpus.Chart.Utils"
+here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Utils"
 
 reloadButtonWrap :: GUR.ReloadS -> R.Element -> R.Element
 reloadButtonWrap setReload el = H.div {} [
@@ -53,7 +53,7 @@ chartUpdateButton :: Record ChartUpdateButtonProps -> R.Element
 chartUpdateButton p = R.createElement chartUpdateButtonCpt p []
 
 chartUpdateButtonCpt :: R.Component ChartUpdateButtonProps
-chartUpdateButtonCpt = R.hooksComponentWithModule thisModule "chartUpdateButton" cpt
+chartUpdateButtonCpt = here.component "chartUpdateButton" cpt
   where
     cpt { chartType
         , path: { corpusId, listId, tabType }

@@ -14,9 +14,11 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
+import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Prelude
 
@@ -35,28 +37,29 @@ import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, TabSubType(..), TabType(..), TermList(..), modeTabType)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
-import Partial.Unsafe (unsafePartial)
+import Gargantext.Utils.Toestand as T2
 
-thisModule = "Gargantext.Components.GraphExplorer.Sidebar"
+here :: R2.Here
+here = R2.here "Gargantext.Components.GraphExplorer.Sidebar"
 
-type Props =
-  ( frontends       :: Frontends
+type Props = (
+    frontends       :: Frontends
   , graph           :: SigmaxT.SGraph
   , graphId         :: Int
   , graphVersion    :: GUR.ReloadS
   , metaData        :: GET.MetaData
-  , removedNodeIds  :: R.State SigmaxT.NodeIds
-  , selectedNodeIds :: R.State SigmaxT.NodeIds
+  , reloadForest    :: T.Cursor T2.Reload
+  , removedNodeIds  :: T.Cursor SigmaxT.NodeIds
+  , selectedNodeIds :: T.Cursor SigmaxT.NodeIds
   , session         :: Session
-  , showSidePanel   :: R.State GET.SidePanelState
-  , reloadForest      :: GUR.ReloadS
+  , showSidePanel   :: T.Cursor GET.SidePanelState
   )
 
 sidebar :: Record Props -> R.Element
 sidebar props = R.createElement sidebarCpt props []
 
 sidebarCpt :: R.Component Props
-sidebarCpt = R.hooksComponentWithModule thisModule "sidebar" cpt
+sidebarCpt = here.component "sidebar" cpt
   where
     cpt {showSidePanel: (GET.Closed /\ _)} _children = do
       pure $ RH.div {} []
@@ -68,22 +71,40 @@ sidebarCpt = R.hooksComponentWithModule thisModule "sidebar" cpt
         , sideTab (fst showSidePanel) props
         ]
 
-sideTabNav :: R.State SidePanelState -> Array SideTab -> R.Element
-sideTabNav (sidePanel /\ setSidePanel) sideTabs =
-  R.fragment [ H.div { className: "text-primary center"} [H.text ""]
-                     , H.div {className: "nav nav-tabs"} (liItem <$> sideTabs)
-                     -- , H.div {className: "center"} [ H.text "Doc sideTabs"]
-             ]
-    where
-      liItem :: SideTab -> R.Element
-      liItem  tab =
-        H.div { className : "nav-item nav-link"
-                          <> if (Opened tab) == sidePanel
-                               then " active"
-                               else ""
-            , on: { click: \_ -> setSidePanel $ const (Opened tab)
-                  }
-            } [ H.text $ show tab ]
+type SideTabNavProps = (
+    sidePanel :: T.Cursor GET.SidePanelState
+  , sideTabs  :: Array SideTab
+  )
+
+sideTabNav :: R2.Component SideTabNavProps
+sideTabNav = R.createElement sideTabNavCpt
+
+sideTabNavCpt :: R.Component SideTabNavProps
+sideTabNavCpt = here.component "sideTabNav" cpt
+  where
+    cpt { sidePanel
+        , sideTabs } _ = do
+      sidePanel' <- T.useLive T.unequal sidePanel
+
+      pure $ R.fragment [ H.div { className: "text-primary center"} [H.text ""]
+                        , H.div { className: "nav nav-tabs"} (liItem sidePanel' <$> sideTabs)
+                            -- , H.div {className: "center"} [ H.text "Doc sideTabs"]
+                        ]
+      where
+        liItem :: GET.SidePanelState -> SideTab -> R.Element
+        liItem sidePanel' tab =
+          H.div { className : "nav-item nav-link"
+                            <> if (Opened tab) == sidePanel'
+                                 then " active"
+                                 else ""
+              , on: { click: \_ -> T.write (Opened tab) sidePanel
+                    }
+              } [ H.text $ show tab ]
+
+type SideTabProps = (
+    frontends       :: Frontends
+  , metaData        :: GET.MetaData
+  )
 
 sideTab :: SidePanelState -> Record Props -> R.Element
 sideTab (Opened SideTabLegend) props@{metaData} =
@@ -101,7 +122,7 @@ sideTab (Opened SideTabData) props =
                              props.metaData
                              props.session
                              (SigmaxT.nodesGraphMap props.graph)
-                             props.selectedNodeIds
+                             selectedNodeIds'
                      ]
             ]
     where
@@ -191,7 +212,7 @@ onClickRemove rType props' nodesMap' e = do
 
 
 
-badge :: R.State SigmaxT.NodeIds -> Record SigmaxT.Node -> R.Element
+badge :: T.Cursor SigmaxT.NodeIds -> Record SigmaxT.Node -> R.Element
 badge (_ /\ setNodeIds) {id, label} =
   RH.a { className: "badge badge-pill badge-light"
        , on: { click: onClick }
@@ -200,10 +221,10 @@ badge (_ /\ setNodeIds) {id, label} =
     onClick e = do
       setNodeIds $ const $ Set.singleton id
 
-badges :: SigmaxT.SGraph -> R.State SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
+badges :: SigmaxT.SGraph -> T.Cursor SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
 badges graph (selectedNodeIds /\ _) = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
 
-neighbourBadges :: SigmaxT.SGraph -> R.State SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
+neighbourBadges :: SigmaxT.SGraph -> T.Cursor SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
 neighbourBadges graph (selectedNodeIds /\ _) = SigmaxT.neighbours graph selectedNodes
   where
     selectedNodes = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
@@ -271,10 +292,10 @@ query :: SearchType
       -> GET.MetaData
       -> Session
       -> SigmaxT.NodesMap
-      -> R.State SigmaxT.NodeIds
+      -> SigmaxT.NodeIds
       -> R.Element
-query _ _ _ _ _ (selectedNodeIds /\ _) | Set.isEmpty selectedNodeIds = RH.div {} []
-query searchType frontends (GET.MetaData metaData) session nodesMap (selectedNodeIds /\ _) =
+query _ _ _ _ _ selectedNodeIds | Set.isEmpty selectedNodeIds = RH.div {} []
+query searchType frontends (GET.MetaData metaData) session nodesMap selectedNodeIds =
   query' (head metaData.corpusId)
   where
     query' Nothing         = RH.div {} []

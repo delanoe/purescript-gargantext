@@ -32,7 +32,7 @@ import Gargantext.Types (NodeType(..), ID)
 import Gargantext.Types         as GT
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.Forest.Tree.Node.Action.Upload"
+here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Upload"
 
 -- UploadFile Action
 
@@ -73,7 +73,7 @@ uploadFileView :: Record Props -> R.Element
 uploadFileView props = R.createElement uploadFileViewCpt props []
 
 uploadFileViewCpt :: R.Component Props
-uploadFileViewCpt = R.hooksComponentWithModule thisModule "uploadFileView" cpt
+uploadFileViewCpt = here.component "uploadFileView" cpt
   where
     cpt {dispatch, id, nodeType} _ = do
       mFile    :: R.State (Maybe UploadFile) <- R.useState' Nothing
@@ -151,7 +151,7 @@ uploadButton :: Record UploadButtonProps -> R.Element
 uploadButton props = R.createElement uploadButtonCpt props []
 
 uploadButtonCpt :: R.Component UploadButtonProps
-uploadButtonCpt = R.hooksComponentWithModule thisModule "uploadButton" cpt
+uploadButtonCpt = here.component "uploadButton" cpt
   where
     cpt { dispatch
         , fileType: (fileType /\ setFileType)
@@ -199,7 +199,7 @@ fileTypeView :: Record FileTypeProps -> R.Element
 fileTypeView p = R.createElement fileTypeViewCpt p []
 
 fileTypeViewCpt :: R.Component FileTypeProps
-fileTypeViewCpt = R.hooksComponentWithModule thisModule "fileTypeView" cpt
+fileTypeViewCpt = here.component "fileTypeView" cpt
   where
     cpt { dispatch
         , droppedFile: Just (DroppedFile {blob, fileType}) /\ setDroppedFile
@@ -338,7 +338,7 @@ uploadTermListView :: Record Props -> R.Element
 uploadTermListView props = R.createElement uploadTermListViewCpt props []
 
 uploadTermListViewCpt :: R.Component Props
-uploadTermListViewCpt = R.hooksComponentWithModule thisModule "uploadTermListView" cpt
+uploadTermListViewCpt = here.component "uploadTermListView" cpt
   where
     cpt {dispatch, id, nodeType} _ = do
       mFile :: R.State (Maybe UploadFile) <- R.useState' Nothing
@@ -384,7 +384,7 @@ uploadTermButton :: Record UploadTermButtonProps -> R.Element
 uploadTermButton props = R.createElement uploadTermButtonCpt props []
 
 uploadTermButtonCpt :: R.Component UploadTermButtonProps
-uploadTermButtonCpt = R.hooksComponentWithModule thisModule "uploadTermButton" cpt
+uploadTermButtonCpt = here.component "uploadTermButton" cpt
   where
     cpt {dispatch, id, mFile: (mFile /\ setMFile), nodeType} _ = do
         pure $ H.button {className: "btn btn-primary", disabled, on: {click: onClick}} [ H.text "Upload" ]

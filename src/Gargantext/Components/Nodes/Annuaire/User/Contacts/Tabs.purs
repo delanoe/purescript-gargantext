@@ -49,15 +49,15 @@ modeTabType' Books = CTabAuthors
 modeTabType' Communication = CTabAuthors
 
 type TabsProps = (
-    reloadRoot        :: T.Cursor T2.Reload
-  , tasks             :: R.Ref (Maybe GAT.Reductor)
-  , cacheState        :: R.State LTypes.CacheState
+    cacheState        :: R.State LTypes.CacheState
   , contactData       :: ContactData'
   , frontends         :: Frontends
   , nodeId            :: Int
+  , reloadForest      :: T.Cursor (T2.InitReload T.Cursor)
+  , reloadRoot        :: T.Cursor T2.Reload
   , session           :: Session
   , sidePanelTriggers :: Record LTypes.SidePanelTriggers
-  , reloadForest      :: T.Cursor (T2.InitReload T.Cursor)
+  , tasks             :: T.Cursor (Maybe GAT.Reductor)
   )
 
 tabs :: Record TabsProps -> R.Element
@@ -131,15 +131,15 @@ tabsCpt = here.component "tabs" cpt
 
 
 type NgramsViewTabsProps = (
-    reloadRoot        :: T.Cursor T2.Reload
-  , tasks             :: R.Ref (Maybe GAT.Reductor)
-  , cacheState        :: R.State LTypes.CacheState
+    cacheState        :: R.State LTypes.CacheState
   , defaultListId     :: Int
   , mode              :: Mode
   , nodeId            :: Int
+  , reloadForest      :: T.Cursor (T2.InitReload T.Cursor)
+  , reloadRoot        :: T.Cursor T2.Reload
   , session           :: Session
   , sidePanelTriggers :: Record LTypes.SidePanelTriggers
-  , reloadForest      :: T.Cursor (T2.InitReload T.Cursor)
+  , tasks             :: T.Cursor (Maybe GAT.Reductor)
   )
 
 ngramsView :: R2.Component NgramsViewTabsProps

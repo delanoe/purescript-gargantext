@@ -59,7 +59,7 @@ type TabsProps =
   , reloadRoot        :: T.Cursor T2.Reload
   , session           :: Session
   , sidePanelTriggers :: Record LTypes.SidePanelTriggers
-  , tasks             :: R.Ref (Maybe GAT.Reductor)
+  , tasks             :: T.Cursor (Maybe GAT.Reductor)
   )
 
 tabs :: R2.Leaf TabsProps
@@ -134,5 +134,5 @@ type NTCommon =
   , reloadRoot        :: T.Cursor T2.Reload
   , session           :: Session
   , sidePanelTriggers :: Record LTypes.SidePanelTriggers
-  , tasks             :: R.Ref (Maybe GAT.Reductor)
+  , tasks             :: T.Cursor (Maybe GAT.Reductor)
   )

@@ -9,14 +9,14 @@ import Gargantext.Sessions as Sessions
 import Reactix as R
 import Toestand as T
 
-thisModule :: String
-thisModule = "Gargantext.Components.App"
+here :: R2.Here
+here = R2.here "Gargantext.Components.App"
 
 app :: R.Element
 app = R.createElement appCpt {} []
 
 appCpt :: R.Component ()
-appCpt = R.hooksComponentWithModule thisModule "app" cpt where
+appCpt = here.component "app" cpt where
   cpt _ _ = do
     cell    <- T.useCell emptyApp     -- global data
     views   <- T.useFieldViews cell   -- read-only access for children

@@ -23,7 +23,7 @@ import Gargantext.Components.Table as Tbl
 import Gargantext.Types as T
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.NgramsTable.Components"
+here = R2.here "Gargantext.Components.NgramsTable.Components"
 
 type SearchInputProps =
   ( key :: String  -- to prevent refreshing & losing input
@@ -35,7 +35,7 @@ searchInput :: Record SearchInputProps -> R.Element
 searchInput props = R.createElement searchInputCpt props []
 
 searchInputCpt :: R.Component SearchInputProps
-searchInputCpt = R.hooksComponentWithModule thisModule "searchInput" cpt
+searchInputCpt = here.component "searchInput" cpt
   where
     cpt { onSearch, searchQuery } _ = 
       pure $ R2.row [
@@ -78,7 +78,7 @@ selectionCheckbox :: Record SelectionCheckboxProps -> R.Element
 selectionCheckbox props = R.createElement selectionCheckboxCpt props []
 
 selectionCheckboxCpt :: R.Component SelectionCheckboxProps
-selectionCheckboxCpt = R.hooksComponentWithModule thisModule "selectionCheckbox" cpt
+selectionCheckboxCpt = here.component "selectionCheckbox" cpt
   where
     cpt { allNgramsSelected, dispatch, ngramsSelection } _ = do
       ref <- R.useRef null
@@ -113,7 +113,7 @@ renderNgramsTree :: Record RenderNgramsTree -> R.Element
 renderNgramsTree p = R.createElement renderNgramsTreeCpt p []
 
 renderNgramsTreeCpt :: R.Component RenderNgramsTree
-renderNgramsTreeCpt = R.hooksComponentWithModule thisModule "renderNgramsTree" cpt
+renderNgramsTreeCpt = here.component "renderNgramsTree" cpt
   where
     cpt { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit} _ =
       pure $ H.ul {} [
@@ -159,7 +159,7 @@ tree :: Record TreeProps -> R.Element
 tree p = R.createElement treeCpt p []
 
 treeCpt :: R.Component TreeProps
-treeCpt = R.hooksComponentWithModule thisModule "tree" cpt
+treeCpt = here.component "tree" cpt
   where
     cpt params@{ ngramsClick, ngramsDepth, ngramsEdit, ngramsStyle, ngramsTable } _ =
       pure $
@@ -210,7 +210,7 @@ renderNgramsItem :: R2.Component RenderNgramsItem
 renderNgramsItem = R.createElement renderNgramsItemCpt
 
 renderNgramsItemCpt :: R.Component RenderNgramsItem
-renderNgramsItemCpt = R.hooksComponentWithModule thisModule "renderNgramsItem" cpt
+renderNgramsItemCpt = here.component "renderNgramsItem" cpt
   where
     cpt { dispatch
         , ngrams
