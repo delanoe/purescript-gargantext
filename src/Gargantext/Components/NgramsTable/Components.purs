@@ -289,7 +289,7 @@ termStyle :: T.TermList -> Number -> DOM.Props
 termStyle T.MapTerm     opacity = DOM.style { color: "green", opacity }
 termStyle T.StopTerm      opacity = DOM.style { color: "red",   opacity
                                               , textDecoration: "line-through" }
-termStyle T.CandidateTerm opacity = DOM.style { color: "black", opacity }
+termStyle T.CandidateTerm opacity = DOM.style { color: "#767676", opacity }
 
 tablePatchHasNgrams :: NgramsTablePatch -> NgramsTerm -> Boolean
 tablePatchHasNgrams ngramsTablePatch ngrams =
