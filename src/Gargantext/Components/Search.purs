@@ -10,6 +10,7 @@ import Gargantext.Prelude (class Eq, class Read, class Show)
 
 import Gargantext.Components.Category.Types (Category)
 import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson, genericEnumDecodeJson, genericEnumEncodeJson)
+import Gargantext.Utils.Toestand as T2
 
 
 -- Example:

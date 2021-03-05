@@ -34,12 +34,12 @@ import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Config.REST as REST
 import Gargantext.Ends (class ToUrl, Backend, toUrl)
 import Gargantext.Utils.Reactix (getls)
+import Gargantext.Utils.Toestand as T2
 
 load :: forall c. T.Write c Sessions => c -> Effect Sessions
 load cell = do
   sessions <- loadSessions
-  _ <- T.write sessions cell
-  pure sessions
+  T.write sessions cell
 
 change
   :: forall c

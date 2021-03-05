@@ -210,7 +210,7 @@ folderIconCpt = here.component "folderIcon" cpt
   where
     cpt { folderOpen, nodeType } _ = do
       open <- T.read folderOpen
-      pure $ H.a { className: "folder-icon", on: { click: \_ -> T.modify not folderOpen } }
+      pure $ H.a { className: "folder-icon", on: { click: \_ -> T2.modify_ not folderOpen } }
         [ H.i { className: GT.fldr nodeType open } [] ]
 
 type ChevronIconProps = (
@@ -231,7 +231,7 @@ chevronIconCpt = here.component "chevronIcon" cpt
     cpt { folderOpen, handed, isLeaf: false, nodeType } _ = do
       open <- T.read folderOpen
       pure $ H.a { className: "chevron-icon"
-          , on: { click: \_ -> T.modify not folderOpen }
+          , on: { click: \_ -> T2.modify_ not folderOpen }
           }
         [ H.i { className: if open
                             then "fa fa-chevron-down"

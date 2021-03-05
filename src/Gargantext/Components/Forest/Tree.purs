@@ -172,7 +172,7 @@ performAction (DeleteNode nt) p@{ forestOpen
     GT.NodePublic GT.FolderPublic -> void $ deleteNode session nt id
     GT.NodePublic _               -> void $ unpublishNode session parent_id id
     _                             -> void $ deleteNode session nt id
-  _ <- liftEffect $ T.modify (Set.delete (mkNodeId session id)) forestOpen
+  liftEffect $ T2.modify_ (Set.delete (mkNodeId session id)) forestOpen
   performAction RefreshTree p
 performAction (DoSearch task) p@{ tasks
                                 , tree: (NTree (LNode {id}) _) } = liftEffect $ do
@@ -198,14 +198,14 @@ performAction (ShareTeam username) p@{ tree: (NTree (LNode {id}) _)} =
 performAction (SharePublic { params }) p@{ forestOpen } = traverse_ f params where
   f (SubTreeOut { in: inId, out }) = do
     void $ Share.shareReq p.session inId $ Share.SharePublicParams { node_id: out }
-    _ <- liftEffect $ T.modify (Set.insert (mkNodeId p.session out)) forestOpen
+    liftEffect $ T2.modify_ (Set.insert (mkNodeId p.session out)) forestOpen
     performAction RefreshTree p
 performAction (AddContact params) p@{ tree: (NTree (LNode {id}) _) } =
     void $ Contact.contactReq p.session id params
 performAction (AddNode name nodeType) p@{ forestOpen
                                         , tree: (NTree (LNode { id }) _) } = do
   task <- addNode p.session id $ AddNodeValue {name, nodeType}
-  _ <- liftEffect $ T.modify (Set.insert (mkNodeId p.session id)) forestOpen
+  liftEffect $ T2.modify_ (Set.insert (mkNodeId p.session id)) forestOpen
   performAction RefreshTree p
 performAction (UploadFile nodeType fileType mName blob) p@{ tasks
                                                           , tree: (NTree (LNode { id }) _) } = do
@@ -230,7 +230,7 @@ performAction (MoveNode {params}) p@{ forestOpen
                                     , session } = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     void $ moveNodeReq p.session in' out
-    _ <- liftEffect $ T.modify (Set.insert (mkNodeId session out)) forestOpen
+    liftEffect $ T2.modify_ (Set.insert (mkNodeId session out)) forestOpen
     performAction RefreshTree p
 performAction (MergeNode { params }) p = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do

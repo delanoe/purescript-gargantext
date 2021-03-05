@@ -21,6 +21,7 @@ import Gargantext.Hooks.Loader as GHL
 import Gargantext.Sessions (Session, Sessions, Action(Logout), unSessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Login"
@@ -109,7 +110,7 @@ renderBackend cursor backend@(Backend {name}) =
   , H.td {} [ H.a { on: { click }} [ H.text (backendLabel name) ]]
   , H.td {} [ H.text $ "garg://" <> name ]] where
     className = "fa fa-hand-o-right" -- "glyphitem fa fa-log-in"
-    click _ = T.write (Just backend) cursor
+    click _ = T2.write_ (Just backend) cursor
 
 backendLabel :: String -> String
 backendLabel =

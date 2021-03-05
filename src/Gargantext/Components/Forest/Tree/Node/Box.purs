@@ -81,7 +81,7 @@ nodePopupCpt = here.component "nodePopupView" cpt where
   editIcon _ true = H.div {} []
   editIcon isOpen false =
     H.a { className: glyphicon "pencil", id: "rename1"
-        , title    : "Rename", on: { click: \_ -> void $ T.write true isOpen } } []
+        , title    : "Rename", on: { click: \_ -> T2.write_ true isOpen } } []
   panelBody :: T.Cursor (Maybe NodeAction) -> Record NodePopupProps -> R.Element
   panelBody nodePopupState {dispatch: d, nodeType} =
     let (SettingsBox { edit, doc, buttons }) = settingsBox nodeType in
@@ -134,7 +134,7 @@ buttonClickCpt = here.component "buttonClick" cpt where
     action <- T.useLive T.unequal state
     let className = glyphiconActive (glyphiconNodeAction todo) (action == (Just todo))
     let style = iconAStyle nodeType todo
-    let click _ = T.write (if action == Just todo then Nothing else Just todo) state
+    let click _ = T2.write_ (if action == Just todo then Nothing else Just todo) state
     pure $ H.div { className: "col-1" }
       [ H.a { style, className, id: show todo, title: show todo, on: { click } } [] ]
         -- | Open the help indications if selected already

@@ -26,6 +26,7 @@ import Gargantext.Types as GT
 import Gargantext.Utils (glyphicon, toggleSet)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.ReactTooltip as ReactTooltip
+import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools"
@@ -81,8 +82,8 @@ textInputBoxCpt = here.component "textInputBox" cpt where
               , className: "text-danger col-2 " <> glyphicon "times" } [] ]
       submit ref _ = do
         launchAff_ $ dispatch (boxAction $ R.readRef ref)
-        void $ T.write false isOpen
-      click _ = void $ T.write false isOpen
+        T2.write_ false isOpen
+      click _ = T2.write_ false isOpen
 
 type DefaultText = String
 
@@ -223,7 +224,7 @@ nodeLinkCpt = here.component "nodeLink" cpt where
            -- NOTE Don't toggle tree if it is not selected
            -- click on closed -> open
            -- click on open   -> ?
-           click _ = when (not isSelected) (void $ T.write true folderOpen)
+           click _ = when (not isSelected) (T2.write_ true folderOpen)
            tooltipId = "node-link-" <> show id
            href = url frontends $ GT.NodePath (sessionId session) nodeType (Just id)
 

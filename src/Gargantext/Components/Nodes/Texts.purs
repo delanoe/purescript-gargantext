@@ -37,8 +37,8 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Texts"
 
 --------------------------------------------------------
-type TextsWithForest a =
-  ( forestProps :: Record (Forest.LayoutProps a)
+type TextsWithForest = (
+    forestProps :: Record Forest.LayoutProps
   , textsProps  :: Record CommonProps
   )
 
@@ -77,34 +77,37 @@ topBarCpt = here.component "topBar" cpt
 
 
 
-type CommonProps =
-  ( frontends :: Frontends
-  , nodeId    :: Int
-  , session   :: R.Context Session
+type CommonProps = (
+    frontends :: Frontends
+  , nodeId    :: NodeID
+  , session   :: Session
   )
 
 type Props = ( controls :: Record TextsLayoutControls | CommonProps )
-
-type KeyProps =
-  ( key       :: String
-  , controls  :: Record TextsLayoutControls
-  , frontends :: Frontends
-  , nodeId    :: Int
-  , session   :: Session
-  )
 
 textsLayout :: R2.Component Props
 textsLayout = R.createElement textsLayoutCpt
 
 textsLayoutCpt :: R.Component Props
 textsLayoutCpt = here.component "textsLayout" cpt where
-  cpt { controls, frontends, nodeId, session, sessionUpdate } children = do
-    session' <- R.useContext session
-    pure $
-      textsLayoutWithKey
-      { controls, frontends, key, nodeId, session: session' } children where
-        key = show sid <> "-" <> show nodeId where
-          sid = sessionId session
+  cpt { controls, frontends, nodeId, session } children = do
+    pure $ textsLayoutWithKey { controls
+                              , frontends
+                              , key
+                              , nodeId
+                              , session } children
+      where
+        key = show sid <> "-" <> show nodeId
+          where
+            sid = sessionId session
+
+type KeyProps = (
+    key       :: String
+  , controls  :: Record TextsLayoutControls
+  , frontends :: Frontends
+  , nodeId    :: NodeID
+  , session   :: Session
+  )
 
 textsLayoutWithKey :: R2.Component KeyProps
 textsLayoutWithKey = R.createElement textsLayoutWithKeyCpt
@@ -112,7 +115,7 @@ textsLayoutWithKey = R.createElement textsLayoutWithKeyCpt
 textsLayoutWithKeyCpt :: R.Component KeyProps
 textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
   where
-    cpt { controls, frontends, nodeId, session, sessionUpdate } _children = do
+    cpt { controls, frontends, nodeId, session } _children = do
       cacheState <- R.useState' $ getCacheState NT.CacheOff session nodeId
 
       pure $ loader { nodeId, session } loadCorpusWithChild $
@@ -121,16 +124,27 @@ textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
               CorpusInfo { authors, desc, query } = getCorpusInfo h.fields
               title = "Corpus " <> name
           R.fragment
-            [ Table.tableHeaderLayout
-              { afterCacheStateChange, cacheState, date, desc, query, title, user: authors
-              , key: "textsLayoutWithKey-" <> (show $ fst cacheState) }
-            , tabs { cacheState, corpusData, corpusId, frontends, session
+            [ Table.tableHeaderLayout { afterCacheStateChange
+                                      , cacheState
+                                      , date
+                                      , desc
+                                      , query
+                                      , title
+                                      , user: authors
+                                      , key: "textsLayoutWithKey-" <> (show $ fst cacheState) }
+            , tabs { cacheState
+                   , corpusData
+                   , corpusId
+                   , frontends
+                   , session
                    , sidePanelTriggers: controls.triggers }
             ]
       where
         afterCacheStateChange cacheState = do
           launchAff_ $ clearCache unit
-          sessionUpdate $ setCacheState session nodeId cacheState
+          -- TODO
+          --sessionUpdate $ setCacheState session nodeId cacheState
+          --_ <- setCacheState session nodeId cacheState
 
 data Mode = MoreLikeFav | MoreLikeTrash
 
@@ -148,7 +162,7 @@ modeTabType MoreLikeTrash  = CTabSources  -- TODO
 type TabsProps =
   ( cacheState      :: R.State NT.CacheState
   , corpusData      :: CorpusData
-  , corpusId        :: Int
+  , corpusId        :: NodeID
   , frontends       :: Frontends
   , session         :: Session
   , sidePanelTriggers :: Record SidePanelTriggers
@@ -391,9 +405,9 @@ sidePanelCpt = here.component "sidePanel" cpt
       ]
 
 type SidePanelDocView = (
-    corpusId :: Maybe NodeID
-  , listId   :: Maybe ListId
-  , nodeId   :: Maybe NodeID
+    mCorpusId :: Maybe NodeID
+  , mListId   :: Maybe ListId
+  , mNodeId   :: Maybe NodeID
   , session  :: Session
   )
 
@@ -403,15 +417,16 @@ sidePanelDocView = R.createElement sidePanelDocViewCpt
 sidePanelDocViewCpt :: R.Component SidePanelDocView
 sidePanelDocViewCpt = here.component "sidePanelDocView" cpt
   where
-    cpt { listId: Nothing } _ = do
+    cpt { mListId: Nothing } _ = do
       pure $ H.div {} []
-    cpt { nodeId: Nothing } _ = do
+    cpt { mNodeId: Nothing } _ = do
       pure $ H.div {} []
-    cpt { corpusId
-        , listId: Just listId
-        , nodeId: Just nodeId
+    cpt { mCorpusId
+        , mListId: Just listId
+        , mNodeId: Just nodeId
         , session } _ = do
+      let session' = R.createContext session
       pure $ D.documentLayout { listId
-                              , corpusId
+                              , mCorpusId
                               , nodeId
-                              , session } []
+                              , session: session' } []

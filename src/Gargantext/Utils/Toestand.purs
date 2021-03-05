@@ -2,6 +2,7 @@ module Gargantext.Utils.Toestand
   ( class Reloadable, reload
   , Reload, newReload, InitReload(..), ready
   , useCursed, useIdentityCursor, useMemberCursor
+  , write_, modify_
   ) where
 
 import Prelude (class Ord, Unit, bind, identity, pure, unit, void, ($), (+), (>>=))
@@ -22,10 +23,10 @@ newReload :: Reload
 newReload = 0
 
 instance reloadableCellReload :: Reloadable (T.Cell Int) where
-  reload cell = void $ T.modify (_ + 1) cell
+  reload cell = modify_ (_ + 1) cell
 
 instance reloadableCursorReload :: Reloadable (T.Cursor Int) where
-  reload cell = void $ T.modify (_ + 1) cell
+  reload cell = modify_ (_ + 1) cell
 
 instance reloadableInitReloadCell :: Reloadable (c Reload) => Reloadable (T.Cell (InitReload c)) where
   reload cell = do
@@ -51,7 +52,7 @@ ready :: forall cell c. T.ReadWrite cell (InitReload c) => T.ReadWrite (c Reload
 ready cell with = do
   val <- T.read cell
   case val of
-    Init    -> void $ T.write (Ready with) cell
+    Init    -> write_ (Ready with) cell
     Ready _ -> pure unit
 
 -- | Turns a Cell into a Cursor.
@@ -74,3 +75,9 @@ useMemberCursor val cell = T.useCursor (Set.member val) (toggleSet val) cell
 toggleSet :: forall s. Ord s => s -> Boolean -> Set s -> Set s
 toggleSet val true  set = Set.insert val set
 toggleSet val false set = Set.delete val set
+
+modify_ :: forall cell val. T.ReadWrite cell val => (val -> val) -> cell -> Effect Unit
+modify_ f cell = void $ T.modify f cell
+
+write_ :: forall cell val. T.Write cell val => val -> cell -> Effect Unit
+write_ val cell = void $ T.write val cell

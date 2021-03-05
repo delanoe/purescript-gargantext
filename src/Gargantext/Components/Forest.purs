@@ -76,8 +76,7 @@ forestCpt = here.component "forest" cpt where
     -- NOTE: this is a hack to reload the forest on demand
     tasks'        <- GAT.useTasks reloadRoot reloadForest
     R.useEffect' $ do
-      _ <- T.write (Just tasks') tasks
-      pure unit
+      T2.write_ (Just tasks') tasks
     handed'       <- T.useLive T.unequal handed
     reloadForest' <- T.useLive T.unequal reloadForest
     reloadRoot'   <- T.useLive T.unequal reloadRoot
@@ -124,8 +123,7 @@ plus handed showLogin backend = H.div { className: "row" }
   where
     click _ = do
       -- _ <- T.modify (const Nothing) backend
-      _ <- T.write true showLogin
-      pure unit
+      T2.write_ true showLogin
     title = "Add or remove connections to the server(s)."
     divClass = "fa fa-universal-access"
     buttonClass =

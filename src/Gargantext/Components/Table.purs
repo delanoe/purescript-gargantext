@@ -41,8 +41,8 @@ stateParams {pageSize, page, orderBy, searchType} = {offset, limit, orderBy, sea
     limit = pageSizes2Int pageSize
     offset = limit * (page - 1)
 
-type TableHeaderLayoutProps =
-  ( afterCacheStateChange :: NT.CacheState -> Effect Unit
+type TableHeaderLayoutProps = (
+    afterCacheStateChange :: NT.CacheState -> Effect Unit
   , cacheState :: R.State NT.CacheState
   , date  :: String
   , desc  :: String

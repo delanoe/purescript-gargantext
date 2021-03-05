@@ -19,6 +19,7 @@ import Gargantext.Sessions (Session, post)
 import Gargantext.Types (ID)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Contact"
@@ -69,7 +70,7 @@ textInputBoxCpt = here.component "textInputBox" cpt where
               click _ = do
                 firstname <- T.read first
                 lastname  <- T.read last
-                _ <- T.write false isOpen
+                T2.write_ false isOpen
                 launchAff $
                   dispatch (boxAction $ AddContactParams { firstname, lastname })
           cancelBtn =
@@ -77,4 +78,4 @@ textInputBoxCpt = here.component "textInputBox" cpt where
             { className: "btn text-danger glyphitem fa fa-remove col-md-2 pull-left"
             , on: { click }, title: "Cancel", type: "button"
             } [] where
-              click _ = void $ T.write false isOpen
+              click _ = T2.write_ false isOpen

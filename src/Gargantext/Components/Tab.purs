@@ -12,8 +12,8 @@ import Gargantext.Utils.Reactix as R2
 here :: R2.Here
 here = R2.here "Gargantext.Components.Tab"
 
-type TabsProps =
-  ( selected :: Int
+type TabsProps = (
+    selected :: Int
   , tabs     :: Array (Tuple String R.Element)
   )
 

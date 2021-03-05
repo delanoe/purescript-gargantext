@@ -11,7 +11,7 @@ import Data.Maybe (Maybe(..), fromJust, maybe)
 import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
 import Data.Set as Set
-import Data.Tuple (fst, snd, Tuple(..))
+import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Math (log)
@@ -126,10 +126,12 @@ explorerCpt = here.component "explorer" cpt
                                             , graph
                                             , graphId
                                             , hyperdataGraph
-                                            , session
                                             , reloadForest: \_ -> GUR.bumpCursor reloadForest
+                                            , session
                                             }
-      multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
+      multiSelectEnabled' <- T.useLive T.unequal controls.multiSelectEnabled
+      showTree' <- T.useLive T.unequal controls.showTree
+      multiSelectEnabledRef <- R.useRef multiSelectEnabled'
 
       forestOpen <- T2.useCursed $ Set.empty
 
@@ -145,21 +147,21 @@ explorerCpt = here.component "explorer" cpt
           R.setRef dataRef graph
           R.setRef graphVersionRef (GUR.value graphVersion)
           -- Reinitialize bunch of state as well.
-          snd controls.removedNodeIds  $ const SigmaxT.emptyNodeIds
-          snd controls.selectedNodeIds $ const SigmaxT.emptyNodeIds
-          snd controls.showEdges       $ const SigmaxT.EShow
-          snd controls.forceAtlasState $ const forceAtlasS
-          snd controls.graphStage      $ const Graph.Init
-          snd controls.showSidePanel   $ const GET.InitialClosed
+          T2.write_ SigmaxT.emptyNodeIds controls.removedNodeIds
+          T2.write_ SigmaxT.emptyNodeIds controls.selectedNodeIds
+          T2.write_ SigmaxT.EShow controls.showEdges
+          T2.write_ forceAtlasS controls.forceAtlasState
+          T2.write_ Graph.Init controls.graphStage
+          T2.write_ GET.InitialClosed controls.showSidePanel
 
       pure $
         RH.div { className: "graph-meta-container" } [
           RH.div { className: "fixed-top navbar navbar-expand-lg"
                  , id: "graph-explorer" }
             [ rowToggle
-                    [ col [ spaces [ Toggle.treeToggleButton controls.showTree         ]]
-                    , col [ spaces [ Toggle.controlsToggleButton controls.showControls ]]
-                    , col [ spaces [ Toggle.sidebarToggleButton controls.showSidePanel ]]
+                    [ col [ spaces [ Toggle.treeToggleButton { state: controls.showTree } [] ]]
+                    , col [ spaces [ Toggle.controlsToggleButton { state: controls.showControls } [] ]]
+                    , col [ spaces [ Toggle.sidebarToggleButton { state: controls.showSidePanel } [] ]]
                     ]
             ]
         , RH.div { className: "graph-container" } [
@@ -174,7 +176,7 @@ explorerCpt = here.component "explorer" cpt
                      , route
                      , reloadForest
                      , sessions
-                     , show: fst controls.showTree
+                     , show: showTree'
                      , showLogin: showLogin
                      , tasks
                      }
@@ -267,10 +269,10 @@ type MSidebarProps =
   , graphId         :: GET.GraphId
   , graphVersion    :: GUR.ReloadS
   , reloadForest    :: T.Cursor T2.Reload
-  , removedNodeIds  :: R.State SigmaxT.NodeIds
-  , selectedNodeIds :: R.State SigmaxT.NodeIds
+  , removedNodeIds  :: T.Cursor SigmaxT.NodeIds
+  , selectedNodeIds :: T.Cursor SigmaxT.NodeIds
   , session         :: Session
-  , showSidePanel   :: R.State GET.SidePanelState
+  , showSidePanel   :: T.Cursor GET.SidePanelState
   )
 
 type GraphProps = (
@@ -297,19 +299,33 @@ graphViewCpt = here.component "graphView" cpt
         , hyperdataGraph: GET.HyperdataGraph { mCamera }
         , mMetaData
         , multiSelectEnabledRef } _children = do
+      edgeConfluence' <- T.useLive T.unequal controls.edgeConfluence
+      edgeWeight' <- T.useLive T.unequal controls.edgeWeight
+      multiSelectEnabled' <- T.useLive T.unequal controls.multiSelectEnabled
+      nodeSize' <- T.useLive T.unequal controls.nodeSize
+      removedNodeIds' <- T.useLive T.unequal controls.removedNodeIds
+      selectedNodeIds' <- T.useLive T.unequal controls.selectedNodeIds
+      showEdges' <- T.useLive T.unequal controls.showEdges
+      showLouvain' <- T.useLive T.unequal controls.showLouvain
+
       -- TODO Cache this?
       let louvainGraph =
-            if (fst controls.showLouvain) then
+            if showLouvain' then
               let louvain = Louvain.louvain unit in
               let cluster = Louvain.init louvain (SigmaxT.louvainNodes graph) (SigmaxT.louvainEdges graph) in
               SigmaxT.louvainGraph graph cluster
             else
               graph
-      let transformedGraph = transformGraph controls louvainGraph
+      let transformedGraph = transformGraph louvainGraph { edgeConfluence'
+                                                                  , edgeWeight'
+                                                                  , nodeSize'
+                                                                  , removedNodeIds'
+                                                                  , selectedNodeIds'
+                                                                  , showEdges' }
       let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas }) -> startForceAtlas) mMetaData
 
-      R.useEffect1' (fst controls.multiSelectEnabled) $ do
-        R.setRef multiSelectEnabledRef $ fst controls.multiSelectEnabled
+      R.useEffect1' multiSelectEnabled' $ do
+        R.setRef multiSelectEnabledRef multiSelectEnabled'
 
       pure $ Graph.graph { elRef
                          , forceAtlas2Settings: Graph.forceAtlas2Settings
@@ -323,7 +339,7 @@ graphViewCpt = here.component "graphView" cpt
                          , stage: controls.graphStage
                          , startForceAtlas
                          , transformedGraph
-                         }
+                         } []
 
 convert :: GET.GraphData -> Tuple (Maybe GET.MetaData) SigmaxT.SGraph
 convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
@@ -384,17 +400,30 @@ getNodes session graphVersion graphId =
                         (Just graphId)
                         ("?version=" <> (show $ GUR.value graphVersion))
 
+type LiveProps = (
+    edgeConfluence'  :: Range.NumberRange
+  , edgeWeight'      :: Range.NumberRange
+  , nodeSize'        :: Range.NumberRange
+  , removedNodeIds'  :: SigmaxT.NodeIds
+  , selectedNodeIds' :: SigmaxT.NodeIds
+  , showEdges'       :: SigmaxT.ShowEdgesState
+  )
 
-transformGraph :: Record Controls.Controls -> SigmaxT.SGraph -> SigmaxT.SGraph
-transformGraph controls graph = SigmaxT.Graph {nodes: newNodes, edges: newEdges}
+transformGraph :: SigmaxT.SGraph -> Record LiveProps -> SigmaxT.SGraph
+transformGraph graph { edgeConfluence'
+                     , edgeWeight'
+                     , nodeSize'
+                     , removedNodeIds'
+                     , selectedNodeIds'
+                     , showEdges' } = SigmaxT.Graph {nodes: newNodes, edges: newEdges}
   where
     edges = SigmaxT.graphEdges graph
     nodes = SigmaxT.graphNodes graph
     selectedEdgeIds =
       Set.fromFoldable
         $ Seq.map _.id
-        $ SigmaxT.neighbouringEdges graph (fst controls.selectedNodeIds)
-    hasSelection = not $ Set.isEmpty (fst controls.selectedNodeIds)
+        $ SigmaxT.neighbouringEdges graph selectedNodeIds'
+    hasSelection = not $ Set.isEmpty selectedNodeIds'
 
     newEdges' = Seq.filter edgeFilter $ Seq.map (
       edgeHideWeight <<< edgeHideConfluence <<< edgeShowFilter <<< edgeMarked
@@ -406,32 +435,32 @@ transformGraph controls graph = SigmaxT.Graph {nodes: newNodes, edges: newEdges}
     nodeFilter n = nodeRemovedFilter n
 
     nodeSizeFilter :: Record SigmaxT.Node -> Boolean
-    nodeSizeFilter node@{ size } = Range.within (fst controls.nodeSize) size
+    nodeSizeFilter node@{ size } = Range.within nodeSize' size
 
-    nodeRemovedFilter node@{ id } = not $ Set.member id $ fst controls.removedNodeIds
+    nodeRemovedFilter node@{ id } = not $ Set.member id removedNodeIds'
 
     edgeConfluenceFilter :: Record SigmaxT.Edge -> Boolean
-    edgeConfluenceFilter edge@{ confluence } = Range.within (fst controls.edgeConfluence) confluence
+    edgeConfluenceFilter edge@{ confluence } = Range.within edgeConfluence' confluence
     edgeWeightFilter :: Record SigmaxT.Edge -> Boolean
-    edgeWeightFilter edge@{ weightIdx } = Range.within (fst controls.edgeWeight) $ toNumber weightIdx
+    edgeWeightFilter edge@{ weightIdx } = Range.within edgeWeight' $ toNumber weightIdx
 
     edgeHideConfluence :: Record SigmaxT.Edge -> Record SigmaxT.Edge
     edgeHideConfluence edge@{ confluence } =
-      if Range.within (fst controls.edgeConfluence) confluence then
+      if Range.within edgeConfluence' confluence then
         edge
       else
         edge { hidden = true }
 
     edgeHideWeight :: Record SigmaxT.Edge -> Record SigmaxT.Edge
     edgeHideWeight edge@{ weightIdx } =
-      if Range.within (fst controls.edgeWeight) $ toNumber weightIdx then
+      if Range.within edgeWeight' $ toNumber weightIdx then
         edge
       else
         edge { hidden = true }
 
     edgeShowFilter :: Record SigmaxT.Edge -> Record SigmaxT.Edge
     edgeShowFilter edge =
-      if (SigmaxT.edgeStateHidden $ fst controls.showEdges) then
+      if SigmaxT.edgeStateHidden showEdges' then
         edge { hidden = true }
       else
         edge
@@ -450,14 +479,14 @@ transformGraph controls graph = SigmaxT.Graph {nodes: newNodes, edges: newEdges}
 
     nodeMarked :: Record SigmaxT.Node -> Record SigmaxT.Node
     nodeMarked node@{ id } =
-      if Set.member id (fst controls.selectedNodeIds) then
+      if Set.member id selectedNodeIds' then
         node { borderColor = "#000", type = "selected" }
       else
         node
 
     nodeHideSize :: Record SigmaxT.Node -> Record SigmaxT.Node
     nodeHideSize node@{ size } =
-      if Range.within (fst controls.nodeSize) size then
+      if Range.within nodeSize' size then
         node
       else
         node { hidden = true }

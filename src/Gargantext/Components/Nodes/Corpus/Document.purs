@@ -111,10 +111,10 @@ docViewCpt = here.component "docView" cpt
         NodePoly {hyperdata: Document doc} = document
 
 type LayoutProps =
- (  listId   :: ListId
-  , corpusId :: Maybe NodeID
-  , nodeId   :: NodeID
-  , session  :: R.Context Session
+ (  listId    :: ListId
+  , mCorpusId :: Maybe NodeID
+  , nodeId    :: NodeID
+  , session   :: R.Context Session
   )
 
 documentMainLayout :: R2.Component LayoutProps
@@ -129,14 +129,14 @@ documentLayout = R.createElement documentLayoutCpt
 
 documentLayoutCpt :: R.Component LayoutProps
 documentLayoutCpt = here.component "documentLayout" cpt where
-  cpt { listId, corpusId, nodeId, session } children = cp <$> R.useContext session where
-    cp s = documentLayoutWithKey { key, listId, corpusId, nodeId, session: s } children where
+  cpt { listId, mCorpusId, nodeId, session } children = cp <$> R.useContext session where
+    cp s = documentLayoutWithKey { key, listId, mCorpusId, nodeId, session: s } children where
       key = show (sessionId s) <> "-" <> show nodeId
 
 type KeyLayoutProps =
   ( key      :: String
   , listId   :: ListId
-  , corpusId :: Maybe NodeID
+  , mCorpusId :: Maybe NodeID
   , nodeId   :: NodeID
   , session  :: Session
   )
@@ -147,12 +147,12 @@ documentLayoutWithKey = R.createElement documentLayoutWithKeyCpt
 documentLayoutWithKeyCpt :: R.Component KeyLayoutProps
 documentLayoutWithKeyCpt = here.component "documentLayoutWithKey" cpt
   where
-    cpt { listId, corpusId, nodeId, session } _ = do
+    cpt { listId, mCorpusId, nodeId, session } _ = do
       useLoader path loadData $ \loaded ->
         docViewWrapper { loaded, path } []
       where
         tabType = TabDocument (TabNgramType CTabTerms)
-        path = { listIds: [listId], corpusId, nodeId, session, tabType }
+        path = { listIds: [listId], mCorpusId, nodeId, session, tabType }
 
 ------------------------------------------------------------------------
 

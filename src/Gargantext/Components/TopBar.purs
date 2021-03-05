@@ -13,6 +13,7 @@ import Gargantext.Prelude
 import Gargantext.Components.Themes (themeSwitcher, defaultTheme, allThemes)
 import Gargantext.Types (Handed(..), reverseHanded)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.TopBar"
@@ -248,6 +249,6 @@ handedChooserCpt = here.component "handedChooser" cpt
     handedClass LeftHanded = "fa fa-hand-o-left"
     handedClass RightHanded = "fa fa-hand-o-right"
 
-    onClick handed = T.modify (\h -> case h of
+    onClick handed = T2.modify_ (\h -> case h of
       LeftHanded  -> RightHanded
       RightHanded -> LeftHanded) handed

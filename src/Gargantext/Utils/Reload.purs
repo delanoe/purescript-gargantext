@@ -8,6 +8,8 @@ import Effect (Effect)
 import Reactix as R
 import Toestand as T
 
+import Gargantext.Utils.Toestand as T2
+
 type Reload  = Int
 type ReloadS = R.State Reload
 type ReloadSRef = R.Ref
@@ -19,9 +21,7 @@ bump :: ReloadS -> Effect Unit
 bump (_ /\ setReload) = setReload (_ + 1)
 
 bumpCursor :: T.Cursor Reload -> Effect Unit
-bumpCursor c = do
-  _ <- T.modify (_ + 1) c
-  pure unit
+bumpCursor c = T2.modify_ (_ + 1) c
 
 value :: ReloadS -> Reload
 value (val /\ _) = val

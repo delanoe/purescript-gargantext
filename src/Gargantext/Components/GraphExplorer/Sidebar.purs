@@ -18,6 +18,8 @@ import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 import Reactix.DOM.HTML as H
+import Record as Record
+import Record.Extra as RX
 import Toestand as T
 
 import Gargantext.Prelude
@@ -34,7 +36,7 @@ import Gargantext.Data.Array (mapMaybe)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType, TabSubType(..), TabType(..), TermList(..), modeTabType)
+import Gargantext.Types (CTabNgramType, NodeID, TabSubType(..), TabType(..), TermList(..), modeTabType)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
 import Gargantext.Utils.Toestand as T2
@@ -42,17 +44,21 @@ import Gargantext.Utils.Toestand as T2
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.Sidebar"
 
-type Props = (
-    frontends       :: Frontends
-  , graph           :: SigmaxT.SGraph
-  , graphId         :: Int
-  , graphVersion    :: GUR.ReloadS
+type Common = (
+    graphId         :: NodeID
   , metaData        :: GET.MetaData
   , reloadForest    :: T.Cursor T2.Reload
   , removedNodeIds  :: T.Cursor SigmaxT.NodeIds
   , selectedNodeIds :: T.Cursor SigmaxT.NodeIds
   , session         :: Session
+  )
+
+type Props = (
+    frontends       :: Frontends
+  , graph           :: SigmaxT.SGraph
+  , graphVersion    :: GUR.ReloadS
   , showSidePanel   :: T.Cursor GET.SidePanelState
+  | Common
   )
 
 sidebar :: Record Props -> R.Element
@@ -61,15 +67,26 @@ sidebar props = R.createElement sidebarCpt props []
 sidebarCpt :: R.Component Props
 sidebarCpt = here.component "sidebar" cpt
   where
-    cpt {showSidePanel: (GET.Closed /\ _)} _children = do
-      pure $ RH.div {} []
-    cpt {showSidePanel: (GET.InitialClosed /\ _)} _children = do
-      pure $ RH.div {} []
-    cpt props@{metaData, showSidePanel} _children = do
-      pure $ RH.div { id: "sp-container" }
-        [ sideTabNav showSidePanel [SideTabLegend, SideTabData, SideTabCommunity]
-        , sideTab (fst showSidePanel) props
-        ]
+    cpt props@{ metaData, showSidePanel } _ = do
+      showSidePanel' <- T.useLive T.unequal showSidePanel
+
+      case showSidePanel' of
+        GET.Closed -> pure $ RH.div {} []
+        GET.InitialClosed -> pure $ RH.div {} []
+        GET.Opened sideTabT -> do
+          let sideTab' = case sideTabT of
+                SideTabLegend -> sideTabLegend sideTabProps []
+                SideTabData -> sideTabData sideTabProps []
+                SideTabCommunity -> sideTabCommunity sideTabProps []
+                _ -> H.div {} []
+
+          pure $ RH.div { id: "sp-container" }
+            [ sideTabNav { sidePanel: showSidePanel
+                         , sideTabs: [SideTabLegend, SideTabData, SideTabCommunity] } []
+            , sideTab'
+            ]
+      where
+        sideTabProps = RX.pick props :: Record SideTabProps
 
 type SideTabNavProps = (
     sidePanel :: T.Cursor GET.SidePanelState
@@ -101,142 +118,217 @@ sideTabNavCpt = here.component "sideTabNav" cpt
                     }
               } [ H.text $ show tab ]
 
-type SideTabProps = (
-    frontends       :: Frontends
-  , metaData        :: GET.MetaData
-  )
+type SideTabProps = Props
 
-sideTab :: SidePanelState -> Record Props -> R.Element
-sideTab (Opened SideTabLegend) props@{metaData} =
-  H.div {} [ let (GET.MetaData {legend}) = metaData
-                    in Legend.legend { items: Seq.fromFoldable legend}
-           , documentation EN
-           ]
+sideTabLegend :: R2.Component SideTabProps
+sideTabLegend = R.createElement sideTabLegendCpt
 
-sideTab (Opened SideTabData) props =
-  RH.div {} [ selectedNodes props (SigmaxT.nodesGraphMap props.graph)
-            , neighborhood  props
-            , RH.div { className: "col-md-12", id: "query" }
-                     [ query SearchDoc
-                             props.frontends
-                             props.metaData
-                             props.session
-                             (SigmaxT.nodesGraphMap props.graph)
-                             selectedNodeIds'
-                     ]
-            ]
-    where
+sideTabLegendCpt :: R.Component SideTabProps
+sideTabLegendCpt = here.component "sideTabLegend" cpt
+  where
+    cpt props@{ metaData: GET.MetaData { legend } } _ = do
+      pure $ H.div {}
+        [ Legend.legend { items: Seq.fromFoldable legend }
+        , documentation EN
+        ]
 
-      checkbox text =
-        RH.li {}
-        [ RH.span {} [ RH.text text ]
-        , RH.input { type: "checkbox"
-                   , className: "checkbox"
-                   , defaultChecked: true
-                   , title: "Mark as completed" } ]
+sideTabData :: R2.Component SideTabProps
+sideTabData = R.createElement sideTabDataCpt
+
+sideTabDataCpt :: R.Component SideTabProps
+sideTabDataCpt = here.component "sideTabData" cpt
+  where
+    cpt props _ = do
+      selectedNodeIds' <- T.useLive T.unequal props.selectedNodeIds
+
+      pure $ RH.div {}
+        [ selectedNodes (Record.merge { nodesMap: SigmaxT.nodesGraphMap props.graph } props) []
+        , neighborhood props []
+        , RH.div { className: "col-md-12", id: "query" }
+          [ query SearchDoc
+            props.frontends
+            props.metaData
+            props.session
+            (SigmaxT.nodesGraphMap props.graph)
+            selectedNodeIds'
+          ]
+        ]
+        where
+          checkbox text = RH.li {}
+                          [ RH.span {} [ RH.text text ]
+                          , RH.input { type: "checkbox"
+                                     , className: "checkbox"
+                                     , defaultChecked: true
+                                     , title: "Mark as completed" } ]
 
 
-sideTab (Opened SideTabCommunity) props  =
-  RH.div { className: "col-md-12", id: "query" }
-                         [ selectedNodes props (SigmaxT.nodesGraphMap props.graph)
-                         , neighborhood  props
-                         , query SearchContact
-                                 props.frontends
-                                 props.metaData
-                                 props.session
-                                 (SigmaxT.nodesGraphMap props.graph)
-                                 props.selectedNodeIds
-                         ]
+sideTabCommunity :: R2.Component SideTabProps
+sideTabCommunity = R.createElement sideTabCommunityCpt
 
-sideTab _ _  = H.div {} []
+sideTabCommunityCpt :: R.Component SideTabProps
+sideTabCommunityCpt = here.component "sideTabCommunity" cpt
+  where
+    cpt props _ = do
+      selectedNodeIds' <- T.useLive T.unequal props.selectedNodeIds
+
+      pure $ RH.div { className: "col-md-12", id: "query" }
+        [ selectedNodes (Record.merge { nodesMap: SigmaxT.nodesGraphMap props.graph } props) []
+        , neighborhood props []
+        , query SearchContact
+          props.frontends
+          props.metaData
+          props.session
+          (SigmaxT.nodesGraphMap props.graph)
+          selectedNodeIds'
+        ]
 
 
 -------------------------------------------
 -- TODO
 -- selectedNodes :: Record Props -> Map.Map String Nodes -> R.Element
-selectedNodes props nodesMap =
-  R2.row [ R2.col 12
+
+type SelectedNodesProps = (
+  nodesMap :: SigmaxT.NodesMap
+  | Props
+  )
+
+selectedNodes :: R2.Component SelectedNodesProps
+selectedNodes = R.createElement selectedNodesCpt
+
+selectedNodesCpt :: R.Component SelectedNodesProps
+selectedNodesCpt = here.component "selectedNodes" cpt
+  where
+    cpt props@{ graph
+              , nodesMap
+              , selectedNodeIds } _ = do
+      selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
+
+      pure $ R2.row
+        [ R2.col 12
           [ RH.ul { className: "nav nav-tabs d-flex justify-content-center"
                   , id: "myTab"
                   , role: "tablist" }
             [ RH.div { className: "tab-content" }
               [ RH.div { className: "d-flex flex-wrap justify-content-center"
                        , role: "tabpanel" }
-                       ( Seq.toUnfoldable
-                       $ ( Seq.map (badge              props.selectedNodeIds)
-                                   (badges props.graph props.selectedNodeIds)
-                         )
-                       )
+                ( Seq.toUnfoldable
+                  $ ( Seq.map (badge selectedNodeIds)
+                      (badges graph selectedNodeIds')
+                    )
+                )
               , H.br {}
               ]
             ]
-            , RH.div { className: "tab-content flex-space-between" }
-                     [ removeButton "primary" "Move as candidate" CandidateTerm props nodesMap
-                     , H.br {}
-                     , removeButton "danger"  "Move as stop"      StopTerm      props nodesMap
-                     ]
-           ]
-       ]
-neighborhood props = RH.div { className: "tab-content", id: "myTabContent" }
-                            [ RH.div { -- className: "flex-space-around d-flex justify-content-center"
-                                       className: "d-flex flex-wrap flex-space-around"
-                                     , id: "home"
-                                     , role: "tabpanel"
-                                     }
-                              (Seq.toUnfoldable $ Seq.map (badge props.selectedNodeIds)
-                                                $ neighbourBadges props.graph props.selectedNodeIds
-                               )
-                            ]
+          , RH.div { className: "tab-content flex-space-between" }
+            [ removeButton (Record.merge { buttonType: "primary"
+                                         , rType: CandidateTerm
+                                         , nodesMap
+                                         , text: "Move as candidate" } commonProps) []
+            , H.br {}
+            , removeButton (Record.merge { buttonType: "danger"
+                                         , nodesMap
+                                         , rType: StopTerm
+                                         , text: "Move as stop" } commonProps) []
+            ]
+          ]
+        ]
+      where
+        commonProps = RX.pick props :: Record Common
+
+neighborhood :: R2.Component Props
+neighborhood = R.createElement neighborhoodCpt
+
+neighborhoodCpt :: R.Component Props
+neighborhoodCpt = here.component "neighborhood" cpt
+  where
+    cpt { graph
+        , selectedNodeIds } _ = do
+      selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
+
+      pure $ RH.div { className: "tab-content", id: "myTabContent" }
+        [ RH.div { -- className: "flex-space-around d-flex justify-content-center"
+             className: "d-flex flex-wrap flex-space-around"
+             , id: "home"
+             , role: "tabpanel"
+             }
+          (Seq.toUnfoldable $ Seq.map (badge selectedNodeIds)
+           $ neighbourBadges graph selectedNodeIds'
+          )
+        ]
 
 
-removeButton btnType text rType props' nodesMap' =
-  if Set.isEmpty $ fst props'.selectedNodeIds then
-    RH.div {} []
-  else
-    RH.button { className: "btn btn-sm btn-" <> btnType
-              , on: { click: onClickRemove rType props' nodesMap' }
-              }
-              [ RH.text text ]
+type RemoveButtonProps = (
+    buttonType :: String
+  , nodesMap   :: SigmaxT.NodesMap
+  , rType      :: TermList
+  , text       :: String
+  | Common
+  )
 
-onClickRemove rType props' nodesMap' e = do
-  let nodes = mapMaybe (\id -> Map.lookup id nodesMap')
-                       $ Set.toUnfoldable $ fst props'.selectedNodeIds
-  deleteNodes { graphId: props'.graphId
-              , metaData: props'.metaData
-              , nodes
-              , session: props'.session
-              , termList: rType
-              , reloadForest: props'.reloadForest }
-  snd props'.removedNodeIds  $ const $ fst props'.selectedNodeIds
-  snd props'.selectedNodeIds $ const SigmaxT.emptyNodeIds
+removeButton :: R2.Component RemoveButtonProps
+removeButton = R.createElement removeButtonCpt
+
+removeButtonCpt :: R.Component RemoveButtonProps
+removeButtonCpt = here.component "removeButton" cpt
+  where
+    cpt { buttonType
+        , graphId
+        , metaData
+        , nodesMap
+        , reloadForest
+        , removedNodeIds
+        , rType
+        , selectedNodeIds
+        , session
+        , text } _ = do
+      selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
+
+      pure $ if Set.isEmpty selectedNodeIds' then
+               RH.div {} []
+             else
+               RH.button { className: "btn btn-sm btn-" <> buttonType
+                         , on: { click: onClickRemove selectedNodeIds' }
+                         } [ RH.text text ]
+      where
+        onClickRemove selectedNodeIds' e = do
+          let nodes = mapMaybe (\id -> Map.lookup id nodesMap)
+                              $ Set.toUnfoldable selectedNodeIds'
+          deleteNodes { graphId: graphId
+                      , metaData: metaData
+                      , nodes
+                      , session: session
+                      , termList: rType
+                      , reloadForest }
+          T2.write_ selectedNodeIds' removedNodeIds
+          T2.write_ SigmaxT.emptyNodeIds selectedNodeIds
 
 
 
 badge :: T.Cursor SigmaxT.NodeIds -> Record SigmaxT.Node -> R.Element
-badge (_ /\ setNodeIds) {id, label} =
+badge selectedNodeIds {id, label} =
   RH.a { className: "badge badge-pill badge-light"
        , on: { click: onClick }
        } [ RH.h6 {} [ RH.text label ] ]
   where
     onClick e = do
-      setNodeIds $ const $ Set.singleton id
+      T2.write_ (Set.singleton id) selectedNodeIds
 
-badges :: SigmaxT.SGraph -> T.Cursor SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
-badges graph (selectedNodeIds /\ _) = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
+badges :: SigmaxT.SGraph -> SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
+badges graph selectedNodeIds = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
 
-neighbourBadges :: SigmaxT.SGraph -> T.Cursor SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
-neighbourBadges graph (selectedNodeIds /\ _) = SigmaxT.neighbours graph selectedNodes
+neighbourBadges :: SigmaxT.SGraph -> SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
+neighbourBadges graph selectedNodeIds = SigmaxT.neighbours graph selectedNodes
   where
     selectedNodes = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
 
 
 type DeleteNodes =
-  ( graphId    :: Int
-  , metaData   :: GET.MetaData
-  , nodes      :: Array (Record SigmaxT.Node)
-  , session    :: Session
-  , termList   :: TermList
-  , reloadForest :: GUR.ReloadS
+  ( graphId      :: NodeID
+  , metaData     :: GET.MetaData
+  , nodes        :: Array (Record SigmaxT.Node)
+  , reloadForest :: T.Cursor T2.Reload
+  , session      :: Session
+  , termList     :: TermList
   )
 
 deleteNodes :: Record DeleteNodes -> Effect Unit
@@ -247,7 +339,7 @@ deleteNodes { graphId, metaData, nodes, session, termList, reloadForest } = do
     case mPatch of
       Nothing -> pure unit
       Just (NTC.Versioned patch) -> do
-        liftEffect $ GUR.bump reloadForest
+        liftEffect $ GUR.bumpCursor reloadForest
 
 -- Why is this called delete node?
 deleteNode :: TermList
@@ -260,7 +352,7 @@ deleteNode termList session (GET.MetaData metaData) node = do
     task <- NTC.postNgramsChartsAsync coreParams  -- TODO add task
     pure ret
   where
-    nodeId :: Int
+    nodeId :: NodeID
     nodeId = unsafePartial $ fromJust $ fromString node.id
 
     versioned :: NTC.VersionedNgramsPatches

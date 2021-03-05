@@ -23,11 +23,13 @@ import Effect.Uncurried (mkEffectFn1)
 import Math as M
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Utils.Math (roundToMultiple)
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
+here :: R2.Here
 here = R2.here "Gargantext.Components.RangeSlider"
 -- data Axis = X | Y
 
