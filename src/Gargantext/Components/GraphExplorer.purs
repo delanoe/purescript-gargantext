@@ -19,6 +19,7 @@ import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 import Record as Record
+import Record.Extra as RX
 import Toestand as T
 
 import Gargantext.AsyncTasks as GAT
@@ -44,41 +45,49 @@ import Gargantext.Utils.Toestand as T2
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer"
 
-type LayoutProps = (
-    backend       :: T.Cursor (Maybe Backend)
+type BaseProps =
+  ( backend       :: T.Cursor (Maybe Backend)
   , frontends     :: Frontends
   , graphId       :: GET.GraphId
   , handed        :: T.Cursor Types.Handed
   , route         :: T.Cursor AppRoute
-  , session       :: R.Context Session
   , sessions      :: T.Cursor Sessions
   , showLogin     :: T.Cursor Boolean
-  , tasks         :: T.Cursor (Maybe GAT.Reductor)
-  )
+  , tasks         :: T.Cursor (Maybe GAT.Reductor) )
+ 
+
+type LayoutLoaderProps = ( session :: R.Context Session | BaseProps )
+
+type LayoutProps = ( session :: Session, graphVersion :: GUR.ReloadS | BaseProps )
 
 type Props =
   ( graph          :: SigmaxT.SGraph
   , graphVersion   :: GUR.ReloadS
   , hyperdataGraph :: GET.HyperdataGraph
   , mMetaData      :: Maybe GET.MetaData
+  , session        :: Session
   | LayoutProps
   )
 
 --------------------------------------------------------------
-explorerLayout :: Record LayoutProps -> R.Element
+explorerLayoutLoader :: R2.Component LayoutLoaderProps
+explorerLayoutLoader props = R.createElement explorerLayoutLoaderCpt props []
+
+explorerLayoutLoaderCpt :: R.Component LayoutLoaderProps
+explorerLayoutLoaderCpt = here.component "explorerLayoutLoader" cpt where
+  cpt props _ = do
+    graphVersion <- GUR.new
+    session <- R.useContext props.session -- todo: ugh, props fiddling
+    let base = RX.pick props :: Record BaseProps
+    let props' = Record.merge base { graphVersion, session }
+    pure $ explorerLayout props'
+    
+explorerLayout :: R2.Component LayoutProps
 explorerLayout props = R.createElement explorerLayoutCpt props []
 
 explorerLayoutCpt :: R.Component LayoutProps
 explorerLayoutCpt = here.component "explorerLayout" cpt where
-  cpt props _ = do
-    graphVersion <- GUR.new
-    session <- R.useContext props.session -- todo: ugh, props fiddling
-    pure $ explorerLayoutView graphVersion props
-
-explorerLayoutView :: GUR.ReloadS -> Record LayoutProps -> R.Element
-explorerLayoutView graphVersion p = R.createElement el p [] where
-  el = here.component "explorerLayoutView" cpt
-  cpt props@{ graphId, session } _ = do
+  cpt props@{ graphId, session, graphVersion } _ = do
     useLoader graphId (getNodes session graphVersion) handler
     where
       handler loaded =

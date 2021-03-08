@@ -234,14 +234,8 @@ graphExplorer = R.createElement graphExplorerCpt
 
 graphExplorerCpt :: R.Component SessionNodeProps
 graphExplorerCpt = here.component "graphExplorer" cpt where
-  cpt props@{ cursors: { backend
-                       , handed
-                       , route
-                       , sessions
-                       , showLogin }
-            , nodeId
-            , session
-            , tasks } _ = do
+  cpt props@{ cursors: { backend, handed, route, sessions, showLogin }
+            , nodeId, session, tasks } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed sessionProps $
       simpleLayout { handed }
