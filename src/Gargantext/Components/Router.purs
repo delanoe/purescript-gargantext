@@ -3,6 +3,7 @@ module Gargantext.Components.Router (router) where
 import Data.Array (fromFoldable)
 import Data.Maybe (Maybe(..), maybe')
 import Reactix as R
+import Record as Record
 import Toestand as T
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -29,6 +30,7 @@ import Gargantext.Components.Nodes.Texts as Texts
 import Gargantext.Components.SessionLoader (sessionWrapper)
 import Gargantext.Components.SimpleLayout (simpleLayout)
 import Gargantext.Config (defaultFrontends, defaultBackends, publicBackend)
+import Gargantext.Ends (Backend)
 import Gargantext.Routes (AppRoute(..))
 import Gargantext.Routes as GR
 import Gargantext.Types (CorpusId, ListId, NodeID, NodeType(..), SessionId(..))
@@ -43,6 +45,8 @@ type Props = (
   , tasks   :: T.Cursor (Maybe GAT.Reductor)
   )
 
+type Props' = ( route' :: AppRoute, backend :: Backend | Props )
+
 router :: R2.Leaf Props
 router props = R.createElement routerCpt props []
 
@@ -51,85 +55,86 @@ routerCpt = here.component "root" cpt where
   cpt props@{ cursors, ws, tasks } _ = do
     let session = R.createContext (unsafeCoerce {})
     showLogin <- T.useLive T.unequal cursors.showLogin
-    route <- T.useLive (T.changed notEq) cursors.route
+    route' <- T.useLive (T.changed notEq) cursors.route
+    let props' = Record.merge props { route' }
     if showLogin then login' cursors
-    else case route of
-      GR.Annuaire s n           -> annuaire props s n
-      GR.Corpus s n             -> corpus props s n
-      GR.CorpusDocument s c l n -> corpusDocument props s c l n
-      GR.Dashboard s n          -> dashboard props s n
-      GR.Document s l n         -> document props s l n
-      GR.Folder        s n      -> corpus props s n
-      GR.FolderPrivate s n      -> corpus props s n
-      GR.FolderPublic  s n      -> corpus props s n
-      GR.FolderShared  s n      -> corpus props s n
-      GR.Home                   -> home props
-      GR.Lists s n              -> lists props s n
+    else case route' of
+      GR.Annuaire s n           -> annuaire props' s n
+      GR.Corpus s n             -> corpus props' s n
+      GR.CorpusDocument s c l n -> corpusDocument props' s c l n
+      GR.Dashboard s n          -> dashboard props' s n
+      GR.Document s l n         -> document props' s l n
+      GR.Folder        s n      -> corpus props' s n
+      GR.FolderPrivate s n      -> corpus props' s n
+      GR.FolderPublic  s n      -> corpus props' s n
+      GR.FolderShared  s n      -> corpus props' s n
+      GR.Home                   -> home props'
+      GR.Lists s n              -> lists props' s n
       GR.Login                  -> login' cursors
-      GR.PGraphExplorer s g     -> graphExplorer props s g
-      GR.RouteFile s n          -> routeFile props s n
-      GR.RouteFrameCalc  s n    -> routeFrame props s n NodeFrameCalc
-      GR.RouteFrameCode  s n    -> routeFrame props s n NodeFrameNotebook
-      GR.RouteFrameWrite s n    -> routeFrame props s n NodeFrameWrite
-      GR.Team s n               -> team props s n
-      GR.Texts s n              -> texts props s n
-      GR.UserPage s n           -> user props s n
-      GR.ContactPage s a n      -> contact props s a n
+      GR.PGraphExplorer s g     -> graphExplorer props' s g
+      GR.RouteFile s n          -> routeFile props' s n
+      GR.RouteFrameCalc  s n    -> routeFrame props' s n NodeFrameCalc
+      GR.RouteFrameCode  s n    -> routeFrame props' s n NodeFrameNotebook
+      GR.RouteFrameWrite s n    -> routeFrame props' s n NodeFrameWrite
+      GR.Team s n               -> team props' s n
+      GR.Texts s n              -> texts props' s n
+      GR.UserPage s n           -> user props' s n
+      GR.ContactPage s a n      -> contact props' s a n
  
-forested :: Record Props -> Array R.Element -> R.Element
-forested { tasks, cursors: { route, handed, sessions, backend, reloadForest, reloadRoot, showLogin } } =
+forested :: Record Props' -> Array R.Element -> R.Element
+forested { route', tasks, cursors: { handed, sessions, backend, reloadForest, reloadRoot, showLogin } } =
   forestLayout
-  { tasks, frontends, route, handed, sessions
+  { tasks, frontends, handed, sessions, route: route'
   , backend, reloadForest, reloadRoot, showLogin
   } where frontends = defaultFrontends
 
-authed :: Record Props -> SessionId -> R.Element -> R.Element
-authed props@{ cursors: { session, sessions } , tasks } sessionId content =
-  sessionWrapper { sessionId, session, sessions, fallback: home props }
+authed :: Record Props' -> SessionId -> R.Element -> R.Element
+authed props@{ cursors: { sessions }, tasks } sessionId content =
+  sessionWrapper { sessionId, sessions, fallback: home props }
   [ content, footer { session } ]
 
-annuaire :: Record Props -> SessionId -> NodeID -> R.Element
+annuaire :: Record Props' -> SessionId -> NodeID -> R.Element
 annuaire props@{ tasks, cursors: { session } } sessionId nodeId =
   authed props sessionId $
     forested props [ annuaireLayout { nodeId, frontends, session } ]
     where frontends = defaultFrontends
 
-corpus :: Record Props -> SessionId -> NodeID -> R.Element
+corpus :: Record Props' -> SessionId -> NodeID -> R.Element
 corpus props@{ tasks, cursors: session } sessionId nodeId =
   authed props sessionId $
     forested props
     [ corpusLayout { nodeId, session } ]
 
-corpusDocument :: Record Props -> SessionId -> CorpusId -> ListId -> NodeID -> R.Element
+corpusDocument :: Record Props' -> SessionId -> CorpusId -> ListId -> NodeID -> R.Element
 corpusDocument props@{ tasks, cursors: session } sessionId corpusId' listId nodeId =
   authed props sessionId $
     forested props
     [ documentMainLayout { listId, nodeId, corpusId, sessionId, session } [] ]
     where corpusId = Just corpusId'
 
-dashboard :: Record Props -> SessionId -> NodeID -> R.Element
+dashboard :: Record Props' -> SessionId -> NodeID -> R.Element
 dashboard props@{ tasks, cursors: { session } } sessionId nodeId =
   authed props sessionId $
     forested props [ dashboardLayout { nodeId, session } [] ]
 
-document :: Record Props -> SessionId -> ListId -> NodeID -> R.Element
+document :: Record Props' -> SessionId -> ListId -> NodeID -> R.Element
 document props@{ tasks, cursors: { session } } sessionId listId nodeId =
   authed props sessionId $
     forested props
     [ documentMainLayout { listId, nodeId, corpusId, session } [] ]
     where corpusId = Nothing
 
-home :: Record Props -> R.Element
-home props@{ cursors: { backend, showLogin, sessions } } =
-  forested props [ homeLayout  { sessions, backend, showLogin, lang: LL_EN } ]
+home :: Record Props' -> R.Element
+home props@{ cursors: { showLogin, sessions } } =
+  forested props [ homeLayout  { sessions, showLogin, lang: LL_EN } ]
 
-lists :: Record Props -> SessionId -> NodeID -> R.Element
+lists :: Record Props' -> SessionId -> NodeID -> R.Element
 lists props@{ cursors: { backend, route, handed, sessions
                        , reloadForest, reloadRoot, session, showLogin }
             , tasks } sessionId nodeId =
   authed props sessionId $
     Lists.listsWithForest
-    { forestProps: { backend
+    { forestProps': { backend
                    , frontends
                    , handed
                    , reloadForest
@@ -138,7 +143,7 @@ lists props@{ cursors: { backend, route, handed, sessions
                    , sessions
                    , showLogin
                    , tasks }
-    , listsProps: { tasks, reloadRoot, reloadForest, nodeId, session }
+    , listsProps': { tasks, reloadRoot, reloadForest, nodeId, session }
     } []
     where frontends = defaultFrontends
 
@@ -147,7 +152,7 @@ login' { backend, sessions, showLogin: visible } =
   login { backend, sessions, visible
         , backends: fromFoldable defaultBackends }
 
-graphExplorer :: Record Props -> SessionId -> Int -> R.Element
+graphExplorer :: Record Props' -> SessionId -> Int -> R.Element
 graphExplorer props@{ views: { backend, route, handed, session, sessions, showLogin }
                     , tasks } sessionId graphId =
   authed props sessionId $
@@ -156,36 +161,36 @@ graphExplorer props@{ views: { backend, route, handed, session, sessions, showLo
                      , handed, session, sessions, showLogin } ]
     where frontends = defaultFrontends
 
-routeFile :: Record Props -> SessionId -> NodeID -> R.Element
+routeFile :: Record Props' -> SessionId -> NodeID -> R.Element
 routeFile props@{ cursors: { session } } sessionId nodeId =
   authed props sessionId $ forested props [ fileLayout { nodeId, session } ]
 
-routeFrame :: Record Props -> SessionId -> NodeID -> NodeType -> R.Element
+routeFrame :: Record Props' -> SessionId -> NodeID -> NodeType -> R.Element
 routeFrame props@{ cursors: { session } } sessionId nodeId nodeType =
   authed props sessionId $ forested props [ frameLayout { nodeId, nodeType, session } ]
 
-team :: Record Props -> SessionId -> NodeID -> R.Element
+team :: Record Props' -> SessionId -> NodeID -> R.Element
 team props@{ tasks, cursors: { session }  } sessionId nodeId =
   authed props sessionId $ forested props [ corpusLayout { nodeId, session } ]
 
-texts :: Record Props -> SessionId -> NodeID -> R.Element
+texts :: Record Props' -> SessionId -> NodeID -> R.Element
 texts props@{ cursors: { backend, reloadForest, reloadRoot, showLogin, route, handed, session, sessions }
             , tasks } sessionId nodeId =
   authed props sessionId $
     Texts.textsWithForest
-    { forestProps: { frontends, tasks, route, handed, sessions
+    { forestProps': { frontends, tasks, route, handed, sessions
                    , backend, reloadForest, reloadRoot, showLogin }
-    , textsProps: { frontends, nodeId, session } }
+    , textsProps': { frontends, nodeId, session } }
     [] where frontends = defaultFrontends
 
-user :: Record Props -> SessionId -> NodeID -> R.Element
+user :: Record Props' -> SessionId -> NodeID -> R.Element
 user props@{ cursors: { reloadRoot, session }, tasks } sessionId nodeId =
   authed props sessionId $
     forested props
     [ userLayout { tasks, nodeId, session, reloadRoot, frontends } ]
     where frontends = defaultFrontends
 
-contact :: Record Props -> SessionId -> NodeID -> R.Element
+contact :: Record Props' -> SessionId -> NodeID -> R.Element
 contact props@{ tasks, cursors: { reloadRoot } } sessionId annuaireId nodeId =
   authed props sessionId $
     forested props

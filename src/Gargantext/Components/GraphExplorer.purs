@@ -44,8 +44,8 @@ import Gargantext.Utils.Toestand as T2
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer"
 
-type LayoutProps = (
-    backend       :: T.Cursor Backend
+type LayoutProps =
+  ( backend       :: T.Cursor (Maybe Backend)
   , frontends     :: Frontends
   , graphId       :: GET.GraphId
   , handed        :: T.Cursor Types.Handed
@@ -250,8 +250,8 @@ explorerCpt = here.component "explorer" cpt
       Sidebar.sidebar (Record.merge props { metaData })
 
 type TreeProps = (
-    backend      :: T.Cursor Backend
-  , forestOpen :: T.Cursor OpenNodes
+    backend      :: T.Cursor (Maybe Backend)
+  , forestOpen   :: T.Cursor OpenNodes
   , frontends    :: Frontends
   , handed       :: T.Cursor Types.Handed
   , reload       :: T.Cursor T2.Reload

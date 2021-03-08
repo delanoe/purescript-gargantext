@@ -4,6 +4,7 @@ import Data.Set as Set
 import Data.Maybe (Maybe(..))
 import Toestand as T
 
+import Gargantext.Ends (Backend)
 import Gargantext.Sessions as Sessions
 import Gargantext.Sessions (OpenNodes, Sessions)
 import Gargantext.Routes (AppRoute(Home))
@@ -11,7 +12,8 @@ import Gargantext.Types (Handed(RightHanded))
 import Gargantext.Utils.Toestand as T2
 
 type App =
-  { handed       :: Handed
+  { backend      :: Maybe Backend
+  , handed       :: Handed
   , forestOpen   :: OpenNodes
   , reloadRoot   :: Int
   , reloadForest :: Int
@@ -23,7 +25,8 @@ type App =
 
 emptyApp :: App
 emptyApp =
-  { handed:       RightHanded
+  { backend:      Nothing
+  , handed:       RightHanded
   , route:        Home
   , forestOpen:   Set.empty
   , reloadRoot:   T2.newReload
@@ -34,7 +37,8 @@ emptyApp =
   }
 
 type Cursors =
-  { handed       :: T.Cursor Handed
+  { backend      :: T.Cursor (Maybe Backend)
+  , handed       :: T.Cursor Handed
   , forestOpen   :: T.Cursor OpenNodes
   , reloadRoot   :: T.Cursor Int
   , reloadForest :: T.Cursor Int

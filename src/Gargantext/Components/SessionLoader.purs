@@ -15,16 +15,16 @@ import Gargantext.Utils.Reactix as R2
 here :: R2.Here
 here = R2.here "Gargantext.Components.SessionWrapper"
 
-type Props sessions =
+type Props =
   ( sessionId :: SessionId
-  , sessions  :: sessions
+  , sessions  :: T.Cursor Sessions
   , provider  :: R.Provider Session
   , fallback  :: R.Element )
 
-sessionWrapper :: forall s. T.Read s Sessions => R2.Component (Props s)
+sessionWrapper :: R2.Component Props
 sessionWrapper = R.createElement sessionWrapperCpt
 
-sessionWrapperCpt :: forall s. T.Read s Sessions => R.Component (Props s)
+sessionWrapperCpt :: R.Component Props
 sessionWrapperCpt = here.component "sessionWrapper" cpt where
   cpt { sessionId, sessions, provider, fallback } content =
     cp <$> T.useLive T.unequal sessions where
