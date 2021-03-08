@@ -49,7 +49,7 @@ type Props = (
   )
 
 type SessionProps = (
-    session   :: Session
+    session   :: R.Context Session
   , sessionId :: SessionId
   | Props
   )
@@ -115,32 +115,31 @@ forestedCpt = here.component "forested" cpt
 
 authed :: Record SessionProps -> R.Element -> R.Element
 authed props@{ cursors: { sessions }, session, sessionId, tasks } content =
-  sessionWrapper { fallback: home homeProps [], provider: session, sessionId, sessions }
+  sessionWrapper { fallback: home homeProps [], context: session, sessionId, sessions }
     [ content, footer { } [] ]
     where
       homeProps = RE.pick props :: Record Props
 
 annuaire :: R2.Component SessionNodeProps
 annuaire = R.createElement annuaireCpt
+
 annuaireCpt :: R.Component SessionNodeProps
-annuaireCpt = here.component "annuaire" cpt
-  where
-    cpt props@{ nodeId, session, sessionId, tasks } _ = do
-      let sessionProps = RE.pick props :: Record SessionProps
-      pure $ authed sessionProps $
-        forested props [ annuaireLayout { frontends, nodeId, session } ]
-        where frontends = defaultFrontends
+annuaireCpt = here.component "annuaire" cpt where
+  cpt props@{ nodeId, session, sessionId, tasks } _ = do
+    let sessionProps = RE.pick props :: Record SessionProps
+    pure $ authed sessionProps $
+      forested props [ annuaireLayout { frontends, nodeId, session } ]
+      where frontends = defaultFrontends
 
 corpus :: R2.Component SessionNodeProps
 corpus = R.createElement corpusCpt
+
 corpusCpt :: R.Component SessionNodeProps
-corpusCpt = here.component "corpus" cpt
-  where
-    cpt props@{ cursors: session, nodeId, session, tasks } _ = do
-      let sessionProps = RE.pick props :: Record SessionProps
-      pure $ authed sessionProps $
-        forested props
-        [ corpusLayout { nodeId, session } ]
+corpusCpt = here.component "corpus" cpt where
+  cpt props@{ cursors, nodeId, session, tasks } _ = do
+    let sessionProps = RE.pick props :: Record SessionProps
+    pure $ authed sessionProps $
+      forested props [ corpusLayout { nodeId, session } ]
 
 type CorpusDocumentProps = (
     corpusId :: CorpusId

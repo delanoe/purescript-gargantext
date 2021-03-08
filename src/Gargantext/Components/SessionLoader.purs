@@ -21,7 +21,7 @@ here = R2.here "Gargantext.Components.SessionWrapper"
 type Props =
   (
     fallback  :: R.Element
-  , provider  :: R.Provider Session
+  , context   :: R.Context Session
   , sessionId :: SessionId
   , sessions  :: T.Cursor Sessions
   )
@@ -31,10 +31,10 @@ sessionWrapper = R.createElement sessionWrapperCpt
 
 sessionWrapperCpt :: R.Component Props
 sessionWrapperCpt = here.component "sessionWrapper" cpt where
-  cpt { fallback, provider, sessionId, sessions } content = do
+  cpt { fallback, context, sessionId, sessions } content = do
     sessions' <- T.useLive T.unequal sessions
     pure $ cp sessions'
     where
       cp sessions' = c $ Sessions.lookup sessionId sessions' where
-        c (Just session) = (R.provide provider session content)
+        c (Just session) = (R.provideContext context session content)
         c Nothing = fallback
