@@ -11,7 +11,7 @@ module Gargantext.Components.Forest
 import Data.Array as A
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Set as Set
-import Data.Tuple (fst, snd)
+import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -25,7 +25,7 @@ import Gargantext.Ends (Frontends, Backend)
 import Gargantext.Prelude
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session(..), Sessions, OpenNodes, unSessions)
-import Gargantext.Types (Handed(..), reverseHanded, switchHanded)
+import Gargantext.Types (Handed, reverseHanded, switchHanded)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 
@@ -74,8 +74,7 @@ forestCpt = here.component "forest" cpt where
             , showLogin
             , tasks } _ = do
     tasks'        <- GAT.useTasks reloadRoot reloadForest
-    R.useEffect' $ do
-      T2.write_ (Just tasks') tasks
+    R.useEffect' $ T2.write_ (Just tasks') tasks
     handed'       <- T.useLive T.unequal handed
     reloadForest' <- T.useLive T.unequal reloadForest
     reloadRoot'   <- T.useLive T.unequal reloadRoot
@@ -95,7 +94,7 @@ forestCpt = here.component "forest" cpt where
           common = RX.pick props :: Record Common
           cp handed' sessions' tasks' _ =
             pure $ H.div { className: "forest" }
-              (A.cons (plus handed' showLogin) (trees handed' sessions' tasks'))
+              (A.cons (plus handed' showLogin backend) (trees handed' sessions' tasks'))
           trees handed' sessions' tasks' = (tree handed' tasks') <$> unSessions sessions'
           tree handed' tasks' s@(Session {treeId}) =
             treeLoader { forestOpen
@@ -108,8 +107,8 @@ forestCpt = here.component "forest" cpt where
                        , session: s
                        , tasks } []
 
-plus :: Handed -> T.Cursor Boolean -> R.Element
-plus handed showLogin = H.div { className: "row" }
+plus :: Handed -> T.Cursor Boolean -> T.Cursor (Maybe Backend) -> R.Element
+plus handed showLogin backend = H.div { className: "row" }
   [ H.button { className: buttonClass
              , on: { click }
              , title }
@@ -122,7 +121,7 @@ plus handed showLogin = H.div { className: "row" }
   -- [ H.i { className: "material-icons md-36"} [] ]
   where
     click _ = do
-      -- _ <- T.modify (const Nothing) backend
+      -- _ <- T.write Nothing backend
       T2.write_ true showLogin
     title = "Add or remove connections to the server(s)."
     divClass = "fa fa-universal-access"

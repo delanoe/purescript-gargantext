@@ -32,6 +32,7 @@ import Gargantext.Components.Nodes.Texts as Texts
 import Gargantext.Components.SessionLoader (sessionWrapper)
 import Gargantext.Components.SimpleLayout (simpleLayout)
 import Gargantext.Config (defaultFrontends, defaultBackends, publicBackend)
+import Gargantext.Ends (Backend)
 import Gargantext.Routes (AppRoute(..))
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session)
@@ -57,6 +58,7 @@ type SessionNodeProps = (
   nodeId :: NodeID
   | SessionProps
   )
+type Props' = ( route' :: AppRoute, backend :: Backend | Props )
 
 router :: R2.Leaf Props
 router props = R.createElement routerCpt props []
@@ -68,9 +70,10 @@ routerCpt = here.component "root" cpt where
     let sessionProps sId = Record.merge { session, sessionId: sId } props
     let sessionNodeProps sId nId = Record.merge { nodeId: nId } $ sessionProps sId
     showLogin <- T.useLive T.unequal cursors.showLogin
-    route <- T.useLive (T.changed notEq) cursors.route
+    route' <- T.useLive (T.changed notEq) cursors.route
+    let props' = Record.merge props { route' }
     if showLogin then login' cursors
-    else case route of
+    else case route' of
       GR.Annuaire s n           -> annuaire (sessionNodeProps s n) []
       GR.ContactPage s a n      -> contact (Record.merge { annuaireId: a } $ sessionNodeProps s n)
       GR.Corpus s n             -> corpus (sessionNodeProps s n)
