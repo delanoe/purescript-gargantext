@@ -50,7 +50,7 @@ type LayoutProps = (
   , graphId       :: GET.GraphId
   , handed        :: T.Cursor Types.Handed
   , route         :: T.Cursor AppRoute
-  , session       :: Session
+  , session       :: R.Context Session
   , sessions      :: T.Cursor Sessions
   , showLogin     :: T.Cursor Boolean
   , tasks         :: T.Cursor (Maybe GAT.Reductor)
@@ -69,24 +69,23 @@ explorerLayout :: Record LayoutProps -> R.Element
 explorerLayout props = R.createElement explorerLayoutCpt props []
 
 explorerLayoutCpt :: R.Component LayoutProps
-explorerLayoutCpt = here.component "explorerLayout" cpt
-  where
-    cpt props _ = do
-      graphVersion <- GUR.new
-      pure $ explorerLayoutView graphVersion props
+explorerLayoutCpt = here.component "explorerLayout" cpt where
+  cpt props _ = do
+    graphVersion <- GUR.new
+    session <- R.useContext props.session -- todo: ugh, props fiddling
+    pure $ explorerLayoutView graphVersion props
 
 explorerLayoutView :: GUR.ReloadS -> Record LayoutProps -> R.Element
-explorerLayoutView graphVersion p = R.createElement el p []
-  where
-    el = here.component "explorerLayoutView" cpt
-    cpt props@{ graphId, session } _ = do
-      useLoader graphId (getNodes session graphVersion) handler
-      where
-        handler loaded =
-          explorer (Record.merge props { graph, graphVersion, hyperdataGraph: loaded, mMetaData })
-          where
-            GET.HyperdataGraph { graph: hyperdataGraph } = loaded
-            Tuple mMetaData graph = convert hyperdataGraph
+explorerLayoutView graphVersion p = R.createElement el p [] where
+  el = here.component "explorerLayoutView" cpt
+  cpt props@{ graphId, session } _ = do
+    useLoader graphId (getNodes session graphVersion) handler
+    where
+      handler loaded =
+        explorer (Record.merge props { graph, graphVersion, hyperdataGraph: loaded, mMetaData })
+        where
+          GET.HyperdataGraph { graph: hyperdataGraph } = loaded
+          Tuple mMetaData graph = convert hyperdataGraph
 
 --------------------------------------------------------------
 explorer :: Record Props -> R.Element
