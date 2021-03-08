@@ -31,9 +31,9 @@ here = R2.here "Gargantext.Components.Login"
 -- and ask for login (modal) or account creation after 15 mn when user
 -- if not logged user can not save his work
 
-type Props =
-  ( backends :: Array Backend
-  , backend  :: T.Cursor (Maybe Backend)
+type Props = (
+    backend  :: T.Cursor (Maybe Backend)
+  , backends :: Array Backend
   , sessions :: T.Cursor Sessions
   , visible  :: T.Cursor Boolean
   )
@@ -43,11 +43,11 @@ login props = R.createElement loginCpt props []
 
 loginCpt :: R.Component Props
 loginCpt = here.component "login" cpt where
-  cpt props@{ visible, sessions } _ = do
-    b <- T.useLive T.unequal props.backend
+  cpt props@{ backend, sessions, visible } _ = do
+    b <- T.useLive T.unequal backend
     pure $ modal { visible } (inner b) where
       inner Nothing = chooser props
-      inner (Just b) = form { sessions, visible, backend: b }
+      inner (Just b) = form { backend: b, sessions, visible }
 
 chooser :: R2.Leaf Props
 chooser props = R.createElement chooserCpt props []

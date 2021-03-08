@@ -76,7 +76,7 @@ topBarCpt = here.component "topBar" cpt
 
 type CommonProps = (
     nodeId        :: Int
-  , reloadForest  :: T.Cursor (T2.InitReload T.Cursor)
+  , reloadForest  :: T.Cursor T2.Reload
   , reloadRoot    :: T.Cursor T2.Reload
   , session       :: Session
   , sessionUpdate :: Session -> Effect Unit

@@ -154,7 +154,7 @@ listElement = H.li { className: "list-group-item justify-content-between" }
 type LayoutProps =
   ( frontends    :: Frontends
   , nodeId       :: Int
-  , reloadForest :: T.Cursor (T2.InitReload T.Cursor)
+  , reloadForest :: T.Cursor T2.Reload
   , reloadRoot   :: T.Cursor T2.Reload
   , session      :: Session
   , tasks        :: T.Cursor (Maybe GAT.Reductor)

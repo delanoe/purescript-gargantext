@@ -45,11 +45,11 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer"
 
 type LayoutProps = (
-    backend       :: T.Cursor Backend
+    backend       :: T.Cursor (Maybe Backend)
   , frontends     :: Frontends
   , graphId       :: GET.GraphId
   , handed        :: T.Cursor Types.Handed
-  , route         :: AppRoute
+  , route         :: T.Cursor AppRoute
   , session       :: Session
   , sessions      :: T.Cursor Sessions
   , showLogin     :: T.Cursor Boolean
@@ -95,9 +95,7 @@ explorer props = R.createElement explorerCpt props []
 explorerCpt :: R.Component Props
 explorerCpt = here.component "explorer" cpt
   where
-    cpt props@{ tasks
-              , backend
-              , route
+    cpt props@{ backend
               , frontends
               , graph
               , graphId
@@ -105,9 +103,11 @@ explorerCpt = here.component "explorer" cpt
               , handed
               , hyperdataGraph
               , mMetaData
+              , route
               , session
               , sessions
               , showLogin
+              , tasks
               } _ = do
       handed' <- T.useLive T.unequal handed
 
@@ -120,6 +120,7 @@ explorerCpt = here.component "explorer" cpt
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
       graphVersionRef <- R.useRef (GUR.value graphVersion)
+      -- reloadForest <- T2.useCursed $ T2.Ready 0
       reloadForest <- T2.useCursed 0
       -- reloadForest <- GUR.newIInitialized reloadForest
       controls <- Controls.useGraphControls { forceAtlasS
@@ -250,13 +251,13 @@ explorerCpt = here.component "explorer" cpt
       Sidebar.sidebar (Record.merge props { metaData })
 
 type TreeProps = (
-    backend      :: T.Cursor Backend
-  , forestOpen :: T.Cursor OpenNodes
+    backend      :: T.Cursor (Maybe Backend)
+  , forestOpen   :: T.Cursor OpenNodes
   , frontends    :: Frontends
   , handed       :: T.Cursor Types.Handed
   , reload       :: T.Cursor T2.Reload
   , reloadForest :: T.Cursor T2.Reload
-  , route        :: AppRoute
+  , route        :: T.Cursor AppRoute
   , sessions     :: T.Cursor Sessions
   , show         :: Boolean
   , showLogin    :: T.Cursor Boolean

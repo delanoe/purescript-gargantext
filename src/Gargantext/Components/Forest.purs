@@ -37,12 +37,12 @@ type Common =
   ( frontends    :: Frontends
   , handed       :: T.Cursor Handed
   , reloadRoot   :: T.Cursor T2.Reload
-  , route        :: AppRoute
+  , route        :: T.Cursor AppRoute
   , tasks        :: T.Cursor (Maybe GAT.Reductor)
   )
 
 type LayoutProps =
-  ( backend      :: T.Cursor Backend
+  ( backend      :: T.Cursor (Maybe Backend)
   , reloadForest :: T.Cursor T2.Reload
   , sessions     :: T.Cursor Sessions
   , showLogin    :: T.Cursor Boolean
@@ -73,13 +73,13 @@ forestCpt = here.component "forest" cpt where
             , sessions
             , showLogin
             , tasks } _ = do
-    -- NOTE: this is a hack to reload the forest on demand
     tasks'        <- GAT.useTasks reloadRoot reloadForest
     R.useEffect' $ do
       T2.write_ (Just tasks') tasks
     handed'       <- T.useLive T.unequal handed
     reloadForest' <- T.useLive T.unequal reloadForest
     reloadRoot'   <- T.useLive T.unequal reloadRoot
+    route'        <- T.useLive T.unequal route
     forestOpen'   <- T.useLive T.unequal forestOpen
     sessions'     <- T.useLive T.unequal sessions
     -- TODO If `reloadForest` is set, `reload` state should be updated
@@ -88,14 +88,14 @@ forestCpt = here.component "forest" cpt where
       -- R.setRef tasks $ Just tasks'
       -- GUR.initializeI reloadForest reload
     R2.useCache
-      ( frontends /\ route /\ sessions' /\ handed' /\ forestOpen'
+      ( frontends /\ route' /\ sessions' /\ handed' /\ forestOpen'
         /\ reloadForest' /\ reloadRoot' /\ (fst tasks').storage )
       (cp handed' sessions' tasks')
         where
           common = RX.pick props :: Record Common
           cp handed' sessions' tasks' _ =
             pure $ H.div { className: "forest" }
-              (A.cons (plus handed' showLogin backend) (trees handed' sessions' tasks'))
+              (A.cons (plus handed' showLogin) (trees handed' sessions' tasks'))
           trees handed' sessions' tasks' = (tree handed' tasks') <$> unSessions sessions'
           tree handed' tasks' s@(Session {treeId}) =
             treeLoader { forestOpen
@@ -108,8 +108,8 @@ forestCpt = here.component "forest" cpt where
                        , session: s
                        , tasks } []
 
-plus :: Handed -> T.Cursor Boolean -> T.Cursor Backend -> R.Element
-plus handed showLogin backend = H.div { className: "row" }
+plus :: Handed -> T.Cursor Boolean -> R.Element
+plus handed showLogin = H.div { className: "row" }
   [ H.button { className: buttonClass
              , on: { click }
              , title }
@@ -131,18 +131,19 @@ plus handed showLogin backend = H.div { className: "row" }
 
 
 forestLayout :: R2.Component LayoutProps
-forestLayout props = R.createElement forestLayoutCpt props
+forestLayout = R.createElement forestLayoutCpt
 
 forestLayoutCpt :: R.Component LayoutProps
 forestLayoutCpt = here.component "forestLayout" cpt where
   cpt props@{ handed } children =
     pure $ R.fragment
-      [ topBar { handed } [], forestLayoutMain props children ]
+      [ topBar { handed } []
+      , forestLayoutMain props children ]
 
 -- Renders its first child component in the top bar and the rest in
 -- the main view.
 forestLayoutWithTopBar :: R2.Component LayoutProps
-forestLayoutWithTopBar props = R.createElement forestLayoutWithTopBarCpt props
+forestLayoutWithTopBar = R.createElement forestLayoutWithTopBarCpt
 
 forestLayoutWithTopBarCpt :: R.Component LayoutProps
 forestLayoutWithTopBarCpt = here.component "forestLayoutWithTopBar" cpt where
@@ -154,14 +155,14 @@ forestLayoutWithTopBarCpt = here.component "forestLayoutWithTopBar" cpt where
       , forestLayoutMain props mainChildren ]
 
 forestLayoutMain :: R2.Component LayoutProps
-forestLayoutMain props = R.createElement forestLayoutMainCpt props
+forestLayoutMain = R.createElement forestLayoutMainCpt
 
 forestLayoutMainCpt :: R.Component LayoutProps
 forestLayoutMainCpt = here.component "forestLayoutMain" cpt where
   cpt props children = pure $ forestLayoutRaw props [ mainPage {} children ]
 
 forestLayoutRaw :: R2.Component LayoutProps
-forestLayoutRaw props = R.createElement forestLayoutRawCpt props
+forestLayoutRaw = R.createElement forestLayoutRawCpt
 
 forestLayoutRawCpt :: R.Component LayoutProps
 forestLayoutRawCpt = here.component "forestLayoutRaw" cpt where

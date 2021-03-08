@@ -2,7 +2,10 @@ module Gargantext.Components.Router (router) where
 
 import Data.Array (fromFoldable)
 import Data.Maybe (Maybe(..), maybe')
+import Prim.Row (class Cons, class Lacks)
 import Reactix as R
+import Record as Record
+import Record.Extra as RE
 import Toestand as T
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -31,6 +34,7 @@ import Gargantext.Components.SimpleLayout (simpleLayout)
 import Gargantext.Config (defaultFrontends, defaultBackends, publicBackend)
 import Gargantext.Routes (AppRoute(..))
 import Gargantext.Routes as GR
+import Gargantext.Sessions (Session)
 import Gargantext.Types (CorpusId, ListId, NodeID, NodeType(..), SessionId(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
@@ -43,151 +47,313 @@ type Props = (
   , tasks   :: T.Cursor (Maybe GAT.Reductor)
   )
 
+type SessionProps = (
+    session   :: Session
+  , sessionId :: SessionId
+  | Props
+  )
+
+type SessionNodeProps = (
+  nodeId :: NodeID
+  | SessionProps
+  )
+
 router :: R2.Leaf Props
 router props = R.createElement routerCpt props []
 
 routerCpt :: R.Component Props
 routerCpt = here.component "root" cpt where
-  cpt props@{ cursors, ws, tasks } _ = do
+  cpt props@{ cursors, tasks, ws } _ = do
     let session = R.createContext (unsafeCoerce {})
+    let sessionProps sId = Record.merge { session, sessionId: sId } props
+    let sessionNodeProps sId nId = Record.merge { nodeId: nId } $ sessionProps sId
     showLogin <- T.useLive T.unequal cursors.showLogin
     route <- T.useLive (T.changed notEq) cursors.route
     if showLogin then login' cursors
     else case route of
-      GR.Annuaire s n           -> annuaire props s n
-      GR.Corpus s n             -> corpus props s n
-      GR.CorpusDocument s c l n -> corpusDocument props s c l n
-      GR.Dashboard s n          -> dashboard props s n
+      GR.Annuaire s n           -> annuaire (sessionNodeProps s n) []
+      GR.ContactPage s a n      -> contact (Record.merge { annuaireId: a } $ sessionNodeProps s n)
+      GR.Corpus s n             -> corpus (sessionNodeProps s n)
+      GR.CorpusDocument s c l n -> corpusDocument (Record.merge { corpusId: c, listId: l } $ sessionNodeProps s n)
+      GR.Dashboard s n          -> dashboard (sessionNodeProps s n)
       GR.Document s l n         -> document props s l n
-      GR.Folder        s n      -> corpus props s n
-      GR.FolderPrivate s n      -> corpus props s n
-      GR.FolderPublic  s n      -> corpus props s n
-      GR.FolderShared  s n      -> corpus props s n
+      GR.Folder        s n      -> corpus (sessionNodeProps s n)
+      GR.FolderPrivate s n      -> corpus (sessionNodeProps s n)
+      GR.FolderPublic  s n      -> corpus (sessionNodeProps s n)
+      GR.FolderShared  s n      -> corpus (sessionNodeProps s n)
       GR.Home                   -> home props
-      GR.Lists s n              -> lists props s n
+      GR.Lists s n              -> lists (sessionNodeProps s n)
       GR.Login                  -> login' cursors
-      GR.PGraphExplorer s g     -> graphExplorer props s g
-      GR.RouteFile s n          -> routeFile props s n
+      GR.PGraphExplorer s g     -> graphExplorer (sessionNodeProps s g)
+      GR.RouteFile s n          -> routeFile (sessionNodeProps s n)
       GR.RouteFrameCalc  s n    -> routeFrame props s n NodeFrameCalc
       GR.RouteFrameCode  s n    -> routeFrame props s n NodeFrameNotebook
       GR.RouteFrameWrite s n    -> routeFrame props s n NodeFrameWrite
-      GR.Team s n               -> team props s n
-      GR.Texts s n              -> texts props s n
-      GR.UserPage s n           -> user props s n
-      GR.ContactPage s a n      -> contact props s a n
- 
-forested :: Record Props -> Array R.Element -> R.Element
-forested { tasks, cursors: { route, handed, sessions, backend, reloadForest, reloadRoot, showLogin } } =
-  forestLayout
-  { tasks, frontends, route, handed, sessions
-  , backend, reloadForest, reloadRoot, showLogin
-  } where frontends = defaultFrontends
+      GR.Team s n               -> team (sessionNodeProps s n)
+      GR.Texts s n              -> texts (sessionNodeProps s n)
+      GR.UserPage s n           -> user (sessionNodeProps s n)
 
-authed :: Record Props -> SessionId -> R.Element -> R.Element
-authed props@{ cursors: { session, sessions } , tasks } sessionId content =
-  sessionWrapper { sessionId, session, sessions, fallback: home props }
-  [ content, footer { session } ]
+forested :: R2.Component Props
+forested = R.createElement forestedCpt
 
-annuaire :: Record Props -> SessionId -> NodeID -> R.Element
-annuaire props@{ tasks, cursors: { session } } sessionId nodeId =
-  authed props sessionId $
-    forested props [ annuaireLayout { nodeId, frontends, session } ]
-    where frontends = defaultFrontends
+forestedCpt :: R.Component Props
+forestedCpt = here.component "forested" cpt
+  where
+    cpt { cursors: { backend, handed, reloadForest, reloadRoot, route, sessions, showLogin }, tasks } children = do
+      pure $ forestLayout { backend
+                          , frontends: defaultFrontends
+                          , handed
+                          , reloadForest
+                          , reloadRoot
+                          , route
+                          , sessions
+                          , showLogin
+                          , tasks } children
 
-corpus :: Record Props -> SessionId -> NodeID -> R.Element
-corpus props@{ tasks, cursors: session } sessionId nodeId =
-  authed props sessionId $
-    forested props
-    [ corpusLayout { nodeId, session } ]
+authed :: Record SessionProps -> R.Element -> R.Element
+authed props@{ cursors: { sessions }, session, sessionId, tasks } content =
+  sessionWrapper { fallback: home homeProps [], provider: session, sessionId, sessions }
+    [ content, footer { } [] ]
+    where
+      homeProps = RE.pick props :: Record Props
 
-corpusDocument :: Record Props -> SessionId -> CorpusId -> ListId -> NodeID -> R.Element
-corpusDocument props@{ tasks, cursors: session } sessionId corpusId' listId nodeId =
-  authed props sessionId $
-    forested props
-    [ documentMainLayout { listId, nodeId, corpusId, sessionId, session } [] ]
-    where corpusId = Just corpusId'
+annuaire :: R2.Component SessionNodeProps
+annuaire = R.createElement annuaireCpt
+annuaireCpt :: R.Component SessionNodeProps
+annuaireCpt = here.component "annuaire" cpt
+  where
+    cpt props@{ nodeId, session, sessionId, tasks } _ = do
+      let sessionProps = RE.pick props :: Record SessionProps
+      pure $ authed sessionProps $
+        forested props [ annuaireLayout { frontends, nodeId, session } ]
+        where frontends = defaultFrontends
 
-dashboard :: Record Props -> SessionId -> NodeID -> R.Element
-dashboard props@{ tasks, cursors: { session } } sessionId nodeId =
-  authed props sessionId $
-    forested props [ dashboardLayout { nodeId, session } [] ]
+corpus :: R2.Component SessionNodeProps
+corpus = R.createElement corpusCpt
+corpusCpt :: R.Component SessionNodeProps
+corpusCpt = here.component "corpus" cpt
+  where
+    cpt props@{ cursors: session, nodeId, session, tasks } _ = do
+      let sessionProps = RE.pick props :: Record SessionProps
+      pure $ authed sessionProps $
+        forested props
+        [ corpusLayout { nodeId, session } ]
 
-document :: Record Props -> SessionId -> ListId -> NodeID -> R.Element
-document props@{ tasks, cursors: { session } } sessionId listId nodeId =
-  authed props sessionId $
-    forested props
-    [ documentMainLayout { listId, nodeId, corpusId, session } [] ]
-    where corpusId = Nothing
+type CorpusDocumentProps = (
+    corpusId :: CorpusId
+  , listID :: ListId
+  | SessionNodeProps
+  )
 
-home :: Record Props -> R.Element
-home props@{ cursors: { backend, showLogin, sessions } } =
-  forested props [ homeLayout  { sessions, backend, showLogin, lang: LL_EN } ]
+corpusDocument :: R2.Component CorpusDocumentProps
+corpusDocument = R.createElement corpusDocumentCpt
+corpusDocumentCpt :: R.Component CorpusDocumentProps
+corpusDocumentCpt = here.component "corpusDocument" cpt
+  where
+    cpt props@{ corpusId: corpusId', listId, nodeId, session, sessionId, tasks } _ = do
+      let sessionProps = RE.pick props :: Record SessionProps
+      pure $ authed sessionProps $
+        forested props
+        [ documentMainLayout { corpusId', listId, nodeId, session, sessionId } [] ]
+        where corpusId = Just corpusId'
 
-lists :: Record Props -> SessionId -> NodeID -> R.Element
-lists props@{ cursors: { backend, route, handed, sessions
-                       , reloadForest, reloadRoot, session, showLogin }
-            , tasks } sessionId nodeId =
-  authed props sessionId $
-    Lists.listsWithForest
-    { forestProps: { backend
-                   , frontends
-                   , handed
-                   , reloadForest
-                   , reloadRoot
-                   , route
-                   , sessions
-                   , showLogin
-                   , tasks }
-    , listsProps: { tasks, reloadRoot, reloadForest, nodeId, session }
-    } []
-    where frontends = defaultFrontends
+dashboard :: R2.Component SessionNodeProps
+dashboard = R.createElement dashboardCpt
+dashboardCpt :: R.Component SessionNodeProps
+dashboardCpt = here.component "dashboard" cpt
+  where
+    cpt props@{ cursors: session, nodeId, session, tasks } _ = do
+      let sessionProps = RE.pick props :: Record SessionProps
+      pure $ authed sessionProps $
+        forested props [ dashboardLayout { nodeId, session } [] ]
+
+type DocumentProps = (
+    listId :: ListId
+  | SessionNodeProps
+  )
+
+document :: R2.Component DocumentProps
+document = R.createElement documentCpt
+documentCpt :: R.Component DocumentProps
+documentCpt = here.component "document" cpt
+  where
+    cpt props@{ listId, nodeId, session, sessionId, tasks } _ = do
+      let sessionProps = RE.pick props :: Record SessionProps
+      pure $ authed sessionProps $
+        forested props
+        [ documentMainLayout { listId, nodeId, corpusId, session } [] ]
+        where corpusId = Nothing
+
+home :: R2.Component Props
+home = R.createElement homeCpt
+homeCpt :: R.Component Props
+homeCpt = here.component "home" cpt
+  where
+    cpt props@{ cursors: { sessions, showLogin } } _ = do
+      pure $ forested props [ homeLayout  { lang: LL_EN, sessions, showLogin } ]
+
+lists :: R2.Component SessionNodeProps
+lists = R.createElement listsCpt
+listsCpt :: R.Component SessionNodeProps
+listsCpt = here.component "lists" cpt
+  where
+    cpt props@{ cursors: { backend
+                         , handed
+                         , reloadForest
+                         , reloadRoot
+                         , route
+                         , sessions
+                         , showLogin }
+                , nodeId
+                , session
+                , sessionId
+                , tasks } _ = do
+      let sessionProps = RE.pick props :: Record SessionProps
+      pure $ authed sessionProps $
+        Lists.listsWithForest
+        { forestProps: { backend
+                       , frontends
+                       , handed
+                       , reloadForest
+                       , reloadRoot
+                       , route
+                       , sessions
+                       , showLogin
+                       , tasks }
+        , listsProps: { nodeId, reloadRoot, reloadForest, session, tasks }
+        } []
+        where frontends = defaultFrontends
 
 login' :: Cursors -> R.Element
 login' { backend, sessions, showLogin: visible } =
   login { backend, sessions, visible
         , backends: fromFoldable defaultBackends }
 
-graphExplorer :: Record Props -> SessionId -> Int -> R.Element
-graphExplorer props@{ views: { backend, route, handed, session, sessions, showLogin }
-                    , tasks } sessionId graphId =
-  authed props sessionId $
-    simpleLayout { handed }
-    [ explorerLayout { tasks, graphId, backend, route, frontends
-                     , handed, session, sessions, showLogin } ]
-    where frontends = defaultFrontends
+graphExplorer :: R2.Component SessionNodeProps
+graphExplorer = R.createElement graphExplorerCpt
+graphExplorerCpt :: R.Component SessionNodeProps
+graphExplorerCpt = here.component "graphExplorer" cpt
+  where
+    cpt props@{ cursors: { backend
+                         , handed
+                         , route
+                         , sessions
+                         , showLogin }
+              , nodeId
+              , session
+              , tasks } _ = do
+      let sessionProps = RE.pick props :: Record SessionProps
+      pure $ authed sessionProps $
+        simpleLayout { handed }
+        [ explorerLayout { backend
+                        , graphId: nodeId
+                        , frontends
+                        , handed
+                        , route
+                        , session
+                        , sessions
+                        , showLogin
+                        , tasks } ]
+        where frontends = defaultFrontends
 
-routeFile :: Record Props -> SessionId -> NodeID -> R.Element
-routeFile props@{ cursors: { session } } sessionId nodeId =
-  authed props sessionId $ forested props [ fileLayout { nodeId, session } ]
+routeFile :: R2.Component SessionNodeProps
+routeFile = R.createElement routeFileCpt
+routeFileCpt :: R.Component SessionNodeProps
+routeFileCpt = here.component "routeFile" cpt
+  where
+    cpt props@{ nodeId, session, sessionId } _ = do
+      let sessionProps = RE.pick props :: Record SessionProps
+      pure $ authed sessionProps $ forested props [ fileLayout { nodeId, session } ]
 
-routeFrame :: Record Props -> SessionId -> NodeID -> NodeType -> R.Element
-routeFrame props@{ cursors: { session } } sessionId nodeId nodeType =
-  authed props sessionId $ forested props [ frameLayout { nodeId, nodeType, session } ]
+type RouteFrameProps = (
+  nodeType :: NodeType
+  | SessionNodeProps
+  )
 
-team :: Record Props -> SessionId -> NodeID -> R.Element
-team props@{ tasks, cursors: { session }  } sessionId nodeId =
-  authed props sessionId $ forested props [ corpusLayout { nodeId, session } ]
+routeFrame :: R2.Component RouteFrameProps
+routeFrame = R.createElement routeFrameCpt
+routeFrameCpt :: R.Component RouteFrameProps
+routeFrameCpt = here.component "routeFrame" cpt
+  where
+    cpt props@{ nodeId, nodeType, session, sessionId } _ = do
+      let sessionProps = RE.pick props :: Record SessionProps
+      pure $ authed sessionProps $ forested props [ frameLayout { nodeId, nodeType, session } ]
 
-texts :: Record Props -> SessionId -> NodeID -> R.Element
-texts props@{ cursors: { backend, reloadForest, reloadRoot, showLogin, route, handed, session, sessions }
-            , tasks } sessionId nodeId =
-  authed props sessionId $
-    Texts.textsWithForest
-    { forestProps: { frontends, tasks, route, handed, sessions
-                   , backend, reloadForest, reloadRoot, showLogin }
-    , textsProps: { frontends, nodeId, session } }
-    [] where frontends = defaultFrontends
+team :: R2.Component SessionNodeProps
+team = R.createElement teamCpt
+teamCpt :: R.Component SessionNodeProps
+teamCpt = here.component "team" cpt
+  where
+    cpt props@{ nodeId, session, sessionId } _ = do
+      let sessionProps = RE.pick props :: Record SessionProps
+      pure $ authed sessionProps $ forested props [ corpusLayout { nodeId, session } ]
 
-user :: Record Props -> SessionId -> NodeID -> R.Element
-user props@{ cursors: { reloadRoot, session }, tasks } sessionId nodeId =
-  authed props sessionId $
-    forested props
-    [ userLayout { tasks, nodeId, session, reloadRoot, frontends } ]
-    where frontends = defaultFrontends
+texts :: R2.Component SessionNodeProps
+texts = R.createElement textsCpt
+textsCpt :: R.Component SessionNodeProps
+textsCpt = here.component "texts" cpt
+  where
+    cpt props@{ cursors: { backend
+                         , handed
+                         , reloadForest
+                         , reloadRoot
+                         , route
+                         , sessions
+                         , showLogin }
+                , nodeId
+                , session
+                , sessionId
+                , tasks } _ = do
+      let sessionProps = RE.pick props :: Record SessionProps
+      pure $ authed sessionProps $
+        Texts.textsWithForest
+        { forestProps: { backend
+                       , frontends
+                       , handed
+                       , route
+                       , reloadForest
+                       , reloadRoot
+                       , sessions
+                       , showLogin
+                       , tasks }
+        , textsProps: { frontends, nodeId, session } }
+        [] where frontends = defaultFrontends
 
-contact :: Record Props -> SessionId -> NodeID -> R.Element
-contact props@{ tasks, cursors: { reloadRoot } } sessionId annuaireId nodeId =
-  authed props sessionId $
-    forested props
-    [ contactLayout { annuaireId, tasks, nodeId, reloadRoot, frontends } ]
-    where frontends = defaultFrontends
+user :: R2.Component SessionNodeProps
+user = R.createElement userCpt
+userCpt :: R.Component SessionNodeProps
+userCpt = here.component "user" cpt
+  where
+    cpt props@{ cursors: { reloadRoot }
+              , nodeId
+              , session
+              , sessionId
+              , tasks } _ = do
+      let sessionProps = RE.pick props :: Record SessionProps
+      pure $ authed sessionProps $
+        forested props
+        [ userLayout { frontends, nodeId, reloadRoot, session, tasks } ]
+        where frontends = defaultFrontends
+
+type ContactProps = (
+  annuaireId :: NodeID
+  | SessionNodeProps
+  )
+
+contact :: R2.Component ContactProps
+contact = R.createElement contactCpt
+contactCpt :: R.Component ContactProps
+contactCpt = here.component "contact" cpt
+  where
+    cpt props@{ annuaireId
+              , cursors: { reloadForest, reloadRoot }
+              , nodeId
+              , session
+              , sessionId
+              , tasks } _ = do
+      let sessionProps = RE.pick props :: Record SessionProps
+      let forestedProps = RE.pick props :: Record Props
+      pure $ authed sessionProps $
+        forested forestedProps
+        [ contactLayout { annuaireId, frontends, nodeId, reloadForest, reloadRoot, session, tasks } [] ]
+        where frontends = defaultFrontends

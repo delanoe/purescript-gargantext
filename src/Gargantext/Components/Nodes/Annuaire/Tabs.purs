@@ -55,7 +55,7 @@ type TabsProps =
   , contactData       :: ContactData
   , frontends         :: Frontends
   , nodeId            :: Int
-  , reloadForest      :: T.Cursor (T2.InitReload T.Cursor)
+  , reloadForest      :: T.Cursor T2.Reload
   , reloadRoot        :: T.Cursor T2.Reload
   , session           :: Session
   , sidePanelTriggers :: Record LTypes.SidePanelTriggers
@@ -130,7 +130,7 @@ type NTCommon =
   ( cacheState        :: R.State LTypes.CacheState
   , defaultListId     :: Int
   , nodeId            :: Int
-  , reloadForest      :: T.Cursor (T2.InitReload T.Cursor)
+  , reloadForest      :: T.Cursor T2.Reload
   , reloadRoot        :: T.Cursor T2.Reload
   , session           :: Session
   , sidePanelTriggers :: Record LTypes.SidePanelTriggers

@@ -5,7 +5,7 @@ module Gargantext.Utils.Toestand
   , write_, modify_
   ) where
 
-import Prelude (class Ord, Unit, bind, identity, pure, unit, void, ($), (+), (>>=))
+import Prelude (class Eq, class Ord, Unit, bind, identity, pure, unit, void, ($), (+), (>>=))
 import Data.Set as Set
 import Data.Set (Set)
 import Effect (Effect)

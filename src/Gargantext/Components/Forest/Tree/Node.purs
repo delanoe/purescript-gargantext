@@ -54,7 +54,7 @@ type NodeMainSpanProps =
   , name          :: Name
   , nodeType      :: GT.NodeType
   , reloadRoot    :: T.Cursor T2.Reload
-  , route         :: Routes.AppRoute
+  , route         :: T.Cursor Routes.AppRoute
   , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
   , tasks         :: T.Cursor (Maybe GAT.Reductor)
   | CommonProps
@@ -91,13 +91,14 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
               , setPopoverRef
               , tasks
               } _ = do
+      route' <- T.useLive T.unequal route
       -- only 1 popup at a time is allowed to be opened
       droppedFile   <- R.useState' (Nothing :: Maybe DroppedFile)
       isDragOver    <- R.useState' false
       popoverRef    <- R.useRef null
       R.useEffect' $ do
         R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
-      let isSelected = Just route == Routes.nodeTypeAppRoute nodeType (sessionId session) id
+      let isSelected = Just route' == Routes.nodeTypeAppRoute nodeType (sessionId session) id
 
       tasks' <- T.read tasks
 

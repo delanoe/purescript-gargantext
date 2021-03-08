@@ -4,7 +4,7 @@ module Gargantext.Components.Nodes.Annuaire.User.Contact
   ) where
 
 import Gargantext.Prelude
-  ( Unit, bind, const, discard, pure, show, ($), (<$>), (*>), (<<<), (<>) )
+  ( Unit, bind, const, discard, pure, show, void, ($), (<$>), (*>), (<<<), (<>) )
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
@@ -26,6 +26,7 @@ import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, get, put, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reload as GUR
 import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
@@ -134,12 +135,12 @@ type BasicProps =
   )
 
 type ReloadProps =
-  ( reloadForest :: T.Cursor (T2.InitReload T.Cursor)
+  ( reloadForest :: T.Cursor T2.Reload
   , reloadRoot   :: T.Cursor T2.Reload
   | BasicProps
   )
 
-type LayoutProps = ( session :: T.Cursor (Maybe Session) | ReloadProps )
+type LayoutProps = ( session :: Session | ReloadProps )
 
 type KeyLayoutProps = ( key :: String, session :: Session | ReloadProps )
 
@@ -150,12 +151,12 @@ type AnnuaireLayoutProps = ( annuaireId :: Int, session :: Session | ReloadProps
 
 type AnnuaireKeyLayoutProps = ( annuaireId :: Int | KeyLayoutProps )
 
-contactLayout :: R2.Leaf AnnuaireLayoutProps
-contactLayout props = R.createElement contactLayoutCpt props []
+contactLayout :: R2.Component AnnuaireLayoutProps
+contactLayout = R.createElement contactLayoutCpt
 
 contactLayoutCpt :: R.Component AnnuaireLayoutProps
 contactLayoutCpt = here.component "contactLayout" cpt where
-  cpt { annuaireId, reloadRoot, tasks, frontends, nodeId, session, reloadForest } _ =
+  cpt { annuaireId, frontends, nodeId, reloadForest, reloadRoot, session, tasks } _ = do
     pure $
       contactLayoutWithKey
       { annuaireId, tasks, frontends, key, nodeId
@@ -167,8 +168,13 @@ contactLayoutWithKey props = R.createElement contactLayoutWithKeyCpt props []
 
 contactLayoutWithKeyCpt :: R.Component AnnuaireKeyLayoutProps
 contactLayoutWithKeyCpt = here.component "contactLayoutWithKey" cpt where
-    cpt { annuaireId, reloadRoot, tasks, frontends
-        , nodeId, session, reloadForest } _ = do
+    cpt { annuaireId
+        , frontends
+        , reloadForest
+        , reloadRoot
+        , nodeId
+        , session
+        , tasks } _ = do
       reload <- T.useCell T2.newReload
       _ <- T.useLive T.unequal reload
       cacheState <- R.useState' LT.CacheOn

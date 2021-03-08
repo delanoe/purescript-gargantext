@@ -55,12 +55,15 @@ type Universal =
 type Global =
   ( frontends  :: Frontends
   , handed     :: Handed
-  , route      :: AppRoute
+  , route      :: T.Cursor AppRoute
   | Universal )
 
 -- Shared by every component here
-type Common =
-  ( forestOpen :: T.Cursor OpenNodes, reload :: T.Cursor T2.Reload | Global )
+type Common = (
+   forestOpen :: T.Cursor OpenNodes
+ , reload :: T.Cursor T2.Reload
+ | Global
+ )
 
 type LoaderProps = ( session :: Session, root :: ID | Common )
 

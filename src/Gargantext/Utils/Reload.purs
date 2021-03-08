@@ -23,6 +23,9 @@ bump (_ /\ setReload) = setReload (_ + 1)
 bumpCursor :: T.Cursor Reload -> Effect Unit
 bumpCursor c = T2.modify_ (_ + 1) c
 
+bumpCell :: T.Cell Reload -> Effect Unit
+bumpCell c = T2.modify_ (_ + 1) c
+
 value :: ReloadS -> Reload
 value (val /\ _) = val
 

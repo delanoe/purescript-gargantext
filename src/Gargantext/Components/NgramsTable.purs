@@ -258,7 +258,7 @@ tableContainerCpt { dispatch
 
 type CommonProps = (
     afterSync         :: Unit -> Aff Unit
-  , reloadForest      :: T.Cursor (T2.InitReload T.Cursor)
+  , reloadForest      :: T.Cursor T2.Reload
   , reloadRoot        :: T.Cursor T2.Reload
   , sidePanelTriggers :: Record NT.SidePanelTriggers
   , tabNgramType      :: CTabNgramType

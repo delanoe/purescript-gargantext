@@ -13,12 +13,12 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Footer"
 
 ---------------------------------------------------------------------------
-type FooterProps s = ( session :: s )
+type FooterProps = ( )
 
-footer :: forall cell c. T.Read cell c => Record (FooterProps cell) -> R.Element
-footer props = R.createElement footerCpt props []
+footer :: R2.Component FooterProps
+footer = R.createElement footerCpt
 
-footerCpt :: forall cell c. T.Read cell c => R.Component (FooterProps cell)
+footerCpt :: R.Component FooterProps
 footerCpt = here.component "footer" cpt where
-  cpt { session } _ =
+  cpt { } _ = do
     pure $ H.div { className: "container" } [ H.hr {}, H.footer {} [] ]

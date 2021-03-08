@@ -37,7 +37,7 @@ type Props = (
     cacheState        :: R.State CacheState
   , corpusData        :: CorpusData
   , corpusId          :: Int
-  , reloadForest      :: T.Cursor (T2.InitReload T.Cursor)
+  , reloadForest      :: T.Cursor T2.Reload
   , reloadRoot        :: T.Cursor T2.Reload
   , session           :: Session
   , sidePanelTriggers :: Record SidePanelTriggers

@@ -1,7 +1,8 @@
 -- | A component that loads the session specified in the route and provides it to its child.
 -- |
 -- | If the session cannot be loaded, displays the homepage.
-module Gargantext.Components.SessionLoader where
+module Gargantext.Components.SessionLoader
+where
 
 import Prelude (($), (<$>))
 import Data.Maybe (Maybe(..))
@@ -16,17 +17,19 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.SessionWrapper"
 
 type Props sessions =
-  ( sessionId :: SessionId
-  , sessions  :: sessions
+  (
+    fallback  :: R.Element
   , provider  :: R.Provider Session
-  , fallback  :: R.Element )
+  , sessionId :: SessionId
+  , sessions  :: sessions
+  )
 
 sessionWrapper :: forall s. T.Read s Sessions => R2.Component (Props s)
 sessionWrapper = R.createElement sessionWrapperCpt
 
 sessionWrapperCpt :: forall s. T.Read s Sessions => R.Component (Props s)
 sessionWrapperCpt = here.component "sessionWrapper" cpt where
-  cpt { sessionId, sessions, provider, fallback } content =
+  cpt { fallback, provider, sessionId, sessions } content =
     cp <$> T.useLive T.unequal sessions where
       cp sessions' = c $ Sessions.lookup sessionId sessions' where
         c (Just session) = (R.provide provider session content)
