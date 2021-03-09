@@ -45,33 +45,36 @@ import Gargantext.Utils.Toestand as T2
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer"
 
-type BaseProps =
-  ( backend       :: T.Cursor (Maybe Backend)
+type BaseProps = (
+    backend       :: T.Cursor (Maybe Backend)
   , frontends     :: Frontends
   , graphId       :: GET.GraphId
   , handed        :: T.Cursor Types.Handed
   , route         :: T.Cursor AppRoute
   , sessions      :: T.Cursor Sessions
   , showLogin     :: T.Cursor Boolean
-  , tasks         :: T.Cursor (Maybe GAT.Reductor) )
+  , tasks         :: T.Cursor (Maybe GAT.Reductor)
+)
  
 
 type LayoutLoaderProps = ( session :: R.Context Session | BaseProps )
 
-type LayoutProps = ( session :: Session, graphVersion :: GUR.ReloadS | BaseProps )
+type LayoutProps = (
+    graphVersion :: GUR.ReloadS
+  , session :: Session
+  | BaseProps
+)
 
-type Props =
-  ( graph          :: SigmaxT.SGraph
-  , graphVersion   :: GUR.ReloadS
+type Props = (
+    graph          :: SigmaxT.SGraph
   , hyperdataGraph :: GET.HyperdataGraph
   , mMetaData      :: Maybe GET.MetaData
-  , session        :: Session
   | LayoutProps
   )
 
 --------------------------------------------------------------
 explorerLayoutLoader :: R2.Component LayoutLoaderProps
-explorerLayoutLoader props = R.createElement explorerLayoutLoaderCpt props []
+explorerLayoutLoader = R.createElement explorerLayoutLoaderCpt
 
 explorerLayoutLoaderCpt :: R.Component LayoutLoaderProps
 explorerLayoutLoaderCpt = here.component "explorerLayoutLoader" cpt where
@@ -80,25 +83,28 @@ explorerLayoutLoaderCpt = here.component "explorerLayoutLoader" cpt where
     session <- R.useContext props.session -- todo: ugh, props fiddling
     let base = RX.pick props :: Record BaseProps
     let props' = Record.merge base { graphVersion, session }
-    pure $ explorerLayout props'
+    pure $ explorerLayout props' []
     
 explorerLayout :: R2.Component LayoutProps
-explorerLayout props = R.createElement explorerLayoutCpt props []
+explorerLayout = R.createElement explorerLayoutCpt
 
 explorerLayoutCpt :: R.Component LayoutProps
 explorerLayoutCpt = here.component "explorerLayout" cpt where
-  cpt props@{ graphId, session, graphVersion } _ = do
+  cpt props@{ backend
+            , graphId
+            , graphVersion
+            , session } _ = do
     useLoader graphId (getNodes session graphVersion) handler
     where
-      handler loaded =
-        explorer (Record.merge props { graph, graphVersion, hyperdataGraph: loaded, mMetaData })
+      handler loaded = explorer (Record.merge props { graph, hyperdataGraph: loaded, mMetaData }) []
+        -- explorer (Record.merge props { graph, graphVersion, hyperdataGraph: loaded, mMetaData })
         where
           GET.HyperdataGraph { graph: hyperdataGraph } = loaded
           Tuple mMetaData graph = convert hyperdataGraph
 
 --------------------------------------------------------------
-explorer :: Record Props -> R.Element
-explorer props = R.createElement explorerCpt props []
+explorer :: R2.Component Props
+explorer = R.createElement explorerCpt
 
 explorerCpt :: R.Component Props
 explorerCpt = here.component "explorer" cpt

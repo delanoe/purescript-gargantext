@@ -1,13 +1,16 @@
 module Gargantext.Components.App (app) where
 
+import Data.Maybe (Maybe(..))
 import Prelude
+import Reactix as R
+import Toestand as T
+
 import Gargantext.Components.App.Data (emptyApp)
 import Gargantext.Components.Router (router)
 import Gargantext.Hooks (useHashRouter)
 import Gargantext.Router as Router
 import Gargantext.Sessions as Sessions
-import Reactix as R
-import Toestand as T
+import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.App"
