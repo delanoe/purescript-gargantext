@@ -921,11 +921,11 @@
   };
   "toestand" = {
     name = "toestand";
-    version = "v0.5.0";
+    version = "v0.5.1";
     src = pkgs.fetchgit {
       url = "https://github.com/poorscript/purescript-toestand";
-      rev = "v0.5.0";
-      sha256 = "1y4pji0gw5dzmxxnrzmzfncq6m6qx7yqac2f758fvv6mi6fmf928";
+      rev = "v0.5.1";
+      sha256 = "0lwxwxnpkbrh8vkicbm12bcrvyak5y1pl18w30xjygwasvdid1nk";
     };
   };
   "transformers" = {

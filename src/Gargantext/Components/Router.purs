@@ -63,7 +63,7 @@ router :: R2.Leaf Props
 router props = R.createElement routerCpt props []
 
 routerCpt :: R.Component Props
-routerCpt = here.component "root" cpt where
+routerCpt = here.component "router" cpt where
   cpt props@{ cursors, tasks } _ = do
     let session = R.createContext (unsafeCoerce {})
     let sessionProps sId = Record.merge { session, sessionId: sId } props
