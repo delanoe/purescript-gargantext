@@ -11,6 +11,7 @@ import Reactix as R
 import Reactix.SyntheticEvent as E
 import Reactix.DOM.HTML as H
 import Toestand as T
+import Toestand.Records (useFocusedFields)
 
 import Gargantext.Components.Login.Types (AuthRequest(..))
 import Gargantext.Components.Forms (clearfix, formGroup)
@@ -33,14 +34,14 @@ type Form =
 emptyForm :: Form
 emptyForm = { error: "", username: "", password: "", agreed: false }
 
-type Cursors =
-  { error    :: T.Cursor String
-  , username :: T.Cursor String
-  , password :: T.Cursor String
-  , agreed   :: T.Cursor Boolean }
+type Boxes =
+  { error    :: T.Box String
+  , username :: T.Box String
+  , password :: T.Box String
+  , agreed   :: T.Box Boolean }
 
-formCursors :: T.Cell Form -> R.Hooks Cursors
-formCursors cell = T.useFieldCursors cell {}
+formBoxes :: T.Box Form -> R.Hooks Boxes
+formBoxes box = useFocusedFields box {}
 
 type Props s v =
   ( backend  :: Backend
@@ -56,8 +57,8 @@ formCpt :: forall s v. T.ReadWrite s Sessions => T.ReadWrite v Boolean
         => R.Component (Props s v)
 formCpt = here.component "form" cpt where
   cpt props@{ backend, sessions, visible } _ = do
-    cell    <- T.useCell emptyForm
-    cursors <- T.useFieldCursors cell {}
+    cell    <- T.useBox emptyForm
+    cursors <- useFocusedFields cell {}
     pure $ R2.row
       [ H.form { className: "col-md-12" }
         [ formLoginLink backend
@@ -81,7 +82,7 @@ formLoginLink backend =
   H.h4 { className: "text-center" } {-className: "text-muted"-}
   [ H.text $ "Login to garg://" <> show backend ]
 
-type SubmitButtonProps s v = ( cell :: T.Cell Form | Props s v )
+type SubmitButtonProps s v = ( cell :: T.Box Form | Props s v )
 
 submitButton
   :: forall s v. T.ReadWrite s Sessions => T.Write v Boolean
@@ -102,7 +103,7 @@ submitButtonCpt = here.component "submitButton" cpt where
     
 -- Attempts to submit the form
 submitForm :: forall s v. T.ReadWrite s Sessions => T.Write v Boolean
-           => Record (Props s v) -> T.Cell Form -> ChangeEvent -> Effect Unit
+           => Record (Props s v) -> T.Box Form -> ChangeEvent -> Effect Unit
 submitForm { backend, sessions, visible } cell e = do
   E.preventDefault e
   state <- T.read cell

@@ -1,5 +1,7 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Metrics where
 
+import Gargantext.Prelude (bind, negate, pure, ($), (<$>), (<>))
+
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
 import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Map as Map
@@ -7,11 +9,9 @@ import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
-
-import Gargantext.Prelude
 
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, yAxis')
 import Gargantext.Components.Charts.Options.Type (xAxis)
@@ -19,16 +19,17 @@ import Gargantext.Components.Charts.Options.Series (Series, seriesScatterD2)
 import Gargantext.Components.Charts.Options.Color (green, grey, red)
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
-import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView, metricsWithCacheLoadView)
+import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types
-import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
+  (MetricsProps, Path, Props, ReloadPath)
 import Gargantext.Hooks.Loader (HashedResponse(..))
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
-import Gargantext.Types (ChartType(..), TabType, TermList(..))
+import Gargantext.Types (TermList(..))
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 
+here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Metrics"
 
 newtype Metric = Metric
@@ -134,9 +135,9 @@ metricsCpt = here.component "etrics" cpt
 
 
 loaded :: Record MetricsProps -> Loaded -> R.Element
-loaded { path, reload, session } loaded =
+loaded { path, reload, session } loaded' =
   H.div {} [
   {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: Scatter, path, reload, session }
-  , -} chart $ scatterOptions loaded
+  , -} chart $ scatterOptions loaded'
   ]

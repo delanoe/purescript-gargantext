@@ -9,8 +9,6 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Sequence as Seq
 import Data.Set as Set
-import Data.Tuple (fst, snd)
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
@@ -47,9 +45,9 @@ here = R2.here "Gargantext.Components.GraphExplorer.Sidebar"
 type Common = (
     graphId         :: NodeID
   , metaData        :: GET.MetaData
-  , reloadForest    :: T.Cursor T2.Reload
-  , removedNodeIds  :: T.Cursor SigmaxT.NodeIds
-  , selectedNodeIds :: T.Cursor SigmaxT.NodeIds
+  , reloadForest    :: T.Box T2.Reload
+  , removedNodeIds  :: T.Box SigmaxT.NodeIds
+  , selectedNodeIds :: T.Box SigmaxT.NodeIds
   , session         :: Session
   )
 
@@ -57,7 +55,7 @@ type Props = (
     frontends       :: Frontends
   , graph           :: SigmaxT.SGraph
   , graphVersion    :: GUR.ReloadS
-  , showSidePanel   :: T.Cursor GET.SidePanelState
+  , showSidePanel   :: T.Box GET.SidePanelState
   | Common
   )
 
@@ -78,8 +76,6 @@ sidebarCpt = here.component "sidebar" cpt
                 SideTabLegend -> sideTabLegend sideTabProps []
                 SideTabData -> sideTabData sideTabProps []
                 SideTabCommunity -> sideTabCommunity sideTabProps []
-                _ -> H.div {} []
-
           pure $ RH.div { id: "sp-container" }
             [ sideTabNav { sidePanel: showSidePanel
                          , sideTabs: [SideTabLegend, SideTabData, SideTabCommunity] } []
@@ -89,7 +85,7 @@ sidebarCpt = here.component "sidebar" cpt
         sideTabProps = RX.pick props :: Record SideTabProps
 
 type SideTabNavProps = (
-    sidePanel :: T.Cursor GET.SidePanelState
+    sidePanel :: T.Box GET.SidePanelState
   , sideTabs  :: Array SideTab
   )
 
@@ -299,34 +295,32 @@ removeButtonCpt = here.component "removeButton" cpt
                       , session: session
                       , termList: rType
                       , reloadForest }
-          T2.write_ selectedNodeIds' removedNodeIds
-          T2.write_ SigmaxT.emptyNodeIds selectedNodeIds
+          T.write_ selectedNodeIds' removedNodeIds
+          T.write_ SigmaxT.emptyNodeIds selectedNodeIds
 
 
 
-badge :: T.Cursor SigmaxT.NodeIds -> Record SigmaxT.Node -> R.Element
+badge :: T.Box SigmaxT.NodeIds -> Record SigmaxT.Node -> R.Element
 badge selectedNodeIds {id, label} =
   RH.a { className: "badge badge-pill badge-light"
        , on: { click: onClick }
        } [ RH.h6 {} [ RH.text label ] ]
   where
     onClick e = do
-      T2.write_ (Set.singleton id) selectedNodeIds
+      T.write_ (Set.singleton id) selectedNodeIds
 
 badges :: SigmaxT.SGraph -> SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
 badges graph selectedNodeIds = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
 
 neighbourBadges :: SigmaxT.SGraph -> SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
-neighbourBadges graph selectedNodeIds = SigmaxT.neighbours graph selectedNodes
-  where
-    selectedNodes = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
-
+neighbourBadges graph selectedNodeIds = SigmaxT.neighbours graph selectedNodes' where
+  selectedNodes' = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
 
 type DeleteNodes =
   ( graphId      :: NodeID
   , metaData     :: GET.MetaData
   , nodes        :: Array (Record SigmaxT.Node)
-  , reloadForest :: T.Cursor T2.Reload
+  , reloadForest :: T.Box T2.Reload
   , session      :: Session
   , termList     :: TermList
   )
@@ -339,7 +333,7 @@ deleteNodes { graphId, metaData, nodes, session, termList, reloadForest } = do
     case mPatch of
       Nothing -> pure unit
       Just (NTC.Versioned patch) -> do
-        liftEffect $ GUR.bumpCursor reloadForest
+        liftEffect $ GUR.bumpBox reloadForest
 
 -- Why is this called delete node?
 deleteNode :: TermList

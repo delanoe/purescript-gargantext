@@ -13,8 +13,6 @@ module Gargantext.Components.GraphExplorer.ToggleButton
 
 import Prelude
 
-import Data.Tuple (snd)
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -23,13 +21,12 @@ import Toestand as T
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.ToggleButton"
 
 type Props = (
-    state      :: T.Cursor Boolean
+    state      :: T.Box Boolean
   , onMessage  :: String
   , offMessage :: String
   , style      :: String
@@ -59,7 +56,7 @@ toggleButtonCpt = here.component "toggleButton" cpt
     text _on off false = off
 
 type ControlsToggleButtonProps = (
-  state :: T.Cursor Boolean
+  state :: T.Box Boolean
   )
 
 controlsToggleButton :: R2.Component ControlsToggleButtonProps
@@ -73,12 +70,12 @@ controlsToggleButtonCpt = here.component "controlsToggleButton" cpt
           state: state
         , onMessage: "Hide Controls"
         , offMessage: "Show Controls"
-        , onClick: \_ -> T2.modify_ not state
+        , onClick: \_ -> T.modify_ not state
         , style: "light"
         } []
 
 type EdgesButtonProps = (
-  state :: T.Cursor SigmaxTypes.ShowEdgesState
+  state :: T.Box SigmaxTypes.ShowEdgesState
 )
 
 edgesToggleButton :: R2.Component EdgesButtonProps
@@ -100,10 +97,10 @@ edgesToggleButtonCpt = here.component "edgesToggleButton" cpt
     cls _ = "active"
 
     -- TODO: Move this to Graph.purs to the R.useEffect handler which renders nodes/edges
-    onClick state _ = T2.modify_ SigmaxTypes.toggleShowEdgesState state
+    onClick state _ = T.modify_ SigmaxTypes.toggleShowEdgesState state
 
 type LouvainToggleButtonProps = (
-  state :: T.Cursor Boolean
+  state :: T.Box Boolean
 )
 
 louvainToggleButton :: R2.Component LouvainToggleButtonProps
@@ -117,12 +114,12 @@ louvainToggleButtonCpt = here.component "louvainToggleButton" cpt
           state: state
         , onMessage: "Louvain off"
         , offMessage: "Louvain on"
-        , onClick: \_ -> T2.modify_ not state
+        , onClick: \_ -> T.modify_ not state
         , style: "primary"
         } []
 
 type MultiSelectEnabledButtonProps = (
-  state :: T.Cursor Boolean
+  state :: T.Box Boolean
 )
 
 multiSelectEnabledButton :: R2.Component MultiSelectEnabledButtonProps
@@ -136,12 +133,12 @@ multiSelectEnabledButtonCpt = here.component "lmultiSelectEnabledButton" cpt
           state: state
         , onMessage: "Single-node"
         , offMessage: "Multi-node"
-        , onClick: \_ -> T2.modify_ not state
+        , onClick: \_ -> T.modify_ not state
         , style : "primary"
         } []
 
 type ForceAtlasProps = (
-  state :: T.Cursor SigmaxTypes.ForceAtlasState
+  state :: T.Box SigmaxTypes.ForceAtlasState
 )
 
 pauseForceAtlasButton :: R2.Component ForceAtlasProps
@@ -166,10 +163,10 @@ pauseForceAtlasButtonCpt = here.component "forceAtlasToggleButton" cpt
     text SigmaxTypes.Running = "Pause Force Atlas"
     text SigmaxTypes.Paused = "Start Force Atlas"
 
-    onClick state _ = T2.modify_ SigmaxTypes.toggleForceAtlasState state
+    onClick state _ = T.modify_ SigmaxTypes.toggleForceAtlasState state
 
 type TreeToggleButtonProps = (
-  state :: T.Cursor Boolean
+  state :: T.Box Boolean
 )
 
 treeToggleButton :: R2.Component TreeToggleButtonProps
@@ -183,12 +180,12 @@ treeToggleButtonCpt = here.component "treeToggleButton" cpt
           state: state
         , onMessage: "Hide Tree"
         , offMessage: "Show Tree"
-        , onClick: \_ -> T2.modify_ not state
+        , onClick: \_ -> T.modify_ not state
         , style: "light"
         } []
 
 type SidebarToggleButtonProps = (
-  state :: T.Cursor GET.SidePanelState
+  state :: T.Box GET.SidePanelState
 )
 
 sidebarToggleButton :: R2.Component SidebarToggleButtonProps
@@ -214,7 +211,7 @@ sidebarToggleButtonCpt = here.component "sidebarToggleButton" cpt
     text _on off GET.Closed        = off
 
     onClick state = \_ ->
-      T2.modify_ (\s -> case s of
+      T.modify_ (\s -> case s of
         GET.InitialClosed -> GET.Opened GET.SideTabLegend
         GET.Closed        -> GET.Opened GET.SideTabLegend
         (GET.Opened _)    -> GET.Closed) state

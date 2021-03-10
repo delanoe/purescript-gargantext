@@ -16,6 +16,7 @@ import Gargantext.Sessions (Session, put_)
 import Gargantext.Types  as GT
 import Gargantext.Utils.Reactix as R2
 
+here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Merge"
 
 mergeNodeReq :: Session -> GT.ID -> GT.ID -> Aff (Array GT.ID)

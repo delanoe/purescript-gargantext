@@ -11,7 +11,6 @@ import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
 import DOM.Simple.Console (log, log2)
 import DOM.Simple.Types (Element)
-import FFI.Simple (delay)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 import Record as Record
@@ -35,17 +34,17 @@ derive instance genericStage :: Generic Stage _
 derive instance eqStage :: Eq Stage
 
 
-type Props sigma forceatlas2 = (
-    elRef                 :: R.Ref (Nullable Element)
+type Props sigma forceatlas2 =
+  ( elRef                 :: R.Ref (Nullable Element)
   , forceAtlas2Settings   :: forceatlas2
   , graph                 :: SigmaxTypes.SGraph
   , mCamera               :: Maybe GET.Camera
   , multiSelectEnabledRef :: R.Ref Boolean
-  , selectedNodeIds       :: T.Cursor SigmaxTypes.NodeIds
-  , showEdges             :: T.Cursor SigmaxTypes.ShowEdgesState
+  , selectedNodeIds       :: T.Box SigmaxTypes.NodeIds
+  , showEdges             :: T.Box SigmaxTypes.ShowEdgesState
   , sigmaRef              :: R.Ref Sigmax.Sigma
   , sigmaSettings         :: sigma
-  , stage                 :: T.Cursor Stage
+  , stage                 :: T.Box Stage
   , startForceAtlas       :: Boolean
   , transformedGraph      :: SigmaxTypes.SGraph
   )
@@ -54,17 +53,13 @@ graph :: forall s fa2. R2.Component (Props s fa2)
 graph = R.createElement graphCpt
 
 graphCpt :: forall s fa2. R.Component (Props s fa2)
-graphCpt = here.component "graph" cpt
-  where
+graphCpt = here.component "graph" cpt where
     cpt props@{ elRef
-              , forceAtlas2Settings
-              , graph
               , mCamera
               , multiSelectEnabledRef
               , selectedNodeIds
               , showEdges
               , sigmaRef
-              , sigmaSettings
               , stage
               , startForceAtlas
               , transformedGraph } _ = do
@@ -89,15 +84,8 @@ graphCpt = here.component "graph" cpt
         Nothing -> RH.div {} []
         Just el -> R.createPortal [] el
 
-    stageHooks { elRef
-               , graph
-               , mCamera
-               , multiSelectEnabledRef
-               , selectedNodeIds
-               , sigmaRef
-               , stage
-               , stage': Init
-               , startForceAtlas } = do
+    stageHooks props@{ elRef, mCamera, multiSelectEnabledRef, selectedNodeIds, forceAtlas2Settings: fa2, graph: graph'
+                     , sigmaRef, stage, stage': Init, startForceAtlas } = do
       R.useEffectOnce' $ do
         let rSigma = R.readRef sigmaRef
 
@@ -117,7 +105,7 @@ graphCpt = here.component "graph" cpt
                     }
                   pure unit
 
-                Sigmax.refreshData sig $ Sigmax.sigmafy graph
+                Sigmax.refreshData sig $ Sigmax.sigmafy graph'
 
                 Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Ready)] no sigma" $ \sigma -> do
                   -- bind the click event only initially, when ref was empty
@@ -129,7 +117,7 @@ graphCpt = here.component "graph" cpt
 
                 -- log2 "[graph] startForceAtlas" startForceAtlas
                 if startForceAtlas then
-                  Sigma.startForceAtlas2 sig forceAtlas2Settings
+                  Sigma.startForceAtlas2 sig fa2
                 else
                   Sigma.stopForceAtlas2 sig
 
@@ -143,6 +131,7 @@ graphCpt = here.component "graph" cpt
             pure unit
 
         T.write Ready stage
+
 
     stageHooks { showEdges'
                , sigmaRef

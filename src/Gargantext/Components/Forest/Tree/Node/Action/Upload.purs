@@ -9,9 +9,8 @@ import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff, throwError)
+import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
-import Effect.Exception (error)
 import Partial.Unsafe (unsafePartial)
 import React.SyntheticEvent     as E
 import Reactix                  as R
@@ -32,6 +31,7 @@ import Gargantext.Types (NodeType(..), ID)
 import Gargantext.Types         as GT
 import Gargantext.Utils.Reactix as R2
 
+here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Upload"
 
 -- UploadFile Action

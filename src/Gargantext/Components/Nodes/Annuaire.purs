@@ -212,7 +212,7 @@ contactCellsCpt = here.component "contactCells" cpt where
         --nodepath = NodePath (sessionId session) NodeContact (Just id)
         nodepath = Routes.ContactPage (sessionId session) annuaireId id
         href = url frontends nodepath
-        contactUrl aId id = url frontends $ Routes.ContactPage (sessionId session) aId id
+        contactUrl aId id' = url frontends $ Routes.ContactPage (sessionId session) aId id'
         contactWhereOrg (CT.ContactWhere { organization: [] }) = "No Organization"
         contactWhereOrg (CT.ContactWhere { organization: orga }) =
           fromMaybe "No orga (list)" (A.head orga)

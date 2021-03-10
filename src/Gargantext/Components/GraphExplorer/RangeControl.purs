@@ -7,7 +7,6 @@ module Gargantext.Components.GraphExplorer.RangeControl
   ) where
 
 import Prelude
-import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
@@ -15,7 +14,6 @@ import Toestand as T
 import Gargantext.Components.RangeSlider as RS
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.RangeControl"
@@ -40,7 +38,7 @@ rangeControlCpt = here.component "rangeButton" cpt
 
 type EdgeConfluenceControlProps = (
     range :: Range.NumberRange
-  , state :: T.Cursor Range.NumberRange
+  , state :: T.Box Range.NumberRange
   )
 
 edgeConfluenceControl :: R2.Component EdgeConfluenceControlProps
@@ -62,13 +60,13 @@ edgeConfluenceControlCpt = here.component "edgeConfluenceControl" cpt
           , step: 1.0
           , width: 10.0
           , height: 5.0
-          , onChange: \rng -> T2.write_ rng state
+          , onChange: \rng -> T.write_ rng state
           }
         } []
 
 type EdgeWeightControlProps = (
     range :: Range.NumberRange
-  , state :: T.Cursor Range.NumberRange
+  , state :: T.Box Range.NumberRange
   )
 
 edgeWeightControl :: R2.Component EdgeWeightControlProps
@@ -90,13 +88,13 @@ edgeWeightControlCpt = here.component "edgeWeightControl" cpt
           , step: 1.0
           , width: 10.0
           , height: 5.0
-          , onChange: \rng -> T2.write_ rng state
+          , onChange: \rng -> T.write_ rng state
           }
         } []
 
 type NodeSideControlProps = (
     range :: Range.NumberRange
-  , state :: T.Cursor Range.NumberRange
+  , state :: T.Box Range.NumberRange
   )
 
 nodeSizeControl :: R2.Component NodeSideControlProps
@@ -118,6 +116,6 @@ nodeSizeControlCpt = here.component "nodeSizeControl" cpt
           , step: 1.0
           , width: 10.0
           , height: 5.0
-          , onChange: \rng -> T2.write_ rng state
+          , onChange: \rng -> T.write_ rng state
           }
         } []

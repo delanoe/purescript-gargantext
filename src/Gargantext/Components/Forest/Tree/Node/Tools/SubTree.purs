@@ -102,66 +102,31 @@ subTreeTreeView :: Record CorpusTreeProps -> R.Element
 subTreeTreeView props = R.createElement subTreeTreeViewCpt props []
 
 subTreeTreeViewCpt :: R.Component CorpusTreeProps
-subTreeTreeViewCpt = here.component "subTreeTreeViewCpt" cpt
-  where
-    cpt p@{ id
-          , tree: NTree (LNode { id: targetId
-                               , name
-                               , nodeType
-                               }
-                        ) ary
-          , subTreeParams
-          , dispatch
-          , action
-          , handed
-          } _ = do
-            let ordering =
-                  case handed of
-                    GT.LeftHanded  -> A.reverse
-                    GT.RightHanded -> identity
-
-            pure $ H.div {} $ ordering [
-              H.div { className: nodeClass validNodeType } [
-                H.span { className: "text"
-                       , on: { click: onClick }
-                       } [
-                  nodeText { isSelected: isSelected targetId valAction
-                           , name: " " <> name
-                           , handed
-                           }
-                , H.span { className: "children" } children
-                ]
-              ]
-            ]
-      where
-
-        nodeClass vnt = "node " <> GT.fldr nodeType true <> " " <> validNodeTypeClass
-          where
-            validNodeTypeClass = if vnt then "node-type-valid" else ""
-
-        SubTreeParams { valitypes } = subTreeParams
-
-        sortedAry = A.sortWith (\(NTree (LNode {id:id'}) _) -> id')
-                  $ A.filter (\(NTree (LNode {id:id'}) _) -> id'/= id) ary
-
-        children = map (\ctree -> subTreeTreeView (p { tree = ctree })) sortedAry
-
-        validNodeType = (A.elem nodeType valitypes) && (id /= targetId)
-
-        clickable    = if validNodeType then "clickable" else ""
-
-        (valAction /\ setAction) = action
-
-        isSelected n action' = case (subTreeOut action') of
-            Nothing                   -> false
-            (Just (SubTreeOut {out})) -> n == out
-
-        onClick e = do
-          let action = if not validNodeType then Nothing else Just $ SubTreeOut { in: id, out: targetId }
-          E.preventDefault  e
-          E.stopPropagation e
-          setAction $ const $ setTreeOut valAction action
-
-
---------------------------------------------------------------------------------------------
-
+subTreeTreeViewCpt = here.component "subTreeTreeViewCpt" cpt where
+  cpt p@{ tree: NTree (LNode { id: targetId, name, nodeType }) ary
+        , id, subTreeParams, dispatch, action, handed } _ = 
+    pure $ H.div {} $ GT.reverseHanded
+      [ H.div { className: nodeClass validNodeType }
+        [ H.span { className: "text", on: { click } }
+          [ nodeText { isSelected: isSelected targetId valAction
+                     , name: " " <> name, handed }
+          , H.span { className: "children" } children ]]]
+      handed
+    where
+      nodeClass vnt = "node " <> GT.fldr nodeType true <> " " <> validNodeTypeClass where
+        validNodeTypeClass = if vnt then "node-type-valid" else ""
+      SubTreeParams { valitypes } = subTreeParams
+      sortedAry = A.sortWith (\(NTree (LNode {id:id'}) _) -> id')
+        $ A.filter (\(NTree (LNode {id:id'}) _) -> id'/= id) ary
+      children = map (\ctree -> subTreeTreeView (p { tree = ctree })) sortedAry
+      validNodeType = (A.elem nodeType valitypes) && (id /= targetId)
+      clickable    = if validNodeType then "clickable" else ""
+      (valAction /\ setAction) = action
+      isSelected n action' = case (subTreeOut action') of
+        Nothing                   -> false
+        (Just (SubTreeOut {out})) -> n == out
+      click e = do
+        let action' = if not validNodeType then Nothing else Just $ SubTreeOut { in: id, out: targetId }
+        E.preventDefault  e
+        E.stopPropagation e
+        setAction $ const $ setTreeOut valAction action'

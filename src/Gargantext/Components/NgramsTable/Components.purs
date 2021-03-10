@@ -17,12 +17,19 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
+  ( Unit, bind, const, discard, map, not, otherwise
+  , pure, show, unit, ($), (+), (/=), (<<<), (<>), (==), (>), (||) )
+
 import Gargantext.Components.NgramsTable.Core
+  ( Action(..), Dispatch, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm
+  , _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list
+  , _ngrams, _occurrences, ngramsTermText, replace, setTermListA )
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as Tbl
 import Gargantext.Types as T
 import Gargantext.Utils.Reactix as R2
 
+here :: R2.Here
 here = R2.here "Gargantext.Components.NgramsTable.Components"
 
 type SearchInputProps =

@@ -3,9 +3,10 @@
 --       has not been ported to this module yet.
 module Gargantext.Components.FacetsTable where
 
-------------------------------------------------------------------------
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
-import Data.Array (concat, filter)
+import Prelude
+  ( class Show, Unit, bind, const, discard, identity, mempty, not
+  , otherwise, pure, unit, void, ($), (*>), (<$>), (<<<), (<>), (==), (>) )
+import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -13,19 +14,20 @@ import Data.Sequence (Seq)
 import Data.Sequence as Seq
 import Data.Set (Set)
 import Data.Set as Set
-import Data.String (Pattern(..), split)
-import Data.String as String
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
-import Prelude
+
 import Reactix as R
 import Reactix.DOM.HTML as H
 
 import Gargantext.Components.Category (CategoryQuery(..), putCategories)
 import Gargantext.Components.Category.Types (Category(..), decodeCategory, favCategory)
 import Gargantext.Components.Search
+  ( Contact(..), Document(..), HyperdataRowContact(..), HyperdataRowDocument(..)
+  , SearchQuery, SearchResult(..), SearchResultTypes(..) )
+
 import Gargantext.Components.Table as T
 import Gargantext.Components.Table.Types as T
 import Gargantext.Ends (url, Frontends)
@@ -35,11 +37,10 @@ import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, post, deleteWithBody)
 import Gargantext.Types (NodeType(..), OrderBy(..), NodePath(..), NodeID)
 import Gargantext.Utils (toggleSet, zeroPad)
-import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Utils.Reactix as R2
 
+here :: R2.Here
 here = R2.here "Gargantext.Components.FacetsTable"
-------------------------------------------------------------------------
 
 type Props =
   ( chart        :: R.Element
@@ -360,7 +361,7 @@ pageCpt = here.component "page" cpt
           }
           where
             markClick   _     = markCategory session nodeId Favorite [id]
-            contactUrl aId id = url frontends $ Routes.ContactPage (sessionId session) annuaireId id
+            contactUrl aId id' = url frontends $ Routes.ContactPage (sessionId session) annuaireId id'
 
         docRow dv@(DocumentsView {id, score, title, source, authors, pairs, delete, category}) =
           { row:

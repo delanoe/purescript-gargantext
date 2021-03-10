@@ -2,23 +2,19 @@ module Gargantext.Utils.CacheAPI where
 
 import Control.Monad.Except (runExcept)
 import Control.Promise (Promise, toAffE)
-import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson, (:=), (~>), (.:), fromString)
+import Data.Argonaut (class DecodeJson, decodeJson)
 import Data.Either (Either(..))
-import Data.Function.Uncurried (Fn3)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
-import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, throwError)
-import Effect.Aff.Compat (EffectFnAff, fromEffectFnAff)
-import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Foreign as F
 import Foreign.Object as O
 import Milkis as M
 import Type.Row (class Union)
 
-import Gargantext.Prelude
+import Gargantext.Prelude hiding (add)
 import Gargantext.Ends (class ToUrl, toUrl)
 import Gargantext.Sessions (Session(..))
 

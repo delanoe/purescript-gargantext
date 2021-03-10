@@ -1,17 +1,12 @@
 module Gargantext.Components.Search where
 
-------------------------------------------------------------------------
+import Gargantext.Prelude (class Eq, class Show)
 import Data.Argonaut as Argonaut
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe)
 
-import Gargantext.Prelude (class Eq, class Read, class Show)
-
-import Gargantext.Components.Category.Types (Category)
 import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson, genericEnumDecodeJson, genericEnumEncodeJson)
-import Gargantext.Utils.Toestand as T2
-
 
 -- Example:
 --   [["machine","learning"],["artificial","intelligence"]]
@@ -30,10 +25,7 @@ instance encodeJsonSearchType :: Argonaut.EncodeJson SearchType where
   encodeJson = genericEnumEncodeJson
 ------------------------------------------------------------------------
 
-data SearchQuery =
-  SearchQuery { query    :: Array String
-              , expected :: SearchType
-              }
+data SearchQuery = SearchQuery { query :: Array String, expected :: SearchType }
 
 derive instance eqSearchQuery :: Eq SearchQuery
 derive instance genericSearchQuery :: Generic SearchQuery _

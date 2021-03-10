@@ -1,11 +1,8 @@
 module Gargantext.Utils.Toestand
-  ( class Reloadable, reload
-  , Reload, newReload, InitReload(..), ready
-  , useCursed, useIdentityCursor, useMemberCursor
-  , write_, modify_
-  ) where
+  ( class Reloadable, reload, Reload, newReload, InitReload(..), ready, useMemberBox )
+  where
 
-import Prelude (class Eq, class Ord, Unit, bind, identity, pure, unit, void, ($), (+), (>>=))
+import Prelude (class Ord, Unit, bind, pure, unit, (+))
 import Data.Set as Set
 import Data.Set (Set)
 import Effect (Effect)
@@ -22,62 +19,38 @@ class Reloadable t where
 newReload :: Reload
 newReload = 0
 
-instance reloadableCellReload :: Reloadable (T.Cell Int) where
-  reload cell = modify_ (_ + 1) cell
+instance reloadableBoxReload :: Reloadable (T.Box Int) where
+  reload box = T.modify_ (_ + 1) box
 
-instance reloadableCursorReload :: Reloadable (T.Cursor Int) where
-  reload cell = modify_ (_ + 1) cell
-
-instance reloadableInitReloadCell :: Reloadable (c Reload) => Reloadable (T.Cell (InitReload c)) where
-  reload cell = do
-    val <- T.read cell
+instance reloadableInitReloadBox :: Reloadable (c Reload) => Reloadable (T.Box (InitReload c)) where
+  reload box = do
+    val <- T.read box
     case val of
       Init    -> pure unit
       Ready r -> reload r
 
-instance reloadableInitReloadCursor :: Reloadable (c Reload) => Reloadable (T.Cursor (InitReload c)) where
-  reload cell = do
-    val <- T.read cell
-    case val of
-      Init    -> pure unit
-      Ready r -> reload r
+-- inner is a Box wrapping a Reload
+data InitReload (inner :: Type -> Type) = Init | Ready (inner Reload)
 
--- c is a cell or cursor wrapping a Reload
-data InitReload (c :: Type -> Type) = Init | Ready (c Reload)
-
--- | Initialises an InitReload cell with the Reload cell it contains,
+-- | Initialises an InitReload box with the Reload box it contains,
 -- | if it has not already been initialised.
-ready :: forall cell c. T.ReadWrite cell (InitReload c) => T.ReadWrite (c Reload) Reload
-      => cell -> (c Reload) -> Effect Unit
-ready cell with = do
-  val <- T.read cell
+ready :: forall box c. T.ReadWrite box (InitReload c) => T.ReadWrite (c Reload) Reload
+      => box -> (c Reload) -> Effect Unit
+ready box with = do
+  val <- T.read box
   case val of
-    Init    -> write_ (Ready with) cell
+    Init    -> T.write_ (Ready with) box
     Ready _ -> pure unit
-
--- | Turns a Cell into a Cursor.
-useIdentityCursor :: forall cell c. T.ReadWrite cell c => cell -> R.Hooks (T.Cursor c)
-useIdentityCursor = T.useCursor identity (\a _ -> a)
-
--- | Creates a cursor directly from a value by creating a cell first.
-useCursed :: forall t. t -> R.Hooks (T.Cursor t)
-useCursed val = T.useCell val >>= useIdentityCursor
 
 -- | Creates a cursor which presents a Boolean over whether the member
 -- | is in the set. Adjusting the value will toggle whether the value
 -- | is in the underlying set.
-useMemberCursor
-  :: forall cell v. Ord v => T.ReadWrite cell (Set v)
-  => v -> cell -> R.Hooks (T.Cursor Boolean)
-useMemberCursor val cell = T.useCursor (Set.member val) (toggleSet val) cell
+useMemberBox
+  :: forall box v. Ord v => T.ReadWrite box (Set v)
+  => v -> box -> R.Hooks (T.Box Boolean)
+useMemberBox val box = T.useFocused (Set.member val) (toggleSet val) box
 
--- utility for useMemberCursor
+-- utility for useMemberBox
 toggleSet :: forall s. Ord s => s -> Boolean -> Set s -> Set s
 toggleSet val true  set = Set.insert val set
 toggleSet val false set = Set.delete val set
-
-modify_ :: forall cell val. T.ReadWrite cell val => (val -> val) -> cell -> Effect Unit
-modify_ f cell = void $ T.modify f cell
-
-write_ :: forall cell val. T.Write cell val => val -> cell -> Effect Unit
-write_ val cell = void $ T.write val cell

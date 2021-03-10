@@ -1,11 +1,10 @@
 module Gargantext.Components.Nodes.File where
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.:))
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Toestand as T
 
 import Gargantext.Prelude
 import Gargantext.Ends (toUrl)

@@ -7,7 +7,6 @@ module Gargantext.Components.GraphExplorer.SlideButton
 
 import Global (readFloat)
 import Prelude
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -16,40 +15,35 @@ import Toestand as T
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.SlideButton"
 
-type Props = (
-    caption  :: String
+type Props =
+  ( caption  :: String
   , min      :: Number
   , max      :: Number
   , onChange :: forall e. e -> Effect Unit
-  , state    :: T.Cursor Number
+  , state    :: T.Box Number
   )
 
 sizeButton :: Record Props -> R.Element
 sizeButton props = R.createElement sizeButtonCpt props []
 
 sizeButtonCpt :: R.Component Props
-sizeButtonCpt = here.component "sizeButton" cpt
-  where
-    cpt {state, caption, min, max, onChange} _ = do
-      state' <- T.useLive T.unequal state
-      pure $
-        H.span { class: "range-simple" }
-          [ H.label {} [ R2.small {} [ H.text caption ] ]
-          , H.input { type: "range"
-                    , className: "form-control"
-                    , min: show min
-                    , max: show max
-                    , defaultValue: state'
-                    , on: {input: onChange}
-                    }
-          ]
+sizeButtonCpt = here.component "sizeButton" cpt where
+  cpt { state, caption, min, max, onChange } _ = do
+    defaultValue <- T.useLive T.unequal state
+    pure $ H.span { class: "range-simple" }
+      [ H.label {} [ R2.small {} [ H.text caption ] ]
+      , H.input { type: "range"
+                , className: "form-control"
+                , min: show min
+                , max: show max
+                , defaultValue
+                , on: { input: onChange } }]
 
-labelSizeButton :: R.Ref Sigmax.Sigma -> T.Cursor Number -> R.Element
+labelSizeButton :: R.Ref Sigmax.Sigma -> T.Box Number -> R.Element
 labelSizeButton sigmaRef state =
   sizeButton {
       state
@@ -66,10 +60,10 @@ labelSizeButton sigmaRef state =
         , maxNodeSize: newValue / 2.5
         --, labelSizeRatio: newValue / 2.5
         }
-      T2.write_ newValue state
+      T.write_ newValue state
     }
 
-mouseSelectorSizeButton :: R.Ref Sigmax.Sigma -> T.Cursor Number -> R.Element
+mouseSelectorSizeButton :: R.Ref Sigmax.Sigma -> T.Box Number -> R.Element
 mouseSelectorSizeButton sigmaRef state =
   sizeButton {
       state
@@ -83,5 +77,5 @@ mouseSelectorSizeButton sigmaRef state =
         Sigma.setSettings s {
           mouseSelectorSize: newValue
         }
-      T2.write_ newValue state
+      T.write_ newValue state
   }

@@ -53,11 +53,11 @@ type TabsProps = (
   , contactData       :: ContactData'
   , frontends         :: Frontends
   , nodeId            :: Int
-  , reloadForest      :: T.Cursor T2.Reload
-  , reloadRoot        :: T.Cursor T2.Reload
+  , reloadForest      :: T.Box T2.Reload
+  , reloadRoot        :: T.Box T2.Reload
   , session           :: Session
   , sidePanelTriggers :: Record LTypes.SidePanelTriggers
-  , tasks             :: T.Cursor (Maybe GAT.Reductor)
+  , tasks             :: T.Box (Maybe GAT.Reductor)
   )
 
 tabs :: Record TabsProps -> R.Element
@@ -135,11 +135,11 @@ type NgramsViewTabsProps = (
   , defaultListId     :: Int
   , mode              :: Mode
   , nodeId            :: Int
-  , reloadForest      :: T.Cursor T2.Reload
-  , reloadRoot        :: T.Cursor T2.Reload
+  , reloadForest      :: T.Box T2.Reload
+  , reloadRoot        :: T.Box T2.Reload
   , session           :: Session
   , sidePanelTriggers :: Record LTypes.SidePanelTriggers
-  , tasks             :: T.Cursor (Maybe GAT.Reductor)
+  , tasks             :: T.Box (Maybe GAT.Reductor)
   )
 
 ngramsView :: R2.Component NgramsViewTabsProps

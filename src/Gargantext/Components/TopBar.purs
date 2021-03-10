@@ -1,8 +1,6 @@
 module Gargantext.Components.TopBar where
 
-import Data.Array (reverse)
 import Data.Foldable (intercalate)
-import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -13,14 +11,11 @@ import Gargantext.Prelude
 import Gargantext.Components.Themes (themeSwitcher, defaultTheme, allThemes)
 import Gargantext.Types (Handed(..), reverseHanded)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.TopBar"
 
-type TopBarProps = (
-  handed :: T.Cursor Handed
-  )
+type TopBarProps = ( handed :: T.Box Handed )
 
 topBar :: R2.Component TopBarProps
 topBar = R.createElement topBarCpt
@@ -229,7 +224,7 @@ liNav (LiNav { title : title'
 
 
 type HandedChooserProps = (
-  handed :: T.Cursor Handed
+  handed :: T.Box Handed
   )
 
 handedChooser :: R2.Component HandedChooserProps
@@ -249,6 +244,6 @@ handedChooserCpt = here.component "handedChooser" cpt
     handedClass LeftHanded = "fa fa-hand-o-left"
     handedClass RightHanded = "fa fa-hand-o-right"
 
-    onClick handed = T2.modify_ (\h -> case h of
+    onClick handed = T.modify_ (\h -> case h of
       LeftHanded  -> RightHanded
       RightHanded -> LeftHanded) handed

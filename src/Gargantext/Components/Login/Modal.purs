@@ -1,6 +1,6 @@
 module Gargantext.Components.Login.Modal (Props, modal) where
 
-import Prelude (bind, (<*), (>>=), (<$>))
+import Prelude (bind, (<*), (<$>))
 import Data.Semigroup ((<>))
 import Reactix as R
 import Reactix.DOM.HTML as H

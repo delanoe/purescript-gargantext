@@ -8,7 +8,7 @@ module Gargantext.Components.NgramsTable.Core
   , ngramsRepoElementToNgramsElement
   , NgramsTable(..)
   , NewElems
-  , NgramsPatch
+  , NgramsPatch(..)
   , NgramsPatches
   , _NgramsTable
   , NgramsTerm
@@ -26,7 +26,6 @@ module Gargantext.Components.NgramsTable.Core
   , VersionedNgramsTable
   , VersionedWithCountNgramsTable
   , NgramsTablePatch
-  , NgramsPatch(..)
   , CoreState
   , highlightNgrams
   , initialPageParams
@@ -1178,9 +1177,9 @@ chartsAfterSync :: forall props discard.
   , tabType :: TabType
   | props
   }
-  -> T.Cursor (Maybe GAT.Reductor)
+  -> T.Box (Maybe GAT.Reductor)
   -> Int
-  -> T.Cursor T2.Reload
+  -> T.Box T2.Reload
   -> discard
   -> Aff Unit
 chartsAfterSync path' tasks nodeId reloadForest _ = do
@@ -1192,7 +1191,7 @@ chartsAfterSync path' tasks nodeId reloadForest _ = do
       Nothing -> log "[chartsAfterSync] tasks is Nothing"
       Just tasks' -> do
         snd tasks' (GAT.Insert nodeId task) -- *> T2.reload reloadForest
-        GUR.bumpCursor reloadForest
+        GUR.bumpBox reloadForest
 
 postNgramsChartsAsync :: forall s. CoreParams s -> Aff AsyncTaskWithType
 postNgramsChartsAsync { listIds, nodeId, session, tabType } = do

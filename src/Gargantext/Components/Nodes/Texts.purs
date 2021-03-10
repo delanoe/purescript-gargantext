@@ -1,19 +1,19 @@
 module Gargantext.Components.Nodes.Texts where
 
 import Prelude
+  ( class Eq, class Show, Unit, bind, const, discard
+  , pure, show, unit, ($), (&&), (<>), (==) )
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log, log2)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
---------------------------------------------------------
-import Gargantext.AsyncTasks as GAT
+
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.Forest as Forest
 import Gargantext.Components.Loader (loader)
@@ -22,15 +22,18 @@ import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
 import Gargantext.Components.Nodes.Corpus.Document as D
-import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..), getCorpusInfo, CorpusInfo(..))
+import Gargantext.Components.Nodes.Corpus.Types
+  ( CorpusData, Hyperdata(..), getCorpusInfo, CorpusInfo(..) )
 import Gargantext.Components.Nodes.Lists.Types as NT
-import Gargantext.Components.Nodes.Texts.SidePanelToggleButton (sidePanelToggleButton)
 import Gargantext.Components.Nodes.Texts.Types
+  ( SidePanelState(..), SidePanelTriggers, TextsLayoutControls
+  , TriggerAnnotatedDocIdChangeParams, initialControls, toggleSidePanelState )
+
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table
 import Gargantext.Ends (Frontends)
-import Gargantext.Sessions (Session, Sessions, sessionId, getCacheState, setCacheState)
-import Gargantext.Types (CTabNgramType(..), Handed(..), ListId, NodeID, TabSubType(..), TabType(..))
+import Gargantext.Sessions (Session, sessionId, getCacheState)
+import Gargantext.Types (CTabNgramType(..), ListId, NodeID, TabSubType(..), TabType(..))
 import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here

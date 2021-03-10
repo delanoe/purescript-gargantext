@@ -1,5 +1,6 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Search.Frame where
 
+import Gargantext.Prelude (discard, identity, pure, unit, ($), (<>), (==), class Show)
 import DOM.Simple as DOM
 import DOM.Simple.Event (MessageEvent)
 import DOM.Simple.EventListener (Callback, addEventListener, callback)
@@ -8,7 +9,6 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
-import Data.String (toLower)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Reactix as R
@@ -16,10 +16,11 @@ import Reactix.DOM.HTML as H
 import URI.Extra.QueryPairs as NQP
 import URI.Query as Query
 
-import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Search, isIsTex_Advanced)
-import Gargantext.Prelude (discard, identity, pure, unit, ($), (<>), (==), class Show, show)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.Types
+  ( DataField(..), Search, isIsTex_Advanced )
 import Gargantext.Utils.Reactix as R2
 
+here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Search.Frame"
 
 --------------------

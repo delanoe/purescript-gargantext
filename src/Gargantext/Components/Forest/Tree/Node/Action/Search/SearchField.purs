@@ -14,7 +14,6 @@ import Reactix.DOM.HTML as H
 
 import Gargantext.Prelude
 
-import Gargantext.Components.Forest.Tree.Node.Tools (panel)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allIMTorgs, allOrgs, dataFields, defaultSearchQuery, doc, performSearch, datafield2database, Search)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Lang (Lang)
@@ -405,11 +404,11 @@ triggerSearch :: (GT.AsyncTaskWithType -> Effect Unit)
 triggerSearch os s q =
   launchAff_ $ do
     liftEffect $ do
-      let here = "[triggerSearch] Searching "
-      log2 (here <> "databases: ") (show q.databases)
-      log2 (here <> "datafield: ") (show q.datafield)
-      log2 (here <> "term: ")            q.term
-      log2 (here <> "lang: ")      (show q.lang)
+      let here' = "[triggerSearch] Searching "
+      log2 (here' <> "databases: ") (show q.databases)
+      log2 (here' <> "datafield: ") (show q.datafield)
+      log2 (here' <> "term: ")            q.term
+      log2 (here' <> "lang: ")      (show q.lang)
 
     case q.node_id of
       Nothing -> liftEffect $ log "[triggerSearch] node_id is Nothing, don't know what to do"

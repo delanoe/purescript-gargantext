@@ -13,6 +13,7 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
 import Gargantext.Utils.Reactix as R2
 
+here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Graph.Tabs"
 
 type Props =

@@ -11,22 +11,22 @@
 -- | 2. We will need a more ambitious search algorithm for skipgrams.
 module Gargantext.Components.Annotation.AnnotatedField where
 
-import Data.Maybe ( Maybe(..), maybe )
-import Data.Tuple ( Tuple )
-import Data.Tuple.Nested ( (/\) )
+import Gargantext.Prelude (Unit, bind, const, discard, not, pure, ($), (<$>), (<>))
+import Data.Maybe (Maybe(..), maybe)
+import Data.Tuple (Tuple)
+import Data.Tuple.Nested ((/\))
 --import DOM.Simple.Console (log2)
 import DOM.Simple.Event as DE
-import Effect ( Effect )
+import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as HTML
 import Reactix.SyntheticEvent as E
 
-import Gargantext.Prelude
-
 import Gargantext.Types (CTabNgramType(..), TermList)
-import Gargantext.Components.Annotation.Utils ( termBootstrapClass, termClass )
+import Gargantext.Components.Annotation.Utils (termClass)
 import Gargantext.Components.NgramsTable.Core
-import Gargantext.Components.Annotation.Menu ( annotationMenu, MenuType(..) )
+  ( NgramsTable, NgramsTerm, findNgramTermList, highlightNgrams, normNgram )
+import Gargantext.Components.Annotation.Menu (annotationMenu, MenuType(..))
 import Gargantext.Utils.Selection as Sel
 import Gargantext.Utils.Reactix as R2
 

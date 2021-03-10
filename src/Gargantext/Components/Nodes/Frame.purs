@@ -5,12 +5,9 @@ import Data.Argonaut (decodeJson, (.:))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 --import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson, genericEnumDecodeJson, genericEnumEncodeJson)
-import Data.Maybe (Maybe(..), maybe)
-import Data.Tuple (fst)
+import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
 
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Hooks.Loader (useLoader)
@@ -21,7 +18,6 @@ import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Argonaut (genericSumEncodeJson)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
-import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Frame"

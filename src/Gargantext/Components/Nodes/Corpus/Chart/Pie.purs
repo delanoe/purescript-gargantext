@@ -1,5 +1,6 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Pie where
 
+import Gargantext.Prelude (bind, map, pure, ($), (==), (>))
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
 import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Array (zip, filter)
@@ -17,14 +18,13 @@ import Gargantext.Components.Charts.Options.Data (dataSerie)
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Series (seriesBarD1, seriesPieD1)
-import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView, metricsWithCacheLoadView)
+import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types
-import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
+  (MetricsProps, Path, Props, ReloadPath)
 import Gargantext.Hooks.Loader (HashedResponse(..))
-import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
-import Gargantext.Types (ChartType(..), TabType)
+import Gargantext.Types (ChartType(..))
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 

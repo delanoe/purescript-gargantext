@@ -2,7 +2,7 @@ module Gargantext.Components.Forest.Tree.Node.Tools where
 
 import Gargantext.Prelude
   ( class Ord, class Read, class Show, Unit
-  , bind, const, discard, map, not, pure, read, show, when, void
+  , bind, const, discard, map, not, pure, read, show, when
   , ($), (<), (<<<), (<>), (<$>), (<*>) )
 import Data.Maybe (fromMaybe, Maybe(..))
 import Data.Nullable (null)
@@ -26,7 +26,6 @@ import Gargantext.Types as GT
 import Gargantext.Utils (glyphicon, toggleSet)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.ReactTooltip as ReactTooltip
-import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools"
@@ -53,7 +52,7 @@ type TextInputBoxProps =
   ( id        :: ID
   , dispatch  :: Action -> Aff Unit
   , text      :: String
-  , isOpen    :: T.Cursor Boolean
+  , isOpen    :: T.Box Boolean
   , boxName   :: String
   , boxAction :: String -> Action
   )
@@ -82,8 +81,8 @@ textInputBoxCpt = here.component "textInputBox" cpt where
               , className: "text-danger col-2 " <> glyphicon "times" } [] ]
       submit ref _ = do
         launchAff_ $ dispatch (boxAction $ R.readRef ref)
-        T2.write_ false isOpen
-      click _ = T2.write_ false isOpen
+        T.write_ false isOpen
+      click _ = T.write_ false isOpen
 
 type DefaultText = String
 
@@ -195,7 +194,7 @@ prettyNodeType
 type NodeLinkProps = (
     frontends  :: Frontends
   , id         :: Int
-  , folderOpen :: T.Cursor Boolean
+  , folderOpen :: T.Box Boolean
   , isSelected :: Boolean
   , name       :: Name
   , nodeType   :: GT.NodeType
@@ -224,7 +223,7 @@ nodeLinkCpt = here.component "nodeLink" cpt where
            -- NOTE Don't toggle tree if it is not selected
            -- click on closed -> open
            -- click on open   -> ?
-           click _ = when (not isSelected) (T2.write_ true folderOpen)
+           click _ = when (not isSelected) (T.write_ true folderOpen)
            tooltipId = "node-link-" <> show id
            href = url frontends $ GT.NodePath (sessionId session) nodeType (Just id)
 

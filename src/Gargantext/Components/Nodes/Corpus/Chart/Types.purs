@@ -2,7 +2,6 @@ module Gargantext.Components.Nodes.Corpus.Chart.Types where
 
 import Data.Maybe (Maybe)
 import Data.Tuple (Tuple)
-import Reactix as R
 
 import Gargantext.Sessions (Session)
 import Gargantext.Types (TabType)

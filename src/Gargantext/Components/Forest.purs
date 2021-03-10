@@ -35,26 +35,26 @@ here = R2.here "Gargantext.Components.Forest"
 -- Shared by components here with Tree
 type Common = 
   ( frontends    :: Frontends
-  , handed       :: T.Cursor Handed
-  , reloadRoot   :: T.Cursor T2.Reload
-  , route        :: T.Cursor AppRoute
-  , tasks        :: T.Cursor (Maybe GAT.Reductor)
+  , handed       :: T.Box Handed
+  , reloadRoot   :: T.Box T2.Reload
+  , route        :: T.Box AppRoute
+  , tasks        :: T.Box (Maybe GAT.Reductor)
   )
 
 type LayoutProps =
-  ( backend      :: T.Cursor (Maybe Backend)
-  , reloadForest :: T.Cursor T2.Reload
-  , sessions     :: T.Cursor Sessions
-  , showLogin    :: T.Cursor Boolean
+  ( backend      :: T.Box (Maybe Backend)
+  , reloadForest :: T.Box T2.Reload
+  , sessions     :: T.Box Sessions
+  , showLogin    :: T.Box Boolean
   | Common 
   )
 
 type Props = (
-    forestOpen :: T.Cursor OpenNodes
+    forestOpen :: T.Box OpenNodes
   | LayoutProps )
   
 type TreeExtra = (
-    forestOpen :: T.Cursor OpenNodes
+    forestOpen :: T.Box OpenNodes
   , session :: Session
   )
 
@@ -74,7 +74,7 @@ forestCpt = here.component "forest" cpt where
             , showLogin
             , tasks } _ = do
     tasks'        <- GAT.useTasks reloadRoot reloadForest
-    R.useEffect' $ T2.write_ (Just tasks') tasks
+    R.useEffect' $ T.write_ (Just tasks') tasks
     handed'       <- T.useLive T.unequal handed
     reloadForest' <- T.useLive T.unequal reloadForest
     reloadRoot'   <- T.useLive T.unequal reloadRoot
@@ -107,7 +107,7 @@ forestCpt = here.component "forest" cpt where
                        , session: s
                        , tasks } []
 
-plus :: Handed -> T.Cursor Boolean -> T.Cursor (Maybe Backend) -> R.Element
+plus :: Handed -> T.Box Boolean -> T.Box (Maybe Backend) -> R.Element
 plus handed showLogin backend = H.div { className: "row" }
   [ H.button { className: buttonClass
              , on: { click }
@@ -122,7 +122,7 @@ plus handed showLogin backend = H.div { className: "row" }
   where
     click _ = do
       -- _ <- T.write Nothing backend
-      T2.write_ true showLogin
+      T.write_ true showLogin
     title = "Add or remove connections to the server(s)."
     divClass = "fa fa-universal-access"
     buttonClass =
@@ -174,7 +174,7 @@ forestLayoutRawCpt = here.component "forestLayoutRaw" cpt where
         , showLogin
         , tasks } children = do
     handed' <- T.useLive T.unequal p.handed
-    forestOpen <- T2.useCursed $ Set.empty
+    forestOpen <- T.useBox $ Set.empty
 
     pure $ R2.row $ reverseHanded
       [ H.div { className: "col-md-2"

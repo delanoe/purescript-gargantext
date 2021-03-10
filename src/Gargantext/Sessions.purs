@@ -24,7 +24,7 @@ import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Prelude
-  ( Unit, bind, discard, otherwise, pure, unit, ($), (*>), (<$>), (<*), (>>=))
+  ( Unit, bind, otherwise, pure, unit, ($), (*>), (<$>), (<*), (>>=))
 import Toestand as T
 import Web.Storage.Storage (getItem, removeItem, setItem)
 
@@ -34,7 +34,6 @@ import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Config.REST as REST
 import Gargantext.Ends (class ToUrl, Backend, toUrl)
 import Gargantext.Utils.Reactix (getls)
-import Gargantext.Utils.Toestand as T2
 
 load :: forall c. T.Write c Sessions => c -> Effect Sessions
 load cell = do

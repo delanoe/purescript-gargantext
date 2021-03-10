@@ -15,18 +15,14 @@ import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTre
 import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, post)
-import Gargantext.Routes as GR
 import Gargantext.Types  as GT
 import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson)
 import Gargantext.Utils.Reactix as R2
 
+here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Link"
 
-
-data LinkNodeReq = LinkNodeReq { nodeType :: GT.NodeType
-                               , id       :: GT.ID
-                               }
-
+data LinkNodeReq = LinkNodeReq { nodeType :: GT.NodeType, id :: GT.ID }
 
 derive instance eqLinkNodeReq :: Eq LinkNodeReq
 derive instance genericLinkNodeReq :: Generic LinkNodeReq _
@@ -41,13 +37,8 @@ instance encodeJsonLinkNodeReq :: Argonaut.EncodeJson LinkNodeReq where
 linkNodeReq :: Session -> Maybe GT.NodeType -> GT.ID -> GT.ID -> Aff GT.AsyncTaskWithType
 linkNodeReq session nt fromId toId = do
   task <- post session (NodeAPI GT.Node (Just fromId) "update")
-                       (LinkNodeReq { nodeType: linkNodeType nt
-                                    , id: toId
-                                    }
-                       )
+                       (LinkNodeReq { nodeType: linkNodeType nt, id: toId })
   pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode }
-    where
-      p = GR.NodeAPI GT.Node (Just fromId) "update"
 
 linkNodeType :: Maybe GT.NodeType -> GT.NodeType
 linkNodeType (Just GT.Corpus)   = GT.Annuaire

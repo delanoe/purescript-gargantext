@@ -1,14 +1,14 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Common where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson)
-import Data.Tuple (fst, Tuple(..))
+import Data.Argonaut (class DecodeJson)
+import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 
 import Gargantext.Prelude
 
-import Gargantext.Components.Nodes.Corpus.Chart.Types (Path, Props, MetricsProps, ReloadPath)
+import Gargantext.Components.Nodes.Corpus.Chart.Types (MetricsProps, ReloadPath)
 import Gargantext.Hooks.Loader (HashedResponse, useLoader, useLoaderWithCacheAPI)
 import Gargantext.Utils.Crypto (Hash)
 import Gargantext.Sessions (Session)

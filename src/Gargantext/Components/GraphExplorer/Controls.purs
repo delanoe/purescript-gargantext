@@ -12,8 +12,6 @@ import Data.Int as I
 import Data.Maybe (Maybe(..), maybe)
 import Data.Sequence as Seq
 import Data.Set as Set
-import Data.Tuple (fst, snd)
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Timer (setTimeout)
 import Prelude
@@ -33,47 +31,39 @@ import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.Controls"
 
-type Controls = (
-    edgeConfluence     :: T.Cursor Range.NumberRange
-  , edgeWeight         :: T.Cursor Range.NumberRange
-  , forceAtlasState    :: T.Cursor SigmaxT.ForceAtlasState
+type Controls =
+  ( edgeConfluence     :: T.Box Range.NumberRange
+  , edgeWeight         :: T.Box Range.NumberRange
+  , forceAtlasState    :: T.Box SigmaxT.ForceAtlasState
   , graph              :: SigmaxT.SGraph
   , graphId            :: GET.GraphId
-  , graphStage         :: T.Cursor Graph.Stage
+  , graphStage         :: T.Box Graph.Stage
   , hyperdataGraph     :: GET.HyperdataGraph
-  , multiSelectEnabled :: T.Cursor Boolean
-  , nodeSize           :: T.Cursor Range.NumberRange
+  , multiSelectEnabled :: T.Box Boolean
+  , nodeSize           :: T.Box Range.NumberRange
   , reloadForest       :: Unit -> Effect Unit
-  , removedNodeIds     :: T.Cursor SigmaxT.NodeIds
-  , selectedNodeIds    :: T.Cursor SigmaxT.NodeIds
+  , removedNodeIds     :: T.Box SigmaxT.NodeIds
+  , selectedNodeIds    :: T.Box SigmaxT.NodeIds
   , session            :: Session
-  , showControls       :: T.Cursor Boolean
-  , showEdges          :: T.Cursor SigmaxT.ShowEdgesState
-  , showLouvain        :: T.Cursor Boolean
-  , showSidePanel      :: T.Cursor GET.SidePanelState
-  , showTree           :: T.Cursor Boolean
+  , showControls       :: T.Box Boolean
+  , showEdges          :: T.Box SigmaxT.ShowEdgesState
+  , showLouvain        :: T.Box Boolean
+  , showSidePanel      :: T.Box GET.SidePanelState
+  , showTree           :: T.Box Boolean
   , sigmaRef           :: R.Ref Sigmax.Sigma
   )
 
-type LocalControls = (
-    labelSize         :: T.Cursor Number
-  , mouseSelectorSize :: T.Cursor Number
-  )
+type LocalControls = ( labelSize :: T.Box Number, mouseSelectorSize :: T.Box Number )
 
 initialLocalControls :: R.Hooks (Record LocalControls)
 initialLocalControls = do
-  labelSize <- T2.useCursed 14.0
-  mouseSelectorSize <- T2.useCursed 15.0
-
-  pure $ {
-    labelSize
-  , mouseSelectorSize
-  }
+  labelSize <- T.useBox 14.0
+  mouseSelectorSize <- T.useBox 15.0
+  pure $ { labelSize, mouseSelectorSize }
 
 controls :: Record Controls -> R.Element
 controls props = R.createElement controlsCpt props []
@@ -122,12 +112,12 @@ controlsCpt = here.component "controls" cpt
 
       -- Handle automatic edge hiding when FA is running (to prevent flickering).
       R.useEffect2' sigmaRef forceAtlasState' $ do
-        T2.modify_ (SigmaxT.forceAtlasEdgeState forceAtlasState') showEdges
+        T.modify_ (SigmaxT.forceAtlasEdgeState forceAtlasState') showEdges
 
       -- Automatic opening of sidebar when a node is selected (but only first time).
       R.useEffect' $ do
         if showSidePanel' == GET.InitialClosed && (not Set.isEmpty selectedNodeIds') then
-          T2.write_ (GET.Opened GET.SideTabData) showSidePanel
+          T.write_ (GET.Opened GET.SideTabData) showSidePanel
         else
           pure unit
 
@@ -138,7 +128,7 @@ controlsCpt = here.component "controls" cpt
           timeoutId <- setTimeout 9000 $ do
             case forceAtlasState' of
               SigmaxT.InitialRunning ->
-                T2.write_ SigmaxT.Paused forceAtlasState
+                T.write_ SigmaxT.Paused forceAtlasState
               _ -> pure unit
             R.setRef mFAPauseRef Nothing
           R.setRef mFAPauseRef $ Just timeoutId
@@ -243,22 +233,22 @@ useGraphControls { forceAtlasS
                  , hyperdataGraph
                  , session
                  , reloadForest } = do
-  edgeConfluence <- T2.useCursed $ Range.Closed { min: 0.0, max: 1.0 }
-  edgeWeight <- T2.useCursed $ Range.Closed {
+  edgeConfluence <- T.useBox $ Range.Closed { min: 0.0, max: 1.0 }
+  edgeWeight <- T.useBox $ Range.Closed {
       min: 0.0
     , max: I.toNumber $ Seq.length $ SigmaxT.graphEdges graph
     }
-  forceAtlasState <- T2.useCursed forceAtlasS
-  graphStage      <- T2.useCursed Graph.Init
-  multiSelectEnabled <- T2.useCursed false
-  nodeSize <- T2.useCursed $ Range.Closed { min: 0.0, max: 100.0 }
-  removedNodeIds <- T2.useCursed SigmaxT.emptyNodeIds
-  selectedNodeIds <- T2.useCursed SigmaxT.emptyNodeIds
-  showControls    <- T2.useCursed false
-  showEdges <- T2.useCursed SigmaxT.EShow
-  showLouvain <- T2.useCursed false
-  showSidePanel   <- T2.useCursed GET.InitialClosed
-  showTree <- T2.useCursed false
+  forceAtlasState <- T.useBox forceAtlasS
+  graphStage      <- T.useBox Graph.Init
+  multiSelectEnabled <- T.useBox false
+  nodeSize <- T.useBox $ Range.Closed { min: 0.0, max: 100.0 }
+  removedNodeIds <- T.useBox SigmaxT.emptyNodeIds
+  selectedNodeIds <- T.useBox SigmaxT.emptyNodeIds
+  showControls    <- T.useBox false
+  showEdges <- T.useBox SigmaxT.EShow
+  showLouvain <- T.useBox false
+  showSidePanel   <- T.useBox GET.InitialClosed
+  showTree <- T.useBox false
   sigma <- Sigmax.initSigma
   sigmaRef <- R.useRef sigma
 
@@ -284,7 +274,7 @@ useGraphControls { forceAtlasS
        }
 
 setShowControls :: Record Controls -> Boolean -> Effect Unit
-setShowControls { showControls } v = T2.write_ v showControls
+setShowControls { showControls } v = T.write_ v showControls
 
 setShowTree :: Record Controls -> Boolean -> Effect Unit
-setShowTree { showTree } v = T2.write_ (not v) showTree
+setShowTree { showTree } v = T.write_ (not v) showTree

@@ -21,7 +21,6 @@ import Gargantext.Hooks.Loader as GHL
 import Gargantext.Sessions (Session, Sessions, Action(Logout), unSessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Login"
@@ -31,11 +30,11 @@ here = R2.here "Gargantext.Components.Login"
 -- and ask for login (modal) or account creation after 15 mn when user
 -- if not logged user can not save his work
 
-type Props = (
-    backend  :: T.Cursor (Maybe Backend)
+type Props =
+  ( backend  :: T.Box (Maybe Backend)
   , backends :: Array Backend
-  , sessions :: T.Cursor Sessions
-  , visible  :: T.Cursor Boolean
+  , sessions :: T.Box Sessions
+  , visible  :: T.Box Boolean
   )
 
 login :: R2.Leaf Props
@@ -110,7 +109,7 @@ renderBackend cursor backend@(Backend {name}) =
   , H.td {} [ H.a { on: { click }} [ H.text (backendLabel name) ]]
   , H.td {} [ H.text $ "garg://" <> name ]] where
     className = "fa fa-hand-o-right" -- "glyphitem fa fa-log-in"
-    click _ = T2.write_ (Just backend) cursor
+    click _ = T.write_ (Just backend) cursor
 
 backendLabel :: String -> String
 backendLabel =

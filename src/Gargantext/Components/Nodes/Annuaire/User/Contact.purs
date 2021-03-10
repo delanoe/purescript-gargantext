@@ -4,7 +4,7 @@ module Gargantext.Components.Nodes.Annuaire.User.Contact
   ) where
 
 import Gargantext.Prelude
-  ( Unit, bind, const, discard, pure, show, void, ($), (<$>), (*>), (<<<), (<>) )
+  ( Unit, bind, const, discard, pure, show, ($), (<$>), (*>), (<<<), (<>) )
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
@@ -18,7 +18,13 @@ import Toestand as T
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
-import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact'(..), ContactData', ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
+import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
+  ( Contact'(..), ContactData', ContactTouch(..), ContactWhere(..)
+  , ContactWho(..), HyperdataContact(..), HyperdataUser(..)
+  , _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName
+  , _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role
+  , _shared, _touch, _who, defaultContactTouch, defaultContactWhere
+  , defaultContactWho, defaultHyperdataContact, defaultHyperdataUser )
 import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
@@ -26,7 +32,6 @@ import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, get, put, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
 import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
@@ -131,12 +136,12 @@ listElement = H.li { className: "list-group-item justify-content-between" }
 type BasicProps =
   ( frontends :: Frontends
   , nodeId    :: Int
-  , tasks     :: T.Cursor (Maybe GAT.Reductor)
+  , tasks     :: T.Box (Maybe GAT.Reductor)
   )
 
 type ReloadProps =
-  ( reloadForest :: T.Cursor T2.Reload
-  , reloadRoot   :: T.Cursor T2.Reload
+  ( reloadForest :: T.Box T2.Reload
+  , reloadRoot   :: T.Box T2.Reload
   | BasicProps
   )
 
@@ -176,7 +181,7 @@ contactLayoutWithKeyCpt = here.component "contactLayoutWithKey" cpt where
         , nodeId
         , session
         , tasks } _ = do
-      reload <- T.useCell T2.newReload
+      reload <- T.useBox T2.newReload
       _ <- T.useLive T.unequal reload
       cacheState <- R.useState' LT.CacheOn
       sidePanelTriggers <- LT.emptySidePanelTriggers
@@ -189,7 +194,7 @@ contactLayoutWithKeyCpt = here.component "contactLayoutWithKey" cpt where
                  { cacheState, contactData, frontends, nodeId, session
                  , sidePanelTriggers, reloadForest, reloadRoot, tasks } ]
       where
-        onUpdateHyperdata :: T.Cell T2.Reload -> HyperdataContact -> Effect Unit
+        onUpdateHyperdata :: T.Box T2.Reload -> HyperdataContact -> Effect Unit
         onUpdateHyperdata reload hd =
           launchAff_ $
             saveContactHyperdata session nodeId hd *> liftEffect (T2.reload reload)

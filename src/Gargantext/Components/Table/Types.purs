@@ -1,23 +1,12 @@
 module Gargantext.Components.Table.Types where
 
-import Prelude
+import Prelude (class Eq, class Show, (<>))
 import Data.Generic.Rep.Show (genericShow)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe)
 import Data.Sequence as Seq
-import Data.Tuple (fst, snd)
-import Effect.Aff (Aff, launchAff_)
-import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
-import Effect (Effect)
-import Gargantext.Sessions (Session, get)
 import Reactix as R
-import Reactix.DOM.HTML as H
-import Gargantext.Components.Nodes.Lists.Types as NT
-import Gargantext.Components.Search
-import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reactix (effectLink)
+import Gargantext.Components.Search (SearchType)
 import Data.Generic.Rep (class Generic)
-
 
 type Params = { limit      :: Int
               , offset     :: Int
@@ -36,8 +25,6 @@ orderByToForm :: OrderByDirection ColumnName -> String
 orderByToForm (ASC  (ColumnName x)) = x <> "Asc"
 orderByToForm (DESC (ColumnName x)) = x <> "Desc"
 
-
-
 newtype ColumnName = ColumnName String
 derive instance genericColumnName :: Generic ColumnName _
 instance showColumnName :: Show ColumnName where
@@ -45,7 +32,6 @@ instance showColumnName :: Show ColumnName where
 derive instance eqColumnName :: Eq ColumnName
 columnName :: ColumnName -> String
 columnName (ColumnName c) = c
-
 
 type Props =
   ( syncResetButton  :: Array R.Element
@@ -66,8 +52,6 @@ type TableContainerProps =
   , tableBody           :: Array R.Element
   )
 
-
 type Row = { row :: R.Element, delete :: Boolean }
 type Rows = Seq.Seq Row
-
 

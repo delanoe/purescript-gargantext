@@ -1,12 +1,14 @@
 -- TODO: this module should be replaced by FacetsTable
 module Gargantext.Components.DocsTable where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
+import Gargantext.Prelude
+  ( class Ord, Unit, bind, const, discard, identity, mempty
+  , otherwise, pure, show, unit, ($), (/=), (<$>), (<<<), (<>), (==) )
+import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Array as A
 import Data.Lens ((^.))
 import Data.Lens.At (at)
 import Data.Lens.Record (prop)
-import Data.Map (Map)
 import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
 import Data.Ord.Down (Down(..))
 import Data.Set (Set)
@@ -15,19 +17,18 @@ import Data.String as Str
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log, log2)
+import DOM.Simple.Console (log2)
 import DOM.Simple.Event as DE
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Toestand as T
 
-import Gargantext.Prelude
-import Gargantext.Components.Category (caroussel, rating)
-import Gargantext.Components.Category.Types (Category(..), decodeCategory, Star(..), decodeStar)
+import Gargantext.Components.Category (rating)
+import Gargantext.Components.Category.Types (Star(..))
 import Gargantext.Components.DocsTable.Types
+  ( DocumentsView(..), Hyperdata(..), LocalUserScore, Query, Response(..), sampleData )
 import Gargantext.Components.Table.Types as T
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Nodes.Texts.Types (SidePanelTriggers)
@@ -43,11 +44,9 @@ import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParamS, queryParam, queryParamS)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
-import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.DocsTable"
-------------------------------------------------------------------------
 
 type TotalRecords = Int
 

@@ -1,13 +1,10 @@
 module Gargantext.Components.Footer where
 
+import Gargantext.Prelude
+import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Toestand as T
 
-import Gargantext.Prelude
-
-import Gargantext.Sessions as Sessions
-import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Footer"

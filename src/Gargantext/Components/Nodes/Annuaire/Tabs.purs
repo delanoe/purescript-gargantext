@@ -55,11 +55,11 @@ type TabsProps =
   , contactData       :: ContactData
   , frontends         :: Frontends
   , nodeId            :: Int
-  , reloadForest      :: T.Cursor T2.Reload
-  , reloadRoot        :: T.Cursor T2.Reload
+  , reloadForest      :: T.Box T2.Reload
+  , reloadRoot        :: T.Box T2.Reload
   , session           :: Session
   , sidePanelTriggers :: Record LTypes.SidePanelTriggers
-  , tasks             :: T.Cursor (Maybe GAT.Reductor)
+  , tasks             :: T.Box (Maybe GAT.Reductor)
   )
 
 tabs :: R2.Leaf TabsProps
@@ -130,9 +130,9 @@ type NTCommon =
   ( cacheState        :: R.State LTypes.CacheState
   , defaultListId     :: Int
   , nodeId            :: Int
-  , reloadForest      :: T.Cursor T2.Reload
-  , reloadRoot        :: T.Cursor T2.Reload
+  , reloadForest      :: T.Box T2.Reload
+  , reloadRoot        :: T.Box T2.Reload
   , session           :: Session
   , sidePanelTriggers :: Record LTypes.SidePanelTriggers
-  , tasks             :: T.Cursor (Maybe GAT.Reductor)
+  , tasks             :: T.Box (Maybe GAT.Reductor)
   )

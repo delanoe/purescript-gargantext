@@ -1,4 +1,4 @@
-module Gargantext.Components.App.Data (App, Cursors, emptyApp) where
+module Gargantext.Components.App.Data (App, Boxes, emptyApp) where
 
 import Data.Set as Set
 import Data.Maybe (Maybe(..))
@@ -36,15 +36,15 @@ emptyApp =
   , showLogin:    false
   }
 
-type Cursors =
-  { backend      :: T.Cursor (Maybe Backend)
-  , handed       :: T.Cursor Handed
-  , forestOpen   :: T.Cursor OpenNodes
-  , reloadRoot   :: T.Cursor T2.Reload
-  , reloadForest :: T.Cursor T2.Reload
-  , route        :: T.Cursor AppRoute
-  , sessions     :: T.Cursor Sessions
-  , showCorpus   :: T.Cursor Boolean
-  , showLogin    :: T.Cursor Boolean
+type Boxes =
+  { backend      :: T.Box (Maybe Backend)
+  , handed       :: T.Box Handed
+  , forestOpen   :: T.Box OpenNodes
+  , reloadRoot   :: T.Box T2.Reload
+  , reloadForest :: T.Box T2.Reload
+  , route        :: T.Box AppRoute
+  , sessions     :: T.Box Sessions
+  , showCorpus   :: T.Box Boolean
+  , showLogin    :: T.Box Boolean
   }
 

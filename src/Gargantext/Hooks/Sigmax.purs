@@ -1,8 +1,9 @@
 module Gargantext.Hooks.Sigmax
   where
 
-import Prelude (Unit, bind, discard, flip, pure, unit, ($), (*>), (<<<), (<>), (>>=), (&&), not, const, map)
-
+import Prelude
+  ( Unit, bind, discard, flip, map, not, pure, unit
+  , ($), (&&), (*>), (<<<), (<>), (>>=))
 import Data.Array as A
 import Data.Either (either)
 import Data.Foldable (sequence_, foldl)
@@ -27,7 +28,6 @@ import Toestand as T
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as ST
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 
 type Sigma =
   { sigma :: R.Ref (Maybe Sigma.Sigma)
@@ -114,7 +114,7 @@ dependOnContainer container notFoundMsg f = do
 -- | pausing can be done not only via buttons but also from the initial
 -- | setTimer.
 --handleForceAtlasPause sigmaRef (toggled /\ setToggled) mFAPauseRef = do
-handleForceAtlas2Pause :: R.Ref Sigma -> T.Cursor ST.ForceAtlasState -> R.Ref (Maybe TimeoutId) -> Effect Unit
+handleForceAtlas2Pause :: R.Ref Sigma -> T.Box ST.ForceAtlasState -> R.Ref (Maybe TimeoutId) -> Effect Unit
 handleForceAtlas2Pause sigmaRef forceAtlasState mFAPauseRef = do
   let sigma = R.readRef sigmaRef
   toggled <- T.read forceAtlasState
@@ -192,15 +192,15 @@ multiSelectUpdate new selected = foldl fld selected new
         Set.insert item selectedAcc
 
 
-bindSelectedNodesClick :: Sigma.Sigma -> T.Cursor ST.NodeIds -> R.Ref Boolean -> Effect Unit
+bindSelectedNodesClick :: Sigma.Sigma -> T.Box ST.NodeIds -> R.Ref Boolean -> Effect Unit
 bindSelectedNodesClick sigma selectedNodeIds multiSelectEnabledRef =
   Sigma.bindClickNodes sigma $ \nodes -> do
     let multiSelectEnabled = R.readRef multiSelectEnabledRef
     let nodeIds = Set.fromFoldable $ map _.id nodes
     if multiSelectEnabled then
-      T2.modify_ (multiSelectUpdate nodeIds) selectedNodeIds
+      T.modify_ (multiSelectUpdate nodeIds) selectedNodeIds
     else
-      T2.write_ nodeIds selectedNodeIds
+      T.write_ nodeIds selectedNodeIds
 
 bindSelectedEdgesClick :: R.Ref Sigma -> R.State ST.EdgeIds -> Effect Unit
 bindSelectedEdgesClick sigmaRef (_ /\ setEdgeIds) =

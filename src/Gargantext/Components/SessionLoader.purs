@@ -23,7 +23,7 @@ type Props =
     fallback  :: R.Element
   , context   :: R.Context Session
   , sessionId :: SessionId
-  , sessions  :: T.Cursor Sessions
+  , sessions  :: T.Box Sessions
   )
 
 sessionWrapper :: R2.Component Props

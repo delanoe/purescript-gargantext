@@ -25,7 +25,7 @@ import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Reactix (Component, Element, Ref, State, createElement, fragment, hooksComponentWithModule, unsafeEventValue, useState') as R
+import Reactix (Component, Element, State, createElement, fragment, unsafeEventValue, useState') as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
@@ -48,7 +48,6 @@ import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermL
 import Gargantext.Utils (queryMatchesLabel, toggleSet, sortWith)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
 import Gargantext.Utils.Seq as Seq
 import Gargantext.Utils.Toestand as T2
 
@@ -258,11 +257,11 @@ tableContainerCpt { dispatch
 
 type CommonProps = (
     afterSync         :: Unit -> Aff Unit
-  , reloadForest      :: T.Cursor T2.Reload
-  , reloadRoot        :: T.Cursor T2.Reload
+  , reloadForest      :: T.Box T2.Reload
+  , reloadRoot        :: T.Box T2.Reload
   , sidePanelTriggers :: Record NT.SidePanelTriggers
   , tabNgramType      :: CTabNgramType
-  , tasks             :: T.Cursor (Maybe GAT.Reductor)
+  , tasks             :: T.Box (Maybe GAT.Reductor)
   , withAutoUpdate    :: Boolean
   )
 

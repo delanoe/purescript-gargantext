@@ -16,7 +16,6 @@ import Reactix.DOM.HTML as H
 import Record as Record
 import Record.Extra as RecordE
 import Toestand as T
-import Web.HTML.Event.EventTypes (offline)
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node (nodeSpan)
@@ -48,20 +47,20 @@ here = R2.here "Gargantext.Components.Forest.Tree"
 
 -- Shared by every component here + performAction + nodeSpan
 type Universal =
-  ( reloadRoot :: T.Cursor T2.Reload
-  , tasks      :: T.Cursor (Maybe GAT.Reductor) )
+  ( reloadRoot :: T.Box T2.Reload
+  , tasks      :: T.Box (Maybe GAT.Reductor) )
 
 -- Shared by every component here + nodeSpan
 type Global =
   ( frontends  :: Frontends
   , handed     :: Handed
-  , route      :: T.Cursor AppRoute
+  , route      :: T.Box AppRoute
   | Universal )
 
 -- Shared by every component here
 type Common = (
-   forestOpen :: T.Cursor OpenNodes
- , reload :: T.Cursor T2.Reload
+   forestOpen :: T.Box OpenNodes
+ , reload :: T.Box T2.Reload
  | Global
  )
 
@@ -89,7 +88,7 @@ getNodeTree session nodeId = get session $ GR.NodeAPI GT.Tree (Just nodeId) ""
 getNodeTreeFirstLevel :: Session -> ID -> Aff FTree
 getNodeTreeFirstLevel session nodeId = get session $ GR.TreeFirstLevel (Just nodeId) ""
 
-type NodeProps = ( reloadTree :: T.Cursor T2.Reload, session :: Session | Common )
+type NodeProps = ( reloadTree :: T.Box T2.Reload, session :: Session | Common )
 
 type TreeProps = ( tree :: FTree | NodeProps )
 
@@ -100,7 +99,7 @@ treeCpt :: R.Component TreeProps
 treeCpt = here.component "tree" cpt where
   cpt p@{ session, tree: NTree (LNode { id, name, nodeType }) children } _ = do
     setPopoverRef <- R.useRef Nothing
-    folderOpen <- T2.useMemberCursor nodeId p.forestOpen
+    folderOpen <- T2.useMemberBox nodeId p.forestOpen
     open <- T.useLive T.unequal folderOpen
     pure $ H.ul { className: ulClass }
       [ H.div { className: divClass } -- TODO: naughty div should not be in a ul
@@ -131,8 +130,8 @@ treeCpt = here.component "tree" cpt where
 
 --- The properties tree shares in common with performAction
 type PACommon =
-  ( forestOpen   :: T.Cursor OpenNodes
-  , reloadTree   :: T.Cursor T2.Reload
+  ( forestOpen   :: T.Box OpenNodes
+  , reloadTree   :: T.Box T2.Reload
   , session      :: Session
   , tree         :: FTree
   | Universal )
@@ -151,7 +150,7 @@ childLoader = R.createElement childLoaderCpt
 childLoaderCpt :: R.Component ChildLoaderProps
 childLoaderCpt = here.component "childLoader" cpt where
   cpt p@{ render } _ = do
-    reload <- T2.useCursed T2.newReload
+    reload <- T.useBox T2.newReload
     let reloads = [ reload, p.reloadTree, p.reloadRoot ]
     cache <- (A.cons p.id) <$> traverse (T.useLive T.unequal) reloads
     useLoader cache fetch (paint reload)
@@ -175,7 +174,7 @@ performAction (DeleteNode nt) p@{ forestOpen
     GT.NodePublic GT.FolderPublic -> void $ deleteNode session nt id
     GT.NodePublic _               -> void $ unpublishNode session parent_id id
     _                             -> void $ deleteNode session nt id
-  liftEffect $ T2.modify_ (Set.delete (mkNodeId session id)) forestOpen
+  liftEffect $ T.modify_ (Set.delete (mkNodeId session id)) forestOpen
   performAction RefreshTree p
 performAction (DoSearch task) p@{ tasks
                                 , tree: (NTree (LNode {id}) _) } = liftEffect $ do
@@ -201,14 +200,14 @@ performAction (ShareTeam username) p@{ tree: (NTree (LNode {id}) _)} =
 performAction (SharePublic { params }) p@{ forestOpen } = traverse_ f params where
   f (SubTreeOut { in: inId, out }) = do
     void $ Share.shareReq p.session inId $ Share.SharePublicParams { node_id: out }
-    liftEffect $ T2.modify_ (Set.insert (mkNodeId p.session out)) forestOpen
+    liftEffect $ T.modify_ (Set.insert (mkNodeId p.session out)) forestOpen
     performAction RefreshTree p
 performAction (AddContact params) p@{ tree: (NTree (LNode {id}) _) } =
     void $ Contact.contactReq p.session id params
 performAction (AddNode name nodeType) p@{ forestOpen
                                         , tree: (NTree (LNode { id }) _) } = do
   task <- addNode p.session id $ AddNodeValue {name, nodeType}
-  liftEffect $ T2.modify_ (Set.insert (mkNodeId p.session id)) forestOpen
+  liftEffect $ T.modify_ (Set.insert (mkNodeId p.session id)) forestOpen
   performAction RefreshTree p
 performAction (UploadFile nodeType fileType mName blob) p@{ tasks
                                                           , tree: (NTree (LNode { id }) _) } = do
@@ -233,7 +232,7 @@ performAction (MoveNode {params}) p@{ forestOpen
                                     , session } = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     void $ moveNodeReq p.session in' out
-    liftEffect $ T2.modify_ (Set.insert (mkNodeId session out)) forestOpen
+    liftEffect $ T.modify_ (Set.insert (mkNodeId session out)) forestOpen
     performAction RefreshTree p
 performAction (MergeNode { params }) p = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do

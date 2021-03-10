@@ -1,9 +1,5 @@
 module Gargantext.Components.GraphExplorer.Button
-  ( centerButton
-  , Props
-  , simpleButton
-  , cameraButton
-  ) where
+  ( Props, centerButton, simpleButton, cameraButton ) where
 
 import Prelude
 
@@ -12,7 +8,6 @@ import Data.Maybe (Maybe(..))
 import Data.DateTime as DDT
 import Data.DateTime.Instant as DDI
 import Data.String as DS
-import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
@@ -29,6 +24,7 @@ import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Sessions (Session)
 import Gargantext.Utils.Reactix as R2
 
+here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.Button"
 
 type Props = (
@@ -92,16 +88,11 @@ cameraButton { id
                                                        , nodes = map GEU.stNodeToGET nodes }
         let cameras = map Sigma.toCamera $ Sigma.cameras s
         let camera = case cameras of
-              [c] -> GET.Camera { ratio: c.ratio
-                                , x: c.x
-                                , y: c.y }
-              _   -> GET.Camera { ratio: 1.0
-                               , x: 0.0
-                               , y: 0.0 }
-        let hyperdataGraph = GET.HyperdataGraph { graph: graphData
-                                                , mCamera: Just camera }
+              [c] -> GET.Camera { ratio: c.ratio, x: c.x, y: c.y }
+              _   -> GET.Camera { ratio: 1.0, x: 0.0, y: 0.0 }
+        let hyperdataGraph' = GET.HyperdataGraph { graph: graphData, mCamera: Just camera }
         launchAff_ $ do
-          clonedGraphId <- cloneGraph { id, hyperdataGraph, session }
+          clonedGraphId <- cloneGraph { id, hyperdataGraph: hyperdataGraph', session }
           ret <- uploadArbitraryDataURL session clonedGraphId (Just $ nowStr <> "-" <> "screenshot.png") screen
           liftEffect $ reloadForest unit
           pure ret

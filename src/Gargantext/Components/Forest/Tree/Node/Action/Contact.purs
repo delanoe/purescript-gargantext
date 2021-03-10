@@ -2,9 +2,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Contact where
 
 import Prelude
 import Data.Maybe (Maybe(..))
-import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff)
-import Effect.Uncurried (mkEffectFn1)
 import Formula as F
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -13,13 +11,11 @@ import Toestand as T
 import Gargantext.Components.Forest.Tree.Node.Action (Action)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact.Types (AddContactParams(..))
 -- import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
-import Gargantext.Prelude (Unit, bind, const, discard, pure, (<<<), (<>))
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types (ID)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Contact"
@@ -32,7 +28,7 @@ type TextInputBoxProps =
   ( id        :: ID
   , dispatch  :: Action -> Aff Unit
   , params    :: Record AddContactProps
-  , isOpen    :: T.Cursor Boolean
+  , isOpen    :: T.Box Boolean
   , boxName   :: String
   , boxAction :: AddContactParams -> Action
   )
@@ -47,7 +43,7 @@ textInputBoxCpt = here.component "textInputBox" cpt where
   cpt p@{ boxName, boxAction, dispatch, isOpen
         , params: { firstname, lastname } } _ =
     content <$> T.useLive T.unequal isOpen
-            <*> T.useCell firstname <*> T.useCell lastname
+            <*> T.useBox firstname <*> T.useBox lastname
     where
       content false _ _ = H.div {} []
       content true firstName lastName =
@@ -68,14 +64,14 @@ textInputBoxCpt = here.component "textInputBox" cpt where
             , type: "button", on: { click }, title:"Submit"
             } [] where
               click _ = do
-                firstname <- T.read first
-                lastname  <- T.read last
-                T2.write_ false isOpen
+                f <- T.read first
+                l  <- T.read last
+                T.write_ false isOpen
                 launchAff $
-                  dispatch (boxAction $ AddContactParams { firstname, lastname })
+                  dispatch (boxAction $ AddContactParams { firstname: f, lastname: l })
           cancelBtn =
             H.a
             { className: "btn text-danger glyphitem fa fa-remove col-md-2 pull-left"
             , on: { click }, title: "Cancel", type: "button"
             } [] where
-              click _ = T2.write_ false isOpen
+              click _ = T.write_ false isOpen

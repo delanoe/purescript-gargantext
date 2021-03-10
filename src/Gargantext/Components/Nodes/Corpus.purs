@@ -1,11 +1,14 @@
 module Gargantext.Components.Nodes.Corpus where
 
+import Gargantext.Prelude
+  ( Unit, bind, const, discard, pure, show, unit
+  , ($), (+), (-), (<), (<$>), (<<<), (<>), (==), (>))
 import Data.Argonaut (class DecodeJson, decodeJson, encodeJson)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.List as List
-import Data.Maybe (Maybe(..), maybe, fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
@@ -15,13 +18,13 @@ import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Toestand as T
-import Gargantext.Prelude
-
 import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
 import Gargantext.Components.Nodes.Types
+  ( FTField, FTFieldWithIndex, FTFieldsWithIndex, Field(..), FieldType(..), Hash, Index
+  , defaultField, defaultHaskell', defaultJSON', defaultMarkdown', defaultPython' )
+
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..))
 import Gargantext.Data.Array as GDA
 import Gargantext.Hooks.Loader (useLoader)
@@ -31,7 +34,6 @@ import Gargantext.Types (NodeType(..), AffTableResult)
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
-import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus"

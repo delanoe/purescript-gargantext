@@ -33,7 +33,6 @@ import Gargantext.Types (Name, ID)
 import Gargantext.Types as GT
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Box"
@@ -46,10 +45,10 @@ nodePopupView p = R.createElement nodePopupCpt p []
 nodePopupCpt :: R.Component NodePopupProps
 nodePopupCpt = here.component "nodePopupView" cpt where
   cpt p@{ id, name, nodeType }  _ = do
-    renameIsOpen <- T.useCell false >>= T2.useIdentityCursor
+    renameIsOpen <- T.useBox false
     open <- T.useLive T.unequal renameIsOpen
-    nodePopup <- T.useCell { action: Nothing, id, name, nodeType }
-    action <- T.useCursor (_.action) (\a b -> b { action = a }) nodePopup
+    nodePopup <- T.useBox { action: Nothing, id, name, nodeType }
+    action <- T.useFocused (_.action) (\a b -> b { action = a }) nodePopup
     nodePopup' <- T.useLive T.unequal nodePopup
     search  <- R.useState' $ defaultSearch { node_id = Just p.id }
     pure $ H.div tooltipProps
@@ -81,8 +80,8 @@ nodePopupCpt = here.component "nodePopupView" cpt where
   editIcon _ true = H.div {} []
   editIcon isOpen false =
     H.a { className: glyphicon "pencil", id: "rename1"
-        , title    : "Rename", on: { click: \_ -> T2.write_ true isOpen } } []
-  panelBody :: T.Cursor (Maybe NodeAction) -> Record NodePopupProps -> R.Element
+        , title    : "Rename", on: { click: \_ -> T.write_ true isOpen } } []
+  panelBody :: T.Box (Maybe NodeAction) -> Record NodePopupProps -> R.Element
   panelBody nodePopupState {dispatch: d, nodeType} =
     let (SettingsBox { edit, doc, buttons }) = settingsBox nodeType in
     H.div {className: "card-body flex-space-between"}
@@ -121,7 +120,7 @@ type ActionState =
 
 type ButtonClickProps =
   ( action   :: NodeAction
-  , state    :: T.Cursor (Maybe NodeAction)
+  , state    :: T.Box (Maybe NodeAction)
   , nodeType :: GT.NodeType
   )
 
@@ -134,7 +133,7 @@ buttonClickCpt = here.component "buttonClick" cpt where
     action <- T.useLive T.unequal state
     let className = glyphiconActive (glyphiconNodeAction todo) (action == (Just todo))
     let style = iconAStyle nodeType todo
-    let click _ = T2.write_ (if action == Just todo then Nothing else Just todo) state
+    let click _ = T.write_ (if action == Just todo then Nothing else Just todo) state
     pure $ H.div { className: "col-1" }
       [ H.a { style, className, id: show todo, title: show todo, on: { click } } [] ]
         -- | Open the help indications if selected already
@@ -188,14 +187,14 @@ panelActionCpt = here.component "panelAction" cpt
     cpt {action: Link {subTreeParams}, dispatch, id, nodeType, session, handed} _ =
       pure $ linkNode {dispatch, id, nodeType, session, subTreeParams, handed} []
     cpt {action : Share, dispatch, id, name } _ = do
-      isOpen <- T.useCell true >>= T.useCursor identity (\a _ -> a)
+      isOpen <- T.useBox true >>= T.useFocused identity (\a _ -> a)
       pure $ panel
         [ textInputBox
           { boxAction: Share.shareAction, boxName: "Share"
           , dispatch, id, text: "username", isOpen } []
         ] (H.div {} [])
     cpt {action : AddingContact, dispatch, id, name } _ = do
-      isOpen <- T.useCell true >>= T.useCursor identity (\a _ -> a)
+      isOpen <- T.useBox true >>= T.useFocused identity (\a _ -> a)
       pure $ Contact.textInputBox
         { id, dispatch, isOpen, boxName:"addContact"
         , params : {firstname:"First Name", lastname: "Last Name"}

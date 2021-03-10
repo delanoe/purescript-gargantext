@@ -1,7 +1,5 @@
 module Gargantext.Components.GraphExplorer.Search
-  ( Props
-  , nodeSearchControl
-  ) where
+  ( Props, nodeSearchControl ) where
 
 import Prelude
 import Data.Sequence as Seq
@@ -17,15 +15,14 @@ import Gargantext.Components.InputWithAutocomplete (inputWithAutocomplete)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Utils (queryMatchesLabel)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.Search"
 
 type Props = (
     graph              :: SigmaxT.SGraph
-  , multiSelectEnabled :: T.Cursor Boolean
-  , selectedNodeIds    :: T.Cursor SigmaxT.NodeIds
+  , multiSelectEnabled :: T.Box Boolean
+  , selectedNodeIds    :: T.Box SigmaxT.NodeIds
   )
 
 -- | Whether a node matches a search string
@@ -68,7 +65,7 @@ autocompleteSearch graph s = Seq.toUnfoldable $ (_.label) <$> searchNodes s node
 triggerSearch :: SigmaxT.SGraph
               -> String
               -> Boolean
-              -> T.Cursor SigmaxT.NodeIds
+              -> T.Box SigmaxT.NodeIds
               -> Effect Unit
 triggerSearch graph search multiSelectEnabled selectedNodeIds = do
   let graphNodes = SigmaxT.graphNodes graph
@@ -76,5 +73,5 @@ triggerSearch graph search multiSelectEnabled selectedNodeIds = do
 
   log2 "[triggerSearch] search" search
 
-  T2.modify_ (\nodes ->
+  T.modify_ (\nodes ->
     Set.union matching $ if multiSelectEnabled then nodes else SigmaxT.emptyNodeIds) selectedNodeIds

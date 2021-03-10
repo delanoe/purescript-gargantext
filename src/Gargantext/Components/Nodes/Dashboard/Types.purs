@@ -6,7 +6,7 @@ import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
-import Gargantext.Components.Nodes.Types (FTField, Field(..), FieldType(..), isJSON)
+import Gargantext.Components.Nodes.Types (FTField)
 import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, get, put)

@@ -19,11 +19,9 @@ import DOM.Simple.EventListener as EL
 import DOM.Simple (DOMRect)
 import Global (toFixed)
 import Effect (Effect)
-import Effect.Uncurried (mkEffectFn1)
 import Math as M
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Toestand as T
 
 import Gargantext.Utils.Math (roundToMultiple)
 import Gargantext.Utils.Range as Range

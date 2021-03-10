@@ -1,5 +1,7 @@
 module Gargantext.Components.Forest.Tree.Node.Tools.Sync where
 
+import Gargantext.Prelude
+  ( Unit, bind, const, discard, pure, unit, ($), (<>), (==) )
 import Effect.Aff (Aff, launchAff_)
 import Data.Tuple.Nested ((/\))
 import Data.Maybe (Maybe(..))
@@ -9,12 +11,11 @@ import Reactix.DOM.HTML as H
 import Reactix as R
 
 import Gargantext.Components.GraphExplorer.API as GraphAPI
-import Gargantext.Components.NgramsTable.API as NTAPI
-import Gargantext.Prelude (Unit, bind, const, discard, pure, unit, ($), (<>), (==))
 import Gargantext.Types as GT
 import Gargantext.Sessions (Session)
 import Gargantext.Utils.Reactix as R2
 
+here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools.Sync"
 
 

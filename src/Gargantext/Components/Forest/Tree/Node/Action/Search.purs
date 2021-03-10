@@ -3,7 +3,6 @@ module Gargantext.Components.Forest.Tree.Node.Action.Search where
 import Data.Maybe (Maybe)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
-import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 

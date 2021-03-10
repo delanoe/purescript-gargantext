@@ -16,7 +16,7 @@ here = R2.here "Gargantext.Components.SimpleLayout"
 
 -- Simple layout does not accommodate the tree
 type SimpleLayoutProps = (
-  handed :: T.Cursor GT.Handed
+  handed :: T.Box GT.Handed
   )
 
 simpleLayout :: R2.Component SimpleLayoutProps

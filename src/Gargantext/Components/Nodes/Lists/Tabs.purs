@@ -1,5 +1,6 @@
 module Gargantext.Components.Nodes.Lists.Tabs where
 
+import Gargantext.Prelude (bind, pure, unit, ($), (<>))
 import Data.Array as A
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (fst)
@@ -11,7 +12,6 @@ import Record as Record
 import Record.Extra as RX
 import Toestand as T
 
-import Gargantext.Prelude
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.NgramsTable as NT
@@ -20,12 +20,12 @@ import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
 import Gargantext.Components.Nodes.Corpus.Chart.Pie  (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
-import Gargantext.Components.Nodes.Corpus.Chart (getChartFunction)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils (mNgramsTypeFromTabType)
-import Gargantext.Components.Nodes.Lists.Types
+import Gargantext.Components.Nodes.Lists.Types (CacheState, SidePanelTriggers)
 import Gargantext.Components.Tab as Tab
 import Gargantext.Sessions (Session)
-import Gargantext.Types (ChartType(..), CTabNgramType(..), Mode(..), TabSubType(..), TabType(..), chartTypeFromString, modeTabType)
+import Gargantext.Types
+  ( ChartType(..), CTabNgramType(..), Mode(..), TabSubType(..), TabType(..), modeTabType )
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
 import Gargantext.Utils.Toestand as T2
@@ -37,11 +37,11 @@ type Props = (
     cacheState        :: R.State CacheState
   , corpusData        :: CorpusData
   , corpusId          :: Int
-  , reloadForest      :: T.Cursor T2.Reload
-  , reloadRoot        :: T.Cursor T2.Reload
+  , reloadForest      :: T.Box T2.Reload
+  , reloadRoot        :: T.Box T2.Reload
   , session           :: Session
   , sidePanelTriggers :: Record SidePanelTriggers
-  , tasks             :: T.Cursor (Maybe GAT.Reductor)
+  , tasks             :: T.Box (Maybe GAT.Reductor)
   )
 
 type PropsWithKey = ( key :: String | Props )

@@ -45,28 +45,23 @@ import Gargantext.Utils.Toestand as T2
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer"
 
-type BaseProps = (
-    backend       :: T.Cursor (Maybe Backend)
+type BaseProps =
+  ( backend       :: T.Box (Maybe Backend)
   , frontends     :: Frontends
   , graphId       :: GET.GraphId
-  , handed        :: T.Cursor Types.Handed
-  , route         :: T.Cursor AppRoute
-  , sessions      :: T.Cursor Sessions
-  , showLogin     :: T.Cursor Boolean
-  , tasks         :: T.Cursor (Maybe GAT.Reductor)
-)
- 
+  , handed        :: T.Box Types.Handed
+  , route         :: T.Box AppRoute
+  , sessions      :: T.Box Sessions
+  , showLogin     :: T.Box Boolean
+  , tasks         :: T.Box (Maybe GAT.Reductor)
+  )
 
 type LayoutLoaderProps = ( session :: R.Context Session | BaseProps )
 
-type LayoutProps = (
-    graphVersion :: GUR.ReloadS
-  , session :: Session
-  | BaseProps
-)
+type LayoutProps = ( graphVersion :: GUR.ReloadS, session :: Session | BaseProps )
 
-type Props = (
-    graph          :: SigmaxT.SGraph
+type Props =
+  ( graph          :: SigmaxT.SGraph
   , hyperdataGraph :: GET.HyperdataGraph
   , mMetaData      :: Maybe GET.MetaData
   | LayoutProps
@@ -90,10 +85,7 @@ explorerLayout = R.createElement explorerLayoutCpt
 
 explorerLayoutCpt :: R.Component LayoutProps
 explorerLayoutCpt = here.component "explorerLayout" cpt where
-  cpt props@{ backend
-            , graphId
-            , graphVersion
-            , session } _ = do
+  cpt props@{ backend, graphId, graphVersion, session } _ = do
     useLoader graphId (getNodes session graphVersion) handler
     where
       handler loaded = explorer (Record.merge props { graph, hyperdataGraph: loaded, mMetaData }) []
@@ -125,7 +117,7 @@ explorerCpt = here.component "explorer" cpt
               } _ = do
       handed' <- T.useLive T.unequal handed
 
-      let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas }) -> startForceAtlas) mMetaData
+      let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas: sfa }) -> sfa) mMetaData
 
       let forceAtlasS = if startForceAtlas
                           then SigmaxT.InitialRunning
@@ -134,21 +126,21 @@ explorerCpt = here.component "explorer" cpt
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
       graphVersionRef <- R.useRef (GUR.value graphVersion)
-      -- reloadForest <- T2.useCursed $ T2.Ready 0
-      reloadForest <- T2.useCursed 0
+      -- reloadForest <- T.useBox $ T2.Ready 0
+      reloadForest <- T.useBox 0
       -- reloadForest <- GUR.newIInitialized reloadForest
       controls <- Controls.useGraphControls { forceAtlasS
                                             , graph
                                             , graphId
                                             , hyperdataGraph
-                                            , reloadForest: \_ -> GUR.bumpCursor reloadForest
+                                            , reloadForest: \_ -> GUR.bumpBox reloadForest
                                             , session
                                             }
       multiSelectEnabled' <- T.useLive T.unequal controls.multiSelectEnabled
       showTree' <- T.useLive T.unequal controls.showTree
       multiSelectEnabledRef <- R.useRef multiSelectEnabled'
 
-      forestOpen <- T2.useCursed $ Set.empty
+      forestOpen <- T.useBox $ Set.empty
 
       R.useEffect' $ do
         let readData = R.readRef dataRef
@@ -162,12 +154,12 @@ explorerCpt = here.component "explorer" cpt
           R.setRef dataRef graph
           R.setRef graphVersionRef (GUR.value graphVersion)
           -- Reinitialize bunch of state as well.
-          T2.write_ SigmaxT.emptyNodeIds controls.removedNodeIds
-          T2.write_ SigmaxT.emptyNodeIds controls.selectedNodeIds
-          T2.write_ SigmaxT.EShow controls.showEdges
-          T2.write_ forceAtlasS controls.forceAtlasState
-          T2.write_ Graph.Init controls.graphStage
-          T2.write_ GET.InitialClosed controls.showSidePanel
+          T.write_ SigmaxT.emptyNodeIds controls.removedNodeIds
+          T.write_ SigmaxT.emptyNodeIds controls.selectedNodeIds
+          T.write_ SigmaxT.EShow controls.showEdges
+          T.write_ forceAtlasS controls.forceAtlasState
+          T.write_ Graph.Init controls.graphStage
+          T.write_ GET.InitialClosed controls.showSidePanel
 
       pure $
         RH.div { className: "graph-meta-container" } [
@@ -265,17 +257,17 @@ explorerCpt = here.component "explorer" cpt
       Sidebar.sidebar (Record.merge props { metaData })
 
 type TreeProps = (
-    backend      :: T.Cursor (Maybe Backend)
-  , forestOpen   :: T.Cursor OpenNodes
+    backend      :: T.Box (Maybe Backend)
+  , forestOpen   :: T.Box OpenNodes
   , frontends    :: Frontends
-  , handed       :: T.Cursor Types.Handed
-  , reload       :: T.Cursor T2.Reload
-  , reloadForest :: T.Cursor T2.Reload
-  , route        :: T.Cursor AppRoute
-  , sessions     :: T.Cursor Sessions
+  , handed       :: T.Box Types.Handed
+  , reload       :: T.Box T2.Reload
+  , reloadForest :: T.Box T2.Reload
+  , route        :: T.Box AppRoute
+  , sessions     :: T.Box Sessions
   , show         :: Boolean
-  , showLogin    :: T.Cursor Boolean
-  , tasks        :: T.Cursor (Maybe GAT.Reductor)
+  , showLogin    :: T.Box Boolean
+  , tasks        :: T.Box (Maybe GAT.Reductor)
   )
 
 type MSidebarProps =
@@ -283,11 +275,11 @@ type MSidebarProps =
   , graph           :: SigmaxT.SGraph
   , graphId         :: GET.GraphId
   , graphVersion    :: GUR.ReloadS
-  , reloadForest    :: T.Cursor T2.Reload
-  , removedNodeIds  :: T.Cursor SigmaxT.NodeIds
-  , selectedNodeIds :: T.Cursor SigmaxT.NodeIds
+  , reloadForest    :: T.Box T2.Reload
+  , removedNodeIds  :: T.Box SigmaxT.NodeIds
+  , selectedNodeIds :: T.Box SigmaxT.NodeIds
   , session         :: Session
-  , showSidePanel   :: T.Cursor GET.SidePanelState
+  , showSidePanel   :: T.Box GET.SidePanelState
   )
 
 type GraphProps = (
@@ -337,7 +329,7 @@ graphViewCpt = here.component "graphView" cpt
                                                                   , removedNodeIds'
                                                                   , selectedNodeIds'
                                                                   , showEdges' }
-      let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas }) -> startForceAtlas) mMetaData
+      let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas: sfa }) -> sfa) mMetaData
 
       R.useEffect1' multiSelectEnabled' $ do
         R.setRef multiSelectEnabledRef multiSelectEnabled'

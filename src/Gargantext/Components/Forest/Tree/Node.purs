@@ -2,7 +2,6 @@ module Gargantext.Components.Forest.Tree.Node where
 
 import Gargantext.Prelude
 
-import Data.Array (reverse)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (null)
 import Data.Symbol (SProxy(..))
@@ -16,7 +15,6 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
 import Toestand as T
-import Web.HTML.Event.EventTypes (offline)
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
@@ -47,16 +45,16 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node"
 
 -- Main Node
 type NodeMainSpanProps =
-  ( folderOpen    :: T.Cursor Boolean
+  ( folderOpen    :: T.Box Boolean
   , frontends     :: Frontends
   , id            :: ID
   , isLeaf        :: IsLeaf
   , name          :: Name
   , nodeType      :: GT.NodeType
-  , reloadRoot    :: T.Cursor T2.Reload
-  , route         :: T.Cursor Routes.AppRoute
+  , reloadRoot    :: T.Box T2.Reload
+  , route         :: T.Box Routes.AppRoute
   , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
-  , tasks         :: T.Cursor (Maybe GAT.Reductor)
+  , tasks         :: T.Box (Maybe GAT.Reductor)
   | CommonProps
   )
 
@@ -103,7 +101,7 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
       tasks' <- T.read tasks
 
       pure $ H.span (dropProps droppedFile isDragOver)
-        $ GT.reverseHanded
+        $ reverseHanded
         [ folderIcon  { folderOpen, nodeType } []
         , chevronIcon { folderOpen, handed, isLeaf, nodeType } []
         , nodeLink { frontends, handed, folderOpen, id, isSelected
@@ -140,27 +138,21 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
                               } []
                 ] handed
         where
-          onTaskFinish id t _ = do
+          onTaskFinish id' t _ = do
             mT <- T.read tasks
             case mT of
-              Just t' -> snd t' $ GAT.Finish id t
+              Just t' -> snd t' $ GAT.Finish id' t
               Nothing -> pure unit
             T2.reload reloadRoot
 
           SettingsBox {show: showBox} = settingsBox nodeType
           onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
 
-          name' {name, nodeType} = if nodeType == GT.NodeUser then show session else name
+          name' {name: n, nodeType: nt} = if nt == GT.NodeUser then show session else n
 
-          mNodePopupView props@{id, nodeType} onPopoverClose =
-                                nodePopupView { dispatch
-                                              , handed : props.handed
-                                              , id
-                                              , name: name' props
-                                              , nodeType
-                                              , onPopoverClose
-                                              , session
-                                              }
+          mNodePopupView props'@{ id: i, nodeType: nt, handed: h } opc =
+            nodePopupView { dispatch, handed: h, id: i, name: name' props'
+                          , nodeType: nt, onPopoverClose: opc, session }
 
     popOverIcon =
       H.a { className: "settings fa fa-cog" 
@@ -199,7 +191,7 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
     onDragLeave (_ /\ setIsDragOver) _ = setIsDragOver $ const false
 
 type FolderIconProps = (
-    folderOpen :: T.Cursor Boolean
+    folderOpen :: T.Box Boolean
   , nodeType   ::  GT.NodeType
   )
 
@@ -211,11 +203,11 @@ folderIconCpt = here.component "folderIcon" cpt
   where
     cpt { folderOpen, nodeType } _ = do
       open <- T.read folderOpen
-      pure $ H.a { className: "folder-icon", on: { click: \_ -> T2.modify_ not folderOpen } }
+      pure $ H.a { className: "folder-icon", on: { click: \_ -> T.modify_ not folderOpen } }
         [ H.i { className: GT.fldr nodeType open } [] ]
 
 type ChevronIconProps = (
-    folderOpen :: T.Cursor Boolean
+    folderOpen :: T.Box Boolean
   , handed     :: GT.Handed
   , isLeaf     :: Boolean
   , nodeType   :: GT.NodeType
@@ -232,7 +224,7 @@ chevronIconCpt = here.component "chevronIcon" cpt
     cpt { folderOpen, handed, isLeaf: false, nodeType } _ = do
       open <- T.read folderOpen
       pure $ H.a { className: "chevron-icon"
-          , on: { click: \_ -> T2.modify_ not folderOpen }
+          , on: { click: \_ -> T.modify_ not folderOpen }
           }
         [ H.i { className: if open
                             then "fa fa-chevron-down"

@@ -9,13 +9,11 @@ import Data.Tuple (fst)
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Toestand as T
 
 import Gargantext.Config (publicBackend)
 import Gargantext.Config.REST (get)
-import Gargantext.Ends (Backend, backendUrl)
+import Gargantext.Ends (backendUrl)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Sessions (Sessions)
 import Gargantext.Prelude
 import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson)
 import Gargantext.Utils.Reactix as R2

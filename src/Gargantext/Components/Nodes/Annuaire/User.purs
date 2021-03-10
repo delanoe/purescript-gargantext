@@ -4,10 +4,9 @@ module Gargantext.Components.Nodes.Annuaire.User
   )
   where
 
-import DOM.Simple.Console (log2)
+import Gargantext.Prelude (Unit, bind, const, discard, pure, show, ($), (<$>), (<<<), (<>))
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
@@ -23,7 +22,6 @@ import Gargantext.Components.Nodes.Annuaire.Tabs as Tabs
 import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (Unit, bind, const, discard, pure, show, unit, ($), (+), (<$>), (<<<), (<>), (==))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, get, put, sessionId)
 import Gargantext.Types (NodeType(..))
@@ -34,9 +32,7 @@ import Gargantext.Utils.Toestand as T2
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Annuaire.User"
 
-type DisplayProps = (
-  title :: String
-  )
+type DisplayProps = ( title :: String )
 
 display :: R2.Component DisplayProps
 display = R.createElement displayCpt
@@ -115,7 +111,7 @@ contactInfoItemCpt = here.component "contactInfoItem" cpt
         item (false /\ setIsEditing) valueRef =
           H.div { className: "input-group col-sm-6" } [
             H.input { className: "form-control"
-                    , defaultValue: placeholder
+                    , defaultValue: placeholder'
                     , disabled: 1
                     , type: "text" }
           , H.div { className: "btn input-group-append"
@@ -124,7 +120,7 @@ contactInfoItemCpt = here.component "contactInfoItem" cpt
             ]
           ]
           where
-            placeholder = R.readRef valueRef
+            placeholder' = R.readRef valueRef
             onClick _ = setIsEditing $ const true
         item (true /\ setIsEditing) valueRef =
           H.div { className: "input-group col-sm-6" } [
@@ -154,10 +150,10 @@ listElement = H.li { className: "list-group-item justify-content-between" }
 type LayoutProps =
   ( frontends    :: Frontends
   , nodeId       :: Int
-  , reloadForest :: T.Cursor T2.Reload
-  , reloadRoot   :: T.Cursor T2.Reload
+  , reloadForest :: T.Box T2.Reload
+  , reloadRoot   :: T.Box T2.Reload
   , session      :: Session
-  , tasks        :: T.Cursor (Maybe GAT.Reductor)
+  , tasks        :: T.Box (Maybe GAT.Reductor)
   )
 
 type KeyLayoutProps = (

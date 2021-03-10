@@ -9,7 +9,7 @@ import Data.Array as A
 import Data.Either (Either(..))
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
-import Data.Tuple (fst, snd)
+import Data.Tuple (fst)
 import Effect (Effect)
 import Gargantext.Types as GT
 import Gargantext.Utils as GU
@@ -55,15 +55,15 @@ removeTaskFromList ts (GT.AsyncTaskWithType { task: GT.AsyncTask { id: id' } }) 
   A.filter (\(GT.AsyncTaskWithType { task: GT.AsyncTask { id: id'' } }) -> id' /= id'') ts
 
 type ReductorProps = (
-    reloadForest :: T.Cursor T2.Reload
-  , reloadRoot   :: T.Cursor T2.Reload
+    reloadForest :: T.Box T2.Reload
+  , reloadRoot   :: T.Box T2.Reload
   , storage      :: Storage
   )
 
 type Reductor = R2.Reductor (Record ReductorProps) Action
 type ReductorAction = Action -> Effect Unit
 
-useTasks :: T.Cursor T2.Reload -> T.Cursor T2.Reload -> R.Hooks Reductor
+useTasks :: T.Box T2.Reload -> T.Box T2.Reload -> R.Hooks Reductor
 useTasks reloadRoot reloadForest = R2.useReductor act initializer unit
   where
     act :: R2.Actor (Record ReductorProps) Action
@@ -79,18 +79,18 @@ data Action =
 
 action :: Record ReductorProps -> Action -> Effect (Record ReductorProps)
 action p@{ reloadForest, storage } (Insert nodeId t) = do
-  _ <- GUR.bumpCursor reloadForest
+  _ <- GUR.bumpBox reloadForest
   let newStorage = Map.alter (maybe (Just [t]) (\ts -> Just $ A.cons t ts)) nodeId storage
   pure $ p { storage = newStorage }
 action p (Finish nodeId t) = do
   action p (Remove nodeId t)
 action p@{ reloadRoot, reloadForest, storage } (Remove nodeId t@(GT.AsyncTaskWithType { typ })) = do
   _ <- if GT.asyncTaskTriggersAppReload typ then
-    GUR.bumpCursor reloadRoot
+    GUR.bumpBox reloadRoot
   else
     pure unit
   _ <- if GT.asyncTaskTriggersTreeReload typ then
-    GUR.bumpCursor reloadForest
+    GUR.bumpBox reloadForest
   else
     pure unit
   let newStorage = Map.alter (maybe Nothing $ (\ts -> Just $ removeTaskFromList ts t)) nodeId storage
