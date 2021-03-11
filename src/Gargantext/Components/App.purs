@@ -26,10 +26,10 @@ appCpt = here.component "app" cpt where
     box    <- T.useBox emptyApp             -- global data
     boxes <- T.useFocusedFields box {}      -- read-write access for children
     tasks   <- T.useBox Nothing             -- storage for asynchronous tasks reductor
-    R.useEffect' $ do
+    R.useEffectOnce' $ do
       void $ Sessions.load boxes.sessions
     tasksReductor <- GAT.useTasks boxes.reloadRoot boxes.reloadForest
-    R.useEffect' $ do
+    R.useEffectOnce' $ do
       T.write (Just tasksReductor) tasks
     useHashRouter Router.router boxes.route -- Install router to window
     pure $ router { boxes, tasks }          -- Render router component
