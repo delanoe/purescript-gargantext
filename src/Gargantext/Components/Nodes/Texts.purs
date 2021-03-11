@@ -13,6 +13,7 @@ import Effect.Aff (launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
+import Record.Extra as REX
 
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.Forest as Forest
@@ -32,7 +33,7 @@ import Gargantext.Components.Nodes.Texts.Types
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table
 import Gargantext.Ends (Frontends)
-import Gargantext.Sessions (Session, sessionId, getCacheState)
+import Gargantext.Sessions (WithSession, WithSessionContext, Session, sessionId, getCacheState)
 import Gargantext.Types (CTabNgramType(..), ListId, NodeID, TabSubType(..), TabType(..))
 import Gargantext.Utils.Reactix as R2
 
@@ -44,6 +45,24 @@ type TextsWithForest = (
     forestProps :: Record Forest.Props
   , textsProps  :: Record CommonProps
   )
+
+type TextsWithForestSessionContext =
+  ( forestProps :: Record Forest.Props
+  , textsProps  :: Record CommonPropsSessionContext )
+
+textsWithForestSessionContext :: R2.Component TextsWithForestSessionContext
+textsWithForestSessionContext = R.createElement textsWithForestSessionContextCpt
+
+textsWithForestSessionContextCpt :: R.Component TextsWithForestSessionContext
+textsWithForestSessionContextCpt = here.component "textsWithForestSessionContext" cpt
+  where
+    cpt { forestProps, textsProps: textsProps@{ session } } _ = do
+      session' <- R.useContext session
+
+      pure $ textsWithForest
+        { forestProps
+        , textsProps: Record.merge { session: session' } $ (REX.pick textsProps :: Record CommonPropsNoSession)
+        } []
 
 textsWithForest :: R2.Component TextsWithForest
 textsWithForest = R.createElement textsWithForestCpt
@@ -80,11 +99,13 @@ topBarCpt = here.component "topBar" cpt
 
 
 
-type CommonProps = (
+type CommonPropsNoSession = (
     frontends :: Frontends
   , nodeId    :: NodeID
-  , session   :: Session
   )
+
+type CommonProps = WithSession CommonPropsNoSession
+type CommonPropsSessionContext = WithSessionContext CommonPropsNoSession
 
 type Props = ( controls :: Record TextsLayoutControls | CommonProps )
 

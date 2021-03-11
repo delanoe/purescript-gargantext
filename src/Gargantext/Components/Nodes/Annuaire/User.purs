@@ -1,6 +1,7 @@
 module Gargantext.Components.Nodes.Annuaire.User
   ( module Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
   , userLayout
+  , userLayoutSessionContext
   )
   where
 
@@ -13,6 +14,8 @@ import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record as Record
+import Record.Extra as REX
 import Toestand as T
 
 import Gargantext.AsyncTasks as GAT
@@ -23,7 +26,7 @@ import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
-import Gargantext.Sessions (Session, get, put, sessionId)
+import Gargantext.Sessions (WithSession, WithSessionContext, Session, get, put, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
@@ -147,19 +150,33 @@ contactInfoItemCpt = here.component "contactInfoItem" cpt
 listElement :: Array R.Element -> R.Element
 listElement = H.li { className: "list-group-item justify-content-between" }
 
-type LayoutProps =
+type LayoutNoSessionProps =
   ( frontends    :: Frontends
   , nodeId       :: Int
   , reloadForest :: T.Box T2.Reload
   , reloadRoot   :: T.Box T2.Reload
-  , session      :: Session
   , tasks        :: T.Box (Maybe GAT.Reductor)
   )
+
+type LayoutProps = WithSession LayoutNoSessionProps
+
+type LayoutSessionContextProps = WithSessionContext LayoutNoSessionProps
 
 type KeyLayoutProps = (
     key :: String
   | LayoutProps
   )
+
+userLayoutSessionContext :: R2.Component LayoutSessionContextProps
+userLayoutSessionContext = R.createElement userLayoutSessionContextCpt
+
+userLayoutSessionContextCpt :: R.Component LayoutSessionContextProps
+userLayoutSessionContextCpt = here.component "userLayoutSessionContext" cpt
+  where
+    cpt props@{ session } _ = do
+      session' <- R.useContext session
+
+      pure $ userLayout (Record.merge { session: session' } $ (REX.pick props :: Record LayoutNoSessionProps)) []
 
 userLayout :: R2.Component LayoutProps
 userLayout = R.createElement userLayoutCpt

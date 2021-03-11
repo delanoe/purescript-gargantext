@@ -1,6 +1,7 @@
 -- | A module for authenticating to create sessions and handling them
 module Gargantext.Sessions
   ( module Gargantext.Sessions.Types
+  , WithSession, WithSessionContext
   , load, change
   , Action(..), act, delete, get, post, put, put_
   , postAuthRequest, deleteWithBody, postWwwUrlencoded
@@ -25,6 +26,10 @@ import Effect (Effect)
 import Effect.Aff (Aff)
 import Prelude
   ( Unit, bind, otherwise, pure, unit, ($), (*>), (<$>), (<*), (>>=))
+import Prim.Row (class Lacks, class Nub)
+import Reactix as R
+import Record as Record
+import Record.Extra as REX
 import Toestand as T
 import Web.Storage.Storage (getItem, removeItem, setItem)
 
@@ -34,6 +39,14 @@ import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Config.REST as REST
 import Gargantext.Ends (class ToUrl, Backend, toUrl)
 import Gargantext.Utils.Reactix (getls)
+
+type WithSession c =
+  ( session :: Session
+  | c )
+
+type WithSessionContext c =
+  ( session :: R.Context Session
+  | c )
 
 load :: forall c. T.Write c Sessions => c -> Effect Sessions
 load cell = do

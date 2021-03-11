@@ -9,6 +9,7 @@ import Effect.Aff (launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
+import Record.Extra as REX
 import Toestand as T
 
 import Gargantext.AsyncTasks as GAT
@@ -25,7 +26,7 @@ import Gargantext.Components.Nodes.Lists.Types
 
 import Gargantext.Components.Table as Table
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Sessions (Session, sessionId, getCacheState, setCacheState)
+import Gargantext.Sessions (WithSession, WithSessionContext, Session, sessionId, getCacheState, setCacheState)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
@@ -37,6 +38,23 @@ type ListsWithForest =
   ( forestProps :: Record Forest.Props
   , listsProps  :: Record CommonProps
   )
+
+type ListsWithForestSessionContext =
+  ( forestProps :: Record Forest.Props
+  , listsProps  :: Record CommonPropsSessionContext )
+
+listsWithForestSessionContext :: R2.Component ListsWithForestSessionContext
+listsWithForestSessionContext = R.createElement listsWithForestSessionContextCpt
+
+listsWithForestSessionContextCpt :: R.Component ListsWithForestSessionContext
+listsWithForestSessionContextCpt = here.component "listsWithForestSessionContext" cpt where
+  cpt { forestProps, listsProps: listsProps@{ session } } _ = do
+      session' <- R.useContext session
+
+      pure $ listsWithForest
+        { forestProps
+        , listsProps: Record.merge { session: session' } $ (REX.pick listsProps :: Record CommonPropsNoSession)
+        } []
 
 listsWithForest :: R2.Component ListsWithForest
 listsWithForest = R.createElement listsWithForestCpt
@@ -67,14 +85,17 @@ topBarCpt = here.component "topBar" cpt where
       --      ]
       --   ]  -- head (goes to top bar)
 
-type CommonProps =
+type CommonPropsNoSession =
   ( nodeId        :: Int
   , reloadForest  :: T.Box T2.Reload
   , reloadRoot    :: T.Box T2.Reload
-  , session       :: Session
   , sessionUpdate :: Session -> Effect Unit
   , tasks         :: T.Box (Maybe GAT.Reductor)
   )
+
+type CommonProps = WithSession CommonPropsNoSession
+
+type CommonPropsSessionContext = WithSessionContext CommonPropsNoSession
 
 type Props = ( controls :: Record ListsLayoutControls | CommonProps )
 
