@@ -383,9 +383,10 @@ li .leaf:hover a.settings {
   visibility: visible;
 }
 
-.tree {
+.forest > .tree {
   margin-top: 20px;
 }
+
 .tree ul li {
   position: relative;
 }
