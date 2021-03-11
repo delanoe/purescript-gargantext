@@ -1,27 +1,27 @@
 module Gargantext.Components.Nodes.Corpus where
 
+import Gargantext.Components.Nodes.Types
+import Gargantext.Prelude
+
+import DOM.Simple.Console (log2)
 import Data.Argonaut (class DecodeJson, decodeJson, encodeJson)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
 import Data.Either (Either(..))
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
+import Data.Generic.Rep.Show (genericShow)
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
-import Gargantext.Prelude
-
 import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
-import Gargantext.Components.Nodes.Types
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..))
 import Gargantext.Data.Array as GDA
 import Gargantext.Hooks.Loader (useLoader)
@@ -31,6 +31,8 @@ import Gargantext.Types (NodeType(..), AffTableResult)
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 thisModule :: String
 thisModule = "Gargantext.Components.Nodes.Corpus"
@@ -59,6 +61,7 @@ corpusLayoutCpt = R.hooksComponentWithModule thisModule "corpusLayout" cpt
 
 corpusLayoutWithKey :: Record KeyProps -> R.Element
 corpusLayoutWithKey props = R.createElement corpusLayoutWithKeyCpt props []
+
 corpusLayoutWithKeyCpt :: R.Component KeyProps
 corpusLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "corpusLayoutWithKey" cpt
   where
@@ -84,6 +87,7 @@ corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" c
       let fieldsWithIndex = List.mapWithIndex (\idx -> \t -> Tuple idx t) fields
       fieldsS <- R.useState' fieldsWithIndex
       fieldsRef <- R.useRef fields
+      viewType <- R.useState' Code
 
       -- handle props change of fields
       R.useEffect1' fields $ do
@@ -100,11 +104,12 @@ corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" c
                   }
             [ H.span { className: "fa fa-floppy-o" } [  ]
             ]
+          , H.div { className: "col-1" } [ viewTypeSelector {state: viewType} ]
           ]
         , H.div {}
-          [ fieldsCodeEditor { fields: fieldsS
+          [ renderContent (fst viewType) { fields: fieldsS
                              , nodeId
-                             , session } [] ]
+                             , session } ]
         , H.div { className: "row" }
           [ H.div { className: "btn btn-primary"
                   , on: { click: onClickAdd fieldsS }
@@ -113,6 +118,9 @@ corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" c
             ]
           ]
         ]
+
+    renderContent Code props = fieldsCodeEditor props []
+    renderContent Folders _ = H.div {} []
 
     saveEnabled :: FTFieldsWithIndex -> R.State FTFieldsWithIndex -> String
     saveEnabled fs (fsS /\ _) = if fs == fsS then "disabled" else "enabled"
@@ -385,3 +393,44 @@ type LoadWithReloadProps =
 -- Just to make reloading effective
 loadCorpusWithChildAndReload :: Record LoadWithReloadProps -> Aff CorpusData
 loadCorpusWithChildAndReload {nodeId, reload, session} = loadCorpusWithChild {nodeId, session}
+
+data ViewType = Code | Folders
+derive instance genericViewType :: Generic ViewType _
+instance eqViewType :: Eq ViewType where
+  eq = genericEq
+instance showViewType :: Show ViewType where
+  show = genericShow
+
+type ViewTypeSelectorProps =
+  (
+    state :: R.State ViewType
+  )
+
+viewTypeSelector :: Record ViewTypeSelectorProps -> R.Element
+viewTypeSelector p = R.createElement viewTypeSelectorCpt p []
+
+viewTypeSelectorCpt :: R.Component ViewTypeSelectorProps
+viewTypeSelectorCpt = R.hooksComponentWithModule thisModule "viewTypeSelector" cpt
+  where
+    cpt {state} _ =
+      pure $ H.div { className: "btn-group"
+                   , role: "group" } [
+          viewTypeButton Code state
+        , viewTypeButton Folders state
+        ]
+
+    viewTypeButton viewType (state /\ setState) =
+      H.button { className: "btn btn-primary" <> active
+               , on: { click: onClick }
+               , type: "button"
+               } [
+        H.i { className: "fa " <> (icon viewType) } []
+      ]
+      where
+        active = if viewType == state then " active" else ""
+
+        onClick _ = do
+          setState $ const viewType
+
+    icon Folders = "fa-folder"
+    icon Code = "fa-code"
