@@ -3,6 +3,7 @@ module Gargantext.Components.Router (router) where
 import Data.Array (fromFoldable)
 import Data.Maybe (Maybe(..))
 import Reactix as R
+import Reactix.DOM.HTML as H
 import Record as Record
 import Record.Extra as RE
 import Toestand as T
@@ -43,7 +44,7 @@ here = R2.here "Gargantext.Components.Router"
 
 type Props = ( boxes :: Boxes, tasks :: T.Box (Maybe GAT.Reductor) )
 
-type SessionProps = ( session   :: R.Context Session, sessionId :: SessionId | Props )
+type SessionProps = ( session :: R.Context Session, sessionId :: SessionId | Props )
 
 type SessionNodeProps = ( nodeId :: NodeID | SessionProps )
 type Props' = ( route' :: AppRoute, backend :: Backend | Props )
@@ -59,29 +60,31 @@ routerCpt = here.component "router" cpt where
     let sessionNodeProps sId nId = Record.merge { nodeId: nId } $ sessionProps sId
     showLogin <- T.useLive T.unequal boxes.showLogin
     route' <- T.useLive T.unequal boxes.route
-    pure $ if showLogin then login' boxes
-    else case route' of
-      GR.Annuaire s n           -> annuaire (sessionNodeProps s n) []
-      GR.ContactPage s a n      -> contact (Record.merge { annuaireId: a } $ sessionNodeProps s n) []
-      GR.Corpus s n             -> corpus (sessionNodeProps s n) []
-      GR.CorpusDocument s c l n -> corpusDocument (Record.merge { corpusId: c, listId: l } $ sessionNodeProps s n) []
-      GR.Dashboard s n          -> dashboard (sessionNodeProps s n) []
-      GR.Document s l n         -> document (Record.merge { listId: l } $ sessionNodeProps s n) []
-      GR.Folder        s n      -> corpus (sessionNodeProps s n) []
-      GR.FolderPrivate s n      -> corpus (sessionNodeProps s n) []
-      GR.FolderPublic  s n      -> corpus (sessionNodeProps s n) []
-      GR.FolderShared  s n      -> corpus (sessionNodeProps s n) []
-      GR.Home                   -> home props []
-      GR.Lists s n              -> lists (sessionNodeProps s n) []
-      GR.Login                  -> login' boxes
-      GR.PGraphExplorer s g     -> graphExplorer (sessionNodeProps s g) []
-      GR.RouteFile s n          -> routeFile (sessionNodeProps s n) []
-      GR.RouteFrameCalc  s n    -> routeFrame (Record.merge { nodeType: NodeFrameCalc } $ sessionNodeProps s n) []
-      GR.RouteFrameCode  s n    -> routeFrame (Record.merge { nodeType: NodeFrameNotebook } $ sessionNodeProps s n) []
-      GR.RouteFrameWrite s n    -> routeFrame (Record.merge { nodeType: NodeFrameWrite } $ sessionNodeProps s n) []
-      GR.Team s n               -> team (sessionNodeProps s n) []
-      GR.Texts s n              -> texts (sessionNodeProps s n) []
-      GR.UserPage s n           -> user (sessionNodeProps s n) []
+    pure $ R.fragment
+      [ if showLogin then login' boxes else H.div {} []
+      , case route' of
+        GR.Annuaire s n           -> annuaire (sessionNodeProps s n) []
+        GR.ContactPage s a n      -> contact (Record.merge { annuaireId: a } $ sessionNodeProps s n) []
+        GR.Corpus s n             -> corpus (sessionNodeProps s n) []
+        GR.CorpusDocument s c l n -> corpusDocument (Record.merge { corpusId: c, listId: l } $ sessionNodeProps s n) []
+        GR.Dashboard s n          -> dashboard (sessionNodeProps s n) []
+        GR.Document s l n         -> document (Record.merge { listId: l } $ sessionNodeProps s n) []
+        GR.Folder        s n      -> corpus (sessionNodeProps s n) []
+        GR.FolderPrivate s n      -> corpus (sessionNodeProps s n) []
+        GR.FolderPublic  s n      -> corpus (sessionNodeProps s n) []
+        GR.FolderShared  s n      -> corpus (sessionNodeProps s n) []
+        GR.Home                   -> home props []
+        GR.Lists s n              -> lists (sessionNodeProps s n) []
+        GR.Login                  -> login' boxes
+        GR.PGraphExplorer s g     -> graphExplorer (sessionNodeProps s g) []
+        GR.RouteFile s n          -> routeFile (sessionNodeProps s n) []
+        GR.RouteFrameCalc  s n    -> routeFrame (Record.merge { nodeType: NodeFrameCalc } $ sessionNodeProps s n) []
+        GR.RouteFrameCode  s n    -> routeFrame (Record.merge { nodeType: NodeFrameNotebook } $ sessionNodeProps s n) []
+        GR.RouteFrameWrite s n    -> routeFrame (Record.merge { nodeType: NodeFrameWrite } $ sessionNodeProps s n) []
+        GR.Team s n               -> team (sessionNodeProps s n) []
+        GR.Texts s n              -> texts (sessionNodeProps s n) []
+        GR.UserPage s n           -> user (sessionNodeProps s n) []
+      ]
 
 forested :: R2.Component Props
 forested = R.createElement forestedCpt
