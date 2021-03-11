@@ -92,8 +92,16 @@ forested = R.createElement forestedCpt
 forestedCpt :: R.Component Props
 forestedCpt = here.component "forested" cpt
   where
-    cpt { boxes: { backend, handed, reloadForest, reloadRoot, route, sessions, showLogin }, tasks } children = do
+    cpt { boxes: { backend
+                 , forestOpen
+                 , handed
+                 , reloadForest
+                 , reloadRoot
+                 , route
+                 , sessions
+                 , showLogin }, tasks } children = do
       pure $ forestLayout { backend
+                          , forestOpen
                           , frontends: defaultFrontends
                           , handed
                           , reloadForest
@@ -189,12 +197,13 @@ lists = R.createElement listsCpt
 listsCpt :: R.Component SessionNodeProps
 listsCpt = here.component "lists" cpt where
   cpt props@{ boxes: { backend
-                       , handed
-                       , reloadForest
-                       , reloadRoot
-                       , route
-                       , sessions
-                       , showLogin }
+                     , forestOpen
+                     , handed
+                     , reloadForest
+                     , reloadRoot
+                     , route
+                     , sessions
+                     , showLogin }
             , nodeId
             , session
             , sessionId
@@ -204,6 +213,7 @@ listsCpt = here.component "lists" cpt where
     pure $ authed sessionProps $
       Lists.listsWithForest
       { forestProps: { backend
+                     , forestOpen
                      , frontends
                      , handed
                      , reloadForest
@@ -291,12 +301,13 @@ textsCpt :: R.Component SessionNodeProps
 textsCpt = here.component "texts" cpt
   where
     cpt props@{ boxes: { backend
-                         , handed
-                         , reloadForest
-                         , reloadRoot
-                         , route
-                         , sessions
-                         , showLogin }
+                       , forestOpen
+                       , handed
+                       , reloadForest
+                       , reloadRoot
+                       , route
+                       , sessions
+                       , showLogin }
               , nodeId
               , session
               , sessionId
@@ -306,6 +317,7 @@ textsCpt = here.component "texts" cpt
       pure $ authed sessionProps $
         Texts.textsWithForest
         { forestProps: { backend
+                       , forestOpen
                        , frontends
                        , handed
                        , route

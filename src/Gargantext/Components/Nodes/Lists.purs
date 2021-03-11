@@ -34,7 +34,7 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Lists"
 
 type ListsWithForest =
-  ( forestProps :: Record Forest.LayoutProps
+  ( forestProps :: Record Forest.Props
   , listsProps  :: Record CommonProps
   )
 

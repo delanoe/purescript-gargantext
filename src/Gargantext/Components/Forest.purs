@@ -5,7 +5,7 @@ module Gargantext.Components.Forest
   , forestLayoutMain
   , forestLayoutRaw
   , Common
-  , LayoutProps
+  , Props
   ) where
 
 import Data.Array as A
@@ -41,18 +41,15 @@ type Common =
   , tasks        :: T.Box (Maybe GAT.Reductor)
   )
 
-type LayoutProps =
+type Props =
   ( backend      :: T.Box (Maybe Backend)
+  , forestOpen   :: T.Box OpenNodes
   , reloadForest :: T.Box T2.Reload
   , sessions     :: T.Box Sessions
   , showLogin    :: T.Box Boolean
   | Common 
   )
 
-type Props = (
-    forestOpen :: T.Box OpenNodes
-  | LayoutProps )
-  
 type TreeExtra = (
     forestOpen :: T.Box OpenNodes
   , session :: Session
@@ -129,10 +126,10 @@ plus handed showLogin backend = H.div { className: "row" }
       "btn btn-primary col-5 " <> switchHanded "ml-1 mr-auto" "mr-1 ml-auto" handed
 
 
-forestLayout :: R2.Component LayoutProps
+forestLayout :: R2.Component Props
 forestLayout = R.createElement forestLayoutCpt
 
-forestLayoutCpt :: R.Component LayoutProps
+forestLayoutCpt :: R.Component Props
 forestLayoutCpt = here.component "forestLayout" cpt where
   cpt props@{ handed } children =
     pure $ R.fragment
@@ -141,10 +138,10 @@ forestLayoutCpt = here.component "forestLayout" cpt where
 
 -- Renders its first child component in the top bar and the rest in
 -- the main view.
-forestLayoutWithTopBar :: R2.Component LayoutProps
+forestLayoutWithTopBar :: R2.Component Props
 forestLayoutWithTopBar = R.createElement forestLayoutWithTopBarCpt
 
-forestLayoutWithTopBarCpt :: R.Component LayoutProps
+forestLayoutWithTopBarCpt :: R.Component Props
 forestLayoutWithTopBarCpt = here.component "forestLayoutWithTopBar" cpt where
   cpt props@{ handed } children = do
     let { head: topBarChild, tail: mainChildren } =
@@ -153,19 +150,20 @@ forestLayoutWithTopBarCpt = here.component "forestLayoutWithTopBar" cpt where
       [ topBar { handed } [ topBarChild ]
       , forestLayoutMain props mainChildren ]
 
-forestLayoutMain :: R2.Component LayoutProps
+forestLayoutMain :: R2.Component Props
 forestLayoutMain = R.createElement forestLayoutMainCpt
 
-forestLayoutMainCpt :: R.Component LayoutProps
+forestLayoutMainCpt :: R.Component Props
 forestLayoutMainCpt = here.component "forestLayoutMain" cpt where
   cpt props children = pure $ forestLayoutRaw props [ mainPage {} children ]
 
-forestLayoutRaw :: R2.Component LayoutProps
+forestLayoutRaw :: R2.Component Props
 forestLayoutRaw = R.createElement forestLayoutRawCpt
 
-forestLayoutRawCpt :: R.Component LayoutProps
+forestLayoutRawCpt :: R.Component Props
 forestLayoutRawCpt = here.component "forestLayoutRaw" cpt where
   cpt p@{ backend
+        , forestOpen
         , frontends
         , reloadForest
         , reloadRoot
@@ -174,15 +172,14 @@ forestLayoutRawCpt = here.component "forestLayoutRaw" cpt where
         , showLogin
         , tasks } children = do
     handed' <- T.useLive T.unequal p.handed
-    forestOpen <- T.useBox $ Set.empty
 
     pure $ R2.row $ reverseHanded
       ([ H.div { className: "col-md-2 forest-layout-raw-tree" }
-         [ forest' p.handed forestOpen ]
+         [ forest' p.handed ]
        ] <> children
       ) handed'
       where
-        forest' handed forestOpen =
+        forest' handed =
           forest { backend
                  , frontends
                  , forestOpen

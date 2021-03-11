@@ -35,6 +35,7 @@ import Reactix.DOM.HTML as H
 import Reactix.React (react)
 import Reactix.SyntheticEvent as RE
 import Reactix.Utils (currySecond, hook, tuple)
+import Toestand as T
 import Unsafe.Coerce (unsafeCoerce)
 import Web.File.Blob (Blob)
 import Web.File.File as WF
@@ -327,24 +328,21 @@ openNodesKey = "garg-open-nodes"
 
 type LocalStorageKey = String
 
-useLocalStorageState :: forall s. Argonaut.DecodeJson s => Argonaut.EncodeJson s => LocalStorageKey -> s -> R.Hooks (R.State s)
-useLocalStorageState key s = do
-  -- we need to synchronously get the initial state from local storage
-  Tuple state setState' <- R.useState \_ -> unsafePerformEffect do
-    item :: Maybe String <- getItem key =<< getls
-    let json = hush <<< Argonaut.jsonParser =<< item
-    let parsed = hush <<< Argonaut.decodeJson =<< json
-    pure $ fromMaybe s parsed
+loadLocalStorageState :: forall s. Argonaut.DecodeJson s => LocalStorageKey -> T.Box s -> Effect Unit
+loadLocalStorageState key cell = do
+  storage <- getls
+  item :: Maybe String <- getItem key storage
+  let json = hush <<< Argonaut.jsonParser =<< item
+  let parsed = hush <<< Argonaut.decodeJson =<< json
+  case parsed of
+    Nothing -> pure unit
+    Just p  -> void $ T.write p cell
 
-  let
-    setState update = do
-      let new = update state
-      setState' (\_ -> new)
-      let json = Json.stringify $ Argonaut.encodeJson new
-      storage <- getls
-      setItem key json storage
-
-  pure (Tuple state setState)
+listenLocalStorageState :: forall s. Argonaut.EncodeJson s => LocalStorageKey -> T.Change s -> Effect Unit
+listenLocalStorageState key { old, new } = do
+  let json = Json.stringify $ Argonaut.encodeJson new
+  storage <- getls
+  setItem key json storage
 
 getMessageDataStr :: DE.MessageEvent -> String
 getMessageDataStr = getMessageData

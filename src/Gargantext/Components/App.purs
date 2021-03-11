@@ -31,5 +31,8 @@ appCpt = here.component "app" cpt where
     tasksReductor <- GAT.useTasks boxes.reloadRoot boxes.reloadForest
     R.useEffectOnce' $ do
       T.write (Just tasksReductor) tasks
+    R.useEffectOnce' $ do
+      R2.loadLocalStorageState R2.openNodesKey boxes.forestOpen
+      T.listen (R2.listenLocalStorageState R2.openNodesKey) boxes.forestOpen
     useHashRouter Router.router boxes.route -- Install router to window
     pure $ router { boxes, tasks }          -- Render router component

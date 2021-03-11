@@ -41,7 +41,7 @@ here = R2.here "Gargantext.Components.Nodes.Texts"
 
 --------------------------------------------------------
 type TextsWithForest = (
-    forestProps :: Record Forest.LayoutProps
+    forestProps :: Record Forest.Props
   , textsProps  :: Record CommonProps
   )
 
