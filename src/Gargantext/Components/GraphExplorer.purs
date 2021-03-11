@@ -141,6 +141,9 @@ explorerCpt = here.component "explorer" cpt
       multiSelectEnabledRef <- R.useRef multiSelectEnabled'
 
       forestOpen <- T.useBox $ Set.empty
+      R.useEffectOnce' $ do
+        R2.loadLocalStorageState R2.openNodesKey forestOpen
+        T.listen (R2.listenLocalStorageState R2.openNodesKey) forestOpen
 
       R.useEffect' $ do
         let readData = R.readRef dataRef

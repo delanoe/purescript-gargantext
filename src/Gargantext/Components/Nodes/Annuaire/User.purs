@@ -161,23 +161,23 @@ type KeyLayoutProps = (
   | LayoutProps
   )
 
-userLayout :: Record LayoutProps -> R.Element
-userLayout props = R.createElement userLayoutCpt props []
+userLayout :: R2.Component LayoutProps
+userLayout = R.createElement userLayoutCpt
 
 userLayoutCpt :: R.Component LayoutProps
 userLayoutCpt = here.component "userLayout" cpt
   where
-    cpt { reloadRoot, tasks, frontends, nodeId, session, reloadForest } _ = do
+    cpt { frontends, nodeId, reloadForest, reloadRoot, session, tasks } _ = do
       let sid = sessionId session
 
       pure $ userLayoutWithKey {
-          reloadRoot
-        , tasks
-        , frontends
+          frontends
         , key: show sid <> "-" <> show nodeId
         , nodeId
-        , session
         , reloadForest
+        , reloadRoot
+        , session
+        , tasks
         }
 
 userLayoutWithKey :: Record KeyLayoutProps -> R.Element

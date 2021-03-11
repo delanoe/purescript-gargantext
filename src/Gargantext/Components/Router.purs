@@ -2,6 +2,7 @@ module Gargantext.Components.Router (router) where
 
 import Data.Array (fromFoldable)
 import Data.Maybe (Maybe(..))
+import DOM.Simple.Console (log2)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
@@ -113,9 +114,13 @@ forestedCpt = here.component "forested" cpt
 
 authed :: Record SessionProps -> R.Element -> R.Element
 authed props@{ boxes: { sessions }, session, sessionId, tasks } content =
-  sessionWrapper { fallback: home homeProps [], context: session, sessionId, sessions }
-    [ content, footer { } [] ]
+  sessionWrapper { fallback: home homeProps []
+                 , context: session
+                 , render
+                 , sessionId
+                 , sessions } []
     where
+      render _ = [ content, footer {} [] ]
       homeProps = RE.pick props :: Record Props
 
 annuaire :: R2.Component SessionNodeProps
@@ -343,6 +348,8 @@ userCpt = here.component "user" cpt where
             , tasks } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     session' <- R.useContext session
+    R.useEffect' $ do
+      log2 "[user] session'" session'
     pure $ authed sessionProps $
       forested { boxes, tasks }
         [ userLayout { frontends
@@ -350,7 +357,7 @@ userCpt = here.component "user" cpt where
                      , reloadForest
                      , reloadRoot
                      , session: session'
-                     , tasks } ]
+                     , tasks } [] ]
       where frontends = defaultFrontends
 
 type ContactProps = ( annuaireId :: NodeID | SessionNodeProps )

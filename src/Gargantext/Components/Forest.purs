@@ -123,7 +123,7 @@ plus handed showLogin backend = H.div { className: "row" }
     title = "Add or remove connections to the server(s)."
     divClass = "fa fa-universal-access"
     buttonClass =
-      "btn btn-primary col-5 " <> switchHanded "ml-1 mr-auto" "mr-1 ml-auto" handed
+      "btn btn-primary col-5 " <> switchHanded "mr-1 ml-auto" "ml-1 mr-auto" handed
 
 
 forestLayout :: R2.Component Props
