@@ -11,7 +11,7 @@ import Reactix as R
 import Reactix.SyntheticEvent as E
 import Reactix.DOM.HTML as H
 import Toestand as T
-import Toestand.Records (useFocusedFields)
+import Toestand (useFocusedFields)
 
 import Gargantext.Components.Login.Types (AuthRequest(..))
 import Gargantext.Components.Forms (clearfix, formGroup)

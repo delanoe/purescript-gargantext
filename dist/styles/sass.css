@@ -532,6 +532,10 @@ li .leaf:hover a.settings {
   color: black;
 }
 
+.forest-layout-raw-tree {
+  padding-top: 60px;
+}
+
 .code-editor-heading {
   /* .buttons-right */
   /*   display: flex */

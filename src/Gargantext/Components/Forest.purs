@@ -177,10 +177,10 @@ forestLayoutRawCpt = here.component "forestLayoutRaw" cpt where
     forestOpen <- T.useBox $ Set.empty
 
     pure $ R2.row $ reverseHanded
-      [ H.div { className: "col-md-2"
-              , style: { paddingTop: "60px" } }
-        (A.cons (forest' p.handed forestOpen) children)
-      ] handed'
+      ([ H.div { className: "col-md-2 forest-layout-raw-tree" }
+         [ forest' p.handed forestOpen ]
+       ] <> children
+      ) handed'
       where
         forest' handed forestOpen =
           forest { backend

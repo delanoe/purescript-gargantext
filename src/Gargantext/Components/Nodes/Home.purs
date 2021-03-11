@@ -91,7 +91,8 @@ joinButtonOrTutorial sessions click =
      
 joinButton :: forall e. (e -> Effect Unit) -> R.Element
 joinButton click =
-  H.div { className: divClass, paddingTop: "100px", paddingBottom: "100px" }
+  H.div { className: divClass
+        , style: { paddingTop: "100px", paddingBottom: "100px" } }
   [ H.button { className: buttonClass, title, on: { click } } [ H.text "Join" ] ] where
     title = "Connect to the server"
     divClass = "flex-space-around d-flex justify-content-center" 
