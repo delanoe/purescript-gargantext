@@ -306,27 +306,7 @@ loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
     -- R.useEffectOnce' $ do
     --   T.listen (\_ -> TT.changePage 1 params) searchQuery
 
-    -- filteredRows :: PreConversionRows
-    -- no need to filter offset if cache is off
-    let filteredRows = if cacheState == NT.CacheOn then TT.filterRows { params: params' } rows else rows
-        filteredConvertedRows :: TT.Rows
-        filteredConvertedRows = convertRow <$> filteredRows
-
-        convertRow ngramsElement =
-          { row: NTC.renderNgramsItem { dispatch: performAction
-                                      , ngrams: ngramsElement ^. _NgramsElement <<< _ngrams
-                                      , ngramsElement
-                                      , ngramsLocalPatch
-                                      , ngramsParent
-                                      , ngramsSelection
-                                      , ngramsTable
-                                      , sidePanelTriggers } []
-          , delete: false
-          }
-
-        allNgramsSelected = allNgramsSelectedOnFirstPage ngramsSelection filteredRows
-
-        rows :: PreConversionRows
+    let rows :: PreConversionRows
         rows = orderWith (
                  Seq.mapMaybe (\(Tuple ng nre) ->
                                 let Additive s = ng_scores ^. at ng <<< _Just in
@@ -346,6 +326,26 @@ loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
             Just TermAsc   -> sortWith \x -> x        ^. _NgramsElement <<< _ngrams
             Just TermDesc  -> sortWith \x -> Down $ x ^. _NgramsElement <<< _ngrams
             _              -> identity -- the server ordering is enough here
+
+        -- filteredRows :: PreConversionRows
+        -- no need to filter offset if cache is off
+        filteredRows = if cacheState == NT.CacheOn then TT.filterRows { params: params' } rows else rows
+        filteredConvertedRows :: TT.Rows
+        filteredConvertedRows = convertRow <$> filteredRows
+
+        convertRow ngramsElement =
+          { row: NTC.renderNgramsItem { dispatch: performAction
+                                      , ngrams: ngramsElement ^. _NgramsElement <<< _ngrams
+                                      , ngramsElement
+                                      , ngramsLocalPatch
+                                      , ngramsParent
+                                      , ngramsSelection
+                                      , ngramsTable
+                                      , sidePanelTriggers } []
+          , delete: false
+          }
+
+        allNgramsSelected = allNgramsSelectedOnFirstPage ngramsSelection filteredRows
 
         totalRecords = fromMaybe (Seq.length rows) mTotalRows
 
@@ -380,23 +380,23 @@ loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
       , NTC.searchInput { key: "search-input"
                         , searchQuery }
       , TT.table
-        { colNames
-        , container: tableContainer
-          { dispatch: performAction
-          , ngramsChildren
-          , ngramsParent
-          , ngramsSelection
-          , ngramsTable
-          , path
+          { colNames
+          , container: tableContainer
+              { dispatch: performAction
+              , ngramsChildren
+              , ngramsParent
+              , ngramsSelection
+              , ngramsTable
+              , path
+              , syncResetButton: [ syncResetButton path' ]
+              , tabNgramType }
+          , params
+          , rows: filteredConvertedRows
           , syncResetButton: [ syncResetButton path' ]
-          , tabNgramType }
-        , params
-        , rows: filteredConvertedRows
-        , syncResetButton: [ syncResetButton path' ]
-        , totalRecords
-        , wrapColElts:
-          wrapColElts { allNgramsSelected, dispatch: performAction, ngramsSelection }
-        }
+          , totalRecords
+          , wrapColElts:
+            wrapColElts { allNgramsSelected, dispatch: performAction, ngramsSelection }
+          }
       , syncResetButton path'
       ]
 
