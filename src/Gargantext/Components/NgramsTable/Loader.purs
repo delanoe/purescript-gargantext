@@ -88,6 +88,6 @@ useCachedAPILoaderEffect { cacheEndpoint
           if version == cacheReal then
             pure vr'
           else
-            throwError $ error $ "Fetched clean cache but hashes don't match"
+            throwError $ error $ "Fetched clean cache but hashes don't match: " <> show version <> " != " <> show cacheReal
         liftEffect $ do
           setState $ const $ Just $ handleResponse val

@@ -1177,11 +1177,10 @@ chartsAfterSync :: forall props discard.
   | props
   }
   -> T.Box (Maybe GAT.Reductor)
-  -> Int
   -> T.Box T2.Reload
   -> discard
   -> Aff Unit
-chartsAfterSync path' tasks nodeId reloadForest _ = do
+chartsAfterSync path'@{ nodeId } tasks reloadForest _ = do
   task <- postNgramsChartsAsync path'
   liftEffect $ do
     log2 "[chartsAfterSync] Synchronize task" task

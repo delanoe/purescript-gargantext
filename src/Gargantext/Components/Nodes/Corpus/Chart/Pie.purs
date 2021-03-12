@@ -103,7 +103,7 @@ handleResponse (HashedResponse { value: ChartMetrics ms }) = ms."data"
 mkRequest :: Session -> ReloadPath -> GUC.Request
 mkRequest session (_ /\ path@{ corpusId, limit, listId, tabType }) = GUC.makeGetRequest session $ chartUrl path
 
-pie :: Record Props -> R.Element
+pie :: R2.Leaf Props
 pie props = R.createElement pieCpt props []
 
 pieCpt :: R.Component Props

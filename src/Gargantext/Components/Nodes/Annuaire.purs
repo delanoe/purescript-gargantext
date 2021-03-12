@@ -19,8 +19,8 @@ import Gargantext.Prelude
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types as CT
 import Gargantext.Components.Nodes.Lists.Types as NT
-import Gargantext.Components.Table as T
-import Gargantext.Components.Table.Types as T
+import Gargantext.Components.Table as TT
+import Gargantext.Components.Table.Types as TT
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
@@ -73,13 +73,15 @@ annuaireLayoutWithKey props = R.createElement annuaireLayoutWithKeyCpt props []
 annuaireLayoutWithKeyCpt :: R.Component KeyLayoutProps
 annuaireLayoutWithKeyCpt = here.component "annuaireLayoutWithKey" cpt where
   cpt { frontends, nodeId, session } _ = do
-    path <- R.useState' nodeId
-    useLoader (fst path) (getAnnuaireInfo session) $
+    path <- T.useBox nodeId
+    path' <- T.useLive T.unequal path
+
+    useLoader path' (getAnnuaireInfo session) $
       \info -> annuaire { frontends, info, path, session }
 
 type AnnuaireProps =
   ( session   :: Session
-  , path      :: R.State Int
+  , path      :: T.Box Int
   , info      :: AnnuaireInfo
   , frontends :: Frontends
   )
@@ -93,7 +95,9 @@ annuaireCpt :: R.Component AnnuaireProps
 annuaireCpt = here.component "annuaire" cpt
   where
     cpt {session, path, info: info@(AnnuaireInfo {name, date: date'}), frontends} _ = do
-      pagePath <- R.useState' $ initialPagePath (fst path)
+      path' <- T.useLive T.unequal path
+
+      pagePath <- T.useBox $ initialPagePath path'
       cacheState <- T.useBox NT.CacheOff
       cacheState' <- T.useLive T.unequal cacheState
 
@@ -101,7 +105,7 @@ annuaireCpt = here.component "annuaire" cpt
         T.listen (\_ -> launchAff_ $ clearCache unit) cacheState
 
       pure $ R.fragment
-        [ T.tableHeaderLayout
+        [ TT.tableHeaderLayout
             { cacheState
             , date
             , desc: name
@@ -116,15 +120,15 @@ annuaireCpt = here.component "annuaire" cpt
       where
         date = "Last update: " <> date'
         style = {width: "250px", display: "inline-block"}
-        initialPagePath nodeId = {nodeId, params: T.initialParams}
+        initialPagePath nodeId = {nodeId, params: TT.initialParams}
 
-type PagePath = { nodeId :: Int, params :: T.Params }
+type PagePath = { nodeId :: Int, params :: TT.Params }
 
 type PageLayoutProps =
   ( session      :: Session
   , frontends    :: Frontends
   , info         :: AnnuaireInfo
-  , pagePath     :: R.State PagePath
+  , pagePath     :: T.Box PagePath
   )
 
 pageLayout :: Record PageLayoutProps -> R.Element
@@ -134,13 +138,15 @@ pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = here.component "pageLayout" cpt
   where
     cpt { info, frontends, pagePath, session } _ = do
-      useLoader (fst pagePath) (loadPage session) $
+      pagePath' <- T.useLive T.unequal pagePath
+
+      useLoader pagePath' (loadPage session) $
         \table -> page { session, table, frontends, pagePath }
 
 type PageProps = 
   ( session   :: Session
   , frontends :: Frontends
-  , pagePath  :: R.State PagePath
+  , pagePath  :: T.Box PagePath
   -- , info :: AnnuaireInfo
   , table     :: TableResult CT.NodeContact
   )
@@ -151,25 +157,28 @@ page props = R.createElement pageCpt props []
 pageCpt :: R.Component PageProps
 pageCpt = here.component "page" cpt
   where
-    cpt { session, pagePath, frontends
-        , table: ({count: totalRecords, docs})} _ = do
-      pure $ T.table { syncResetButton : [ H.div {} [] ]
-                     , rows, params, container
-                     , colNames, totalRecords
-                     , wrapColElts
-                     }
+    cpt { frontends
+        , pagePath
+        , session
+        , table: ({count: totalRecords, docs}) } _ = do
+      pagePath' <- T.useLive T.unequal pagePath
+      params <- T.useFocused (_.params) (\a b -> b { params = a }) pagePath
+
+      pure $ TT.table { colNames
+                      , container
+                      , params
+                      , rows: rows pagePath'
+                      , syncResetButton : [ H.div {} [] ]
+                      , totalRecords
+                      , wrapColElts
+                      }
       where
-        path = fst pagePath
-        rows = row <$> Seq.fromFoldable docs
-        row contact = { row: contactCells { annuaireId, frontends, contact, session }
-                      , delete: false } where
-          annuaireId = (fst pagePath).nodeId
-        container = T.defaultContainer { title: "Annuaire" } -- TODO
-        colNames = T.ColumnName <$> [ "", "First Name", "Last Name", "Company", "Role"]
+        rows pagePath' = (row pagePath') <$> Seq.fromFoldable docs
+        row pagePath'@{ nodeId } contact = { row: contactCells { annuaireId: nodeId, frontends, contact, session }
+                                           , delete: false }
+        container = TT.defaultContainer { title: "Annuaire" } -- TODO
+        colNames = TT.ColumnName <$> [ "", "First Name", "Last Name", "Company", "Role"]
         wrapColElts = const identity
-        setParams f = snd pagePath $ \pp@{params: ps} ->
-          pp {params = f ps}
-        params = (fst pagePath).params /\ setParams
 
 type AnnuaireId = Int
 
@@ -188,7 +197,7 @@ contactCellsCpt = here.component "contactCells" cpt where
   cpt { annuaireId, frontends, session
       , contact: CT.NodeContact
         { id, hyperdata: CT.HyperdataContact { who : Nothing }}} _ =
-    pure $ T.makeRow
+    pure $ TT.makeRow
     [ H.text ""
     , H.span {} [ H.text "Name" ]
       --, H.a { href, target: "blank" } [ H.text $ fromMaybe "name" contact.title ]
@@ -202,7 +211,7 @@ contactCellsCpt = here.component "contactCells" cpt where
         { id, hyperdata: CT.HyperdataContact
               { who: Just (CT.ContactWho { firstName, lastName })
               , ou:  ou }}} _ = do
-    pure $ T.makeRow [
+    pure $ TT.makeRow [
       H.text ""
       , H.a { target: "_blank", href: contactUrl annuaireId id }
         [ H.text $ fromMaybe "First Name" firstName ]

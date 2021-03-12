@@ -129,6 +129,6 @@ useCachedAPILoaderEffect { cacheEndpoint
           if h == cacheReal then
             pure hr'
           else
-            throwError $ error $ "Fetched clean cache but hashes don't match"
+            throwError $ error $ "Fetched clean cache but hashes don't match: " <> h <> " != " <> cacheReal
         liftEffect $ do
           setState $ const $ Just $ handleResponse val

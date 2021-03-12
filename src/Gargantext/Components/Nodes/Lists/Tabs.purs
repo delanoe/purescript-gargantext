@@ -77,15 +77,15 @@ ngramsViewCpt = here.component "ngramsView" cpt where
             , session
             , sidePanelTriggers
             , tasks } _ = do
-      chartType <- R.useState' Histo
       chartsReload <- T.useBox T2.newReload
-      path <- R.useState' $ NTC.initialPageParams props.session initialPath.corpusId [initialPath.listId] initialPath.tabType
-      let listId' = fromMaybe defaultListId $ A.head (fst path).listIds
+      chartsReload' <- T.useLive T.unequal chartsReload
+      path <- T.useBox $ NTC.initialPageParams props.session initialPath.corpusId [initialPath.listId] initialPath.tabType
+      { listIds, nodeId, params, tabType } <- T.useLive T.unequal path
       let path' = {
-          corpusId: (fst path).nodeId
-        , limit: (fst path).params.limit
-        , listId: listId'
-        , tabType: (fst path).tabType
+          corpusId: nodeId
+        , limit: params.limit
+        , listId: fromMaybe defaultListId $ A.head listIds
+        , tabType: tabType
         }
       let chartParams = {
           corpusId: path'.corpusId
@@ -95,7 +95,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
         }
 
       pure $ R.fragment
-        ( charts chartParams tabNgramType chartType chartsReload
+        ( charts chartParams tabNgramType
         <> [ NT.mainNgramsTable { afterSync: afterSync chartsReload
                                 , cacheState
                                 , defaultListId
@@ -133,7 +133,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
                        , tabType
                        }
 
-        charts params CTabTerms (chartType /\ setChartType) _ = [
+        charts params CTabTerms = [
           H.div {className: "row"}
                 [ H.div {className: "col-12 d-flex justify-content-center"}
                   [ H.img { src: "images/Gargantextuel-212x300.jpg"
@@ -163,7 +163,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
         , getChartFunction chartType $ { path: params, session }
         -}
         ]
-        charts params _ _ _         = [ chart params mode ]
+        charts params _        = [ chart params mode ]
 
         chart path Authors    = pie     { path, session }
         chart path Institutes = tree    { path, session }

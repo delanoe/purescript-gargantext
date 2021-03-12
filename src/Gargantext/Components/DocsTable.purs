@@ -282,20 +282,21 @@ pageLayoutCpt = here.component "pageLayout" cpt where
           }
       NT.CacheOff -> do
         localCategories <- R.useState' (mempty :: LocalUserScore)
-        paramsS <- R.useState' params
+        paramsS <- T.useBox params
+        paramsS' <- T.useLive T.unequal paramsS
         let loader p = do
-              let route = tableRouteWithPage (p { params = fst paramsS, query = query })
+              let route = tableRouteWithPage (p { params = paramsS', query = query })
               res <- get session $ route
               liftEffect $ do
                 log2 "[pageLayout] table route" route
                 log2 "[pageLayout] table res" res
               pure $ handleResponse res
             render (Tuple count documents) = pagePaintRaw { documents
-                                                          , layout: props { params = fst paramsS
+                                                          , layout: props { params = paramsS'
                                                                           , totalRecords = count }
                                                           , localCategories
                                                           , params: paramsS } []
-        useLoader (path { params = fst paramsS }) loader render
+        useLoader (path { params = paramsS' }) loader render
 
 type PageProps = (
     documents :: Array DocumentsView
@@ -309,13 +310,14 @@ page = R.createElement pageCpt
 pageCpt :: R.Component PageProps
 pageCpt = here.component "pageCpt" cpt where
   cpt { documents, layout, params } _ = do
-    paramsS <- R.useState' params
+    paramsS <- T.useBox params
+
     pure $ pagePaint { documents, layout, params: paramsS } []
 
 type PagePaintProps = (
     documents :: Array DocumentsView
   , layout :: Record PageLayoutProps
-  , params :: R.State TT.Params
+  , params :: T.Box TT.Params
 )
 
 pagePaint :: R2.Component PagePaintProps
@@ -325,14 +327,16 @@ pagePaintCpt :: R.Component PagePaintProps
 pagePaintCpt = here.component "pagePaintCpt" cpt
   where
     cpt { documents, layout, params } _ = do
+      params' <- T.useLive T.unequal params
+
       localCategories <- R.useState' (mempty :: LocalUserScore)
-      pure $ pagePaintRaw { documents: A.fromFoldable filteredRows
+      pure $ pagePaintRaw { documents: A.fromFoldable (filteredRows params')
                           , layout
                           , localCategories
                           , params } []
         where
-          orderWith =
-            case convOrderBy (fst params).orderBy of
+          orderWith { orderBy } =
+            case convOrderBy orderBy of
               Just DateAsc    -> sortWith \(DocumentsView { date })   -> date
               Just DateDesc   -> sortWith \(DocumentsView { date })   -> Down date
               Just SourceAsc  -> sortWith \(DocumentsView { source }) -> Str.toLower source
@@ -340,14 +344,14 @@ pagePaintCpt = here.component "pagePaintCpt" cpt
               Just TitleAsc   -> sortWith \(DocumentsView { title })  -> Str.toLower title
               Just TitleDesc  -> sortWith \(DocumentsView { title })  -> Down $ Str.toLower title
               _               -> identity -- the server ordering is enough here
-          filteredRows = TT.filterRows { params: fst params } $ orderWith $ A.toUnfoldable documents
+          filteredRows params' = TT.filterRows { params: params' } $ (orderWith params') $ A.toUnfoldable documents
 
 
 type PagePaintRawProps = (
     documents :: Array DocumentsView
   , layout :: Record PageLayoutProps
   , localCategories :: R.State LocalUserScore
-  , params :: R.State TT.Params
+  , params :: T.Box TT.Params
   )
 
 pagePaintRaw :: R2.Component PagePaintRawProps

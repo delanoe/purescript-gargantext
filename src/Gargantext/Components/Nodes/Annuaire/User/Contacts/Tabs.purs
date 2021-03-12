@@ -157,7 +157,7 @@ ngramsViewCpt = here.component "ngramsView" cpt
         , session
         , sidePanelTriggers
         , reloadForest } _ = do
-      path <- R.useState' $ NTC.initialPageParams session nodeId [defaultListId] (TabDocument TabDocs)
+      path <- T.useBox $ NTC.initialPageParams session nodeId [defaultListId] (TabDocument TabDocs)
 
       pure $ NT.mainNgramsTable {
           reloadRoot

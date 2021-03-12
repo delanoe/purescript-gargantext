@@ -1,12 +1,15 @@
 module Gargantext.Components.Table.Types where
 
-import Prelude (class Eq, class Show, (<>))
+import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe)
 import Data.Sequence as Seq
 import Reactix as R
+import Toestand as T
+
+import Prelude (class Eq, class Show, (<>))
+
 import Gargantext.Components.Search (SearchType)
-import Data.Generic.Rep (class Generic)
 
 type Params = { limit      :: Int
               , offset     :: Int
@@ -37,7 +40,7 @@ type Props =
   ( syncResetButton  :: Array R.Element
   , colNames     :: Array ColumnName
   , container    :: Record TableContainerProps -> R.Element
-  , params       :: R.State Params
+  , params       :: T.Box Params
   , rows         :: Rows
   , totalRecords :: Int
   , wrapColElts  :: ColumnName -> Array R.Element -> Array R.Element

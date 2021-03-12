@@ -112,17 +112,20 @@ ngramsView props = R.createElement ngramsViewCpt props []
 ngramsViewCpt :: R.Component NgramsViewTabsProps
 ngramsViewCpt = here.component "ngramsView" cpt where
   cpt props@{ defaultListId, mode, nodeId, session } _ = do
-    path <- R.useState' $
+    path <- T.useBox $
       NTC.initialPageParams session nodeId
       [ defaultListId ] (TabDocument TabDocs)
+
     pure $ NT.mainNgramsTable (props' path) [] where
       most = RX.pick props :: Record NTCommon
       props' path =
         Record.merge most
-        { tabType:        TabPairing (TabNgramType $ modeTabType mode)
-        , tabNgramType:   modeTabType' mode
-        , withAutoUpdate: false
-        , afterSync, path } where
+          { afterSync
+          , path
+          , tabType:        TabPairing (TabNgramType $ modeTabType mode)
+          , tabNgramType:   modeTabType' mode
+          , withAutoUpdate: false }
+        where
           afterSync :: Unit -> Aff Unit
           afterSync _ = pure unit
 

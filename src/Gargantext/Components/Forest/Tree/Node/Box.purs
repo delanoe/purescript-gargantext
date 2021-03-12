@@ -187,14 +187,14 @@ panelActionCpt = here.component "panelAction" cpt
     cpt {action: Link {subTreeParams}, dispatch, id, nodeType, session, handed} _ =
       pure $ linkNode {dispatch, id, nodeType, session, subTreeParams, handed} []
     cpt {action : Share, dispatch, id, name } _ = do
-      isOpen <- T.useBox true >>= T.useFocused identity (\a _ -> a)
+      isOpen <- T.useBox true
       pure $ panel
         [ textInputBox
           { boxAction: Share.shareAction, boxName: "Share"
           , dispatch, id, text: "username", isOpen } []
         ] (H.div {} [])
     cpt {action : AddingContact, dispatch, id, name } _ = do
-      isOpen <- T.useBox true >>= T.useFocused identity (\a _ -> a)
+      isOpen <- T.useBox true
       pure $ Contact.textInputBox
         { id, dispatch, isOpen, boxName:"addContact"
         , params : {firstname:"First Name", lastname: "Last Name"}

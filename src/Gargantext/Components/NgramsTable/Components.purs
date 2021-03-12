@@ -15,6 +15,7 @@ import Effect (Effect)
 import FFI.Simple (delay)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Prelude
   ( Unit, bind, const, discard, map, not, otherwise
@@ -34,8 +35,7 @@ here = R2.here "Gargantext.Components.NgramsTable.Components"
 
 type SearchInputProps =
   ( key :: String  -- to prevent refreshing & losing input
-  , onSearch :: String -> Effect Unit
-  , searchQuery :: String
+  , searchQuery :: T.Box String
   )
 
 searchInput :: Record SearchInputProps -> R.Element
@@ -44,33 +44,34 @@ searchInput props = R.createElement searchInputCpt props []
 searchInputCpt :: R.Component SearchInputProps
 searchInputCpt = here.component "searchInput" cpt
   where
-    cpt { onSearch, searchQuery } _ = 
+    cpt { searchQuery } _ = do
+      searchQuery' <- T.useLive T.unequal searchQuery
+
       pure $ R2.row [
         H.div { className: "col-12" } [
-          H.div { className: "input-group" } [
-            searchButton
-            , fieldInput
+          H.div { className: "input-group" }
+            [ searchButton searchQuery'
+            , fieldInput searchQuery'
             ]
           ]
         ]
         where
-          searchButton = 
+          searchButton searchQuery' =
             H.div { className: "input-group-prepend" }
-                  [
-                   if searchQuery /= ""
-                       then removeButton
-                       else H.span { className: "fa fa-search input-group-text" } []
-                  ]
+              [ if searchQuery' /= ""
+                then removeButton
+                else H.span { className: "fa fa-search input-group-text" } []
+              ]
           removeButton =
             H.button { className: "btn btn-danger"
-                     , on: {click: \e -> onSearch ""}}
-                     [ H.span {className: "fa fa-times"} []]
+                     , on: {click: \e -> T.write "" searchQuery}}
+              [ H.span {className: "fa fa-times"} []]
 
-          fieldInput  = 
+          fieldInput searchQuery' =
             H.input { className: "form-control"
-                    , defaultValue: searchQuery
+                    , defaultValue: searchQuery'
                     , name: "search"
-                    , on: { input: onSearch <<< R.unsafeEventValue }
+                    , on: { input: \e -> T.write (R.unsafeEventValue e) searchQuery }
                     , placeholder: "Search"
                     , type: "value"
                     }
