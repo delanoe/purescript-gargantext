@@ -13,6 +13,8 @@ import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
+
 import Gargantext.Components.Nodes.Corpus (fieldsCodeEditor)
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
 import Gargantext.Components.Nodes.Dashboard.Types as DT
@@ -21,7 +23,7 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (NodeID)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
+import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Dashboard"
@@ -50,9 +52,10 @@ dashboardLayoutWithKeyCpt :: R.Component KeyProps
 dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
   where
     cpt { nodeId, session } _ = do
-      reload <- GUR.new
+      reload <- T.useBox T2.newReload
+      reload' <- T.useLive T.unequal reload
 
-      useLoader {nodeId, reload: GUR.value reload, session} DT.loadDashboardWithReload $
+      useLoader {nodeId, reload: reload', session} DT.loadDashboardWithReload $
         \dashboardData@{hyperdata: DT.Hyperdata h, parentId} -> do
           let { charts, fields } = h
           dashboardLayoutLoaded { charts
@@ -63,14 +66,14 @@ dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
                                 , onChange: onChange nodeId reload (DT.Hyperdata h)
                                 , session } []
       where
-        onChange :: NodeID -> GUR.ReloadS -> DT.Hyperdata -> { charts :: Array P.PredefinedChart
-                                                         , fields :: List.List FTField } -> Effect Unit
+        onChange :: NodeID -> T2.ReloadS -> DT.Hyperdata -> { charts :: Array P.PredefinedChart
+                                                            , fields :: List.List FTField } -> Effect Unit
         onChange nodeId' reload (DT.Hyperdata h) { charts, fields } = do
           launchAff_ do
             DT.saveDashboard { hyperdata: DT.Hyperdata $ h { charts = charts, fields = fields }
                              , nodeId:nodeId'
                              , session }
-            liftEffect $ GUR.bump reload
+            liftEffect $ T2.reload reload
 
 type LoadedProps =
   ( charts        :: Array P.PredefinedChart

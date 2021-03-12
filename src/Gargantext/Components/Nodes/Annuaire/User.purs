@@ -29,7 +29,6 @@ import Gargantext.Routes as Routes
 import Gargantext.Sessions (WithSession, WithSessionContext, Session, get, put, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
 import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
@@ -204,13 +203,14 @@ userLayoutWithKeyCpt :: R.Component KeyLayoutProps
 userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt
   where
     cpt { frontends, nodeId, reloadForest, reloadRoot, session, tasks } _ = do
-      reload <- GUR.new
+      reload <- T.useBox T2.newReload
+      reload' <- T.useLive T.unequal reload
 
-      cacheState <- R.useState' LT.CacheOn
+      cacheState <- T.useBox LT.CacheOn
 
       sidePanelTriggers <- LT.emptySidePanelTriggers
 
-      useLoader {nodeId, reload: GUR.value reload, session} getUserWithReload $
+      useLoader {nodeId, reload: reload', session} getUserWithReload $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" } [
             display { title: fromMaybe "no name" name }
@@ -228,11 +228,11 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt
                }
           ]
       where
-        onUpdateHyperdata :: GUR.ReloadS -> HyperdataUser -> Effect Unit
+        onUpdateHyperdata :: T2.ReloadS -> HyperdataUser -> Effect Unit
         onUpdateHyperdata reload hd = do
           launchAff_ $ do
             _ <- saveContactHyperdata session nodeId hd
-            liftEffect $ GUR.bump reload
+            liftEffect $ T2.reload reload
 
 -- | toUrl to get data XXX
 getContact :: Session -> Int -> Aff ContactData
@@ -247,7 +247,9 @@ getContact session id = do
   --    throwError $ error "Missing default list"
   pure {contactNode, defaultListId: 424242}
 
-getUserWithReload :: {nodeId :: Int, reload :: GUR.Reload, session :: Session} -> Aff ContactData
+getUserWithReload :: { nodeId :: Int
+                     , reload :: T2.Reload
+                     , session :: Session} -> Aff ContactData
 getUserWithReload {nodeId, session} = getContact session nodeId
 
 saveContactHyperdata :: Session -> Int -> HyperdataUser -> Aff Int

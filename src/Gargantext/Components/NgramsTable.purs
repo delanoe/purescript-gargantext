@@ -504,7 +504,7 @@ selectNgramsOnFirstPage rows = Set.fromFoldable $ (view $ _NgramsElement <<< _ng
 
 
 type MainNgramsTableProps = (
-    cacheState        :: R.State NT.CacheState
+    cacheState        :: T.Box NT.CacheState
   , defaultListId     :: Int
   , nodeId            :: Int
     -- ^ This node can be a corpus or contact.
@@ -521,25 +521,26 @@ mainNgramsTableCpt :: R.Component MainNgramsTableProps
 mainNgramsTableCpt = here.component "mainNgramsTable" cpt
   where
     cpt props@{ afterSync
-              , reloadRoot
-              , tasks
               , cacheState
               , defaultListId
               , nodeId
               , path
+              , reloadForest
+              , reloadRoot
               , session
               , sidePanelTriggers
               , tabNgramType
               , tabType
-              , reloadForest
+              , tasks
               , withAutoUpdate } _ = do
+      cacheState' <- T.useLive T.unequal cacheState
 
       -- let path = initialPageParams session nodeId [defaultListId] tabType
 
-      case cacheState of
-        (NT.CacheOn /\ _) -> do
+      case cacheState' of
+        NT.CacheOn -> do
           let render versioned = mainNgramsTablePaint { afterSync
-                                                      , cacheState: fst cacheState
+                                                      , cacheState: cacheState'
                                                       , path: fst path
                                                       , reloadForest
                                                       , reloadRoot
@@ -555,10 +556,10 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
             , path: fst path
             , renderer: render
             }
-        (NT.CacheOff /\ _) -> do
+        NT.CacheOff -> do
           -- path <- R.useState' path
           let render versionedWithCount = mainNgramsTablePaintNoCache { afterSync
-                                                                      , cacheState: fst cacheState
+                                                                      , cacheState: cacheState'
                                                                       , path
                                                                       , reloadForest
                                                                       , reloadRoot

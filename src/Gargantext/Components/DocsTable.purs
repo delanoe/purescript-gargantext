@@ -24,15 +24,16 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Components.Category (rating)
 import Gargantext.Components.Category.Types (Star(..))
 import Gargantext.Components.DocsTable.Types
   ( DocumentsView(..), Hyperdata(..), LocalUserScore, Query, Response(..), sampleData )
-import Gargantext.Components.Table.Types as T
+import Gargantext.Components.Table.Types as TT
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Nodes.Texts.Types (SidePanelTriggers)
-import Gargantext.Components.Table as T
+import Gargantext.Components.Table as TT
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
 import Gargantext.Routes as Routes
@@ -43,7 +44,7 @@ import Gargantext.Utils (sortWith)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParamS, queryParam, queryParamS)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
+import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.DocsTable"
@@ -59,7 +60,7 @@ type Path a =
   )
 
 type LayoutProps =
-  ( cacheState      :: R.State NT.CacheState
+  ( cacheState      :: T.Box NT.CacheState
   , frontends       :: Frontends
   , chart           :: R.Element
   , listId          :: Int
@@ -76,13 +77,13 @@ type LayoutProps =
   )
 
 type PageLayoutProps =
-  ( cacheState        :: R.State NT.CacheState
+  ( cacheState        :: T.Box NT.CacheState
   , frontends         :: Frontends
   , key               :: String  -- NOTE Necessary to clear the component when cache state changes
   , listId            :: Int
   , mCorpusId         :: Maybe Int
   , nodeId            :: Int
-  , params            :: T.Params
+  , params            :: TT.Params
   , query             :: Query
   , session           :: Session
   , sidePanelTriggers :: Record SidePanelTriggers
@@ -101,12 +102,12 @@ docViewLayoutCpt = here.component "docViewLayout" cpt
   where
     cpt layout _children = do
       query <- R.useState' ""
-      let params = T.initialParams
+      let params = TT.initialParams
       pure $ docView { layout, params, query } []
 
 type Props = (
     layout :: Record LayoutProps
-  , params :: T.Params
+  , params :: TT.Params
   , query :: R.State Query
   )
 
@@ -130,6 +131,8 @@ docViewCpt = here.component "docView" cpt where
       , params
       , query
       } _ = do
+    cacheState' <- T.useLive T.unequal cacheState
+
     pure $ H.div { className: "doc-table-doc-view container1" }
       [ R2.row
         [ chart
@@ -137,7 +140,7 @@ docViewCpt = here.component "docView" cpt where
         , H.div {className: "col-md-12"}
           [ pageLayout { cacheState
                        , frontends
-                       , key: "docView-" <> (show $ fst cacheState)
+                       , key: "docView-" <> (show cacheState')
                        , listId
                        , mCorpusId
                        , nodeId
@@ -200,20 +203,20 @@ type PageParams = {
   , nodeId    :: Int
   , tabType   :: TabType
   , query     :: Query
-  , params    :: T.Params
+  , params    :: TT.Params
   }
 
 getPageHash :: Session -> PageParams -> Aff String
 getPageHash session { nodeId, tabType } = do
   (get session $ tableHashRoute nodeId tabType) :: Aff String
 
-convOrderBy :: Maybe (T.OrderByDirection T.ColumnName) -> Maybe OrderBy
-convOrderBy (Just (T.ASC  (T.ColumnName "Date")))  = Just DateAsc
-convOrderBy (Just (T.DESC (T.ColumnName "Date")))  = Just DateDesc
-convOrderBy (Just (T.ASC  (T.ColumnName "Title"))) = Just TitleAsc
-convOrderBy (Just (T.DESC (T.ColumnName "Title"))) = Just TitleDesc
-convOrderBy (Just (T.ASC  (T.ColumnName "Source"))) = Just SourceAsc
-convOrderBy (Just (T.DESC (T.ColumnName "Source"))) = Just SourceDesc
+convOrderBy :: Maybe (TT.OrderByDirection TT.ColumnName) -> Maybe OrderBy
+convOrderBy (Just (TT.ASC  (TT.ColumnName "Date")))  = Just DateAsc
+convOrderBy (Just (TT.DESC (TT.ColumnName "Date")))  = Just DateDesc
+convOrderBy (Just (TT.ASC  (TT.ColumnName "Title"))) = Just TitleAsc
+convOrderBy (Just (TT.DESC (TT.ColumnName "Title"))) = Just TitleDesc
+convOrderBy (Just (TT.ASC  (TT.ColumnName "Source"))) = Just SourceAsc
+convOrderBy (Just (TT.DESC (TT.ColumnName "Source"))) = Just SourceDesc
 convOrderBy _ = Nothing
 
 res2corpus :: Response -> DocumentsView
@@ -250,6 +253,8 @@ pageLayoutCpt = here.component "pageLayout" cpt where
             , session
             , sidePanelTriggers
             , tabType } _ = do
+    cacheState' <- T.useLive T.unequal cacheState
+
     let path = { listId, mCorpusId, nodeId, params, query, tabType }
         handleResponse :: HashedResponse (TableResult Response) -> Tuple Int (Array DocumentsView)
         handleResponse (HashedResponse { hash, value: res }) = ret
@@ -260,8 +265,8 @@ pageLayoutCpt = here.component "pageLayout" cpt where
                       Tuple 0 sampleData
                     else
                       Tuple res.count docs
-    case cacheState of
-      (NT.CacheOn  /\ _) -> do
+    case cacheState' of
+      NT.CacheOn -> do
         let paint (Tuple count docs) = page { documents: docs
                                             , layout: props { totalRecords = count }
                                             , params } []
@@ -275,7 +280,7 @@ pageLayoutCpt = here.component "pageLayout" cpt where
           , path
           , renderer: paint
           }
-      (NT.CacheOff /\ _) -> do
+      NT.CacheOff -> do
         localCategories <- R.useState' (mempty :: LocalUserScore)
         paramsS <- R.useState' params
         let loader p = do
@@ -295,7 +300,7 @@ pageLayoutCpt = here.component "pageLayout" cpt where
 type PageProps = (
     documents :: Array DocumentsView
   , layout :: Record PageLayoutProps
-  , params :: T.Params
+  , params :: TT.Params
   )
 
 page :: R2.Component PageProps
@@ -310,7 +315,7 @@ pageCpt = here.component "pageCpt" cpt where
 type PagePaintProps = (
     documents :: Array DocumentsView
   , layout :: Record PageLayoutProps
-  , params :: R.State T.Params
+  , params :: R.State TT.Params
 )
 
 pagePaint :: R2.Component PagePaintProps
@@ -335,14 +340,14 @@ pagePaintCpt = here.component "pagePaintCpt" cpt
               Just TitleAsc   -> sortWith \(DocumentsView { title })  -> Str.toLower title
               Just TitleDesc  -> sortWith \(DocumentsView { title })  -> Down $ Str.toLower title
               _               -> identity -- the server ordering is enough here
-          filteredRows = T.filterRows { params: fst params } $ orderWith $ A.toUnfoldable documents
+          filteredRows = TT.filterRows { params: fst params } $ orderWith $ A.toUnfoldable documents
 
 
 type PagePaintRawProps = (
     documents :: Array DocumentsView
   , layout :: Record PageLayoutProps
   , localCategories :: R.State LocalUserScore
-  , params :: R.State T.Params
+  , params :: R.State TT.Params
   )
 
 pagePaintRaw :: R2.Component PagePaintRawProps
@@ -361,12 +366,12 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
       , localCategories
       , params } _ = do
 
-    reload <- R.useState' 0
+    reload <- T.useBox T2.newReload
 
-    pure $ T.table
+    pure $ TT.table
       { syncResetButton : [ H.div {} [] ]
       , colNames
-      , container: T.defaultContainer { title: "Documents" }
+      , container: TT.defaultContainer { title: "Documents" }
       , params
       , rows: rows reload localCategories
       , totalRecords
@@ -382,14 +387,14 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
         corpusDocument
           | Just cid <- mCorpusId = Routes.CorpusDocument sid cid listId
           | otherwise = Routes.Document sid listId
-        colNames = T.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source", "Score" ]
+        colNames = TT.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source", "Score" ]
         wrapColElts = const identity
         getCategory (lc /\ _) {_id, category} = fromMaybe category (lc ^. at _id)
         rows reload lc@(_ /\ setLocalCategories) = row <$> A.toUnfoldable documents
           where
             row dv@(DocumentsView r) =
               { row:
-                T.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
+                TT.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
                             H.div { className: "" } [ docChooser { listId, mCorpusId, nodeId: r._id, selected, sidePanelTriggers, tableReload: reload } []
                                                                    ]
                           --, H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
@@ -417,7 +422,7 @@ type DocChooser = (
   , nodeId            :: NodeID
   , selected          :: Boolean
   , sidePanelTriggers :: Record SidePanelTriggers
-  , tableReload       :: GUR.ReloadS
+  , tableReload       :: T2.ReloadS
   )
 
 docChooser :: R2.Component DocChooser
@@ -448,7 +453,7 @@ docChooserCpt = here.component "docChooser" cpt
           -- log2 "[docChooser] onClick, corpusId" corpusId
           -- log2 "[docChooser] onClick, nodeId" nodeId
           R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
-          GUR.bump tableReload
+          T2.reload tableReload
 
 
 newtype SearchQuery = SearchQuery {
@@ -476,7 +481,7 @@ tableHashRoute nodeId tabType = NodeAPI Node (Just nodeId) $ "table/hash" <> "?t
 tableRouteWithPage :: forall row.
                       { listId :: Int
                       , nodeId :: Int
-                      , params :: T.Params
+                      , params :: TT.Params
                       , query ::  Query
                       , tabType :: TabType
                       | row } -> SessionRoute
@@ -486,7 +491,7 @@ tableRouteWithPage { listId, nodeId, params: { limit, offset, orderBy, searchTyp
     lmt = queryParam "limit" limit
     lst = queryParam "list" listId
     ofs = queryParam "offset" offset
-    odb = mQueryParamS "orderBy" T.orderByToForm orderBy
+    odb = mQueryParamS "orderBy" TT.orderByToForm orderBy
     st  = queryParam "searchType" searchType
     tt  = queryParamS "tabType" (showTabType' tabType)
     q   = queryParamS "query" query

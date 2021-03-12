@@ -139,7 +139,6 @@ import Gargantext.Sessions (Session, get, post, put)
 import Gargantext.Types (AsyncTaskType(..), AsyncTaskWithType(..), CTabNgramType(..), ListId, OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize(..))
 import Gargantext.Utils.KarpRabin (indicesOfAny)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
 import Gargantext.Utils.Toestand as T2
   
 here :: R2.Here
@@ -1191,7 +1190,7 @@ chartsAfterSync path' tasks nodeId reloadForest _ = do
       Nothing -> log "[chartsAfterSync] tasks is Nothing"
       Just tasks' -> do
         snd tasks' (GAT.Insert nodeId task) -- *> T2.reload reloadForest
-        GUR.bumpBox reloadForest
+        T2.reload reloadForest
 
 postNgramsChartsAsync :: forall s. CoreParams s -> Aff AsyncTaskWithType
 postNgramsChartsAsync { listIds, nodeId, session, tabType } = do

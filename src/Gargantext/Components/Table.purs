@@ -8,6 +8,7 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Prelude
 
@@ -42,8 +43,7 @@ stateParams {pageSize, page, orderBy, searchType} = {offset, limit, orderBy, sea
     offset = limit * (page - 1)
 
 type TableHeaderLayoutProps = (
-    afterCacheStateChange :: NT.CacheState -> Effect Unit
-  , cacheState :: R.State NT.CacheState
+    cacheState :: T.Box NT.CacheState
   , date  :: String
   , desc  :: String
   , key   :: String
@@ -56,58 +56,57 @@ initialParams :: Params
 initialParams = stateParams {page: 1, pageSize: PS10, orderBy: Nothing, searchType: SearchDoc}
 -- TODO: Not sure this is the right place for this
 
-tableHeaderLayout :: Record TableHeaderLayoutProps -> R.Element
-tableHeaderLayout props = R.createElement tableHeaderLayoutCpt props []
+tableHeaderLayout :: R2.Component TableHeaderLayoutProps
+tableHeaderLayout = R.createElement tableHeaderLayoutCpt
 tableHeaderLayoutCpt :: R.Component TableHeaderLayoutProps
 tableHeaderLayoutCpt = here.component "tableHeaderLayout" cpt
   where
-    cpt { afterCacheStateChange, cacheState, date, desc, query, title, user } _ =
+    cpt { cacheState, date, desc, query, title, user } _ = do
+      cacheState' <- T.useLive T.unequal cacheState
+
       pure $ R.fragment
-      [ R2.row
-        [ H.div {className: "col-md-3"} [ H.h3 {} [H.text title] ]
-        , H.div {className: "col-md-9"}
-          [ H.hr {style: {height: "2px", backgroundColor: "black"}} ]
-        ]
-      , R2.row
-        [ H.div {className: "col-md-8 content"}
-          [ H.p {}
-            [ H.span {className: "fa fa-globe"} []
-            , H.text $ " " <> desc
-            ]
-          , H.p {}
-            [ H.span {className: "fa fa-search-plus"} []
-            , H.text $ " " <> query
-            ]
-          , H.p { className: "cache-toggle"
-                , on: { click: cacheClick cacheState afterCacheStateChange } }
-            [ H.span { className: "fa " <> (cacheToggle cacheState) } []
-            , H.text $ cacheText cacheState
+        [ R2.row
+          [ H.div {className: "col-md-3"} [ H.h3 {} [H.text title] ]
+          , H.div {className: "col-md-9"}
+            [ H.hr {style: {height: "2px", backgroundColor: "black"}} ]
+          ]
+          , R2.row
+            [ H.div {className: "col-md-8 content"}
+              [ H.p {}
+                [ H.span {className: "fa fa-globe"} []
+                , H.text $ " " <> desc
+                ]
+              , H.p {}
+                [ H.span {className: "fa fa-search-plus"} []
+                , H.text $ " " <> query
+                ]
+              , H.p { className: "cache-toggle"
+                    , on: { click: cacheClick cacheState } }
+                [ H.span { className: "fa " <> (cacheToggle cacheState') } []
+                , H.text $ cacheText cacheState'
+                ]
+              ]
+            , H.div {className: "col-md-4 content"}
+              [ H.p {}
+                [ H.span {className: "fa fa-calendar"} []
+                , H.text $ " " <> date
+                ]
+              , H.p {}
+                [ H.span {className: "fa fa-user"} []
+                , H.text $ " " <> user
+                ]
+              ]
             ]
           ]
-        , H.div {className: "col-md-4 content"}
-          [ H.p {}
-            [ H.span {className: "fa fa-calendar"} []
-            , H.text $ " " <> date
-            ]
-          , H.p {}
-            [ H.span {className: "fa fa-user"} []
-            , H.text $ " " <> user
-            ]
-          ]
-        ]
-      ]
 
-    cacheToggle (NT.CacheOn /\ _) = "fa-toggle-on"
-    cacheToggle (NT.CacheOff /\ _) = "fa-toggle-off"
+    cacheToggle NT.CacheOn = "fa-toggle-on"
+    cacheToggle NT.CacheOff = "fa-toggle-off"
 
-    cacheText (NT.CacheOn /\ _) = "Cache On"
-    cacheText (NT.CacheOff /\ _) = "Cache Off"
+    cacheText NT.CacheOn = "Cache On"
+    cacheText NT.CacheOff = "Cache Off"
 
-    cacheClick (cacheState /\ setCacheState) after _ = do
-      setCacheState $ const newCacheState
-      after newCacheState
-      where
-        newCacheState = cacheStateToggle cacheState
+    cacheClick cacheState _ = do
+      T.modify cacheStateToggle cacheState
 
     cacheStateToggle NT.CacheOn = NT.CacheOff
     cacheStateToggle NT.CacheOff = NT.CacheOn

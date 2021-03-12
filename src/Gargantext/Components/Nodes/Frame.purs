@@ -8,6 +8,7 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Reactix as R
+import Toestand as T
 
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Hooks.Loader (useLoader)
@@ -17,7 +18,7 @@ import Gargantext.Sessions (Session, get, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Argonaut (genericSumEncodeJson)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
+import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Frame"
@@ -72,13 +73,14 @@ frameLayoutWithKey props = R.createElement frameLayoutWithKeyCpt props []
 frameLayoutWithKeyCpt :: R.Component KeyProps
 frameLayoutWithKeyCpt = here.component "frameLayoutWithKey" cpt where
   cpt { nodeId, session, nodeType} _ = do
-    reload <- GUR.new
-    useLoader {nodeId, reload: GUR.value reload, session} loadframeWithReload $
+    reload <- T.useBox T2.newReload
+    reload' <- T.useLive T.unequal reload
+    useLoader {nodeId, reload: reload', session} loadframeWithReload $
       \frame -> frameLayoutView {frame, nodeId, reload, session, nodeType}
 
 type ViewProps =
-  ( frame  :: NodePoly Hyperdata
-  , reload  :: GUR.ReloadS
+  ( frame    :: NodePoly Hyperdata
+  , reload   :: T2.ReloadS
   , nodeId   :: Int
   , session  :: Session
   , nodeType :: NodeType
@@ -107,7 +109,9 @@ frameLayoutViewCpt = here.component "frameLayoutView" cpt
 
 type LoadProps   = ( nodeId  :: Int, session :: Session )
 
-type ReloadProps = ( nodeId  :: Int, session :: Session, reload :: GUR.Reload )
+type ReloadProps = ( nodeId  :: Int
+                   , reload :: T2.Reload
+                   , session :: Session )
 
 loadframe' :: Record LoadProps -> Aff (NodePoly Hyperdata)
 loadframe' { nodeId, session } = get session $ NodeAPI Node (Just nodeId) ""

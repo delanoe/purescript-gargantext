@@ -82,7 +82,6 @@ forestCpt = here.component "forest" cpt where
     -- TODO fix tasks ref
     -- R.useEffect' $ do
       -- R.setRef tasks $ Just tasks'
-      -- GUR.initializeI reloadForest reload
     R2.useCache
       ( frontends /\ route' /\ sessions' /\ handed' /\ forestOpen'
         /\ reloadForest' /\ reloadRoot' /\ (fst tasks').storage )

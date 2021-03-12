@@ -8,6 +8,7 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
 import Gargantext.Components.Charts.Options.Series (TreeNode, Trees(..), mkTree)
@@ -20,6 +21,7 @@ import Gargantext.Sessions (Session, get)
 import Gargantext.Types (ChartType(..))
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Tree"
@@ -78,7 +80,7 @@ treeCpt :: R.Component Props
 treeCpt = here.component "tree" cpt
   where
     cpt {path, session} _ = do
-      reload <- R.useState' 0
+      reload <- T.useBox T2.newReload
       pure $ metricsWithCacheLoadView {
           getMetricsHash
         , handleResponse

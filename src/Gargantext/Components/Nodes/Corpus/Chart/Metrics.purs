@@ -12,6 +12,7 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, yAxis')
 import Gargantext.Components.Charts.Options.Type (xAxis)
@@ -28,6 +29,7 @@ import Gargantext.Sessions (Session, get)
 import Gargantext.Types (TermList(..))
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Metrics"
@@ -122,7 +124,8 @@ metricsCpt :: R.Component Props
 metricsCpt = here.component "etrics" cpt
   where
     cpt {path, session} _ = do
-      reload <- R.useState' 0
+      reload <- T.useBox T2.newReload
+
       pure $ metricsWithCacheLoadView {
           getMetricsHash
         , handleResponse

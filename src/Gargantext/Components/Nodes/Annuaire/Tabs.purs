@@ -51,7 +51,7 @@ modeTabType' Books = CTabAuthors
 modeTabType' Communication = CTabAuthors
 
 type TabsProps =
-  ( cacheState        :: R.State LTypes.CacheState
+  ( cacheState        :: T.Box LTypes.CacheState
   , contactData       :: ContactData
   , frontends         :: Frontends
   , nodeId            :: Int
@@ -93,7 +93,7 @@ tabsCpt = here.component "tabs" cpt where
         }
 
 type DTCommon =
-  ( cacheState        :: R.State LTypes.CacheState
+  ( cacheState        :: T.Box LTypes.CacheState
   -- , contactData       :: ContactData
   , frontends         :: Frontends
   , nodeId            :: Int
@@ -127,7 +127,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
           afterSync _ = pure unit
 
 type NTCommon =
-  ( cacheState        :: R.State LTypes.CacheState
+  ( cacheState        :: T.Box LTypes.CacheState
   , defaultListId     :: Int
   , nodeId            :: Int
   , reloadForest      :: T.Box T2.Reload

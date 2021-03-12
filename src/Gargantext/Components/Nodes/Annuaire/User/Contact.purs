@@ -183,7 +183,7 @@ contactLayoutWithKeyCpt = here.component "contactLayoutWithKey" cpt where
         , tasks } _ = do
       reload <- T.useBox T2.newReload
       _ <- T.useLive T.unequal reload
-      cacheState <- R.useState' LT.CacheOn
+      cacheState <- T.useBox LT.CacheOn
       sidePanelTriggers <- LT.emptySidePanelTriggers
       useLoader nodeId (getAnnuaireContact session annuaireId) $
         \contactData@{contactNode: Contact' {name, hyperdata}} ->
@@ -191,8 +191,15 @@ contactLayoutWithKeyCpt = here.component "contactLayoutWithKey" cpt where
                [ display { title: fromMaybe "no name" name }
                          (contactInfos hyperdata (onUpdateHyperdata reload))
                , Tabs.tabs
-                 { cacheState, contactData, frontends, nodeId, session
-                 , sidePanelTriggers, reloadForest, reloadRoot, tasks } ]
+                   { cacheState
+                   , contactData
+                   , frontends
+                   , nodeId
+                   , session
+                   , sidePanelTriggers
+                   , reloadForest
+                   , reloadRoot
+                   , tasks } ]
       where
         onUpdateHyperdata :: T.Box T2.Reload -> HyperdataContact -> Effect Unit
         onUpdateHyperdata reload hd =

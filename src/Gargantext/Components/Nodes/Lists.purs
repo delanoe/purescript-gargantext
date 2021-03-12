@@ -120,7 +120,11 @@ listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
     cpt { controls, nodeId, reloadForest, reloadRoot, session, sessionUpdate, tasks } _ = do
       let path = { nodeId, session }
 
-      cacheState <- R.useState' $ getCacheState CacheOn session nodeId
+      cacheState <- T.useBox $ getCacheState CacheOn session nodeId
+      cacheState' <- T.useLive T.unequal cacheState
+
+      R.useEffectOnce' $ do
+        T.listen (\{ new } -> afterCacheStateChange new) cacheState
 
       useLoader path loadCorpusWithChild $
         \corpusData@{ corpusId, corpusNode: NodePoly poly, defaultListId } ->
@@ -129,19 +133,18 @@ listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
           in
           R.fragment [
             Table.tableHeaderLayout {
-                afterCacheStateChange
-              , cacheState
+                cacheState
               , date
               , desc
-              , key: "listsLayoutWithKey-header-" <> (show $ fst cacheState)
+              , key: "listsLayoutWithKey-header-" <> (show cacheState')
               , query
               , title: "Corpus " <> name
-              , user: authors }
+              , user: authors } []
           , Tabs.tabs {
                cacheState
              , corpusData
              , corpusId
-             , key: "listsLayoutWithKey-tabs-" <> (show $ fst cacheState)
+             , key: "listsLayoutWithKey-tabs-" <> (show cacheState')
              , reloadForest
              , reloadRoot
              , session

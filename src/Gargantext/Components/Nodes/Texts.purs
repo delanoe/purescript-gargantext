@@ -14,6 +14,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
 import Record.Extra as REX
+import Toestand as T
 
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.Forest as Forest
@@ -140,7 +141,11 @@ textsLayoutWithKeyCpt :: R.Component KeyProps
 textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
   where
     cpt { controls, frontends, nodeId, session } _children = do
-      cacheState <- R.useState' $ getCacheState NT.CacheOff session nodeId
+      cacheState <- T.useBox $ getCacheState NT.CacheOff session nodeId
+      cacheState' <- T.useLive T.unequal cacheState
+
+      R.useEffectOnce' $ do
+        T.listen (\{ new } -> afterCacheStateChange new) cacheState
 
       pure $ loader { nodeId, session } loadCorpusWithChild $
         \corpusData@{ corpusId, corpusNode, defaultListId } -> do
@@ -148,14 +153,13 @@ textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
               CorpusInfo { authors, desc, query } = getCorpusInfo h.fields
               title = "Corpus " <> name
           R.fragment
-            [ Table.tableHeaderLayout { afterCacheStateChange
-                                      , cacheState
+            [ Table.tableHeaderLayout { cacheState
                                       , date
                                       , desc
                                       , query
                                       , title
                                       , user: authors
-                                      , key: "textsLayoutWithKey-" <> (show $ fst cacheState) }
+                                      , key: "textsLayoutWithKey-" <> (show cacheState') } []
             , tabs { cacheState
                    , corpusData
                    , corpusId
@@ -184,7 +188,7 @@ modeTabType MoreLikeFav    = CTabAuthors  -- TODO
 modeTabType MoreLikeTrash  = CTabSources  -- TODO
 
 type TabsProps =
-  ( cacheState      :: R.State NT.CacheState
+  ( cacheState      :: T.Box NT.CacheState
   , corpusData      :: CorpusData
   , corpusId        :: NodeID
   , frontends       :: Frontends
@@ -232,7 +236,7 @@ tabsCpt = here.component "tabs" cpt
                                         , sidePanelTriggers } []
 
 type DocViewProps a = (
-    cacheState        :: R.State NT.CacheState
+    cacheState        :: T.Box NT.CacheState
   , corpusData        :: CorpusData
   , corpusId          :: NodeID
   , frontends         :: Frontends

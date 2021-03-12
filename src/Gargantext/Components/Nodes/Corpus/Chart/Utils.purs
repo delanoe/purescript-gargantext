@@ -13,21 +13,21 @@ import Gargantext.Components.Nodes.Corpus.Chart.Types (Path)
 import Gargantext.Sessions (Session)
 import Gargantext.Types as T
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
+import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Utils"
 
-reloadButtonWrap :: GUR.ReloadS -> R.Element -> R.Element
+reloadButtonWrap :: T2.ReloadS -> R.Element -> R.Element
 reloadButtonWrap setReload el = H.div {} [
     reloadButton setReload
   , el
   ]
 
-reloadButton :: GUR.ReloadS -> R.Element
+reloadButton :: T2.ReloadS -> R.Element
 reloadButton reloadS = H.a { className, on: { click }, title: "Reload" } [] where
   className = "reload-btn fa fa-refresh"
-  click _ = GUR.bump reloadS
+  click _ = T2.reload reloadS
 
 
 mNgramsTypeFromTabType :: T.TabType -> Maybe T.CTabNgramType
@@ -38,9 +38,9 @@ mNgramsTypeFromTabType _                                          = Nothing
 
 type ChartUpdateButtonProps =
   ( chartType :: T.ChartType
-  , path :: Record Path
-  , reload :: GUR.ReloadS
-  , session :: Session
+  , path      :: Record Path
+  , reload    :: T2.ReloadS
+  , session   :: Session
   )
 
 chartUpdateButton :: Record ChartUpdateButtonProps -> R.Element
@@ -59,5 +59,5 @@ chartUpdateButtonCpt = here.component "chartUpdateButton" cpt where
           case mNgramsTypeFromTabType tabType of
             Just ngramsType -> do
               _ <- recomputeChart session chartType ngramsType corpusId listId
-              liftEffect $ GUR.bump reload
+              liftEffect $ T2.reload reload
             Nothing -> pure unit

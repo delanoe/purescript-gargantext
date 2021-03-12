@@ -49,7 +49,7 @@ modeTabType' Books = CTabAuthors
 modeTabType' Communication = CTabAuthors
 
 type TabsProps = (
-    cacheState        :: R.State LTypes.CacheState
+    cacheState        :: T.Box LTypes.CacheState
   , contactData       :: ContactData'
   , frontends         :: Frontends
   , nodeId            :: Int
@@ -131,7 +131,7 @@ tabsCpt = here.component "tabs" cpt
 
 
 type NgramsViewTabsProps = (
-    cacheState        :: R.State LTypes.CacheState
+    cacheState        :: T.Box LTypes.CacheState
   , defaultListId     :: Int
   , mode              :: Mode
   , nodeId            :: Int

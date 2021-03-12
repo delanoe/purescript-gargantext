@@ -1,5 +1,5 @@
 module Gargantext.Utils.Toestand
-  ( class Reloadable, reload, Reload, newReload, InitReload(..), ready, useMemberBox )
+  ( class Reloadable, reload, Reload, ReloadS, newReload, InitReload(..), ready, useMemberBox )
   where
 
 import Prelude (class Ord, Unit, bind, pure, unit, (+))
@@ -11,6 +11,7 @@ import Toestand as T
 
 -- | Reload is a simple counter that can be used to force an update.
 type Reload = Int
+type ReloadS = T.Box Reload
 
 class Reloadable t where
   reload :: t -> Effect Unit

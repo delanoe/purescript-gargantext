@@ -11,14 +11,14 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Tuple (fst)
 import Effect (Effect)
-import Gargantext.Types as GT
-import Gargantext.Utils as GU
-import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
-import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Toestand as T
 import Web.Storage.Storage as WSS
+
+import Gargantext.Types as GT
+import Gargantext.Utils as GU
+import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 
 localStorageKey :: String
 localStorageKey = "garg-async-tasks"
@@ -79,18 +79,18 @@ data Action =
 
 action :: Record ReductorProps -> Action -> Effect (Record ReductorProps)
 action p@{ reloadForest, storage } (Insert nodeId t) = do
-  _ <- GUR.bumpBox reloadForest
+  _ <- T2.reload reloadForest
   let newStorage = Map.alter (maybe (Just [t]) (\ts -> Just $ A.cons t ts)) nodeId storage
   pure $ p { storage = newStorage }
 action p (Finish nodeId t) = do
   action p (Remove nodeId t)
 action p@{ reloadRoot, reloadForest, storage } (Remove nodeId t@(GT.AsyncTaskWithType { typ })) = do
   _ <- if GT.asyncTaskTriggersAppReload typ then
-    GUR.bumpBox reloadRoot
+    T2.reload reloadRoot
   else
     pure unit
   _ <- if GT.asyncTaskTriggersTreeReload typ then
-    GUR.bumpBox reloadForest
+    T2.reload reloadForest
   else
     pure unit
   let newStorage = Map.alter (maybe Nothing $ (\ts -> Just $ removeTaskFromList ts t)) nodeId storage

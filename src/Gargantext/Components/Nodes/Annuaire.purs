@@ -12,6 +12,8 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
+
 import Gargantext.Prelude
 
 import Gargantext.Components.NgramsTable.Loader (clearCache)
@@ -92,17 +94,21 @@ annuaireCpt = here.component "annuaire" cpt
   where
     cpt {session, path, info: info@(AnnuaireInfo {name, date: date'}), frontends} _ = do
       pagePath <- R.useState' $ initialPagePath (fst path)
-      cacheState <- R.useState' NT.CacheOff
+      cacheState <- T.useBox NT.CacheOff
+      cacheState' <- T.useLive T.unequal cacheState
+
+      R.useEffectOnce' $ do
+        T.listen (\_ -> launchAff_ $ clearCache unit) cacheState
+
       pure $ R.fragment
         [ T.tableHeaderLayout
-          { afterCacheStateChange: \_ -> launchAff_ $ clearCache unit
-            , cacheState
+            { cacheState
             , date
             , desc: name
-            , key: "annuaire-" <> (show $ fst cacheState)
+            , key: "annuaire-" <> (show cacheState')
             , query: ""
             , title: name
-            , user: "" }
+            , user: "" } []
         , H.p {} []
           -- , H.div {className: "col-md-3"} [ H.text "    Filter ", H.input { className: "form-control", style } ]
           , H.br {}

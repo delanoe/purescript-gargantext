@@ -27,14 +27,13 @@ import Gargantext.Sessions (Session)
 import Gargantext.Types
   ( ChartType(..), CTabNgramType(..), Mode(..), TabSubType(..), TabType(..), modeTabType )
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
 import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Lists.Tabs"
 
 type Props = (
-    cacheState        :: R.State CacheState
+    cacheState        :: T.Box CacheState
   , corpusData        :: CorpusData
   , corpusId          :: Int
   , reloadForest      :: T.Box T2.Reload
@@ -69,10 +68,17 @@ ngramsView props = R.createElement ngramsViewCpt props []
 
 ngramsViewCpt :: R.Component NgramsViewProps
 ngramsViewCpt = here.component "ngramsView" cpt where
-  cpt props@{ reloadRoot, tasks, cacheState, corpusData: { defaultListId }
-            , corpusId, mode, session, sidePanelTriggers, reloadForest } _ = do
+  cpt props@{ cacheState
+            , corpusData: { defaultListId }
+            , corpusId
+            , reloadForest
+            , reloadRoot
+            , mode
+            , session
+            , sidePanelTriggers
+            , tasks } _ = do
       chartType <- R.useState' Histo
-      chartsReload <- GUR.new
+      chartsReload <- T.useBox T2.newReload
       path <- R.useState' $ NTC.initialPageParams props.session initialPath.corpusId [initialPath.listId] initialPath.tabType
       let listId' = fromMaybe defaultListId $ A.head (fst path).listIds
       let path' = {
@@ -91,17 +97,17 @@ ngramsViewCpt = here.component "ngramsView" cpt where
       pure $ R.fragment
         ( charts chartParams tabNgramType chartType chartsReload
         <> [ NT.mainNgramsTable { afterSync: afterSync chartsReload
-                                , reloadRoot
-                                , tasks
                                 , cacheState
                                 , defaultListId
                                 , nodeId: corpusId
                                 , path
+                                , reloadForest
+                                , reloadRoot
                                 , session
                                 , sidePanelTriggers
                                 , tabNgramType
                                 , tabType
-                                , reloadForest
+                                , tasks
                                 , withAutoUpdate: false
                                 } []
            ]
@@ -114,7 +120,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
               -- should be recomputed already
               -- We just refresh it
               -- _ <- recomputeChart session chartType ngramsType corpusId listId
-              liftEffect $ GUR.bump chartsReload
+              liftEffect $ T2.reload chartsReload
             Nothing         -> pure unit
 
         tabNgramType = modeTabType mode

@@ -36,7 +36,6 @@ import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, NodeID, TabSubType(..), TabType(..), TermList(..), modeTabType)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
 import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
@@ -54,7 +53,7 @@ type Common = (
 type Props = (
     frontends       :: Frontends
   , graph           :: SigmaxT.SGraph
-  , graphVersion    :: GUR.ReloadS
+  , graphVersion    :: T2.ReloadS
   , showSidePanel   :: T.Box GET.SidePanelState
   | Common
   )
@@ -333,7 +332,7 @@ deleteNodes { graphId, metaData, nodes, session, termList, reloadForest } = do
     case mPatch of
       Nothing -> pure unit
       Just (NTC.Versioned patch) -> do
-        liftEffect $ GUR.bumpBox reloadForest
+        liftEffect $ T2.reload reloadForest
 
 -- Why is this called delete node?
 deleteNode :: TermList
