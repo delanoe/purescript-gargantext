@@ -9,6 +9,7 @@ import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
+import Toestand as T
 
 import Gargantext.Prelude (bind, pure, show, unit, ($), (<>), (<$>), (<<<))
 
@@ -43,12 +44,12 @@ docViewWrapperCpt :: R.Component Props
 docViewWrapperCpt = here.component "docViewWrapper" cpt
   where
     cpt props@{ loaded } _ = do
-      state <- R.useState' $ initialState { loaded }
+      state <- T.useBox $ initialState { loaded }
 
       pure $ docView (Record.merge props { state }) []
 
 type DocViewProps = (
-  state :: R.State State
+  state :: T.Box State
   | Props
   )
 
@@ -60,8 +61,9 @@ docViewCpt = here.component "docView" cpt
   where
     cpt { path
         , loaded: loaded@{ ngramsTable: Versioned { data: initTable }, document }
-        , state: state@({ ngramsVersion: version, ngramsLocalPatch } /\ _)
+        , state
         } _children = do
+      state'@{ ngramsLocalPatch, ngramsVersion: version } <- T.useLive T.unequal state
 
       let
         afterSync = \_ -> pure unit
@@ -73,6 +75,13 @@ docViewCpt = here.component "docView" cpt
           if withAutoUpdate
           then [ autoUpdate { duration: 5000, effect: dispatch $ Synchronize { afterSync } } ]
           else []
+
+        ngrams = applyNgramsPatches state' initTable
+        annotate text = AnnotatedField.annotatedField { ngrams, setTermList, text }
+
+        setTermListOrAddA ngram Nothing        = addNewNgramA ngram
+        setTermListOrAddA ngram (Just oldList) = setTermListA ngram <<< replace oldList
+        setTermList ngram mOldList = dispatch <<< setTermListOrAddA (findNgramRoot ngrams ngram) mOldList
 
       pure $ H.div {} $
         autoUpd <> syncResetBtns <>
@@ -95,17 +104,12 @@ docViewCpt = here.component "docView" cpt
               ]]]]
       where
         dispatch = coreDispatch path state
-        ngrams = applyNgramsPatches (fst state) initTable
-        annotate text = AnnotatedField.annotatedField { ngrams, setTermList, text }
         badge s = H.span { className: "badge badge-default badge-pill" } [ H.text s ]
         badgeLi s =
           H.span { className: "list-group-item-heading" }
           [ H.span { className: "badge-container" }
             [ H.span { className: "badge badge-default badge-pill" } [ H.text s ] ]]
         li' = H.li { className: "list-group-item justify-content-between" }
-        setTermListOrAddA ngram Nothing        = addNewNgramA ngram
-        setTermListOrAddA ngram (Just oldList) = setTermListA ngram <<< replace oldList
-        setTermList ngram mOldList = dispatch <<< setTermListOrAddA (findNgramRoot ngrams ngram) mOldList
         -- Here the use of findNgramRoot makes that we always target the root of an ngram group.
         text' x = H.span { className: "list-group-item-text" } [ H.text $ fromMaybe "Nothing" x ]
         NodePoly {hyperdata: Document doc} = document

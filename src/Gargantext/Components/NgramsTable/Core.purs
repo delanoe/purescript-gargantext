@@ -974,12 +974,12 @@ putNgramsPatches :: forall s. CoreParams s -> VersionedNgramsPatches -> Aff Vers
 putNgramsPatches { listIds, nodeId, session, tabType } = put session putNgrams
   where putNgrams = PutNgrams tabType (head listIds) Nothing (Just nodeId)
 
-syncPatches :: forall p s. CoreParams p -> R.State (CoreState s) -> (Unit -> Aff Unit) -> Effect Unit
-syncPatches props ({ ngramsLocalPatch: ngramsLocalPatch@{ ngramsPatches }
-                   , ngramsStagePatch
-                   , ngramsValidPatch
-                   , ngramsVersion
-                   } /\ setState) callback = do
+syncPatches :: forall p s. CoreParams p -> T.Box (CoreState s) -> (Unit -> Aff Unit) -> Effect Unit
+syncPatches props state callback = do
+  { ngramsLocalPatch: ngramsLocalPatch@{ ngramsPatches }
+  , ngramsStagePatch
+  , ngramsValidPatch
+  , ngramsVersion } <- T.read state
   when (isEmptyNgramsTablePatch ngramsStagePatch) $ do
     let pt = Versioned { data: ngramsPatches, version: ngramsVersion }
     launchAff_ $ do
@@ -987,7 +987,7 @@ syncPatches props ({ ngramsLocalPatch: ngramsLocalPatch@{ ngramsPatches }
       callback unit
       liftEffect $ do
         log2 "[syncPatches] setting state, newVersion" newVersion
-        setState $ \s ->
+        T.modify_ (\s ->
           -- I think that sometimes this setState does not fully go through.
           -- This is an issue because the version number does not get updated and the subsequent calls
           -- can mess up the patches.
@@ -997,7 +997,7 @@ syncPatches props ({ ngramsLocalPatch: ngramsLocalPatch@{ ngramsPatches }
             , ngramsValidPatch = fromNgramsPatches newPatch <> ngramsLocalPatch <> s.ngramsValidPatch
                               -- First the already valid patch, then the local patch, then the newly received newPatch.
             , ngramsVersion    = newVersion
-            }
+            }) state
         log2 "[syncPatches] ngramsVersion" newVersion
     pure unit
 
@@ -1027,10 +1027,9 @@ syncPatchesAsync props@{ listIds, tabType }
         log2 "[syncPatches] ngramsVersion" newVersion
 -}
 
-commitPatch :: forall s. Versioned NgramsTablePatch -> R.State (CoreState s) -> Effect Unit
-commitPatch (Versioned {version, data: tablePatch}) (_ /\ setState) = do
-  setState $ \s ->
-    s { ngramsLocalPatch = tablePatch <> s.ngramsLocalPatch }
+commitPatch :: forall s. NgramsTablePatch -> T.Box (CoreState s) -> Effect Unit
+commitPatch tablePatch state = do
+  T.modify_ (\s -> s { ngramsLocalPatch = tablePatch <> s.ngramsLocalPatch }) state
     -- First we apply the patches we have locally and then the new patch (tablePatch).
 
 loadNgramsTable :: PageParams -> Aff VersionedNgramsTable
@@ -1096,13 +1095,13 @@ data Action
 type CoreDispatch = CoreAction -> Effect Unit
 type Dispatch = Action -> Effect Unit
 
-coreDispatch :: forall p s. CoreParams p -> R.State (CoreState s) -> CoreDispatch
+coreDispatch :: forall p s. CoreParams p -> T.Box (CoreState s) -> CoreDispatch
 coreDispatch path state (Synchronize { afterSync }) =
   syncPatches path state afterSync
-coreDispatch _ state@({ngramsVersion} /\ _) (CommitPatch pt) =
-  commitPatch (Versioned {version: ngramsVersion, data: pt}) state
-coreDispatch _ (_ /\ setState) ResetPatches =
-  setState $ \s -> s { ngramsLocalPatch = { ngramsPatches: mempty } }
+coreDispatch _ state (CommitPatch pt) =
+  commitPatch pt state
+coreDispatch _ state ResetPatches =
+  T.modify_ (\s -> s { ngramsLocalPatch = { ngramsPatches: mempty } }) state
 
 isSingleNgramsTerm :: NgramsTerm -> Boolean
 isSingleNgramsTerm nt = isSingleTerm $ ngramsTermText nt

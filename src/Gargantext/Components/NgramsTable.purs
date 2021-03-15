@@ -271,7 +271,7 @@ type Props =
   ( cacheState :: NT.CacheState
   , mTotalRows :: Maybe Int
   , path       :: T.Box PageParams
-  , state      :: R.State State
+  , state      :: T.Box State
   , versioned  :: VersionedNgramsTable
   | CommonProps
   )
@@ -288,15 +288,12 @@ loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
             , reloadForest
             , reloadRoot
             , sidePanelTriggers
-            , state: (state@{ ngramsChildren
-                            , ngramsLocalPatch
-                            , ngramsParent
-                            , ngramsSelection
-                            , ngramsVersion } /\ setState)
+            , state
             , tabNgramType
             , tasks
             , versioned: Versioned { data: initTable }
             , withAutoUpdate } _ = do
+    state'@{ ngramsChildren, ngramsLocalPatch, ngramsParent, ngramsSelection, ngramsVersion } <- T.useLive T.unequal state
     path'@{ listIds, params, scoreType, termListFilter, termSizeFilter } <- T.useLive T.unequal path
     params <- T.useFocused (_.params) (\a b -> b { params = a }) path
     params'@{ orderBy } <- T.useLive T.unequal params
@@ -306,26 +303,40 @@ loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
     -- R.useEffectOnce' $ do
     --   T.listen (\_ -> TT.changePage 1 params) searchQuery
 
-    let rows :: PreConversionRows
-        rows = orderWith (
-                 Seq.mapMaybe (\(Tuple ng nre) ->
-                                let Additive s = ng_scores ^. at ng <<< _Just in
-                                addOcc <$> rowsFilter (ngramsRepoElementToNgramsElement ng s nre)) $
+    let ngramsTable = applyNgramsPatches state' initTable
+        roots = rootsOf ngramsTable
+
+        rowMap (Tuple ng nre) =
+          let ng_scores :: Map NgramsTerm (Additive Int)
+              ng_scores = ngramsTable ^. _NgramsTable <<< _ngrams_scores
+              Additive s = ng_scores ^. at ng <<< _Just
+              addOcc ne =
+                let Additive occurrences = sumOccurrences ngramsTable (ngramsElementToNgramsOcc ne) in
+                ne # _NgramsElement <<< _occurrences .~ occurrences
+          in
+          addOcc <$> rowsFilter (ngramsRepoElementToNgramsElement ng s nre)
+        rows :: PreConversionRows
+        rows = ngramsTableOrderWith orderBy (
+                 Seq.mapMaybe rowMap $
                    Map.toUnfoldable (ngramsTable ^. _NgramsTable <<< _ngrams_repo_elements)
                )
         rowsFilter :: NgramsElement -> Maybe NgramsElement
-        rowsFilter ne =
-           if displayRow state searchQuery' ngramsTable ngramsParentRoot termListFilter termSizeFilter ne then
-             Just ne
-           else
-             Nothing
-        orderWith =
-          case convOrderBy <$> orderBy of
-            Just ScoreAsc  -> sortWith \x -> x        ^. _NgramsElement <<< _occurrences
-            Just ScoreDesc -> sortWith \x -> Down $ x ^. _NgramsElement <<< _occurrences
-            Just TermAsc   -> sortWith \x -> x        ^. _NgramsElement <<< _ngrams
-            Just TermDesc  -> sortWith \x -> Down $ x ^. _NgramsElement <<< _ngrams
-            _              -> identity -- the server ordering is enough here
+        rowsFilter ngramsElement =
+          if displayRow { ngramsElement
+                        , ngramsParentRoot
+                        , ngramsTable
+                        , searchQuery: searchQuery'
+                        , state: state'
+                        , termListFilter
+                        , termSizeFilter } then
+            Just ngramsElement
+          else
+            Nothing
+
+        performAction = mkDispatch { filteredRows
+                                   , path: path'
+                                   , state
+                                   , state' }
 
         -- filteredRows :: PreConversionRows
         -- no need to filter offset if cache is off
@@ -349,28 +360,32 @@ loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
 
         totalRecords = fromMaybe (Seq.length rows) mTotalRows
 
-        performAction = mkDispatch { filteredRows
-                                   , path: path'
-                                   , state: state /\ setState }
+        afterSync' _ = do
+          chartsAfterSync path' tasks reloadForest unit
+          afterSync unit
 
-        syncResetButton path' = syncResetButtons { afterSync: afterSync' path'
-                                                 , ngramsLocalPatch
-                                                 , performAction: performAction <<< CoreAction }
+        syncResetButton = syncResetButtons { afterSync: afterSync'
+                                           , ngramsLocalPatch
+                                           , performAction: performAction <<< CoreAction }
 
         -- autoUpdate :: Array R.Element
         autoUpdate path' = if withAutoUpdate then
                        [ R2.buff
                        $ autoUpdateElt
                          { duration: 5000
-                         , effect: performAction $ CoreAction $ Synchronize { afterSync: afterSync' path' }
+                         , effect: performAction $ CoreAction $ Synchronize { afterSync: afterSync' }
                          }
                        ]
                      else []
 
-        -- This is used to *decorate* the Select header with the checkbox.
-        wrapColElts scProps (TT.ColumnName "Select") = const [NTC.selectionCheckbox scProps]
-        wrapColElts _       (TT.ColumnName "Score")  = (_ <> [H.text ("(" <> show scoreType <> ")")])
-        wrapColElts _       _                       = identity
+        ngramsParentRoot :: Maybe NgramsTerm
+        ngramsParentRoot =
+          (\np -> ngramsTable ^? at np
+                            <<< _Just
+                            <<< _NgramsRepoElement
+                            <<< _root
+                            <<< _Just
+            ) =<< ngramsParent
 
     pure $ R.fragment $
       autoUpdate path' <>
@@ -388,58 +403,49 @@ loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
               , ngramsSelection
               , ngramsTable
               , path
-              , syncResetButton: [ syncResetButton path' ]
+              , syncResetButton: [ syncResetButton ]
               , tabNgramType }
           , params
           , rows: filteredConvertedRows
-          , syncResetButton: [ syncResetButton path' ]
+          , syncResetButton: [ syncResetButton ]
           , totalRecords
           , wrapColElts:
-            wrapColElts { allNgramsSelected, dispatch: performAction, ngramsSelection }
+            wrapColElts { allNgramsSelected, dispatch: performAction, ngramsSelection } scoreType
           }
-      , syncResetButton path'
+      , syncResetButton
       ]
-
       where
-        afterSync' path' _ = do
-          chartsAfterSync path' tasks reloadForest unit
-          afterSync unit
-
-
-        ng_scores :: Map NgramsTerm (Additive Int)
-        ng_scores = ngramsTable ^. _NgramsTable <<< _ngrams_scores
-        addOcc ngramsElement =
-          let Additive occurrences = sumOccurrences ngramsTable (ngramsElementToNgramsOcc ngramsElement) in
-          ngramsElement # _NgramsElement <<< _occurrences .~ occurrences
-
-        ngramsTable = applyNgramsPatches state initTable
-        roots = rootsOf ngramsTable
-        ngramsParentRoot :: Maybe NgramsTerm
-        ngramsParentRoot =
-          (\np -> ngramsTable ^? at np
-                            <<< _Just
-                            <<< _NgramsRepoElement
-                            <<< _root
-                            <<< _Just
-            ) =<< ngramsParent
-
-
         colNames = TT.ColumnName <$> ["Show", "Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
+
+ngramsTableOrderWith orderBy =
+  case convOrderBy <$> orderBy of
+    Just ScoreAsc  -> sortWith \x -> x        ^. _NgramsElement <<< _occurrences
+    Just ScoreDesc -> sortWith \x -> Down $ x ^. _NgramsElement <<< _occurrences
+    Just TermAsc   -> sortWith \x -> x        ^. _NgramsElement <<< _ngrams
+    Just TermDesc  -> sortWith \x -> Down $ x ^. _NgramsElement <<< _ngrams
+    _              -> identity -- the server ordering is enough here
+
+-- This is used to *decorate* the Select header with the checkbox.
+wrapColElts scProps _         (TT.ColumnName "Select") = const [NTC.selectionCheckbox scProps]
+wrapColElts _       scoreType (TT.ColumnName "Score")  = (_ <> [H.text ("(" <> show scoreType <> ")")])
+wrapColElts _       _         _                        = identity
 
 type MkDispatchProps = (
     filteredRows :: PreConversionRows
   , path         :: PageParams
-  , state :: R.State State
+  , state        :: T.Box State
+  , state'       :: State
   )
 
 mkDispatch :: Record MkDispatchProps -> (Action -> Effect Unit)
 mkDispatch { filteredRows
            , path
-           , state: (state@{ ngramsChildren
-                           , ngramsLocalPatch
-                           , ngramsParent
-                           , ngramsSelection
-                           , ngramsVersion } /\ setState) } = performAction
+           , state
+           , state': state'@{ ngramsChildren
+                            , ngramsLocalPatch
+                            , ngramsParent
+                            , ngramsSelection
+                            , ngramsVersion } } = performAction
   where
     allNgramsSelected = allNgramsSelectedOnFirstPage ngramsSelection filteredRows
 
@@ -448,15 +454,15 @@ mkDispatch { filteredRows
 
     performAction :: Action -> Effect Unit
     performAction (SetParentResetChildren p) =
-      setState $ setParentResetChildren p
+      T.modify_ (setParentResetChildren p) state
     performAction (ToggleChild b c) =
-      setState $ \s@{ ngramsChildren: nc } -> s { ngramsChildren = newNC nc }
+      T.modify_ (\s@{ ngramsChildren: nc } -> s { ngramsChildren = newNC nc }) state
       where
         newNC nc = Map.alter (maybe (Just b) (const Nothing)) c nc
     performAction (ToggleSelect c) =
-      setState $ \s@{ ngramsSelection: ns } -> s { ngramsSelection = toggleSet c ns }
+      T.modify_ (\s@{ ngramsSelection: ns } -> s { ngramsSelection = toggleSet c ns }) state
     performAction ToggleSelectAll =
-      setState toggler
+      T.modify_ toggler state
       where
         toggler s =
           if allNgramsSelected then
@@ -472,21 +478,27 @@ mkDispatch { filteredRows
           let pc = patchSetFromMap ngramsChildren
               pe = NgramsPatch { patch_list: mempty, patch_children: pc }
               pt = singletonNgramsTablePatch parent pe
-          setState $ setParentResetChildren Nothing
-          commitPatch (Versioned {version: ngramsVersion, data: pt}) (state /\ setState)
-    performAction (CoreAction a) = coreDispatch path (state /\ setState) a
+          T.modify_ (setParentResetChildren Nothing) state
+          commitPatch pt state
+    performAction (CoreAction a) = coreDispatch path state a
 
 
-displayRow :: State -> SearchQuery -> NgramsTable -> Maybe NgramsTerm -> Maybe TermList -> Maybe TermSize -> NgramsElement -> Boolean
-displayRow state@{ ngramsChildren
-                 , ngramsLocalPatch
-                 , ngramsParent }
-           searchQuery
-           ngramsTable
-           ngramsParentRoot
-           termListFilter
-           termSizeFilter
-           (NgramsElement {ngrams, root, list}) =
+displayRow :: { ngramsElement    :: NgramsElement
+              , ngramsParentRoot :: Maybe NgramsTerm
+              , ngramsTable      :: NgramsTable
+              , searchQuery      :: SearchQuery
+              , state            :: State
+              , termListFilter   :: Maybe TermList
+              , termSizeFilter   :: Maybe TermSize } -> Boolean
+displayRow { ngramsElement: NgramsElement {ngrams, root, list}
+           , ngramsParentRoot
+           , ngramsTable
+           , state: state@{ ngramsChildren
+                          , ngramsLocalPatch
+                          , ngramsParent }
+           , searchQuery
+           , termListFilter
+           , termSizeFilter } =
   (
       isNothing root
     -- ^ Display only nodes without parents
@@ -652,7 +664,7 @@ mainNgramsTablePaintCpt = here.component "mainNgramsTablePaint" cpt
               , tasks
               , versioned
               , withAutoUpdate } _ = do
-      state <- R.useState' $ initialState versioned
+      state <- T.useBox $ initialState versioned
 
       pure $ loadedNgramsTable { afterSync
                                , cacheState
@@ -693,7 +705,7 @@ mainNgramsTablePaintNoCacheCpt = here.component "mainNgramsTablePaintNoCache" cp
               , withAutoUpdate } _ = do
       let count /\ versioned = toVersioned versionedWithCount
 
-      state <- R.useState' $ initialState versioned
+      state <- T.useBox $ initialState versioned
 
       pure $ loadedNgramsTable {
         afterSync
