@@ -48,11 +48,13 @@ type MetricsWithCacheLoadViewProps res ret = (
   | MetricsProps
   )
 
-metricsWithCacheLoadView :: forall res ret. DecodeJson res =>
+metricsWithCacheLoadView :: forall res ret.
+                            Eq ret => DecodeJson res =>
                             Record (MetricsWithCacheLoadViewProps res ret) -> R.Element
 metricsWithCacheLoadView p = R.createElement metricsWithCacheLoadViewCpt p []
 
-metricsWithCacheLoadViewCpt :: forall res ret. DecodeJson res =>
+metricsWithCacheLoadViewCpt :: forall res ret.
+                               Eq ret => DecodeJson res =>
                                R.Component (MetricsWithCacheLoadViewProps res ret)
 metricsWithCacheLoadViewCpt = here.component "metricsWithCacheLoadView" cpt
   where

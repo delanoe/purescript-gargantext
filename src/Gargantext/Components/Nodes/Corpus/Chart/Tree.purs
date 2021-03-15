@@ -81,6 +81,7 @@ treeCpt = here.component "tree" cpt
   where
     cpt {path, session} _ = do
       reload <- T.useBox T2.newReload
+
       pure $ metricsWithCacheLoadView {
           getMetricsHash
         , handleResponse

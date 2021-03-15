@@ -32,7 +32,6 @@ flipHanded l r LeftHanded  = R.fragment [r, l]
 flipHanded l r RightHanded = R.fragment [l, r]
 
 derive instance ed :: Generic Handed _
-
 instance eqHanded :: Eq Handed where
   eq = genericEq
 

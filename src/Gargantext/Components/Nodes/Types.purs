@@ -35,10 +35,8 @@ newtype Field a =
 type FTField = Field FieldType
 
 derive instance genericFTField :: Generic (Field FieldType) _
-
 instance eqFTField :: Eq (Field FieldType) where
   eq = genericEq
-
 instance showFTField :: Show (Field FieldType) where
   show = genericShow
 

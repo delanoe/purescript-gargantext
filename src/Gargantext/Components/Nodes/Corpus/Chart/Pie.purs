@@ -1,10 +1,11 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Pie where
 
-import Gargantext.Prelude (bind, map, pure, ($), (==), (>))
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
 import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Array (zip, filter)
 import Data.Array as A
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.Maybe (Maybe(..))
 import Data.String (take, joinWith, Pattern(..), split, length)
 import Data.Tuple (Tuple(..))
@@ -13,6 +14,8 @@ import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
+
+import Gargantext.Prelude (class Eq, bind, map, pure, ($), (==), (>))
 
 import Gargantext.Components.Charts.Options.Color (blue)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
@@ -47,7 +50,9 @@ newtype HistoMetrics = HistoMetrics
   { dates :: Array String
   , count :: Array Number
   }
-
+derive instance genericHistoMetrics :: Generic HistoMetrics _
+instance eqHistoMetrics :: Eq HistoMetrics where
+  eq = genericEq
 instance decodeHistoMetrics :: DecodeJson HistoMetrics where
   decodeJson json = do
     obj   <- decodeJson json

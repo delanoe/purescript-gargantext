@@ -1,9 +1,9 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Metrics where
 
-import Gargantext.Prelude (bind, negate, pure, ($), (<$>), (<>))
-
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
 import Data.Argonaut.Core (jsonEmptyObject)
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.Map as Map
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
@@ -13,6 +13,8 @@ import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
+
+import Gargantext.Prelude (class Eq, bind, negate, pure, ($), (<$>), (<>))
 
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, yAxis')
 import Gargantext.Components.Charts.Options.Type (xAxis)
@@ -40,7 +42,9 @@ newtype Metric = Metric
   , y     :: Number
   , cat   :: TermList
   }
-
+derive instance genericMetric :: Generic Metric _
+instance eqMetric :: Eq Metric where
+  eq = genericEq
 instance decodeMetric :: DecodeJson Metric where
   decodeJson json = do
     obj   <- decodeJson json
@@ -49,7 +53,6 @@ instance decodeMetric :: DecodeJson Metric where
     y     <- obj .: "y"
     cat   <- obj .: "cat"
     pure $ Metric { label, x, y, cat }
-
 instance encodeMetric :: EncodeJson Metric where
   encodeJson (Metric { label, x, y, cat }) =
        "label"  := encodeJson label

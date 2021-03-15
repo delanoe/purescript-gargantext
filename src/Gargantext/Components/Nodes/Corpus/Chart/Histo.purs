@@ -2,12 +2,16 @@ module Gargantext.Components.Nodes.Corpus.Chart.Histo where
 
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
 import Data.Argonaut.Core (jsonEmptyObject)
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
+
+import Gargantext.Prelude (class Eq, bind, map, pure, ($), (==))
 
 import Gargantext.Components.Charts.Options.Color (grey)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
@@ -17,7 +21,6 @@ import Gargantext.Components.Charts.Options.Series (seriesBarD1)
 import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types (MetricsProps, Path, Props, ReloadPath)
 import Gargantext.Hooks.Loader (HashedResponse(..))
-import Gargantext.Prelude (bind, map, pure, ($), (==))
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (ChartType(..))
@@ -31,7 +34,9 @@ here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Histo"
 newtype ChartMetrics = ChartMetrics {
     "data" :: HistoMetrics
    }
-
+derive instance genericChartMetrics :: Generic ChartMetrics _
+instance eqChartMetrics :: Eq ChartMetrics where
+  eq = genericEq
 instance decodeChartMetrics :: DecodeJson ChartMetrics where
   decodeJson json = do
     obj <- decodeJson json
@@ -39,7 +44,9 @@ instance decodeChartMetrics :: DecodeJson ChartMetrics where
     pure $ ChartMetrics { "data": d }
 
 newtype HistoMetrics = HistoMetrics { dates :: Array String, count :: Array Number }
-
+derive instance genericHistoMetrics :: Generic HistoMetrics _
+instance eqHistoMetrics :: Eq HistoMetrics where
+  eq = genericEq
 instance decodeHistoMetrics :: DecodeJson HistoMetrics where
   decodeJson json = do
     obj   <- decodeJson json
