@@ -40,7 +40,8 @@ sizeButtonCpt :: R.Component Props
 sizeButtonCpt = here.component "nodeSearchControl" cpt
   where
     cpt { graph, multiSelectEnabled, selectedNodeIds } _ = do
-      search@(search' /\ setSearch) <- R.useState' ""
+      search <- T.useBox ""
+      search' <- T.useLive T.unequal search
       multiSelectEnabled' <- T.useLive T.unequal multiSelectEnabled
 
       pure $
@@ -49,7 +50,7 @@ sizeButtonCpt = here.component "nodeSearchControl" cpt
             [ inputWithAutocomplete { autocompleteSearch: autocompleteSearch graph
                                     , onAutocompleteClick: \s -> triggerSearch graph s multiSelectEnabled' selectedNodeIds
                                     , onEnterPress: \s -> triggerSearch graph s multiSelectEnabled' selectedNodeIds
-                                    , state: search }
+                                    , state: search } []
             , H.div { className: "btn input-group-addon"
                     , on: { click: \_ -> triggerSearch graph search' multiSelectEnabled' selectedNodeIds }
                     }
