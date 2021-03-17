@@ -60,14 +60,22 @@ listsWithForest :: R2.Component ListsWithForest
 listsWithForest = R.createElement listsWithForestCpt
 
 listsWithForestCpt :: R.Component ListsWithForest
-listsWithForestCpt = here.component "listsWithForest" cpt where
-  cpt { forestProps, listsProps: listsProps@{ session } } _ = do
-    controls <- initialControls
-    pure $ Forest.forestLayoutWithTopBar forestProps
-      [ topBar { controls } []
-      , listsLayout (Record.merge listsProps { controls }) []
-      , H.div { className: "side-panel" } [ sidePanel { controls, session } [] ]
-      ]
+listsWithForestCpt = here.component "listsWithForest" cpt
+  where
+    cpt { forestProps
+        , listsProps: listsProps@{ session } } _ = do
+      controls <- initialControls
+
+      pure $ Forest.forestLayoutWithTopBar forestProps
+           [ topBar { controls } []
+           , listsLayout (Record.merge listsProps { controls }) []
+
+           -- TODO remove className "side-panel" is preview is not triggered
+           -- , H.div { className: "" }
+           , H.div { className: "side-panel" }
+                   [ sidePanel { controls, session } []]
+           ]
+--------------------------------------------------------
 
 type TopBarProps = ( controls :: Record ListsLayoutControls )
 
@@ -166,26 +174,39 @@ sidePanel :: R2.Component SidePanelProps
 sidePanel = R.createElement sidePanelCpt
 
 sidePanelCpt :: R.Component SidePanelProps
-sidePanelCpt = here.component "sidePanel" cpt where
-  cpt { controls: { triggers: { toggleSidePanel, triggerSidePanel } }
-      , session } _ = do
-    showSidePanel <- R.useState' InitialClosed
-    R.useEffect' $ do
-      let toggleSidePanel'  _ = snd showSidePanel toggleSidePanelState
-          triggerSidePanel' _ = snd showSidePanel $ const Opened
-      R2.setTrigger toggleSidePanel  toggleSidePanel'
-      R2.setTrigger triggerSidePanel triggerSidePanel'
-    (mCorpusId /\ setMCorpusId) <- R.useState' Nothing
-    (mListId /\ setMListId) <- R.useState' Nothing
-    (mNodeId /\ setMNodeId) <- R.useState' Nothing
-    let mainStyle = case fst showSidePanel of
-         Opened -> { display: "block" }
-         _      -> { display: "none" }
-    let closeSidePanel _ =  snd showSidePanel $ const Closed
-    pure $ H.div { style: mainStyle }
-      [ H.div { className: "header" }
-        [ H.span { className: "btn btn-danger", on: { click: closeSidePanel } }
-          [ H.span { className: "fa fa-times" } [] ]]
+sidePanelCpt = here.component "sidePanel" cpt
+  where
+    cpt { controls: { triggers: { toggleSidePanel
+                                , triggerSidePanel
+                                } }
+        , session } _ = do
+
+      showSidePanel <- R.useState' InitialClosed
+
+      R.useEffect' $ do
+        let toggleSidePanel' _  = snd showSidePanel toggleSidePanelState
+            triggerSidePanel' _ = snd showSidePanel $ const Opened
+        R2.setTrigger toggleSidePanel  toggleSidePanel'
+        R2.setTrigger triggerSidePanel triggerSidePanel'
+
+      (mCorpusId /\ setMCorpusId) <- R.useState' Nothing
+      (mListId   /\ setMListId  ) <- R.useState' Nothing
+      (mNodeId   /\ setMNodeId  ) <- R.useState' Nothing
+
+      let mainStyle = case fst showSidePanel of
+            Opened -> { display: "block" }
+            _      -> { display: "none" }
+
+      let closeSidePanel _ = do
+            snd showSidePanel $ const Closed
+
+      pure $ H.div { style: mainStyle } [
+        H.div { className: "header" } [
+          H.span { className: "btn btn-danger"
+                 , on: { click: closeSidePanel } } [
+            H.span { className: "fa fa-times" } []
+          ]
+        ]
       , sidePanelDocView { session } []
       ]
 

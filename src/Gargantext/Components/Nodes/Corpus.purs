@@ -220,7 +220,14 @@ fieldCodeEditorWrapperCpt = here.component "fieldCodeEditorWrapperCpt" cpt
         H.div { className: "card-header" } [
           H.div { className: "code-editor-heading row" } [
               H.div { className: "col-4" } [
-                renameable {onRename, text: name}
+                 inputWithEnter { onBlur: onRename
+                                , onEnter: \_ -> pure unit
+                                , onValueChanged: onRename
+                                , autoFocus: false
+                                , className: "form-control"
+                                , defaultValue: name
+                                , placeholder: "Enter file name"
+                                , type: "text" }
               ]
             , H.div { className: "col-7" } []
             , H.div { className: "buttons-right col-1" } ([
@@ -311,6 +318,7 @@ renameableTextCpt = here.component "renameableTextCpt" cpt
             autoFocus: false
           , className: "form-control text"
           , defaultValue: text
+          , onBlur: setText <<< const
           , onEnter: submit
           , onValueChanged: setText <<< const
           , placeholder: ""

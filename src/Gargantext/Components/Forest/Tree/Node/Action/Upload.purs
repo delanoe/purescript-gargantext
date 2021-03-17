@@ -80,6 +80,9 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
       fileType@(_ /\ setFileType)   <- R.useState'  CSV
       lang@( _chosenLang /\ setLang) <- R.useState' EN
 
+      let setFileType' = setFileType <<< const
+      let setLang' = setLang <<< const
+
       let bodies =
             [ R2.row
               [ H.div { className:"col-12 flex-space-around"}
@@ -99,12 +102,12 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
                                  , WOS
                                  , PresseRIS
                                  , Arbitrary
-                                 ] CSV setFileType
+                                 ] CSV setFileType'
                 ]
               ]
             , R2.row
               [ H.div {className:"col-6 flex-space-around"}
-                [ formChoiceSafe [EN, FR, No_extraction, Universal] EN setLang ]
+                [ formChoiceSafe [EN, FR, No_extraction, Universal] EN setLang' ]
               ]
             ]
 

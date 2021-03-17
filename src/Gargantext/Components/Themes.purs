@@ -36,8 +36,16 @@ monotonyTheme :: Theme
 monotonyTheme = Theme { name: "monotony"
                       , location: "styles/bootstrap-monotony.css" }
 
+herbieTheme :: Theme
+herbieTheme = Theme { name: "herbie"
+                      , location: "styles/bootstrap-herbie.css" }
+
+darksterTheme :: Theme
+darksterTheme = Theme { name: "darkster (bêta)"
+                      , location: "styles/bootstrap-darkster.css" }
+
 allThemes :: Array Theme
-allThemes = [ defaultTheme, greysonTheme, monotonyTheme ]
+allThemes = [ defaultTheme, greysonTheme, monotonyTheme, herbieTheme, darksterTheme]
 
 switchTheme :: Theme -> Effect Unit
 switchTheme (Theme { location }) = do

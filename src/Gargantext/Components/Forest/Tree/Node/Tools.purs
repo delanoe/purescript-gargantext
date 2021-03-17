@@ -11,6 +11,7 @@ import Data.Set as Set
 import Data.String as S
 import Data.String.CodeUnits as DSCU
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
 import Reactix as R
@@ -20,8 +21,9 @@ import Toestand as T
 import Gargantext.Components.Forest.Tree.Node.Action (Action, icon, text)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Ends (Frontends, url)
+import Gargantext.Components.GraphExplorer.API as GraphAPI
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (Session, sessionId)
-import Gargantext.Types (ID, Name)
 import Gargantext.Types as GT
 import Gargantext.Utils (glyphicon, toggleSet)
 import Gargantext.Utils.Reactix as R2
@@ -49,11 +51,11 @@ panel bodies submit =
       [ H.div { className: "mx-auto"} [ submit ] ]]]
 
 type TextInputBoxProps =
-  ( id        :: ID
-  , dispatch  :: Action -> Aff Unit
-  , text      :: String
+  ( id       :: GT.ID
+  , dispatch :: Action -> Aff Unit
+  , text     :: String
   , isOpen    :: T.Box Boolean
-  , boxName   :: String
+  , boxName  :: String
   , boxAction :: String -> Action
   )
 
@@ -68,17 +70,31 @@ textInputBoxCpt = here.component "textInputBox" cpt where
       content false _ = (R.fragment [])
       content true renameNodeNameRef =
         H.div { className: "from-group row" }
-        [ H.div { className: "col-8" }
-          [ inputWithEnter
-            { type: "text", autoFocus: true, defaultValue: text, className: "form-control"
-            , onEnter:        submit renameNodeNameRef
-            , onValueChanged: R.setRef renameNodeNameRef
-            , placeholder:    boxName <> " Node" } ]
-        , H.a { type: "button", title: "Submit"
-              , on: { click: submit renameNodeNameRef }
-              , className: "col-2 " <> glyphicon "floppy-o" } []
-        , H.a { type: "button", title: "Cancel", on: { click }
-              , className: "text-danger col-2 " <> glyphicon "times" } [] ]
+        [ textInput renameNodeNameRef
+        , submitBtn renameNodeNameRef
+        , cancelBtn
+        ]
+      textInput renameNodeNameRef =
+        H.div { className: "col-8" }
+          [ inputWithEnter {
+                autoFocus: true
+              , className: "form-control"
+              , defaultValue: text
+              , onBlur: R.setRef renameNodeNameRef
+              , onEnter: submit renameNodeNameRef
+              , onValueChanged: R.setRef renameNodeNameRef
+              , placeholder: (boxName <> " Node")
+              , type: "text"
+              }
+          ]
+      submitBtn renameNodeNameRef =
+        H.a { type: "button"
+            , title: "Submit"
+            , on: { click: submit renameNodeNameRef }
+            , className: "col-2 " <> glyphicon "floppy-o" } []
+      cancelBtn =
+        H.a { type: "button", title: "Cancel", on: { click }
+            , className: "text-danger col-2 " <> glyphicon "times" } []
       submit ref _ = do
         launchAff_ $ dispatch (boxAction $ R.readRef ref)
         T.write_ false isOpen
@@ -96,9 +112,14 @@ formEdit defaultValue setter =
 
 -- | Form Choice input
 -- if the list of options is not big enough, a button is used instead
-formChoiceSafe
-  :: forall a b c. Read  a => Show a
-  => Array a -> a -> ((b -> a) -> Effect c) -> R.Element
+formChoiceSafe :: forall a b c
+               .  Read  a
+               => Show  a
+               => Array a
+               -> a
+               -> (a -> Effect c)
+               -- -> ((b -> a) -> Effect c)
+               -> R.Element
 formChoiceSafe [] _ _ = H.div {} []
 
 formChoiceSafe [n] _defaultNodeType setNodeType =
@@ -108,27 +129,44 @@ formChoiceSafe nodeTypes defaultNodeType setNodeType =
   formChoice nodeTypes defaultNodeType setNodeType
 
 -- | List Form
-formChoice
-  :: forall a b c d.  Read b => Show d
-  => Array d -> b -> ((c -> b) -> Effect a) -> R.Element
+formChoice :: forall a b c d
+           .  Read b
+           => Show d
+           => Array d
+           -> b
+           -> (b -> Effect a)
+           -- -> ((c -> b) -> Effect a)
+           -> R.Element
 formChoice nodeTypes defaultNodeType setNodeType = 
   H.div { className: "form-group"}
-  [ R2.select { className: "form-control", on: { change } }
-    (map (\opt -> H.option {} [ H.text $ show opt ]) nodeTypes)
-  ] where
-    change = setNodeType <<< const <<< fromMaybe defaultNodeType <<< read <<< R.unsafeEventValue
+        [ R2.select { className: "form-control"
+                    , on: { change: \e -> setNodeType $ fromMaybe defaultNodeType $ read $ R.unsafeEventValue e }
+                    }
+          (map (\opt -> H.option {} [ H.text $ show opt ]) nodeTypes)
+         ]
 
 -- | Button Form
 -- FIXME: currently needs a click from the user (by default, we could avoid such click)
-formButton :: forall a b c. Show a => a -> ((b -> a) -> Effect c) -> R.Element
+formButton :: forall a b c
+           . Show a
+           =>   a
+           -> (a -> Effect c)
+           -- -> ((b -> a) -> Effect c)
+           -> R.Element
 formButton nodeType setNodeType =
-  H.div {}
-  [ H.text $ "Confirm the selection of: " <> show nodeType
-  , H.button
-    { className: "cold-md-5 btn btn-primary center", on: { click }
-    , type: "button", title: "Form Button", style : { width: "100%" } }
-    [ H.text $ "Confirmation" ]] where
-      click _ = setNodeType $ const nodeType
+  H.div {} [ H.text $ "Confirm the selection of: " <> show nodeType
+           , bouton
+           ]
+    where
+      bouton = H.button { className : "cold-md-5 btn btn-primary center"
+                        , type : "button"
+                        , title: "Form Button"
+                        , style : { width: "100%" }
+                        , on: { click: \_ -> setNodeType nodeType }
+                        } [H.text $ "Confirmation"]
+
+------------------------------------------------------------------------
+------------------------------------------------------------------------
 
 submitButton :: Action -> (Action -> Aff Unit) -> R.Element
 submitButton action dispatch =
@@ -189,64 +227,88 @@ prettyNodeType
   <<< S.replace (S.Pattern "Folder") (S.Replacement " ")
   <<< show
 
+tooltipId :: GT.NodeID -> String
+tooltipId id = "node-link-" <> show id
 
 -- START node link
+
 type NodeLinkProps = (
     frontends  :: Frontends
-  , id         :: Int
   , folderOpen :: T.Box Boolean
+  , handed     :: GT.Handed
+  , id         :: Int
   , isSelected :: Boolean
-  , name       :: Name
+  , name       :: GT.Name
   , nodeType   :: GT.NodeType
   , session    :: Session
-  , handed     :: GT.Handed
   )
 
 nodeLink :: R2.Component NodeLinkProps
 nodeLink = R.createElement nodeLinkCpt
 
 nodeLinkCpt :: R.Component NodeLinkProps
-nodeLinkCpt = here.component "nodeLink" cpt where
-  cpt { frontends, handed, id, isSelected, name, nodeType, session
-      , folderOpen } _ = do
-    popoverRef <- R.useRef null
-    pure $
-      H.div { className: "node-link", on: { click } }
-      [ H.a { href, data: { for: tooltipId, tip: true } }
-        [ nodeText { isSelected, name, handed } ]
-      , ReactTooltip.reactTooltip { id: tooltipId }
-        [ R2.row
-          [ H.h4 {className: GT.fldr nodeType true}
-            [ H.text $ prettyNodeType nodeType ]
-          , R2.row [ H.span {} [ H.text $ name ]]
-          ]]] where
-           -- NOTE Don't toggle tree if it is not selected
-           -- click on closed -> open
-           -- click on open   -> ?
-           click _ = when (not isSelected) (T.write_ true folderOpen)
-           tooltipId = "node-link-" <> show id
-           href = url frontends $ GT.NodePath (sessionId session) nodeType (Just id)
+nodeLinkCpt = here.component "nodeLink" cpt
+  where
+    cpt { folderOpen
+        , frontends
+        , handed
+        , id
+        , isSelected
+        , name
+        , nodeType
+        , session
+        } _ = do
+      popoverRef <- R.useRef null
+
+      pure $
+        H.div { className: "node-link"
+              , on: { click } }
+          [ H.a { href, data: { for: tooltipId, tip: true } }
+            [ nodeText { handed, isSelected, name } []
+            , ReactTooltip.reactTooltip { id: tooltipId id }
+                [ R2.row
+                    [ H.h4 {className: GT.fldr nodeType true}
+                        [ H.text $ GT.prettyNodeType nodeType ]
+                    ]
+                , R2.row [ H.span {} [ H.text $ name ]]
+                ]
+              ]
+            ]
+
+      where
+        -- NOTE Don't toggle tree if it is not selected
+        -- click on closed -> open
+        -- click on open   -> ?
+        click _ = when (not isSelected) (T.write_ true folderOpen)
+        tooltipId id = "node-link-" <> show id
+        href = url frontends $ GT.NodePath (sessionId session) nodeType (Just id)
+-- END node link
 
 type NodeTextProps =
   ( isSelected :: Boolean
-  , name       :: Name
   , handed     :: GT.Handed
+  , name       :: GT.Name
   )
 
-nodeText :: Record NodeTextProps -> R.Element
-nodeText p = R.createElement nodeTextCpt p []
+nodeText :: R2.Component NodeTextProps
+nodeText = R.createElement nodeTextCpt
 
 nodeTextCpt :: R.Component NodeTextProps
 nodeTextCpt = here.component "nodeText" cpt where
-  cpt { isSelected: true, name } _ =
-    pure $ H.u {} [ H.b {} [ H.text ("| " <> name15 name <> " |    ") ] ]
-  cpt { isSelected: false, name, handed } _ = do
-    pure $ GT.flipHanded l r handed where
-      l = H.text "..." 
-      r = H.text (name15 name)
+  cpt { isSelected, handed, name } _ =
+    pure $ if isSelected then
+              H.u { className }
+                [ H.b {}
+                  [ H.text ("| " <> name15 name <> " |    ") ]
+                ]
+              else
+                GT.flipHanded l r handed where
+                  l = H.text "..."
+                  r = H.text (name15 name)
   name_ len n =
     if S.length n < len then n
     else case (DSCU.slice 0 len n) of
       Nothing -> "???"
       Just s  -> s <> "..."
   name15 = name_ 15
+  className = "node-text"

@@ -68,26 +68,30 @@ addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
       nodeName@(name' /\ setNodeName) <- R.useState' "Name"
       nodeType'@(nt /\ setNodeType)   <- R.useState' $ fromMaybe Folder $ head nodeTypes
 
-      let 
+      let
           SettingsBox {edit} = settingsBox nt
+          setNodeType' nt = do
+            setNodeName $ const $ GT.prettyNodeType nt
+            setNodeType $ const nt
           (maybeChoose /\ nt') = if length nodeTypes > 1
-                           then ([ formChoiceSafe nodeTypes Error setNodeType ] /\ nt)
+                           then ([ formChoiceSafe nodeTypes Error setNodeType' ] /\ nt)
                            else ([H.div {} [H.text $ "Creating a node of type "
                                                   <> show defaultNt
                                                   <> " with name:"
                                            ]
-                                  ] /\ defaultNt 
+                                  ] /\ defaultNt
                                  )
                               where
                                 defaultNt = (fromMaybe Error $ head nodeTypes)
           maybeEdit   = [ if edit
                           then inputWithEnter {
-                              onEnter: \_ -> launchAff_ $ dispatch (AddNode name' nt')
+                              onBlur: \val -> setNodeName $ const val
+                            , onEnter: \_ -> launchAff_ $ dispatch (AddNode name' nt')
                             , onValueChanged: \val -> setNodeName $ const val
                             , autoFocus: true
                             , className: "form-control"
-                            , defaultValue: name'
-                            , placeholder: name'
+                            , defaultValue: name' -- (prettyNodeType nt')
+                            , placeholder: name'  -- (prettyNodeType nt')
                             , type: "text"
                             }
                           else H.div {} []

@@ -21,7 +21,8 @@ import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
 import Gargantext.Components.Nodes.Corpus.Chart.Pie  (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils (mNgramsTypeFromTabType)
-import Gargantext.Components.Nodes.Lists.Types (CacheState, SidePanelTriggers)
+import Gargantext.Components.Nodes.Lists.Types
+import Gargantext.Components.Search as S
 import Gargantext.Components.Tab as Tab
 import Gargantext.Sessions (Session)
 import Gargantext.Types
@@ -53,18 +54,18 @@ tabsCpt = here.component "tabs" cpt where
   cpt props _ = do
     (selected /\ setSelected) <- R.useState' 0
     pure $ Tab.tabs { selected, tabs: tabs' } where
-      tabs' = [ "Terms"      /\ view Terms
-              , "Authors"    /\ view Authors
-              , "Institutes" /\ view Institutes
-              , "Sources"    /\ view Sources
+      tabs' = [ "Terms"      /\ view Terms []
+              , "Authors"    /\ view Authors []
+              , "Institutes" /\ view Institutes []
+              , "Sources"    /\ view Sources []
               ]
       common = RX.pick props :: Record Props
-      view mode = ngramsView $Record.merge common { mode }
+      view mode = ngramsView $ Record.merge common { mode }
 
 type NgramsViewProps = ( mode :: Mode | Props )
 
-ngramsView :: Record NgramsViewProps -> R.Element
-ngramsView props = R.createElement ngramsViewCpt props []
+ngramsView :: R2.Component NgramsViewProps
+ngramsView = R.createElement ngramsViewCpt
 
 ngramsViewCpt :: R.Component NgramsViewProps
 ngramsViewCpt = here.component "ngramsView" cpt where
@@ -99,7 +100,6 @@ ngramsViewCpt = here.component "ngramsView" cpt where
         <> [ NT.mainNgramsTable { afterSync: afterSync chartsReload
                                 , cacheState
                                 , defaultListId
-                                , nodeId: corpusId
                                 , path
                                 , reloadForest
                                 , reloadRoot

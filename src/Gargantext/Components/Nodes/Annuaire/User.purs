@@ -130,6 +130,7 @@ contactInfoItemCpt = here.component "contactInfoItem" cpt
                 autoFocus: true
               , className: "form-control"
               , defaultValue: R.readRef valueRef
+              , onBlur: R.setRef valueRef
               , onEnter: onClick
               , onValueChanged: R.setRef valueRef
               , placeholder

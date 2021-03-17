@@ -104,13 +104,18 @@ subTreeTreeView props = R.createElement subTreeTreeViewCpt props []
 subTreeTreeViewCpt :: R.Component CorpusTreeProps
 subTreeTreeViewCpt = here.component "subTreeTreeViewCpt" cpt where
   cpt p@{ tree: NTree (LNode { id: targetId, name, nodeType }) ary
-        , id, subTreeParams, dispatch, action, handed } _ = 
+        , id, subTreeParams, dispatch, action, handed } _ = do
     pure $ H.div {} $ GT.reverseHanded
       [ H.div { className: nodeClass validNodeType }
-        [ H.span { className: "text", on: { click } }
-          [ nodeText { isSelected: isSelected targetId valAction
-                     , name: " " <> name, handed }
-          , H.span { className: "children" } children ]]]
+        [ H.span { className: "text"
+                 , on: { click } }
+          [ nodeText { handed
+                     , isSelected: isSelected targetId valAction
+                     , name: " " <> name } []
+          , H.span { className: "children" } children
+          ]
+        ]
+      ]
       handed
     where
       nodeClass vnt = "node " <> GT.fldr nodeType true <> " " <> validNodeTypeClass where

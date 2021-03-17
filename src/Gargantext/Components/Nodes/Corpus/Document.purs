@@ -92,14 +92,14 @@ docViewCpt = here.component "docView" cpt
         [ H.div { className: "corpus-doc-view container1" }
           [ R2.row
             [ R2.col 12
-              [ H.h4 {} [ H.span {} [ badge "title", annotate doc.title ] ]
+              [ H.h4 {} [ H.span {} [ badge "title", annotate doc.title [] ] ]
               , H.ul { className: "list-group" }
                 [ li' [ badgeLi "source", text' doc.source ]
               -- TODO add href to /author/ if author present in
                 , li' [ badgeLi "authors", text' doc.authors ]
                 , li' [ badgeLi "date", H.text $ publicationDate $ Document doc ]
                 ]
-              , H.span {} [ badge "abstract", annotate doc.abstract ]
+              , H.span {} [ badge "abstract", annotate doc.abstract [] ]
               , H.div { className: "jumbotron" } [ H.p {} [ H.text "Empty Full Text" ] ]
               ]]]]
       where

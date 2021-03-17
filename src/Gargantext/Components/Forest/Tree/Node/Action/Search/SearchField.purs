@@ -345,7 +345,8 @@ searchInputCpt = here.component "searchInput" cpt
       valueRef <- R.useRef term
 
       pure $ H.div { className: "" } [
-        inputWithEnter { onEnter: onEnter valueRef setSearch
+        inputWithEnter { onBlur: onBlur valueRef setSearch
+                       , onEnter: onEnter valueRef setSearch
                        , onValueChanged: onValueChanged valueRef
                        , autoFocus: false
                        , className: "form-control"
@@ -363,6 +364,9 @@ searchInputCpt = here.component "searchInput" cpt
       --             , type: "text"
       --             }
       --   ]
+    onBlur valueRef setSearch value = do
+      R.setRef valueRef value
+      setSearch $ _ { term = value }
     onEnter valueRef setSearch _ = do
       setSearch $ _ { term = R.readRef valueRef }
 

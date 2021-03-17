@@ -85,7 +85,7 @@ cameraButton { id
         edges <- Sigmax.getEdges s
         nodes <- Sigmax.getNodes s
         let graphData = GET.GraphData $ hyperdataGraph { edges = map GEU.stEdgeToGET edges
-                                                       , nodes = map GEU.stNodeToGET nodes }
+                                                       , nodes = GEU.normalizeNodes $ map GEU.stNodeToGET nodes }
         let cameras = map Sigma.toCamera $ Sigma.cameras s
         let camera = case cameras of
               [c] -> GET.Camera { ratio: c.ratio, x: c.x, y: c.y }

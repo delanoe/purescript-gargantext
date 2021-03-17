@@ -119,9 +119,14 @@ contactInfoItemCpt = here.component "contactInfoItem" cpt
         item (true /\ setIsEditing) valueRef =
           H.div { className: "input-group col-sm-6" }
           [ inputWithEnter
-            { autoFocus: true, className: "form-control", type: "text"
-            , defaultValue: R.readRef valueRef, onEnter: click
-            , onValueChanged: R.setRef valueRef, placeholder }
+            { autoFocus: true
+            , className: "form-control"
+            , defaultValue: R.readRef valueRef
+            , onBlur: R.setRef valueRef
+            , onEnter: click
+            , onValueChanged: R.setRef valueRef
+            , placeholder
+            , type: "text" }
           , H.div { className: "btn input-group-append", on: { click } }
             [ H.div { className: "input-group-text fa fa-floppy-o" } [] ]]
           where

@@ -9,8 +9,9 @@ import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff, launchAff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+
 import Gargantext.Components.Category.Types
-  ( Category(..), Star(..), cat2score, categories, star2score, stars )
+  ( Category(..), Star(..), cat2score, categories, clickAgain, star2score, stars )
 import Gargantext.Components.DocsTable.Types
   ( DocumentsView(..), LocalCategories, LocalUserScore )
 import Gargantext.Utils.Reactix as R2
@@ -34,19 +35,27 @@ rating = R.createElement ratingCpt
 
 ratingCpt :: R.Component RatingProps
 ratingCpt = here.component "rating" cpt where
-  cpt { score, nodeId, row: DocumentsView r, session, setLocalCategories } _ =
-    pure $ H.div {className:"flex"} divs where
-      divs = map (\s -> H.div { className : icon' score s, on: { click: onClick s } } []) stars
+  cpt { nodeId, row: DocumentsView r, score, session, setLocalCategories } _ =
+    pure $ H.div { className:"flex" } divs where
+      divs = map (\s -> H.div { className : icon' score s
+                              , on: { click: onClick s } } []) stars
       icon' Star_0 Star_0  = "fa fa-times-circle"
       icon' _ Star_0       = "fa fa-times"
       icon' c s = if star2score c < star2score s then "fa fa-star-o" else "fa fa-star"
-      onClick c = \_-> do
-        setLocalCategories $ Map.insert r._id c
+      onClick c _ = do
+        let c' = if score == c
+                  then clickAgain c
+                  else c
+
+        setLocalCategories $ Map.insert r._id c'
         void $ launchAff
              $ putRating session nodeId
-             $ RatingQuery {nodeIds: [r._id], rating: c}
+             $ RatingQuery { nodeIds: [r._id], rating: c' }
 
-newtype RatingQuery = RatingQuery { nodeIds :: Array Int, rating :: Star }
+newtype RatingQuery =
+  RatingQuery { nodeIds :: Array Int
+              , rating  :: Star
+              }
 
 instance encodeJsonRatingQuery :: EncodeJson RatingQuery where
   encodeJson (RatingQuery post) =

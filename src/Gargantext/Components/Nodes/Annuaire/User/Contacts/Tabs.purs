@@ -148,30 +148,29 @@ ngramsView = R.createElement ngramsViewCpt
 ngramsViewCpt :: R.Component NgramsViewTabsProps
 ngramsViewCpt = here.component "ngramsView" cpt
   where
-    cpt { reloadRoot
-        , tasks
-        , cacheState
+    cpt { cacheState
         , defaultListId
+        , reloadForest
+        , reloadRoot
         , mode
         , nodeId
         , session
         , sidePanelTriggers
-        , reloadForest } _ = do
+        , tasks } _ = do
       path <- T.useBox $ NTC.initialPageParams session nodeId [defaultListId] (TabDocument TabDocs)
 
       pure $ NT.mainNgramsTable {
-          reloadRoot
-        , afterSync: \_ -> pure unit
-        , tasks
+          afterSync: \_ -> pure unit
         , cacheState
         , defaultListId
-        , nodeId
         , path
-        , tabType
+        , reloadForest
+        , reloadRoot
         , session
         , sidePanelTriggers
         , tabNgramType
-        , reloadForest
+        , tabType
+        , tasks
         , withAutoUpdate: false
         } []
       where

@@ -26,6 +26,7 @@ import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest (forest)
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Controls as Controls
+import Gargantext.Components.GraphExplorer.Search (nodeSearchControl)
 import Gargantext.Components.GraphExplorer.Sidebar as Sidebar
 import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
 import Gargantext.Components.GraphExplorer.Types as GET
@@ -175,6 +176,9 @@ explorerCpt = here.component "explorer" cpt
                     [ col [ spaces [ Toggle.treeToggleButton { state: controls.showTree } [] ]]
                     , col [ spaces [ Toggle.controlsToggleButton { state: controls.showControls } [] ]]
                     , col [ spaces [ Toggle.sidebarToggleButton { state: controls.showSidePanel } [] ]]
+                    , col [ spaces [ nodeSearchControl { graph
+                                                       , multiSelectEnabled: controls.multiSelectEnabled
+                                                       , selectedNodeIds: controls.selectedNodeIds } [] ] ]
                     ]
             ]
         , RH.div { className: "graph-container" } [

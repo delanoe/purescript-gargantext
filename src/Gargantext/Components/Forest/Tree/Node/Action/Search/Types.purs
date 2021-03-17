@@ -17,7 +17,7 @@ import Gargantext.Sessions (Session(..), post)
 import Gargantext.Types as GT
 import URI.Extra.QueryPairs as QP
 import URI.Query as Q
-
+import Data.String as String
 
 type Search = { databases :: Database
               , datafield :: Maybe DataField
@@ -93,7 +93,7 @@ instance encodeJsonDataOriginApi :: EncodeJson DataOriginApi where
 
 datafield2dataOriginApi :: DataField -> DataOriginApi
 datafield2dataOriginApi (External (Just a)) = ExternalOrigin { api : a }
-datafield2dataOriginApi _                   = InternalOrigin { api : IsTex } -- TOD fixme 
+datafield2dataOriginApi _                   = InternalOrigin { api : IsTex } -- TODO fixme 
 
 ------------------------------------------------------------------------
 -- | Database search specifications
@@ -368,7 +368,7 @@ instance searchQueryToQuery :: GT.ToQuery SearchQuery where
 
 instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
   encodeJson (SearchQuery {query, databases, datafield, node_id, lang})
-    =  "query"      := query
+    =  "query"      := (String.replace (String.Pattern "\"") (String.Replacement "\\\"") query)
     -- ~> "datafield"  := "" -- fromMaybe "" datafield
     ~> "databases"  := databases
     ~> "lang"       := maybe "EN" show lang

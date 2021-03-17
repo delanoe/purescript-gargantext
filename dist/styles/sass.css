@@ -140,11 +140,10 @@
   left: 0%;
 }
 .graph-container #controls-container {
-  position: fixed;
+  position: absolute;
   z-index: 999;
   backdrop-filter: blur(4px);
   background: rgba(255, 255, 255, 0.75);
-  overflow: auto;
   left: 0;
   right: 0;
   top: 60px;
@@ -168,7 +167,7 @@
   max-height: 300px;
   overflow-y: scroll;
   width: 300px;
-  top: 100px;
+  top: 50px;
 }
 
 #dafixedtop {
@@ -368,8 +367,11 @@ li .leaf .folder-icon {
   padding: 0 2 0 2;
   cursor: pointer;
 }
-li .leaf .node-link {
+li .leaf .node-link a {
   cursor: pointer;
+}
+li .leaf .node-link > .node-text {
+  color: #000000;
 }
 li .leaf a.settings {
   cursor: pointer;
@@ -537,18 +539,6 @@ li .leaf:hover a.settings {
   padding-top: 60px;
 }
 
-.code-editor-heading {
-  /* .buttons-right */
-  /*   display: flex */
-  /*   justify-content: flex-end */
-}
-.code-editor-heading .renameable {
-  flex-grow: 2;
-}
-.code-editor-heading .renameable .text {
-  padding-right: 10px;
-}
-
 .code-editor .editor .code-area {
   flex-grow: 1;
   max-height: 200px;
@@ -656,11 +646,11 @@ li .leaf:hover a.settings {
   cursor: pointer;
 }
 #page-wrapper .side-panel {
-  background-color: white;
   left: 70%;
   padding: 5px;
   position: fixed;
   top: 60px;
+  background-color: #fff;
   width: 28%;
 }
 #page-wrapper .side-panel .header {
@@ -735,6 +725,15 @@ ul .nav {
 }
 ul li {
   color: #005a9aff;
+}
+
+.frame iframe {
+  border: 0;
+}
+
+.join-button {
+  padding-bottom: 100px;
+  padding-top: 100px;
 }
 
 .range {

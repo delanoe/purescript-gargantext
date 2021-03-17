@@ -10,7 +10,6 @@ module Gargantext.Components.Forest
 
 import Data.Array as A
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Set as Set
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Reactix as R

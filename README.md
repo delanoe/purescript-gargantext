@@ -123,7 +123,8 @@ the docker container.
 
 ### Basic tasks
 
-Now we must install our javascript and purescript dependencies:
+Now we must install our javascript and purescript dependencies:  
+*Note: if you're installing manually you might also need to manually install [psc-package](https://github.com/purescript/psc-package)*
 
 ```shell
 darn install -D && darn install-ps # for docker setup
@@ -191,6 +192,14 @@ yarn css # for manual setup
 <!-- development server is running. -->
 
 A guide to getting set up with the IDE integration is coming soon, I hope.
+
+### Testing
+
+To run unit tests, just run:
+
+``` shell
+test-ps
+```
 
 ### Note to contributors
 

@@ -22,7 +22,6 @@ import Toestand as T
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Button (centerButton, cameraButton)
 import Gargantext.Components.GraphExplorer.RangeControl (edgeConfluenceControl, edgeWeightControl, nodeSizeControl)
-import Gargantext.Components.GraphExplorer.Search (nodeSearchControl)
 import Gargantext.Components.GraphExplorer.SlideButton (labelSizeButton, mouseSelectorSizeButton)
 import Gargantext.Components.GraphExplorer.ToggleButton (multiSelectEnabledButton, edgesToggleButton, louvainToggleButton, pauseForceAtlasButton)
 import Gargantext.Components.GraphExplorer.Types as GET
@@ -180,15 +179,13 @@ controlsCpt = here.component "controls" cpt
                    , RH.li { className: "nav-item" } [ multiSelectEnabledButton { state: multiSelectEnabled } [] ]  -- toggle multi node selection
               -- save button
                    , RH.li { className: "nav-item" }
-                       [ nodeSearchControl { graph: graph
-                                           , multiSelectEnabled: multiSelectEnabled
-                                           , selectedNodeIds: selectedNodeIds } [] ]
-                   , RH.li { className: "nav-item" } [ mouseSelectorSizeButton sigmaRef localControls.mouseSelectorSize ]
-                   , RH.li { className: "nav-item" } [ cameraButton { id: graphId
-                                      , hyperdataGraph: hyperdataGraph
-                                      , session: session
-                                      , sigmaRef: sigmaRef
-                                      , reloadForest: reloadForest } ]
+                     [ mouseSelectorSizeButton sigmaRef localControls.mouseSelectorSize ]
+                   , RH.li { className: "nav-item" }
+                     [ cameraButton { id: graphId
+                                    , hyperdataGraph: hyperdataGraph
+                                    , session: session
+                                    , sigmaRef: sigmaRef
+                                    , reloadForest: reloadForest } ]
             ]
           ]
           --   RH.ul {} [ -- change type button (?)

@@ -132,7 +132,6 @@ ngramsViewCpt = here.component "ngramsView" cpt where
 type NTCommon =
   ( cacheState        :: T.Box LTypes.CacheState
   , defaultListId     :: Int
-  , nodeId            :: Int
   , reloadForest      :: T.Box T2.Reload
   , reloadRoot        :: T.Box T2.Reload
   , session           :: Session

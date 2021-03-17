@@ -142,7 +142,7 @@ tableContainerCpt { dispatch
                                               $ CoreAction
                                               $ addNewNgramA
                                               (normNgram tabNgramType searchQuery)
-                                              CandidateTerm
+                                              MapTerm
                                             }
                                       }
                              [ H.text ("Add " <> searchQuery) ]
@@ -531,9 +531,8 @@ selectNgramsOnFirstPage rows = Set.fromFoldable $ (view $ _NgramsElement <<< _ng
 type MainNgramsTableProps = (
     cacheState        :: T.Box NT.CacheState
   , defaultListId     :: Int
-  , nodeId            :: Int
     -- ^ This node can be a corpus or contact.
-  , path             :: T.Box PageParams
+  , path              :: T.Box PageParams
   , session           :: Session
   , tabType           :: TabType
   | CommonProps
@@ -548,18 +547,15 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
     cpt props@{ afterSync
               , cacheState
               , defaultListId
-              , nodeId
               , path
               , reloadForest
               , reloadRoot
-              , session
               , sidePanelTriggers
               , tabNgramType
-              , tabType
               , tasks
               , withAutoUpdate } _ = do
       cacheState' <- T.useLive T.unequal cacheState
-      path' <- T.useLive T.unequal path
+      path'@{ nodeId, tabType, session } <- T.useLive T.unequal path
 
       -- let path = initialPageParams session nodeId [defaultListId] tabType
 
@@ -576,7 +572,7 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
                                                       , versioned
                                                       , withAutoUpdate } []
           useLoaderWithCacheAPI {
-              cacheEndpoint: versionEndpoint props
+              cacheEndpoint: versionEndpoint { defaultListId, path: path' }
             , handleResponse
             , mkRequest
             , path: path'
@@ -597,8 +593,8 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
           useLoader path' loader render
 
     -- NOTE With cache on
-    versionEndpoint :: Record MainNgramsTableProps -> PageParams -> Aff Version
-    versionEndpoint { defaultListId, nodeId, session, tabType } _ = get session $ R.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
+    -- versionEndpoint :: Record MainNgramsTableProps -> PageParams -> Aff Version
+    versionEndpoint { defaultListId, path: { nodeId, tabType, session } } _ = get session $ R.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
 
     -- NOTE With cache off
     loader :: PageParams -> Aff VersionedWithCountNgramsTable

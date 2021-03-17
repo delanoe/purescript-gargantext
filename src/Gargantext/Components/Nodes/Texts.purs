@@ -76,9 +76,10 @@ textsWithForestCpt = here.component "textsWithForest" cpt
       pure $ Forest.forestLayoutWithTopBar forestProps
         [ topBar { controls } []
         , textsLayout (Record.merge textProps { controls }) []
+        -- TODO remove className "side-panel" is preview is not triggered
+        -- , H.div { className: "" }
         , H.div { className: "side-panel" }
           [ sidePanel { controls, session } [] ]]
-
 
 
 type TopBarProps = ( controls :: Record TextsLayoutControls )
@@ -361,7 +362,6 @@ docViewLayoutRec { cacheState
 
 
 --------------------------------------------------------
-
 type SidePanelProps = (
     controls :: Record TextsLayoutControls
   , session  :: Session

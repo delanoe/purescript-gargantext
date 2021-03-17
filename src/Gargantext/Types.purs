@@ -4,6 +4,7 @@ import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson
 import Data.Argonaut.Decode.Error (JsonDecodeError(..))
 import Data.Array as A
 import Data.Either (Either(..))
+import Data.String as S
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Ord (genericCompare)
@@ -763,3 +764,15 @@ progressPercent (AsyncProgress {log}) = perc
         where
           nom = toNumber $ failed + succeeded
           denom = toNumber $ failed + succeeded + remaining
+
+---------------------------------------------------------------------------
+-- | GarganText Internal Sugar
+
+prettyNodeType :: NodeType -> String
+prettyNodeType nt = S.replace (S.Pattern "Node")   (S.Replacement " ")
+                  $ S.replace (S.Pattern "Folder") (S.Replacement " ")
+                  $ show nt
+
+
+
+
