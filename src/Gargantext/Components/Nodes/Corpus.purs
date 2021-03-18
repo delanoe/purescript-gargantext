@@ -27,10 +27,12 @@ import Gargantext.Data.Array as GDA
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI, Children))
 import Gargantext.Sessions (Session, get, put, sessionId)
-import Gargantext.Types (NodeType(..), AffTableResult)
+import Gargantext.Types (NodeType(..), AffTableResult, SessionId)
+import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
+import Gargantext.Routes
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -83,11 +85,11 @@ corpusLayoutView props = R.createElement corpusLayoutViewCpt props []
 corpusLayoutViewCpt :: R.Component ViewProps
 corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" cpt
   where
-    cpt {corpus: (NodePoly {hyperdata: Hyperdata {fields}}), nodeId, reload, session} _ = do
+    cpt {corpus: (NodePoly {hyperdata: Hyperdata {fields}, parentId}), nodeId, reload, session} _ = do
       let fieldsWithIndex = List.mapWithIndex (\idx -> \t -> Tuple idx t) fields
       fieldsS <- R.useState' fieldsWithIndex
       fieldsRef <- R.useRef fields
-      viewType <- R.useState' Code
+      viewType <- R.useState' Folders
 
       -- handle props change of fields
       R.useEffect1' fields $ do
@@ -107,9 +109,13 @@ corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" c
           , H.div { className: "col-1" } [ viewTypeSelector {state: viewType} ]
           ]
         , H.div {}
-          [ renderContent (fst viewType) { fields: fieldsS
-                             , nodeId
-                             , session } ]
+          [ renderContent (fst viewType) 
+                          { fields: fieldsS
+                          , nodeId
+                          , session}
+                          { parentId
+                          , nodeId 
+                          , session} ]
         , H.div { className: "row" }
           [ H.div { className: "btn btn-primary"
                   , on: { click: onClickAdd fieldsS }
@@ -119,8 +125,9 @@ corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" c
           ]
         ]
 
-    renderContent Code props = fieldsCodeEditor props []
-    renderContent Folders _ = H.div {} []
+    renderContent :: ViewType -> Record FieldsCodeEditorProps -> Record FolderLoadProps -> R.Element
+    renderContent Code props _ = fieldsCodeEditor props []
+    renderContent Folders _ props = folderViewLoad props
 
     saveEnabled :: FTFieldsWithIndex -> R.State FTFieldsWithIndex -> String
     saveEnabled fs (fsS /\ _) = if fs == fsS then "disabled" else "enabled"
@@ -139,6 +146,78 @@ corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" c
     onClickAdd :: forall e. R.State FTFieldsWithIndex -> e -> Effect Unit
     onClickAdd (_ /\ setFieldsS) _ = do
       setFieldsS $ \fieldsS -> List.snoc fieldsS $ Tuple (List.length fieldsS) defaultField
+
+type FolderLoadProps = 
+  ( 
+    nodeId :: Int
+  , parentId :: Int
+  , session :: Session
+  )
+
+data FolderStyle = FolderUp | FolderChild
+
+folderViewLoad :: Record FolderLoadProps -> R.Element
+folderViewLoad props = R.createElement folderViewLoadCpt props []
+
+folderViewLoadCpt :: R.Component FolderLoadProps
+folderViewLoadCpt = R.hooksComponentWithModule thisModule "folderViewLoadCpt" cpt where
+  cpt {parentId, nodeId, session} _ = do
+    useLoader {nodeId, session} loadFolders $
+      \folders -> folderView {folders, parentId, nodeId, session}
+
+type FolderViewProps = 
+  ( 
+    nodeId :: Int
+  , folders:: FTree
+  , parentId :: Int
+  , session :: Session
+  )
+
+folderView :: Record FolderViewProps -> R.Element
+folderView props = R.createElement folderViewCpt props []
+
+folderViewCpt :: R.Component FolderViewProps
+folderViewCpt = R.hooksComponentWithModule thisModule "folderViewCpt" cpt where
+  cpt {parentId, nodeId, session, folders: (NTree _ (foldersS))} _ = do
+    let sid = sessionId session 
+    let children = makeFolderElements foldersS sid
+
+    pure $ H.div {className: "folders"} $ [folder {style: FolderUp, text: "..", nodeId: parentId, sid: sid, nodeType: FolderPrivate} []] <> children
+
+  makeFolderElements :: Array (NTree LNode) -> SessionId -> Array R.Element
+  makeFolderElements foldersS sid = makeFolderElementsMap <$> foldersS where
+    makeFolderElementsMap :: NTree LNode -> R.Element
+    makeFolderElementsMap (NTree (LNode node) _) = folder {style: FolderChild, text: node.name, nodeId: node.id, nodeType: node.nodeType, sid: sid} []
+
+type FolderProps = 
+  (
+    style :: FolderStyle
+  , text :: String
+  , nodeType :: NodeType
+  , nodeId :: Int
+  , sid :: SessionId
+  )
+
+folder :: R2.Component FolderProps
+folder = R.createElement folderCpt
+
+folderCpt :: R.Component FolderProps
+folderCpt = R.hooksComponentWithModule thisModule "folderCpt" cpt where
+  cpt {style, text, nodeId, sid, nodeType} _ = do
+    pure $ H.a {className: "btn btn-primary", href: "/#/" <> getFolderPath nodeType sid nodeId}  [ H.i { className: "fa " <> (icon style nodeType) } []
+                                                                   , H.br {}
+                                                                   , H.text text]
+
+  icon FolderUp _ = "fa-folder-open"
+  icon _ Dashboard = "fa-signal"
+  icon _ Texts = "fa-newspaper-o"
+  icon _ NodeList = "fa-list"
+  icon _ Graph = "fa-hubzilla"
+  icon _ NodeFile = "fa-file"
+  icon FolderChild _  = "fa-folder"
+
+  getFolderPath nodeType sid nodeId = appPath $ fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
+
 
 type FieldsCodeEditorProps =
   (
@@ -333,6 +412,9 @@ type LoadProps =
 loadCorpus' :: Record LoadProps -> Aff (NodePoly Hyperdata)
 loadCorpus' {nodeId, session} = get session $ NodeAPI Corpus (Just nodeId) ""
 
+loadFolders :: Record LoadProps -> Aff FTree
+loadFolders {nodeId, session} = get session $ TreeFirstLevel (Just nodeId) ""
+
 -- Just to make reloading effective
 loadCorpusWithReload :: {reload :: GUR.Reload  | LoadProps} -> Aff (NodePoly Hyperdata)
 loadCorpusWithReload {nodeId, session} = loadCorpus' {nodeId, session}
@@ -415,8 +497,8 @@ viewTypeSelectorCpt = R.hooksComponentWithModule thisModule "viewTypeSelector" c
     cpt {state} _ =
       pure $ H.div { className: "btn-group"
                    , role: "group" } [
-          viewTypeButton Code state
-        , viewTypeButton Folders state
+          viewTypeButton Folders state
+        , viewTypeButton Code state
         ]
 
     viewTypeButton viewType (state /\ setState) =

@@ -821,4 +821,11 @@ ul li {
   background-color: #F5949931;
 }
 
+.folders {
+  display: grid;
+  grid-template-columns: 100px 100px 100px;
+  gap: 10px;
+  margin: 10px 0px;
+}
+
 /*# sourceMappingURL=sass.css.map */
