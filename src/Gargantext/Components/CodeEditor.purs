@@ -19,10 +19,12 @@ import Text.Markdown.SlamDown.Parser (parseMd)
 import Text.Markdown.SlamDown.Smolder as MD
 import Text.Markdown.SlamDown.Syntax (SlamDownP)
 import Text.Smolder.Renderer.String as Smolder
+import Toestand as T
 
 import Gargantext.Prelude
 import Gargantext.Utils.HighlightJS as HLJS
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.CodeEditor"
@@ -30,6 +32,7 @@ here = R2.here "Gargantext.Components.CodeEditor"
 type Code = String
 type Html = String
 type Error = String
+type ElRef = R.Ref (Nullable Element)
 
 data CodeType = Haskell | JSON | Markdown | Python
 
@@ -113,23 +116,26 @@ codeEditorCpt = here.component "codeEditor" cpt
     cpt {code, defaultCodeType, onChange} _ = do
       controls <- initControls code defaultCodeType
 
-      R.useEffect2' (fst controls.codeS) (fst controls.codeType) $ do
-        let code' = fst controls.codeS
-        setCodeOverlay controls code'
-        renderHtml code' controls
+      codeS' <- T.useLive T.unequal controls.codeS
+      codeType' <- T.useLive T.unequal controls.codeType
+      viewType' <- T.useLive T.unequal controls.viewType
+
+      R.useEffect2' codeS' codeType' $ do
+        setCodeOverlay controls.codeOverlayElRef codeType' codeS'
+        renderHtml codeS' codeType' controls.htmlElRef controls.error
 
       pure $ H.div { className: "code-editor" }
-        [ toolbar {controls, onChange}
+        [ toolbar { controls, onChange }
         , H.div { className: "row error" }
           [ errorComponent {error: controls.error} ]
         , H.div { className: "row editor" }
-          [ H.div { className: "code-area " <> (codeHidden $ fst controls.viewType) }
+          [ H.div { className: "code-area " <> (codeHidden viewType') }
             [ H.div { className: "code-container" }
-              [ H.textarea { defaultValue: code
-                           , on: { change: onEditChange controls onChange }
+              [ H.textarea { defaultValue: codeS'
+                           , on: { change: onEditChange controls.codeS codeType' onChange }
                            , placeholder: "Type some code..."
                            , ref: controls.codeElRef } [ ]
-              , H.pre  { className: (langClass $ fst controls.codeType)
+              , H.pre  { className: (langClass codeType')
                          -- , contentEditable: "true"
                        , ref: controls.codeOverlayElRef
                        , rows: 30
@@ -137,8 +143,8 @@ codeEditorCpt = here.component "codeEditor" cpt
                        } []
               ]
              ]
-           , H.div { className: "v-divider " <> (dividerHidden $ fst controls.viewType) } [ H.text " " ]
-           , H.div { className: "html " <> (langClass $ fst controls.codeType) <> (previewHidden $ fst controls.viewType)
+           , H.div { className: "v-divider " <> (dividerHidden viewType') } [ H.text " " ]
+           , H.div { className: "html " <> (langClass codeType') <> (previewHidden viewType')
                    , ref: controls.htmlElRef
                    } []
            ]
@@ -164,14 +170,14 @@ codeEditorCpt = here.component "codeEditor" cpt
     previewHidden Both = ""
     previewHidden _ = " d-none"
 
-    onEditChange :: forall e. Record Controls -> (CodeType -> Code -> Effect Unit) -> e -> Effect Unit
-    onEditChange controls@{codeElRef, codeOverlayElRef, codeType: (codeType /\ _), codeS} onChange e = do
+    onEditChange :: forall e. T.Box Code -> CodeType -> OnChangeCodeType -> e -> Effect Unit
+    onEditChange codeS codeType onChange e = do
       let code = R.unsafeEventValue e
-      snd codeS $ const code
+      T.write_ code codeS
       onChange codeType code
 
-setCodeOverlay :: Record Controls -> Code -> Effect Unit
-setCodeOverlay {codeOverlayElRef, codeType: (codeType /\ _)} code = do
+setCodeOverlay :: ElRef -> CodeType -> Code -> Effect Unit
+setCodeOverlay codeOverlayElRef codeType code = do
   let mCodeOverlayEl = toMaybe $ R.readRef codeOverlayElRef
   _ <- case mCodeOverlayEl of
     Nothing -> pure unit
@@ -181,23 +187,25 @@ setCodeOverlay {codeOverlayElRef, codeType: (codeType /\ _)} code = do
       pure unit
   pure unit
 
-renderHtml :: Code -> Record Controls -> Effect Unit
-renderHtml code {codeType: (codeType /\ _), htmlElRef, error: (_ /\ setError)} =
+renderHtml :: Code -> CodeType -> ElRef -> T.Box (Maybe Error) -> Effect Unit
+renderHtml code codeType htmlElRef error =
   case (toMaybe $ R.readRef htmlElRef) of
     Nothing -> pure unit
     Just htmlEl -> do
       case render codeType code of
         Left err -> do
-          setError $ const $ Just err
+          T.write_ (Just err) error
         Right rendered -> do
-          setError $ const Nothing
+          T.write_ Nothing error
           _ <- pure $ (htmlEl .= "innerHTML") rendered
           previewPostProcess codeType htmlEl
           pure unit
 
+type OnChangeCodeType = CodeType -> Code -> Effect Unit
+
 type ToolbarProps = (
     controls :: Record Controls
-  , onChange :: CodeType -> Code -> Effect Unit
+  , onChange :: OnChangeCodeType
   )
 
 toolbar :: Record ToolbarProps -> R.Element
@@ -206,30 +214,28 @@ toolbar p = R.createElement toolbarCpt p []
 toolbarCpt :: R.Component ToolbarProps
 toolbarCpt = here.component "toolbar" cpt
   where
-    cpt props@{controls: {codeType, error, viewType}} _ = do
+    cpt props@{ controls: { codeS, codeType, error, viewType }
+              , onChange } _ = do
+      codeS' <- T.useLive T.unequal codeS
+      codeType' <- T.useLive T.unequal codeType
+
       pure $
         H.div { className: "row toolbar" }
           [ H.div { className: "col-2" }
                [ codeTypeSelector {
                    codeType
-                 , onChange: onChangeCodeType props
+                  -- Handle rerendering of preview when viewType changed
+                 , onChange: \ct -> onChange ct codeS'
                  }
                ]
           , H.div { className: "col-1" }
-             [ viewTypeSelector {state: viewType} ]
+             [ viewTypeSelector {state: viewType} [] ]
           ]
-
-    -- Handle rerendering of preview when viewType changed
-    onChangeCodeType :: forall e. Record ToolbarProps -> e -> Effect Unit
-    onChangeCodeType {controls, onChange} _ = do
-      onChange (fst controls.codeType) code
-      where
-        code = fst controls.codeS
 
 
 type ErrorComponentProps =
   (
-    error :: R.State (Maybe Error)
+    error :: T.Box (Maybe Error)
   )
 
 errorComponent :: Record ErrorComponentProps -> R.Element
@@ -238,14 +244,17 @@ errorComponent p = R.createElement errorComponentCpt p []
 errorComponentCpt :: R.Component ErrorComponentProps
 errorComponentCpt = here.component "errorComponent" cpt
   where
-    cpt {error: (Nothing /\ _)} _ = pure $ H.div {} []
-    cpt {error: ((Just error) /\ _)} _ = do
-      pure $ H.div { className: "text-danger" } [ H.text error ]
+    cpt { error } _ = do
+      error' <- T.useLive T.unequal error
+
+      pure $ case error' of
+        Nothing -> H.div {} []
+        Just err -> H.div { className: "text-danger" } [ H.text err ]
 
 
 type CodeTypeSelectorProps =
   (
-    codeType :: R.State CodeType
+    codeType :: T.Box CodeType
   , onChange :: CodeType -> Effect Unit
   )
 
@@ -255,9 +264,11 @@ codeTypeSelector p = R.createElement codeTypeSelectorCpt p []
 codeTypeSelectorCpt :: R.Component CodeTypeSelectorProps
 codeTypeSelectorCpt = here.component "codeTypeSelector" cpt
   where
-    cpt {codeType, onChange} _ = do
+    cpt { codeType, onChange } _ = do
+      codeType' <- T.useLive T.unequal codeType
+
       pure $ R2.select { className: "form-control"
-                       , defaultValue: show $ fst codeType
+                       , defaultValue: show codeType'
                        , on: { change: onSelectChange codeType onChange }
                        , style: { width: "150px" }
                        }
@@ -266,51 +277,50 @@ codeTypeSelectorCpt = here.component "codeTypeSelector" cpt
     option :: CodeType -> R.Element
     option value = H.option { value: show value } [ H.text $ show value ]
 
-    onSelectChange :: forall e. R.State CodeType -> (CodeType -> Effect Unit) -> e -> Effect Unit
-    onSelectChange (_ /\ setCodeType) onChange e = do
-      let codeType = case value of
+    onSelectChange :: forall e. T.Box CodeType -> (CodeType -> Effect Unit) -> e -> Effect Unit
+    onSelectChange codeType onChange e = do
+      let ct = case value of
             "Haskell"  -> Haskell
             "JSON"     -> JSON
             "Markdown" -> Markdown
             "Python"   -> Python
             _          -> Markdown
-      setCodeType $ const codeType
-      onChange codeType
+      T.write_ ct codeType
+      onChange ct
       where
         value = R.unsafeEventValue e
 
 
 type ViewTypeSelectorProps =
   (
-    state :: R.State ViewType
+    state :: T.Box ViewType
   )
 
-viewTypeSelector :: Record ViewTypeSelectorProps -> R.Element
-viewTypeSelector p = R.createElement viewTypeSelectorCpt p []
+viewTypeSelector :: R2.Component ViewTypeSelectorProps
+viewTypeSelector = R.createElement viewTypeSelectorCpt
 
 viewTypeSelectorCpt :: R.Component ViewTypeSelectorProps
 viewTypeSelectorCpt = here.component "viewTypeSelector" cpt
   where
-    cpt {state} _ =
+    cpt { state } _ = do
+      state' <- T.useLive T.unequal state
+
       pure $ H.div { className: "btn-group"
                    , role: "group" } [
-          viewTypeButton Code state
-        , viewTypeButton Both state
-        , viewTypeButton Preview state
+          viewTypeButton Code state' state
+        , viewTypeButton Both state' state
+        , viewTypeButton Preview state' state
         ]
 
-    viewTypeButton viewType (state /\ setState) =
+    viewTypeButton viewType state' state =
       H.button { className: "btn btn-primary" <> active
-               , on: { click: onClick }
+               , on: { click: \_ -> T.write viewType state }
                , type: "button"
                } [
         H.i { className: "fa " <> (icon viewType) } []
       ]
       where
-        active = if viewType == state then " active" else ""
-
-        onClick _ = do
-          setState $ const viewType
+        active = if viewType == state' then " active" else ""
 
     icon Preview = "fa-eye"
     icon Both = "fa-columns"
@@ -319,23 +329,23 @@ viewTypeSelectorCpt = here.component "viewTypeSelector" cpt
 type Controls =
   (
       codeElRef :: R.Ref (Nullable Element)
-    , codeS :: R.State Code
-    , codeType :: R.State CodeType
+    , codeS :: T.Box Code
+    , codeType :: T.Box CodeType
     , codeOverlayElRef :: R.Ref (Nullable Element)
-    , error :: R.State (Maybe Error)
+    , error :: T.Box (Maybe Error)
     , htmlElRef :: R.Ref (Nullable Element)
-    , viewType :: R.State ViewType
+    , viewType :: T.Box ViewType
   )
 
 initControls :: Code -> CodeType -> R.Hooks (Record Controls)
 initControls code defaultCodeType = do
   htmlElRef <- R.useRef null
-  codeS <- R.useState' code
+  codeS <- T.useBox code
   codeElRef <- R.useRef null
   codeOverlayElRef <- R.useRef null
-  codeType <- R.useState' defaultCodeType
-  error <- R.useState' Nothing
-  viewType <- R.useState' Preview
+  codeType <- T.useBox defaultCodeType
+  error <- T.useBox Nothing
+  viewType <- T.useBox Preview
 
   pure $ {
       codeElRef
@@ -348,7 +358,7 @@ initControls code defaultCodeType = do
     }
 
 reinitControls :: Record Controls -> Code -> CodeType -> Effect Unit
-reinitControls c@{codeType, codeS, error} code defaultCodeType = do
-  snd codeType $ const defaultCodeType
-  snd codeS $ const code
-  snd error $ const Nothing
+reinitControls c@{ codeType, codeS, error } code defaultCodeType = do
+  T.write_ defaultCodeType codeType
+  T.write_ code codeS
+  T.write_ Nothing error
