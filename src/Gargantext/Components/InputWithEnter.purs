@@ -11,15 +11,15 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.InputWithEnter"
 
 type Props a = (
-    onBlur :: String -> Effect Unit
-  , onEnter :: Unit -> Effect Unit
+    onBlur         :: String -> Effect Unit
+  , onEnter        :: Unit -> Effect Unit
   , onValueChanged :: String -> Effect Unit
 
-  , autoFocus :: Boolean
-  , className :: String
-  , defaultValue :: String
-  , placeholder :: String
-  , type :: String
+  , autoFocus      :: Boolean
+  , className      :: String
+  , defaultValue   :: String
+  , placeholder    :: String
+  , type           :: String
   )
 
 inputWithEnter :: forall a. Record (Props a) -> R.Element
