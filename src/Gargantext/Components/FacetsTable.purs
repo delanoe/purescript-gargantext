@@ -3,9 +3,6 @@
 --       has not been ported to this module yet.
 module Gargantext.Components.FacetsTable where
 
-import Prelude
-  ( class Eq, class Show, Unit, bind, const, discard, identity, mempty, not
-  , otherwise, pure, unit, void, ($), (*>), (<$>), (<<<), (<>), (==), (>) )
 import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
@@ -22,6 +19,8 @@ import Effect.Aff (Aff, launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
+
+import Gargantext.Prelude
 
 import Gargantext.Components.Category (CategoryQuery(..), putCategories)
 import Gargantext.Components.Category.Types (Category(..), decodeCategory, favCategory)
@@ -106,15 +105,18 @@ newtype ContactsView =
   , annuaireId :: Int
   , delete     :: Boolean
   }
-
 derive instance genericContactsView :: Generic ContactsView _
-
+instance eqContactsView :: Eq ContactsView where
+  eq = genericEq
 instance showContactsView :: Show ContactsView where
   show = genericShow
 
 ----------------------------------------------------------------------
 data Rows = Docs     { docs     :: Seq DocumentsView }
           | Contacts { contacts :: Seq ContactsView  }
+derive instance genericRows :: Generic Rows _
+instance eqRows :: Eq Rows where
+  eq = genericEq
 
 ----------------------------------------------------------------------
 

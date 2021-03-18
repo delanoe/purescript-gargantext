@@ -3,6 +3,7 @@ module Gargantext.Components.Search where
 import Gargantext.Prelude (class Eq, class Show)
 import Data.Argonaut as Argonaut
 import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe)
 
@@ -74,9 +75,9 @@ data Document =
            , category   :: Int
            , score      :: Int
            }
-
-derive instance eqDocument :: Eq Document
 derive instance genericDocument :: Generic Document _
+instance eqDocument :: Eq Document where
+  eq = genericEq
 instance showDocument :: Show Document where
   show = genericShow
 instance decodeJsonDocument :: Argonaut.DecodeJson Document where

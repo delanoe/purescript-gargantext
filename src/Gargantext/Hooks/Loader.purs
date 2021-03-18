@@ -16,6 +16,9 @@ import Gargantext.Utils.Crypto (Hash)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 
+here :: R2.Here
+here = R2.here "Gargantext.Hooks.Loader"
+
 cacheName :: String
 cacheName = "cache-api-loader"
 
@@ -23,22 +26,43 @@ clearCache :: Unit -> Aff Unit
 clearCache _ = GUC.delete $ GUC.CacheName cacheName
 
 
-useLoader :: forall path st. Eq path
+useLoader :: forall path st. Eq path => Eq st
           => path
           -> (path -> Aff st)
           -> (st -> R.Element)
           -> R.Hooks R.Element
-useLoader path loader render = do
-  state <- R.useState' Nothing
-  useLoaderEffect path state loader
-  pure $ maybe (loadingSpinner {}) render (fst state)
+useLoader path loader' render = do
+  state <- T.useBox Nothing
 
-useLoaderEffect :: forall st path. Eq path =>
+  useLoaderEffect path state loader'
+
+  pure $ loader { path, render, state } []
+
+
+type LoaderProps path st =
+  ( path   :: path
+  , render :: st -> R.Element
+  , state  :: T.Box (Maybe st) )
+
+loader :: forall path st. Eq path => Eq st => R2.Component (LoaderProps path st)
+loader = R.createElement loaderCpt
+
+loaderCpt :: forall path st. Eq path => Eq st => R.Component (LoaderProps path st)
+loaderCpt = here.component "loader" cpt
+  where
+    cpt { path, render, state } _ = do
+      state' <- T.useLive T.unequal state
+
+      pure $ maybe (loadingSpinner {}) render state'
+
+
+useLoaderEffect :: forall st path. Eq path => Eq st =>
                       path
-                   -> R.State (Maybe st)
+                   -> T.Box (Maybe st)
                    -> (path -> Aff st)
                    -> R.Hooks Unit
-useLoaderEffect path state@(state' /\ setState) loader = do
+useLoaderEffect path state loader = do
+  state' <- T.useLive T.unequal state
   oPath <- R.useRef path
 
   R.useEffect' $ do
@@ -49,7 +73,7 @@ useLoaderEffect path state@(state' /\ setState) loader = do
       R.setRef oPath path
       R2.affEffect "G.H.Loader.useLoaderEffect" $ do
         l <- loader path
-        liftEffect $ setState $ const $ Just l
+        liftEffect $ T.write_ (Just l) state
 
 
 newtype HashedResponse a = HashedResponse { hash  :: Hash, value :: a }

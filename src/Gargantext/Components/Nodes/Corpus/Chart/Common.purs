@@ -28,10 +28,10 @@ type MetricsLoadViewProps a = (
 cacheName :: String
 cacheName = "metrics"
 
-metricsLoadView :: forall a. Record (MetricsLoadViewProps a) -> R.Element
+metricsLoadView :: forall a. Eq a => Record (MetricsLoadViewProps a) -> R.Element
 metricsLoadView p = R.createElement metricsLoadViewCpt p []
 
-metricsLoadViewCpt :: forall a. R.Component (MetricsLoadViewProps a)
+metricsLoadViewCpt :: forall a. Eq a => R.Component (MetricsLoadViewProps a)
 metricsLoadViewCpt = here.component "metricsLoadView" cpt
   where
     cpt { getMetrics, loaded, path, reload, session } _ = do

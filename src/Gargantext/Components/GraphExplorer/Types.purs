@@ -65,6 +65,9 @@ newtype GraphSideCorpus = GraphSideCorpus
   , corpusLabel :: CorpusLabel
   , listId      :: ListId
   }
+derive instance genericGraphSideCorpus :: Generic GraphSideCorpus _
+instance eqGraphSideCorpus :: Eq GraphSideCorpus where
+  eq = genericEq
 
 newtype GraphData = GraphData
   { nodes :: Array Node
@@ -72,8 +75,10 @@ newtype GraphData = GraphData
   , sides :: Array GraphSideCorpus
   , metaData :: Maybe MetaData
   }
-
 derive instance newtypeGraphData :: Newtype GraphData _
+derive instance genericGraphData :: Generic GraphData _
+instance eqGraphData :: Eq GraphData where
+  eq = genericEq
 
 
 newtype MetaData = MetaData
@@ -86,6 +91,9 @@ newtype MetaData = MetaData
   , startForceAtlas :: Boolean
   , title    :: String
   }
+derive instance genericMetaData :: Generic MetaData _
+instance eqMetaData :: Eq MetaData where
+  eq = genericEq
 
 getLegend :: GraphData -> Maybe (Array Legend)
 getLegend (GraphData {metaData}) = (\(MetaData m) -> m.legend) <$> metaData
@@ -291,7 +299,9 @@ newtype Camera =
          , x     :: Number
          , y     :: Number
          }
-
+derive instance genericCamera :: Generic Camera _
+instance eqCamera :: Eq Camera where
+  eq = genericEq
 instance decodeCamera :: DecodeJson Camera where
   decodeJson json = do
     obj   <- decodeJson json
@@ -299,7 +309,6 @@ instance decodeCamera :: DecodeJson Camera where
     x     <- obj .: "x"
     y     <- obj .: "y"
     pure $ Camera { ratio, x, y }
-
 instance jsonEncodeCamera :: EncodeJson Camera where
   encodeJson (Camera c) =
        "ratio" := c.ratio
@@ -312,14 +321,15 @@ newtype HyperdataGraph = HyperdataGraph {
     graph   :: GraphData
   , mCamera :: Maybe Camera
   }
-
+derive instance genericHyperdataGraph :: Generic HyperdataGraph _
+instance eqHyperdataGraph :: Eq HyperdataGraph where
+  eq = genericEq
 instance decodeHyperdataGraph :: DecodeJson HyperdataGraph where
   decodeJson json = do
     obj <- decodeJson json
     graph   <- obj .: "graph"
     mCamera <- obj .:? "camera"
     pure $ HyperdataGraph { graph, mCamera }
-
 instance jsonEncodeHyperdataGraph :: EncodeJson HyperdataGraph where
   encodeJson (HyperdataGraph c) =
       "camera"  := c.mCamera

@@ -3,6 +3,7 @@ module Gargantext.Components.Nodes.Frame where
 import Data.Argonaut as Argonaut
 import Data.Argonaut (decodeJson, (.:))
 import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
 --import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson, genericEnumDecodeJson, genericEnumEncodeJson)
 import Data.Maybe (Maybe(..))
@@ -26,13 +27,11 @@ here = R2.here "Gargantext.Components.Nodes.Frame"
 
 data Hyperdata = Hyperdata { base :: String, frame_id :: String }
 
-derive instance eqHyperdata :: Eq Hyperdata
-
 derive instance genericHyperdata :: Generic Hyperdata _
-
+instance eqHyperdata :: Eq Hyperdata where
+  eq = genericEq
 instance showHyperdata :: Show Hyperdata where
   show = genericShow
-
 instance decodeJsonHyperdata :: Argonaut.DecodeJson Hyperdata where
 -- TODO
 --  decodeJson = genericSumDecodeJson
@@ -41,8 +40,6 @@ instance decodeJsonHyperdata :: Argonaut.DecodeJson Hyperdata where
     base     <- obj .: "base"
     frame_id <- obj .: "frame_id"
     pure $ Hyperdata {base, frame_id}
-
-
 instance encodeJsonHyperdata :: Argonaut.EncodeJson Hyperdata where
   encodeJson = genericSumEncodeJson
 

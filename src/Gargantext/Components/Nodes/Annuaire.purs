@@ -2,9 +2,10 @@ module Gargantext.Components.Nodes.Annuaire
  -- ( annuaire )
  where
 
-import Prelude (bind, const, identity, pure, show, ($), (<$>), (<>))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Array as A
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Sequence as Seq
 import Data.Tuple (fst, snd)
@@ -240,7 +241,9 @@ contactCellsCpt = here.component "contactCells" cpt where
 data HyperdataAnnuaire = HyperdataAnnuaire
   { title :: Maybe String
   , desc  :: Maybe String }
-
+derive instance genericHyperdataAnnuaire :: Generic HyperdataAnnuaire _
+instance eqHyperdataAnnuaire :: Eq HyperdataAnnuaire where
+  eq = genericEq
 instance decodeHyperdataAnnuaire :: DecodeJson HyperdataAnnuaire where
   decodeJson json = do
     obj   <- decodeJson json
@@ -259,7 +262,9 @@ newtype AnnuaireInfo =
   , date      :: String
   , hyperdata :: HyperdataAnnuaire
   }
-
+derive instance genericAnnuaireInfo :: Generic AnnuaireInfo _
+instance eqAnnuaireInfo :: Eq AnnuaireInfo where
+  eq = genericEq
 instance decodeAnnuaireInfo :: DecodeJson AnnuaireInfo where
   decodeJson json = do
     obj <- decodeJson json

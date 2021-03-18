@@ -1,10 +1,14 @@
 module Gargantext.Components.Forest.Tree.Node.Tools.FTree where
 
-import Data.Maybe (Maybe(..))
 import Data.Argonaut (class DecodeJson, decodeJson, (.:))
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
+import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
+
+import Gargantext.Prelude
+
 import Gargantext.Types  as GT
-import Prelude hiding (div)
 
 -----------------------------------------------------------------------
 type ID   = Int
@@ -12,8 +16,11 @@ type Name = String
 -----------------------------------------------------------------------
 type FTree = NTree LNode
 data NTree a = NTree a (Array (NTree a))
+derive instance genericNTree :: Generic (NTree a) _
+instance eqNTree :: Eq a => Eq (NTree a) where
+  eq (NTree a1 as1) (NTree a2 as2) = (eq a1 a2) && (eq as1 as2)
 type Tree = { tree       :: FTree
-            , tasks :: Array GT.AsyncTaskWithType
+            , tasks     :: Array GT.AsyncTaskWithType
             }
 
 fTreeID :: FTree -> ID
@@ -29,9 +36,10 @@ newtype LNode =
   , nodeType  :: GT.NodeType
   , parent_id :: Maybe ID
   }
-
 derive instance newtypeLNode :: Newtype LNode _
-
+derive instance genericLNode :: Generic LNode _
+instance eqLNode :: Eq LNode where
+  eq = genericEq
 instance decodeJsonLNode :: DecodeJson LNode where
   decodeJson json = do
     obj  <- decodeJson json

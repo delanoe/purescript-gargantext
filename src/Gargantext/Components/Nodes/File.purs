@@ -1,6 +1,8 @@
 module Gargantext.Components.Nodes.File where
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.:))
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Reactix as R
@@ -23,7 +25,9 @@ newtype HyperdataFile =
   , name :: String
   , path :: String
   }
-
+derive instance genericHyperdataFile :: Generic HyperdataFile _
+instance eqHyperdataFile :: Eq HyperdataFile where
+  eq = genericEq
 instance decodeHyperdataFile :: DecodeJson HyperdataFile where
   decodeJson json = do
     obj  <- decodeJson json
@@ -39,7 +43,9 @@ newtype File =
   , hyperdata :: HyperdataFile
   , name      :: String
   }
-
+derive instance genericFile :: Generic File _
+instance eqFile :: Eq File where
+  eq = genericEq
 instance decodeFile :: DecodeJson File where
   decodeJson json = do
     obj       <- decodeJson json

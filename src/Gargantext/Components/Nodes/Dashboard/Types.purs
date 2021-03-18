@@ -1,6 +1,8 @@
 module Gargantext.Components.Nodes.Dashboard.Types where
 
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, (.:), (.:?), (:=), (~>), jsonEmptyObject)
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.List as List
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
@@ -20,6 +22,9 @@ newtype Hyperdata =
   , fields :: List.List FTField
   , preferences :: Preferences
   }
+derive instance genericHyperdata :: Generic Hyperdata _
+instance eqHyperdata :: Eq Hyperdata where
+  eq = genericEq
 instance decodeHyperdata :: DecodeJson Hyperdata where
   decodeJson json = do
     obj <- decodeJson json

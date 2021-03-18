@@ -78,7 +78,6 @@ module Gargantext.Components.NgramsTable.Core
   )
   where
 
-import Gargantext.Prelude
 import Control.Monad.State (class MonadState, execState)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (.:!), (.:?), (:=), (:=?), (~>), (~>?))
 import Data.Argonaut.Decode.Error (JsonDecodeError(..))
@@ -133,6 +132,8 @@ import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
 import Toestand as T
 
+import Gargantext.Prelude
+
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Table       as T
 import Gargantext.Components.Table.Types as T
@@ -156,13 +157,14 @@ newtype Versioned a = Versioned
   { version :: Version
   , data    :: a
   }
-
+derive instance genericVersioned :: Generic (Versioned a) _
+instance eqVersioned :: Eq a => Eq (Versioned a) where
+  eq = genericEq
 instance encodeJsonVersioned :: EncodeJson a => EncodeJson (Versioned a) where
   encodeJson (Versioned {version, data: data_})
      = "version" := version
     ~> "data" := data_
     ~> jsonEmptyObject
-
 instance decodeJsonVersioned :: DecodeJson a => DecodeJson (Versioned a) where
   decodeJson json = do
     obj     <- decodeJson json
@@ -177,7 +179,9 @@ newtype VersionedWithCount a = VersionedWithCount
   , count   :: Count
   , data    :: a
   }
-
+derive instance genericVersionedWithCount :: Generic (VersionedWithCount a) _
+instance eqVersionedWithCount :: Eq a => Eq (VersionedWithCount a) where
+  eq = genericEq
 instance encodeJsonVersionedWithCount :: EncodeJson a => EncodeJson (VersionedWithCount a) where
   encodeJson (VersionedWithCount {count, version, data: data_})
      = "version" := version
