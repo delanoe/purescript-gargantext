@@ -128,7 +128,7 @@ docViewCpt :: R.Component Props
 docViewCpt = here.component "docView" cpt
   where
     cpt {frontends, session, nodeId, listId, query, totalRecords, chart, container} _ = do
-      deletions <- R.useState' initialDeletions
+      deletions <- T.useBox initialDeletions
       path <- T.useBox $ initialPagePath {nodeId, listId, query, session}
       path' <- T.useLive T.unequal path
 
@@ -143,28 +143,29 @@ docViewCpt = here.component "docView" cpt
         [ R2.row
           [ chart
           , H.div { className: "col-md-12" }
-            [ pageLayout { deletions, frontends, totalRecords, container, session, path } ]
-   {-     , H.div { className: "col-md-12" }
+            [ pageLayout { container, deletions, frontends, path, session, totalRecords } [] ]
+    {-     , H.div { className: "col-md-12" }
             [ H.button { style: buttonStyle, on: { click: trashClick deletions } }
               [ H.i { className: "glyphitem fa fa-trash"
                     , style: { marginRight : "9px" }} []
             , H.text "Delete document!" ] 
             ] 
     -}      ] 
-       ]
-        where
-          buttonStyle =
-            { backgroundColor: "peru", padding: "9px", color: "white"
-            , border: "white", float: "right" }
-          trashClick deletions _ = performDeletions session nodeId deletions
+        ]
+      where
+        buttonStyle = { backgroundColor: "peru"
+                      , border: "white"
+                      , color: "white"
+                      , float: "right"
+                      , padding: "9px" }
 
-performDeletions :: Session -> Int -> R.State Deletions -> Effect Unit
-performDeletions session nodeId (deletions /\ setDeletions) =
-  launchAff_ call *> setDeletions del
+performDeletions :: Session -> Int -> T.Box Deletions -> Deletions -> Effect Unit
+performDeletions session nodeId deletions deletions' = do
+  launchAff_ $ deleteDocuments session nodeId (DeleteDocumentQuery q)
+  T.modify_ del deletions
   where
-    q = {documents: Set.toUnfoldable deletions.pending}
-    call = deleteDocuments session nodeId (DeleteDocumentQuery q)
-    del {pending, deleted} = {pending: mempty, deleted: deleted <> pending}
+    q = { documents: Set.toUnfoldable deletions'.pending }
+    del { deleted, pending } = { deleted: deleted <> pending, pending: mempty }
 
 markCategory :: Session -> NodeID -> Category -> Array NodeID -> Effect Unit
 markCategory session nodeId category nids =
@@ -183,10 +184,11 @@ docViewGraphCpt :: R.Component Props
 docViewGraphCpt = here.component "docViewGraph" cpt
   where
     cpt {frontends, session, nodeId, listId, query, totalRecords, chart, container} _ = do
-      deletions <- R.useState' initialDeletions
+      deletions <- T.useBox initialDeletions
+      deletions' <- T.useLive T.unequal deletions
       let buttonStyle = { backgroundColor: "peru", padding : "9px"
                         , color : "white", border : "white", float: "right"}
-      let performClick = \_ -> performDeletions session nodeId deletions
+      let performClick = \_ -> performDeletions session nodeId deletions deletions'
       path <- T.useBox $ initialPagePath { nodeId, listId, query, session }
 
       pure $ R.fragment
@@ -197,7 +199,7 @@ docViewGraphCpt = here.component "docViewGraph" cpt
           [ R2.row
             [ chart
             , H.div { className: "col-md-12" }
-              [ pageLayout { frontends, totalRecords, deletions, container, session, path }
+              [ pageLayout { container, deletions, frontends, path, session, totalRecords } []
               , H.button { style: buttonStyle, on: { click: performClick } }
                 [ H.i { className: "glyphitem fa fa-trash"
                       , style: { marginRight : "9px" } } []
@@ -298,7 +300,7 @@ err2view message =
 type PageLayoutProps =
   ( frontends    :: Frontends
   , totalRecords :: Int
-  , deletions    :: R.State Deletions
+  , deletions    :: T.Box Deletions
   , container    :: Record T.TableContainerProps -> R.Element
   , session      :: Session
   , path         :: T.Box PagePath
@@ -307,33 +309,41 @@ type PageLayoutProps =
 type PageProps = ( rowsLoaded :: Rows | PageLayoutProps )
 
 -- | Loads and renders a page
-pageLayout :: Record PageLayoutProps -> R.Element
-pageLayout props = R.createElement pageLayoutCpt props []
+pageLayout :: R2.Component PageLayoutProps
+pageLayout = R.createElement pageLayoutCpt
 
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = here.component "pageLayout" cpt
   where
-    cpt {frontends, totalRecords, deletions, container, session, path} _ = do
+    cpt { container, deletions, frontends, path, session, totalRecords } _ = do
       path' <- T.useLive T.unequal path
 
       useLoader path' loadPage $ \rowsLoaded ->
-        page {frontends, totalRecords, deletions, container, session, path, rowsLoaded}
+        page { container, deletions, frontends, path, rowsLoaded, session, totalRecords } []
 
-page :: Record PageProps -> R.Element
-page props = R.createElement pageCpt props []
+page :: R2.Component PageProps
+page = R.createElement pageCpt
 
 pageCpt :: R.Component PageProps
 pageCpt = here.component "page" cpt
   where
-    cpt { frontends
-        , totalRecords
-        , container
+    cpt { container
         , deletions
+        , frontends
+        , path
         , rowsLoaded
         , session
-        , path } _ = do
+        , totalRecords } _ = do
       path'@{ nodeId, listId, query } <- T.useLive T.unequal path
       params <- T.useFocused (_.params) (\a b -> b { params = a }) path
+      deletions' <- T.useLive T.unequal deletions
+
+      let isChecked id = Set.member id deletions'.pending
+          isDeleted (DocumentsView {id}) = Set.member id deletions'.deleted
+
+          rows path' = case rowsLoaded of
+            Docs     {docs}     -> docRow path'     <$> Seq.filter (not <<< isDeleted) docs
+            Contacts {contacts} -> contactRow path' <$>  contacts
 
       pure $ T.table { colNames
                      , container
@@ -353,9 +363,6 @@ pageCpt = here.component "page" cpt
         gi Trash = "fa fa-star-empty"
         gi _ = "fa fa-star"
 
-        isChecked id = Set.member id (fst deletions).pending
-        isDeleted (DocumentsView {id}) = Set.member id (fst deletions).deleted
-
         documentUrl id { listId, nodeId } =
             url frontends $ Routes.CorpusDocument (sessionId session) nodeId listId id
 
@@ -363,10 +370,6 @@ pageCpt = here.component "page" cpt
           | id > 1 = H.a { href, target: "blank" } [ H.text label ]
             where href = url session $ NodePath (sessionId session) NodeContact (Just id)
           | otherwise = H.text label
-
-        rows path' = case rowsLoaded of
-          Docs     {docs}     -> docRow path'     <$> Seq.filter (not <<< isDeleted) docs
-          Contacts {contacts} -> contactRow path' <$>  contacts
 
         contactRow path' (ContactsView { id, hyperdata: HyperdataRowContact { firstname, lastname, labs }
                                        , score, annuaireId, delete
@@ -390,18 +393,10 @@ pageCpt = here.component "page" cpt
                       , maybeStricken delete [ H.text $ publicationDate dv ]
                       , maybeStricken delete [ H.a {target: "_blank", href: documentUrl id path'} [ H.text title ] ]
                       , maybeStricken delete [ H.text source ]
-                      -- , maybeStricken delete [ H.text authors ]
-                        -- , maybeStricken $ intercalate [comma] (pairUrl <$> pairs)
-                      {-, H.input { defaultChecked: isChecked id
-                                , on: { click: toggleClick }
-                                , type: "checkbox"
-                                }
-                      -}
                       ]
           , delete: true }
           where
             markClick { nodeId } _ = markCategory session nodeId category [id]
-            toggleClick _ = togglePendingDeletion deletions id
             -- comma = H.span {} [ H.text ", " ]
 
         maybeStricken delete

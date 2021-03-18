@@ -289,7 +289,7 @@ pageLayoutCpt = here.component "pageLayout" cpt where
           , renderer: paint
           }
       NT.CacheOff -> do
-        localCategories <- R.useState' (mempty :: LocalUserScore)
+        localCategories <- T.useBox (mempty :: LocalUserScore)
         paramsS <- T.useBox params
         paramsS' <- T.useLive T.unequal paramsS
         let loader p = do
@@ -337,7 +337,7 @@ pagePaintCpt = here.component "pagePaintCpt" cpt
     cpt { documents, layout, params } _ = do
       params' <- T.useLive T.unequal params
 
-      localCategories <- R.useState' (mempty :: LocalUserScore)
+      localCategories <- T.useBox (mempty :: LocalUserScore)
       pure $ pagePaintRaw { documents: A.fromFoldable (filteredRows params')
                           , layout
                           , localCategories
@@ -356,10 +356,10 @@ pagePaintCpt = here.component "pagePaintCpt" cpt
 
 
 type PagePaintRawProps = (
-    documents :: Array DocumentsView
-  , layout :: Record PageLayoutProps
-  , localCategories :: R.State LocalUserScore
-  , params :: T.Box TT.Params
+    documents       :: Array DocumentsView
+  , layout          :: Record PageLayoutProps
+  , localCategories :: T.Box LocalUserScore
+  , params          :: T.Box TT.Params
   )
 
 pagePaintRaw :: R2.Component PagePaintRawProps
@@ -380,12 +380,14 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
 
     reload <- T.useBox T2.newReload
 
+    localCategories' <- T.useLive T.unequal localCategories
+
     pure $ TT.table
       { syncResetButton : [ H.div {} [] ]
       , colNames
       , container: TT.defaultContainer { title: "Documents" }
       , params
-      , rows: rows reload localCategories
+      , rows: rows reload localCategories'
       , totalRecords
       , wrapColElts
       }
@@ -401,10 +403,9 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
           | otherwise = Routes.Document sid listId
         colNames = TT.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source", "Score" ]
         wrapColElts = const identity
-        getCategory (lc /\ _) {_id, category} = fromMaybe category (lc ^. at _id)
-        rows reload lc@(_ /\ setLocalCategories) = row <$> A.toUnfoldable documents
+        rows reload localCategories' = row <$> A.toUnfoldable documents
           where
-            row dv@(DocumentsView r) =
+            row dv@(DocumentsView r@{ _id, category }) =
               { row:
                 TT.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
                             H.div { className: "" }
@@ -412,7 +413,11 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
                                                                    ]
                           --, H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
                           , H.div { className: "column-tag flex" }
-                                  [ rating { score: cat, nodeId, row: dv, session, setLocalCategories } [] ]
+                                  [ rating { nodeId
+                                           , row: dv
+                                           , score: cat
+                                           , setLocalCategories: \lc -> T.modify_ lc localCategories
+                                           , session } [] ]
                 --, H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only
                 , H.div { className: tClassName } [ R2.showText r.date ]
@@ -425,7 +430,7 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
                 ]
               , delete: true }
               where
-                cat         = getCategory lc r
+                cat         = fromMaybe category (localCategories' ^. at _id)
                 -- checked    = Star_1 == cat
                 tClassName = trashClassName cat selected
                 className  = gi cat
