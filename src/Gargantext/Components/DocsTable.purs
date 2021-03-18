@@ -100,14 +100,14 @@ docViewLayoutCpt :: R.Component LayoutProps
 docViewLayoutCpt = here.component "docViewLayout" cpt
   where
     cpt layout _children = do
-      query <- R.useState' ""
+      query <- T.useBox ""
       let params = TT.initialParams
       pure $ docView { layout, params, query } []
 
 type Props = (
     layout :: Record LayoutProps
   , params :: TT.Params
-  , query :: R.State Query
+  , query  :: T.Box Query
   )
 
 docView :: R2.Component Props
@@ -131,11 +131,12 @@ docViewCpt = here.component "docView" cpt where
       , query
       } _ = do
     cacheState' <- T.useLive T.unequal cacheState
+    query' <- T.useLive T.unequal query
 
     pure $ H.div { className: "doc-table-doc-view container1" }
       [ R2.row
         [ chart
-        , if showSearch then searchBar query else H.div {} []
+        , if showSearch then searchBar { query } [] else H.div {} []
         , H.div {className: "col-md-12"}
           [ pageLayout { cacheState
                        , frontends
@@ -144,54 +145,62 @@ docViewCpt = here.component "docView" cpt where
                        , mCorpusId
                        , nodeId
                        , params
-                       , query: fst query
+                       , query: query'
                        , session
                        , sidePanelTriggers
                        , tabType
                        , totalRecords
                        } ] ] ]
 
-searchBar :: R.State Query -> R.Element
-searchBar (query /\ setQuery) = R.createElement el {} []
+type SearchBarProps =
+  ( query :: T.Box Query )
+
+searchBar :: R2.Component SearchBarProps
+searchBar = R.createElement searchBarCpt
+
+searchBarCpt :: R.Component SearchBarProps
+searchBarCpt = here.component "searchBar" cpt
   where
-    el = here.component "SearchBar" cpt
-    cpt {} _children = do
-      queryText <- R.useState' query
+    cpt { query } _children = do
+      query' <- T.useLive T.unequal query
+      queryText <- T.useBox query'
+      queryText' <- T.useLive T.unequal queryText
 
       pure $ H.div {className: "col-md-12 row"}
         [ H.div {className: "col-md-3"} []
-        , H.div {className: "col-md-1"} [if query /= "" then clearButton else H.div {} []]
+        , H.div {className: "col-md-1"} [if query' /= "" then (clearButton query) else H.div {} []]
         , H.div {className: "col-md-3 form-group"}
-          [ H.input { type: "text"
-                    , className: "form-control"
-                    , on: {change: onSearchChange queryText, keyUp: onSearchKeyup queryText}
-                    , placeholder: query
-                    , defaultValue: query}
+          [ H.input { className: "form-control"
+                    , defaultValue: query'
+                    , on: { change: onSearchChange queryText
+                          , keyUp: onSearchKeyup query queryText' }
+                    , placeholder: query'
+                    , type: "text" }
           ]
-        , H.div {className: "col-md-1"} [searchButton queryText]
+        , H.div {className: "col-md-1"} [ searchButton query queryText' ]
         ]
 
-    onSearchChange :: forall e. R.State Query -> e -> Effect Unit
-    onSearchChange (_ /\ setQueryText) = \e ->
-      setQueryText $ const $ R.unsafeEventValue e
+    onSearchChange :: forall e. T.Box Query -> e -> Effect Unit
+    onSearchChange queryText e =
+      T.write_ (R.unsafeEventValue e) queryText
 
-    onSearchKeyup :: R.State Query -> DE.KeyboardEvent -> Effect Unit
-    onSearchKeyup (queryText /\ _) = \e ->
+    onSearchKeyup :: T.Box Query -> Query -> DE.KeyboardEvent -> Effect Unit
+    onSearchKeyup query queryText e =
       if DE.key e == "Enter" then
-        setQuery $ const queryText
+        T.write_ queryText query
       else
-        pure $ unit
+        pure unit
 
-    searchButton (queryText /\ _) =
-      H.button { type: "submit"
-               , className: "btn btn-primary"
-               , on: {click: \e -> setQuery $ const queryText}}
-      [ H.span {className: "fa fa-search"} [] ]
+    searchButton query queryText' =
+      H.button { className: "btn btn-primary"
+               , on: { click: \e -> T.write_ queryText' query }
+               , type: "submit" }
+        [ H.span {className: "fa fa-search"} [] ]
 
-    clearButton =
+    clearButton query =
       H.button { className: "btn btn-danger"
-               , on: {click: \e -> setQuery $ const ""}}
-      [ H.span {className: "fa fa-times"} [] ]
+               , on: { click: \e -> T.write_ "" query } }
+        [ H.span {className: "fa fa-times"} [] ]
 
 mock :: Boolean
 mock = false

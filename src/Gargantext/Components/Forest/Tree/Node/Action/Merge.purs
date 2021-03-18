@@ -6,6 +6,7 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel, checkbox, checkboxesListGroup)
@@ -32,8 +33,8 @@ mergeNodeCpt = here.component "mergeNode" cpt
     cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
       action@(valAction /\ setAction) :: R.State Action <- R.useState' (MergeNode {params:Nothing})
 
-      merge   <- R.useState' false
-      options <- R.useState' (Set.singleton GT.MapTerm)
+      merge   <- T.useBox false
+      options <- T.useBox (Set.singleton GT.MapTerm)
 
       let button = case valAction of
             MergeNode {params} -> case params of
@@ -52,15 +53,17 @@ mergeNodeCpt = here.component "mergeNode" cpt
                   , H.ul { className:"merge mx-auto list-group"}
                      ([ H.li { className: "list-group-item" }
                        [ H.h5 { className: "mb-1" } [ H.text "Merge which list?" ]
+                       , checkboxesListGroup { groups: [ GT.MapTerm, GT.CandidateTerm, GT.StopTerm ]
+                                             , options } []
                        ]
-                     ] <> (checkboxesListGroup [ GT.MapTerm, GT.CandidateTerm, GT.StopTerm ] options))
+                     ])
                   , H.ul { className:"merge mx-auto list-group"}
                      [ H.li { className: "list-group-item" }
                        [ H.h5 { className: "mb-1" } [ H.text "Title" ]
                        ]
                      , H.li { className: "list-group-item" }
                        [ H.div { className: " form-check" }
-                         [ checkbox merge
+                         [ checkbox { value: merge }
                          , H.label { className: "form-check-label" } [ H.text "Merge data?" ]
                          ]
                        ]

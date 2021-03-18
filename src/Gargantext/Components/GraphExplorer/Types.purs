@@ -115,7 +115,7 @@ type State = (
   --, multiNodeSelection :: R.State Boolean
   --, selectedNodes :: R.State (Set SelectedNode)
   --, showSidePanel :: R.State Boolean
-  --, showControls :: R.State Boolean
+  --, showControls :: T.Box Boolean
   --, showTree :: R.State Boolean
   --, sigmaGraphData :: R.State (Maybe SigmaxTypes.SGraph)
   --, sigmaSettings :: R.State ({|Graph.SigmaSettings})

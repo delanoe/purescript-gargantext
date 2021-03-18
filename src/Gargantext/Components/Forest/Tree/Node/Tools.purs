@@ -187,39 +187,54 @@ submitButtonHref action href =
 
 ------------------------------------------------------------------------
 -- | CheckBox tools
--- checkboxes: Array of poolean values (basic: without pending option)
+-- checkboxes: Array of boolean values (basic: without pending option)
 -- checkbox  : One boolean value only
 
-checkbox :: R.State Boolean -> R.Element
-checkbox ( val /\ set ) =
-  H.input
-  { className: "form-check-input", type: "checkbox"
-  , value: val, on: { click } } where
-    click _ = set $ const $ not val
+type CheckboxProps =
+  ( value :: T.Box Boolean )
+
+checkbox :: R2.Leaf CheckboxProps
+checkbox props = R.createElement checkboxCpt props []
+
+checkboxCpt :: R.Component CheckboxProps
+checkboxCpt = here.component "checkbox" cpt
+  where
+    cpt { value } _ = do
+      value' <- T.useLive T.unequal value
+
+      pure $ H.input { className: "form-check-input"
+                     , on: { click }
+                     , type: "checkbox"
+                     , value: value' }
+      where
+        click _ = T.modify_ not value
 
 data CheckBoxes = Multiple | Uniq
 
-checkboxes :: forall a. Ord a => Show a => Array a -> R.State (Set a) -> R.Element
-checkboxes xs (val /\ set) = H.fieldset {} $ map field xs where
-  field a =
-    H.div {}
-    [ H.input { defaultChecked, type: "checkbox", on: { click } }
-    , H.div {} [ H.text $ show a ] ] where
-      click _ = set (const $ toggleSet a val)
-      defaultChecked = Set.member a val
+type CheckboxesListGroup a =
+  ( groups :: Array a
+  , options :: T.Box (Set a) )
 
-checkboxesListGroup
-  :: forall a. Ord a => Show a => Array a -> R.State (Set a) -> Array R.Element
-checkboxesListGroup xs (val /\ set) = map one xs where
-  one a =
-    H.li { className: "list-group-item" }
-    [ H.div { className: "form-check" }
-      [ H.input { defaultChecked, type: "checkbox", on: { click }
-                , className: "form-check-input" }
-      , H.label { className: "form-check-label" } [ H.text (show a) ] ]
-    ] where
-      click _ = set (const $ toggleSet a val)
-      defaultChecked = Set.member a val
+checkboxesListGroup :: forall a. Ord a => Show a => R2.Component (CheckboxesListGroup a)
+checkboxesListGroup = R.createElement checkboxesListGroupCpt
+
+checkboxesListGroupCpt :: forall a. Ord a => Show a => R.Component (CheckboxesListGroup a)
+checkboxesListGroupCpt = here.component "checkboxesListGroup" cpt
+  where
+    cpt { groups, options } _ = do
+      options' <- T.useLive T.unequal options
+
+      let one a =
+            H.li { className: "list-group-item" }
+              [ H.div { className: "form-check" }
+                [ H.input { defaultChecked: Set.member a options'
+                          , on: { click: \_ -> T.write_ (toggleSet a options') options
+                                , type: "checkbox" }
+                          , className: "form-check-input" }
+                , H.label { className: "form-check-label" } [ H.text (show a) ] ]
+              ]
+
+      pure $ R.fragment $ map one $ Set.toUnfoldable options'
 
 prettyNodeType :: GT.NodeType -> String
 prettyNodeType

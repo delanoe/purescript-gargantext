@@ -3,15 +3,18 @@ module Gargantext.Components.GraphExplorer.ControlsToggleButton
   ) where
 
 import Data.Tuple.Nested ((/\))
-import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
+
+import Gargantext.Prelude
 
 import Gargantext.Utils.Reactix as R2
 
+here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.ControlsToggleButton"
 
-type Props = ( state :: R.State Boolean )
+type Props = ( state :: T.Box Boolean )
 
 controlsToggleButton :: Record Props -> R.Element
 controlsToggleButton props = R.createElement controlsToggleButtonCpt props []
@@ -19,11 +22,11 @@ controlsToggleButton props = R.createElement controlsToggleButtonCpt props []
 controlsToggleButtonCpt :: R.Component Props
 controlsToggleButtonCpt = here.component "controlsToggleButton" cpt
   where
-    cpt {state} _ = do
-      let (open /\ setOpen) = state
+    cpt { state } _ = do
+      open' <- T.useLive T.unequal state
       pure $
         H.button
-          { className: "btn btn-primary", on: {click: \_ -> setOpen not } }
-          [ H.text (text open) ]
+          { className: "btn btn-primary", on: {click: \_ -> T.modify_ not state } }
+          [ H.text (text open') ]
     text true = "Hide Controls"
     text false = "Show Controls"
