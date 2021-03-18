@@ -2,8 +2,10 @@
     "name": "Gargantext",
     "version": "0.0.2.7.1",
     "scripts": {
-        "rebase-set": "spago package-set-upgrade && spago psc-package-insdhall",
-        "rebuild-set": "spago psc-package-insdhall",
+        "generate-purs-packages-nix": "./nix/generate-purs-packages.nix",
+        "generate-psc-packages-nix": "./nix/generate-packages-json.bash",
+        "rebase-set": "spago package-set-upgrade && yarn generate-psc-packages-nix",
+        "rebuild-set": "yarn generate-psc-packages-nix",
         "install-ps": "psc-package install",
         "compile": "pulp build",
         "build": "pulp browserify -t dist/bundle.js",

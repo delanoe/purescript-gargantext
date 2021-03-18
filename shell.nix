@@ -43,6 +43,7 @@ pkgs.mkShell {
   buildInputs = [
     easy-ps.purs
     easy-ps.psc-package
+    easy-ps.dhall-json-simple
     build-purs
     build
     repl
