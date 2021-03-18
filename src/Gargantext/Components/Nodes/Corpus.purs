@@ -9,7 +9,7 @@ import Data.Array as A
 import Data.Either (Either(..))
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (Tuple(..), fst, snd)
+import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
@@ -83,7 +83,8 @@ corpusLayoutViewCpt = here.component "corpusLayoutView" cpt
   where
     cpt {corpus: (NodePoly {hyperdata: Hyperdata {fields}}), nodeId, reload, session} _ = do
       let fieldsWithIndex = List.mapWithIndex (\idx -> \t -> Tuple idx t) fields
-      fieldsS <- R.useState' fieldsWithIndex
+      fieldsS <- T.useBox fieldsWithIndex
+      fields' <- T.useLive T.unequal fieldsS
       fieldsRef <- R.useRef fields
 
       -- handle props change of fields
@@ -92,12 +93,12 @@ corpusLayoutViewCpt = here.component "corpusLayoutView" cpt
           pure unit
         else do
           R.setRef fieldsRef fields
-          snd fieldsS $ const fieldsWithIndex
+          T.write_ fieldsWithIndex fieldsS
 
       pure $ H.div {}
         [ H.div { className: "row" }
-          [ H.div { className: "btn btn-primary " <> (saveEnabled fieldsWithIndex fieldsS)
-                  , on: { click: onClickSave {fields: fieldsS, nodeId, reload, session} }
+          [ H.div { className: "btn btn-primary " <> (saveEnabled fieldsWithIndex fields')
+                  , on: { click: onClickSave {fields: fields', nodeId, reload, session} }
                   }
             [ H.span { className: "fa fa-floppy-o" } [  ]
             ]
@@ -115,27 +116,27 @@ corpusLayoutViewCpt = here.component "corpusLayoutView" cpt
           ]
         ]
 
-    saveEnabled :: FTFieldsWithIndex -> R.State FTFieldsWithIndex -> String
-    saveEnabled fs (fsS /\ _) = if fs == fsS then "disabled" else "enabled"
+    saveEnabled :: FTFieldsWithIndex -> FTFieldsWithIndex -> String
+    saveEnabled fs fsS = if fs == fsS then "disabled" else "enabled"
 
-    onClickSave :: forall e. { fields :: R.State FTFieldsWithIndex
+    onClickSave :: forall e. { fields :: FTFieldsWithIndex
                              , nodeId :: Int
                              , reload :: T2.ReloadS
                              , session :: Session } -> e -> Effect Unit
-    onClickSave {fields: (fieldsS /\ _), nodeId, reload, session} _ = do
+    onClickSave {fields, nodeId, reload, session} _ = do
       launchAff_ do
-        saveCorpus $ { hyperdata: Hyperdata {fields: (\(Tuple _ f) -> f) <$> fieldsS}
+        saveCorpus $ { hyperdata: Hyperdata {fields: (\(Tuple _ f) -> f) <$> fields}
                      , nodeId
                      , session }
         liftEffect $ T2.reload reload
 
-    onClickAdd :: forall e. R.State FTFieldsWithIndex -> e -> Effect Unit
-    onClickAdd (_ /\ setFieldsS) _ = do
-      setFieldsS $ \fieldsS -> List.snoc fieldsS $ Tuple (List.length fieldsS) defaultField
+    onClickAdd :: forall e. T.Box FTFieldsWithIndex -> e -> Effect Unit
+    onClickAdd fieldsS _ = do
+      T.modify_ (\fields -> List.snoc fields $ Tuple (List.length fields) defaultField) fieldsS
 
 type FieldsCodeEditorProps =
   (
-    fields :: R.State FTFieldsWithIndex
+    fields :: T.Box FTFieldsWithIndex
     | LoadProps
   )
 
@@ -145,50 +146,49 @@ fieldsCodeEditor = R.createElement fieldsCodeEditorCpt
 fieldsCodeEditorCpt :: R.Component FieldsCodeEditorProps
 fieldsCodeEditorCpt = here.component "fieldsCodeEditorCpt" cpt
   where
-    cpt {nodeId, fields: fS@(fields /\ _), session} _ = do
+    cpt { fields, nodeId, session } _ = do
+      fields' <- T.useLive T.unequal fields
       masterKey <- T.useBox T2.newReload
       masterKey' <- T.useLive T.unequal masterKey
 
-      pure $ H.div {} $ List.toUnfoldable (editors masterKey masterKey')
-      where
-        editors masterKey masterKey' =
-          (\(Tuple idx field) ->
-            fieldCodeEditorWrapper { canMoveDown: idx < (List.length fields - 1)
+      let editorsMap (Tuple idx field) =
+            fieldCodeEditorWrapper { canMoveDown: idx < (List.length fields' - 1)
                                    , canMoveUp: idx > 0
                                    , field
                                    , key: (show masterKey') <> "-" <> (show idx)
-                                   , onChange: onChange fS idx
-                                   , onMoveDown: onMoveDown masterKey fS idx
-                                   , onMoveUp: onMoveUp masterKey fS idx
-                                   , onRemove: onRemove fS idx
-                                   , onRename: onRename fS idx
-                                   }) <$> fields
+                                   , onChange: onChange idx
+                                   , onMoveDown: onMoveDown masterKey idx
+                                   , onMoveUp: onMoveUp masterKey idx
+                                   , onRemove: onRemove idx
+                                   , onRename: onRename idx
+                                   }
 
-    onChange :: R.State FTFieldsWithIndex -> Index -> FieldType -> Effect Unit
-    onChange (_ /\ setFields) idx typ = do
-      setFields $ \fields ->
-        fromMaybe fields $
-          List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { typ = typ })) fields
+      pure $ H.div {} $ List.toUnfoldable (editorsMap <$> fields')
+      where
+        onChange :: Index -> FieldType -> Effect Unit
+        onChange idx typ = do
+          T.modify_ (\fs ->
+            fromMaybe fs $
+              List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { typ = typ })) fs) fields
 
-    onMoveDown :: T2.ReloadS -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
-    onMoveDown masterKey (_ /\ setFields) idx _ = do
-      T2.reload masterKey
-      setFields $ recomputeIndices <<< (GDA.swapList idx (idx + 1))
+        onMoveDown :: T2.ReloadS -> Index -> Unit -> Effect Unit
+        onMoveDown masterKey idx _ = do
+          T2.reload masterKey
+          T.modify_ (recomputeIndices <<< (GDA.swapList idx (idx + 1))) fields
 
-    onMoveUp :: T2.ReloadS -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
-    onMoveUp masterKey (_ /\ setFields) idx _ = do
-      T2.reload masterKey
-      setFields $ recomputeIndices <<< (GDA.swapList idx (idx - 1))
+        onMoveUp :: T2.ReloadS -> Index -> Unit -> Effect Unit
+        onMoveUp masterKey idx _ = do
+          T2.reload masterKey
+          T.modify_ (recomputeIndices <<< (GDA.swapList idx (idx - 1))) fields
 
-    onRemove :: R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
-    onRemove (_ /\ setFields) idx _ = do
-      setFields $ \fields ->
-        fromMaybe fields $ List.deleteAt idx fields
+        onRemove :: Index -> Unit -> Effect Unit
+        onRemove idx _ = do
+          T.modify_ (\fs -> fromMaybe fs $ List.deleteAt idx fs) fields
 
-    onRename :: R.State FTFieldsWithIndex -> Index -> String -> Effect Unit
-    onRename (_ /\ setFields) idx newName = do
-      setFields $ \fields ->
-        fromMaybe fields $ List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { name = newName })) fields
+        onRename :: Index -> String -> Effect Unit
+        onRename idx newName = do
+          T.modify_ (\fs ->
+            fromMaybe fs $ List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { name = newName })) fs) fields
 
     recomputeIndices :: FTFieldsWithIndex -> FTFieldsWithIndex
     recomputeIndices = List.mapWithIndex $ \idx -> \(Tuple _ t) -> Tuple idx t
@@ -199,14 +199,14 @@ hash (Tuple idx f) = Crypto.hash $ "--idx--" <> (show idx) <> "--field--" <> (sh
 type FieldCodeEditorProps =
   (
     canMoveDown :: Boolean
-  , canMoveUp :: Boolean
-  , field :: FTField
-  , key :: String
-  , onChange :: FieldType -> Effect Unit
-  , onMoveDown :: Unit -> Effect Unit
-  , onMoveUp :: Unit -> Effect Unit
-  , onRemove :: Unit -> Effect Unit
-  , onRename :: String -> Effect Unit
+  , canMoveUp   :: Boolean
+  , field       :: FTField
+  , key         :: String
+  , onChange    :: FieldType -> Effect Unit
+  , onMoveDown  :: Unit -> Effect Unit
+  , onMoveUp    :: Unit -> Effect Unit
+  , onRemove    :: Unit -> Effect Unit
+  , onRename    :: String -> Effect Unit
   )
 
 fieldCodeEditorWrapper :: Record FieldCodeEditorProps -> R.Element
@@ -272,8 +272,8 @@ renameableCpt :: R.Component RenameableProps
 renameableCpt = here.component "renameableCpt" cpt
   where
     cpt {onRename, text} _ = do
-      isEditing <- R.useState' false
-      state <- R.useState' text
+      isEditing <- T.useBox false
+      state <- T.useBox text
       textRef <- R.useRef text
 
       -- handle props change of text
@@ -282,7 +282,7 @@ renameableCpt = here.component "renameableCpt" cpt
           pure unit
         else do
           R.setRef textRef text
-          snd state $ const text
+          T.write_ text state
 
       pure $ H.div { className: "renameable" } [
         renameableText { isEditing, onRename, state }
@@ -290,9 +290,9 @@ renameableCpt = here.component "renameableCpt" cpt
 
 type RenameableTextProps =
   (
-    isEditing :: R.State Boolean
-  , onRename :: String -> Effect Unit
-  , state :: R.State String
+    isEditing :: T.Box Boolean
+  , onRename  :: String -> Effect Unit
+  , state     :: T.Box String
   )
 
 renameableText :: Record RenameableTextProps -> R.Element
@@ -301,37 +301,41 @@ renameableText props = R.createElement renameableTextCpt props []
 renameableTextCpt :: R.Component RenameableTextProps
 renameableTextCpt = here.component "renameableTextCpt" cpt
   where
-    cpt {isEditing: (false /\ setIsEditing), state: (text /\ _)} _ = do
-      pure $ H.div { className: "input-group" }
-        [ H.input { className: "form-control"
-                  , defaultValue: text
-                  , disabled: 1
-                  , type: "text" }
-        , H.div { className: "btn input-group-append"
-                , on: { click: \_ -> setIsEditing $ const true } }
-          [ H.span { className: "fa fa-pencil" } []
-          ]
-        ]
-    cpt {isEditing: (true /\ setIsEditing), onRename, state: (text /\ setText)} _ = do
-      pure $ H.div { className: "input-group" }
-        [ inputWithEnter {
-            autoFocus: false
-          , className: "form-control text"
-          , defaultValue: text
-          , onBlur: setText <<< const
-          , onEnter: submit
-          , onValueChanged: setText <<< const
-          , placeholder: ""
-          , type: "text"
-          }
-        , H.div { className: "btn input-group-append"
-                , on: { click: submit } }
-          [ H.span { className: "fa fa-floppy-o" } []
-          ]
-        ]
+    cpt { isEditing, onRename, state } _ = do
+      isEditing' <- T.useLive T.unequal isEditing
+      state' <- T.useLive T.unequal state
+
+      pure $ if isEditing' then
+              H.div { className: "input-group" }
+                [ inputWithEnter {
+                    autoFocus: false
+                  , className: "form-control text"
+                  , defaultValue: state'
+                  , onBlur: \st -> T.write_ st state
+                  , onEnter: submit state'
+                  , onValueChanged: \st -> T.write_ st state
+                  , placeholder: ""
+                  , type: "text"
+                  }
+                , H.div { className: "btn input-group-append"
+                        , on: { click: submit state' } }
+                  [ H.span { className: "fa fa-floppy-o" } []
+                  ]
+                ]
+             else
+               H.div { className: "input-group" }
+               [ H.input { className: "form-control"
+                         , defaultValue: state'
+                         , disabled: 1
+                         , type: "text" }
+               , H.div { className: "btn input-group-append"
+                       , on: { click: \_ -> T.write_ true isEditing } }
+                 [ H.span { className: "fa fa-pencil" } []
+                 ]
+               ]
       where
-        submit _ = do
-          setIsEditing $ const false
+        submit text _ = do
+          T.write_ false isEditing
           onRename text
 
 fieldCodeEditor :: Record FieldCodeEditorProps -> R.Element

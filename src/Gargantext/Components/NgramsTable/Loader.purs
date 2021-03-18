@@ -8,6 +8,7 @@ import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Reactix as R
+import Toestand as T
 
 import Gargantext.Prelude
 
@@ -33,35 +34,38 @@ type LoaderWithCacheAPIProps path res ret = (
   )
 
 
-useLoaderWithCacheAPI :: forall path res ret. Eq path => DecodeJson res =>
+useLoaderWithCacheAPI :: forall path res ret. Eq path => DecodeJson res => Eq ret =>
                          Record (LoaderWithCacheAPIProps path res ret)
                       -> R.Hooks R.Element
 useLoaderWithCacheAPI { cacheEndpoint, handleResponse, mkRequest, path, renderer } = do
-  state <- R.useState' Nothing
+  state <- T.useBox Nothing
+  state' <- T.useLive T.unequal state
+
   useCachedAPILoaderEffect { cacheEndpoint
                            , handleResponse
                            , mkRequest
                            , path
                            , state }
-  pure $ maybe (loadingSpinner {}) renderer (fst state)
+  pure $ maybe (loadingSpinner {}) renderer state'
 
 type LoaderWithCacheAPIEffectProps path res ret = (
-    cacheEndpoint :: path -> Aff Version
+    cacheEndpoint  :: path -> Aff Version
   , handleResponse :: Versioned res -> ret
-  , mkRequest :: path -> GUC.Request
-  , path :: path
-  , state :: R.State (Maybe ret)
+  , mkRequest      :: path -> GUC.Request
+  , path           :: path
+  , state          :: T.Box (Maybe ret)
   )
 
-useCachedAPILoaderEffect :: forall path res ret. Eq path => DecodeJson res =>
+useCachedAPILoaderEffect :: forall path res ret. Eq path => DecodeJson res => Eq ret =>
                             Record (LoaderWithCacheAPIEffectProps path res ret)
                          -> R.Hooks Unit
 useCachedAPILoaderEffect { cacheEndpoint
                          , handleResponse
                          , mkRequest
                          , path
-                         , state: state@(state' /\ setState) } = do
+                         , state: state } = do
   oPath <- R.useRef path
+  state' <- T.useLive T.unequal state
 
   R.useEffect' $ do
     if (R.readRef oPath == path) && (isJust state') then
@@ -90,4 +94,4 @@ useCachedAPILoaderEffect { cacheEndpoint
           else
             throwError $ error $ "Fetched clean cache but hashes don't match: " <> show version <> " != " <> show cacheReal
         liftEffect $ do
-          setState $ const $ Just $ handleResponse val
+          T.write_ (Just $ handleResponse val) state

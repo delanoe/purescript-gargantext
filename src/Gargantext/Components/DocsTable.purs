@@ -17,7 +17,6 @@ import Data.String as Str
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import DOM.Simple.Event as DE
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -288,8 +287,8 @@ pageLayoutCpt = here.component "pageLayout" cpt where
               let route = tableRouteWithPage (p { params = paramsS', query = query })
               res <- get session $ route
               liftEffect $ do
-                log2 "[pageLayout] table route" route
-                log2 "[pageLayout] table res" res
+                here.log2 "table route" route
+                here.log2 "table res" res
               pure $ handleResponse res
             render (Tuple count documents) = pagePaintRaw { documents
                                                           , layout: props { params = paramsS'

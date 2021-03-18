@@ -85,7 +85,7 @@ divDropdownLeftCpt :: R.Component ()
 divDropdownLeftCpt = here.component "divDropdownLeft" cpt
   where
     cpt {} _ = do
-      show <- R.useState' false
+      show <- T.useBox false
 
       pure $ H.li { className: "nav-item dropdown" } [
           menuButton { element: menuElement, show } []
@@ -151,7 +151,7 @@ divDropdownLeftCpt = here.component "divDropdownLeft" cpt
 
 type MenuButtonProps = (
     element :: LiNav
-  , show :: R.State Boolean
+  , show    :: T.Box Boolean
   )
 
 menuButton :: R2.Component MenuButtonProps
@@ -160,11 +160,11 @@ menuButton = R.createElement menuButtonCpt
 menuButtonCpt :: R.Component MenuButtonProps
 menuButtonCpt = here.component "menuButton" cpt
   where
-    cpt { element: LiNav { title, href, icon, text }, show: (_ /\ setShow) } _ = do
+    cpt { element: LiNav { title, href, icon, text }, show } _ = do
       pure $ H.a { className: "dropdown-toggle navbar-text"
                 -- , data: {toggle: "dropdown"}
                 , href, title
-                , on: { click: \_ -> setShow $ not }
+                , on: { click: \_ -> T.modify_ not show }
                 , role: "button" } [
           H.span { aria: {hidden : true}, className: icon } []
         , H.text (" " <> text)
@@ -173,7 +173,7 @@ menuButtonCpt = here.component "menuButton" cpt
 -- | Menu in the sidebar, syntactic sugar
 type MenuElementsProps = (
     elements :: Array (Array LiNav)
-  , show :: R.State Boolean
+  , show     :: T.Box Boolean
   )
 
 menuElements :: R2.Component MenuElementsProps
@@ -182,15 +182,17 @@ menuElements = R.createElement menuElementsCpt
 menuElementsCpt :: R.Component MenuElementsProps
 menuElementsCpt = here.component "menuElements" cpt
   where
-    cpt { show: false /\ _ } _ = do
-      pure $ H.div {} []
-    cpt { elements, show: (true /\ setShow) } _ = do
-      pure $ H.ul { className: "dropdown-menu"
-                  , on: { click: setShow $ const false }
-                  , style: { display: "block" } } $ intercalate divider $ map (map liNav) elements
-      where
-        divider :: Array R.Element
-        divider = [H.li {className: "dropdown-divider"} []]
+    cpt { elements, show } _ = do
+      show' <- T.useLive T.unequal show
+
+      pure $ if show' then
+               H.ul { className: "dropdown-menu"
+                    , on: { click: \_ -> T.write_ false show }
+                    , style: { display: "block" } } $ intercalate divider $ map (map liNav) elements
+             else
+               H.div {} []
+    divider :: Array R.Element
+    divider = [H.li {className: "dropdown-divider"} []]
 
 -- | surgar for target : "blank"
 --data LiNav_ = LiNav_ { title  :: String

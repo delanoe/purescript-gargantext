@@ -125,10 +125,10 @@ dashboardLayoutLoadedCpt = here.component "dashboardLayoutLoaded" cpt
                                   , fields }
 
 type CodeEditorProps =
-  ( fields :: List.List FTField
+  ( fields   :: List.List FTField
   , onChange :: List.List FTField -> Effect Unit
-  , nodeId :: NodeID
-  , session :: Session
+  , nodeId   :: NodeID
+  , session  :: Session
   )
 
 dashboardCodeEditor :: R2.Component CodeEditorProps
@@ -139,21 +139,22 @@ dashboardCodeEditorCpt = here.component "dashboardCodeEditor" cpt
   where
     cpt props@{ fields, nodeId, onChange, session } _ = do
       let fieldsWithIndex = List.mapWithIndex (\idx -> \t -> Tuple idx t) fields
-      fieldsS <- R.useState' fieldsWithIndex
-      fieldsRef <- R.useRef fields
+      fieldsS <- T.useBox fieldsWithIndex
+      fields' <- T.useLive T.unequal fieldsS
+      fieldsRef <- R.useRef fields'
 
       -- handle props change of fields
       R.useEffect1' fields $ do
-        if R.readRef fieldsRef == fields then
+        if R.readRef fieldsRef == fields' then
           pure unit
         else do
-          R.setRef fieldsRef fields
-          snd fieldsS $ const fieldsWithIndex
+          R.setRef fieldsRef fields'
+          T.write_ fieldsWithIndex fieldsS
 
       pure $ R.fragment
         [ H.div { className: "row" }
-          [ H.div { className: "btn btn-primary " <> (saveEnabled fieldsWithIndex fieldsS)
-                  , on: { click: onClickSave fieldsS }
+          [ H.div { className: "btn btn-primary " <> (saveEnabled fieldsWithIndex fields')
+                  , on: { click: onClickSave fields' }
                   }
             [ H.span { className: "fa fa-floppy-o" } [  ]
             ]
@@ -162,7 +163,7 @@ dashboardCodeEditorCpt = here.component "dashboardCodeEditor" cpt
           [ H.div { className: "col-12" }
             [ fieldsCodeEditor { fields: fieldsS
                                , nodeId
-                               , session} []
+                               , session } []
             ]
           ]
         , H.div { className: "row" }
@@ -174,11 +175,11 @@ dashboardCodeEditorCpt = here.component "dashboardCodeEditor" cpt
           ]
         ]
       where
-        saveEnabled :: FTFieldsWithIndex -> R.State FTFieldsWithIndex -> String
-        saveEnabled fs (fsS /\ _) = if fs == fsS then "disabled" else "enabled"
+        saveEnabled :: FTFieldsWithIndex -> FTFieldsWithIndex -> String
+        saveEnabled fs fsS = if fs == fsS then "disabled" else "enabled"
 
-        onClickSave :: forall e. R.State FTFieldsWithIndex -> e -> Effect Unit
-        onClickSave (fields' /\ _) _ = do
+        onClickSave :: forall e. FTFieldsWithIndex -> e -> Effect Unit
+        onClickSave fields' _ = do
           here.log "saving (TODO)"
           onChange $ snd <$> fields'
           -- launchAff_ do
@@ -186,9 +187,9 @@ dashboardCodeEditorCpt = here.component "dashboardCodeEditor" cpt
             --             , nodeId
             --             , session }
 
-        onClickAddField :: forall e. R.State FTFieldsWithIndex -> e -> Effect Unit
-        onClickAddField (_ /\ setFieldsS) _ = do
-          setFieldsS $ \fieldsS -> List.snoc fieldsS $ Tuple (List.length fieldsS) defaultField
+        onClickAddField :: forall e. T.Box FTFieldsWithIndex -> e -> Effect Unit
+        onClickAddField fieldsS _ = do
+          T.modify_ (\fs -> List.snoc fs $ Tuple (List.length fs) defaultField) fieldsS
 
 type PredefinedChartProps =
   ( chart         :: P.PredefinedChart
