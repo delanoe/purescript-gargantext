@@ -263,9 +263,9 @@ nodeLinkCpt = here.component "nodeLink" cpt
       pure $
         H.div { className: "node-link"
               , on: { click } }
-          [ H.a { href, data: { for: tooltipId, tip: true } }
+          [ H.a { href, data: { for: tooltipId id, tip: true } }
             [ nodeText { handed, isSelected, name } []
-            , ReactTooltip.reactTooltip { id: tooltipId id }
+            , ReactTooltip.reactTooltip { effect: "float", id: tooltipId id, type: "dark" }
                 [ R2.row
                     [ H.h4 {className: GT.fldr nodeType true}
                         [ H.text $ GT.prettyNodeType nodeType ]
@@ -280,7 +280,6 @@ nodeLinkCpt = here.component "nodeLink" cpt
         -- click on closed -> open
         -- click on open   -> ?
         click _ = when (not isSelected) (T.write_ true folderOpen)
-        tooltipId id = "node-link-" <> show id
         href = url frontends $ GT.NodePath (sessionId session) nodeType (Just id)
 -- END node link
 
