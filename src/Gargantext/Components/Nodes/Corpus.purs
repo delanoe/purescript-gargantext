@@ -25,14 +25,13 @@ import Gargantext.Components.Node (NodePoly(..), HyperdataList)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..))
 import Gargantext.Data.Array as GDA
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Routes (SessionRoute(NodeAPI, Children))
+import Gargantext.Routes (SessionRoute(NodeAPI, Children, TreeFirstLevel), AppRoute(Home), appPath, nodeTypeAppRoute)
 import Gargantext.Sessions (Session, get, put, sessionId)
 import Gargantext.Types (NodeType(..), AffTableResult, SessionId)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reload as GUR
-import Gargantext.Routes
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -57,8 +56,15 @@ corpusLayoutCpt = R.hooksComponentWithModule thisModule "corpusLayout" cpt
   where
     cpt { nodeId, session } _ = do
       let sid = sessionId session
+      viewType <- R.useState' Folders
 
-      pure $ corpusLayoutWithKey { key: show sid <> "-" <> show nodeId, nodeId, session }
+      pure $ H.div{} [
+        H.div{} [viewTypeSelector {state: viewType} ]
+      , H.div{} [renderContent (fst viewType) nodeId session sid]
+      ]
+
+    renderContent Folders nodeId session _ = folderViewLoad {nodeId, session}
+    renderContent Code nodeId session sid = corpusLayoutWithKey { key: show sid <> "-" <> show nodeId, nodeId, session }
 
 
 corpusLayoutWithKey :: Record KeyProps -> R.Element
@@ -85,12 +91,11 @@ corpusLayoutView props = R.createElement corpusLayoutViewCpt props []
 corpusLayoutViewCpt :: R.Component ViewProps
 corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" cpt
   where
-    cpt {corpus: (NodePoly {hyperdata: Hyperdata {fields}, parentId}), nodeId, reload, session} _ = do
+    cpt {corpus: (NodePoly {hyperdata: Hyperdata {fields}}), nodeId, reload, session} _ = do
       let fieldsWithIndex = List.mapWithIndex (\idx -> \t -> Tuple idx t) fields
       fieldsS <- R.useState' fieldsWithIndex
       fieldsRef <- R.useRef fields
-      viewType <- R.useState' Folders
-
+      
       -- handle props change of fields
       R.useEffect1' fields $ do
         if R.readRef fieldsRef == fields then
@@ -104,18 +109,12 @@ corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" c
           [ H.div { className: "btn btn-primary " <> (saveEnabled fieldsWithIndex fieldsS)
                   , on: { click: onClickSave {fields: fieldsS, nodeId, reload, session} }
                   }
-            [ H.span { className: "fa fa-floppy-o" } [  ]
-            ]
-          , H.div { className: "col-1" } [ viewTypeSelector {state: viewType} ]
+            [ H.span { className: "fa fa-floppy-o" } [  ] ]
           ]
         , H.div {}
-          [ renderContent (fst viewType) 
-                          { fields: fieldsS
-                          , nodeId
-                          , session}
-                          { parentId
-                          , nodeId 
-                          , session} ]
+          [ fieldsCodeEditor { fields: fieldsS
+                             , nodeId
+                             , session } [] ]
         , H.div { className: "row" }
           [ H.div { className: "btn btn-primary"
                   , on: { click: onClickAdd fieldsS }
@@ -124,10 +123,6 @@ corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" c
             ]
           ]
         ]
-
-    renderContent :: ViewType -> Record FieldsCodeEditorProps -> Record FolderLoadProps -> R.Element
-    renderContent Code props _ = fieldsCodeEditor props []
-    renderContent Folders _ props = folderViewLoad props
 
     saveEnabled :: FTFieldsWithIndex -> R.State FTFieldsWithIndex -> String
     saveEnabled fs (fsS /\ _) = if fs == fsS then "disabled" else "enabled"
@@ -147,29 +142,21 @@ corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" c
     onClickAdd (_ /\ setFieldsS) _ = do
       setFieldsS $ \fieldsS -> List.snoc fieldsS $ Tuple (List.length fieldsS) defaultField
 
-type FolderLoadProps = 
-  ( 
-    nodeId :: Int
-  , parentId :: Int
-  , session :: Session
-  )
-
 data FolderStyle = FolderUp | FolderChild
 
-folderViewLoad :: Record FolderLoadProps -> R.Element
+folderViewLoad :: Record LoadProps -> R.Element
 folderViewLoad props = R.createElement folderViewLoadCpt props []
 
-folderViewLoadCpt :: R.Component FolderLoadProps
+folderViewLoadCpt :: R.Component LoadProps
 folderViewLoadCpt = R.hooksComponentWithModule thisModule "folderViewLoadCpt" cpt where
-  cpt {parentId, nodeId, session} _ = do
+  cpt {nodeId, session} _ = do
     useLoader {nodeId, session} loadFolders $
-      \folders -> folderView {folders, parentId, nodeId, session}
+      \folders -> folderView {folders, nodeId, session}
 
 type FolderViewProps = 
   ( 
     nodeId :: Int
   , folders:: FTree
-  , parentId :: Int
   , session :: Session
   )
 
@@ -178,16 +165,25 @@ folderView props = R.createElement folderViewCpt props []
 
 folderViewCpt :: R.Component FolderViewProps
 folderViewCpt = R.hooksComponentWithModule thisModule "folderViewCpt" cpt where
-  cpt {parentId, nodeId, session, folders: (NTree _ (foldersS))} _ = do
+  cpt {nodeId, session, folders: (NTree (LNode {parent_id: parentId}) (foldersS))} _ = do
     let sid = sessionId session 
     let children = makeFolderElements foldersS sid
+    let parent = makeParentFolder parentId sid
 
-    pure $ H.div {className: "folders"} $ [folder {style: FolderUp, text: "..", nodeId: parentId, sid: sid, nodeType: FolderPrivate} []] <> children
+    pure $ H.div {className: "folders"} $ parent <> children
 
   makeFolderElements :: Array (NTree LNode) -> SessionId -> Array R.Element
   makeFolderElements foldersS sid = makeFolderElementsMap <$> foldersS where
     makeFolderElementsMap :: NTree LNode -> R.Element
     makeFolderElementsMap (NTree (LNode node) _) = folder {style: FolderChild, text: node.name, nodeId: node.id, nodeType: node.nodeType, sid: sid} []
+
+  makeParentFolder :: Maybe Int -> SessionId -> Array R.Element
+  makeParentFolder (Just parentId) sid =
+    -- FIXME: The NodeType here should not be hardcoded to FolderPrivate but we currently can't get the actual NodeType
+    -- without performing another API call. Also parentId is never being returned by this API even when it clearly exists
+    [ folder {style: FolderUp, text: "..", nodeId: parentId, nodeType: FolderPrivate, sid: sid} [] ]
+  makeParentFolder Nothing _ = []
+
 
 type FolderProps = 
   (
@@ -207,7 +203,8 @@ folderCpt = R.hooksComponentWithModule thisModule "folderCpt" cpt where
     pure $ H.a {className: "btn btn-primary", href: "/#/" <> getFolderPath nodeType sid nodeId}  [ H.i { className: "fa " <> (icon style nodeType) } []
                                                                    , H.br {}
                                                                    , H.text text]
-
+  
+  icon :: FolderStyle -> NodeType -> String
   icon FolderUp _ = "fa-folder-open"
   icon _ Dashboard = "fa-signal"
   icon _ Texts = "fa-newspaper-o"
@@ -215,7 +212,8 @@ folderCpt = R.hooksComponentWithModule thisModule "folderCpt" cpt where
   icon _ Graph = "fa-hubzilla"
   icon _ NodeFile = "fa-file"
   icon FolderChild _  = "fa-folder"
-
+  
+  getFolderPath :: NodeType -> SessionId -> Int -> String
   getFolderPath nodeType sid nodeId = appPath $ fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
 
 
