@@ -31,18 +31,19 @@ mergeNodeCpt :: R.Component SubTreeParamsIn
 mergeNodeCpt = here.component "mergeNode" cpt
   where
     cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
-      action@(valAction /\ setAction) :: R.State Action <- R.useState' (MergeNode {params:Nothing})
+      action@(action' /\ _) :: R.State Action <- R.useState' (MergeNode {params:Nothing})
 
       merge   <- T.useBox false
       options <- T.useBox (Set.singleton GT.MapTerm)
 
-      let button = case valAction of
+      let button = case action' of
             MergeNode {params} -> case params of
               Just val -> submitButton (MergeNode {params: Just val}) dispatch
               Nothing -> H.div {} []
             _                   -> H.div {} []
 
-      pure $ panel [ subTreeView { action
+      pure $ panel
+        [ subTreeView { action
                       , dispatch
                       , id
                       , nodeType

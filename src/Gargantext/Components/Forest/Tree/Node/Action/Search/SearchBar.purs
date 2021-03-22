@@ -7,6 +7,7 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (searchField)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Types -- (Database, SearchQuery(..), defaultSearchQuery, performSearch, Lang(..))
@@ -21,17 +22,17 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar"
 
 type Props = ( langs     :: Array Lang
              , onSearch  :: GT.AsyncTaskWithType -> Effect Unit
-             , search    :: R.State Search
+             , search    :: T.Box Search
              , session   :: Session
              )
 
-searchBar :: Record Props -> R.Element
-searchBar props = R.createElement searchBarCpt props []
+searchBar :: R2.Component Props
+searchBar = R.createElement searchBarCpt
 
 searchBarCpt :: R.Component Props
 searchBarCpt = here.component "searchBar" cpt
   where
-    cpt {langs, onSearch, search: search@(s /\ _), session} _ = do
+    cpt { langs, onSearch, search, session } _ = do
       --onSearchChange session s
       pure $ H.div { className: "search-bar" }
                    [ searchField { databases:allDatabases
@@ -39,5 +40,5 @@ searchBarCpt = here.component "searchBar" cpt
                                  , onSearch
                                  , search
                                  , session
-                                 }
+                                 } []
                    ]
