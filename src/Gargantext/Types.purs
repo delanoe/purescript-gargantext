@@ -24,9 +24,9 @@ switchHanded :: forall a. a -> a -> Handed -> a
 switchHanded l _ LeftHanded = l
 switchHanded _ r RightHanded = r
 
-reverseHanded :: forall a. Array a -> Handed -> Array a
-reverseHanded a LeftHanded = A.reverse a
-reverseHanded a RightHanded = a
+reverseHanded :: forall a. Handed -> Array a -> Array a
+reverseHanded LeftHanded a = A.reverse a
+reverseHanded RightHanded a = a
 
 flipHanded :: R.Element -> R.Element -> Handed -> R.Element
 flipHanded l r LeftHanded  = R.fragment [r, l]

@@ -101,7 +101,7 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
       tasks' <- T.read tasks
 
       pure $ H.span (dropProps droppedFile isDragOver)
-        $ reverseHanded
+        $ reverseHanded handed
         [ folderIcon  { folderOpen, nodeType } []
         , chevronIcon { folderOpen, handed, isLeaf, nodeType } []
         , nodeLink { frontends, handed, folderOpen, id, isSelected
@@ -136,7 +136,7 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
                               , refresh: const $ dispatch RefreshTree
                               , session
                               } []
-                ] handed
+                ]
         where
           onTaskFinish id' t _ = do
             mT <- T.read tasks

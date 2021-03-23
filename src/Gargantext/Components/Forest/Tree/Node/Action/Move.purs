@@ -5,6 +5,7 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Prelude
 
@@ -30,10 +31,11 @@ moveNodeCpt :: R.Component SubTreeParamsIn
 moveNodeCpt = here.component "moveNode" cpt
   where
     cpt { dispatch, handed, id, nodeType, session, subTreeParams } _ = do
-      action@(valAction /\ setAction) :: R.State Action <- R.useState' (MoveNode {params: Nothing})
+      action :: T.Box Action <- T.useBox (MoveNode {params: Nothing})
+      action' <- T.useLive T.unequal action
 
-      let button = case valAction of
-              MoveNode {params} -> case params of
+      let button = case action' of
+              MoveNode { params } -> case params of
                 Just val -> submitButton (MoveNode {params: Just val}) dispatch
                 Nothing -> H.div {} []
               _                   -> H.div {} []
@@ -45,5 +47,5 @@ moveNodeCpt = here.component "moveNode" cpt
                                  , nodeType
                                  , session
                                  , subTreeParams
-                                 }
+                                 } []
               ] button
