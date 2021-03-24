@@ -99,7 +99,10 @@ frameLayoutViewCpt :: R.Component ViewProps
 frameLayoutViewCpt = here.component "frameLayoutView" cpt
   where
     cpt { frame: (NodePoly { hyperdata: Hyperdata { base, frame_id }})
-        , nodeId, reload, session, nodeType } _ =
+        , nodeId
+        , nodeType
+        , reload
+        , session } _ =
       pure $ H.div { className : "frame"
                    , rows: "100%,*" }
         [ H.iframe { src: hframeUrl nodeType base frame_id
