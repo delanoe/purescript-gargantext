@@ -727,6 +727,9 @@ ul li {
   color: #005a9aff;
 }
 
+.frame {
+  height: 100vh;
+}
 .frame iframe {
   border: 0;
 }
