@@ -1,9 +1,11 @@
 {
     "name": "Gargantext",
-    "version": "0.0.2.7.1",
+    "version": "0.0.2.8",
     "scripts": {
-        "rebase-set": "spago package-set-upgrade && spago psc-package-insdhall",
-        "rebuild-set": "spago psc-package-insdhall",
+        "generate-purs-packages-nix": "./nix/generate-purs-packages.nix",
+        "generate-psc-packages-nix": "./nix/generate-packages-json.bash",
+        "rebase-set": "spago upgrade-set && yarn generate-psc-packages-nix",
+        "rebuild-set": "yarn generate-psc-packages-nix",
         "install-ps": "psc-package install",
         "compile": "pulp build",
         "build": "pulp browserify -t dist/bundle.js",
@@ -51,7 +53,7 @@
         "react-testing-library": "^6.1.2",
         "sass": "^1.23.7",
         "serve": "^11.3.1",
-        "spago": "^0.10.0",
+        "spago": "^0.19.1",
         "vscode-languageserver": "^6.0.0",
         "xhr2": "^0.1.4"
     }
