@@ -31,7 +31,8 @@ mergeNodeCpt :: R.Component SubTreeParamsIn
 mergeNodeCpt = here.component "mergeNode" cpt
   where
     cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
-      action@(action' /\ _) :: R.State Action <- R.useState' (MergeNode {params:Nothing})
+      action <- T.useBox (MergeNode { params: Nothing })
+      action' <- T.useLive T.unequal action
 
       merge   <- T.useBox false
       options <- T.useBox (Set.singleton GT.MapTerm)
@@ -45,12 +46,12 @@ mergeNodeCpt = here.component "mergeNode" cpt
       pure $ panel
         [ subTreeView { action
                       , dispatch
+                      , handed
                       , id
                       , nodeType
                       , session
                       , subTreeParams
-                      , handed
-                      }
+                      } []
                   , H.ul { className:"merge mx-auto list-group"}
                      ([ H.li { className: "list-group-item" }
                        [ H.h5 { className: "mb-1" } [ H.text "Merge which list?" ]

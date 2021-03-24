@@ -94,18 +94,18 @@ subTreeViewLoadedCpt = here.component "subTreeViewLoaded" cpt
       let pRender = Record.merge { render: subTreeTreeView } p
 
       pure $ H.div {className:"tree"}
-                   [ H.div { className: if handed == GT.RightHanded
-                                         then "righthanded"
-                                         else "lefthanded"
-                          }
-                          [ subTreeTreeView pRender [] ]
-                   ]
+        [ H.div { className: if handed == GT.RightHanded
+                             then "righthanded"
+                             else "lefthanded"
+                }
+          [ subTreeTreeView (CorpusTreeRenderProps pRender) [] ]
+        ]
 
 newtype CorpusTreeRenderProps = CorpusTreeRenderProps
-  { render :: R2.NTHooksComponent CorpusTreeRenderProps
+  { render :: CorpusTreeRenderProps -> Array R.Element -> R.Element
   | CorpusTreeProps }
 
-subTreeTreeView :: R2.NTComponent CorpusTreeRenderProps
+subTreeTreeView :: CorpusTreeRenderProps -> Array R.Element -> R.Element
 subTreeTreeView = R2.ntCreateElement subTreeTreeViewCpt
 
 subTreeTreeViewCpt :: R2.NTComponent CorpusTreeRenderProps
@@ -125,7 +125,7 @@ subTreeTreeViewCpt = here.ntComponent "subTreeTreeView" cpt where
           E.stopPropagation e
           T.modify_ (\a -> setTreeOut a action'') action
 
-        children = map (\ctree -> render (CorpusTreeRenderProps (p { tree = ctree })) []) sortedAry
+        children = (map (\ctree -> render (CorpusTreeRenderProps (p { tree = ctree })) []) sortedAry) :: Array R.Element
 
     pure $ H.div {} $ GT.reverseHanded handed
       [ H.div { className: nodeClass validNodeType }
