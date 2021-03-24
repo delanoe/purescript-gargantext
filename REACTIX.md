@@ -401,15 +401,322 @@ And with that, we've covered the entire lifecycle:
 
 And all of that controlled by just a render function!
 
-### Reconciliation with reality
+## Handling state with Toestand
+
+Dealing with state storage in React can seem a bit daunting at
+first. There are too many options and it's not always obvious which
+you need. On top of that, if you change later, you have to rewrite a
+lot of code.
+
+Toestand is a new purescript library built on top of Reactix. It aims
+to provide one extremely flexible state type, `Toestand.Box a` that is
+suitable for the majority of usecases.
+
+Passed as a property, a `Box` is like a Reactix Ref - irrelevant for
+prop diffing purposes. Changing the value stored in the box does not
+cause a rerender by itself.
+
+With the `Toestand.useLive` hook, a component can opt in to rerender
+when the value changes (like a `State`, but sharing the same
+type!). While most of the time you will want to check equality, you
+can provide a custom predicate and only rerender when you want to.
+
+### My first box
+
+Let's pick up our counter from earlier and rewrite it to use
+Toestand. Not much code actually changes, it's pretty similar to
+before:
+
+```purescript
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
+
+counterCpt :: R.Component Counter
+counterCpt = R.hooksComponent "counter" cpt where
+  cpt { initialCount } _children = do
+    -- Create the box with the initial value
+    box <- T.useBox initialCount
+    -- Subscribe to a live count when it changes
+    count <- T.useLive T.unequal box
+    pure $ H.div {}
+      [ button { box }
+      , clicks { clicks: count } ]
+
+-- The button now takes a box instead of a setter function.
+type Button = ( setter :: T.Box Int )
+
+buttonCpt :: R.Component Button
+buttonCpt = R.hooksComponent "button" cpt where
+  cpt { box } _children =
+    pure $ H.button { on: { click } } [ H.text "Don't click me" ] where
+      -- Increment the value in the box
+      click _event = T.modify_ (_ + 1) } box
+
+-- Everything else is identical and here for completeness.
+
+helloCounter :: R.Element
+helloCounter = counter { initialCount: 1 }
+
+type Counter = ( initialCount :: Int )
+
+counter :: Record Counter -> R.Element
+counter props = R.createElement counterCpt props []
+
+button :: Record Button -> R.Element
+button props = R.createElement buttonCpt props []
+
+type Clicks = ( clicks :: Int )
+
+clicks :: Record Clicks -> R.Element
+clicks props = R.createElement clicksCpt props []
+
+clicksCpt :: R.Component Clicks
+clicksCpt = R.hooksComponent "clicks" cpt where
+  cpt { clicks } _children =
+    pure $ H.text $ "Clicked " <> show clicks <> " times"
+```
+
+### Core Toestand API: a closer look
+
+`useBox` has a fairly straightforward type signature:
+
+```purescript
+-- Creates a new Box inside a component from an initial value
+useBox :: forall b. b -> R.Hooks (Box b)
+```
+
+`modify_` is slightly more complicated. `ReadWrite` is a typeclass
+that `Box` implements. This constraint is basically saying a `v` can
+be read from and written to a `box`. So given a function that takes
+and returns a value and a box, modify the value by applying that
+function to the current value of the box:
+
+```purescript
+modify_ :: forall box v. ReadWrite box v => (v -> v) -> box -> Effect Unit
+```
+
+As you might have guessed, `modify` exists too, and returns the newly set value:
+
+```purescript
+modify :: forall c v. ReadWrite c v => (v -> v) -> c -> Effect v
+```
+
+The `ReadWrite` class is actually methodless, it is a shorthand way of
+referring to both the `Read` and `Write` classes:
+
+```purescript
+class (Read box val, Write box val) <= ReadWrite box val | box -> val
+
+instance readWrite :: (Read box val, Write box val) => ReadWrite box val
+```
+
+When you don't care about the current value, you can use `write`, the
+singular method of the `Write` typeclass. Its effective type is
+similar to `modify` but simpler, reflecting our lack of need to read
+from it:
+
+```purescript
+write :: forall box v. Write box v => v -> box -> Effect v
+```
+
+There is also the corresponding `write_` for when you want a Unit return:
+
+
+```purescript
+write_ :: forall box v. Write box v => v -> box -> Effect Unit
+```
+
+`read` is the most important method of the `Read` typeclass. Its effective type is:
+
+```purescript
+read :: forall box v m. Read box v => MonadDelay m => box -> m v
+```
+
+`MonadDelay` is implemented by two types we already know:
+
+* `Effect`
+* `Hooks`
+
+This means reading can be done in either monad.
+
+### Live updates
+
+The astute reader may notice that `useLive` was used in our first
+example but not covered in our last section. Explaining it will take a
+little longer...
+
+Boxes have another functionality: a hook to call a function when the
+value is written. Registering one of these is the purpose of the other
+function in the `Read` typeclass, `listen`, which has the following
+effective type:
+
+```purescript
+listen :: forall box v. Read box v => Listener v -> box -> Effect (Effect Unit)
+```
+
+We'll take that in two bites, first, the `Listener`:
+
+```purescript
+forall box v. Read box v => Listener v
+```
+
+Here's how `Listener` (and the `Change` that it mentions) are defined:
+
+
+```purescript
+-- | A summary of a change in value
+type Change c = { new :: c, old :: c }
+
+-- | An Effect function which is provided the new and old values.
+type Listener c = Change c -> Effect Unit
+```
+
+So to listen, we provide an effectful `Listener`, which receives the
+new and old values. Whenever someone calls `write` (or a function that
+wraps it) on a `Box`, our callback will be executed.
+
+The type of `listen` ends thus:
+
+```purescript
+Effect (Effect Unit)
+```
+
+Remember that an `Effect` is internally a 0-arity function used to delay the execution of some code.
+
+The inner `Effect Unit` is a means of cancelling the subscription we
+established. The outer `Effect` is used to return it without executing
+it.
+
+So, you provide a listener (which can execute effects) and you get
+back a means of cancelling when you no longer need to listen. Neat!
+
+Now we just need one more type before we can look at `useLive`:
+
+```purescript
+-- | An effect function which determines whether notifications should be sent.
+type ShouldReload c = Change c -> Effect Boolean
+```
+
+Toestand ships with just one function of this type, `unequal`, which
+does what you'd expect (i.e. it's `Prelude.notEq`, but in Effect):
+
+```purescript
+unequal :: forall v. Eq v => Change v -> Effect Boolean
+```
+
+And finally, we're ready to study `useLive`:
+
+```purescript
+useLive :: forall box b. Read box b => ShouldReload b -> box -> R.Hooks b
+```
+
+Wondering how it works?
+
+* It uses `useState` to create a counter. 
+* It registers a listener with `listen` to hear when writes are performed.
+* When a write is performed, the `ShouldReload` callback is executed.
+* If it returns true, the counter.
+
+Once you know how it works, it's not actually so mysterious :)
+
+The nice thing about `useState` is it pushes the choice about whether
+to refresh to the component that uses it. Because it even allows you
+to customise the logic, it is incredibly flexible.
+
+### Focused boxes and the single source of truth
+
+By now, we hope you think Toestand is as cool as we do. But it's not done yet!
+
+Sometimes, you'd like to have a box containing a data structure of
+state (say a record, for example) and only pass a part of it on to a
+child component, as another Box.
+
+That was a bit of a mouthful, let's look at an example:
+
+```purescript
+use Reactix as R
+use Toestand as T
+
+type Bigger = ( count :: Int, start :: Int )
+
+useCountBox :: Box (Record Bigger) -> R.Hooks (T.Box Int)
+useCountBox box = R.useFocused reader writer box where
+  reader :: Record Bigger -> Int
+  reader {count} = count
+  writer :: Int -> Record Bigger -> Record Bigger
+  writer count old = old { count = count }
+```
+
+We have overannotated the types to be clearer here. `reader` is a
+function that can look up `count` in a `Bigger` record and return
+it. `write` is a function that can set a new `count` in a `Bigger`.
+
+The `Box` that `useCountBox` takes is linked to the new `Box` it
+returns. When the value inside the original `Box` changes, the value
+inside the focused box may also appear to be changed, depending on the
+read function. You can even write to the returned Box and have it
+update the original, you just have to pass the right writer function!
+
+If you are a haskell programmer, you may recognise the reader and
+writer together as being a van Laarhoven-style lens, as used by most
+of the haskell lens libraries. Indeed it is, but this is as complex as
+ours get - no prisms or anything fancy.
+
+The particular case of turning a `Box (Record a)` into `focused field
+boxes` is in fact so common that we ship it in Toestand as
+`useFocusedFields`:
+
+```purescript
+import Toestand as T
+
+type Bigger = ( count :: Int, start :: Int )
+type Smaller = ( count :: T.Box Int, start :: T.Box Int )
+
+useSmaller :: T.Box (Record Bigger) -> R.Hooks Record 
+useSmaller box = T.useFocusedFields box
+```
+
+## Advanced Reactix
+
+<!-- ### Reactix is a bad purescript library -->
+
+<!-- Reactix is one of those libraries that was written because we needed -->
+<!-- it and that would be great if it got all the time and attention other -->
+<!-- things get. -->
+
+<!-- This isn't to say Reactix sucks, on the contrary we're generally quite -->
+<!-- fond of it, but using it effectively means understanding its -->
+<!-- limitations and figuring out how to make peace with its requirements -->
+<!-- of you. -->
+
+<!-- Firstly, it's not finished. It was hastily written and we've really -->
+<!-- only maintained it as much as we need to and no more. -->
+
+<!-- In attempting to be a lightweight wrapper over modern React, Reactix -->
+<!-- does not always behave the way you might expect a purescript library -->
+<!-- to. In -->
+
+
+<!-- ### Limitations of Reactix -->
+
+<!-- Reactix is meant to be a relatively barebones binding to modern -->
+<!-- React. Where purescript and react differ, react wins. -->
+
+<!-- What do I mean by this? The `Hooks` monad is literally a newtype over -->
+<!-- `Effect`. We take a very liberal view of this - when you are writing -->
+<!-- code in `Hooks`, you are choosing to invert control to React and its -->
+<!-- way of doing things. -->
+
+<!-- It's not necessarily against the rules of purescript to do this, but -->
+<!-- it does mean that some of the properties we often take for granted in -->
+<!-- writing purescript code do not necessarily apply. -->
+
+
+### Reconciliation and the rules of hooks
 
 So far, we've largely glossed over the part that links the virtual DOM
 with the real DOM. This is react's [reconciliation algorithm.](https://reactjs.org/docs/reconciliation.html).
-
-
-
-
-### Advanced reactix
 
 This is probably a good time to mention one of the major current
 limitations of Reactix: the properties provided to html constructor
