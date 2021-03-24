@@ -673,9 +673,11 @@ import Toestand as T
 type Bigger = ( count :: Int, start :: Int )
 type Smaller = ( count :: T.Box Int, start :: T.Box Int )
 
-useSmaller :: T.Box (Record Bigger) -> R.Hooks Record 
-useSmaller box = T.useFocusedFields box
+useSmaller :: T.Box (Record Bigger) -> R.Hooks (Record Smaller)
+useSmaller box = T.useFocusedFields box {}
 ```
+
+The final argument, {} is the base record to add the cursors to.
 
 ## Advanced Reactix
 
