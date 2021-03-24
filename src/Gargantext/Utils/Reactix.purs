@@ -51,15 +51,17 @@ type Component p = Record p -> Array R.Element -> R.Element
 type Leaf p = Record p -> R.Element
 
 type Here =
-  { component :: forall p. String -> R.HooksComponent p -> R.Component p
-  , log       :: forall l. l -> Effect Unit
-  , log2      :: forall l. String -> l -> Effect Unit }
+  { component   :: forall p. String -> R.HooksComponent p -> R.Component p
+  , log         :: forall l. l -> Effect Unit
+  , log2        :: forall l. String -> l -> Effect Unit
+  , ntComponent :: forall p. String -> NTHooksComponent p -> NTComponent p }
 
 here :: Module -> Here
 here mod =
-  { component: R.hooksComponentWithModule mod
-  , log:       log2 ("[" <> mod <> "]")
-  , log2:      \msg -> log2 ("[" <> mod <> "] " <> msg) }
+  { component:   R.hooksComponentWithModule mod
+  , log:         log2 ("[" <> mod <> "]")
+  , log2:        \msg -> log2 ("[" <> mod <> "] " <> msg)
+  , ntComponent: ntHooksComponentWithModule mod }
 
 -- newtypes
 type NTHooksComponent props = props -> Array R.Element -> R.Hooks R.Element

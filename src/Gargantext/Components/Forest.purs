@@ -171,11 +171,10 @@ forestLayoutRawCpt = here.component "forestLayoutRaw" cpt where
         , tasks } children = do
     handed' <- T.useLive T.unequal p.handed
 
-    pure $ R2.row $ reverseHanded
-      ([ H.div { className: "col-md-2 forest-layout-raw-tree" }
+    pure $ R2.row $ reverseHanded handed' $
+      [ H.div { className: "col-md-2 forest-layout-raw-tree" }
          [ forest' p.handed ]
-       ] <> children
-      ) handed'
+      ] <> children
       where
         forest' handed =
           forest { backend

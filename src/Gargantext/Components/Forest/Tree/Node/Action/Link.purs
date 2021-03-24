@@ -8,6 +8,7 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
@@ -53,11 +54,11 @@ linkNodeCpt :: R.Component SubTreeParamsIn
 linkNodeCpt = here.component "linkNode" cpt
   where
     cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
+      action <- T.useBox (LinkNode { nodeType: Nothing, params: Nothing})
+      action' <- T.useLive T.unequal action
 
-      action@(valAction /\ setAction) :: R.State Action <- R.useState' (LinkNode {nodeType:Nothing,params:Nothing})
-
-      let button = case valAction of
-              LinkNode {params} -> case params of
+      let button = case action' of
+              LinkNode { params } -> case params of
                 Just val -> submitButton (LinkNode {nodeType: Just nodeType, params: Just val}) dispatch
                 Nothing -> H.div {} []
               _                   -> H.div {} []
@@ -65,10 +66,10 @@ linkNodeCpt = here.component "linkNode" cpt
       pure $ panel [
           subTreeView { action
                       , dispatch
+                      , handed
                       , id
                       , nodeType
                       , session
                       , subTreeParams
-                      , handed
-                      }
+                      } []
               ] button

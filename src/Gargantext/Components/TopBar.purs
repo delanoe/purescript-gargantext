@@ -29,19 +29,19 @@ topBarCpt = here.component "topBar" cpt
       pure $ H.div { className: "navbar navbar-expand-lg navbar-dark bg-dark fixed-top"
                    , id: "dafixedtop"
                    , role: "navigation"
-                   } $ reverseHanded [
+                   } $ reverseHanded handed' [
                       -- NOTE: first (and only) entry in the sorted array should have the "ml-auto class"
                       -- https://stackoverflow.com/questions/19733447/bootstrap-navbar-with-left-center-or-right-aligned-items
                       -- In practice: only apply "ml-auto" to the last element of this list, if handed == LeftHanded
                       logo
-                   , H.ul { className: "navbar-nav " <> if handed' == LeftHanded then "ml-auto" else "" } $ reverseHanded [
+                   , H.ul { className: "navbar-nav " <> if handed' == LeftHanded then "ml-auto" else "" } $ reverseHanded handed' [
                         divDropdownLeft {} []
                       , handButton handed'
                       , smiley
                       , H.li { className: "nav-item" } [ themeSwitcher { theme: defaultTheme
                                                                        , themes: allThemes } [] ]
-                      ] handed'
-                   ] handed'
+                      ]
+                   ]
           where
             handButton handed' = H.li { title: "If you are Left Handed you can change\n"
                                             <> "the interface by clicking on me. Click\n"

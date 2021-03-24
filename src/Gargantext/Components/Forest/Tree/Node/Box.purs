@@ -184,7 +184,7 @@ panelActionCpt = here.component "panelAction" cpt
     cpt {action: Merge {subTreeParams}, dispatch, id, nodeType, session, handed} _ =
       pure $ mergeNode {dispatch, id, nodeType, session, subTreeParams, handed} []
     cpt {action: Move {subTreeParams}, dispatch, id, nodeType, session, handed} _ =
-      pure $ moveNode {dispatch, id, nodeType, session, subTreeParams, handed} []
+      pure $ moveNode { dispatch, id, nodeType, session, subTreeParams, handed } []
     cpt {action: Link {subTreeParams}, dispatch, id, nodeType, session, handed} _ =
       pure $ linkNode {dispatch, id, nodeType, session, subTreeParams, handed} []
     cpt {action : Share, dispatch, id, name } _ = do

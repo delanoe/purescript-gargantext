@@ -9,6 +9,7 @@ import Effect.Aff (Aff)
 import Prelude (($))
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Components.Forest.Tree.Node.Action (Action)
 import Gargantext.Components.Forest.Tree.Node.Action as Action
@@ -63,21 +64,22 @@ shareNodeCpt :: R.Component SubTreeParamsIn
 shareNodeCpt = here.component "shareNode" cpt
   where
     cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
-      action@(valAction /\ setAction) :: R.State Action <- R.useState' (Action.SharePublic {params: Nothing})
+      action <- T.useBox (Action.SharePublic { params: Nothing })
+      action' <- T.useLive T.unequal action
 
-      let button = case valAction of
-              Action.SharePublic {params} -> case params of
+      let button = case action' of
+              Action.SharePublic { params } -> case params of
                 Just val -> Tools.submitButton (Action.SharePublic {params: Just val}) dispatch
                 Nothing -> H.div {} []
               _   -> H.div {} []
 
       pure $ Tools.panel [ subTreeView { action
                                        , dispatch
+                                       , handed
                                        , id
                                        , nodeType
                                        , session
                                        , subTreeParams
-                                       , handed
-                                       }
+                                       } []
               ] button
 
