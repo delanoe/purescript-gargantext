@@ -616,7 +616,7 @@ Wondering how it works?
 * It uses `useState` to create a counter. 
 * It registers a listener with `listen` to hear when writes are performed.
 * When a write is performed, the `ShouldReload` callback is executed.
-* If it returns true, the counter.
+* If it returns true, the counter is incremented.
 
 Once you know how it works, it's not actually so mysterious :)
 
