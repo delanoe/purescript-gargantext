@@ -1,18 +1,19 @@
 module Gargantext.Utils.Spec where
 
-import Prelude
-
 import Data.Argonaut as Argonaut
 import Data.Argonaut.Decode.Error (JsonDecodeError)
 import Data.Either (Either(..), isLeft)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
+import Test.Spec (Spec, describe, it)
+import Test.Spec.Assertions (shouldEqual)
+
+import Gargantext.Prelude
+
 import Gargantext.Utils as GU
 import Gargantext.Utils.Argonaut (genericEnumDecodeJson, genericEnumEncodeJson, genericSumDecodeJson, genericSumEncodeJson)
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Math as GUM
-import Test.Spec (Spec, describe, it)
-import Test.Spec.Assertions (shouldEqual)
 
 data Fruit
   = Boat { hi :: Int }

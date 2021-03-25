@@ -1,13 +1,17 @@
 module Gargantext.Components.Nodes.Annuaire.User.Contacts.Types where
 
-import Prelude (bind, pure, ($))
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, (.:), (.:!), (.:?), (:=), (~>), jsonEmptyObject)
 import Data.Array as A
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.Lens
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.String as S
-import Gargantext.Utils.DecodeMaybe ((.?|))
 import Data.Newtype (class Newtype)
+import Data.String as S
+
+import Gargantext.Prelude
+
+import Gargantext.Utils.DecodeMaybe ((.?|))
 
 -- TODO: should it be a NodePoly HyperdataContact ?
 newtype NodeContact =
@@ -20,7 +24,9 @@ newtype NodeContact =
   , typename  :: Maybe Int
   , userId    :: Maybe Int
   }
-
+derive instance genericNodeContact :: Generic NodeContact _
+instance eqNodeContact :: Eq NodeContact where
+  eq = genericEq
 instance decodeNodeContact :: DecodeJson NodeContact where
   decodeJson json = do
     obj       <- decodeJson json
@@ -40,7 +46,6 @@ instance decodeNodeContact :: DecodeJson NodeContact where
                    , typename
                    , userId
                    }
-
 derive instance newtypeNodeContact :: Newtype NodeContact _
 
 ----------------------------------------------------------------------------
@@ -55,8 +60,9 @@ newtype Contact' =
   , typename :: Maybe Int
   , userId :: Maybe Int
   }
-
-
+derive instance genericContact' :: Generic Contact' _
+instance eqContact' :: Eq Contact' where
+  eq = genericEq
 instance decodeContact' :: DecodeJson Contact' where
   decodeJson json = do
     obj       <- decodeJson json
@@ -90,8 +96,9 @@ newtype Contact =
   , typename :: Maybe Int
   , userId :: Maybe Int
   }
-
-
+derive instance genericContact :: Generic Contact _
+instance eqContact :: Eq Contact where
+  eq = genericEq
 instance decodeContact :: DecodeJson Contact where
   decodeJson json = do
     obj       <- decodeJson json
@@ -156,7 +163,9 @@ newtype ContactWho =
   }
 
 derive instance newtypeContactWho :: Newtype ContactWho _
-
+derive instance genericContactWho :: Generic ContactWho _
+instance eqContactWho :: Eq ContactWho where
+  eq = genericEq
 instance decodeContactWho :: DecodeJson ContactWho
   where
     decodeJson json = do
@@ -171,7 +180,6 @@ instance decodeContactWho :: DecodeJson ContactWho
       let f = fromMaybe [] freetags
 
       pure $ ContactWho {idWho, firstName, lastName, keywords:k, freetags:f}
-
 instance encodeContactWho :: EncodeJson ContactWho
   where
     encodeJson (ContactWho cw) =
@@ -209,7 +217,9 @@ newtype ContactWhere =
   , exit         :: Maybe String }
 
 derive instance newtypeContactWhere :: Newtype ContactWhere _
-
+derive instance genericContactWhere :: Generic ContactWhere _
+instance eqContactWhere :: Eq ContactWhere where
+  eq = genericEq
 instance decodeContactWhere :: DecodeJson ContactWhere
   where
     decodeJson json = do
@@ -228,7 +238,6 @@ instance decodeContactWhere :: DecodeJson ContactWhere
       let l = fromMaybe [] labTeamDepts
 
       pure $ ContactWhere {organization:o, labTeamDepts:l, role, office, country, city, touch, entry, exit}
-
 instance encodeContactWhere :: EncodeJson ContactWhere
   where
     encodeJson (ContactWhere cw) =
@@ -264,7 +273,9 @@ newtype ContactTouch =
   , url   :: Maybe String }
 
 derive instance newtypeContactTouch :: Newtype ContactTouch _
-
+derive instance genericContactTouch :: Generic ContactTouch _
+instance eqContactTouch :: Eq ContactTouch where
+  eq = genericEq
 instance decodeContactTouch :: DecodeJson ContactTouch
   where
     decodeJson json = do
@@ -273,7 +284,6 @@ instance decodeContactTouch :: DecodeJson ContactTouch
       phone <- obj .:? "phone"
       url   <- obj .:? "url"
       pure $ ContactTouch {mail, phone, url}
-
 instance encodeContactTouch :: EncodeJson ContactTouch
   where
     encodeJson (ContactTouch ct) =
@@ -302,7 +312,9 @@ newtype HyperdataContact =
                       , who            :: Maybe ContactWho
                       }
 derive instance newtypeHyperdataContact :: Newtype HyperdataContact _
-
+derive instance genericHyperdataContact :: Generic HyperdataContact _
+instance eqHyperdataContact :: Eq HyperdataContact where
+  eq = genericEq
 instance decodeHyperdataContact :: DecodeJson HyperdataContact
   where
     decodeJson json = do
@@ -319,7 +331,6 @@ instance decodeHyperdataContact :: DecodeJson HyperdataContact
       let ou' = fromMaybe [] ou
 
       pure $ HyperdataContact {bdd, who, ou:ou', title, source, lastValidation, uniqId, uniqIdBdd}
-
 instance encodeHyperdataContact :: EncodeJson HyperdataContact
   where
     encodeJson (HyperdataContact {bdd, lastValidation, ou, source, title, uniqId, uniqIdBdd, who}) =
@@ -350,14 +361,15 @@ newtype HyperdataUser =
     shared :: Maybe HyperdataContact
   }
 derive instance newtypeHyperdataUser :: Newtype HyperdataUser _
-
+derive instance genericHyperdataUser :: Generic HyperdataUser _
+instance eqHyperdataUser :: Eq HyperdataUser where
+  eq = genericEq
 instance decodeHyperdataUser :: DecodeJson HyperdataUser
   where
     decodeJson json = do
       obj    <- decodeJson json
       shared <- obj .:? "shared"
       pure $ HyperdataUser { shared }
-
 instance encodeHyperdataUser :: EncodeJson HyperdataUser
   where
     encodeJson (HyperdataUser {shared}) =

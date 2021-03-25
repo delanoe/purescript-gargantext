@@ -1,30 +1,30 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Tree where
 
+import Prelude (bind, pure, ($), (==))
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
 import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Maybe (Maybe(..))
-import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
-
-import Gargantext.Prelude
+import Toestand as T
 
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
 import Gargantext.Components.Charts.Options.Series (TreeNode, Trees(..), mkTree)
 import Gargantext.Components.Charts.Options.Font (mkTooltip, templateFormatter)
-import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
-import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView, metricsWithCacheLoadView)
-import Gargantext.Components.Nodes.Corpus.Chart.Types
+import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsWithCacheLoadView)
+import Gargantext.Components.Nodes.Corpus.Chart.Types (MetricsProps, Path, Props, ReloadPath)
 import Gargantext.Hooks.Loader (HashedResponse(..))
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
-import Gargantext.Types (ChartType(..), TabType)
+import Gargantext.Types (ChartType(..))
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 
-thisModule = "Gargantext.Components.Nodes.Corpus.Chart.Tree"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Tree"
 
 newtype Metrics = Metrics {
     "data" :: Array TreeNode
@@ -77,10 +77,11 @@ tree :: Record Props -> R.Element
 tree props = R.createElement treeCpt props []
 
 treeCpt :: R.Component Props
-treeCpt = R.hooksComponentWithModule thisModule "tree" cpt
+treeCpt = here.component "tree" cpt
   where
     cpt {path, session} _ = do
-      reload <- R.useState' 0
+      reload <- T.useBox T2.newReload
+
       pure $ metricsWithCacheLoadView {
           getMetricsHash
         , handleResponse
@@ -92,9 +93,9 @@ treeCpt = R.hooksComponentWithModule thisModule "tree" cpt
         }
 
 loaded :: Record MetricsProps -> Loaded -> R.Element
-loaded { path, reload, session } loaded =
+loaded { path, reload, session } loaded' =
   H.div {} [
   {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: ChartTree, path, reload, session }
-  , -} chart (scatterOptions loaded)
+  , -} chart (scatterOptions loaded')
   ]

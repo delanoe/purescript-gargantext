@@ -9,44 +9,37 @@ import Reactix.DOM.HTML as H
 
 import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Tab"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Tab"
 
 type TabsProps = (
     selected :: Int
   , tabs     :: Array (Tuple String R.Element)
   )
 
-tabs :: Record TabsProps -> R.Element
+tabs :: R2.Leaf TabsProps
 tabs props = R.createElement tabsCpt props []
 
 -- this is actually just the list of tabs, not the tab contents itself
 tabsCpt :: R.Component TabsProps
-tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
-  where
-    cpt props _ = do
-      (activeTab /\ setActiveTab) <- R.useState' props.selected
-      pure $
-        H.div {}
-        [ H.nav {}
+tabsCpt = here.component "tabs" cpt where
+  cpt props _ = do
+    (activeTab /\ setActiveTab) <- R.useState' props.selected
+    pure $ H.div {}
+      [ H.nav {}
         [ H.br {}
-        , H.div { className: "nav nav-tabs"
-                  , title    : "Search result"
-                  } -- [H.text "" ]
-               (mapWithIndex (button setActiveTab activeTab) props.tabs) 
-          ]
-        , H.div { className: "tab-content" }
-                $ mapWithIndex (item activeTab) props.tabs
+        , H.div { className: "nav nav-tabs", title: "Search result" }
+          (mapWithIndex (button setActiveTab activeTab) props.tabs) 
         ]
-    --{-
-    button setActiveTab selected index (name /\ _) =
-      H.a { className, on: { click } } [ H.text name ]
-      where
-        eq = index == selected
-        className = "nav-item nav-link" <> (if eq then " active" else "")
-        click e = setActiveTab (const index)
-    --}
-    item selected index (_ /\ cpt') = tab { selected, index } [ cpt' ]
+      , H.div { className: "tab-content" }
+        (mapWithIndex (item activeTab) props.tabs)
+      ]
+  button setActiveTab selected index (name /\ _) =
+    H.a { className, on: { click } } [ H.text name ] where
+      eq = index == selected
+      className = "nav-item nav-link" <> (if eq then " active" else "")
+      click e = setActiveTab (const index)
+  item selected index (_ /\ cpt') = tab { selected, index } [ cpt' ]
 
 -- TODO: document what these are (selection, item indices)
 type TabProps = ( selected :: Int, index :: Int )

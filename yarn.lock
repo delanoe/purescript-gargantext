@@ -2939,7 +2939,7 @@ fast-deep-equal@^2.0.1:
   resolved "https://registry.yarnpkg.com/fast-deep-equal/-/fast-deep-equal-2.0.1.tgz#7b05218ddf9667bf7f370bf7fdb2cb15fdd0aa49"
   integrity sha1-ewUhjd+WZ79/Nwv3/bLLFf3Qqkk=
 
-fast-deep-equal@^3.1.1:
+fast-deep-equal@^3.1.1, fast-deep-equal@^3.1.3:
   version "3.1.3"
   resolved "https://registry.yarnpkg.com/fast-deep-equal/-/fast-deep-equal-3.1.3.tgz#3a7d56b559d6cbc3eb512325244e619a65c6c525"
   integrity sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==
@@ -3028,7 +3028,7 @@ flush-write-stream@^1.0.0:
     inherits "^2.0.3"
     readable-stream "^2.3.6"
 
-follow-redirects@^1.5.9, follow-redirects@^1.7.0:
+follow-redirects@^1.5.9:
   version "1.13.2"
   resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.13.2.tgz#dd73c8effc12728ba5cf4259d760ea5fb83e3147"
   integrity sha512-6mPTgLxYm3r6Bkkg0vNM0HTjfGrOEtsfbhagQvbxDEsEkpNhw582upBaoRZylzen6krEmxXJgt9Ju6HiI4O7BA==
@@ -3446,6 +3446,11 @@ iferr@^0.1.5:
   version "0.1.5"
   resolved "https://registry.yarnpkg.com/iferr/-/iferr-0.1.5.tgz#c60eed69e6d8fdb6b3104a1fcbca1c192dc5b501"
   integrity sha1-xg7taebY/bazEEofy8ocGS3FtQE=
+
+immer@^8.0.1:
+  version "8.0.1"
+  resolved "https://registry.yarnpkg.com/immer/-/immer-8.0.1.tgz#9c73db683e2b3975c424fb0572af5889877ae656"
+  integrity sha512-aqXhGP7//Gui2+UrEtvxZxSquQVXTpZ7KDxfCcKAF3Vysvw0CViVaW9RZ1j1xlIYqaaaipBoqdqeibkc18PNvA==
 
 import-fresh@^2.0.0:
   version "2.0.0"
@@ -5227,14 +5232,6 @@ promise-inflight@^1.0.1:
   resolved "https://registry.yarnpkg.com/promise-inflight/-/promise-inflight-1.0.1.tgz#98472870bf228132fcbdd868129bad12c3c029e3"
   integrity sha1-mEcocL8igTL8vdhoEputEsPAKeM=
 
-prop-types@15.6.2:
-  version "15.6.2"
-  resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.6.2.tgz#05d5ca77b4453e985d60fc7ff8c859094a497102"
-  integrity sha512-3pboPvLiWD7dkI3qf3KbUe6hKFKa52w+AE0VCqECtf+QHAKgOL37tTaNCnuX1nAAQ4ZhyP+kYVKf8rLmJ/feDQ==
-  dependencies:
-    loose-envify "^1.3.1"
-    object-assign "^4.1.1"
-
 prop-types@^15.6.2, prop-types@^15.7.2:
   version "15.7.2"
   resolved "https://registry.yarnpkg.com/prop-types/-/prop-types-15.7.2.tgz#52c41e75b8c87e72b9d9360e0206b99dcbffa6c5"
@@ -5274,6 +5271,14 @@ public-encrypt@^4.0.0:
     parse-asn1 "^5.0.0"
     randombytes "^2.0.1"
     safe-buffer "^5.1.2"
+
+pullstate@^1.20.6:
+  version "1.20.6"
+  resolved "https://registry.yarnpkg.com/pullstate/-/pullstate-1.20.6.tgz#0a1e54f462244aad1641b422fcad922921b4c0b8"
+  integrity sha512-HVL3290fyl1YO5na1bLnLovTdDkLbGF7h7/rmAqgHdAIQ3PEZCZzaBL/vSTU2osZDGc+5UzxoOXs95/FHjSh6g==
+  dependencies:
+    fast-deep-equal "^3.1.3"
+    immer "^8.0.1"
 
 pulp@^15.0.0:
   version "15.0.0"
@@ -6102,12 +6107,12 @@ sourcemap-codec@^1.3.0:
   resolved "https://registry.yarnpkg.com/sourcemap-codec/-/sourcemap-codec-1.4.8.tgz#ea804bd94857402e6992d05a38ef1ae35a9ab4c4"
   integrity sha512-9NykojV5Uih4lgo5So5dtw+f0JgJX30KCNI8gwhz2J9A15wD0Ml6tjHKwf6fTSa6fAdVBdZeNOs9eJ71qCk8vA==
 
-spago@^0.10.0:
-  version "0.10.0"
-  resolved "https://registry.yarnpkg.com/spago/-/spago-0.10.0.tgz#8783febe6e701122cdc90e4a509ecf0dfa646bd7"
-  integrity sha512-hcyAVObO+ZgXZaqy0EMCZgw8+Yr+PAGpYfV77C1EuL5gcSaly4snCY6dFBIdcUq0/vYhkCuUpBUGi6Dx+rnxiw==
+spago@^0.19.1:
+  version "0.19.1"
+  resolved "https://registry.yarnpkg.com/spago/-/spago-0.19.1.tgz#7a5da507f347bba441f4acbd63bf6eaed1624990"
+  integrity sha512-OD/yopJZ9Ub+XsFtayDeLAWLT4kLdMxosJEyyp8W5OkyJVVSbCrvYacsO7iq3lSuHJmmNny/TEZdyb7uSyupng==
   dependencies:
-    follow-redirects "^1.7.0"
+    request "^2.88.0"
     tar "^4.4.8"
 
 split-string@^3.0.1, split-string@^3.0.2:

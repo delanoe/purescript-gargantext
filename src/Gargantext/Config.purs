@@ -1,7 +1,6 @@
 module Gargantext.Config where
 
 import Data.String as S
-import Web.HTML.Location (Location(..))
 import Effect (Effect)
 import Data.NonEmpty (NonEmpty, (:|), head)
 import Gargantext.Ends
@@ -10,11 +9,8 @@ import Gargantext.Utils (location)
 import Gargantext.Prelude (bind, pure, ($))
 
 defaultBackends :: NonEmpty Array Backend
-defaultBackends = backend_local :| [ backend_prod
-                                   , backend_partner
-                                   , backend_demo
-                                   , backend_dev
-                                   ]
+defaultBackends =
+ backend_local :| [ backend_prod, backend_partner, backend_demo, backend_dev ]
 
 backend_prod :: Backend
 backend_prod    = backend V10 "/api/" "https://v4.gargantext.org"    "iscpif.cnrs"

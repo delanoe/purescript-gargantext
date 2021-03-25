@@ -2,7 +2,6 @@ module Gargantext.Components.Nodes.Corpus.Chart.API where
 
 import Effect.Aff (Aff)
 
-import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types as T

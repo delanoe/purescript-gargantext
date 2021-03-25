@@ -1,27 +1,23 @@
 module Gargantext.Hooks.Loader where
 
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (:=), (~>), jsonEmptyObject)
-import Data.Argonaut.Core (stringify)
-import Data.Argonaut.Parser (jsonParser)
-import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Milkis as M
 import Reactix as R
-import Web.Storage.Storage as WSS
+import Toestand as T
 
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
-import Gargantext.Ends (class ToUrl, toUrl)
 import Gargantext.Prelude
 import Gargantext.Utils.Crypto (Hash)
-import Gargantext.Utils as GU
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
+
+here :: R2.Here
+here = R2.here "Gargantext.Hooks.Loader"
 
 cacheName :: String
 cacheName = "cache-api-loader"
@@ -30,39 +26,57 @@ clearCache :: Unit -> Aff Unit
 clearCache _ = GUC.delete $ GUC.CacheName cacheName
 
 
-useLoader :: forall path st. Eq path
+useLoader :: forall path st. Eq path => Eq st
           => path
           -> (path -> Aff st)
           -> (st -> R.Element)
           -> R.Hooks R.Element
-useLoader path loader render = do
-  state <- R.useState' Nothing
-  useLoaderEffect path state loader
-  pure $ maybe (loadingSpinner {}) render (fst state)
+useLoader path loader' render = do
+  state <- T.useBox Nothing
 
-useLoaderEffect :: forall st path. Eq path =>
+  useLoaderEffect path state loader'
+
+  pure $ loader { path, render, state } []
+
+
+type LoaderProps path st =
+  ( path   :: path
+  , render :: st -> R.Element
+  , state  :: T.Box (Maybe st) )
+
+loader :: forall path st. Eq path => Eq st => R2.Component (LoaderProps path st)
+loader = R.createElement loaderCpt
+
+loaderCpt :: forall path st. Eq path => Eq st => R.Component (LoaderProps path st)
+loaderCpt = here.component "loader" cpt
+  where
+    cpt { path, render, state } _ = do
+      state' <- T.useLive T.unequal state
+
+      pure $ maybe (loadingSpinner {}) render state'
+
+
+useLoaderEffect :: forall st path. Eq path => Eq st =>
                       path
-                   -> R.State (Maybe st)
+                   -> T.Box (Maybe st)
                    -> (path -> Aff st)
                    -> R.Hooks Unit
-useLoaderEffect path state@(state' /\ setState) loader = do
+useLoaderEffect path state loader = do
+  state' <- T.useLive T.unequal state
   oPath <- R.useRef path
 
   R.useEffect' $ do
-    if (R.readRef oPath == path) && (isJust state') then
-      pure $ pure unit
+    path' <- R.readRefM oPath
+    if (path' == path) && (isJust state')
+    then pure $ R.nothing
     else do
       R.setRef oPath path
-
       R2.affEffect "G.H.Loader.useLoaderEffect" $ do
         l <- loader path
-        liftEffect $ setState $ const $ Just l
+        liftEffect $ T.write_ (Just l) state
 
 
-newtype HashedResponse a =
-  HashedResponse { hash  :: Hash
-                 , value :: a
-                 }
+newtype HashedResponse a = HashedResponse { hash  :: Hash, value :: a }
 
 instance decodeHashedResponse :: DecodeJson a => DecodeJson (HashedResponse a) where
   decodeJson json = do
@@ -88,35 +102,38 @@ type LoaderWithCacheAPIProps path res ret = (
 
 
 useLoaderWithCacheAPI :: forall path res ret.
-                         Eq path => DecodeJson res =>
+                         Eq ret => Eq path => DecodeJson res =>
                          Record (LoaderWithCacheAPIProps path res ret)
                       -> R.Hooks R.Element
 useLoaderWithCacheAPI { cacheEndpoint, handleResponse, mkRequest, path, renderer } = do
-  state <- R.useState' Nothing
+  state <- T.useBox Nothing
+  state' <- T.useLive T.unequal state
+
   useCachedAPILoaderEffect { cacheEndpoint
                            , handleResponse
                            , mkRequest
                            , path
                            , state }
-  pure $ maybe (loadingSpinner {}) renderer (fst state)
+  pure $ maybe (loadingSpinner {}) renderer state'
 
 type LoaderWithCacheAPIEffectProps path res ret = (
-    cacheEndpoint :: path -> Aff Hash
+    cacheEndpoint  :: path -> Aff Hash
   , handleResponse :: HashedResponse res -> ret
-  , mkRequest :: path -> GUC.Request
-  , path :: path
-  , state :: R.State (Maybe ret)
+  , mkRequest      :: path -> GUC.Request
+  , path           :: path
+  , state          :: T.Box (Maybe ret)
   )
 
 useCachedAPILoaderEffect :: forall path res ret.
-                            Eq path => DecodeJson res =>
+                            Eq ret => Eq path => DecodeJson res =>
                             Record (LoaderWithCacheAPIEffectProps path res ret)
                          -> R.Hooks Unit
 useCachedAPILoaderEffect { cacheEndpoint
                          , handleResponse
                          , mkRequest
                          , path
-                         , state: state@(state' /\ setState) } = do
+                         , state } = do
+  state' <- T.useLive T.unequal state
   oPath <- R.useRef path
 
   R.useEffect' $ do
@@ -136,10 +153,10 @@ useCachedAPILoaderEffect { cacheEndpoint
           pure hr
         else do
           _ <- GUC.deleteReq cache req
-          hr@(HashedResponse { hash, value }) <- GUC.cachedJson cache req
-          if hash == cacheReal then
-            pure hr
+          hr'@(HashedResponse { hash: h }) <- GUC.cachedJson cache req
+          if h == cacheReal then
+            pure hr'
           else
-            throwError $ error $ "Fetched clean cache but hashes don't match"
+            throwError $ error $ "Fetched clean cache but hashes don't match: " <> h <> " != " <> cacheReal
         liftEffect $ do
-          setState $ const $ Just $ handleResponse val
+          T.write_ (Just $ handleResponse val) state

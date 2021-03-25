@@ -21,8 +21,8 @@ import Reactix.DOM.HTML as HTML
 
 import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.ContextMenu.ContextMenu"
+here :: R2.Here
+here = R2.here "Gargantext.Components.ContextMenu.ContextMenu"
 
 type Props t = (
     x :: Number
@@ -34,7 +34,7 @@ contextMenu :: forall t. R2.Component (Props t)
 contextMenu = R.createElement contextMenuCpt
 
 contextMenuCpt :: forall t. R.Component (Props t)
-contextMenuCpt = R.hooksComponentWithModule thisModule "contextMenu" cpt
+contextMenuCpt = here.component "contextMenu" cpt
   where
     cpt menu@{ x, y, onClose } children = do
       host <- R2.getPortalHost
@@ -108,7 +108,7 @@ contextMenuItem :: Array R.Element -> R.Element
 contextMenuItem = R.createElement contextMenuItemCpt {}
 
 contextMenuItemCpt :: R.Component ()
-contextMenuItemCpt = R.hooksComponentWithModule thisModule "contextMenuItem" cpt
+contextMenuItemCpt = here.component "contextMenuItem" cpt
   where
     cpt _props children = pure $ HTML.li { className: "context-menu-item" } children
 

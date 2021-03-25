@@ -1,9 +1,8 @@
 module Gargantext.Components.Nodes.Corpus.Dashboard where
 
-import Gargantext.Components.Nodes.Types
 import Gargantext.Prelude
+  ( Unit, bind, const, discard, pure, read, show, unit, ($), (<$>), (<>), (==) )
 
-import DOM.Simple.Console (log, log2)
 import Data.Array as A
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -12,51 +11,51 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
+
 import Gargantext.Components.Nodes.Corpus (fieldsCodeEditor)
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
 import Gargantext.Components.Nodes.Dashboard.Types as DT
+import Gargantext.Components.Nodes.Types (FTField, FTFieldsWithIndex, defaultField)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (NodeID)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
-import Reactix as R
-import Reactix.DOM.HTML as H
+import Gargantext.Utils.Toestand as T2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Nodes.Corpus.Dashboard"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Corpus.Dashboard"
 
-type Props =
-  ( nodeId :: NodeID
-  , session :: Session
-  )
+type Props = ( nodeId :: NodeID, session :: R.Context Session )
 
 dashboardLayout :: R2.Component Props
 dashboardLayout = R.createElement dashboardLayoutCpt
 
 dashboardLayoutCpt :: R.Component Props
-dashboardLayoutCpt = R.hooksComponentWithModule thisModule "dashboardLayout" cpt
-  where
-    cpt { nodeId, session } _ = do
-      let sid = sessionId session
+dashboardLayoutCpt = here.component "dashboardLayout" cpt where
+  cpt { nodeId, session } content = cp <$> R.useContext session where
+    cp s = dashboardLayoutWithKey { key, nodeId, session: s } content where
+      key = show (sessionId s) <> "-" <> show nodeId
 
-      pure $ dashboardLayoutWithKey { key: show sid <> "-" <> show nodeId, nodeId, session } []
-
-type KeyProps = (
-  key :: String
-  | Props
+type KeyProps =
+  ( key     :: String
+  , nodeId  :: NodeID
+  , session :: Session
   )
 
 dashboardLayoutWithKey :: R2.Component KeyProps
 dashboardLayoutWithKey = R.createElement dashboardLayoutWithKeyCpt
 
 dashboardLayoutWithKeyCpt :: R.Component KeyProps
-dashboardLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "dashboardLayoutWithKey" cpt
+dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
   where
     cpt { nodeId, session } _ = do
-      reload <- GUR.new
+      reload <- T.useBox T2.newReload
+      reload' <- T.useLive T.unequal reload
 
-      useLoader {nodeId, reload: GUR.value reload, session} DT.loadDashboardWithReload $
+      useLoader {nodeId, reload: reload', session} DT.loadDashboardWithReload $
         \dashboardData@{hyperdata: DT.Hyperdata h, parentId} -> do
           let { charts, fields } = h
           dashboardLayoutLoaded { charts
@@ -67,30 +66,31 @@ dashboardLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "dashboardLayo
                                 , onChange: onChange nodeId reload (DT.Hyperdata h)
                                 , session } []
       where
-        onChange :: NodeID -> GUR.ReloadS -> DT.Hyperdata -> { charts :: Array P.PredefinedChart
-                                                         , fields :: List.List FTField } -> Effect Unit
+        onChange :: NodeID -> T2.ReloadS -> DT.Hyperdata -> { charts :: Array P.PredefinedChart
+                                                            , fields :: List.List FTField } -> Effect Unit
         onChange nodeId' reload (DT.Hyperdata h) { charts, fields } = do
           launchAff_ do
             DT.saveDashboard { hyperdata: DT.Hyperdata $ h { charts = charts, fields = fields }
                              , nodeId:nodeId'
                              , session }
-            liftEffect $ GUR.bump reload
+            liftEffect $ T2.reload reload
 
 type LoadedProps =
-  ( charts :: Array P.PredefinedChart
-  , corpusId :: NodeID
+  ( charts        :: Array P.PredefinedChart
+  , corpusId      :: NodeID
   , defaultListId :: Int
-  , fields :: List.List FTField
-  , onChange :: { charts :: Array P.PredefinedChart
-               , fields :: List.List FTField } -> Effect Unit
-  | Props
+  , fields        :: List.List FTField
+  , onChange      :: { charts :: Array P.PredefinedChart
+                     , fields :: List.List FTField } -> Effect Unit
+  , nodeId        :: NodeID
+  , session       :: Session
   )
 
 dashboardLayoutLoaded :: R2.Component LoadedProps
 dashboardLayoutLoaded = R.createElement dashboardLayoutLoadedCpt
 
 dashboardLayoutLoadedCpt :: R.Component LoadedProps
-dashboardLayoutLoadedCpt = R.hooksComponentWithModule thisModule "dashboardLayoutLoaded" cpt
+dashboardLayoutLoadedCpt = here.component "dashboardLayoutLoaded" cpt
   where
     cpt props@{ charts, corpusId, defaultListId, fields, nodeId, onChange, session } _ = do
       pure $ H.div {}
@@ -125,34 +125,36 @@ dashboardLayoutLoadedCpt = R.hooksComponentWithModule thisModule "dashboardLayou
                                   , fields }
 
 type CodeEditorProps =
-  ( fields :: List.List FTField
+  ( fields   :: List.List FTField
   , onChange :: List.List FTField -> Effect Unit
-  | Props
+  , nodeId   :: NodeID
+  , session  :: Session
   )
 
 dashboardCodeEditor :: R2.Component CodeEditorProps
 dashboardCodeEditor = R.createElement dashboardCodeEditorCpt
 
 dashboardCodeEditorCpt :: R.Component CodeEditorProps
-dashboardCodeEditorCpt = R.hooksComponentWithModule thisModule "dashboardCodeEditor" cpt
+dashboardCodeEditorCpt = here.component "dashboardCodeEditor" cpt
   where
     cpt props@{ fields, nodeId, onChange, session } _ = do
       let fieldsWithIndex = List.mapWithIndex (\idx -> \t -> Tuple idx t) fields
-      fieldsS <- R.useState' fieldsWithIndex
-      fieldsRef <- R.useRef fields
+      fieldsS <- T.useBox fieldsWithIndex
+      fields' <- T.useLive T.unequal fieldsS
+      fieldsRef <- R.useRef fields'
 
       -- handle props change of fields
       R.useEffect1' fields $ do
-        if R.readRef fieldsRef == fields then
+        if R.readRef fieldsRef == fields' then
           pure unit
         else do
-          R.setRef fieldsRef fields
-          snd fieldsS $ const fieldsWithIndex
+          R.setRef fieldsRef fields'
+          T.write_ fieldsWithIndex fieldsS
 
       pure $ R.fragment
         [ H.div { className: "row" }
-          [ H.div { className: "btn btn-primary " <> (saveEnabled fieldsWithIndex fieldsS)
-                  , on: { click: onClickSave fieldsS }
+          [ H.div { className: "btn btn-primary " <> (saveEnabled fieldsWithIndex fields')
+                  , on: { click: onClickSave fields' }
                   }
             [ H.span { className: "fa fa-floppy-o" } [  ]
             ]
@@ -161,7 +163,7 @@ dashboardCodeEditorCpt = R.hooksComponentWithModule thisModule "dashboardCodeEdi
           [ H.div { className: "col-12" }
             [ fieldsCodeEditor { fields: fieldsS
                                , nodeId
-                               , session} []
+                               , session } []
             ]
           ]
         , H.div { className: "row" }
@@ -173,36 +175,36 @@ dashboardCodeEditorCpt = R.hooksComponentWithModule thisModule "dashboardCodeEdi
           ]
         ]
       where
-        saveEnabled :: FTFieldsWithIndex -> R.State FTFieldsWithIndex -> String
-        saveEnabled fs (fsS /\ _) = if fs == fsS then "disabled" else "enabled"
+        saveEnabled :: FTFieldsWithIndex -> FTFieldsWithIndex -> String
+        saveEnabled fs fsS = if fs == fsS then "disabled" else "enabled"
 
-        onClickSave :: forall e. R.State FTFieldsWithIndex -> e -> Effect Unit
-        onClickSave (fields /\ _) _ = do
-          log "[dashboardCodeEditor] saving (TODO)"
-          onChange $ snd <$> fields
+        onClickSave :: forall e. FTFieldsWithIndex -> e -> Effect Unit
+        onClickSave fields' _ = do
+          here.log "saving (TODO)"
+          onChange $ snd <$> fields'
           -- launchAff_ do
             -- saveCorpus $ { hyperdata: Hyperdata {fields: (\(Tuple _ f) -> f) <$> fieldsS}
             --             , nodeId
             --             , session }
 
-        onClickAddField :: forall e. R.State FTFieldsWithIndex -> e -> Effect Unit
-        onClickAddField (_ /\ setFieldsS) _ = do
-          setFieldsS $ \fieldsS -> List.snoc fieldsS $ Tuple (List.length fieldsS) defaultField
+        onClickAddField :: forall e. T.Box FTFieldsWithIndex -> e -> Effect Unit
+        onClickAddField fieldsS _ = do
+          T.modify_ (\fs -> List.snoc fs $ Tuple (List.length fs) defaultField) fieldsS
 
 type PredefinedChartProps =
-  ( chart :: P.PredefinedChart
-  , corpusId :: NodeID
+  ( chart         :: P.PredefinedChart
+  , corpusId      :: NodeID
   , defaultListId :: Int
-  , onChange :: P.PredefinedChart -> Effect Unit
-  , onRemove :: Unit -> Effect Unit
-  , session :: Session
+  , onChange      :: P.PredefinedChart -> Effect Unit
+  , onRemove      :: Unit -> Effect Unit
+  , session       :: Session
   )
 
 renderChart :: R2.Component PredefinedChartProps
 renderChart = R.createElement renderChartCpt
 
 renderChartCpt :: R.Component PredefinedChartProps
-renderChartCpt = R.hooksComponentWithModule thisModule "renderChart" cpt
+renderChartCpt = here.component "renderChart" cpt
   where
     cpt { chart, corpusId, defaultListId, onChange, onRemove, session } _ = do
       pure $ H.div { className: "row chart card" }

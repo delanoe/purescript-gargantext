@@ -1,5 +1,6 @@
 module Gargantext.Components.Nodes.Lists.Tabs where
 
+import Gargantext.Prelude (bind, pure, unit, ($), (<>))
 import Data.Array as A
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (fst)
@@ -8,8 +9,9 @@ import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
+import Record.Extra as RX
+import Toestand as T
 
-import Gargantext.Prelude
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.NgramsTable as NT
@@ -18,67 +20,47 @@ import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
 import Gargantext.Components.Nodes.Corpus.Chart.Pie  (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
-import Gargantext.Components.Nodes.Corpus.Chart (getChartFunction)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils (mNgramsTypeFromTabType)
 import Gargantext.Components.Nodes.Lists.Types
 import Gargantext.Components.Search as S
 import Gargantext.Components.Tab as Tab
 import Gargantext.Sessions (Session)
-import Gargantext.Types (ChartType(..), CTabNgramType(..), Mode(..), TabSubType(..), TabType(..), chartTypeFromString, modeTabType)
+import Gargantext.Types
+  ( ChartType(..), CTabNgramType(..), Mode(..), TabSubType(..), TabType(..), modeTabType )
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
+import Gargantext.Utils.Toestand as T2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Nodes.Lists.Tabs"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Lists.Tabs"
 
 type Props = (
-    appReload         :: GUR.ReloadS
-  , asyncTasksRef     :: R.Ref (Maybe GAT.Reductor)
-  , cacheState        :: R.State CacheState
+    cacheState        :: T.Box CacheState
   , corpusData        :: CorpusData
   , corpusId          :: Int
+  , reloadForest      :: T.Box T2.Reload
+  , reloadRoot        :: T.Box T2.Reload
   , session           :: Session
   , sidePanelTriggers :: Record SidePanelTriggers
-  , treeReloadRef     :: GUR.ReloadWithInitializeRef
+  , tasks             :: T.Box (Maybe GAT.Reductor)
   )
 
-type PropsWithKey = (
-  key        :: String
-  | Props
-  )
+type PropsWithKey = ( key :: String | Props )
 
 tabs :: Record PropsWithKey -> R.Element
 tabs props = R.createElement tabsCpt props []
 
 tabsCpt :: R.Component PropsWithKey
-tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
-  where
-    cpt { appReload
-        , asyncTasksRef
-        , cacheState
-        , corpusData
-        , corpusId
-        , session
-        , sidePanelTriggers
-        , treeReloadRef } _ = do
-      (selected /\ setSelected) <- R.useState' 0
-
-      pure $ Tab.tabs { selected, tabs: tabs' }
-      where
-        tabs' = [ "Terms"      /\ view Terms
-                , "Authors"    /\ view Authors
-                , "Institutes" /\ view Institutes
-                , "Sources"    /\ view Sources
-                ]
-        view mode = ngramsView { appReload
-                               , asyncTasksRef
-                               , cacheState
-                               , corpusData
-                               , corpusId
-                               , mode
-                               , session
-                               , sidePanelTriggers
-                               , treeReloadRef } []
+tabsCpt = here.component "tabs" cpt where
+  cpt props _ = do
+    (selected /\ setSelected) <- R.useState' 0
+    pure $ Tab.tabs { selected, tabs: tabs' } where
+      tabs' = [ "Terms"      /\ view Terms []
+              , "Authors"    /\ view Authors []
+              , "Institutes" /\ view Institutes []
+              , "Sources"    /\ view Sources []
+              ]
+      common = RX.pick props :: Record Props
+      view mode = ngramsView $ Record.merge common { mode }
 
 type NgramsViewProps = ( mode :: Mode | Props )
 
@@ -86,40 +68,46 @@ ngramsView :: R2.Component NgramsViewProps
 ngramsView = R.createElement ngramsViewCpt
 
 ngramsViewCpt :: R.Component NgramsViewProps
-ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
-  where
-    cpt { appReload
-        , asyncTasksRef
-        , cacheState
-        , corpusData: { defaultListId }
-        , corpusId
-        , mode
-        , session
-        , sidePanelTriggers
-        , treeReloadRef
-        } _ = do
-
-      chartType <- R.useState' Histo
-      chartsReload <- GUR.new
-      let path = NTC.initialPageParams session corpusId [listId] tabType
+ngramsViewCpt = here.component "ngramsView" cpt where
+  cpt props@{ cacheState
+            , corpusData: { defaultListId }
+            , corpusId
+            , reloadForest
+            , reloadRoot
+            , mode
+            , session
+            , sidePanelTriggers
+            , tasks } _ = do
+      chartsReload <- T.useBox T2.newReload
+      chartsReload' <- T.useLive T.unequal chartsReload
+      path <- T.useBox $ NTC.initialPageParams props.session initialPath.corpusId [initialPath.listId] initialPath.tabType
+      { listIds, nodeId, params, tabType } <- T.useLive T.unequal path
+      let path' = {
+          corpusId: nodeId
+        , limit: params.limit
+        , listId: fromMaybe defaultListId $ A.head listIds
+        , tabType: tabType
+        }
       let chartParams = {
-          corpusId
-        , limit: Just path.params.limit
-        , listId
-        , tabType
+          corpusId: path'.corpusId
+        , limit: Just path'.limit
+        , listId: path'.listId
+        , tabType: path'.tabType
         }
 
       pure $ R.fragment
-        ( charts chartParams tabNgramType chartType chartsReload
+        ( charts chartParams tabNgramType
         <> [ NT.mainNgramsTable { afterSync: afterSync chartsReload
-                                , appReload
-                                , asyncTasksRef
                                 , cacheState
                                 , defaultListId
                                 , path
+                                , reloadForest
+                                , reloadRoot
+                                , session
                                 , sidePanelTriggers
                                 , tabNgramType
-                                , treeReloadRef
+                                , tabType
+                                , tasks
                                 , withAutoUpdate: false
                                 } []
            ]
@@ -132,7 +120,7 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
               -- should be recomputed already
               -- We just refresh it
               -- _ <- recomputeChart session chartType ngramsType corpusId listId
-              liftEffect $ GUR.bump chartsReload
+              liftEffect $ T2.reload chartsReload
             Nothing         -> pure unit
 
         tabNgramType = modeTabType mode
@@ -145,7 +133,7 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
                        , tabType
                        }
 
-        charts params CTabTerms (chartType /\ setChartType) _ = [
+        charts params CTabTerms = [
           H.div {className: "row"}
                 [ H.div {className: "col-12 d-flex justify-content-center"}
                   [ H.img { src: "images/Gargantextuel-212x300.jpg"
@@ -175,7 +163,7 @@ ngramsViewCpt = R.hooksComponentWithModule thisModule "ngramsView" cpt
         , getChartFunction chartType $ { path: params, session }
         -}
         ]
-        charts params _ _ _         = [ chart params mode ]
+        charts params _        = [ chart params mode ]
 
         chart path Authors    = pie     { path, session }
         chart path Institutes = tree    { path, session }

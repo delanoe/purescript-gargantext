@@ -2,6 +2,7 @@ module Gargantext.Components.Nodes.Corpus.Document.Types where
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 
@@ -12,8 +13,8 @@ import Gargantext.Components.NgramsTable.Core (CoreState, Versioned(..) , Versio
 import Gargantext.Sessions (Session)
 import Gargantext.Types (ListId, NodeID, TabType)
 
-type DocPath =
-  { listIds   :: Array ListId
+type DocPath = {
+    listIds   :: Array ListId
   , mCorpusId :: Maybe NodeID
   , nodeId    :: NodeID
   , session   :: Session
@@ -167,6 +168,8 @@ derive instance genericDocument   :: Generic Document   _
 derive instance genericDocumentV3 :: Generic DocumentV3 _
 derive instance genericStatus     :: Generic Status     _
 
+instance eqDocument :: Eq Document where
+  eq = genericEq
 instance showDocument :: Show Document where
   show = genericShow
 

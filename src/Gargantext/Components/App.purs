@@ -1,222 +1,38 @@
-module Gargantext.Components.App where
+module Gargantext.Components.App (app) where
 
-import Data.Array (fromFoldable)
-import Data.Maybe (Maybe(..), maybe')
-import Data.Tuple (fst, snd)
+import Data.Maybe (Maybe(..))
 import Reactix as R
+import Toestand as T
 
 import Gargantext.Prelude
 
-import Gargantext.Components.Footer (footer)
-import Gargantext.Components.Forest (forestLayout, forestLayoutWithTopBar)
-import Gargantext.Components.GraphExplorer (explorerLayout)
-import Gargantext.Components.Lang (LandingLang(..))
-import Gargantext.Components.Login (login)
-import Gargantext.Components.Nodes.Annuaire (annuaireLayout)
-import Gargantext.Components.Nodes.Annuaire.User (userLayout)
-import Gargantext.Components.Nodes.Annuaire.User.Contact (contactLayout)
-import Gargantext.Components.Nodes.Corpus (corpusLayout)
-import Gargantext.Components.Nodes.Corpus.Dashboard (dashboardLayout)
-import Gargantext.Components.Nodes.Corpus.Document (documentMainLayout)
-import Gargantext.Components.Nodes.File (fileLayout)
-import Gargantext.Components.Nodes.Frame  (frameLayout)
-import Gargantext.Components.Nodes.Home (homeLayout)
-import Gargantext.Components.Nodes.Lists as Lists
-import Gargantext.Components.Nodes.Texts as Texts
-import Gargantext.Components.SimpleLayout (simpleLayout)
-import Gargantext.Config (defaultFrontends, defaultBackends, publicBackend)
-import Gargantext.Hooks.Router (useHashRouter)
-import Gargantext.Router (router)
-import Gargantext.Routes (AppRoute(..))
-import Gargantext.Sessions (useSessions)
+import Gargantext.AsyncTasks as GAT
+import Gargantext.Components.App.Data (emptyApp)
+import Gargantext.Components.Router (router)
+import Gargantext.Hooks (useHashRouter)
+import Gargantext.Router as Router
 import Gargantext.Sessions as Sessions
-import Gargantext.Types as GT
-import Gargantext.Utils.Reload as GUR
+import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.App"
+here :: R2.Here
+here = R2.here "Gargantext.Components.App"
 
--- TODO (what does this mean?)
--- tree changes endConfig state => trigger endConfig change in outerLayout, layoutFooter etc
-
-app :: {} -> R.Element
-app props = R.createElement appCpt props []
+app :: R2.Component ()
+app = R.createElement appCpt
 
 appCpt :: R.Component ()
-appCpt = R.hooksComponentWithModule thisModule "app" cpt where
-  frontends = defaultFrontends
+appCpt = here.component "app" cpt where
   cpt _ _ = do
-    sessions   <- useSessions
-    route      <- useHashRouter router Home
-
-    asyncTasksRef <- R.useRef Nothing
-    treeReloadRef <- GUR.newI
-
-    showLogin  <- R.useState' false
-    backend    <- R.useState' Nothing
-
-    appReload  <- GUR.new
-
-    showCorpus <- R.useState' false
-
-    handed <- R.useState' GT.RightHanded
-
-    let backends          = fromFoldable defaultBackends
-    let ff f session      = R.fragment [ f session, footer { session } ]
-    let forested = forestLayout { appReload
-                                , asyncTasksRef
-                                , backend
-                                , currentRoute: fst route
-                                , frontends
-                                , handed
-                                , sessions: fst sessions
-                                , showLogin: snd showLogin
-                                , treeReloadRef
-                                }
-    let forestedTB = forestLayoutWithTopBar { appReload
-                                            , asyncTasksRef
-                                            , backend
-                                            , currentRoute: fst route
-                                            , frontends
-                                            , handed
-                                            , sessions: fst sessions
-                                            , showLogin: snd showLogin
-                                            , treeReloadRef
-                                            }
-    let defaultView _ = forested [
-          homeLayout { backend
-                     , lang: LL_EN
-                     , publicBackend
-                     , sessions
-                     , visible: showLogin
-                     }
-          ]
-    let withSession sid f = maybe' defaultView (ff f) (Sessions.lookup sid (fst sessions))
-
-    let sessionUpdate s = snd sessions $ Sessions.Update s
-
-    pure $ case fst showLogin of
-      true -> forested [ login { backend, backends, sessions, visible: showLogin } ]
-      false ->
-        case fst route of
-          Annuaire sid nodeId        -> withSession sid $ \session -> forested [
-            annuaireLayout { frontends, nodeId, session }
-          ]
-          Corpus sid nodeId        -> withSession sid $ \session -> forested [
-            corpusLayout { nodeId, session }
-          ]
-          CorpusDocument sid corpusId listId nodeId -> withSession sid $ \session -> forested [
-            documentMainLayout { listId, mCorpusId: Just corpusId,  nodeId, session } []
-          ]
-          Dashboard sid nodeId       -> withSession sid $ \session -> forested [
-            dashboardLayout { nodeId, session } []
-          ]
-          Document sid listId nodeId ->
-            withSession sid $
-              \session -> forested [
-                documentMainLayout { listId, mCorpusId: Nothing, nodeId, session } []
-              ]
-          Folder sid nodeId -> withSession sid $ \session -> forested [ corpusLayout { nodeId, session } ]
-          FolderPrivate sid nodeId -> withSession sid $ \session -> forested [ corpusLayout { nodeId, session } ]
-          FolderPublic sid nodeId  -> withSession sid $ \session -> forested [ corpusLayout { nodeId, session } ]
-          FolderShared sid nodeId  -> withSession sid $ \session -> forested [ corpusLayout { nodeId, session } ]
-          Home  -> forested [
-            homeLayout { backend, lang: LL_EN, publicBackend, sessions, visible: showLogin }
-          ]
-          Lists sid nodeId         -> withSession sid $
-            \session -> Lists.listsWithForest {
-                  forestProps: {
-                      appReload
-                    , asyncTasksRef
-                    , backend
-                    , currentRoute: fst route
-                    , frontends
-                    , handed
-                    , sessions: fst sessions
-                    , showLogin: snd showLogin
-                    , treeReloadRef
-                  }
-                , listsProps: {
-                      appReload
-                    , asyncTasksRef
-                    , nodeId
-                    , session
-                    , sessionUpdate
-                    , treeReloadRef
-                }
-              } []
-          Login -> login { backend, backends, sessions, visible: showLogin }
-          PGraphExplorer sid graphId ->
-            withSession sid $
-              \session ->
-                simpleLayout { handed } [
-                  explorerLayout { asyncTasksRef
-                                 , backend
-                                 , currentRoute: fst route
-                                 , frontends
-                                 , graphId
-                                 , handed: fst handed
-                                 , session
-                                 , sessions: (fst sessions)
-                                 , showLogin
-                                 }
-                ]
-          RouteFile sid nodeId -> withSession sid $ \session -> forested [ fileLayout { nodeId, session } ]
-          RouteFrameCalc  sid nodeId -> withSession sid $ \session -> forested [
-            frameLayout { nodeId, nodeType: GT.NodeFrameCalc, session     }
-          ]
-          RouteFrameCode  sid nodeId -> withSession sid $ \session -> forested [
-            frameLayout { nodeId, nodeType: GT.NodeFrameNotebook, session }
-          ]
-          RouteFrameWrite sid nodeId -> withSession sid $ \session -> forested [
-            frameLayout { nodeId, nodeType: GT.NodeFrameWrite, session    }
-          ]
-          Team sid nodeId  -> withSession sid $ \session -> forested [
-            corpusLayout { nodeId, session }
-          ]
-          Texts sid nodeId         -> withSession sid $
-            \session -> Texts.textsWithForest {
-                  forestProps: {
-                      appReload
-                    , asyncTasksRef
-                    , backend
-                    , currentRoute: fst route
-                    , frontends
-                    , handed
-                    , sessions: fst sessions
-                    , showLogin: snd showLogin
-                    , treeReloadRef
-                  }
-                , textsProps: {
-                      frontends
-                    , nodeId
-                    , session
-                    , sessionUpdate
-                }
-              } []
-----------------------------------------------------------------------------------------
--- | TODO refact UserPage and ContactPage
-          UserPage sid nodeId        -> withSession sid $ \session -> forested [
-            userLayout {
-                appReload
-              , asyncTasksRef
-              , frontends
-              , nodeId
-              , session
-              , treeReloadRef
-              }
-            ]
-
-          ContactPage sid aId nodeId                -> withSession sid $ \session -> forested [
-            contactLayout {
-                annuaireId: aId
-              , appReload
-              , asyncTasksRef
-              , frontends
-              , nodeId
-              , session
-              , treeReloadRef
-              }
-            ]
-
-
+    box    <- T.useBox emptyApp             -- global data
+    boxes <- T.useFocusedFields box {}      -- read-write access for children
+    tasks   <- T.useBox Nothing             -- storage for asynchronous tasks reductor
+    R.useEffectOnce' $ do
+      void $ Sessions.load boxes.sessions
+    tasksReductor <- GAT.useTasks boxes.reloadRoot boxes.reloadForest
+    R.useEffectOnce' $ do
+      T.write (Just tasksReductor) tasks
+    R.useEffectOnce' $ do
+      R2.loadLocalStorageState R2.openNodesKey boxes.forestOpen
+      T.listen (R2.listenLocalStorageState R2.openNodesKey) boxes.forestOpen
+    useHashRouter Router.router boxes.route -- Install router to window
+    pure $ router { boxes, tasks }          -- Render router component

@@ -1,10 +1,11 @@
 module Gargantext.Components.Charts.Options.Series where
 
-import Prelude (class Show, bind, map, pure, show, ($), (+), (<<<), (<>))
+import Prelude (class Eq, class Show, bind, map, pure, show, ($), (+), (<<<), (<>), eq)
 
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
 import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Array (foldl)
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), maybe)
 import Record.Unsafe (unsafeSet)
 import Unsafe.Coerce (unsafeCoerce)
@@ -186,11 +187,14 @@ toJsTree maybeSurname (TreeNode x) =
       name = maybe "" (\x' -> x' <> ">") maybeSurname  <> x.name
 
 data TreeNode = TreeNode {
-    name     :: String
+    children :: Array TreeNode
+  , name     :: String
   , value    :: Int
-  , children :: Array TreeNode
   }
 
+derive instance genericTreeNode :: Generic TreeNode _
+instance eqTreeNode :: Eq TreeNode where
+  eq (TreeNode n1) (TreeNode n2) = eq n1 n2
 instance decodeTreeNode :: DecodeJson TreeNode where
   decodeJson json = do
     obj <- decodeJson json

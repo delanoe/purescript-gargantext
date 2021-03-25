@@ -8,19 +8,22 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
-import Data.String (toLower)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 import URI.Extra.QueryPairs as NQP
 import URI.Query as Query
 
-import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Search, isIsTex_Advanced)
-import Gargantext.Prelude (discard, identity, pure, unit, ($), (<>), (==), class Show, show)
+import Gargantext.Prelude
+
+import Gargantext.Components.Forest.Tree.Node.Action.Search.Types
+  ( DataField(..), Search, isIsTex_Advanced )
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.Forest.Tree.Node.Action.Search.Frame"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Search.Frame"
 
 --------------------
 
@@ -36,59 +39,63 @@ instance showFrameSource :: Show FrameSource where
 
 type SearchIFramesProps = (
     iframeRef :: R.Ref (Nullable DOM.Element)
-  , search :: R.State Search
+  , search    :: T.Box Search
   )
 
-searchIframes :: Record SearchIFramesProps -> R.Element
-searchIframes props = R.createElement searchIframesCpt props []
+searchIframes :: R2.Component SearchIFramesProps
+searchIframes = R.createElement searchIframesCpt
 
 searchIframesCpt :: R.Component SearchIFramesProps
-searchIframesCpt = R.hooksComponentWithModule thisModule "searchIframes" cpt
+searchIframesCpt = here.component "searchIframes" cpt
   where
-    cpt { iframeRef, search: search@(search' /\ _) } _ = do
+    cpt { iframeRef, search } _ = do
+      search' <- T.useLive T.unequal search
+
       pure $ if isIsTex_Advanced search'.datafield
-         then divIframe { frameSource: Istex, iframeRef, search }
+         then divIframe { frameSource: Istex, iframeRef, search } []
       else
         if Just Web == search'.datafield
-           then divIframe { frameSource: Searx, iframeRef, search }
+           then divIframe { frameSource: Searx, iframeRef, search } []
            else H.div {} []
 
 
 type IFrameProps = (
     frameSource :: FrameSource
-  , iframeRef :: R.Ref (Nullable DOM.Element)
-  , search :: R.State Search
+  , iframeRef   :: R.Ref (Nullable DOM.Element)
+  , search      :: T.Box Search
   )
 
-divIframe :: Record IFrameProps -> R.Element
-divIframe props = R.createElement divIframeCpt props []
+divIframe :: R2.Component IFrameProps
+divIframe = R.createElement divIframeCpt
 
 divIframeCpt :: R.Component IFrameProps
-divIframeCpt = R.hooksComponentWithModule thisModule "divIframe" cpt
+divIframeCpt = here.component "divIframe" cpt
   where
-    cpt { frameSource, iframeRef, search: search@(search' /\ _) } _ = do
+    cpt props _ = do
       pure $ H.div { className: "frame-search card" }
-                   [ iframeWith { frameSource, iframeRef, search } ]
+                   [ iframeWith props [] ]
 
 frameUrl :: FrameSource -> String
 frameUrl Istex = "https://istex.frame.gargantext.org"
 frameUrl Searx = "https://searx.frame.gargantext.org" -- 192.168.1.4:8080"
 
 
-iframeWith :: Record IFrameProps -> R.Element
-iframeWith props = R.createElement iframeWithCpt props []
+iframeWith :: R2.Component IFrameProps
+iframeWith = R.createElement iframeWithCpt
 
 iframeWithCpt :: R.Component IFrameProps
-iframeWithCpt = R.hooksComponentWithModule thisModule "iframeWith" cpt
+iframeWithCpt = here.component "iframeWith" cpt
   where
-    cpt { frameSource, iframeRef, search: (search /\ setSearch) } _ =
-      pure $ H.iframe { src: src frameSource search.term
+    cpt { frameSource, iframeRef, search } _ = do
+      search' <- T.useLive T.unequal search
+
+      pure $ H.iframe { src: src frameSource search'.term
                       , width: "100%"
                       , height: "100%"
                       , ref: iframeRef
                       , on: { load: \_ -> do
                                  addEventListener window "message" (changeSearchOnMessage url)
-                                 R2.postMessage iframeRef search.term
+                                 R2.postMessage iframeRef search'.term
                             }
                       } []
       where
@@ -99,7 +106,7 @@ iframeWithCpt = R.hooksComponentWithModule thisModule "iframeWith" cpt
         changeSearchOnMessage url' =
                 callback $ \m -> if R2.getMessageOrigin m == url' then do
                                    let {url'', term} = R2.getMessageData m
-                                   setSearch $ _ {url = url'', term = term}
+                                   T.modify_ (_ {url = url'', term = term}) search
                                  else
                                     pure unit
 

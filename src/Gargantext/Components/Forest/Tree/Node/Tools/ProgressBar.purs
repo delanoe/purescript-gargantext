@@ -16,8 +16,8 @@ import Gargantext.Sessions (Session, get)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar"
 
 
 data BarType = Bar | Pie
@@ -35,7 +35,7 @@ asyncProgressBar :: Record Props -> R.Element
 asyncProgressBar p = R.createElement asyncProgressBarCpt p []
 
 asyncProgressBarCpt :: R.Component Props
-asyncProgressBarCpt = R.hooksComponentWithModule thisModule "asyncProgressBar" cpt
+asyncProgressBarCpt = here.component "asyncProgressBar" cpt
   where
     cpt props@{ asyncTask: (GT.AsyncTaskWithType {task: GT.AsyncTask {id}})
               , barType
@@ -81,7 +81,7 @@ progressIndicator :: Record ProgressIndicatorProps -> R.Element
 progressIndicator p = R.createElement progressIndicatorCpt p []
 
 progressIndicatorCpt :: R.Component ProgressIndicatorProps
-progressIndicatorCpt = R.hooksComponentWithModule thisModule "progressIndicator" cpt
+progressIndicatorCpt = here.component "progressIndicator" cpt
   where
     cpt { barType: Bar, label, progress } _ = do
       pure $

@@ -1,46 +1,46 @@
 module Gargantext.Components.Nodes.Annuaire.User
   ( module Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
   , userLayout
+  , userLayoutSessionContext
   )
   where
 
-import DOM.Simple.Console (log2)
+import Gargantext.Prelude (Unit, bind, const, discard, pure, show, ($), (<$>), (<<<), (<>))
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record as Record
+import Record.Extra as REX
+import Toestand as T
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.InputWithEnter (inputWithEnter)
-import Gargantext.Components.Nodes.Annuaire.User.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
+import Gargantext.Components.Nodes.Annuaire.Tabs as Tabs
 import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (Unit, bind, const, discard, pure, show, unit, ($), (+), (<$>), (<<<), (<>), (==))
 import Gargantext.Routes as Routes
-import Gargantext.Sessions (Session, get, put, sessionId)
+import Gargantext.Sessions (WithSession, WithSessionContext, Session, get, put, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
+import Gargantext.Utils.Toestand as T2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Nodes.Annuaire.User"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Annuaire.User"
 
-type DisplayProps = (
-  title :: String
-  )
+type DisplayProps = ( title :: String )
 
 display :: R2.Component DisplayProps
 display = R.createElement displayCpt
 
 displayCpt :: R.Component DisplayProps
-displayCpt = R.hooksComponentWithModule thisModule "display" cpt
+displayCpt = here.component "display" cpt
   where
     cpt { title } children = do
       pure $ H.div { className: "container-fluid" }
@@ -96,7 +96,7 @@ contactInfoItem :: Record ContactInfoItemProps -> R.Element
 contactInfoItem props = R.createElement contactInfoItemCpt props []
 
 contactInfoItemCpt :: R.Component ContactInfoItemProps
-contactInfoItemCpt = R.hooksComponentWithModule thisModule "contactInfoItem" cpt
+contactInfoItemCpt = here.component "contactInfoItem" cpt
   where
     cpt {hyperdata, label, lens, onUpdateHyperdata, placeholder} _ = do
       isEditing <- R.useState' false
@@ -113,7 +113,7 @@ contactInfoItemCpt = R.hooksComponentWithModule thisModule "contactInfoItem" cpt
         item (false /\ setIsEditing) valueRef =
           H.div { className: "input-group col-sm-6" } [
             H.input { className: "form-control"
-                    , defaultValue: placeholder
+                    , defaultValue: placeholder'
                     , disabled: 1
                     , type: "text" }
           , H.div { className: "btn input-group-append"
@@ -122,7 +122,7 @@ contactInfoItemCpt = R.hooksComponentWithModule thisModule "contactInfoItem" cpt
             ]
           ]
           where
-            placeholder = R.readRef valueRef
+            placeholder' = R.readRef valueRef
             onClick _ = setIsEditing $ const true
         item (true /\ setIsEditing) valueRef =
           H.div { className: "input-group col-sm-6" } [
@@ -150,75 +150,90 @@ contactInfoItemCpt = R.hooksComponentWithModule thisModule "contactInfoItem" cpt
 listElement :: Array R.Element -> R.Element
 listElement = H.li { className: "list-group-item justify-content-between" }
 
-type LayoutProps =
-  ( appReload     :: GUR.ReloadS
-  , asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
-  , frontends     :: Frontends
-  , nodeId        :: Int
-  , session       :: Session
-  , treeReloadRef :: GUR.ReloadWithInitializeRef
+type LayoutNoSessionProps =
+  ( frontends    :: Frontends
+  , nodeId       :: Int
+  , reloadForest :: T.Box T2.Reload
+  , reloadRoot   :: T.Box T2.Reload
+  , tasks        :: T.Box (Maybe GAT.Reductor)
   )
+
+type LayoutProps = WithSession LayoutNoSessionProps
+
+type LayoutSessionContextProps = WithSessionContext LayoutNoSessionProps
 
 type KeyLayoutProps = (
     key :: String
   | LayoutProps
   )
 
-userLayout :: Record LayoutProps -> R.Element
-userLayout props = R.createElement userLayoutCpt props []
+userLayoutSessionContext :: R2.Component LayoutSessionContextProps
+userLayoutSessionContext = R.createElement userLayoutSessionContextCpt
+
+userLayoutSessionContextCpt :: R.Component LayoutSessionContextProps
+userLayoutSessionContextCpt = here.component "userLayoutSessionContext" cpt
+  where
+    cpt props@{ session } _ = do
+      session' <- R.useContext session
+
+      pure $ userLayout (Record.merge { session: session' } $ (REX.pick props :: Record LayoutNoSessionProps)) []
+
+userLayout :: R2.Component LayoutProps
+userLayout = R.createElement userLayoutCpt
 
 userLayoutCpt :: R.Component LayoutProps
-userLayoutCpt = R.hooksComponentWithModule thisModule "userLayout" cpt
+userLayoutCpt = here.component "userLayout" cpt
   where
-    cpt { appReload, asyncTasksRef, frontends, nodeId, session, treeReloadRef } _ = do
+    cpt { frontends, nodeId, reloadForest, reloadRoot, session, tasks } _ = do
       let sid = sessionId session
 
       pure $ userLayoutWithKey {
-          appReload
-        , asyncTasksRef
-        , frontends
+          frontends
         , key: show sid <> "-" <> show nodeId
         , nodeId
+        , reloadForest
+        , reloadRoot
         , session
-        , treeReloadRef
+        , tasks
         }
 
 userLayoutWithKey :: Record KeyLayoutProps -> R.Element
 userLayoutWithKey props = R.createElement userLayoutWithKeyCpt props []
 
 userLayoutWithKeyCpt :: R.Component KeyLayoutProps
-userLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "userLayoutWithKey" cpt
+userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt
   where
-    cpt { appReload, asyncTasksRef, frontends, nodeId, session, treeReloadRef } _ = do
-      reload <- GUR.new
+    cpt { frontends, nodeId, reloadForest, reloadRoot, session, tasks } _ = do
+      reload <- T.useBox T2.newReload
+      reload' <- T.useLive T.unequal reload
 
-      cacheState <- R.useState' LT.CacheOn
+      cacheState <- T.useBox LT.CacheOn
 
       sidePanelTriggers <- LT.emptySidePanelTriggers
 
-      useLoader {nodeId, reload: GUR.value reload, session} getUserWithReload $
+      useLoader {nodeId, reload: reload', session} getUserWithReload $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" } [
             display { title: fromMaybe "no name" name }
                     (contactInfos hyperdata (onUpdateHyperdata reload))
           , Tabs.tabs {
-                 appReload
-               , asyncTasksRef
-               , cacheState
+                 cacheState
                , contactData
                , frontends
                , nodeId
+               , reloadForest
+               , reloadRoot
                , session
                , sidePanelTriggers
-               , treeReloadRef
+               , tasks
                }
           ]
       where
-        onUpdateHyperdata :: GUR.ReloadS -> HyperdataUser -> Effect Unit
+        onUpdateHyperdata :: T2.ReloadS -> HyperdataUser -> Effect Unit
         onUpdateHyperdata reload hd = do
           launchAff_ $ do
             _ <- saveContactHyperdata session nodeId hd
-            liftEffect $ GUR.bump reload
+            liftEffect $ T2.reload reload
 
 -- | toUrl to get data XXX
 getContact :: Session -> Int -> Aff ContactData
@@ -233,7 +248,9 @@ getContact session id = do
   --    throwError $ error "Missing default list"
   pure {contactNode, defaultListId: 424242}
 
-getUserWithReload :: {nodeId :: Int, reload :: GUR.Reload, session :: Session} -> Aff ContactData
+getUserWithReload :: { nodeId :: Int
+                     , reload :: T2.Reload
+                     , session :: Session} -> Aff ContactData
 getUserWithReload {nodeId, session} = getContact session nodeId
 
 saveContactHyperdata :: Session -> Int -> HyperdataUser -> Aff Int

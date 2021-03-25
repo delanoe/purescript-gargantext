@@ -8,7 +8,7 @@ module Gargantext.Components.NgramsTable.Core
   , ngramsRepoElementToNgramsElement
   , NgramsTable(..)
   , NewElems
-  , NgramsPatch
+  , NgramsPatch(..)
   , NgramsPatches
   , _NgramsTable
   , NgramsTerm
@@ -26,7 +26,6 @@ module Gargantext.Components.NgramsTable.Core
   , VersionedNgramsTable
   , VersionedWithCountNgramsTable
   , NgramsTablePatch
-  , NgramsPatch(..)
   , CoreState
   , HighlightElement
   , highlightNgrams
@@ -79,8 +78,6 @@ module Gargantext.Components.NgramsTable.Core
   )
   where
 
-import Prelude
-
 import Control.Monad.State (class MonadState, execState)
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (.:!), (.:?), (:=), (:=?), (~>), (~>?))
 import Data.Argonaut.Decode.Error (JsonDecodeError(..))
@@ -95,7 +92,7 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Ord (genericCompare)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Lens (Iso', Lens', use, view, (%=), (%~), (.~), (?=), (^?), (^.))
+import Data.Lens (Iso', Lens', use, view, (%=), (%~), (.~), (?=), (^?))
 import Data.Lens.At (class At, at)
 import Data.Lens.Common (_Just)
 import Data.Lens.Fold (folded, traverseOf_)
@@ -133,19 +130,22 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
+import Toestand as T
+
+import Gargantext.Prelude
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Table       as T
 import Gargantext.Components.Table.Types as T
-import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, post, put)
 import Gargantext.Types (AsyncTaskType(..), AsyncTaskWithType(..), CTabNgramType(..), ListId, OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize(..))
 import Gargantext.Utils.KarpRabin (indicesOfAny)
-import Gargantext.Utils.Reload as GUR
-
-thisModule :: String
-thisModule = "Gargantext.Components.NgramsTable.Core"
+import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
+  
+here :: R2.Here
+here = R2.here "Gargantext.Components.NgramsTable.Core"
 
 type Endo a = a -> a
 
@@ -157,13 +157,14 @@ newtype Versioned a = Versioned
   { version :: Version
   , data    :: a
   }
-
+derive instance genericVersioned :: Generic (Versioned a) _
+instance eqVersioned :: Eq a => Eq (Versioned a) where
+  eq = genericEq
 instance encodeJsonVersioned :: EncodeJson a => EncodeJson (Versioned a) where
   encodeJson (Versioned {version, data: data_})
      = "version" := version
     ~> "data" := data_
     ~> jsonEmptyObject
-
 instance decodeJsonVersioned :: DecodeJson a => DecodeJson (Versioned a) where
   decodeJson json = do
     obj     <- decodeJson json
@@ -178,7 +179,9 @@ newtype VersionedWithCount a = VersionedWithCount
   , count   :: Count
   , data    :: a
   }
-
+derive instance genericVersionedWithCount :: Generic (VersionedWithCount a) _
+instance eqVersionedWithCount :: Eq a => Eq (VersionedWithCount a) where
+  eq = genericEq
 instance encodeJsonVersionedWithCount :: EncodeJson a => EncodeJson (VersionedWithCount a) where
   encodeJson (VersionedWithCount {count, version, data: data_})
      = "version" := version
@@ -814,7 +817,7 @@ applyPatchMap applyPatchValue (PatchMap pm) m = mergeMap f pm m
 applyPatchMap applyPatchValue (PatchMap pm) m =
     foldl go m (Map.toUnfoldable pm :: List (Tuple k p))
   where
-    go m (Tuple k pv) = Map.alter (applyPatchValue pv) k m
+    go m' (Tuple k pv) = Map.alter (applyPatchValue pv) k m'
 
 type VersionedNgramsPatches = Versioned NgramsPatches
 
@@ -980,12 +983,12 @@ putNgramsPatches :: forall s. CoreParams s -> VersionedNgramsPatches -> Aff Vers
 putNgramsPatches { listIds, nodeId, session, tabType } = put session putNgrams
   where putNgrams = PutNgrams tabType (head listIds) Nothing (Just nodeId)
 
-syncPatches :: forall p s. CoreParams p -> R.State (CoreState s) -> (Unit -> Aff Unit) -> Effect Unit
-syncPatches props ({ ngramsLocalPatch: ngramsLocalPatch@{ ngramsPatches }
-                   , ngramsStagePatch
-                   , ngramsValidPatch
-                   , ngramsVersion
-                   } /\ setState) callback = do
+syncPatches :: forall p s. CoreParams p -> T.Box (CoreState s) -> (Unit -> Aff Unit) -> Effect Unit
+syncPatches props state callback = do
+  { ngramsLocalPatch: ngramsLocalPatch@{ ngramsPatches }
+  , ngramsStagePatch
+  , ngramsValidPatch
+  , ngramsVersion } <- T.read state
   when (isEmptyNgramsTablePatch ngramsStagePatch) $ do
     let pt = Versioned { data: ngramsPatches, version: ngramsVersion }
     launchAff_ $ do
@@ -993,7 +996,7 @@ syncPatches props ({ ngramsLocalPatch: ngramsLocalPatch@{ ngramsPatches }
       callback unit
       liftEffect $ do
         log2 "[syncPatches] setting state, newVersion" newVersion
-        setState $ \s ->
+        T.modify_ (\s ->
           -- I think that sometimes this setState does not fully go through.
           -- This is an issue because the version number does not get updated and the subsequent calls
           -- can mess up the patches.
@@ -1003,7 +1006,7 @@ syncPatches props ({ ngramsLocalPatch: ngramsLocalPatch@{ ngramsPatches }
             , ngramsValidPatch = fromNgramsPatches newPatch <> ngramsLocalPatch <> s.ngramsValidPatch
                               -- First the already valid patch, then the local patch, then the newly received newPatch.
             , ngramsVersion    = newVersion
-            }
+            }) state
         log2 "[syncPatches] ngramsVersion" newVersion
     pure unit
 
@@ -1033,10 +1036,9 @@ syncPatchesAsync props@{ listIds, tabType }
         log2 "[syncPatches] ngramsVersion" newVersion
 -}
 
-commitPatch :: forall s. Versioned NgramsTablePatch -> R.State (CoreState s) -> Effect Unit
-commitPatch (Versioned {version, data: tablePatch}) (_ /\ setState) = do
-  setState $ \s ->
-    s { ngramsLocalPatch = tablePatch <> s.ngramsLocalPatch }
+commitPatch :: forall s. NgramsTablePatch -> T.Box (CoreState s) -> Effect Unit
+commitPatch tablePatch state = do
+  T.modify_ (\s -> s { ngramsLocalPatch = tablePatch <> s.ngramsLocalPatch }) state
     -- First we apply the patches we have locally and then the new patch (tablePatch).
 
 loadNgramsTable :: PageParams -> Aff VersionedNgramsTable
@@ -1102,13 +1104,13 @@ data Action
 type CoreDispatch = CoreAction -> Effect Unit
 type Dispatch = Action -> Effect Unit
 
-coreDispatch :: forall p s. CoreParams p -> R.State (CoreState s) -> CoreDispatch
+coreDispatch :: forall p s. CoreParams p -> T.Box (CoreState s) -> CoreDispatch
 coreDispatch path state (Synchronize { afterSync }) =
   syncPatches path state afterSync
-coreDispatch _ state@({ngramsVersion} /\ _) (CommitPatch pt) =
-  commitPatch (Versioned {version: ngramsVersion, data: pt}) state
-coreDispatch _ (_ /\ setState) ResetPatches =
-  setState $ \s -> s { ngramsLocalPatch = { ngramsPatches: mempty } }
+coreDispatch _ state (CommitPatch pt) =
+  commitPatch pt state
+coreDispatch _ state ResetPatches =
+  T.modify_ (\s -> s { ngramsLocalPatch = { ngramsPatches: mempty } }) state
 
 isSingleNgramsTerm :: NgramsTerm -> Boolean
 isSingleNgramsTerm nt = isSingleTerm $ ngramsTermText nt
@@ -1136,7 +1138,7 @@ syncResetButtons :: Record SyncResetButtonsProps -> R.Element
 syncResetButtons p = R.createElement syncResetButtonsCpt p []
 
 syncResetButtonsCpt :: R.Component SyncResetButtonsProps
-syncResetButtonsCpt = R.hooksComponentWithModule thisModule "syncResetButtons" cpt
+syncResetButtonsCpt = here.component "syncResetButtons" cpt
   where
     cpt { afterSync, ngramsLocalPatch, performAction } _ = do
       synchronizing@(s /\ setSynchronizing) <- R.useState' false
@@ -1182,20 +1184,20 @@ chartsAfterSync :: forall props discard.
   , tabType :: TabType
   | props
   }
-  -> R.Ref (Maybe GAT.Reductor)
-  -> Int
-  -> GUR.ReloadWithInitializeRef
+  -> T.Box (Maybe GAT.Reductor)
+  -> T.Box T2.Reload
   -> discard
   -> Aff Unit
-chartsAfterSync path' asyncTasksRef nodeId treeReloadRef _ = do
+chartsAfterSync path'@{ nodeId } tasks reloadForest _ = do
   task <- postNgramsChartsAsync path'
   liftEffect $ do
     log2 "[chartsAfterSync] Synchronize task" task
-    case R.readRef asyncTasksRef of
-      Nothing -> log "[chartsAfterSync] asyncTasksRef is Nothing"
-      Just asyncTasks -> do
-        snd asyncTasks $ GAT.Insert nodeId task
-        GUR.bumpI treeReloadRef
+    mT <- T.read tasks
+    case mT of
+      Nothing -> log "[chartsAfterSync] tasks is Nothing"
+      Just tasks' -> do
+        snd tasks' (GAT.Insert nodeId task) -- *> T2.reload reloadForest
+        T2.reload reloadForest
 
 postNgramsChartsAsync :: forall s. CoreParams s -> Aff AsyncTaskWithType
 postNgramsChartsAsync { listIds, nodeId, session, tabType } = do

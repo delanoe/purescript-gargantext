@@ -1,22 +1,24 @@
 module Gargantext.Components.Forest.Tree.Node.Tools where
 
+import Gargantext.Prelude
+  ( class Ord, class Read, class Show, Unit
+  , bind, const, discard, map, not, pure, read, show, when
+  , ($), (<), (<<<), (<>), (<$>), (<*>) )
 import Data.Maybe (fromMaybe, Maybe(..))
 import Data.Nullable (null)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as S
 import Data.String.CodeUnits as DSCU
-import Data.Tuple (snd)
 import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
-import Gargantext.Prelude
-
-import Gargantext.Components.Forest.Tree.Node.Action
+import Gargantext.Components.Forest.Tree.Node.Action (Action, icon, text)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Components.GraphExplorer.API as GraphAPI
@@ -27,41 +29,32 @@ import Gargantext.Utils (glyphicon, toggleSet)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.ReactTooltip as ReactTooltip
 
-thisModule :: String
-thisModule = "Gargantext.Components.Forest.Tree.Node.Tools"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools"
 
-------------------------------------------------------------------------
+fragmentPT :: String -> R.Element
+fragmentPT text = H.div { style: { margin: "10px" }} [ H.text text ]
 
 type Body    = Array R.Element
+
 type Footer  = R.Element
 
 panel :: Body -> Footer -> R.Element
 panel bodies submit =
-  R.fragment [ panelBody, footer ]
-    where
-      panelBody =
-          H.div { className: "card-body" }
-          [ H.div { className: "row" }
-                  [ H.div { className: "col-12" } bodies
-                          -- TODO add type for text or form here
-                          -- [ H.form {className: "form-horizontal"} bodies ]
-                  ]
-            ]
-      footer =
-        H.div {className: "card-footer"}
-          [ H.div { className: "row" }
-              [ H.div { className: "mx-auto"} [ submit ]
-              ]
-          ]
+  R.fragment
+  [ H.div { className: "card-body" }
+    [ H.div { className: "row" }
+        -- TODO add type for text or form here [ H.form {className: "form-horizontal"} bodies ]
+      [ H.div { className: "col-12" } bodies ]]
+  , H.div {className: "card-footer"}
+    [ H.div { className: "row" }
+      [ H.div { className: "mx-auto"} [ submit ] ]]]
 
-
-------------------------------------------------------------------------
--- | START Text input
 type TextInputBoxProps =
   ( id       :: GT.ID
   , dispatch :: Action -> Aff Unit
   , text     :: String
-  , isOpen   :: R.State Boolean
+  , isOpen    :: T.Box Boolean
   , boxName  :: String
   , boxAction :: String -> Action
   )
@@ -70,74 +63,52 @@ textInputBox :: R2.Component TextInputBoxProps
 textInputBox = R.createElement textInputBoxCpt
 
 textInputBoxCpt :: R.Component TextInputBoxProps
-textInputBoxCpt = R.hooksComponentWithModule thisModule "textInputBox" cpt
-  where
-    cpt p@{ boxAction, boxName, dispatch, id, isOpen: (true /\ setIsOpen), text } _ = do
-      renameNodeNameRef <- R.useRef text
-
-      pure $ H.div { className: "from-group row" }
+textInputBoxCpt = here.component "textInputBox" cpt where
+  cpt { boxAction, boxName, dispatch, id, isOpen, text } _ =
+    content <$> T.useLive T.unequal isOpen <*> R.useRef text
+    where
+      content false _ = (R.fragment [])
+      content true renameNodeNameRef =
+        H.div { className: "from-group row" }
         [ textInput renameNodeNameRef
         , submitBtn renameNodeNameRef
         , cancelBtn
         ]
-      where
-        textInput renameNodeNameRef =
-          H.div { className: "col-8" }
-            [ inputWithEnter {
-                 onBlur: R.setRef renameNodeNameRef
-               , onEnter: submit renameNodeNameRef
-               , onValueChanged: R.setRef renameNodeNameRef
-               , autoFocus: true
-               , className: "form-control"
-               , defaultValue: text
-               , placeholder: (boxName <> " Node")
-               , type: "text"
-               }
-            ]
-        submitBtn renameNodeNameRef =
-          H.a { className: "col-2 " <> glyphicon "floppy-o"
-              , type: "button"
-              , on: { click: submit renameNodeNameRef }
-              , title: "Submit"
-              } []
-        cancelBtn =
-          H.a { className: "text-danger col-2 " <> glyphicon "times"
-              , type: "button"
-              , on: { click: \_ -> setIsOpen $ const false }
-              , title: "Cancel"
-              } []
-        submit renameNodeNameRef _ = do
-          launchAff_ $ dispatch ( boxAction $ R.readRef renameNodeNameRef )
-          setIsOpen $ const false
-    cpt { isOpen: (false /\ _) } _ = pure $ H.div {} []
+      textInput renameNodeNameRef =
+        H.div { className: "col-8" }
+          [ inputWithEnter {
+                autoFocus: true
+              , className: "form-control"
+              , defaultValue: text
+              , onBlur: R.setRef renameNodeNameRef
+              , onEnter: submit renameNodeNameRef
+              , onValueChanged: R.setRef renameNodeNameRef
+              , placeholder: (boxName <> " Node")
+              , type: "text"
+              }
+          ]
+      submitBtn renameNodeNameRef =
+        H.a { type: "button"
+            , title: "Submit"
+            , on: { click: submit renameNodeNameRef }
+            , className: "col-2 " <> glyphicon "floppy-o" } []
+      cancelBtn =
+        H.a { type: "button", title: "Cancel", on: { click }
+            , className: "text-danger col-2 " <> glyphicon "times" } []
+      submit ref _ = do
+        launchAff_ $ dispatch (boxAction $ R.readRef ref)
+        T.write_ false isOpen
+      click _ = T.write_ false isOpen
 
--- | END Rename Box
-
-
--- | Sugar Text style
-fragmentPT :: String -> R.Element
-fragmentPT text = H.div {style: {margin: "10px"}} [H.text text]
-
-
--- | Form Edit input
 type DefaultText = String
 
-formEdit :: forall previous next
-         .  DefaultText
-         -> ((previous -> String)
-         -> Effect next)
-         -> R.Element
+formEdit :: forall prev next
+          . DefaultText -> ((prev -> String) -> Effect next) -> R.Element
 formEdit defaultValue setter = 
-  H.div {className: "form-group"}
-     [ H.input { type        : "text"
-               , placeholder : defaultValue
-               , defaultValue: defaultValue
-               , className   : "form-control"
-               , on: { input: setter
-                                <<< const
-                                <<< R.unsafeEventValue }
-              }
-     ]
+  H.div { className: "form-group" }
+  [ H.input { defaultValue, type: "text", on: { input }
+            , placeholder: defaultValue, className: "form-control" }
+  ] where input = setter <<< const <<< R.unsafeEventValue
 
 -- | Form Choice input
 -- if the list of options is not big enough, a button is used instead
@@ -211,67 +182,65 @@ type Href  = String
 
 submitButtonHref :: Action -> Href -> R.Element
 submitButtonHref action href =
-  H.a { className : "btn btn-primary fa fa-" <> icon action
-      , href
-      , target: "_blank"
-      }
-      [ H.text $ " " <> text action]
+  H.a { className, href, target: "_blank" } [ H.text $ " " <> text action ] where
+    className = "btn btn-primary fa fa-" <> icon action
 
 ------------------------------------------------------------------------
 -- | CheckBox tools
--- checkboxes: Array of poolean values (basic: without pending option)
+-- checkboxes: Array of boolean values (basic: without pending option)
 -- checkbox  : One boolean value only
 
-checkbox :: R.State Boolean -> R.Element
-checkbox ( val /\ set ) =
-  H.input { className : "form-check-input"
-          , type: "checkbox"
-          , value: val
-          , on: { click: \_ -> set $ const $ not val}
-          }
+type CheckboxProps =
+  ( value :: T.Box Boolean )
+
+checkbox :: R2.Leaf CheckboxProps
+checkbox props = R.createElement checkboxCpt props []
+
+checkboxCpt :: R.Component CheckboxProps
+checkboxCpt = here.component "checkbox" cpt
+  where
+    cpt { value } _ = do
+      value' <- T.useLive T.unequal value
+
+      pure $ H.input { className: "form-check-input"
+                     , on: { click }
+                     , type: "checkbox"
+                     , value: value' }
+      where
+        click _ = T.modify_ not value
 
 data CheckBoxes = Multiple | Uniq
 
-checkboxes :: forall a
-           .  Ord   a
-           => Show  a
-           => Array a
-           -> R.State (Set a)
-           -> R.Element
-checkboxes xs (val /\ set) =
-  H.fieldset {} $ map (\a -> H.div {} [ H.input { type: "checkbox"
-                                           , defaultChecked: Set.member a val
-                                           , on: { click: \_ -> set
-                                                             $ const
-                                                             $ toggleSet a val
-                                                 }
-                                           }
-                                 , H.div {} [H.text $ show a]
-                                 ]
-                  ) xs
+type CheckboxesListGroup a =
+  ( groups :: Array a
+  , options :: T.Box (Set a) )
 
-checkboxesListGroup :: forall a
-           .  Ord   a
-           => Show  a
-           => Array a
-           -> R.State (Set a)
-           -> Array R.Element
-checkboxesListGroup xs (val /\ set) =
-  map (\a -> H.li { className: "list-group-item" }
-             [ H.div { className: "form-check" }
-               [ H.input { type: "checkbox"
-                         , className: "form-check-input"
-                         , defaultChecked: Set.member a val
-                         , on: { click: \_ -> set
-                                            $ const
-                                            $ toggleSet a val
-                             }
-                       }
-               , H.label { className: "form-check-label" } [ H.text $ show a ]
-               ]
-             ]
-      ) xs
+checkboxesListGroup :: forall a. Ord a => Show a => R2.Component (CheckboxesListGroup a)
+checkboxesListGroup = R.createElement checkboxesListGroupCpt
 
+checkboxesListGroupCpt :: forall a. Ord a => Show a => R.Component (CheckboxesListGroup a)
+checkboxesListGroupCpt = here.component "checkboxesListGroup" cpt
+  where
+    cpt { groups, options } _ = do
+      options' <- T.useLive T.unequal options
+
+      let one a =
+            H.li { className: "list-group-item" }
+              [ H.div { className: "form-check" }
+                [ H.input { defaultChecked: Set.member a options'
+                          , on: { click: \_ -> T.write_ (toggleSet a options') options
+                                , type: "checkbox" }
+                          , className: "form-check-input" }
+                , H.label { className: "form-check-label" } [ H.text (show a) ] ]
+              ]
+
+      pure $ R.fragment $ map one $ Set.toUnfoldable options'
+
+prettyNodeType :: GT.NodeType -> String
+prettyNodeType
+  =   S.replace (S.Pattern "Node")   (S.Replacement " ")
+  <<< S.replace (S.Pattern "Folder") (S.Replacement " ")
+  <<< show
 
 tooltipId :: GT.NodeID -> String
 tooltipId id = "node-link-" <> show id
@@ -280,9 +249,9 @@ tooltipId id = "node-link-" <> show id
 
 type NodeLinkProps = (
     frontends  :: Frontends
-  , id         :: GT.NodeID
-  , folderOpen :: R.State Boolean
+  , folderOpen :: T.Box Boolean
   , handed     :: GT.Handed
+  , id         :: Int
   , isSelected :: Boolean
   , name       :: GT.Name
   , nodeType   :: GT.NodeType
@@ -293,9 +262,9 @@ nodeLink :: R2.Component NodeLinkProps
 nodeLink = R.createElement nodeLinkCpt
 
 nodeLinkCpt :: R.Component NodeLinkProps
-nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
+nodeLinkCpt = here.component "nodeLink" cpt
   where
-    cpt { folderOpen: (_ /\ setFolderOpen)
+    cpt { folderOpen
         , frontends
         , handed
         , id
@@ -308,79 +277,27 @@ nodeLinkCpt = R.hooksComponentWithModule thisModule "nodeLink" cpt
 
       pure $
         H.div { className: "node-link"
-              , on: { click: onClick } }
-          [ nodeLinkHref { frontends, handed, id, isSelected, name, nodeType, session } []
-          , ReactTooltip.reactTooltip { id: tooltipId id }
-              [ R2.row
-                  [ H.h4 {className: GT.fldr nodeType true}
-                      [ H.text $ GT.prettyNodeType nodeType ]
-                  ]
-              , R2.row [ H.span {} [ H.text $ name ]]
+              , on: { click } }
+          [ H.a { href, data: { for: tooltipId id, tip: true } }
+            [ nodeText { handed, isSelected, name } []
+            , ReactTooltip.reactTooltip { effect: "float", id: tooltipId id, type: "dark" }
+                [ R2.row
+                    [ H.h4 {className: GT.fldr nodeType true}
+                        [ H.text $ GT.prettyNodeType nodeType ]
+                    ]
+                , R2.row [ H.span {} [ H.text $ name ]]
+                ]
               ]
-          ]
+            ]
 
       where
         -- NOTE Don't toggle tree if it is not selected
         -- click on closed -> open
         -- click on open   -> ?
-        onClick _ = if isSelected then
-                      setFolderOpen (const true)
-                    else
-                      setFolderOpen (const true)
+        click _ = when (not isSelected) (T.write_ true folderOpen)
+        href = url frontends $ GT.NodePath (sessionId session) nodeType (Just id)
 -- END node link
 
--- START node link href
-type NodeLinkHrefProps = (
-    frontends  :: Frontends
-  , handed     :: GT.Handed
-  , id         :: GT.NodeID
-  , isSelected :: Boolean
-  , name       :: GT.Name
-  , nodeType   :: GT.NodeType
-  , session    :: Session
-  )
-
-nodeLinkHref :: R2.Component NodeLinkHrefProps
-nodeLinkHref = R.createElement nodeLinkHrefCpt
-
-nodeLinkHrefCpt :: R.Component NodeLinkHrefProps
-nodeLinkHrefCpt = R.hooksComponentWithModule thisModule "nodeLinkHref" cpt
-  where
-    cpt { frontends
-        , handed
-        , id
-        , isSelected
-        , name
-        , nodeType: nodeType@GT.Graph
-        , session } _ = do
-
-      useLoader id (graphVersions session) renderElement
-
-      where
-        renderElement { gv_graph: Nothing } = nodeText { isSelected, handed, name } []
-        renderElement _ = H.a { data: { for: tooltipId id
-                                      , tip: true
-                                      }
-                              , href: url frontends $ GT.NodePath (sessionId session) nodeType (Just id) }
-                            [ nodeText { isSelected, handed, name} [] ]
-
-    cpt { frontends
-        , handed
-        , id
-        , isSelected
-        , name
-        , nodeType
-        , session } _ = do
-      pure $ H.a { data: { for: tooltipId id
-                         , tip: true
-                         }
-                 , href: url frontends $ GT.NodePath (sessionId session) nodeType (Just id) }
-        [ nodeText { isSelected, handed, name} [] ]
-
-    graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
-
-
--- START node text
 type NodeTextProps =
   ( isSelected :: Boolean
   , handed     :: GT.Handed
@@ -391,28 +308,21 @@ nodeText :: R2.Component NodeTextProps
 nodeText = R.createElement nodeTextCpt
 
 nodeTextCpt :: R.Component NodeTextProps
-nodeTextCpt = R.hooksComponentWithModule thisModule "nodeText" cpt
-  where
-    cpt { isSelected: true, name } _ = do
-      pure $ H.u { className } [
-        H.b {} [
-           H.text ("| " <> name15 name <> " |    ")
-         ]
-        ]
-    cpt {isSelected: false, name, handed} _ = do
-      pure $ if handed == GT.RightHanded
-                then H.span { className } [ H.text "..." <> H.text (name15 name) ]
-                else H.span { className} [ H.text (name15 name) <> H.text "..." ]
-
-    name len n = if S.length n < len then
-                 n
-               else
-                 case (DSCU.slice 0 len n) of
-                   Nothing -> "???"
-                   Just s  -> s <> "..."
-    name15 = name 15
-    className = "node-text"
--- END node text
-
-------------------------------------------------------------------------
-
+nodeTextCpt = here.component "nodeText" cpt where
+  cpt { isSelected, handed, name } _ =
+    pure $ if isSelected then
+              H.u { className }
+                [ H.b {}
+                  [ H.text ("| " <> name15 name <> " |    ") ]
+                ]
+              else
+                GT.flipHanded l r handed where
+                  l = H.text "..."
+                  r = H.text (name15 name)
+  name_ len n =
+    if S.length n < len then n
+    else case (DSCU.slice 0 len n) of
+      Nothing -> "???"
+      Just s  -> s <> "..."
+  name15 = name_ 15
+  className = "node-text"

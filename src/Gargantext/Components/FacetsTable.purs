@@ -3,29 +3,31 @@
 --       has not been ported to this module yet.
 module Gargantext.Components.FacetsTable where
 
-------------------------------------------------------------------------
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
-import Data.Array (concat, filter)
+import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Sequence (Seq)
 import Data.Sequence as Seq
 import Data.Set (Set)
 import Data.Set as Set
-import Data.String (Pattern(..), split)
-import Data.String as String
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
-import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
+
+import Gargantext.Prelude
 
 import Gargantext.Components.Category (CategoryQuery(..), putCategories)
 import Gargantext.Components.Category.Types (Category(..), decodeCategory, favCategory)
 import Gargantext.Components.Search
+  ( Contact(..), Document(..), HyperdataRowContact(..), HyperdataRowDocument(..)
+  , SearchQuery, SearchResult(..), SearchResultTypes(..) )
+
 import Gargantext.Components.Table as T
 import Gargantext.Components.Table.Types as T
 import Gargantext.Ends (url, Frontends)
@@ -35,11 +37,10 @@ import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, post, deleteWithBody)
 import Gargantext.Types (NodeType(..), OrderBy(..), NodePath(..), NodeID)
 import Gargantext.Utils (toggleSet, zeroPad)
-import Gargantext.Utils.DecodeMaybe ((.|))
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.FacetsTable"
-------------------------------------------------------------------------
+here :: R2.Here
+here = R2.here "Gargantext.Components.FacetsTable"
 
 type Props =
   ( chart        :: R.Element
@@ -67,7 +68,8 @@ newtype Pair =
        }
 
 derive instance genericPair :: Generic Pair _
-
+instance eqPair :: Eq Pair where
+  eq = genericEq
 instance showPair :: Show Pair where
   show = genericShow
 
@@ -89,7 +91,8 @@ newtype DocumentsView =
   }
 
 derive instance genericDocumentsView :: Generic DocumentsView _
-
+instance eqDocumentsView :: Eq DocumentsView where
+  eq = genericEq
 instance showDocumentsView :: Show DocumentsView where
   show = genericShow
 
@@ -102,15 +105,18 @@ newtype ContactsView =
   , annuaireId :: Int
   , delete     :: Boolean
   }
-
 derive instance genericContactsView :: Generic ContactsView _
-
+instance eqContactsView :: Eq ContactsView where
+  eq = genericEq
 instance showContactsView :: Show ContactsView where
   show = genericShow
 
 ----------------------------------------------------------------------
 data Rows = Docs     { docs     :: Seq DocumentsView }
           | Contacts { contacts :: Seq ContactsView  }
+derive instance genericRows :: Generic Rows _
+instance eqRows :: Eq Rows where
+  eq = genericEq
 
 ----------------------------------------------------------------------
 
@@ -119,45 +125,47 @@ docView :: Record Props -> R.Element
 docView props = R.createElement docViewCpt props []
 
 docViewCpt :: R.Component Props
-docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
+docViewCpt = here.component "docView" cpt
   where
     cpt {frontends, session, nodeId, listId, query, totalRecords, chart, container} _ = do
-      deletions <- R.useState' initialDeletions
-      path <- R.useState' $ initialPagePath {nodeId, listId, query, session}
+      deletions <- T.useBox initialDeletions
+      path <- T.useBox $ initialPagePath {nodeId, listId, query, session}
+      path' <- T.useLive T.unequal path
 
       R.useEffect' $ do
         let ipp = initialPagePath {nodeId, listId, query, session}
-        if fst path == ipp then
+        if path' == ipp then
           pure unit
         else
-          snd path $ const ipp
+          void $ T.write ipp path
 
       pure $ H.div { className: "facets-doc-view container1" }
         [ R2.row
           [ chart
           , H.div { className: "col-md-12" }
-            [ pageLayout { deletions, frontends, totalRecords, container, session, path } ]
-   {-     , H.div { className: "col-md-12" }
+            [ pageLayout { container, deletions, frontends, path, session, totalRecords } [] ]
+    {-     , H.div { className: "col-md-12" }
             [ H.button { style: buttonStyle, on: { click: trashClick deletions } }
               [ H.i { className: "glyphitem fa fa-trash"
                     , style: { marginRight : "9px" }} []
             , H.text "Delete document!" ] 
             ] 
     -}      ] 
-       ]
-        where
-          buttonStyle =
-            { backgroundColor: "peru", padding: "9px", color: "white"
-            , border: "white", float: "right" }
-          trashClick deletions _ = performDeletions session nodeId deletions
+        ]
+      where
+        buttonStyle = { backgroundColor: "peru"
+                      , border: "white"
+                      , color: "white"
+                      , float: "right"
+                      , padding: "9px" }
 
-performDeletions :: Session -> Int -> R.State Deletions -> Effect Unit
-performDeletions session nodeId (deletions /\ setDeletions) =
-  launchAff_ call *> setDeletions del
+performDeletions :: Session -> Int -> T.Box Deletions -> Deletions -> Effect Unit
+performDeletions session nodeId deletions deletions' = do
+  launchAff_ $ deleteDocuments session nodeId (DeleteDocumentQuery q)
+  T.modify_ del deletions
   where
-    q = {documents: Set.toUnfoldable deletions.pending}
-    call = deleteDocuments session nodeId (DeleteDocumentQuery q)
-    del {pending, deleted} = {pending: mempty, deleted: deleted <> pending}
+    q = { documents: Set.toUnfoldable deletions'.pending }
+    del { deleted, pending } = { deleted: deleted <> pending, pending: mempty }
 
 markCategory :: Session -> NodeID -> Category -> Array NodeID -> Effect Unit
 markCategory session nodeId category nids =
@@ -173,14 +181,16 @@ docViewGraph :: Record Props -> R.Element
 docViewGraph props = R.createElement docViewCpt props []
 
 docViewGraphCpt :: R.Component Props
-docViewGraphCpt = R.hooksComponentWithModule thisModule "docViewGraph" cpt
+docViewGraphCpt = here.component "docViewGraph" cpt
   where
     cpt {frontends, session, nodeId, listId, query, totalRecords, chart, container} _ = do
-      deletions <- R.useState' initialDeletions
+      deletions <- T.useBox initialDeletions
+      deletions' <- T.useLive T.unequal deletions
       let buttonStyle = { backgroundColor: "peru", padding : "9px"
                         , color : "white", border : "white", float: "right"}
-      let performClick = \_ -> performDeletions session nodeId deletions
-      path <- R.useState' $ initialPagePath { nodeId, listId, query, session }
+      let performClick = \_ -> performDeletions session nodeId deletions deletions'
+      path <- T.useBox $ initialPagePath { nodeId, listId, query, session }
+
       pure $ R.fragment
         [ H.br {}
         , H.p  {} [ H.text "" ]
@@ -189,7 +199,7 @@ docViewGraphCpt = R.hooksComponentWithModule thisModule "docViewGraph" cpt
           [ R2.row
             [ chart
             , H.div { className: "col-md-12" }
-              [ pageLayout { frontends, totalRecords, deletions, container, session, path }
+              [ pageLayout { container, deletions, frontends, path, session, totalRecords } []
               , H.button { style: buttonStyle, on: { click: performClick } }
                 [ H.i { className: "glyphitem fa fa-trash"
                       , style: { marginRight : "9px" } } []
@@ -290,39 +300,60 @@ err2view message =
 type PageLayoutProps =
   ( frontends    :: Frontends
   , totalRecords :: Int
-  , deletions    :: R.State Deletions
+  , deletions    :: T.Box Deletions
   , container    :: Record T.TableContainerProps -> R.Element
   , session      :: Session
-  , path         :: R.State PagePath
+  , path         :: T.Box PagePath
   )
 
 type PageProps = ( rowsLoaded :: Rows | PageLayoutProps )
 
 -- | Loads and renders a page
-pageLayout :: Record PageLayoutProps -> R.Element
-pageLayout props = R.createElement pageLayoutCpt props []
+pageLayout :: R2.Component PageLayoutProps
+pageLayout = R.createElement pageLayoutCpt
 
 pageLayoutCpt :: R.Component PageLayoutProps
-pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt
+pageLayoutCpt = here.component "pageLayout" cpt
   where
-    cpt {frontends, totalRecords, deletions, container, session, path} _ = do
-      useLoader (fst path) loadPage $ \rowsLoaded ->
-        page {frontends, totalRecords, deletions, container, session, path, rowsLoaded}
+    cpt { container, deletions, frontends, path, session, totalRecords } _ = do
+      path' <- T.useLive T.unequal path
 
-page :: Record PageProps -> R.Element
-page props = R.createElement pageCpt props []
+      useLoader path' loadPage $ \rowsLoaded ->
+        page { container, deletions, frontends, path, rowsLoaded, session, totalRecords } []
+
+page :: R2.Component PageProps
+page = R.createElement pageCpt
 
 pageCpt :: R.Component PageProps
-pageCpt = R.hooksComponentWithModule thisModule "page" cpt
+pageCpt = here.component "page" cpt
   where
-    cpt {frontends, totalRecords, container, deletions, rowsLoaded, session, path: path@({nodeId, listId, query} /\ setPath)} _ = do
-      pure $ T.table { syncResetButton : [ H.div {} [] ]
-                     , rows, container, colNames
-                     , totalRecords, params, wrapColElts
+    cpt { container
+        , deletions
+        , frontends
+        , path
+        , rowsLoaded
+        , session
+        , totalRecords } _ = do
+      path'@{ nodeId, listId, query } <- T.useLive T.unequal path
+      params <- T.useFocused (_.params) (\a b -> b { params = a }) path
+      deletions' <- T.useLive T.unequal deletions
+
+      let isChecked id = Set.member id deletions'.pending
+          isDeleted (DocumentsView {id}) = Set.member id deletions'.deleted
+
+          rows path' = case rowsLoaded of
+            Docs     {docs}     -> docRow path'     <$> Seq.filter (not <<< isDeleted) docs
+            Contacts {contacts} -> contactRow path' <$>  contacts
+
+      pure $ T.table { colNames
+                     , container
+                     , params
+                     , rows: rows path'
+                     , syncResetButton : [ H.div {} [] ]
+                     , totalRecords
+                     , wrapColElts
                      }
       where
-        setParams f = setPath $ \p@{params: ps} -> p {params = f ps}
-        params = (fst path).params /\ setParams
         colNames = case rowsLoaded of
             Docs     _ -> T.ColumnName <$> [ "", "Date", "Title", "Journal", "", "" ]
             Contacts _ -> T.ColumnName <$> [ "", "Contact", "Organization", "", "", "" ]
@@ -332,25 +363,19 @@ pageCpt = R.hooksComponentWithModule thisModule "page" cpt
         gi Trash = "fa fa-star-empty"
         gi _ = "fa fa-star"
 
-        isChecked id = Set.member id (fst deletions).pending
-        isDeleted (DocumentsView {id}) = Set.member id (fst deletions).deleted
+        documentUrl id { listId, nodeId } =
+            url frontends $ Routes.CorpusDocument (sessionId session) nodeId listId id
 
         pairUrl (Pair {id,label})
           | id > 1 = H.a { href, target: "blank" } [ H.text label ]
             where href = url session $ NodePath (sessionId session) NodeContact (Just id)
           | otherwise = H.text label
-        documentUrl id =
-            url frontends $ Routes.CorpusDocument (sessionId session) nodeId listId id
 
-        rows = case rowsLoaded of
-          Docs     {docs}     -> docRow     <$> Seq.filter (not <<< isDeleted) docs
-          Contacts {contacts} -> contactRow <$>  contacts
-
-        contactRow (ContactsView { id, hyperdata: HyperdataRowContact { firstname, lastname, labs}
-                                 , score, annuaireId, delete
+        contactRow path' (ContactsView { id, hyperdata: HyperdataRowContact { firstname, lastname, labs }
+                                       , score, annuaireId, delete
                                }) =
           { row:
-            T.makeRow [ H.div {} [ H.a { className: gi Favorite, on: {click: markClick} } [] ]
+            T.makeRow [ H.div {} [ H.a { className: gi Favorite, on: {click: markClick path'} } [] ]
                       , maybeStricken delete [ H.a {target: "_blank", href: contactUrl annuaireId id}
                                                    [ H.text $ firstname <> " " <> lastname ]
                                              ]
@@ -359,27 +384,19 @@ pageCpt = R.hooksComponentWithModule thisModule "page" cpt
           , delete: true
           }
           where
-            markClick   _     = markCategory session nodeId Favorite [id]
-            contactUrl aId id = url frontends $ Routes.ContactPage (sessionId session) annuaireId id
+            markClick { nodeId }  _     = markCategory session nodeId Favorite [id]
+            contactUrl aId id' = url frontends $ Routes.ContactPage (sessionId session) annuaireId id'
 
-        docRow dv@(DocumentsView {id, score, title, source, authors, pairs, delete, category}) =
+        docRow path' dv@(DocumentsView {id, score, title, source, authors, pairs, delete, category}) =
           { row:
-            T.makeRow [ H.div {} [ H.a { className: gi category, on: {click: markClick} } [] ]
+            T.makeRow [ H.div {} [ H.a { className: gi category, on: {click: markClick path'} } [] ]
                       , maybeStricken delete [ H.text $ publicationDate dv ]
-                      , maybeStricken delete [ H.a {target: "_blank", href: documentUrl id} [ H.text title ] ]
+                      , maybeStricken delete [ H.a {target: "_blank", href: documentUrl id path'} [ H.text title ] ]
                       , maybeStricken delete [ H.text source ]
-                      -- , maybeStricken delete [ H.text authors ]
-                        -- , maybeStricken $ intercalate [comma] (pairUrl <$> pairs)
-                      {-, H.input { defaultChecked: isChecked id
-                                , on: { click: toggleClick }
-                                , type: "checkbox"
-                                }
-                      -}
                       ]
           , delete: true }
           where
-            markClick   _ = markCategory session nodeId category [id]
-            toggleClick _ = togglePendingDeletion deletions id
+            markClick { nodeId } _ = markCategory session nodeId category [id]
             -- comma = H.span {} [ H.text ", " ]
 
         maybeStricken delete

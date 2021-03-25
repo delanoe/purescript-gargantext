@@ -385,9 +385,10 @@ li .leaf:hover a.settings {
   visibility: visible;
 }
 
-.tree {
+.forest > .tree {
   margin-top: 20px;
 }
+
 .tree ul li {
   position: relative;
 }
@@ -532,6 +533,10 @@ li .leaf:hover a.settings {
 }
 .panel-actions .ok-to-use {
   color: black;
+}
+
+.forest-layout-raw-tree {
+  padding-top: 60px;
 }
 
 .code-editor .editor .code-area {
@@ -722,6 +727,9 @@ ul li {
   color: #005a9aff;
 }
 
+.frame {
+  height: 100vh;
+}
 .frame iframe {
   border: 0;
 }

@@ -20,10 +20,9 @@ import Gargantext.Types  as GT
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Forest.Tree.Node.Action.Add"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Add"
 
-----------------------------------------------------------------------
 addNode :: Session -> GT.ID -> AddNodeValue -> Aff (Array GT.ID)
 addNode session parentId = post session $ GR.NodeAPI GT.Node (Just parentId) ""
 
@@ -34,8 +33,7 @@ addNodeAsync :: Session
 addNodeAsync session parentId q = do
   task <- post session p q
   pure $ GT.AsyncTaskWithType {task, typ: GT.AddNode}
-  where
-    p = GR.NodeAPI GT.Node (Just parentId) (GT.asyncTaskTypePath GT.AddNode)
+  where p = GR.NodeAPI GT.Node (Just parentId) (GT.asyncTaskTypePath GT.AddNode)
 
 ----------------------------------------------------------------------
 -- TODO AddNodeParams
@@ -65,7 +63,7 @@ addNodeView :: Record CreateNodeProps
             -> R.Element
 addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
   where
-    el = R.hooksComponentWithModule thisModule "addNodeView" cpt
+    el = here.component "addNodeView" cpt
     cpt {id, name} _ = do
       nodeName@(name' /\ setNodeName) <- R.useState' "Name"
       nodeType'@(nt /\ setNodeType)   <- R.useState' $ fromMaybe Folder $ head nodeTypes

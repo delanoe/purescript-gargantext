@@ -5,6 +5,7 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Prelude
 
@@ -16,8 +17,8 @@ import Gargantext.Sessions (Session, put_)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Forest.Tree.Node.Action.Move"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Move"
 
 moveNodeReq :: Session -> GT.ID -> GT.ID -> Aff (Array GT.ID)
 moveNodeReq session fromId toId =
@@ -27,13 +28,14 @@ moveNode :: R2.Component SubTreeParamsIn
 moveNode = R.createElement moveNodeCpt
 
 moveNodeCpt :: R.Component SubTreeParamsIn
-moveNodeCpt = R.hooksComponentWithModule thisModule "moveNode" cpt
+moveNodeCpt = here.component "moveNode" cpt
   where
     cpt { dispatch, handed, id, nodeType, session, subTreeParams } _ = do
-      action@(valAction /\ setAction) :: R.State Action <- R.useState' (MoveNode {params: Nothing})
+      action :: T.Box Action <- T.useBox (MoveNode {params: Nothing})
+      action' <- T.useLive T.unequal action
 
-      let button = case valAction of
-              MoveNode {params} -> case params of
+      let button = case action' of
+              MoveNode { params } -> case params of
                 Just val -> submitButton (MoveNode {params: Just val}) dispatch
                 Nothing -> H.div {} []
               _                   -> H.div {} []
@@ -45,5 +47,5 @@ moveNodeCpt = R.hooksComponentWithModule thisModule "moveNode" cpt
                                  , nodeType
                                  , session
                                  , subTreeParams
-                                 }
+                                 } []
               ] button

@@ -11,7 +11,9 @@ import Gargantext.Prelude
 
 type Props =
   (
-    id :: String
+      effect :: String
+    , id     :: String
+    , type   :: String
   )
 
 foreign import reactTooltipCpt :: R.Component Props

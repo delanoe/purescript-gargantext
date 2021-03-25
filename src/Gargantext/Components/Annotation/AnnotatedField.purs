@@ -19,7 +19,7 @@ import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ( (/\) )
 --import DOM.Simple.Console (log2)
 import DOM.Simple.Event as DE
-import Effect ( Effect )
+import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as HTML
 import Reactix.SyntheticEvent as E
@@ -33,8 +33,8 @@ import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Selection as Sel
 import Gargantext.Types (CTabNgramType(..), TermList)
 
-thisModule :: String
-thisModule = "Gargantext.Components.Annotation.AnnotatedField"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Annotation.AnnotatedField"
 
 type Props =
   ( ngrams       :: NgramsTable
@@ -51,7 +51,7 @@ annotatedField :: R2.Component Props
 annotatedField = R.createElement annotatedFieldComponent
 
 annotatedFieldComponent :: R.Component Props
-annotatedFieldComponent = R.hooksComponentWithModule thisModule "annotatedField" cpt
+annotatedFieldComponent = here.component "annotatedField" cpt
   where
     cpt {ngrams, setTermList, text: fieldText} _ = do
       (_ /\ setRedrawMenu) <- R.useState' false

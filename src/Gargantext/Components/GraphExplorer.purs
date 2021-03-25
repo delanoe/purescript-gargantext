@@ -11,7 +11,7 @@ import Data.Maybe (Maybe(..), fromJust, maybe)
 import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
 import Data.Set as Set
-import Data.Tuple (fst, snd, Tuple(..))
+import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Math (log)
@@ -19,6 +19,8 @@ import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as RH
 import Record as Record
+import Record.Extra as RX
+import Toestand as T
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest (forest)
@@ -34,69 +36,77 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Routes (SessionRoute(NodeAPI), AppRoute)
-import Gargantext.Sessions (Session, Sessions, get)
+import Gargantext.Sessions (OpenNodes, Session, Sessions, get)
 import Gargantext.Types as Types
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
+import Gargantext.Utils.Toestand as T2
 
-thisModule :: String
-thisModule = "Gargantext.Components.GraphExplorer"
+here :: R2.Here
+here = R2.here "Gargantext.Components.GraphExplorer"
 
-type LayoutProps = (
-    asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
-  , backend       :: R.State (Maybe Backend)
-  , currentRoute  :: AppRoute
+type BaseProps =
+  ( backend       :: T.Box (Maybe Backend)
   , frontends     :: Frontends
   , graphId       :: GET.GraphId
-  , handed        :: Types.Handed
-  , session       :: Session
-  , sessions      :: Sessions
-  , showLogin     :: R.State Boolean
+  , handed        :: T.Box Types.Handed
+  , route         :: T.Box AppRoute
+  , sessions      :: T.Box Sessions
+  , showLogin     :: T.Box Boolean
+  , tasks         :: T.Box (Maybe GAT.Reductor)
   )
+
+type LayoutLoaderProps = ( session :: R.Context Session | BaseProps )
+
+type LayoutProps =
+  ( graphVersion :: T2.ReloadS
+  , session :: Session
+  | BaseProps )
 
 type Props =
   ( graph          :: SigmaxT.SGraph
-  , graphVersion   :: GUR.ReloadS
   , hyperdataGraph :: GET.HyperdataGraph
   , mMetaData      :: Maybe GET.MetaData
   | LayoutProps
   )
 
 --------------------------------------------------------------
-explorerLayout :: Record LayoutProps -> R.Element
-explorerLayout props = R.createElement explorerLayoutCpt props []
+explorerLayoutLoader :: R2.Component LayoutLoaderProps
+explorerLayoutLoader = R.createElement explorerLayoutLoaderCpt
+
+explorerLayoutLoaderCpt :: R.Component LayoutLoaderProps
+explorerLayoutLoaderCpt = here.component "explorerLayoutLoader" cpt where
+  cpt props _ = do
+    graphVersion <- T.useBox T2.newReload
+    session <- R.useContext props.session -- todo: ugh, props fiddling
+    let base = RX.pick props :: Record BaseProps
+    let props' = Record.merge base { graphVersion, session }
+    pure $ explorerLayout props' []
+    
+explorerLayout :: R2.Component LayoutProps
+explorerLayout = R.createElement explorerLayoutCpt
 
 explorerLayoutCpt :: R.Component LayoutProps
-explorerLayoutCpt = R.hooksComponentWithModule thisModule "explorerLayout" cpt
-  where
-    cpt props _ = do
-      graphVersion <- GUR.new
-      pure $ explorerLayoutView graphVersion props
+explorerLayoutCpt = here.component "explorerLayout" cpt where
+  cpt props@{ backend, graphId, graphVersion, session } _ = do
+    graphVersion' <- T.useLive T.unequal graphVersion
 
-explorerLayoutView :: GUR.ReloadS -> Record LayoutProps -> R.Element
-explorerLayoutView graphVersion p = R.createElement el p []
-  where
-    el = R.hooksComponentWithModule thisModule "explorerLayoutView" cpt
-    cpt props@{ graphId, session } _ = do
-      useLoader graphId (getNodes session graphVersion) handler
-      where
-        handler loaded =
-          explorer (Record.merge props { graph, graphVersion, hyperdataGraph: loaded, mMetaData })
-          where
-            GET.HyperdataGraph { graph: hyperdataGraph } = loaded
-            Tuple mMetaData graph = convert hyperdataGraph
+    useLoader graphId (getNodes session graphVersion') handler
+    where
+      handler loaded = explorer (Record.merge props { graph, hyperdataGraph: loaded, mMetaData }) []
+        -- explorer (Record.merge props { graph, graphVersion, hyperdataGraph: loaded, mMetaData })
+        where
+          GET.HyperdataGraph { graph: hyperdataGraph } = loaded
+          Tuple mMetaData graph = convert hyperdataGraph
 
 --------------------------------------------------------------
-explorer :: Record Props -> R.Element
-explorer props = R.createElement explorerCpt props []
+explorer :: R2.Component Props
+explorer = R.createElement explorerCpt
 
 explorerCpt :: R.Component Props
-explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
+explorerCpt = here.component "explorer" cpt
   where
-    cpt props@{ asyncTasksRef
-              , backend
-              , currentRoute
+    cpt props@{ backend
               , frontends
               , graph
               , graphId
@@ -104,12 +114,17 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
               , handed
               , hyperdataGraph
               , mMetaData
+              , route
               , session
               , sessions
               , showLogin
+              , tasks
               } _ = do
+      handed' <- T.useLive T.unequal handed
+      graphVersion' <- T.useLive T.unequal graphVersion
+      graphVersionRef <- R.useRef graphVersion'
 
-      let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas }) -> startForceAtlas) mMetaData
+      let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas: sfa }) -> sfa) mMetaData
 
       let forceAtlasS = if startForceAtlas
                           then SigmaxT.InitialRunning
@@ -117,17 +132,22 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
 
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
-      graphVersionRef <- R.useRef (GUR.value graphVersion)
-      treeReload <- GUR.new
-      treeReloadRef <- GUR.newIInitialized treeReload
+      reloadForest <- T.useBox T2.newReload
       controls <- Controls.useGraphControls { forceAtlasS
-                                           , graph
-                                           , graphId
-                                           , hyperdataGraph
-                                           , session
-                                           , treeReload: \_ -> GUR.bump treeReload
-                                           }
-      multiSelectEnabledRef <- R.useRef $ fst controls.multiSelectEnabled
+                                            , graph
+                                            , graphId
+                                            , hyperdataGraph
+                                            , reloadForest: \_ -> T2.reload reloadForest
+                                            , session
+                                            }
+      multiSelectEnabled' <- T.useLive T.unequal controls.multiSelectEnabled
+      showTree' <- T.useLive T.unequal controls.showTree
+      multiSelectEnabledRef <- R.useRef multiSelectEnabled'
+
+      forestOpen <- T.useBox $ Set.empty
+      R.useEffectOnce' $ do
+        R2.loadLocalStorageState R2.openNodesKey forestOpen
+        T.listen (R2.listenLocalStorageState R2.openNodesKey) forestOpen
 
       R.useEffect' $ do
         let readData = R.readRef dataRef
@@ -139,43 +159,44 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
           let rSigma = R.readRef controls.sigmaRef
           Sigmax.cleanupSigma rSigma "explorerCpt"
           R.setRef dataRef graph
-          R.setRef graphVersionRef (GUR.value graphVersion)
+          R.setRef graphVersionRef graphVersion'
           -- Reinitialize bunch of state as well.
-          snd controls.removedNodeIds  $ const SigmaxT.emptyNodeIds
-          snd controls.selectedNodeIds $ const SigmaxT.emptyNodeIds
-          snd controls.showEdges       $ const SigmaxT.EShow
-          snd controls.forceAtlasState $ const forceAtlasS
-          snd controls.graphStage      $ const Graph.Init
-          snd controls.showSidePanel   $ const GET.InitialClosed
+          T.write_ SigmaxT.emptyNodeIds controls.removedNodeIds
+          T.write_ SigmaxT.emptyNodeIds controls.selectedNodeIds
+          T.write_ SigmaxT.EShow controls.showEdges
+          T.write_ forceAtlasS controls.forceAtlasState
+          T.write_ Graph.Init controls.graphStage
+          T.write_ GET.InitialClosed controls.showSidePanel
 
       pure $
         RH.div { className: "graph-meta-container" } [
           RH.div { className: "fixed-top navbar navbar-expand-lg"
                  , id: "graph-explorer" }
             [ rowToggle
-                    [ col [ spaces [ Toggle.treeToggleButton controls.showTree         ]]
-                    , col [ spaces [ Toggle.controlsToggleButton controls.showControls ]]
-                    , col [ spaces [ Toggle.sidebarToggleButton controls.showSidePanel ]]
+                    [ col [ spaces [ Toggle.treeToggleButton { state: controls.showTree } [] ]]
+                    , col [ spaces [ Toggle.controlsToggleButton { state: controls.showControls } [] ]]
+                    , col [ spaces [ Toggle.sidebarToggleButton { state: controls.showSidePanel } [] ]]
                     , col [ spaces [ nodeSearchControl { graph
                                                        , multiSelectEnabled: controls.multiSelectEnabled
                                                        , selectedNodeIds: controls.selectedNodeIds } [] ] ]
                     ]
             ]
         , RH.div { className: "graph-container" } [
-            inner handed [
+            inner handed' [
               rowControls [ Controls.controls controls ]
-            , RH.div { className: "row graph-row" } $ mainLayout handed $
-                tree { asyncTasksRef
-                    , backend
-                    , currentRoute
-                    , frontends
-                    , handed
-                    , reload: treeReload
-                    , sessions
-                    , show: fst controls.showTree
-                    , showLogin: snd showLogin
-                    , treeReloadRef
-                    }
+            , RH.div { className: "row graph-row" } $ mainLayout handed' $
+                tree { backend
+                     , forestOpen
+                     , frontends
+                     , handed
+                     , reload: reloadForest
+                     , route
+                     , reloadForest
+                     , sessions
+                     , show: showTree'
+                     , showLogin: showLogin
+                     , tasks
+                     }
                 /\
                 RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []
                 /\
@@ -189,15 +210,15 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
                           }
                 /\
                 mSidebar mMetaData { frontends
-                                  , graph
-                                  , graphId
-                                  , graphVersion
-                                  , removedNodeIds : controls.removedNodeIds
-                                  , session
-                                  , selectedNodeIds: controls.selectedNodeIds
-                                  , showSidePanel  :   controls.showSidePanel
-                                  , treeReload
-                                  }
+                                   , graph
+                                   , graphId
+                                   , graphVersion
+                                   , removedNodeIds : controls.removedNodeIds
+                                   , session
+                                   , selectedNodeIds: controls.selectedNodeIds
+                                   , showSidePanel  :   controls.showSidePanel
+                                   , reloadForest
+                                   }
             ]
           ]
         ]
@@ -224,17 +245,18 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
 
     tree :: Record TreeProps -> R.Element
     tree { show: false } = RH.div { id: "tree" } []
-    tree { asyncTasksRef, backend, frontends, handed, currentRoute, reload, sessions, showLogin, treeReloadRef } =
+    tree { backend, forestOpen, frontends, handed, reload, route, sessions, showLogin, reloadForest, tasks } =
       RH.div {className: "col-md-2 graph-tree"} [
-        forest { appReload: reload
-               , asyncTasksRef
-               , backend
-               , currentRoute
+        forest { backend
+               , forestOpen
                , frontends
                , handed
+               , reloadForest
+               , reloadRoot: reload
+               , route
                , sessions
                , showLogin
-               , treeReloadRef } []
+               , tasks } []
       ]
 
     mSidebar :: Maybe GET.MetaData
@@ -244,30 +266,30 @@ explorerCpt = R.hooksComponentWithModule thisModule "explorer" cpt
     mSidebar (Just metaData) props =
       Sidebar.sidebar (Record.merge props { metaData })
 
-type TreeProps =
-  (
-    asyncTasksRef :: R.Ref (Maybe GAT.Reductor)
-  , backend       :: R.State (Maybe Backend)
-  , currentRoute  :: AppRoute
-  , frontends     :: Frontends
-  , handed        :: Types.Handed
-  , reload        :: GUR.ReloadS
-  , sessions      :: Sessions
-  , show          :: Boolean
-  , showLogin     :: R.Setter Boolean
-  , treeReloadRef :: GUR.ReloadWithInitializeRef
+type TreeProps = (
+    backend      :: T.Box (Maybe Backend)
+  , forestOpen   :: T.Box OpenNodes
+  , frontends    :: Frontends
+  , handed       :: T.Box Types.Handed
+  , reload       :: T.Box T2.Reload
+  , reloadForest :: T.Box T2.Reload
+  , route        :: T.Box AppRoute
+  , sessions     :: T.Box Sessions
+  , show         :: Boolean
+  , showLogin    :: T.Box Boolean
+  , tasks        :: T.Box (Maybe GAT.Reductor)
   )
 
 type MSidebarProps =
   ( frontends       :: Frontends
   , graph           :: SigmaxT.SGraph
   , graphId         :: GET.GraphId
-  , graphVersion    :: GUR.ReloadS
-  , removedNodeIds  :: R.State SigmaxT.NodeIds
-  , showSidePanel   :: R.State GET.SidePanelState
-  , selectedNodeIds :: R.State SigmaxT.NodeIds
+  , graphVersion    :: T2.ReloadS
+  , reloadForest    :: T.Box T2.Reload
+  , removedNodeIds  :: T.Box SigmaxT.NodeIds
+  , selectedNodeIds :: T.Box SigmaxT.NodeIds
   , session         :: Session
-  , treeReload      :: GUR.ReloadS
+  , showSidePanel   :: T.Box GET.SidePanelState
   )
 
 type GraphProps = (
@@ -285,7 +307,7 @@ graphView :: Record GraphProps -> R.Element
 graphView props = R.createElement graphViewCpt props []
 
 graphViewCpt :: R.Component GraphProps
-graphViewCpt = R.hooksComponentWithModule thisModule "graphView" cpt
+graphViewCpt = here.component "graphView" cpt
   where
     cpt { controls
         , elRef
@@ -294,19 +316,33 @@ graphViewCpt = R.hooksComponentWithModule thisModule "graphView" cpt
         , hyperdataGraph: GET.HyperdataGraph { mCamera }
         , mMetaData
         , multiSelectEnabledRef } _children = do
+      edgeConfluence' <- T.useLive T.unequal controls.edgeConfluence
+      edgeWeight' <- T.useLive T.unequal controls.edgeWeight
+      multiSelectEnabled' <- T.useLive T.unequal controls.multiSelectEnabled
+      nodeSize' <- T.useLive T.unequal controls.nodeSize
+      removedNodeIds' <- T.useLive T.unequal controls.removedNodeIds
+      selectedNodeIds' <- T.useLive T.unequal controls.selectedNodeIds
+      showEdges' <- T.useLive T.unequal controls.showEdges
+      showLouvain' <- T.useLive T.unequal controls.showLouvain
+
       -- TODO Cache this?
       let louvainGraph =
-            if (fst controls.showLouvain) then
+            if showLouvain' then
               let louvain = Louvain.louvain unit in
               let cluster = Louvain.init louvain (SigmaxT.louvainNodes graph) (SigmaxT.louvainEdges graph) in
               SigmaxT.louvainGraph graph cluster
             else
               graph
-      let transformedGraph = transformGraph controls louvainGraph
-      let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas }) -> startForceAtlas) mMetaData
+      let transformedGraph = transformGraph louvainGraph { edgeConfluence'
+                                                                  , edgeWeight'
+                                                                  , nodeSize'
+                                                                  , removedNodeIds'
+                                                                  , selectedNodeIds'
+                                                                  , showEdges' }
+      let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas: sfa }) -> sfa) mMetaData
 
-      R.useEffect1' (fst controls.multiSelectEnabled) $ do
-        R.setRef multiSelectEnabledRef $ fst controls.multiSelectEnabled
+      R.useEffect1' multiSelectEnabled' $ do
+        R.setRef multiSelectEnabledRef multiSelectEnabled'
 
       pure $ Graph.graph { elRef
                          , forceAtlas2Settings: Graph.forceAtlas2Settings
@@ -320,7 +356,7 @@ graphViewCpt = R.hooksComponentWithModule thisModule "graphView" cpt
                          , stage: controls.graphStage
                          , startForceAtlas
                          , transformedGraph
-                         }
+                         } []
 
 convert :: GET.GraphData -> Tuple (Maybe GET.MetaData) SigmaxT.SGraph
 convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
@@ -375,23 +411,36 @@ modeGraphType Types.Sources = "star"
 modeGraphType Types.Terms = "def"
 
 
-getNodes :: Session -> GUR.ReloadS -> GET.GraphId -> Aff GET.HyperdataGraph
+getNodes :: Session -> T2.Reload -> GET.GraphId -> Aff GET.HyperdataGraph
 getNodes session graphVersion graphId =
   get session $ NodeAPI Types.Graph
                         (Just graphId)
-                        ("?version=" <> (show $ GUR.value graphVersion))
+                        ("?version=" <> (show graphVersion))
 
+type LiveProps = (
+    edgeConfluence'  :: Range.NumberRange
+  , edgeWeight'      :: Range.NumberRange
+  , nodeSize'        :: Range.NumberRange
+  , removedNodeIds'  :: SigmaxT.NodeIds
+  , selectedNodeIds' :: SigmaxT.NodeIds
+  , showEdges'       :: SigmaxT.ShowEdgesState
+  )
 
-transformGraph :: Record Controls.Controls -> SigmaxT.SGraph -> SigmaxT.SGraph
-transformGraph controls graph = SigmaxT.Graph {nodes: newNodes, edges: newEdges}
+transformGraph :: SigmaxT.SGraph -> Record LiveProps -> SigmaxT.SGraph
+transformGraph graph { edgeConfluence'
+                     , edgeWeight'
+                     , nodeSize'
+                     , removedNodeIds'
+                     , selectedNodeIds'
+                     , showEdges' } = SigmaxT.Graph {nodes: newNodes, edges: newEdges}
   where
     edges = SigmaxT.graphEdges graph
     nodes = SigmaxT.graphNodes graph
     selectedEdgeIds =
       Set.fromFoldable
         $ Seq.map _.id
-        $ SigmaxT.neighbouringEdges graph (fst controls.selectedNodeIds)
-    hasSelection = not $ Set.isEmpty (fst controls.selectedNodeIds)
+        $ SigmaxT.neighbouringEdges graph selectedNodeIds'
+    hasSelection = not $ Set.isEmpty selectedNodeIds'
 
     newEdges' = Seq.filter edgeFilter $ Seq.map (
       edgeHideWeight <<< edgeHideConfluence <<< edgeShowFilter <<< edgeMarked
@@ -403,32 +452,32 @@ transformGraph controls graph = SigmaxT.Graph {nodes: newNodes, edges: newEdges}
     nodeFilter n = nodeRemovedFilter n
 
     nodeSizeFilter :: Record SigmaxT.Node -> Boolean
-    nodeSizeFilter node@{ size } = Range.within (fst controls.nodeSize) size
+    nodeSizeFilter node@{ size } = Range.within nodeSize' size
 
-    nodeRemovedFilter node@{ id } = not $ Set.member id $ fst controls.removedNodeIds
+    nodeRemovedFilter node@{ id } = not $ Set.member id removedNodeIds'
 
     edgeConfluenceFilter :: Record SigmaxT.Edge -> Boolean
-    edgeConfluenceFilter edge@{ confluence } = Range.within (fst controls.edgeConfluence) confluence
+    edgeConfluenceFilter edge@{ confluence } = Range.within edgeConfluence' confluence
     edgeWeightFilter :: Record SigmaxT.Edge -> Boolean
-    edgeWeightFilter edge@{ weightIdx } = Range.within (fst controls.edgeWeight) $ toNumber weightIdx
+    edgeWeightFilter edge@{ weightIdx } = Range.within edgeWeight' $ toNumber weightIdx
 
     edgeHideConfluence :: Record SigmaxT.Edge -> Record SigmaxT.Edge
     edgeHideConfluence edge@{ confluence } =
-      if Range.within (fst controls.edgeConfluence) confluence then
+      if Range.within edgeConfluence' confluence then
         edge
       else
         edge { hidden = true }
 
     edgeHideWeight :: Record SigmaxT.Edge -> Record SigmaxT.Edge
     edgeHideWeight edge@{ weightIdx } =
-      if Range.within (fst controls.edgeWeight) $ toNumber weightIdx then
+      if Range.within edgeWeight' $ toNumber weightIdx then
         edge
       else
         edge { hidden = true }
 
     edgeShowFilter :: Record SigmaxT.Edge -> Record SigmaxT.Edge
     edgeShowFilter edge =
-      if (SigmaxT.edgeStateHidden $ fst controls.showEdges) then
+      if SigmaxT.edgeStateHidden showEdges' then
         edge { hidden = true }
       else
         edge
@@ -447,14 +496,14 @@ transformGraph controls graph = SigmaxT.Graph {nodes: newNodes, edges: newEdges}
 
     nodeMarked :: Record SigmaxT.Node -> Record SigmaxT.Node
     nodeMarked node@{ id } =
-      if Set.member id (fst controls.selectedNodeIds) then
+      if Set.member id selectedNodeIds' then
         node { borderColor = "#000", type = "selected" }
       else
         node
 
     nodeHideSize :: Record SigmaxT.Node -> Record SigmaxT.Node
     nodeHideSize node@{ size } =
-      if Range.within (fst controls.nodeSize) size then
+      if Range.within nodeSize' size then
         node
       else
         node { hidden = true }

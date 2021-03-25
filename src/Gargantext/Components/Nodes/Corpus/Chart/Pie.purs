@@ -4,6 +4,8 @@ import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson
 import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Array (zip, filter)
 import Data.Array as A
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.Maybe (Maybe(..))
 import Data.String (take, joinWith, Pattern(..), split, length)
 import Data.Tuple (Tuple(..))
@@ -11,25 +13,28 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
+
+import Gargantext.Prelude (class Eq, bind, map, pure, ($), (==), (>))
 
 import Gargantext.Components.Charts.Options.Color (blue)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Series (seriesBarD1, seriesPieD1)
-import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView, metricsWithCacheLoadView)
+import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types
-import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
+  (MetricsProps, Path, Props, ReloadPath)
 import Gargantext.Hooks.Loader (HashedResponse(..))
-import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
-import Gargantext.Types (ChartType(..), TabType)
+import Gargantext.Types (ChartType(..))
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Nodes.Corpus.Chart.Pie"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Pie"
 
 newtype ChartMetrics = ChartMetrics {
     "data" :: HistoMetrics
@@ -45,7 +50,9 @@ newtype HistoMetrics = HistoMetrics
   { dates :: Array String
   , count :: Array Number
   }
-
+derive instance genericHistoMetrics :: Generic HistoMetrics _
+instance eqHistoMetrics :: Eq HistoMetrics where
+  eq = genericEq
 instance decodeHistoMetrics :: DecodeJson HistoMetrics where
   decodeJson json = do
     obj   <- decodeJson json
@@ -101,14 +108,14 @@ handleResponse (HashedResponse { value: ChartMetrics ms }) = ms."data"
 mkRequest :: Session -> ReloadPath -> GUC.Request
 mkRequest session (_ /\ path@{ corpusId, limit, listId, tabType }) = GUC.makeGetRequest session $ chartUrl path
 
-pie :: Record Props -> R.Element
+pie :: R2.Leaf Props
 pie props = R.createElement pieCpt props []
 
 pieCpt :: R.Component Props
-pieCpt = R.hooksComponentWithModule thisModule "pie" cpt
+pieCpt = here.component "pie" cpt
   where
     cpt { path, session } _ = do
-      reload <- R.useState' 0
+      reload <- T.useBox T2.newReload
 
       pure $ metricsWithCacheLoadView {
           getMetricsHash
@@ -133,10 +140,10 @@ bar :: Record Props -> R.Element
 bar props = R.createElement barCpt props []
 
 barCpt :: R.Component Props
-barCpt = R.hooksComponentWithModule thisModule "bar" cpt
+barCpt = here.component "bar" cpt
   where
     cpt {path, session} _ = do
-      reload <- R.useState' 0
+      reload <- T.useBox T2.newReload
 
       pure $ metricsWithCacheLoadView {
            getMetricsHash

@@ -7,26 +7,27 @@ module Gargantext.Components.GraphExplorer.RangeControl
   ) where
 
 import Prelude
-import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Components.RangeSlider as RS
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.GraphExplorer.RangeControl"
+here :: R2.Here
+here = R2.here "Gargantext.Components.GraphExplorer.RangeControl"
 
 type Props = (
     caption :: String
   , sliderProps :: Record RS.Props
   )
 
-rangeControl :: Record Props -> R.Element
-rangeControl props = R.createElement rangeControlCpt props []
+rangeControl :: R2.Component Props
+rangeControl = R.createElement rangeControlCpt
 
 rangeControlCpt :: R.Component Props
-rangeControlCpt = R.hooksComponentWithModule thisModule "rangeButton" cpt
+rangeControlCpt = here.component "rangeButton" cpt
   where
     cpt {caption, sliderProps} _ = do
       pure $
@@ -35,47 +36,86 @@ rangeControlCpt = R.hooksComponentWithModule thisModule "rangeButton" cpt
           , RS.rangeSlider sliderProps
           ]
 
-edgeConfluenceControl :: Range.NumberRange -> R.State Range.NumberRange -> R.Element
-edgeConfluenceControl (Range.Closed { min, max }) (state /\ setState) =
-  rangeControl {
-      caption: "Edge Confluence Weight"
-    , sliderProps: {
-        bounds: Range.Closed { min, max }
-      , initialValue: state
-      , epsilon: 0.01
-      , step: 1.0
-      , width: 10.0
-      , height: 5.0
-      , onChange: setState <<< const
-      }
-    }
+type EdgeConfluenceControlProps = (
+    range :: Range.NumberRange
+  , state :: T.Box Range.NumberRange
+  )
 
-edgeWeightControl :: Range.NumberRange -> R.State Range.NumberRange -> R.Element
-edgeWeightControl (Range.Closed { min, max }) (state /\ setState) =
-  rangeControl {
-      caption: "Edge Weight"
-    , sliderProps: {
-        bounds: Range.Closed { min, max }
-      , initialValue: state
-      , epsilon: 1.0
-      , step: 1.0
-      , width: 10.0
-      , height: 5.0
-      , onChange: setState <<< const
-      }
-    }
+edgeConfluenceControl :: R2.Component EdgeConfluenceControlProps
+edgeConfluenceControl = R.createElement edgeConfluenceControlCpt
 
-nodeSizeControl :: Range.NumberRange -> R.State Range.NumberRange -> R.Element
-nodeSizeControl (Range.Closed { min, max }) (state /\ setState) =
-  rangeControl {
-      caption: "Node Size"
-    , sliderProps: {
-        bounds: Range.Closed { min, max }
-      , initialValue: state
-      , epsilon: 0.1
-      , step: 1.0
-      , width: 10.0
-      , height: 5.0
-      , onChange: setState <<< const
-      }
-    }
+edgeConfluenceControlCpt :: R.Component EdgeConfluenceControlProps
+edgeConfluenceControlCpt = here.component "edgeConfluenceControl" cpt
+  where
+    cpt { range: Range.Closed { min, max }
+        , state } _ = do
+      state' <- T.useLive T.unequal state
+
+      pure $ rangeControl {
+        caption: "Edge Confluence Weight"
+        , sliderProps: {
+          bounds: Range.Closed { min, max }
+          , initialValue: state'
+          , epsilon: 0.01
+          , step: 1.0
+          , width: 10.0
+          , height: 5.0
+          , onChange: \rng -> T.write_ rng state
+          }
+        } []
+
+type EdgeWeightControlProps = (
+    range :: Range.NumberRange
+  , state :: T.Box Range.NumberRange
+  )
+
+edgeWeightControl :: R2.Component EdgeWeightControlProps
+edgeWeightControl = R.createElement edgeWeightControlCpt
+
+edgeWeightControlCpt :: R.Component EdgeWeightControlProps
+edgeWeightControlCpt = here.component "edgeWeightControl" cpt
+  where
+    cpt { range: Range.Closed { min, max }
+        , state } _ = do
+      state' <- T.useLive T.unequal state
+
+      pure $ rangeControl {
+        caption: "Edge Weight"
+        , sliderProps: {
+          bounds: Range.Closed { min, max }
+          , initialValue: state'
+          , epsilon: 1.0
+          , step: 1.0
+          , width: 10.0
+          , height: 5.0
+          , onChange: \rng -> T.write_ rng state
+          }
+        } []
+
+type NodeSideControlProps = (
+    range :: Range.NumberRange
+  , state :: T.Box Range.NumberRange
+  )
+
+nodeSizeControl :: R2.Component NodeSideControlProps
+nodeSizeControl = R.createElement nodeSizeControlCpt
+
+nodeSizeControlCpt :: R.Component NodeSideControlProps
+nodeSizeControlCpt = here.component "nodeSizeControl" cpt
+  where
+    cpt { range: Range.Closed { min, max }
+        , state } _ = do
+      state' <- T.useLive T.unequal state
+
+      pure $ rangeControl {
+        caption: "Node Size"
+        , sliderProps: {
+          bounds: Range.Closed { min, max }
+          , initialValue: state'
+          , epsilon: 0.1
+          , step: 1.0
+          , width: 10.0
+          , height: 5.0
+          , onChange: \rng -> T.write_ rng state
+          }
+        } []

@@ -1,8 +1,9 @@
 module Gargantext.Hooks.Sigmax
   where
 
-import Prelude (Unit, bind, discard, flip, pure, unit, ($), (*>), (<<<), (<>), (>>=), (&&), not, const, map)
-
+import Prelude
+  ( Unit, bind, discard, flip, map, not, pure, unit
+  , ($), (&&), (*>), (<<<), (<>), (>>=))
 import Data.Array as A
 import Data.Either (either)
 import Data.Foldable (sequence_, foldl)
@@ -22,6 +23,7 @@ import Effect.Class.Console (error)
 import Effect.Timer (TimeoutId, clearTimeout)
 import FFI.Simple ((.=))
 import Reactix as R
+import Toestand as T
 
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as ST
@@ -112,9 +114,10 @@ dependOnContainer container notFoundMsg f = do
 -- | pausing can be done not only via buttons but also from the initial
 -- | setTimer.
 --handleForceAtlasPause sigmaRef (toggled /\ setToggled) mFAPauseRef = do
-handleForceAtlas2Pause :: R.Ref Sigma -> R.State ST.ForceAtlasState -> R.Ref (Maybe TimeoutId) -> Effect Unit
-handleForceAtlas2Pause sigmaRef (toggled /\ setToggled) mFAPauseRef = do
+handleForceAtlas2Pause :: R.Ref Sigma -> T.Box ST.ForceAtlasState -> R.Ref (Maybe TimeoutId) -> Effect Unit
+handleForceAtlas2Pause sigmaRef forceAtlasState mFAPauseRef = do
   let sigma = R.readRef sigmaRef
+  toggled <- T.read forceAtlasState
   dependOnSigma sigma "[handleForceAtlas2Pause] sigma: Nothing" $ \s -> do
     --log2 "[handleForceAtlas2Pause] mSigma: Just " s
     --log2 "[handleForceAtlas2Pause] toggled: " toggled
@@ -189,15 +192,15 @@ multiSelectUpdate new selected = foldl fld selected new
         Set.insert item selectedAcc
 
 
-bindSelectedNodesClick :: Sigma.Sigma -> R.State ST.NodeIds -> R.Ref Boolean -> Effect Unit
-bindSelectedNodesClick sigma (_ /\ setNodeIds) multiSelectEnabledRef =
+bindSelectedNodesClick :: Sigma.Sigma -> T.Box ST.NodeIds -> R.Ref Boolean -> Effect Unit
+bindSelectedNodesClick sigma selectedNodeIds multiSelectEnabledRef =
   Sigma.bindClickNodes sigma $ \nodes -> do
     let multiSelectEnabled = R.readRef multiSelectEnabledRef
     let nodeIds = Set.fromFoldable $ map _.id nodes
     if multiSelectEnabled then
-      setNodeIds $ multiSelectUpdate nodeIds
+      T.modify_ (multiSelectUpdate nodeIds) selectedNodeIds
     else
-      setNodeIds $ const nodeIds
+      T.write_ nodeIds selectedNodeIds
 
 bindSelectedEdgesClick :: R.Ref Sigma -> R.State ST.EdgeIds -> Effect Unit
 bindSelectedEdgesClick sigmaRef (_ /\ setEdgeIds) =

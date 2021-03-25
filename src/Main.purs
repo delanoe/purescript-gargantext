@@ -16,4 +16,4 @@ main = paint $ toMaybe (document ... "getElementById" $ [ "app" ])
 
 paint :: Maybe Element -> Effect Unit
 paint Nothing = log "[main] Container not found"
-paint (Just c) = R2.render (app {}) c
+paint (Just c) = R2.render (app {} []) c

@@ -2,16 +2,19 @@ module Gargantext.Components.Nodes.Corpus.Chart.Metrics where
 
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
 import Data.Argonaut.Core (jsonEmptyObject)
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.Map as Map
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
-import Gargantext.Prelude
+import Gargantext.Prelude (class Eq, bind, negate, pure, ($), (<$>), (<>))
 
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, yAxis')
 import Gargantext.Components.Charts.Options.Type (xAxis)
@@ -19,17 +22,19 @@ import Gargantext.Components.Charts.Options.Series (Series, seriesScatterD2)
 import Gargantext.Components.Charts.Options.Color (green, grey, red)
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
-import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView, metricsWithCacheLoadView)
+import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types
-import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
+  (MetricsProps, Path, Props, ReloadPath)
 import Gargantext.Hooks.Loader (HashedResponse(..))
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
-import Gargantext.Types (ChartType(..), TabType, TermList(..))
+import Gargantext.Types (TermList(..))
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 
-thisModule = "Gargantext.Components.Nodes.Corpus.Chart.Metrics"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Metrics"
 
 newtype Metric = Metric
   { label :: String
@@ -37,7 +42,9 @@ newtype Metric = Metric
   , y     :: Number
   , cat   :: TermList
   }
-
+derive instance genericMetric :: Generic Metric _
+instance eqMetric :: Eq Metric where
+  eq = genericEq
 instance decodeMetric :: DecodeJson Metric where
   decodeJson json = do
     obj   <- decodeJson json
@@ -46,7 +53,6 @@ instance decodeMetric :: DecodeJson Metric where
     y     <- obj .: "y"
     cat   <- obj .: "cat"
     pure $ Metric { label, x, y, cat }
-
 instance encodeMetric :: EncodeJson Metric where
   encodeJson (Metric { label, x, y, cat }) =
        "label"  := encodeJson label
@@ -118,10 +124,11 @@ metrics :: Record Props -> R.Element
 metrics props = R.createElement metricsCpt props []
 
 metricsCpt :: R.Component Props
-metricsCpt = R.hooksComponentWithModule thisModule "etrics" cpt
+metricsCpt = here.component "etrics" cpt
   where
     cpt {path, session} _ = do
-      reload <- R.useState' 0
+      reload <- T.useBox T2.newReload
+
       pure $ metricsWithCacheLoadView {
           getMetricsHash
         , handleResponse
@@ -134,9 +141,9 @@ metricsCpt = R.hooksComponentWithModule thisModule "etrics" cpt
 
 
 loaded :: Record MetricsProps -> Loaded -> R.Element
-loaded { path, reload, session } loaded =
+loaded { path, reload, session } loaded' =
   H.div {} [
   {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: Scatter, path, reload, session }
-  , -} chart $ scatterOptions loaded
+  , -} chart $ scatterOptions loaded'
   ]

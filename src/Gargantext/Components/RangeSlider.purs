@@ -19,7 +19,6 @@ import DOM.Simple.EventListener as EL
 import DOM.Simple (DOMRect)
 import Global (toFixed)
 import Effect (Effect)
-import Effect.Uncurried (mkEffectFn1)
 import Math as M
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -28,7 +27,8 @@ import Gargantext.Utils.Math (roundToMultiple)
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.RangeSlider"
+here :: R2.Here
+here = R2.here "Gargantext.Components.RangeSlider"
 -- data Axis = X | Y
 
 type Bounds = Range.NumberRange
@@ -55,7 +55,7 @@ data Knob = MinKnob | MaxKnob
 data RangeUpdate = SetMin Number | SetMax Number
 
 rangeSliderCpt :: R.Component Props
-rangeSliderCpt = R.hooksComponentWithModule thisModule "rangeSlider" cpt
+rangeSliderCpt = here.component "rangeSlider" cpt
   where
     cpt props _ = do
       -- rounding precision (i.e. how many decimal digits are in epsilon)

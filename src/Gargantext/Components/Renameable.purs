@@ -5,6 +5,7 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Prelude
 
@@ -12,24 +13,24 @@ import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Utils.Reactix as R2
 
 
-thisModule :: String
-thisModule = "Gargantext.Components.Renameable"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Renameable"
 
 type RenameableProps =
   (
     onRename :: String -> Effect Unit
-  , text :: String
+  , text     :: String
   )
 
-renameable :: Record RenameableProps -> R.Element
-renameable props = R.createElement renameableCpt props []
+renameable :: R2.Component RenameableProps
+renameable = R.createElement renameableCpt
 
 renameableCpt :: R.Component RenameableProps
-renameableCpt = R.hooksComponentWithModule thisModule "renameableCpt" cpt
+renameableCpt = here.component "renameableCpt" cpt
   where
-    cpt {onRename, text} _ = do
-      isEditing <- R.useState' false
-      state <- R.useState' text
+    cpt { onRename, text } _ = do
+      isEditing <- T.useBox false
+      state <- T.useBox text
       textRef <- R.useRef text
 
       -- handle props change of text
@@ -38,45 +39,72 @@ renameableCpt = R.hooksComponentWithModule thisModule "renameableCpt" cpt
           pure unit
         else do
           R.setRef textRef text
-          snd state $ const text
+          T.write_ text state
 
       pure $ H.div { className: "renameable" } [
-        renameableText { isEditing, onRename, state }
+        renameableText { isEditing, onRename, state } []
       ]
 
 type RenameableTextProps =
   (
-    isEditing :: R.State Boolean
-  , onRename :: String -> Effect Unit
-  , state :: R.State String
+    isEditing :: T.Box Boolean
+  , onRename  :: String -> Effect Unit
+  , state     :: T.Box String
   )
 
-renameableText :: Record RenameableTextProps -> R.Element
-renameableText props = R.createElement renameableTextCpt props []
+renameableText :: R2.Component RenameableTextProps
+renameableText = R.createElement renameableTextCpt
 
 renameableTextCpt :: R.Component RenameableTextProps
-renameableTextCpt = R.hooksComponentWithModule thisModule "renameableTextCpt" cpt
+renameableTextCpt = here.component "renameableText" cpt
   where
-    cpt {isEditing: (false /\ setIsEditing), state: (text /\ _)} _ = do
+    cpt props@{ isEditing, state } _ = do
+      isEditing' <- T.useLive T.unequal isEditing
+
+      pure $ if isEditing' then
+               notEditing props []
+             else
+               editing props []
+
+
+notEditing :: R2.Component RenameableTextProps
+notEditing = R.createElement notEditingCpt
+
+notEditingCpt :: R.Component RenameableTextProps
+notEditingCpt = here.component "notEditing" cpt
+  where
+    cpt props@{ isEditing, state } _ = do
+      state' <- T.useLive T.unequal state
+
       pure $ H.div { className: "input-group" }
         [ H.input { className: "form-control"
-                  , defaultValue: text
+                  , defaultValue: state'
                   , disabled: 1
                   , type: "text" }
         , H.div { className: "btn input-group-append"
-                , on: { click: \_ -> setIsEditing $ const true } }
+                , on: { click: \_ -> T.write_ true isEditing } }
           [ H.span { className: "fa fa-pencil" } []
           ]
         ]
-    cpt {isEditing: (true /\ setIsEditing), onRename, state: (text /\ setText)} _ = do
+
+
+editing :: R2.Component RenameableTextProps
+editing = R.createElement editingCpt
+
+editingCpt :: R.Component RenameableTextProps
+editingCpt = here.component "editing" cpt
+  where
+    cpt props@{ isEditing, onRename, state } _ = do
+      state' <- T.useLive T.unequal state
+
       pure $ H.div { className: "input-group" }
         [ inputWithEnter {
             autoFocus: false
           , className: "form-control text"
-          , defaultValue: text
-          , onBlur: setText <<< const
-          , onEnter: submit
-          , onValueChanged: setText <<< const
+          , defaultValue: state'
+          , onBlur: \s -> T.write_ s state
+          , onEnter: submit state'
+          , onValueChanged: \s -> T.write_ s state
           , placeholder: ""
           , type: "text"
           }
@@ -86,6 +114,6 @@ renameableTextCpt = R.hooksComponentWithModule thisModule "renameableTextCpt" cp
           ]
         ]
       where
-        submit _ = do
-          setIsEditing $ const false
+        submit text _ = do
+          T.write_ false isEditing
           onRename text

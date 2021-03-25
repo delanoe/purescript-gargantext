@@ -1,12 +1,14 @@
 module Gargantext.Components.Nodes.Dashboard.Types where
 
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, (.:), (.:?), (:=), (~>), jsonEmptyObject)
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.List as List
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
-import Gargantext.Components.Nodes.Types (FTField, Field(..), FieldType(..), isJSON)
+import Gargantext.Components.Nodes.Types (FTField)
 import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, get, put)
@@ -20,6 +22,9 @@ newtype Hyperdata =
   , fields :: List.List FTField
   , preferences :: Preferences
   }
+derive instance genericHyperdata :: Generic Hyperdata _
+instance eqHyperdata :: Eq Hyperdata where
+  eq = genericEq
 instance decodeHyperdata :: DecodeJson Hyperdata where
   decodeJson json = do
     obj <- decodeJson json
@@ -35,10 +40,7 @@ instance encodeHyperdata :: EncodeJson Hyperdata where
     ~> jsonEmptyObject
 
 
-type LoadProps = (
-    nodeId  :: Int
-  , session :: Session
-  )
+type LoadProps = ( nodeId  :: Int, session :: Session )
 
 loadDashboard' :: Record LoadProps -> Aff DashboardData
 loadDashboard' {nodeId, session} = get session $ NodeAPI Node (Just nodeId) ""
@@ -47,10 +49,7 @@ loadDashboard' {nodeId, session} = get session $ NodeAPI Node (Just nodeId) ""
 loadDashboardWithReload :: {reload :: Int  | LoadProps} -> Aff DashboardData
 loadDashboardWithReload {nodeId, session} = loadDashboard' {nodeId, session}
 
-type SaveProps = (
-  hyperdata :: Hyperdata
-  | LoadProps
-  )
+type SaveProps = ( hyperdata :: Hyperdata | LoadProps )
 
 saveDashboard :: Record SaveProps -> Aff Unit
 saveDashboard {hyperdata, nodeId, session} = do

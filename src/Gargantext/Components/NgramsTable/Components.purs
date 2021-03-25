@@ -15,55 +15,63 @@ import Effect (Effect)
 import FFI.Simple (delay)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Prelude
+  ( Unit, bind, const, discard, map, not, otherwise
+  , pure, show, unit, ($), (+), (/=), (<<<), (<>), (==), (>), (||) )
+
 import Gargantext.Components.NgramsTable.Core
+  ( Action(..), Dispatch, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm
+  , _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list
+  , _ngrams, _occurrences, ngramsTermText, replace, setTermListA )
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as Tbl
 import Gargantext.Types as T
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.NgramsTable.Components"
+here :: R2.Here
+here = R2.here "Gargantext.Components.NgramsTable.Components"
 
 type SearchInputProps =
   ( key :: String  -- to prevent refreshing & losing input
-  , onSearch :: String -> Effect Unit
-  , searchQuery :: String
+  , searchQuery :: T.Box String
   )
 
 searchInput :: Record SearchInputProps -> R.Element
 searchInput props = R.createElement searchInputCpt props []
 
 searchInputCpt :: R.Component SearchInputProps
-searchInputCpt = R.hooksComponentWithModule thisModule "searchInput" cpt
+searchInputCpt = here.component "searchInput" cpt
   where
-    cpt { onSearch, searchQuery } _ = 
+    cpt { searchQuery } _ = do
+      searchQuery' <- T.useLive T.unequal searchQuery
+
       pure $ R2.row [
         H.div { className: "col-12" } [
-          H.div { className: "input-group" } [
-            searchButton
-            , fieldInput
+          H.div { className: "input-group" }
+            [ searchButton searchQuery'
+            , fieldInput searchQuery'
             ]
           ]
         ]
         where
-          searchButton = 
+          searchButton searchQuery' =
             H.div { className: "input-group-prepend" }
-                  [
-                   if searchQuery /= ""
-                       then removeButton
-                       else H.span { className: "fa fa-search input-group-text" } []
-                  ]
+              [ if searchQuery' /= ""
+                then removeButton
+                else H.span { className: "fa fa-search input-group-text" } []
+              ]
           removeButton =
             H.button { className: "btn btn-danger"
-                     , on: {click: \e -> onSearch ""}}
-                     [ H.span {className: "fa fa-times"} []]
+                     , on: {click: \e -> T.write "" searchQuery}}
+              [ H.span {className: "fa fa-times"} []]
 
-          fieldInput  = 
+          fieldInput searchQuery' =
             H.input { className: "form-control"
-                    , defaultValue: searchQuery
+                    , defaultValue: searchQuery'
                     , name: "search"
-                    , on: { input: onSearch <<< R.unsafeEventValue }
+                    , on: { input: \e -> T.write (R.unsafeEventValue e) searchQuery }
                     , placeholder: "Search"
                     , type: "value"
                     }
@@ -78,7 +86,7 @@ selectionCheckbox :: Record SelectionCheckboxProps -> R.Element
 selectionCheckbox props = R.createElement selectionCheckboxCpt props []
 
 selectionCheckboxCpt :: R.Component SelectionCheckboxProps
-selectionCheckboxCpt = R.hooksComponentWithModule thisModule "selectionCheckbox" cpt
+selectionCheckboxCpt = here.component "selectionCheckbox" cpt
   where
     cpt { allNgramsSelected, dispatch, ngramsSelection } _ = do
       ref <- R.useRef null
@@ -113,7 +121,7 @@ renderNgramsTree :: Record RenderNgramsTree -> R.Element
 renderNgramsTree p = R.createElement renderNgramsTreeCpt p []
 
 renderNgramsTreeCpt :: R.Component RenderNgramsTree
-renderNgramsTreeCpt = R.hooksComponentWithModule thisModule "renderNgramsTree" cpt
+renderNgramsTreeCpt = here.component "renderNgramsTree" cpt
   where
     cpt { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit} _ =
       pure $ H.ul {} [
@@ -159,7 +167,7 @@ tree :: Record TreeProps -> R.Element
 tree p = R.createElement treeCpt p []
 
 treeCpt :: R.Component TreeProps
-treeCpt = R.hooksComponentWithModule thisModule "tree" cpt
+treeCpt = here.component "tree" cpt
   where
     cpt params@{ ngramsClick, ngramsDepth, ngramsEdit, ngramsStyle, ngramsTable } _ =
       pure $
@@ -210,7 +218,7 @@ renderNgramsItem :: R2.Component RenderNgramsItem
 renderNgramsItem = R.createElement renderNgramsItemCpt
 
 renderNgramsItemCpt :: R.Component RenderNgramsItem
-renderNgramsItemCpt = R.hooksComponentWithModule thisModule "renderNgramsItem" cpt
+renderNgramsItemCpt = here.component "renderNgramsItem" cpt
   where
     cpt { dispatch
         , ngrams

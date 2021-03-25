@@ -1,22 +1,26 @@
 module Gargantext.Components.Nodes.Corpus.Types where
 
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, (.:), (:=), (~>), jsonEmptyObject)
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.List as List
 import Data.Maybe (Maybe(..))
 
+import Gargantext.Prelude
+
 import Gargantext.Components.Node (NodePoly)
 import Gargantext.Components.Nodes.Types (FTField, Field(..), FieldType(..), isJSON)
-import Gargantext.Prelude (bind, pure, ($))
 
 newtype Hyperdata =
   Hyperdata { fields :: List.List FTField }
-
+derive instance genericHyperdata :: Generic Hyperdata _
+instance eqHyperdata :: Eq Hyperdata where
+  eq = genericEq
 instance decodeHyperdata :: DecodeJson Hyperdata where
   decodeJson json = do
     obj <- decodeJson json
     fields <- obj .: "fields"
     pure $ Hyperdata {fields}
-
 instance encodeHyperdata :: EncodeJson Hyperdata where
   encodeJson (Hyperdata {fields}) = do
        "fields"  := fields

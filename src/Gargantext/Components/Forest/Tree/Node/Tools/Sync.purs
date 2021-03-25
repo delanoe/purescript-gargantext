@@ -1,5 +1,7 @@
 module Gargantext.Components.Forest.Tree.Node.Tools.Sync where
 
+import Gargantext.Prelude
+  ( Unit, bind, const, discard, pure, unit, ($), (<>), (==) )
 import Effect.Aff (Aff, launchAff_)
 import Data.Tuple.Nested ((/\))
 import Data.Maybe (Maybe(..))
@@ -9,13 +11,12 @@ import Reactix.DOM.HTML as H
 import Reactix as R
 
 import Gargantext.Components.GraphExplorer.API as GraphAPI
-import Gargantext.Components.NgramsTable.API as NTAPI
-import Gargantext.Prelude (Unit, bind, const, discard, pure, unit, ($), (<>), (==))
 import Gargantext.Types as GT
 import Gargantext.Sessions (Session)
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.Forest.Tree.Node.Tools.Sync"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools.Sync"
 
 
 -- | Sync Node (Graph)
@@ -23,36 +24,36 @@ type NodeActionsGraphProps =
   ( id             :: GT.ID
   , graphVersions  :: Record GraphAPI.GraphVersions
   , session        :: Session
-  , triggerRefresh :: Unit -> Aff Unit
+  , refresh :: Unit -> Aff Unit
   )
 
 nodeActionsGraph :: Record NodeActionsGraphProps -> R.Element
 nodeActionsGraph p = R.createElement nodeActionsGraphCpt p []
 
 nodeActionsGraphCpt :: R.Component NodeActionsGraphProps
-nodeActionsGraphCpt = R.hooksComponentWithModule thisModule "nodeActionsGraph" cpt
+nodeActionsGraphCpt = here.component "nodeActionsGraph" cpt
   where
-    cpt { id, graphVersions, session, triggerRefresh } _ = do
+    cpt { id, graphVersions, session, refresh } _ = do
       pure $ H.div { className: "node-actions" } [
         if graphVersions.gv_graph == Just graphVersions.gv_repo then
           H.div {} []
         else
-          graphUpdateButton { id, session, triggerRefresh }
+          graphUpdateButton { id, session, refresh }
       ]
 
 type GraphUpdateButtonProps =
   ( id :: GT.ID
   , session :: Session
-  , triggerRefresh :: Unit -> Aff Unit
+  , refresh :: Unit -> Aff Unit
   )
 
 graphUpdateButton :: Record GraphUpdateButtonProps -> R.Element
 graphUpdateButton p = R.createElement graphUpdateButtonCpt p []
 
 graphUpdateButtonCpt :: R.Component GraphUpdateButtonProps
-graphUpdateButtonCpt = R.hooksComponentWithModule thisModule "graphUpdateButton" cpt
+graphUpdateButtonCpt = here.component "graphUpdateButton" cpt
   where
-    cpt { id, session, triggerRefresh } _ = do
+    cpt { id, session, refresh } _ = do
       enabled <- R.useState' true
 
       pure $ H.div { className: "update-button "
@@ -69,7 +70,7 @@ graphUpdateButtonCpt = R.hooksComponentWithModule thisModule "graphUpdateButton"
             liftEffect $ setEnabled $ const false
             g <- GraphAPI.updateGraphVersions { graphId: id, session }
             liftEffect $ setEnabled $ const true
-            triggerRefresh unit
+            refresh unit
           pure unit
 
 -- | Sync Node (List)
@@ -79,14 +80,14 @@ type NodeActionsNodeListProps =
   , nodeId :: GT.ID
   , nodeType :: GT.TabSubType GT.CTabNgramType
   , session :: Session
-  , triggerRefresh :: Unit -> Aff Unit
+  , refresh :: Unit -> Aff Unit
   )
 
 nodeActionsNodeList :: Record NodeActionsNodeListProps -> R.Element
 nodeActionsNodeList p = R.createElement nodeActionsNodeListCpt p []
 
 nodeActionsNodeListCpt :: R.Component NodeActionsNodeListProps
-nodeActionsNodeListCpt = R.hooksComponentWithModule thisModule "nodeActionsNodeList" cpt
+nodeActionsNodeListCpt = here.component "nodeActionsNodeList" cpt
   where
     cpt props _ = do
       pure $ H.div { className: "node-actions" } [
@@ -98,16 +99,16 @@ type NodeListUpdateButtonProps =
   , nodeId :: GT.ID
   , nodeType :: GT.TabSubType GT.CTabNgramType
   , session :: Session
-  , triggerRefresh :: Unit -> Aff Unit
+  , refresh :: Unit -> Aff Unit
   )
 
 nodeListUpdateButton :: Record NodeListUpdateButtonProps -> R.Element
 nodeListUpdateButton p = R.createElement nodeListUpdateButtonCpt p []
 
 nodeListUpdateButtonCpt :: R.Component NodeListUpdateButtonProps
-nodeListUpdateButtonCpt = R.hooksComponentWithModule thisModule "nodeListUpdateButton" cpt
+nodeListUpdateButtonCpt = here.component "nodeListUpdateButton" cpt
   where
-    cpt { listId, nodeId, nodeType, session, triggerRefresh } _ = do
+    cpt { listId, nodeId, nodeType, session, refresh } _ = do
       enabled <- R.useState' true
 
       pure $ H.div {} [] {- { className: "update-button " 
@@ -122,6 +123,6 @@ nodeListUpdateButtonCpt = R.hooksComponentWithModule thisModule "nodeListUpdateB
             liftEffect $ setEnabled $ const false
             _ <- NTAPI.updateNodeList { listId, nodeId, nodeType, session }
             liftEffect $ setEnabled $ const true
-            triggerRefresh unit
+            refresh unit
           pure unit
       -}

@@ -1,52 +1,53 @@
 module Gargantext.Components.TopBar where
 
-import Data.Array (reverse)
 import Data.Foldable (intercalate)
-import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Prelude
 
 import Gargantext.Components.Themes (themeSwitcher, defaultTheme, allThemes)
-import Gargantext.Types (Handed(..))
+import Gargantext.Types (Handed(..), reverseHanded)
 import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.TopBar"
+here :: R2.Here
+here = R2.here "Gargantext.Components.TopBar"
 
-type TopBarProps = (handed :: R.State Handed)
+type TopBarProps = ( handed :: T.Box Handed )
 
 topBar :: R2.Component TopBarProps
 topBar = R.createElement topBarCpt
 
 topBarCpt :: R.Component TopBarProps
-topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
+topBarCpt = here.component "topBar" cpt
   where
     cpt { handed } _children = do
-      pure $ H.div { id: "dafixedtop"
+      handed' <- T.useLive T.unequal handed
+
+      pure $ H.div { className: "navbar navbar-expand-lg navbar-dark bg-dark fixed-top"
+                   , id: "dafixedtop"
                    , role: "navigation"
-                   , className: "navbar navbar-expand-lg navbar-dark bg-dark fixed-top"
-                   } $ sortHanded [
-                     -- NOTE: first (and only) entry in the sorted array should have the "ml-auto class"
-                     -- https://stackoverflow.com/questions/19733447/bootstrap-navbar-with-left-center-or-right-aligned-items
-                     -- In practice: only apply "ml-auto" to the last element of this list, if handed == LeftHanded
-                     logo
-                   , H.ul { className: "navbar-nav " <> if fst handed == LeftHanded then "ml-auto" else "" } $ sortHanded [
-                       divDropdownLeft {} []
-                     , handButton handed
-                     , smiley
-                     , H.li { className: "nav-item" } [ themeSwitcher { theme: defaultTheme
-                                                                      , themes: allThemes } [] ]
-                     ]
+                   } $ reverseHanded handed' [
+                      -- NOTE: first (and only) entry in the sorted array should have the "ml-auto class"
+                      -- https://stackoverflow.com/questions/19733447/bootstrap-navbar-with-left-center-or-right-aligned-items
+                      -- In practice: only apply "ml-auto" to the last element of this list, if handed == LeftHanded
+                      logo
+                   , H.ul { className: "navbar-nav " <> if handed' == LeftHanded then "ml-auto" else "" } $ reverseHanded handed' [
+                        divDropdownLeft {} []
+                      , handButton handed'
+                      , smiley
+                      , H.li { className: "nav-item" } [ themeSwitcher { theme: defaultTheme
+                                                                       , themes: allThemes } [] ]
+                      ]
                    ]
           where
-            handButton handed = H.li { title: "If you are Left Handed you can change\n"
-                                           <> "the interface by clicking on me. Click\n"
-                                           <> "again to come back to previous state."
-                                     , className: "nav-item"
-                                     } [handedChooser { handed } []]
+            handButton handed' = H.li { title: "If you are Left Handed you can change\n"
+                                            <> "the interface by clicking on me. Click\n"
+                                            <> "again to come back to previous state."
+                                      , className: "nav-item"
+                                      } [handedChooser { handed } []]
 
             smiley = H.li { title: "Hello! Looking for the tree ?\n"
                                 <> "Just watch on the other side!\n"
@@ -63,7 +64,6 @@ topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
                                       ]
                               -}
 
-            sortHanded = if fst handed == LeftHanded then reverse else identity
             -- SB.searchBar {session, databases: allDatabases}
 
 
@@ -82,10 +82,10 @@ divDropdownLeft :: R2.Component ()
 divDropdownLeft = R.createElement divDropdownLeftCpt
 
 divDropdownLeftCpt :: R.Component ()
-divDropdownLeftCpt = R.hooksComponentWithModule thisModule "divDropdownLeft" cpt
+divDropdownLeftCpt = here.component "divDropdownLeft" cpt
   where
     cpt {} _ = do
-      show <- R.useState' false
+      show <- T.useBox false
 
       pure $ H.li { className: "nav-item dropdown" } [
           menuButton { element: menuElement, show } []
@@ -151,20 +151,20 @@ divDropdownLeftCpt = R.hooksComponentWithModule thisModule "divDropdownLeft" cpt
 
 type MenuButtonProps = (
     element :: LiNav
-  , show :: R.State Boolean
+  , show    :: T.Box Boolean
   )
 
 menuButton :: R2.Component MenuButtonProps
 menuButton = R.createElement menuButtonCpt
 
 menuButtonCpt :: R.Component MenuButtonProps
-menuButtonCpt = R.hooksComponentWithModule thisModule "menuButton" cpt
+menuButtonCpt = here.component "menuButton" cpt
   where
-    cpt { element: LiNav { title, href, icon, text }, show: (_ /\ setShow) } _ = do
+    cpt { element: LiNav { title, href, icon, text }, show } _ = do
       pure $ H.a { className: "dropdown-toggle navbar-text"
                 -- , data: {toggle: "dropdown"}
                 , href, title
-                , on: { click: \_ -> setShow $ not }
+                , on: { click: \_ -> T.modify_ not show }
                 , role: "button" } [
           H.span { aria: {hidden : true}, className: icon } []
         , H.text (" " <> text)
@@ -173,24 +173,26 @@ menuButtonCpt = R.hooksComponentWithModule thisModule "menuButton" cpt
 -- | Menu in the sidebar, syntactic sugar
 type MenuElementsProps = (
     elements :: Array (Array LiNav)
-  , show :: R.State Boolean
+  , show     :: T.Box Boolean
   )
 
 menuElements :: R2.Component MenuElementsProps
 menuElements = R.createElement menuElementsCpt
 
 menuElementsCpt :: R.Component MenuElementsProps
-menuElementsCpt = R.hooksComponentWithModule thisModule "menuElements" cpt
+menuElementsCpt = here.component "menuElements" cpt
   where
-    cpt { show: false /\ _ } _ = do
-      pure $ H.div {} []
-    cpt { elements, show: (true /\ setShow) } _ = do
-      pure $ H.ul { className: "dropdown-menu"
-                  , on: { click: setShow $ const false }
-                  , style: { display: "block" } } $ intercalate divider $ map (map liNav) elements
-      where
-        divider :: Array R.Element
-        divider = [H.li {className: "dropdown-divider"} []]
+    cpt { elements, show } _ = do
+      show' <- T.useLive T.unequal show
+
+      pure $ if show' then
+               H.ul { className: "dropdown-menu"
+                    , on: { click: \_ -> T.write_ false show }
+                    , style: { display: "block" } } $ intercalate divider $ map (map liNav) elements
+             else
+               H.div {} []
+    divider :: Array R.Element
+    divider = [H.li {className: "dropdown-divider"} []]
 
 -- | surgar for target : "blank"
 --data LiNav_ = LiNav_ { title  :: String
@@ -224,24 +226,26 @@ liNav (LiNav { title : title'
 
 
 type HandedChooserProps = (
-  handed :: R.State Handed
+  handed :: T.Box Handed
   )
 
 handedChooser :: R2.Component HandedChooserProps
 handedChooser = R.createElement handedChooserCpt
 
 handedChooserCpt :: R.Component HandedChooserProps
-handedChooserCpt = R.hooksComponentWithModule thisModule "handedChooser" cpt
+handedChooserCpt = here.component "handedChooser" cpt
   where
     cpt { handed } _ = do
+      handed' <- T.useLive T.unequal handed
+
       pure $ H.a { className: "nav-link" } [
-        H.span { className: handedClass handed
+        H.span { className: handedClass handed'
                , on: { click: onClick handed } } []
         ]
 
-    handedClass (LeftHanded  /\ _) = "fa fa-hand-o-left"
-    handedClass (RightHanded /\ _) = "fa fa-hand-o-right"
+    handedClass LeftHanded = "fa fa-hand-o-left"
+    handedClass RightHanded = "fa fa-hand-o-right"
 
-    onClick (_ /\ setHanded) = setHanded $ \h -> case h of
+    onClick handed = T.modify_ (\h -> case h of
       LeftHanded  -> RightHanded
-      RightHanded -> LeftHanded
+      RightHanded -> LeftHanded) handed

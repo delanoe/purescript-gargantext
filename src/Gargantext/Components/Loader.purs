@@ -10,8 +10,8 @@ import Reactix as R
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
 import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Loader"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Loader"
 
 type Props path loaded =
   ( path  :: path
@@ -26,7 +26,7 @@ loader path load paint =
   R.createElement loaderCpt {path,load,paint} []
 
 loaderCpt :: forall path loaded. R.Component (Props path loaded)
-loaderCpt = R.hooksComponentWithModule thisModule "loader" cpt where
+loaderCpt = here.component "loader" cpt where
   cpt {path, load, paint} _ = do
     (loaded /\ setLoaded) <- R.useState' Nothing
     R.useEffect3 path load paint $ do

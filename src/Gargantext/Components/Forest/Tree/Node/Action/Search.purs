@@ -3,9 +3,9 @@ module Gargantext.Components.Forest.Tree.Node.Action.Search where
 import Data.Maybe (Maybe)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
-import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Prelude
 
@@ -17,34 +17,45 @@ import Gargantext.Components.Lang (allLangs)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (ID)
 import Gargantext.Types as GT
+import Gargantext.Utils.Reactix as R2
 
+here :: R2.Here
+here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Search"
+
+
+type Props =
+  ( dispatch  :: Action -> Aff Unit
+  , id        :: Maybe ID
+  , nodePopup :: Maybe NodePopup
+  , session   :: Session )
 
 -- | Action : Search
-actionSearch :: Session
-            -> Maybe ID
-            -> (Action -> Aff Unit)
-            -> Maybe NodePopup
-            -> R.Hooks R.Element
-actionSearch session id dispatch nodePopup = do
-  search <- R.useState' $ defaultSearch { node_id = id }
-  pure $ R.fragment [ H.p { className: "action-search" }
-                          [ H.text $ "Search and create a private "
-                                  <> "corpus with the search query as corpus name." ]
-                    , searchBar { langs: allLangs
-                                , onSearch: searchOn dispatch nodePopup
-                                , search
-                                , session
-                                }
-                    ]
-    where
-      searchOn :: (Action -> Aff Unit)
-               -> Maybe NodePopup
-               -> GT.AsyncTaskWithType
-               -> Effect Unit
-      searchOn dispatch' p task = do
-        _ <- launchAff $ dispatch' (DoSearch task)
-        -- close popup
-        _ <- launchAff $ dispatch' ClosePopover
-        -- TODO
-        --snd p $ const Nothing
-        pure unit
+actionSearch :: R2.Component Props
+actionSearch = R.createElement actionSearchCpt
+
+actionSearchCpt :: R.Component Props
+actionSearchCpt = here.component "actionSearch" cpt
+  where
+    cpt { dispatch, id, nodePopup, session } _ = do
+      search <- T.useBox $ defaultSearch { node_id = id }
+      pure $ R.fragment [ H.p { className: "action-search" }
+                              [ H.text $ "Search and create a private "
+                                      <> "corpus with the search query as corpus name." ]
+                        , searchBar { langs: allLangs
+                                    , onSearch: searchOn dispatch nodePopup
+                                    , search
+                                    , session
+                                    } []
+                        ]
+        where
+          searchOn :: (Action -> Aff Unit)
+                  -> Maybe NodePopup
+                  -> GT.AsyncTaskWithType
+                  -> Effect Unit
+          searchOn dispatch' p task = do
+            _ <- launchAff $ dispatch' (DoSearch task)
+            -- close popup
+            _ <- launchAff $ dispatch' ClosePopover
+            -- TODO
+            --snd p $ const Nothing
+            pure unit

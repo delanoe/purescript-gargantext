@@ -12,8 +12,8 @@ import Reactix.DOM.HTML as H
 import Gargantext.Prelude
 import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Themes"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Themes"
 
 stylesheetElId :: String
 stylesheetElId = "bootstrap-css"
@@ -65,7 +65,7 @@ themeSwitcher :: R2.Component ThemeSwitcherProps
 themeSwitcher = R.createElement themeSwitcherCpt
 
 themeSwitcherCpt :: R.Component ThemeSwitcherProps
-themeSwitcherCpt = R.hooksComponentWithModule thisModule "themeSwitcher" cpt
+themeSwitcherCpt = here.component "themeSwitcher" cpt
   where
     cpt { theme, themes } _ = do
       currentTheme <- R.useState' theme

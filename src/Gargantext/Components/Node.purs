@@ -1,8 +1,11 @@
 module Gargantext.Components.Node 
   where
 
-import Gargantext.Prelude
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?), (.!=))
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
+
+import Gargantext.Prelude
 
 newtype NodePoly a =
   NodePoly { id :: Int
@@ -13,8 +16,9 @@ newtype NodePoly a =
            , date      :: String
            , hyperdata :: a
            }
-
-
+derive instance genericNodePoly :: Generic (NodePoly a) _
+instance eqNodePoly :: Eq a => Eq (NodePoly a) where
+  eq = genericEq
 instance decodeNodePoly :: (DecodeJson a)
   => DecodeJson (NodePoly a) where
   decodeJson json = do
