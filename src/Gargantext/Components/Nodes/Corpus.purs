@@ -1,7 +1,7 @@
 module Gargantext.Components.Nodes.Corpus where
 
 import Gargantext.Prelude
-  ( Unit, bind, const, discard, pure, show, unit
+  ( Unit, bind, discard, pure, show, unit
   , ($), (+), (-), (<), (<$>), (<<<), (<>), (==), (>), class Show, class Eq)
 import Data.Argonaut (class DecodeJson, decodeJson, encodeJson)
 import Data.Argonaut.Parser (jsonParser)
@@ -12,8 +12,7 @@ import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (Tuple(..), fst)
-import Data.Tuple.Nested ((/\))
+import Data.Tuple (Tuple(..))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, throwError)
@@ -68,11 +67,12 @@ corpusLayoutMainCpt :: R.Component KeyProps
 corpusLayoutMainCpt = here.component "corpusLayoutMain" cpt
   where
     cpt { nodeId, key, session } _ = do
-      viewType <- R.useState' Folders
+      viewType <- T.useBox Folders
+      viewType' <- T.read viewType
 
       pure $ H.div{} [
         H.div{} [viewTypeSelector {state: viewType} ]
-      , H.div{} [renderContent (fst viewType) nodeId session key]
+      , H.div{} [renderContent viewType' nodeId session key]
       ]
 
     renderContent Folders nodeId session key = folderViewLoad { nodeId, session }
@@ -575,7 +575,7 @@ instance showViewType :: Show ViewType where
 
 type ViewTypeSelectorProps =
   (
-    state :: R.State ViewType
+    state :: T.Box ViewType
   )
 
 viewTypeSelector :: Record ViewTypeSelectorProps -> R.Element
@@ -584,25 +584,24 @@ viewTypeSelector p = R.createElement viewTypeSelectorCpt p []
 viewTypeSelectorCpt :: R.Component ViewTypeSelectorProps
 viewTypeSelectorCpt = here.component "viewTypeSelector" cpt
   where
-    cpt {state} _ =
+    cpt {state} _ = do
+      state' <- T.useLive T.unequal state
+
       pure $ H.div { className: "btn-group"
                    , role: "group" } [
-          viewTypeButton Folders state
-        , viewTypeButton Code state
+          viewTypeButton Folders state' state
+        , viewTypeButton Code state' state
         ]
 
-    viewTypeButton viewType (state /\ setState) =
+    viewTypeButton viewType state' state =
       H.button { className: "btn btn-primary" <> active
-               , on: { click: onClick }
+               , on: { click: \_ -> T.write viewType state }
                , type: "button"
                } [
         H.i { className: "fa " <> (icon viewType) } []
       ]
       where
-        active = if viewType == state then " active" else ""
-
-        onClick _ = do
-          setState $ const viewType
+        active = if viewType == state' then " active" else ""
 
     icon Folders = "fa-folder"
     icon Code = "fa-code"
