@@ -17,7 +17,7 @@ import Data.Maybe ( Maybe(..), maybe )
 import Data.String.Common ( joinWith )
 import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ( (/\) )
---import DOM.Simple.Console (log2)
+-- import DOM.Simple.Console (log2)
 import DOM.Simple.Event as DE
 import Effect (Effect)
 import Reactix as R
@@ -56,6 +56,7 @@ annotatedFieldComponent = here.component "annotatedField" cpt
   where
     cpt { ngrams, setTermList, text: fieldText } _ = do
       redrawMenu <- T.useBox false
+      redrawMenu' <- T.useLive T.unequal redrawMenu
 
       menuRef <- R.useRef (Nothing :: Maybe AnnotationMenu)
 
@@ -96,7 +97,7 @@ onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList } Nothing event = 
                    , redrawMenu
                    , setTermList }
     Nothing -> hideMenu { menuRef, redrawMenu }
-onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList } (Just (Tuple ngram list)) event =
+onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList } (Just (Tuple ngram list)) event = do
   showMenu { event
            , getList: const (Just list)
            , menuRef
