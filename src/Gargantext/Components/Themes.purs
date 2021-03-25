@@ -1,13 +1,14 @@
 module Gargantext.Components.Themes where
 
 import Data.Array as A
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.Maybe (Maybe(..))
-import Data.Tuple (fst)
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import FFI.Simple ((.=))
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Prelude
 import Gargantext.Utils.Reactix as R2
@@ -18,8 +19,11 @@ here = R2.here "Gargantext.Components.Themes"
 stylesheetElId :: String
 stylesheetElId = "bootstrap-css"
 
-newtype Theme = Theme { name :: String
-                      , location :: String }
+newtype Theme = Theme { location :: String
+                      , name :: String }
+derive instance genericTheme :: Generic Theme _
+instance genericEq :: Eq Theme where
+  eq = genericEq
 
 themeName :: Theme -> String
 themeName (Theme { name }) = name
@@ -68,16 +72,17 @@ themeSwitcherCpt :: R.Component ThemeSwitcherProps
 themeSwitcherCpt = here.component "themeSwitcher" cpt
   where
     cpt { theme, themes } _ = do
-      currentTheme <- R.useState' theme
+      currentTheme <- T.useBox theme
+      currentTheme' <- T.useLive T.unequal currentTheme
 
       let option (Theme { name }) = H.option { value: name } [ H.text name ]
       let options = map option themes
 
       pure $ R2.select { className: "form-control"
-                       , defaultValue: themeName $ fst currentTheme
+                       , defaultValue: themeName currentTheme'
                        , on: { change: onChange currentTheme } } options
       where
-        onChange (_ /\ setCurrentTheme) e = do
+        onChange currentTheme e = do
           let value = R.unsafeEventValue e
           let mTheme = A.head $ A.filter (\(Theme { name }) -> value == name) themes
 
@@ -85,4 +90,4 @@ themeSwitcherCpt = here.component "themeSwitcher" cpt
             Nothing -> pure unit
             Just t  -> do
               switchTheme t
-              setCurrentTheme $ const t
+              T.write_ t currentTheme

@@ -4,9 +4,9 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
-import Web.File.Blob (Blob)
+import Web.File.Blob (Blob, size)
 
-import Gargantext.Prelude (class Read, class Show, class Eq)
+import Gargantext.Prelude
 
 
 data FileType = CSV | CSV_HAL | WOS | PresseRIS | Arbitrary
@@ -27,3 +27,6 @@ instance readFileType :: Read FileType where
 
 
 newtype UploadFileBlob = UploadFileBlob Blob
+derive instance genericUploadFileBlob :: Generic UploadFileBlob _
+instance eqUploadFileBlob :: Eq UploadFileBlob where
+  eq (UploadFileBlob b1) (UploadFileBlob b2) = eq (size b1) (size b2)

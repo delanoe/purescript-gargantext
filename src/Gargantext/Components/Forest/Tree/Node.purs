@@ -91,16 +91,19 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
               } _ = do
       route' <- T.useLive T.unequal route
       -- only 1 popup at a time is allowed to be opened
-      droppedFile   <- R.useState' (Nothing :: Maybe DroppedFile)
-      isDragOver    <- R.useState' false
+      droppedFile   <- T.useBox (Nothing :: Maybe DroppedFile)
+      droppedFile'  <- T.useLive T.unequal droppedFile
+      isDragOver    <- T.useBox false
+      isDragOver'   <- T.useLive T.unequal isDragOver
       popoverRef    <- R.useRef null
+
       R.useEffect' $ do
         R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
       let isSelected = Just route' == Routes.nodeTypeAppRoute nodeType (sessionId session) id
 
       tasks' <- T.read tasks
 
-      pure $ H.span (dropProps droppedFile isDragOver)
+      pure $ H.span (dropProps droppedFile droppedFile' isDragOver isDragOver')
         $ reverseHanded handed
         [ folderIcon  { folderOpen, nodeType } []
         , chevronIcon { folderOpen, handed, isLeaf, nodeType } []
@@ -158,37 +161,37 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
       H.a { className: "settings fa fa-cog" 
           , title : "Each node of the Tree can perform some actions.\n"
             <> "Click here to execute one of them." } []
-    dropProps droppedFile isDragOver =
-      { className: "leaf " <> (dropClass droppedFile isDragOver)
+    dropProps droppedFile droppedFile' isDragOver isDragOver' =
+      { className: "leaf " <> (dropClass droppedFile' isDragOver')
       , on: { drop: dropHandler droppedFile
             , dragOver: onDragOverHandler isDragOver
             , dragLeave: onDragLeave isDragOver }
       }
       where
-        dropClass   (Just _  /\ _)        _          = "file-dropped"
-        dropClass    _                   (true /\ _) = "file-dropped"
-        dropClass   (Nothing /\ _)        _          = ""
-        dropHandler (_ /\ setDroppedFile) e          = do
+        dropClass (Just _) _    = "file-dropped"
+        dropClass _        true = "file-dropped"
+        dropClass Nothing  _    = ""
+
+        dropHandler droppedFile e          = do
           -- prevent redirection when file is dropped
           E.preventDefault e
           E.stopPropagation e
           blob <- R2.dataTransferFileBlob e
           void $ launchAff do
             --contents <- readAsText blob
-            liftEffect $ setDroppedFile
-                       $ const
-                       $ Just
-                       $ DroppedFile { blob: (UploadFileBlob blob)
-                                     , fileType: Just CSV
-                                     , lang    : EN
-                                     }
-    onDragOverHandler (_ /\ setIsDragOver) e = do
+            liftEffect $ T.write_
+                        (Just
+                        $ DroppedFile { blob: (UploadFileBlob blob)
+                                      , fileType: Just CSV
+                                      , lang    : EN
+                                      }) droppedFile
+    onDragOverHandler isDragOver e = do
       -- prevent redirection when file is dropped
       -- https://stackoverflow.com/a/6756680/941471
       E.preventDefault e
       E.stopPropagation e
-      setIsDragOver $ const true
-    onDragLeave (_ /\ setIsDragOver) _ = setIsDragOver $ const false
+      T.write_ true isDragOver
+    onDragLeave isDragOver _ = T.write_ false isDragOver
 
 type FolderIconProps = (
     folderOpen :: T.Box Boolean

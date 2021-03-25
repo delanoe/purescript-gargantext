@@ -2,7 +2,6 @@ module Gargantext.Components.Forest.Tree.Node.Box where
 
 import Data.Array as A
 import Data.Maybe (Maybe(..))
-import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -16,7 +15,6 @@ import Gargantext.Components.Forest.Tree.Node.Action.Documentation (actionDoc)
 import Gargantext.Components.Forest.Tree.Node.Action.Download (actionDownload)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameAction)
 import Gargantext.Components.Forest.Tree.Node.Action.Search (actionSearch)
-import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (defaultSearch)
 import Gargantext.Components.Forest.Tree.Node.Action.Share   as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
 import Gargantext.Components.Forest.Tree.Node.Action.Update (update)
@@ -51,7 +49,7 @@ nodePopupCpt = here.component "nodePopupView" cpt where
     nodePopup <- T.useBox { action: Nothing, id, name, nodeType }
     action <- T.useFocused (_.action) (\a b -> b { action = a }) nodePopup
     nodePopup' <- T.useLive T.unequal nodePopup
-    search  <- R.useState' $ defaultSearch { node_id = Just p.id }
+
     pure $ H.div tooltipProps
       [ H.div { className: "popup-container" }
         [ H.div { className: "card" }
