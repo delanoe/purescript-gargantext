@@ -2,7 +2,7 @@ module Gargantext.Components.Nodes.Corpus where
 
 import Gargantext.Prelude
   ( Unit, bind, const, discard, pure, show, unit
-  , ($), (+), (-), (<), (<$>), (<<<), (<>), (==), (>))
+  , ($), (+), (-), (<), (<$>), (<<<), (<>), (==), (>), class Show, class Eq)
 import Data.Argonaut (class DecodeJson, decodeJson, encodeJson)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
@@ -12,8 +12,9 @@ import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
@@ -49,27 +50,34 @@ corpusLayout :: R2.Leaf Props
 corpusLayout props = R.createElement corpusLayoutCpt props []
 
 corpusLayoutCpt :: R.Component Props
-corpusLayoutCpt = here.component "corpusLayout" cpt
-  where
-    cpt { nodeId, session } _ = do
-      let sid = sessionId session
-      viewType <- R.useState' Folders
-
-      pure $ H.div{} [
-        H.div{} [viewTypeSelector {state: viewType} ]
-      , H.div{} [renderContent (fst viewType) nodeId session]
-      ]
-
-    renderContent Folders nodeId session = folderViewLoad {nodeId, session}
-    renderContent Code nodeId session = cp <$> R.useContext session where
-      cp s = corpusLayoutWithKey { key, nodeId, session } where
-        key = show (sessionId s) <> "-" <> show nodeId
+corpusLayoutCpt = here.component "corpusLayout" cpt where
+  cpt { nodeId, session } _ = cp <$> R.useContext session where
+    cp s = corpusLayoutMain { key, nodeId, session: s } where
+      key = show (sessionId s) <> "-" <> show nodeId
 
 type KeyProps =
   ( nodeId  :: Int
   , key     :: String
   , session :: Session
   )
+
+corpusLayoutMain :: R2.Leaf KeyProps
+corpusLayoutMain props = R.createElement corpusLayoutMainCpt props []
+
+corpusLayoutMainCpt :: R.Component KeyProps
+corpusLayoutMainCpt = here.component "corpusLayoutMain" cpt
+  where
+    cpt { nodeId, key, session } _ = do
+      viewType <- R.useState' Folders
+
+      pure $ H.div{} [
+        H.div{} [viewTypeSelector {state: viewType} ]
+      , H.div{} [renderContent (fst viewType) nodeId session key]
+      ]
+
+    renderContent Folders nodeId session key = folderViewLoad { nodeId, session }
+    renderContent Code nodeId session key = corpusLayoutWithKey { key, nodeId, session }
+
 
 corpusLayoutWithKey :: R2.Leaf KeyProps
 corpusLayoutWithKey props = R.createElement corpusLayoutWithKeyCpt props []
@@ -149,11 +157,11 @@ corpusLayoutViewCpt = here.component "corpusLayoutView" cpt
 
 data FolderStyle = FolderUp | FolderChild
 
-folderViewLoad :: Record LoadProps -> R.Element
+folderViewLoad :: R2.Leaf LoadProps
 folderViewLoad props = R.createElement folderViewLoadCpt props []
 
 folderViewLoadCpt :: R.Component LoadProps
-folderViewLoadCpt = R.hooksComponentWithModule thisModule "folderViewLoadCpt" cpt where
+folderViewLoadCpt = here.component "folderViewLoadCpt" cpt where
   cpt {nodeId, session} _ = do
     useLoader {nodeId, session} loadFolders $
       \folders -> folderView {folders, nodeId, session}
@@ -169,7 +177,7 @@ folderView :: Record FolderViewProps -> R.Element
 folderView props = R.createElement folderViewCpt props []
 
 folderViewCpt :: R.Component FolderViewProps
-folderViewCpt = R.hooksComponentWithModule thisModule "folderViewCpt" cpt where
+folderViewCpt = here.component "folderViewCpt" cpt where
   cpt {nodeId, session, folders: (NTree (LNode {parent_id: parentId}) (foldersS))} _ = do
     let sid = sessionId session 
     let children = makeFolderElements foldersS sid
@@ -203,7 +211,7 @@ folder :: R2.Component FolderProps
 folder = R.createElement folderCpt
 
 folderCpt :: R.Component FolderProps
-folderCpt = R.hooksComponentWithModule thisModule "folderCpt" cpt where
+folderCpt = here.component "folderCpt" cpt where
   cpt {style, text, nodeId, sid, nodeType} _ = do
     pure $ H.a {className: "btn btn-primary", href: "/#/" <> getFolderPath nodeType sid nodeId}  [ H.i { className: "fa " <> (icon style nodeType) } []
                                                                    , H.br {}
@@ -574,7 +582,7 @@ viewTypeSelector :: Record ViewTypeSelectorProps -> R.Element
 viewTypeSelector p = R.createElement viewTypeSelectorCpt p []
 
 viewTypeSelectorCpt :: R.Component ViewTypeSelectorProps
-viewTypeSelectorCpt = R.hooksComponentWithModule thisModule "viewTypeSelector" cpt
+viewTypeSelectorCpt = here.component "viewTypeSelector" cpt
   where
     cpt {state} _ =
       pure $ H.div { className: "btn-group"
