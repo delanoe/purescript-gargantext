@@ -25,12 +25,12 @@ appCpt = here.component "app" cpt where
   cpt _ _ = do
     box    <- T.useBox emptyApp             -- global data
     boxes <- T.useFocusedFields box {}      -- read-write access for children
-    tasks   <- T.useBox Nothing             -- storage for asynchronous tasks reductor
+    -- tasks   <- T.useBox Nothing             -- storage for asynchronous tasks reductor
     R.useEffectOnce' $ do
       void $ Sessions.load boxes.sessions
-    tasksReductor <- GAT.useTasks boxes.reloadRoot boxes.reloadForest
-    R.useEffectOnce' $ do
-      T.write (Just tasksReductor) tasks
+    tasks <- GAT.useTasks boxes.reloadRoot boxes.reloadForest
+    -- R.useEffectOnce' $ do
+    --   T.write (Just tasksReductor) tasks
     R.useEffectOnce' $ do
       R2.loadLocalStorageState R2.openNodesKey boxes.forestOpen
       T.listen (R2.listenLocalStorageState R2.openNodesKey) boxes.forestOpen

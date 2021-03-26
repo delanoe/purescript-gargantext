@@ -41,7 +41,7 @@ type Props = (
   , reloadRoot        :: T.Box T2.Reload
   , session           :: Session
   , sidePanelTriggers :: Record SidePanelTriggers
-  , tasks             :: T.Box (Maybe GAT.Reductor)
+  , tasks             :: GAT.Reductor
   )
 
 type PropsWithKey = ( key :: String | Props )

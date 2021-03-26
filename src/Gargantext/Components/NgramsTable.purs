@@ -263,7 +263,7 @@ type CommonProps = (
   , reloadRoot        :: T.Box T2.Reload
   , sidePanelTriggers :: Record NT.SidePanelTriggers
   , tabNgramType      :: CTabNgramType
-  , tasks             :: T.Box (Maybe GAT.Reductor)
+  , tasks             :: GAT.Reductor
   , withAutoUpdate    :: Boolean
   )
 

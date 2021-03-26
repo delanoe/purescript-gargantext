@@ -33,11 +33,12 @@ here = R2.here "Gargantext.Components.Forest"
 
 -- Shared by components here with Tree
 type Common = 
-  ( frontends    :: Frontends
-  , handed       :: T.Box Handed
-  , reloadRoot   :: T.Box T2.Reload
-  , route        :: T.Box AppRoute
-  , tasks        :: T.Box (Maybe GAT.Reductor)
+  ( frontends     :: Frontends
+  , handed        :: T.Box Handed
+  , reloadRoot    :: T.Box T2.Reload
+  , route         :: T.Box AppRoute
+  -- , tasks      :: T.Box (Maybe GAT.Reductor)
+  , tasks         :: GAT.Reductor
   )
 
 type Props =
@@ -69,29 +70,32 @@ forestCpt = here.component "forest" cpt where
             , sessions
             , showLogin
             , tasks } _ = do
-    tasks'        <- GAT.useTasks reloadRoot reloadForest
-    R.useEffect' $ T.write_ (Just tasks') tasks
+    -- TODO Fix this. I think tasks shouldn't be a Box but only a Reductor
+    -- tasks'        <- GAT.useTasks reloadRoot reloadForest
+    -- R.useEffect' $ do
+    --   T.write_ (Just tasks') tasks
     handed'       <- T.useLive T.unequal handed
     reloadForest' <- T.useLive T.unequal reloadForest
     reloadRoot'   <- T.useLive T.unequal reloadRoot
     route'        <- T.useLive T.unequal route
     forestOpen'   <- T.useLive T.unequal forestOpen
     sessions'     <- T.useLive T.unequal sessions
+
     -- TODO If `reloadForest` is set, `reload` state should be updated
     -- TODO fix tasks ref
     -- R.useEffect' $ do
       -- R.setRef tasks $ Just tasks'
     R2.useCache
       ( frontends /\ route' /\ sessions' /\ handed' /\ forestOpen'
-        /\ reloadForest' /\ reloadRoot' /\ (fst tasks').storage )
-      (cp handed' sessions' tasks')
+        /\ reloadForest' /\ reloadRoot' /\ (fst tasks).storage )
+      (cp handed' sessions')
         where
           common = RX.pick props :: Record Common
-          cp handed' sessions' tasks' _ =
+          cp handed' sessions' _ =
             pure $ H.div { className: "forest" }
-              (A.cons (plus handed' showLogin backend) (trees handed' sessions' tasks'))
-          trees handed' sessions' tasks' = (tree handed' tasks') <$> unSessions sessions'
-          tree handed' tasks' s@(Session {treeId}) =
+              (A.cons (plus handed' showLogin backend) (trees handed' sessions'))
+          trees handed' sessions' = (tree handed') <$> unSessions sessions'
+          tree handed' s@(Session {treeId}) =
             treeLoader { forestOpen
                        , frontends
                        , handed: handed'
@@ -193,7 +197,7 @@ mainPage = R.createElement mainPageCpt
 
 -- mainPageCpt :: R.Memo ()
 -- mainPageCpt = R.memo (here.component "mainPage" cpt) where
-mainPageCpt :: R.Component()
+mainPageCpt :: R.Component ()
 mainPageCpt = here.component "mainPage" cpt
   where
     cpt _ children = do

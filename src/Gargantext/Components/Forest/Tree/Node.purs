@@ -5,7 +5,7 @@ import Gargantext.Prelude
 import Data.Maybe (Maybe(..))
 import Data.Nullable (null)
 import Data.Symbol (SProxy(..))
-import Data.Tuple (snd)
+import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
@@ -54,7 +54,7 @@ type NodeMainSpanProps =
   , reloadRoot    :: T.Box T2.Reload
   , route         :: T.Box Routes.AppRoute
   , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
-  , tasks         :: T.Box (Maybe GAT.Reductor)
+  , tasks         :: GAT.Reductor
   | CommonProps
   )
 
@@ -101,7 +101,7 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
         R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
       let isSelected = Just route' == Routes.nodeTypeAppRoute nodeType (sessionId session) id
 
-      tasks' <- T.read tasks
+      -- tasks' <- T.read tasks
 
       pure $ H.span (dropProps droppedFile droppedFile' isDragOver isDragOver')
         $ reverseHanded handed
@@ -117,7 +117,7 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
                                                        , onFinish: onTaskFinish id t
                                                        , session
                                                        }
-                                ) $ GAT.getTasksMaybe tasks' id
+                                ) $ GAT.getTasks (fst tasks) id
                            )
                 , if nodeType == GT.NodeUser
                         then GV.versionView {session}
@@ -142,10 +142,11 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
                 ]
         where
           onTaskFinish id' t _ = do
-            mT <- T.read tasks
-            case mT of
-              Just t' -> snd t' $ GAT.Finish id' t
-              Nothing -> pure unit
+            snd tasks $ GAT.Finish id' t
+            -- mT <- T.read tasks
+            -- case mT of
+            --   Just t' -> snd t' $ GAT.Finish id' t
+            --   Nothing -> pure unit
             T2.reload reloadRoot
 
           SettingsBox {show: showBox} = settingsBox nodeType

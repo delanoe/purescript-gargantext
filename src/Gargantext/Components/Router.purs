@@ -42,7 +42,7 @@ import Gargantext.Utils.Reactix as R2
 here :: R2.Here
 here = R2.here "Gargantext.Components.Router"
 
-type Props = ( boxes :: Boxes, tasks :: T.Box (Maybe GAT.Reductor) )
+type Props = ( boxes :: Boxes, tasks :: GAT.Reductor )
 
 type SessionProps = ( session :: R.Context Session, sessionId :: SessionId | Props )
 
