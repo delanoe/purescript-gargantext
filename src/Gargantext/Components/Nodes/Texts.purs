@@ -18,7 +18,7 @@ import Toestand as T
 
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.Forest as Forest
-import Gargantext.Components.Loader (loader)
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
@@ -148,7 +148,7 @@ textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
       R.useEffectOnce' $ do
         T.listen (\{ new } -> afterCacheStateChange new) cacheState
 
-      pure $ loader { nodeId, session } loadCorpusWithChild $
+      useLoader { nodeId, session } loadCorpusWithChild $
         \corpusData@{ corpusId, corpusNode, defaultListId } -> do
           let NodePoly { date, hyperdata: Hyperdata h, name } = corpusNode
               CorpusInfo { authors, desc, query } = getCorpusInfo h.fields

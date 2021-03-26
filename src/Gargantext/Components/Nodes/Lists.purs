@@ -98,7 +98,7 @@ type CommonPropsNoSession =
   , reloadForest  :: T.Box T2.Reload
   , reloadRoot    :: T.Box T2.Reload
   , sessionUpdate :: Session -> Effect Unit
-  , tasks         :: T.Box (Maybe GAT.Reductor)
+  , tasks         :: GAT.Reductor
   )
 
 type CommonProps = WithSession CommonPropsNoSession

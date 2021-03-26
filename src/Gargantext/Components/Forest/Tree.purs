@@ -48,7 +48,8 @@ here = R2.here "Gargantext.Components.Forest.Tree"
 -- Shared by every component here + performAction + nodeSpan
 type Universal =
   ( reloadRoot :: T.Box T2.Reload
-  , tasks      :: T.Box (Maybe GAT.Reductor) )
+  -- , tasks      :: T.Box (Maybe GAT.Reductor) )
+  , tasks :: GAT.Reductor )
 
 -- Shared by every component here + nodeSpan
 type Global =
@@ -178,19 +179,13 @@ performAction (DeleteNode nt) p@{ forestOpen
   performAction RefreshTree p
 performAction (DoSearch task) p@{ tasks
                                 , tree: (NTree (LNode {id}) _) } = liftEffect $ do
-  mT <- T.read tasks
-  case mT of
-    Just t -> snd t $ GAT.Insert id task
-    Nothing -> pure unit
+  snd tasks $ GAT.Insert id task
   log2 "[performAction] DoSearch task:" task
 performAction (UpdateNode params) p@{ tasks
                                     , tree: (NTree (LNode {id}) _) } = do
   task <- updateRequest params p.session id
   liftEffect $ do
-    mT <- T.read tasks
-    case mT of
-      Just t -> snd t $ GAT.Insert id task
-      Nothing -> pure unit
+    snd tasks $ GAT.Insert id task
     log2 "[performAction] UpdateNode task:" task
 performAction (RenameNode name) p@{ tree: (NTree (LNode {id}) _) } = do
   void $ rename p.session id $ RenameValue { text: name }
@@ -213,19 +208,13 @@ performAction (UploadFile nodeType fileType mName blob) p@{ tasks
                                                           , tree: (NTree (LNode { id }) _) } = do
   task <- uploadFile p.session nodeType id fileType {mName, blob}
   liftEffect $ do
-    mT <- T.read tasks
-    case mT of
-      Just t -> snd t $ GAT.Insert id task
-      Nothing -> pure unit
+    snd tasks $ GAT.Insert id task
     log2 "[performAction] UploadFile, uploaded, task:" task
 performAction (UploadArbitraryFile mName blob) p@{ tasks
                                                  , tree: (NTree (LNode { id }) _) } = do
   task <- uploadArbitraryFile p.session id { blob, mName }
   liftEffect $ do
-    mT <- T.read tasks
-    case mT of
-      Just t -> snd t $ GAT.Insert id task
-      Nothing -> pure unit
+    snd tasks $ GAT.Insert id task
     log2 "[performAction] UploadArbitraryFile, uploaded, task:" task
 performAction DownloadNode _ = liftEffect $ log "[performAction] DownloadNode"
 performAction (MoveNode {params}) p@{ forestOpen

@@ -2,7 +2,6 @@
 module Gargantext.Components.ContextMenu.ContextMenu where
   -- (MenuProps, Action(..), separator) where
 
-import Prelude hiding (div)
 import Data.Maybe ( Maybe(..) )
 import Data.Nullable ( Nullable, null, toMaybe )
 import Data.Tuple.Nested ( (/\) )
@@ -18,6 +17,9 @@ import Effect (Effect)
 import FFI.Simple ((..))
 import Reactix as R
 import Reactix.DOM.HTML as HTML
+import Toestand as T
+
+import Gargantext.Prelude
 
 import Gargantext.Utils.Reactix as R2
 
@@ -25,9 +27,9 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.ContextMenu.ContextMenu"
 
 type Props t = (
-    x :: Number
+    onClose :: Effect Unit
+  , x :: Number
   , y :: Number
-  , onClose :: Effect Unit
   )
 
 contextMenu :: forall t. R2.Component (Props t)
@@ -39,10 +41,12 @@ contextMenuCpt = here.component "contextMenu" cpt
     cpt menu@{ x, y, onClose } children = do
       host <- R2.getPortalHost
       root <- R.useRef null
-      rect /\ setRect <- R.useState $ \_ -> Nothing
+      rect <- T.useBox Nothing
+      rect' <- T.useLive T.unequal rect
+
       R.useLayoutEffect1 (R.readRef root) $ do
         traverse_
-          (\r -> setRect (\_ -> Just (Element.boundingRect r)))
+          (\r -> T.write_ (Just (Element.boundingRect r)) rect)
           (toMaybe $ R.readRef root)
         pure $ pure unit
       R.useLayoutEffect2 root rect (contextMenuEffect onClose root)
@@ -54,7 +58,7 @@ contextMenuCpt = here.component "contextMenu" cpt
               ]
             ]
       ]
-      pure $ R.createPortal [ elems root menu rect $ cs ] host
+      pure $ R.createPortal [ elems root menu rect' $ cs ] host
     elems ref menu (Just rect) = HTML.div
         { ref
         , key: "context-menu"

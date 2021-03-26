@@ -59,7 +59,7 @@ type TabsProps =
   , reloadRoot        :: T.Box T2.Reload
   , session           :: Session
   , sidePanelTriggers :: Record LTypes.SidePanelTriggers
-  , tasks             :: T.Box (Maybe GAT.Reductor)
+  , tasks             :: GAT.Reductor
   )
 
 tabs :: R2.Leaf TabsProps
@@ -136,5 +136,5 @@ type NTCommon =
   , reloadRoot        :: T.Box T2.Reload
   , session           :: Session
   , sidePanelTriggers :: Record LTypes.SidePanelTriggers
-  , tasks             :: T.Box (Maybe GAT.Reductor)
+  , tasks             :: GAT.Reductor
   )

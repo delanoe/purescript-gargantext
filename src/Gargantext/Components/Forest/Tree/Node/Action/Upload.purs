@@ -1,6 +1,8 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
 import Data.Either (fromRight)
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Eq (genericEq)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.String.Regex as DSR
@@ -15,6 +17,7 @@ import Partial.Unsafe (unsafePartial)
 import React.SyntheticEvent     as E
 import Reactix                  as R
 import Reactix.DOM.HTML         as H
+import Toestand as T
 import URI.Extra.QueryPairs     as QP
 -- import Web.File.Blob (Blob)
 import Web.File.FileReader.Aff (readAsDataURL, readAsText)
@@ -55,16 +58,19 @@ actionUpload _ _ _ _ =
 
 -- file upload types
 data DroppedFile =
-  DroppedFile { blob :: UploadFileBlob
+  DroppedFile { blob     :: UploadFileBlob
               , fileType :: Maybe FileType
               , lang     :: Lang
               }
+derive instance genericDroppedFile :: Generic DroppedFile _
+instance eqDroppedFile :: Eq DroppedFile where
+  eq = genericEq
 
 type FileHash = String
 
 
 type UploadFile = 
-  { blob :: UploadFileBlob
+  { blob     :: UploadFileBlob
   , name     :: String
   }
 
@@ -192,9 +198,9 @@ uploadButtonCpt = here.component "uploadButton" cpt
 -- START File Type View
 type FileTypeProps =
   ( dispatch    :: Action -> Aff Unit
-  , droppedFile :: R.State (Maybe DroppedFile)
+  , droppedFile :: T.Box (Maybe DroppedFile)
   , id          :: ID
-  , isDragOver  :: R.State Boolean
+  , isDragOver  :: T.Box Boolean
   , nodeType    :: GT.NodeType
   )
 
@@ -205,16 +211,21 @@ fileTypeViewCpt :: R.Component FileTypeProps
 fileTypeViewCpt = here.component "fileTypeView" cpt
   where
     cpt { dispatch
-        , droppedFile: Just (DroppedFile {blob, fileType}) /\ setDroppedFile
-        , isDragOver: (_ /\ setIsDragOver)
+        , droppedFile
+        , isDragOver
         , nodeType
-        } _ = pure
-            $ H.div tooltipProps [ H.div { className: "card"}
-                                         [ panelHeading
-                                         , panelBody
-                                         , panelFooter
-                                         ]
-                                 ]
+        } _ = do
+      droppedFile' <- T.useLive T.unequal droppedFile
+
+      case droppedFile' of
+        Nothing -> pure $ H.div {} []
+        Just df@(DroppedFile { blob, fileType }) ->
+          pure $ H.div tooltipProps [ H.div { className: "card"}
+                                      [ panelHeading
+                                      , panelBody df
+                                      , panelFooter df
+                                      ]
+                                    ]
       where
         tooltipProps = { className: ""
                        , id       : "file-type-tooltip"
@@ -231,30 +242,30 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
             , H.div {className: "col-md-2"}
               [ H.a {className: "btn glyphitem fa fa-remove-circle"
                     , on: {click: \_ -> do
-                              setDroppedFile $ const Nothing
-                              setIsDragOver  $ const false
+                              T.write_ Nothing droppedFile
+                              T.write_ false isDragOver
                           }
                     , title: "Close"} []
               ]
             ]
           ]
 
-        panelBody =
+        panelBody (DroppedFile { blob }) =
           H.div {className: "card-body"}
           [ R2.select {className: "col-md-12 form-control"
-                      , on: {change: onChange}
+                      , on: {change: onChange blob}
                       }
                       (map renderOption [CSV, CSV_HAL, WOS])
           ]
           where
-            onChange e l =
-              setDroppedFile $ const $ Just $ DroppedFile $ { blob
-                                                            , fileType: read $ R.unsafeEventValue e
-                                                            , lang    : fromMaybe EN $ read $ R.unsafeEventValue l
-                                                            }
+            onChange blob e l =
+              T.write_ (Just $ DroppedFile $ { blob
+                                             , fileType: read $ R.unsafeEventValue e
+                                             , lang    : fromMaybe EN $ read $ R.unsafeEventValue l
+                                             }) droppedFile
             renderOption opt = H.option {} [ H.text $ show opt ]
 
-        panelFooter =
+        panelFooter (DroppedFile { blob, fileType }) =
           H.div {className: "card-footer"}
           [
             case fileType of
@@ -262,7 +273,7 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
                 H.button {className: "btn btn-success"
                          , type: "button"
                          , on: {click: \_ -> do
-                                   setDroppedFile $ const Nothing
+                                   T.write_ Nothing droppedFile
                                    launchAff $ dispatch $ UploadFile nodeType ft Nothing blob
                                }
                          } [H.text "Upload"]
@@ -271,9 +282,6 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
                          , type: "button"
                          } [H.text "Upload"]
           ]
-
-    cpt {droppedFile: (Nothing /\ _)} _ = do
-      pure $ H.div {} []
 
 
 newtype FileUploadQuery = FileUploadQuery {

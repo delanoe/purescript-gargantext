@@ -6,6 +6,7 @@ import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Utils.Reactix as R2
 
@@ -24,21 +25,23 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component TabsProps
 tabsCpt = here.component "tabs" cpt where
   cpt props _ = do
-    (activeTab /\ setActiveTab) <- R.useState' props.selected
+    activeTab <- T.useBox props.selected
+    activeTab' <- T.useLive T.unequal activeTab
+
     pure $ H.div {}
       [ H.nav {}
         [ H.br {}
         , H.div { className: "nav nav-tabs", title: "Search result" }
-          (mapWithIndex (button setActiveTab activeTab) props.tabs) 
+          (mapWithIndex (button activeTab activeTab') props.tabs)
         ]
       , H.div { className: "tab-content" }
-        (mapWithIndex (item activeTab) props.tabs)
+        (mapWithIndex (item activeTab') props.tabs)
       ]
-  button setActiveTab selected index (name /\ _) =
+  button activeTab selected index (name /\ _) =
     H.a { className, on: { click } } [ H.text name ] where
       eq = index == selected
       className = "nav-item nav-link" <> (if eq then " active" else "")
-      click e = setActiveTab (const index)
+      click e = T.write_ index activeTab
   item selected index (_ /\ cpt') = tab { selected, index } [ cpt' ]
 
 -- TODO: document what these are (selection, item indices)

@@ -155,7 +155,7 @@ type LayoutNoSessionProps =
   , nodeId       :: Int
   , reloadForest :: T.Box T2.Reload
   , reloadRoot   :: T.Box T2.Reload
-  , tasks        :: T.Box (Maybe GAT.Reductor)
+  , tasks        :: GAT.Reductor
   )
 
 type LayoutProps = WithSession LayoutNoSessionProps

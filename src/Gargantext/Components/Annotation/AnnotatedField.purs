@@ -17,12 +17,13 @@ import Data.Maybe ( Maybe(..), maybe )
 import Data.String.Common ( joinWith )
 import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ( (/\) )
---import DOM.Simple.Console (log2)
+-- import DOM.Simple.Console (log2)
 import DOM.Simple.Event as DE
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as HTML
 import Reactix.SyntheticEvent as E
+import Toestand as T
 
 import Gargantext.Prelude
 
@@ -53,15 +54,16 @@ annotatedField = R.createElement annotatedFieldComponent
 annotatedFieldComponent :: R.Component Props
 annotatedFieldComponent = here.component "annotatedField" cpt
   where
-    cpt {ngrams, setTermList, text: fieldText} _ = do
-      (_ /\ setRedrawMenu) <- R.useState' false
+    cpt { ngrams, setTermList, text: fieldText } _ = do
+      redrawMenu <- T.useBox false
+      redrawMenu' <- T.useLive T.unequal redrawMenu
 
       menuRef <- R.useRef (Nothing :: Maybe AnnotationMenu)
 
       let wrapperProps = { className: "annotated-field-wrapper" }
 
           wrap (text /\ list) = { list
-                               , onSelect: onAnnotationSelect { menuRef, ngrams, setRedrawMenu, setTermList }
+                               , onSelect: onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList }
                                , text }
 
       pure $ HTML.div wrapperProps
@@ -75,57 +77,69 @@ compile ngrams = maybe [] (highlightNgrams CTabTerms ngrams)
 
 -- Runs
 
-onAnnotationSelect { menuRef, ngrams, setRedrawMenu, setTermList } Nothing event = do
+onAnnotationSelect :: forall e. DE.IsMouseEvent e => { menuRef :: R.Ref (Maybe AnnotationMenu)
+                                              , ngrams :: NgramsTable
+                                              , redrawMenu :: T.Box Boolean
+                                              , setTermList :: NgramsTerm -> Maybe TermList -> TermList -> Effect Unit }
+                      -> Maybe (Tuple NgramsTerm TermList) -> E.SyntheticEvent e -> Effect Unit
+onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList } Nothing event = do
   s <- Sel.getSelection
   case s of
     Just sel -> do
       case Sel.selectionToString sel of
-        "" -> hideMenu { menuRef, setRedrawMenu }
+        "" -> hideMenu { menuRef, redrawMenu }
         sel' -> do
           showMenu { event
                    , getList: findNgramTermList ngrams
                    , menuRef
                    , menuType: NewNgram
                    , ngram: normNgram CTabTerms sel'
-                   , setRedrawMenu
+                   , redrawMenu
                    , setTermList }
-    Nothing -> hideMenu { menuRef, setRedrawMenu }
-onAnnotationSelect { menuRef, ngrams, setRedrawMenu, setTermList } (Just (Tuple ngram list)) event =
+    Nothing -> hideMenu { menuRef, redrawMenu }
+onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList } (Just (Tuple ngram list)) event = do
   showMenu { event
            , getList: const (Just list)
            , menuRef
            , menuType: SetTermListItem
            , ngram
-           , setRedrawMenu
+           , redrawMenu
            , setTermList }
 
-showMenu { event, getList, menuRef, menuType, ngram, setRedrawMenu, setTermList } = do
+-- showMenu :: forall p e. DE.IsMouseEvent e => { event :: E.SyntheticEvent e | p } -> Effect Unit
+showMenu :: forall e. DE.IsMouseEvent e => { event :: E.SyntheticEvent e
+                                    , getList :: NgramsTerm -> Maybe TermList
+                                    , menuRef :: R.Ref (Maybe AnnotationMenu)
+                                    , menuType :: MenuType
+                                    , ngram :: NgramsTerm
+                                    , redrawMenu :: T.Box Boolean
+                                    , setTermList :: NgramsTerm -> Maybe TermList -> TermList -> Effect Unit }
+            -> Effect Unit
+showMenu { event, getList, menuRef, menuType, ngram, redrawMenu, setTermList } = do
   let x = E.clientX event
       y = E.clientY event
       -- n = normNgram CTabTerms text
       list = getList ngram
-      redrawMenu = setRedrawMenu not
+      -- redrawMenu = T.modify not redrawMenu
       setList t = do
         setTermList ngram list t
-        hideMenu { menuRef, setRedrawMenu }
+        hideMenu { menuRef, redrawMenu }
   E.preventDefault event
   --range <- Sel.getRange sel 0
   --log2 "[showMenu] selection range" $ Sel.rangeToTuple range
   let menu = Just
-        { x
-        , y
-        , list
+        { list
+        , onClose: hideMenu { menuRef, redrawMenu }
         , menuType
-        , onClose: hideMenu { menuRef, setRedrawMenu }
         , setList
-        }
+        , x
+        , y }
   R.setRef menuRef menu
-  redrawMenu
+  T.modify_ not redrawMenu
 
-hideMenu { menuRef, setRedrawMenu } = do
-  let redrawMenu = setRedrawMenu not
+hideMenu { menuRef, redrawMenu } = do
   R.setRef menuRef Nothing
-  redrawMenu
+  T.modify_ not redrawMenu
 
 type Run =
   ( list :: List (Tuple NgramsTerm TermList)

@@ -7,6 +7,7 @@ import Effect.Class (liftEffect)
 import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Config.REST as REST
 import Gargantext.Ends (toUrl)
@@ -37,20 +38,21 @@ versionCpt :: R.Component VersionProps
 versionCpt = here.component "version" cpt
   where
     cpt { session } _ = do
-      (versionBack /\ setVer) <- R.useState' "No Backend Version"
+      versionBack <- T.useBox "No Backend Version"
+      versionBack' <- T.useLive T.unequal versionBack
 
       R.useEffect' $ do
         launchAff_ $ do
           v <- getBackendVersion session
-          liftEffect $ setVer $ const v
+          liftEffect $ T.write_ v versionBack
 
-      pure $ case version == versionBack of
+      pure $ case version == versionBack' of
         true  -> H.a { className: "fa fa-check-circle-o"
                      , textDecoration: "none"
                      , title: "Versions match: frontend ("
                             <> version
                             <> "), backend ("
-                            <> versionBack
+                            <> versionBack'
                             <> ")"
                       } []
         false -> H.a { className: "fa fa-exclamation-triangle"
@@ -58,7 +60,7 @@ versionCpt = here.component "version" cpt
                      , title: "Versions mismatch: frontend ("
                             <> version
                             <> "), backend ("
-                            <> versionBack
+                            <> versionBack'
                             <> ")"
                      } []
 
