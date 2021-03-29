@@ -58,8 +58,10 @@ routerCpt = here.component "router" cpt where
     let session = R.createContext (unsafeCoerce {})
     let sessionProps sId = Record.merge { session, sessionId: sId } props
     let sessionNodeProps sId nId = Record.merge { nodeId: nId } $ sessionProps sId
+
     showLogin <- T.useLive T.unequal boxes.showLogin
     route' <- T.useLive T.unequal boxes.route
+
     pure $ R.fragment
       [ if showLogin then login' boxes else H.div {} []
       , case route' of

@@ -13,10 +13,10 @@ import Gargantext.Utils.Toestand as T2
 
 type App =
   { backend      :: Maybe Backend
-  , handed       :: Handed
   , forestOpen   :: OpenNodes
-  , reloadRoot   :: Int
+  , handed       :: Handed
   , reloadForest :: Int
+  , reloadRoot   :: Int
   , route        :: AppRoute
   , sessions     :: Sessions
   , showCorpus   :: Boolean
@@ -26,11 +26,11 @@ type App =
 emptyApp :: App
 emptyApp =
   { backend:      Nothing
-  , handed:       RightHanded
-  , route:        Home
   , forestOpen:   Set.empty
-  , reloadRoot:   T2.newReload
+  , handed:       RightHanded
   , reloadForest: T2.newReload
+  , reloadRoot:   T2.newReload
+  , route:        Home
   , sessions:     Sessions.empty
   , showCorpus:   false
   , showLogin:    false
@@ -38,10 +38,10 @@ emptyApp =
 
 type Boxes =
   { backend      :: T.Box (Maybe Backend)
-  , handed       :: T.Box Handed
   , forestOpen   :: T.Box OpenNodes
-  , reloadRoot   :: T.Box T2.Reload
+  , handed       :: T.Box Handed
   , reloadForest :: T.Box T2.Reload
+  , reloadRoot   :: T.Box T2.Reload
   , route        :: T.Box AppRoute
   , sessions     :: T.Box Sessions
   , showCorpus   :: T.Box Boolean
