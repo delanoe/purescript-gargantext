@@ -73,10 +73,12 @@ treeLoader = R.createElement treeLoaderCpt
 
 treeLoaderCpt :: R.Component LoaderProps
 treeLoaderCpt = here.component "treeLoader" cpt where
+-- treeLoaderCpt :: R.Memo LoaderProps
+-- treeLoaderCpt = R.memo (here.component "treeLoader" cpt) memoCmp where
+--   memoCmp ({ root: t1 }) ({ root: t2 }) = t1 == t2
   cpt p@{ root, session } _ = do
     app     <- T.useLive T.unequal p.reloadRoot
-    reload  <- T.useLive T.unequal p.reload
-    let fetch _ = getNodeTree session root
+    let fetch { root: r } = getNodeTree session r
     useLoader { app, root } fetch loaded where
       loaded tree' = tree props where
         props = Record.merge common extra where
