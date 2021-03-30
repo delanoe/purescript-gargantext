@@ -79,18 +79,20 @@ data Action =
 
 action :: Record ReductorProps -> Action -> Effect (Record ReductorProps)
 action p@{ reloadForest, storage } (Insert nodeId t) = do
-  _ <- T2.reload reloadForest
+  -- _ <- T2.reload reloadForest
   let newStorage = Map.alter (maybe (Just [t]) (\ts -> Just $ A.cons t ts)) nodeId storage
   pure $ p { storage = newStorage }
 action p (Finish nodeId t) = do
   action p (Remove nodeId t)
 action p@{ reloadRoot, reloadForest, storage } (Remove nodeId t@(GT.AsyncTaskWithType { typ })) = do
   _ <- if GT.asyncTaskTriggersAppReload typ then
-    T2.reload reloadRoot
+    pure unit
+    -- T2.reload reloadRoot
   else
     pure unit
   _ <- if GT.asyncTaskTriggersTreeReload typ then
-    T2.reload reloadForest
+    pure unit
+    -- T2.reload reloadForest
   else
     pure unit
   let newStorage = Map.alter (maybe Nothing $ (\ts -> Just $ removeTaskFromList ts t)) nodeId storage

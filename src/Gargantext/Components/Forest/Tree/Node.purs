@@ -147,7 +147,7 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
             -- case mT of
             --   Just t' -> snd t' $ GAT.Finish id' t
             --   Nothing -> pure unit
-            T2.reload reloadRoot
+            -- T2.reload reloadRoot
 
           SettingsBox {show: showBox} = settingsBox nodeType
           onPopoverClose popoverRef _ = Popover.setOpen popoverRef false

@@ -361,7 +361,7 @@ loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
         totalRecords = fromMaybe (Seq.length rows) mTotalRows
 
         afterSync' _ = do
-          chartsAfterSync path' tasks reloadForest unit
+          chartsAfterSync path' tasks unit
           afterSync unit
 
         syncResetButton = syncResetButtons { afterSync: afterSync'

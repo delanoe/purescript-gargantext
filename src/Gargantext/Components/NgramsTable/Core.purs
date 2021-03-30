@@ -1141,7 +1141,8 @@ syncResetButtonsCpt :: R.Component SyncResetButtonsProps
 syncResetButtonsCpt = here.component "syncResetButtons" cpt
   where
     cpt { afterSync, ngramsLocalPatch, performAction } _ = do
-      synchronizing@(s /\ setSynchronizing) <- R.useState' false
+      -- synchronizing <- T.useBox false
+      -- synchronizing' <- T.useLive T.unequal synchronizing
 
       let
         hasChanges = ngramsLocalPatch /= mempty
@@ -1151,12 +1152,12 @@ syncResetButtonsCpt = here.component "syncResetButtons" cpt
           performAction ResetPatches
 
         synchronizeClick _ = delay unit $ \_ -> do
-          setSynchronizing $ const true
+          -- T.write_ true synchronizing
           performAction $ Synchronize { afterSync: newAfterSync }
 
         newAfterSync x = do
           afterSync x
-          liftEffect $ setSynchronizing $ const false
+          -- liftEffect $ T.write_ false synchronizing
 
       pure $ H.div { className: "btn-toolbar" }
         [ H.div { className: "btn-group mr-2" }
@@ -1166,8 +1167,8 @@ syncResetButtonsCpt = here.component "syncResetButtons" cpt
           ]
         , H.div { className: "btn-group mr-2" }
           [ H.button { className: "btn btn-primary " <> hasChangesClass
-                 , on: { click: synchronizeClick }
-                 } [ H.text "Sync" ]
+                     , on: { click: synchronizeClick }
+                     } [ H.text "Sync" ]
           ]
         ]
 
@@ -1185,15 +1186,13 @@ chartsAfterSync :: forall props discard.
   | props
   }
   -> GAT.Reductor
-  -> T.Box T2.Reload
   -> discard
   -> Aff Unit
-chartsAfterSync path'@{ nodeId } tasks reloadForest _ = do
+chartsAfterSync path'@{ nodeId } tasks _ = do
   task <- postNgramsChartsAsync path'
   liftEffect $ do
     log2 "[chartsAfterSync] Synchronize task" task
     snd tasks $ GAT.Insert nodeId task
-    T2.reload reloadForest
 
 postNgramsChartsAsync :: forall s. CoreParams s -> Aff AsyncTaskWithType
 postNgramsChartsAsync { listIds, nodeId, session, tabType } = do

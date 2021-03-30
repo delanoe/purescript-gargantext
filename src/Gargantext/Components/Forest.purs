@@ -76,7 +76,7 @@ forestCpt = here.component "forest" cpt where
     --   T.write_ (Just tasks') tasks
     handed'       <- T.useLive T.unequal handed
     reloadForest' <- T.useLive T.unequal reloadForest
-    reloadRoot'   <- T.useLive T.unequal reloadRoot
+    -- reloadRoot'   <- T.useLive T.unequal reloadRoot
     route'        <- T.useLive T.unequal route
     forestOpen'   <- T.useLive T.unequal forestOpen
     sessions'     <- T.useLive T.unequal sessions
@@ -87,7 +87,7 @@ forestCpt = here.component "forest" cpt where
       -- R.setRef tasks $ Just tasks'
     R2.useCache
       ( frontends /\ route' /\ sessions' /\ handed' /\ forestOpen'
-        /\ reloadForest' /\ reloadRoot' /\ (fst tasks).storage )
+        /\ reloadForest' /\ (fst tasks).storage )
       (cp handed' sessions')
         where
           common = RX.pick props :: Record Common

@@ -79,7 +79,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
             , sidePanelTriggers
             , tasks } _ = do
       chartsReload <- T.useBox T2.newReload
-      chartsReload' <- T.useLive T.unequal chartsReload
+
       path <- T.useBox $ NTC.initialPageParams props.session initialPath.corpusId [initialPath.listId] initialPath.tabType
       { listIds, nodeId, params, tabType } <- T.useLive T.unequal path
       let path' = {

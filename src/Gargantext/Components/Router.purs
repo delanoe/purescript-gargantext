@@ -226,8 +226,8 @@ listsCpt = here.component "lists" cpt where
                      , showLogin
                      , tasks }
       , listsProps: { nodeId
-                    , reloadRoot
                     , reloadForest
+                    , reloadRoot
                     , session
                     , sessionUpdate: \_ -> pure unit
                     , tasks }
