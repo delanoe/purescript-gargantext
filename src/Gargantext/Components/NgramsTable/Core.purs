@@ -1185,14 +1185,14 @@ chartsAfterSync :: forall props discard.
   , tabType :: TabType
   | props
   }
-  -> GAT.Reductor
+  -> T.Box GAT.Storage
   -> discard
   -> Aff Unit
 chartsAfterSync path'@{ nodeId } tasks _ = do
   task <- postNgramsChartsAsync path'
   liftEffect $ do
     log2 "[chartsAfterSync] Synchronize task" task
-    snd tasks $ GAT.Insert nodeId task
+    GAT.insert nodeId task tasks
 
 postNgramsChartsAsync :: forall s. CoreParams s -> Aff AsyncTaskWithType
 postNgramsChartsAsync { listIds, nodeId, session, tabType } = do

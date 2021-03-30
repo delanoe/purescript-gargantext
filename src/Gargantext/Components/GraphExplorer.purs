@@ -53,7 +53,7 @@ type BaseProps =
   , route         :: T.Box AppRoute
   , sessions      :: T.Box Sessions
   , showLogin     :: T.Box Boolean
-  , tasks         :: GAT.Reductor
+  , tasks         :: T.Box GAT.Storage
   )
 
 type LayoutLoaderProps = ( session :: R.Context Session | BaseProps )
@@ -277,7 +277,7 @@ type TreeProps = (
   , sessions     :: T.Box Sessions
   , show         :: Boolean
   , showLogin    :: T.Box Boolean
-  , tasks        :: GAT.Reductor
+  , tasks        :: T.Box GAT.Storage
   )
 
 type MSidebarProps =
