@@ -1,11 +1,8 @@
 module Gargantext.Components.App (app) where
 
-import Data.Maybe (Maybe(..))
-import Reactix as R
-import Toestand as T
-
 import Gargantext.Prelude
 
+import Data.Maybe (Maybe(..))
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Data (emptyApp)
 import Gargantext.Components.Router (router)
@@ -13,6 +10,8 @@ import Gargantext.Hooks (useHashRouter)
 import Gargantext.Router as Router
 import Gargantext.Sessions as Sessions
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.App"
@@ -28,11 +27,14 @@ appCpt = here.component "app" cpt where
     -- tasks   <- T.useBox Nothing             -- storage for asynchronous tasks reductor
     R.useEffectOnce' $ do
       void $ Sessions.load boxes.sessions
-    tasks <- GAT.useTasks boxes.reloadRoot boxes.reloadForest
+    -- tasks <- GAT.useTasks boxes.reloadRoot boxes.reloadForest
+    R.useEffectOnce' $ do
+      tasksStorage <- GAT.getAsyncTasks
+      T.write_ tasksStorage boxes.tasks
     -- R.useEffectOnce' $ do
     --   T.write (Just tasksReductor) tasks
     R.useEffectOnce' $ do
       R2.loadLocalStorageState R2.openNodesKey boxes.forestOpen
       T.listen (R2.listenLocalStorageState R2.openNodesKey) boxes.forestOpen
     useHashRouter Router.router boxes.route -- Install router to window
-    pure $ router { boxes, tasks }          -- Render router component
+    pure $ router { boxes }          -- Render router component

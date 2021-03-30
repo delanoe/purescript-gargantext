@@ -37,8 +37,6 @@ type Common =
   , handed        :: T.Box Handed
   , reloadRoot    :: T.Box T2.Reload
   , route         :: T.Box AppRoute
-  -- , tasks      :: T.Box (Maybe GAT.Reductor)
-  , tasks         :: GAT.Reductor
   )
 
 type Props =
@@ -47,6 +45,7 @@ type Props =
   , reloadForest :: T.Box T2.Reload
   , sessions     :: T.Box Sessions
   , showLogin    :: T.Box Boolean
+  , tasks        :: T.Box GAT.Storage
   | Common 
   )
 
@@ -76,7 +75,7 @@ forestCpt = here.component "forest" cpt where
     --   T.write_ (Just tasks') tasks
     handed'       <- T.useLive T.unequal handed
     reloadForest' <- T.useLive T.unequal reloadForest
-    reloadRoot'   <- T.useLive T.unequal reloadRoot
+    -- reloadRoot'   <- T.useLive T.unequal reloadRoot
     route'        <- T.useLive T.unequal route
     forestOpen'   <- T.useLive T.unequal forestOpen
     sessions'     <- T.useLive T.unequal sessions
@@ -86,8 +85,7 @@ forestCpt = here.component "forest" cpt where
     -- R.useEffect' $ do
       -- R.setRef tasks $ Just tasks'
     R2.useCache
-      ( frontends /\ route' /\ sessions' /\ handed' /\ forestOpen'
-        /\ reloadForest' /\ reloadRoot' /\ (fst tasks).storage )
+      ( frontends /\ route' /\ sessions' /\ handed' /\ forestOpen' /\ reloadForest' )
       (cp handed' sessions')
         where
           common = RX.pick props :: Record Common

@@ -1,35 +1,31 @@
 module Gargantext.Components.Nodes.Lists where
 
-import Gargantext.Prelude (Unit, bind, const, discard, pure, show, unit, ($), (<>))
+import DOM.Simple.Console (log, log2)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (fst, snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Record as Record
-import Record.Extra as REX
-import Toestand as T
-
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest as Forest
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
-import Gargantext.Components.Nodes.Corpus.Types
-  ( getCorpusInfo, CorpusInfo(..), Hyperdata(..) )
+import Gargantext.Components.Nodes.Corpus.Types (getCorpusInfo, CorpusInfo(..), Hyperdata(..))
 import Gargantext.Components.Nodes.Lists.Tabs as Tabs
-import Gargantext.Components.Nodes.Lists.Types
-  ( CacheState(..), ListsLayoutControls, SidePanelState(..)
-  , initialControls, toggleSidePanelState )
-
+import Gargantext.Components.Nodes.Lists.Types (CacheState(..), ListsLayoutControls, SidePanelState(..), initialControls, toggleSidePanelState)
 import Gargantext.Components.Table as Table
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude (Unit, bind, const, discard, pure, show, unit, ($), (<>))
 import Gargantext.Sessions (WithSession, WithSessionContext, Session, sessionId, getCacheState, setCacheState)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Record.Extra as REX
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Lists"
@@ -98,7 +94,7 @@ type CommonPropsNoSession =
   , reloadForest  :: T.Box T2.Reload
   , reloadRoot    :: T.Box T2.Reload
   , sessionUpdate :: Session -> Effect Unit
-  , tasks         :: GAT.Reductor
+  , tasks         :: T.Box GAT.Storage
   )
 
 type CommonProps = WithSession CommonPropsNoSession

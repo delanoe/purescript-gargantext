@@ -47,21 +47,20 @@ here = R2.here "Gargantext.Components.Forest.Tree"
 
 -- Shared by every component here + performAction + nodeSpan
 type Universal =
-  ( reloadRoot :: T.Box T2.Reload
-  -- , tasks      :: T.Box (Maybe GAT.Reductor) )
-  , tasks :: GAT.Reductor )
+  ( reloadRoot :: T.Box T2.Reload )
 
 -- Shared by every component here + nodeSpan
 type Global =
   ( frontends  :: Frontends
   , handed     :: Handed
   , route      :: T.Box AppRoute
+ , tasks       :: T.Box GAT.Storage
   | Universal )
 
 -- Shared by every component here
 type Common = (
    forestOpen :: T.Box OpenNodes
- , reload :: T.Box T2.Reload
+ , reload     :: T.Box T2.Reload
  | Global
  )
 
@@ -77,9 +76,9 @@ treeLoaderCpt = here.component "treeLoader" cpt where
 -- treeLoaderCpt = R.memo (here.component "treeLoader" cpt) memoCmp where
 --   memoCmp ({ root: t1 }) ({ root: t2 }) = t1 == t2
   cpt p@{ root, session } _ = do
-    app     <- T.useLive T.unequal p.reloadRoot
+    -- app     <- T.useLive T.unequal p.reloadRoot
     let fetch { root: r } = getNodeTree session r
-    useLoader { app, root } fetch loaded where
+    useLoader { root } fetch loaded where
       loaded tree' = tree props where
         props = Record.merge common extra where
           common = RecordE.pick p :: Record Common
@@ -108,7 +107,10 @@ treeCpt = here.component "tree" cpt where
       [ H.div { className: divClass } -- TODO: naughty div should not be in a ul
         [ H.li { className: childrenClass children }
           [ nodeSpan (nsprops { folderOpen, name, id, nodeType, setPopoverRef, isLeaf })
-            (renderChildren open) ]]]
+            (renderChildren open)
+          ]
+        ]
+      ]
     where
       isLeaf = A.null children
       nodeId = mkNodeId session id
@@ -136,6 +138,7 @@ type PACommon =
   ( forestOpen   :: T.Box OpenNodes
   , reloadTree   :: T.Box T2.Reload
   , session      :: Session
+  , tasks        :: T.Box GAT.Storage
   , tree         :: FTree
   | Universal )
 
@@ -181,13 +184,13 @@ performAction (DeleteNode nt) p@{ forestOpen
   performAction RefreshTree p
 performAction (DoSearch task) p@{ tasks
                                 , tree: (NTree (LNode {id}) _) } = liftEffect $ do
-  snd tasks $ GAT.Insert id task
+  GAT.insert id task tasks
   log2 "[performAction] DoSearch task:" task
 performAction (UpdateNode params) p@{ tasks
                                     , tree: (NTree (LNode {id}) _) } = do
   task <- updateRequest params p.session id
   liftEffect $ do
-    snd tasks $ GAT.Insert id task
+    GAT.insert id task tasks
     log2 "[performAction] UpdateNode task:" task
 performAction (RenameNode name) p@{ tree: (NTree (LNode {id}) _) } = do
   void $ rename p.session id $ RenameValue { text: name }
@@ -210,13 +213,13 @@ performAction (UploadFile nodeType fileType mName blob) p@{ tasks
                                                           , tree: (NTree (LNode { id }) _) } = do
   task <- uploadFile p.session nodeType id fileType {mName, blob}
   liftEffect $ do
-    snd tasks $ GAT.Insert id task
+    GAT.insert id task tasks
     log2 "[performAction] UploadFile, uploaded, task:" task
 performAction (UploadArbitraryFile mName blob) p@{ tasks
                                                  , tree: (NTree (LNode { id }) _) } = do
   task <- uploadArbitraryFile p.session id { blob, mName }
   liftEffect $ do
-    snd tasks $ GAT.Insert id task
+    GAT.insert id task tasks
     log2 "[performAction] UploadArbitraryFile, uploaded, task:" task
 performAction DownloadNode _ = liftEffect $ log "[performAction] DownloadNode"
 performAction (MoveNode {params}) p@{ forestOpen

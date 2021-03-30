@@ -263,7 +263,7 @@ type CommonProps = (
   , reloadRoot        :: T.Box T2.Reload
   , sidePanelTriggers :: Record NT.SidePanelTriggers
   , tabNgramType      :: CTabNgramType
-  , tasks             :: GAT.Reductor
+  , tasks             :: T.Box GAT.Storage
   , withAutoUpdate    :: Boolean
   )
 
@@ -361,7 +361,7 @@ loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
         totalRecords = fromMaybe (Seq.length rows) mTotalRows
 
         afterSync' _ = do
-          chartsAfterSync path' tasks reloadForest unit
+          chartsAfterSync path' tasks unit
           afterSync unit
 
         syncResetButton = syncResetButtons { afterSync: afterSync'

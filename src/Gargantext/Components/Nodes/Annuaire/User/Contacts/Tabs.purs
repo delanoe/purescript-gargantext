@@ -57,7 +57,7 @@ type TabsProps = (
   , reloadRoot        :: T.Box T2.Reload
   , session           :: Session
   , sidePanelTriggers :: Record LTypes.SidePanelTriggers
-  , tasks             :: GAT.Reductor
+  , tasks             :: T.Box GAT.Storage
   )
 
 tabs :: Record TabsProps -> R.Element
@@ -139,7 +139,7 @@ type NgramsViewTabsProps = (
   , reloadRoot        :: T.Box T2.Reload
   , session           :: Session
   , sidePanelTriggers :: Record LTypes.SidePanelTriggers
-  , tasks             :: GAT.Reductor
+  , tasks             :: T.Box GAT.Storage
   )
 
 ngramsView :: R2.Component NgramsViewTabsProps

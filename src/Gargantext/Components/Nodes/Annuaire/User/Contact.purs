@@ -141,7 +141,7 @@ listElement = H.li { className: "list-group-item justify-content-between" }
 type BasicProps =
   ( frontends :: Frontends
   , nodeId    :: Int
-  , tasks     :: GAT.Reductor
+  , tasks     :: T.Box GAT.Storage
   )
 
 type ReloadProps =

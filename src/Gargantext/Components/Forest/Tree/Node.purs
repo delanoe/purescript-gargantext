@@ -54,7 +54,7 @@ type NodeMainSpanProps =
   , reloadRoot    :: T.Box T2.Reload
   , route         :: T.Box Routes.AppRoute
   , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
-  , tasks         :: GAT.Reductor
+  , tasks         :: T.Box GAT.Storage
   | CommonProps
   )
 
@@ -97,6 +97,9 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
       isDragOver'   <- T.useLive T.unequal isDragOver
       popoverRef    <- R.useRef null
 
+      currentTasks <- GAT.focus id tasks
+      currentTasks' <- T.useLive T.unequal currentTasks
+
       R.useEffect' $ do
         R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
       let isSelected = Just route' == Routes.nodeTypeAppRoute nodeType (sessionId session) id
@@ -117,7 +120,7 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
                                                        , onFinish: onTaskFinish id t
                                                        , session
                                                        }
-                                ) $ GAT.getTasks (fst tasks) id
+                                ) currentTasks'
                            )
                 , if nodeType == GT.NodeUser
                         then GV.versionView {session}
@@ -142,12 +145,13 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
                 ]
         where
           onTaskFinish id' t _ = do
-            snd tasks $ GAT.Finish id' t
+            GAT.finish id' t tasks
+            -- snd tasks $ GAT.Finish id' t
             -- mT <- T.read tasks
             -- case mT of
             --   Just t' -> snd t' $ GAT.Finish id' t
             --   Nothing -> pure unit
-            T2.reload reloadRoot
+            -- T2.reload reloadRoot
 
           SettingsBox {show: showBox} = settingsBox nodeType
           onPopoverClose popoverRef _ = Popover.setOpen popoverRef false

@@ -4,10 +4,11 @@ import Data.Set as Set
 import Data.Maybe (Maybe(..))
 import Toestand as T
 
+import Gargantext.AsyncTasks as GAT
 import Gargantext.Ends (Backend)
+import Gargantext.Routes (AppRoute(Home))
 import Gargantext.Sessions as Sessions
 import Gargantext.Sessions (OpenNodes, Sessions)
-import Gargantext.Routes (AppRoute(Home))
 import Gargantext.Types (Handed(RightHanded))
 import Gargantext.Utils.Toestand as T2
 
@@ -21,6 +22,7 @@ type App =
   , sessions     :: Sessions
   , showCorpus   :: Boolean
   , showLogin    :: Boolean
+  , tasks        :: GAT.Storage
   }
 
 emptyApp :: App
@@ -34,6 +36,7 @@ emptyApp =
   , sessions:     Sessions.empty
   , showCorpus:   false
   , showLogin:    false
+  , tasks:        GAT.empty
   }
 
 type Boxes =
@@ -46,5 +49,5 @@ type Boxes =
   , sessions     :: T.Box Sessions
   , showCorpus   :: T.Box Boolean
   , showLogin    :: T.Box Boolean
+  , tasks        :: T.Box GAT.Storage
   }
-
