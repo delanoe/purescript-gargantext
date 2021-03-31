@@ -91,7 +91,7 @@ forestCpt = here.component "forest" cpt where
           common = RX.pick props :: Record Common
           cp handed' sessions' _ =
             pure $ H.div { className: "forest" }
-              (A.cons (plus handed' showLogin backend) (trees handed' sessions'))
+              (A.cons (plus handed' showLogin) (trees handed' sessions'))
           trees handed' sessions' = (tree handed') <$> unSessions sessions'
           tree handed' s@(Session {treeId}) =
             treeLoader { forestOpen
@@ -104,8 +104,8 @@ forestCpt = here.component "forest" cpt where
                        , session: s
                        , tasks } []
 
-plus :: Handed -> T.Box Boolean -> T.Box (Maybe Backend) -> R.Element
-plus handed showLogin backend = H.div { className: "row" }
+plus :: Handed -> T.Box Boolean -> R.Element
+plus handed showLogin = H.div { className: "row" }
   [ H.button { className: buttonClass
              , on: { click }
              , title }

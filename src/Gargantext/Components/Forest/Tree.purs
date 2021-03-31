@@ -54,7 +54,7 @@ type Global =
   ( frontends  :: Frontends
   , handed     :: Handed
   , route      :: T.Box AppRoute
- , tasks       :: T.Box GAT.Storage
+  , tasks       :: T.Box GAT.Storage
   | Universal )
 
 -- Shared by every component here
@@ -102,20 +102,18 @@ treeCpt = here.component "tree" cpt where
   cpt p@{ session, tree: NTree (LNode { id, name, nodeType }) children } _ = do
     setPopoverRef <- R.useRef Nothing
     folderOpen <- T2.useMemberBox nodeId p.forestOpen
-    open <- T.useLive T.unequal folderOpen
-    pure $ H.ul { className: ulClass }
-      [ H.div { className: divClass } -- TODO: naughty div should not be in a ul
-        [ H.li { className: childrenClass children }
-          [ nodeSpan (nsprops { folderOpen, name, id, nodeType, setPopoverRef, isLeaf })
-            (renderChildren open)
-          ]
+    folderOpen' <- T.useLive T.unequal folderOpen
+    pure $ H.ul { className: ulClass <> " " <> handedClass }
+      [ H.li { className: childrenClass children }
+        [ nodeSpan (nsprops { folderOpen, name, id, nodeType, setPopoverRef, isLeaf })
+          (renderChildren folderOpen')
         ]
       ]
     where
       isLeaf = A.null children
       nodeId = mkNodeId session id
       ulClass  = switchHanded "ml" "mr" p.handed <> "-auto tree"
-      divClass = switchHanded "left" "right" p.handed <> "handed"
+      handedClass = switchHanded "left" "right" p.handed <> "handed"
       children' = A.sortWith fTreeID pubChildren
       pubChildren = if isPublic nodeType then map (map pub) children else children
       renderChildren false = []
