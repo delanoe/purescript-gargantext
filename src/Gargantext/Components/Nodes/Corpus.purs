@@ -1,8 +1,8 @@
 module Gargantext.Components.Nodes.Corpus where
 
 import Gargantext.Prelude
-  ( Unit, bind, discard, pure, show, unit
-  , ($), (+), (-), (<), (<$>), (<<<), (<>), (==), (>), class Show, class Eq)
+  ( Unit, bind, discard, pure, show, unit, compare
+  , ($), (+), (-), (<), (<$>), (<<<), (<>), (==), (>), class Show, class Eq, Ordering)
 import Data.Argonaut (class DecodeJson, decodeJson, encodeJson)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
@@ -34,8 +34,8 @@ import Gargantext.Data.Array as GDA
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI, Children, TreeFirstLevel), AppRoute(Home), appPath, nodeTypeAppRoute)
 import Gargantext.Sessions (Session, get, put, sessionId)
-import Gargantext.Types (NodeType(..), AffTableResult, SessionId)
-import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
+import Gargantext.Types (NodeType(..), AffTableResult, SessionId, fldr)
+import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
@@ -68,15 +68,32 @@ corpusLayoutMainCpt = here.component "corpusLayoutMain" cpt
   where
     cpt { nodeId, key, session } _ = do
       viewType <- T.useBox Folders
-      viewType' <- T.read viewType
 
       pure $ H.div{} [
         H.div{} [viewTypeSelector {state: viewType} ]
-      , H.div{} [renderContent viewType' nodeId session key]
+      , H.div{} [corpusLayoutSelection {state: viewType, key, session, nodeId}]
       ]
 
-    renderContent Folders nodeId session key = folderViewLoad { nodeId, session }
-    renderContent Code nodeId session key = corpusLayoutWithKey { key, nodeId, session }
+type SelectionProps = 
+  ( nodeId  :: Int
+  , key     :: String
+  , session :: Session
+  , state   :: T.Box ViewType
+  )
+
+corpusLayoutSelection :: R2.Leaf SelectionProps
+corpusLayoutSelection props = R.createElement corpusLayoutSelectionCpt props []
+
+corpusLayoutSelectionCpt :: R.Component SelectionProps
+corpusLayoutSelectionCpt = here.component "corpusLayoutSelection" cpt where
+  cpt { nodeId, session, key, state} _ = do
+    state' <- T.useLive T.unequal state
+    viewType <- T.read state
+
+    pure $ renderContent viewType nodeId session key
+
+  renderContent Folders nodeId session key = folderViewLoad { nodeId, session }
+  renderContent Code nodeId session key = corpusLayoutWithKey { key, nodeId, session }
 
 
 corpusLayoutWithKey :: R2.Leaf KeyProps
@@ -178,8 +195,9 @@ folderView props = R.createElement folderViewCpt props []
 
 folderViewCpt :: R.Component FolderViewProps
 folderViewCpt = here.component "folderViewCpt" cpt where
-  cpt {nodeId, session, folders: (NTree (LNode {parent_id: parentId}) (foldersS))} _ = do
+  cpt {nodeId, session, folders: (NTree (LNode {parent_id: parentId}) (folders))} _ = do
     let sid = sessionId session 
+    let foldersS = A.sortBy sortFolders folders
     let children = makeFolderElements foldersS sid
     let parent = makeParentFolder parentId sid
 
@@ -197,6 +215,9 @@ folderViewCpt = here.component "folderViewCpt" cpt where
     [ folder {style: FolderUp, text: "..", nodeId: parentId, nodeType: FolderPrivate, sid: sid} [] ]
   makeParentFolder Nothing _ = []
 
+  sortFolders :: FTree -> FTree -> Ordering
+  sortFolders a b = compare (fTreeID a) (fTreeID b)
+
 
 type FolderProps = 
   (
@@ -213,19 +234,14 @@ folder = R.createElement folderCpt
 folderCpt :: R.Component FolderProps
 folderCpt = here.component "folderCpt" cpt where
   cpt {style, text, nodeId, sid, nodeType} _ = do
-    pure $ H.a {className: "btn btn-primary", href: "/#/" <> getFolderPath nodeType sid nodeId}  [ H.i { className: "fa " <> (icon style nodeType) } []
+    pure $ H.a {className: "btn btn-primary", href: "/#/" <> getFolderPath nodeType sid nodeId}  [ H.i { className: icon style nodeType } []
                                                                    , H.br {}
                                                                    , H.text text]
   
   icon :: FolderStyle -> NodeType -> String
-  icon FolderUp _ = "fa-folder-open"
-  icon _ Dashboard = "fa-signal"
-  icon _ Texts = "fa-newspaper-o"
-  icon _ NodeList = "fa-list"
-  icon _ Graph = "fa-hubzilla"
-  icon _ NodeFile = "fa-file"
-  icon FolderChild _  = "fa-folder"
-  
+  icon FolderUp _ = "fa fa-folder-open"
+  icon _ nodeType = fldr nodeType false
+
   getFolderPath :: NodeType -> SessionId -> Int -> String
   getFolderPath nodeType sid nodeId = appPath $ fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
 
