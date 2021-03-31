@@ -832,7 +832,7 @@ ul li {
 .folders {
   display: grid;
   grid-template-columns: 100px 100px 100px;
-  gap: 10px;
+  gap: 25px;
   margin: 10px 0px;
 }
 
