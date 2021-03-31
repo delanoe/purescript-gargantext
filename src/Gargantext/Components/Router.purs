@@ -59,11 +59,10 @@ routerCpt = here.component "router" cpt where
     let sessionProps sId = Record.merge { session, sessionId: sId } props
     let sessionNodeProps sId nId = Record.merge { nodeId: nId } $ sessionProps sId
 
-    showLogin <- T.useLive T.unequal boxes.showLogin
     route' <- T.useLive T.unequal boxes.route
 
     pure $ R.fragment
-      [ if showLogin then login' boxes else H.div {} []
+      [ loginModal { boxes } []
       , case route' of
         GR.Annuaire s n           -> annuaire (sessionNodeProps s n) []
         GR.ContactPage s a n      -> contact (Record.merge { annuaireId: a } $ sessionNodeProps s n) []
@@ -87,6 +86,22 @@ routerCpt = here.component "router" cpt where
         GR.Texts s n              -> texts (sessionNodeProps s n) []
         GR.UserPage s n           -> user (sessionNodeProps s n) []
       ]
+
+
+type LoginModalProps = (
+  boxes :: Boxes
+  )
+
+loginModal :: R2.Component LoginModalProps
+loginModal = R.createElement loginModalCpt
+
+loginModalCpt :: R.Component LoginModalProps
+loginModalCpt = here.component "loginModal" cpt
+  where
+    cpt { boxes: boxes@{ showLogin } } _ = do
+        showLogin' <- T.useLive T.unequal showLogin
+
+        pure $ if showLogin' then login' boxes else H.div {} []
 
 forested :: R2.Component Props
 forested = R.createElement forestedCpt
