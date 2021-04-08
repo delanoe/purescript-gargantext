@@ -146,7 +146,7 @@ tutorialCpt = here.component "tutorial" cpt where
 
     pure $ H.div { className: "mx-auto container" }
       [ H.div {className: "d-flex justify-content-center"}
-              [FV.folderViewLoad {session, nodeId}]
+              [FV.folderView {session, nodeId, backFolder: false}]
       , H.h1 {} [H.text "Welcome!"]
       , H.h2 {} [H.text "For easy start, just watch the tutorials"]
       , summary

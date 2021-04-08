@@ -2,10 +2,11 @@ module Gargantext.Components.FolderView where
 
 import Data.Array as A
 import Data.Maybe (Maybe(..), fromMaybe)
+import Effect (Effect)
 import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (compare, pure, ($), (<$>), (<>), Ordering)
+import Gargantext.Prelude (Ordering, Unit, compare, pure, ($), (<$>), (<>))
 import Gargantext.Routes (AppRoute(Home), SessionRoute(..), appPath, nodeTypeAppRoute)
 import Gargantext.Sessions (Session, get, sessionId)
 import Gargantext.Types (NodeType(..), SessionId, fldr)
@@ -13,42 +14,46 @@ import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 
+foreign import back :: Effect Unit
+
 here :: R2.Here
 here = R2.here "Gargantext.Components.FolderView"
 
 type Props =
   ( nodeId  :: Int
   , session :: Session
+  , backFolder :: Boolean
   )
 
 data FolderStyle = FolderUp | FolderChild
 
-folderViewLoad :: R2.Leaf Props
-folderViewLoad props = R.createElement folderViewLoadCpt props []
+folderView :: R2.Leaf Props
+folderView props = R.createElement folderViewCpt props []
 
-folderViewLoadCpt :: R.Component Props
-folderViewLoadCpt = here.component "folderViewLoadCpt" cpt where
-  cpt {nodeId, session} _ = do
-    useLoader {nodeId, session} loadFolders $
-      \folders -> folderView {folders, nodeId, session}
+folderViewCpt :: R.Component Props
+folderViewCpt = here.component "folderViewCpt" cpt where
+  cpt {nodeId, session, backFolder} _ = do
+    useLoader {nodeId, session, backFolder} loadFolders $
+      \folders -> folderViewMain {folders, nodeId, session, backFolder}
 
 type FolderViewProps = 
   ( 
     nodeId :: Int
   , folders:: FTree
   , session :: Session
+  , backFolder :: Boolean
   )
 
-folderView :: Record FolderViewProps -> R.Element
-folderView props = R.createElement folderViewCpt props []
+folderViewMain :: Record FolderViewProps -> R.Element
+folderViewMain props = R.createElement folderViewMainCpt props []
 
-folderViewCpt :: R.Component FolderViewProps
-folderViewCpt = here.component "folderViewCpt" cpt where
-  cpt {nodeId, session, folders: (NTree (LNode {parent_id: parentId}) (folders))} _ = do
+folderViewMainCpt :: R.Component FolderViewProps
+folderViewMainCpt = here.component "folderViewMainCpt" cpt where
+  cpt {nodeId, session, backFolder, folders: (NTree (LNode {parent_id: parentId}) (folders))} _ = do
     let sid = sessionId session 
     let foldersS = A.sortBy sortFolders folders
     let children = makeFolderElements foldersS sid
-    let parent = makeParentFolder parentId sid
+    let parent = makeParentFolder parentId sid backFolder
 
     pure $ H.div {className: "folders"} $ parent <> children
 
@@ -57,12 +62,15 @@ folderViewCpt = here.component "folderViewCpt" cpt where
     makeFolderElementsMap :: NTree LNode -> R.Element
     makeFolderElementsMap (NTree (LNode node) _) = folder {style: FolderChild, text: node.name, nodeId: node.id, nodeType: node.nodeType, sid: sid} []
 
-  makeParentFolder :: Maybe Int -> SessionId -> Array R.Element
-  makeParentFolder (Just parentId) sid =
+  makeParentFolder :: Maybe Int -> SessionId -> Boolean -> Array R.Element
+  makeParentFolder (Just parentId) sid _ =
     -- FIXME: The NodeType here should not be hardcoded to FolderPrivate but we currently can't get the actual NodeType
     -- without performing another API call. Also parentId is never being returned by this API even when it clearly exists
     [ folder {style: FolderUp, text: "..", nodeId: parentId, nodeType: FolderPrivate, sid: sid} [] ]
-  makeParentFolder Nothing _ = []
+  makeParentFolder Nothing _ true = [ H.button {className: "btn btn-primary", on: { click: back } }  [ H.i { className: "fa fa-folder-open" } []
+                                                                   , H.br {}
+                                                                   , H.text ".."] ]
+  makeParentFolder Nothing _ _ = []
 
   sortFolders :: FTree -> FTree -> Ordering
   sortFolders a b = compare (fTreeID a) (fTreeID b)

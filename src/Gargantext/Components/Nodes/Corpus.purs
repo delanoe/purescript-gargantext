@@ -90,7 +90,7 @@ corpusLayoutSelectionCpt = here.component "corpusLayoutSelection" cpt where
 
     pure $ renderContent viewType nodeId session key
 
-  renderContent Folders nodeId session key = FV.folderViewLoad { nodeId, session }
+  renderContent Folders nodeId session key = FV.folderView { nodeId, session, backFolder: true }
   renderContent Code nodeId session key = corpusLayoutWithKey { key, nodeId, session }
 
 
