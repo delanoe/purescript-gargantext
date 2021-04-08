@@ -145,7 +145,8 @@ tutorialCpt = here.component "tutorial" cpt where
     let nodeId = treeId
 
     pure $ H.div { className: "mx-auto container" }
-      [ FV.folderViewLoad {session, nodeId}
+      [ H.div {className: "d-flex justify-content-center"}
+              [FV.folderViewLoad {session, nodeId}]
       , H.h1 {} [H.text "Welcome!"]
       , H.h2 {} [H.text "For easy start, just watch the tutorials"]
       , summary
