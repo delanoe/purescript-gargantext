@@ -14,7 +14,7 @@ import Gargantext.Prelude
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Footer (footer)
-import Gargantext.Components.Forest (forestLayout)
+import Gargantext.Components.Forest as Forest
 import Gargantext.Components.GraphExplorer (explorerLayoutLoader)
 import Gargantext.Components.Lang (LandingLang(LL_EN))
 import Gargantext.Components.Login (login)
@@ -31,6 +31,7 @@ import Gargantext.Components.Nodes.Lists as Lists
 import Gargantext.Components.Nodes.Texts as Texts
 import Gargantext.Components.SessionLoader (sessionWrapper)
 import Gargantext.Components.SimpleLayout (simpleLayout)
+import Gargantext.Components.TopBar as TopBar
 import Gargantext.Config (defaultFrontends, defaultBackends)
 import Gargantext.Ends (Backend)
 import Gargantext.Routes (AppRoute)
@@ -55,6 +56,27 @@ router props = R.createElement routerCpt props []
 routerCpt :: R.Component Props
 routerCpt = here.component "router" cpt where
   cpt props@{ boxes } _ = do
+    pure $ R.fragment
+      [ loginModal { boxes } []
+      , TopBar.topBar { handed: boxes.handed } []
+      , Forest.forestLayoutMain { backend: boxes.backend
+                                , forestOpen: boxes.forestOpen
+                                , frontends: defaultFrontends
+                                , handed: boxes.handed
+                                , reloadForest: boxes.reloadForest
+                                , reloadRoot: boxes.reloadRoot
+                                , route: boxes.route
+                                , sessions: boxes.sessions
+                                , showLogin: boxes.showLogin
+                                , tasks: boxes.tasks } [ renderRoute props [] ]
+      ]
+
+renderRoute :: R2.Component Props
+renderRoute = R.createElement renderRouteCpt
+
+renderRouteCpt :: R.Component Props
+renderRouteCpt = here.component "renderRoute" cpt where
+  cpt props@{ boxes } _ = do
     let session = R.createContext (unsafeCoerce {})
     let sessionProps sId = Record.merge { session, sessionId: sId } props
     let sessionNodeProps sId nId = Record.merge { nodeId: nId } $ sessionProps sId
@@ -62,8 +84,7 @@ routerCpt = here.component "router" cpt where
     route' <- T.useLive T.unequal boxes.route
 
     pure $ R.fragment
-      [ loginModal { boxes } []
-      , case route' of
+      [ case route' of
         GR.Annuaire s n           -> annuaire (sessionNodeProps s n) []
         GR.ContactPage s a n      -> contact (Record.merge { annuaireId: a } $ sessionNodeProps s n) []
         GR.Corpus s n             -> corpus (sessionNodeProps s n) []
@@ -118,16 +139,16 @@ forestedCpt = here.component "forested" cpt
                  , sessions
                  , showLogin
                  , tasks } } children = do
-      pure $ forestLayout { backend
-                          , forestOpen
-                          , frontends: defaultFrontends
-                          , handed
-                          , reloadForest
-                          , reloadRoot
-                          , route
-                          , sessions
-                          , showLogin
-                          , tasks } children
+      pure $ Forest.forestLayoutMain { backend
+                                     , forestOpen
+                                     , frontends: defaultFrontends
+                                     , handed
+                                     , reloadForest
+                                     , reloadRoot
+                                     , route
+                                     , sessions
+                                     , showLogin
+                                     , tasks } children
 
 authed :: Record SessionProps -> R.Element -> R.Element
 authed props@{ boxes: { sessions }, session, sessionId } content =
@@ -145,8 +166,7 @@ annuaireCpt :: R.Component SessionNodeProps
 annuaireCpt = here.component "annuaire" cpt where
   cpt props@{ boxes, nodeId, session, sessionId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
-    pure $ authed sessionProps $
-      forested { boxes } [ annuaireLayout { frontends, nodeId, session } ]
+    pure $ authed sessionProps $ annuaireLayout { frontends, nodeId, session }
       where frontends = defaultFrontends
 
 corpus :: R2.Component SessionNodeProps
@@ -156,8 +176,7 @@ corpusCpt :: R.Component SessionNodeProps
 corpusCpt = here.component "corpus" cpt where
   cpt props@{ boxes, nodeId, session } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
-    pure $ authed sessionProps $
-      forested { boxes } [ corpusLayout { nodeId, session } ]
+    pure $ authed sessionProps $ corpusLayout { nodeId, session }
 
 type CorpusDocumentProps =
   ( corpusId :: CorpusId
@@ -174,8 +193,7 @@ corpusDocumentCpt = here.component "corpusDocument" cpt
     cpt props@{ boxes, corpusId: corpusId', listId, nodeId, session, sessionId } _ = do
       let sessionProps = RE.pick props :: Record SessionProps
       pure $ authed sessionProps $
-        forested { boxes }
-        [ documentMainLayout { mCorpusId: corpusId, listId: listId, nodeId, session } [] ]
+        documentMainLayout { mCorpusId: corpusId, listId: listId, nodeId, session } []
         where corpusId = Just corpusId'
 
 dashboard :: R2.Component SessionNodeProps
@@ -186,8 +204,7 @@ dashboardCpt = here.component "dashboard" cpt
   where
     cpt props@{ boxes, nodeId, session } _ = do
       let sessionProps = RE.pick props :: Record SessionProps
-      pure $ authed sessionProps $
-        forested { boxes } [ dashboardLayout { nodeId, session } [] ]
+      pure $ authed sessionProps $ dashboardLayout { nodeId, session } []
 
 type DocumentProps = ( listId :: ListId | SessionNodeProps )
 
@@ -199,8 +216,7 @@ documentCpt = here.component "document" cpt where
   cpt props@{ listId, nodeId, session, sessionId, boxes } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed sessionProps $
-      forested { boxes }
-      [ documentMainLayout { listId, nodeId, mCorpusId, session } [] ]
+      documentMainLayout { listId, nodeId, mCorpusId, session } []
       where mCorpusId = Nothing
 
 home :: R2.Component Props
@@ -209,7 +225,7 @@ home = R.createElement homeCpt
 homeCpt :: R.Component Props
 homeCpt = here.component "home" cpt where
   cpt props@{ boxes: boxes@{ sessions, showLogin } } _ = do
-    pure $ forested { boxes } [ homeLayout  { lang: LL_EN, sessions, showLogin } ]
+    pure $ homeLayout  { lang: LL_EN, sessions, showLogin }
 
 lists :: R2.Component SessionNodeProps
 lists = R.createElement listsCpt
@@ -230,24 +246,12 @@ listsCpt = here.component "lists" cpt where
             , sessionId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed sessionProps $
-      Lists.listsWithForestSessionContext
-      { forestProps: { backend
-                     , forestOpen
-                     , frontends
-                     , handed
-                     , reloadForest
-                     , reloadRoot
-                     , route
-                     , sessions
-                     , showLogin
-                     , tasks }
-      , listsProps: { nodeId
-                    , reloadForest
-                    , reloadRoot
-                    , session
-                    , sessionUpdate: \_ -> pure unit
-                    , tasks }
-      } []
+      Lists.listsWithSessionContext { nodeId
+                                    , reloadForest
+                                    , reloadRoot
+                                    , session
+                                    , sessionUpdate: \_ -> pure unit
+                                    , tasks } []
       where frontends = defaultFrontends
 
 login' :: Boxes -> R.Element
@@ -287,7 +291,7 @@ routeFileCpt = here.component "routeFile" cpt where
   cpt props@{ nodeId, session, sessionId, boxes } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed sessionProps $
-      forested { boxes } [ fileLayout { nodeId, session } ]
+      fileLayout { nodeId, session }
 
 type RouteFrameProps = (
   nodeType :: NodeType
@@ -302,7 +306,7 @@ routeFrameCpt = here.component "routeFrame" cpt where
   cpt props@{ nodeId, nodeType, session, sessionId, boxes } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed sessionProps $
-      forested { boxes } [ frameLayout { nodeId, nodeType, session } ]
+      frameLayout { nodeId, nodeType, session }
 
 team :: R2.Component SessionNodeProps
 team = R.createElement teamCpt
@@ -312,7 +316,7 @@ teamCpt = here.component "team" cpt where
   cpt props@{ nodeId, session, sessionId, boxes } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed sessionProps $
-      forested { boxes } [ corpusLayout { nodeId, session } ]
+      corpusLayout { nodeId, session }
 
 texts :: R2.Component SessionNodeProps
 texts = R.createElement textsCpt
@@ -334,21 +338,9 @@ textsCpt = here.component "texts" cpt
               , sessionId } _ = do
       let sessionProps = RE.pick props :: Record SessionProps
       pure $ authed sessionProps $
-        Texts.textsWithForestSessionContext
-        { forestProps: { backend
-                       , forestOpen
-                       , frontends
-                       , handed
-                       , route
-                       , reloadForest
-                       , reloadRoot
-                       , sessions
-                       , showLogin
-                       , tasks }
-        , textsProps: { frontends
-                      , nodeId
-                      , session }
-        } []
+        Texts.textsWithSessionContext { frontends
+                                      , nodeId
+                                      , session } []
         where
           frontends = defaultFrontends
 
@@ -363,13 +355,12 @@ userCpt = here.component "user" cpt where
             , sessionId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed sessionProps $
-      forested { boxes }
-        [ userLayoutSessionContext { frontends
-                                   , nodeId
-                                   , reloadForest
-                                   , reloadRoot
-                                   , session
-                                   , tasks } [] ]
+      userLayoutSessionContext { frontends
+                               , nodeId
+                               , reloadForest
+                               , reloadRoot
+                               , session
+                               , tasks } []
       where frontends = defaultFrontends
 
 type ContactProps = ( annuaireId :: NodeID | SessionNodeProps )
@@ -384,6 +375,5 @@ contactCpt = here.component "contact" cpt where
     let sessionProps = RE.pick props :: Record SessionProps
     let forestedProps = RE.pick props :: Record Props
     pure $ authed sessionProps $
-      forested forestedProps
-      [ contactLayout { annuaireId, frontends, nodeId, reloadForest, reloadRoot, session, tasks } [] ]
+      contactLayout { annuaireId, frontends, nodeId, reloadForest, reloadRoot, session, tasks } []
       where frontends = defaultFrontends

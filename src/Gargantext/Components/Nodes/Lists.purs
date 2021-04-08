@@ -30,64 +30,21 @@ import Toestand as T
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Lists"
 
-type ListsWithForest =
-  ( forestProps :: Record Forest.Props
-  , listsProps  :: Record CommonProps
-  )
+listsWithSessionContext :: R2.Component CommonPropsSessionContext
+listsWithSessionContext = R.createElement listsWithSessionContextCpt
 
-type ListsWithForestSessionContext =
-  ( forestProps :: Record Forest.Props
-  , listsProps  :: Record CommonPropsSessionContext )
-
-listsWithForestSessionContext :: R2.Component ListsWithForestSessionContext
-listsWithForestSessionContext = R.createElement listsWithForestSessionContextCpt
-
-listsWithForestSessionContextCpt :: R.Component ListsWithForestSessionContext
-listsWithForestSessionContextCpt = here.component "listsWithForestSessionContext" cpt where
-  cpt { forestProps, listsProps: listsProps@{ session } } _ = do
+listsWithSessionContextCpt :: R.Component CommonPropsSessionContext
+listsWithSessionContextCpt = here.component "listsWithSessionContext" cpt where
+  cpt props@{ session } _ = do
       session' <- R.useContext session
-
-      pure $ listsWithForest
-        { forestProps
-        , listsProps: Record.merge { session: session' } $ (REX.pick listsProps :: Record CommonPropsNoSession)
-        } []
-
-listsWithForest :: R2.Component ListsWithForest
-listsWithForest = R.createElement listsWithForestCpt
-
-listsWithForestCpt :: R.Component ListsWithForest
-listsWithForestCpt = here.component "listsWithForest" cpt
-  where
-    cpt { forestProps
-        , listsProps: listsProps@{ session } } _ = do
       controls <- initialControls
 
-      pure $ Forest.forestLayoutWithTopBar forestProps
-           [ topBar { controls } []
-           , listsLayout (Record.merge listsProps { controls }) []
-
-           -- TODO remove className "side-panel" is preview is not triggered
-           -- , H.div { className: "" }
-           , H.div { className: "side-panel" }
-                   [ sidePanel { controls, session } []]
-           ]
+      pure $ R.fragment [
+        -- topBar { controls } []
+        listsLayout (Record.merge { controls, session: session' } props) []
+      , H.div { className: "side-panel" } [ sidePanel { controls, session: session' } [] ]
+      ]
 --------------------------------------------------------
-
-type TopBarProps = ( controls :: Record ListsLayoutControls )
-
-topBar :: R2.Component TopBarProps
-topBar = R.createElement topBarCpt
-
-topBarCpt :: R.Component TopBarProps
-topBarCpt = here.component "topBar" cpt where
-  cpt { controls } _ = do
-    -- empty for now because the button is moved to the side panel
-    pure $ H.div {} []
-      -- H.ul { className: "nav navbar-nav" } [
-      --   H.li {} [
-      --      sidePanelToggleButton { state: controls.showSidePanel } []
-      --      ]
-      --   ]  -- head (goes to top bar)
 
 type CommonPropsNoSession =
   ( nodeId        :: Int
@@ -110,9 +67,9 @@ listsLayout = R.createElement listsLayoutCpt
 
 listsLayoutCpt :: R.Component Props
 listsLayoutCpt = here.component "listsLayout" cpt where
-  cpt path@{ nodeId, session } _ = do
+  cpt props@{ nodeId, session } _ = do
     let sid = sessionId session
-    pure $ listsLayoutWithKey $ Record.merge path { key: show sid <> "-" <> show nodeId }
+    pure $ listsLayoutWithKey $ Record.merge props { key: show sid <> "-" <> show nodeId }
 
 type KeyProps = ( key :: String | Props )
 

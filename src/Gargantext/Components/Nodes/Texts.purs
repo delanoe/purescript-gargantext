@@ -42,44 +42,21 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Texts"
 
 --------------------------------------------------------
-type TextsWithForest = (
-    forestProps :: Record Forest.Props
-  , textsProps  :: Record CommonProps
-  )
+textsWithSessionContext :: R2.Component CommonPropsSessionContext
+textsWithSessionContext = R.createElement textsWithSessionContextCpt
 
-type TextsWithForestSessionContext =
-  ( forestProps :: Record Forest.Props
-  , textsProps  :: Record CommonPropsSessionContext )
-
-textsWithForestSessionContext :: R2.Component TextsWithForestSessionContext
-textsWithForestSessionContext = R.createElement textsWithForestSessionContextCpt
-
-textsWithForestSessionContextCpt :: R.Component TextsWithForestSessionContext
-textsWithForestSessionContextCpt = here.component "textsWithForestSessionContext" cpt
+textsWithSessionContextCpt :: R.Component CommonPropsSessionContext
+textsWithSessionContextCpt = here.component "textsWithSessionContext" cpt
   where
-    cpt { forestProps, textsProps: textsProps@{ session } } _ = do
+    cpt props@{ session } _ = do
       session' <- R.useContext session
-
-      pure $ textsWithForest
-        { forestProps
-        , textsProps: Record.merge { session: session' } $ (REX.pick textsProps :: Record CommonPropsNoSession)
-        } []
-
-textsWithForest :: R2.Component TextsWithForest
-textsWithForest = R.createElement textsWithForestCpt
-
-textsWithForestCpt :: R.Component TextsWithForest
-textsWithForestCpt = here.component "textsWithForest" cpt
-  where
-    cpt { forestProps, textsProps: textProps@{ session } } _ = do
       controls <- initialControls
-      pure $ Forest.forestLayoutWithTopBar forestProps
-        [ topBar { controls } []
-        , textsLayout (Record.merge textProps { controls }) []
-        -- TODO remove className "side-panel" is preview is not triggered
-        -- , H.div { className: "" }
-        , H.div { className: "side-panel" }
-          [ sidePanel { controls, session } [] ]]
+
+      pure $ R.fragment
+        [ -- topBar { controls } []
+          textsLayout (Record.merge { controls, session: session' } props) []
+        , H.div { className: "side-panel" } [ sidePanel { controls, session: session' } [] ]
+        ]
 
 
 type TopBarProps = ( controls :: Record TextsLayoutControls )
