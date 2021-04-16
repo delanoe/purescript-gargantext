@@ -773,6 +773,14 @@ prettyNodeType nt = S.replace (S.Pattern "Node")   (S.Replacement " ")
                   $ S.replace (S.Pattern "Folder") (S.Replacement " ")
                   $ show nt
 
+---------------------------------------------------------------------------
 
+data SidePanelState = InitialClosed | Opened | Closed
+derive instance genericSidePanelState :: Generic SidePanelState _
+instance eqSidePanelState :: Eq SidePanelState where
+  eq = genericEq
 
-
+toggleSidePanelState :: SidePanelState -> SidePanelState
+toggleSidePanelState InitialClosed = Opened
+toggleSidePanelState Closed        = Opened
+toggleSidePanelState Opened        = Closed

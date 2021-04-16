@@ -18,8 +18,8 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
-import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
+import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
@@ -185,7 +185,7 @@ treeToggleButtonCpt = here.component "treeToggleButton" cpt
         } []
 
 type SidebarToggleButtonProps = (
-  state :: T.Box GET.SidePanelState
+  state :: T.Box GT.SidePanelState
 )
 
 sidebarToggleButton :: R2.Component SidebarToggleButtonProps
@@ -201,17 +201,18 @@ sidebarToggleButtonCpt = here.component "sidebarToggleButton" cpt
                       , on: { click: onClick state }
                       } [ R2.small {} [ H.text (text onMessage offMessage state') ] ]
 
-    cls (GET.Opened _) = "active"
-    cls _ = ""
+    cls GT.Opened = "active"
+    cls _         = ""
 
     onMessage = "Hide Sidebar"
     offMessage = "Show Sidebar"
-    text on _off (GET.Opened _)    = on
-    text _on off GET.InitialClosed = off
-    text _on off GET.Closed        = off
+    text on _off GT.Opened        = on
+    text _on off GT.InitialClosed = off
+    text _on off GT.Closed        = off
 
     onClick state = \_ ->
-      T.modify_ (\s -> case s of
-        GET.InitialClosed -> GET.Opened GET.SideTabLegend
-        GET.Closed        -> GET.Opened GET.SideTabLegend
-        (GET.Opened _)    -> GET.Closed) state
+      T.modify_ GT.toggleSidePanelState state
+                  -- case s of
+        -- GET.InitialClosed -> GET.Opened GET.SideTabLegend
+        -- GET.Closed        -> GET.Opened GET.SideTabLegend
+        -- (GET.Opened _)    -> GET.Closed) state

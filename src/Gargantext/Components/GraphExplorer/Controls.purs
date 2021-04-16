@@ -24,10 +24,12 @@ import Gargantext.Components.GraphExplorer.Button (centerButton, cameraButton)
 import Gargantext.Components.GraphExplorer.RangeControl (edgeConfluenceControl, edgeWeightControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.SlideButton (labelSizeButton, mouseSelectorSizeButton)
 import Gargantext.Components.GraphExplorer.ToggleButton (multiSelectEnabledButton, edgesToggleButton, louvainToggleButton, pauseForceAtlasButton)
+import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
+import Gargantext.Types as GT
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
@@ -51,7 +53,7 @@ type Controls =
   , showControls       :: T.Box Boolean
   , showEdges          :: T.Box SigmaxT.ShowEdgesState
   , showLouvain        :: T.Box Boolean
-  , showSidePanel      :: T.Box GET.SidePanelState
+  , sidePanelState     :: T.Box GT.SidePanelState
   , showTree           :: T.Box Boolean
   , sigmaRef           :: R.Ref Sigmax.Sigma
   )
@@ -85,14 +87,14 @@ controlsCpt = here.component "controls" cpt
         , showControls
         , showEdges
         , showLouvain
-        , showSidePanel
         , showTree
+        , sidePanelState
         , sigmaRef } _ = do
       forceAtlasState' <- T.useLive T.unequal forceAtlasState
       graphStage' <- T.useLive T.unequal graphStage
       selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
       showControls' <- T.useLive T.unequal showControls
-      showSidePanel' <- T.useLive T.unequal showSidePanel
+      sidePanelState' <- T.useLive T.unequal sidePanelState
 
       localControls <- initialLocalControls
       -- ref to track automatic FA pausing
@@ -115,8 +117,8 @@ controlsCpt = here.component "controls" cpt
 
       -- Automatic opening of sidebar when a node is selected (but only first time).
       R.useEffect' $ do
-        if showSidePanel' == GET.InitialClosed && (not Set.isEmpty selectedNodeIds') then
-          T.write_ (GET.Opened GET.SideTabData) showSidePanel
+        if sidePanelState' == GT.InitialClosed && (not Set.isEmpty selectedNodeIds') then
+          T.write_ GT.Opened sidePanelState
         else
           pure unit
 
@@ -221,15 +223,19 @@ useGraphControls :: { forceAtlasS :: SigmaxT.ForceAtlasState
                    , graph :: SigmaxT.SGraph
                    , graphId :: GET.GraphId
                    , hyperdataGraph :: GET.HyperdataGraph
+                   , reloadForest :: Unit -> Effect Unit
                    , session :: Session
-                   , reloadForest :: Unit -> Effect Unit }
+                   , sidePanel :: T.Box (Maybe (Record GEST.SidePanel))
+                   , sidePanelState :: T.Box GT.SidePanelState }
                  -> R.Hooks (Record Controls)
 useGraphControls { forceAtlasS
                  , graph
                  , graphId
                  , hyperdataGraph
+                 , reloadForest
                  , session
-                 , reloadForest } = do
+                 , sidePanel
+                 , sidePanelState } = do
   edgeConfluence <- T.useBox $ Range.Closed { min: 0.0, max: 1.0 }
   edgeWeight <- T.useBox $ Range.Closed {
       min: 0.0
@@ -237,17 +243,19 @@ useGraphControls { forceAtlasS
     }
   forceAtlasState <- T.useBox forceAtlasS
   graphStage      <- T.useBox Graph.Init
-  multiSelectEnabled <- T.useBox false
+  -- multiSelectEnabled <- T.useBox false
   nodeSize <- T.useBox $ Range.Closed { min: 0.0, max: 100.0 }
-  removedNodeIds <- T.useBox SigmaxT.emptyNodeIds
-  selectedNodeIds <- T.useBox SigmaxT.emptyNodeIds
-  showControls    <- T.useBox false
+  -- removedNodeIds <- T.useBox SigmaxT.emptyNodeIds
+  -- selectedNodeIds <- T.useBox SigmaxT.emptyNodeIds
+  -- showControls    <- T.useBox false
   showEdges <- T.useBox SigmaxT.EShow
   showLouvain <- T.useBox false
-  showSidePanel   <- T.useBox GET.InitialClosed
+  -- sidePanelState   <- T.useBox GT.InitialClosed
   showTree <- T.useBox false
   sigma <- Sigmax.initSigma
   sigmaRef <- R.useRef sigma
+
+  { multiSelectEnabled, removedNodeIds, selectedNodeIds, showControls } <- GEST.focusedSidePanel sidePanel
 
   pure { edgeConfluence
        , edgeWeight
@@ -264,7 +272,7 @@ useGraphControls { forceAtlasS
        , showControls
        , showEdges
        , showLouvain
-       , showSidePanel
+       , sidePanelState
        , showTree
        , sigmaRef
        , reloadForest

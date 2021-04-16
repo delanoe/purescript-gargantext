@@ -26,11 +26,12 @@ import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
   , _shared, _touch, _who, defaultContactTouch, defaultContactWhere
   , defaultContactWho, defaultHyperdataContact, defaultHyperdataUser )
 import Gargantext.Components.Nodes.Lists.Types as LT
+import Gargantext.Components.Nodes.Texts.Types as TT
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, get, put, sessionId)
-import Gargantext.Types (NodeType(..))
+import Gargantext.Types (NodeType(..), SidePanelState)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 
@@ -139,9 +140,11 @@ listElement :: Array R.Element -> R.Element
 listElement = H.li { className: "list-group-item justify-content-between" }
 
 type BasicProps =
-  ( frontends :: Frontends
-  , nodeId    :: Int
-  , tasks     :: T.Box GAT.Storage
+  ( frontends      :: Frontends
+  , nodeId         :: Int
+  , sidePanelState :: T.Box SidePanelState
+  , sidePanel      :: T.Box (Maybe (Record TT.SidePanel))
+  , tasks          :: T.Box GAT.Storage
   )
 
 type ReloadProps =
@@ -166,13 +169,30 @@ contactLayout = R.createElement contactLayoutCpt
 
 contactLayoutCpt :: R.Component AnnuaireLayoutProps
 contactLayoutCpt = here.component "contactLayout" cpt where
-  cpt { annuaireId, frontends, nodeId, reloadForest, reloadRoot, session, tasks } _ = do
+  cpt { annuaireId
+      , frontends
+      , nodeId
+      , reloadForest
+      , reloadRoot
+      , session
+      , sidePanel
+      , sidePanelState
+      , tasks } _ = do
     s <- R.useContext session
     let key = show (sessionId s) <> "-" <> show nodeId
     pure $
       contactLayoutWithKey
-      { annuaireId, tasks, frontends, key, nodeId
-      , session: s, reloadForest, reloadRoot }
+      { annuaireId
+      , frontends
+      , key
+      , nodeId
+      , reloadForest
+      , reloadRoot
+      , session: s
+      , sidePanel
+      , sidePanelState
+      , tasks
+      }
 
 contactLayoutWithKey :: R2.Leaf AnnuaireKeyLayoutProps
 contactLayoutWithKey props = R.createElement contactLayoutWithKeyCpt props []
@@ -185,11 +205,12 @@ contactLayoutWithKeyCpt = here.component "contactLayoutWithKey" cpt where
         , reloadRoot
         , nodeId
         , session
+        , sidePanel
+        , sidePanelState
         , tasks } _ = do
       reload <- T.useBox T2.newReload
       _ <- T.useLive T.unequal reload
       cacheState <- T.useBox LT.CacheOn
-      sidePanelTriggers <- LT.emptySidePanelTriggers
       useLoader nodeId (getAnnuaireContact session annuaireId) $
         \contactData@{contactNode: Contact' {name, hyperdata}} ->
           H.ul { className: "col-md-12 list-group" }
@@ -201,7 +222,8 @@ contactLayoutWithKeyCpt = here.component "contactLayoutWithKey" cpt where
                    , frontends
                    , nodeId
                    , session
-                   , sidePanelTriggers
+                   , sidePanel
+                   , sidePanelState
                    , reloadForest
                    , reloadRoot
                    , tasks } ]

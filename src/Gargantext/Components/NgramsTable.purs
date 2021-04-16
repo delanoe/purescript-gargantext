@@ -261,7 +261,6 @@ type CommonProps = (
     afterSync         :: Unit -> Aff Unit
   , reloadForest      :: T.Box T2.Reload
   , reloadRoot        :: T.Box T2.Reload
-  , sidePanelTriggers :: Record NT.SidePanelTriggers
   , tabNgramType      :: CTabNgramType
   , tasks             :: T.Box GAT.Storage
   , withAutoUpdate    :: Boolean
@@ -287,7 +286,6 @@ loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
             , path
             , reloadForest
             , reloadRoot
-            , sidePanelTriggers
             , state
             , tabNgramType
             , tasks
@@ -299,9 +297,6 @@ loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
     params'@{ orderBy } <- T.useLive T.unequal params
     searchQuery <- T.useFocused (_.searchQuery) (\a b -> b { searchQuery = a }) path
     searchQuery' <- T.useLive T.unequal searchQuery
-
-    -- R.useEffectOnce' $ do
-    --   T.listen (\_ -> TT.changePage 1 params) searchQuery
 
     let ngramsTable = applyNgramsPatches state' initTable
         roots = rootsOf ngramsTable
@@ -351,8 +346,7 @@ loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
                                       , ngramsLocalPatch
                                       , ngramsParent
                                       , ngramsSelection
-                                      , ngramsTable
-                                      , sidePanelTriggers } []
+                                      , ngramsTable } []
           , delete: false
           }
 
@@ -550,7 +544,6 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
               , path
               , reloadForest
               , reloadRoot
-              , sidePanelTriggers
               , tabNgramType
               , tasks
               , withAutoUpdate } _ = do
@@ -566,7 +559,6 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
                                                       , path
                                                       , reloadForest
                                                       , reloadRoot
-                                                      , sidePanelTriggers
                                                       , tabNgramType
                                                       , tasks
                                                       , versioned
@@ -585,7 +577,6 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
                                                                       , path
                                                                       , reloadForest
                                                                       , reloadRoot
-                                                                      , sidePanelTriggers
                                                                       , tabNgramType
                                                                       , tasks
                                                                       , versionedWithCount
@@ -655,7 +646,6 @@ mainNgramsTablePaintCpt = here.component "mainNgramsTablePaint" cpt
               , path
               , reloadForest
               , reloadRoot
-              , sidePanelTriggers
               , tabNgramType
               , tasks
               , versioned
@@ -668,7 +658,6 @@ mainNgramsTablePaintCpt = here.component "mainNgramsTablePaint" cpt
                                , path
                                , reloadForest
                                , reloadRoot
-                               , sidePanelTriggers
                                , state
                                , tabNgramType
                                , tasks
@@ -694,7 +683,6 @@ mainNgramsTablePaintNoCacheCpt = here.component "mainNgramsTablePaintNoCache" cp
               , path
               , reloadForest
               , reloadRoot
-              , sidePanelTriggers
               , tabNgramType
               , tasks
               , versionedWithCount
@@ -710,7 +698,6 @@ mainNgramsTablePaintNoCacheCpt = here.component "mainNgramsTablePaintNoCache" cp
       , path: path
       , reloadForest
       , reloadRoot
-      , sidePanelTriggers
       , state
       , tabNgramType
       , tasks

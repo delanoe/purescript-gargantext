@@ -23,11 +23,12 @@ import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
 import Gargantext.Components.Nodes.Annuaire.Tabs as Tabs
 import Gargantext.Components.Nodes.Lists.Types as LT
+import Gargantext.Components.Nodes.Texts.Types as TT
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (WithSession, WithSessionContext, Session, get, put, sessionId)
-import Gargantext.Types (NodeType(..))
+import Gargantext.Types (NodeType(..), SidePanelState)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 
@@ -151,11 +152,13 @@ listElement :: Array R.Element -> R.Element
 listElement = H.li { className: "list-group-item justify-content-between" }
 
 type LayoutNoSessionProps =
-  ( frontends    :: Frontends
-  , nodeId       :: Int
-  , reloadForest :: T.Box T2.Reload
-  , reloadRoot   :: T.Box T2.Reload
-  , tasks        :: T.Box GAT.Storage
+  ( frontends      :: Frontends
+  , nodeId         :: Int
+  , reloadForest   :: T.Box T2.Reload
+  , reloadRoot     :: T.Box T2.Reload
+  , sidePanel      :: T.Box (Maybe (Record TT.SidePanel))
+  , sidePanelState :: T.Box SidePanelState
+  , tasks          :: T.Box GAT.Storage
   )
 
 type LayoutProps = WithSession LayoutNoSessionProps
@@ -184,7 +187,14 @@ userLayout = R.createElement userLayoutCpt
 userLayoutCpt :: R.Component LayoutProps
 userLayoutCpt = here.component "userLayout" cpt
   where
-    cpt { frontends, nodeId, reloadForest, reloadRoot, session, tasks } _ = do
+    cpt { frontends
+        , nodeId
+        , reloadForest
+        , reloadRoot
+        , session
+        , sidePanel
+        , sidePanelState
+        , tasks } _ = do
       let sid = sessionId session
 
       pure $ userLayoutWithKey {
@@ -194,6 +204,8 @@ userLayoutCpt = here.component "userLayout" cpt
         , reloadForest
         , reloadRoot
         , session
+        , sidePanel
+        , sidePanelState
         , tasks
         }
 
@@ -203,13 +215,18 @@ userLayoutWithKey props = R.createElement userLayoutWithKeyCpt props []
 userLayoutWithKeyCpt :: R.Component KeyLayoutProps
 userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt
   where
-    cpt { frontends, nodeId, reloadForest, reloadRoot, session, tasks } _ = do
+    cpt { frontends
+        , nodeId
+        , reloadForest
+        , reloadRoot
+        , session
+        , sidePanel
+        , sidePanelState
+        , tasks } _ = do
       reload <- T.useBox T2.newReload
       reload' <- T.useLive T.unequal reload
 
       cacheState <- T.useBox LT.CacheOn
-
-      sidePanelTriggers <- LT.emptySidePanelTriggers
 
       useLoader {nodeId, reload: reload', session} getUserWithReload $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
@@ -224,7 +241,8 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt
                , reloadForest
                , reloadRoot
                , session
-               , sidePanelTriggers
+               , sidePanel
+        , sidePanelState
                , tasks
                }
           ]

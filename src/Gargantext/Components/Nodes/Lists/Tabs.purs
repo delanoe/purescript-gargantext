@@ -40,7 +40,6 @@ type Props = (
   , reloadForest      :: T.Box T2.Reload
   , reloadRoot        :: T.Box T2.Reload
   , session           :: Session
-  , sidePanelTriggers :: Record SidePanelTriggers
   , tasks             :: T.Box GAT.Storage
   )
 
@@ -76,7 +75,6 @@ ngramsViewCpt = here.component "ngramsView" cpt where
             , reloadRoot
             , mode
             , session
-            , sidePanelTriggers
             , tasks } _ = do
       chartsReload <- T.useBox T2.newReload
 
@@ -104,7 +102,6 @@ ngramsViewCpt = here.component "ngramsView" cpt where
                                 , reloadForest
                                 , reloadRoot
                                 , session
-                                , sidePanelTriggers
                                 , tabNgramType
                                 , tabType
                                 , tasks

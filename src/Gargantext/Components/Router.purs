@@ -1,7 +1,10 @@
 module Gargantext.Components.Router (router) where
 
+import Gargantext.Prelude
+
 import Data.Array (fromFoldable)
 import Data.Maybe (Maybe(..))
+import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
@@ -9,13 +12,12 @@ import Record.Extra as RE
 import Toestand as T
 import Unsafe.Coerce (unsafeCoerce)
 
-import Gargantext.Prelude
-
-import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Footer (footer)
 import Gargantext.Components.Forest as Forest
-import Gargantext.Components.GraphExplorer (explorerLayoutLoader)
+import Gargantext.Components.GraphExplorer as GraphExplorer
+import Gargantext.Components.GraphExplorer.Sidebar as GES
+import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
 import Gargantext.Components.Lang (LandingLang(LL_EN))
 import Gargantext.Components.Login (login)
 import Gargantext.Components.Nodes.Annuaire (annuaireLayout)
@@ -28,17 +30,20 @@ import Gargantext.Components.Nodes.File (fileLayout)
 import Gargantext.Components.Nodes.Frame (frameLayout)
 import Gargantext.Components.Nodes.Home (homeLayout)
 import Gargantext.Components.Nodes.Lists as Lists
+import Gargantext.Components.Nodes.Lists.Types as ListsTypes
 import Gargantext.Components.Nodes.Texts as Texts
 import Gargantext.Components.SessionLoader (sessionWrapper)
 import Gargantext.Components.SimpleLayout (simpleLayout)
+import Gargantext.Components.TopBar (handedChooser)
 import Gargantext.Components.TopBar as TopBar
 import Gargantext.Config (defaultFrontends, defaultBackends)
 import Gargantext.Ends (Backend)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Routes as GR
-import Gargantext.Sessions (Session)
-import Gargantext.Types (CorpusId, ListId, NodeID, NodeType(..), SessionId)
+import Gargantext.Sessions (Session, WithSessionContext)
+import Gargantext.Types (CorpusId, ListId, NodeID, NodeType(..), SessionId, SidePanelState(..))
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Router"
@@ -56,28 +61,21 @@ router props = R.createElement routerCpt props []
 routerCpt :: R.Component Props
 routerCpt = here.component "router" cpt where
   cpt props@{ boxes } _ = do
+    let session = R.createContext (unsafeCoerce {})
+
     pure $ R.fragment
       [ loginModal { boxes } []
-      , TopBar.topBar { handed: boxes.handed } []
-      , Forest.forestLayoutMain { backend: boxes.backend
-                                , forestOpen: boxes.forestOpen
-                                , frontends: defaultFrontends
-                                , handed: boxes.handed
-                                , reloadForest: boxes.reloadForest
-                                , reloadRoot: boxes.reloadRoot
-                                , route: boxes.route
-                                , sessions: boxes.sessions
-                                , showLogin: boxes.showLogin
-                                , tasks: boxes.tasks } [ renderRoute props [] ]
+      , topBar { boxes } []
+      , forest { boxes, session } []
+      , sidePanel { boxes, session } []
       ]
 
-renderRoute :: R2.Component Props
+renderRoute :: R2.Component (WithSessionContext Props)
 renderRoute = R.createElement renderRouteCpt
 
-renderRouteCpt :: R.Component Props
+renderRouteCpt :: R.Component (WithSessionContext Props)
 renderRouteCpt = here.component "renderRoute" cpt where
-  cpt props@{ boxes } _ = do
-    let session = R.createContext (unsafeCoerce {})
+  cpt props@{ boxes, session } _ = do
     let sessionProps sId = Record.merge { session, sessionId: sId } props
     let sessionNodeProps sId nId = Record.merge { nodeId: nId } $ sessionProps sId
 
@@ -95,7 +93,7 @@ renderRouteCpt = here.component "renderRoute" cpt where
         GR.FolderPrivate s n      -> corpus (sessionNodeProps s n) []
         GR.FolderPublic  s n      -> corpus (sessionNodeProps s n) []
         GR.FolderShared  s n      -> corpus (sessionNodeProps s n) []
-        GR.Home                   -> home props []
+        GR.Home                   -> home { boxes } []
         GR.Lists s n              -> lists (sessionNodeProps s n) []
         GR.Login                  -> login' boxes
         GR.PGraphExplorer s g     -> graphExplorer (sessionNodeProps s g) []
@@ -109,46 +107,16 @@ renderRouteCpt = here.component "renderRoute" cpt where
       ]
 
 
-type LoginModalProps = (
-  boxes :: Boxes
-  )
-
-loginModal :: R2.Component LoginModalProps
+loginModal :: R2.Component Props
 loginModal = R.createElement loginModalCpt
 
-loginModalCpt :: R.Component LoginModalProps
+loginModalCpt :: R.Component Props
 loginModalCpt = here.component "loginModal" cpt
   where
     cpt { boxes: boxes@{ showLogin } } _ = do
         showLogin' <- T.useLive T.unequal showLogin
 
         pure $ if showLogin' then login' boxes else H.div {} []
-
-forested :: R2.Component Props
-forested = R.createElement forestedCpt
-
-forestedCpt :: R.Component Props
-forestedCpt = here.component "forested" cpt
-  where
-    cpt { boxes: { backend
-                 , forestOpen
-                 , handed
-                 , reloadForest
-                 , reloadRoot
-                 , route
-                 , sessions
-                 , showLogin
-                 , tasks } } children = do
-      pure $ Forest.forestLayoutMain { backend
-                                     , forestOpen
-                                     , frontends: defaultFrontends
-                                     , handed
-                                     , reloadForest
-                                     , reloadRoot
-                                     , route
-                                     , sessions
-                                     , showLogin
-                                     , tasks } children
 
 authed :: Record SessionProps -> R.Element -> R.Element
 authed props@{ boxes: { sessions }, session, sessionId } content =
@@ -159,6 +127,101 @@ authed props@{ boxes: { sessions }, session, sessionId } content =
     where
       homeProps = RE.pick props :: Record Props
 
+topBar :: R2.Component Props
+topBar = R.createElement topBarCpt
+
+topBarCpt :: R.Component Props
+topBarCpt = here.component "topBar" cpt where
+  cpt props@{ boxes: boxes@{ handed
+                           , route } } _ = do
+    route' <- T.useLive T.unequal boxes.route
+
+    let children = case route' of
+          GR.PGraphExplorer s g -> [ GraphExplorer.topBar { boxes } [] ]
+          _                     -> []
+
+    pure $ TopBar.topBar { handed } children
+
+
+forest :: R2.Component (WithSessionContext Props)
+forest = R.createElement forestCpt
+
+forestCpt :: R.Component (WithSessionContext Props)
+forestCpt = here.component "forest" cpt where
+  cpt props@{ boxes: { backend
+                     , forestOpen
+                     , handed
+                     , reloadForest
+                     , reloadRoot
+                     , route
+                     , sessions
+                     , showLogin
+                     , tasks }
+            , session } _ = do
+    session' <- R.useContext session
+
+    pure $ Forest.forestLayoutMain { backend
+                                   , forestOpen
+                                   , frontends: defaultFrontends
+                                   , handed
+                                   , reloadForest
+                                   , reloadRoot
+                                   , route
+                                   , sessions
+                                   , showLogin
+                                   , tasks } [ renderRoute (Record.merge { session } props) [] ]
+
+sidePanel :: R2.Component (WithSessionContext Props)
+sidePanel = R.createElement sidePanelCpt
+
+sidePanelCpt :: R.Component (WithSessionContext Props)
+sidePanelCpt = here.component "sidePanel" cpt where
+  cpt props@{ boxes: boxes@{ graphVersion
+                           , reloadForest
+                           , sidePanelGraph
+                           , sidePanelState
+                           , sidePanelLists
+                           , sidePanelTexts }
+            , session } _ = do
+    route' <- T.useLive T.unequal boxes.route
+    session' <- R.useContext session
+    sidePanelState' <- T.useLive T.unequal sidePanelState
+
+    case sidePanelState' of
+      Opened ->
+        case route' of
+          GR.Lists s n -> do
+            pure $ H.div { className: "side-panel" } [ Lists.sidePanel { session: session'
+                                                                       , sidePanel: sidePanelLists
+                                                                       , sidePanelState } [] ]
+          GR.PGraphExplorer s g -> do
+            { mGraph, mMetaData, removedNodeIds, selectedNodeIds, sideTab } <- GEST.focusedSidePanel sidePanelGraph
+            mGraph' <- T.useLive T.unequal mGraph
+            mGraphMetaData' <- T.useLive T.unequal mMetaData
+
+            case (mGraph' /\ mGraphMetaData') of
+              (Nothing /\ _) -> pure $ H.div {} []
+              (_ /\ Nothing) -> pure $ H.div {} []
+              (Just graph /\ Just metaData) -> do
+                pure $ H.div { className: "side-panel" }
+                            [ GES.sidebar { frontends: defaultFrontends
+                                          , graph
+                                          , graphId: g
+                                          , graphVersion
+                                          , metaData
+                                          , reloadForest
+                                          , removedNodeIds
+                                          , selectedNodeIds
+                                          , session: session'
+                                          , sideTab
+                                          } [] ]
+          GR.Texts s n -> do
+            pure $ H.div { className: "side-panel" } [ Texts.sidePanel { session: session'
+                                                                       , sidePanel: sidePanelTexts
+                                                                       , sidePanelState } [] ]
+          _ -> pure $ H.div {} []
+      _ -> pure $ H.div {} []
+
 annuaire :: R2.Component SessionNodeProps
 annuaire = R.createElement annuaireCpt
 
@@ -166,8 +229,9 @@ annuaireCpt :: R.Component SessionNodeProps
 annuaireCpt = here.component "annuaire" cpt where
   cpt props@{ boxes, nodeId, session, sessionId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
-    pure $ authed sessionProps $ annuaireLayout { frontends, nodeId, session }
-      where frontends = defaultFrontends
+    pure $ authed sessionProps $ annuaireLayout { frontends: defaultFrontends
+                                                , nodeId
+                                                , session }
 
 corpus :: R2.Component SessionNodeProps
 corpus = R.createElement corpusCpt
@@ -213,7 +277,7 @@ document = R.createElement documentCpt
 
 documentCpt :: R.Component DocumentProps
 documentCpt = here.component "document" cpt where
-  cpt props@{ listId, nodeId, session, sessionId, boxes } _ = do
+  cpt props@{ boxes, listId, nodeId, session, sessionId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed sessionProps $
       documentMainLayout { listId, nodeId, mCorpusId, session } []
@@ -225,7 +289,7 @@ home = R.createElement homeCpt
 homeCpt :: R.Component Props
 homeCpt = here.component "home" cpt where
   cpt props@{ boxes: boxes@{ sessions, showLogin } } _ = do
-    pure $ homeLayout  { lang: LL_EN, sessions, showLogin }
+    pure $ homeLayout { lang: LL_EN, sessions, showLogin }
 
 lists :: R2.Component SessionNodeProps
 lists = R.createElement listsCpt
@@ -240,6 +304,8 @@ listsCpt = here.component "lists" cpt where
                      , route
                      , sessions
                      , showLogin
+                     , sidePanelState
+                     , sidePanelLists
                      , tasks }
             , nodeId
             , session
@@ -251,8 +317,9 @@ listsCpt = here.component "lists" cpt where
                                     , reloadRoot
                                     , session
                                     , sessionUpdate: \_ -> pure unit
+                                    , sidePanel: sidePanelLists
+                                    , sidePanelState
                                     , tasks } []
-      where frontends = defaultFrontends
 
 login' :: Boxes -> R.Element
 login' { backend, sessions, showLogin: visible } =
@@ -266,29 +333,40 @@ graphExplorer = R.createElement graphExplorerCpt
 
 graphExplorerCpt :: R.Component SessionNodeProps
 graphExplorerCpt = here.component "graphExplorer" cpt where
-  cpt props@{ boxes: { backend, handed, route, sessions, showLogin, tasks }
+  cpt props@{ boxes: boxes@{ backend
+                           , handed
+                           , route
+                           , sessions
+                           , showLogin
+                           , sidePanelGraph
+                           , sidePanelState
+                           , tasks }
             , nodeId
             , session } _ = do
+    { mMetaData } <- GEST.focusedSidePanel sidePanelGraph
+    mMetaData' <- T.useLive T.unequal mMetaData
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed sessionProps $
-      simpleLayout { handed }
-      [ explorerLayoutLoader { backend
-                             , frontends
-                             , graphId: nodeId
-                             , handed
-                             , route
-                             , session
-                             , sessions
-                             , showLogin
-                             , tasks } [] ]
-      where frontends = defaultFrontends
+      -- simpleLayout { handed }
+      GraphExplorer.explorerLayoutLoader { backend
+                                         , boxes
+                                         , frontends: defaultFrontends
+                                         , graphId: nodeId
+                                         , handed
+                                         , mMetaData'
+                                         , route
+                                         , session
+                                         , sessions
+                                         , showLogin
+                                         , sidePanelState
+                                         , tasks } []
 
 routeFile :: R2.Component SessionNodeProps
 routeFile = R.createElement routeFileCpt
 
 routeFileCpt :: R.Component SessionNodeProps
 routeFileCpt = here.component "routeFile" cpt where
-  cpt props@{ nodeId, session, sessionId, boxes } _ = do
+  cpt props@{ boxes, nodeId, session, sessionId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed sessionProps $
       fileLayout { nodeId, session }
@@ -303,7 +381,7 @@ routeFrame = R.createElement routeFrameCpt
 
 routeFrameCpt :: R.Component RouteFrameProps
 routeFrameCpt = here.component "routeFrame" cpt where
-  cpt props@{ nodeId, nodeType, session, sessionId, boxes } _ = do
+  cpt props@{ boxes, nodeId, nodeType, session, sessionId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed sessionProps $
       frameLayout { nodeId, nodeType, session }
@@ -313,7 +391,7 @@ team = R.createElement teamCpt
 
 teamCpt :: R.Component SessionNodeProps
 teamCpt = here.component "team" cpt where
-  cpt props@{ nodeId, session, sessionId, boxes } _ = do
+  cpt props@{ boxes, nodeId, session, sessionId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed sessionProps $
       corpusLayout { nodeId, session }
@@ -332,36 +410,43 @@ textsCpt = here.component "texts" cpt
                        , route
                        , sessions
                        , showLogin
+                       , sidePanelState
+                       , sidePanelTexts
                        , tasks }
               , nodeId
               , session
               , sessionId } _ = do
       let sessionProps = RE.pick props :: Record SessionProps
       pure $ authed sessionProps $
-        Texts.textsWithSessionContext { frontends
+        Texts.textsWithSessionContext { frontends: defaultFrontends
                                       , nodeId
-                                      , session } []
-        where
-          frontends = defaultFrontends
+                                      , session
+                                      , sidePanel: sidePanelTexts
+                                      , sidePanelState } []
 
 user :: R2.Component SessionNodeProps
 user = R.createElement userCpt
 
 userCpt :: R.Component SessionNodeProps
 userCpt = here.component "user" cpt where
-  cpt props@{ boxes: boxes@{ reloadForest, reloadRoot, tasks }
+  cpt props@{ boxes: boxes@{ reloadForest
+                           , reloadRoot
+                           , sidePanelState
+                           , sidePanelTexts
+                           , tasks }
             , nodeId
             , session
             , sessionId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed sessionProps $
-      userLayoutSessionContext { frontends
+      userLayoutSessionContext { frontends: defaultFrontends
                                , nodeId
                                , reloadForest
                                , reloadRoot
                                , session
+                               , sidePanel: sidePanelTexts
+                               , sidePanelState
                                , tasks } []
-      where frontends = defaultFrontends
 
 type ContactProps = ( annuaireId :: NodeID | SessionNodeProps )
 
@@ -370,10 +455,24 @@ contact = R.createElement contactCpt
 
 contactCpt :: R.Component ContactProps
 contactCpt = here.component "contact" cpt where
-  cpt props@{ annuaireId, nodeId, session, sessionId
-            , boxes: { reloadForest, reloadRoot, tasks } } _ = do
+  cpt props@{ annuaireId
+            , boxes: { reloadForest
+                     , reloadRoot
+                     , sidePanelTexts
+                     , sidePanelState
+                     , tasks }
+            , nodeId
+            , session
+            , sessionId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     let forestedProps = RE.pick props :: Record Props
     pure $ authed sessionProps $
-      contactLayout { annuaireId, frontends, nodeId, reloadForest, reloadRoot, session, tasks } []
-      where frontends = defaultFrontends
+      contactLayout { annuaireId
+                    , frontends: defaultFrontends
+                    , nodeId
+                    , reloadForest
+                    , reloadRoot
+                    , session
+                    , sidePanel: sidePanelTexts
+                    , sidePanelState
+                    , tasks } []
