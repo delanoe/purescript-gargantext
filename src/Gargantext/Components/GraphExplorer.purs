@@ -14,6 +14,14 @@ import Data.Set as Set
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
+import Math (log)
+import Partial.Unsafe (unsafePartial)
+import Reactix as R
+import Reactix.DOM.HTML as RH
+import Record as Record
+import Record.Extra as RX
+import Toestand as T
+
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Forest (forest)
@@ -35,13 +43,6 @@ import Gargantext.Types as Types
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
-import Math (log)
-import Partial.Unsafe (unsafePartial)
-import Reactix as R
-import Reactix.DOM.HTML as RH
-import Record as Record
-import Record.Extra as RX
-import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer"
@@ -108,7 +109,7 @@ explorerCpt :: R.Component Props
 explorerCpt = here.component "explorer" cpt
   where
     cpt props@{ backend
-              , boxes: boxes@{ graphVersion, sidePanelGraph }
+              , boxes: boxes@{ graphVersion, showTree, sidePanelGraph }
               , frontends
               , graph
               , graphId
@@ -141,21 +142,22 @@ explorerCpt = here.component "explorer" cpt
                                             , graph
                                             , graphId
                                             , hyperdataGraph
-                                            , reloadForest: \_ -> T2.reload reloadForest
+                                            , reloadForest
                                             , session
+                                            , showTree
                                             , sidePanel: sidePanelGraph
                                             , sidePanelState
                                             }
       multiSelectEnabled' <- T.useLive T.unequal controls.multiSelectEnabled
       showTree' <- T.useLive T.unequal controls.showTree
       multiSelectEnabledRef <- R.useRef multiSelectEnabled'
-      sidePanel@{ mGraph, mMetaData, sideTab } <- GEST.focusedSidePanel sidePanelGraph
+      { mGraph, mMetaData, sideTab } <- GEST.focusedSidePanel sidePanelGraph
 
       R.useEffectOnce' $ do
         T.write_ (Just graph) mGraph
         T.write_ mMetaData' mMetaData
 
-      forestOpen <- T.useBox $ Set.empty
+      forestOpen <- T.useBox $ (Set.empty :: OpenNodes)
       R.useEffectOnce' $ do
         R2.loadLocalStorageState R2.openNodesKey forestOpen
         T.listen (R2.listenLocalStorageState R2.openNodesKey) forestOpen
@@ -180,30 +182,13 @@ explorerCpt = here.component "explorer" cpt
           T.write_ Types.InitialClosed controls.sidePanelState
 
       pure $
-        RH.div { className: "graph-meta-container" } [
-          -- RH.div { className: "fixed-top navbar navbar-expand-lg"
-          --        , id: "graph-explorer" }
-          --   [ topBar { controls, graph } [] ]
-          RH.div { className: "graph-container" } [
-            inner handed' [
-              rowControls [ Controls.controls controls ]
-            , RH.div { className: "row graph-row" } $ mainLayout handed' $
-                tree { backend
-                     , forestOpen
-                     , frontends
-                     , handed
-                     , reload: reloadForest
-                     , route
-                     , reloadForest
-                     , sessions
-                     , show: showTree'
-                     , showLogin: showLogin
-                     , tasks
-                     }
-                /\
-                RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []
-                /\
-                graphView { controls
+        RH.div { className: "graph-meta-container" }
+        [ RH.div { className: "graph-container" }
+          [ inner handed'
+            [ RH.div { id: "controls-container" } [ Controls.controls controls [] ]
+            , RH.div { className: "row graph-row" }
+              [ RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []
+              , graphView { controls
                           , elRef: graphRef
                           , graphId
                           , graph
@@ -211,72 +196,16 @@ explorerCpt = here.component "explorer" cpt
                           , mMetaData
                           , multiSelectEnabledRef
                           } []
-                /\
-                mSidebar (Record.merge sidePanel { frontends
-                                                 , graph
-                                                 , graphId
-                                                 , graphVersion
-                                                 , reloadForest
-                                                 , removedNodeIds : controls.removedNodeIds
-                                                 , session
-                                                 , sideTab
-                                                 }) []
+              ]
             ]
           ]
         ]
 
-    mainLayout Types.RightHanded (tree' /\ gc /\ gv /\ sdb) = [tree', gc, gv, sdb]
-    mainLayout Types.LeftHanded  (tree' /\ gc /\ gv /\ sdb) = [sdb, gc, gv, tree']
-
-    outer = RH.div { className: "col-md-12" }
     inner h = RH.div { className: "container-fluid " <> hClass }
       where
         hClass = case h of
           Types.LeftHanded  -> "lefthanded"
           Types.RightHanded -> "righthanded"
-    rowControls = RH.div { id: "controls-container" }
-    pullLeft  = RH.div { className: "pull-left"  }
-    pullRight = RH.div { className: "pull-right" }
-
-
-    tree :: Record TreeProps -> R.Element
-    tree { show: false } = RH.div { id: "tree" } []
-    tree { backend, forestOpen, frontends, handed, reload, route, sessions, showLogin, reloadForest, tasks } =
-      RH.div {className: "col-md-2 graph-tree"} [
-        forest { backend
-               , forestOpen
-               , frontends
-               , handed
-               , reloadForest
-               , reloadRoot: reload
-               , route
-               , sessions
-               , showLogin
-               , tasks } []
-      ]
-
-type MSideBar =
-  (
-    mGraph             :: T.Box (Maybe SigmaxT.SGraph)
-  , mMetaData          :: T.Box (Maybe GET.MetaData)
-  , multiSelectEnabled :: T.Box Boolean
-  -- , selectedNodeIds    :: T.Box SigmaxT.NodeIds
-  , showControls       :: T.Box Boolean
-  | MSidebarProps
-  )
-
-mSidebar :: R2.Component MSideBar
-mSidebar = R.createElement mSidebarCpt
-
-mSidebarCpt :: R.Component MSideBar
-mSidebarCpt = here.component "mSidebar" cpt where
-  cpt props@{ mMetaData } _ = do
-    mMetaData' <- T.useLive T.unequal mMetaData
-
-    case mMetaData' of
-      Nothing       -> pure $ RH.div {} []
-      Just metaData -> do
-        pure $ Sidebar.sidebar (Record.merge (RX.pick props :: Record MSidebarProps) { metaData }) []
 
 type TopBar =
  (
@@ -315,32 +244,6 @@ topBarCpt = here.component "topBar" cpt where
       col = RH.li { className: "nav-item" }
       -- spaces    = RH.div { className: "flex-space-between" }
       spaces = RH.a { className: "nav-link" }
-
-type TreeProps = (
-    backend      :: T.Box (Maybe Backend)
-  , forestOpen   :: T.Box OpenNodes
-  , frontends    :: Frontends
-  , handed       :: T.Box Types.Handed
-  , reload       :: T.Box T2.Reload
-  , reloadForest :: T.Box T2.Reload
-  , route        :: T.Box AppRoute
-  , sessions     :: T.Box Sessions
-  , show         :: Boolean
-  , showLogin    :: T.Box Boolean
-  , tasks        :: T.Box GAT.Storage
-  )
-
-type MSidebarProps =
-  ( frontends       :: Frontends
-  , graph           :: SigmaxT.SGraph
-  , graphId         :: GET.GraphId
-  , graphVersion    :: T2.ReloadS
-  , reloadForest    :: T.Box T2.Reload
-  , removedNodeIds  :: T.Box SigmaxT.NodeIds
-  , selectedNodeIds :: T.Box SigmaxT.NodeIds
-  , session         :: Session
-  , sideTab         :: T.Box GET.SideTab
-  )
 
 type GraphProps = (
     controls              :: Record Controls.Controls

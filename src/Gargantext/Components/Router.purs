@@ -30,11 +30,8 @@ import Gargantext.Components.Nodes.File (fileLayout)
 import Gargantext.Components.Nodes.Frame (frameLayout)
 import Gargantext.Components.Nodes.Home (homeLayout)
 import Gargantext.Components.Nodes.Lists as Lists
-import Gargantext.Components.Nodes.Lists.Types as ListsTypes
 import Gargantext.Components.Nodes.Texts as Texts
 import Gargantext.Components.SessionLoader (sessionWrapper)
-import Gargantext.Components.SimpleLayout (simpleLayout)
-import Gargantext.Components.TopBar (handedChooser)
 import Gargantext.Components.TopBar as TopBar
 import Gargantext.Config (defaultFrontends, defaultBackends)
 import Gargantext.Ends (Backend)
@@ -43,7 +40,6 @@ import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, WithSessionContext)
 import Gargantext.Types (CorpusId, ListId, NodeID, NodeType(..), SessionId, SidePanelState(..))
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Router"
@@ -156,6 +152,7 @@ forestCpt = here.component "forest" cpt where
                      , route
                      , sessions
                      , showLogin
+                     , showTree
                      , tasks }
             , session } _ = do
     session' <- R.useContext session
@@ -169,6 +166,7 @@ forestCpt = here.component "forest" cpt where
                                    , route
                                    , sessions
                                    , showLogin
+                                   , showTree
                                    , tasks } [ renderRoute (Record.merge { session } props) [] ]
 
 sidePanel :: R2.Component (WithSessionContext Props)
@@ -187,13 +185,16 @@ sidePanelCpt = here.component "sidePanel" cpt where
     session' <- R.useContext session
     sidePanelState' <- T.useLive T.unequal sidePanelState
 
+    let className = "side-panel"
+
     case sidePanelState' of
       Opened ->
         case route' of
           GR.Lists s n -> do
-            pure $ H.div { className: "side-panel" } [ Lists.sidePanel { session: session'
-                                                                       , sidePanel: sidePanelLists
-                                                                       , sidePanelState } [] ]
+            pure $ H.div { className }
+              [ Lists.sidePanel { session: session'
+                                , sidePanel: sidePanelLists
+                                , sidePanelState } [] ]
           GR.PGraphExplorer s g -> do
             { mGraph, mMetaData, removedNodeIds, selectedNodeIds, sideTab } <- GEST.focusedSidePanel sidePanelGraph
             mGraph' <- T.useLive T.unequal mGraph
@@ -203,22 +204,23 @@ sidePanelCpt = here.component "sidePanel" cpt where
               (Nothing /\ _) -> pure $ H.div {} []
               (_ /\ Nothing) -> pure $ H.div {} []
               (Just graph /\ Just metaData) -> do
-                pure $ H.div { className: "side-panel" }
-                            [ GES.sidebar { frontends: defaultFrontends
-                                          , graph
-                                          , graphId: g
-                                          , graphVersion
-                                          , metaData
-                                          , reloadForest
-                                          , removedNodeIds
-                                          , selectedNodeIds
-                                          , session: session'
-                                          , sideTab
-                                          } [] ]
+                pure $ H.div { className }
+                  [ GES.sidebar { frontends: defaultFrontends
+                                , graph
+                                , graphId: g
+                                , graphVersion
+                                , metaData
+                                , reloadForest
+                                , removedNodeIds
+                                , selectedNodeIds
+                                , session: session'
+                                , sideTab
+                                } [] ]
           GR.Texts s n -> do
-            pure $ H.div { className: "side-panel" } [ Texts.sidePanel { session: session'
-                                                                       , sidePanel: sidePanelTexts
-                                                                       , sidePanelState } [] ]
+            pure $ H.div { className }
+              [ Texts.sidePanel { session: session'
+                                , sidePanel: sidePanelTexts
+                                , sidePanelState } [] ]
           _ -> pure $ H.div {} []
       _ -> pure $ H.div {} []
 

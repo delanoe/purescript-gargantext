@@ -35,26 +35,27 @@ focusedSidePanel :: T.Box (Maybe (Record SidePanel))
                             , sideTab            :: T.Box GET.SideTab }
 focusedSidePanel sidePanel = do
   mGraph <- T.useFocused
-            (maybe Nothing (_.mGraph))
+            (maybe Nothing _.mGraph)
             (\val -> maybe Nothing (\sp -> Just $ sp { mGraph = val })) sidePanel
   mMetaData <- T.useFocused
-            (maybe Nothing (_.mMetaData))
+            (maybe Nothing _.mMetaData)
             (\val -> maybe Nothing (\sp -> Just $ sp { mMetaData = val })) sidePanel
   multiSelectEnabled <- T.useFocused
-                        (maybe false (_.multiSelectEnabled))
+                        (maybe false _.multiSelectEnabled)
                         (\val -> maybe Nothing (\sp -> Just $ sp { multiSelectEnabled = val })) sidePanel
   removedNodeIds <- T.useFocused
-                     (maybe Set.empty (_.removedNodeIds))
+                     (maybe Set.empty _.removedNodeIds)
                      (\val -> maybe Nothing (\sp -> Just $ sp { removedNodeIds = val })) sidePanel
   selectedNodeIds <- T.useFocused
-                     (maybe Set.empty (_.selectedNodeIds))
+                     (maybe Set.empty _.selectedNodeIds)
                      (\val -> maybe Nothing (\sp -> Just $ sp { selectedNodeIds = val })) sidePanel
   showControls <- T.useFocused
-                  (maybe false (_.showControls))
+                  (maybe false _.showControls)
                   (\val -> maybe Nothing (\sp -> Just $ sp { showControls = val })) sidePanel
   sideTab <- T.useFocused
-                  (maybe GET.SideTabLegend (_.sideTab))
+                  (maybe GET.SideTabLegend _.sideTab)
                   (\val -> maybe Nothing (\sp -> Just $ sp { sideTab = val })) sidePanel
+
   pure $ {
     mGraph
   , mMetaData

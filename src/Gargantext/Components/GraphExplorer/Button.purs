@@ -23,6 +23,7 @@ import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Sessions (Session)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.Button"
@@ -53,12 +54,12 @@ centerButton sigmaRef = simpleButton {
   }
 
 
-type CameraButtonProps = (
-    id :: Int
+type CameraButtonProps =
+  ( id             :: Int
   , hyperdataGraph :: GET.HyperdataGraph
-  , session :: Session
-  , sigmaRef :: R.Ref Sigmax.Sigma
-  , reloadForest :: Unit -> Effect Unit
+  , session        :: Session
+  , sigmaRef       :: R.Ref Sigmax.Sigma
+  , reloadForest   :: T2.ReloadS
   )
 
 
@@ -94,7 +95,7 @@ cameraButton { id
         launchAff_ $ do
           clonedGraphId <- cloneGraph { id, hyperdataGraph: hyperdataGraph', session }
           ret <- uploadArbitraryDataURL session clonedGraphId (Just $ nowStr <> "-" <> "screenshot.png") screen
-          liftEffect $ reloadForest unit
+          liftEffect $ T2.reload reloadForest
           pure ret
   , text: "Screenshot"
   }

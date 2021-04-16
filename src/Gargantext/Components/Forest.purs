@@ -10,7 +10,6 @@ module Gargantext.Components.Forest
 
 import Data.Array as A
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -45,6 +44,7 @@ type Props =
   , reloadForest :: T.Box T2.Reload
   , sessions     :: T.Box Sessions
   , showLogin    :: T.Box Boolean
+  , showTree     :: T.Box Boolean
   , tasks        :: T.Box GAT.Storage
   | Common 
   )
@@ -68,6 +68,7 @@ forestCpt = here.component "forest" cpt where
             , route
             , sessions
             , showLogin
+            , showTree
             , tasks } _ = do
     -- TODO Fix this. I think tasks shouldn't be a Box but only a Reductor
     -- tasks'        <- GAT.useTasks reloadRoot reloadForest
@@ -80,17 +81,21 @@ forestCpt = here.component "forest" cpt where
     forestOpen'   <- T.useLive T.unequal forestOpen
     sessions'     <- T.useLive T.unequal sessions
 
+    showTree' <- T.useLive T.unequal showTree
+
     -- TODO If `reloadForest` is set, `reload` state should be updated
     -- TODO fix tasks ref
     -- R.useEffect' $ do
       -- R.setRef tasks $ Just tasks'
     R2.useCache
-      ( frontends /\ sessions' /\ handed' /\ forestOpen' /\ reloadForest' )
-      (cp handed' sessions')
+      ( forestOpen' /\  frontends /\ handed' /\ reloadForest' /\ sessions' /\ showTree' )
+      (cp handed' sessions' showTree')
         where
           common = RX.pick props :: Record Common
-          cp handed' sessions' _ =
-            pure $ H.div { className: "forest" }
+          cp handed' sessions' showTree' _ = do
+            let className = "forest " <> if showTree' then "" else "d-none"
+
+            pure $ H.div { className }
               (A.cons (plus handed' showLogin) (trees handed' sessions'))
           trees handed' sessions' = (tree handed') <$> unSessions sessions'
           tree handed' s@(Session {treeId}) =
@@ -169,6 +174,7 @@ forestLayoutRawCpt = here.component "forestLayoutRaw" cpt where
         , reloadRoot
         , route
         , sessions
+        , showTree
         , showLogin
         , tasks } children = do
     handed' <- T.useLive T.unequal p.handed
@@ -187,6 +193,7 @@ forestLayoutRawCpt = here.component "forestLayoutRaw" cpt where
                  , reloadRoot
                  , route
                  , sessions
+                 , showTree
                  , showLogin
                  , tasks } []
 
