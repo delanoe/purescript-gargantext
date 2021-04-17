@@ -154,6 +154,7 @@ explorerCpt = here.component "explorer" cpt
       { mGraph, mMetaData, sideTab } <- GEST.focusedSidePanel sidePanelGraph
 
       R.useEffectOnce' $ do
+        here.log2 "writing graph" graph
         T.write_ (Just graph) mGraph
         T.write_ mMetaData' mMetaData
 
@@ -208,9 +209,9 @@ explorerCpt = here.component "explorer" cpt
           Types.RightHanded -> "righthanded"
 
 type TopBar =
- (
-   boxes    :: Boxes
- )
+  (
+    boxes    :: Boxes
+  )
 
 topBar :: R2.Component TopBar
 topBar = R.createElement topBarCpt
@@ -220,12 +221,11 @@ topBarCpt = here.component "topBar" cpt where
   cpt { boxes: { showTree
                , sidePanelGraph
                , sidePanelState } } _ = do
-    sidePanelGraph' <- T.useLive T.unequal sidePanelGraph
-    let mGraph = maybe Nothing (_.mGraph) sidePanelGraph'
+    { mGraph, multiSelectEnabled, selectedNodeIds, showControls } <- GEST.focusedSidePanel sidePanelGraph
 
-    { multiSelectEnabled, selectedNodeIds, showControls } <- GEST.focusedSidePanel sidePanelGraph
+    mGraph' <- T.useLive T.unequal mGraph
 
-    let search = case mGraph of
+    let search = case mGraph' of
           Just graph -> nodeSearchControl { graph
                                          , multiSelectEnabled
                                          , selectedNodeIds } []

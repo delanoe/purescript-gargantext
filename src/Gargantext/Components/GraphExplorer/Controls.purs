@@ -158,10 +158,9 @@ controlsCpt = here.component "controls" cpt
       let nodeSizeMax = maybe 100.0 _.size $ A.last nodesSorted
       let nodeSizeRange = Range.Closed { min: nodeSizeMin, max: nodeSizeMax }
 
-      pure $ case showControls' of
-        false -> RH.div {} []
-        -- true -> R2.menu { id: "toolbar" } [
-        true -> RH.nav { className: "navbar navbar-expand-lg" }
+      let className = "navbar navbar-expand-lg " <> if showControls' then "" else "d-none"
+
+      pure $ RH.nav { className }
                  [ RH.ul { className: "navbar-nav mx-auto" }
                    [ -- change type button (?)
                      navItem [ centerButton sigmaRef ]

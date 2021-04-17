@@ -181,47 +181,65 @@ sidePanelCpt = here.component "sidePanel" cpt where
                            , sidePanelLists
                            , sidePanelTexts }
             , session } _ = do
+    sidePanelState' <- T.useLive T.unequal sidePanelState
+
+    case sidePanelState' of
+      Opened -> pure $ openedSidePanel props []
+      _      -> pure $ H.div {} []
+
+openedSidePanel :: R2.Component (WithSessionContext Props)
+openedSidePanel = R.createElement openedSidePanelCpt
+
+openedSidePanelCpt :: R.Component (WithSessionContext Props)
+openedSidePanelCpt = here.component "openedSidePanel" cpt where
+  cpt props@{ boxes: boxes@{ graphVersion
+                           , reloadForest
+                           , sidePanelGraph
+                           , sidePanelState
+                           , sidePanelLists
+                           , sidePanelTexts }
+            , session } _ = do
     route' <- T.useLive T.unequal boxes.route
     session' <- R.useContext session
-    sidePanelState' <- T.useLive T.unequal sidePanelState
 
     let className = "side-panel"
 
-    case sidePanelState' of
-      Opened ->
-        case route' of
-          GR.Lists s n -> do
-            pure $ H.div { className }
-              [ Lists.sidePanel { session: session'
-                                , sidePanel: sidePanelLists
-                                , sidePanelState } [] ]
-          GR.PGraphExplorer s g -> do
-            { mGraph, mMetaData, removedNodeIds, selectedNodeIds, sideTab } <- GEST.focusedSidePanel sidePanelGraph
-            mGraph' <- T.useLive T.unequal mGraph
-            mGraphMetaData' <- T.useLive T.unequal mMetaData
+    case route' of
+      GR.Lists s n -> do
+        pure $ H.div { className }
+          [ Lists.sidePanel { session: session'
+                            , sidePanel: sidePanelLists
+                            , sidePanelState } [] ]
+      GR.PGraphExplorer s g -> do
+        { mGraph, mMetaData, removedNodeIds, selectedNodeIds, sideTab } <- GEST.focusedSidePanel sidePanelGraph
+        mGraph' <- T.useLive T.unequal mGraph
+        mGraphMetaData' <- T.useLive T.unequal mMetaData
 
-            case (mGraph' /\ mGraphMetaData') of
-              (Nothing /\ _) -> pure $ H.div {} []
-              (_ /\ Nothing) -> pure $ H.div {} []
-              (Just graph /\ Just metaData) -> do
-                pure $ H.div { className }
-                  [ GES.sidebar { frontends: defaultFrontends
-                                , graph
-                                , graphId: g
-                                , graphVersion
-                                , metaData
-                                , reloadForest
-                                , removedNodeIds
-                                , selectedNodeIds
-                                , session: session'
-                                , sideTab
-                                } [] ]
-          GR.Texts s n -> do
+        R.useEffect' $ do
+          here.log2 "mGraph" mGraph'
+          here.log2 "mGraphMetaData" mGraphMetaData'
+
+        case (mGraph' /\ mGraphMetaData') of
+          (Nothing /\ _) -> pure $ H.div {} []
+          (_ /\ Nothing) -> pure $ H.div {} []
+          (Just graph /\ Just metaData) -> do
             pure $ H.div { className }
-              [ Texts.sidePanel { session: session'
-                                , sidePanel: sidePanelTexts
-                                , sidePanelState } [] ]
-          _ -> pure $ H.div {} []
+              [ GES.sidebar { frontends: defaultFrontends
+                            , graph
+                            , graphId: g
+                            , graphVersion
+                            , metaData
+                            , reloadForest
+                            , removedNodeIds
+                            , selectedNodeIds
+                            , session: session'
+                            , sideTab
+                            } [] ]
+      GR.Texts s n -> do
+        pure $ H.div { className }
+          [ Texts.sidePanel { session: session'
+                            , sidePanel: sidePanelTexts
+                            , sidePanelState } [] ]
       _ -> pure $ H.div {} []
 
 annuaire :: R2.Component SessionNodeProps
