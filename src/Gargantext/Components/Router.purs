@@ -202,6 +202,10 @@ openedSidePanelCpt = here.component "openedSidePanel" cpt where
     route' <- T.useLive T.unequal boxes.route
     session' <- R.useContext session
 
+    { mGraph, mMetaData, removedNodeIds, selectedNodeIds, sideTab } <- GEST.focusedSidePanel sidePanelGraph
+    mGraph' <- T.useLive T.unequal mGraph
+    mGraphMetaData' <- T.useLive T.unequal mMetaData
+
     let className = "side-panel"
 
     case route' of
@@ -211,10 +215,6 @@ openedSidePanelCpt = here.component "openedSidePanel" cpt where
                             , sidePanel: sidePanelLists
                             , sidePanelState } [] ]
       GR.PGraphExplorer s g -> do
-        { mGraph, mMetaData, removedNodeIds, selectedNodeIds, sideTab } <- GEST.focusedSidePanel sidePanelGraph
-        mGraph' <- T.useLive T.unequal mGraph
-        mGraphMetaData' <- T.useLive T.unequal mMetaData
-
         R.useEffect' $ do
           here.log2 "mGraph" mGraph'
           here.log2 "mGraphMetaData" mGraphMetaData'
