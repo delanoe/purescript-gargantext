@@ -12,23 +12,12 @@ import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (Tuple(..))
-import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Math (log)
-import Partial.Unsafe (unsafePartial)
-import Reactix as R
-import Reactix.DOM.HTML as RH
-import Record as Record
-import Record.Extra as RX
-import Toestand as T
-
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Data (Boxes)
-import Gargantext.Components.Forest (forest)
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Controls as Controls
 import Gargantext.Components.GraphExplorer.Search (nodeSearchControl)
-import Gargantext.Components.GraphExplorer.Sidebar as Sidebar
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
 import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
 import Gargantext.Components.GraphExplorer.Types as GET
@@ -43,6 +32,13 @@ import Gargantext.Types as Types
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Math as Math
+import Partial.Unsafe (unsafePartial)
+import Reactix as R
+import Reactix.DOM.HTML as RH
+import Record as Record
+import Record.Extra as RX
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer"
@@ -53,11 +49,9 @@ type BaseProps =
   , frontends      :: Frontends
   , graphId        :: GET.GraphId
   , handed         :: T.Box Types.Handed
-  , mMetaData'     :: Maybe GET.MetaData
   , route          :: T.Box AppRoute
   , sessions       :: T.Box Sessions
   , showLogin      :: T.Box Boolean
-  , sidePanelState :: T.Box Types.SidePanelState
   , tasks          :: T.Box GAT.Storage
   )
 
@@ -66,6 +60,13 @@ type LayoutLoaderProps = ( session :: R.Context Session | BaseProps )
 type LayoutProps =
   ( session      :: Session
   | BaseProps )
+
+type GraphWriteProps =
+  ( graph          :: SigmaxT.SGraph
+  , hyperdataGraph :: GET.HyperdataGraph
+  , mMetaData'     :: Maybe GET.MetaData
+  | LayoutProps
+  )
 
 type Props =
   ( graph          :: SigmaxT.SGraph
@@ -95,11 +96,38 @@ explorerLayoutCpt = here.component "explorerLayout" cpt where
 
     useLoader graphId (getNodes session graphVersion') handler
     where
-      handler loaded = explorer (Record.merge props { graph, hyperdataGraph: loaded, mMetaData' }) []
+      handler loaded = explorerWriteGraph (Record.merge props { graph, hyperdataGraph: loaded, mMetaData' }) []
         -- explorer (Record.merge props { graph, graphVersion, hyperdataGraph: loaded, mMetaData })
         where
           GET.HyperdataGraph { graph: hyperdataGraph } = loaded
           Tuple mMetaData' graph = convert hyperdataGraph
+
+explorerWriteGraph :: R2.Component GraphWriteProps
+explorerWriteGraph = R.createElement explorerWriteGraphCpt
+
+explorerWriteGraphCpt :: R.Component GraphWriteProps
+explorerWriteGraphCpt = here.component "explorerWriteGraph" cpt where
+  cpt props@{ boxes: { sidePanelGraph, sidePanelState }
+            , graph
+            , hyperdataGraph
+            , mMetaData' } _ = do
+      R.useEffectOnce' $ do
+        T.write_ (Just { mGraph: Just graph
+                       , mMetaData: mMetaData'
+                       , multiSelectEnabled: false
+                       , removedNodeIds: Set.empty
+                       , selectedNodeIds: Set.empty
+                       , showControls: false
+                       , sideTab: GET.SideTabLegend }) sidePanelGraph
+
+      -- { mGraph, mMetaData, sideTab } <- GEST.focusedSidePanel sidePanelGraph
+
+      -- R.useEffect' $ do
+      --   here.log2 "writing graph" graph
+      --   T.write_ (Just graph) mGraph
+      --   T.write_ mMetaData' mMetaData
+
+      pure $ explorer (RX.pick props :: Record Props) []
 
 --------------------------------------------------------------
 explorer :: R2.Component Props
@@ -109,24 +137,23 @@ explorerCpt :: R.Component Props
 explorerCpt = here.component "explorer" cpt
   where
     cpt props@{ backend
-              , boxes: boxes@{ graphVersion, showTree, sidePanelGraph }
+              , boxes: boxes@{ graphVersion, showTree, sidePanelGraph, sidePanelState }
               , frontends
               , graph
               , graphId
               , handed
               , hyperdataGraph
-              , mMetaData'
               , route
               , session
               , sessions
               , showLogin
-              , sidePanelState
               , tasks
               } _ = do
+      { mMetaData, sideTab } <- GEST.focusedSidePanel sidePanelGraph
       handed' <- T.useLive T.unequal handed
       graphVersion' <- T.useLive T.unequal graphVersion
       graphVersionRef <- R.useRef graphVersion'
-      sidePanel <- T.useLive T.unequal sidePanelGraph
+      mMetaData' <- T.useLive T.unequal mMetaData
       -- sideTab <- T.useBox GET.SideTabLegend
 
       let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas: sfa }) -> sfa) mMetaData'
@@ -151,12 +178,6 @@ explorerCpt = here.component "explorer" cpt
       multiSelectEnabled' <- T.useLive T.unequal controls.multiSelectEnabled
       showTree' <- T.useLive T.unequal controls.showTree
       multiSelectEnabledRef <- R.useRef multiSelectEnabled'
-      { mGraph, mMetaData, sideTab } <- GEST.focusedSidePanel sidePanelGraph
-
-      R.useEffectOnce' $ do
-        here.log2 "writing graph" graph
-        T.write_ (Just graph) mGraph
-        T.write_ mMetaData' mMetaData
 
       forestOpen <- T.useBox $ (Set.empty :: OpenNodes)
       R.useEffectOnce' $ do
@@ -325,7 +346,7 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
         , hidden : false
         , id    : n.id_
         , label : n.label
-        , size  : log (toNumber n.size + 1.0)
+        , size  : Math.log (toNumber n.size + 1.0)
         , type  : modeGraphType gargType
         , x     : n.x -- cos (toNumber i)
         , y     : n.y -- sin (toNumber i)

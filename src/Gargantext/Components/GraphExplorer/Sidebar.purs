@@ -63,24 +63,23 @@ sidebar = R.createElement sidebarCpt
 sidebarCpt :: R.Component Props
 sidebarCpt = here.component "sidebar" cpt
   where
-    cpt props@{ metaData, sideTab } _ = do
+    cpt props@{ sideTab } _ = do
       sideTab' <- T.useLive T.unequal sideTab
 
-      let sideTabLegend' = case sideTab' of
-            GET.SideTabLegend -> sideTabLegend sideTabProps []
-            GET.SideTabData -> sideTabData sideTabProps []
-            GET.SideTabCommunity -> sideTabCommunity sideTabProps []
       pure $ RH.div { id: "sp-container" }
         [ sideTabNav { sideTab
                      , sideTabs: [GET.SideTabLegend, GET.SideTabData, GET.SideTabCommunity] } []
-        , sideTabLegend'
+        , case sideTab' of
+            GET.SideTabLegend -> sideTabLegend sideTabProps []
+            GET.SideTabData -> sideTabData sideTabProps []
+            GET.SideTabCommunity -> sideTabCommunity sideTabProps []
         ]
       where
         sideTabProps = RX.pick props :: Record SideTabProps
 
 type SideTabNavProps = (
-    sideTab         :: T.Box GET.SideTab
-  , sideTabs  :: Array GET.SideTab
+    sideTab  :: T.Box GET.SideTab
+  , sideTabs :: Array GET.SideTab
   )
 
 sideTabNav :: R2.Component SideTabNavProps
@@ -103,8 +102,8 @@ sideTabNavCpt = here.component "sideTabNav" cpt
                             <> if tab == sideTab'
                                  then " active"
                                  else ""
-              , on: { click: \_ -> T.write_ tab sideTab }
-              } [ H.text $ show tab ]
+                , on: { click: \_ -> T.write_ tab sideTab }
+                } [ H.text $ show tab ]
 
 type SideTabProps = Props
 
@@ -133,12 +132,13 @@ sideTabDataCpt = here.component "sideTabData" cpt
         [ selectedNodes (Record.merge { nodesMap: SigmaxT.nodesGraphMap props.graph } props) []
         , neighborhood props []
         , RH.div { className: "col-md-12", id: "query" }
-          [ query SearchDoc
-            props.frontends
-            props.metaData
-            props.session
-            (SigmaxT.nodesGraphMap props.graph)
-            selectedNodeIds'
+          [ query { frontends: props.frontends
+                  , metaData: props.metaData
+                  , nodesMap: SigmaxT.nodesGraphMap props.graph
+                  , searchType: SearchDoc
+                  , selectedNodeIds: selectedNodeIds'
+                  , session: props.session
+                  } []
           ]
         ]
         where
@@ -162,12 +162,13 @@ sideTabCommunityCpt = here.component "sideTabCommunity" cpt
       pure $ RH.div { className: "col-md-12", id: "query" }
         [ selectedNodes (Record.merge { nodesMap: SigmaxT.nodesGraphMap props.graph } props) []
         , neighborhood props []
-        , query SearchContact
-          props.frontends
-          props.metaData
-          props.session
-          (SigmaxT.nodesGraphMap props.graph)
-          selectedNodeIds'
+        , query { frontends: props.frontends
+                , metaData: props.metaData
+                , nodesMap: SigmaxT.nodesGraphMap props.graph
+                , searchType: SearchContact
+                , selectedNodeIds: selectedNodeIds'
+                , session: props.session
+                } []
         ]
 
 
@@ -365,35 +366,56 @@ deleteNode termList session (GET.MetaData metaData) node = do
     patch_list :: NTC.Replace TermList
     patch_list = NTC.Replace { new: termList, old: MapTerm }
 
-query :: SearchType
-      -> Frontends
-      -> GET.MetaData
-      -> Session
-      -> SigmaxT.NodesMap
-      -> SigmaxT.NodeIds
-      -> R.Element
-query _ _ _ _ _ selectedNodeIds | Set.isEmpty selectedNodeIds = RH.div {} []
-query searchType frontends (GET.MetaData metaData) session nodesMap selectedNodeIds =
-  query' (head metaData.corpusId)
-  where
-    query' Nothing         = RH.div {} []
-    query' (Just corpusId) =
-      CGT.tabs { frontends
-               , session
-               , query: SearchQuery { query : concat $ toQuery <$> Set.toUnfoldable selectedNodeIds
-                                    , expected: searchType
-                                    }
-               , sides: [side corpusId]
-               }
+type Query =
+  ( frontends       :: Frontends
+  , metaData        :: GET.MetaData
+  , nodesMap        :: SigmaxT.NodesMap
+  , searchType      :: SearchType
+  , selectedNodeIds :: SigmaxT.NodeIds
+  , session         :: Session )
 
-    toQuery id = case Map.lookup id nodesMap of
-      Nothing -> []
-      Just n -> words n.label
+query :: R2.Component Query
+query = R.createElement queryCpt
 
-    side corpusId = GET.GraphSideCorpus { corpusId
-                                        , listId     : metaData.list.listId
-                                        , corpusLabel: metaData.title
-                                        }
+queryCpt :: R.Component Query
+queryCpt = here.component "query" cpt where
+  cpt props@{ selectedNodeIds } _ = do
+
+    pure $ if Set.isEmpty selectedNodeIds
+           then RH.div {} []
+           else query' props []
+
+query' :: R2.Component Query
+query' = R.createElement queryCpt'
+
+queryCpt' :: R.Component Query
+queryCpt' = here.component "query'" cpt where
+  cpt { frontends
+      , metaData: GET.MetaData metaData
+      , nodesMap
+      , searchType
+      , selectedNodeIds
+      , session } _ = do
+    pure $ case (head metaData.corpusId) of
+      Nothing -> RH.div {} []
+      Just corpusId ->
+        CGT.tabs { frontends
+                 , query: SearchQuery { expected: searchType
+                                      , query : concat $ toQuery <$> Set.toUnfoldable selectedNodeIds
+                                      }
+                 , session
+                 , sides: [side corpusId]
+                 }
+
+    where
+      toQuery id = case Map.lookup id nodesMap of
+        Nothing -> []
+        Just n -> words n.label
+
+      side corpusId = GET.GraphSideCorpus { corpusId
+                                          , corpusLabel: metaData.title
+                                          , listId     : metaData.list.listId
+                                          }
 
 ------------------------------------------------------------------------
 

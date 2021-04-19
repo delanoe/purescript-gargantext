@@ -95,9 +95,6 @@ controlsCpt = here.component "controls" cpt
       showControls' <- T.useLive T.unequal showControls
       sidePanelState' <- T.useLive T.unequal sidePanelState
 
-      R.useEffect' $ do
-        here.log2 "showControls" showControls'
-
       localControls <- initialLocalControls
       -- ref to track automatic FA pausing
       -- If user pauses FA before auto is triggered, clear the timeoutId

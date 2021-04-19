@@ -207,10 +207,11 @@ openedSidePanelCpt = here.component "openedSidePanel" cpt where
     mGraphMetaData' <- T.useLive T.unequal mMetaData
 
     let className = "side-panel"
+    let wrapper = H.div { className }
 
     case route' of
       GR.Lists s n -> do
-        pure $ H.div { className }
+        pure $ wrapper
           [ Lists.sidePanel { session: session'
                             , sidePanel: sidePanelLists
                             , sidePanelState } [] ]
@@ -220,10 +221,10 @@ openedSidePanelCpt = here.component "openedSidePanel" cpt where
           here.log2 "mGraphMetaData" mGraphMetaData'
 
         case (mGraph' /\ mGraphMetaData') of
-          (Nothing /\ _) -> pure $ H.div {} []
-          (_ /\ Nothing) -> pure $ H.div {} []
+          (Nothing /\ _) -> pure $ wrapper []
+          (_ /\ Nothing) -> pure $ wrapper []
           (Just graph /\ Just metaData) -> do
-            pure $ H.div { className }
+            pure $ wrapper
               [ GES.sidebar { frontends: defaultFrontends
                             , graph
                             , graphId: g
@@ -236,11 +237,11 @@ openedSidePanelCpt = here.component "openedSidePanel" cpt where
                             , sideTab
                             } [] ]
       GR.Texts s n -> do
-        pure $ H.div { className }
+        pure $ wrapper
           [ Texts.sidePanel { session: session'
                             , sidePanel: sidePanelTexts
                             , sidePanelState } [] ]
-      _ -> pure $ H.div {} []
+      _ -> pure $ wrapper []
 
 annuaire :: R2.Component SessionNodeProps
 annuaire = R.createElement annuaireCpt
@@ -303,6 +304,35 @@ documentCpt = here.component "document" cpt where
       documentMainLayout { listId, nodeId, mCorpusId, session } []
       where mCorpusId = Nothing
 
+graphExplorer :: R2.Component SessionNodeProps
+graphExplorer = R.createElement graphExplorerCpt
+
+graphExplorerCpt :: R.Component SessionNodeProps
+graphExplorerCpt = here.component "graphExplorer" cpt where
+  cpt props@{ boxes: boxes@{ backend
+                           , handed
+                           , route
+                           , sessions
+                           , showLogin
+                           , sidePanelGraph
+                           , sidePanelState
+                           , tasks }
+            , nodeId
+            , session } _ = do
+    let sessionProps = RE.pick props :: Record SessionProps
+    pure $ authed sessionProps $
+      -- simpleLayout { handed }
+      GraphExplorer.explorerLayoutLoader { backend
+                                         , boxes
+                                         , frontends: defaultFrontends
+                                         , graphId: nodeId
+                                         , handed
+                                         , route
+                                         , session
+                                         , sessions
+                                         , showLogin
+                                         , tasks } []
+
 home :: R2.Component Props
 home = R.createElement homeCpt
 
@@ -347,39 +377,6 @@ login' { backend, sessions, showLogin: visible } =
         , backends: fromFoldable defaultBackends
         , sessions
         , visible }
-
-graphExplorer :: R2.Component SessionNodeProps
-graphExplorer = R.createElement graphExplorerCpt
-
-graphExplorerCpt :: R.Component SessionNodeProps
-graphExplorerCpt = here.component "graphExplorer" cpt where
-  cpt props@{ boxes: boxes@{ backend
-                           , handed
-                           , route
-                           , sessions
-                           , showLogin
-                           , sidePanelGraph
-                           , sidePanelState
-                           , tasks }
-            , nodeId
-            , session } _ = do
-    { mMetaData } <- GEST.focusedSidePanel sidePanelGraph
-    mMetaData' <- T.useLive T.unequal mMetaData
-    let sessionProps = RE.pick props :: Record SessionProps
-    pure $ authed sessionProps $
-      -- simpleLayout { handed }
-      GraphExplorer.explorerLayoutLoader { backend
-                                         , boxes
-                                         , frontends: defaultFrontends
-                                         , graphId: nodeId
-                                         , handed
-                                         , mMetaData'
-                                         , route
-                                         , session
-                                         , sessions
-                                         , showLogin
-                                         , sidePanelState
-                                         , tasks } []
 
 routeFile :: R2.Component SessionNodeProps
 routeFile = R.createElement routeFileCpt
