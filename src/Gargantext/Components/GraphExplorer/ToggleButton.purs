@@ -46,7 +46,7 @@ toggleButtonCpt = here.component "toggleButton" cpt
         , style } _ = do
       state' <- T.useLive T.unequal state
 
-      pure $ H.button { className: "btn btn-outline-" <> style <> " " <> cls state'
+      pure $ H.button { className: "btn btn-outline-" <> style <> " " <> cls state' <> " mx-2"
                       , on: { click: onClick }
                       } [ R2.small {} [ H.text (text onMessage offMessage state') ] ]
 

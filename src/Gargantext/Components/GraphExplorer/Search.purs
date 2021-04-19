@@ -44,19 +44,17 @@ sizeButtonCpt = here.component "nodeSearchControl" cpt
       search' <- T.useLive T.unequal search
       multiSelectEnabled' <- T.useLive T.unequal multiSelectEnabled
 
-      pure $
-        H.div { className: "form-group" }
-          [ H.div { className: "input-group" }
-            [ inputWithAutocomplete { autocompleteSearch: autocompleteSearch graph
-                                    , onAutocompleteClick: \s -> triggerSearch graph s multiSelectEnabled' selectedNodeIds
-                                    , onEnterPress: \s -> triggerSearch graph s multiSelectEnabled' selectedNodeIds
-                                    , state: search } []
-            , H.div { className: "btn input-group-addon"
-                    , on: { click: \_ -> triggerSearch graph search' multiSelectEnabled' selectedNodeIds }
-                    }
-              [ H.span { className: "fa fa-search" } [] ]
-            ]
-          ]
+      pure $ R.fragment
+        [ inputWithAutocomplete { autocompleteSearch: autocompleteSearch graph
+                                , classes: "mx-2"
+                                , onAutocompleteClick: \s -> triggerSearch graph s multiSelectEnabled' selectedNodeIds
+                                , onEnterPress: \s -> triggerSearch graph s multiSelectEnabled' selectedNodeIds
+                                , state: search } []
+        , H.div { className: "btn input-group-addon"
+                , on: { click: \_ -> triggerSearch graph search' multiSelectEnabled' selectedNodeIds }
+                }
+          [ H.span { className: "fa fa-search" } [] ]
+        ]
 
 autocompleteSearch :: SigmaxT.SGraph -> String -> Array String
 autocompleteSearch graph s = Seq.toUnfoldable $ (_.label) <$> searchNodes s nodes

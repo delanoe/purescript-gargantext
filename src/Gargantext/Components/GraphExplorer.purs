@@ -252,11 +252,15 @@ topBarCpt = here.component "topBar" cpt where
                                          , selectedNodeIds } []
           Nothing -> RH.div {} []
 
-    pure $ rowToggle
-      [ col [ spaces [ Toggle.treeToggleButton { state: showTree } [] ]]
-      , col [ spaces [ Toggle.controlsToggleButton { state: showControls } [] ]]
-      , col [ spaces [ Toggle.sidebarToggleButton { state: sidePanelState } [] ]]
-      , col [ spaces [ search ] ]
+    pure $ RH.form { className: "d-flex" }
+      [ Toggle.treeToggleButton { state: showTree } []
+      , Toggle.controlsToggleButton { state: showControls } []
+      , Toggle.sidebarToggleButton { state: sidePanelState } []
+      , search
+      -- [ col [ spaces [ Toggle.treeToggleButton { state: showTree } [] ]]
+      -- , col [ spaces [ Toggle.controlsToggleButton { state: showControls } [] ]]
+      -- , col [ spaces [ Toggle.sidebarToggleButton { state: sidePanelState } [] ]]
+      -- , col [ spaces [ search ] ]
       ]
     where
       -- rowToggle  = RH.div { id: "toggle-container" }
