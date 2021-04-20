@@ -55,7 +55,7 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
     let children = makeFolderElements foldersS sid
     let parent = makeParentFolder parentId sid backFolder
 
-    pure $ H.div {className: "folders"} $ parent <> children
+    pure $ H.div {className: "fv folders"} $ parent <> children
 
   makeFolderElements :: Array (NTree LNode) -> SessionId -> Array R.Element
   makeFolderElements foldersS sid = makeFolderElementsMap <$> foldersS where
@@ -91,9 +91,15 @@ folder = R.createElement folderCpt
 folderCpt :: R.Component FolderProps
 folderCpt = here.component "folderCpt" cpt where
   cpt {style, text, nodeId, sid, nodeType} _ = do
-    pure $ H.a {className: "btn btn-primary", href: "/#/" <> getFolderPath nodeType sid nodeId}  [ H.i { className: icon style nodeType } []
-                                                                   , H.br {}
-                                                                   , H.text text]
+    pure $ H.a {className: "btn btn-primary", href: "/#/" <> getFolderPath nodeType sid nodeId} [ 
+      H.div { className: "fv action" } [
+        H.a { className: "settings fa fa-cog" 
+          , title : "Each node of the Tree can perform some actions.\n"
+            <> "Click here to execute one of them." } []
+      ]
+    , H.i { className: icon style nodeType } []
+    , H.br {}
+    , H.text text ]
   
   icon :: FolderStyle -> NodeType -> String
   icon FolderUp _ = "fa fa-folder-open"
