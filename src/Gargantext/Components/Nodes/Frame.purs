@@ -13,7 +13,7 @@ import Reactix.DOM.HTML as H
 import Toestand as T
 
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Components.FolderView as FV
+import Gargantext.Components.FolderView.BackButton (backButton)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(NodeAPI))
@@ -106,7 +106,7 @@ frameLayoutViewCpt = here.component "frameLayoutView" cpt
         , reload
         , session } _ =
       pure $ H.div{} [
-        FV.backButton
+        backButton
       , H.div { className : "frame"
               , rows: "100%,*" }
           [ H.iframe { src: hframeUrl nodeType base frame_id
