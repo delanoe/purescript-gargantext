@@ -644,14 +644,6 @@ asyncTaskTypePath UpdateNgramsCharts = "ngrams/async/charts/update/"
 asyncTaskTypePath UpdateNode         = "update/"
 asyncTaskTypePath UploadFile         = "async/file/add/"
 
-asyncTaskTriggersAppReload :: AsyncTaskType -> Boolean
-asyncTaskTriggersAppReload _ = true
-
-asyncTaskTriggersTreeReload :: AsyncTaskType -> Boolean
-asyncTaskTriggersTreeReload Form       = true
-asyncTaskTriggersTreeReload UploadFile = true
-asyncTaskTriggersTreeReload _          = false
-
 
 type AsyncTaskID = String
 

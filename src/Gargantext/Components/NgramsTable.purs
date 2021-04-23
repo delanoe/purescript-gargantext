@@ -259,8 +259,8 @@ tableContainerCpt { dispatch
 
 type CommonProps = (
     afterSync         :: Unit -> Aff Unit
-  , reloadForest      :: T.Box T2.Reload
-  , reloadRoot        :: T.Box T2.Reload
+  , reloadForest      :: T2.ReloadS
+  , reloadRoot        :: T2.ReloadS
   , tabNgramType      :: CTabNgramType
   , tasks             :: T.Box GAT.Storage
   , withAutoUpdate    :: Boolean

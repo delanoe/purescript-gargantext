@@ -53,8 +53,8 @@ type TabsProps = (
   , contactData    :: ContactData'
   , frontends      :: Frontends
   , nodeId         :: Int
-  , reloadForest   :: T.Box T2.Reload
-  , reloadRoot     :: T.Box T2.Reload
+  , reloadForest   :: T2.ReloadS
+  , reloadRoot     :: T2.ReloadS
   , session        :: Session
   , sidePanel      :: T.Box (Maybe (Record TTypes.SidePanel))
   , sidePanelState :: T.Box SidePanelState
@@ -134,8 +134,8 @@ type NgramsViewTabsProps = (
   , defaultListId  :: Int
   , mode           :: Mode
   , nodeId         :: Int
-  , reloadForest   :: T.Box T2.Reload
-  , reloadRoot     :: T.Box T2.Reload
+  , reloadForest   :: T2.ReloadS
+  , reloadRoot     :: T2.ReloadS
   , session        :: Session
   , tasks          :: T.Box GAT.Storage
   )

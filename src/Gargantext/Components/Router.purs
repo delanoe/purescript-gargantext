@@ -148,6 +148,7 @@ forestCpt = here.component "forest" cpt where
                      , forestOpen
                      , handed
                      , reloadForest
+                     , reloadMainPage
                      , reloadRoot
                      , route
                      , sessions
@@ -162,6 +163,7 @@ forestCpt = here.component "forest" cpt where
                                    , frontends: defaultFrontends
                                    , handed
                                    , reloadForest
+                                   , reloadMainPage
                                    , reloadRoot
                                    , route
                                    , sessions

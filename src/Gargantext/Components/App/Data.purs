@@ -20,8 +20,9 @@ type App =
   , forestOpen     :: OpenNodes
   , graphVersion   :: T2.Reload
   , handed         :: Handed
-  , reloadForest   :: Int
-  , reloadRoot     :: Int
+  , reloadForest   :: T2.Reload
+  , reloadMainPage :: T2.Reload
+  , reloadRoot     :: T2.Reload
   , route          :: AppRoute
   , sessions       :: Sessions
   , showCorpus     :: Boolean
@@ -41,6 +42,7 @@ emptyApp =
   , graphVersion   : T2.newReload
   , handed         : RightHanded
   , reloadForest   : T2.newReload
+  , reloadMainPage : T2.newReload
   , reloadRoot     : T2.newReload
   , route          : Home
   , sessions       : Sessions.empty
@@ -59,8 +61,9 @@ type Boxes =
   , forestOpen     :: T.Box OpenNodes
   , graphVersion   :: T2.ReloadS
   , handed         :: T.Box Handed
-  , reloadForest   :: T.Box T2.Reload
-  , reloadRoot     :: T.Box T2.Reload
+  , reloadForest   :: T2.ReloadS
+  , reloadMainPage :: T2.ReloadS
+  , reloadRoot     :: T2.ReloadS
   , route          :: T.Box AppRoute
   , sessions       :: T.Box Sessions
   , showCorpus     :: T.Box Boolean

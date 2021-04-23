@@ -32,16 +32,17 @@ here = R2.here "Gargantext.Components.Forest"
 
 -- Shared by components here with Tree
 type Common = 
-  ( frontends     :: Frontends
-  , handed        :: T.Box Handed
-  , reloadRoot    :: T.Box T2.Reload
-  , route         :: T.Box AppRoute
+  ( frontends      :: Frontends
+  , handed         :: T.Box Handed
+  , reloadMainPage :: T2.ReloadS
+  , reloadRoot     :: T2.ReloadS
+  , route          :: T.Box AppRoute
   )
 
 type Props =
   ( backend      :: T.Box (Maybe Backend)
   , forestOpen   :: T.Box OpenNodes
-  , reloadForest :: T.Box T2.Reload
+  , reloadForest :: T2.ReloadS
   , sessions     :: T.Box Sessions
   , showLogin    :: T.Box Boolean
   , showTree     :: T.Box Boolean
@@ -64,6 +65,7 @@ forestCpt = here.component "forest" cpt where
             , frontends
             , handed
             , reloadForest
+            , reloadMainPage
             , reloadRoot
             , route
             , sessions
@@ -103,6 +105,7 @@ forestCpt = here.component "forest" cpt where
                        , frontends
                        , handed: handed'
                        , reload: reloadForest
+                       , reloadMainPage
                        , reloadRoot
                        , root: treeId
                        , route
@@ -160,7 +163,8 @@ forestLayoutMain = R.createElement forestLayoutMainCpt
 
 forestLayoutMainCpt :: R.Component Props
 forestLayoutMainCpt = here.component "forestLayoutMain" cpt where
-  cpt props children = pure $ forestLayoutRaw props [ mainPage {} children ]
+  cpt props@{ reloadMainPage } children =
+    pure $ forestLayoutRaw props [ mainPage { reloadMainPage } children ]
 
 forestLayoutRaw :: R2.Component Props
 forestLayoutRaw = R.createElement forestLayoutRawCpt
@@ -171,6 +175,7 @@ forestLayoutRawCpt = here.component "forestLayoutRaw" cpt where
         , forestOpen
         , frontends
         , reloadForest
+        , reloadMainPage
         , reloadRoot
         , route
         , sessions
@@ -190,6 +195,7 @@ forestLayoutRawCpt = here.component "forestLayoutRaw" cpt where
                  , forestOpen
                  , handed
                  , reloadForest
+                 , reloadMainPage
                  , reloadRoot
                  , route
                  , sessions
@@ -197,15 +203,20 @@ forestLayoutRawCpt = here.component "forestLayoutRaw" cpt where
                  , showLogin
                  , tasks } []
 
-mainPage :: R2.Component ()
+type MainPage =
+  ( reloadMainPage :: T2.ReloadS )
+
+mainPage :: R2.Component MainPage
 mainPage = R.createElement mainPageCpt
 
 -- mainPageCpt :: R.Memo ()
 -- mainPageCpt = R.memo (here.component "mainPage" cpt) where
-mainPageCpt :: R.Component ()
+mainPageCpt :: R.Component MainPage
 mainPageCpt = here.component "mainPage" cpt
   where
-    cpt _ children = do
+    cpt { reloadMainPage } children = do
+      reloadMainPage' <- T.useLive T.unequal reloadMainPage
+
       pure $ H.div { className: "col-md-10" }
         [ H.div { id: "page-wrapper" }
           [ H.div { className: "container-fluid" } children ]

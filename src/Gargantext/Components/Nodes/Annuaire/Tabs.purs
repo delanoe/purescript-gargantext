@@ -56,8 +56,8 @@ type TabsProps =
   , contactData    :: ContactData
   , frontends      :: Frontends
   , nodeId         :: Int
-  , reloadForest   :: T.Box T2.Reload
-  , reloadRoot     :: T.Box T2.Reload
+  , reloadForest   :: T2.ReloadS
+  , reloadRoot     :: T2.ReloadS
   , session        :: Session
   , sidePanel      :: T.Box (Maybe (Record TextsT.SidePanel))
   , sidePanelState :: T.Box SidePanelState
@@ -133,8 +133,8 @@ ngramsViewCpt = here.component "ngramsView" cpt where
 type NTCommon =
   ( cacheState     :: T.Box LTypes.CacheState
   , defaultListId  :: Int
-  , reloadForest   :: T.Box T2.Reload
-  , reloadRoot     :: T.Box T2.Reload
+  , reloadForest   :: T2.ReloadS
+  , reloadRoot     :: T2.ReloadS
   , session        :: Session
   , tasks          :: T.Box GAT.Storage
   )

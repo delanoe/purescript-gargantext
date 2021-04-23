@@ -43,7 +43,7 @@ here = R2.here "Gargantext.Components.GraphExplorer.Sidebar"
 type Common = (
     graphId         :: NodeID
   , metaData        :: GET.MetaData
-  , reloadForest    :: T.Box T2.Reload
+  , reloadForest    :: T2.ReloadS
   , removedNodeIds  :: T.Box SigmaxT.NodeIds
   , selectedNodeIds :: T.Box SigmaxT.NodeIds
   , session         :: Session
@@ -313,7 +313,7 @@ type DeleteNodes =
   ( graphId      :: NodeID
   , metaData     :: GET.MetaData
   , nodes        :: Array (Record SigmaxT.Node)
-  , reloadForest :: T.Box T2.Reload
+  , reloadForest :: T2.ReloadS
   , session      :: Session
   , termList     :: TermList
   )

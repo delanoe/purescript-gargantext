@@ -154,8 +154,8 @@ listElement = H.li { className: "list-group-item justify-content-between" }
 type LayoutNoSessionProps =
   ( frontends      :: Frontends
   , nodeId         :: Int
-  , reloadForest   :: T.Box T2.Reload
-  , reloadRoot     :: T.Box T2.Reload
+  , reloadForest   :: T2.ReloadS
+  , reloadRoot     :: T2.ReloadS
   , sidePanel      :: T.Box (Maybe (Record TT.SidePanel))
   , sidePanelState :: T.Box SidePanelState
   , tasks          :: T.Box GAT.Storage

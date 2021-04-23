@@ -148,8 +148,8 @@ type BasicProps =
   )
 
 type ReloadProps =
-  ( reloadForest :: T.Box T2.Reload
-  , reloadRoot   :: T.Box T2.Reload
+  ( reloadForest :: T2.ReloadS
+  , reloadRoot   :: T2.ReloadS
   | BasicProps
   )
 
@@ -228,7 +228,7 @@ contactLayoutWithKeyCpt = here.component "contactLayoutWithKey" cpt where
                    , reloadRoot
                    , tasks } ]
       where
-        onUpdateHyperdata :: T.Box T2.Reload -> HyperdataContact -> Effect Unit
+        onUpdateHyperdata :: T2.ReloadS -> HyperdataContact -> Effect Unit
         onUpdateHyperdata reload hd =
           launchAff_ $
             saveContactHyperdata session nodeId hd *> liftEffect (T2.reload reload)

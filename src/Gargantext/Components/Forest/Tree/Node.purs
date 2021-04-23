@@ -45,17 +45,18 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node"
 
 -- Main Node
 type NodeMainSpanProps =
-  ( folderOpen    :: T.Box Boolean
-  , frontends     :: Frontends
-  , id            :: ID
-  , isLeaf        :: IsLeaf
-  , name          :: Name
-  , nodeType      :: GT.NodeType
-  , reload        :: T.Box T2.Reload
-  , reloadRoot    :: T.Box T2.Reload
-  , route         :: T.Box Routes.AppRoute
-  , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
-  , tasks         :: T.Box GAT.Storage
+  ( folderOpen     :: T.Box Boolean
+  , frontends      :: Frontends
+  , id             :: ID
+  , isLeaf         :: IsLeaf
+  , name           :: Name
+  , nodeType       :: GT.NodeType
+  , reload         :: T2.ReloadS
+  , reloadMainPage :: T2.ReloadS
+  , reloadRoot     :: T2.ReloadS
+  , route          :: T.Box Routes.AppRoute
+  , setPopoverRef  :: R.Ref (Maybe (Boolean -> Effect Unit))
+  , tasks          :: T.Box GAT.Storage
   | CommonProps
   )
 
@@ -84,7 +85,7 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
               , isLeaf
               , name
               , nodeType
-              , reload
+              , reloadMainPage
               , reloadRoot
               , route
               , session
@@ -153,7 +154,7 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
               T2.reload reloadRoot
             else if GAT.asyncTaskTTriggersTreeReload t then do
               here.log2 "reloading tree for task" t
-              T2.reload reload
+              T2.reload reloadMainPage
             else do
               here.log2 "task doesn't trigger a reload" t
               pure unit

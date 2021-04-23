@@ -6,7 +6,6 @@ import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Data.Traversable (traverse_, traverse)
-import Data.Tuple (snd)
 import DOM.Simple.Console (log, log2)
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -47,7 +46,8 @@ here = R2.here "Gargantext.Components.Forest.Tree"
 
 -- Shared by every component here + performAction + nodeSpan
 type Universal =
-  ( reloadRoot :: T.Box T2.Reload )
+  ( reloadMainPage :: T2.ReloadS
+  , reloadRoot     :: T2.ReloadS )
 
 -- Shared by every component here + nodeSpan
 type Global =
@@ -60,7 +60,7 @@ type Global =
 -- Shared by every component here
 type Common = (
    forestOpen :: T.Box OpenNodes
- , reload     :: T.Box T2.Reload
+ , reload     :: T2.ReloadS
  | Global
  )
 
@@ -90,7 +90,7 @@ getNodeTree session nodeId = get session $ GR.NodeAPI GT.Tree (Just nodeId) ""
 getNodeTreeFirstLevel :: Session -> ID -> Aff FTree
 getNodeTreeFirstLevel session nodeId = get session $ GR.TreeFirstLevel (Just nodeId) ""
 
-type NodeProps = ( reloadTree :: T.Box T2.Reload, session :: Session | Common )
+type NodeProps = ( reloadTree :: T2.ReloadS, session :: Session | Common )
 
 type TreeProps = ( tree :: FTree | NodeProps )
 
@@ -102,25 +102,18 @@ treeCpt = here.component "tree" cpt where
   cpt p@{ reload, session, tree: NTree (LNode { id, name, nodeType }) children } _ = do
     setPopoverRef <- R.useRef Nothing
     folderOpen <- T2.useMemberBox nodeId p.forestOpen
-    folderOpen' <- T.useLive T.unequal folderOpen
-    pure $ H.ul { className: ulClass <> " " <> handedClass }
-      [ H.li { className: childrenClass children }
+    pure $ H.ul { className: ulClass }
+      [ H.li { className: childrenClass children' }
         [ nodeSpan (nsprops { folderOpen, name, id, nodeType, setPopoverRef, isLeaf })
-          (renderChildren folderOpen')
+          [ renderChildren (Record.merge p { childProps: { children', folderOpen, render: tree } } ) [] ]
         ]
       ]
     where
       isLeaf = A.null children
       nodeId = mkNodeId session id
-      ulClass  = switchHanded "ml" "mr" p.handed <> "-auto tree"
-      handedClass = switchHanded "left" "right" p.handed <> "handed"
+      ulClass  = switchHanded "ml left" "mr right" p.handed <> "-auto tree handed"
       children' = A.sortWith fTreeID pubChildren
       pubChildren = if isPublic nodeType then map (map pub) children else children
-      renderChildren false = []
-      renderChildren true = map renderChild children' where
-        renderChild (NTree (LNode {id: cId}) _) = childLoader props [] where
-          props = Record.merge nodeProps { id: cId, render: tree }
-          nodeProps = RecordE.pick p :: Record NodeProps
       nsprops extra = Record.merge common extra' where
         common = RecordE.pick p :: Record NSCommon
         extra' = Record.merge extra { dispatch, reload } where
@@ -129,12 +122,49 @@ treeCpt = here.component "tree" cpt where
             spr = { setPopoverRef: extra.setPopoverRef }
   pub (LNode n@{ nodeType: t }) = LNode (n { nodeType = publicize t })
   childrenClass [] = "no-children"
-  childrenClass _ = "with-children"
+  childrenClass _  = "with-children"
+
+
+type ChildrenTreeProps =
+  ( childProps :: { children'  :: Array FTree
+                  , folderOpen :: T.Box Boolean
+                  , render     :: R2.Leaf TreeProps }
+  | TreeProps )
+
+
+renderChildren :: R2.Component ChildrenTreeProps
+renderChildren = R.createElement renderChildrenCpt
+
+renderChildrenCpt :: R.Component ChildrenTreeProps
+renderChildrenCpt = here.component "renderChildren" cpt where
+  cpt p@{ childProps: { folderOpen } } _ = do
+    folderOpen' <- T.useLive T.unequal folderOpen
+
+    if folderOpen' then
+      pure $ renderTreeChildren p []
+    else
+      pure $ H.div {} []
+
+renderTreeChildren :: R2.Component ChildrenTreeProps
+renderTreeChildren = R.createElement renderTreeChildrenCpt
+
+renderTreeChildrenCpt :: R.Component ChildrenTreeProps
+renderTreeChildrenCpt = here.component "renderTreeChildren" cpt where
+  cpt p@{ childProps: { children'
+                      , folderOpen
+                      , render } } _ = do
+    pure $ R.fragment (map renderChild children')
+
+    where
+      nodeProps = RecordE.pick p :: Record NodeProps
+      renderChild (NTree (LNode {id: cId}) _) = childLoader props [] where
+        props = Record.merge nodeProps { id: cId, render }
+
 
 --- The properties tree shares in common with performAction
 type PACommon =
   ( forestOpen   :: T.Box OpenNodes
-  , reloadTree   :: T.Box T2.Reload
+  , reloadTree   :: T2.ReloadS
   , session      :: Session
   , tasks        :: T.Box GAT.Storage
   , tree         :: FTree
@@ -155,7 +185,7 @@ childLoaderCpt :: R.Component ChildLoaderProps
 childLoaderCpt = here.component "childLoader" cpt where
   cpt p@{ render } _ = do
     reload <- T.useBox T2.newReload
-    let reloads = [ reload, p.reloadTree, p.reloadRoot ]
+    let reloads = [ reload, p.reloadRoot, p.reloadTree ]
     cache <- (A.cons p.id) <$> traverse (T.useLive T.unequal) reloads
     useLoader cache fetch (paint reload)
     where

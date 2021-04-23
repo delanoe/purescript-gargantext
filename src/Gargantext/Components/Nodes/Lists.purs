@@ -40,8 +40,8 @@ listsWithSessionContextCpt = here.component "listsWithSessionContext" cpt where
 
 type CommonPropsNoSession =
   ( nodeId         :: Int
-  , reloadForest   :: T.Box T2.Reload
-  , reloadRoot     :: T.Box T2.Reload
+  , reloadForest   :: T2.ReloadS
+  , reloadRoot     :: T2.ReloadS
   , sessionUpdate  :: Session -> Effect Unit
   , sidePanel      :: T.Box (Maybe (Record SidePanel))
   , sidePanelState :: T.Box GT.SidePanelState

@@ -55,8 +55,8 @@ removeTaskFromList ts (GT.AsyncTaskWithType { task: GT.AsyncTask { id: id' } }) 
   A.filter (\(GT.AsyncTaskWithType { task: GT.AsyncTask { id: id'' } }) -> id' /= id'') ts
 
 type ReductorProps = (
-    reloadForest :: T.Box T2.Reload
-  , reloadRoot   :: T.Box T2.Reload
+    reloadForest :: T2.ReloadS
+  , reloadRoot   :: T2.ReloadS
   , storage      :: Storage
   )
 
