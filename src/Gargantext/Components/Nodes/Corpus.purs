@@ -1,8 +1,6 @@
 module Gargantext.Components.Nodes.Corpus where
 
-import Gargantext.Prelude
-  ( Unit, bind, discard, pure, show, unit, compare
-  , ($), (+), (-), (<), (<$>), (<<<), (<>), (==), (>), class Show, class Eq, Ordering)
+import Gargantext.Prelude (class Eq, class Show, Unit, bind, discard, pure, show, unit, ($), (+), (-), (<), (<$>), (<<<), (<>), (==), (>))
 import Data.Argonaut (class DecodeJson, decodeJson, encodeJson)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
@@ -22,6 +20,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
+import Gargantext.Components.FolderView as FV
 import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
@@ -32,10 +31,9 @@ import Gargantext.Components.Nodes.Types
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..))
 import Gargantext.Data.Array as GDA
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Routes (SessionRoute(NodeAPI, Children, TreeFirstLevel), AppRoute(Home), appPath, nodeTypeAppRoute)
+import Gargantext.Routes (SessionRoute(Children, NodeAPI))
 import Gargantext.Sessions (Session, get, put, sessionId)
-import Gargantext.Types (NodeType(..), AffTableResult, SessionId, fldr)
-import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
+import Gargantext.Types (AffTableResult, NodeType(..))
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
@@ -92,7 +90,7 @@ corpusLayoutSelectionCpt = here.component "corpusLayoutSelection" cpt where
 
     pure $ renderContent viewType nodeId session key
 
-  renderContent Folders nodeId session key = folderViewLoad { nodeId, session }
+  renderContent Folders nodeId session key = FV.folderView { nodeId, session, backFolder: true }
   renderContent Code nodeId session key = corpusLayoutWithKey { key, nodeId, session }
 
 
@@ -171,79 +169,6 @@ corpusLayoutViewCpt = here.component "corpusLayoutView" cpt
     onClickAdd :: forall e. T.Box FTFieldsWithIndex -> e -> Effect Unit
     onClickAdd fieldsS _ = do
       T.modify_ (\fields -> List.snoc fields $ Tuple (List.length fields) defaultField) fieldsS
-
-data FolderStyle = FolderUp | FolderChild
-
-folderViewLoad :: R2.Leaf LoadProps
-folderViewLoad props = R.createElement folderViewLoadCpt props []
-
-folderViewLoadCpt :: R.Component LoadProps
-folderViewLoadCpt = here.component "folderViewLoadCpt" cpt where
-  cpt {nodeId, session} _ = do
-    useLoader {nodeId, session} loadFolders $
-      \folders -> folderView {folders, nodeId, session}
-
-type FolderViewProps = 
-  ( 
-    nodeId :: Int
-  , folders:: FTree
-  , session :: Session
-  )
-
-folderView :: Record FolderViewProps -> R.Element
-folderView props = R.createElement folderViewCpt props []
-
-folderViewCpt :: R.Component FolderViewProps
-folderViewCpt = here.component "folderViewCpt" cpt where
-  cpt {nodeId, session, folders: (NTree (LNode {parent_id: parentId}) (folders))} _ = do
-    let sid = sessionId session 
-    let foldersS = A.sortBy sortFolders folders
-    let children = makeFolderElements foldersS sid
-    let parent = makeParentFolder parentId sid
-
-    pure $ H.div {className: "folders"} $ parent <> children
-
-  makeFolderElements :: Array (NTree LNode) -> SessionId -> Array R.Element
-  makeFolderElements foldersS sid = makeFolderElementsMap <$> foldersS where
-    makeFolderElementsMap :: NTree LNode -> R.Element
-    makeFolderElementsMap (NTree (LNode node) _) = folder {style: FolderChild, text: node.name, nodeId: node.id, nodeType: node.nodeType, sid: sid} []
-
-  makeParentFolder :: Maybe Int -> SessionId -> Array R.Element
-  makeParentFolder (Just parentId) sid =
-    -- FIXME: The NodeType here should not be hardcoded to FolderPrivate but we currently can't get the actual NodeType
-    -- without performing another API call. Also parentId is never being returned by this API even when it clearly exists
-    [ folder {style: FolderUp, text: "..", nodeId: parentId, nodeType: FolderPrivate, sid: sid} [] ]
-  makeParentFolder Nothing _ = []
-
-  sortFolders :: FTree -> FTree -> Ordering
-  sortFolders a b = compare (fTreeID a) (fTreeID b)
-
-
-type FolderProps = 
-  (
-    style :: FolderStyle
-  , text :: String
-  , nodeType :: NodeType
-  , nodeId :: Int
-  , sid :: SessionId
-  )
-
-folder :: R2.Component FolderProps
-folder = R.createElement folderCpt
-
-folderCpt :: R.Component FolderProps
-folderCpt = here.component "folderCpt" cpt where
-  cpt {style, text, nodeId, sid, nodeType} _ = do
-    pure $ H.a {className: "btn btn-primary", href: "/#/" <> getFolderPath nodeType sid nodeId}  [ H.i { className: icon style nodeType } []
-                                                                   , H.br {}
-                                                                   , H.text text]
-  
-  icon :: FolderStyle -> NodeType -> String
-  icon FolderUp _ = "fa fa-folder-open"
-  icon _ nodeType = fldr nodeType false
-
-  getFolderPath :: NodeType -> SessionId -> Int -> String
-  getFolderPath nodeType sid nodeId = appPath $ fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
 
 
 type FieldsCodeEditorProps =
@@ -517,9 +442,6 @@ type LoadProps =
 
 loadCorpus' :: Record LoadProps -> Aff (NodePoly Hyperdata)
 loadCorpus' {nodeId, session} = get session $ NodeAPI Corpus (Just nodeId) ""
-
-loadFolders :: Record LoadProps -> Aff FTree
-loadFolders {nodeId, session} = get session $ TreeFirstLevel (Just nodeId) ""
 
 -- Just to make reloading effective
 loadCorpusWithReload :: { reload :: T2.Reload  | LoadProps } -> Aff (NodePoly Hyperdata)

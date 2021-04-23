@@ -1,23 +1,27 @@
 module Gargantext.Components.Nodes.Home where
 
+import Gargantext.Prelude
+
 import Data.Array as Array
+import Data.Maybe (fromJust)
 import Data.Newtype (class Newtype)
 import Effect (Effect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Routing.Hash (setHash)
-import Toestand as T
-
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
+import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Lang (LandingLang(..))
 import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
 import Gargantext.Components.Nodes.Home.Public (renderPublic)
 import Gargantext.License (license)
-import Gargantext.Prelude -- (Unit, map, pure, unit, void, ($), (<>), (*>))
 import Gargantext.Sessions (Sessions)
 import Gargantext.Sessions as Sessions
+import Gargantext.Sessions.Types (Session(..))
 import Gargantext.Utils.Reactix as R2
+import Partial.Unsafe (unsafePartial)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Routing.Hash (setHash)
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Home"
@@ -87,7 +91,8 @@ joinButtonOrTutorial :: forall e. Sessions -> (e -> Effect Unit) -> R.Element
 joinButtonOrTutorial sessions click =
   if Sessions.null sessions
   then joinButton click
-  else tutorial
+  -- sessions is not empty
+  else tutorial {session: unsafePartial $ fromJust $ Array.head $ Sessions.unSessions sessions}
      
 joinButton :: forall e. (e -> Effect Unit) -> R.Element
 joinButton click =
@@ -131,23 +136,31 @@ summary =
         , H.ol {} (map toSummary tutos) ] ]          
     toSummary (Tuto x) = H.li {} [ H.a {href: "#" <> x.id} [ H.text x.title ]]
 
-tutorial :: R.Element
-tutorial =
-  H.div { className: "mx-auto container" }
-  [ H.h1 {} [H.text "Welcome!"]
-  , H.h2 {} [H.text "For easy start, just watch the tutorials"]
-  , summary
-  , H.h3 {} [H.text "Tutorial resources"]
-  , section "How to start?" "alert-info" startTutos
-  -- , section "How to play?" "alert-warning" playTutos
-  -- , section "How to master?" "alert-danger" expertTutos
-  ]
-  where
-    section name class' tutos =
-      H.div {} $ Array.cons (H.h4 {} [ H.text name ]) (map (makeTuto class') tutos)
-    makeTuto class' (Tuto x) =
-      H.div { className : "alert " <> class', id: x.id}
-      [ video x.id, H.h4 {} [ H.text x.title ], H.p  {} [ H.text x.text ] ]
+tutorial :: R2.Leaf (session :: Session)
+tutorial props = R.createElement tutorialCpt props []
+
+tutorialCpt :: R.Component (session :: Session)
+tutorialCpt = here.component "tutorial" cpt where
+  cpt {session: session@(Session {treeId})} _ = do
+    let nodeId = treeId
+
+    pure $ H.div { className: "mx-auto container" }
+      [ H.div {className: "d-flex justify-content-center"}
+              [FV.folderView {session, nodeId, backFolder: false}]
+      , H.h1 {} [H.text "Welcome!"]
+      , H.h2 {} [H.text "For easy start, just watch the tutorials"]
+      , summary
+      , H.h3 {} [H.text "Tutorial resources"]
+      , section "How to start?" "alert-info" startTutos
+      -- , section "How to play?" "alert-warning" playTutos
+      -- , section "How to master?" "alert-danger" expertTutos
+      ]
+    where
+      section name class' tutos =
+        H.div {} $ Array.cons (H.h4 {} [ H.text name ]) (map (makeTuto class') tutos)
+      makeTuto class' (Tuto x) =
+        H.div { className : "alert " <> class', id: x.id}
+        [ video x.id, H.h4 {} [ H.text x.title ], H.p  {} [ H.text x.text ] ]
 
 startTutos :: Array Tuto
 startTutos =

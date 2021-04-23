@@ -10,6 +10,7 @@ import Toestand as T
 
 import Gargantext.Prelude
 
+import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Table.Types (ColumnName, OrderBy, OrderByDirection(..), Params, Props, TableContainerProps, columnName)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Search (SearchType(..))
@@ -63,7 +64,9 @@ tableHeaderLayoutCpt = here.component "tableHeaderLayout" cpt
       cacheState' <- T.useLive T.unequal cacheState
 
       pure $ R.fragment
-        [ R2.row
+        [ R2.row [FV.backButton]
+        ,
+          R2.row
           [ H.div {className: "col-md-3"} [ H.h3 {} [H.text title] ]
           , H.div {className: "col-md-9"}
             [ H.hr {style: {height: "2px", backgroundColor: "black"}} ]
