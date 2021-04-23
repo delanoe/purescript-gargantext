@@ -99,7 +99,7 @@ tree props = R.createElement treeCpt props []
 
 treeCpt :: R.Component TreeProps
 treeCpt = here.component "tree" cpt where
-  cpt p@{ session, tree: NTree (LNode { id, name, nodeType }) children } _ = do
+  cpt p@{ reload, session, tree: NTree (LNode { id, name, nodeType }) children } _ = do
     setPopoverRef <- R.useRef Nothing
     folderOpen <- T2.useMemberBox nodeId p.forestOpen
     folderOpen' <- T.useLive T.unequal folderOpen
@@ -123,7 +123,7 @@ treeCpt = here.component "tree" cpt where
           nodeProps = RecordE.pick p :: Record NodeProps
       nsprops extra = Record.merge common extra' where
         common = RecordE.pick p :: Record NSCommon
-        extra' = Record.merge extra { dispatch } where
+        extra' = Record.merge extra { dispatch, reload } where
           dispatch a = performAction a (Record.merge common' spr) where
             common' = RecordE.pick p :: Record PACommon
             spr = { setPopoverRef: extra.setPopoverRef }

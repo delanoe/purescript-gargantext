@@ -51,6 +51,7 @@ type NodeMainSpanProps =
   , isLeaf        :: IsLeaf
   , name          :: Name
   , nodeType      :: GT.NodeType
+  , reload        :: T.Box T2.Reload
   , reloadRoot    :: T.Box T2.Reload
   , route         :: T.Box Routes.AppRoute
   , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
@@ -83,6 +84,7 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
               , isLeaf
               , name
               , nodeType
+              , reload
               , reloadRoot
               , route
               , session
@@ -146,6 +148,15 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
         where
           onTaskFinish id' t _ = do
             GAT.finish id' t tasks
+            if GAT.asyncTaskTTriggersAppReload t then do
+              here.log2 "reloading root for task" t
+              T2.reload reloadRoot
+            else if GAT.asyncTaskTTriggersTreeReload t then do
+              here.log2 "reloading tree for task" t
+              T2.reload reload
+            else do
+              here.log2 "task doesn't trigger a reload" t
+              pure unit
             -- snd tasks $ GAT.Finish id' t
             -- mT <- T.read tasks
             -- case mT of

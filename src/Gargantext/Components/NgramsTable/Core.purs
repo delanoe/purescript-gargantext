@@ -1110,7 +1110,7 @@ coreDispatch path state (Synchronize { afterSync }) =
 coreDispatch _ state (CommitPatch pt) =
   commitPatch pt state
 coreDispatch _ state ResetPatches =
-  T.modify_ (\s -> s { ngramsLocalPatch = { ngramsPatches: mempty } }) state
+  T.modify_ (_ { ngramsLocalPatch = { ngramsPatches: mempty } }) state
 
 isSingleNgramsTerm :: NgramsTerm -> Boolean
 isSingleNgramsTerm nt = isSingleTerm $ ngramsTermText nt
@@ -1141,32 +1141,34 @@ syncResetButtonsCpt :: R.Component SyncResetButtonsProps
 syncResetButtonsCpt = here.component "syncResetButtons" cpt
   where
     cpt { afterSync, ngramsLocalPatch, performAction } _ = do
-      -- synchronizing <- T.useBox false
-      -- synchronizing' <- T.useLive T.unequal synchronizing
+      synchronizing <- T.useBox false
+      synchronizing' <- T.useLive T.unequal synchronizing
 
       let
         hasChanges = ngramsLocalPatch /= mempty
         hasChangesClass = if hasChanges then "" else " disabled"
 
+        synchronizingClass = if synchronizing' then " disabled" else ""
+
         resetClick _ = do
           performAction ResetPatches
 
         synchronizeClick _ = delay unit $ \_ -> do
-          -- T.write_ true synchronizing
+          T.write_ true synchronizing
           performAction $ Synchronize { afterSync: newAfterSync }
 
         newAfterSync x = do
           afterSync x
-          -- liftEffect $ T.write_ false synchronizing
+          liftEffect $ T.write_ false synchronizing
 
       pure $ H.div { className: "btn-toolbar" }
         [ H.div { className: "btn-group mr-2" }
-          [ H.button { className: "btn btn-danger " <> hasChangesClass
+          [ H.button { className: "btn btn-danger " <> hasChangesClass <> synchronizingClass
                      , on: { click: resetClick }
                      } [ H.text "Reset" ]
           ]
         , H.div { className: "btn-group mr-2" }
-          [ H.button { className: "btn btn-primary " <> hasChangesClass
+          [ H.button { className: "btn btn-primary " <> hasChangesClass <> synchronizingClass
                      , on: { click: synchronizeClick }
                      } [ H.text "Sync" ]
           ]
