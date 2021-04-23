@@ -137,7 +137,7 @@ explorerCpt :: R.Component Props
 explorerCpt = here.component "explorer" cpt
   where
     cpt props@{ backend
-              , boxes: boxes@{ graphVersion, showTree, sidePanelGraph, sidePanelState }
+              , boxes: boxes@{ graphVersion, reloadForest, showTree, sidePanelGraph, sidePanelState }
               , frontends
               , graph
               , graphId
@@ -164,7 +164,6 @@ explorerCpt = here.component "explorer" cpt
 
       dataRef <- R.useRef graph
       graphRef <- R.useRef null
-      reloadForest <- T.useBox T2.newReload
       controls <- Controls.useGraphControls { forceAtlasS
                                             , graph
                                             , graphId
