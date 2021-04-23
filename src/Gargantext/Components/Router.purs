@@ -352,6 +352,7 @@ listsCpt = here.component "lists" cpt where
                      , forestOpen
                      , handed
                      , reloadForest
+                     , reloadMainPage
                      , reloadRoot
                      , route
                      , sessions
@@ -366,6 +367,7 @@ listsCpt = here.component "lists" cpt where
     pure $ authed sessionProps $
       Lists.listsWithSessionContext { nodeId
                                     , reloadForest
+                                    , reloadMainPage
                                     , reloadRoot
                                     , session
                                     , sessionUpdate: \_ -> pure unit

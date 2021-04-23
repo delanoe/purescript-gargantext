@@ -77,8 +77,9 @@ tabsCpt = here.component "tabs" cpt
         , sidePanel
         , sidePanelState
         , reloadForest } _ = do
-      active <- R.useState' 0
-      pure $ Tab.tabs { selected: fst active, tabs: tabs' }
+      activeTab <- T.useBox 0
+
+      pure $ Tab.tabs { activeTab, tabs: tabs' }
       where
         tabs' =
           [ "Documents"     /\ docs

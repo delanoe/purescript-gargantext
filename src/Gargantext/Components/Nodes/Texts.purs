@@ -160,8 +160,10 @@ tabsCpt = here.component "tabs" cpt
     cpt { cacheState, corpusId, corpusData, frontends, session, sidePanel, sidePanelState } _ = do
       let path = initialPath
 
+      activeTab <- T.useBox 0
+
       pure $ Tab.tabs {
-          selected: 0
+          activeTab
         , tabs: [
             "Documents"       /\ R.fragment [
                 histo { path, session }

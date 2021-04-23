@@ -4,6 +4,7 @@ import Prelude hiding (div)
 import Data.Array (fromFoldable)
 import Data.Tuple (Tuple(..))
 import Reactix as R
+import Toestand as T
 
 import Gargantext.Components.GraphExplorer.Types (GraphSideCorpus(..))
 import Gargantext.Components.FacetsTable (docView)
@@ -32,7 +33,9 @@ tabsCpt :: R.Component Props
 tabsCpt = here.component "tabs" cpt
   where
     cpt {frontends, query, session, sides} _ = do
-      pure $ Tab.tabs { selected: 0, tabs: tabs' }
+      activeTab <- T.useBox 0
+
+      pure $ Tab.tabs { activeTab, tabs: tabs' }
       where
         tabs' = fromFoldable $ tab frontends session query <$> sides
 

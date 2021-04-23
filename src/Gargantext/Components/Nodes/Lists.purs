@@ -1,8 +1,6 @@
 module Gargantext.Components.Nodes.Lists where
 
 import Data.Maybe (Maybe(..))
-import Data.Tuple (fst, snd)
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Gargantext.AsyncTasks as GAT
@@ -41,6 +39,7 @@ listsWithSessionContextCpt = here.component "listsWithSessionContext" cpt where
 type CommonPropsNoSession =
   ( nodeId         :: Int
   , reloadForest   :: T2.ReloadS
+  , reloadMainPage :: T2.ReloadS
   , reloadRoot     :: T2.ReloadS
   , sessionUpdate  :: Session -> Effect Unit
   , sidePanel      :: T.Box (Maybe (Record SidePanel))
@@ -72,12 +71,16 @@ listsLayoutWithKeyCpt :: R.Component KeyProps
 listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
   cpt { nodeId
       , reloadForest
+      , reloadMainPage
       , reloadRoot
       , session
       , sessionUpdate
       , sidePanel
       , sidePanelState
       , tasks } _ = do
+    activeTab <- T.useBox 0
+    reloadMainPage' <- T.useLive T.unequal reloadMainPage
+
     let path = { nodeId, session }
 
     cacheState <- T.useBox $ getCacheState CacheOn session nodeId
@@ -101,7 +104,8 @@ listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
             , title: "Corpus " <> name
             , user: authors } []
         , Tabs.tabs {
-              cacheState
+              activeTab
+            , cacheState
             , corpusData
             , corpusId
             , key: "listsLayoutWithKey-tabs-" <> (show cacheState')

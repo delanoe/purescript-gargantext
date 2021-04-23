@@ -76,11 +76,17 @@ remove id task storage = T.modify_ newStorage storage
 
 -- When a task is finished: which tasks cause forest or app reload
 asyncTaskTriggersAppReload :: GT.AsyncTaskType -> Boolean
-asyncTaskTriggersAppReload GT.UpdateNgramsCharts = true
 asyncTaskTriggersAppReload _                     = false
 
 asyncTaskTTriggersAppReload :: GT.AsyncTaskWithType -> Boolean
 asyncTaskTTriggersAppReload (GT.AsyncTaskWithType { typ }) = asyncTaskTriggersAppReload typ
+
+asyncTaskTriggersMainPageReload :: GT.AsyncTaskType -> Boolean
+asyncTaskTriggersMainPageReload GT.UpdateNgramsCharts = true
+asyncTaskTriggersMainPageReload _                     = false
+
+asyncTaskTTriggersMainPageReload :: GT.AsyncTaskWithType -> Boolean
+asyncTaskTTriggersMainPageReload (GT.AsyncTaskWithType { typ }) = asyncTaskTriggersMainPageReload typ
 
 asyncTaskTriggersTreeReload :: GT.AsyncTaskType -> Boolean
 asyncTaskTriggersTreeReload GT.Form       = true

@@ -70,8 +70,9 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component TabsProps
 tabsCpt = here.component "tabs" cpt where
   cpt props _ = do
-    active <- R.useState' 0
-    pure $ Tab.tabs { selected: fst active, tabs: tabs' props }
+    activeTab <- T.useBox 0
+
+    pure $ Tab.tabs { activeTab, tabs: tabs' props }
   tabs' props@{ sidePanel, sidePanelState } =
     [ "Documents"     /\ docs
     , "Patents"       /\ ngramsView (viewProps Patents)

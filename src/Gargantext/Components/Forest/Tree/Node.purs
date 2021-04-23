@@ -85,6 +85,7 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
               , isLeaf
               , name
               , nodeType
+              , reload
               , reloadMainPage
               , reloadRoot
               , route
@@ -152,12 +153,19 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
             if GAT.asyncTaskTTriggersAppReload t then do
               here.log2 "reloading root for task" t
               T2.reload reloadRoot
-            else if GAT.asyncTaskTTriggersTreeReload t then do
-              here.log2 "reloading tree for task" t
-              T2.reload reloadMainPage
             else do
-              here.log2 "task doesn't trigger a reload" t
-              pure unit
+              if GAT.asyncTaskTTriggersTreeReload t then do
+                here.log2 "reloading tree for task" t
+                T2.reload reload
+              else do
+                here.log2 "task doesn't trigger a tree reload" t
+                pure unit
+              if GAT.asyncTaskTTriggersMainPageReload t then do
+                here.log2 "reloading main page for task" t
+                T2.reload reloadMainPage
+              else do
+                here.log2 "task doesn't trigger a main page reload" t
+                pure unit
             -- snd tasks $ GAT.Finish id' t
             -- mT <- T.read tasks
             -- case mT of

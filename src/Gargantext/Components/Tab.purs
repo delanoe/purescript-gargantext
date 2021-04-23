@@ -1,6 +1,5 @@
 module Gargantext.Components.Tab where
 
-import Prelude hiding (div)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
@@ -8,14 +7,16 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
+import Gargantext.Prelude
+
 import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Tab"
 
 type TabsProps = (
-    selected :: Int
-  , tabs     :: Array (Tuple String R.Element)
+    activeTab  :: T.Box Int
+  , tabs       :: Array (Tuple String R.Element)
   )
 
 tabs :: R2.Leaf TabsProps
@@ -24,18 +25,17 @@ tabs props = R.createElement tabsCpt props []
 -- this is actually just the list of tabs, not the tab contents itself
 tabsCpt :: R.Component TabsProps
 tabsCpt = here.component "tabs" cpt where
-  cpt props _ = do
-    activeTab <- T.useBox props.selected
+  cpt props@{ activeTab, tabs } _ = do
     activeTab' <- T.useLive T.unequal activeTab
 
     pure $ H.div {}
       [ H.nav {}
         [ H.br {}
         , H.div { className: "nav nav-tabs", title: "Search result" }
-          (mapWithIndex (button activeTab activeTab') props.tabs)
+          (mapWithIndex (button activeTab activeTab') tabs)
         ]
       , H.div { className: "tab-content" }
-        (mapWithIndex (item activeTab') props.tabs)
+        (mapWithIndex (item activeTab') tabs)
       ]
   button activeTab selected index (name /\ _) =
     H.a { className, on: { click } } [ H.text name ] where

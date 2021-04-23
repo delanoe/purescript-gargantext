@@ -164,7 +164,7 @@ forestLayoutMain = R.createElement forestLayoutMainCpt
 forestLayoutMainCpt :: R.Component Props
 forestLayoutMainCpt = here.component "forestLayoutMain" cpt where
   cpt props@{ reloadMainPage } children =
-    pure $ forestLayoutRaw props [ mainPage { reloadMainPage } children ]
+    pure $ forestLayoutRaw props [ mainPage {} children ]
 
 forestLayoutRaw :: R2.Component Props
 forestLayoutRaw = R.createElement forestLayoutRawCpt
@@ -203,20 +203,15 @@ forestLayoutRawCpt = here.component "forestLayoutRaw" cpt where
                  , showLogin
                  , tasks } []
 
-type MainPage =
-  ( reloadMainPage :: T2.ReloadS )
-
-mainPage :: R2.Component MainPage
+mainPage :: R2.Component ()
 mainPage = R.createElement mainPageCpt
 
 -- mainPageCpt :: R.Memo ()
 -- mainPageCpt = R.memo (here.component "mainPage" cpt) where
-mainPageCpt :: R.Component MainPage
+mainPageCpt :: R.Component ()
 mainPageCpt = here.component "mainPage" cpt
   where
-    cpt { reloadMainPage } children = do
-      reloadMainPage' <- T.useLive T.unequal reloadMainPage
-
+    cpt _ children = do
       pure $ H.div { className: "col-md-10" }
         [ H.div { id: "page-wrapper" }
           [ H.div { className: "container-fluid" } children ]
