@@ -13,8 +13,6 @@ import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Record as Record
-import Record.Extra as REX
 import Toestand as T
 
 import Gargantext.AsyncTasks as GAT

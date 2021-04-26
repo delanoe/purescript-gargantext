@@ -380,12 +380,12 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
       , localCategories
       , params } _ = do
     reload <- T.useBox T2.newReload
-
-    localCategories' <- T.useLive T.unequal localCategories
     mCurrentDocId <- T.useFocused
           (maybe Nothing _.mCurrentDocId)
           (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentDocId = val })) sidePanel
     mCurrentDocId' <- T.useLive T.unequal mCurrentDocId
+
+    localCategories' <- T.useLive T.unequal localCategories
 
     pure $ TT.table
       { colNames
@@ -417,7 +417,6 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
                                   [ docChooser { listId
                                                , mCorpusId
                                                , nodeId: r._id
-                                               , selected
                                                , sidePanel
                                                , sidePanelState
                                                , tableReload: reload } []
@@ -443,15 +442,14 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
               where
                 cat         = fromMaybe category (localCategories' ^. at _id)
                 -- checked    = Star_1 == cat
+                selected   = mCurrentDocId' == Just r._id
                 tClassName = trashClassName cat selected
                 className  = gi cat
-                selected = mCurrentDocId' == Just r._id
 
 type DocChooser = (
     listId         :: ListId
   , mCorpusId      :: Maybe NodeID
   , nodeId         :: NodeID
-  , selected       :: Boolean
   , sidePanel      :: T.Box (Maybe (Record TextsT.SidePanel))
   , sidePanelState :: T.Box SidePanelState
   , tableReload    :: T2.ReloadS
@@ -469,29 +467,37 @@ docChooserCpt = here.component "docChooser" cpt
     cpt { listId
         , mCorpusId: Just corpusId
         , nodeId
-        , selected
         , sidePanel
         , sidePanelState
         , tableReload } _ = do
+      mCurrentDocId <- T.useFocused
+            (maybe Nothing _.mCurrentDocId)
+            (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentDocId = val })) sidePanel
+      mCurrentDocId' <- T.useLive T.unequal mCurrentDocId
 
-      let eyeClass = if selected then "fa-eye" else "fa-eye-slash"
+      let selected = mCurrentDocId' == Just nodeId
+          eyeClass = if selected then "fa-eye" else "fa-eye-slash"
 
       pure $ H.div { className: "btn" } [
         H.span { className: "fa " <> eyeClass
-               , on: { click: onClick } } []
+               , on: { click: onClick selected } } []
       ]
       where
-        onClick _ = do
+        onClick selected _ = do
           -- log2 "[docChooser] onClick, listId" listId
           -- log2 "[docChooser] onClick, corpusId" corpusId
           -- log2 "[docChooser] onClick, nodeId" nodeId
           -- R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
           -- T2.reload tableReload
-          T.write_ (Just { corpusId: corpusId
-                         , listId: listId
-                         , mCurrentDocId: Nothing
-                         , nodeId: nodeId }) sidePanel
-          T.write_ Opened sidePanelState
+          if selected then do
+            T.write_ Nothing sidePanel
+            T.write_ Closed sidePanelState
+          else do
+            T.write_ (Just { corpusId: corpusId
+                          , listId: listId
+                          , mCurrentDocId: Just nodeId
+                          , nodeId: nodeId }) sidePanel
+            T.write_ Opened sidePanelState
           log2 "[docChooser] sidePanel opened" sidePanelState
 
 
