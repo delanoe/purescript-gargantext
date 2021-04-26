@@ -9,7 +9,7 @@ module Gargantext.Components.Forest
   ) where
 
 import Data.Array as A
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe, fromMaybe)
 import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H

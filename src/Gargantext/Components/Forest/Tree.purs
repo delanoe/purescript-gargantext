@@ -198,75 +198,95 @@ childLoaderCpt = here.component "childLoader" cpt where
 type PerformActionProps =
   ( setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit)) | PACommon )
 
--- | This thing is basically a hangover from when garg was a thermite
--- | application. we should slowly get rid of it.
-performAction :: Action -> Record PerformActionProps -> Aff Unit
-performAction (DeleteNode nt) p@{ forestOpen
-                                , session
-                                , tree: (NTree (LNode {id, parent_id}) _) } = do
+closePopover { setPopoverRef } =
+   liftEffect $ traverse_ (\set -> set false) (R.readRef setPopoverRef)
+
+refreshTree p = liftEffect $ T2.reload p.reloadTree *> closePopover p
+
+deleteNode' nt p@{ tree: (NTree (LNode {id, parent_id}) _) } = do
   case nt of
-    GT.NodePublic GT.FolderPublic -> void $ deleteNode session nt id
-    GT.NodePublic _               -> void $ unpublishNode session parent_id id
-    _                             -> void $ deleteNode session nt id
-  liftEffect $ T.modify_ (Set.delete (mkNodeId session id)) forestOpen
-  performAction RefreshTree p
-performAction (DoSearch task) p@{ tasks
-                                , tree: (NTree (LNode {id}) _) } = liftEffect $ do
+    GT.NodePublic GT.FolderPublic -> void $ deleteNode p.session nt id
+    GT.NodePublic _               -> void $ unpublishNode p.session parent_id id
+    _                             -> void $ deleteNode p.session nt id
+  liftEffect $ T.modify_ (Set.delete (mkNodeId p.session id)) p.forestOpen
+  refreshTree p
+
+doSearch task p@{ tasks, tree: NTree (LNode {id}) _ } = liftEffect $ do
   GAT.insert id task tasks
   log2 "[performAction] DoSearch task:" task
-performAction (UpdateNode params) p@{ tasks
-                                    , tree: (NTree (LNode {id}) _) } = do
+  
+updateNode params p@{ tasks, tree: (NTree (LNode {id}) _) } = do
   task <- updateRequest params p.session id
   liftEffect $ do
     GAT.insert id task tasks
     log2 "[performAction] UpdateNode task:" task
-performAction (RenameNode name) p@{ tree: (NTree (LNode {id}) _) } = do
+
+renameNode name p@{ tree: (NTree (LNode {id}) _) } = do
   void $ rename p.session id $ RenameValue { text: name }
-  performAction RefreshTree p
-performAction (ShareTeam username) p@{ tree: (NTree (LNode {id}) _)} =
+  refreshTree p
+
+shareTeam username p@{ tree: (NTree (LNode {id}) _)} =
   void $ Share.shareReq p.session id $ Share.ShareTeamParams {username}
-performAction (SharePublic { params }) p@{ forestOpen } = traverse_ f params where
+
+sharePublic params p@{ forestOpen } = traverse_ f params where
   f (SubTreeOut { in: inId, out }) = do
     void $ Share.shareReq p.session inId $ Share.SharePublicParams { node_id: out }
     liftEffect $ T.modify_ (Set.insert (mkNodeId p.session out)) forestOpen
-    performAction RefreshTree p
-performAction (AddContact params) p@{ tree: (NTree (LNode {id}) _) } =
-    void $ Contact.contactReq p.session id params
-performAction (AddNode name nodeType) p@{ forestOpen
-                                        , tree: (NTree (LNode { id }) _) } = do
+    refreshTree p
+
+addContact params p@{ tree: (NTree (LNode {id}) _) } =
+  void $ Contact.contactReq p.session id params
+
+addNode' name nodeType p@{ forestOpen, tree: (NTree (LNode { id }) _) } = do
   task <- addNode p.session id $ AddNodeValue {name, nodeType}
   liftEffect $ T.modify_ (Set.insert (mkNodeId p.session id)) forestOpen
-  performAction RefreshTree p
-performAction (UploadFile nodeType fileType mName blob) p@{ tasks
-                                                          , tree: (NTree (LNode { id }) _) } = do
+  refreshTree p
+
+uploadFile' nodeType fileType mName blob p@{ tasks, tree: (NTree (LNode { id }) _) } = do
   task <- uploadFile p.session nodeType id fileType {mName, blob}
   liftEffect $ do
     GAT.insert id task tasks
     log2 "[performAction] UploadFile, uploaded, task:" task
-performAction (UploadArbitraryFile mName blob) p@{ tasks
-                                                 , tree: (NTree (LNode { id }) _) } = do
+
+uploadArbitraryFile' mName blob p@{ tasks, tree: (NTree (LNode { id }) _) } = do
   task <- uploadArbitraryFile p.session id { blob, mName }
   liftEffect $ do
     GAT.insert id task tasks
     log2 "[performAction] UploadArbitraryFile, uploaded, task:" task
-performAction DownloadNode _ = liftEffect $ log "[performAction] DownloadNode"
-performAction (MoveNode {params}) p@{ forestOpen
-                                    , session } = traverse_ f params where
+
+moveNode params p@{ forestOpen, session } = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     void $ moveNodeReq p.session in' out
     liftEffect $ T.modify_ (Set.insert (mkNodeId session out)) forestOpen
-    performAction RefreshTree p
-performAction (MergeNode { params }) p = traverse_ f params where
+    refreshTree p
+
+mergeNode params p = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     void $ mergeNodeReq p.session in' out
-    performAction RefreshTree p
-performAction (LinkNode { nodeType, params }) p = traverse_ f params where
+    refreshTree p
+
+linkNode nodeType params p = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     void $ linkNodeReq p.session nodeType in' out
-    performAction RefreshTree p
-performAction RefreshTree p = do
-  liftEffect $ T2.reload p.reloadTree
-  performAction ClosePopover p
+    refreshTree p
+
+-- | This thing is basically a hangover from when garg was a thermite
+-- | application. we should slowly get rid of it.
+performAction :: Action -> Record PerformActionProps -> Aff Unit
+performAction (DeleteNode nt) p = deleteNode' nt p
+performAction (DoSearch task) p = doSearch task p
+performAction (UpdateNode params) p = updateNode params p
+performAction (RenameNode name) p = renameNode name p
+performAction (ShareTeam username) p = shareTeam username p
+performAction (SharePublic { params }) p = sharePublic params p
+performAction (AddContact params) p = addContact params p
+performAction (AddNode name nodeType) p = addNode' name nodeType p
+performAction (UploadFile nodeType fileType mName blob) p = uploadFile' nodeType fileType mName blob p
+performAction (UploadArbitraryFile mName blob) p = uploadArbitraryFile' mName blob p
+performAction DownloadNode _ = liftEffect $ log "[performAction] DownloadNode"
+performAction (MoveNode {params}) p = moveNode params p
+performAction (MergeNode {params}) p = mergeNode params p
+performAction (LinkNode { nodeType, params }) p = linkNode nodeType params p
+performAction RefreshTree p = refreshTree p
 performAction NoAction _ = liftEffect $ log "[performAction] NoAction"
-performAction ClosePopover { setPopoverRef } =
-  liftEffect $ traverse_ (\set -> set false) (R.readRef setPopoverRef)
+performAction ClosePopover p = closePopover p
