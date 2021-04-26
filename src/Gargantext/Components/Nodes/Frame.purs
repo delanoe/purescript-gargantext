@@ -46,15 +46,13 @@ instance encodeJsonHyperdata :: Argonaut.EncodeJson Hyperdata where
 
 type Props =
   ( nodeId   :: Int
-  , session  :: R.Context Session
   , nodeType :: NodeType
+  , session  :: Session
   )
 
 type KeyProps =
   ( key      :: String
-  , nodeId   :: Int
-  , session  :: Session
-  , nodeType :: NodeType
+  | Props
   )
 
 frameLayout :: R2.Leaf Props
@@ -62,9 +60,10 @@ frameLayout props = R.createElement frameLayoutCpt props []
 
 frameLayoutCpt :: R.Component Props
 frameLayoutCpt = here.component "frameLayout" cpt where
-  cpt { nodeId, nodeType, session } _ = cp <$> R.useContext session where
-    cp s = frameLayoutWithKey { key, nodeId, nodeType, session: s } where
-      key = show (sessionId s) <> "-" <> show nodeId
+  cpt { nodeId, nodeType, session } _ = do
+    pure $ frameLayoutWithKey { key, nodeId, nodeType, session }
+      where
+        key = show (sessionId session) <> "-" <> show nodeId
 
 frameLayoutWithKey :: R2.Leaf KeyProps
 frameLayoutWithKey props = R.createElement frameLayoutWithKeyCpt props []

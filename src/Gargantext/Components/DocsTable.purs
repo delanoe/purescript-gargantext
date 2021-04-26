@@ -379,18 +379,19 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
                 , totalRecords }
       , localCategories
       , params } _ = do
-
     reload <- T.useBox T2.newReload
 
     localCategories' <- T.useLive T.unequal localCategories
-    sidePanel' <- T.useLive T.unequal sidePanel
-    let mCurrentDocId = maybe Nothing (_.mCurrentDocId) sidePanel'
+    mCurrentDocId <- T.useFocused
+          (maybe Nothing _.mCurrentDocId)
+          (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentDocId = val })) sidePanel
+    mCurrentDocId' <- T.useLive T.unequal mCurrentDocId
 
     pure $ TT.table
       { colNames
       , container: TT.defaultContainer { title: "Documents" }
       , params
-      , rows: rows reload localCategories' mCurrentDocId
+      , rows: rows reload localCategories' mCurrentDocId'
       , syncResetButton : [ H.div {} [] ]
       , totalRecords
       , wrapColElts
@@ -407,7 +408,7 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
           | otherwise = Routes.Document sid listId
         colNames = TT.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source", "Score" ]
         wrapColElts = const identity
-        rows reload localCategories' mCurrentDocId = row <$> A.toUnfoldable documents
+        rows reload localCategories' mCurrentDocId' = row <$> A.toUnfoldable documents
           where
             row dv@(DocumentsView r@{ _id, category }) =
               { row:
@@ -444,7 +445,7 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
                 -- checked    = Star_1 == cat
                 tClassName = trashClassName cat selected
                 className  = gi cat
-                selected = mCurrentDocId == Just r._id
+                selected = mCurrentDocId' == Just r._id
 
 type DocChooser = (
     listId         :: ListId

@@ -160,7 +160,7 @@ type KeyLayoutProps = ( key :: String, session :: Session | ReloadProps )
 saveContactHyperdata :: Session -> Int -> HyperdataContact -> Aff Int
 saveContactHyperdata session id = put session (Routes.NodeAPI Node (Just id) "")
 
-type AnnuaireLayoutProps = ( annuaireId :: Int, session :: R.Context Session | ReloadProps )
+type AnnuaireLayoutProps = ( annuaireId :: Int, session :: Session | ReloadProps )
 
 type AnnuaireKeyLayoutProps = ( annuaireId :: Int | KeyLayoutProps )
 
@@ -178,8 +178,7 @@ contactLayoutCpt = here.component "contactLayout" cpt where
       , sidePanel
       , sidePanelState
       , tasks } _ = do
-    s <- R.useContext session
-    let key = show (sessionId s) <> "-" <> show nodeId
+    let key = show (sessionId session) <> "-" <> show nodeId
     pure $
       contactLayoutWithKey
       { annuaireId
@@ -188,7 +187,7 @@ contactLayoutCpt = here.component "contactLayout" cpt where
       , nodeId
       , reloadForest
       , reloadRoot
-      , session: s
+      , session
       , sidePanel
       , sidePanelState
       , tasks

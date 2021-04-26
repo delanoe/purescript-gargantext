@@ -1,7 +1,6 @@
 module Gargantext.Components.Nodes.Annuaire.User
   ( module Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
   , userLayout
-  , userLayoutSessionContext
   )
   where
 
@@ -169,17 +168,6 @@ type KeyLayoutProps = (
     key :: String
   | LayoutProps
   )
-
-userLayoutSessionContext :: R2.Component LayoutSessionContextProps
-userLayoutSessionContext = R.createElement userLayoutSessionContextCpt
-
-userLayoutSessionContextCpt :: R.Component LayoutSessionContextProps
-userLayoutSessionContextCpt = here.component "userLayoutSessionContext" cpt
-  where
-    cpt props@{ session } _ = do
-      session' <- R.useContext session
-
-      pure $ userLayout (Record.merge { session: session' } $ (REX.pick props :: Record LayoutNoSessionProps)) []
 
 userLayout :: R2.Component LayoutProps
 userLayout = R.createElement userLayoutCpt

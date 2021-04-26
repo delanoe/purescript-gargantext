@@ -33,20 +33,6 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Texts"
 
 --------------------------------------------------------
-textsWithSessionContext :: R2.Component CommonPropsSessionContext
-textsWithSessionContext = R.createElement textsWithSessionContextCpt
-
-textsWithSessionContextCpt :: R.Component CommonPropsSessionContext
-textsWithSessionContextCpt = here.component "textsWithSessionContext" cpt
-  where
-    cpt props@{ session, sidePanel, sidePanelState } _ = do
-      session' <- R.useContext session
-
-      pure $ R.fragment
-        [
-          textsLayout (Record.merge { session: session', sidePanel, sidePanelState } props) []
-        -- , H.div { className: "side-panel" } [ sidePanelC { session: session', sidePanel } [] ]
-        ]
 
 
 type CommonPropsNoSession = (
@@ -57,7 +43,6 @@ type CommonPropsNoSession = (
   )
 
 type Props = WithSession CommonPropsNoSession
-type CommonPropsSessionContext = WithSessionContext CommonPropsNoSession
 
 
 textsLayout :: R2.Component Props
@@ -427,9 +412,7 @@ sidePanelDocViewCpt = here.component "sidePanelDocView" cpt
       pure $ H.div {} []
     cpt { mSidePanel: Just { corpusId, listId, nodeId }
         , session } _ = do
-      let session' = R.createContext session
-
       pure $ D.documentLayout { listId
                               , mCorpusId: Just corpusId
                               , nodeId
-                              , session: session' } []
+                              , session } []

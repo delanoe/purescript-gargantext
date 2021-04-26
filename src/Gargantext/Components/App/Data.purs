@@ -11,7 +11,7 @@ import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Ends (Backend)
 import Gargantext.Routes (AppRoute(Home))
 import Gargantext.Sessions as Sessions
-import Gargantext.Sessions (OpenNodes, Sessions)
+import Gargantext.Sessions (OpenNodes, Session, Sessions)
 import Gargantext.Types (Handed(RightHanded), SidePanelState(..))
 import Gargantext.Utils.Toestand as T2
 
@@ -24,6 +24,7 @@ type App =
   , reloadMainPage :: T2.Reload
   , reloadRoot     :: T2.Reload
   , route          :: AppRoute
+  , session        :: Maybe Session
   , sessions       :: Sessions
   , showCorpus     :: Boolean
   , showLogin      :: Boolean
@@ -45,6 +46,7 @@ emptyApp =
   , reloadMainPage : T2.newReload
   , reloadRoot     : T2.newReload
   , route          : Home
+  , session        : Nothing
   , sessions       : Sessions.empty
   , showCorpus     : false
   , showLogin      : false
@@ -65,6 +67,7 @@ type Boxes =
   , reloadMainPage :: T2.ReloadS
   , reloadRoot     :: T2.ReloadS
   , route          :: T.Box AppRoute
+  , session        :: T.Box (Maybe Session)
   , sessions       :: T.Box Sessions
   , showCorpus     :: T.Box Boolean
   , showLogin      :: T.Box Boolean

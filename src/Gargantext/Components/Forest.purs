@@ -52,7 +52,6 @@ type Props =
 
 type TreeExtra = (
     forestOpen :: T.Box OpenNodes
-  , session :: Session
   )
 
 forest :: R2.Component Props

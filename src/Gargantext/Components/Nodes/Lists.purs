@@ -24,16 +24,6 @@ import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Lists"
-
-listsWithSessionContext :: R2.Component CommonPropsSessionContext
-listsWithSessionContext = R.createElement listsWithSessionContextCpt
-
-listsWithSessionContextCpt :: R.Component CommonPropsSessionContext
-listsWithSessionContextCpt = here.component "listsWithSessionContext" cpt where
-  cpt props@{ session, sidePanel, sidePanelState } _ = do
-      session' <- R.useContext session
-
-      pure $ listsLayout (Record.merge { session: session', sidePanel, sidePanelState } props) []
 --------------------------------------------------------
 
 type CommonPropsNoSession =

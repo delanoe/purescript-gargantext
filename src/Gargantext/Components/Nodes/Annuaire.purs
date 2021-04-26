@@ -49,7 +49,7 @@ newtype IndividuView =
 type LayoutProps =
   ( frontends :: Frontends
   , nodeId    :: Int
-  , session   :: R.Context Session
+  , session   :: Session
   )
 
 annuaireLayout :: R2.Leaf LayoutProps
@@ -57,15 +57,14 @@ annuaireLayout props = R.createElement annuaireLayoutCpt props []
 
 annuaireLayoutCpt :: R.Component LayoutProps
 annuaireLayoutCpt = here.component "annuaireLayout" cpt where
-  cpt { frontends, nodeId, session } _ = cp <$> R.useContext session where
-    cp s = annuaireLayoutWithKey { frontends, key, nodeId, session: s } where
-      key = show (sessionId s) <> "-" <> show nodeId
+  cpt { frontends, nodeId, session } _ = do
+    pure $ annuaireLayoutWithKey { frontends, key, nodeId, session }
+      where
+        key = show (sessionId session) <> "-" <> show nodeId
 
 type KeyLayoutProps =
-  ( frontends :: Frontends
-  , nodeId    :: Int
-  , session   :: Session
-  , key       :: String
+  ( key       :: String
+  | LayoutProps
   )
 
 annuaireLayoutWithKey :: R2.Leaf KeyLayoutProps

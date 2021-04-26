@@ -55,8 +55,6 @@ type BaseProps =
   , tasks          :: T.Box GAT.Storage
   )
 
-type LayoutLoaderProps = ( session :: R.Context Session | BaseProps )
-
 type LayoutProps =
   ( session      :: Session
   | BaseProps )
@@ -75,17 +73,6 @@ type Props =
   )
 
 --------------------------------------------------------------
-explorerLayoutLoader :: R2.Component LayoutLoaderProps
-explorerLayoutLoader = R.createElement explorerLayoutLoaderCpt
-
-explorerLayoutLoaderCpt :: R.Component LayoutLoaderProps
-explorerLayoutLoaderCpt = here.component "explorerLayoutLoader" cpt where
-  cpt props _ = do
-    session <- R.useContext props.session -- TODO: ugh, props fiddling
-    let base = RX.pick props :: Record BaseProps
-    let props' = Record.merge base { session }
-    pure $ explorerLayout props' []
-    
 explorerLayout :: R2.Component LayoutProps
 explorerLayout = R.createElement explorerLayoutCpt
 
