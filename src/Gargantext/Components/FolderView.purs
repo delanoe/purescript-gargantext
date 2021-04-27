@@ -108,5 +108,14 @@ folderCpt = here.component "folderCpt" cpt where
   getFolderPath :: NodeType -> SessionId -> Int -> String
   getFolderPath nodeType sid nodeId = appPath $ fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
 
+backButton :: R.Element
+backButton = 
+  H.button {
+    className: "btn btn-primary"
+  , on: {click: back}
+  } [
+    H.i { className: "fa fa-arrow-left"} []
+  ]
+
 loadFolders :: Record Props -> Aff FTree
 loadFolders {nodeId, session} = get session $ TreeFirstLevel (Just nodeId) ""
