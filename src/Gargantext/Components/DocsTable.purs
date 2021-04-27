@@ -151,7 +151,7 @@ docViewCpt = here.component "docView" cpt where
                        , sidePanelState
                        , tabType
                        , totalRecords
-                       } ] ] ]
+                       } [] ] ] ]
 
 type SearchBarProps =
   ( query :: T.Box Query )
@@ -247,8 +247,8 @@ filterDocs query docs = A.filter filterFunc docs
     filterFunc (Response { hyperdata: Hyperdata { title } }) =
       isJust $ Str.indexOf (Str.Pattern $ Str.toLower query) $ Str.toLower title
 
-pageLayout :: Record PageLayoutProps -> R.Element
-pageLayout props = R.createElement pageLayoutCpt props []
+pageLayout :: R2.Component PageLayoutProps
+pageLayout = R.createElement pageLayoutCpt
 
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = here.component "pageLayout" cpt where

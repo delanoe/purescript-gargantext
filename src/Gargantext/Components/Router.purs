@@ -125,6 +125,9 @@ authedCpt = here.component "authed" cpt where
     sessions' <- T.useLive T.unequal sessions
     let session' = Sessions.lookup sessionId sessions'
 
+    R.useEffect' $ do
+      T.write_ session' session
+
     case session' of
       Nothing -> pure $ home homeProps []
       Just s  -> pure $ R.fragment [ content s, footer {} [] ]
@@ -191,6 +194,9 @@ sidePanelCpt = here.component "sidePanel" cpt where
                            , sidePanelTexts } } _ = do
     sidePanelState' <- T.useLive T.unequal sidePanelState
     session' <- T.useLive T.unequal session
+
+    R.useEffect' $ do
+      here.log2 "sidePanel session" session'
 
     case session' of
       Nothing -> pure $ H.div {} []
