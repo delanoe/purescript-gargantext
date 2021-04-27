@@ -195,9 +195,6 @@ sidePanelCpt = here.component "sidePanel" cpt where
     sidePanelState' <- T.useLive T.unequal sidePanelState
     session' <- T.useLive T.unequal session
 
-    R.useEffect' $ do
-      here.log2 "sidePanel session" session'
-
     case session' of
       Nothing -> pure $ H.div {} []
       Just s  ->
@@ -233,10 +230,6 @@ openedSidePanelCpt = here.component "openedSidePanel" cpt where
                             , sidePanel: sidePanelLists
                             , sidePanelState } [] ]
       GR.PGraphExplorer s g -> do
-        R.useEffect' $ do
-          here.log2 "mGraph" mGraph'
-          here.log2 "mGraphMetaData" mGraphMetaData'
-
         case (mGraph' /\ mGraphMetaData') of
           (Nothing /\ _) -> pure $ wrapper []
           (_ /\ Nothing) -> pure $ wrapper []

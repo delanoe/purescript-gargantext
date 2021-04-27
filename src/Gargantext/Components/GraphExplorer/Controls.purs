@@ -10,7 +10,6 @@ import Data.Int as I
 import Data.Maybe (Maybe(..), maybe)
 import Data.Sequence as Seq
 import Data.Set as Set
-import Effect (Effect)
 import Effect.Timer (setTimeout)
 import Prelude
 import Reactix as R
@@ -52,8 +51,9 @@ type Controls =
   , showControls       :: T.Box Boolean
   , showEdges          :: T.Box SigmaxT.ShowEdgesState
   , showLouvain        :: T.Box Boolean
-  , sidePanelState     :: T.Box GT.SidePanelState
   , showTree           :: T.Box Boolean
+  , sidePanelState     :: T.Box GT.SidePanelState
+  , sideTab            :: T.Box GET.SideTab
   , sigmaRef           :: R.Ref Sigmax.Sigma
   )
 
@@ -88,6 +88,7 @@ controlsCpt = here.component "controls" cpt
         , showLouvain
         , showTree
         , sidePanelState
+        , sideTab
         , sigmaRef } _ = do
       forceAtlasState' <- T.useLive T.unequal forceAtlasState
       graphStage' <- T.useLive T.unequal graphStage
@@ -116,8 +117,9 @@ controlsCpt = here.component "controls" cpt
 
       -- Automatic opening of sidebar when a node is selected (but only first time).
       R.useEffect' $ do
-        if sidePanelState' == GT.InitialClosed && (not Set.isEmpty selectedNodeIds') then
+        if sidePanelState' == GT.InitialClosed && (not Set.isEmpty selectedNodeIds') then do
           T.write_ GT.Opened sidePanelState
+          T.write_ GET.SideTabData sideTab
         else
           pure unit
 
@@ -255,7 +257,7 @@ useGraphControls { forceAtlasS
   sigma <- Sigmax.initSigma
   sigmaRef <- R.useRef sigma
 
-  { multiSelectEnabled, removedNodeIds, selectedNodeIds, showControls } <- GEST.focusedSidePanel sidePanel
+  { multiSelectEnabled, removedNodeIds, selectedNodeIds, showControls, sideTab } <- GEST.focusedSidePanel sidePanel
 
   pure { edgeConfluence
        , edgeWeight
@@ -274,6 +276,7 @@ useGraphControls { forceAtlasS
        , showLouvain
        , sidePanelState
        , showTree
+       , sideTab
        , sigmaRef
        , reloadForest
        }
