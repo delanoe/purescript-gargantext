@@ -77,39 +77,31 @@ forestCpt = here.component "forest" cpt where
     --   T.write_ (Just tasks') tasks
     handed'       <- T.useLive T.unequal handed
     reloadForest' <- T.useLive T.unequal reloadForest
+    sessions'     <- T.useLive T.unequal sessions
+    -- forestOpen'   <- T.useLive T.unequal forestOpen
     -- reloadRoot'   <- T.useLive T.unequal reloadRoot
     -- route'        <- T.useLive T.unequal route
-    forestOpen'   <- T.useLive T.unequal forestOpen
-    sessions'     <- T.useLive T.unequal sessions
 
     showTree' <- T.useLive T.unequal showTree
 
     -- TODO If `reloadForest` is set, `reload` state should be updated
     -- TODO fix tasks ref
-    -- R.useEffect' $ do
-      -- R.setRef tasks $ Just tasks'
-    R2.useCache
-      ( forestOpen' /\  frontends /\ handed' /\ reloadForest' /\ sessions' /\ showTree' )
-      (cp handed' sessions' showTree')
-        where
-          common = RX.pick props :: Record Common
-          cp handed' sessions' showTree' _ = do
-            let className = "forest " <> if showTree' then "" else "d-none"
-
-            pure $ H.div { className }
-              (A.cons (plus handed' showLogin) (trees handed' sessions'))
-          trees handed' sessions' = (tree handed') <$> unSessions sessions'
-          tree handed' s@(Session {treeId}) =
-            treeLoader { forestOpen
-                       , frontends
-                       , handed: handed'
-                       , reload: reloadForest
-                       , reloadMainPage
-                       , reloadRoot
-                       , root: treeId
-                       , route
-                       , session: s
-                       , tasks } []
+    pure $ H.div { className: "forest " <> if showTree' then "" else "d-none" }
+      (A.cons (plus handed' showLogin) (trees handed' sessions'))
+    where
+      common = RX.pick props :: Record Common
+      trees handed' sessions' = (tree handed') <$> unSessions sessions'
+      tree handed' s@(Session {treeId}) =
+        treeLoader { forestOpen
+                   , frontends
+                   , handed: handed'
+                   , reload: reloadForest
+                   , reloadMainPage
+                   , reloadRoot
+                   , root: treeId
+                   , route
+                   , session: s
+                   , tasks } []
 
 plus :: Handed -> T.Box Boolean -> R.Element
 plus handed showLogin = H.div { className: "row" }
