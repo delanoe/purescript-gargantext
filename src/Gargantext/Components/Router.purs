@@ -192,8 +192,8 @@ sidePanelCpt = here.component "sidePanel" cpt where
                            , sidePanelState
                            , sidePanelLists
                            , sidePanelTexts } } _ = do
-    sidePanelState' <- T.useLive T.unequal sidePanelState
     session' <- T.useLive T.unequal session
+    sidePanelState' <- T.useLive T.unequal sidePanelState
 
     case session' of
       Nothing -> pure $ H.div {} []
@@ -209,19 +209,18 @@ openedSidePanelCpt :: R.Component (WithSession Props)
 openedSidePanelCpt = here.component "openedSidePanel" cpt where
   cpt props@{ boxes: boxes@{ graphVersion
                            , reloadForest
+                           , route
                            , sidePanelGraph
                            , sidePanelState
                            , sidePanelLists
                            , sidePanelTexts }
             , session} _ = do
-    route' <- T.useLive T.unequal boxes.route
-
     { mGraph, mMetaData, removedNodeIds, selectedNodeIds, sideTab } <- GEST.focusedSidePanel sidePanelGraph
     mGraph' <- T.useLive T.unequal mGraph
     mGraphMetaData' <- T.useLive T.unequal mMetaData
+    route' <- T.useLive T.unequal route
 
-    let className = "side-panel"
-    let wrapper = H.div { className }
+    let wrapper = H.div { className: "side-panel" }
 
     case route' of
       GR.Lists s n -> do
@@ -258,7 +257,7 @@ annuaire = R.createElement annuaireCpt
 
 annuaireCpt :: R.Component SessionNodeProps
 annuaireCpt = here.component "annuaire" cpt where
-  cpt props@{ boxes, nodeId, sessionId } _ = do
+  cpt props@{ boxes, nodeId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
                                    annuaireLayout { frontends: defaultFrontends
@@ -287,11 +286,13 @@ corpusDocument = R.createElement corpusDocumentCpt
 corpusDocumentCpt :: R.Component CorpusDocumentProps
 corpusDocumentCpt = here.component "corpusDocument" cpt
   where
-    cpt props@{ boxes, corpusId: corpusId', listId, nodeId, sessionId } _ = do
+    cpt props@{ boxes, corpusId: corpusId', listId, nodeId } _ = do
       let sessionProps = RE.pick props :: Record SessionProps
       pure $ authed (Record.merge { content: \session ->
-                                     documentMainLayout { mCorpusId: corpusId, listId: listId, nodeId, session } [] } sessionProps )[]
-        where corpusId = Just corpusId'
+                                     documentMainLayout { mCorpusId: Just corpusId'
+                                                        , listId: listId
+                                                        , nodeId
+                                                        , session } [] } sessionProps )[]
 
 dashboard :: R2.Component SessionNodeProps
 dashboard = R.createElement dashboardCpt
@@ -311,11 +312,13 @@ document = R.createElement documentCpt
 
 documentCpt :: R.Component DocumentProps
 documentCpt = here.component "document" cpt where
-  cpt props@{ boxes, listId, nodeId, sessionId } _ = do
+  cpt props@{ boxes, listId, nodeId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
-                                   documentMainLayout { listId, nodeId, mCorpusId, session } [] } sessionProps) []
-      where mCorpusId = Nothing
+                                   documentMainLayout { listId
+                                                      , nodeId
+                                                      , mCorpusId: Nothing
+                                                      , session } [] } sessionProps) []
 
 graphExplorer :: R2.Component SessionNodeProps
 graphExplorer = R.createElement graphExplorerCpt
@@ -370,8 +373,7 @@ listsCpt = here.component "lists" cpt where
                      , sidePanelState
                      , sidePanelLists
                      , tasks }
-            , nodeId
-            , sessionId } _ = do
+            , nodeId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
                                    Lists.listsLayout { nodeId
@@ -396,7 +398,7 @@ routeFile = R.createElement routeFileCpt
 
 routeFileCpt :: R.Component SessionNodeProps
 routeFileCpt = here.component "routeFile" cpt where
-  cpt props@{ boxes, nodeId, sessionId } _ = do
+  cpt props@{ boxes, nodeId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
                                    fileLayout { nodeId, session } } sessionProps) []
@@ -411,7 +413,7 @@ routeFrame = R.createElement routeFrameCpt
 
 routeFrameCpt :: R.Component RouteFrameProps
 routeFrameCpt = here.component "routeFrame" cpt where
-  cpt props@{ boxes, nodeId, nodeType, sessionId } _ = do
+  cpt props@{ boxes, nodeId, nodeType } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
                                    frameLayout { nodeId, nodeType, session } } sessionProps) []
@@ -421,7 +423,7 @@ team = R.createElement teamCpt
 
 teamCpt :: R.Component SessionNodeProps
 teamCpt = here.component "team" cpt where
-  cpt props@{ boxes, nodeId, sessionId } _ = do
+  cpt props@{ boxes, nodeId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
                                    corpusLayout { nodeId, session } } sessionProps) []
@@ -443,8 +445,7 @@ textsCpt = here.component "texts" cpt
                        , sidePanelState
                        , sidePanelTexts
                        , tasks }
-              , nodeId
-              , sessionId } _ = do
+              , nodeId } _ = do
       let sessionProps = RE.pick props :: Record SessionProps
       pure $ authed (Record.merge { content: \session ->
                                      Texts.textsLayout { frontends: defaultFrontends
@@ -463,8 +464,7 @@ userCpt = here.component "user" cpt where
                            , sidePanelState
                            , sidePanelTexts
                            , tasks }
-            , nodeId
-            , sessionId } _ = do
+            , nodeId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
                                    userLayout { frontends: defaultFrontends
@@ -489,8 +489,7 @@ contactCpt = here.component "contact" cpt where
                      , sidePanelTexts
                      , sidePanelState
                      , tasks }
-            , nodeId
-            , sessionId } _ = do
+            , nodeId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     let forestedProps = RE.pick props :: Record Props
     pure $ authed (Record.merge { content: \session ->

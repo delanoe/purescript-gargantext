@@ -49,7 +49,6 @@ linkNodeType  _   = GT.Error
 
 linkNode :: R2.Component SubTreeParamsIn
 linkNode = R.createElement linkNodeCpt
-
 linkNodeCpt :: R.Component SubTreeParamsIn
 linkNodeCpt = here.component "linkNode" cpt
   where

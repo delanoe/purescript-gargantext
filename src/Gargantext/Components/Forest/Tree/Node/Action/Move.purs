@@ -1,7 +1,6 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Move where
 
 import Data.Maybe (Maybe(..))
-import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -26,7 +25,6 @@ moveNodeReq session fromId toId =
 
 moveNode :: R2.Component SubTreeParamsIn
 moveNode = R.createElement moveNodeCpt
-
 moveNodeCpt :: R.Component SubTreeParamsIn
 moveNodeCpt = here.component "moveNode" cpt
   where

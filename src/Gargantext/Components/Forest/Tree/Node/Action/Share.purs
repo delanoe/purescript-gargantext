@@ -4,7 +4,6 @@ import Data.Argonaut as Argonaut
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
-import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Prelude (($))
 import Reactix as R
@@ -15,7 +14,7 @@ import Gargantext.Components.Forest.Tree.Node.Action (Action)
 import Gargantext.Components.Forest.Tree.Node.Action as Action
 import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
-import Gargantext.Prelude (class Eq, class Show, bind, pure)
+import Gargantext.Prelude (class Eq, class Show, bind, pure, Unit)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types (ID)
@@ -34,9 +33,6 @@ shareReq session nodeId =
 shareAction :: String -> Action
 shareAction username = Action.ShareTeam username
 
-------------------------------------------------------------------------
-textInputBox :: Record Tools.TextInputBoxProps -> R.Element
-textInputBox p = Tools.textInputBox p []
 
 ------------------------------------------------------------------------
 data ShareNodeParams = ShareTeamParams   { username :: String }
@@ -57,11 +53,30 @@ instance encodeJsonShareNodeParams :: Argonaut.EncodeJson ShareNodeParams where
 
 
 ------------------------------------------------------------------------
-shareNode :: Record SubTreeParamsIn -> R.Element
-shareNode p = R.createElement shareNodeCpt p []
+type ShareNode =
+  ( id :: ID
+  , dispatch :: Action -> Aff Unit )
 
-shareNodeCpt :: R.Component SubTreeParamsIn
+shareNode :: R2.Component ShareNode
+shareNode = R.createElement shareNodeCpt
+shareNodeCpt :: R.Component ShareNode
 shareNodeCpt = here.component "shareNode" cpt
+  where
+    cpt { dispatch, id } _ = do
+      isOpen <- T.useBox true
+      pure $ Tools.panel
+                [ Tools.textInputBox { boxAction: shareAction
+                                     , boxName: "Share"
+                                     , dispatch
+                                     , id
+                                     , isOpen
+                                     , text: "username" } []
+                ] (H.div {} [])
+------------------------------------------------------------------------
+publishNode :: R2.Component SubTreeParamsIn
+publishNode = R.createElement publishNodeCpt
+publishNodeCpt :: R.Component SubTreeParamsIn
+publishNodeCpt = here.component "publishNode" cpt
   where
     cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
       action <- T.useBox (Action.SharePublic { params: Nothing })
@@ -73,13 +88,13 @@ shareNodeCpt = here.component "shareNode" cpt
                 Nothing -> H.div {} []
               _   -> H.div {} []
 
-      pure $ Tools.panel [ subTreeView { action
-                                       , dispatch
-                                       , handed
-                                       , id
-                                       , nodeType
-                                       , session
-                                       , subTreeParams
-                                       } []
-              ] button
-
+      pure $ Tools.panel
+        [ subTreeView { action
+                      , dispatch
+                      , handed
+                      , id
+                      , nodeType
+                      , session
+                      , subTreeParams
+                      } []
+        ] button

@@ -7,6 +7,7 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Prelude
 
@@ -59,45 +60,49 @@ type CreateNodeProps =
   , nodeTypes :: Array NodeType
   )
 
-addNodeView :: Record CreateNodeProps
-            -> R.Element
-addNodeView p@{ dispatch, nodeType, nodeTypes } = R.createElement el p []
-  where
-    el = here.component "addNodeView" cpt
-    cpt {id, name} _ = do
-      nodeName@(name' /\ setNodeName) <- R.useState' "Name"
-      nodeType'@(nt /\ setNodeType)   <- R.useState' $ fromMaybe Folder $ head nodeTypes
+addNodeView :: R2.Component CreateNodeProps
+addNodeView = R.createElement addNodeViewCpt
+addNodeViewCpt :: R.Component CreateNodeProps
+addNodeViewCpt = here.component "addNodeView" cpt where
+  cpt { dispatch
+      , id
+      , name
+      , nodeTypes } _ = do
+    nodeName <- T.useBox "Name"
+    nodeName' <- T.useLive T.unequal nodeName
+    nodeType <- T.useBox $ fromMaybe Folder $ head nodeTypes
+    nodeType' <- T.useLive T.unequal nodeType
 
-      let
-          SettingsBox {edit} = settingsBox nt
-          setNodeType' nt = do
-            setNodeName $ const $ GT.prettyNodeType nt
-            setNodeType $ const nt
-          (maybeChoose /\ nt') = if length nodeTypes > 1
-                           then ([ formChoiceSafe nodeTypes Error setNodeType' ] /\ nt)
-                           else ([H.div {} [H.text $ "Creating a node of type "
-                                                  <> show defaultNt
-                                                  <> " with name:"
-                                           ]
-                                  ] /\ defaultNt
-                                 )
-                              where
-                                defaultNt = (fromMaybe Error $ head nodeTypes)
-          maybeEdit   = [ if edit
-                          then inputWithEnter {
-                              onBlur: \val -> setNodeName $ const val
-                            , onEnter: \_ -> launchAff_ $ dispatch (AddNode name' nt')
-                            , onValueChanged: \val -> setNodeName $ const val
-                            , autoFocus: true
-                            , className: "form-control"
-                            , defaultValue: name' -- (prettyNodeType nt')
-                            , placeholder: name'  -- (prettyNodeType nt')
-                            , type: "text"
-                            }
-                          else H.div {} []
-                        ]
+    let
+        SettingsBox {edit} = settingsBox nodeType'
+        setNodeType' nt = do
+          T.write_ (GT.prettyNodeType nt) nodeName
+          T.write_ nt nodeType
+        (maybeChoose /\ nt') = if length nodeTypes > 1
+                         then ([ formChoiceSafe nodeTypes Error setNodeType' ] /\ nodeType')
+                         else ([H.div {} [H.text $ "Creating a node of type "
+                                                <> show defaultNt
+                                                <> " with name:"
+                                         ]
+                                ] /\ defaultNt
+                               )
+                            where
+                              defaultNt = (fromMaybe Error $ head nodeTypes)
+        maybeEdit   = [ if edit
+                        then inputWithEnter {
+                            onBlur: \val -> T.write_ val nodeName
+                          , onEnter: \_ -> launchAff_ $ dispatch (AddNode nodeName' nt')
+                          , onValueChanged: \val -> T.write_ val nodeName
+                          , autoFocus: true
+                          , className: "form-control"
+                          , defaultValue: nodeName' -- (prettyNodeType nt')
+                          , placeholder: nodeName'  -- (prettyNodeType nt')
+                          , type: "text"
+                          }
+                        else H.div {} []
+                      ]
 
-      pure $ panel (maybeChoose <> maybeEdit) (submitButton (AddNode name' nt') dispatch)
+    pure $ panel (maybeChoose <> maybeEdit) (submitButton (AddNode nodeName' nt') dispatch)
 
 -- END Create Node
 

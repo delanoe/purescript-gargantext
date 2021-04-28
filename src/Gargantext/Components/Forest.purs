@@ -76,7 +76,6 @@ forestCpt = here.component "forest" cpt where
     -- R.useEffect' $ do
     --   T.write_ (Just tasks') tasks
     handed'       <- T.useLive T.unequal handed
-    reloadForest' <- T.useLive T.unequal reloadForest
     sessions'     <- T.useLive T.unequal sessions
     -- forestOpen'   <- T.useLive T.unequal forestOpen
     -- reloadRoot'   <- T.useLive T.unequal reloadRoot

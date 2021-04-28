@@ -40,20 +40,31 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Upload"
 -- UploadFile Action
 
 -- | Action : Upload
-actionUpload :: NodeType -> ID -> Session -> (Action -> Aff Unit) -> R.Hooks R.Element
-actionUpload NodeList id session dispatch =
-  pure $ uploadTermListView {dispatch, id, nodeType: GT.NodeList, session}
+type ActionUpload =
+  ( dispatch :: Action -> Aff Unit
+  , id       :: ID
+  , nodeType :: NodeType
+  , session  :: Session )
 
-actionUpload Corpus id session dispatch =
-  pure $ uploadFileView {dispatch, id, nodeType: Corpus, session}
+actionUpload :: R2.Component ActionUpload
+actionUpload = R.createElement actionUploadCpt
+actionUploadCpt :: R.Component ActionUpload
+actionUploadCpt = here.component "actionUpload" cpt where
+  cpt { nodeType: Corpus, dispatch, id, session } _ = pure $ uploadFileView {dispatch, id, nodeType: GT.Corpus, session}
+  cpt { nodeType: NodeList, dispatch, id, session } _ = pure $ uploadTermListView {dispatch, id, nodeType: GT.NodeList, session}
+  cpt props@{ nodeType: _, dispatch, id, session } _ = pure $ actionUploadOther props []
 
 {-
 actionUpload Annuaire id session dispatch =
   pure $ uploadFileView {dispatch, id, nodeType: Annuaire, session}
   -}
 
-actionUpload _ _ _ _ =
-  pure $ fragmentPT $ "Soon, upload for this NodeType."
+actionUploadOther :: R2.Component ActionUpload
+actionUploadOther = R.createElement actionUploadOtherCpt
+actionUploadOtherCpt :: R.Component ActionUpload
+actionUploadOtherCpt = here.component "actionUploadOther" cpt where
+  cpt _ _ = do
+    pure $ fragmentPT $ "Soon, upload for this NodeType."
 
 
 -- file upload types
