@@ -108,7 +108,7 @@ backButton =
     className: "btn btn-primary"
   , on: {click: back}
   } [
-    H.i { className: "fa fa-arrow-left"} []
+    H.i { className: "fa fa-arrow-right"} []
   ]
 
 loadFolders :: Record Props -> Aff FTree

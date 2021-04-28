@@ -152,10 +152,10 @@
   padding-left: 0.8rem;
 }
 .graph-container .graph-row {
-  height: 100%;
+  height: 100vh;
 }
 .graph-container .graph-row #graph-view {
-  height: 95%;
+  height: 95vh;
 }
 .graph-container #tree {
   position: absolute;
