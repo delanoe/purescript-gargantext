@@ -6,7 +6,6 @@ import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Data.Traversable (traverse_, traverse)
-import Data.Tuple (snd)
 import DOM.Simple.Console (log, log2)
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -47,7 +46,8 @@ here = R2.here "Gargantext.Components.Forest.Tree"
 
 -- Shared by every component here + performAction + nodeSpan
 type Universal =
-  ( reloadRoot :: T.Box T2.Reload )
+  ( reloadMainPage :: T2.ReloadS
+  , reloadRoot     :: T2.ReloadS )
 
 -- Shared by every component here + nodeSpan
 type Global =
@@ -60,7 +60,7 @@ type Global =
 -- Shared by every component here
 type Common = (
    forestOpen :: T.Box OpenNodes
- , reload     :: T.Box T2.Reload
+ , reload     :: T2.ReloadS
  | Global
  )
 
@@ -90,7 +90,7 @@ getNodeTree session nodeId = get session $ GR.NodeAPI GT.Tree (Just nodeId) ""
 getNodeTreeFirstLevel :: Session -> ID -> Aff FTree
 getNodeTreeFirstLevel session nodeId = get session $ GR.TreeFirstLevel (Just nodeId) ""
 
-type NodeProps = ( reloadTree :: T.Box T2.Reload, session :: Session | Common )
+type NodeProps = ( reloadTree :: T2.ReloadS, session :: Session | Common )
 
 type TreeProps = ( tree :: FTree | NodeProps )
 
@@ -99,42 +99,72 @@ tree props = R.createElement treeCpt props []
 
 treeCpt :: R.Component TreeProps
 treeCpt = here.component "tree" cpt where
-  cpt p@{ session, tree: NTree (LNode { id, name, nodeType }) children } _ = do
+  cpt p@{ reload, session, tree: NTree (LNode { id, name, nodeType }) children } _ = do
     setPopoverRef <- R.useRef Nothing
     folderOpen <- T2.useMemberBox nodeId p.forestOpen
-    folderOpen' <- T.useLive T.unequal folderOpen
-    pure $ H.ul { className: ulClass <> " " <> handedClass }
-      [ H.li { className: childrenClass children }
+    pure $ H.ul { className: ulClass }
+      [ H.li { className: childrenClass children' }
         [ nodeSpan (nsprops { folderOpen, name, id, nodeType, setPopoverRef, isLeaf })
-          (renderChildren folderOpen')
+          [ renderChildren (Record.merge p { childProps: { children', folderOpen, render: tree } } ) [] ]
         ]
       ]
     where
       isLeaf = A.null children
       nodeId = mkNodeId session id
-      ulClass  = switchHanded "ml" "mr" p.handed <> "-auto tree"
-      handedClass = switchHanded "left" "right" p.handed <> "handed"
+      ulClass  = switchHanded "ml left" "mr right" p.handed <> "-auto tree handed"
       children' = A.sortWith fTreeID pubChildren
       pubChildren = if isPublic nodeType then map (map pub) children else children
-      renderChildren false = []
-      renderChildren true = map renderChild children' where
-        renderChild (NTree (LNode {id: cId}) _) = childLoader props [] where
-          props = Record.merge nodeProps { id: cId, render: tree }
-          nodeProps = RecordE.pick p :: Record NodeProps
       nsprops extra = Record.merge common extra' where
         common = RecordE.pick p :: Record NSCommon
-        extra' = Record.merge extra { dispatch } where
+        extra' = Record.merge extra { dispatch, reload } where
           dispatch a = performAction a (Record.merge common' spr) where
             common' = RecordE.pick p :: Record PACommon
             spr = { setPopoverRef: extra.setPopoverRef }
   pub (LNode n@{ nodeType: t }) = LNode (n { nodeType = publicize t })
   childrenClass [] = "no-children"
-  childrenClass _ = "with-children"
+  childrenClass _  = "with-children"
+
+
+type ChildrenTreeProps =
+  ( childProps :: { children'  :: Array FTree
+                  , folderOpen :: T.Box Boolean
+                  , render     :: R2.Leaf TreeProps }
+  | TreeProps )
+
+
+renderChildren :: R2.Component ChildrenTreeProps
+renderChildren = R.createElement renderChildrenCpt
+
+renderChildrenCpt :: R.Component ChildrenTreeProps
+renderChildrenCpt = here.component "renderChildren" cpt where
+  cpt p@{ childProps: { folderOpen } } _ = do
+    folderOpen' <- T.useLive T.unequal folderOpen
+
+    if folderOpen' then
+      pure $ renderTreeChildren p []
+    else
+      pure $ H.div {} []
+
+renderTreeChildren :: R2.Component ChildrenTreeProps
+renderTreeChildren = R.createElement renderTreeChildrenCpt
+
+renderTreeChildrenCpt :: R.Component ChildrenTreeProps
+renderTreeChildrenCpt = here.component "renderTreeChildren" cpt where
+  cpt p@{ childProps: { children'
+                      , folderOpen
+                      , render } } _ = do
+    pure $ R.fragment (map renderChild children')
+
+    where
+      nodeProps = RecordE.pick p :: Record NodeProps
+      renderChild (NTree (LNode {id: cId}) _) = childLoader props [] where
+        props = Record.merge nodeProps { id: cId, render }
+
 
 --- The properties tree shares in common with performAction
 type PACommon =
   ( forestOpen   :: T.Box OpenNodes
-  , reloadTree   :: T.Box T2.Reload
+  , reloadTree   :: T2.ReloadS
   , session      :: Session
   , tasks        :: T.Box GAT.Storage
   , tree         :: FTree
@@ -155,7 +185,7 @@ childLoaderCpt :: R.Component ChildLoaderProps
 childLoaderCpt = here.component "childLoader" cpt where
   cpt p@{ render } _ = do
     reload <- T.useBox T2.newReload
-    let reloads = [ reload, p.reloadTree, p.reloadRoot ]
+    let reloads = [ reload, p.reloadRoot, p.reloadTree ]
     cache <- (A.cons p.id) <$> traverse (T.useLive T.unequal) reloads
     useLoader cache fetch (paint reload)
     where
@@ -168,75 +198,95 @@ childLoaderCpt = here.component "childLoader" cpt where
 type PerformActionProps =
   ( setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit)) | PACommon )
 
--- | This thing is basically a hangover from when garg was a thermite
--- | application. we should slowly get rid of it.
-performAction :: Action -> Record PerformActionProps -> Aff Unit
-performAction (DeleteNode nt) p@{ forestOpen
-                                , session
-                                , tree: (NTree (LNode {id, parent_id}) _) } = do
+closePopover { setPopoverRef } =
+   liftEffect $ traverse_ (\set -> set false) (R.readRef setPopoverRef)
+
+refreshTree p = liftEffect $ T2.reload p.reloadTree *> closePopover p
+
+deleteNode' nt p@{ tree: (NTree (LNode {id, parent_id}) _) } = do
   case nt of
-    GT.NodePublic GT.FolderPublic -> void $ deleteNode session nt id
-    GT.NodePublic _               -> void $ unpublishNode session parent_id id
-    _                             -> void $ deleteNode session nt id
-  liftEffect $ T.modify_ (Set.delete (mkNodeId session id)) forestOpen
-  performAction RefreshTree p
-performAction (DoSearch task) p@{ tasks
-                                , tree: (NTree (LNode {id}) _) } = liftEffect $ do
+    GT.NodePublic GT.FolderPublic -> void $ deleteNode p.session nt id
+    GT.NodePublic _               -> void $ unpublishNode p.session parent_id id
+    _                             -> void $ deleteNode p.session nt id
+  liftEffect $ T.modify_ (Set.delete (mkNodeId p.session id)) p.forestOpen
+  refreshTree p
+
+doSearch task p@{ tasks, tree: NTree (LNode {id}) _ } = liftEffect $ do
   GAT.insert id task tasks
   log2 "[performAction] DoSearch task:" task
-performAction (UpdateNode params) p@{ tasks
-                                    , tree: (NTree (LNode {id}) _) } = do
+  
+updateNode params p@{ tasks, tree: (NTree (LNode {id}) _) } = do
   task <- updateRequest params p.session id
   liftEffect $ do
     GAT.insert id task tasks
     log2 "[performAction] UpdateNode task:" task
-performAction (RenameNode name) p@{ tree: (NTree (LNode {id}) _) } = do
+
+renameNode name p@{ tree: (NTree (LNode {id}) _) } = do
   void $ rename p.session id $ RenameValue { text: name }
-  performAction RefreshTree p
-performAction (ShareTeam username) p@{ tree: (NTree (LNode {id}) _)} =
+  refreshTree p
+
+shareTeam username p@{ tree: (NTree (LNode {id}) _)} =
   void $ Share.shareReq p.session id $ Share.ShareTeamParams {username}
-performAction (SharePublic { params }) p@{ forestOpen } = traverse_ f params where
+
+sharePublic params p@{ forestOpen } = traverse_ f params where
   f (SubTreeOut { in: inId, out }) = do
     void $ Share.shareReq p.session inId $ Share.SharePublicParams { node_id: out }
     liftEffect $ T.modify_ (Set.insert (mkNodeId p.session out)) forestOpen
-    performAction RefreshTree p
-performAction (AddContact params) p@{ tree: (NTree (LNode {id}) _) } =
-    void $ Contact.contactReq p.session id params
-performAction (AddNode name nodeType) p@{ forestOpen
-                                        , tree: (NTree (LNode { id }) _) } = do
+    refreshTree p
+
+addContact params p@{ tree: (NTree (LNode {id}) _) } =
+  void $ Contact.contactReq p.session id params
+
+addNode' name nodeType p@{ forestOpen, tree: (NTree (LNode { id }) _) } = do
   task <- addNode p.session id $ AddNodeValue {name, nodeType}
   liftEffect $ T.modify_ (Set.insert (mkNodeId p.session id)) forestOpen
-  performAction RefreshTree p
-performAction (UploadFile nodeType fileType mName blob) p@{ tasks
-                                                          , tree: (NTree (LNode { id }) _) } = do
+  refreshTree p
+
+uploadFile' nodeType fileType mName blob p@{ tasks, tree: (NTree (LNode { id }) _) } = do
   task <- uploadFile p.session nodeType id fileType {mName, blob}
   liftEffect $ do
     GAT.insert id task tasks
     log2 "[performAction] UploadFile, uploaded, task:" task
-performAction (UploadArbitraryFile mName blob) p@{ tasks
-                                                 , tree: (NTree (LNode { id }) _) } = do
+
+uploadArbitraryFile' mName blob p@{ tasks, tree: (NTree (LNode { id }) _) } = do
   task <- uploadArbitraryFile p.session id { blob, mName }
   liftEffect $ do
     GAT.insert id task tasks
     log2 "[performAction] UploadArbitraryFile, uploaded, task:" task
-performAction DownloadNode _ = liftEffect $ log "[performAction] DownloadNode"
-performAction (MoveNode {params}) p@{ forestOpen
-                                    , session } = traverse_ f params where
+
+moveNode params p@{ forestOpen, session } = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     void $ moveNodeReq p.session in' out
     liftEffect $ T.modify_ (Set.insert (mkNodeId session out)) forestOpen
-    performAction RefreshTree p
-performAction (MergeNode { params }) p = traverse_ f params where
+    refreshTree p
+
+mergeNode params p = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     void $ mergeNodeReq p.session in' out
-    performAction RefreshTree p
-performAction (LinkNode { nodeType, params }) p = traverse_ f params where
+    refreshTree p
+
+linkNode nodeType params p = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     void $ linkNodeReq p.session nodeType in' out
-    performAction RefreshTree p
-performAction RefreshTree p = do
-  liftEffect $ T2.reload p.reloadTree
-  performAction ClosePopover p
+    refreshTree p
+
+-- | This thing is basically a hangover from when garg was a thermite
+-- | application. we should slowly get rid of it.
+performAction :: Action -> Record PerformActionProps -> Aff Unit
+performAction (DeleteNode nt) p = deleteNode' nt p
+performAction (DoSearch task) p = doSearch task p
+performAction (UpdateNode params) p = updateNode params p
+performAction (RenameNode name) p = renameNode name p
+performAction (ShareTeam username) p = shareTeam username p
+performAction (SharePublic { params }) p = sharePublic params p
+performAction (AddContact params) p = addContact params p
+performAction (AddNode name nodeType) p = addNode' name nodeType p
+performAction (UploadFile nodeType fileType mName blob) p = uploadFile' nodeType fileType mName blob p
+performAction (UploadArbitraryFile mName blob) p = uploadArbitraryFile' mName blob p
+performAction DownloadNode _ = liftEffect $ log "[performAction] DownloadNode"
+performAction (MoveNode {params}) p = moveNode params p
+performAction (MergeNode {params}) p = mergeNode params p
+performAction (LinkNode { nodeType, params }) p = linkNode nodeType params p
+performAction RefreshTree p = refreshTree p
 performAction NoAction _ = liftEffect $ log "[performAction] NoAction"
-performAction ClosePopover { setPopoverRef } =
-  liftEffect $ traverse_ (\set -> set false) (R.readRef setPopoverRef)
+performAction ClosePopover p = closePopover p

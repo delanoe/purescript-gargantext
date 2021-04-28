@@ -1,13 +1,12 @@
 module Gargantext.Components.Nodes.Lists.Types where
 
-import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson, (~>), (:=))
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson)
 import Data.Argonaut.Decode.Error (JsonDecodeError(..))
+import Data.Maybe (Maybe(..))
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
-import Data.Maybe (Maybe(..))
-import Reactix as R
 
 import Gargantext.Prelude
 import Gargantext.Types (ListId, NodeID)
@@ -34,45 +33,7 @@ instance encodeJsonCacheState :: EncodeJson CacheState where
 instance showCacheState :: Show CacheState where
   show = genericShow
 
+type SidePanel = ()
 
-data SidePanelState = InitialClosed | Opened | Closed
-derive instance eqSidePanelState :: Eq SidePanelState
-
-toggleSidePanelState :: SidePanelState -> SidePanelState
-toggleSidePanelState InitialClosed = Opened
-toggleSidePanelState Closed        = Opened
-toggleSidePanelState Opened        = Closed
-
-type TriggerAnnotatedDocIdChangeParams = (
-    corpusId :: NodeID
-  , listId   :: ListId
-  , nodeId   :: NodeID
-  )
-
-type SidePanelTriggers = (
-    toggleSidePanel             :: R2.Trigger Unit  -- toggles side panel
-  , triggerSidePanel            :: R2.Trigger Unit  -- opens side panel
-)
-
-emptySidePanelTriggers :: R.Hooks (Record SidePanelTriggers)
-emptySidePanelTriggers = do
-  toggleSidePanel             <- R.useRef Nothing
-  triggerSidePanel            <- R.useRef Nothing
-
-  pure $ {
-      toggleSidePanel
-    , triggerSidePanel
-    }
-
-
-type ListsLayoutControls = (
-    triggers      :: Record SidePanelTriggers
-  )
-
-initialControls :: R.Hooks (Record ListsLayoutControls)
-initialControls = do
-  triggers <- emptySidePanelTriggers
-
-  pure $ {
-      triggers
-  }
+initialSidePanel :: Maybe (Record SidePanel)
+initialSidePanel = Nothing

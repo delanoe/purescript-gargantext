@@ -5,10 +5,11 @@ import Gargantext.Prelude
 import Effect.Aff (Aff, launchAff_)
 import Data.Tuple.Nested ((/\))
 import Data.Maybe (Maybe(..))
-import Effect.Class (liftEffect)
 import Data.Tuple (fst)
+import Effect.Class (liftEffect)
 import Reactix.DOM.HTML as H
 import Reactix as R
+import Toestand as T
 
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Types as GT
@@ -27,9 +28,8 @@ type NodeActionsGraphProps =
   , refresh :: Unit -> Aff Unit
   )
 
-nodeActionsGraph :: Record NodeActionsGraphProps -> R.Element
-nodeActionsGraph p = R.createElement nodeActionsGraphCpt p []
-
+nodeActionsGraph :: R2.Component NodeActionsGraphProps
+nodeActionsGraph = R.createElement nodeActionsGraphCpt
 nodeActionsGraphCpt :: R.Component NodeActionsGraphProps
 nodeActionsGraphCpt = here.component "nodeActionsGraph" cpt
   where
@@ -54,22 +54,23 @@ graphUpdateButtonCpt :: R.Component GraphUpdateButtonProps
 graphUpdateButtonCpt = here.component "graphUpdateButton" cpt
   where
     cpt { id, session, refresh } _ = do
-      enabled <- R.useState' true
+      enabled <- T.useBox true
+      enabled' <- T.useLive T.unequal enabled
 
       pure $ H.div { className: "update-button "
-                   <> if (fst enabled)
+                   <> if enabled'
                          then "enabled"
                          else "disabled text-muted"
                    } [ H.span { className: "fa fa-refresh"
-                     , on: { click: onClick enabled } } []
+                     , on: { click: onClick enabled' enabled } } []
                      ]
       where
-        onClick (false /\ _) _ = pure unit
-        onClick (true /\ setEnabled) _ = do
+        onClick false _ = pure unit
+        onClick true enabled = do
           launchAff_ $ do
-            liftEffect $ setEnabled $ const false
+            liftEffect $ T.write_ false enabled
             g <- GraphAPI.updateGraphVersions { graphId: id, session }
-            liftEffect $ setEnabled $ const true
+            liftEffect $ T.write_ true enabled
             refresh unit
           pure unit
 
@@ -109,7 +110,7 @@ nodeListUpdateButtonCpt :: R.Component NodeListUpdateButtonProps
 nodeListUpdateButtonCpt = here.component "nodeListUpdateButton" cpt
   where
     cpt { listId, nodeId, nodeType, session, refresh } _ = do
-      enabled <- R.useState' true
+      -- enabled <- T.useBox true
 
       pure $ H.div {} [] {- { className: "update-button " 
                      <> if (fst enabled) then "enabled" else "disabled text-muted"

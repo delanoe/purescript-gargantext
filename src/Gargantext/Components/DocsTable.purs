@@ -15,11 +15,11 @@ import Data.Set (Set)
 import Data.Set as Set
 import Data.String as Str
 import Data.Symbol (SProxy(..))
-import Data.Tuple (Tuple(..), fst)
-import Data.Tuple.Nested ((/\))
+import Data.Tuple (Tuple(..))
+import DOM.Simple.Console (log2)
 import DOM.Simple.Event as DE
 import Effect (Effect)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -31,14 +31,14 @@ import Gargantext.Components.DocsTable.Types
   ( DocumentsView(..), Hyperdata(..), LocalUserScore, Query, Response(..), sampleData )
 import Gargantext.Components.Table.Types as TT
 import Gargantext.Components.Nodes.Lists.Types as NT
-import Gargantext.Components.Nodes.Texts.Types (SidePanelTriggers)
+import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Table as TT
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
 import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, sessionId, get, delete)
-import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), TableResult, TabSubType, TabType, showTabType')
+import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), SidePanelState(..), TableResult, TabSubType, TabType, showTabType')
 import Gargantext.Utils (sortWith)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParamS, queryParam, queryParamS)
@@ -58,36 +58,35 @@ type Path a =
   , tabType   :: TabSubType a
   )
 
-type LayoutProps =
-  ( cacheState      :: T.Box NT.CacheState
-  , frontends       :: Frontends
-  , chart           :: R.Element
-  , listId          :: Int
-  , mCorpusId       :: Maybe Int
-  , nodeId          :: Int
-  -- , path         :: Record (Path a)
-  , session         :: Session
-  , showSearch      :: Boolean
-  , sidePanelTriggers :: Record SidePanelTriggers
-  , tabType         :: TabType
+type CommonProps =
+  ( cacheState     :: T.Box NT.CacheState
+  , frontends      :: Frontends
+  , listId         :: Int
+  , mCorpusId      :: Maybe Int
+  , nodeId         :: Int
+  , session        :: Session
+  , sidePanel      :: T.Box (Maybe (Record TextsT.SidePanel))
+  , sidePanelState :: T.Box SidePanelState
+  , tabType        :: TabType
   -- ^ tabType is not ideal here since it is too much entangled with tabs and
   -- ngramtable. Let's see how this evolves.  )
-  , totalRecords    :: Int
+  , totalRecords  :: Int
+  )
+
+type LayoutProps =
+  (
+    chart      :: R.Element
+  , showSearch :: Boolean
+  | CommonProps
+  -- , path      :: Record (Path a)
   )
 
 type PageLayoutProps =
-  ( cacheState        :: T.Box NT.CacheState
-  , frontends         :: Frontends
-  , key               :: String  -- NOTE Necessary to clear the component when cache state changes
-  , listId            :: Int
-  , mCorpusId         :: Maybe Int
-  , nodeId            :: Int
-  , params            :: TT.Params
-  , query             :: Query
-  , session           :: Session
-  , sidePanelTriggers :: Record SidePanelTriggers
-  , tabType           :: TabType
-  , totalRecords      :: Int
+  (
+    key    :: String  -- NOTE Necessary to clear the component when cache state changes
+  , params :: TT.Params
+  , query  :: Query
+  | CommonProps
   )
 
 _documentIdsDeleted  = prop (SProxy :: SProxy "documentIdsDeleted")
@@ -123,7 +122,8 @@ docViewCpt = here.component "docView" cpt where
                 , nodeId
                 , session
                 , showSearch
-                , sidePanelTriggers
+                , sidePanel
+                , sidePanelState
                 , tabType
                 , totalRecords
                 }
@@ -147,10 +147,11 @@ docViewCpt = here.component "docView" cpt where
                        , params
                        , query: query'
                        , session
-                       , sidePanelTriggers
+                       , sidePanel
+                       , sidePanelState
                        , tabType
                        , totalRecords
-                       } ] ] ]
+                       } [] ] ] ]
 
 type SearchBarProps =
   ( query :: T.Box Query )
@@ -246,8 +247,8 @@ filterDocs query docs = A.filter filterFunc docs
     filterFunc (Response { hyperdata: Hyperdata { title } }) =
       isJust $ Str.indexOf (Str.Pattern $ Str.toLower query) $ Str.toLower title
 
-pageLayout :: Record PageLayoutProps -> R.Element
-pageLayout props = R.createElement pageLayoutCpt props []
+pageLayout :: R2.Component PageLayoutProps
+pageLayout = R.createElement pageLayoutCpt
 
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = here.component "pageLayout" cpt where
@@ -259,7 +260,7 @@ pageLayoutCpt = here.component "pageLayout" cpt where
             , params
             , query
             , session
-            , sidePanelTriggers
+            , sidePanel
             , tabType } _ = do
     cacheState' <- T.useLive T.unequal cacheState
 
@@ -373,21 +374,25 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
                 , mCorpusId
                 , nodeId
                 , session
-                , sidePanelTriggers: sidePanelTriggers@{ currentDocIdRef }
+                , sidePanel
+                , sidePanelState
                 , totalRecords }
       , localCategories
       , params } _ = do
-
     reload <- T.useBox T2.newReload
+    mCurrentDocId <- T.useFocused
+          (maybe Nothing _.mCurrentDocId)
+          (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentDocId = val })) sidePanel
+    mCurrentDocId' <- T.useLive T.unequal mCurrentDocId
 
     localCategories' <- T.useLive T.unequal localCategories
 
     pure $ TT.table
-      { syncResetButton : [ H.div {} [] ]
-      , colNames
+      { colNames
       , container: TT.defaultContainer { title: "Documents" }
       , params
-      , rows: rows reload localCategories'
+      , rows: rows reload localCategories' mCurrentDocId'
+      , syncResetButton : [ H.div {} [] ]
       , totalRecords
       , wrapColElts
       }
@@ -403,14 +408,19 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
           | otherwise = Routes.Document sid listId
         colNames = TT.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source", "Score" ]
         wrapColElts = const identity
-        rows reload localCategories' = row <$> A.toUnfoldable documents
+        rows reload localCategories' mCurrentDocId' = row <$> A.toUnfoldable documents
           where
             row dv@(DocumentsView r@{ _id, category }) =
               { row:
                 TT.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
                             H.div { className: "" }
-                                  [ docChooser { listId, mCorpusId, nodeId: r._id, selected, sidePanelTriggers, tableReload: reload } []
-                                                                   ]
+                                  [ docChooser { listId
+                                               , mCorpusId
+                                               , nodeId: r._id
+                                               , sidePanel
+                                               , sidePanelState
+                                               , tableReload: reload } []
+                                  ]
                           --, H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
                           , H.div { className: "column-tag flex" }
                                   [ rating { nodeId
@@ -432,17 +442,17 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
               where
                 cat         = fromMaybe category (localCategories' ^. at _id)
                 -- checked    = Star_1 == cat
+                selected   = mCurrentDocId' == Just r._id
                 tClassName = trashClassName cat selected
                 className  = gi cat
-                selected   = R.readRef currentDocIdRef == Just r._id
 
 type DocChooser = (
-    listId            :: ListId
-  , mCorpusId         :: Maybe NodeID
-  , nodeId            :: NodeID
-  , selected          :: Boolean
-  , sidePanelTriggers :: Record SidePanelTriggers
-  , tableReload       :: T2.ReloadS
+    listId         :: ListId
+  , mCorpusId      :: Maybe NodeID
+  , nodeId         :: NodeID
+  , sidePanel      :: T.Box (Maybe (Record TextsT.SidePanel))
+  , sidePanelState :: T.Box SidePanelState
+  , tableReload    :: T2.ReloadS
   )
 
 docChooser :: R2.Component DocChooser
@@ -457,23 +467,38 @@ docChooserCpt = here.component "docChooser" cpt
     cpt { listId
         , mCorpusId: Just corpusId
         , nodeId
-        , selected
-        , sidePanelTriggers: { triggerAnnotatedDocIdChange }
+        , sidePanel
+        , sidePanelState
         , tableReload } _ = do
+      mCurrentDocId <- T.useFocused
+            (maybe Nothing _.mCurrentDocId)
+            (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentDocId = val })) sidePanel
+      mCurrentDocId' <- T.useLive T.unequal mCurrentDocId
 
-      let eyeClass = if selected then "fa-eye" else "fa-eye-slash"
+      let selected = mCurrentDocId' == Just nodeId
+          eyeClass = if selected then "fa-eye" else "fa-eye-slash"
 
       pure $ H.div { className: "btn" } [
         H.span { className: "fa " <> eyeClass
-               , on: { click: onClick } } []
+               , on: { click: onClick selected } } []
       ]
       where
-        onClick _ = do
+        onClick selected _ = do
           -- log2 "[docChooser] onClick, listId" listId
           -- log2 "[docChooser] onClick, corpusId" corpusId
           -- log2 "[docChooser] onClick, nodeId" nodeId
-          R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
-          T2.reload tableReload
+          -- R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
+          -- T2.reload tableReload
+          if selected then do
+            T.write_ Nothing sidePanel
+            T.write_ Closed sidePanelState
+          else do
+            T.write_ (Just { corpusId: corpusId
+                          , listId: listId
+                          , mCurrentDocId: Just nodeId
+                          , nodeId: nodeId }) sidePanel
+            T.write_ Opened sidePanelState
+          log2 "[docChooser] sidePanel opened" sidePanelState
 
 
 newtype SearchQuery = SearchQuery {

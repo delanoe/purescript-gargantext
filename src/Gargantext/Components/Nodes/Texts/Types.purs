@@ -1,7 +1,6 @@
 module Gargantext.Components.Nodes.Texts.Types where
 
 import Data.Maybe (Maybe(..))
-import Effect (Effect)
 import Reactix as R
 
 import Gargantext.Prelude
@@ -56,3 +55,15 @@ initialControls = do
   pure $ {
       triggers
   }
+
+
+type SidePanel =
+  (
+    corpusId      :: NodeID
+  , listId        :: ListId
+  , mCurrentDocId :: Maybe Int
+  , nodeId        :: NodeID
+  )
+
+initialSidePanel :: Maybe (Record SidePanel)
+initialSidePanel = Nothing

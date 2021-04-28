@@ -34,14 +34,14 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Lists.Tabs"
 
 type Props = (
-    cacheState        :: T.Box CacheState
-  , corpusData        :: CorpusData
-  , corpusId          :: Int
-  , reloadForest      :: T.Box T2.Reload
-  , reloadRoot        :: T.Box T2.Reload
-  , session           :: Session
-  , sidePanelTriggers :: Record SidePanelTriggers
-  , tasks             :: T.Box GAT.Storage
+    activeTab    :: T.Box Int
+  , cacheState   :: T.Box CacheState
+  , corpusData   :: CorpusData
+  , corpusId     :: Int
+  , reloadForest :: T2.ReloadS
+  , reloadRoot   :: T2.ReloadS
+  , session      :: Session
+  , tasks        :: T.Box GAT.Storage
   )
 
 type PropsWithKey = ( key :: String | Props )
@@ -51,9 +51,9 @@ tabs props = R.createElement tabsCpt props []
 
 tabsCpt :: R.Component PropsWithKey
 tabsCpt = here.component "tabs" cpt where
-  cpt props _ = do
-    (selected /\ setSelected) <- R.useState' 0
-    pure $ Tab.tabs { selected, tabs: tabs' } where
+  cpt props@{ activeTab } _ = do
+    pure $ Tab.tabs { activeTab
+                    , tabs: tabs' } where
       tabs' = [ "Terms"      /\ view Terms []
               , "Authors"    /\ view Authors []
               , "Institutes" /\ view Institutes []
@@ -76,7 +76,6 @@ ngramsViewCpt = here.component "ngramsView" cpt where
             , reloadRoot
             , mode
             , session
-            , sidePanelTriggers
             , tasks } _ = do
       chartsReload <- T.useBox T2.newReload
 
@@ -104,7 +103,6 @@ ngramsViewCpt = here.component "ngramsView" cpt where
                                 , reloadForest
                                 , reloadRoot
                                 , session
-                                , sidePanelTriggers
                                 , tabNgramType
                                 , tabType
                                 , tasks

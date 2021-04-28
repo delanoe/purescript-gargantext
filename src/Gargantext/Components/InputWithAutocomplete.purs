@@ -22,10 +22,11 @@ type Completions = Array String
 
 type Props =
   (
-    autocompleteSearch :: String -> Completions
+    autocompleteSearch  :: String -> Completions
+  , classes             :: String
   , onAutocompleteClick :: String -> Effect Unit
-  , onEnterPress :: String -> Effect Unit
-  , state :: T.Box String
+  , onEnterPress        :: String -> Effect Unit
+  , state               :: T.Box String
   )
 
 inputWithAutocomplete :: R2.Component Props
@@ -35,6 +36,7 @@ inputWithAutocompleteCpt :: R.Component Props
 inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
   where
     cpt props@{ autocompleteSearch
+              , classes
               , onAutocompleteClick
               , onEnterPress
               , state } _ = do
@@ -45,7 +47,7 @@ inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
       let onFocus completions e = T.write_ (autocompleteSearch state') completions
 
       pure $
-        H.span { className: "input-with-autocomplete" }
+        H.span { className: "input-with-autocomplete " <> classes }
         [
           completionsCpt { completions, onAutocompleteClick, state } []
         , H.input { type: "text"

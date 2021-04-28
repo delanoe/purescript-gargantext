@@ -80,6 +80,11 @@ let additions =
         , repo = "https://github.com/nwolverson/purescript-dom-filereader"
         , version = "v5.0.0"
         }
+      , formula = 
+        { dependencies = [ "effect", "prelude", "reactix", "record", "toestand", "tuples", "typelevel-prelude", "typisch" ]
+        , repo = "https://github.com/poorscript/purescript-formula"
+        , version = "v0.2.1"
+        }
       , markdown =
         { dependencies = [ "precise" ]
         , repo = "https://github.com/poorscript/purescript-markdown"
@@ -107,7 +112,17 @@ let additions =
           , "unsafe-coerce"
           ]
         , repo = "https://github.com/irresponsible/purescript-reactix"
-        , version = "v0.4.6"
+        , version = "v0.4.11"
+        }
+      , toestand = 
+        { dependencies = [ "effect", "reactix", "prelude", "record", "tuples", "typelevel-prelude", "typisch" ]
+        , repo = "https://github.com/poorscript/purescript-toestand"
+        , version = "v0.6.1"
+        }
+      , typisch = 
+        { dependencies = [ "prelude" ]
+        , repo = "https://github.com/poorscript/purescript-typisch"
+        , version = "v0.2.1"
         }
       , tuples-native =
         { dependencies =

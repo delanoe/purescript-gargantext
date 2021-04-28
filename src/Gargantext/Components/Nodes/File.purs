@@ -55,25 +55,25 @@ instance decodeFile :: DecodeJson File where
     hyperdata <- (obj .: "hyperdata") >>= decodeJson
     pure $ File { id, date, hyperdata, name }
 
-type FileLayoutProps = ( nodeId :: NodeID, session :: R.Context Session )
+type FileLayoutProps = ( nodeId :: NodeID, session :: Session )
 
 fileLayout :: R2.Leaf FileLayoutProps
 fileLayout props = R.createElement fileLayoutCpt props []
 
 fileLayoutCpt :: R.Component FileLayoutProps
 fileLayoutCpt = here.component "fileLayout" cpt where
-  cpt { nodeId, session } _ = R.useContext session >>= cp where
-    cp s = useLoader nodeId (loadFile s) onLoad where
-      onLoad loaded = fileLayoutLoaded { loaded, nodeId, session: s } where
-        key = show (sessionId s) <> "-" <> show nodeId
+  cpt { nodeId, session } _ = do
+    useLoader nodeId (loadFile session) onLoad
+      where
+        onLoad loaded = fileLayoutLoaded { loaded, nodeId, session }
+        key = show (sessionId session) <> "-" <> show nodeId
 
 loadFile :: Session -> NodeID -> Aff File
 loadFile session nodeId = get session $ NodeAPI Node (Just nodeId) ""
 
 type FileLayoutLoadedProps =
   ( loaded  :: File
-  , nodeId  :: Int
-  , session :: Session
+  | FileLayoutProps
   )
 
 fileLayoutLoaded :: Record FileLayoutLoadedProps -> R.Element

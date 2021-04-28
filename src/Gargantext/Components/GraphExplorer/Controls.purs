@@ -3,8 +3,6 @@ module Gargantext.Components.GraphExplorer.Controls
  , useGraphControls
  , controls
  , controlsCpt
- , setShowTree
- , setShowControls
  ) where
 
 import Data.Array as A
@@ -12,7 +10,6 @@ import Data.Int as I
 import Data.Maybe (Maybe(..), maybe)
 import Data.Sequence as Seq
 import Data.Set as Set
-import Effect (Effect)
 import Effect.Timer (setTimeout)
 import Prelude
 import Reactix as R
@@ -24,12 +21,15 @@ import Gargantext.Components.GraphExplorer.Button (centerButton, cameraButton)
 import Gargantext.Components.GraphExplorer.RangeControl (edgeConfluenceControl, edgeWeightControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.SlideButton (labelSizeButton, mouseSelectorSizeButton)
 import Gargantext.Components.GraphExplorer.ToggleButton (multiSelectEnabledButton, edgesToggleButton, louvainToggleButton, pauseForceAtlasButton)
+import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
+import Gargantext.Types as GT
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.Controls"
@@ -44,15 +44,16 @@ type Controls =
   , hyperdataGraph     :: GET.HyperdataGraph
   , multiSelectEnabled :: T.Box Boolean
   , nodeSize           :: T.Box Range.NumberRange
-  , reloadForest       :: Unit -> Effect Unit
+  , reloadForest       :: T2.ReloadS
   , removedNodeIds     :: T.Box SigmaxT.NodeIds
   , selectedNodeIds    :: T.Box SigmaxT.NodeIds
   , session            :: Session
   , showControls       :: T.Box Boolean
   , showEdges          :: T.Box SigmaxT.ShowEdgesState
   , showLouvain        :: T.Box Boolean
-  , showSidePanel      :: T.Box GET.SidePanelState
   , showTree           :: T.Box Boolean
+  , sidePanelState     :: T.Box GT.SidePanelState
+  , sideTab            :: T.Box GET.SideTab
   , sigmaRef           :: R.Ref Sigmax.Sigma
   )
 
@@ -64,8 +65,8 @@ initialLocalControls = do
   mouseSelectorSize <- T.useBox 15.0
   pure $ { labelSize, mouseSelectorSize }
 
-controls :: Record Controls -> R.Element
-controls props = R.createElement controlsCpt props []
+controls :: R2.Component Controls
+controls = R.createElement controlsCpt
 
 controlsCpt :: R.Component Controls
 controlsCpt = here.component "controls" cpt
@@ -85,14 +86,15 @@ controlsCpt = here.component "controls" cpt
         , showControls
         , showEdges
         , showLouvain
-        , showSidePanel
         , showTree
+        , sidePanelState
+        , sideTab
         , sigmaRef } _ = do
       forceAtlasState' <- T.useLive T.unequal forceAtlasState
       graphStage' <- T.useLive T.unequal graphStage
       selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
       showControls' <- T.useLive T.unequal showControls
-      showSidePanel' <- T.useLive T.unequal showSidePanel
+      sidePanelState' <- T.useLive T.unequal sidePanelState
 
       localControls <- initialLocalControls
       -- ref to track automatic FA pausing
@@ -115,8 +117,9 @@ controlsCpt = here.component "controls" cpt
 
       -- Automatic opening of sidebar when a node is selected (but only first time).
       R.useEffect' $ do
-        if showSidePanel' == GET.InitialClosed && (not Set.isEmpty selectedNodeIds') then
-          T.write_ (GET.Opened GET.SideTabData) showSidePanel
+        if sidePanelState' == GT.InitialClosed && (not Set.isEmpty selectedNodeIds') then do
+          T.write_ GT.Opened sidePanelState
+          T.write_ GET.SideTabData sideTab
         else
           pure unit
 
@@ -154,40 +157,40 @@ controlsCpt = here.component "controls" cpt
       let nodeSizeMax = maybe 100.0 _.size $ A.last nodesSorted
       let nodeSizeRange = Range.Closed { min: nodeSizeMin, max: nodeSizeMax }
 
-      pure $ case showControls' of
-        false -> RH.div {} []
-        -- true -> R2.menu { id: "toolbar" } [
-        true -> RH.nav { className: "navbar navbar-expand-lg" }
-                 [ RH.ul { className: "navbar-nav mx-auto" } [ -- change type button (?)
-                     RH.li { className: "nav-item" } [ centerButton sigmaRef ]
-                   , RH.li { className: "nav-item" } [ pauseForceAtlasButton { state: forceAtlasState } [] ]
-                   , RH.li { className: "nav-item" } [ edgesToggleButton { state: showEdges } [] ]
-                   , RH.li { className: "nav-item" } [ louvainToggleButton { state: showLouvain } [] ]
-                   , RH.li { className: "nav-item" } [ edgeConfluenceControl { range: edgeConfluenceRange
-                                                                             , state: edgeConfluence } [] ]
-                   , RH.li { className: "nav-item" } [ edgeWeightControl { range: edgeWeightRange
-                                                                         , state: edgeWeight } [] ]
-              -- change level
-              -- file upload
-              -- run demo
-              -- search button
-              -- search topics
-                   , RH.li { className: "nav-item" } [ labelSizeButton sigmaRef localControls.labelSize ] -- labels size: 1-4
-                   , RH.li { className: "nav-item" } [ nodeSizeControl { range: nodeSizeRange
-                                                                       , state: nodeSize } [] ]
-              -- zoom: 0 -100 - calculate ratio
-                   , RH.li { className: "nav-item" } [ multiSelectEnabledButton { state: multiSelectEnabled } [] ]  -- toggle multi node selection
-              -- save button
-                   , RH.li { className: "nav-item" }
-                     [ mouseSelectorSizeButton sigmaRef localControls.mouseSelectorSize ]
-                   , RH.li { className: "nav-item" }
-                     [ cameraButton { id: graphId
-                                    , hyperdataGraph: hyperdataGraph
-                                    , session: session
-                                    , sigmaRef: sigmaRef
-                                    , reloadForest: reloadForest } ]
-            ]
-          ]
+      let className = "navbar navbar-expand-lg " <> if showControls' then "" else "d-none"
+
+      pure $ RH.nav { className }
+                 [ RH.ul { className: "navbar-nav mx-auto" }
+                   [ -- change type button (?)
+                     navItem [ centerButton sigmaRef ]
+                   , navItem [ pauseForceAtlasButton { state: forceAtlasState } [] ]
+                   , navItem [ edgesToggleButton { state: showEdges } [] ]
+                   , navItem [ louvainToggleButton { state: showLouvain } [] ]
+                   , navItem [ edgeConfluenceControl { range: edgeConfluenceRange
+                                                     , state: edgeConfluence } [] ]
+                   , navItem [ edgeWeightControl { range: edgeWeightRange
+                                                 , state: edgeWeight } [] ]
+                   -- change level
+                   -- file upload
+                   -- run demo
+                   -- search button
+                   -- search topics
+                   , navItem [ labelSizeButton sigmaRef localControls.labelSize ] -- labels size: 1-4
+                   , navItem [ nodeSizeControl { range: nodeSizeRange
+                                               , state: nodeSize } [] ]
+                   -- zoom: 0 -100 - calculate ratio
+                   , navItem [ multiSelectEnabledButton { state: multiSelectEnabled } [] ]  -- toggle multi node selection
+                   -- save button
+                   , navItem [ mouseSelectorSizeButton sigmaRef localControls.mouseSelectorSize ]
+                   , navItem [ cameraButton { id: graphId
+                                            , hyperdataGraph: hyperdataGraph
+                                            , session: session
+                                            , sigmaRef: sigmaRef
+                                            , reloadForest } ]
+                   ]
+                 ]
+      where
+        navItem = RH.li { className: "nav-item" }
           --   RH.ul {} [ -- change type button (?)
           --     RH.li {} [ centerButton sigmaRef ]
           --   , RH.li {} [ pauseForceAtlasButton {state: forceAtlasState} ]
@@ -218,18 +221,24 @@ controlsCpt = here.component "controls" cpt
           -- ]
 
 useGraphControls :: { forceAtlasS :: SigmaxT.ForceAtlasState
-                   , graph :: SigmaxT.SGraph
-                   , graphId :: GET.GraphId
-                   , hyperdataGraph :: GET.HyperdataGraph
-                   , session :: Session
-                   , reloadForest :: Unit -> Effect Unit }
+                    , graph          :: SigmaxT.SGraph
+                    , graphId        :: GET.GraphId
+                    , hyperdataGraph :: GET.HyperdataGraph
+                    , reloadForest   :: T2.ReloadS
+                    , session        :: Session
+                    , showTree       :: T.Box Boolean
+                    , sidePanel      :: T.Box (Maybe (Record GEST.SidePanel))
+                    , sidePanelState :: T.Box GT.SidePanelState }
                  -> R.Hooks (Record Controls)
 useGraphControls { forceAtlasS
                  , graph
                  , graphId
                  , hyperdataGraph
+                 , reloadForest
                  , session
-                 , reloadForest } = do
+                 , showTree
+                 , sidePanel
+                 , sidePanelState } = do
   edgeConfluence <- T.useBox $ Range.Closed { min: 0.0, max: 1.0 }
   edgeWeight <- T.useBox $ Range.Closed {
       min: 0.0
@@ -237,17 +246,18 @@ useGraphControls { forceAtlasS
     }
   forceAtlasState <- T.useBox forceAtlasS
   graphStage      <- T.useBox Graph.Init
-  multiSelectEnabled <- T.useBox false
+  -- multiSelectEnabled <- T.useBox false
   nodeSize <- T.useBox $ Range.Closed { min: 0.0, max: 100.0 }
-  removedNodeIds <- T.useBox SigmaxT.emptyNodeIds
-  selectedNodeIds <- T.useBox SigmaxT.emptyNodeIds
-  showControls    <- T.useBox false
+  -- removedNodeIds <- T.useBox SigmaxT.emptyNodeIds
+  -- selectedNodeIds <- T.useBox SigmaxT.emptyNodeIds
+  -- showControls    <- T.useBox false
   showEdges <- T.useBox SigmaxT.EShow
   showLouvain <- T.useBox false
-  showSidePanel   <- T.useBox GET.InitialClosed
-  showTree <- T.useBox false
+  -- sidePanelState   <- T.useBox GT.InitialClosed
   sigma <- Sigmax.initSigma
   sigmaRef <- R.useRef sigma
+
+  { multiSelectEnabled, removedNodeIds, selectedNodeIds, showControls, sideTab } <- GEST.focusedSidePanel sidePanel
 
   pure { edgeConfluence
        , edgeWeight
@@ -264,14 +274,9 @@ useGraphControls { forceAtlasS
        , showControls
        , showEdges
        , showLouvain
-       , showSidePanel
+       , sidePanelState
        , showTree
+       , sideTab
        , sigmaRef
        , reloadForest
        }
-
-setShowControls :: Record Controls -> Boolean -> Effect Unit
-setShowControls { showControls } v = T.write_ v showControls
-
-setShowTree :: Record Controls -> Boolean -> Effect Unit
-setShowTree { showTree } v = T.write_ (not v) showTree

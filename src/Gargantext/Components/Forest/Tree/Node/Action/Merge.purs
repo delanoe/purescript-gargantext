@@ -2,7 +2,6 @@ module Gargantext.Components.Forest.Tree.Node.Action.Merge where
 
 import Data.Maybe (Maybe(..))
 import Data.Set as Set
-import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -26,7 +25,6 @@ mergeNodeReq session fromId toId =
 
 mergeNode :: R2.Component SubTreeParamsIn
 mergeNode = R.createElement mergeNodeCpt
-
 mergeNodeCpt :: R.Component SubTreeParamsIn
 mergeNodeCpt = here.component "mergeNode" cpt
   where

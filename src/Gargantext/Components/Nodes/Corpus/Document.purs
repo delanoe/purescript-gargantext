@@ -118,7 +118,7 @@ type LayoutProps =
  (  listId    :: ListId
   , mCorpusId :: Maybe NodeID
   , nodeId    :: NodeID
-  , session   :: R.Context Session
+  , session   :: Session
   )
 
 documentMainLayout :: R2.Component LayoutProps
@@ -133,9 +133,10 @@ documentLayout = R.createElement documentLayoutCpt
 
 documentLayoutCpt :: R.Component LayoutProps
 documentLayoutCpt = here.component "documentLayout" cpt where
-  cpt { listId, mCorpusId, nodeId, session } children = cp <$> R.useContext session where
-    cp s = documentLayoutWithKey { key, listId, mCorpusId, nodeId, session: s } children where
-      key = show (sessionId s) <> "-" <> show nodeId
+  cpt { listId, mCorpusId, nodeId, session } children = do
+    pure $ documentLayoutWithKey { key, listId, mCorpusId, nodeId, session } children
+      where
+        key = show (sessionId session) <> "-" <> show nodeId
 
 type KeyLayoutProps =
   ( key      :: String

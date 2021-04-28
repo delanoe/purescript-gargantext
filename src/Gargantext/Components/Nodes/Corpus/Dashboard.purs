@@ -28,21 +28,21 @@ import Gargantext.Utils.Toestand as T2
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Dashboard"
 
-type Props = ( nodeId :: NodeID, session :: R.Context Session )
+type Props = ( nodeId :: NodeID, session :: Session )
 
 dashboardLayout :: R2.Component Props
 dashboardLayout = R.createElement dashboardLayoutCpt
 
 dashboardLayoutCpt :: R.Component Props
 dashboardLayoutCpt = here.component "dashboardLayout" cpt where
-  cpt { nodeId, session } content = cp <$> R.useContext session where
-    cp s = dashboardLayoutWithKey { key, nodeId, session: s } content where
-      key = show (sessionId s) <> "-" <> show nodeId
+  cpt { nodeId, session } content = do
+    pure $ dashboardLayoutWithKey { key, nodeId, session } content
+      where
+        key = show (sessionId session) <> "-" <> show nodeId
 
 type KeyProps =
   ( key     :: String
-  , nodeId  :: NodeID
-  , session :: Session
+  | Props
   )
 
 dashboardLayoutWithKey :: R2.Component KeyProps

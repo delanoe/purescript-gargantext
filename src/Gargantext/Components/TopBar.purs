@@ -23,25 +23,29 @@ topBar = R.createElement topBarCpt
 topBarCpt :: R.Component TopBarProps
 topBarCpt = here.component "topBar" cpt
   where
-    cpt { handed } _children = do
+    cpt { handed } children = do
       handed' <- T.useLive T.unequal handed
 
       pure $ H.div { className: "navbar navbar-expand-lg navbar-dark bg-dark fixed-top"
                    , id: "dafixedtop"
                    , role: "navigation"
-                   } $ reverseHanded handed' [
-                      -- NOTE: first (and only) entry in the sorted array should have the "ml-auto class"
-                      -- https://stackoverflow.com/questions/19733447/bootstrap-navbar-with-left-center-or-right-aligned-items
-                      -- In practice: only apply "ml-auto" to the last element of this list, if handed == LeftHanded
-                      logo
-                   , H.ul { className: "navbar-nav " <> if handed' == LeftHanded then "ml-auto" else "" } $ reverseHanded handed' [
-                        divDropdownLeft {} []
-                      , handButton handed'
-                      , smiley
-                      , H.li { className: "nav-item" } [ themeSwitcher { theme: defaultTheme
-                                                                       , themes: allThemes } [] ]
-                      ]
-                   ]
+                   }
+        [ H.div { className: "container-fluid" } $ reverseHanded handed' [
+             -- NOTE: first (and only) entry in the sorted array should have the "ml-auto class"
+             -- https://stackoverflow.com/questions/19733447/bootstrap-navbar-with-left-center-or-right-aligned-items
+             -- In practice: only apply "ml-auto" to the last element of this list, if handed == LeftHanded
+             logo
+             , H.div { className: "collapse navbar-collapse" }
+               [ H.ul { className: "navbar-nav " <> if handed' == LeftHanded then "ml-auto" else "" } $ reverseHanded handed'
+               ([ divDropdownLeft {} []
+                , handButton handed'
+                , smiley
+                , H.li { className: "nav-item" } [ themeSwitcher { theme: defaultTheme
+                                                                 , themes: allThemes } [] ]
+                ] <> children)
+               ]
+             ]
+        ]
           where
             handButton handed' = H.li { title: "If you are Left Handed you can change\n"
                                             <> "the interface by clicking on me. Click\n"

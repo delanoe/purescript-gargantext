@@ -2,7 +2,6 @@ module Gargantext.Components.App (app) where
 
 import Gargantext.Prelude
 
-import Data.Maybe (Maybe(..))
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Data (emptyApp)
 import Gargantext.Components.Router (router)

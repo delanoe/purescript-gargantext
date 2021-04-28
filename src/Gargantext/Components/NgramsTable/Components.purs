@@ -211,7 +211,6 @@ type RenderNgramsItem = (
   , ngramsParent      :: Maybe NgramsTerm
   , ngramsSelection   :: Set NgramsTerm
   , ngramsTable       :: NgramsTable
-  , sidePanelTriggers :: Record NT.SidePanelTriggers
   )
 
 renderNgramsItem :: R2.Component RenderNgramsItem
@@ -227,7 +226,6 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         , ngramsParent
         , ngramsSelection
         , ngramsTable
-        , sidePanelTriggers: { toggleSidePanel }
         } _ = do
       pure $ Tbl.makeRow [
           H.div { className: "ngrams-selector" } [
@@ -254,8 +252,9 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
               a (ngramsStyle <> [DOM.onClick $ const effect])
             Nothing ->
               span ngramsStyle
-        onClick _ = do
-          R2.callTrigger toggleSidePanel unit
+        onClick _ = pure unit :: Effect Unit
+        -- onClick _ = do
+        --   R2.callTrigger toggleSidePanel unit
         termList    = ngramsElement ^. _NgramsElement <<< _list
         ngramsStyle = [termStyle termList ngramsOpacity]
         ngramsEdit  = Just <<< dispatch <<< SetParentResetChildren <<< Just <<< view _ngrams

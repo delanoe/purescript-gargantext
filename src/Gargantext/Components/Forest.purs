@@ -9,8 +9,7 @@ module Gargantext.Components.Forest
   ) where
 
 import Data.Array as A
-import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (fst)
+import Data.Maybe (Maybe, fromMaybe)
 import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -33,25 +32,26 @@ here = R2.here "Gargantext.Components.Forest"
 
 -- Shared by components here with Tree
 type Common = 
-  ( frontends     :: Frontends
-  , handed        :: T.Box Handed
-  , reloadRoot    :: T.Box T2.Reload
-  , route         :: T.Box AppRoute
+  ( frontends      :: Frontends
+  , handed         :: T.Box Handed
+  , reloadMainPage :: T2.ReloadS
+  , reloadRoot     :: T2.ReloadS
+  , route          :: T.Box AppRoute
   )
 
 type Props =
   ( backend      :: T.Box (Maybe Backend)
   , forestOpen   :: T.Box OpenNodes
-  , reloadForest :: T.Box T2.Reload
+  , reloadForest :: T2.ReloadS
   , sessions     :: T.Box Sessions
   , showLogin    :: T.Box Boolean
+  , showTree     :: T.Box Boolean
   , tasks        :: T.Box GAT.Storage
   | Common 
   )
 
 type TreeExtra = (
     forestOpen :: T.Box OpenNodes
-  , session :: Session
   )
 
 forest :: R2.Component Props
@@ -64,45 +64,43 @@ forestCpt = here.component "forest" cpt where
             , frontends
             , handed
             , reloadForest
+            , reloadMainPage
             , reloadRoot
             , route
             , sessions
             , showLogin
+            , showTree
             , tasks } _ = do
     -- TODO Fix this. I think tasks shouldn't be a Box but only a Reductor
     -- tasks'        <- GAT.useTasks reloadRoot reloadForest
     -- R.useEffect' $ do
     --   T.write_ (Just tasks') tasks
     handed'       <- T.useLive T.unequal handed
-    reloadForest' <- T.useLive T.unequal reloadForest
+    sessions'     <- T.useLive T.unequal sessions
+    -- forestOpen'   <- T.useLive T.unequal forestOpen
     -- reloadRoot'   <- T.useLive T.unequal reloadRoot
     -- route'        <- T.useLive T.unequal route
-    forestOpen'   <- T.useLive T.unequal forestOpen
-    sessions'     <- T.useLive T.unequal sessions
+
+    showTree' <- T.useLive T.unequal showTree
 
     -- TODO If `reloadForest` is set, `reload` state should be updated
     -- TODO fix tasks ref
-    -- R.useEffect' $ do
-      -- R.setRef tasks $ Just tasks'
-    R2.useCache
-      ( frontends /\ sessions' /\ handed' /\ forestOpen' /\ reloadForest' )
-      (cp handed' sessions')
-        where
-          common = RX.pick props :: Record Common
-          cp handed' sessions' _ =
-            pure $ H.div { className: "forest" }
-              (A.cons (plus handed' showLogin) (trees handed' sessions'))
-          trees handed' sessions' = (tree handed') <$> unSessions sessions'
-          tree handed' s@(Session {treeId}) =
-            treeLoader { forestOpen
-                       , frontends
-                       , handed: handed'
-                       , reload: reloadForest
-                       , reloadRoot
-                       , root: treeId
-                       , route
-                       , session: s
-                       , tasks } []
+    pure $ H.div { className: "forest " <> if showTree' then "" else "d-none" }
+      (A.cons (plus handed' showLogin) (trees handed' sessions'))
+    where
+      common = RX.pick props :: Record Common
+      trees handed' sessions' = (tree handed') <$> unSessions sessions'
+      tree handed' s@(Session {treeId}) =
+        treeLoader { forestOpen
+                   , frontends
+                   , handed: handed'
+                   , reload: reloadForest
+                   , reloadMainPage
+                   , reloadRoot
+                   , root: treeId
+                   , route
+                   , session: s
+                   , tasks } []
 
 plus :: Handed -> T.Box Boolean -> R.Element
 plus handed showLogin = H.div { className: "row" }
@@ -155,7 +153,8 @@ forestLayoutMain = R.createElement forestLayoutMainCpt
 
 forestLayoutMainCpt :: R.Component Props
 forestLayoutMainCpt = here.component "forestLayoutMain" cpt where
-  cpt props children = pure $ forestLayoutRaw props [ mainPage {} children ]
+  cpt props@{ reloadMainPage } children =
+    pure $ forestLayoutRaw props [ mainPage {} children ]
 
 forestLayoutRaw :: R2.Component Props
 forestLayoutRaw = R.createElement forestLayoutRawCpt
@@ -166,9 +165,11 @@ forestLayoutRawCpt = here.component "forestLayoutRaw" cpt where
         , forestOpen
         , frontends
         , reloadForest
+        , reloadMainPage
         , reloadRoot
         , route
         , sessions
+        , showTree
         , showLogin
         , tasks } children = do
     handed' <- T.useLive T.unequal p.handed
@@ -184,9 +185,11 @@ forestLayoutRawCpt = here.component "forestLayoutRaw" cpt where
                  , forestOpen
                  , handed
                  , reloadForest
+                 , reloadMainPage
                  , reloadRoot
                  , route
                  , sessions
+                 , showTree
                  , showLogin
                  , tasks } []
 

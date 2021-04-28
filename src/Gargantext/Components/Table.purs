@@ -142,10 +142,10 @@ tableCpt = here.component "table" cpt
                 Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "DESC ", lnk Nothing (columnName c)]
                 _ -> [lnk (Just (ASC c)) (columnName c)]
       pure $ container
-        { syncResetButton
-        , pageSizeControl: sizeDD { params }
+        { pageSizeControl: sizeDD { params }
         , pageSizeDescription: textDescription state.page state.pageSize totalRecords
         , paginationLinks: pagination { params, totalPages }
+        , syncResetButton
         , tableBody: map _.row $ A.fromFoldable rows
         , tableHead: H.tr {} (colHeader <$> colNames)
         }

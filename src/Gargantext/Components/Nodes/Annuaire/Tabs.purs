@@ -17,13 +17,14 @@ import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.NgramsTable.Core as NTC
+import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (ContactData)
 import Gargantext.Components.Nodes.Lists.Types as LTypes
 import Gargantext.Components.Nodes.Texts.Types as TTypes
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType(..), PTabNgramType(..), TabType(..), TabSubType(..))
+import Gargantext.Types (CTabNgramType(..), PTabNgramType(..), SidePanelState, TabType(..), TabSubType(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 
@@ -51,15 +52,16 @@ modeTabType' Books = CTabAuthors
 modeTabType' Communication = CTabAuthors
 
 type TabsProps =
-  ( cacheState        :: T.Box LTypes.CacheState
-  , contactData       :: ContactData
-  , frontends         :: Frontends
-  , nodeId            :: Int
-  , reloadForest      :: T.Box T2.Reload
-  , reloadRoot        :: T.Box T2.Reload
-  , session           :: Session
-  , sidePanelTriggers :: Record LTypes.SidePanelTriggers
-  , tasks             :: T.Box GAT.Storage
+  ( cacheState     :: T.Box LTypes.CacheState
+  , contactData    :: ContactData
+  , frontends      :: Frontends
+  , nodeId         :: Int
+  , reloadForest   :: T2.ReloadS
+  , reloadRoot     :: T2.ReloadS
+  , session        :: Session
+  , sidePanel      :: T.Box (Maybe (Record TextsT.SidePanel))
+  , sidePanelState :: T.Box SidePanelState
+  , tasks          :: T.Box GAT.Storage
   )
 
 tabs :: R2.Leaf TabsProps
@@ -68,20 +70,20 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component TabsProps
 tabsCpt = here.component "tabs" cpt where
   cpt props _ = do
-    active <- R.useState' 0
-    triggers <- TTypes.emptySidePanelTriggers
-    pure $ Tab.tabs { selected: fst active, tabs: tabs' props triggers }
-  tabs' props trg =
-    [ "Documents"     /\ docs trg
+    activeTab <- T.useBox 0
+
+    pure $ Tab.tabs { activeTab, tabs: tabs' props }
+  tabs' props@{ sidePanel, sidePanelState } =
+    [ "Documents"     /\ docs
     , "Patents"       /\ ngramsView (viewProps Patents)
     , "Books"         /\ ngramsView (viewProps Books)
     , "Communication" /\ ngramsView (viewProps Communication)
-    , "Trash"         /\ docs trg -- TODO pass-in trash mode
+    , "Trash"         /\ docs -- TODO pass-in trash mode
     ] where
       viewProps mode = Record.merge props { defaultListId: props.contactData.defaultListId
                                           , mode }
       totalRecords = 4736 -- TODO lol
-      docs sidePanelTriggers = DT.docViewLayout (Record.merge { sidePanelTriggers } $ Record.merge dtCommon dtExtra)
+      docs = DT.docViewLayout (Record.merge { sidePanel, sidePanelState } $ Record.merge dtCommon dtExtra)
       dtCommon = RX.pick props :: Record DTCommon
       dtExtra =
         { chart: mempty
@@ -98,7 +100,7 @@ type DTCommon =
   , frontends         :: Frontends
   , nodeId            :: Int
   , session           :: Session
-  -- , sidePanelTriggers :: Record LTypes.SidePanelTriggers
+  -- , sidePanel    :: T.Box (Record SidePanel)
   )
 
 type NgramsViewTabsProps =
@@ -119,22 +121,21 @@ ngramsViewCpt = here.component "ngramsView" cpt where
     pure $ NT.mainNgramsTable (props' path) [] where
       most = RX.pick props :: Record NTCommon
       props' path =
-        Record.merge most
+        (Record.merge most
           { afterSync
           , path
           , tabType:        TabPairing (TabNgramType $ modeTabType mode)
           , tabNgramType:   modeTabType' mode
-          , withAutoUpdate: false }
+          , withAutoUpdate: false }) :: Record NT.MainNgramsTableProps
         where
           afterSync :: Unit -> Aff Unit
           afterSync _ = pure unit
 
 type NTCommon =
-  ( cacheState        :: T.Box LTypes.CacheState
-  , defaultListId     :: Int
-  , reloadForest      :: T.Box T2.Reload
-  , reloadRoot        :: T.Box T2.Reload
-  , session           :: Session
-  , sidePanelTriggers :: Record LTypes.SidePanelTriggers
-  , tasks             :: T.Box GAT.Storage
+  ( cacheState     :: T.Box LTypes.CacheState
+  , defaultListId  :: Int
+  , reloadForest   :: T2.ReloadS
+  , reloadRoot     :: T2.ReloadS
+  , session        :: Session
+  , tasks          :: T.Box GAT.Storage
   )

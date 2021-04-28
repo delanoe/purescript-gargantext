@@ -642,10 +642,11 @@ li .leaf:hover a.settings {
   list-style: decimal !important;
 }
 
-#page-wrapper .cache-toggle {
+.cache-toggle {
   cursor: pointer;
 }
-#page-wrapper .side-panel {
+
+.side-panel {
   left: 70%;
   padding: 5px;
   position: fixed;
@@ -653,14 +654,14 @@ li .leaf:hover a.settings {
   background-color: #fff;
   width: 28%;
 }
-#page-wrapper .side-panel .header {
+.side-panel .header {
   float: right;
 }
-#page-wrapper .side-panel .corpus-doc-view .annotated-field-wrapper .annotated-field-runs {
+.side-panel .corpus-doc-view .annotated-field-wrapper .annotated-field-runs {
   max-height: 200px;
   overflow-y: scroll;
 }
-#page-wrapper .side-panel .corpus-doc-view .list-group .list-group-item-heading {
+.side-panel .corpus-doc-view .list-group .list-group-item-heading {
   display: inline-block;
   width: 60px;
 }

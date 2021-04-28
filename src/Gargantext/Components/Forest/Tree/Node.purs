@@ -45,16 +45,18 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node"
 
 -- Main Node
 type NodeMainSpanProps =
-  ( folderOpen    :: T.Box Boolean
-  , frontends     :: Frontends
-  , id            :: ID
-  , isLeaf        :: IsLeaf
-  , name          :: Name
-  , nodeType      :: GT.NodeType
-  , reloadRoot    :: T.Box T2.Reload
-  , route         :: T.Box Routes.AppRoute
-  , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
-  , tasks         :: T.Box GAT.Storage
+  ( folderOpen     :: T.Box Boolean
+  , frontends      :: Frontends
+  , id             :: ID
+  , isLeaf         :: IsLeaf
+  , name           :: Name
+  , nodeType       :: GT.NodeType
+  , reload         :: T2.ReloadS
+  , reloadMainPage :: T2.ReloadS
+  , reloadRoot     :: T2.ReloadS
+  , route          :: T.Box Routes.AppRoute
+  , setPopoverRef  :: R.Ref (Maybe (Boolean -> Effect Unit))
+  , tasks          :: T.Box GAT.Storage
   | CommonProps
   )
 
@@ -66,8 +68,12 @@ nodeSpan = R.createElement nodeSpanCpt
 nodeSpanCpt :: R.Component NodeMainSpanProps
 nodeSpanCpt = here.component "nodeSpan" cpt
   where
-    cpt props children = do
-      pure $ H.div {} ([ nodeMainSpan props [] ] <> children)
+    cpt props@{ handed } children = do
+      let className = case handed of
+            GT.LeftHanded  -> "lefthanded"
+            GT.RightHanded -> "righthanded"
+
+      pure $ H.div { className } ([ nodeMainSpan props [] ] <> children)
 
 nodeMainSpan :: R2.Component NodeMainSpanProps
 nodeMainSpan = R.createElement nodeMainSpanCpt
@@ -83,6 +89,8 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
               , isLeaf
               , name
               , nodeType
+              , reload
+              , reloadMainPage
               , reloadRoot
               , route
               , session
@@ -110,16 +118,21 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
         $ reverseHanded handed
         [ folderIcon  { folderOpen, nodeType } []
         , chevronIcon { folderOpen, handed, isLeaf, nodeType } []
-        , nodeLink { frontends, handed, folderOpen, id, isSelected
-                   , name: name' props, nodeType, session } []
+        , nodeLink { frontends
+                   , handed
+                   , folderOpen
+                   , id
+                   , isSelected
+                   , name: name' props
+                   , nodeType
+                   , session } []
 
                 , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType }
                 , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
                                                        , barType: Pie
                                                        , nodeId: id
                                                        , onFinish: onTaskFinish id t
-                                                       , session
-                                                       }
+                                                       , session } []
                                 ) currentTasks'
                            )
                 , if nodeType == GT.NodeUser
@@ -146,6 +159,22 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
         where
           onTaskFinish id' t _ = do
             GAT.finish id' t tasks
+            if GAT.asyncTaskTTriggersAppReload t then do
+              here.log2 "reloading root for task" t
+              T2.reload reloadRoot
+            else do
+              if GAT.asyncTaskTTriggersTreeReload t then do
+                here.log2 "reloading tree for task" t
+                T2.reload reload
+              else do
+                here.log2 "task doesn't trigger a tree reload" t
+                pure unit
+              if GAT.asyncTaskTTriggersMainPageReload t then do
+                here.log2 "reloading main page for task" t
+                T2.reload reloadMainPage
+              else do
+                here.log2 "task doesn't trigger a main page reload" t
+                pure unit
             -- snd tasks $ GAT.Finish id' t
             -- mT <- T.read tasks
             -- case mT of
@@ -168,9 +197,9 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
             <> "Click here to execute one of them." } []
     dropProps droppedFile droppedFile' isDragOver isDragOver' =
       { className: "leaf " <> (dropClass droppedFile' isDragOver')
-      , on: { drop: dropHandler droppedFile
+      , on: { dragLeave: onDragLeave isDragOver
             , dragOver: onDragOverHandler isDragOver
-            , dragLeave: onDragLeave isDragOver }
+            , drop: dropHandler droppedFile }
       }
       where
         dropClass (Just _) _    = "file-dropped"
@@ -184,12 +213,12 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
           blob <- R2.dataTransferFileBlob e
           void $ launchAff do
             --contents <- readAsText blob
-            liftEffect $ T.write_
-                        (Just
-                        $ DroppedFile { blob: (UploadFileBlob blob)
-                                      , fileType: Just CSV
-                                      , lang    : EN
-                                      }) droppedFile
+            liftEffect $ do
+              T.write_ (Just
+                       $ DroppedFile { blob: (UploadFileBlob blob)
+                                     , fileType: Just CSV
+                                     , lang    : EN
+                                     }) droppedFile
     onDragOverHandler isDragOver e = do
       -- prevent redirection when file is dropped
       -- https://stackoverflow.com/a/6756680/941471
@@ -283,7 +312,7 @@ graphNodeActionsCpt :: R.Component NodeActionsCommon
 graphNodeActionsCpt = here.component "graphNodeActions" cpt where
   cpt { id, session, refresh } _ =
     useLoader id (graphVersions session) $ \gv ->
-      nodeActionsGraph { graphVersions: gv, session, id, refresh }
+      nodeActionsGraph { graphVersions: gv, session, id, refresh } []
   graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
 
 listNodeActions :: R2.Leaf NodeActionsCommon

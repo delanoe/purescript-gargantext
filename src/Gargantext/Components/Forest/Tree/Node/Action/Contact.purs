@@ -1,21 +1,20 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Contact where
 
 import Prelude
+
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff, launchAff)
 import Formula as F
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
-import Gargantext.Components.Forest.Tree.Node.Action (Action)
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Contact.Types (AddContactParams(..))
--- import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types (ID)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Contact"
@@ -24,20 +23,36 @@ contactReq :: Session -> ID -> AddContactParams -> Aff ID
 contactReq session nodeId =
   post session $ GR.NodeAPI GT.Annuaire (Just nodeId) "contact"
 
-type TextInputBoxProps =
-  ( id        :: ID
-  , dispatch  :: Action -> Aff Unit
-  , params    :: Record AddContactProps
-  , isOpen    :: T.Box Boolean
-  , boxName   :: String
-  , boxAction :: AddContactParams -> Action
-  )
+type ActionAddContact =
+  ( dispatch :: Action -> Aff Unit
+  , id :: ID )
 
-type AddContactProps = ( firstname :: String, lastname :: String)
+actionAddContact :: R2.Component ActionAddContact
+actionAddContact = R.createElement actionAddContactCpt
+actionAddContactCpt :: R.Component ActionAddContact
+actionAddContactCpt = here.component "actionAddContact" cpt where
+  cpt { dispatch, id } _ = do
+    isOpen <- T.useBox true
+    pure $ textInputBox
+      { boxAction: \p -> AddContact p
+      , boxName:"addContact"
+      , dispatch
+      , id
+      , isOpen
+      , params: {firstname:"First Name", lastname: "Last Name"} }
+
+type TextInputBoxProps =
+  ( boxAction :: AddContactParams -> Action
+  , boxName   :: String
+  , dispatch  :: Action -> Aff Unit
+  , id        :: ID
+  , isOpen    :: T.Box Boolean
+  , params    :: Record AddContactProps )
+
+type AddContactProps = ( firstname :: String, lastname :: String )
 
 textInputBox :: R2.Leaf TextInputBoxProps
 textInputBox props = R.createElement textInputBoxCpt props []
-
 textInputBoxCpt :: R.Component TextInputBoxProps
 textInputBoxCpt = here.component "textInputBox" cpt where
   cpt p@{ boxName, boxAction, dispatch, isOpen
