@@ -75,12 +75,10 @@ loadPublicData _l = do
 
 renderPublic :: R2.Leaf ()
 renderPublic props = R.createElement renderPublicCpt props []
-
 renderPublicCpt :: R.Component ()
 renderPublicCpt = here.component "renderPublic" cpt where
   cpt _ _ = do
-    reload <- R.useState' 0
-    useLoader { reload: fst reload } loadPublicData loaded where
+    useLoader { reload: 0 } loadPublicData loaded where
       loaded publicData = publicLayout { publicData }
 
 publicLayout :: Record PublicDataProps -> R.Element

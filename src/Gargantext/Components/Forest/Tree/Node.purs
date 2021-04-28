@@ -312,7 +312,7 @@ graphNodeActionsCpt :: R.Component NodeActionsCommon
 graphNodeActionsCpt = here.component "graphNodeActions" cpt where
   cpt { id, session, refresh } _ =
     useLoader id (graphVersions session) $ \gv ->
-      nodeActionsGraph { graphVersions: gv, session, id, refresh }
+      nodeActionsGraph { graphVersions: gv, session, id, refresh } []
   graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
 
 listNodeActions :: R2.Leaf NodeActionsCommon

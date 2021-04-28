@@ -91,23 +91,25 @@ type ContactInfoItemProps =
   , placeholder       :: String
   )
 
-contactInfoItem :: Record ContactInfoItemProps -> R.Element
+contactInfoItem :: R2.Leaf ContactInfoItemProps
 contactInfoItem props = R.createElement contactInfoItemCpt props []
-
 contactInfoItemCpt :: R.Component ContactInfoItemProps
 contactInfoItemCpt = here.component "contactInfoItem" cpt
   where
-    cpt {hyperdata, label, lens, onUpdateHyperdata, placeholder} _ = do
-      isEditing <- R.useState' false
+    cpt { hyperdata, label, lens, onUpdateHyperdata, placeholder } _ = do
+      isEditing <- T.useBox false
+      isEditing' <- T.useLive T.unequal isEditing
+
       let value = (L.view cLens hyperdata) :: String
+
       valueRef <- R.useRef value
       pure $
         H.div { className: "form-group row" }
         [ H.span { className: "col-sm-2 col-form-label" } [ H.text label ]
-        , item isEditing valueRef ]
+        , item isEditing' isEditing valueRef ]
       where
         cLens = L.cloneLens lens
-        item (false /\ setIsEditing) valueRef =
+        item false isEditing valueRef =
           H.div { className: "input-group col-sm-6" }
           [ H.input
             { className: "form-control", type: "text"
@@ -116,8 +118,8 @@ contactInfoItemCpt = here.component "contactInfoItem" cpt
             [ H.div { className: "input-group-text fa fa-pencil" } [] ]]
           where
             placeholder' = R.readRef valueRef
-            click _ = setIsEditing $ const true
-        item (true /\ setIsEditing) valueRef =
+            click _ = T.write_ true isEditing
+        item true isEditing valueRef =
           H.div { className: "input-group col-sm-6" }
           [ inputWithEnter
             { autoFocus: true
@@ -132,7 +134,7 @@ contactInfoItemCpt = here.component "contactInfoItem" cpt
             [ H.div { className: "input-group-text fa fa-floppy-o" } [] ]]
           where
             click _ = do
-              setIsEditing $ const false
+              T.write_ false isEditing
               let newHyperdata = (L.over cLens (\_ -> R.readRef valueRef) hyperdata) :: HyperdataContact
               onUpdateHyperdata newHyperdata
 

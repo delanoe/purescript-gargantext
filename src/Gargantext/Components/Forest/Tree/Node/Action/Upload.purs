@@ -93,12 +93,13 @@ uploadFileViewCpt :: R.Component Props
 uploadFileViewCpt = here.component "uploadFileView" cpt
   where
     cpt {dispatch, id, nodeType} _ = do
-      mFile    :: R.State (Maybe UploadFile) <- R.useState' Nothing
-      fileType@(_ /\ setFileType)   <- R.useState'  CSV
-      lang@( _chosenLang /\ setLang) <- R.useState' EN
+      -- mFile    :: R.State (Maybe UploadFile) <- R.useState' Nothing
+      mFile <- T.useBox (Nothing :: Maybe UploadFile)
+      fileType <- T.useBox CSV
+      lang <- T.useBox EN
 
-      let setFileType' = setFileType <<< const
-      let setLang' = setLang <<< const
+      let setFileType' val = T.write_ val fileType
+      let setLang' val = T.write_ val lang
 
       let bodies =
             [ R2.row
@@ -144,8 +145,8 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
     renderOptionLang :: Lang -> R.Element
     renderOptionLang opt = H.option {} [ H.text $ show opt ]
 
-    onChangeContents :: forall e. R.State (Maybe UploadFile) -> E.SyntheticEvent_ e -> Effect Unit
-    onChangeContents (mFile /\ setMFile) e = do
+    onChangeContents :: forall e. T.Box (Maybe UploadFile) -> E.SyntheticEvent_ e -> Effect Unit
+    onChangeContents mFile e = do
       let mF = R2.inputFileNameWithBlob 0 e
       E.preventDefault e
       E.stopPropagation e
@@ -155,15 +156,15 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
           --contents <- readAsText blob
           --contents <- readAsDataURL blob
           liftEffect $ do
-            setMFile $ const $ Just $ {blob: UploadFileBlob blob, name}
+            T.write_ (Just $ {blob: UploadFileBlob blob, name}) mFile
 
 
 type UploadButtonProps =
   ( dispatch :: Action -> Aff Unit
-  , fileType :: R.State FileType
+  , fileType :: T.Box FileType
   , id       :: GT.ID
-  , lang     :: R.State Lang
-  , mFile    :: R.State (Maybe UploadFile)
+  , lang     :: T.Box Lang
+  , mFile    :: T.Box (Maybe UploadFile)
   , nodeType :: GT.NodeType
   )
 
@@ -174,36 +175,39 @@ uploadButtonCpt :: R.Component UploadButtonProps
 uploadButtonCpt = here.component "uploadButton" cpt
   where
     cpt { dispatch
-        , fileType: (fileType /\ setFileType)
+        , fileType
         , id
-        , lang: (lang /\ setLang)
-        , mFile: (mFile /\ setMFile)
+        , lang
+        , mFile
         , nodeType
-        } _ = pure
-            $ H.button { className: "btn btn-primary"
-                       , "type" : "button"
-                       , disabled
-                       , style    : { width: "100%" }
-                       , on: {click: onClick}
-                       } [ H.text "Upload" ]
-      where
-        disabled = case mFile of
-          Nothing -> "1"
-          Just _  -> ""
+        } _ = do
+      fileType' <- T.useLive T.unequal fileType
+      mFile' <- T.useLive T.unequal mFile
 
-        onClick e = do
-          let { blob, name } = unsafePartial $ fromJust mFile
-          log2 "[uploadButton] fileType" fileType
+      let disabled = case mFile' of
+            Nothing -> "1"
+            Just _  -> ""
+
+      pure $ H.button { className: "btn btn-primary"
+                      , "type" : "button"
+                      , disabled
+                      , style    : { width: "100%" }
+                      , on: {click: onClick fileType' mFile'}
+                      } [ H.text "Upload" ]
+      where
+        onClick fileType' mFile' e = do
+          let { blob, name } = unsafePartial $ fromJust mFile'
+          log2 "[uploadButton] fileType" fileType'
           void $ launchAff do
-            case fileType of
+            case fileType' of
               Arbitrary ->
                 dispatch $ UploadArbitraryFile (Just name) blob
               _ ->
-                dispatch $ UploadFile nodeType fileType (Just name) blob
+                dispatch $ UploadFile nodeType fileType' (Just name) blob
             liftEffect $ do
-              setMFile     $ const $ Nothing
-              setFileType  $ const $ CSV
-              setLang      $ const $ EN
+              T.write_ Nothing mFile
+              T.write_ CSV fileType
+              T.write_ EN lang
             dispatch ClosePopover
 
 -- START File Type View
@@ -363,7 +367,8 @@ uploadTermListViewCpt :: R.Component Props
 uploadTermListViewCpt = here.component "uploadTermListView" cpt
   where
     cpt {dispatch, id, nodeType} _ = do
-      mFile :: R.State (Maybe UploadFile) <- R.useState' Nothing
+      mFile <- T.useBox (Nothing :: Maybe UploadFile)
+
       let body = H.input { type: "file"
                             , placeholder: "Choose file"
                             , on: {change: onChangeContents mFile}
@@ -373,15 +378,15 @@ uploadTermListViewCpt = here.component "uploadTermListView" cpt
                                                , id
                                                , mFile
                                                , nodeType
-                                               } 
+                                               }
                             ]
 
       pure $ panel [body] footer
 
-    onChangeContents :: forall e. R.State (Maybe UploadFile)
+    onChangeContents :: forall e. T.Box (Maybe UploadFile)
                      -> E.SyntheticEvent_ e
                      -> Effect Unit
-    onChangeContents (mFile /\ setMFile) e = do
+    onChangeContents mFile e = do
       let mF = R2.inputFileNameWithBlob 0 e
       E.preventDefault  e
       E.stopPropagation e
@@ -390,37 +395,41 @@ uploadTermListViewCpt = here.component "uploadTermListView" cpt
         Just {blob, name} -> void $ launchAff do
           --contents <- readAsText blob
           liftEffect $ do
-            setMFile $ const $ Just $ { blob: UploadFileBlob blob
-                                      , name
-                                      }
+            T.write_ (Just $ { blob: UploadFileBlob blob
+                             , name }) mFile
 
 
 type UploadTermButtonProps =
   ( dispatch :: Action -> Aff Unit
   , id       :: Int
-  , mFile    :: R.State (Maybe UploadFile)
+  , mFile    :: T.Box (Maybe UploadFile)
   , nodeType :: GT.NodeType
   )
 
-uploadTermButton :: Record UploadTermButtonProps -> R.Element
+uploadTermButton :: R2.Leaf UploadTermButtonProps
 uploadTermButton props = R.createElement uploadTermButtonCpt props []
 
 uploadTermButtonCpt :: R.Component UploadTermButtonProps
 uploadTermButtonCpt = here.component "uploadTermButton" cpt
   where
-    cpt {dispatch, id, mFile: (mFile /\ setMFile), nodeType} _ = do
-        pure $ H.button {className: "btn btn-primary", disabled, on: {click: onClick}} [ H.text "Upload" ]
-      where
-        disabled = case mFile of
-          Nothing -> "1"
-          Just _  -> ""
+    cpt { dispatch
+        , id
+        , mFile
+        , nodeType } _ = do
+      mFile' <- T.useLive T.unequal mFile
 
-        onClick e = do
-          let {name, blob} = unsafePartial $ fromJust mFile
+      let  disabled = case mFile' of
+             Nothing -> "1"
+             Just _  -> ""
+
+      pure $ H.button { className: "btn btn-primary"
+                      , disabled
+                      , on: {click: onClick mFile'}
+                      } [ H.text "Upload" ]
+      where
+        onClick mFile' e = do
+          let {name, blob} = unsafePartial $ fromJust mFile'
           void $ launchAff do
             _ <- dispatch $ UploadFile nodeType CSV (Just name) blob
             liftEffect $ do
-              setMFile $ const $ Nothing
-
-
-
+              T.write_ Nothing mFile
