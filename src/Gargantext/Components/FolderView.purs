@@ -111,5 +111,15 @@ backButton =
     H.i { className: "fa fa-arrow-left"} []
   ]
 
+homeButton :: R.Element
+homeButton =
+  H.a {
+    className: "btn btn-primary"
+  , href: appPath Home
+  } [
+    H.i { className: "fa fa-home"} []
+  ]
+  
+
 loadFolders :: Record Props -> Aff FTree
 loadFolders {nodeId, session} = get session $ TreeFirstLevel (Just nodeId) ""
