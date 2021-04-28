@@ -8,8 +8,9 @@ processing, text-mining, complex networks analysis and interactive data
 visualization to pave the way toward new kinds of interactions with your
 digital corpora.
 
-You will not find this software very useful without also running or being
-granted access to a [backend](https://gitlab.iscpif.fr/gargantext/haskell-gargantext).
+This repo deals with the frontend or client which needs
+a backend server running or being granted access to a
+[backend](https://gitlab.iscpif.fr/gargantext/haskell-gargantext).
 
 This software is free software, developed by the CNRS Complex Systems
 Institute of Paris Île-de-France (ISC-PIF) and its partners.
@@ -191,7 +192,7 @@ yarn css # for manual setup
 <!-- A `purs ide` connection will be available on port 9002 while the -->
 <!-- development server is running. -->
 
-A guide to getting set up with the IDE integration is coming soon, I hope.
+A guide to getting set up with the IDE integration is coming soon.
 
 ### Testing
 
@@ -236,8 +237,6 @@ yarn rebuild-set # or darn rebuild-set
 yarn rebase-set && yarn rebuild-set # or darn rebase-set && darn rebuild-set
 ```
 
-This will occasionally result in swearing when you go on to build.
-
 ## Theory Introduction
 
 Making sense of out text isn't actually that hard, but it does require
@@ -245,21 +244,23 @@ a little background knowledge to understand.
 
 ### N-grams
 
-N-grams are at the heart of how Gargantext makes sense out of text.
+N-grams in contexts (of texts) are at the heart of how Gargantext makes
+sense out of text.
 
 There are two common meanings in the literature for n-gram:
 - a sequence of `n` characters
 - a sequence of `n` words
 
-Gargantext is focused on words. Here are some example word n-grams;
+Gargantext is focused on words. Here are some example word n-grams
+usually extracted by our Natural Language Process toolkit;
 
 - `coffee` (unigram or 1-gram)
-- `need coffee` (bigram or 2-gram)
-- `one coffee please` (trigram or 3-gram)
-- `here is your coffee` (4-gram)
-- `i need some more coffee` (5-gram)
+- `black coffee` (bigram or 2-gram)
+- `hot black coffee` (trigram or 3-gram)
+- `arabica hot black coffee` (4-gram)
 
-N-grams are matched case insensitively and across whole words. Examples:
+N-grams are matched case insensitively and across whole words removing
+the linked syntax if exists. Examples:
 
 | Text         | N-gram       | Matches              |
 |--------------|--------------|----------------------|
@@ -271,20 +272,23 @@ You may read more about n-grams [on wikipedia](https://en.wikipedia.org/wiki/N-g
 
 <!-- TODO: Discuss punctuation -->
 
-Gargantext allows you to define n-grams interactively in your browser
-and explore the relationships they uncover across a corpus of text.
+Gargantext allows you to define and refine n-grams interactively in your
+browser and explore the relationships they uncover across a corpus of
+text.
 
-Various metrics can be applied to n-grams, the most common of which is
-the number of times an n-gram appears in a document.
+Various metrics can be applied to n-grams, the most common of which
+is the number of times an n-gram appears in a document (occurrences).
+GarganText uses extensively the cooccurrences: times 2 n-grams appear in
+same context of text.
 
 ## Glossary
 
 document
 : One or more texts comprising a single logical document
 field
-: A portion of a document, e.g. `title`, `abstract`, `body`
+: A portion of a document or metadata, e.g. `title`, `abstract`, `body`
 corpus
-: A collection of documents
+: A collection of documents as set (with no repetition)
 n-gram/ngram
 : A word or words to be indexed, consisting of `n` words.
   This technically includes skip-grams, but in the general case
@@ -296,8 +300,10 @@ bigram/2-gram
 trigram/3-gram
 : A three-word n-gram, e.g. `coffee cup holder`
 skip-gram
-: An n-gram where the words are not all adjacent. Not yet supported.
+: An n-gram where the words are not all adjacent. Group 2 different
+n-grams to enable such feature.
 k-skip-n-gram
-: An n-gram where the words are at most distance k from each other.
-
+: An n-gram where the words are at most distance k from each other. This
+feature is used for advanced research in text (not yet supported in
+GarganText)
 
