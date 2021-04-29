@@ -5,6 +5,12 @@ import Gargantext.Prelude
 import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Record.Extra as RE
+import Toestand as T
+
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Footer (footer)
 import Gargantext.Components.Forest as Forest
@@ -34,11 +40,6 @@ import Gargantext.Sessions (Session, WithSession)
 import Gargantext.Sessions as Sessions
 import Gargantext.Types (CorpusId, Handed(..), ListId, NodeID, NodeType(..), SessionId, SidePanelState(..), reverseHanded)
 import Gargantext.Utils.Reactix as R2
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Record as Record
-import Record.Extra as RE
-import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Router"
@@ -101,71 +102,7 @@ mainPage = R.createElement mainPageCpt
 mainPageCpt :: R.Component Props
 mainPageCpt = here.component "mainPage" cpt where
   cpt { boxes } _ = do
-    pure $ MainPage.mainPage {} [ renderRoute { boxes }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-[] ]
+    pure $ MainPage.mainPage { boxes } [ renderRoute { boxes } [] ]
 
 forest :: R2.Component Props
 forest = R.createElement forestCpt

@@ -1,9 +1,5 @@
 module Gargantext.Components.Forest
   ( forest
-  -- , forestLayout
-  -- , forestLayoutWithTopBar
-  -- , forestLayoutMain
-  -- , forestLayoutRaw
   , forestLayout
   , Common
   , Props
@@ -12,14 +8,13 @@ module Gargantext.Components.Forest
 import Gargantext.Prelude
 
 import Data.Array as A
-import Data.Maybe (Maybe, fromMaybe)
+import Data.Maybe (Maybe)
 import Gargantext.AsyncTasks as GAT
-import Gargantext.Components.Forest.Tree (doSearch, treeLoader)
-import Gargantext.Components.TopBar (topBar)
+import Gargantext.Components.Forest.Tree (treeLoader)
 import Gargantext.Ends (Frontends, Backend)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session(..), Sessions, OpenNodes, unSessions)
-import Gargantext.Types (Handed, reverseHanded, switchHanded)
+import Gargantext.Types (Handed, switchHanded)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
