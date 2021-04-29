@@ -17,7 +17,6 @@ import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.FolderView as FV
-import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (doc)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..))
@@ -65,9 +64,14 @@ corpusLayoutMainCpt = here.component "corpusLayoutMain" cpt
     cpt { nodeId, key, session } _ = do
       viewType <- T.useBox Folders
 
-      pure $ H.div{} [
-        H.div{} [viewTypeSelector {state: viewType} ]
-      , H.div{} [corpusLayoutSelection {state: viewType, key, session, nodeId}]
+      pure $ H.div {} [
+        H.div {} [
+          H.div { className: "row" } [
+            H.div { className: "col-1" } [ viewTypeSelector {state: viewType} ]
+          , H.div { className: "col-1" } [ FV.homeButton ]
+          ]
+        ]
+      , H.div {} [corpusLayoutSelection {state: viewType, key, session, nodeId}]
       ]
 
 type SelectionProps = 

@@ -1,27 +1,26 @@
 module Gargantext.Components.Nodes.Frame where
 
-import Data.Argonaut as Argonaut
+import Gargantext.Prelude
+
 import Data.Argonaut (decodeJson, (.:))
+import Data.Argonaut as Argonaut
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
---import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson, genericEnumDecodeJson, genericEnumEncodeJson)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
-import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.FolderView as FV
+import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, get, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Argonaut (genericSumEncodeJson)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Frame"
@@ -106,6 +105,7 @@ frameLayoutViewCpt = here.component "frameLayoutView" cpt
         , session } _ =
       pure $ H.div{} [
         FV.backButton
+      , FV.homeButton
       , H.div { className : "frame"
               , rows: "100%,*" }
           [ H.iframe { src: hframeUrl nodeType base frame_id
