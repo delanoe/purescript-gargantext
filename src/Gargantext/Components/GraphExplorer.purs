@@ -2,7 +2,6 @@ module Gargantext.Components.GraphExplorer where
 
 import Gargantext.Prelude hiding (max,min)
 
-import DOM.Simple.Types (Element)
 import Data.Array as A
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Int (toNumber)
@@ -12,7 +11,16 @@ import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (Tuple(..))
+import DOM.Simple.Types (Element)
 import Effect.Aff (Aff)
+import Math as Math
+import Partial.Unsafe (unsafePartial)
+import Reactix as R
+import Reactix.DOM.HTML as RH
+import Record as Record
+import Record.Extra as RX
+import Toestand as T
+
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Graph as Graph
@@ -32,13 +40,6 @@ import Gargantext.Types as Types
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
-import Math as Math
-import Partial.Unsafe (unsafePartial)
-import Reactix as R
-import Reactix.DOM.HTML as RH
-import Record as Record
-import Record.Extra as RX
-import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer"

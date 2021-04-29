@@ -2,7 +2,7 @@ module Gargantext.Components.Router (router) where
 
 import Gargantext.Prelude
 
-import Data.Array (fromFoldable)
+import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Reactix as R
@@ -19,6 +19,7 @@ import Gargantext.Components.GraphExplorer.Sidebar as GES
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
 import Gargantext.Components.Lang (LandingLang(LL_EN))
 import Gargantext.Components.Login (login)
+import Gargantext.Components.MainPage as MainPage
 import Gargantext.Components.Nodes.Annuaire (annuaireLayout)
 import Gargantext.Components.Nodes.Annuaire.User (userLayout)
 import Gargantext.Components.Nodes.Annuaire.User.Contact (contactLayout)
@@ -35,9 +36,9 @@ import Gargantext.Config (defaultFrontends, defaultBackends)
 import Gargantext.Ends (Backend)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Routes as GR
-import Gargantext.Sessions as Sessions
 import Gargantext.Sessions (Session, WithSession)
-import Gargantext.Types (CorpusId, ListId, NodeID, NodeType(..), SessionId, SidePanelState(..))
+import Gargantext.Sessions as Sessions
+import Gargantext.Types (CorpusId, Handed(..), ListId, NodeID, NodeType(..), SessionId, SidePanelState(..), reverseHanded)
 import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
@@ -52,20 +53,108 @@ type Props' = ( backend :: Backend, route' :: AppRoute | Props )
 
 router :: R2.Leaf Props
 router props = R.createElement routerCpt props []
-
 routerCpt :: R.Component Props
 routerCpt = here.component "router" cpt where
-  cpt props@{ boxes } _ = do
+  cpt props@{ boxes: boxes@{ handed } } _ = do
+    handed'       <- T.useLive T.unequal handed
+
+    let handedClassName = case handed' of
+          LeftHanded  -> "left-handed"
+          RightHanded -> "right-handed"
+
     pure $ R.fragment
-      [ loginModal { boxes } []
-      , topBar { boxes } []
-      , forest { boxes } []
-      , sidePanel { boxes } []
-      ]
+      ([ loginModal { boxes } []
+       , topBar { boxes } [] ] <>
+       [ H.div { className: handedClassName } $ reverseHanded handed' $
+         [ forest { boxes } []
+         , mainPage { boxes } []
+         , sidePanel { boxes } []
+         ]
+       ])
+
+
+loginModal :: R2.Component Props
+loginModal = R.createElement loginModalCpt
+loginModalCpt :: R.Component Props
+loginModalCpt = here.component "loginModal" cpt
+  where
+    cpt { boxes: boxes@{ showLogin } } _ = do
+        showLogin' <- T.useLive T.unequal showLogin
+
+        pure $ if showLogin' then login' boxes else H.div {} []
+
+topBar :: R2.Component Props
+topBar = R.createElement topBarCpt
+topBarCpt :: R.Component Props
+topBarCpt = here.component "topBar" cpt where
+  cpt props@{ boxes: boxes@{ handed
+                           , route } } _ = do
+    route' <- T.useLive T.unequal boxes.route
+
+    let children = case route' of
+          GR.PGraphExplorer s g -> [ GraphExplorer.topBar { boxes } [] ]
+          _                     -> []
+
+    pure $ TopBar.topBar { handed } children
+
+mainPage :: R2.Component Props
+mainPage = R.createElement mainPageCpt
+mainPageCpt :: R.Component Props
+mainPageCpt = here.component "mainPage" cpt where
+  cpt { boxes } _ = do
+    pure $ MainPage.mainPage { boxes } [ renderRoute { boxes } [] ]
+
+forest :: R2.Component Props
+forest = R.createElement forestCpt
+forestCpt :: R.Component Props
+forestCpt = here.component "forest" cpt where
+  cpt props@{ boxes: boxes@{ backend
+                           , forestOpen
+                           , handed
+                           , reloadForest
+                           , reloadMainPage
+                           , reloadRoot
+                           , route
+                           , sessions
+                           , showLogin
+                           , showTree
+                           , tasks } } _ = do
+    pure $ Forest.forestLayout { backend
+                               , forestOpen
+                               , frontends: defaultFrontends
+                               , handed
+                               , reloadForest
+                               , reloadMainPage
+                               , reloadRoot
+                               , route
+                               , sessions
+                               , showLogin
+                               , showTree
+                               , tasks } []
+
+sidePanel :: R2.Component Props
+sidePanel = R.createElement sidePanelCpt
+sidePanelCpt :: R.Component Props
+sidePanelCpt = here.component "sidePanel" cpt where
+  cpt props@{ boxes: boxes@{ graphVersion
+                           , reloadForest
+                           , session
+                           , sidePanelGraph
+                           , sidePanelState
+                           , sidePanelLists
+                           , sidePanelTexts } } _ = do
+    session' <- T.useLive T.unequal session
+    sidePanelState' <- T.useLive T.unequal sidePanelState
+
+    case session' of
+      Nothing -> pure $ H.div {} []
+      Just s  ->
+        case sidePanelState' of
+          Opened -> pure $ openedSidePanel (Record.merge { session: s } props) []
+          _      -> pure $ H.div {} []
 
 renderRoute :: R2.Component Props
 renderRoute = R.createElement renderRouteCpt
-
 renderRouteCpt :: R.Component Props
 renderRouteCpt = here.component "renderRoute" cpt where
   cpt props@{ boxes } _ = do
@@ -98,25 +187,12 @@ renderRouteCpt = here.component "renderRoute" cpt where
         GR.UserPage s n           -> user (sessionNodeProps s n) []
       ]
 
-
-loginModal :: R2.Component Props
-loginModal = R.createElement loginModalCpt
-
-loginModalCpt :: R.Component Props
-loginModalCpt = here.component "loginModal" cpt
-  where
-    cpt { boxes: boxes@{ showLogin } } _ = do
-        showLogin' <- T.useLive T.unequal showLogin
-
-        pure $ if showLogin' then login' boxes else H.div {} []
-
 type AuthedProps =
   ( content :: Session -> R.Element
   | SessionProps )
 
 authed :: R2.Component AuthedProps
 authed = R.createElement authedCpt
-
 authedCpt :: R.Component AuthedProps
 authedCpt = here.component "authed" cpt where
   cpt props@{ boxes: { session, sessions }
@@ -133,74 +209,6 @@ authedCpt = here.component "authed" cpt where
       Just s  -> pure $ R.fragment [ content s, footer {} [] ]
     where
       homeProps = RE.pick props :: Record Props
-
-topBar :: R2.Component Props
-topBar = R.createElement topBarCpt
-
-topBarCpt :: R.Component Props
-topBarCpt = here.component "topBar" cpt where
-  cpt props@{ boxes: boxes@{ handed
-                           , route } } _ = do
-    route' <- T.useLive T.unequal boxes.route
-
-    let children = case route' of
-          GR.PGraphExplorer s g -> [ GraphExplorer.topBar { boxes } [] ]
-          _                     -> []
-
-    pure $ TopBar.topBar { handed } children
-
-
-forest :: R2.Component Props
-forest = R.createElement forestCpt
-
-forestCpt :: R.Component Props
-forestCpt = here.component "forest" cpt where
-  cpt props@{ boxes: boxes@{ backend
-                           , forestOpen
-                           , handed
-                           , reloadForest
-                           , reloadMainPage
-                           , reloadRoot
-                           , route
-                           , sessions
-                           , showLogin
-                           , showTree
-                           , tasks }
-            } _ = do
-    pure $ Forest.forestLayoutMain { backend
-                                   , forestOpen
-                                   , frontends: defaultFrontends
-                                   , handed
-                                   , reloadForest
-                                   , reloadMainPage
-                                   , reloadRoot
-                                   , route
-                                   , sessions
-                                   , showLogin
-                                   , showTree
-                                   , tasks } [ renderRoute { boxes } [] ]
-
-sidePanel :: R2.Component Props
-sidePanel = R.createElement sidePanelCpt
-
-sidePanelCpt :: R.Component Props
-sidePanelCpt = here.component "sidePanel" cpt where
-  cpt props@{ boxes: boxes@{ graphVersion
-                           , reloadForest
-                           , session
-                           , sidePanelGraph
-                           , sidePanelState
-                           , sidePanelLists
-                           , sidePanelTexts } } _ = do
-    session' <- T.useLive T.unequal session
-    sidePanelState' <- T.useLive T.unequal sidePanelState
-
-    case session' of
-      Nothing -> pure $ H.div {} []
-      Just s  ->
-        case sidePanelState' of
-          Opened -> pure $ openedSidePanel (Record.merge { session: s } props) []
-          _      -> pure $ H.div {} []
 
 openedSidePanel :: R2.Component (WithSession Props)
 openedSidePanel = R.createElement openedSidePanelCpt
@@ -389,7 +397,7 @@ listsCpt = here.component "lists" cpt where
 login' :: Boxes -> R.Element
 login' { backend, sessions, showLogin: visible } =
   login { backend
-        , backends: fromFoldable defaultBackends
+        , backends: A.fromFoldable defaultBackends
         , sessions
         , visible }
 

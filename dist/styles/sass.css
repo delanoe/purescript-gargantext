@@ -535,8 +535,20 @@ li .leaf:hover a.settings {
   color: black;
 }
 
-.forest-layout-raw-tree {
-  padding-top: 60px;
+.forest-layout {
+  background-color: #fff;
+  position: fixed;
+  top: 3.7em;
+  width: 15%;
+  z-index: 999;
+}
+
+.left-handed .forest-layout {
+  left: 80%;
+}
+
+.right-handed .forest-layout {
+  left: 2%;
 }
 
 .code-editor .editor .code-area {
@@ -646,22 +658,42 @@ li .leaf:hover a.settings {
   cursor: pointer;
 }
 
-.side-panel {
-  left: 70%;
-  padding: 5px;
+.left-handed .side-panel {
+  left: 2%;
+  padding: 0.3em;
   position: fixed;
-  top: 60px;
+  top: 3.7em;
   background-color: #fff;
   width: 28%;
 }
-.side-panel .header {
-  float: right;
+.left-handed .side-panel .header {
+  float: left;
 }
-.side-panel .corpus-doc-view .annotated-field-wrapper .annotated-field-runs {
+.left-handed .side-panel .corpus-doc-view .annotated-field-wrapper .annotated-field-runs {
   max-height: 200px;
   overflow-y: scroll;
 }
-.side-panel .corpus-doc-view .list-group .list-group-item-heading {
+.left-handed .side-panel .corpus-doc-view .list-group .list-group-item-heading {
+  display: inline-block;
+  width: 60px;
+}
+
+.right-handed .side-panel {
+  left: 70%;
+  padding: 0.3em;
+  position: fixed;
+  top: 3.7em;
+  background-color: #fff;
+  width: 28%;
+}
+.right-handed .side-panel .header {
+  float: right;
+}
+.right-handed .side-panel .corpus-doc-view .annotated-field-wrapper .annotated-field-runs {
+  max-height: 200px;
+  overflow-y: scroll;
+}
+.right-handed .side-panel .corpus-doc-view .list-group .list-group-item-heading {
   display: inline-block;
   width: 60px;
 }

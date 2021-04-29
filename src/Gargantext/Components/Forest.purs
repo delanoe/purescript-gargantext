@@ -1,31 +1,26 @@
 module Gargantext.Components.Forest
   ( forest
   , forestLayout
-  , forestLayoutWithTopBar
-  , forestLayoutMain
-  , forestLayoutRaw
   , Common
   , Props
   ) where
 
+import Gargantext.Prelude
+
 import Data.Array as A
-import Data.Maybe (Maybe, fromMaybe)
-import Data.Tuple.Nested ((/\))
+import Data.Maybe (Maybe)
+import Gargantext.AsyncTasks as GAT
+import Gargantext.Components.Forest.Tree (treeLoader)
+import Gargantext.Ends (Frontends, Backend)
+import Gargantext.Routes (AppRoute)
+import Gargantext.Sessions (Session(..), Sessions, OpenNodes, unSessions)
+import Gargantext.Types (Handed, switchHanded)
+import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record.Extra as RX
 import Toestand as T
-
-import Gargantext.AsyncTasks as GAT
-import Gargantext.Components.Forest.Tree (treeLoader)
-import Gargantext.Components.TopBar (topBar)
-import Gargantext.Ends (Frontends, Backend)
-import Gargantext.Prelude
-import Gargantext.Routes (AppRoute)
-import Gargantext.Sessions (Session(..), Sessions, OpenNodes, unSessions)
-import Gargantext.Types (Handed, reverseHanded, switchHanded)
-import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest"
@@ -40,13 +35,13 @@ type Common =
   )
 
 type Props =
-  ( backend      :: T.Box (Maybe Backend)
-  , forestOpen   :: T.Box OpenNodes
-  , reloadForest :: T2.ReloadS
-  , sessions     :: T.Box Sessions
-  , showLogin    :: T.Box Boolean
-  , showTree     :: T.Box Boolean
-  , tasks        :: T.Box GAT.Storage
+  ( backend            :: T.Box (Maybe Backend)
+  , forestOpen         :: T.Box OpenNodes
+  , reloadForest       :: T2.ReloadS
+  , sessions           :: T.Box Sessions
+  , showLogin          :: T.Box Boolean
+  , showTree           :: T.Box Boolean
+  , tasks              :: T.Box GAT.Storage
   | Common 
   )
 
@@ -56,7 +51,6 @@ type TreeExtra = (
 
 forest :: R2.Component Props
 forest = R.createElement forestCpt
-
 forestCpt :: R.Component Props
 forestCpt = here.component "forest" cpt where
   cpt props@{ backend
@@ -86,7 +80,7 @@ forestCpt = here.component "forest" cpt where
     -- TODO If `reloadForest` is set, `reload` state should be updated
     -- TODO fix tasks ref
     pure $ H.div { className: "forest " <> if showTree' then "" else "d-none" }
-      (A.cons (plus handed' showLogin) (trees handed' sessions'))
+      (A.cons (plus { handed, showLogin }) (trees handed' sessions'))
     where
       common = RX.pick props :: Record Common
       trees handed' sessions' = (tree handed') <$> unSessions sessions'
@@ -102,107 +96,41 @@ forestCpt = here.component "forest" cpt where
                    , session: s
                    , tasks } []
 
-plus :: Handed -> T.Box Boolean -> R.Element
-plus handed showLogin = H.div { className: "row" }
-  [ H.button { className: buttonClass
-             , on: { click }
-             , title }
-      [ H.div { className: divClass } [ H.text " Log in/out " ] -- fa-lg
-      , H.div {} [ H.text "    " ] ]
-  ]
+type Plus =
+  ( handed    :: T.Box Handed
+  , showLogin :: T.Box Boolean )
+
+plus :: R2.Leaf Plus
+plus p = R.createElement plusCpt p []
+plusCpt :: R.Component Plus
+plusCpt = here.component "plus" cpt where
+  cpt { handed, showLogin } _ = do
+    handed' <- T.useLive T.unequal handed
+
+    pure $ H.div { className: "row" }
+      [ H.button { className: buttonClass handed'
+                , on: { click }
+                , title }
+          [ H.div { className: divClass } [ H.text " Log in/out " ] -- fa-lg
+          , H.div {} [ H.text "    " ] ]
+      ]
   --, H.div { "type": "", className: "fa fa-plus-circle fa-lg"} []
   --, H.div { "type": "", className: "fa fa-minus-circle fa-lg"} []
   -- TODO same as the one in the Login Modal (same CSS)
   -- [ H.i { className: "material-icons md-36"} [] ]
-  where
-    click _ = do
-      -- _ <- T.write Nothing backend
-      T.write_ true showLogin
-    title = "Add or remove connections to the server(s)."
-    divClass = "fa fa-universal-access"
-    buttonClass =
-      "btn btn-primary col-5 " <> switchHanded "mr-1 ml-auto" "ml-1 mr-auto" handed
-
+    where
+      click _ = do
+        -- _ <- T.write Nothing backend
+        T.write_ true showLogin
+      title = "Add or remove connections to the server(s)."
+      divClass = "fa fa-universal-access"
+      buttonClass handed' =
+        "btn btn-primary col-5 " <> switchHanded "mr-1 ml-auto" "ml-1 mr-auto" handed'
 
 forestLayout :: R2.Component Props
 forestLayout = R.createElement forestLayoutCpt
-
 forestLayoutCpt :: R.Component Props
 forestLayoutCpt = here.component "forestLayout" cpt where
-  cpt props@{ handed } children =
-    pure $ R.fragment
-      [ topBar { handed } []
-      , forestLayoutMain props children ]
-
--- Renders its first child component in the top bar and the rest in
--- the main view.
-forestLayoutWithTopBar :: R2.Component Props
-forestLayoutWithTopBar = R.createElement forestLayoutWithTopBarCpt
-
-forestLayoutWithTopBarCpt :: R.Component Props
-forestLayoutWithTopBarCpt = here.component "forestLayoutWithTopBar" cpt where
-  cpt props@{ handed } children = do
-    let { head: topBarChild, tail: mainChildren } =
-          fromMaybe { head: H.div {} [], tail: [] } $ A.uncons children
-    pure $ R.fragment
-      [ topBar { handed } [ topBarChild ]
-      , forestLayoutMain props mainChildren ]
-
-forestLayoutMain :: R2.Component Props
-forestLayoutMain = R.createElement forestLayoutMainCpt
-
-forestLayoutMainCpt :: R.Component Props
-forestLayoutMainCpt = here.component "forestLayoutMain" cpt where
-  cpt props@{ reloadMainPage } children =
-    pure $ forestLayoutRaw props [ mainPage {} children ]
-
-forestLayoutRaw :: R2.Component Props
-forestLayoutRaw = R.createElement forestLayoutRawCpt
-
-forestLayoutRawCpt :: R.Component Props
-forestLayoutRawCpt = here.component "forestLayoutRaw" cpt where
-  cpt p@{ backend
-        , forestOpen
-        , frontends
-        , reloadForest
-        , reloadMainPage
-        , reloadRoot
-        , route
-        , sessions
-        , showTree
-        , showLogin
-        , tasks } children = do
-    handed' <- T.useLive T.unequal p.handed
-
-    pure $ R2.row $ reverseHanded handed' $
-      [ H.div { className: "col-md-2 forest-layout-raw-tree" }
-         [ forest' p.handed ]
-      ] <> children
-      where
-        forest' handed =
-          forest { backend
-                 , frontends
-                 , forestOpen
-                 , handed
-                 , reloadForest
-                 , reloadMainPage
-                 , reloadRoot
-                 , route
-                 , sessions
-                 , showTree
-                 , showLogin
-                 , tasks } []
-
-mainPage :: R2.Component ()
-mainPage = R.createElement mainPageCpt
-
--- mainPageCpt :: R.Memo ()
--- mainPageCpt = R.memo (here.component "mainPage" cpt) where
-mainPageCpt :: R.Component ()
-mainPageCpt = here.component "mainPage" cpt
-  where
-    cpt _ children = do
-      pure $ H.div { className: "col-md-10" }
-        [ H.div { id: "page-wrapper" }
-          [ H.div { className: "container-fluid" } children ]
-        ]
+  cpt p _ = do
+    pure $ H.div { className: "forest-layout" }
+      [ forest p [] ]
