@@ -118,7 +118,7 @@ backButton =
     className: "btn btn-primary"
   , on: {click: back}
   } [
-    H.i { className: "fa fa-arrow-right"} []
+    H.i { className: "fa fa-arrow-left", title: "Previous view"} []
   ]
 
 homeButton :: R.Element
@@ -127,7 +127,7 @@ homeButton =
     className: "btn btn-primary"
   , href: appPath Home
   } [
-    H.i { className: "fa fa-home"} []
+    H.i { className: "fa fa-home", title: "Back to home"} []
   ]
   
 
