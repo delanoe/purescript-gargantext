@@ -4,7 +4,6 @@ module Gargantext.Components.ContextMenu.ContextMenu where
 
 import Data.Maybe ( Maybe(..) )
 import Data.Nullable ( Nullable, null, toMaybe )
-import Data.Tuple.Nested ( (/\) )
 import Data.Traversable ( traverse_ )
 import DOM.Simple as DOM
 import DOM.Simple.Event as DE
@@ -34,7 +33,6 @@ type Props t = (
 
 contextMenu :: forall t. R2.Component (Props t)
 contextMenu = R.createElement contextMenuCpt
-
 contextMenuCpt :: forall t. R.Component (Props t)
 contextMenuCpt = here.component "contextMenu" cpt
   where
@@ -64,13 +62,13 @@ contextMenuCpt = here.component "contextMenu" cpt
         , key: "context-menu"
         , className: "context-menu"
         , style: position menu rect
-        , data: {toggle: "popover", placement: "right"}
+        , data: { placement: "right", toggle: "popover" }
         }
     elems ref _ _ = HTML.div
         { ref
         , key: "context-menu"
         , className: "context-menu"
-        , data: {toggle: "popover", placement: "right"}
+        , data: { placement: "right", toggle: "popover" }
         }
 
 contextMenuEffect
@@ -108,9 +106,8 @@ position mouse {width: menuWidth, height: menuHeight} = {left, top}
         screenWidth = window .. "innerWidth"
         screenHeight = window .. "innerHeight"
 
-contextMenuItem :: Array R.Element -> R.Element
-contextMenuItem = R.createElement contextMenuItemCpt {}
-
+contextMenuItem :: R2.Component ()
+contextMenuItem = R.createElement contextMenuItemCpt
 contextMenuItemCpt :: R.Component ()
 contextMenuItemCpt = here.component "contextMenuItem" cpt
   where

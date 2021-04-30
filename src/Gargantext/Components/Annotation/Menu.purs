@@ -22,37 +22,40 @@ here = R2.here "Gargantext.Components.Annotation.Menu"
 data MenuType = NewNgram | SetTermListItem
 
 type Props =
-  ( list :: Maybe TermList
+  ( list     :: Maybe TermList
   , menuType :: MenuType
-  , setList :: TermList -> Effect Unit -- not a state hook setter
+  , setList  :: TermList -> Effect Unit -- not a state hook setter
   )
 
-type AnnotationMenu = {
-    x :: Number
-  , y :: Number
+type AnnotationMenu = (
+    x       :: Number
+  , y       :: Number
   , onClose :: Effect Unit
   | Props
-  }
+  )
 
 -- | An Annotation Menu is parameterised by a Maybe Termlist of the
 -- | TermList the currently selected text belongs to
-annotationMenu :: AnnotationMenu -> R.Element
-annotationMenu {x, y, list, menuType, onClose, setList} =
-  CM.contextMenu {x, y, onClose} [
-    R.createElement annotationMenuCpt {list, menuType, setList} []
-  ]
+annotationMenu :: R2.Leaf AnnotationMenu
+annotationMenu p = R.createElement annotationMenuCpt p []
+annotationMenuCpt :: R.Component AnnotationMenu
+annotationMenuCpt = here.component "annotationMenu" cpt where
+  cpt { x, y, list, menuType, onClose, setList } _ = do
+    pure $ CM.contextMenu {x, y, onClose} [
+        annotationMenuInner { list, menuType, setList }
+      ]
 
-annotationMenuCpt :: R.Component Props
-annotationMenuCpt = here.component "annotationMenu" cpt
-  where
-    cpt props _ = pure $ R.fragment $ children props
-    children props = A.mapMaybe (addToList props) [ MapTerm, CandidateTerm, StopTerm ]
+annotationMenuInner :: R2.Leaf Props
+annotationMenuInner p = R.createElement annotationMenuInnerCpt p []
+annotationMenuInnerCpt :: R.Component Props
+annotationMenuInnerCpt = here.component "annotationMenuInner" cpt where
+  cpt props _ = pure $ R.fragment $ A.mapMaybe (addToList props) [ MapTerm, CandidateTerm, StopTerm ]
 
 -- | Given the TermList to render the item for zand the Maybe TermList the item may belong to, possibly render the menuItem
 addToList :: Record Props -> TermList -> Maybe R.Element
 addToList {list: Just t'} t
   | t == t'   = Nothing
-addToList {menuType, setList} t = Just $ CM.contextMenuItem [ link ]
+addToList {menuType, setList} t = Just $ CM.contextMenuItem {} [ link ]
   where
     link = HTML.a { on: { click }, className: className } [ HTML.text (label menuType) ]
     label NewNgram = "Add to " <> termListName t

@@ -12,12 +12,11 @@
 module Gargantext.Components.Annotation.AnnotatedField where
 
 import Data.Array as A
-import Data.List ( List(..), (:), length )
+import Data.List (List(..), (:))
 import Data.Maybe ( Maybe(..), maybe )
 import Data.String.Common ( joinWith )
 import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ( (/\) )
--- import DOM.Simple.Console (log2)
 import DOM.Simple.Event as DE
 import Effect (Effect)
 import Reactix as R
@@ -28,7 +27,7 @@ import Toestand as T
 import Gargantext.Prelude
 
 import Gargantext.Components.Annotation.Menu ( annotationMenu, AnnotationMenu, MenuType(..) )
-import Gargantext.Components.Annotation.Utils ( termBootstrapClass, termClass )
+import Gargantext.Components.Annotation.Utils (termClass)
 import Gargantext.Components.NgramsTable.Core (NgramsTable, NgramsTerm, findNgramTermList, highlightNgrams, normNgram)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Selection as Sel
@@ -58,7 +57,7 @@ annotatedFieldComponent = here.component "annotatedField" cpt
       redrawMenu <- T.useBox false
       redrawMenu' <- T.useLive T.unequal redrawMenu
 
-      menuRef <- R.useRef (Nothing :: Maybe AnnotationMenu)
+      menuRef <- R.useRef (Nothing :: Maybe (Record AnnotationMenu))
 
       let wrapperProps = { className: "annotated-field-wrapper" }
 
@@ -77,7 +76,7 @@ compile ngrams = maybe [] (highlightNgrams CTabTerms ngrams)
 
 -- Runs
 
-onAnnotationSelect :: forall e. DE.IsMouseEvent e => { menuRef :: R.Ref (Maybe AnnotationMenu)
+onAnnotationSelect :: forall e. DE.IsMouseEvent e => { menuRef :: R.Ref (Maybe (Record AnnotationMenu))
                                               , ngrams :: NgramsTable
                                               , redrawMenu :: T.Box Boolean
                                               , setTermList :: NgramsTerm -> Maybe TermList -> TermList -> Effect Unit }
@@ -109,7 +108,7 @@ onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList } (Just (Tuple ngr
 -- showMenu :: forall p e. DE.IsMouseEvent e => { event :: E.SyntheticEvent e | p } -> Effect Unit
 showMenu :: forall e. DE.IsMouseEvent e => { event :: E.SyntheticEvent e
                                     , getList :: NgramsTerm -> Maybe TermList
-                                    , menuRef :: R.Ref (Maybe AnnotationMenu)
+                                    , menuRef :: R.Ref (Maybe (Record AnnotationMenu))
                                     , menuType :: MenuType
                                     , ngram :: NgramsTerm
                                     , redrawMenu :: T.Box Boolean
@@ -124,9 +123,11 @@ showMenu { event, getList, menuRef, menuType, ngram, redrawMenu, setTermList } =
       setList t = do
         setTermList ngram list t
         hideMenu { menuRef, redrawMenu }
+  here.log2 "x" x
+  here.log2 "y" y
   E.preventDefault event
   --range <- Sel.getRange sel 0
-  --log2 "[showMenu] selection range" $ Sel.rangeToTuple range
+  --here.log2 "selection range" $ Sel.rangeToTuple range
   let menu = Just
         { list
         , onClose: hideMenu { menuRef, redrawMenu }
