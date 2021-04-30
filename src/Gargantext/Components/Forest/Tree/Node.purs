@@ -259,7 +259,7 @@ chevronIconCpt = here.component "chevronIcon" cpt
     cpt { folderOpen, handed, isLeaf: true, nodeType } _ = do
       pure $ H.div {} []
     cpt { folderOpen, handed, isLeaf: false, nodeType } _ = do
-      open <- T.read folderOpen
+      open <- T.useLive T.unequal folderOpen
       pure $ H.a { className: "chevron-icon"
           , on: { click: \_ -> T.modify_ not folderOpen }
           }
