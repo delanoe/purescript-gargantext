@@ -11,6 +11,7 @@ import Gargantext.Components.Lang (LandingLang(..))
 import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
 import Gargantext.Components.Nodes.Home.Public (renderPublic)
+import Gargantext.Ends (Backend(..))
 import Gargantext.License (license)
 import Gargantext.Sessions (Sessions)
 import Gargantext.Sessions as Sessions
@@ -142,7 +143,7 @@ tutorialCpt = here.component "tutorial" cpt where
     let folders = makeFolders sessions
 
     pure $ H.div { className: "mx-auto container" }
-      [ H.div {className: "d-flex justify-content-center"} folders
+      [ H.div {className: "d-flex justify-content-center"} [ H.table {} folders ]
       , H.h1 {} [H.text "Welcome!"]
       , H.h2 {} [H.text "For easy start, just watch the tutorials"]
       , summary
@@ -160,7 +161,10 @@ tutorialCpt = here.component "tutorial" cpt where
 
       makeFolders :: Array Session -> Array R.Element
       makeFolders s = sessionToFolder <$> s where
-        sessionToFolder session@(Session {treeId}) = FV.folderView {session, nodeId: treeId, backFolder: false}
+        sessionToFolder session@(Session {treeId, username, backend: (Backend {name})}) = 
+          H.tr {} [
+            H.div { className: "d-flex justify-content-center" } [ H.text (username <> "@" <> name) ]
+          , H.div {} [ FV.folderView {session, nodeId: treeId, backFolder: false} ] ]
 
 startTutos :: Array Tuto
 startTutos =
