@@ -97,13 +97,14 @@ type FolderProps =
 
 folder :: R2.Component FolderProps
 folder = R.createElement folderCpt
-
 folderCpt :: R.Component FolderProps
 folderCpt = here.component "folderCpt" cpt where
   cpt {style, text, nodeId, sid, nodeType} _ = do
-    pure $ H.a {className: "btn btn-primary", href: "/#/" <> getFolderPath nodeType sid nodeId}  [ H.i { className: icon style nodeType } []
-                                                                   , H.br {}
-                                                                   , H.text text]
+    pure $ H.a { className: "btn btn-primary"
+               , href: "/#/" <> getFolderPath nodeType sid nodeId }
+      [ H.i { className: icon style nodeType } []
+      , H.br {}
+      , H.text text ]
   
   icon :: FolderStyle -> GT.NodeType -> String
   icon FolderUp _ = "fa fa-folder-open"

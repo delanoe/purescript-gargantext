@@ -51,10 +51,10 @@ type Universal =
 
 -- Shared by every component here + nodeSpan
 type Global =
-  ( frontends  :: Frontends
-  , handed     :: Handed
-  , route      :: T.Box AppRoute
-  , tasks       :: T.Box GAT.Storage
+  ( frontends :: Frontends
+  , handed    :: Handed
+  , route     :: T.Box AppRoute
+  , tasks     :: T.Box GAT.Storage
   | Universal )
 
 -- Shared by every component here
@@ -69,7 +69,6 @@ type LoaderProps = ( session :: Session, root :: ID | Common )
 -- | Loads and renders the tree starting at the given root node id.
 treeLoader :: R2.Component LoaderProps
 treeLoader = R.createElement treeLoaderCpt
-
 treeLoaderCpt :: R.Component LoaderProps
 treeLoaderCpt = here.component "treeLoader" cpt where
 -- treeLoaderCpt :: R.Memo LoaderProps
@@ -96,7 +95,6 @@ type TreeProps = ( tree :: FTree | NodeProps )
 
 tree :: R2.Leaf TreeProps
 tree props = R.createElement treeCpt props []
-
 treeCpt :: R.Component TreeProps
 treeCpt = here.component "tree" cpt where
   cpt p@{ reload, session, tree: NTree (LNode { id, name, nodeType }) children } _ = do
@@ -134,7 +132,6 @@ type ChildrenTreeProps =
 
 renderChildren :: R2.Component ChildrenTreeProps
 renderChildren = R.createElement renderChildrenCpt
-
 renderChildrenCpt :: R.Component ChildrenTreeProps
 renderChildrenCpt = here.component "renderChildren" cpt where
   cpt p@{ childProps: { folderOpen } } _ = do
@@ -147,7 +144,6 @@ renderChildrenCpt = here.component "renderChildren" cpt where
 
 renderTreeChildren :: R2.Component ChildrenTreeProps
 renderTreeChildren = R.createElement renderTreeChildrenCpt
-
 renderTreeChildrenCpt :: R.Component ChildrenTreeProps
 renderTreeChildrenCpt = here.component "renderTreeChildren" cpt where
   cpt p@{ childProps: { children'
@@ -180,7 +176,6 @@ type ChildLoaderProps = ( id :: ID, render :: R2.Leaf TreeProps | NodeProps )
 
 childLoader :: R2.Component ChildLoaderProps
 childLoader = R.createElement childLoaderCpt
-
 childLoaderCpt :: R.Component ChildLoaderProps
 childLoaderCpt = here.component "childLoader" cpt where
   cpt p@{ render } _ = do

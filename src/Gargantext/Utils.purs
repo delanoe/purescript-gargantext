@@ -1,6 +1,5 @@
 module Gargantext.Utils where
 
-import DOM.Simple.Window (window)
 import Data.Either (Either(..))
 import Data.Foldable (class Foldable, foldr)
 import Data.Lens (Lens', lens)
@@ -10,6 +9,7 @@ import Data.Set as Set
 import Data.Sequence.Ordered as OSeq
 import Data.String as S
 import Data.Unfoldable (class Unfoldable)
+import DOM.Simple.Window (window)
 import Effect (Effect)
 import FFI.Simple ((..))
 import FFI.Simple.Functions (delay)

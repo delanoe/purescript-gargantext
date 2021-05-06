@@ -67,7 +67,6 @@ initialLocalControls = do
 
 controls :: R2.Component Controls
 controls = R.createElement controlsCpt
-
 controlsCpt :: R.Component Controls
 controlsCpt = here.component "controls" cpt
   where

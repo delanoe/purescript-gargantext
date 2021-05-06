@@ -32,10 +32,9 @@ import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Data.Louvain as Louvain
 import Gargantext.Ends (Frontends, Backend)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Routes (SessionRoute(NodeAPI), AppRoute)
-import Gargantext.Sessions (OpenNodes, Session, Sessions, get)
+import Gargantext.Sessions (Session, Sessions, get)
 import Gargantext.Types as Types
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
@@ -76,7 +75,6 @@ type Props =
 --------------------------------------------------------------
 explorerLayout :: R2.Component LayoutProps
 explorerLayout = R.createElement explorerLayoutCpt
-
 explorerLayoutCpt :: R.Component LayoutProps
 explorerLayoutCpt = here.component "explorerLayout" cpt where
   cpt props@{ backend, boxes: { graphVersion }, graphId, session } _ = do
@@ -84,15 +82,13 @@ explorerLayoutCpt = here.component "explorerLayout" cpt where
 
     useLoader graphId (getNodes session graphVersion') handler
     where
-      handler loaded = explorerWriteGraph (Record.merge props { graph, hyperdataGraph: loaded, mMetaData' }) []
-        -- explorer (Record.merge props { graph, graphVersion, hyperdataGraph: loaded, mMetaData })
+      handler loaded@(GET.HyperdataGraph { graph: hyperdataGraph }) =
+        explorerWriteGraph (Record.merge props { graph, hyperdataGraph: loaded, mMetaData' }) []
         where
-          GET.HyperdataGraph { graph: hyperdataGraph } = loaded
           Tuple mMetaData' graph = convert hyperdataGraph
 
 explorerWriteGraph :: R2.Component GraphWriteProps
 explorerWriteGraph = R.createElement explorerWriteGraphCpt
-
 explorerWriteGraphCpt :: R.Component GraphWriteProps
 explorerWriteGraphCpt = here.component "explorerWriteGraph" cpt where
   cpt props@{ boxes: { sidePanelGraph, sidePanelState }
@@ -108,19 +104,11 @@ explorerWriteGraphCpt = here.component "explorerWriteGraph" cpt where
                        , showControls: false
                        , sideTab: GET.SideTabLegend }) sidePanelGraph
 
-      -- { mGraph, mMetaData, sideTab } <- GEST.focusedSidePanel sidePanelGraph
-
-      -- R.useEffect' $ do
-      --   here.log2 "writing graph" graph
-      --   T.write_ (Just graph) mGraph
-      --   T.write_ mMetaData' mMetaData
-
       pure $ explorer (RX.pick props :: Record Props) []
 
 --------------------------------------------------------------
 explorer :: R2.Component Props
 explorer = R.createElement explorerCpt
-
 explorerCpt :: R.Component Props
 explorerCpt = here.component "explorer" cpt
   where
@@ -163,32 +151,26 @@ explorerCpt = here.component "explorer" cpt
                                             , sidePanelState
                                             }
       multiSelectEnabled' <- T.useLive T.unequal controls.multiSelectEnabled
-      showTree' <- T.useLive T.unequal controls.showTree
       multiSelectEnabledRef <- R.useRef multiSelectEnabled'
 
-      forestOpen <- T.useBox $ (Set.empty :: OpenNodes)
-      R.useEffectOnce' $ do
-        R2.loadLocalStorageState R2.openNodesKey forestOpen
-        T.listen (R2.listenLocalStorageState R2.openNodesKey) forestOpen
-
-      R.useEffect' $ do
-        let readData = R.readRef dataRef
-        let gv = R.readRef graphVersionRef
-        if SigmaxT.eqGraph readData graph then
-          pure unit
-        else do
-          -- Graph data changed, reinitialize sigma.
-          let rSigma = R.readRef controls.sigmaRef
-          Sigmax.cleanupSigma rSigma "explorerCpt"
-          R.setRef dataRef graph
-          R.setRef graphVersionRef graphVersion'
-          -- Reinitialize bunch of state as well.
-          T.write_ SigmaxT.emptyNodeIds controls.removedNodeIds
-          T.write_ SigmaxT.emptyNodeIds controls.selectedNodeIds
-          T.write_ SigmaxT.EShow controls.showEdges
-          T.write_ forceAtlasS controls.forceAtlasState
-          T.write_ Graph.Init controls.graphStage
-          T.write_ Types.InitialClosed controls.sidePanelState
+      -- R.useEffect' $ do
+      --   let readData = R.readRef dataRef
+      --   let gv = R.readRef graphVersionRef
+      --   if SigmaxT.eqGraph readData graph then
+      --     pure unit
+      --   else do
+      --     -- Graph data changed, reinitialize sigma.
+      --     let rSigma = R.readRef controls.sigmaRef
+      --     Sigmax.cleanupSigma rSigma "explorerCpt"
+      --     R.setRef dataRef graph
+      --     R.setRef graphVersionRef graphVersion'
+      --     -- Reinitialize bunch of state as well.
+      --     T.write_ SigmaxT.emptyNodeIds controls.removedNodeIds
+      --     T.write_ SigmaxT.emptyNodeIds controls.selectedNodeIds
+      --     T.write_ SigmaxT.EShow controls.showEdges
+      --     T.write_ forceAtlasS controls.forceAtlasState
+      --     T.write_ Graph.Init controls.graphStage
+      --     T.write_ Types.InitialClosed controls.sidePanelState
 
       pure $
         RH.div { className: "graph-meta-container" }
@@ -221,9 +203,8 @@ type TopBar =
     boxes    :: Boxes
   )
 
-topBar :: R2.Component TopBar
-topBar = R.createElement topBarCpt
-
+topBar :: R2.Leaf TopBar
+topBar p = R.createElement topBarCpt p []
 topBarCpt :: R.Component TopBar
 topBarCpt = here.component "topBar" cpt where
   cpt { boxes: { showTree
@@ -268,9 +249,7 @@ type GraphProps = (
 )
 
 graphView :: R2.Component GraphProps
---graphView sigmaRef props = R.createElement (R.memo el memoCmp) props []
 graphView = R.createElement graphViewCpt
-
 graphViewCpt :: R.Component GraphProps
 graphViewCpt = here.component "graphView" cpt
   where

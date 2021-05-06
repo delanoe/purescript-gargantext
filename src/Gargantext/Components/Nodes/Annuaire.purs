@@ -191,7 +191,6 @@ type ContactCellsProps =
 
 contactCells :: Record ContactCellsProps -> R.Element
 contactCells p = R.createElement contactCellsCpt p []
-
 contactCellsCpt :: R.Component ContactCellsProps
 contactCellsCpt = here.component "contactCells" cpt where
   cpt { annuaireId, frontends, session
