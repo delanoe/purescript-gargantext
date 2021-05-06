@@ -2,14 +2,17 @@ module Gargantext.Components.FolderView where
 
 import Data.Array as A
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Nullable (null)
 import Effect (Effect)
 import Effect.Aff (Aff)
+import Gargantext.Components.FolderView.Box (nodePopupView)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (Ordering, Unit, compare, pure, ($), (<$>), (<>))
+import Gargantext.Prelude (Ordering, Unit, bind, compare, discard, pure, unit, ($), (<$>), (<>))
 import Gargantext.Routes (AppRoute(Home), SessionRoute(..), appPath, nodeTypeAppRoute)
 import Gargantext.Sessions (Session, get, sessionId)
 import Gargantext.Types (NodeType(..), SessionId, fldr)
+import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -50,23 +53,23 @@ folderViewMain props = R.createElement folderViewMainCpt props []
 folderViewMainCpt :: R.Component FolderViewProps
 folderViewMainCpt = here.component "folderViewMainCpt" cpt where
   cpt {nodeId, session, backFolder, folders: (NTree (LNode {parent_id: parentId}) (folders))} _ = do
+    setPopoverRef <- R.useRef Nothing
     let sid = sessionId session 
     let foldersS = A.sortBy sortFolders folders
-    let children = makeFolderElements foldersS sid
+    let children = makeFolderElements foldersS sid setPopoverRef
     let parent = makeParentFolder parentId sid backFolder
 
     pure $ H.div {className: "fv folders"} $ parent <> children
 
-  makeFolderElements :: Array (NTree LNode) -> SessionId -> Array R.Element
-  makeFolderElements foldersS sid = makeFolderElementsMap <$> foldersS where
+  makeFolderElements foldersS sid spr = makeFolderElementsMap <$> foldersS where
     makeFolderElementsMap :: NTree LNode -> R.Element
-    makeFolderElementsMap (NTree (LNode node) _) = folder {style: FolderChild, text: node.name, nodeId: node.id, nodeType: node.nodeType, sid: sid} []
+    makeFolderElementsMap (NTree (LNode node) _) = folder {style: FolderChild, text: node.name, nodeId: node.id, nodeType: node.nodeType, sid: sid, setPopoverRef: spr} []
 
   makeParentFolder :: Maybe Int -> SessionId -> Boolean -> Array R.Element
   makeParentFolder (Just parentId) sid _ =
     -- FIXME: The NodeType here should not be hardcoded to FolderPrivate but we currently can't get the actual NodeType
     -- without performing another API call. Also parentId is never being returned by this API even when it clearly exists
-    [ folder {style: FolderUp, text: "..", nodeId: parentId, nodeType: FolderPrivate, sid: sid} [] ]
+    [ folderSimple {style: FolderUp, text: "..", nodeId: parentId, nodeType: FolderPrivate, sid: sid} [] ]
   makeParentFolder Nothing _ true = [ H.button {className: "btn btn-primary", on: { click: back } }  [ H.i { className: "fa fa-folder-open" } []
                                                                    , H.br {}
                                                                    , H.text ".."] ]
@@ -75,8 +78,7 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
   sortFolders :: FTree -> FTree -> Ordering
   sortFolders a b = compare (fTreeID a) (fTreeID b)
 
-
-type FolderProps = 
+type FolderSimpleProps =
   (
     style :: FolderStyle
   , text :: String
@@ -85,18 +87,49 @@ type FolderProps =
   , sid :: SessionId
   )
 
+folderSimple :: R2.Component FolderSimpleProps
+folderSimple = R.createElement folderSimpleCpt
+
+folderSimpleCpt :: R.Component FolderSimpleProps
+folderSimpleCpt = here.component "folderSimpleCpt" cpt where
+  cpt {style, text, nodeId, sid, nodeType} _ = do
+    pure $ H.a {className: "btn btn-primary", href: "/#/" <> getFolderPath nodeType sid nodeId}  [ H.i { className: icon style nodeType } []
+                                                                   , H.br {}
+                                                                   , H.text text]
+  
+  icon :: FolderStyle -> NodeType -> String
+  icon FolderUp _ = "fa fa-folder-open"
+  icon _ nodeType = fldr nodeType false
+
+  getFolderPath :: NodeType -> SessionId -> Int -> String
+  getFolderPath nodeType sid nodeId = appPath $ fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
+
+type FolderProps = 
+  (
+    setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
+  | FolderSimpleProps
+  )
+
 folder :: R2.Component FolderProps
 folder = R.createElement folderCpt
 
 folderCpt :: R.Component FolderProps
 folderCpt = here.component "folderCpt" cpt where
-  cpt {style, text, nodeId, sid, nodeType} _ = do
-    pure $ H.a {className: "btn btn-primary", href: "/#/" <> getFolderPath nodeType sid nodeId} [ 
-      H.div { className: "fv action" } [
-        H.a { className: "settings fa fa-cog" 
-          , title : "Each node of the Tree can perform some actions.\n"
-            <> "Click here to execute one of them." } []
-      ]
+  cpt props@{style, text, nodeId, sid, nodeType, setPopoverRef} _ = do
+    popoverRef <- R.useRef null
+
+    R.useEffect' $ do
+        R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
+
+    pure $ H.a {className: "btn btn-primary"} [ 
+      Popover.popover { arrow: false
+                      , open: false
+                      , onClose: \_ -> pure unit
+                      , onOpen:  \_ -> pure unit
+                      , ref: popoverRef } [
+                        popOverIcon
+                        , mNodePopupView props (onPopoverClose popoverRef)
+                        ]
     , H.i { className: icon style nodeType } []
     , H.br {}
     , H.text text ]
@@ -107,6 +140,16 @@ folderCpt = here.component "folderCpt" cpt where
 
   getFolderPath :: NodeType -> SessionId -> Int -> String
   getFolderPath nodeType sid nodeId = appPath $ fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
+
+  onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
+
+  popOverIcon = H.div { className: "fv action" } [
+        H.a { className: "settings fa fa-cog" 
+          , title : "Each node of the Tree can perform some actions.\n"
+            <> "Click here to execute one of them." } []
+      ]
+
+  mNodePopupView props opc = nodePopupView {onPopoverClose: opc, nodeType:props.nodeType, name: props.text, id: props.nodeId}
 
 backButton :: R.Element
 backButton = 
