@@ -3,8 +3,14 @@ module Gargantext.Components.Nodes.Home where
 import Gargantext.Prelude
 
 import Data.Array as Array
+import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Effect (Effect)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Routing.Hash (setHash)
+import Toestand as T
+
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Lang (LandingLang(..))
@@ -17,10 +23,6 @@ import Gargantext.Sessions (Sessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Sessions.Types (Session(..))
 import Gargantext.Utils.Reactix as R2
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Routing.Hash (setHash)
-import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Home"
@@ -51,7 +53,8 @@ langLandingData LL_EN = En.landingData
 ------------------------------------------------------------------------
 
 type HomeProps s l =
-  ( lang      :: LandingLang
+  ( backend :: T.Box (Maybe Backend)
+  , lang      :: LandingLang
   , sessions  :: s
   , showLogin :: l
   )
@@ -59,12 +62,12 @@ type HomeProps s l =
 homeLayout :: forall s l. T.Read s Sessions => T.ReadWrite l Boolean
            => R2.Leaf (HomeProps s l)
 homeLayout props = R.createElement homeLayoutCpt props []
-
 homeLayoutCpt :: forall s l. T.Read s Sessions => T.ReadWrite l Boolean
              => R.Component (HomeProps s l)
 homeLayoutCpt = here.component "homeLayout" cpt
   where
-    cpt { lang, sessions, showLogin } _ = do
+    cpt { backend, lang, sessions, showLogin } _ = do
+      backend' <- T.useLive T.unequal backend
       sessions' <- T.useLive T.unequal sessions
       let landingData = langLandingData lang
       pure $
@@ -72,7 +75,7 @@ homeLayoutCpt = here.component "homeLayout" cpt
         [ H.div { className: "home-title container1" }
           [ jumboTitle landingData ]
         , H.div { className: "home-research-form container1" } [] -- TODO
-        , joinButtonOrTutorial sessions' click
+        , joinButtonOrTutorial sessions' (click backend')
         , H.div { className: "home-public container1" }
           [ renderPublic { }
           , H.div { className:"col-12 d-flex justify-content-center" }
@@ -82,9 +85,10 @@ homeLayoutCpt = here.component "homeLayout" cpt
           , license
           ]
         ] where
-        click _
-          =  T.write true showLogin
-          *> here.log "[homeLayout] Clicked: Join"
+        click mBackend _ =
+          case mBackend of
+            Nothing -> T.write_ true showLogin
+            Just b -> pure unit
 
 joinButtonOrTutorial :: forall e. Sessions -> (e -> Effect Unit) -> R.Element
 joinButtonOrTutorial sessions click =
@@ -94,6 +98,8 @@ joinButtonOrTutorial sessions click =
      
 joinButton :: forall e. (e -> Effect Unit) -> R.Element
 joinButton click =
+  -- TODO Add G.C.L.F.form -- which backend to use?
+  -- form { backend, sessions, visible }
   H.div { className: divClass
         , style: { paddingTop: "100px", paddingBottom: "100px" } }
   [ H.button { className: buttonClass, title, on: { click } } [ H.text "Join" ] ] where

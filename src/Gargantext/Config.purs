@@ -1,31 +1,55 @@
 module Gargantext.Config where
 
-import Data.String as S
-import Effect (Effect)
+import Data.Array as A
+import Data.Maybe (Maybe)
+import Data.Array.NonEmpty as AN
 import Data.NonEmpty (NonEmpty, (:|), head)
+import Data.String as S
+import Data.String.Utils as S
+import Data.Tuple.Nested ((/\))
+import Effect (Effect)
+
+import Gargantext.Prelude (bind, pure, ($))
+
 import Gargantext.Ends
 import Gargantext.Types (ApiVersion(..))
 import Gargantext.Utils (location)
-import Gargantext.Prelude (bind, pure, ($))
 
 defaultBackends :: NonEmpty Array Backend
 defaultBackends =
  backend_local :| [ backend_prod, backend_partner, backend_demo, backend_dev ]
 
+prodUrl :: String
+prodUrl = "https://v4.gargantext.org"
 backend_prod :: Backend
-backend_prod    = backend V10 "/api/" "https://v4.gargantext.org"    "iscpif.cnrs"
+backend_prod    = backend V10 "/api/" prodUrl    "iscpif.cnrs"
 
+partnerUrl :: String
+partnerUrl = "https://imtv4.gargantext.org"
 backend_partner :: Backend
-backend_partner = backend V10 "/api/" "https://imtv4.gargantext.org" "institut-mines-telecom.imt"
+backend_partner = backend V10 "/api/" partnerUrl "institut-mines-telecom.imt"
 
+demoUrl :: String
+demoUrl = "https://demo.gargantext.org"
 backend_demo :: Backend
-backend_demo    = backend V10 "/api/" "https://demo.gargantext.org"  "demo.inshs.cnrs"
+backend_demo    = backend V10 "/api/" demoUrl    "demo.inshs.cnrs"
 
+devUrl :: String
+devUrl = "https://dev.gargantext.org"
 backend_dev :: Backend
-backend_dev     = backend V10 "/api/" "https://dev.gargantext.org"   "devel.inshs.cnrs"
+backend_dev     = backend V10 "/api/" devUrl     "devel.inshs.cnrs"
 
+localUrl :: String
+localUrl = "http://localhost:8008"
 backend_local :: Backend
-backend_local   = backend V10 "/api/" "http://localhost:8008"        "local.cnrs"
+backend_local   = backend V10 "/api/" localUrl   "local.cnrs"
+
+
+matchCurrentLocation :: Effect (Maybe Backend)
+matchCurrentLocation = do
+  url <- location
+  let starts = AN.filter (\(Backend { baseUrl }) -> S.startsWith baseUrl url) $ AN.fromNonEmpty defaultBackends
+  pure $ A.head starts
 
 
 -- | public Backend
