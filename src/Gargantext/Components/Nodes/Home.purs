@@ -6,23 +6,23 @@ import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Effect (Effect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Routing.Hash (setHash)
-import Toestand as T
-
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Lang (LandingLang(..))
 import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
 import Gargantext.Components.Nodes.Home.Public (renderPublic)
+import Gargantext.Config as Config
 import Gargantext.Ends (Backend(..))
 import Gargantext.License (license)
 import Gargantext.Sessions (Sessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Sessions.Types (Session(..))
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Routing.Hash (setHash)
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Home"
@@ -87,8 +87,14 @@ homeLayoutCpt = here.component "homeLayout" cpt
         ] where
         click mBackend _ =
           case mBackend of
-            Nothing -> T.write_ true showLogin
-            Just b -> pure unit
+            Nothing -> do
+              mLoc <- Config.matchCurrentLocation
+              case mLoc of
+                Nothing -> pure unit
+                Just b -> do
+                  T.write_ (Just b) backend
+                  T.write_ true showLogin
+            Just b -> T.write_ true showLogin
 
 joinButtonOrTutorial :: forall e. Sessions -> (e -> Effect Unit) -> R.Element
 joinButtonOrTutorial sessions click =

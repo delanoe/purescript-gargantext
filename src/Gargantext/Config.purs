@@ -13,7 +13,7 @@ import Gargantext.Prelude (bind, pure, ($))
 
 import Gargantext.Ends
 import Gargantext.Types (ApiVersion(..))
-import Gargantext.Utils (location)
+import Gargantext.Utils (href)
 
 defaultBackends :: NonEmpty Array Backend
 defaultBackends =
@@ -47,8 +47,8 @@ backend_local   = backend V10 "/api/" localUrl   "local.cnrs"
 
 matchCurrentLocation :: Effect (Maybe Backend)
 matchCurrentLocation = do
-  url <- location
-  let starts = AN.filter (\(Backend { baseUrl }) -> S.startsWith baseUrl url) $ AN.fromNonEmpty defaultBackends
+  href <- href
+  let starts = AN.filter (\(Backend { baseUrl }) -> S.startsWith baseUrl href) $ AN.fromNonEmpty defaultBackends
   pure $ A.head starts
 
 
@@ -60,9 +60,9 @@ publicBackend = backend_local
 
 publicBackend' :: Effect Backend
 publicBackend' = do
-  url <- location
+  href <- href
   pure $ Backend { name  : "Public Backend"
-                 , baseUrl : url
+                 , baseUrl : href
                  , prePath : "api/"
                  , version : V10
                  }
