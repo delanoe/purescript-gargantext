@@ -136,7 +136,7 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
                                 ) currentTasks'
                            )
                 , if nodeType == GT.NodeUser
-                        then GV.versionView {session}
+                        then GV.versionView { session } []
                         else H.div {} []
 
                 , if showBox then
