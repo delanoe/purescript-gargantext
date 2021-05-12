@@ -2,22 +2,22 @@ module Gargantext.Utils.Reactix where
 
 import Prelude
 
+import Data.Argonaut as Argonaut
+import Data.Argonaut as Json
+import Data.Argonaut.Core (Json)
+import Data.Array as A
+import Data.Either (hush)
+import Data.Function.Uncurried (Fn1, runFn1, Fn2, runFn2)
+import Data.Maybe (Maybe(..), fromJust, fromMaybe, isJust)
+import Data.Nullable (Nullable, null, toMaybe)
+import Data.Tuple (Tuple(..))
+import Data.Tuple.Nested ((/\))
 import DOM.Simple as DOM
 import DOM.Simple.Console (log2)
 import DOM.Simple.Document (document)
 import DOM.Simple.Element as Element
 import DOM.Simple.Event as DE
-import DOM.Simple.Types (class IsNode)
-import Data.Argonaut as Argonaut
-import Data.Argonaut as Json
-import Data.Argonaut.Core (Json)
-import Data.Either (hush)
-import Data.Function.Uncurried (Fn2, runFn2)
-import Data.Maybe (Maybe(..), fromJust, fromMaybe, isJust)
-import Data.Nullable (Nullable, null, toMaybe)
-import Data.Tuple (Tuple(..))
-import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
+import DOM.Simple.Types (class IsNode, class IsElement, DOMRect)
 import Effect (Effect)
 import Effect.Console (logShow)
 import Effect.Aff (Aff, launchAff, launchAff_, killFiber)
@@ -398,3 +398,35 @@ setTrigger tRef fun = R.setRef tRef $ Just fun
 
 clearTrigger :: forall a. Trigger a -> Effect Unit
 clearTrigger tRef = R.setRef tRef Nothing
+
+type Rect =
+  ( x :: Number
+  , y :: Number
+  , width :: Number
+  , height :: Number )
+
+foreign import _domRectFromRect :: Fn1 (Record Rect) DOMRect
+
+domRectFromRect :: Record Rect -> DOMRect
+domRectFromRect = runFn1 _domRectFromRect
+
+boundingRect :: forall e. IsElement e => Array e -> DOMRect
+boundingRect els =
+  case A.uncons els of
+    Nothing -> domRectFromRect { x: 0.0, y: 0.0, width: 0.0, height: 0.0 }
+    Just { head, tail } ->
+      let br = Element.boundingRect head
+      in
+      case tail of
+        [] -> br
+        _  ->
+          let brs = boundingRect tail
+              minx = min br.left brs.left
+              maxx = max br.right brs.right
+              miny = min br.top brs.top
+              maxy = max br.bottom brs.bottom
+          in
+           domRectFromRect { x: minx
+                           , y: miny
+                           , width: maxx - minx
+                           , height: maxy - miny }

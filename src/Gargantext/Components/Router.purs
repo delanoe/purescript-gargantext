@@ -41,6 +41,7 @@ import Gargantext.Sessions as Sessions
 import Gargantext.Types (CorpusId, Handed(..), ListId, NodeID, NodeType(..), SessionId, SidePanelState(..), reverseHanded)
 import Gargantext.Utils.Reactix as R2
 
+
 here :: R2.Here
 here = R2.here "Gargantext.Components.Router"
 

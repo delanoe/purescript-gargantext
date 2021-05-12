@@ -31,8 +31,8 @@ type VersionProps =
     session :: Sessions.Session
   )
 
-versionView :: Record VersionProps -> R.Element
-versionView props = R.createElement versionCpt props []
+versionView :: R2.Component VersionProps
+versionView = R.createElement versionCpt
 
 versionCpt :: R.Component VersionProps
 versionCpt = here.component "version" cpt
