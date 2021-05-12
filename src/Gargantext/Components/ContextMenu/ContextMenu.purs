@@ -39,7 +39,9 @@ contextMenuCpt = here.component "contextMenu" cpt
     cpt menu@{ x, y, onClose } children = do
       host <- R2.getPortalHost
       root <- R.useRef null
-      rect <- T.useBox Nothing
+      -- rect <- T.useBox $ Just $ R2.domRectFromRect { x, y, width: 224.6, height: 102.0 }
+      let childRect = R2.boundingRect children
+      rect <- T.useBox $ Just $ R2.domRectFromRect { x, y, width: childRect.width, height: childRect.height }
       rect' <- T.useLive T.unequal rect
 
       R.useLayoutEffect1 (R.readRef root) $ do
@@ -47,7 +49,7 @@ contextMenuCpt = here.component "contextMenu" cpt
           (\r -> T.write_ (Just (Element.boundingRect r)) rect)
           (toMaybe $ R.readRef root)
         pure $ pure unit
-      R.useLayoutEffect2 root rect (contextMenuEffect onClose root)
+      R.useLayoutEffect2 (R.readRef root) rect' (contextMenuEffect onClose root)
       let cs = [
             HTML.div { className: "popover-content" }
             [ HTML.div { className: "card" }
@@ -64,7 +66,7 @@ contextMenuCpt = here.component "contextMenu" cpt
         , style: position menu rect
         , data: { placement: "right", toggle: "popover" }
         }
-    elems ref _ _ = HTML.div
+    elems ref menu Nothing = HTML.div
         { ref
         , key: "context-menu"
         , className: "context-menu"
