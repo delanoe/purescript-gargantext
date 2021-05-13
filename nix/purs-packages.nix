@@ -212,7 +212,7 @@
     name = "dom-simple";
     version = "v0.2.7";
     src = pkgs.fetchgit {
-      url = "https://github.com/poorscript/purescript-dom-simple";
+      url = "https://github.com/irresponsible/purescript-dom-simple";
       rev = "v0.2.7";
       sha256 = "02f1vsjk5frva3p3xpbrnj2zg4rg01l07dnvc3i6axvc5k30i282";
     };
@@ -266,7 +266,7 @@
     name = "ffi-simple";
     version = "v0.2.10";
     src = pkgs.fetchgit {
-      url = "https://github.com/poorscript/purescript-ffi-simple";
+      url = "https://github.com/irresponsible/purescript-ffi-simple";
       rev = "v0.2.10";
       sha256 = "14slcccmy96ml7r8rzhhqnw486qj1b385i9095fdymms78g5gnj5";
     };
@@ -372,11 +372,11 @@
   };
   "generics-rep" = {
     name = "generics-rep";
-    version = "v6.1.1";
+    version = "v6.1.3";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript/purescript-generics-rep.git";
-      rev = "v6.1.1";
-      sha256 = "15vchzbcvf6byks90q14lvcwb8hnxqzm2mrlxi7v1f7has4s74kn";
+      rev = "v6.1.3";
+      sha256 = "18yz3wfhh0xk1aw6scgv94mlr0hyf0q1ydhi8y3wm4zlch0lpy5i";
     };
   };
   "globals" = {
@@ -705,11 +705,11 @@
   };
   "proxy" = {
     name = "proxy";
-    version = "v3.0.0";
+    version = "v3.0.2";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript/purescript-proxy.git";
-      rev = "v3.0.0";
-      sha256 = "0rqf25b1n9p5sgx7gdsxwrfv9rb3sqxgqmqpp5kdm30lfk7snz24";
+      rev = "v3.0.2";
+      sha256 = "0p941cp8qz7dqyvybm7l1dyx6hbid4azxf35clj9i0zxr4k3vb8l";
     };
   };
   "psci-support" = {
@@ -752,7 +752,7 @@
     name = "reactix";
     version = "v0.4.11";
     src = pkgs.fetchgit {
-      url = "https://github.com/poorscript/purescript-reactix";
+      url = "https://github.com/irresponsible/purescript-reactix";
       rev = "v0.4.11";
       sha256 = "1prxqww81lk32cp4mr318yanvf51kf9hz7x4n6rxdbcprj27710d";
     };

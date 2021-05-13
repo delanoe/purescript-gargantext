@@ -146,6 +146,13 @@ affEffect errmsg aff = do
 mousePosition :: RE.SyntheticEvent DE.MouseEvent -> Point
 mousePosition e = Point { x: RE.clientX e, y: RE.clientY e }
 
+mouseClickInElement :: DE.MouseEvent -> DOM.Element -> Boolean
+mouseClickInElement e el = x <= cx && cx <= x + width && y <= cy && cy <= y + height
+  where
+    { x, y, width, height } = Element.boundingRect el
+    cx = DE.clientX e
+    cy = DE.clientY e
+
 domMousePosition :: DE.MouseEvent -> Point
 domMousePosition = mousePosition <<< unsafeCoerce
 -- | This is naughty, it quietly mutates the input and returns it
