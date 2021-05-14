@@ -43,15 +43,8 @@ topBarCpt = here.component "topBar" cpt where
       , Toggle.controlsToggleButton { state: showControls } []
       , Toggle.sidebarToggleButton { state: sidePanelState } []
       , search
-      -- [ col [ spaces [ Toggle.treeToggleButton { state: showTree } [] ]]
-      -- , col [ spaces [ Toggle.controlsToggleButton { state: showControls } [] ]]
-      -- , col [ spaces [ Toggle.sidebarToggleButton { state: sidePanelState } [] ]]
-      -- , col [ spaces [ search ] ]
       ]
     where
-      -- rowToggle  = RH.div { id: "toggle-container" }
       rowToggle  = RH.ul { className: "navbar-nav ml-auto mr-auto" }
-      -- col       = RH.div { className: "col-md-4" }
       col = RH.li { className: "nav-item" }
-      -- spaces    = RH.div { className: "flex-space-between" }
       spaces = RH.a { className: "nav-link" }

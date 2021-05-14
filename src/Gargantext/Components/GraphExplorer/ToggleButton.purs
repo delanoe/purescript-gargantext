@@ -45,9 +45,9 @@ toggleButtonCpt = here.component "toggleButton" cpt
         , style } _ = do
       state' <- T.useLive T.unequal state
 
-      pure $ H.button { className: "btn btn-outline-" <> style <> " " <> cls state' <> " mx-2"
-                      , on: { click: onClick }
-                      } [ R2.small {} [ H.text (text onMessage offMessage state') ] ]
+      pure $ H.div { className: "btn btn-outline-" <> style <> " " <> cls state' <> " mx-2"
+                   , on: { click: onClick }
+                   } [ R2.small {} [ H.text (text onMessage offMessage state') ] ]
 
     cls true = "active"
     cls false = ""
@@ -189,9 +189,9 @@ sidebarToggleButtonCpt = here.component "sidebarToggleButton" cpt
     cpt { state } _ = do
       state' <- T.useLive T.unequal state
 
-      pure $ H.button { className: "btn btn-outline-light " <> cls state'
-                      , on: { click: onClick state }
-                      } [ R2.small {} [ H.text (text onMessage offMessage state') ] ]
+      pure $ H.div { className: "btn btn-outline-light " <> cls state'
+                   , on: { click: onClick state }
+                   } [ R2.small {} [ H.text (text onMessage offMessage state') ] ]
 
     cls GT.Opened = "active"
     cls _         = ""
