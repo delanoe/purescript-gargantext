@@ -35,7 +35,6 @@ type Props = (
 
 toggleButton :: R2.Component Props
 toggleButton = R.createElement toggleButtonCpt
-
 toggleButtonCpt :: R.Component Props
 toggleButtonCpt = here.component "toggleButton" cpt
   where
@@ -61,7 +60,6 @@ type ControlsToggleButtonProps = (
 
 controlsToggleButton :: R2.Component ControlsToggleButtonProps
 controlsToggleButton = R.createElement controlsToggleButtonCpt
-
 controlsToggleButtonCpt :: R.Component ControlsToggleButtonProps
 controlsToggleButtonCpt = here.component "controlsToggleButton" cpt
   where
@@ -80,7 +78,6 @@ type EdgesButtonProps = (
 
 edgesToggleButton :: R2.Component EdgesButtonProps
 edgesToggleButton = R.createElement edgesToggleButtonCpt
-
 edgesToggleButtonCpt :: R.Component EdgesButtonProps
 edgesToggleButtonCpt = here.component "edgesToggleButton" cpt
   where
@@ -105,7 +102,6 @@ type LouvainToggleButtonProps = (
 
 louvainToggleButton :: R2.Component LouvainToggleButtonProps
 louvainToggleButton = R.createElement louvainToggleButtonCpt
-
 louvainToggleButtonCpt :: R.Component LouvainToggleButtonProps
 louvainToggleButtonCpt = here.component "louvainToggleButton" cpt
   where
@@ -124,7 +120,6 @@ type MultiSelectEnabledButtonProps = (
 
 multiSelectEnabledButton :: R2.Component MultiSelectEnabledButtonProps
 multiSelectEnabledButton = R.createElement multiSelectEnabledButtonCpt
-
 multiSelectEnabledButtonCpt :: R.Component MultiSelectEnabledButtonProps
 multiSelectEnabledButtonCpt = here.component "lmultiSelectEnabledButton" cpt
   where
@@ -143,7 +138,6 @@ type ForceAtlasProps = (
 
 pauseForceAtlasButton :: R2.Component ForceAtlasProps
 pauseForceAtlasButton = R.createElement pauseForceAtlasButtonCpt
-
 pauseForceAtlasButtonCpt :: R.Component ForceAtlasProps
 pauseForceAtlasButtonCpt = here.component "forceAtlasToggleButton" cpt
   where
@@ -171,7 +165,6 @@ type TreeToggleButtonProps = (
 
 treeToggleButton :: R2.Component TreeToggleButtonProps
 treeToggleButton = R.createElement treeToggleButtonCpt
-
 treeToggleButtonCpt :: R.Component TreeToggleButtonProps
 treeToggleButtonCpt = here.component "treeToggleButton" cpt
   where
@@ -190,7 +183,6 @@ type SidebarToggleButtonProps = (
 
 sidebarToggleButton :: R2.Component SidebarToggleButtonProps
 sidebarToggleButton = R.createElement sidebarToggleButtonCpt
-
 sidebarToggleButtonCpt :: R.Component SidebarToggleButtonProps
 sidebarToggleButtonCpt = here.component "sidebarToggleButton" cpt
   where

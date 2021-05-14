@@ -141,7 +141,7 @@
 }
 .graph-container #controls-container {
   position: absolute;
-  z-index: 999;
+  z-index: 900;
   backdrop-filter: blur(4px);
   background: rgba(255, 255, 255, 0.75);
   left: 0;
@@ -171,7 +171,7 @@
 }
 
 #dafixedtop {
-  z-index: 999;
+  z-index: 910;
 }
 
 #logo-designed {
@@ -540,7 +540,7 @@ li .leaf:hover a.settings {
   position: fixed;
   top: 3.7em;
   width: 15%;
-  z-index: 999;
+  z-index: 900;
 }
 
 .left-handed .forest-layout {

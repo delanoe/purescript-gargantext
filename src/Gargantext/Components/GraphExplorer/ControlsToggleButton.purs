@@ -2,7 +2,6 @@ module Gargantext.Components.GraphExplorer.ControlsToggleButton
   ( Props, controlsToggleButton, controlsToggleButtonCpt
   ) where
 
-import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
@@ -16,7 +15,7 @@ here = R2.here "Gargantext.Components.GraphExplorer.ControlsToggleButton"
 
 type Props = ( state :: T.Box Boolean )
 
-controlsToggleButton :: Record Props -> R.Element
+controlsToggleButton :: R2.Leaf Props
 controlsToggleButton props = R.createElement controlsToggleButtonCpt props []
 
 controlsToggleButtonCpt :: R.Component Props

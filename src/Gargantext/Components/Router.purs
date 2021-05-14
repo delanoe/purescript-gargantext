@@ -17,6 +17,7 @@ import Gargantext.Components.Forest as Forest
 import Gargantext.Components.GraphExplorer as GraphExplorer
 import Gargantext.Components.GraphExplorer.Sidebar as GES
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
+import Gargantext.Components.GraphExplorer.TopBar as GETB
 import Gargantext.Components.Lang (LandingLang(LL_EN))
 import Gargantext.Components.Login (login)
 import Gargantext.Components.MainPage as MainPage
@@ -92,7 +93,7 @@ topBarCpt = here.component "topBar" cpt where
     route' <- T.useLive T.unequal boxes.route
 
     let children = case route' of
-          GR.PGraphExplorer s g -> [ GraphExplorer.topBar { boxes } ]
+          GR.PGraphExplorer s g -> [ GETB.topBar { boxes } ]
           _                     -> []
 
     pure $ TopBar.topBar { handed } children
@@ -326,27 +327,13 @@ graphExplorer :: R2.Component SessionNodeProps
 graphExplorer = R.createElement graphExplorerCpt
 graphExplorerCpt :: R.Component SessionNodeProps
 graphExplorerCpt = here.component "graphExplorer" cpt where
-  cpt props@{ boxes: boxes@{ backend
-                           , handed
-                           , route
-                           , sessions
-                           , showLogin
-                           , sidePanelGraph
-                           , sidePanelState
-                           , tasks }
+  cpt props@{ boxes
             , nodeId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
-                                   GraphExplorer.explorerLayout { backend
-                                                                , boxes
-                                                                , frontends: defaultFrontends
+                                   GraphExplorer.explorerLayout { boxes
                                                                 , graphId: nodeId
-                                                                , handed
-                                                                , route
-                                                                , session
-                                                                , sessions
-                                                                , showLogin
-                                                                , tasks } [] } sessionProps) []
+                                                                , session } [] } sessionProps) []
 
 home :: R2.Component Props
 home = R.createElement homeCpt

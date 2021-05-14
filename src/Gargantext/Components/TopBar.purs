@@ -84,7 +84,6 @@ logo =
 
 divDropdownLeft :: R2.Component ()
 divDropdownLeft = R.createElement divDropdownLeftCpt
-
 divDropdownLeftCpt :: R.Component ()
 divDropdownLeftCpt = here.component "divDropdownLeft" cpt
   where
@@ -160,14 +159,13 @@ type MenuButtonProps = (
 
 menuButton :: R2.Component MenuButtonProps
 menuButton = R.createElement menuButtonCpt
-
 menuButtonCpt :: R.Component MenuButtonProps
 menuButtonCpt = here.component "menuButton" cpt
   where
     cpt { element: LiNav { title, href, icon, text }, show } _ = do
       pure $ H.a { className: "dropdown-toggle navbar-text"
                 -- , data: {toggle: "dropdown"}
-                , href, title
+                , title
                 , on: { click: \_ -> T.modify_ not show }
                 , role: "button" } [
           H.span { aria: {hidden : true}, className: icon } []
@@ -182,7 +180,6 @@ type MenuElementsProps = (
 
 menuElements :: R2.Component MenuElementsProps
 menuElements = R.createElement menuElementsCpt
-
 menuElementsCpt :: R.Component MenuElementsProps
 menuElementsCpt = here.component "menuElements" cpt
   where
