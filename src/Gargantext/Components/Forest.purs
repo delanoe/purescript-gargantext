@@ -8,7 +8,7 @@ module Gargantext.Components.Forest
 import Gargantext.Prelude
 
 import Data.Array as A
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree (treeLoader)
 import Gargantext.Ends (Frontends, Backend)
@@ -80,7 +80,7 @@ forestCpt = here.component "forest" cpt where
     -- TODO If `reloadForest` is set, `reload` state should be updated
     -- TODO fix tasks ref
     pure $ H.div { className: "forest " <> if showTree' then "" else "d-none" }
-      (A.cons (plus { handed, showLogin }) (trees handed' sessions'))
+      (A.cons (plus { backend, handed, showLogin }) (trees handed' sessions'))
     where
       common = RX.pick props :: Record Common
       trees handed' sessions' = (tree handed') <$> unSessions sessions'
@@ -97,14 +97,15 @@ forestCpt = here.component "forest" cpt where
                    , tasks } []
 
 type Plus =
-  ( handed    :: T.Box Handed
+  ( backend   :: T.Box (Maybe Backend)
+  , handed    :: T.Box Handed
   , showLogin :: T.Box Boolean )
 
 plus :: R2.Leaf Plus
 plus p = R.createElement plusCpt p []
 plusCpt :: R.Component Plus
 plusCpt = here.component "plus" cpt where
-  cpt { handed, showLogin } _ = do
+  cpt { backend, handed, showLogin } _ = do
     handed' <- T.useLive T.unequal handed
 
     pure $ H.div { className: "row" }
@@ -120,7 +121,9 @@ plusCpt = here.component "plus" cpt where
   -- [ H.i { className: "material-icons md-36"} [] ]
     where
       click _ = do
-        -- _ <- T.write Nothing backend
+        -- NOTE Reset backend in case G.C.N.Home.homeLayout set that to (Just b)
+        -- from current url
+        _ <- T.write Nothing backend
         T.write_ true showLogin
       title = "Add or remove connections to the server(s)."
       divClass = "fa fa-universal-access"

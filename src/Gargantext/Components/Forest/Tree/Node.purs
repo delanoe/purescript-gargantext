@@ -239,7 +239,7 @@ folderIconCpt :: R.Component FolderIconProps
 folderIconCpt = here.component "folderIcon" cpt
   where
     cpt { folderOpen, nodeType } _ = do
-      open <- T.read folderOpen
+      open <- T.useLive T.unequal folderOpen
       pure $ H.a { className: "folder-icon", on: { click: \_ -> T.modify_ not folderOpen } }
         [ H.i { className: GT.fldr nodeType open } [] ]
 

@@ -3,7 +3,7 @@ module Gargantext.Components.Nodes.Home where
 import Gargantext.Prelude
 
 import Data.Array as Array
-import Data.Maybe (fromJust)
+import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Effect (Effect)
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
@@ -12,12 +12,13 @@ import Gargantext.Components.Lang (LandingLang(..))
 import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
 import Gargantext.Components.Nodes.Home.Public (renderPublic)
+import Gargantext.Config as Config
+import Gargantext.Ends (Backend(..))
 import Gargantext.License (license)
 import Gargantext.Sessions (Sessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Sessions.Types (Session(..))
 import Gargantext.Utils.Reactix as R2
-import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Routing.Hash (setHash)
@@ -52,7 +53,8 @@ langLandingData LL_EN = En.landingData
 ------------------------------------------------------------------------
 
 type HomeProps s l =
-  ( lang      :: LandingLang
+  ( backend :: T.Box (Maybe Backend)
+  , lang      :: LandingLang
   , sessions  :: s
   , showLogin :: l
   )
@@ -60,12 +62,12 @@ type HomeProps s l =
 homeLayout :: forall s l. T.Read s Sessions => T.ReadWrite l Boolean
            => R2.Leaf (HomeProps s l)
 homeLayout props = R.createElement homeLayoutCpt props []
-
 homeLayoutCpt :: forall s l. T.Read s Sessions => T.ReadWrite l Boolean
              => R.Component (HomeProps s l)
 homeLayoutCpt = here.component "homeLayout" cpt
   where
-    cpt { lang, sessions, showLogin } _ = do
+    cpt { backend, lang, sessions, showLogin } _ = do
+      backend' <- T.useLive T.unequal backend
       sessions' <- T.useLive T.unequal sessions
       let landingData = langLandingData lang
       pure $
@@ -73,7 +75,7 @@ homeLayoutCpt = here.component "homeLayout" cpt
         [ H.div { className: "home-title container1" }
           [ jumboTitle landingData ]
         , H.div { className: "home-research-form container1" } [] -- TODO
-        , joinButtonOrTutorial sessions' click
+        , joinButtonOrTutorial sessions' (click backend')
         , H.div { className: "home-public container1" }
           [ renderPublic { }
           , H.div { className:"col-12 d-flex justify-content-center" }
@@ -83,19 +85,27 @@ homeLayoutCpt = here.component "homeLayout" cpt
           , license
           ]
         ] where
-        click _
-          =  T.write true showLogin
-          *> here.log "[homeLayout] Clicked: Join"
+        click mBackend _ =
+          case mBackend of
+            Nothing -> do
+              mLoc <- Config.matchCurrentLocation
+              case mLoc of
+                Nothing -> pure unit
+                Just b -> do
+                  T.write_ (Just b) backend
+                  T.write_ true showLogin
+            Just b -> T.write_ true showLogin
 
 joinButtonOrTutorial :: forall e. Sessions -> (e -> Effect Unit) -> R.Element
 joinButtonOrTutorial sessions click =
   if Sessions.null sessions
   then joinButton click
-  -- sessions is not empty
-  else tutorial {session: unsafePartial $ fromJust $ Array.head $ Sessions.unSessions sessions}
+  else tutorial {sessions: Sessions.unSessions sessions}
      
 joinButton :: forall e. (e -> Effect Unit) -> R.Element
 joinButton click =
+  -- TODO Add G.C.L.F.form -- which backend to use?
+  -- form { backend, sessions, visible }
   H.div { className: divClass
         , style: { paddingTop: "100px", paddingBottom: "100px" } }
   [ H.button { className: buttonClass, title, on: { click } } [ H.text "Join" ] ] where
@@ -136,17 +146,16 @@ summary =
         , H.ol {} (map toSummary tutos) ] ]          
     toSummary (Tuto x) = H.li {} [ H.a {href: "#" <> x.id} [ H.text x.title ]]
 
-tutorial :: R2.Leaf (session :: Session)
+tutorial :: R2.Leaf (sessions :: Array Session)
 tutorial props = R.createElement tutorialCpt props []
 
-tutorialCpt :: R.Component (session :: Session)
+tutorialCpt :: R.Component (sessions :: Array Session)
 tutorialCpt = here.component "tutorial" cpt where
-  cpt {session: session@(Session {treeId})} _ = do
-    let nodeId = treeId
+  cpt {sessions} _ = do
+    let folders = makeFolders sessions
 
     pure $ H.div { className: "mx-auto container" }
-      [ H.div {className: "d-flex justify-content-center"}
-              [FV.folderView {session, nodeId, backFolder: false}]
+      [ H.div {className: "d-flex justify-content-center"} [ H.table {} folders ]
       , H.h1 {} [H.text "Welcome!"]
       , H.h2 {} [H.text "For easy start, just watch the tutorials"]
       , summary
@@ -161,6 +170,13 @@ tutorialCpt = here.component "tutorial" cpt where
       makeTuto class' (Tuto x) =
         H.div { className : "alert " <> class', id: x.id}
         [ video x.id, H.h4 {} [ H.text x.title ], H.p  {} [ H.text x.text ] ]
+
+      makeFolders :: Array Session -> Array R.Element
+      makeFolders s = sessionToFolder <$> s where
+        sessionToFolder session@(Session {treeId, username, backend: (Backend {name})}) = 
+          H.tr {} [
+            H.div { className: "d-flex justify-content-center" } [ H.text (username <> "@" <> name) ]
+          , H.div {} [ FV.folderView {session, nodeId: treeId, backFolder: false} ] ]
 
 startTutos :: Array Tuto
 startTutos =

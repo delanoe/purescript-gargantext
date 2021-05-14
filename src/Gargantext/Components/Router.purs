@@ -352,8 +352,8 @@ home :: R2.Component Props
 home = R.createElement homeCpt
 homeCpt :: R.Component Props
 homeCpt = here.component "home" cpt where
-  cpt props@{ boxes: boxes@{ sessions, showLogin } } _ = do
-    pure $ homeLayout { lang: LL_EN, sessions, showLogin }
+  cpt props@{ boxes: boxes@{ backend, sessions, showLogin } } _ = do
+    pure $ homeLayout { backend, lang: LL_EN, sessions, showLogin }
 
 lists :: R2.Component SessionNodeProps
 lists = R.createElement listsCpt

@@ -11,9 +11,10 @@ import Data.String as S
 import Data.Unfoldable (class Unfoldable)
 import DOM.Simple.Window (window)
 import Effect (Effect)
-import FFI.Simple ((..))
-import FFI.Simple.Functions (delay)
 import Prelude
+import Web.HTML (window)
+import Web.HTML.Window (location)
+import Web.HTML.Location as WHL
 
 -- | TODO (hard coded)
 csrfMiddlewareToken :: String
@@ -82,10 +83,6 @@ mapLeft :: forall l m r. (l -> m) -> Either l r -> Either m r
 mapLeft f (Left  l) = Left (f l)
 mapLeft _ (Right r) = Right r
 
--- | Get current Window Location
-location :: Effect String
-location = delay unit $ \_ -> pure $ window .. "location"
-
 data On a b = On a b
 
 instance eqOn :: Eq a => Eq (On a b) where
@@ -102,3 +99,10 @@ sortWith :: forall a b f. Functor f =>
                           Ord b =>
                           (a -> b) -> f a -> f a
 sortWith f = map (\(On _ y) -> y) <<< OSeq.toUnfoldable <<< foldr (\x -> OSeq.insert (On (f x) x)) OSeq.empty
+
+
+href :: Effect String
+href = do
+  w <- window
+  loc <- location w
+  WHL.href loc
