@@ -12,7 +12,7 @@ import Data.Unfoldable (class Unfoldable)
 import DOM.Simple.Window (window)
 import Effect (Effect)
 import Prelude
-import Web.HTML (window)
+import Web.HTML as WHTML
 import Web.HTML.Window (location)
 import Web.HTML.Location as WHL
 
@@ -103,6 +103,6 @@ sortWith f = map (\(On _ y) -> y) <<< OSeq.toUnfoldable <<< foldr (\x -> OSeq.in
 
 href :: Effect String
 href = do
-  w <- window
+  w <- WHTML.window
   loc <- location w
   WHL.href loc
