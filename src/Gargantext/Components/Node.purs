@@ -25,8 +25,8 @@ instance decodeNodePoly :: (DecodeJson a)
     obj <- decodeJson json
     id        <- obj .: "id"
     typename  <- obj .: "typename"
-    userId    <- obj .: "user_id"
-    parentId  <- obj .: "parent_id"
+    userId    <- obj .: "userId"
+    parentId  <- obj .: "parentId"
     name      <- obj .: "name"
     date      <- obj .: "date"
 

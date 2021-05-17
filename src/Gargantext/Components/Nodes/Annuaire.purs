@@ -191,7 +191,6 @@ type ContactCellsProps =
 
 contactCells :: Record ContactCellsProps -> R.Element
 contactCells p = R.createElement contactCellsCpt p []
-
 contactCellsCpt :: R.Component ContactCellsProps
 contactCellsCpt = here.component "contactCells" cpt where
   cpt { annuaireId, frontends, session
@@ -269,8 +268,8 @@ instance decodeAnnuaireInfo :: DecodeJson AnnuaireInfo where
     obj <- decodeJson json
     id        <- obj .: "id"
     typename  <- obj .: "typename"
-    userId    <- obj .: "user_id"
-    parentId  <- obj .: "parent_id"
+    userId    <- obj .: "userId"
+    parentId  <- obj .: "parentId"
     name      <- obj .: "name"
     date      <- obj .: "date"
     hyperdata <- obj .: "hyperdata"

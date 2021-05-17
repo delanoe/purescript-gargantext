@@ -39,7 +39,6 @@ type SubTreeParamsProps =
 
 subTreeView :: R2.Component SubTreeParamsProps
 subTreeView = R.createElement subTreeViewCpt
-
 subTreeViewCpt :: R.Component SubTreeParamsProps
 subTreeViewCpt = here.component "subTreeView" cpt
   where
@@ -86,7 +85,6 @@ type CorpusTreeProps =
 
 subTreeViewLoaded :: R2.Component CorpusTreeProps
 subTreeViewLoaded = R.createElement subTreeViewLoadedCpt
-
 subTreeViewLoadedCpt :: R.Component CorpusTreeProps
 subTreeViewLoadedCpt = here.component "subTreeViewLoaded" cpt
   where
@@ -107,7 +105,6 @@ newtype CorpusTreeRenderProps = CorpusTreeRenderProps
 
 subTreeTreeView :: CorpusTreeRenderProps -> Array R.Element -> R.Element
 subTreeTreeView = R2.ntCreateElement subTreeTreeViewCpt
-
 subTreeTreeViewCpt :: R2.NTComponent CorpusTreeRenderProps
 subTreeTreeViewCpt = here.ntComponent "subTreeTreeView" cpt where
   cpt (CorpusTreeRenderProps p@{ action

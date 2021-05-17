@@ -67,7 +67,6 @@ initialLocalControls = do
 
 controls :: R2.Component Controls
 controls = R.createElement controlsCpt
-
 controlsCpt :: R.Component Controls
 controlsCpt = here.component "controls" cpt
   where
@@ -246,14 +245,9 @@ useGraphControls { forceAtlasS
     }
   forceAtlasState <- T.useBox forceAtlasS
   graphStage      <- T.useBox Graph.Init
-  -- multiSelectEnabled <- T.useBox false
   nodeSize <- T.useBox $ Range.Closed { min: 0.0, max: 100.0 }
-  -- removedNodeIds <- T.useBox SigmaxT.emptyNodeIds
-  -- selectedNodeIds <- T.useBox SigmaxT.emptyNodeIds
-  -- showControls    <- T.useBox false
   showEdges <- T.useBox SigmaxT.EShow
   showLouvain <- T.useBox false
-  -- sidePanelState   <- T.useBox GT.InitialClosed
   sigma <- Sigmax.initSigma
   sigmaRef <- R.useRef sigma
 

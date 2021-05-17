@@ -1,7 +1,5 @@
 module Gargantext.Components.GraphExplorer where
 
-import Gargantext.Prelude hiding (max,min)
-
 import Data.Array as A
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Int (toNumber)
@@ -21,21 +19,18 @@ import Record as Record
 import Record.Extra as RX
 import Toestand as T
 
-import Gargantext.AsyncTasks as GAT
+import Gargantext.Prelude hiding (max,min)
+
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Controls as Controls
-import Gargantext.Components.GraphExplorer.Search (nodeSearchControl)
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
-import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Data.Louvain as Louvain
-import Gargantext.Ends (Frontends, Backend)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
-import Gargantext.Routes (SessionRoute(NodeAPI), AppRoute)
-import Gargantext.Sessions (OpenNodes, Session, Sessions, get)
+import Gargantext.Routes (SessionRoute(NodeAPI))
+import Gargantext.Sessions (Session, get)
 import Gargantext.Types as Types
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
@@ -45,27 +40,13 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer"
 
 type BaseProps =
-  ( backend        :: T.Box (Maybe Backend)
-  , boxes          :: Boxes
-  , frontends      :: Frontends
+  ( boxes          :: Boxes
   , graphId        :: GET.GraphId
-  , handed         :: T.Box Types.Handed
-  , route          :: T.Box AppRoute
-  , sessions       :: T.Box Sessions
-  , showLogin      :: T.Box Boolean
-  , tasks          :: T.Box GAT.Storage
   )
 
 type LayoutProps =
   ( session      :: Session
   | BaseProps )
-
-type GraphWriteProps =
-  ( graph          :: SigmaxT.SGraph
-  , hyperdataGraph :: GET.HyperdataGraph
-  , mMetaData'     :: Maybe GET.MetaData
-  | LayoutProps
-  )
 
 type Props =
   ( graph          :: SigmaxT.SGraph
@@ -73,26 +54,28 @@ type Props =
   | LayoutProps
   )
 
+type GraphWriteProps =
+  ( mMetaData'     :: Maybe GET.MetaData
+  | Props
+  )
+
 --------------------------------------------------------------
 explorerLayout :: R2.Component LayoutProps
 explorerLayout = R.createElement explorerLayoutCpt
-
 explorerLayoutCpt :: R.Component LayoutProps
 explorerLayoutCpt = here.component "explorerLayout" cpt where
-  cpt props@{ backend, boxes: { graphVersion }, graphId, session } _ = do
+  cpt props@{ boxes: { graphVersion }, graphId, session } _ = do
     graphVersion' <- T.useLive T.unequal graphVersion
 
     useLoader graphId (getNodes session graphVersion') handler
     where
-      handler loaded = explorerWriteGraph (Record.merge props { graph, hyperdataGraph: loaded, mMetaData' }) []
-        -- explorer (Record.merge props { graph, graphVersion, hyperdataGraph: loaded, mMetaData })
+      handler loaded@(GET.HyperdataGraph { graph: hyperdataGraph }) =
+        explorerWriteGraph (Record.merge props { graph, hyperdataGraph: loaded, mMetaData' }) []
         where
-          GET.HyperdataGraph { graph: hyperdataGraph } = loaded
           Tuple mMetaData' graph = convert hyperdataGraph
 
 explorerWriteGraph :: R2.Component GraphWriteProps
 explorerWriteGraph = R.createElement explorerWriteGraphCpt
-
 explorerWriteGraphCpt :: R.Component GraphWriteProps
 explorerWriteGraphCpt = here.component "explorerWriteGraph" cpt where
   cpt props@{ boxes: { sidePanelGraph, sidePanelState }
@@ -108,41 +91,24 @@ explorerWriteGraphCpt = here.component "explorerWriteGraph" cpt where
                        , showControls: false
                        , sideTab: GET.SideTabLegend }) sidePanelGraph
 
-      -- { mGraph, mMetaData, sideTab } <- GEST.focusedSidePanel sidePanelGraph
-
-      -- R.useEffect' $ do
-      --   here.log2 "writing graph" graph
-      --   T.write_ (Just graph) mGraph
-      --   T.write_ mMetaData' mMetaData
-
       pure $ explorer (RX.pick props :: Record Props) []
 
 --------------------------------------------------------------
 explorer :: R2.Component Props
 explorer = R.createElement explorerCpt
-
 explorerCpt :: R.Component Props
 explorerCpt = here.component "explorer" cpt
   where
-    cpt props@{ backend
-              , boxes: boxes@{ graphVersion, reloadForest, showTree, sidePanelGraph, sidePanelState }
-              , frontends
+    cpt props@{ boxes: boxes@{ graphVersion, handed, reloadForest, showTree, sidePanelGraph, sidePanelState }
               , graph
               , graphId
-              , handed
               , hyperdataGraph
-              , route
               , session
-              , sessions
-              , showLogin
-              , tasks
               } _ = do
       { mMetaData, sideTab } <- GEST.focusedSidePanel sidePanelGraph
-      handed' <- T.useLive T.unequal handed
       graphVersion' <- T.useLive T.unequal graphVersion
-      graphVersionRef <- R.useRef graphVersion'
+      handed' <- T.useLive T.unequal handed
       mMetaData' <- T.useLive T.unequal mMetaData
-      -- sideTab <- T.useBox GET.SideTabLegend
 
       let startForceAtlas = maybe true (\(GET.MetaData { startForceAtlas: sfa }) -> sfa) mMetaData'
 
@@ -160,127 +126,68 @@ explorerCpt = here.component "explorer" cpt
                                             , session
                                             , showTree
                                             , sidePanel: sidePanelGraph
-                                            , sidePanelState
-                                            }
-      multiSelectEnabled' <- T.useLive T.unequal controls.multiSelectEnabled
-      showTree' <- T.useLive T.unequal controls.showTree
-      multiSelectEnabledRef <- R.useRef multiSelectEnabled'
+                                            , sidePanelState }
 
-      forestOpen <- T.useBox $ (Set.empty :: OpenNodes)
-      R.useEffectOnce' $ do
-        R2.loadLocalStorageState R2.openNodesKey forestOpen
-        T.listen (R2.listenLocalStorageState R2.openNodesKey) forestOpen
-
-      R.useEffect' $ do
-        let readData = R.readRef dataRef
-        let gv = R.readRef graphVersionRef
-        if SigmaxT.eqGraph readData graph then
-          pure unit
-        else do
-          -- Graph data changed, reinitialize sigma.
-          let rSigma = R.readRef controls.sigmaRef
-          Sigmax.cleanupSigma rSigma "explorerCpt"
-          R.setRef dataRef graph
-          R.setRef graphVersionRef graphVersion'
-          -- Reinitialize bunch of state as well.
-          T.write_ SigmaxT.emptyNodeIds controls.removedNodeIds
-          T.write_ SigmaxT.emptyNodeIds controls.selectedNodeIds
-          T.write_ SigmaxT.EShow controls.showEdges
-          T.write_ forceAtlasS controls.forceAtlasState
-          T.write_ Graph.Init controls.graphStage
-          T.write_ Types.InitialClosed controls.sidePanelState
+      -- graphVersionRef <- R.useRef graphVersion'
+      -- R.useEffect' $ do
+      --   let readData = R.readRef dataRef
+      --   let gv = R.readRef graphVersionRef
+      --   if SigmaxT.eqGraph readData graph then
+      --     pure unit
+      --   else do
+      --     -- Graph data changed, reinitialize sigma.
+      --     let rSigma = R.readRef controls.sigmaRef
+      --     Sigmax.cleanupSigma rSigma "explorerCpt"
+      --     R.setRef dataRef graph
+      --     R.setRef graphVersionRef graphVersion'
+      --     -- Reinitialize bunch of state as well.
+      --     T.write_ SigmaxT.emptyNodeIds controls.removedNodeIds
+      --     T.write_ SigmaxT.emptyNodeIds controls.selectedNodeIds
+      --     T.write_ SigmaxT.EShow controls.showEdges
+      --     T.write_ forceAtlasS controls.forceAtlasState
+      --     T.write_ Graph.Init controls.graphStage
+      --     T.write_ Types.InitialClosed controls.sidePanelState
 
       pure $
         RH.div { className: "graph-meta-container" }
         [ RH.div { className: "graph-container" }
-          [ inner handed'
+          [ RH.div { className: "container-fluid " <> hClass handed' }
             [ RH.div { id: "controls-container" } [ Controls.controls controls [] ]
             , RH.div { className: "row graph-row" }
               [ RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []
               , graphView { controls
                           , elRef: graphRef
-                          , graphId
                           , graph
                           , hyperdataGraph
                           , mMetaData
-                          , multiSelectEnabledRef
                           } []
               ]
             ]
           ]
         ]
 
-    inner h = RH.div { className: "container-fluid " <> hClass }
-      where
-        hClass = case h of
-          Types.LeftHanded  -> "lefthanded"
-          Types.RightHanded -> "righthanded"
-
-type TopBar =
-  (
-    boxes    :: Boxes
-  )
-
-topBar :: R2.Component TopBar
-topBar = R.createElement topBarCpt
-
-topBarCpt :: R.Component TopBar
-topBarCpt = here.component "topBar" cpt where
-  cpt { boxes: { showTree
-               , sidePanelGraph
-               , sidePanelState } } _ = do
-    { mGraph, multiSelectEnabled, selectedNodeIds, showControls } <- GEST.focusedSidePanel sidePanelGraph
-
-    mGraph' <- T.useLive T.unequal mGraph
-
-    let search = case mGraph' of
-          Just graph -> nodeSearchControl { graph
-                                         , multiSelectEnabled
-                                         , selectedNodeIds } []
-          Nothing -> RH.div {} []
-
-    pure $ RH.form { className: "d-flex" }
-      [ Toggle.treeToggleButton { state: showTree } []
-      , Toggle.controlsToggleButton { state: showControls } []
-      , Toggle.sidebarToggleButton { state: sidePanelState } []
-      , search
-      -- [ col [ spaces [ Toggle.treeToggleButton { state: showTree } [] ]]
-      -- , col [ spaces [ Toggle.controlsToggleButton { state: showControls } [] ]]
-      -- , col [ spaces [ Toggle.sidebarToggleButton { state: sidePanelState } [] ]]
-      -- , col [ spaces [ search ] ]
-      ]
-    where
-      -- rowToggle  = RH.div { id: "toggle-container" }
-      rowToggle  = RH.ul { className: "navbar-nav ml-auto mr-auto" }
-      -- col       = RH.div { className: "col-md-4" }
-      col = RH.li { className: "nav-item" }
-      -- spaces    = RH.div { className: "flex-space-between" }
-      spaces = RH.a { className: "nav-link" }
+    hClass h = case h of
+      Types.LeftHanded  -> "lefthanded"
+      Types.RightHanded -> "righthanded"
 
 type GraphProps = (
-    controls              :: Record Controls.Controls
-  , elRef                 :: R.Ref (Nullable Element)
-  , graphId               :: GET.GraphId
-  , graph                 :: SigmaxT.SGraph
-  , hyperdataGraph        :: GET.HyperdataGraph
-  , mMetaData             :: T.Box (Maybe GET.MetaData)
-  , multiSelectEnabledRef :: R.Ref Boolean
+    controls       :: Record Controls.Controls
+  , elRef          :: R.Ref (Nullable Element)
+  , graph          :: SigmaxT.SGraph
+  , hyperdataGraph :: GET.HyperdataGraph
+  , mMetaData      :: T.Box (Maybe GET.MetaData)
 )
 
 graphView :: R2.Component GraphProps
---graphView sigmaRef props = R.createElement (R.memo el memoCmp) props []
 graphView = R.createElement graphViewCpt
-
 graphViewCpt :: R.Component GraphProps
 graphViewCpt = here.component "graphView" cpt
   where
     cpt { controls
         , elRef
-        , graphId
         , graph
         , hyperdataGraph: GET.HyperdataGraph { mCamera }
-        , mMetaData
-        , multiSelectEnabledRef } _children = do
+        , mMetaData } _children = do
       edgeConfluence' <- T.useLive T.unequal controls.edgeConfluence
       edgeWeight' <- T.useLive T.unequal controls.edgeWeight
       mMetaData' <- T.useLive T.unequal mMetaData
@@ -290,6 +197,8 @@ graphViewCpt = here.component "graphView" cpt
       selectedNodeIds' <- T.useLive T.unequal controls.selectedNodeIds
       showEdges' <- T.useLive T.unequal controls.showEdges
       showLouvain' <- T.useLive T.unequal controls.showLouvain
+
+      multiSelectEnabledRef <- R.useRef multiSelectEnabled'
 
       -- TODO Cache this?
       let louvainGraph =

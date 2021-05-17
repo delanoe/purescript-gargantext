@@ -17,6 +17,7 @@ import Gargantext.Components.Forest as Forest
 import Gargantext.Components.GraphExplorer as GraphExplorer
 import Gargantext.Components.GraphExplorer.Sidebar as GES
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
+import Gargantext.Components.GraphExplorer.TopBar as GETB
 import Gargantext.Components.Lang (LandingLang(LL_EN))
 import Gargantext.Components.Login (login)
 import Gargantext.Components.MainPage as MainPage
@@ -64,18 +65,18 @@ routerCpt = here.component "router" cpt where
           RightHanded -> "right-handed"
 
     pure $ R.fragment
-      ([ loginModal { boxes } []
-       , topBar { boxes } [] ] <>
+      ([ loginModal { boxes }
+       , topBar { boxes } ] <>
        [ H.div { className: handedClassName } $ reverseHanded handed' $
-         [ forest { boxes } []
-         , mainPage { boxes } []
-         , sidePanel { boxes } []
+         [ forest { boxes }
+         , mainPage { boxes }
+         , sidePanel { boxes }
          ]
        ])
 
 
-loginModal :: R2.Component Props
-loginModal = R.createElement loginModalCpt
+loginModal :: R2.Leaf Props
+loginModal p = R.createElement loginModalCpt p []
 loginModalCpt :: R.Component Props
 loginModalCpt = here.component "loginModal" cpt
   where
@@ -84,8 +85,8 @@ loginModalCpt = here.component "loginModal" cpt
 
         pure $ if showLogin' then login' boxes else H.div {} []
 
-topBar :: R2.Component Props
-topBar = R.createElement topBarCpt
+topBar :: R2.Leaf Props
+topBar p = R.createElement topBarCpt p []
 topBarCpt :: R.Component Props
 topBarCpt = here.component "topBar" cpt where
   cpt props@{ boxes: boxes@{ handed
@@ -93,20 +94,20 @@ topBarCpt = here.component "topBar" cpt where
     route' <- T.useLive T.unequal boxes.route
 
     let children = case route' of
-          GR.PGraphExplorer s g -> [ GraphExplorer.topBar { boxes } [] ]
+          GR.PGraphExplorer s g -> [ GETB.topBar { boxes } ]
           _                     -> []
 
     pure $ TopBar.topBar { handed } children
 
-mainPage :: R2.Component Props
-mainPage = R.createElement mainPageCpt
+mainPage :: R2.Leaf Props
+mainPage p = R.createElement mainPageCpt p []
 mainPageCpt :: R.Component Props
 mainPageCpt = here.component "mainPage" cpt where
   cpt { boxes } _ = do
-    pure $ MainPage.mainPage { boxes } [ renderRoute { boxes } [] ]
+    pure $ MainPage.mainPage { boxes } [ renderRoute { boxes } ]
 
-forest :: R2.Component Props
-forest = R.createElement forestCpt
+forest :: R2.Leaf Props
+forest p = R.createElement forestCpt p []
 forestCpt :: R.Component Props
 forestCpt = here.component "forest" cpt where
   cpt props@{ boxes: boxes@{ backend
@@ -133,8 +134,8 @@ forestCpt = here.component "forest" cpt where
                                , showTree
                                , tasks } []
 
-sidePanel :: R2.Component Props
-sidePanel = R.createElement sidePanelCpt
+sidePanel :: R2.Leaf Props
+sidePanel p = R.createElement sidePanelCpt p []
 sidePanelCpt :: R.Component Props
 sidePanelCpt = here.component "sidePanel" cpt where
   cpt props@{ boxes: boxes@{ graphVersion
@@ -154,8 +155,8 @@ sidePanelCpt = here.component "sidePanel" cpt where
           Opened -> pure $ openedSidePanel (Record.merge { session: s } props) []
           _      -> pure $ H.div {} []
 
-renderRoute :: R2.Component Props
-renderRoute = R.createElement renderRouteCpt
+renderRoute :: R2.Leaf Props
+renderRoute p = R.createElement renderRouteCpt p []
 renderRouteCpt :: R.Component Props
 renderRouteCpt = here.component "renderRoute" cpt where
   cpt props@{ boxes } _ = do
@@ -213,7 +214,6 @@ authedCpt = here.component "authed" cpt where
 
 openedSidePanel :: R2.Component (WithSession Props)
 openedSidePanel = R.createElement openedSidePanelCpt
-
 openedSidePanelCpt :: R.Component (WithSession Props)
 openedSidePanelCpt = here.component "openedSidePanel" cpt where
   cpt props@{ boxes: boxes@{ graphVersion
@@ -263,7 +263,6 @@ openedSidePanelCpt = here.component "openedSidePanel" cpt where
 
 annuaire :: R2.Component SessionNodeProps
 annuaire = R.createElement annuaireCpt
-
 annuaireCpt :: R.Component SessionNodeProps
 annuaireCpt = here.component "annuaire" cpt where
   cpt props@{ boxes, nodeId } _ = do
@@ -275,7 +274,6 @@ annuaireCpt = here.component "annuaire" cpt where
 
 corpus :: R2.Component SessionNodeProps
 corpus = R.createElement corpusCpt
-
 corpusCpt :: R.Component SessionNodeProps
 corpusCpt = here.component "corpus" cpt where
   cpt props@{ boxes, nodeId } _ = do
@@ -291,7 +289,6 @@ type CorpusDocumentProps =
 
 corpusDocument :: R2.Component CorpusDocumentProps
 corpusDocument = R.createElement corpusDocumentCpt
-
 corpusDocumentCpt :: R.Component CorpusDocumentProps
 corpusDocumentCpt = here.component "corpusDocument" cpt
   where
@@ -305,7 +302,6 @@ corpusDocumentCpt = here.component "corpusDocument" cpt
 
 dashboard :: R2.Component SessionNodeProps
 dashboard = R.createElement dashboardCpt
-
 dashboardCpt :: R.Component SessionNodeProps
 dashboardCpt = here.component "dashboard" cpt
   where
@@ -318,7 +314,6 @@ type DocumentProps = ( listId :: ListId | SessionNodeProps )
 
 document :: R2.Component DocumentProps
 document = R.createElement documentCpt
-
 documentCpt :: R.Component DocumentProps
 documentCpt = here.component "document" cpt where
   cpt props@{ boxes, listId, nodeId } _ = do
@@ -331,35 +326,18 @@ documentCpt = here.component "document" cpt where
 
 graphExplorer :: R2.Component SessionNodeProps
 graphExplorer = R.createElement graphExplorerCpt
-
 graphExplorerCpt :: R.Component SessionNodeProps
 graphExplorerCpt = here.component "graphExplorer" cpt where
-  cpt props@{ boxes: boxes@{ backend
-                           , handed
-                           , route
-                           , sessions
-                           , showLogin
-                           , sidePanelGraph
-                           , sidePanelState
-                           , tasks }
+  cpt props@{ boxes
             , nodeId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
-                                   -- simpleLayout { handed }
-                                   GraphExplorer.explorerLayout { backend
-                                                                , boxes
-                                                                , frontends: defaultFrontends
+                                   GraphExplorer.explorerLayout { boxes
                                                                 , graphId: nodeId
-                                                                , handed
-                                                                , route
-                                                                , session
-                                                                , sessions
-                                                                , showLogin
-                                                                , tasks } [] } sessionProps) []
+                                                                , session } [] } sessionProps) []
 
 home :: R2.Component Props
 home = R.createElement homeCpt
-
 homeCpt :: R.Component Props
 homeCpt = here.component "home" cpt where
   cpt props@{ boxes: boxes@{ backend, sessions, showLogin } } _ = do
@@ -367,7 +345,6 @@ homeCpt = here.component "home" cpt where
 
 lists :: R2.Component SessionNodeProps
 lists = R.createElement listsCpt
-
 listsCpt :: R.Component SessionNodeProps
 listsCpt = here.component "lists" cpt where
   cpt props@{ boxes: { backend
@@ -419,7 +396,6 @@ type RouteFrameProps = (
 
 routeFrame :: R2.Component RouteFrameProps
 routeFrame = R.createElement routeFrameCpt
-
 routeFrameCpt :: R.Component RouteFrameProps
 routeFrameCpt = here.component "routeFrame" cpt where
   cpt props@{ boxes, nodeId, nodeType } _ = do
@@ -429,7 +405,6 @@ routeFrameCpt = here.component "routeFrame" cpt where
 
 team :: R2.Component SessionNodeProps
 team = R.createElement teamCpt
-
 teamCpt :: R.Component SessionNodeProps
 teamCpt = here.component "team" cpt where
   cpt props@{ boxes, nodeId } _ = do
@@ -439,7 +414,6 @@ teamCpt = here.component "team" cpt where
 
 texts :: R2.Component SessionNodeProps
 texts = R.createElement textsCpt
-
 textsCpt :: R.Component SessionNodeProps
 textsCpt = here.component "texts" cpt
   where
@@ -465,7 +439,6 @@ textsCpt = here.component "texts" cpt
 
 user :: R2.Component SessionNodeProps
 user = R.createElement userCpt
-
 userCpt :: R.Component SessionNodeProps
 userCpt = here.component "user" cpt where
   cpt props@{ boxes: boxes@{ reloadForest
@@ -489,7 +462,6 @@ type ContactProps = ( annuaireId :: NodeID | SessionNodeProps )
 
 contact :: R2.Component ContactProps
 contact = R.createElement contactCpt
-
 contactCpt :: R.Component ContactProps
 contactCpt = here.component "contact" cpt where
   cpt props@{ annuaireId

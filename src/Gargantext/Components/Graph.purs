@@ -9,7 +9,6 @@ import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
-import DOM.Simple.Console (log, log2)
 import DOM.Simple.Types (Element)
 import Reactix as R
 import Reactix.DOM.HTML as RH
@@ -70,12 +69,12 @@ graphCpt = here.component "graph" cpt where
 
       R.useEffectOnce $ do
         pure $ do
-          log "[graphCpt (Cleanup)]"
+          here.log "[graphCpt (Cleanup)]"
           Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Cleanup)] no sigma" $ \sigma -> do
             Sigma.stopForceAtlas2 sigma
-            log2 "[graphCpt (Cleanup)] forceAtlas stopped for" sigma
+            here.log2 "[graphCpt (Cleanup)] forceAtlas stopped for" sigma
             Sigma.kill sigma
-            log "[graphCpt (Cleanup)] sigma killed"
+            here.log "[graphCpt (Cleanup)] sigma killed"
 
       -- NOTE: This div is not empty after sigma initializes.
       -- When we change state, we make it empty though.
@@ -93,7 +92,7 @@ graphCpt = here.component "graph" cpt where
           Nothing -> do
             eSigma <- Sigma.sigma {settings: sigmaSettings}
             case eSigma of
-              Left err -> log2 "[graphCpt] error creating sigma" err
+              Left err -> here.log2 "[graphCpt] error creating sigma" err
               Right sig -> do
                 Sigmax.writeSigma rSigma $ Just sig
 
@@ -115,7 +114,7 @@ graphCpt = here.component "graph" cpt where
 
                 Sigmax.setEdges sig false
 
-                -- log2 "[graph] startForceAtlas" startForceAtlas
+                -- here.log2 "[graph] startForceAtlas" startForceAtlas
                 if startForceAtlas then
                   Sigma.startForceAtlas2 sig fa2
                 else
