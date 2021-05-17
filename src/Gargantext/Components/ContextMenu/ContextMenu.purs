@@ -36,12 +36,11 @@ contextMenu = R.createElement contextMenuCpt
 contextMenuCpt :: forall t. R.Component (Props t)
 contextMenuCpt = here.component "contextMenu" cpt
   where
-    cpt menu@{ x, y, onClose } children = do
+    cpt menu@{ onClose, x, y } children = do
       host <- R2.getPortalHost
       root <- R.useRef null
-      -- rect <- T.useBox $ Just $ R2.domRectFromRect { x, y, width: 224.6, height: 102.0 }
-      let childRect = R2.boundingRect children
-      rect <- T.useBox $ Just $ R2.domRectFromRect { x, y, width: childRect.width, height: childRect.height }
+      -- NOTE: Just some dummy width/height here, it should be set properly in the effect function later
+      rect <- T.useBox $ Just $ R2.domRectFromRect { x, y, width: 100.0, height: 100.0 }
       rect' <- T.useLive T.unequal rect
 
       R.useLayoutEffect1 (R.readRef root) $ do
@@ -92,8 +91,10 @@ contextMenuEffect onClose rootRef =
 
 documentClickHandler :: Effect Unit -> DOM.Element -> Callback DE.MouseEvent
 documentClickHandler onClose menu =
-  R2.named "hideMenuOnClickOutside" $ callback $ \e ->
-    when (Element.contains menu (DE.target e)) onClose
+  R2.named "hideMenuOnClickOutside" $ callback $ \e -> do
+    when (R2.mouseClickInElement e menu) $ do
+      here.log "mouse in element"
+      onClose
 
 documentScrollHandler :: Effect Unit -> Callback DE.MouseEvent
 documentScrollHandler onClose =

@@ -70,10 +70,8 @@ annotatedFieldInner p = R.createElement annotatedFieldInnerCpt p []
 annotatedFieldInnerCpt :: R.Component InnerProps
 annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
   cpt { menuRef, ngrams, redrawMenu, setTermList, text: fieldText } _ = do
-    -- redrawMenu <- T.useBox false
     redrawMenu' <- T.useLive T.unequal redrawMenu
 
-    -- menuRef <- R.useRef (Nothing :: Maybe (Record AnnotationMenu))
     -- menu <- T.useBox (Nothing :: Maybe (Record AnnotationMenu))
 
     let wrap (text /\ list) = { list
@@ -138,8 +136,6 @@ showMenu { event, getList, menuRef, menuType, ngram, redrawMenu, setTermList } =
       setList t = do
         setTermList ngram list t
         hideMenu { menuRef, redrawMenu }
-  -- here.log2 "x" x
-  -- here.log2 "y" y
   E.preventDefault event
   --range <- Sel.getRange sel 0
   --here.log2 "selection range" $ Sel.rangeToTuple range
