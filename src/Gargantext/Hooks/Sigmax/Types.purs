@@ -157,7 +157,7 @@ eqGraph (Graph {nodes: n1, edges: e1}) (Graph {nodes: n2, edges: e2}) = (n1 == n
 -- however when graph is loaded initially, forceAtlas is running for a couple of
 -- seconds and then stops (unless the user alters this by clicking the toggle
 -- button).
-data ForceAtlasState = InitialRunning | InitialStopped | Running | Paused
+data ForceAtlasState = InitialRunning | InitialStopped | Running | Paused | Killed
 
 derive instance genericForceAtlasState :: Generic ForceAtlasState _
 instance eqForceAtlasState :: Eq ForceAtlasState where
@@ -168,6 +168,7 @@ toggleForceAtlasState InitialRunning = Paused
 toggleForceAtlasState InitialStopped = InitialRunning
 toggleForceAtlasState Running = Paused
 toggleForceAtlasState Paused = Running
+toggleForceAtlasState Killed = Running
 
 -- | Custom state for show edges. Normally it is EShow or EHide (show/hide
 -- | edges). However, edges are temporarily turned off when forceAtlas is
@@ -218,6 +219,7 @@ forceAtlasEdgeState Running EShow = ETempHiddenThenShow
 forceAtlasEdgeState Running es = es
 forceAtlasEdgeState Paused ETempHiddenThenShow = EShow
 forceAtlasEdgeState Paused es = es
+forceAtlasEdgeState Killed es = es
 
 
 louvainEdges :: SGraph -> Array (Record Louvain.Edge)

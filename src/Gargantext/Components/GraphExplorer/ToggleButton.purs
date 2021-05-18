@@ -8,6 +8,7 @@ module Gargantext.Components.GraphExplorer.ToggleButton
   , multiSelectEnabledButton
   , sidebarToggleButton
   , pauseForceAtlasButton
+  , resetForceAtlasButton
   , treeToggleButton
   ) where
 
@@ -18,6 +19,9 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
+import Gargantext.Components.Graph as Graph
+import Gargantext.Hooks.Sigmax as Sigmax
+import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
@@ -156,8 +160,31 @@ pauseForceAtlasButtonCpt = here.component "forceAtlasToggleButton" cpt
     text SigmaxTypes.InitialStopped = "Start Force Atlas"
     text SigmaxTypes.Running = "Pause Force Atlas"
     text SigmaxTypes.Paused = "Start Force Atlas"
+    text SigmaxTypes.Killed = "Start Force Atlas"
 
     onClick state _ = T.modify_ SigmaxTypes.toggleForceAtlasState state
+
+type ResetForceAtlasProps = (
+    forceAtlasState :: T.Box SigmaxTypes.ForceAtlasState
+  , sigmaRef        :: R.Ref Sigmax.Sigma
+)
+
+resetForceAtlasButton :: R2.Component ResetForceAtlasProps
+resetForceAtlasButton = R.createElement resetForceAtlasButtonCpt
+resetForceAtlasButtonCpt :: R.Component ResetForceAtlasProps
+resetForceAtlasButtonCpt = here.component "resetForceAtlasToggleButton" cpt
+  where
+    cpt { forceAtlasState, sigmaRef } _ = do
+      pure $ H.button { className: "btn btn-outline-primary"
+                      , on: { click: onClick forceAtlasState sigmaRef }
+                      } [ R2.small {} [ H.text "Reset Force Atlas" ] ]
+
+    onClick forceAtlasState sigmaRef _ = do
+      -- TODO Sigma.killForceAtlas2 sigma
+      -- startForceAtlas2 sigma
+      Sigmax.dependOnSigma (R.readRef sigmaRef) "[resetForceAtlasButton] no sigma" $ \sigma -> do
+        Sigma.killForceAtlas2 sigma
+        T.write_ SigmaxTypes.Killed forceAtlasState
 
 type TreeToggleButtonProps = (
   state :: T.Box Boolean

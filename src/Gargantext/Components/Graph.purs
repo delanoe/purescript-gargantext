@@ -302,22 +302,24 @@ sigmaSettings =
   }
   
 type ForceAtlas2Settings =
-  ( adjustSizes :: Boolean
-  , barnesHutOptimize :: Boolean
-  -- , barnesHutTheta :: Number
-  , edgeWeightInfluence :: Number
-  -- , fixedY  :: Boolean
-  , gravity :: Number
-  , iterationsPerRender :: Number
-  , linLogMode :: Boolean
+  ( adjustSizes                    :: Boolean
+  , barnesHutOptimize              :: Boolean
+  -- , barnesHutTheta              :: Number
+  , edgeWeightInfluence            :: Number
+  -- , fixedY                      :: Boolean
+  , gravity                        :: Number
+  , includeHiddenEdges             :: Boolean
+  , includeHiddenNodes             :: Boolean
+  , iterationsPerRender            :: Number
+  , linLogMode                     :: Boolean
   , outboundAttractionDistribution :: Boolean
-  , scalingRatio :: Number
-  , skipHidden :: Boolean
-  , slowDown :: Number
-  , startingIterations :: Number
-  , strongGravityMode :: Boolean
-  -- , timeout :: Number
-  -- , worker :: Boolean
+  , scalingRatio                   :: Number
+  , skipHidden                     :: Boolean
+  , slowDown                       :: Number
+  , startingIterations             :: Number
+  , strongGravityMode              :: Boolean
+  -- , timeout                     :: Number
+  -- , worker                      :: Boolean
   )
 
 forceAtlas2Settings :: {|ForceAtlas2Settings}
@@ -327,6 +329,8 @@ forceAtlas2Settings =
   , edgeWeightInfluence : 1.0
     -- fixedY : false
   , gravity : 0.01
+  , includeHiddenEdges: false
+  , includeHiddenNodes: true
   , iterationsPerRender : 50.0 -- 10.0
   , linLogMode : false  -- false
   , outboundAttractionDistribution: false
