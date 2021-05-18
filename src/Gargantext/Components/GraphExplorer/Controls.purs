@@ -20,7 +20,7 @@ import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Button (centerButton, cameraButton)
 import Gargantext.Components.GraphExplorer.RangeControl (edgeConfluenceControl, edgeWeightControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.SlideButton (labelSizeButton, mouseSelectorSizeButton)
-import Gargantext.Components.GraphExplorer.ToggleButton (multiSelectEnabledButton, edgesToggleButton, louvainToggleButton, pauseForceAtlasButton)
+import Gargantext.Components.GraphExplorer.ToggleButton (multiSelectEnabledButton, edgesToggleButton, louvainToggleButton, pauseForceAtlasButton, resetForceAtlasButton)
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax as Sigmax
@@ -108,7 +108,7 @@ controlsCpt = here.component "controls" cpt
           _          -> pure unit
 
       -- Handle case when FA is paused from outside events, eg. the automatic timer.
-      R.useEffect' $ Sigmax.handleForceAtlas2Pause sigmaRef forceAtlasState mFAPauseRef
+      R.useEffect' $ Sigmax.handleForceAtlas2Pause sigmaRef forceAtlasState mFAPauseRef Graph.forceAtlas2Settings
 
       -- Handle automatic edge hiding when FA is running (to prevent flickering).
       R.useEffect2' sigmaRef forceAtlasState' $ do
@@ -162,6 +162,7 @@ controlsCpt = here.component "controls" cpt
                  [ RH.ul { className: "navbar-nav mx-auto" }
                    [ -- change type button (?)
                      navItem [ centerButton sigmaRef ]
+                   , navItem [ resetForceAtlasButton { forceAtlasState, sigmaRef } [] ]
                    , navItem [ pauseForceAtlasButton { state: forceAtlasState } [] ]
                    , navItem [ edgesToggleButton { state: showEdges } [] ]
                    , navItem [ louvainToggleButton { state: showLouvain } [] ]

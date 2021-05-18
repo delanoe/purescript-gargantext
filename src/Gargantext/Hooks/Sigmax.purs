@@ -113,28 +113,21 @@ dependOnContainer container notFoundMsg f = do
 -- | Effect for handling pausing FA via state changes.  We need this because
 -- | pausing can be done not only via buttons but also from the initial
 -- | setTimer.
---handleForceAtlasPause sigmaRef (toggled /\ setToggled) mFAPauseRef = do
-handleForceAtlas2Pause :: R.Ref Sigma -> T.Box ST.ForceAtlasState -> R.Ref (Maybe TimeoutId) -> Effect Unit
-handleForceAtlas2Pause sigmaRef forceAtlasState mFAPauseRef = do
+handleForceAtlas2Pause :: forall settings. R.Ref Sigma -> T.Box ST.ForceAtlasState -> R.Ref (Maybe TimeoutId) -> settings -> Effect Unit
+handleForceAtlas2Pause sigmaRef forceAtlasState mFAPauseRef settings = do
   let sigma = R.readRef sigmaRef
   toggled <- T.read forceAtlasState
   dependOnSigma sigma "[handleForceAtlas2Pause] sigma: Nothing" $ \s -> do
-    --log2 "[handleForceAtlas2Pause] mSigma: Just " s
-    --log2 "[handleForceAtlas2Pause] toggled: " toggled
     let isFARunning = Sigma.isForceAtlas2Running s
-    --log2 "[handleForceAtlas2Pause] isFARunning: " isFARunning
     case Tuple toggled isFARunning of
       Tuple ST.InitialRunning false -> do
-        -- hide edges during forceAtlas rendering, this prevents flickering
-        Sigma.restartForceAtlas2 s
+        Sigma.restartForceAtlas2 s settings
       Tuple ST.Running false -> do
-        -- hide edges during forceAtlas rendering, this prevents flickering
-        Sigma.restartForceAtlas2 s
+        Sigma.restartForceAtlas2 s settings
         case R.readRef mFAPauseRef of
           Nothing -> pure unit
           Just timeoutId -> clearTimeout timeoutId
       Tuple ST.Paused true -> do
-        -- restore edges state
         Sigma.stopForceAtlas2 s
       _ -> pure unit
 
