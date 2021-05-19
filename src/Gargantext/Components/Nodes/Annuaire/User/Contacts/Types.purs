@@ -34,9 +34,9 @@ instance decodeNodeContact :: DecodeJson NodeContact where
     hyperdata <- obj .: "hyperdata"
     id        <- obj .: "id"
     name      <- obj .:! "name"
-    parentId  <- obj .?| "parentId"
+    parentId  <- obj .?| "parent_id"
     typename  <- obj .?| "typename"
-    userId    <- obj .:! "userId"
+    userId    <- obj .:! "user_id"
 
     pure $ NodeContact { id
                    , date
@@ -70,9 +70,9 @@ instance decodeContact' :: DecodeJson Contact' where
     hyperdata <- obj .: "hyperdata"
     id        <- obj .: "id"
     name      <- obj .:! "name"
-    parentId  <- obj .?| "parentId"
+    parentId  <- obj .?| "parent_id"
     typename  <- obj .?| "typename"
-    userId    <- obj .:! "userId"
+    userId    <- obj .:! "user_id"
 
     pure $ Contact' { id
                    , date
@@ -106,9 +106,9 @@ instance decodeContact :: DecodeJson Contact where
     hyperdata <- obj .: "hyperdata"
     id        <- obj .: "id"
     name      <- obj .:! "name"
-    parentId  <- obj .?| "parentId"
+    parentId  <- obj .?| "parent_id"
     typename  <- obj .?| "typename"
-    userId    <- obj .:! "userId"
+    userId    <- obj .:! "user_id"
 
     pure $ Contact { id
                    , date
@@ -139,9 +139,9 @@ instance decodeUser :: DecodeJson User where
     hyperdata <- obj .: "hyperdata"
     id        <- obj .: "id"
     name      <- obj .:! "name"
-    parentId  <- obj .?| "parentId"
+    parentId  <- obj .?| "parent_id"
     typename  <- obj .?| "typename"
-    userId    <- obj .:! "userId"
+    userId    <- obj .:! "user_id"
 
     pure $ User { id
                 , date
