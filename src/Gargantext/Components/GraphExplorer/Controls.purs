@@ -111,8 +111,9 @@ controlsCpt = here.component "controls" cpt
       R.useEffect' $ Sigmax.handleForceAtlas2Pause sigmaRef forceAtlasState mFAPauseRef Graph.forceAtlas2Settings
 
       -- Handle automatic edge hiding when FA is running (to prevent flickering).
-      R.useEffect2' sigmaRef forceAtlasState' $ do
-        T.modify_ (SigmaxT.forceAtlasEdgeState forceAtlasState') showEdges
+      -- TODO Commented temporarily: this breaks forceatlas rendering after reset
+      -- R.useEffect2' sigmaRef forceAtlasState' $ do
+      --   T.modify_ (SigmaxT.forceAtlasEdgeState forceAtlasState') showEdges
 
       -- Automatic opening of sidebar when a node is selected (but only first time).
       R.useEffect' $ do

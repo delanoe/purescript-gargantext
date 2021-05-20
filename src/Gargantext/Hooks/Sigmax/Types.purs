@@ -168,7 +168,7 @@ toggleForceAtlasState InitialRunning = Paused
 toggleForceAtlasState InitialStopped = InitialRunning
 toggleForceAtlasState Running = Paused
 toggleForceAtlasState Paused = Running
-toggleForceAtlasState Killed = Running
+toggleForceAtlasState Killed = InitialRunning
 
 -- | Custom state for show edges. Normally it is EShow or EHide (show/hide
 -- | edges). However, edges are temporarily turned off when forceAtlas is
@@ -219,6 +219,7 @@ forceAtlasEdgeState Running EShow = ETempHiddenThenShow
 forceAtlasEdgeState Running es = es
 forceAtlasEdgeState Paused ETempHiddenThenShow = EShow
 forceAtlasEdgeState Paused es = es
+forceAtlasEdgeState Killed ETempHiddenThenShow = EShow
 forceAtlasEdgeState Killed es = es
 
 

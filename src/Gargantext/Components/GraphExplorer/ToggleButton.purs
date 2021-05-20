@@ -15,16 +15,15 @@ module Gargantext.Components.GraphExplorer.ToggleButton
 import Prelude
 
 import Effect (Effect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
 import Gargantext.Components.Graph as Graph
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.ToggleButton"
@@ -184,6 +183,7 @@ resetForceAtlasButtonCpt = here.component "resetForceAtlasToggleButton" cpt
       -- startForceAtlas2 sigma
       Sigmax.dependOnSigma (R.readRef sigmaRef) "[resetForceAtlasButton] no sigma" $ \sigma -> do
         Sigma.killForceAtlas2 sigma
+        Sigma.refreshForceAtlas sigma Graph.forceAtlas2Settings
         T.write_ SigmaxTypes.Killed forceAtlasState
 
 type TreeToggleButtonProps = (
