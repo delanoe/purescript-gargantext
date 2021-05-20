@@ -56,7 +56,7 @@ dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
       reload' <- T.useLive T.unequal reload
 
       useLoader {nodeId, reload: reload', session} DT.loadDashboardWithReload $
-        \dashboardData@{hyperdata: DT.Hyperdata h, parentId} -> do
+        \(DT.DashboardData dashboardData@{hyperdata: DT.Hyperdata h, parentId}) -> do
           let { charts, fields } = h
           dashboardLayoutLoaded { charts
                                 , corpusId: parentId

@@ -18,8 +18,8 @@ type Preferences = Maybe String
 
 newtype Hyperdata =
   Hyperdata
-  { charts :: Array P.PredefinedChart
-  , fields :: List.List FTField
+  { charts      :: Array P.PredefinedChart
+  , fields      :: List.List FTField
   , preferences :: Preferences
   }
 derive instance genericHyperdata :: Generic Hyperdata _
@@ -56,8 +56,26 @@ saveDashboard {hyperdata, nodeId, session} = do
   id_ <- (put session (NodeAPI Node (Just nodeId) "") hyperdata) :: Aff Int
   pure unit
 
-type DashboardData =
-  { id :: Int
+newtype DashboardData =
+  DashboardData
+  { id        :: Int
   , hyperdata :: Hyperdata
-  , parentId :: Int
+  , parentId  :: Int
   }
+
+derive instance genericDashboardData :: Generic DashboardData _
+instance eqDashboardData :: Eq DashboardData where
+  eq = genericEq
+instance decodeDashboardData :: DecodeJson DashboardData where
+  decodeJson json = do
+    obj <- decodeJson json
+    id <- obj .: "id"
+    hyperdata <- obj .: "hyperdata"
+    parentId <- obj .: "parent_id"
+    pure $ DashboardData { id, hyperdata, parentId }
+instance encodeDashboardData :: EncodeJson DashboardData where
+  encodeJson (DashboardData { id, hyperdata, parentId }) = do
+       "id"       := id
+    ~> "hyperdata" := hyperdata
+    ~> "parent_id" := parentId
+    ~> jsonEmptyObject
