@@ -268,8 +268,8 @@ instance decodeAnnuaireInfo :: DecodeJson AnnuaireInfo where
     obj <- decodeJson json
     id        <- obj .: "id"
     typename  <- obj .: "typename"
-    userId    <- obj .: "userId"
-    parentId  <- obj .: "parentId"
+    userId    <- obj .: "user_id"
+    parentId  <- obj .: "parent_id"
     name      <- obj .: "name"
     date      <- obj .: "date"
     hyperdata <- obj .: "hyperdata"
