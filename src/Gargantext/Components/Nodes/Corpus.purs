@@ -17,6 +17,7 @@ import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.FolderView as FV
+import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..))
@@ -37,15 +38,15 @@ import Toestand as T
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus"
 
-type Props = ( nodeId  :: Int, session :: Session )
+type Props = ( nodeId  :: Int, session :: Session, tasks :: T.Box GAT.Storage )
 
 corpusLayout :: R2.Leaf Props
 corpusLayout props = R.createElement corpusLayoutCpt props []
 
 corpusLayoutCpt :: R.Component Props
 corpusLayoutCpt = here.component "corpusLayout" cpt where
-  cpt { nodeId, session } _ = do
-    pure $ corpusLayoutMain { key, nodeId, session }
+  cpt { nodeId, session, tasks } _ = do
+    pure $ corpusLayoutMain { key, nodeId, session, tasks }
       where
         key = show (sessionId session) <> "-" <> show nodeId
 
@@ -53,6 +54,7 @@ type KeyProps =
   ( nodeId  :: Int
   , key     :: String
   , session :: Session
+  , tasks   :: T.Box GAT.Storage
   )
 
 corpusLayoutMain :: R2.Leaf KeyProps
@@ -61,7 +63,7 @@ corpusLayoutMain props = R.createElement corpusLayoutMainCpt props []
 corpusLayoutMainCpt :: R.Component KeyProps
 corpusLayoutMainCpt = here.component "corpusLayoutMain" cpt
   where
-    cpt { nodeId, key, session } _ = do
+    cpt { nodeId, key, session, tasks } _ = do
       viewType <- T.useBox Folders
 
       pure $ H.div {} [
@@ -71,7 +73,7 @@ corpusLayoutMainCpt = here.component "corpusLayoutMain" cpt
           , H.div { className: "col-1" } [ FV.homeButton ]
           ]
         ]
-      , H.div {} [corpusLayoutSelection {state: viewType, key, session, nodeId}]
+      , H.div {} [corpusLayoutSelection {state: viewType, key, session, nodeId, tasks}]
       ]
 
 type SelectionProps = 
@@ -79,6 +81,7 @@ type SelectionProps =
   , key     :: String
   , session :: Session
   , state   :: T.Box ViewType
+  , tasks   :: T.Box GAT.Storage
   )
 
 corpusLayoutSelection :: R2.Leaf SelectionProps
@@ -86,20 +89,25 @@ corpusLayoutSelection props = R.createElement corpusLayoutSelectionCpt props []
 
 corpusLayoutSelectionCpt :: R.Component SelectionProps
 corpusLayoutSelectionCpt = here.component "corpusLayoutSelection" cpt where
-  cpt { nodeId, session, key, state} _ = do
+  cpt { nodeId, session, key, state, tasks} _ = do
     state' <- T.useLive T.unequal state
     viewType <- T.read state
 
-    pure $ renderContent viewType nodeId session key
+    pure $ renderContent viewType nodeId session key tasks
 
-  renderContent Folders nodeId session key = FV.folderView { nodeId, session, backFolder: true }
-  renderContent Code nodeId session key = corpusLayoutWithKey { key, nodeId, session }
+  renderContent Folders nodeId session key tasks = FV.folderView { nodeId, session, backFolder: true, tasks }
+  renderContent Code nodeId session key tasks = corpusLayoutWithKey { key, nodeId, session }
 
+type CorpusKeyProps =
+  ( nodeId  :: Int
+  , key     :: String
+  , session :: Session
+  )
 
-corpusLayoutWithKey :: R2.Leaf KeyProps
+corpusLayoutWithKey :: R2.Leaf CorpusKeyProps
 corpusLayoutWithKey props = R.createElement corpusLayoutWithKeyCpt props []
 
-corpusLayoutWithKeyCpt :: R.Component KeyProps
+corpusLayoutWithKeyCpt :: R.Component CorpusKeyProps
 corpusLayoutWithKeyCpt = here.component "corpusLayoutWithKey" cpt where
   cpt { nodeId, session } _ = do
     reload <- T.useBox T2.newReload

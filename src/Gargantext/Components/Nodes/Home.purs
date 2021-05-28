@@ -6,6 +6,7 @@ import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Effect (Effect)
+import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Lang (LandingLang(..))
@@ -57,6 +58,7 @@ type HomeProps s l =
   , lang      :: LandingLang
   , sessions  :: s
   , showLogin :: l
+  , tasks     :: T.Box GAT.Storage
   )
 
 homeLayout :: forall s l. T.Read s Sessions => T.ReadWrite l Boolean
@@ -66,7 +68,7 @@ homeLayoutCpt :: forall s l. T.Read s Sessions => T.ReadWrite l Boolean
              => R.Component (HomeProps s l)
 homeLayoutCpt = here.component "homeLayout" cpt
   where
-    cpt { backend, lang, sessions, showLogin } _ = do
+    cpt { backend, lang, sessions, showLogin, tasks} _ = do
       backend' <- T.useLive T.unequal backend
       sessions' <- T.useLive T.unequal sessions
       let landingData = langLandingData lang
@@ -75,7 +77,7 @@ homeLayoutCpt = here.component "homeLayout" cpt
         [ H.div { className: "home-title container1" }
           [ jumboTitle landingData ]
         , H.div { className: "home-research-form container1" } [] -- TODO
-        , joinButtonOrTutorial sessions' (click backend')
+        , joinButtonOrTutorial tasks sessions' (click backend')
         , H.div { className: "home-public container1" }
           [ renderPublic { }
           , H.div { className:"col-12 d-flex justify-content-center" }
@@ -96,11 +98,11 @@ homeLayoutCpt = here.component "homeLayout" cpt
                   T.write_ true showLogin
             Just b -> T.write_ true showLogin
 
-joinButtonOrTutorial :: forall e. Sessions -> (e -> Effect Unit) -> R.Element
-joinButtonOrTutorial sessions click =
+joinButtonOrTutorial :: forall e. T.Box GAT.Storage -> Sessions -> (e -> Effect Unit) -> R.Element
+joinButtonOrTutorial tasks sessions click =
   if Sessions.null sessions
   then joinButton click
-  else tutorial {sessions: Sessions.unSessions sessions}
+  else tutorial {tasks, sessions: Sessions.unSessions sessions}
      
 joinButton :: forall e. (e -> Effect Unit) -> R.Element
 joinButton click =
@@ -146,12 +148,12 @@ summary =
         , H.ol {} (map toSummary tutos) ] ]          
     toSummary (Tuto x) = H.li {} [ H.a {href: "#" <> x.id} [ H.text x.title ]]
 
-tutorial :: R2.Leaf (sessions :: Array Session)
+tutorial :: R2.Leaf (sessions :: Array Session, tasks :: T.Box GAT.Storage)
 tutorial props = R.createElement tutorialCpt props []
 
-tutorialCpt :: R.Component (sessions :: Array Session)
+tutorialCpt :: R.Component (sessions :: Array Session, tasks:: T.Box GAT.Storage)
 tutorialCpt = here.component "tutorial" cpt where
-  cpt {sessions} _ = do
+  cpt {sessions, tasks} _ = do
     let folders = makeFolders sessions
 
     pure $ H.div { className: "mx-auto container" }
@@ -176,7 +178,7 @@ tutorialCpt = here.component "tutorial" cpt where
         sessionToFolder session@(Session {treeId, username, backend: (Backend {name})}) = 
           H.tr {} [
             H.div { className: "d-flex justify-content-center" } [ H.text (username <> "@" <> name) ]
-          , H.div {} [ FV.folderView {session, nodeId: treeId, backFolder: false} ] ]
+          , H.div {} [ FV.folderView {session, tasks, nodeId: treeId, backFolder: false} ] ]
 
 startTutos :: Array Tuto
 startTutos =

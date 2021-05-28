@@ -1,23 +1,44 @@
 module Gargantext.Components.FolderView where
 
+import DOM.Simple.Console (log, log2)
 import Data.Array as A
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Nullable (null)
+import Data.Traversable (traverse_)
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Gargantext.Components.FolderView.Box (nodePopupView)
+import Effect.Class (liftEffect)
+import Gargantext.AsyncTasks as GAT
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
+import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
+import Gargantext.Components.Forest.Tree.Node.Action.Delete (deleteNode, unpublishNode)
+import Gargantext.Components.Forest.Tree.Node.Action.Link (linkNodeReq)
+import Gargantext.Components.Forest.Tree.Node.Action.Merge (mergeNodeReq)
+import Gargantext.Components.Forest.Tree.Node.Action.Move (moveNodeReq)
+import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
+import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
+import Gargantext.Components.Forest.Tree.Node.Action.Update (updateRequest)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadArbitraryFile, uploadFile)
+import Gargantext.Components.Forest.Tree.Node.Box (nodePopupView)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (Ordering, Unit, bind, compare, discard, pure, unit, ($), (<$>), (<>))
+import Gargantext.Prelude (Ordering, Unit, bind, compare, discard, pure, unit, void, ($), (<$>), (<>))
 import Gargantext.Routes (AppRoute(Home), SessionRoute(..), appPath, nodeTypeAppRoute)
 import Gargantext.Sessions (Session, get, sessionId)
+import Gargantext.Types (NodeType(..))
 import Gargantext.Types as GT
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record as Record
+import Toestand as T
 
 foreign import back :: Effect Unit
+foreign import link :: String -> Effect Unit
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.FolderView"
@@ -26,6 +47,7 @@ type Props =
   ( nodeId  :: Int
   , session :: Session
   , backFolder :: Boolean
+  , tasks :: T.Box GAT.Storage
   )
 
 data FolderStyle = FolderUp | FolderChild
@@ -35,9 +57,12 @@ folderView props = R.createElement folderViewCpt props []
 
 folderViewCpt :: R.Component Props
 folderViewCpt = here.component "folderViewCpt" cpt where
-  cpt {nodeId, session, backFolder} _ = do
-    useLoader {nodeId, session, backFolder} loadFolders $
-      \folders -> folderViewMain {folders, nodeId, session, backFolder}
+  cpt {nodeId, session, backFolder, tasks} _ = do
+    setPopoverRef <- R.useRef Nothing
+    reload <- T.useBox T2.newReload
+    reload' <- T.useLive T.unequal reload
+    useLoader { nodeId, session, reload: reload'} loadFolders $
+      \folders -> folderViewMain {folders, nodeId, session, backFolder, tasks, reload, setPopoverRef}
 
 type FolderViewProps = 
   ( 
@@ -45,6 +70,9 @@ type FolderViewProps =
   , folders:: FTree
   , session :: Session
   , backFolder :: Boolean
+  , tasks :: T.Box GAT.Storage
+  , reload :: T.Box T2.Reload
+  , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
   )
 
 folderViewMain :: Record FolderViewProps -> R.Element
@@ -52,25 +80,31 @@ folderViewMain props = R.createElement folderViewMainCpt props []
 
 folderViewMainCpt :: R.Component FolderViewProps
 folderViewMainCpt = here.component "folderViewMainCpt" cpt where
-  cpt {nodeId, session, backFolder, folders: (NTree (LNode {parent_id: parentId, nodeType}) (folders))} _ = do
-    setPopoverRef <- R.useRef Nothing
-    let sid = sessionId session 
+  cpt {nodeId, session, backFolder, tasks, setPopoverRef, reload, folders: tree@(NTree (LNode {parent_id: parentId, nodeType}) (folders))} _ = do
     let foldersS = A.sortBy sortFolders folders
-    let children = makeFolderElements foldersS sid setPopoverRef
     let backHome = isBackHome nodeType
-    let parent = makeParentFolder parentId sid backFolder backHome
+    let parent = makeParentFolder parentId session backFolder backHome
+    let children = makeFolderElements foldersS {session, setPopoverRef, nodeId, tasks, reload}
 
     pure $ H.div {className: "fv folders"} $ parent <> children
 
-  makeFolderElements foldersS sid spr = makeFolderElementsMap <$> foldersS where
+  makeFolderElements foldersS props = makeFolderElementsMap <$> foldersS where
     makeFolderElementsMap :: NTree LNode -> R.Element
-    makeFolderElementsMap (NTree (LNode node) _) = folder {style: FolderChild, text: node.name, nodeId: node.id, nodeType: node.nodeType, sid: sid, setPopoverRef: spr} []
+    makeFolderElementsMap (NTree (LNode node) _) = folder {style: FolderChild
+                                                          , text: node.name
+                                                          , nodeId: node.id
+                                                          , nodeType: node.nodeType
+                                                          , session: props.session
+                                                          , setPopoverRef: props.setPopoverRef
+                                                          , parentId: props.nodeId
+                                                          , tasks: props.tasks
+                                                          , reload: props.reload} []
 
-  makeParentFolder :: Maybe Int -> GT.SessionId -> Boolean -> Boolean -> Array R.Element
-  makeParentFolder (Just parentId) sid _ _ =
+  makeParentFolder :: Maybe Int -> Session -> Boolean -> Boolean -> Array R.Element
+  makeParentFolder (Just parentId) session _ _ =
     -- FIXME: The NodeType here should not be hardcoded to FolderPrivate but we currently can't get the actual NodeType
     -- without performing another API call. Also parentId is never being returned by this API even when it clearly exists
-    [ folderSimple {style: FolderUp, text: "..", nodeId: parentId, nodeType: GT.FolderPrivate, sid: sid} [] ]
+    [ folderSimple {style: FolderUp, text: "..", nodeId: parentId, nodeType: GT.FolderPrivate, session: session} [] ]
   makeParentFolder Nothing _ _ true = [ H.a {className: "btn btn-primary", href: appPath Home} [ H.i { className: "fa fa-folder-open" } []
                                                                    , H.br {}
                                                                    , H.text ".."] ]
@@ -96,7 +130,7 @@ type FolderSimpleProps =
   , text :: String
   , nodeType :: GT.NodeType
   , nodeId :: Int
-  , sid :: GT.SessionId
+  , session :: Session
   )
 
 folderSimple :: R2.Component FolderSimpleProps
@@ -104,7 +138,8 @@ folderSimple = R.createElement folderSimpleCpt
 
 folderSimpleCpt :: R.Component FolderSimpleProps
 folderSimpleCpt = here.component "folderSimpleCpt" cpt where
-  cpt {style, text, nodeId, sid, nodeType} _ = do
+  cpt {style, text, nodeId, session, nodeType} _ = do
+    let sid = sessionId session
     pure $ H.a { className: "btn btn-primary"
                , href: "/#/" <> getFolderPath nodeType sid nodeId }
       [ H.i { className: icon style nodeType } []
@@ -121,6 +156,9 @@ folderSimpleCpt = here.component "folderSimpleCpt" cpt where
 type FolderProps = 
   (
     setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
+  , parentId :: Int
+  , tasks :: T.Box GAT.Storage
+  , reload :: T.Box T2.Reload
   | FolderSimpleProps
   )
 
@@ -129,25 +167,33 @@ folder = R.createElement folderCpt
 
 folderCpt :: R.Component FolderProps
 folderCpt = here.component "folderCpt" cpt where
-  cpt props@{style, text, nodeId, sid, nodeType, setPopoverRef} _ = do
+  cpt props@{style, text, nodeId, session, nodeType, setPopoverRef, parentId, tasks, reload} _ = do
+    let sid = sessionId session
+    let dispatch a = performAction a {setPopoverRef, session, nodeId, parentId, tasks, reload}
     popoverRef <- R.useRef null
+    buttonState <- T.useBox false
+    buttonState' <- T.useLive T.unequal buttonState
 
     R.useEffect' $ do
         R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
 
-    pure $ H.a {className: "btn btn-primary"} [ 
-      Popover.popover { arrow: false
-                      , open: false
-                      , onClose: \_ -> pure unit
-                      , onOpen:  \_ -> pure unit
-                      , ref: popoverRef } [
-                        popOverIcon
-                        , mNodePopupView props (onPopoverClose popoverRef)
-                        ]
-    , H.i { className: icon style nodeType } []
-    , H.br {}
-    , H.text text ]
-  
+    pure $ 
+      H.button {on: {click: link ("/#/" <> getFolderPath nodeType sid nodeId) }, className: "btn btn-primary", disabled: buttonState'} [ 
+        Popover.popover {
+            arrow: false
+          , open: false
+          , onClose: \_ -> pure unit
+          , onOpen:  \_ -> pure unit
+          , ref: popoverRef 
+          } [
+              popOverIcon buttonState
+              , mNodePopupView (Record.merge props {dispatch}) (onPopoverClose popoverRef)
+              ]
+        , H.i {className: icon style nodeType} []
+        , H.br {}
+        , H.text text]
+    
+    
   icon :: FolderStyle -> GT.NodeType -> String
   icon FolderUp _ = "fa fa-folder-open"
   icon _ nodeType = GT.fldr nodeType false
@@ -157,13 +203,21 @@ folderCpt = here.component "folderCpt" cpt where
 
   onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
 
-  popOverIcon = H.div { className: "fv action" } [
+  popOverIcon buttonState = H.div { className: "fv action" } [
         H.a { className: "settings fa fa-cog" 
           , title : "Each node of the Tree can perform some actions.\n"
-            <> "Click here to execute one of them." } []
+            <> "Click here to execute one of them." 
+          , on: {mouseEnter: \_ -> T.write_ true buttonState, mouseLeave: \_ -> T.write_ false buttonState}} []
       ]
 
-  mNodePopupView props opc = nodePopupView {onPopoverClose: opc, nodeType:props.nodeType, name: props.text, id: props.nodeId}
+  mNodePopupView props opc = nodePopupView {onPopoverClose: opc
+                                           ,nodeType: props.nodeType
+                                           , name: props.text
+                                           , id: props.nodeId
+                                           , dispatch: props.dispatch
+                                           , session: props.session
+                                           , handed: GT.RightHanded
+                                           }
 
 backButton :: R.Element
 backButton = 
@@ -182,7 +236,113 @@ homeButton =
   } [
     H.i { className: "fa fa-home", title: "Back to home"} []
   ]
-  
 
-loadFolders :: Record Props -> Aff FTree
+type LoadProps =
+  (
+    session :: Session,
+    nodeId :: Int,
+    reload :: T2.Reload
+  )
+
+loadFolders :: Record LoadProps -> Aff FTree
 loadFolders {nodeId, session} = get session $ TreeFirstLevel (Just nodeId) ""
+
+type PerformActionProps =
+  (
+    setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
+  , session :: Session
+  , nodeId :: Int
+  , parentId :: Int
+  , tasks :: T.Box GAT.Storage
+  , reload :: T.Box T2.Reload
+  )
+
+performAction :: Action -> Record PerformActionProps -> Aff Unit
+performAction = performAction' where
+  performAction' (DeleteNode nt) p = deleteNode' nt p
+  performAction' (DoSearch task) p = doSearch task p
+  performAction' (UpdateNode params) p = updateNode params p
+  performAction' (RenameNode name) p = renameNode name p
+  performAction' (ShareTeam username) p = shareTeam username p
+  performAction' (SharePublic { params }) p = sharePublic params p
+  performAction' (AddContact params) p = addContact params p
+  performAction' (AddNode name nodeType) p = addNode' name nodeType p
+  performAction' (UploadFile nodeType fileType mName blob) p = uploadFile' nodeType fileType mName blob p
+  performAction' (UploadArbitraryFile mName blob) p = uploadArbitraryFile' mName blob p
+  performAction' DownloadNode _ = liftEffect $ log "[performAction] DownloadNode"
+  performAction' (MoveNode {params}) p = moveNode params p
+  performAction' (MergeNode {params}) p = mergeNode params p
+  performAction' (LinkNode { nodeType, params }) p = linkNode nodeType params p
+  performAction' NoAction _ = liftEffect $ log "[performAction] NoAction"
+  performAction' ClosePopover p = closePopover p
+  performAction' _ _ = liftEffect $ log "[performAction] unsupported action"
+
+  closePopover { setPopoverRef } =
+    liftEffect $ traverse_ (\set -> set false) (R.readRef setPopoverRef)
+
+  refreshFolders p = do 
+    liftEffect $ T2.reload p.reload
+    closePopover p
+
+  deleteNode' nt p@{ nodeId: id, parentId: parent_id } = do
+    case nt of
+      NodePublic FolderPublic  -> void $ deleteNode p.session nt id
+      NodePublic _             -> void $ unpublishNode p.session (Just parent_id) id
+      _                        -> void $ deleteNode p.session nt id
+    refreshFolders p
+
+  doSearch task p@{ tasks, nodeId: id } = liftEffect $ do
+    GAT.insert id task tasks
+    log2 "[performAction] DoSearch task:" task
+
+  updateNode params p@{ tasks, nodeId: id } = do
+    task <- updateRequest params p.session id
+    liftEffect $ do
+      GAT.insert id task tasks
+      log2 "[performAction] UpdateNode task:" task
+  
+  shareTeam username p@{ nodeId: id} =
+    void $ Share.shareReq p.session id $ Share.ShareTeamParams {username}
+
+  sharePublic params p = traverse_ f params where
+    f (SubTreeOut { in: inId, out }) = do
+      void $ Share.shareReq p.session inId $ Share.SharePublicParams { node_id: out }
+      refreshFolders p
+
+  addContact params p@{ nodeId: id } =
+    void $ Contact.contactReq p.session id params
+
+  uploadFile' nodeType fileType mName blob p@{ tasks, nodeId: id } = do
+    task <- uploadFile p.session nodeType id fileType {mName, blob}
+    liftEffect $ do
+      GAT.insert id task tasks
+      log2 "[performAction] UploadFile, uploaded, task:" task
+
+  uploadArbitraryFile' mName blob p@{ tasks, nodeId: id } = do
+    task <- uploadArbitraryFile p.session id { blob, mName }
+    liftEffect $ do
+      GAT.insert id task tasks
+      log2 "[performAction] UploadArbitraryFile, uploaded, task:" task
+
+  moveNode params p@{ session } = traverse_ f params where
+    f (SubTreeOut { in: in', out }) = do
+      void $ moveNodeReq p.session in' out
+      refreshFolders p
+
+  mergeNode params p = traverse_ f params where
+    f (SubTreeOut { in: in', out }) = do
+      void $ mergeNodeReq p.session in' out
+      refreshFolders p
+
+  linkNode nodeType params p = traverse_ f params where
+    f (SubTreeOut { in: in', out }) = do
+      void $ linkNodeReq p.session nodeType in' out
+      refreshFolders p
+
+  renameNode name p@{ nodeId: id } = do
+    void $ rename p.session id $ RenameValue { text: name }
+    refreshFolders p
+
+  addNode' name nodeType p@{ nodeId: id } = do
+    void $ addNode p.session id $ AddNodeValue {name, nodeType}
+    refreshFolders p
