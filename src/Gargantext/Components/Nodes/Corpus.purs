@@ -1,6 +1,6 @@
 module Gargantext.Components.Nodes.Corpus where
 
-import Gargantext.Prelude (class Eq, class Show, Unit, bind, discard, pure, show, unit, ($), (+), (-), (<), (<$>), (<<<), (<>), (==), (>))
+import DOM.Simple.Console (log2)
 import Data.Argonaut (class DecodeJson, decodeJson, encodeJson)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
@@ -11,46 +11,43 @@ import Data.Generic.Rep.Show (genericShow)
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (Tuple(..))
-import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
-import Gargantext.Components.FolderView as FV
 import Gargantext.Components.CodeEditor as CE
+import Gargantext.Components.FolderView as FV
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
-import Gargantext.Components.Nodes.Types
-  ( FTField, FTFieldWithIndex, FTFieldsWithIndex, Field(..), FieldType(..), Hash, Index
-  , defaultField, defaultHaskell', defaultJSON', defaultMarkdown', defaultPython' )
-
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..))
+import Gargantext.Components.Nodes.Types (FTField, FTFieldWithIndex, FTFieldsWithIndex, Field(..), FieldType(..), Hash, Index, defaultField, defaultHaskell', defaultJSON', defaultMarkdown', defaultPython')
 import Gargantext.Data.Array as GDA
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude (class Eq, class Show, Unit, bind, discard, pure, show, unit, ($), (+), (-), (<), (<$>), (<<<), (<>), (==), (>))
 import Gargantext.Routes (SessionRoute(Children, NodeAPI))
 import Gargantext.Sessions (Session, get, put, sessionId)
 import Gargantext.Types (AffTableResult, NodeType(..))
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus"
 
-type Props = ( nodeId  :: Int, session :: R.Context Session )
+type Props = ( nodeId  :: Int, session :: Session )
 
 corpusLayout :: R2.Leaf Props
 corpusLayout props = R.createElement corpusLayoutCpt props []
 
 corpusLayoutCpt :: R.Component Props
 corpusLayoutCpt = here.component "corpusLayout" cpt where
-  cpt { nodeId, session } _ = cp <$> R.useContext session where
-    cp s = corpusLayoutMain { key, nodeId, session: s } where
-      key = show (sessionId s) <> "-" <> show nodeId
+  cpt { nodeId, session } _ = do
+    pure $ corpusLayoutMain { key, nodeId, session }
+      where
+        key = show (sessionId session) <> "-" <> show nodeId
 
 type KeyProps =
   ( nodeId  :: Int
@@ -67,9 +64,14 @@ corpusLayoutMainCpt = here.component "corpusLayoutMain" cpt
     cpt { nodeId, key, session } _ = do
       viewType <- T.useBox Folders
 
-      pure $ H.div{} [
-        H.div{} [viewTypeSelector {state: viewType} ]
-      , H.div{} [corpusLayoutSelection {state: viewType, key, session, nodeId}]
+      pure $ H.div {} [
+        H.div {} [
+          H.div { className: "row" } [
+            H.div { className: "col-1" } [ viewTypeSelector {state: viewType} ]
+          , H.div { className: "col-1" } [ FV.homeButton ]
+          ]
+        ]
+      , H.div {} [corpusLayoutSelection {state: viewType, key, session, nodeId}]
       ]
 
 type SelectionProps = 

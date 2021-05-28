@@ -19,7 +19,10 @@ import Gargantext.Types as GT
 
 newtype Graph n e = Graph { edges :: Seq.Seq {|e}, nodes :: Seq.Seq {|n} }
 
---derive instance eqGraph :: Eq Graph
+derive instance genericGraph :: Generic (Graph n e) _
+
+instance eqGraphInst :: (Eq (Record n), Eq (Record e)) => Eq (Graph n e) where
+  eq = genericEq
 
 --instance eqGraph :: Eq Graph where
 --  eq (Graph {nodes: n1, edges: e1}) (Graph {nodes: n2, edges: e2}) = n1 == n2 && e1 == e2

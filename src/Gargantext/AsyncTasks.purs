@@ -10,14 +10,13 @@ import Data.Either (Either(..))
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Effect (Effect)
-import Reactix as R
-import Toestand as T
-import Web.Storage.Storage as WSS
-
 import Gargantext.Types as GT
 import Gargantext.Utils as GU
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Toestand as T
+import Web.Storage.Storage as WSS
 
 localStorageKey :: String
 localStorageKey = "garg-async-tasks"
@@ -56,8 +55,8 @@ removeTaskFromList ts (GT.AsyncTaskWithType { task: GT.AsyncTask { id: id' } }) 
   A.filter (\(GT.AsyncTaskWithType { task: GT.AsyncTask { id: id'' } }) -> id' /= id'') ts
 
 type ReductorProps = (
-    reloadForest :: T.Box T2.Reload
-  , reloadRoot   :: T.Box T2.Reload
+    reloadForest :: T2.ReloadS
+  , reloadRoot   :: T2.ReloadS
   , storage      :: Storage
   )
 
@@ -73,3 +72,26 @@ remove :: GT.NodeID -> GT.AsyncTaskWithType -> T.Box Storage -> Effect Unit
 remove id task storage = T.modify_ newStorage storage
   where
     newStorage s = Map.alter (maybe Nothing $ (\ts -> Just $ removeTaskFromList ts task)) id s
+
+
+-- When a task is finished: which tasks cause forest or app reload
+asyncTaskTriggersAppReload :: GT.AsyncTaskType -> Boolean
+asyncTaskTriggersAppReload _                     = false
+
+asyncTaskTTriggersAppReload :: GT.AsyncTaskWithType -> Boolean
+asyncTaskTTriggersAppReload (GT.AsyncTaskWithType { typ }) = asyncTaskTriggersAppReload typ
+
+asyncTaskTriggersMainPageReload :: GT.AsyncTaskType -> Boolean
+asyncTaskTriggersMainPageReload GT.UpdateNgramsCharts = true
+asyncTaskTriggersMainPageReload _                     = false
+
+asyncTaskTTriggersMainPageReload :: GT.AsyncTaskWithType -> Boolean
+asyncTaskTTriggersMainPageReload (GT.AsyncTaskWithType { typ }) = asyncTaskTriggersMainPageReload typ
+
+asyncTaskTriggersTreeReload :: GT.AsyncTaskType -> Boolean
+asyncTaskTriggersTreeReload GT.Form       = true
+asyncTaskTriggersTreeReload GT.UploadFile = true
+asyncTaskTriggersTreeReload _            = false
+
+asyncTaskTTriggersTreeReload :: GT.AsyncTaskWithType -> Boolean
+asyncTaskTTriggersTreeReload (GT.AsyncTaskWithType { typ }) = asyncTaskTriggersTreeReload typ

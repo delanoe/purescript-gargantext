@@ -34,7 +34,7 @@ sizeButtonCpt :: R.Component Props
 sizeButtonCpt = here.component "sizeButton" cpt where
   cpt { state, caption, min, max, onChange } _ = do
     defaultValue <- T.useLive T.unequal state
-    pure $ H.span { class: "range-simple" }
+    pure $ H.span { className: "range-simple" }
       [ H.label {} [ R2.small {} [ H.text caption ] ]
       , H.input { type: "range"
                 , className: "form-control"

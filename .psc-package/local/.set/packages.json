@@ -989,7 +989,7 @@
       "prelude",
       "unsafe-coerce"
     ],
-    "repo": "https://github.com/poorscript/purescript-dom-simple",
+    "repo": "https://github.com/irresponsible/purescript-dom-simple",
     "version": "v0.2.7"
   },
   "dotenv": {
@@ -1218,7 +1218,7 @@
       "nullable",
       "unsafe-coerce"
     ],
-    "repo": "https://github.com/poorscript/purescript-ffi-simple",
+    "repo": "https://github.com/irresponsible/purescript-ffi-simple",
     "version": "v0.2.10"
   },
   "filterable": {
@@ -1411,9 +1411,13 @@
   },
   "formula": {
     "dependencies": [
+      "effect",
       "prelude",
       "reactix",
+      "record",
       "toestand",
+      "tuples",
+      "typelevel-prelude",
       "typisch"
     ],
     "repo": "https://github.com/poorscript/purescript-formula",
@@ -3812,10 +3816,9 @@
       "functions",
       "nullable",
       "prelude",
-      "tuples",
       "unsafe-coerce"
     ],
-    "repo": "https://github.com/poorscript/purescript-reactix",
+    "repo": "https://github.com/irresponsible/purescript-reactix",
     "version": "v0.4.11"
   },
   "read": {
@@ -4719,12 +4722,14 @@
     "dependencies": [
       "aff",
       "coroutines",
+      "web-dom",
       "freet",
       "profunctor-lenses",
-      "react"
+      "react",
+      "react-dom"
     ],
-    "repo": "https://github.com/paf31/purescript-thermite.git",
-    "version": "v6.3.1"
+    "repo": "https://github.com/poorscript/purescript-thermite.git",
+    "version": "hide-2020-03-04"
   },
   "thermite-dom": {
     "dependencies": [
@@ -4746,13 +4751,13 @@
   },
   "toestand": {
     "dependencies": [
-      "prelude",
       "effect",
-      "foldable-traversable",
       "reactix",
+      "prelude",
       "record",
       "tuples",
-      "typelevel-prelude"
+      "typelevel-prelude",
+      "typisch"
     ],
     "repo": "https://github.com/poorscript/purescript-toestand",
     "version": "v0.6.1"

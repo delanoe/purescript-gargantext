@@ -1,7 +1,6 @@
 module Gargantext.Components.Nodes.Annuaire.User
   ( module Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
   , userLayout
-  , userLayoutSessionContext
   )
   where
 
@@ -14,8 +13,6 @@ import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Record as Record
-import Record.Extra as REX
 import Toestand as T
 
 import Gargantext.AsyncTasks as GAT
@@ -23,11 +20,12 @@ import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
 import Gargantext.Components.Nodes.Annuaire.Tabs as Tabs
 import Gargantext.Components.Nodes.Lists.Types as LT
+import Gargantext.Components.Nodes.Texts.Types as TT
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (WithSession, WithSessionContext, Session, get, put, sessionId)
-import Gargantext.Types (NodeType(..))
+import Gargantext.Types (NodeType(..), SidePanelState)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 
@@ -99,18 +97,20 @@ contactInfoItemCpt :: R.Component ContactInfoItemProps
 contactInfoItemCpt = here.component "contactInfoItem" cpt
   where
     cpt {hyperdata, label, lens, onUpdateHyperdata, placeholder} _ = do
-      isEditing <- R.useState' false
+      isEditing <- T.useBox false
+      isEditing' <- T.useLive T.unequal isEditing
+
       let value = (L.view cLens hyperdata) :: String
       valueRef <- R.useRef value
 
       pure $ H.div { className: "form-group row" } [
         H.span { className: "col-sm-2 col-form-label" } [ H.text label ]
-      , item isEditing valueRef
+      , item isEditing' isEditing valueRef
       ]
 
       where
         cLens = L.cloneLens lens
-        item (false /\ setIsEditing) valueRef =
+        item false isEditing valueRef =
           H.div { className: "input-group col-sm-6" } [
             H.input { className: "form-control"
                     , defaultValue: placeholder'
@@ -123,8 +123,8 @@ contactInfoItemCpt = here.component "contactInfoItem" cpt
           ]
           where
             placeholder' = R.readRef valueRef
-            onClick _ = setIsEditing $ const true
-        item (true /\ setIsEditing) valueRef =
+            onClick _ = T.write_ true isEditing
+        item true isEditing valueRef =
           H.div { className: "input-group col-sm-6" } [
             inputWithEnter {
                 autoFocus: true
@@ -143,7 +143,7 @@ contactInfoItemCpt = here.component "contactInfoItem" cpt
           ]
           where
             onClick _ = do
-              setIsEditing $ const false
+              T.write_ true isEditing
               let newHyperdata = (L.over cLens (\_ -> R.readRef valueRef) hyperdata) :: HyperdataUser
               onUpdateHyperdata newHyperdata
 
@@ -151,11 +151,13 @@ listElement :: Array R.Element -> R.Element
 listElement = H.li { className: "list-group-item justify-content-between" }
 
 type LayoutNoSessionProps =
-  ( frontends    :: Frontends
-  , nodeId       :: Int
-  , reloadForest :: T.Box T2.Reload
-  , reloadRoot   :: T.Box T2.Reload
-  , tasks        :: T.Box GAT.Storage
+  ( frontends      :: Frontends
+  , nodeId         :: Int
+  , reloadForest   :: T2.ReloadS
+  , reloadRoot     :: T2.ReloadS
+  , sidePanel      :: T.Box (Maybe (Record TT.SidePanel))
+  , sidePanelState :: T.Box SidePanelState
+  , tasks          :: T.Box GAT.Storage
   )
 
 type LayoutProps = WithSession LayoutNoSessionProps
@@ -167,24 +169,20 @@ type KeyLayoutProps = (
   | LayoutProps
   )
 
-userLayoutSessionContext :: R2.Component LayoutSessionContextProps
-userLayoutSessionContext = R.createElement userLayoutSessionContextCpt
-
-userLayoutSessionContextCpt :: R.Component LayoutSessionContextProps
-userLayoutSessionContextCpt = here.component "userLayoutSessionContext" cpt
-  where
-    cpt props@{ session } _ = do
-      session' <- R.useContext session
-
-      pure $ userLayout (Record.merge { session: session' } $ (REX.pick props :: Record LayoutNoSessionProps)) []
-
 userLayout :: R2.Component LayoutProps
 userLayout = R.createElement userLayoutCpt
 
 userLayoutCpt :: R.Component LayoutProps
 userLayoutCpt = here.component "userLayout" cpt
   where
-    cpt { frontends, nodeId, reloadForest, reloadRoot, session, tasks } _ = do
+    cpt { frontends
+        , nodeId
+        , reloadForest
+        , reloadRoot
+        , session
+        , sidePanel
+        , sidePanelState
+        , tasks } _ = do
       let sid = sessionId session
 
       pure $ userLayoutWithKey {
@@ -194,6 +192,8 @@ userLayoutCpt = here.component "userLayout" cpt
         , reloadForest
         , reloadRoot
         , session
+        , sidePanel
+        , sidePanelState
         , tasks
         }
 
@@ -203,13 +203,18 @@ userLayoutWithKey props = R.createElement userLayoutWithKeyCpt props []
 userLayoutWithKeyCpt :: R.Component KeyLayoutProps
 userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt
   where
-    cpt { frontends, nodeId, reloadForest, reloadRoot, session, tasks } _ = do
+    cpt { frontends
+        , nodeId
+        , reloadForest
+        , reloadRoot
+        , session
+        , sidePanel
+        , sidePanelState
+        , tasks } _ = do
       reload <- T.useBox T2.newReload
       reload' <- T.useLive T.unequal reload
 
       cacheState <- T.useBox LT.CacheOn
-
-      sidePanelTriggers <- LT.emptySidePanelTriggers
 
       useLoader {nodeId, reload: reload', session} getUserWithReload $
         \contactData@{contactNode: Contact {name, hyperdata}} ->
@@ -224,7 +229,8 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt
                , reloadForest
                , reloadRoot
                , session
-               , sidePanelTriggers
+               , sidePanel
+        , sidePanelState
                , tasks
                }
           ]

@@ -88,10 +88,10 @@ useCachedAPILoaderEffect { cacheEndpoint
           --   log2 "[useCachedAPILoaderEffect] cached version" version
           --   log2 "[useCachedAPILoaderEffect] real version" cacheReal
           _ <- GUC.deleteReq cache req
-          vr'@(Versioned { version: _, data: _ }) <- GUC.cachedJson cache req
-          if version == cacheReal then
+          vr'@(Versioned { version: version', data: _ }) <- GUC.cachedJson cache req
+          if version' == cacheReal then
             pure vr'
           else
-            throwError $ error $ "Fetched clean cache but hashes don't match: " <> show version <> " != " <> show cacheReal
+            throwError $ error $ "[NgramsTable.Loader] Fetched clean cache but hashes don't match: " <> show version <> " != " <> show cacheReal
         liftEffect $ do
           T.write_ (Just $ handleResponse val) state

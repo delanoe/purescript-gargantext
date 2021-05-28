@@ -114,9 +114,9 @@ type State = (
   --, legendData :: R.State (Array Legend)
   --, multiNodeSelection :: R.State Boolean
   --, selectedNodes :: R.State (Set SelectedNode)
-  --, showSidePanel :: R.State Boolean
   --, showControls :: T.Box Boolean
   --, showTree :: R.State Boolean
+  --, sidePanelState :: R.State Boolean
   --, sigmaGraphData :: R.State (Maybe SigmaxTypes.SGraph)
   --, sigmaSettings :: R.State ({|Graph.SigmaSettings})
     --treeId :: R.State (Maybe TreeId)
@@ -280,10 +280,6 @@ defaultPalette = ["#5fa571","#ab9ba2","#da876d","#bdd3ff","#b399df","#ffdfed","#
 
 intColor :: Int -> String
 intColor i = unsafePartial $ fromJust $ defaultPalette !! (i `mod` length defaultPalette)
-
-
-data SidePanelState = InitialClosed | Opened SideTab | Closed
-derive instance eqSidePanelState :: Eq SidePanelState
 
 data SideTab = SideTabLegend | SideTabData | SideTabCommunity
 

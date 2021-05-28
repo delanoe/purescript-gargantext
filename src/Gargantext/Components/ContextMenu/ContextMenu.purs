@@ -4,7 +4,6 @@ module Gargantext.Components.ContextMenu.ContextMenu where
 
 import Data.Maybe ( Maybe(..) )
 import Data.Nullable ( Nullable, null, toMaybe )
-import Data.Tuple.Nested ( (/\) )
 import Data.Traversable ( traverse_ )
 import DOM.Simple as DOM
 import DOM.Simple.Event as DE
@@ -34,14 +33,14 @@ type Props t = (
 
 contextMenu :: forall t. R2.Component (Props t)
 contextMenu = R.createElement contextMenuCpt
-
 contextMenuCpt :: forall t. R.Component (Props t)
 contextMenuCpt = here.component "contextMenu" cpt
   where
-    cpt menu@{ x, y, onClose } children = do
+    cpt menu@{ onClose, x, y } children = do
       host <- R2.getPortalHost
       root <- R.useRef null
-      rect <- T.useBox Nothing
+      -- NOTE: Just some dummy width/height here, it should be set properly in the effect function later
+      rect <- T.useBox $ Just $ R2.domRectFromRect { x, y, width: 100.0, height: 100.0 }
       rect' <- T.useLive T.unequal rect
 
       R.useLayoutEffect1 (R.readRef root) $ do
@@ -49,7 +48,7 @@ contextMenuCpt = here.component "contextMenu" cpt
           (\r -> T.write_ (Just (Element.boundingRect r)) rect)
           (toMaybe $ R.readRef root)
         pure $ pure unit
-      R.useLayoutEffect2 root rect (contextMenuEffect onClose root)
+      R.useLayoutEffect2 (R.readRef root) rect' (contextMenuEffect onClose root)
       let cs = [
             HTML.div { className: "popover-content" }
             [ HTML.div { className: "card" }
@@ -64,13 +63,13 @@ contextMenuCpt = here.component "contextMenu" cpt
         , key: "context-menu"
         , className: "context-menu"
         , style: position menu rect
-        , data: {toggle: "popover", placement: "right"}
+        , data: { placement: "right", toggle: "popover" }
         }
-    elems ref _ _ = HTML.div
+    elems ref menu Nothing = HTML.div
         { ref
         , key: "context-menu"
         , className: "context-menu"
-        , data: {toggle: "popover", placement: "right"}
+        , data: { placement: "right", toggle: "popover" }
         }
 
 contextMenuEffect
@@ -92,8 +91,10 @@ contextMenuEffect onClose rootRef =
 
 documentClickHandler :: Effect Unit -> DOM.Element -> Callback DE.MouseEvent
 documentClickHandler onClose menu =
-  R2.named "hideMenuOnClickOutside" $ callback $ \e ->
-    when (Element.contains menu (DE.target e)) onClose
+  R2.named "hideMenuOnClickOutside" $ callback $ \e -> do
+    when (R2.mouseClickInElement e menu) $ do
+      here.log "mouse in element"
+      onClose
 
 documentScrollHandler :: Effect Unit -> Callback DE.MouseEvent
 documentScrollHandler onClose =
@@ -108,9 +109,8 @@ position mouse {width: menuWidth, height: menuHeight} = {left, top}
         screenWidth = window .. "innerWidth"
         screenHeight = window .. "innerHeight"
 
-contextMenuItem :: Array R.Element -> R.Element
-contextMenuItem = R.createElement contextMenuItemCpt {}
-
+contextMenuItem :: R2.Component ()
+contextMenuItem = R.createElement contextMenuItemCpt
 contextMenuItemCpt :: R.Component ()
 contextMenuItemCpt = here.component "contextMenuItem" cpt
   where

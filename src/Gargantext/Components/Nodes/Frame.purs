@@ -1,27 +1,26 @@
 module Gargantext.Components.Nodes.Frame where
 
-import Data.Argonaut as Argonaut
+import Gargantext.Prelude
+
 import Data.Argonaut (decodeJson, (.:))
+import Data.Argonaut as Argonaut
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Show (genericShow)
---import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson, genericEnumDecodeJson, genericEnumEncodeJson)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
-import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.FolderView as FV
+import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, get, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Argonaut (genericSumEncodeJson)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Frame"
@@ -46,15 +45,13 @@ instance encodeJsonHyperdata :: Argonaut.EncodeJson Hyperdata where
 
 type Props =
   ( nodeId   :: Int
-  , session  :: R.Context Session
   , nodeType :: NodeType
+  , session  :: Session
   )
 
 type KeyProps =
   ( key      :: String
-  , nodeId   :: Int
-  , session  :: Session
-  , nodeType :: NodeType
+  | Props
   )
 
 frameLayout :: R2.Leaf Props
@@ -62,9 +59,10 @@ frameLayout props = R.createElement frameLayoutCpt props []
 
 frameLayoutCpt :: R.Component Props
 frameLayoutCpt = here.component "frameLayout" cpt where
-  cpt { nodeId, nodeType, session } _ = cp <$> R.useContext session where
-    cp s = frameLayoutWithKey { key, nodeId, nodeType, session: s } where
-      key = show (sessionId s) <> "-" <> show nodeId
+  cpt { nodeId, nodeType, session } _ = do
+    pure $ frameLayoutWithKey { key, nodeId, nodeType, session }
+      where
+        key = show (sessionId session) <> "-" <> show nodeId
 
 frameLayoutWithKey :: R2.Leaf KeyProps
 frameLayoutWithKey props = R.createElement frameLayoutWithKeyCpt props []
@@ -107,6 +105,7 @@ frameLayoutViewCpt = here.component "frameLayoutView" cpt
         , session } _ =
       pure $ H.div{} [
         FV.backButton
+      , FV.homeButton
       , H.div { className : "frame"
               , rows: "100%,*" }
           [ H.iframe { src: hframeUrl nodeType base frame_id

@@ -64,7 +64,7 @@ tableHeaderLayoutCpt = here.component "tableHeaderLayout" cpt
       cacheState' <- T.useLive T.unequal cacheState
 
       pure $ R.fragment
-        [ R2.row [FV.backButton]
+        [ R2.row [FV.backButton, FV.homeButton]
         ,
           R2.row
           [ H.div {className: "col-md-3"} [ H.h3 {} [H.text title] ]
@@ -142,10 +142,10 @@ tableCpt = here.component "table" cpt
                 Just (DESC d) | c == d -> [lnk (Just (ASC  c)) "DESC ", lnk Nothing (columnName c)]
                 _ -> [lnk (Just (ASC c)) (columnName c)]
       pure $ container
-        { syncResetButton
-        , pageSizeControl: sizeDD { params }
+        { pageSizeControl: sizeDD { params }
         , pageSizeDescription: textDescription state.page state.pageSize totalRecords
         , paginationLinks: pagination { params, totalPages }
+        , syncResetButton
         , tableBody: map _.row $ A.fromFoldable rows
         , tableHead: H.tr {} (colHeader <$> colNames)
         }

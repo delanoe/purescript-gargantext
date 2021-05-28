@@ -23,13 +23,12 @@ import Toestand as T
 import Gargantext.Prelude
 
 import Gargantext.Components.Lang (Lang(..))
-import Gargantext.Components.Search (SearchType(..), SearchQuery(..))
-import Gargantext.Components.GraphExplorer.Types  as GET
-import Gargantext.Components.GraphExplorer.Types  (SidePanelState(..), SideTab(..))
+import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.GraphExplorer.Legend as Legend
 import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Components.Nodes.Corpus.Graph.Tabs (tabs) as CGT
 import Gargantext.Components.RandomText (words)
+import Gargantext.Components.Search (SearchType(..), SearchQuery(..))
 import Gargantext.Data.Array (mapMaybe)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
@@ -44,7 +43,7 @@ here = R2.here "Gargantext.Components.GraphExplorer.Sidebar"
 type Common = (
     graphId         :: NodeID
   , metaData        :: GET.MetaData
-  , reloadForest    :: T.Box T2.Reload
+  , reloadForest    :: T2.ReloadS
   , removedNodeIds  :: T.Box SigmaxT.NodeIds
   , selectedNodeIds :: T.Box SigmaxT.NodeIds
   , session         :: Session
@@ -54,38 +53,33 @@ type Props = (
     frontends       :: Frontends
   , graph           :: SigmaxT.SGraph
   , graphVersion    :: T2.ReloadS
-  , showSidePanel   :: T.Box GET.SidePanelState
+  , sideTab         :: T.Box GET.SideTab
   | Common
   )
 
-sidebar :: Record Props -> R.Element
-sidebar props = R.createElement sidebarCpt props []
+sidebar :: R2.Component Props
+sidebar = R.createElement sidebarCpt
 
 sidebarCpt :: R.Component Props
 sidebarCpt = here.component "sidebar" cpt
   where
-    cpt props@{ metaData, showSidePanel } _ = do
-      showSidePanel' <- T.useLive T.unequal showSidePanel
+    cpt props@{ sideTab } _ = do
+      sideTab' <- T.useLive T.unequal sideTab
 
-      case showSidePanel' of
-        GET.Closed -> pure $ RH.div {} []
-        GET.InitialClosed -> pure $ RH.div {} []
-        GET.Opened sideTabT -> do
-          let sideTab' = case sideTabT of
-                SideTabLegend -> sideTabLegend sideTabProps []
-                SideTabData -> sideTabData sideTabProps []
-                SideTabCommunity -> sideTabCommunity sideTabProps []
-          pure $ RH.div { id: "sp-container" }
-            [ sideTabNav { sidePanel: showSidePanel
-                         , sideTabs: [SideTabLegend, SideTabData, SideTabCommunity] } []
-            , sideTab'
-            ]
+      pure $ RH.div { id: "sp-container" }
+        [ sideTabNav { sideTab
+                     , sideTabs: [GET.SideTabLegend, GET.SideTabData, GET.SideTabCommunity] } []
+        , case sideTab' of
+            GET.SideTabLegend -> sideTabLegend sideTabProps []
+            GET.SideTabData -> sideTabData sideTabProps []
+            GET.SideTabCommunity -> sideTabCommunity sideTabProps []
+        ]
       where
         sideTabProps = RX.pick props :: Record SideTabProps
 
 type SideTabNavProps = (
-    sidePanel :: T.Box GET.SidePanelState
-  , sideTabs  :: Array SideTab
+    sideTab  :: T.Box GET.SideTab
+  , sideTabs :: Array GET.SideTab
   )
 
 sideTabNav :: R2.Component SideTabNavProps
@@ -94,24 +88,22 @@ sideTabNav = R.createElement sideTabNavCpt
 sideTabNavCpt :: R.Component SideTabNavProps
 sideTabNavCpt = here.component "sideTabNav" cpt
   where
-    cpt { sidePanel
-        , sideTabs } _ = do
-      sidePanel' <- T.useLive T.unequal sidePanel
+    cpt { sideTab, sideTabs } _ = do
+      sideTab' <- T.useLive T.unequal sideTab
 
       pure $ R.fragment [ H.div { className: "text-primary center"} [H.text ""]
-                        , H.div { className: "nav nav-tabs"} (liItem sidePanel' <$> sideTabs)
+                        , H.div { className: "nav nav-tabs"} (liItem sideTab' <$> sideTabs)
                             -- , H.div {className: "center"} [ H.text "Doc sideTabs"]
                         ]
       where
-        liItem :: GET.SidePanelState -> SideTab -> R.Element
-        liItem sidePanel' tab =
+        liItem :: GET.SideTab -> GET.SideTab -> R.Element
+        liItem sideTab' tab =
           H.div { className : "nav-item nav-link"
-                            <> if (Opened tab) == sidePanel'
+                            <> if tab == sideTab'
                                  then " active"
                                  else ""
-              , on: { click: \_ -> T.write (Opened tab) sidePanel
-                    }
-              } [ H.text $ show tab ]
+                , on: { click: \_ -> T.write_ tab sideTab }
+                } [ H.text $ show tab ]
 
 type SideTabProps = Props
 
@@ -140,12 +132,13 @@ sideTabDataCpt = here.component "sideTabData" cpt
         [ selectedNodes (Record.merge { nodesMap: SigmaxT.nodesGraphMap props.graph } props) []
         , neighborhood props []
         , RH.div { className: "col-md-12", id: "query" }
-          [ query SearchDoc
-            props.frontends
-            props.metaData
-            props.session
-            (SigmaxT.nodesGraphMap props.graph)
-            selectedNodeIds'
+          [ query { frontends: props.frontends
+                  , metaData: props.metaData
+                  , nodesMap: SigmaxT.nodesGraphMap props.graph
+                  , searchType: SearchDoc
+                  , selectedNodeIds: selectedNodeIds'
+                  , session: props.session
+                  } []
           ]
         ]
         where
@@ -169,12 +162,13 @@ sideTabCommunityCpt = here.component "sideTabCommunity" cpt
       pure $ RH.div { className: "col-md-12", id: "query" }
         [ selectedNodes (Record.merge { nodesMap: SigmaxT.nodesGraphMap props.graph } props) []
         , neighborhood props []
-        , query SearchContact
-          props.frontends
-          props.metaData
-          props.session
-          (SigmaxT.nodesGraphMap props.graph)
-          selectedNodeIds'
+        , query { frontends: props.frontends
+                , metaData: props.metaData
+                , nodesMap: SigmaxT.nodesGraphMap props.graph
+                , searchType: SearchContact
+                , selectedNodeIds: selectedNodeIds'
+                , session: props.session
+                } []
         ]
 
 
@@ -319,7 +313,7 @@ type DeleteNodes =
   ( graphId      :: NodeID
   , metaData     :: GET.MetaData
   , nodes        :: Array (Record SigmaxT.Node)
-  , reloadForest :: T.Box T2.Reload
+  , reloadForest :: T2.ReloadS
   , session      :: Session
   , termList     :: TermList
   )
@@ -372,35 +366,56 @@ deleteNode termList session (GET.MetaData metaData) node = do
     patch_list :: NTC.Replace TermList
     patch_list = NTC.Replace { new: termList, old: MapTerm }
 
-query :: SearchType
-      -> Frontends
-      -> GET.MetaData
-      -> Session
-      -> SigmaxT.NodesMap
-      -> SigmaxT.NodeIds
-      -> R.Element
-query _ _ _ _ _ selectedNodeIds | Set.isEmpty selectedNodeIds = RH.div {} []
-query searchType frontends (GET.MetaData metaData) session nodesMap selectedNodeIds =
-  query' (head metaData.corpusId)
-  where
-    query' Nothing         = RH.div {} []
-    query' (Just corpusId) =
-      CGT.tabs { frontends
-               , session
-               , query: SearchQuery { query : concat $ toQuery <$> Set.toUnfoldable selectedNodeIds
-                                    , expected: searchType
-                                    }
-               , sides: [side corpusId]
-               }
+type Query =
+  ( frontends       :: Frontends
+  , metaData        :: GET.MetaData
+  , nodesMap        :: SigmaxT.NodesMap
+  , searchType      :: SearchType
+  , selectedNodeIds :: SigmaxT.NodeIds
+  , session         :: Session )
 
-    toQuery id = case Map.lookup id nodesMap of
-      Nothing -> []
-      Just n -> words n.label
+query :: R2.Component Query
+query = R.createElement queryCpt
 
-    side corpusId = GET.GraphSideCorpus { corpusId
-                                        , listId     : metaData.list.listId
-                                        , corpusLabel: metaData.title
-                                        }
+queryCpt :: R.Component Query
+queryCpt = here.component "query" cpt where
+  cpt props@{ selectedNodeIds } _ = do
+
+    pure $ if Set.isEmpty selectedNodeIds
+           then RH.div {} []
+           else query' props []
+
+query' :: R2.Component Query
+query' = R.createElement queryCpt'
+
+queryCpt' :: R.Component Query
+queryCpt' = here.component "query'" cpt where
+  cpt { frontends
+      , metaData: GET.MetaData metaData
+      , nodesMap
+      , searchType
+      , selectedNodeIds
+      , session } _ = do
+    pure $ case (head metaData.corpusId) of
+      Nothing -> RH.div {} []
+      Just corpusId ->
+        CGT.tabs { frontends
+                 , query: SearchQuery { expected: searchType
+                                      , query : concat $ toQuery <$> Set.toUnfoldable selectedNodeIds
+                                      }
+                 , session
+                 , sides: [side corpusId]
+                 }
+
+    where
+      toQuery id = case Map.lookup id nodesMap of
+        Nothing -> []
+        Just n -> words n.label
+
+      side corpusId = GET.GraphSideCorpus { corpusId
+                                          , corpusLabel: metaData.title
+                                          , listId     : metaData.list.listId
+                                          }
 
 ------------------------------------------------------------------------
 

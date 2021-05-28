@@ -32,7 +32,6 @@ type Props =
 -- | Action : Search
 actionSearch :: R2.Component Props
 actionSearch = R.createElement actionSearchCpt
-
 actionSearchCpt :: R.Component Props
 actionSearchCpt = here.component "actionSearch" cpt
   where

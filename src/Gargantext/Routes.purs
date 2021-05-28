@@ -83,27 +83,27 @@ instance showAppRoute :: Show AppRoute where
 
 
 appPath :: AppRoute -> String
-appPath Home                 = ""
-appPath Login                = "login"
-appPath (Folder s i)         = "folder/"        <> show s <> "/" <> show i
-appPath (FolderPrivate s i)  = "folderPrivate/" <> show s <> "/" <> show i
-appPath (FolderPublic s i)   = "folderPublic/"  <> show s <> "/" <> show i
-appPath (FolderShared s i)   = "folderShared/"  <> show s <> "/" <> show i
-appPath (Team s i)           = "team/"          <> show s <> "/" <> show i
+appPath Home                     = ""
+appPath Login                    = "login"
+appPath (Folder s i)             = "folder/"        <> show s <> "/" <> show i
+appPath (FolderPrivate s i)      = "folderPrivate/" <> show s <> "/" <> show i
+appPath (FolderPublic s i)       = "folderPublic/"  <> show s <> "/" <> show i
+appPath (FolderShared s i)       = "folderShared/"  <> show s <> "/" <> show i
+appPath (Team s i)               = "team/"          <> show s <> "/" <> show i
 appPath (CorpusDocument s c l i) = "corpus/" <> show s <> "/" <> show c <> "/list/" <> show l <> "/document/" <> show i
-appPath (Corpus s i)         = "corpus/"     <> show s <> "/" <> show i
-appPath (Document s l i)     = "list/"       <> show s <> "/" <> show l <> "/document/" <> show i
-appPath (Dashboard s i)      = "dashboard/"  <> show s <> "/" <> show i
-appPath (PGraphExplorer s i) = "graph/"      <> show s <> "/" <> show i
-appPath (Texts s i)          = "texts/"      <> show s <> "/" <> show i
-appPath (Lists s i)          = "lists/"      <> show s <> "/" <> show i
-appPath (Annuaire s i)       = "annuaire/"   <> show s <> "/" <> show i
-appPath (UserPage s i)       = "user/"       <> show s <> "/" <> show i
-appPath (ContactPage s a i)  = "annuaire/"   <> show s <> "/" <> show a <> "/contact/" <> show i
-appPath (RouteFrameWrite s i) = "write/"     <> show s <> "/" <> show i
-appPath (RouteFrameCalc s i)  = "calc/"      <> show s <> "/" <> show i
-appPath (RouteFrameCode s i)  = "code/"      <> show s <> "/" <> show i
-appPath (RouteFile s i)       = "file/"      <> show s <> "/" <> show i
+appPath (Corpus s i)             = "corpus/"     <> show s <> "/" <> show i
+appPath (Document s l i)         = "list/"       <> show s <> "/" <> show l <> "/document/" <> show i
+appPath (Dashboard s i)          = "dashboard/"  <> show s <> "/" <> show i
+appPath (PGraphExplorer s i)     = "graph/"      <> show s <> "/" <> show i
+appPath (Texts s i)              = "texts/"      <> show s <> "/" <> show i
+appPath (Lists s i)              = "lists/"      <> show s <> "/" <> show i
+appPath (Annuaire s i)           = "annuaire/"   <> show s <> "/" <> show i
+appPath (UserPage s i)           = "user/"       <> show s <> "/" <> show i
+appPath (ContactPage s a i)      = "annuaire/"   <> show s <> "/" <> show a <> "/contact/" <> show i
+appPath (RouteFrameWrite s i)    = "write/"     <> show s <> "/" <> show i
+appPath (RouteFrameCalc s i)     = "calc/"      <> show s <> "/" <> show i
+appPath (RouteFrameCode s i)     = "code/"      <> show s <> "/" <> show i
+appPath (RouteFile s i)          = "file/"      <> show s <> "/" <> show i
 
 nodeTypeAppRoute :: NodeType -> SessionId -> Int -> Maybe AppRoute
 nodeTypeAppRoute GT.Annuaire s i       = Just $ Annuaire s i

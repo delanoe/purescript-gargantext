@@ -141,7 +141,7 @@
 }
 .graph-container #controls-container {
   position: absolute;
-  z-index: 999;
+  z-index: 900;
   backdrop-filter: blur(4px);
   background: rgba(255, 255, 255, 0.75);
   left: 0;
@@ -152,10 +152,10 @@
   padding-left: 0.8rem;
 }
 .graph-container .graph-row {
-  height: 100%;
+  height: 100vh;
 }
 .graph-container .graph-row #graph-view {
-  height: 95%;
+  height: 95vh;
 }
 .graph-container #tree {
   position: absolute;
@@ -171,7 +171,7 @@
 }
 
 #dafixedtop {
-  z-index: 999;
+  z-index: 910;
 }
 
 #logo-designed {
@@ -535,8 +535,20 @@ li .leaf:hover a.settings {
   color: black;
 }
 
-.forest-layout-raw-tree {
-  padding-top: 60px;
+.forest-layout {
+  background-color: #fff;
+  position: fixed;
+  top: 3.7em;
+  width: 15%;
+  z-index: 900;
+}
+
+.left-handed .forest-layout {
+  left: 80%;
+}
+
+.right-handed .forest-layout {
+  left: 2%;
 }
 
 .code-editor .editor .code-area {
@@ -642,25 +654,46 @@ li .leaf:hover a.settings {
   list-style: decimal !important;
 }
 
-#page-wrapper .cache-toggle {
+.cache-toggle {
   cursor: pointer;
 }
-#page-wrapper .side-panel {
-  left: 70%;
-  padding: 5px;
+
+.left-handed .side-panel {
+  left: 2%;
+  padding: 0.3em;
   position: fixed;
-  top: 60px;
+  top: 3.7em;
   background-color: #fff;
   width: 28%;
 }
-#page-wrapper .side-panel .header {
-  float: right;
+.left-handed .side-panel .header {
+  float: left;
 }
-#page-wrapper .side-panel .corpus-doc-view .annotated-field-wrapper .annotated-field-runs {
+.left-handed .side-panel .corpus-doc-view .annotated-field-wrapper .annotated-field-runs {
   max-height: 200px;
   overflow-y: scroll;
 }
-#page-wrapper .side-panel .corpus-doc-view .list-group .list-group-item-heading {
+.left-handed .side-panel .corpus-doc-view .list-group .list-group-item-heading {
+  display: inline-block;
+  width: 60px;
+}
+
+.right-handed .side-panel {
+  left: 70%;
+  padding: 0.3em;
+  position: fixed;
+  top: 3.7em;
+  background-color: #fff;
+  width: 28%;
+}
+.right-handed .side-panel .header {
+  float: right;
+}
+.right-handed .side-panel .corpus-doc-view .annotated-field-wrapper .annotated-field-runs {
+  max-height: 200px;
+  overflow-y: scroll;
+}
+.right-handed .side-panel .corpus-doc-view .list-group .list-group-item-heading {
   display: inline-block;
   width: 60px;
 }

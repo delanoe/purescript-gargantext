@@ -20,7 +20,7 @@ import Gargantext.Components.Nodes.Lists.Types as LTypes
 import Gargantext.Components.Nodes.Texts.Types as TTypes
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType(..), PTabNgramType(..), TabType(..), TabSubType(..))
+import Gargantext.Types (CTabNgramType(..), PTabNgramType(..), SidePanelState, TabType(..), TabSubType(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 
@@ -49,15 +49,16 @@ modeTabType' Books = CTabAuthors
 modeTabType' Communication = CTabAuthors
 
 type TabsProps = (
-    cacheState        :: T.Box LTypes.CacheState
-  , contactData       :: ContactData'
-  , frontends         :: Frontends
-  , nodeId            :: Int
-  , reloadForest      :: T.Box T2.Reload
-  , reloadRoot        :: T.Box T2.Reload
-  , session           :: Session
-  , sidePanelTriggers :: Record LTypes.SidePanelTriggers
-  , tasks             :: T.Box GAT.Storage
+    cacheState     :: T.Box LTypes.CacheState
+  , contactData    :: ContactData'
+  , frontends      :: Frontends
+  , nodeId         :: Int
+  , reloadForest   :: T2.ReloadS
+  , reloadRoot     :: T2.ReloadS
+  , session        :: Session
+  , sidePanel      :: T.Box (Maybe (Record TTypes.SidePanel))
+  , sidePanelState :: T.Box SidePanelState
+  , tasks          :: T.Box GAT.Storage
   )
 
 tabs :: Record TabsProps -> R.Element
@@ -73,13 +74,14 @@ tabsCpt = here.component "tabs" cpt
         , frontends
         , nodeId
         , session
-        , sidePanelTriggers
+        , sidePanel
+        , sidePanelState
         , reloadForest } _ = do
-      active <- R.useState' 0
-      textsSidePanelTriggers <- TTypes.emptySidePanelTriggers
-      pure $ Tab.tabs { selected: fst active, tabs: tabs' textsSidePanelTriggers }
+      activeTab <- T.useBox 0
+
+      pure $ Tab.tabs { activeTab, tabs: tabs' }
       where
-        tabs' trg =
+        tabs' =
           [ "Documents"     /\ docs
           , "Patents"       /\ ngramsView patentsView []
           , "Books"         /\ ngramsView booksView []
@@ -93,26 +95,23 @@ tabsCpt = here.component "tabs" cpt
                           , defaultListId
                           , mode: Patents
                           , nodeId
-                          , session
-                          , sidePanelTriggers
-                          , reloadForest }
+                          , reloadForest
+                          , session }
             booksView   = { reloadRoot
                           , tasks
                           , cacheState
                           , defaultListId
                           , mode: Books
                           , nodeId
-                          , session
-                          , sidePanelTriggers
-                          , reloadForest }
+                          , reloadForest
+                          , session }
             commView    = { reloadRoot, tasks
                           , cacheState
                           , defaultListId
                           , mode: Communication
                           , nodeId
-                          , session
-                          , sidePanelTriggers
-                          , reloadForest }
+                          , reloadForest
+                          , session }
             chart       = mempty
             totalRecords = 4736 -- TODO
             docs = DT.docViewLayout
@@ -124,22 +123,22 @@ tabsCpt = here.component "tabs" cpt
               , nodeId
               , session
               , showSearch: true
-              , sidePanelTriggers: trg
+              , sidePanel
+              , sidePanelState
               , tabType: TabPairing TabDocs
               , totalRecords
               }
 
 
 type NgramsViewTabsProps = (
-    cacheState        :: T.Box LTypes.CacheState
-  , defaultListId     :: Int
-  , mode              :: Mode
-  , nodeId            :: Int
-  , reloadForest      :: T.Box T2.Reload
-  , reloadRoot        :: T.Box T2.Reload
-  , session           :: Session
-  , sidePanelTriggers :: Record LTypes.SidePanelTriggers
-  , tasks             :: T.Box GAT.Storage
+    cacheState     :: T.Box LTypes.CacheState
+  , defaultListId  :: Int
+  , mode           :: Mode
+  , nodeId         :: Int
+  , reloadForest   :: T2.ReloadS
+  , reloadRoot     :: T2.ReloadS
+  , session        :: Session
+  , tasks          :: T.Box GAT.Storage
   )
 
 ngramsView :: R2.Component NgramsViewTabsProps
@@ -155,7 +154,6 @@ ngramsViewCpt = here.component "ngramsView" cpt
         , mode
         , nodeId
         , session
-        , sidePanelTriggers
         , tasks } _ = do
       path <- T.useBox $ NTC.initialPageParams session nodeId [defaultListId] (TabDocument TabDocs)
 
@@ -167,7 +165,6 @@ ngramsViewCpt = here.component "ngramsView" cpt
         , reloadForest
         , reloadRoot
         , session
-        , sidePanelTriggers
         , tabNgramType
         , tabType
         , tasks

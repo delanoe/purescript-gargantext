@@ -169,13 +169,13 @@ panelAction p = R.createElement panelActionCpt p []
 panelActionCpt :: R.Component PanelActionProps
 panelActionCpt = here.component "panelAction" cpt
   where
-    cpt {action: Documentation nodeType}                  _ = actionDoc      nodeType
-    cpt {action: Download, id, nodeType, session}         _ = actionDownload nodeType id session
-    cpt {action: Upload, dispatch, id, nodeType, session} _ = actionUpload   nodeType id session dispatch
-    cpt {action: Delete, nodeType, dispatch}              _ = actionDelete   nodeType dispatch
+    cpt {action: Documentation nodeType}                  _ = pure $ actionDoc { nodeType } []
+    cpt {action: Download, id, nodeType, session}         _ = pure $ actionDownload { id, nodeType, session } []
+    cpt {action: Upload, dispatch, id, nodeType, session} _ = pure $ actionUpload { dispatch, id, nodeType, session } []
+    cpt {action: Delete, nodeType, dispatch}              _ = pure $ actionDelete { dispatch, nodeType } []
     cpt {action: Add xs, dispatch, id, name, nodeType} _ =
-      pure $ addNodeView {dispatch, id, name, nodeType, nodeTypes: xs}
-    cpt {action: Refresh , dispatch, id, nodeType, session} _ = update nodeType dispatch
+      pure $ addNodeView {dispatch, id, name, nodeType, nodeTypes: xs} []
+    cpt {action: Refresh , dispatch, id, nodeType, session} _ = pure $ update { dispatch, nodeType } []
     cpt {action: Config , dispatch, id, nodeType, session} _ =
       pure $ fragmentPT $ "Config " <> show nodeType
     -- Functions using SubTree
@@ -185,21 +185,10 @@ panelActionCpt = here.component "panelAction" cpt
       pure $ moveNode { dispatch, id, nodeType, session, subTreeParams, handed } []
     cpt {action: Link {subTreeParams}, dispatch, id, nodeType, session, handed} _ =
       pure $ linkNode {dispatch, id, nodeType, session, subTreeParams, handed} []
-    cpt {action : Share, dispatch, id, name } _ = do
-      isOpen <- T.useBox true
-      pure $ panel
-        [ textInputBox
-          { boxAction: Share.shareAction, boxName: "Share"
-          , dispatch, id, text: "username", isOpen } []
-        ] (H.div {} [])
-    cpt {action : AddingContact, dispatch, id, name } _ = do
-      isOpen <- T.useBox true
-      pure $ Contact.textInputBox
-        { id, dispatch, isOpen, boxName:"addContact"
-        , params : {firstname:"First Name", lastname: "Last Name"}
-        , boxAction: \p -> AddContact p }
+    cpt {action : Share, dispatch, id, name } _ = pure $ Share.shareNode { dispatch, id } []
+    cpt {action : AddingContact, dispatch, id, name } _ = pure $ Contact.actionAddContact { dispatch, id } []
     cpt {action : Publish {subTreeParams}, dispatch, id, nodeType, session, handed} _ =
-      pure $ Share.shareNode {dispatch, id, nodeType, session, subTreeParams, handed}
+      pure $ Share.publishNode { dispatch, handed, id, nodeType, session, subTreeParams } []
     cpt props@{action: SearchBox, id, session, dispatch, nodePopup} _ =
       pure $ actionSearch { dispatch, id: (Just id), nodePopup, session } []
     cpt _ _ = pure $ H.div {} []

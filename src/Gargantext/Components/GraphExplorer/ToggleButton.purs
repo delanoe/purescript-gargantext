@@ -18,8 +18,8 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
-import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
+import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
@@ -35,7 +35,6 @@ type Props = (
 
 toggleButton :: R2.Component Props
 toggleButton = R.createElement toggleButtonCpt
-
 toggleButtonCpt :: R.Component Props
 toggleButtonCpt = here.component "toggleButton" cpt
   where
@@ -46,9 +45,9 @@ toggleButtonCpt = here.component "toggleButton" cpt
         , style } _ = do
       state' <- T.useLive T.unequal state
 
-      pure $ H.button { className: "btn btn-outline-" <> style <> " " <> cls state'
-                      , on: {click: onClick}
-                      } [ R2.small {} [ H.text (text onMessage offMessage state') ] ]
+      pure $ H.div { className: "btn btn-outline-" <> style <> " " <> cls state' <> " mx-2"
+                   , on: { click: onClick }
+                   } [ R2.small {} [ H.text (text onMessage offMessage state') ] ]
 
     cls true = "active"
     cls false = ""
@@ -61,7 +60,6 @@ type ControlsToggleButtonProps = (
 
 controlsToggleButton :: R2.Component ControlsToggleButtonProps
 controlsToggleButton = R.createElement controlsToggleButtonCpt
-
 controlsToggleButtonCpt :: R.Component ControlsToggleButtonProps
 controlsToggleButtonCpt = here.component "controlsToggleButton" cpt
   where
@@ -80,7 +78,6 @@ type EdgesButtonProps = (
 
 edgesToggleButton :: R2.Component EdgesButtonProps
 edgesToggleButton = R.createElement edgesToggleButtonCpt
-
 edgesToggleButtonCpt :: R.Component EdgesButtonProps
 edgesToggleButtonCpt = here.component "edgesToggleButton" cpt
   where
@@ -105,7 +102,6 @@ type LouvainToggleButtonProps = (
 
 louvainToggleButton :: R2.Component LouvainToggleButtonProps
 louvainToggleButton = R.createElement louvainToggleButtonCpt
-
 louvainToggleButtonCpt :: R.Component LouvainToggleButtonProps
 louvainToggleButtonCpt = here.component "louvainToggleButton" cpt
   where
@@ -124,7 +120,6 @@ type MultiSelectEnabledButtonProps = (
 
 multiSelectEnabledButton :: R2.Component MultiSelectEnabledButtonProps
 multiSelectEnabledButton = R.createElement multiSelectEnabledButtonCpt
-
 multiSelectEnabledButtonCpt :: R.Component MultiSelectEnabledButtonProps
 multiSelectEnabledButtonCpt = here.component "lmultiSelectEnabledButton" cpt
   where
@@ -143,7 +138,6 @@ type ForceAtlasProps = (
 
 pauseForceAtlasButton :: R2.Component ForceAtlasProps
 pauseForceAtlasButton = R.createElement pauseForceAtlasButtonCpt
-
 pauseForceAtlasButtonCpt :: R.Component ForceAtlasProps
 pauseForceAtlasButtonCpt = here.component "forceAtlasToggleButton" cpt
   where
@@ -171,7 +165,6 @@ type TreeToggleButtonProps = (
 
 treeToggleButton :: R2.Component TreeToggleButtonProps
 treeToggleButton = R.createElement treeToggleButtonCpt
-
 treeToggleButtonCpt :: R.Component TreeToggleButtonProps
 treeToggleButtonCpt = here.component "treeToggleButton" cpt
   where
@@ -185,33 +178,33 @@ treeToggleButtonCpt = here.component "treeToggleButton" cpt
         } []
 
 type SidebarToggleButtonProps = (
-  state :: T.Box GET.SidePanelState
+  state :: T.Box GT.SidePanelState
 )
 
 sidebarToggleButton :: R2.Component SidebarToggleButtonProps
 sidebarToggleButton = R.createElement sidebarToggleButtonCpt
-
 sidebarToggleButtonCpt :: R.Component SidebarToggleButtonProps
 sidebarToggleButtonCpt = here.component "sidebarToggleButton" cpt
   where
     cpt { state } _ = do
       state' <- T.useLive T.unequal state
 
-      pure $ H.button { className: "btn btn-outline-light " <> cls state'
-                      , on: { click: onClick state }
-                      } [ R2.small {} [ H.text (text onMessage offMessage state') ] ]
+      pure $ H.div { className: "btn btn-outline-light " <> cls state'
+                   , on: { click: onClick state }
+                   } [ R2.small {} [ H.text (text onMessage offMessage state') ] ]
 
-    cls (GET.Opened _) = "active"
-    cls _ = ""
+    cls GT.Opened = "active"
+    cls _         = ""
 
     onMessage = "Hide Sidebar"
     offMessage = "Show Sidebar"
-    text on _off (GET.Opened _)    = on
-    text _on off GET.InitialClosed = off
-    text _on off GET.Closed        = off
+    text on _off GT.Opened        = on
+    text _on off GT.InitialClosed = off
+    text _on off GT.Closed        = off
 
     onClick state = \_ ->
-      T.modify_ (\s -> case s of
-        GET.InitialClosed -> GET.Opened GET.SideTabLegend
-        GET.Closed        -> GET.Opened GET.SideTabLegend
-        (GET.Opened _)    -> GET.Closed) state
+      T.modify_ GT.toggleSidePanelState state
+                  -- case s of
+        -- GET.InitialClosed -> GET.Opened GET.SideTabLegend
+        -- GET.Closed        -> GET.Opened GET.SideTabLegend
+        -- (GET.Opened _)    -> GET.Closed) state

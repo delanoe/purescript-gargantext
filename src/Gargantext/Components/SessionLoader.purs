@@ -20,8 +20,8 @@ here = R2.here "Gargantext.Components.SessionWrapper"
 
 type Props =
   (
-    fallback  :: R.Element
-  , context   :: R.Context Session
+    context   :: R.Context Session
+  , fallback  :: R.Element
   , sessionId :: SessionId
   , sessions  :: T.Box Sessions
   )

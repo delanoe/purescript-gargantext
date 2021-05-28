@@ -2,12 +2,14 @@ module Gargantext.Components.Nodes.Corpus.Graph.Tabs where
 
 import Prelude hiding (div)
 import Data.Array (fromFoldable)
-import Data.Tuple (Tuple(..), fst)
+import Data.Tuple (Tuple(..))
 import Reactix as R
+import Toestand as T
+
 import Gargantext.Components.GraphExplorer.Types (GraphSideCorpus(..))
 import Gargantext.Components.FacetsTable (docView)
 import Gargantext.Components.Search (SearchQuery)
-import Gargantext.Components.Table as T
+import Gargantext.Components.Table as Table
 import Gargantext.Components.Tab as Tab
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
@@ -31,8 +33,9 @@ tabsCpt :: R.Component Props
 tabsCpt = here.component "tabs" cpt
   where
     cpt {frontends, query, session, sides} _ = do
-      active <- R.useState' 0
-      pure $ Tab.tabs {tabs: tabs', selected: fst active}
+      activeTab <- T.useBox 0
+
+      pure $ Tab.tabs { activeTab, tabs: tabs' }
       where
         tabs' = fromFoldable $ tab frontends session query <$> sides
 
@@ -42,5 +45,4 @@ tab frontends session query (GraphSideCorpus {corpusId: nodeId, corpusLabel, lis
   where
     dvProps   = {frontends, session, nodeId, listId, query, chart, totalRecords: 0, container}
     chart     = mempty
-    container = T.graphContainer {title: corpusLabel}
-
+    container = Table.graphContainer {title: corpusLabel}
