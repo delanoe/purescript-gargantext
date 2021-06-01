@@ -171,27 +171,26 @@ folderCpt = here.component "folderCpt" cpt where
     let sid = sessionId session
     let dispatch a = performAction a {setPopoverRef, session, nodeId, parentId, tasks, reload}
     popoverRef <- R.useRef null
-    buttonState <- T.useBox false
-    buttonState' <- T.useLive T.unequal buttonState
 
     R.useEffect' $ do
         R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
 
     pure $ 
-      H.button {on: {click: link ("/#/" <> getFolderPath nodeType sid nodeId) }, className: "btn btn-primary", disabled: buttonState'} [ 
-        Popover.popover {
+        H.div {} [
+        H.span{style: {position: "absolute"}} [ Popover.popover {
             arrow: false
           , open: false
           , onClose: \_ -> pure unit
           , onOpen:  \_ -> pure unit
           , ref: popoverRef 
           } [
-              popOverIcon buttonState
+              popOverIcon
               , mNodePopupView (Record.merge props {dispatch}) (onPopoverClose popoverRef)
-              ]
-        , H.i {className: icon style nodeType} []
+              ]]
+      , H.button {on: {click: link ("/#/" <> getFolderPath nodeType sid nodeId) }, className: "btn btn-primary fv btn" } [ 
+          H.i {className: icon style nodeType} []
         , H.br {}
-        , H.text text]
+        , H.text text]]
     
     
   icon :: FolderStyle -> GT.NodeType -> String
@@ -203,11 +202,10 @@ folderCpt = here.component "folderCpt" cpt where
 
   onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
 
-  popOverIcon buttonState = H.div { className: "fv action" } [
+  popOverIcon = H.span { className: "fv action" } [
         H.a { className: "settings fa fa-cog" 
           , title : "Each node of the Tree can perform some actions.\n"
-            <> "Click here to execute one of them." 
-          , on: {mouseEnter: \_ -> T.write_ true buttonState, mouseLeave: \_ -> T.write_ false buttonState}} []
+            <> "Click here to execute one of them." } []
       ]
 
   mNodePopupView props opc = nodePopupView {onPopoverClose: opc
