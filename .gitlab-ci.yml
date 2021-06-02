@@ -23,4 +23,4 @@ test:
       - .stack-root/
       - .stack-work/
   script:
-    - nix-shell -p git purescript stack yarn --run ./s/ci-run-tests.sh
+    - nix-shell -p ghc git stack yarn --run ./s/ci-run-tests.sh
