@@ -185,6 +185,7 @@ settingsBox Corpus =
                                 , Dashboard
                                 , NodeFrameWrite
                                 , NodeFrameCalc
+                                , Phylo
                                 ]
                           , Link (linkParams Annuaire)
                           , Move moveParameters
