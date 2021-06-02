@@ -23,5 +23,4 @@ test:
       - .stack-root/
       - .stack-work/
   script:
-    - yarn
-    - nix-shell --run test-ps
+    - nix-shell -p yarn --run ./s/ci-run-tests.sh
