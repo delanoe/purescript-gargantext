@@ -29,4 +29,5 @@ test:
     - nix-env -i git
     - nix-env -i nodejs
     - nix-env -i yarn
+    - yarn --skip-builds
     - nix-shell shell.nix --run test-ps
