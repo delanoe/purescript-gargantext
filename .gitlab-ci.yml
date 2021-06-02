@@ -1,0 +1,27 @@
+# Thanks to:
+# https://vadosware.io/post/zero-to-continuous-integrated-testing-a-haskell-project-with-gitlab/
+#
+#
+image: nixos/nix:latest
+
+variables:
+  STACK_ROOT: "${CI_PROJECT_DIR}/.stack-root"
+  STACK_OPTS: "--system-ghc"
+
+#before_script:
+  #- apt-get update
+  #- apt-get install make xz-utils
+
+stages:
+  - test
+
+test:
+  cache:
+    # cache per branch name
+    # key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - .stack-root/
+      - .stack-work/
+  script:
+    - yarn
+    - nix-shell --run test-ps
