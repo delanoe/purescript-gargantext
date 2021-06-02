@@ -23,4 +23,10 @@ test:
       - .stack-root/
       - .stack-work/
   script:
-    - nix-shell -p ghc git stack yarn --run ./s/ci-run-tests.sh
+    # find 0.13.8 purescript version here:
+    # https://lazamar.co.uk/nix-versions/
+    - nix-env -i purescript-0.13.8 -f https://github.com/NixOS/nixpkgs/archive/bed08131cd29a85f19716d9351940bdc34834492.tar.gz
+    - nix-env -i git
+    - nix-env -i yarn
+    - yarn
+    - test-ps
