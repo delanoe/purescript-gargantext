@@ -57,13 +57,15 @@
         "parcel": "^1.12.4",
         "psc-package": "^4.0.1",
         "pulp": "^15.0.0",
-        "purescript": "^0.13.8",
-        "purescript-language-server": "^0.12.9",
         "react-testing-library": "^6.1.2",
         "sass": "^1.23.7",
         "serve": "^11.3.1",
         "spago": "^0.19.1",
         "vscode-languageserver": "^6.0.0",
         "xhr2": "^0.1.4"
+    },
+    "optionalDependencies": {
+        "purescript": "^0.13.8",
+        "purescript-language-server": "^0.12.9"
     }
 }
