@@ -19,9 +19,9 @@ test:
   cache:
     # cache per branch name
     # key: ${CI_COMMIT_REF_SLUG}
-    paths:
-      - .stack-root/
-      - .stack-work/
+    # paths:
+    #   - .stack-root/
+    #   - .stack-work/
   script:
     # find 0.13.8 purescript version here:
     # https://lazamar.co.uk/nix-versions/
