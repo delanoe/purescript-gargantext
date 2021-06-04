@@ -21,7 +21,6 @@ import Toestand as T
 import Gargantext.Components.Forest.Tree.Node.Action (Action, icon, text)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Ends (Frontends, url)
-import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types as GT

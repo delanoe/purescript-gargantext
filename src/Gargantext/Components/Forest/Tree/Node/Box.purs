@@ -1,30 +1,26 @@
 module Gargantext.Components.Forest.Tree.Node.Box where
 
+import Gargantext.Prelude
+
 import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
-import Gargantext.Prelude
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
+import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (actionDelete)
 import Gargantext.Components.Forest.Tree.Node.Action.Documentation (actionDoc)
 import Gargantext.Components.Forest.Tree.Node.Action.Download (actionDownload)
-import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameAction)
-import Gargantext.Components.Forest.Tree.Node.Action.Search (actionSearch)
-import Gargantext.Components.Forest.Tree.Node.Action.Share   as Share
-import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
-import Gargantext.Components.Forest.Tree.Node.Action.Update (update)
-import Gargantext.Components.Forest.Tree.Node.Action.Upload (actionUpload)
-import Gargantext.Components.Forest.Tree.Node.Action.Move (moveNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Link (linkNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Merge (mergeNode)
+import Gargantext.Components.Forest.Tree.Node.Action.Move (moveNode)
+import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameAction)
+import Gargantext.Components.Forest.Tree.Node.Action.Search (actionSearch)
+import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
+import Gargantext.Components.Forest.Tree.Node.Action.Update (update)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload (actionUpload)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (NodePopupProps, NodePopupS)
-import Gargantext.Components.Forest.Tree.Node.Settings
-  (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
+import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Status (Status(..), hasStatus)
 import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT, panel)
 import Gargantext.Sessions (Session)
@@ -32,6 +28,9 @@ import Gargantext.Types (Name, ID, prettyNodeType)
 import Gargantext.Types as GT
 import Gargantext.Utils (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Box"
@@ -82,7 +81,7 @@ nodePopupCpt = here.component "nodePopupView" cpt where
         , title    : "Rename", on: { click: \_ -> T.write_ true isOpen } } []
   panelBody :: T.Box (Maybe NodeAction) -> Record NodePopupProps -> R.Element
   panelBody nodePopupState {dispatch: d, nodeType} =
-    let (SettingsBox { edit, doc, buttons }) = settingsBox nodeType in
+    let (SettingsBox { edit, doc, buttons}) = settingsBox nodeType in
     H.div {className: "card-body flex-space-between"}
     $ [ H.p { className: "spacer" } []
       , H.div { className: "flex-center" }
