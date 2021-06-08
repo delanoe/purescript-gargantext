@@ -48,6 +48,7 @@ type Props =
   , session :: Session
   , backFolder :: Boolean
   , tasks :: T.Box GAT.Storage
+  , reloadForest :: T.Box T2.Reload
   )
 
 data FolderStyle = FolderUp | FolderChild
@@ -57,12 +58,12 @@ folderView props = R.createElement folderViewCpt props []
 
 folderViewCpt :: R.Component Props
 folderViewCpt = here.component "folderViewCpt" cpt where
-  cpt {nodeId, session, backFolder, tasks} _ = do
+  cpt {nodeId, session, backFolder, tasks, reloadForest} _ = do
     setPopoverRef <- R.useRef Nothing
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
     useLoader { nodeId, session, reload: reload'} loadFolders $
-      \folders -> folderViewMain {folders, nodeId, session, backFolder, tasks, reload, setPopoverRef}
+      \folders -> folderViewMain {folders, nodeId, session, backFolder, tasks, reload, setPopoverRef, reloadForest}
 
 type FolderViewProps = 
   ( 
@@ -72,6 +73,7 @@ type FolderViewProps =
   , backFolder :: Boolean
   , tasks :: T.Box GAT.Storage
   , reload :: T.Box T2.Reload
+  , reloadForest :: T.Box T2.Reload
   , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
   )
 
@@ -80,11 +82,11 @@ folderViewMain props = R.createElement folderViewMainCpt props []
 
 folderViewMainCpt :: R.Component FolderViewProps
 folderViewMainCpt = here.component "folderViewMainCpt" cpt where
-  cpt {nodeId, session, backFolder, tasks, setPopoverRef, reload, folders: tree@(NTree (LNode {parent_id: parentId, nodeType}) (folders))} _ = do
+  cpt {nodeId, session, backFolder, tasks, setPopoverRef, reload, reloadForest, folders: tree@(NTree (LNode {parent_id: parentId, nodeType}) (folders))} _ = do
     let foldersS = A.sortBy sortFolders folders
     let backHome = isBackHome nodeType
     let parent = makeParentFolder parentId session backFolder backHome
-    let children = makeFolderElements foldersS {session, setPopoverRef, nodeId, tasks, reload}
+    let children = makeFolderElements foldersS {session, setPopoverRef, nodeId, tasks, reload, reloadForest}
 
     pure $ H.div {className: "fv folders"} $ parent <> children
 
@@ -98,7 +100,8 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
                                                           , setPopoverRef: props.setPopoverRef
                                                           , parentId: props.nodeId
                                                           , tasks: props.tasks
-                                                          , reload: props.reload} []
+                                                          , reload: props.reload
+                                                          , reloadForest: props.reloadForest} []
 
   makeParentFolder :: Maybe Int -> Session -> Boolean -> Boolean -> Array R.Element
   makeParentFolder (Just parentId) session _ _ =
@@ -159,6 +162,7 @@ type FolderProps =
   , parentId :: Int
   , tasks :: T.Box GAT.Storage
   , reload :: T.Box T2.Reload
+  , reloadForest :: T.Box T2.Reload
   | FolderSimpleProps
   )
 
@@ -167,9 +171,9 @@ folder = R.createElement folderCpt
 
 folderCpt :: R.Component FolderProps
 folderCpt = here.component "folderCpt" cpt where
-  cpt props@{style, text, nodeId, session, nodeType, setPopoverRef, parentId, tasks, reload} _ = do
+  cpt props@{style, text, nodeId, session, nodeType, setPopoverRef, parentId, tasks, reload, reloadForest} _ = do
     let sid = sessionId session
-    let dispatch a = performAction a {setPopoverRef, session, nodeId, parentId, tasks, reload}
+    let dispatch a = performAction a {setPopoverRef, session, nodeId, parentId, tasks, reload, reloadForest}
     popoverRef <- R.useRef null
 
     R.useEffect' $ do
@@ -253,6 +257,7 @@ type PerformActionProps =
   , parentId :: Int
   , tasks :: T.Box GAT.Storage
   , reload :: T.Box T2.Reload
+  , reloadForest :: T.Box T2.Reload
   )
 
 performAction :: Action -> Record PerformActionProps -> Aff Unit
@@ -280,6 +285,7 @@ performAction = performAction' where
 
   refreshFolders p = do 
     liftEffect $ T2.reload p.reload
+    liftEffect $ T2.reload p.reloadForest
     closePopover p
 
   deleteNode' nt p@{ nodeId: id, parentId: parent_id } = do
