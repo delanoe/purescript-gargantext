@@ -134,9 +134,9 @@ data Tuto = Tuto { title :: String, id :: String, text  :: String }
 summary :: R.Element
 summary =
   H.div {}
-  [ H.h3 {} [ H.text "Tutorial summary"]
+  [ H.h3 {} [ H.text "Summary"]
   , H.ol {}
-    [ sum "Getting Started (beginners)" startTutos "alert-info"
+    [ sum "Getting Started for beginners" startTutos "alert-info"
     -- , sum "How to play (advanced users)?" playTutos "alert-warning"
     -- , sum "How to master (expert users)?" expertTutos "alert-danger"
     ]]
@@ -158,10 +158,9 @@ tutorialCpt = here.component "tutorial" cpt where
 
     pure $ H.div { className: "mx-auto container" }
       [ H.div {className: "d-flex justify-content-center"} [ H.table {} folders ]
-      , H.h1 {} [H.text "Welcome!"]
-      , H.h2 {} [H.text "For easy start, just watch the tutorials"]
+      , H.h1 {} [H.text "Tutorials"]
       , summary
-      , H.h3 {} [H.text "Tutorial resources"]
+      , H.h3 {} [H.text "Resources"]
       , section "How to start?" "alert-info" startTutos
       -- , section "How to play?" "alert-warning" playTutos
       -- , section "How to master?" "alert-danger" expertTutos
