@@ -1,29 +1,17 @@
 module Gargantext.Components.Nodes.Corpus.Phylo where
 
 import Gargantext.Prelude
-  ( Unit, bind, const, discard, pure, read, show, unit, ($), (<$>), (<>), (==) )
+  ( pure, ($) )
 
-import Data.Array as A
-import Data.List as List
-import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (Tuple(..), snd)
+-- import Gargantext.Utils.Toestand as T2
+-- import Toestand as T
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Aff (launchAff_)
-import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
-import Gargantext.Components.Nodes.Corpus (fieldsCodeEditor)
-import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
-import Gargantext.Components.Nodes.Dashboard.Types as DT
-import Gargantext.Components.Nodes.Types (FTField, FTFieldsWithIndex, defaultField)
-import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Sessions (Session, sessionId)
+import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeID)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Phylo"
