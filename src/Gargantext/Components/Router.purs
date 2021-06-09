@@ -26,6 +26,7 @@ import Gargantext.Components.Nodes.Annuaire.User (userLayout)
 import Gargantext.Components.Nodes.Annuaire.User.Contact (contactLayout)
 import Gargantext.Components.Nodes.Corpus (corpusLayout)
 import Gargantext.Components.Nodes.Corpus.Dashboard (dashboardLayout)
+import Gargantext.Components.Nodes.Corpus.Phylo (phyloLayout)
 import Gargantext.Components.Nodes.Corpus.Document (documentMainLayout)
 import Gargantext.Components.Nodes.File (fileLayout)
 import Gargantext.Components.Nodes.Frame (frameLayout)
@@ -180,6 +181,7 @@ renderRouteCpt = here.component "renderRoute" cpt where
         GR.Lists s n              -> lists (sessionNodeProps s n) []
         GR.Login                  -> login' boxes
         GR.PGraphExplorer s g     -> graphExplorer (sessionNodeProps s g) []
+        GR.PhyloExplorer s g      -> phyloExplorer (sessionNodeProps s g) []
         GR.RouteFile s n          -> routeFile (sessionNodeProps s n) []
         GR.RouteFrameCalc  s n    -> routeFrame (Record.merge { nodeType: NodeFrameCalc } $ sessionNodeProps s n) []
         GR.RouteFrameCode  s n    -> routeFrame (Record.merge { nodeType: NodeFrameNotebook } $ sessionNodeProps s n) []
@@ -335,6 +337,17 @@ graphExplorerCpt = here.component "graphExplorer" cpt where
                                    GraphExplorer.explorerLayout { boxes
                                                                 , graphId: nodeId
                                                                 , session } [] } sessionProps) []
+phyloExplorer :: R2.Component SessionNodeProps
+phyloExplorer = R.createElement phyloExplorerCpt
+phyloExplorerCpt :: R.Component SessionNodeProps
+phyloExplorerCpt = here.component "phylo" cpt
+  where
+    cpt props@{ boxes, nodeId } _ = do
+      let sessionProps = RE.pick props :: Record SessionProps
+      pure $ authed (Record.merge { content: \session ->
+                                     phyloLayout { nodeId, session } [] } sessionProps) []
+
+
 
 home :: R2.Component Props
 home = R.createElement homeCpt

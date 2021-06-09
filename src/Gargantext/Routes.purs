@@ -24,6 +24,7 @@ data AppRoute
   | Lists          SessionId Int
   | Login
   | PGraphExplorer  SessionId Int
+  | PhyloExplorer   SessionId Int
   | RouteFile       SessionId Int
   | RouteFrameCalc  SessionId Int
   | RouteFrameCode  SessionId Int
@@ -70,6 +71,7 @@ instance showAppRoute :: Show AppRoute where
   show (Document    _ s i)      = "Document"       <> show i <> " (" <> show s <> ")"
   show (CorpusDocument s _ _ i) = "CorpusDocument" <> show i <> " (" <> show s <> ")"
   show (PGraphExplorer s i)     = "graphExplorer"  <> show i <> " (" <> show s <> ")"
+  show (PhyloExplorer  s i)     = "phyloExplorer"  <> show i <> " (" <> show s <> ")"
   show (Dashboard      s i)     = "Dashboard"      <> show i <> " (" <> show s <> ")"
   show (Texts          s i)     = "texts"          <> show i <> " (" <> show s <> ")"
   show (Lists          s i)     = "lists"          <> show i <> " (" <> show s <> ")"
@@ -95,6 +97,7 @@ appPath (Corpus s i)             = "corpus/"     <> show s <> "/" <> show i
 appPath (Document s l i)         = "list/"       <> show s <> "/" <> show l <> "/document/" <> show i
 appPath (Dashboard s i)          = "dashboard/"  <> show s <> "/" <> show i
 appPath (PGraphExplorer s i)     = "graph/"      <> show s <> "/" <> show i
+appPath (PhyloExplorer  s i)     = "phylo/"      <> show s <> "/" <> show i
 appPath (Texts s i)              = "texts/"      <> show s <> "/" <> show i
 appPath (Lists s i)              = "lists/"      <> show s <> "/" <> show i
 appPath (Annuaire s i)           = "annuaire/"   <> show s <> "/" <> show i
@@ -114,6 +117,7 @@ nodeTypeAppRoute GT.FolderPrivate s i  = Just $ FolderPrivate s i
 nodeTypeAppRoute GT.FolderPublic s i   = Just $ FolderPublic s i
 nodeTypeAppRoute GT.FolderShared s i   = Just $ FolderShared s i
 nodeTypeAppRoute GT.Graph s i          = Just $ PGraphExplorer s i
+nodeTypeAppRoute GT.Phylo s i          = Just $ PhyloExplorer  s i
 nodeTypeAppRoute GT.NodeContact s i    = Just $ Annuaire s i
 nodeTypeAppRoute GT.NodeFile s i       = Just $ RouteFile s i
 nodeTypeAppRoute GT.NodeList s i       = Just $ Lists s i
