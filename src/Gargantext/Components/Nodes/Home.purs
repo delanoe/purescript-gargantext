@@ -102,7 +102,7 @@ joinButtonOrTutorial :: forall e. T.Box GAT.Storage -> Sessions -> (e -> Effect 
 joinButtonOrTutorial tasks sessions click =
   if Sessions.null sessions
   then joinButton click
-  else H.div {} [] -- tutorial {tasks, sessions: Sessions.unSessions sessions}
+  else tutorial {tasks, sessions: Sessions.unSessions sessions}
      
 joinButton :: forall e. (e -> Effect Unit) -> R.Element
 joinButton click =
@@ -158,8 +158,8 @@ tutorialCpt = here.component "tutorial" cpt where
 
     pure $ H.div { className: "mx-auto container" }
       [ H.div {className: "d-flex justify-content-center"} [ H.table {} folders ]
-      , H.h1 {} [H.text "Tutorials"]
-      , summary
+      -- , H.h1 {} [H.text "Tutorials"]
+      -- , summary
       -- , H.h3 {} [H.text "Resources"]
       -- , section "How to start?" "alert-info" startTutos
       -- , section "How to play?" "alert-warning" playTutos
