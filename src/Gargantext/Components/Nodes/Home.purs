@@ -102,7 +102,7 @@ joinButtonOrTutorial :: forall e. T.Box GAT.Storage -> Sessions -> (e -> Effect 
 joinButtonOrTutorial tasks sessions click =
   if Sessions.null sessions
   then joinButton click
-  else tutorial {tasks, sessions: Sessions.unSessions sessions}
+  else H.div {} [] -- tutorial {tasks, sessions: Sessions.unSessions sessions}
      
 joinButton :: forall e. (e -> Effect Unit) -> R.Element
 joinButton click =
@@ -110,10 +110,10 @@ joinButton click =
   -- form { backend, sessions, visible }
   H.div { className: divClass
         , style: { paddingTop: "100px", paddingBottom: "100px" } }
-  [ H.button { className: buttonClass, title, on: { click } } [ H.text "Join" ] ] where
+        [ H.button { className: buttonClass, title, on: { click } } [ H.text "Log in" ] ] where
     title = "Connect to the server"
     divClass = "flex-space-around d-flex justify-content-center" 
-    buttonClass = "btn btn-primary my-2"
+    buttonClass = "btn btn-primary btn-lg btn-block"
 
 incompatible :: String
 incompatible =
@@ -160,8 +160,8 @@ tutorialCpt = here.component "tutorial" cpt where
       [ H.div {className: "d-flex justify-content-center"} [ H.table {} folders ]
       , H.h1 {} [H.text "Tutorials"]
       , summary
-      , H.h3 {} [H.text "Resources"]
-      , section "How to start?" "alert-info" startTutos
+      -- , H.h3 {} [H.text "Resources"]
+      -- , section "How to start?" "alert-info" startTutos
       -- , section "How to play?" "alert-warning" playTutos
       -- , section "How to master?" "alert-danger" expertTutos
       ]
