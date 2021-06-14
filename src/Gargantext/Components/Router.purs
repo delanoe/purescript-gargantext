@@ -281,7 +281,7 @@ corpusCpt = here.component "corpus" cpt where
   cpt props@{ boxes, nodeId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
-                                   corpusLayout { nodeId, session, tasks: boxes.tasks } } sessionProps) []
+                                   corpusLayout { nodeId, session, tasks: boxes.tasks, reloadForest: boxes.reloadForest } } sessionProps) []
 
 type CorpusDocumentProps =
   ( corpusId :: CorpusId
@@ -353,8 +353,8 @@ home :: R2.Component Props
 home = R.createElement homeCpt
 homeCpt :: R.Component Props
 homeCpt = here.component "home" cpt where
-  cpt props@{ boxes: boxes@{ backend, sessions, showLogin, tasks } } _ = do
-    pure $ homeLayout { backend, lang: LL_EN, sessions, showLogin, tasks }
+  cpt props@{ boxes: boxes@{ backend, sessions, showLogin, tasks, reloadForest} } _ = do
+    pure $ homeLayout { backend, lang: LL_EN, sessions, showLogin, tasks, reloadForest }
 
 lists :: R2.Component SessionNodeProps
 lists = R.createElement listsCpt
@@ -423,7 +423,7 @@ teamCpt = here.component "team" cpt where
   cpt props@{ boxes, nodeId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
-                                   corpusLayout { nodeId, session, tasks: boxes.tasks} } sessionProps) []
+                                   corpusLayout { nodeId, session, tasks: boxes.tasks, reloadForest: boxes.reloadForest } } sessionProps) []
 
 texts :: R2.Component SessionNodeProps
 texts = R.createElement textsCpt

@@ -24,6 +24,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Routing.Hash (setHash)
 import Toestand as T
+import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Home"
@@ -59,6 +60,7 @@ type HomeProps s l =
   , sessions  :: s
   , showLogin :: l
   , tasks     :: T.Box GAT.Storage
+  , reloadForest :: T.Box T2.Reload
   )
 
 homeLayout :: forall s l. T.Read s Sessions => T.ReadWrite l Boolean
@@ -68,7 +70,7 @@ homeLayoutCpt :: forall s l. T.Read s Sessions => T.ReadWrite l Boolean
              => R.Component (HomeProps s l)
 homeLayoutCpt = here.component "homeLayout" cpt
   where
-    cpt { backend, lang, sessions, showLogin, tasks} _ = do
+    cpt { backend, lang, sessions, showLogin, tasks, reloadForest} _ = do
       backend' <- T.useLive T.unequal backend
       sessions' <- T.useLive T.unequal sessions
       let landingData = langLandingData lang
@@ -77,7 +79,7 @@ homeLayoutCpt = here.component "homeLayout" cpt
         [ H.div { className: "home-title container1" }
           [ jumboTitle landingData ]
         , H.div { className: "home-research-form container1" } [] -- TODO
-        , joinButtonOrTutorial tasks sessions' (click backend')
+        , joinButtonOrTutorial tasks reloadForest sessions' (click backend')
         , H.div { className: "home-public container1" }
           [ renderPublic { }
           , H.div { className:"col-12 d-flex justify-content-center" }
@@ -98,11 +100,11 @@ homeLayoutCpt = here.component "homeLayout" cpt
                   T.write_ true showLogin
             Just b -> T.write_ true showLogin
 
-joinButtonOrTutorial :: forall e. T.Box GAT.Storage -> Sessions -> (e -> Effect Unit) -> R.Element
-joinButtonOrTutorial tasks sessions click =
+joinButtonOrTutorial :: forall e. T.Box GAT.Storage -> T2.ReloadS -> Sessions -> (e -> Effect Unit) -> R.Element
+joinButtonOrTutorial tasks reloadForest sessions click =
   if Sessions.null sessions
   then joinButton click
-  else tutorial {tasks, sessions: Sessions.unSessions sessions}
+  else tutorial {tasks, reloadForest, sessions: Sessions.unSessions sessions}
      
 joinButton :: forall e. (e -> Effect Unit) -> R.Element
 joinButton click =
@@ -148,12 +150,12 @@ summary =
         , H.ol {} (map toSummary tutos) ] ]          
     toSummary (Tuto x) = H.li {} [ H.a {href: "#" <> x.id} [ H.text x.title ]]
 
-tutorial :: R2.Leaf (sessions :: Array Session, tasks :: T.Box GAT.Storage)
+tutorial :: R2.Leaf (sessions :: Array Session, tasks :: T.Box GAT.Storage, reloadForest :: T.Box T2.Reload)
 tutorial props = R.createElement tutorialCpt props []
 
-tutorialCpt :: R.Component (sessions :: Array Session, tasks:: T.Box GAT.Storage)
+tutorialCpt :: R.Component (sessions :: Array Session, tasks :: T.Box GAT.Storage, reloadForest :: T.Box T2.Reload)
 tutorialCpt = here.component "tutorial" cpt where
-  cpt {sessions, tasks} _ = do
+  cpt {sessions, tasks, reloadForest} _ = do
     let folders = makeFolders sessions
 
     pure $ H.div { className: "mx-auto container" }
@@ -177,7 +179,7 @@ tutorialCpt = here.component "tutorial" cpt where
         sessionToFolder session@(Session {treeId, username, backend: (Backend {name})}) = 
           H.tr {} [
             H.div { className: "d-flex justify-content-center" } [ H.text (username <> "@" <> name) ]
-          , H.div {} [ FV.folderView {session, tasks, nodeId: treeId, backFolder: false} ] ]
+          , H.div {} [ FV.folderView {session, tasks, reloadForest, nodeId: treeId, backFolder: false} ] ]
 
 startTutos :: Array Tuto
 startTutos =
