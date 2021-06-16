@@ -89,7 +89,8 @@ type FrameId = String
 
 hframeUrl :: NodeType -> Base -> FrameId -> String
 hframeUrl NodeFrameNotebook _ frame_id = frame_id  -- Temp fix : frame_id is currently the whole url created
-hframeUrl NodeFrameCalc base frame_id = base <> "/" <> frame_id
+hframeUrl NodeFrameCalc  base frame_id = base <> "/" <> frame_id
+hframeUrl NodeFrameVisio base frame_id = base <> "/" <> frame_id
 hframeUrl _ base frame_id = base <> "/" <> frame_id <> "?view" -- "?both"
 
 frameLayoutView :: Record ViewProps -> R.Element
@@ -108,10 +109,11 @@ frameLayoutViewCpt = here.component "frameLayoutView" cpt
       , FV.homeButton
       , H.div { className : "frame"
               , rows: "100%,*" }
-          [ H.iframe { src: hframeUrl nodeType base frame_id
-                     , width: "100%"
-                     , height: "100%"
-                     } []
+              [ -- H.script { src: "https://visio.gargantext.org/external_api.js"} [],
+               H.iframe { src: hframeUrl nodeType base frame_id
+                         , width: "100%"
+                         , height: "100%"
+                         } []
           ]
       ]
 

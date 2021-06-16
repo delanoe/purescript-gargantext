@@ -133,6 +133,7 @@ settingsBox Team =
                                 -- , NodeFrameNotebook
                                 , Team
                                 , FolderShared
+                                , NodeFrameVisio
                                 ]
                           , Share
                           , Delete
@@ -333,6 +334,19 @@ settingsBox NodeFrameNotebook =
                                 , NodeFrameNotebook
                                 ]
                           , Move moveFrameParameters
+                          , Delete
+                          ]
+              }
+
+
+settingsBox NodeFrameVisio =
+  SettingsBox { show : true
+              , edit : true
+              , doc  : Documentation NodeFrameVisio
+              , buttons : [ Add [ NodeFrameVisio
+                                , NodeFrameWrite
+                                , NodeFrameCalc
+                                ]
                           , Delete
                           ]
               }

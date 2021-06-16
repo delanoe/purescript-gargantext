@@ -173,6 +173,7 @@ data NodeType = Annuaire
               | NodeFrameCalc
               | NodeFrameNotebook
               | NodeFrameWrite
+              | NodeFrameVisio
               | NodePublic NodeType
 
 
@@ -203,7 +204,8 @@ instance showNodeType :: Show NodeType where
   show Texts           = "NodeDocs"
   show NodeFrameWrite  = "NodeFrameWrite"
   show NodeFrameCalc   = "NodeFrameCalc"
-  show NodeFrameNotebook   = "NodeFrameNotebook"
+  show NodeFrameNotebook = "NodeFrameNotebook"
+  show NodeFrameVisio    = "NodeFrameVisio"
   show (NodePublic nt) = "NodePublic" <> show nt
   show NodeFile        = "NodeFile"
 
@@ -232,6 +234,7 @@ instance readNodeType :: Read NodeType where
   read "NodeFrameWrite"    = Just NodeFrameWrite
   read "NodeFrameCalc"     = Just NodeFrameCalc
   read "NodeFrameNotebook"     = Just NodeFrameNotebook
+  read "NodeFrameVisio"    = Just NodeFrameVisio
   read "NodeFile"          = Just NodeFile
   -- TODO NodePublic read ?
   read _                   = Nothing
@@ -281,6 +284,10 @@ fldr NodeFrameCalc false = "fa fa-calculator"
 
 fldr NodeFrameNotebook true  = "fa fa-file-code-o"
 fldr NodeFrameNotebook false = "fa fa-code"
+
+fldr NodeFrameVisio true  = "fa fa-video-camera"
+fldr NodeFrameVisio false = "fa fa-video-camera"
+
 
 
 fldr (NodePublic nt) b   = fldr nt b
@@ -338,7 +345,8 @@ nodeTypePath Texts           = "texts"
 nodeTypePath Team            = "team"
 nodeTypePath NodeFrameWrite  = "write"
 nodeTypePath NodeFrameCalc   = "calc"
-nodeTypePath NodeFrameNotebook   = "code"
+nodeTypePath NodeFrameNotebook = "code"
+nodeTypePath NodeFrameVisio    = "visio"
 nodeTypePath (NodePublic nt) = nodeTypePath nt
 nodeTypePath NodeFile        = "file"
 

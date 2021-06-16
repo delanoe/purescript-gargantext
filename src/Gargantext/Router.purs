@@ -32,10 +32,11 @@ router = oneOf
   , Annuaire          <$> (route "annuaire"  *> sid) <*> int
     , UserPage        <$> (route "user"      *> sid) <*> int
 
-  , RouteFrameWrite    <$> (route "write"     *> sid) <*> int
+  , RouteFrameWrite    <$> (route "write"    *> sid) <*> int
   , RouteFrameCalc     <$> (route "calc"     *> sid) <*> int
   , RouteFrameCode     <$> (route "code"     *> sid) <*> int
-  , RouteFile          <$> (route "file"   *> sid) <*> int
+  , RouteFrameVisio    <$> (route "visio"    *> sid) <*> int
+  , RouteFile          <$> (route "file"     *> sid) <*> int
   , Home              <$   lit ""
   ]
  where

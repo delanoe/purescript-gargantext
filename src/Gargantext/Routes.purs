@@ -29,6 +29,7 @@ data AppRoute
   | RouteFrameCalc  SessionId Int
   | RouteFrameCode  SessionId Int
   | RouteFrameWrite SessionId Int
+  | RouteFrameVisio SessionId Int
   | Team            SessionId Int
   | Texts           SessionId Int
   | UserPage        SessionId Int
@@ -81,6 +82,7 @@ instance showAppRoute :: Show AppRoute where
   show (RouteFrameWrite s i)    = "write"          <> show i <> " (" <> show s <> ")"
   show (RouteFrameCalc  s i)    = "calc"           <> show i <> " (" <> show s <> ")"
   show (RouteFrameCode  s i)    = "code"           <> show i <> " (" <> show s <> ")"
+  show (RouteFrameVisio s i)    = "visio"          <> show i <> " (" <> show s <> ")"
   show (RouteFile       s i)    = "file"           <> show i <> " (" <> show s <> ")"
 
 
@@ -104,8 +106,9 @@ appPath (Annuaire s i)           = "annuaire/"   <> show s <> "/" <> show i
 appPath (UserPage s i)           = "user/"       <> show s <> "/" <> show i
 appPath (ContactPage s a i)      = "annuaire/"   <> show s <> "/" <> show a <> "/contact/" <> show i
 appPath (RouteFrameWrite s i)    = "write/"     <> show s <> "/" <> show i
-appPath (RouteFrameCalc s i)     = "calc/"      <> show s <> "/" <> show i
-appPath (RouteFrameCode s i)     = "code/"      <> show s <> "/" <> show i
+appPath (RouteFrameCalc  s i)     = "calc/"      <> show s <> "/" <> show i
+appPath (RouteFrameCode  s i)     = "code/"      <> show s <> "/" <> show i
+appPath (RouteFrameVisio s i)     = "visio/"      <> show s <> "/" <> show i
 appPath (RouteFile s i)          = "file/"      <> show s <> "/" <> show i
 
 nodeTypeAppRoute :: NodeType -> SessionId -> Int -> Maybe AppRoute
@@ -125,5 +128,6 @@ nodeTypeAppRoute GT.NodeUser s i       = Just $ UserPage s i
 nodeTypeAppRoute GT.Team s i           = Just $ Team s i
 nodeTypeAppRoute GT.Texts s i          = Just $ Texts s i
 nodeTypeAppRoute GT.NodeFrameWrite s i = Just $ RouteFrameWrite s i
-nodeTypeAppRoute GT.NodeFrameCalc s i  = Just $ RouteFrameCalc s i
+nodeTypeAppRoute GT.NodeFrameCalc  s i = Just $ RouteFrameCalc  s i
+nodeTypeAppRoute GT.NodeFrameVisio s i = Just $ RouteFrameVisio s i
 nodeTypeAppRoute _ _ _                 = Nothing
