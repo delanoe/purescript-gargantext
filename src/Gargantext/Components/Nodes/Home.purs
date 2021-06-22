@@ -152,14 +152,13 @@ summary =
 
 tutorial :: R2.Leaf (sessions :: Array Session, tasks :: T.Box GAT.Storage, reloadForest :: T.Box T2.Reload)
 tutorial props = R.createElement tutorialCpt props []
-
 tutorialCpt :: R.Component (sessions :: Array Session, tasks :: T.Box GAT.Storage, reloadForest :: T.Box T2.Reload)
 tutorialCpt = here.component "tutorial" cpt where
   cpt {sessions, tasks, reloadForest} _ = do
     let folders = makeFolders sessions
 
     pure $ H.div { className: "mx-auto container" }
-      [ H.div {className: "d-flex justify-content-center"} [ H.table {} folders ]
+      [ H.div {className: "d-flex justify-content-center"} [ H.div { className: "folders" } folders ]
       -- , H.h1 {} [H.text "Tutorials"]
       -- , summary
       -- , H.h3 {} [H.text "Resources"]
@@ -177,7 +176,7 @@ tutorialCpt = here.component "tutorial" cpt where
       makeFolders :: Array Session -> Array R.Element
       makeFolders s = sessionToFolder <$> s where
         sessionToFolder session@(Session {treeId, username, backend: (Backend {name})}) = 
-          H.tr {} [
+          H.span { className: "folder" } [
             H.div { className: "d-flex justify-content-center" } [ H.text (username <> "@" <> name) ]
           , H.div {} [ FV.folderView {session, tasks, reloadForest, nodeId: treeId, backFolder: false} ] ]
 
