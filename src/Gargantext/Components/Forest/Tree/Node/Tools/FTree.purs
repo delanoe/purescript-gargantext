@@ -2,7 +2,7 @@ module Gargantext.Components.Forest.Tree.Node.Tools.FTree where
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
+import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 

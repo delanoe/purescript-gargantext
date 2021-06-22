@@ -2,7 +2,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Update.Types where
 
 import Data.Argonaut as Argonaut
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Show.Generic (genericShow)
 import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson, genericEnumDecodeJson, genericEnumEncodeJson)
 import Data.Maybe (Maybe(..))
 import Gargantext.Prelude (class Eq, class Read, class Show)

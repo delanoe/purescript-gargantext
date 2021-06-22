@@ -2,7 +2,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
 import Data.Either (fromRight)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
+import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.String.Regex as DSR

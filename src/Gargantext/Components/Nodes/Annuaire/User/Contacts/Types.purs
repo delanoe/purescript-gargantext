@@ -3,7 +3,7 @@ module Gargantext.Components.Nodes.Annuaire.User.Contacts.Types where
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, (.:), (.:!), (.:?), (:=), (~>), jsonEmptyObject)
 import Data.Array as A
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
+import Data.Eq.Generic (genericEq)
 import Data.Lens
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (class Newtype)

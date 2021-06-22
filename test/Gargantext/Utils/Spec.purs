@@ -4,7 +4,7 @@ import Data.Argonaut as Argonaut
 import Data.Argonaut.Decode.Error (JsonDecodeError)
 import Data.Either (Either(..), isLeft)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Show.Generic (genericShow)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 

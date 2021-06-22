@@ -2,9 +2,6 @@ module Gargantext.Utils.Reactix where
 
 import Prelude
 
-import Data.Argonaut as Argonaut
-import Data.Argonaut as Json
-import Data.Argonaut.Core (Json)
 import Data.Array as A
 import Data.Either (hush)
 import Data.Function.Uncurried (Fn1, runFn1, Fn2, runFn2)
@@ -35,6 +32,7 @@ import Reactix.DOM.HTML as H
 import Reactix.React (react)
 import Reactix.SyntheticEvent as RE
 import Reactix.Utils (currySecond, hook, tuple)
+import Simple.JSON as JSON
 import Toestand as T
 import Unsafe.Coerce (unsafeCoerce)
 import Web.File.Blob (Blob)
@@ -343,8 +341,9 @@ loadLocalStorageState :: forall s. Argonaut.DecodeJson s => LocalStorageKey -> T
 loadLocalStorageState key cell = do
   storage <- getls
   item :: Maybe String <- getItem key storage
-  let json = hush <<< Argonaut.jsonParser =<< item
-  let parsed = hush <<< Argonaut.decodeJson =<< json
+  -- let json = hush <<< Argonaut.jsonParser =<< item
+  -- let parsed = hush <<< Argonaut.decodeJson =<< json
+  let parsed = hush <<< JSON.readJSON item
   case parsed of
     Nothing -> pure unit
     Just p  -> void $ T.write p cell

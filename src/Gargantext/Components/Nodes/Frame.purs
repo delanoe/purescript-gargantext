@@ -5,8 +5,8 @@ import Gargantext.Prelude
 import Data.Argonaut (decodeJson, (.:))
 import Data.Argonaut as Argonaut
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Eq.Generic (genericEq)
+import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Gargantext.Components.FolderView as FV

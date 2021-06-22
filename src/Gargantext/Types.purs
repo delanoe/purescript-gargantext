@@ -6,14 +6,15 @@ import Data.Array as A
 import Data.Either (Either(..))
 import Data.String as S
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Ord (genericCompare)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Eq.Generic (genericEq)
+import Data.Ord.Generic (genericCompare)
+import Data.Show.Generic (genericShow)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Effect.Aff (Aff)
 import Prim.Row (class Union)
 import Reactix as R
+import Simple.JSON as JSON
 import URI.Query (Query)
 
 import Gargantext.Prelude
@@ -724,6 +725,7 @@ instance decodeJsonAsyncTaskWithType :: DecodeJson AsyncTaskWithType where
     task <- obj .: "task"
     typ  <- obj .: "typ"
     pure $ AsyncTaskWithType { task, typ }
+instance foreignAsyncTaskWithType :: JSON.ReadForeign AsyncTaskWithType
 
 newtype AsyncProgress = AsyncProgress {
     id :: AsyncTaskID

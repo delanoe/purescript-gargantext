@@ -2,7 +2,7 @@ module Gargantext.Components.Nodes.Dashboard.Types where
 
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, (.:), (.:?), (:=), (~>), jsonEmptyObject)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
+import Data.Eq.Generic (genericEq)
 import Data.List as List
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)

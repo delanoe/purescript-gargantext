@@ -5,8 +5,8 @@ import Data.Argonaut.Decode.Error (JsonDecodeError(..))
 import Data.Maybe (Maybe(..))
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Eq.Generic (genericEq)
+import Data.Show.Generic (genericShow)
 
 import Gargantext.Prelude
 import Gargantext.Types (ListId, NodeID)

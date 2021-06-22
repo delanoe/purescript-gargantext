@@ -2,7 +2,7 @@ module Gargantext.Components.DocsTable.Types where
 
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
+import Data.Eq.Generic (genericEq)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))

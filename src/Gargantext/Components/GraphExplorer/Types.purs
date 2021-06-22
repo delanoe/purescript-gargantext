@@ -3,7 +3,7 @@ module Gargantext.Components.GraphExplorer.Types where
 import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson, (.:), (.:?), jsonEmptyObject, (~>), (:=))
 import Data.Array ((!!), length)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
+import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
 import Data.Ord

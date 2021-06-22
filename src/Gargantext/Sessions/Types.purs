@@ -15,7 +15,7 @@ import Data.Argonaut.Decode.Error (JsonDecodeError)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
+import Data.Eq.Generic (genericEq)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Sequence (Seq)

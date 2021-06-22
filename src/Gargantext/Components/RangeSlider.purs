@@ -7,7 +7,7 @@
 module Gargantext.Components.RangeSlider where
 
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
+import Data.Eq.Generic (genericEq)
 import Data.Int (fromNumber)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Nullable (Nullable, null)

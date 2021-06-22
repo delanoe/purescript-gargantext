@@ -11,7 +11,7 @@ import Data.Argonaut
   , (:=), (~>), (.:) )
 import Data.Foldable (foldMap)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
+import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Gargantext.Routes as R
 import Gargantext.Types (ApiVersion, ChartType(..), Limit, NodePath, NodeType(..), Offset, TabType(..), TermSize(..), nodePath, nodeTypePath, showTabType', TermList(MapTerm))

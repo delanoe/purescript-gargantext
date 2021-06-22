@@ -3,7 +3,7 @@ module Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs where
 
 import Prelude hiding (div)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))

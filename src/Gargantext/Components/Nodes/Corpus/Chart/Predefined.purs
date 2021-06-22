@@ -2,8 +2,8 @@ module Gargantext.Components.Nodes.Corpus.Chart.Predefined where
 
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Ord (genericCompare)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Ord.Generic (genericCompare)
+import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Reactix as R
 

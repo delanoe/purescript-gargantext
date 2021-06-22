@@ -2,7 +2,7 @@ module Gargantext.Components.Themes where
 
 import Data.Array as A
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
+import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import FFI.Simple ((.=))

@@ -1,8 +1,8 @@
 module Gargantext.Components.Forest.Tree.Node.Settings where
 
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
-import Data.Generic.Rep.Eq   (genericEq)
+import Data.Show.Generic (genericShow)
+import Data.Eq.Generic   (genericEq)
 import Gargantext.Prelude (class Eq, class Show, show, (&&), (<>), (==))
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..))
 import Data.Array (foldl)

@@ -5,7 +5,7 @@ import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Array (zip, filter)
 import Data.Array as A
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
+import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..))
 import Data.String (take, joinWith, Pattern(..), split, length)
 import Data.Tuple (Tuple(..))

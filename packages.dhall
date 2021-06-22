@@ -1,24 +1,25 @@
 let upstream =
-      https://github.com/purescript/package-sets/releases/download/psc-0.13.8-20210226/packages.dhall sha256:7e973070e323137f27e12af93bc2c2f600d53ce4ae73bb51f34eb7d7ce0a43ea
+      https://github.com/purescript/package-sets/releases/download/psc-0.14.2-20210613/packages.dhall sha256:64d7b5a1921e8458589add8a1499a1c82168e726a87fc4f958b3f8760cca2efe
 
 let overrides =
-      { thermite =
-        { dependencies =
-          [ "aff"
-          , "coroutines"
-          , "web-dom"
-          , "freet"
-          , "profunctor-lenses"
-          , "react"
-          , "react-dom"
-          ]
-        , repo = "https://github.com/poorscript/purescript-thermite.git"
-        , version = "hide-2020-03-04"
-        }
-      , globals =
+      { globals =
         { dependencies = [ "functions", "maybe" ]
         , repo = "https://github.com/purescript/purescript-globals"
         , version = "v4.1.0"
+        }
+      , smolder =
+        { dependencies = [
+            "bifunctors"
+          , "catenable-lists"
+          , "free"
+          , "ordered-collections"
+          , "prelude"
+          , "strings"
+          , "test-unit"
+          , "transformers"
+          , "tuples"]
+        , repo = "https://github.com/bodil/purescript-smolder"
+        , version = "v12.3.0"
         }
       }
 
@@ -88,12 +89,12 @@ let additions =
       , markdown =
         { dependencies = [ "precise" ]
         , repo = "https://github.com/poorscript/purescript-markdown"
-        , version = "2020-03-04"
+        , version = "2021-06-22"
         }
       , markdown-smolder =
         { dependencies = [ "markdown", "smolder" ]
         , repo = "https://github.com/poorscript/purescript-markdown-smolder"
-        , version = "2020-03-04"
+        , version = "2021-06-22"
         }
       , precise =
         { dependencies = [ "prelude" ]
@@ -126,12 +127,12 @@ let additions =
         }
       , tuples-native =
         { dependencies =
-          [ "generics-rep", "prelude", "typelevel", "unsafe-coerce" ]
+          [ "prelude", "typelevel", "unsafe-coerce" ]
         , repo = "https://github.com/athanclark/purescript-tuples-native"
         , version = "v2.0.1"
         }
       , uint =
-        { dependencies = [ "maybe", "math", "generics-rep" ]
+        { dependencies = [ "maybe", "math" ]
         , repo = "https://github.com/zaquest/purescript-uint"
         , version = "v5.1.1"
         }
@@ -144,10 +145,9 @@ let additions =
           , "parsing"
           , "integers"
           , "globals"
-          , "generics-rep"
           ]
         , repo = "https://github.com/slamdata/purescript-uri"
-        , version = "v7.0.0"
+        , version = "v8.0.1"
         }
       , read =
         { dependencies = [ "prelude", "maybe", "strings" ]
@@ -157,7 +157,7 @@ let additions =
       , versions =
         { dependencies = [ "prelude" ]
         , repo = "https://github.com/hdgarrood/purescript-versions.git"
-        , version = "v5.0.1"
+        , version = "v6.0.0"
         }
       , simplecrypto =
         { dependencies = [ "prelude", "maybe", "node-buffer" ]

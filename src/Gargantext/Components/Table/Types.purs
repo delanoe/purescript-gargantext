@@ -1,7 +1,7 @@
 module Gargantext.Components.Table.Types where
 
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe)
 import Data.Sequence as Seq
 import Reactix as R

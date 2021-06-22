@@ -30,7 +30,7 @@ module Gargantext.Components.Charts.Options.Font
 import Prelude (Unit, ($), (<<<), (<>))
 
 import Data.Generic.Rep
-import Data.Generic.Rep.Show (genericShow)
+import Data.Show.Generic (genericShow)
 import CSS (FontStyle(..), FontWeight(..), Prefixed(..), Value(..))
 import Data.String (toLower)
 import Gargantext.Components.Charts.Options.Color (Color)

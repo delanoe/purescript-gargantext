@@ -4,7 +4,7 @@ import Gargantext.Prelude (class Eq, class Show)
 import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson)
 import Data.Argonaut (class DecodeJson, class EncodeJson)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Show.Generic (genericShow)
 
 data AddContactParams =
   AddContactParams { firstname :: String, lastname :: String }

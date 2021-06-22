@@ -3,7 +3,7 @@ module Gargantext.Components.Node
 
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?), (.!=))
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
+import Data.Eq.Generic (genericEq)
 
 import Gargantext.Prelude
 

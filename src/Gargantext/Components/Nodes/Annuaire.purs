@@ -5,7 +5,7 @@ module Gargantext.Components.Nodes.Annuaire
 import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Array as A
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
+import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Sequence as Seq
 import Data.Tuple (fst, snd)

@@ -3,7 +3,7 @@ module Gargantext.Components.Nodes.Corpus.Chart.Metrics where
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
 import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
+import Data.Eq.Generic (genericEq)
 import Data.Map as Map
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))

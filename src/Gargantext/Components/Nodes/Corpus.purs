@@ -6,8 +6,8 @@ import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Eq.Generic (genericEq)
+import Data.Show.Generic (genericShow)
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (Tuple(..))

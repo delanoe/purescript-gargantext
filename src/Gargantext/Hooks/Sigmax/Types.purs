@@ -3,8 +3,8 @@ module Gargantext.Hooks.Sigmax.Types where
 import DOM.Simple.Types (Element)
 import Data.Array as A
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Eq.Generic (genericEq)
+import Data.Show.Generic (genericShow)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Sequence as Seq

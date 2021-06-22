@@ -14,7 +14,7 @@ module Gargantext.Components.Charts.Options.Legend
 import Prelude (class Show, show, (<<<))
 
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show
+import Data.Show.Generic
 import Data.String (toLower)
 import Unsafe.Coerce (unsafeCoerce)
 

@@ -2,7 +2,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Link where
 
 import Data.Argonaut as Argonaut
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
