@@ -11,11 +11,12 @@ import Gargantext.Prelude
 import Gargantext.Components.Themes (themeSwitcher, defaultTheme, allThemes)
 import Gargantext.Types (Handed(..), reverseHanded)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.TopBar"
 
-type TopBarProps = ( handed :: T.Box Handed )
+type TopBarProps = ( handed :: T.Box Handed, showTree :: T.Box Boolean )
 
 topBar :: R2.Component TopBarProps
 topBar = R.createElement topBarCpt
@@ -23,7 +24,7 @@ topBar = R.createElement topBarCpt
 topBarCpt :: R.Component TopBarProps
 topBarCpt = here.component "topBar" cpt
   where
-    cpt { handed } children = do
+    cpt { handed, showTree } children = do
       handed' <- T.useLive T.unequal handed
 
       pure $ H.div { className: "navbar navbar-expand-lg navbar-dark bg-dark fixed-top"
@@ -42,6 +43,7 @@ topBarCpt = here.component "topBar" cpt
                 , smiley
                 , H.li { className: "nav-item" } [ themeSwitcher { theme: defaultTheme
                                                                  , themes: allThemes } [] ]
+                , Toggle.treeToggleButton { state: showTree } []
                 ] <> children)
                ]
              ]

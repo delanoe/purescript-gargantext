@@ -91,14 +91,15 @@ topBar p = R.createElement topBarCpt p []
 topBarCpt :: R.Component Props
 topBarCpt = here.component "topBar" cpt where
   cpt props@{ boxes: boxes@{ handed
-                           , route } } _ = do
+                           , route
+                           , showTree } } _ = do
     route' <- T.useLive T.unequal boxes.route
 
     let children = case route' of
           GR.PGraphExplorer s g -> [ GETB.topBar { boxes } ]
           _                     -> []
 
-    pure $ TopBar.topBar { handed } children
+    pure $ TopBar.topBar { handed, showTree } children
 
 mainPage :: R2.Leaf Props
 mainPage p = R.createElement mainPageCpt p []
