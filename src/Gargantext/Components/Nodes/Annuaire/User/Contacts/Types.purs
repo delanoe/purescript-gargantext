@@ -24,10 +24,10 @@ newtype NodeContact =
   , typename  :: Maybe Int
   , userId    :: Maybe Int
   }
-derive instance genericNodeContact :: Generic NodeContact _
-instance eqNodeContact :: Eq NodeContact where
+derive instance Generic NodeContact _
+instance Eq NodeContact where
   eq = genericEq
-instance decodeNodeContact :: DecodeJson NodeContact where
+instance DecodeJson NodeContact where
   decodeJson json = do
     obj       <- decodeJson json
     date      <- obj .?| "date"
@@ -46,7 +46,7 @@ instance decodeNodeContact :: DecodeJson NodeContact where
                    , typename
                    , userId
                    }
-derive instance newtypeNodeContact :: Newtype NodeContact _
+derive instance Newtype NodeContact _
 
 ----------------------------------------------------------------------------
 
@@ -60,10 +60,10 @@ newtype Contact' =
   , typename :: Maybe Int
   , userId :: Maybe Int
   }
-derive instance genericContact' :: Generic Contact' _
-instance eqContact' :: Eq Contact' where
+derive instance Generic Contact' _
+instance Eq Contact' where
   eq = genericEq
-instance decodeContact' :: DecodeJson Contact' where
+instance DecodeJson Contact' where
   decodeJson json = do
     obj       <- decodeJson json
     date      <- obj .?| "date"
@@ -96,10 +96,10 @@ newtype Contact =
   , typename :: Maybe Int
   , userId :: Maybe Int
   }
-derive instance genericContact :: Generic Contact _
-instance eqContact :: Eq Contact where
+derive instance Generic Contact _
+instance Eq Contact where
   eq = genericEq
-instance decodeContact :: DecodeJson Contact where
+instance DecodeJson Contact where
   decodeJson json = do
     obj       <- decodeJson json
     date      <- obj .?| "date"
@@ -132,7 +132,7 @@ newtype User =
   }
 
 
-instance decodeUser :: DecodeJson User where
+instance DecodeJson User where
   decodeJson json = do
     obj       <- decodeJson json
     date      <- obj .?| "date"
@@ -162,11 +162,11 @@ newtype ContactWho =
   , freetags  :: (Array String)
   }
 
-derive instance newtypeContactWho :: Newtype ContactWho _
-derive instance genericContactWho :: Generic ContactWho _
-instance eqContactWho :: Eq ContactWho where
+derive instance Newtype ContactWho _
+derive instance Generic ContactWho _
+instance Eq ContactWho where
   eq = genericEq
-instance decodeContactWho :: DecodeJson ContactWho
+instance DecodeJson ContactWho
   where
     decodeJson json = do
       obj <- decodeJson json
@@ -180,7 +180,7 @@ instance decodeContactWho :: DecodeJson ContactWho
       let f = fromMaybe [] freetags
 
       pure $ ContactWho {idWho, firstName, lastName, keywords:k, freetags:f}
-instance encodeContactWho :: EncodeJson ContactWho
+instance EncodeJson ContactWho
   where
     encodeJson (ContactWho cw) =
          "id"        := cw.idWho
@@ -216,11 +216,11 @@ newtype ContactWhere =
   , entry        :: Maybe String
   , exit         :: Maybe String }
 
-derive instance newtypeContactWhere :: Newtype ContactWhere _
-derive instance genericContactWhere :: Generic ContactWhere _
-instance eqContactWhere :: Eq ContactWhere where
+derive instance Newtype ContactWhere _
+derive instance Generic ContactWhere _
+instance Eq ContactWhere where
   eq = genericEq
-instance decodeContactWhere :: DecodeJson ContactWhere
+instance DecodeJson ContactWhere
   where
     decodeJson json = do
       obj <- decodeJson json
@@ -238,7 +238,7 @@ instance decodeContactWhere :: DecodeJson ContactWhere
       let l = fromMaybe [] labTeamDepts
 
       pure $ ContactWhere {organization:o, labTeamDepts:l, role, office, country, city, touch, entry, exit}
-instance encodeContactWhere :: EncodeJson ContactWhere
+instance EncodeJson ContactWhere
   where
     encodeJson (ContactWhere cw) =
          "city"         := cw.city
@@ -272,11 +272,11 @@ newtype ContactTouch =
   , phone :: Maybe String
   , url   :: Maybe String }
 
-derive instance newtypeContactTouch :: Newtype ContactTouch _
-derive instance genericContactTouch :: Generic ContactTouch _
-instance eqContactTouch :: Eq ContactTouch where
+derive instance Newtype ContactTouch _
+derive instance Generic ContactTouch _
+instance Eq ContactTouch where
   eq = genericEq
-instance decodeContactTouch :: DecodeJson ContactTouch
+instance DecodeJson ContactTouch
   where
     decodeJson json = do
       obj <- decodeJson json
@@ -284,7 +284,7 @@ instance decodeContactTouch :: DecodeJson ContactTouch
       phone <- obj .:? "phone"
       url   <- obj .:? "url"
       pure $ ContactTouch {mail, phone, url}
-instance encodeContactTouch :: EncodeJson ContactTouch
+instance EncodeJson ContactTouch
   where
     encodeJson (ContactTouch ct) =
          "mail"  := ct.mail
@@ -311,11 +311,11 @@ newtype HyperdataContact =
                       , uniqIdBdd      :: Maybe String
                       , who            :: Maybe ContactWho
                       }
-derive instance newtypeHyperdataContact :: Newtype HyperdataContact _
-derive instance genericHyperdataContact :: Generic HyperdataContact _
-instance eqHyperdataContact :: Eq HyperdataContact where
+derive instance Newtype HyperdataContact _
+derive instance Generic HyperdataContact _
+instance Eq HyperdataContact where
   eq = genericEq
-instance decodeHyperdataContact :: DecodeJson HyperdataContact
+instance DecodeJson HyperdataContact
   where
     decodeJson json = do
       obj <- decodeJson json
@@ -331,7 +331,7 @@ instance decodeHyperdataContact :: DecodeJson HyperdataContact
       let ou' = fromMaybe [] ou
 
       pure $ HyperdataContact {bdd, who, ou:ou', title, source, lastValidation, uniqId, uniqIdBdd}
-instance encodeHyperdataContact :: EncodeJson HyperdataContact
+instance EncodeJson HyperdataContact
   where
     encodeJson (HyperdataContact {bdd, lastValidation, ou, source, title, uniqId, uniqIdBdd, who}) =
          "bdd" := bdd
@@ -360,17 +360,17 @@ newtype HyperdataUser =
   HyperdataUser {
     shared :: Maybe HyperdataContact
   }
-derive instance newtypeHyperdataUser :: Newtype HyperdataUser _
-derive instance genericHyperdataUser :: Generic HyperdataUser _
-instance eqHyperdataUser :: Eq HyperdataUser where
+derive instance Newtype HyperdataUser _
+derive instance Generic HyperdataUser _
+instance Eq HyperdataUser where
   eq = genericEq
-instance decodeHyperdataUser :: DecodeJson HyperdataUser
+instance DecodeJson HyperdataUser
   where
     decodeJson json = do
       obj    <- decodeJson json
       shared <- obj .:? "shared"
       pure $ HyperdataUser { shared }
-instance encodeHyperdataUser :: EncodeJson HyperdataUser
+instance EncodeJson HyperdataUser
   where
     encodeJson (HyperdataUser {shared}) =
          "shared" := shared
@@ -390,7 +390,7 @@ defaultHyperdataUser =
 --   , specific :: Map String String
 --   }
 
--- instance decodeUserHyperData :: (DecodeJson c, DecodeJson s) =>
+-- instance (DecodeJson c, DecodeJson s) =>
 --                                 DecodeJson (HyperData c s) where
 --   decodeJson json = do
 --     common <- decodeJson json

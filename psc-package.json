@@ -36,6 +36,7 @@
     "routing",
     "sequences",
     "simple-json",
+    "simple-json-generics",
     "simplecrypto",
     "smolder",
     "spec-discovery",

@@ -31,7 +31,8 @@ import Prelude (Unit, ($), (<<<), (<>))
 
 import Data.Generic.Rep
 import Data.Show.Generic (genericShow)
-import CSS (FontStyle(..), FontWeight(..), Prefixed(..), Value(..))
+import CSS (FontWeight(..), Prefixed(..), Value(..))
+import CSS.FontStyle (FontStyle(..))
 import Data.String (toLower)
 import Gargantext.Components.Charts.Options.Color (Color)
 import Gargantext.Components.Charts.Options.Position (LeftRelativePosition, Position, TopRelativePosition)
@@ -62,8 +63,8 @@ type TextStyle =
 newtype ChartFontStyle = ChartFontStyle String
 
 chartFontStyle :: FontStyle -> ChartFontStyle
-chartFontStyle (FontStyle (Value (Plain "italic"))) = ChartFontStyle "italic"
-chartFontStyle (FontStyle (Value (Plain "oblique"))) = ChartFontStyle "oblique"
+chartFontStyle Italic = ChartFontStyle "italic"
+chartFontStyle (Oblique _) = ChartFontStyle "oblique"
 chartFontStyle _ = ChartFontStyle "normal"
 
 
@@ -81,7 +82,7 @@ newtype Icon = Icon String
 newtype ImageURL = ImageURL String
 
 data Shape = Circle | Rect | RoundRect | Triangle | Diamond | Pin | Arrow
-derive instance genericShape :: Generic Shape _
+derive instance Generic Shape _
 
 data IconOptions = Shape Shape | Image ImageURL
 

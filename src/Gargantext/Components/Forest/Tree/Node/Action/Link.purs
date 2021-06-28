@@ -1,13 +1,14 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Link where
 
-import Data.Argonaut as Argonaut
 import Data.Generic.Rep (class Generic)
 import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..))
+import Data.Newtype (class Newtype)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
 import Toestand as T
 
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
@@ -23,16 +24,12 @@ import Gargantext.Utils.Reactix as R2
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Link"
 
-data LinkNodeReq = LinkNodeReq { nodeType :: GT.NodeType, id :: GT.ID }
-
-derive instance eqLinkNodeReq :: Eq LinkNodeReq
-derive instance genericLinkNodeReq :: Generic LinkNodeReq _
-instance showLinkNodeReq :: Show LinkNodeReq where
-  show = genericShow
-instance decodeJsonLinkNodeReq :: Argonaut.DecodeJson LinkNodeReq where
-  decodeJson = genericSumDecodeJson
-instance encodeJsonLinkNodeReq :: Argonaut.EncodeJson LinkNodeReq where
-  encodeJson = genericSumEncodeJson
+newtype LinkNodeReq = LinkNodeReq { nodeType :: GT.NodeType, id :: GT.ID }
+derive instance Eq LinkNodeReq
+derive instance Generic LinkNodeReq _
+instance Show LinkNodeReq where show = genericShow
+derive newtype instance JSON.ReadForeign LinkNodeReq
+derive newtype instance JSON.WriteForeign LinkNodeReq
 
 
 linkNodeReq :: Session -> Maybe GT.NodeType -> GT.ID -> GT.ID -> Aff GT.AsyncTaskWithType

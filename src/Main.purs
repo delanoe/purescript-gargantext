@@ -8,6 +8,7 @@ import DOM.Simple.Document (document)
 import DOM.Simple.Console (log)
 import Effect (Effect)
 import FFI.Simple ((...))
+
 import Gargantext.Components.App (app)
 import Gargantext.Utils.Reactix as R2
 

@@ -58,9 +58,9 @@ setTreeOut (LinkNode  {nodeType, params:_}) p = LinkNode  {nodeType, params: p}
 setTreeOut (SharePublic {params:_}) p = SharePublic  {params: p}
 setTreeOut a   _             = a
 
-derive instance genericAction :: Generic Action _
+derive instance Generic Action _
 
-instance eqAction :: Eq Action where
+instance Eq Action where
   eq (AddNode s1 nt1) (AddNode s2 nt2) = (eq s1 s2) && (eq nt1 nt2)
   eq (DeleteNode nt1) (DeleteNode nt2) = eq nt1 nt2
   eq (RenameNode s1) (RenameNode s2) = eq s1 s2
@@ -80,7 +80,7 @@ instance eqAction :: Eq Action where
   eq NoAction NoAction = true
   eq _ _ = false
 
-instance showAction :: Show Action where
+instance Show Action where
   show (AddNode     _ _    )      = "AddNode"
   show (DeleteNode  _      )      = "DeleteNode"
   show (RenameNode  _      )      = "RenameNode"

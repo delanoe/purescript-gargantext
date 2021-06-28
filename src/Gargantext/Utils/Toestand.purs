@@ -20,10 +20,10 @@ class Reloadable t where
 newReload :: Reload
 newReload = 0
 
-instance reloadableBoxReload :: Reloadable (T.Box Int) where
+instance Reloadable (T.Box Int) where
   reload box = T.modify_ (_ + 1) box
 
-instance reloadableInitReloadBox :: Reloadable (c Reload) => Reloadable (T.Box (InitReload c)) where
+instance Reloadable (c Reload) => Reloadable (T.Box (InitReload c)) where
   reload box = do
     val <- T.read box
     case val of

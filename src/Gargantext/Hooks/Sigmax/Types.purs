@@ -19,12 +19,12 @@ import Gargantext.Types as GT
 
 newtype Graph n e = Graph { edges :: Seq.Seq {|e}, nodes :: Seq.Seq {|n} }
 
-derive instance genericGraph :: Generic (Graph n e) _
+derive instance Generic (Graph n e) _
 
-instance eqGraphInst :: (Eq (Record n), Eq (Record e)) => Eq (Graph n e) where
+instance (Eq (Record n), Eq (Record e)) => Eq (Graph n e) where
   eq = genericEq
 
---instance eqGraph :: Eq Graph where
+--instance Eq Graph where
 --  eq (Graph {nodes: n1, edges: e1}) (Graph {nodes: n2, edges: e2}) = n1 == n2 && e1 == e2
 
 
@@ -159,8 +159,8 @@ eqGraph (Graph {nodes: n1, edges: e1}) (Graph {nodes: n2, edges: e2}) = (n1 == n
 -- button).
 data ForceAtlasState = InitialRunning | InitialStopped | Running | Paused | Killed
 
-derive instance genericForceAtlasState :: Generic ForceAtlasState _
-instance eqForceAtlasState :: Eq ForceAtlasState where
+derive instance Generic ForceAtlasState _
+instance Eq ForceAtlasState where
   eq = genericEq
 
 toggleForceAtlasState :: ForceAtlasState -> ForceAtlasState
@@ -175,10 +175,10 @@ toggleForceAtlasState Killed = InitialRunning
 -- | running.
 data ShowEdgesState = EShow | EHide | ETempHiddenThenShow
 
-derive instance genericShowEdgesState :: Generic ShowEdgesState _
-instance eqShowEdgesState :: Eq ShowEdgesState where
+derive instance Generic ShowEdgesState _
+instance Eq ShowEdgesState where
   eq = genericEq
-instance showShowEdgesState :: Show ShowEdgesState where
+instance Show ShowEdgesState where
   show = genericShow
 
 -- | Whether the edges are hidden now (temp or "stable").

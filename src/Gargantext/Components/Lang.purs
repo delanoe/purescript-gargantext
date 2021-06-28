@@ -14,15 +14,15 @@ allLangs = [ EN
 
 data Lang = FR | EN | Universal | No_extraction
 
-instance showLang :: Show Lang where
+instance Show Lang where
   show FR            = "FR"
   show EN            = "EN"
   show Universal     = "All"
   show No_extraction = "Nothing"
 
-derive instance eqLang :: Eq Lang
+derive instance Eq Lang
 
-instance readLang :: Read Lang where
+instance Read Lang where
   read "FR"      = Just FR
   read "EN"      = Just EN
   read "All"     = Just Universal
@@ -30,7 +30,7 @@ instance readLang :: Read Lang where
   read _         = Nothing
 
 
-instance encodeJsonLang :: EncodeJson Lang where
+instance EncodeJson Lang where
   encodeJson a = encodeJson (show a)
 
 -- Language used for the landing page

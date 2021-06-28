@@ -30,12 +30,12 @@ newtype Metrics = Metrics {
     "data" :: Array TreeNode
   }
 
-instance decodeMetrics :: DecodeJson Metrics where
+instance DecodeJson Metrics where
   decodeJson json = do
     obj <- decodeJson json
     d   <- obj .: "data"
     pure $ Metrics { "data": d }
-instance encodeMetrics :: EncodeJson Metrics where
+instance EncodeJson Metrics where
   encodeJson (Metrics { "data": d }) =
        "data" := encodeJson d
     ~> jsonEmptyObject

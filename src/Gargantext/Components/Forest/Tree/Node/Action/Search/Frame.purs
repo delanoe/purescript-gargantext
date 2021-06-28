@@ -29,9 +29,9 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Search.Frame"
 
 data FrameSource = Istex | Searx
 
-derive instance genericFrameSource :: Generic FrameSource _
+derive instance Generic FrameSource _
 
-instance showFrameSource :: Show FrameSource where
+instance Show FrameSource where
   show = genericShow
 
 --------------------

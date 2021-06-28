@@ -1,9 +1,13 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Rename where
 
-import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
+import Data.Newtype (class Newtype)
 import Effect.Aff (Aff)
-import Prelude (($))
+import Simple.JSON as JSON
+
+import Gargantext.Prelude
+
 import Gargantext.Components.Forest.Tree.Node.Action
 import Gargantext.Types as GT
 import Gargantext.Types (ID)
@@ -21,10 +25,9 @@ renameAction newName = RenameNode newName
 ------------------------------------------------------------------------
 newtype RenameValue = RenameValue
   { text :: String }
-
-instance encodeJsonRenameValue :: EncodeJson RenameValue where
-  encodeJson (RenameValue {text})
-     = "name" := text
-    ~> jsonEmptyObject
+derive instance Generic RenameValue _
+derive instance Newtype RenameValue _
+instance JSON.WriteForeign RenameValue where
+  writeImpl (RenameValue {text}) = JSON.writeImpl { name: text }
 
 ------------------------------------------------------------------------

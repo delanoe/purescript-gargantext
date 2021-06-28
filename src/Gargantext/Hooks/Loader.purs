@@ -78,14 +78,14 @@ useLoaderEffect path state loader = do
 
 newtype HashedResponse a = HashedResponse { hash  :: Hash, value :: a }
 
-instance decodeHashedResponse :: DecodeJson a => DecodeJson (HashedResponse a) where
+instance DecodeJson a => DecodeJson (HashedResponse a) where
   decodeJson json = do
     obj   <- decodeJson json
     hash  <- obj .: "hash"
     value <- obj .: "value"
     pure $ HashedResponse { hash, value }
 
-instance encodeHashedResponse :: EncodeJson a => EncodeJson (HashedResponse a) where
+instance EncodeJson a => EncodeJson (HashedResponse a) where
   encodeJson (HashedResponse { hash, value }) = do
        "hash" := encodeJson hash
     ~> "value" := encodeJson value

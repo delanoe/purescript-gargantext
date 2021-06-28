@@ -24,8 +24,8 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Annotation.Menu"
 
 data MenuType = NewNgram | SetTermListItem
-derive instance genericMenuType :: Generic MenuType _
-instance eqMenuType :: Eq MenuType where
+derive instance Generic MenuType _
+instance Eq MenuType where
   eq = genericEq
 
 type Props =

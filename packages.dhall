@@ -38,7 +38,7 @@ let additions =
           , "newtype"
           ]
         , repo = "https://github.com/hdgarrood/purescript-sequences.git"
-        , version = "v2.1.0"
+        , version = "v3.0.2"
         }
       , spec-discovery =
         { dependencies = [ "prelude", "effect", "arrays", "spec", "node-fs" ]
@@ -115,10 +115,16 @@ let additions =
         , repo = "https://github.com/irresponsible/purescript-reactix"
         , version = "v0.4.11"
         }
+      , simple-json-generics =
+        { dependencies =
+          [ "simple-json" ]
+        , repo = "https://github.com/justinwoo/purescript-simple-json-generics"
+        , version = "v0.1.0"
+        }
       , toestand = 
         { dependencies = [ "effect", "reactix", "prelude", "record", "tuples", "typelevel-prelude", "typisch" ]
         , repo = "https://github.com/poorscript/purescript-toestand"
-        , version = "v0.6.1"
+        , version = "v0.6.2"
         }
       , typisch = 
         { dependencies = [ "prelude" ]
@@ -128,8 +134,8 @@ let additions =
       , tuples-native =
         { dependencies =
           [ "prelude", "typelevel", "unsafe-coerce" ]
-        , repo = "https://github.com/athanclark/purescript-tuples-native"
-        , version = "v2.0.1"
+        , repo = "https://github.com/poorscript/purescript-tuples-native"
+        , version = "v2.2.0"
         }
       , uint =
         { dependencies = [ "maybe", "math" ]

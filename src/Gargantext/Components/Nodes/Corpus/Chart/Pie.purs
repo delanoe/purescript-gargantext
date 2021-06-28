@@ -40,7 +40,7 @@ newtype ChartMetrics = ChartMetrics {
     "data" :: HistoMetrics
   }
 
-instance decodeChartMetrics :: DecodeJson ChartMetrics where
+instance DecodeJson ChartMetrics where
   decodeJson json = do
     obj <- decodeJson json
     d   <- obj .: "data"
@@ -50,17 +50,17 @@ newtype HistoMetrics = HistoMetrics
   { dates :: Array String
   , count :: Array Number
   }
-derive instance genericHistoMetrics :: Generic HistoMetrics _
-instance eqHistoMetrics :: Eq HistoMetrics where
+derive instance Generic HistoMetrics _
+instance Eq HistoMetrics where
   eq = genericEq
-instance decodeHistoMetrics :: DecodeJson HistoMetrics where
+instance DecodeJson HistoMetrics where
   decodeJson json = do
     obj   <- decodeJson json
     d <- obj .: "dates"
     c <- obj .: "count"
     pure $ HistoMetrics { dates : d , count: c}
 
-instance encodeHistoMetrics :: EncodeJson HistoMetrics where
+instance EncodeJson HistoMetrics where
   encodeJson (HistoMetrics { dates, count }) =
        "count" := encodeJson count
     ~> "dates"    := encodeJson dates

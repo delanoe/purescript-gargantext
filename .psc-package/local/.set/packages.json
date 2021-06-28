@@ -3587,7 +3587,7 @@
       "newtype"
     ],
     "repo": "https://github.com/hdgarrood/purescript-sequences.git",
-    "version": "v2.1.0"
+    "version": "v3.0.2"
   },
   "server-sent-events": {
     "dependencies": [
@@ -3661,6 +3661,13 @@
     ],
     "repo": "https://github.com/justinwoo/purescript-simple-json.git",
     "version": "v8.0.0"
+  },
+  "simple-json-generics": {
+    "dependencies": [
+      "simple-json"
+    ],
+    "repo": "https://github.com/justinwoo/purescript-simple-json-generics",
+    "version": "v0.1.0"
   },
   "simple-jwt": {
     "dependencies": [
@@ -4159,8 +4166,8 @@
       "typelevel",
       "unsafe-coerce"
     ],
-    "repo": "https://github.com/athanclark/purescript-tuples-native",
-    "version": "v2.0.1"
+    "repo": "https://github.com/poorscript/purescript-tuples-native",
+    "version": "v2.2.0"
   },
   "turf": {
     "dependencies": [

@@ -67,10 +67,10 @@ newtype Pair =
        , label :: String
        }
 
-derive instance genericPair :: Generic Pair _
-instance eqPair :: Eq Pair where
+derive instance Generic Pair _
+instance Eq Pair where
   eq = genericEq
-instance showPair :: Show Pair where
+instance Show Pair where
   show = genericShow
 
 ----------------------------------------------------------------------
@@ -90,10 +90,10 @@ newtype DocumentsView =
   , publication_day  :: Int
   }
 
-derive instance genericDocumentsView :: Generic DocumentsView _
-instance eqDocumentsView :: Eq DocumentsView where
+derive instance Generic DocumentsView _
+instance Eq DocumentsView where
   eq = genericEq
-instance showDocumentsView :: Show DocumentsView where
+instance Show DocumentsView where
   show = genericShow
 
 ----------------------------------------------------------------------
@@ -105,17 +105,17 @@ newtype ContactsView =
   , annuaireId :: Int
   , delete     :: Boolean
   }
-derive instance genericContactsView :: Generic ContactsView _
-instance eqContactsView :: Eq ContactsView where
+derive instance Generic ContactsView _
+instance Eq ContactsView where
   eq = genericEq
-instance showContactsView :: Show ContactsView where
+instance Show ContactsView where
   show = genericShow
 
 ----------------------------------------------------------------------
 data Rows = Docs     { docs     :: Seq DocumentsView }
           | Contacts { contacts :: Seq ContactsView  }
-derive instance genericRows :: Generic Rows _
-instance eqRows :: Eq Rows where
+derive instance Generic Rows _
+instance Eq Rows where
   eq = genericEq
 
 ----------------------------------------------------------------------
@@ -413,7 +413,7 @@ publicationDate (DocumentsView {publication_year, publication_month, publication
 
 newtype DeleteDocumentQuery = DeleteDocumentQuery { documents :: Array Int }
 
-instance encodeJsonDDQuery :: EncodeJson DeleteDocumentQuery where
+instance EncodeJson DeleteDocumentQuery where
   encodeJson (DeleteDocumentQuery {documents}) =
     "documents" := documents ~> jsonEmptyObject
 

@@ -1,10 +1,13 @@
 module Gargantext.Components.Forest.Tree.Node.Tools.FTree where
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.:))
+import Data.Array as A
 import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
+import Foreign as F
+import Simple.JSON as JSON
+import Simple.JSON.Generics as JSONG
 
 import Gargantext.Prelude
 
@@ -16,9 +19,15 @@ type Name = String
 -----------------------------------------------------------------------
 type FTree = NTree LNode
 data NTree a = NTree a (Array (NTree a))
-derive instance genericNTree :: Generic (NTree a) _
-instance eqNTree :: Eq a => Eq (NTree a) where
+derive instance Generic (NTree a) _
+instance JSON.ReadForeign (NTree LNode) where
+  readImpl f = do
+    inst :: { node :: LNode, children :: Array FTree } <- JSON.readImpl f
+    let (LNode { id }) = inst.node
+    pure $ NTree inst.node ((addParent id) <$> inst.children)
+instance Eq a => Eq (NTree a) where
   eq (NTree a1 as1) (NTree a2 as2) = (eq a1 a2) && (eq as1 as2)
+
 type Tree = { tree       :: FTree
             , tasks     :: Array GT.AsyncTaskWithType
             }
@@ -26,7 +35,7 @@ type Tree = { tree       :: FTree
 fTreeID :: FTree -> ID
 fTreeID (NTree (LNode { id }) _) = id
 
-instance ntreeFunctor :: Functor NTree where
+instance Functor NTree where
   map f (NTree x ary) = NTree (f x) (map (map f) ary)
 
 newtype LNode =
@@ -36,31 +45,16 @@ newtype LNode =
   , nodeType  :: GT.NodeType
   , parent_id :: Maybe ID
   }
-derive instance newtypeLNode :: Newtype LNode _
-derive instance genericLNode :: Generic LNode _
-instance eqLNode :: Eq LNode where
-  eq = genericEq
-instance decodeJsonLNode :: DecodeJson LNode where
-  decodeJson json = do
-    obj  <- decodeJson json
-    id_  <- obj .: "id"
-    name <- obj .: "name"
-    nodeType <- obj .: "type"
-    pure $ LNode { id : id_
-                 , name
-                 , nodeType
-                 , parent_id : Nothing
-                 }
-
-instance decodeJsonFTree :: DecodeJson (NTree LNode) where
-  decodeJson json = do
-    obj    <- decodeJson json
-    node   <- obj .: "node"
-    nodes  <- obj .: "children"
-    node'  <- decodeJson node
-    nodes' <- decodeJson nodes
-    let (LNode {id}) = node'
-    pure $ NTree node' (map (addParent id) nodes')
+derive instance Newtype LNode _
+derive instance Generic LNode _
+instance Eq LNode where eq = genericEq
+instance JSON.ReadForeign LNode where
+  readImpl f = do
+    inst :: { id :: ID, name :: Name, type :: GT.NodeType, parent_id :: Maybe ID } <- JSON.readImpl f
+    pure $ LNode { id: inst.id
+                 , name: inst.name
+                 , nodeType: inst.type
+                 , parent_id: Nothing }
 
 addParent :: ID -> NTree LNode -> NTree LNode
 addParent id (NTree (LNode p@{id:id'}) ary)=

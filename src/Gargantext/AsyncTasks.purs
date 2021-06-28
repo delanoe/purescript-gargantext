@@ -8,14 +8,16 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import DOM.Simple.Console (log2)
 import Effect (Effect)
-import Gargantext.Types as GT
-import Gargantext.Utils as GU
-import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Simple.JSON as JSON
 import Toestand as T
 import Web.Storage.Storage as WSS
+
+import Gargantext.Types as GT
+import Gargantext.Utils as GU
+import Gargantext.Utils.JSON as GUJ
+import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 
 localStorageKey :: String
 localStorageKey = "garg-async-tasks"
@@ -23,6 +25,8 @@ localStorageKey = "garg-async-tasks"
 
 type TaskList = Array GT.AsyncTaskWithType
 type Storage = Map.Map GT.NodeID TaskList
+
+instance JSON.ReadForeign Storage where readImpl = GUJ.readMap 
 
 empty :: Storage
 empty = Map.empty

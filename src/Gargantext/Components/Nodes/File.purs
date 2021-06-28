@@ -1,12 +1,13 @@
 module Gargantext.Components.Nodes.File where
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.:))
 import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..))
+import Data.Newtype (class Newtype)
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
 
 import Gargantext.Prelude
 import Gargantext.Ends (toUrl)
@@ -25,16 +26,11 @@ newtype HyperdataFile =
   , name :: String
   , path :: String
   }
-derive instance genericHyperdataFile :: Generic HyperdataFile _
-instance eqHyperdataFile :: Eq HyperdataFile where
+derive instance Generic HyperdataFile _
+derive instance Newtype HyperdataFile _
+derive newtype instance JSON.ReadForeign HyperdataFile
+instance Eq HyperdataFile where
   eq = genericEq
-instance decodeHyperdataFile :: DecodeJson HyperdataFile where
-  decodeJson json = do
-    obj  <- decodeJson json
-    mime <- obj .: "mime"
-    name <- obj .: "name"
-    path <- obj .: "path"
-    pure $ HyperdataFile { mime, name, path }
 
 newtype File =
   File
@@ -43,17 +39,11 @@ newtype File =
   , hyperdata :: HyperdataFile
   , name      :: String
   }
-derive instance genericFile :: Generic File _
-instance eqFile :: Eq File where
+derive instance Generic File _
+derive instance Newtype File _
+derive newtype instance JSON.ReadForeign File
+instance Eq File where
   eq = genericEq
-instance decodeFile :: DecodeJson File where
-  decodeJson json = do
-    obj       <- decodeJson json
-    id        <- obj .: "id"
-    date      <- obj .: "date"
-    name      <- obj .: "name"
-    hyperdata <- (obj .: "hyperdata") >>= decodeJson
-    pure $ File { id, date, hyperdata, name }
 
 type FileLayoutProps = ( nodeId :: NodeID, session :: Session )
 

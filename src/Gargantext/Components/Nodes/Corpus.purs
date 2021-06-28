@@ -517,10 +517,10 @@ loadCorpusWithChildAndReload :: Record LoadWithReloadProps -> Aff CorpusData
 loadCorpusWithChildAndReload {nodeId, reload, session} = loadCorpusWithChild {nodeId, session}
 
 data ViewType = Code | Folders
-derive instance genericViewType :: Generic ViewType _
-instance eqViewType :: Eq ViewType where
+derive instance Generic ViewType _
+instance Eq ViewType where
   eq = genericEq
-instance showViewType :: Show ViewType where
+instance Show ViewType where
   show = genericShow
 
 type ViewTypeSelectorProps =

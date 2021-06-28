@@ -16,10 +16,10 @@ newtype NodePoly a =
            , date      :: String
            , hyperdata :: a
            }
-derive instance genericNodePoly :: Generic (NodePoly a) _
-instance eqNodePoly :: Eq a => Eq (NodePoly a) where
+derive instance Generic (NodePoly a) _
+instance Eq a => Eq (NodePoly a) where
   eq = genericEq
-instance decodeNodePoly :: (DecodeJson a)
+instance (DecodeJson a)
   => DecodeJson (NodePoly a) where
   decodeJson json = do
     obj <- decodeJson json
@@ -44,7 +44,7 @@ instance decodeNodePoly :: (DecodeJson a)
 
 newtype HyperdataList = HyperdataList { preferences :: String }
 
-instance decodeHyperdataList :: DecodeJson HyperdataList where
+instance DecodeJson HyperdataList where
   decodeJson json = do
     obj <- decodeJson json
     pref <- obj .:? "preferences" .!= ""

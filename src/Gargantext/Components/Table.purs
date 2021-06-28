@@ -298,9 +298,9 @@ paginationCpt = here.component "pagination" cpt
 
 data PageSizes = PS10 | PS20 | PS50 | PS100 | PS200
 
-derive instance eqPageSizes :: Eq PageSizes
+derive instance Eq PageSizes
 
-instance showPageSize :: Show PageSizes where
+instance Show PageSizes where
   show PS10  = "10"
   show PS20  = "20"
   show PS50  = "50"

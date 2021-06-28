@@ -13,6 +13,9 @@ import Data.Foldable (foldMap)
 import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
+import Data.Newtype (class Newtype)
+import Simple.JSON as JSON
+
 import Gargantext.Routes as R
 import Gargantext.Types (ApiVersion, ChartType(..), Limit, NodePath, NodeType(..), Offset, TabType(..), TermSize(..), nodePath, nodeTypePath, showTabType', TermList(MapTerm))
 import Prelude (class Eq, class Show, identity, show, ($), (<>), bind, pure, (<<<), (==), (/=))
@@ -31,6 +34,10 @@ newtype Backend = Backend
   , prePath :: String
   , version :: ApiVersion
   }
+derive instance Generic Backend _
+derive instance Newtype Backend _
+derive newtype instance JSON.ReadForeign Backend
+derive newtype instance JSON.WriteForeign Backend
 
 backend :: ApiVersion -> String -> String -> String -> Backend
 backend version prePath baseUrl name = Backend { name, version, prePath, baseUrl }
@@ -39,34 +46,14 @@ backend version prePath baseUrl name = Backend { name, version, prePath, baseUrl
 backendUrl :: Backend -> String -> String
 backendUrl (Backend b) path = b.baseUrl <> b.prePath <> show b.version <> "/" <> path
 
-derive instance genericBackend :: Generic Backend _
-
-instance eqBackend :: Eq Backend where
+instance Eq Backend where
   eq = genericEq
 
-instance showBackend :: Show Backend where
+instance Show Backend where
   show (Backend {name}) = name
 
-instance toUrlBackendString :: ToUrl Backend String where
+instance ToUrl Backend String where
   toUrl = backendUrl
-
--- JSON instances
-instance encodeJsonBackend :: EncodeJson Backend where
-  encodeJson (Backend {name, baseUrl, prePath, version})
-    =  "name"    := name
-    ~> "baseUrl" := baseUrl
-    ~> "prePath" := prePath
-    ~> "version" := show version
-    ~> jsonEmptyObject
-
-instance decodeJsonBackend :: DecodeJson Backend where
-  decodeJson json = do
-    obj <- decodeJson json
-    name <- obj .: "name"
-    baseUrl <- obj .: "baseUrl"
-    prePath <- obj .: "prePath"
-    version <- obj .: "version"
-    pure $ Backend {name, baseUrl, prePath, version}
 
 -- | Encapsulates the data needed to construct a url to a frontend
 -- | server (either for the app or static content)
@@ -75,12 +62,12 @@ newtype Frontend = Frontend
   , baseUrl :: String
   , prePath :: String }
 
-derive instance genericFrontend :: Generic Frontend _
+derive instance Generic Frontend _
 
-instance eqFrontend :: Eq Frontend where
+instance Eq Frontend where
   eq = genericEq
 
-instance toUrlFrontendNodePath :: ToUrl Frontend NodePath where
+instance ToUrl Frontend NodePath where
   toUrl front np = frontendUrl front (nodePath np)
 
 -- | Creates a frontend
@@ -91,24 +78,24 @@ frontend baseUrl prePath name = Frontend { name, baseUrl, prePath }
 frontendUrl :: Frontend -> String -> String
 frontendUrl (Frontend f) path = f.baseUrl <> f.prePath <> path
 
-instance showFrontend :: Show Frontend where
+instance Show Frontend where
   show (Frontend {name}) = name
 
-instance toUrlFrontendString :: ToUrl Frontend String where
+instance ToUrl Frontend String where
   toUrl = frontendUrl
 
-instance toUrlFrontendAppRoute :: ToUrl Frontend R.AppRoute where
+instance ToUrl Frontend R.AppRoute where
   toUrl f r = frontendUrl f (R.appPath r)
 
 -- | The currently selected App and Static configurations
 newtype Frontends = Frontends { app :: Frontend, static :: Frontend }
 
-derive instance eqFrontends :: Eq Frontends
+derive instance Eq Frontends
 
-instance toUrlFrontendsRoutes :: ToUrl Frontends R.AppRoute where
+instance ToUrl Frontends R.AppRoute where
   toUrl f r = appUrl f (R.appPath r)
 
-instance toUrlFrontendsNodePath :: ToUrl Frontends NodePath where
+instance ToUrl Frontends NodePath where
   toUrl (Frontends {app}) np = frontendUrl app (nodePath np)
 
 -- | Creates an app url from a Frontends and the path as a string
@@ -257,10 +244,10 @@ orderByUrl = maybe "" (\x -> "&orderBy=" <> show x)
 -- nodeTypePath :: NodeType -> Path
 -- nodeTypePath = NodeAPI
 
--- instance toUrlNodeType :: ToUrl NodeType where
+-- instance ToUrl NodeType where
 --   toUrl ec e nt i = toUrl ec e (NodeAPI nt) i
 
--- instance toUrlPath :: ToUrl Path where
+-- instance ToUrl Path where
 --   toUrl ec e p i = doUrl base path params
 --     where
 --       base   = endBaseUrl e ec

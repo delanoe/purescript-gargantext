@@ -28,8 +28,8 @@ foreign import data SigmaGraph :: Type
 type NodeRequiredProps = ( id :: Types.NodeId )
 type EdgeRequiredProps = ( id :: Types.EdgeId, source :: Types.NodeId, target :: Types.NodeId )
 
-class NodeProps (all :: #Type) (extra :: #Type) | all -> extra
-class EdgeProps (all :: #Type) (extra :: #Type) | all -> extra
+class NodeProps (all :: Row Type) (extra :: Row Type) | all -> extra
+class EdgeProps (all :: Row Type) (extra :: Row Type) | all -> extra
 
 instance nodeProps
   :: Union NodeRequiredProps extra all
@@ -280,7 +280,7 @@ type CameraProps =
   , angle :: Number
   )
 
-foreign import data CameraInstance' :: # Type
+foreign import data CameraInstance' :: Row Type
 type CameraInstance = { | CameraInstance' }
 
 -- | Get an array of a sigma instance's `cameras`.

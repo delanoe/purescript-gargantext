@@ -87,8 +87,8 @@ type CameraProps =
   , angle :: Number
   )
 
-foreign import data SigmaInstance' :: # Type
-foreign import data CameraInstance' :: # Type
+foreign import data SigmaInstance' :: Row Type
+foreign import data CameraInstance' :: Row Type
 type SigmaInstance = { | SigmaInstance' }
 type CameraInstance = { | CameraInstance' }
 

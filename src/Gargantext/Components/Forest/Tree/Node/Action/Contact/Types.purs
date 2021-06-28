@@ -1,23 +1,19 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Contact.Types where
 
+import Data.Generic.Rep (class Generic)
+import Data.Newtype (class Newtype)
+import Data.Show.Generic (genericShow)
+import Simple.JSON as JSON
+
 import Gargantext.Prelude (class Eq, class Show)
 import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson)
-import Data.Argonaut (class DecodeJson, class EncodeJson)
-import Data.Generic.Rep (class Generic)
-import Data.Show.Generic (genericShow)
 
-data AddContactParams =
+newtype AddContactParams =
   AddContactParams { firstname :: String, lastname :: String }
+derive instance Eq AddContactParams
+derive instance Generic AddContactParams _
+derive instance Newtype AddContactParams _
+instance Show AddContactParams where show = genericShow
+derive newtype instance JSON.ReadForeign AddContactParams
+derive newtype instance JSON.WriteForeign AddContactParams
 
-derive instance eqAddContactParams :: Eq AddContactParams
-
-derive instance genericAddContactParams :: Generic AddContactParams _
-
-instance showAddContactParams :: Show AddContactParams where
-  show = genericShow
-
-instance decodeJsonAddContactParams :: DecodeJson AddContactParams where
-  decodeJson = genericSumDecodeJson
-
-instance encodeJsonAddContactParams :: EncodeJson AddContactParams where
-  encodeJson = genericSumEncodeJson

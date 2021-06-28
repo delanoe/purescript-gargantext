@@ -30,7 +30,7 @@ data NodeAction = Documentation NodeType
                 | CloseNodePopover
 
 ------------------------------------------------------------------------
-instance eqNodeAction :: Eq NodeAction where
+instance Eq NodeAction where
   eq (Documentation x) (Documentation y) = true && (x == y)
   eq SearchBox SearchBox                 = true
   eq Download Download                   = true
@@ -49,7 +49,7 @@ instance eqNodeAction :: Eq NodeAction where
   eq CloseNodePopover CloseNodePopover   = true
   eq _ _                                 = false
 
-instance showNodeAction :: Show NodeAction where
+instance Show NodeAction where
   show (Documentation x) = "Documentation of " <> show x
   show SearchBox         = "SearchBox"
   show Download          = "Download"

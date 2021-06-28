@@ -85,10 +85,10 @@ mapLeft _ (Right r) = Right r
 
 data On a b = On a b
 
-instance eqOn :: Eq a => Eq (On a b) where
+instance Eq a => Eq (On a b) where
   eq (On x _) (On y _) = eq x y
 
-instance ordOn :: Ord a => Ord (On a b) where
+instance Ord a => Ord (On a b) where
   compare (On x _) (On y _) = compare x y
 
 -- same as

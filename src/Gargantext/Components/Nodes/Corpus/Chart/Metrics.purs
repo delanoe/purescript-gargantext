@@ -42,10 +42,10 @@ newtype Metric = Metric
   , y     :: Number
   , cat   :: TermList
   }
-derive instance genericMetric :: Generic Metric _
-instance eqMetric :: Eq Metric where
+derive instance Generic Metric _
+instance Eq Metric where
   eq = genericEq
-instance decodeMetric :: DecodeJson Metric where
+instance DecodeJson Metric where
   decodeJson json = do
     obj   <- decodeJson json
     label <- obj .: "label"
@@ -53,7 +53,7 @@ instance decodeMetric :: DecodeJson Metric where
     y     <- obj .: "y"
     cat   <- obj .: "cat"
     pure $ Metric { label, x, y, cat }
-instance encodeMetric :: EncodeJson Metric where
+instance EncodeJson Metric where
   encodeJson (Metric { label, x, y, cat }) =
        "label"  := encodeJson label
     ~> "x"      := encodeJson x
@@ -65,7 +65,7 @@ newtype Metrics = Metrics {
      "data" :: Array Metric
   }
 
-instance decodeMetrics :: DecodeJson Metrics where
+instance DecodeJson Metrics where
   decodeJson json = do
     obj <- decodeJson json
     d   <- obj .: "data"

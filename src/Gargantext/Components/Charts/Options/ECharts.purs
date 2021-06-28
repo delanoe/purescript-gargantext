@@ -2,8 +2,8 @@ module Gargantext.Components.Charts.Options.ECharts where
 
 import Prelude
 
-import CSS (italic)
 import CSS.Common (normal)
+import CSS.FontStyle (FontStyle(..))
 import Gargantext.Components.Charts.Options.Color (transparent, violet, black)
 import Gargantext.Components.Charts.Options.Data (DataLegend, dataSerie)
 import Gargantext.Components.Charts.Options.Font (IconOptions(..), Shape(..), TextStyle, chartFontStyle, chartFontWeight, icon, mkTooltip, Tooltip, mkToolBox)
@@ -183,7 +183,7 @@ opts (Options { mainTitle
 
 data Zoom = Slider | Inside
 
-instance showZoom :: Show Zoom where
+instance Show Zoom where
   show Slider = "slider"
   show Inside = "inside"
 
@@ -211,7 +211,7 @@ seriesPie = seriesPieD1
 textStyle2 :: TextStyle
 textStyle2 =
   { color: black
-  , fontStyle: chartFontStyle italic
+  , fontStyle: chartFontStyle Italic
   , fontWeight: chartFontWeight normal
   , fontFamily: "sans-serif"
   , fontSize: 11

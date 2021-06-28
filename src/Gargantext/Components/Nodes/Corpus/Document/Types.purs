@@ -164,22 +164,22 @@ defaultDocument =
            --, text               : Nothing
            }
 
-derive instance genericDocument   :: Generic Document   _
-derive instance genericDocumentV3 :: Generic DocumentV3 _
-derive instance genericStatus     :: Generic Status     _
+derive instance Generic Document   _
+derive instance Generic DocumentV3 _
+derive instance Generic Status     _
 
-instance eqDocument :: Eq Document where
+instance Eq Document where
   eq = genericEq
-instance showDocument :: Show Document where
+instance Show Document where
   show = genericShow
 
-instance showDocumentV3 :: Show DocumentV3 where
+instance Show DocumentV3 where
   show = genericShow
 
-instance showStatus :: Show Status where
+instance Show Status where
   show = genericShow
 
-instance decodeStatus :: DecodeJson Status
+instance DecodeJson Status
   where
     decodeJson json = do
       obj <- decodeJson json
@@ -189,7 +189,7 @@ instance decodeStatus :: DecodeJson Status
       pure $ Status {failed, succeeded, remaining}
 
 
-instance decodeDocumentV3 :: DecodeJson DocumentV3
+instance DecodeJson DocumentV3
   where
     decodeJson json = do
       obj <- decodeJson json
@@ -229,7 +229,7 @@ instance decodeDocumentV3 :: DecodeJson DocumentV3
                         , title
                         }
 
-instance decodeDocument :: DecodeJson Document
+instance DecodeJson Document
   where
     decodeJson json = do
       obj <- decodeJson json

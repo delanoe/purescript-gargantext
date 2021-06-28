@@ -1,19 +1,20 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Predefined where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson)
+import Gargantext.Prelude
+
 import Data.Generic.Rep (class Generic)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
-import Data.Maybe (Maybe(..), fromMaybe)
-import Reactix as R
-
-import Gargantext.Prelude
-import Gargantext.Components.Nodes.Corpus.Chart.Histo   (histo)
+import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
-import Gargantext.Components.Nodes.Corpus.Chart.Pie     (pie)
-import Gargantext.Components.Nodes.Corpus.Chart.Tree    (tree)
+import Gargantext.Components.Nodes.Corpus.Chart.Pie (pie)
+import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeID, Mode(..), TabSubType(..), TabType(..), modeTabType)
+import Reactix as R
+import Simple.JSON as JSON
+import Simple.JSON.Generics as JSONG
 
 
 data PredefinedChart =
@@ -23,25 +24,16 @@ data PredefinedChart =
   | CInstitutesTree
   | CTermsMetrics
 
-derive instance genericPredefinedChart :: Generic PredefinedChart _
-
-instance showPredefinedChart :: Show PredefinedChart where
+derive instance Generic PredefinedChart _
+instance JSON.ReadForeign PredefinedChart where readImpl = JSONG.enumSumRep
+instance JSON.WriteForeign PredefinedChart where writeImpl = JSON.writeImpl <<< show
+instance Show PredefinedChart where
   show = genericShow
-
-derive instance eqPredefinedChart :: Eq PredefinedChart
-
-instance ordPredefinedChart :: Ord PredefinedChart where
+derive instance Eq PredefinedChart
+instance Ord PredefinedChart where
   compare = genericCompare
 
-instance decodePredefinedChart :: DecodeJson PredefinedChart where
-  decodeJson json = do
-    obj <- decodeJson json
-    pure $ fromMaybe CDocsHistogram $ read obj
-
-instance encodePredefinedChart :: EncodeJson PredefinedChart where
-  encodeJson c = encodeJson $ show c
-
-instance readPredefinedChart :: Read PredefinedChart where
+instance Read PredefinedChart where
   read "CDocsHistogram"  = Just CDocsHistogram
   read "CAuthorsPie"     = Just CAuthorsPie
   read "CSourcesBar"     = Just CSourcesBar

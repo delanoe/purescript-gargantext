@@ -34,26 +34,26 @@ here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Histo"
 newtype ChartMetrics = ChartMetrics {
     "data" :: HistoMetrics
    }
-derive instance genericChartMetrics :: Generic ChartMetrics _
-instance eqChartMetrics :: Eq ChartMetrics where
+derive instance Generic ChartMetrics _
+instance Eq ChartMetrics where
   eq = genericEq
-instance decodeChartMetrics :: DecodeJson ChartMetrics where
+instance DecodeJson ChartMetrics where
   decodeJson json = do
     obj <- decodeJson json
     d <- obj .: "data"
     pure $ ChartMetrics { "data": d }
 
 newtype HistoMetrics = HistoMetrics { dates :: Array String, count :: Array Number }
-derive instance genericHistoMetrics :: Generic HistoMetrics _
-instance eqHistoMetrics :: Eq HistoMetrics where
+derive instance Generic HistoMetrics _
+instance Eq HistoMetrics where
   eq = genericEq
-instance decodeHistoMetrics :: DecodeJson HistoMetrics where
+instance DecodeJson HistoMetrics where
   decodeJson json = do
     obj   <- decodeJson json
     d <- obj .: "dates"
     c <- obj .: "count"
     pure $ HistoMetrics { dates : d , count: c}
-instance encodeHistoMetrics :: EncodeJson HistoMetrics where
+instance EncodeJson HistoMetrics where
   encodeJson (HistoMetrics { dates, count }) =
        "count" := encodeJson count
     ~> "dates"    := encodeJson dates

@@ -29,8 +29,8 @@ here = R2.here "Gargantext.Components.Graph"
 type OnProps  = ()
 
 data Stage = Init | Ready | Cleanup
-derive instance genericStage :: Generic Stage _
-derive instance eqStage :: Eq Stage
+derive instance Generic Stage _
+derive instance Eq Stage
 
 
 type Props sigma forceatlas2 =

@@ -1,6 +1,6 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
-import Data.Either (fromRight)
+import Data.Either (fromRight')
 import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
@@ -13,7 +13,7 @@ import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
-import Partial.Unsafe (unsafePartial)
+import Partial.Unsafe (unsafePartial, unsafeCrashWith)
 import React.SyntheticEvent     as E
 import Reactix                  as R
 import Reactix.DOM.HTML         as H
@@ -73,8 +73,8 @@ data DroppedFile =
               , fileType :: Maybe FileType
               , lang     :: Lang
               }
-derive instance genericDroppedFile :: Generic DroppedFile _
-instance eqDroppedFile :: Eq DroppedFile where
+derive instance Generic DroppedFile _
+instance Eq DroppedFile where
   eq = genericEq
 
 type FileHash = String
@@ -302,8 +302,8 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
 newtype FileUploadQuery = FileUploadQuery {
     fileType :: FileType
   }
-derive instance newtypeSearchQuery :: Newtype FileUploadQuery _
-instance fileUploadQueryToQuery :: GT.ToQuery FileUploadQuery where
+derive instance Newtype FileUploadQuery _
+instance GT.ToQuery FileUploadQuery where
   toQuery (FileUploadQuery {fileType}) =
     QP.print id id $ QP.QueryPairs $
          pair "fileType" fileType
@@ -347,7 +347,7 @@ uploadArbitraryDataURL :: Session
                        -> String
                        -> Aff GT.AsyncTaskWithType
 uploadArbitraryDataURL session id mName contents' = do
-    let re = unsafePartial $ fromRight $ DSR.regex "data:.*;base64," DSRF.noFlags
+    let re = fromRight' (\_ -> unsafeCrashWith "Unexpected Left") $ DSR.regex "data:.*;base64," DSRF.noFlags
         contents = DSR.replace re "" contents'
     task <- postWwwUrlencoded session p (bodyParams contents)
     pure $ GT.AsyncTaskWithType { task, typ: GT.Form }

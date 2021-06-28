@@ -36,7 +36,7 @@ class GenericSumDecodeJsonRep rep where
 class GenericSumEncodeJsonRep rep where
   genericSumEncodeJsonRep :: rep -> Json
 
-instance genericSumDecodeJsonRepSum ::
+instance
   ( GenericSumDecodeJsonRep a
   , GenericSumDecodeJsonRep b
   ) => GenericSumDecodeJsonRep (GR.Sum a b) where
@@ -44,7 +44,7 @@ instance genericSumDecodeJsonRepSum ::
       = GR.Inl <$> genericSumDecodeJsonRep f
     <|> GR.Inr <$> genericSumDecodeJsonRep f
 
-instance genericSumDecodeJsonRepConstructor ::
+instance
   ( GenericSumDecodeJsonRep a
   , IsSymbol name
   ) => GenericSumDecodeJsonRep (GR.Constructor name a) where
@@ -57,24 +57,24 @@ instance genericSumDecodeJsonRepConstructor ::
     argument <- genericSumDecodeJsonRep inner
     pure $ GR.Constructor argument
 
-instance genericSumDecodeJsonRepNoArguments ::
+instance
   GenericSumDecodeJsonRep (GR.NoArguments) where
   genericSumDecodeJsonRep _ = do
     pure GR.NoArguments
 
-instance genericSumDecodeJsonRepArgument ::
+instance
   ( Argonaut.DecodeJson a
   ) => GenericSumDecodeJsonRep (GR.Argument a) where
   genericSumDecodeJsonRep f = GR.Argument <$> Argonaut.decodeJson f
 
-instance genericSumEncodeJsonRepSum ::
+instance
   ( GenericSumEncodeJsonRep a
   , GenericSumEncodeJsonRep b
   ) => GenericSumEncodeJsonRep (GR.Sum a b) where
   genericSumEncodeJsonRep (GR.Inl f) = genericSumEncodeJsonRep f
   genericSumEncodeJsonRep (GR.Inr f) = genericSumEncodeJsonRep f
 
-instance genericSumEncodeJsonRepConstructor ::
+instance
   ( GenericSumEncodeJsonRep a
   , IsSymbol name
   ) => GenericSumEncodeJsonRep (GR.Constructor name a) where
@@ -85,11 +85,11 @@ instance genericSumEncodeJsonRepConstructor ::
     let argument = genericSumEncodeJsonRep inner
     Argonaut.jsonSingletonObject name argument
 
-instance genericSumEncodeJsonRepNoArguments ::
+instance
   GenericSumEncodeJsonRep GR.NoArguments where
   genericSumEncodeJsonRep GR.NoArguments = Argonaut.jsonNull
 
-instance genericSumEncodeJsonRepArgument ::
+instance
   ( Argonaut.EncodeJson a
   ) => GenericSumEncodeJsonRep (GR.Argument a) where
   genericSumEncodeJsonRep (GR.Argument f) = Argonaut.encodeJson f
@@ -106,7 +106,7 @@ genericEnumDecodeJson f =
 class GenericEnumDecodeJson rep where
   genericEnumDecodeJsonRep :: Json -> Either JsonDecodeError rep
 
-instance sumEnumDecodeJsonRep ::
+instance
   ( GenericEnumDecodeJson a
   , GenericEnumDecodeJson b
   ) => GenericEnumDecodeJson (GR.Sum a b) where
@@ -114,7 +114,7 @@ instance sumEnumDecodeJsonRep ::
       = GR.Inl <$> genericEnumDecodeJsonRep f
     <|> GR.Inr <$> genericEnumDecodeJsonRep f
 
-instance constructorEnumSumRep ::
+instance
   ( IsSymbol name
   ) => GenericEnumDecodeJson (GR.Constructor name GR.NoArguments) where
   genericEnumDecodeJsonRep f = do
@@ -137,14 +137,14 @@ genericEnumEncodeJson f =
 class GenericEnumEncodeJson rep where
   genericEnumEncodeJsonRep :: rep -> Json
 
-instance sumGenericEnumEncodeJson ::
+instance
   ( GenericEnumEncodeJson a
   , GenericEnumEncodeJson b
   ) => GenericEnumEncodeJson (GR.Sum a b) where
   genericEnumEncodeJsonRep (GR.Inl x) = genericEnumEncodeJsonRep x
   genericEnumEncodeJsonRep (GR.Inr x) = genericEnumEncodeJsonRep x
 
-instance constructorGenericEnumEncodeJson ::
+instance
   ( IsSymbol name
   ) => GenericEnumEncodeJson (GR.Constructor name GR.NoArguments) where
   genericEnumEncodeJsonRep _ = Argonaut.encodeJson $ reflectSymbol (SProxy :: SProxy name)

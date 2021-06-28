@@ -239,10 +239,10 @@ contactCellsCpt = here.component "contactCells" cpt where
 data HyperdataAnnuaire = HyperdataAnnuaire
   { title :: Maybe String
   , desc  :: Maybe String }
-derive instance genericHyperdataAnnuaire :: Generic HyperdataAnnuaire _
-instance eqHyperdataAnnuaire :: Eq HyperdataAnnuaire where
+derive instance Generic HyperdataAnnuaire _
+instance Eq HyperdataAnnuaire where
   eq = genericEq
-instance decodeHyperdataAnnuaire :: DecodeJson HyperdataAnnuaire where
+instance DecodeJson HyperdataAnnuaire where
   decodeJson json = do
     obj   <- decodeJson json
     title <- obj .:? "title"
@@ -260,10 +260,10 @@ newtype AnnuaireInfo =
   , date      :: String
   , hyperdata :: HyperdataAnnuaire
   }
-derive instance genericAnnuaireInfo :: Generic AnnuaireInfo _
-instance eqAnnuaireInfo :: Eq AnnuaireInfo where
+derive instance Generic AnnuaireInfo _
+instance Eq AnnuaireInfo where
   eq = genericEq
-instance decodeAnnuaireInfo :: DecodeJson AnnuaireInfo where
+instance DecodeJson AnnuaireInfo where
   decodeJson json = do
     obj <- decodeJson json
     id        <- obj .: "id"
@@ -285,7 +285,7 @@ instance decodeAnnuaireInfo :: DecodeJson AnnuaireInfo where
 
 --newtype AnnuaireTable  = AnnuaireTable  { annuaireTable :: Array (Maybe Contact)}
 
---instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
+--instance DecodeJson AnnuaireTable where
 --  decodeJson json = do
 --    rows <- decodeJson json
 --    pure $ AnnuaireTable { annuaireTable : rows}

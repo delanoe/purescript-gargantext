@@ -2,14 +2,12 @@ module Gargantext.Components.Login.Types where
 
 import Prelude
 
-import Data.Argonaut
-  ( class DecodeJson, class EncodeJson
-  , decodeJson, jsonEmptyObject, (.:), (.:!), (:=), (~>) )
 import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
 import Data.Lens (Iso', iso)
 import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype)
+import Simple.JSON as JSON
 
 type Username = String
 type Password = String
@@ -20,51 +18,37 @@ newtype AuthRequest = AuthRequest
   { username :: Username
   , password :: Password
   }
+derive instance Generic AuthRequest _
+derive instance Newtype AuthRequest _
+derive newtype instance JSON.ReadForeign AuthRequest
+derive newtype instance JSON.WriteForeign AuthRequest
 
 newtype AuthResponse = AuthResponse
   { valid :: Maybe AuthData
   , inval :: Maybe AuthInvalid
   }
+derive instance Generic AuthResponse _
+derive instance Newtype AuthResponse _
+derive newtype instance JSON.ReadForeign AuthResponse
+derive newtype instance JSON.WriteForeign AuthResponse
 
 newtype AuthInvalid = AuthInvalid { message :: String }
+derive instance Generic AuthInvalid _
+derive instance Newtype AuthInvalid _
+derive newtype instance JSON.ReadForeign AuthInvalid
+derive newtype instance JSON.WriteForeign AuthInvalid
 
 newtype AuthData = AuthData
   { token   :: Token
   , tree_id :: TreeId
   }
+derive instance Generic AuthData _
+derive instance Newtype AuthData _
+derive newtype instance JSON.ReadForeign AuthData
+derive newtype instance JSON.WriteForeign AuthData
 
-derive instance genericAuthData :: Generic AuthData _
-
-derive instance newtypeAuthData :: Newtype AuthData _
-
-instance eqAuthData :: Eq AuthData where
+instance Eq AuthData where
   eq = genericEq
 
 _AuthData :: Iso' AuthData { token :: Token, tree_id :: TreeId }
 _AuthData = iso (\(AuthData v) -> v) AuthData
-
-instance decodeAuthInvalid :: DecodeJson AuthInvalid where
-  decodeJson json = do
-    obj     <- decodeJson json
-    message <- obj .: "message"
-    pure $ AuthInvalid {message}
-
-instance decodeAuthResponse :: DecodeJson AuthResponse where
-  decodeJson json = do
-    obj   <- decodeJson json
-    valid <- obj .:! "valid"
-    inval <- obj .:! "inval"
-    pure $ AuthResponse {valid, inval}
-
-instance decodeAuthData :: DecodeJson AuthData where
-  decodeJson json = do
-    obj   <- decodeJson json
-    token <- obj .: "token"
-    tree_id <- obj .: "tree_id"
-    pure $ AuthData { token, tree_id }
-
-instance encodeAuthRequest :: EncodeJson AuthRequest where
-  encodeJson (AuthRequest {username, password}) =
-       "username" := username
-    ~> "password" := password
-    ~> jsonEmptyObject

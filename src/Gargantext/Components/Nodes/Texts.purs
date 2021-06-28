@@ -115,12 +115,12 @@ textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
 
 data Mode = MoreLikeFav | MoreLikeTrash
 
-derive instance genericMode :: Generic Mode _
+derive instance Generic Mode _
 
-instance showMode :: Show Mode where
+instance Show Mode where
   show = genericShow
 
-derive instance eqMode :: Eq Mode
+derive instance Eq Mode
 
 modeTabType :: Mode -> CTabNgramType
 modeTabType MoreLikeFav    = CTabAuthors  -- TODO

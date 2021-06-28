@@ -31,7 +31,7 @@ here = R2.here "Gargantext.Components.Nodes.Home"
 
 newtype State = State { userName :: String, password :: String }
 
-derive instance newtypeState :: Newtype State _
+derive instance Newtype State _
 
 initialState :: State
 initialState = State { userName: "", password: "" }

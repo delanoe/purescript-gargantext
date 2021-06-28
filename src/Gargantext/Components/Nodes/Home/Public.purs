@@ -1,6 +1,5 @@
 module Gargantext.Components.Nodes.Home.Public where
 
-import Data.Argonaut as Argonaut
 import Data.Generic.Rep (class Generic)
 import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..))
@@ -9,6 +8,8 @@ import Data.Tuple (fst)
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
+import Simple.JSON.Generics as JSONG
 
 import Gargantext.Config (publicBackend)
 import Gargantext.Config.REST (get)
@@ -33,18 +34,11 @@ data PublicData = PublicData
   , author   :: String
   } | NoData { nodata :: String }
 
-derive instance eqPublicData :: Eq PublicData
-
-derive instance genericPublicData :: Generic PublicData _
-
-instance showPublicData :: Show PublicData where
+derive instance Eq PublicData
+derive instance Generic PublicData _
+instance JSON.ReadForeign PublicData where readImpl = JSONG.untaggedSumRep
+instance Show PublicData where
   show = genericShow
-
-instance decodeJsonPublicData :: Argonaut.DecodeJson PublicData where
-  decodeJson = genericSumDecodeJson
-
-instance encodeJsonPublicData :: Argonaut.EncodeJson PublicData where
-  encodeJson = genericSumEncodeJson
 
 ------------------------------------------------------------------------
 type LoadData  = ()

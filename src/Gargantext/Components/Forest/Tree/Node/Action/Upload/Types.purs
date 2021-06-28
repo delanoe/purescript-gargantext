@@ -11,12 +11,12 @@ import Gargantext.Prelude
 
 data FileType = CSV | CSV_HAL | WOS | PresseRIS | Arbitrary
 
-derive instance genericFileType :: Generic FileType _
-instance eqFileType :: Eq FileType where
+derive instance Generic FileType _
+instance Eq FileType where
   eq = genericEq
-instance showFileType :: Show FileType where
+instance Show FileType where
   show = genericShow
-instance readFileType :: Read FileType where
+instance Read FileType where
   read :: String -> Maybe FileType
   read "Arbitrary" = Just Arbitrary
   read "CSV"       = Just CSV
@@ -27,6 +27,6 @@ instance readFileType :: Read FileType where
 
 
 newtype UploadFileBlob = UploadFileBlob Blob
-derive instance genericUploadFileBlob :: Generic UploadFileBlob _
-instance eqUploadFileBlob :: Eq UploadFileBlob where
+derive instance Generic UploadFileBlob _
+instance Eq UploadFileBlob where
   eq (UploadFileBlob b1) (UploadFileBlob b2) = eq (size b1) (size b2)

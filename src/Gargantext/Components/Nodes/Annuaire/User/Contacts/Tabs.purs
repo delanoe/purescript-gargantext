@@ -30,12 +30,12 @@ here = R2.here "Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs"
 
 data Mode = Patents | Books | Communication
 
-derive instance genericMode :: Generic Mode _
+derive instance Generic Mode _
 
-instance showMode :: Show Mode where
+instance Show Mode where
   show = genericShow
 
-derive instance eqMode :: Eq Mode
+derive instance Eq Mode
 
 modeTabType :: Mode -> PTabNgramType
 modeTabType Patents = PTabPatents

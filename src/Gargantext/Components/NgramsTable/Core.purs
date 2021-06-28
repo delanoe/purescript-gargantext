@@ -157,15 +157,15 @@ newtype Versioned a = Versioned
   { version :: Version
   , data    :: a
   }
-derive instance genericVersioned :: Generic (Versioned a) _
-instance eqVersioned :: Eq a => Eq (Versioned a) where
+derive instance Generic (Versioned a) _
+instance Eq a => Eq (Versioned a) where
   eq = genericEq
-instance encodeJsonVersioned :: EncodeJson a => EncodeJson (Versioned a) where
+instance EncodeJson a => EncodeJson (Versioned a) where
   encodeJson (Versioned {version, data: data_})
      = "version" := version
     ~> "data" := data_
     ~> jsonEmptyObject
-instance decodeJsonVersioned :: DecodeJson a => DecodeJson (Versioned a) where
+instance DecodeJson a => DecodeJson (Versioned a) where
   decodeJson json = do
     obj     <- decodeJson json
     version <- obj .: "version"
@@ -179,17 +179,17 @@ newtype VersionedWithCount a = VersionedWithCount
   , count   :: Count
   , data    :: a
   }
-derive instance genericVersionedWithCount :: Generic (VersionedWithCount a) _
-instance eqVersionedWithCount :: Eq a => Eq (VersionedWithCount a) where
+derive instance Generic (VersionedWithCount a) _
+instance Eq a => Eq (VersionedWithCount a) where
   eq = genericEq
-instance encodeJsonVersionedWithCount :: EncodeJson a => EncodeJson (VersionedWithCount a) where
+instance EncodeJson a => EncodeJson (VersionedWithCount a) where
   encodeJson (VersionedWithCount {count, version, data: data_})
      = "version" := version
     ~> "count" := count
     ~> "data" := data_
     ~> jsonEmptyObject
 
-instance decodeJsonVersionedWithCount :: DecodeJson a => DecodeJson (VersionedWithCount a) where
+instance DecodeJson a => DecodeJson (VersionedWithCount a) where
   decodeJson json = do
     obj     <- decodeJson json
     count   <- obj .: "count"
@@ -220,19 +220,19 @@ data NgramsPatch
 
 ------------------------------------------------------------------------
 newtype NgramsTerm = NormNgramsTerm String
-derive instance genericNgramsTerm :: Generic NgramsTerm _
-instance eqNgramsTerm  :: Eq NgramsTerm where
+derive instance Generic NgramsTerm _
+instance Eq NgramsTerm where
   eq = genericEq
-instance ordNgramsTerm :: Ord NgramsTerm where
+instance Ord NgramsTerm where
   compare = genericCompare
-instance showNgramsTerm :: Show NgramsTerm where
+instance Show NgramsTerm where
   show = genericShow
 
-instance encodeJsonNgramsTerm :: EncodeJson NgramsTerm where
+instance EncodeJson NgramsTerm where
   encodeJson (NormNgramsTerm s) = encodeJson s
 
 -- TODO we assume that the ngrams are already normalized.
-instance decodeJsonNgramsTerm :: DecodeJson NgramsTerm where
+instance DecodeJson NgramsTerm where
   decodeJson = map NormNgramsTerm <<< decodeJson
 
 
@@ -302,7 +302,7 @@ newtype NgramsElement = NgramsElement
   , occurrences :: Int -- HERE
   }
 
-derive instance eqNgramsElement :: Eq NgramsElement
+derive instance Eq NgramsElement
 
 
 _parent :: forall parent row. Lens' { parent :: parent | row } parent
@@ -329,9 +329,9 @@ _ngrams_repo_elements = prop (SProxy :: SProxy "ngrams_repo_elements")
 _ngrams_scores :: forall a row. Lens' { ngrams_scores :: a | row } a
 _ngrams_scores = prop (SProxy :: SProxy "ngrams_scores")
 
-derive instance newtypeNgramsElement :: Newtype NgramsElement _
-derive instance genericNgramsElement :: Generic NgramsElement _
-instance showNgramsElement :: Show NgramsElement where
+derive instance Newtype NgramsElement _
+derive instance Generic NgramsElement _
+instance Show NgramsElement where
   show = genericShow
 
 _NgramsElement  :: Iso' NgramsElement {
@@ -345,7 +345,7 @@ _NgramsElement  :: Iso' NgramsElement {
   }
 _NgramsElement = _Newtype
 
-instance decodeJsonNgramsElement :: DecodeJson NgramsElement where
+instance DecodeJson NgramsElement where
   decodeJson json = do
     obj         <- decodeJson json
     ngrams      <- obj .:  "ngrams"
@@ -358,7 +358,7 @@ instance decodeJsonNgramsElement :: DecodeJson NgramsElement where
     let children = Set.fromFoldable (children' :: Array NgramsTerm)
     pure $ NgramsElement {ngrams, size, list, occurrences, parent, root, children}
 
-instance encodeJsonNgramsElement :: EncodeJson NgramsElement where
+instance EncodeJson NgramsElement where
   encodeJson (NgramsElement { children, list, ngrams, occurrences, parent, root }) = 
        "children"    := children
     ~> "list"        := list
@@ -377,9 +377,9 @@ newtype NgramsRepoElement = NgramsRepoElement
 --  , occurrences :: Int -- TODO
   }
 
-derive instance eqNgramsRepoElement  :: Eq NgramsRepoElement
+derive instance Eq NgramsRepoElement
 
-instance decodeJsonNgramsRepoElement :: DecodeJson NgramsRepoElement where
+instance DecodeJson NgramsRepoElement where
   decodeJson json = do
     obj         <- decodeJson json
     size        <- obj .:  "size"
@@ -390,7 +390,7 @@ instance decodeJsonNgramsRepoElement :: DecodeJson NgramsRepoElement where
     let children = Set.fromFoldable (children' :: Array NgramsTerm)
     pure $ NgramsRepoElement {size, list, parent, root, children}
 
-instance encodeJsonNgramsRepoElement :: EncodeJson NgramsRepoElement where
+instance EncodeJson NgramsRepoElement where
   encodeJson (NgramsRepoElement { size, list, root, parent, children {-occurrences-} })
      =  "size"       :=  size
     ~>  "list"       :=  list
@@ -400,9 +400,9 @@ instance encodeJsonNgramsRepoElement :: EncodeJson NgramsRepoElement where
 --    ~>  "occurrences" := occurrences
     ~>  jsonEmptyObject
 
-derive instance newtypeNgramsRepoElement :: Newtype NgramsRepoElement _
-derive instance genericNgramsRepoElement :: Generic NgramsRepoElement _
-instance showNgramsRepoElement :: Show NgramsRepoElement where
+derive instance Newtype NgramsRepoElement _
+derive instance Generic NgramsRepoElement _
+instance Show NgramsRepoElement where
   show = genericShow
 
 _NgramsRepoElement  :: Iso' NgramsRepoElement {
@@ -445,11 +445,11 @@ newtype NgramsTable = NgramsTable
   , ngrams_scores        :: Map NgramsTerm (Additive Int)
   }
 
-derive instance newtypeNgramsTable :: Newtype NgramsTable _
-derive instance genericNgramsTable :: Generic NgramsTable _
-instance eqNgramsTable  :: Eq NgramsTable where
+derive instance Newtype NgramsTable _
+derive instance Generic NgramsTable _
+instance Eq NgramsTable where
   eq = genericEq
-instance showNgramsTable :: Show NgramsTable where
+instance Show NgramsTable where
   show = genericShow
 
 _NgramsTable :: Iso' NgramsTable
@@ -458,13 +458,13 @@ _NgramsTable :: Iso' NgramsTable
                      }
 _NgramsTable = _Newtype
 
-instance indexNgramsTable :: Index NgramsTable NgramsTerm NgramsRepoElement where
+instance Index NgramsTable NgramsTerm NgramsRepoElement where
   ix k = _NgramsTable <<< _ngrams_repo_elements <<< ix k
 
-instance atNgramsTable :: At NgramsTable NgramsTerm NgramsRepoElement where
+instance At NgramsTable NgramsTerm NgramsRepoElement where
   at k = _NgramsTable <<< _ngrams_repo_elements <<< at k
 
-instance decodeJsonNgramsTable :: DecodeJson NgramsTable where
+instance DecodeJson NgramsTable where
   decodeJson json = do
     elements <- decodeJson json
     pure $ NgramsTable
@@ -477,7 +477,7 @@ instance decodeJsonNgramsTable :: DecodeJson NgramsTable where
       g (NgramsElement e) = Tuple e.ngrams (Additive e.occurrences)
 
 {- NOT USED
-instance encodeJsonNgramsTable :: EncodeJson NgramsTable where
+instance EncodeJson NgramsTable where
   encodeJson (NgramsTable {ngrams_repo_elements, ngrams_scores}) = encodeJson $ Map.values ... TODO
 -}
 -----------------------------------------------------------------------------------
@@ -585,15 +585,15 @@ replace old new
   | old == new = Keep
   | otherwise  = Replace { old, new }
 
-derive instance eqReplace :: Eq a => Eq (Replace a)
+derive instance Eq a => Eq (Replace a)
 
-instance semigroupReplace :: Eq a => Semigroup (Replace a) where
+instance Eq a => Semigroup (Replace a) where
   append Keep p = p
   append p Keep = p
   append (Replace { old }) (Replace { new }) | old /= new = unsafeThrow "old != new"
   append (Replace { new }) (Replace { old }) = replace old new
 
-instance semigroupMonoid :: Eq a => Monoid (Replace a) where
+instance Eq a => Monoid (Replace a) where
   mempty = Keep
 
 applyReplace :: forall a. Eq a => Replace a -> a -> a
@@ -602,7 +602,7 @@ applyReplace (Replace { old, new }) a
   | a == old  = new
   | otherwise = a
 
-instance encodeJsonReplace :: EncodeJson a => EncodeJson (Replace a) where
+instance EncodeJson a => EncodeJson (Replace a) where
   encodeJson Keep
     = "tag" := "Keep"
    ~> jsonEmptyObject
@@ -612,7 +612,7 @@ instance encodeJsonReplace :: EncodeJson a => EncodeJson (Replace a) where
    ~> "tag" := "Replace"
    ~> jsonEmptyObject
 
-instance decodeJsonReplace :: (DecodeJson a, Eq a) => DecodeJson (Replace a) where
+instance (DecodeJson a, Eq a) => DecodeJson (Replace a) where
   decodeJson json = do
     obj  <- decodeJson json
     mold <- obj .:! "old"
@@ -629,23 +629,23 @@ newtype PatchSet a = PatchSet
   , add :: Set a
   }
 
-instance semigroupPatchSet :: Ord a => Semigroup (PatchSet a) where
+instance Ord a => Semigroup (PatchSet a) where
   append (PatchSet p) (PatchSet q) = PatchSet
     { rem: q.rem <> p.rem
     , add: Set.difference q.add p.rem <> p.add
     }
 
-instance monoidPatchSet :: Ord a => Monoid (PatchSet a) where
+instance Ord a => Monoid (PatchSet a) where
   mempty = PatchSet { rem: Set.empty, add: Set.empty }
 
-instance encodeJsonPatchSet :: EncodeJson a => EncodeJson (PatchSet a) where
+instance EncodeJson a => EncodeJson (PatchSet a) where
   encodeJson (PatchSet {rem, add})
     -- TODO only include non empty fields
     = "rem" := (Set.toUnfoldable rem :: Array a)
    ~> "add" := (Set.toUnfoldable add :: Array a)
    ~> jsonEmptyObject
 
-instance decodeJsonPatchSet :: (Ord a, DecodeJson a) => DecodeJson (PatchSet a) where
+instance (Ord a, DecodeJson a) => DecodeJson (PatchSet a) where
   decodeJson json = do
     -- TODO handle empty fields
     obj <- decodeJson json
@@ -668,10 +668,10 @@ patchSetFromMap m = PatchSet { rem: Map.keys (Map.filter not m)
 ngramsReplace :: Maybe NgramsRepoElement -> Maybe NgramsRepoElement -> NgramsPatch
 ngramsReplace patch_old patch_new = NgramsReplace {patch_old, patch_new}
 
-derive instance eqNgramsPatch  :: Eq NgramsPatch
-derive instance eqPatchSetNgramsTerm  :: Eq (PatchSet NgramsTerm)
+derive instance Eq NgramsPatch
+derive instance Eq (PatchSet NgramsTerm)
 
-instance semigroupNgramsPatch :: Semigroup NgramsPatch where
+instance Semigroup NgramsPatch where
   append (NgramsReplace p) (NgramsReplace q)
     | p.patch_old /= q.patch_new = unsafeThrow "append/NgramsPatch: old != new"
     | otherwise                  = ngramsReplace q.patch_old p.patch_new
@@ -689,10 +689,10 @@ invert _ = unsafeThrow "invert: TODO"
 
 
 
-instance monoidNgramsPatch :: Monoid NgramsPatch where
+instance Monoid NgramsPatch where
   mempty = NgramsPatch { patch_children: mempty, patch_list: mempty }
 
-instance encodeJsonNgramsPatch :: EncodeJson NgramsPatch where
+instance EncodeJson NgramsPatch where
   encodeJson (NgramsReplace { patch_old, patch_new })
      = "patch_old" := patch_old
     ~> "patch_new" := patch_new
@@ -703,7 +703,7 @@ instance encodeJsonNgramsPatch :: EncodeJson NgramsPatch where
     ~> "patch_list"     := patch_list
     ~> jsonEmptyObject
 
-instance decodeJsonNgramsPatch :: DecodeJson NgramsPatch where
+instance DecodeJson NgramsPatch where
   decodeJson json = do
     obj            <- decodeJson json
     -- TODO handle empty fields
@@ -738,43 +738,43 @@ applyNgramsPatch (NgramsPatch p)           m = m # _Just <<< _Newtype %~ applyNg
 fromMap :: forall k p. Ord k => Eq p => Monoid p => Map k p -> PatchMap k p
 fromMap = PatchMap <<< Map.filter (\v -> v /= mempty)
 
-instance semigroupPatchMap :: (Ord k, Eq p, Monoid p) => Semigroup (PatchMap k p) where
+instance (Ord k, Eq p, Monoid p) => Semigroup (PatchMap k p) where
   append (PatchMap p) (PatchMap q) = fromMap $ Map.unionWith append p q
 
-instance monoidPatchMap :: (Ord k, Eq p, Monoid p) => Monoid (PatchMap k p) where
+instance (Ord k, Eq p, Monoid p) => Monoid (PatchMap k p) where
   mempty = PatchMap Map.empty
 
-derive instance newtypePatchMap :: Newtype (PatchMap k p) _
-derive instance eqPatchMap :: (Eq k, Eq p) => Eq (PatchMap k p)
+derive instance Newtype (PatchMap k p) _
+derive instance (Eq k, Eq p) => Eq (PatchMap k p)
 
 _PatchMap :: forall k p. Iso' (PatchMap k p) (Map k p)
 _PatchMap = _Newtype
 
 {-
-instance functorPatchMap :: Functor (PatchMap k) where
+instance Functor (PatchMap k) where
   map f (PatchMap m) = PatchMap (map f m) -- NO NORM: fromMap would not typecheck
 
-instance functorWithIndexPatchMap :: FunctorWithIndex k (PatchMap k) where
+instance FunctorWithIndex k (PatchMap k) where
   mapWithIndex f (PatchMap m) = PatchMap (mapWithIndex f m) -- NO NORM: fromMap would not typecheck
 -}
 
-instance foldlablePatchMap :: Foldable (PatchMap k) where
+instance Foldable (PatchMap k) where
   foldr f z (PatchMap m) = foldr f z m
   foldl f z (PatchMap m) = foldl f z m
   foldMap f (PatchMap m) = foldMap f m
 
-instance foldlableWithIndexPatchMap :: FoldableWithIndex k (PatchMap k) where
+instance FoldableWithIndex k (PatchMap k) where
   foldrWithIndex f z (PatchMap m) = foldrWithIndex f z m
   foldlWithIndex f z (PatchMap m) = foldlWithIndex f z m
   foldMapWithIndex f (PatchMap m) = foldMapWithIndex f m
 
 {- fromMap is preventing these to type check:
 
-instance traversablePatchMap :: Ord k => Traversable (PatchMap k) where
+instance Ord k => Traversable (PatchMap k) where
   traverse f (PatchMap m) = fromMap <$> traverse f m
   sequence (PatchMap m) = fromMap <$> sequence m
 
-instance traversableWithIndexPatchMap :: Ord k => TraversableWithIndex k (PatchMap k) where
+instance Ord k => TraversableWithIndex k (PatchMap k) where
   traverseWithIndex f (PatchMap m) = fromMap <$> traverseWithIndex f m
 -}
 
@@ -784,11 +784,11 @@ traversePatchMapWithIndex :: forall f a b k.
 traversePatchMapWithIndex f (PatchMap m) = fromMap <$> traverseWithIndex f m
 
 -- TODO generalize
-instance encodeJsonPatchMap :: EncodeJson p => EncodeJson (PatchMap NgramsTerm p) where
+instance EncodeJson p => EncodeJson (PatchMap NgramsTerm p) where
   encodeJson (PatchMap m) =
     encodeJson $ FO.fromFoldable $ map (lmap ngramsTermText) (Map.toUnfoldable m :: Array _)
 
-instance decodeJsonPatchMap :: DecodeJson p => DecodeJson (PatchMap NgramsTerm p) where
+instance DecodeJson p => DecodeJson (PatchMap NgramsTerm p) where
   decodeJson json = do
     obj <- decodeJson json
     pure $ PatchMap $ foldlWithIndex (\k m v -> Map.insert (NormNgramsTerm k) v m) mempty (obj :: FO.Object p)
@@ -825,7 +825,7 @@ newtype AsyncNgramsChartsUpdate = AsyncNgramsChartsUpdate {
     listId  :: Maybe ListId
   , tabType :: TabType
   }
-instance encodeAsyncNgramsChartsUpdate :: EncodeJson AsyncNgramsChartsUpdate where
+instance EncodeJson AsyncNgramsChartsUpdate where
   encodeJson (AsyncNgramsChartsUpdate { listId, tabType }) = do
       "list_id"  := listId
     ~> "tab_type" := tabType

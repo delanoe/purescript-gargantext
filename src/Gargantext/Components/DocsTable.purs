@@ -507,7 +507,7 @@ newtype SearchQuery = SearchQuery {
   }
 
 
-instance encodeJsonSQuery :: EncodeJson SearchQuery where
+instance EncodeJson SearchQuery where
   encodeJson (SearchQuery {query, parent_id})
     = "query" := query
     ~> "parent_id" := parent_id

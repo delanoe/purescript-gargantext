@@ -52,7 +52,7 @@ asyncProgressBarCpt = here.component "asyncProgressBar" cpt
             asyncProgress@(GT.AsyncProgress {status}) <- queryProgress props
             liftEffect do
               T.write_ (min 100.0 $ GT.progressPercent asyncProgress) progress
-              if (status == GT.Finished) || (status == GT.Killed) || (status == GT.Failed) then do
+              if (status == GT.IsFinished) || (status == GT.IsKilled) || (status == GT.IsFailure) then do
                 _ <- case R.readRef intervalIdRef of
                   Nothing -> pure unit
                   Just iid -> clearInterval iid

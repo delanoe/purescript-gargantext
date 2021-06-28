@@ -27,12 +27,12 @@ here = R2.here "Gargantext.Components.Nodes.Frame"
 
 data Hyperdata = Hyperdata { base :: String, frame_id :: String }
 
-derive instance genericHyperdata :: Generic Hyperdata _
-instance eqHyperdata :: Eq Hyperdata where
+derive instance Generic Hyperdata _
+instance Eq Hyperdata where
   eq = genericEq
-instance showHyperdata :: Show Hyperdata where
+instance Show Hyperdata where
   show = genericShow
-instance decodeJsonHyperdata :: Argonaut.DecodeJson Hyperdata where
+instance Argonaut.DecodeJson Hyperdata where
 -- TODO
 --  decodeJson = genericSumDecodeJson
   decodeJson json = do
@@ -40,7 +40,7 @@ instance decodeJsonHyperdata :: Argonaut.DecodeJson Hyperdata where
     base     <- obj .: "base"
     frame_id <- obj .: "frame_id"
     pure $ Hyperdata {base, frame_id}
-instance encodeJsonHyperdata :: Argonaut.EncodeJson Hyperdata where
+instance Argonaut.EncodeJson Hyperdata where
   encodeJson = genericSumEncodeJson
 
 type Props =

@@ -21,8 +21,8 @@ stylesheetElId = "bootstrap-css"
 
 newtype Theme = Theme { location :: String
                       , name :: String }
-derive instance genericTheme :: Generic Theme _
-instance genericEq :: Eq Theme where
+derive instance Generic Theme _
+instance Eq Theme where
   eq = genericEq
 
 themeName :: Theme -> String

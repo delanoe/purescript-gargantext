@@ -5,6 +5,10 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff, launchAff)
 import Formula as F
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
+
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Contact.Types (AddContactParams(..))
 import Gargantext.Routes as GR
@@ -12,9 +16,6 @@ import Gargantext.Sessions (Session, post)
 import Gargantext.Types (ID)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Contact"

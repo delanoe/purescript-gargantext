@@ -110,13 +110,13 @@ scuff = unsafeCoerce
 -- class ToElement a where
 --   toElement :: a -> R.Element
 
--- instance toElementElement :: ToElement R.Element where
+-- instance ToElement R.Element where
 --   toElement = identity
 
--- instance toElementReactElement :: ToElement ReactElement where
+-- instance ToElement ReactElement where
 --   toElement = buff
 
--- instance toElementArray :: ToElement a => ToElement (Array a) where
+-- instance ToElement a => ToElement (Array a) where
 --   toElement = R.fragment <<< map toElement
 
 createElement' :: forall required given
@@ -324,10 +324,10 @@ getSelection = runEffectFn1 _getSelection
 
 foreign import _getSelection :: EffectFn1 Unit Selection
 
-stringify :: Json -> Int -> String
+stringify :: forall a. a -> Int -> String
 stringify j indent = runFn2 _stringify j indent
 
-foreign import _stringify :: Fn2 Json Int String
+foreign import _stringify :: forall a. Fn2 a Int String
 
 getls :: Effect Storage
 getls = window >>= localStorage
@@ -337,20 +337,21 @@ openNodesKey = "garg-open-nodes"
 
 type LocalStorageKey = String
 
-loadLocalStorageState :: forall s. Argonaut.DecodeJson s => LocalStorageKey -> T.Box s -> Effect Unit
+loadLocalStorageState :: forall s. JSON.ReadForeign s => LocalStorageKey -> T.Box s -> Effect Unit
 loadLocalStorageState key cell = do
   storage <- getls
   item :: Maybe String <- getItem key storage
   -- let json = hush <<< Argonaut.jsonParser =<< item
   -- let parsed = hush <<< Argonaut.decodeJson =<< json
-  let parsed = hush <<< JSON.readJSON item
+  let parsed = hush <<< JSON.readJSON $ fromMaybe "" item
   case parsed of
     Nothing -> pure unit
     Just p  -> void $ T.write p cell
 
-listenLocalStorageState :: forall s. Argonaut.EncodeJson s => LocalStorageKey -> T.Change s -> Effect Unit
+listenLocalStorageState :: forall s. JSON.WriteForeign s => LocalStorageKey -> T.Change s -> Effect Unit
 listenLocalStorageState key { old, new } = do
-  let json = Json.stringify $ Argonaut.encodeJson new
+  --let json = Json.stringify $ Argonaut.encodeJson new
+  let json = JSON.writeJSON new
   storage <- getls
   setItem key json storage
 

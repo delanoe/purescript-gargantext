@@ -35,7 +35,7 @@ data AppRoute
   | UserPage        SessionId Int
 
 
-derive instance eqAppRoute :: Eq AppRoute
+derive instance Eq AppRoute
 
 data SessionRoute
   = Tab TabType (Maybe Id)
@@ -60,7 +60,7 @@ data SessionRoute
   | ChartHash { chartType :: ChartType, listId :: Maybe ListId, tabType :: TabType } (Maybe Id)
   -- | AnnuaireContact AnnuaireId DocId
 
-instance showAppRoute :: Show AppRoute where
+instance Show AppRoute where
   show Home                     = "Home"
   show Login                    = "Login"
   show (Folder        s i)      = "Folder"         <> show i <> " (" <> show s <> ")"

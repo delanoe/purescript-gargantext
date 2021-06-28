@@ -39,7 +39,7 @@ data Chart = Line
            | ThemeRiver
 -- Trees
 
-instance showChart :: Show Chart where
+instance Show Chart where
   show Bar      = "bar"
   show EffectScatter = "effectScatter" -- ^ https://ecomfe.github.io/echarts-examples/public/editor.html?c=scatter-effect
   show Funnel   = "funnel"
@@ -131,7 +131,7 @@ seriesSankey o = unsafeSeries ((unsafeCoerce o) { "type" = seriesType Sankey })
 -- Tree types
 data Trees = TreeLine | TreeRadial | TreeMap
 
-instance showTrees :: Show Trees where
+instance Show Trees where
   show TreeLine    = "tree"           -- ^ https://ecomfe.github.io/echarts-examples/public/editor.html?c=tree-radial
   show TreeRadial  = "tree"           -- ^ https://ecomfe.github.io/echarts-examples/public/editor.html?c=scatter-simple
   show TreeMap     = "treemap"        -- ^ https://ecomfe.github.io/echarts-examples/public/editor.html?c=treemap-simple
@@ -192,17 +192,17 @@ data TreeNode = TreeNode {
   , value    :: Int
   }
 
-derive instance genericTreeNode :: Generic TreeNode _
-instance eqTreeNode :: Eq TreeNode where
+derive instance Generic TreeNode _
+instance Eq TreeNode where
   eq (TreeNode n1) (TreeNode n2) = eq n1 n2
-instance decodeTreeNode :: DecodeJson TreeNode where
+instance DecodeJson TreeNode where
   decodeJson json = do
     obj <- decodeJson json
     children <- obj .: "children"
     name <- obj .: "label"
     value <- obj .: "value"
     pure $ TreeNode { children, name, value }
-instance encodeTreeNode :: EncodeJson TreeNode where
+instance EncodeJson TreeNode where
   encodeJson (TreeNode { children, name, value }) =
        "children" := encodeJson children
     ~> "label"    := encodeJson name

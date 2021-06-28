@@ -36,17 +36,17 @@ type ElRef = R.Ref (Nullable Element)
 
 data CodeType = Haskell | JSON | Markdown | Python
 
-derive instance genericCodeType :: Generic CodeType _
-instance eqCodeType :: Eq CodeType where
+derive instance Generic CodeType _
+instance Eq CodeType where
   eq = genericEq
-instance showCodeType :: Show CodeType where
+instance Show CodeType where
   show = genericShow
 
 data ViewType = Code | Preview | Both
-derive instance genericViewType :: Generic ViewType _
-instance eqViewType :: Eq ViewType where
+derive instance Generic ViewType _
+instance Eq ViewType where
   eq = genericEq
-instance showViewType :: Show ViewType where
+instance Show ViewType where
   show = genericShow
 
 type Props =

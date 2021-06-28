@@ -16,9 +16,10 @@ let
     set -e
 
     echo "Compiling"
-    build-purs
+    #build-purs
     echo "Bundling"
-    yarn pulp browserify --skip-compile -t dist/bundle.js --src-path output
+    #yarn pulp browserify --skip-compile -t dist/bundle.js --src-path output
+    yarn spago bundle-app --to dist/bundle.js
   '';
 
   repl = pkgs.writeShellScriptBin "repl" ''

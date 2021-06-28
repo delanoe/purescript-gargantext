@@ -1,43 +1,40 @@
 module Gargantext.Components.Nodes.Dashboard.Types where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, (.:), (.:?), (:=), (~>), jsonEmptyObject)
-import Data.Generic.Rep (class Generic)
+import Gargantext.Prelude
+
 import Data.Eq.Generic (genericEq)
+import Data.Generic.Rep (class Generic)
 import Data.List as List
 import Data.Maybe (Maybe(..))
+import Data.Newtype (class Newtype)
 import Effect.Aff (Aff)
-
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
-import Gargantext.Components.Nodes.Types (FTField)
-import Gargantext.Prelude
+import Gargantext.Components.Nodes.Types (FTField, FTFieldList(..))
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, get, put)
 import Gargantext.Types (NodeType(..))
+import Simple.JSON as JSON
 
 type Preferences = Maybe String
 
 newtype Hyperdata =
   Hyperdata
   { charts      :: Array P.PredefinedChart
-  , fields      :: List.List FTField
+  , fields      :: FTFieldList
   , preferences :: Preferences
   }
-derive instance genericHyperdata :: Generic Hyperdata _
-instance eqHyperdata :: Eq Hyperdata where
+derive instance Generic Hyperdata _
+derive instance Newtype Hyperdata _
+derive newtype instance JSON.ReadForeign Hyperdata
+derive newtype instance JSON.WriteForeign Hyperdata
+-- instance JSON.WriteForeign Hyperdata where
+--   writeImpl (Hyperdata h) = JSON.writeImpl h'
+--     where
+--       h' = { charts: h.charts
+--            , fields: List.toUnfoldable h.fields :: Array FTField
+--            , preferences: h.preferences }
+instance Eq Hyperdata where
   eq = genericEq
-instance decodeHyperdata :: DecodeJson Hyperdata where
-  decodeJson json = do
-    obj <- decodeJson json
-    charts <- obj .: "charts"
-    fields <- obj .: "fields"
-    preferences <- obj .:? "preferences"
-    pure $ Hyperdata {charts, fields, preferences}
-instance encodeHyperdata :: EncodeJson Hyperdata where
-  encodeJson (Hyperdata {charts, fields, preferences}) = do
-       "charts"  := charts
-    ~> "fields"  := fields
-    ~> "preferences"  := preferences
-    ~> jsonEmptyObject
 
 
 type LoadProps = ( nodeId  :: Int, session :: Session )
@@ -62,20 +59,16 @@ newtype DashboardData =
   , hyperdata :: Hyperdata
   , parentId  :: Int
   }
-
-derive instance genericDashboardData :: Generic DashboardData _
-instance eqDashboardData :: Eq DashboardData where
+derive instance Generic DashboardData _
+derive instance Newtype DashboardData _
+instance JSON.ReadForeign DashboardData where
+  readImpl f = do
+    inst :: { id :: Int, hyperdata :: Hyperdata, parent_id :: Int } <- JSON.readImpl f
+    pure $ DashboardData { id: inst.id
+                         , hyperdata: inst.hyperdata
+                         , parentId: inst.parent_id }
+instance JSON.WriteForeign DashboardData where
+  writeImpl (DashboardData { id, hyperdata, parentId }) =
+    JSON.writeImpl { id, hyperdata, parent_id: parentId }
+instance Eq DashboardData where
   eq = genericEq
-instance decodeDashboardData :: DecodeJson DashboardData where
-  decodeJson json = do
-    obj <- decodeJson json
-    id <- obj .: "id"
-    hyperdata <- obj .: "hyperdata"
-    parentId <- obj .: "parent_id"
-    pure $ DashboardData { id, hyperdata, parentId }
-instance encodeDashboardData :: EncodeJson DashboardData where
-  encodeJson (DashboardData { id, hyperdata, parentId }) = do
-       "id"       := id
-    ~> "hyperdata" := hyperdata
-    ~> "parent_id" := parentId
-    ~> jsonEmptyObject

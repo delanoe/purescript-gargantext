@@ -1,12 +1,14 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Add where
 
-import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Array (head, length)
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Newtype (class Newtype)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
 import Toestand as T
 
 import Gargantext.Prelude
@@ -42,12 +44,11 @@ newtype AddNodeValue = AddNodeValue
   { name     :: GT.Name
   , nodeType :: GT.NodeType
   }
-
-instance encodeJsonAddNodeValue :: EncodeJson AddNodeValue where
-  encodeJson (AddNodeValue {name, nodeType})
-     = "pn_name"     := name
-    ~> "pn_typename" := nodeType
-    ~> jsonEmptyObject
+derive instance Generic AddNodeValue _
+derive instance Newtype AddNodeValue _
+instance JSON.WriteForeign AddNodeValue where
+  writeImpl (AddNodeValue {name, nodeType}) = JSON.writeImpl { pn_name: name
+                                                             , pn_typename: nodeType }
 
 ----------------------------------------------------------------------
 data NodePopup = CreatePopup | NodePopup

@@ -119,7 +119,7 @@ pureJson req = do
     Right b -> pure b
 
 
-foreign import _makeRequest :: forall options trash. Union options trash M.Options =>
+foreign import _makeRequest :: forall options trash.
                                M.URL -> { method :: M.Method, headers :: M.Headers | options } -> Request
 foreign import _openCache :: String -> Effect (Promise Cache)
 foreign import _delete :: String -> Effect (Promise Unit)

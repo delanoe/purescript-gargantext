@@ -10,10 +10,10 @@ import Reactix as R
 data SubTreeOut = SubTreeOut { in  :: GT.ID
                              , out :: GT.ID
                              }
-derive instance genericSubTreeOut :: Generic SubTreeOut _
-instance eqSubTreOut      :: Eq SubTreeOut where
+derive instance Generic SubTreeOut _
+instance Eq SubTreeOut where
   eq = genericEq
-instance showSubTreeOut           :: Show SubTreeOut where
+instance Show SubTreeOut where
   show = genericShow
 
 ------------------------------------------------------------------------
@@ -21,10 +21,10 @@ data SubTreeParams = SubTreeParams { showtypes :: Array GT.NodeType
                                    , valitypes :: Array GT.NodeType
                                    }
 
-derive instance genericSubTreeParams :: Generic SubTreeParams _
-instance eqSubTreeParams      :: Eq SubTreeParams where
+derive instance Generic SubTreeParams _
+instance Eq SubTreeParams where
   eq = genericEq
-instance showSubTreeParams           :: Show SubTreeParams where
+instance Show SubTreeParams where
   show = genericShow
 ------------------------------------------------------------------------
 

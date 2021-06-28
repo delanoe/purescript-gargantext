@@ -822,11 +822,29 @@
   };
   "sequences" = {
     name = "sequences";
-    version = "v2.1.0";
+    version = "v3.0.2";
     src = pkgs.fetchgit {
       url = "https://github.com/hdgarrood/purescript-sequences.git";
-      rev = "v2.1.0";
-      sha256 = "10fkkmmb7qh4p5gmgb6xpxh9g8hy06ddy8cyfrs3py8a5b8h46hw";
+      rev = "v3.0.2";
+      sha256 = "0mc0jjs1119c2nyd08yhdmliq3s47lhrdknhziga3lnbzja889k4";
+    };
+  };
+  "simple-json" = {
+    name = "simple-json";
+    version = "v8.0.0";
+    src = pkgs.fetchgit {
+      url = "https://github.com/justinwoo/purescript-simple-json.git";
+      rev = "v8.0.0";
+      sha256 = "0q5hb324m1r5njnxq9wxgy99i0x8sd9mj2drq72i64xxr1k0m8qc";
+    };
+  };
+  "simple-json-generics" = {
+    name = "simple-json-generics";
+    version = "v0.1.0";
+    src = pkgs.fetchgit {
+      url = "https://github.com/justinwoo/purescript-simple-json-generics";
+      rev = "v0.1.0";
+      sha256 = "1izbrh9614yi0lzpnqbn9q7hbllhvvhrgyziganj7rzgphwn3ywx";
     };
   };
   "simplecrypto" = {
@@ -966,11 +984,11 @@
   };
   "tuples-native" = {
     name = "tuples-native";
-    version = "v2.0.1";
+    version = "v2.2.0";
     src = pkgs.fetchgit {
-      url = "https://github.com/athanclark/purescript-tuples-native";
-      rev = "v2.0.1";
-      sha256 = "1c8065krignnphiwnws9d5ingfx8k83wqnmd1zadyjlakfdg2b4h";
+      url = "https://github.com/poorscript/purescript-tuples-native";
+      rev = "v2.2.0";
+      sha256 = "0hplpqc2sbcjin084jqzhzqhprlc1achbqmsn9czpnf6ylgkqhaz";
     };
   };
   "type-equality" = {
@@ -1061,6 +1079,15 @@
       url = "https://github.com/purescript/purescript-validation.git";
       rev = "v5.0.0";
       sha256 = "0yfb97nk7179hp0r2iylj74wl7rnl1y2x6dh5hlipxg1kpq9yydk";
+    };
+  };
+  "variant" = {
+    name = "variant";
+    version = "v7.0.2";
+    src = pkgs.fetchgit {
+      url = "https://github.com/natefaubion/purescript-variant.git";
+      rev = "v7.0.2";
+      sha256 = "0a555fa2d8kd6rzfv9w64aphr7n6x0cizfp7n71wh5jw07b7hn5y";
     };
   };
   "versions" = {

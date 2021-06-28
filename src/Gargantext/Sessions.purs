@@ -8,37 +8,28 @@ module Gargantext.Sessions
   , getCacheState, setCacheState
   ) where
 
-import Gargantext.Sessions.Types
-  ( Session(..), Sessions(..), OpenNodes, NodeId, mkNodeId
-  , sessionUrl, sessionId
-  , empty, null, unSessions, lookup, cons, tryCons, update, remove, tryRemove
-  )
+import Gargantext.Prelude
 
-import Data.Argonaut
-  ( class DecodeJson, decodeJson, class EncodeJson, encodeJson )
-import Data.Argonaut.Core (stringify)
-import Data.Argonaut.Parser (jsonParser)
-import Data.Either (Either(..))
+import DOM.Simple.Console (log2)
+import Data.Either (Either(..), hush)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe)
-import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Prelude
-  ( Unit, bind, otherwise, pure, unit, ($), (*>), (<$>), (<*), (>>=))
+import Gargantext.Components.Login.Types (AuthData(..), AuthInvalid(..), AuthRequest(..), AuthResponse(..))
+import Gargantext.Components.Nodes.Lists.Types as NT
+import Gargantext.Config.REST as REST
+import Gargantext.Ends (class ToUrl, Backend, toUrl)
+import Gargantext.Sessions.Types (Session(..), Sessions(..), OpenNodes, NodeId, mkNodeId, sessionUrl, sessionId, empty, null, unSessions, lookup, cons, tryCons, update, remove, tryRemove)
+import Gargantext.Utils.Reactix (getls, stringify)
 import Prim.Row (class Lacks, class Nub)
 import Reactix as R
 import Record as Record
 import Record.Extra as REX
+import Simple.JSON as JSON
 import Toestand as T
+import Web.HTML.Event.EventTypes (offline)
 import Web.Storage.Storage (getItem, removeItem, setItem)
-
-import Gargantext.Components.Login.Types
-  ( AuthData(..), AuthInvalid(..), AuthRequest(..), AuthResponse(..) )
-import Gargantext.Components.Nodes.Lists.Types as NT
-import Gargantext.Config.REST as REST
-import Gargantext.Ends (class ToUrl, Backend, toUrl)
-import Gargantext.Utils.Reactix (getls)
 
 type WithSession c =
   ( session :: Session
@@ -94,18 +85,25 @@ setCacheState (Session session@{ caches }) nodeId cacheState =
 -- | Will attempt to load saved sessions from localstorage. should log
 -- | if decoding fails
 loadSessions :: Effect Sessions
-loadSessions = getls >>= getItem localStorageKey >>= handleMaybe
-  where
-    -- a localstorage lookup can find nothing
-    handleMaybe (Just val) = handleEither (parse val >>= decode)
-    handleMaybe Nothing    = pure empty
+loadSessions = do
+  storage <- getls
+  mItem :: Maybe String <- getItem localStorageKey storage
+  case mItem of
+    Nothing -> pure empty
+    Just val -> do
+      let r = JSON.readJSON val
+      case hush r of
+        Nothing -> pure empty
+        Just p -> pure p
+-- loadSessions = getls >>= getItem localStorageKey >>= handleMaybe
+--   where
+--     -- a localstorage lookup can find nothing
+--     handleMaybe (Just val) = handleEither (JSON.readJSON val)
+--     handleMaybe Nothing    = pure empty
 
-    -- either parsing or decoding could fail, hence two errors
-    handleEither (Left err) = err *> pure empty
-    handleEither (Right ss) = pure ss
-
-    parse  s = mapLeft (log2 "Error parsing serialised sessions:") (jsonParser s)
-    decode j = mapLeft (log2 "Error decoding serialised sessions:") (decodeJson j)
+--     -- either parsing or decoding could fail, hence two errors
+--     handleEither (Left err) = err *> pure empty
+--     handleEither (Right ss) = pure ss
 
 mapLeft :: forall l m r. (l -> m) -> Either l r -> Either m r
 mapLeft f (Left  l) = Left (f l)
@@ -117,7 +115,7 @@ saveSessions sessions = effect *> pure sessions where
   set v  = getls >>= setItem    localStorageKey v
   effect
     | null sessions = rem
-    | otherwise = set (stringify $ encodeJson sessions)
+    | otherwise = set (JSON.writeJSON sessions)
 
 updateSession :: Session -> Effect Unit
 updateSession s = do
@@ -135,28 +133,28 @@ postAuthRequest backend ar@(AuthRequest {username}) =
           Right $ Session { backend, caches: Map.empty, token, treeId: tree_id, username }
       | otherwise = Left "Invalid response from server"
 
-get :: forall a p. DecodeJson a => ToUrl Session p => Session -> p -> Aff a
+get :: forall a p. JSON.ReadForeign a => ToUrl Session p => Session -> p -> Aff a
 get session@(Session {token}) p = REST.get (Just token) (toUrl session p)
 
-put :: forall a b p. EncodeJson a => DecodeJson b => ToUrl Session p => Session -> p -> a -> Aff b
+put :: forall a b p. JSON.WriteForeign a => JSON.ReadForeign b => ToUrl Session p => Session -> p -> a -> Aff b
 put session@(Session {token}) p = REST.put (Just token) (toUrl session p)
 
-put_ :: forall b p. DecodeJson b => ToUrl Session p => Session -> p -> Aff b
+put_ :: forall b p. JSON.ReadForeign b => ToUrl Session p => Session -> p -> Aff b
 put_ session@(Session {token}) p = REST.put_ (Just token) (toUrl session p)
 
-delete :: forall a p. DecodeJson a => ToUrl Session p => Session -> p -> Aff a
+delete :: forall a p. JSON.ReadForeign a => ToUrl Session p => Session -> p -> Aff a
 delete session@(Session {token}) p = REST.delete (Just token) (toUrl session p)
 
 -- This might not be a good idea:
 -- https://stackoverflow.com/questions/14323716/restful-alternatives-to-delete-request-body
-deleteWithBody :: forall a b p. EncodeJson a => DecodeJson b => ToUrl Session p => Session -> p -> a -> Aff b
+deleteWithBody :: forall a b p. JSON.WriteForeign a => JSON.ReadForeign b => ToUrl Session p => Session -> p -> a -> Aff b
 deleteWithBody session@(Session {token}) p = REST.deleteWithBody (Just token) (toUrl session p)
 
-post :: forall a b p. EncodeJson a => DecodeJson b => ToUrl Session p => Session -> p -> a -> Aff b
+post :: forall a b p. JSON.WriteForeign a => JSON.ReadForeign b => ToUrl Session p => Session -> p -> a -> Aff b
 post session@(Session {token}) p = REST.post (Just token) (toUrl session p)
 
-postWwwUrlencoded :: forall b p. DecodeJson b => ToUrl Session p => Session -> p -> REST.FormDataParams -> Aff b
+postWwwUrlencoded :: forall b p. JSON.ReadForeign b => ToUrl Session p => Session -> p -> REST.FormDataParams -> Aff b
 postWwwUrlencoded session@(Session {token}) p = REST.postWwwUrlencoded (Just token) (toUrl session p)
 
-postMultipartFormData :: forall b p. DecodeJson b => ToUrl Session p => Session -> p -> String -> Aff b
+postMultipartFormData :: forall b p. JSON.ReadForeign b => ToUrl Session p => Session -> p -> String -> Aff b
 postMultipartFormData session@(Session {token}) p = REST.postMultipartFormData (Just token) (toUrl session p)

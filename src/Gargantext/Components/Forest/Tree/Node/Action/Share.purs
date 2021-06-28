@@ -1,14 +1,16 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Share where
 
-import Data.Argonaut as Argonaut
 import Data.Generic.Rep (class Generic)
 import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-import Prelude (($))
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
+import Simple.JSON.Generics as JSONG
 import Toestand as T
+
+import Gargantext.Prelude
 
 import Gargantext.Components.Forest.Tree.Node.Action (Action)
 import Gargantext.Components.Forest.Tree.Node.Action as Action
@@ -37,20 +39,11 @@ shareAction username = Action.ShareTeam username
 ------------------------------------------------------------------------
 data ShareNodeParams = ShareTeamParams   { username :: String }
                | SharePublicParams { node_id  :: Int    }
-
-derive instance eqShareNodeParams :: Eq ShareNodeParams
-
-derive instance genericShareNodeParams :: Generic ShareNodeParams _
-
-instance showShareNodeParams :: Show ShareNodeParams where
-  show = genericShow
-
-instance decodeJsonShareNodeParams :: Argonaut.DecodeJson ShareNodeParams where
-  decodeJson = genericSumDecodeJson
-
-instance encodeJsonShareNodeParams :: Argonaut.EncodeJson ShareNodeParams where
-  encodeJson = genericSumEncodeJson
-
+derive instance Eq ShareNodeParams
+derive instance Generic ShareNodeParams _
+instance JSON.ReadForeign ShareNodeParams where readImpl = JSONG.untaggedSumRep
+instance JSON.WriteForeign ShareNodeParams where writeImpl = JSON.writeImpl <<< show
+instance Show ShareNodeParams where show = genericShow
 
 ------------------------------------------------------------------------
 type ShareNode =
