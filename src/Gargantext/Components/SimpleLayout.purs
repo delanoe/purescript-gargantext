@@ -16,7 +16,8 @@ here = R2.here "Gargantext.Components.SimpleLayout"
 
 -- Simple layout does not accommodate the tree
 type SimpleLayoutProps = (
-  handed :: T.Box GT.Handed
+    handed :: T.Box GT.Handed
+  , showTree :: T.Box Boolean
   )
 
 simpleLayout :: R2.Component SimpleLayoutProps
@@ -25,7 +26,7 @@ simpleLayout = R.createElement simpleLayoutCpt
 simpleLayoutCpt :: R.Component SimpleLayoutProps
 simpleLayoutCpt = here.component "simpleLayout" cpt
   where
-    cpt { handed } children = do
+    cpt { handed, showTree } children = do
       pure $ H.div { className: "simple-layout" } (
-        [ topBar { handed } [] ] <> children <> [ license ]
+        [ topBar { handed, showTree } [] ] <> children <> [ license ]
         )

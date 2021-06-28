@@ -39,8 +39,7 @@ topBarCpt = here.component "topBar" cpt where
           Nothing -> RH.div {} []
 
     pure $ RH.form { className: "d-flex" }
-      [ Toggle.treeToggleButton { state: showTree } []
-      , Toggle.controlsToggleButton { state: showControls } []
+      [ Toggle.controlsToggleButton { state: showControls } []
       , Toggle.sidebarToggleButton { state: sidePanelState } []
       , search
       ]
