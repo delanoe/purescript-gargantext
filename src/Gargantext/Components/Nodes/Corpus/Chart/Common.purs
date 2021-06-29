@@ -34,11 +34,11 @@ metricsLoadView p = R.createElement metricsLoadViewCpt p []
 metricsLoadViewCpt :: forall a. Eq a => R.Component (MetricsLoadViewProps a)
 metricsLoadViewCpt = here.component "metricsLoadView" cpt
   where
-    cpt { getMetrics, loaded, path, reload, session } _ = do
+    cpt { getMetrics, loaded, path, reload, session, onClick, onInit } _ = do
       reload' <- T.useLive T.unequal reload
 
       useLoader (reload' /\ path) (getMetrics session) $ \l ->
-        loaded { path, reload, session } l
+        loaded { path, reload, session, onClick, onInit } l
 
 type MetricsWithCacheLoadViewProps res ret = (
     getMetricsHash :: Session -> ReloadPath -> Aff Hash
@@ -58,11 +58,11 @@ metricsWithCacheLoadViewCpt :: forall res ret.
                                R.Component (MetricsWithCacheLoadViewProps res ret)
 metricsWithCacheLoadViewCpt = here.component "metricsWithCacheLoadView" cpt
   where
-    cpt { getMetricsHash, handleResponse, loaded, mkRequest, path, reload, session } _ = do
+    cpt { getMetricsHash, handleResponse, loaded, mkRequest, path, reload, session, onClick, onInit } _ = do
       reload' <- T.useLive T.unequal reload
 
       useLoaderWithCacheAPI { cacheEndpoint: (getMetricsHash session)
                             , handleResponse
                             , mkRequest
                             , path: (reload' /\ path)
-                            , renderer: loaded { path, reload, session } }
+                            , renderer: loaded { path, reload, session, onClick, onInit } }

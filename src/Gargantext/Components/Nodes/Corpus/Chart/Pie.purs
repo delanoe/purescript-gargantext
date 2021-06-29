@@ -68,8 +68,8 @@ instance encodeHistoMetrics :: EncodeJson HistoMetrics where
 
 type Loaded = HistoMetrics
 
-chartOptionsBar :: HistoMetrics -> Options
-chartOptionsBar (HistoMetrics { dates: dates', count: count'}) = Options
+chartOptionsBar :: Record MetricsProps -> HistoMetrics -> Options
+chartOptionsBar { onClick, onInit } (HistoMetrics { dates: dates', count: count'}) = Options
   { mainTitle : "Bar"
   , subTitle  : "Count of MapTerm"
   , xAxis     : xAxis' $ map (\t -> joinWith " " $ map (take 3) $ A.take 3 $ filter (\s -> length s > 3) $ split (Pattern " ") t) dates'
@@ -77,10 +77,12 @@ chartOptionsBar (HistoMetrics { dates: dates', count: count'}) = Options
   , series    : [seriesBarD1 {name: "Number of publication / year"} $ map (\n -> dataSerie {name: "", itemStyle: itemStyle {color:blue}, value: n }) count']
   , addZoom   : false
   , tooltip   : mkTooltip { formatter: templateFormatter "{b0}" }
+  , onClick
+  , onInit
   }
 
-chartOptionsPie :: HistoMetrics -> Options
-chartOptionsPie (HistoMetrics { dates: dates', count: count'}) = Options
+chartOptionsPie :: Record MetricsProps -> HistoMetrics -> Options
+chartOptionsPie { onClick, onInit } (HistoMetrics { dates: dates', count: count'}) = Options
   { mainTitle : "Pie"
   , subTitle  : "Distribution by MapTerm"
   , xAxis     : xAxis' []
@@ -89,6 +91,8 @@ chartOptionsPie (HistoMetrics { dates: dates', count: count'}) = Options
   -- , series    : [seriesBarD1 {name: "Number of publication / year"} $ map (\n -> dataSerie {name: "", value: n }) count']
   , addZoom   : false
   , tooltip   : mkTooltip { formatter: templateFormatter "{b0}" }
+  , onClick
+  , onInit
   }
 
 getMetricsHash :: Session -> ReloadPath -> Aff String
@@ -114,7 +118,7 @@ pie props = R.createElement pieCpt props []
 pieCpt :: R.Component Props
 pieCpt = here.component "pie" cpt
   where
-    cpt { path, session } _ = do
+    cpt { path, session, onClick, onInit } _ = do
       reload <- T.useBox T2.newReload
 
       pure $ metricsWithCacheLoadView {
@@ -125,14 +129,16 @@ pieCpt = here.component "pie" cpt
         , path
         , reload
         , session
+        , onClick
+        , onInit
         }
 
 loadedPie :: Record MetricsProps -> HistoMetrics -> R.Element
-loadedPie { path, reload, session } loaded =
+loadedPie p@{ path, reload, session } loaded =
   H.div {} [
   {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: ChartPie, path, reload, session }
-  , -} chart $ chartOptionsPie loaded
+  , -} chart $ chartOptionsPie p loaded
   ]
 
 
@@ -142,7 +148,7 @@ bar props = R.createElement barCpt props []
 barCpt :: R.Component Props
 barCpt = here.component "bar" cpt
   where
-    cpt {path, session} _ = do
+    cpt {path, session, onClick, onInit} _ = do
       reload <- T.useBox T2.newReload
 
       pure $ metricsWithCacheLoadView {
@@ -153,12 +159,14 @@ barCpt = here.component "bar" cpt
          , path
          , reload
          , session
+         , onClick
+         , onInit
          }
 
 loadedBar :: Record MetricsProps -> Loaded -> R.Element
-loadedBar { path, reload, session } loaded =
+loadedBar p@{ path, reload, session } loaded =
   H.div {} [
   {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: ChartBar, path, reload, session }
-  , -} chart $ chartOptionsBar loaded
+  , -} chart $ chartOptionsBar p loaded
   ]

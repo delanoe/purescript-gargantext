@@ -105,6 +105,7 @@ instance decodeResponse :: DecodeJson Response where
 type LocalCategories = Map Int Category
 type LocalUserScore  = Map Int Star
 type Query = String
+type Year = String
 
 ---------------------------------------------------------
 sampleData' :: DocumentsView
