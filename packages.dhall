@@ -93,8 +93,8 @@ let additions =
         }
       , markdown-smolder =
         { dependencies = [ "markdown", "smolder" ]
-        , repo = "https://github.com/poorscript/purescript-markdown-smolder"
-        , version = "2021-06-22"
+        , repo = "https://github.com/hgiasac/purescript-markdown-smolder"
+        , version = "v2.2.0"
         }
       , precise =
         { dependencies = [ "prelude" ]

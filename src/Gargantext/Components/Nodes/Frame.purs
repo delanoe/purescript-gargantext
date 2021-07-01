@@ -4,11 +4,17 @@ import Gargantext.Prelude
 
 import Data.Argonaut (decodeJson, (.:))
 import Data.Argonaut as Argonaut
-import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
-import Data.Show.Generic (genericShow)
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
+import Data.Newtype (class Newtype)
+import Data.Show.Generic (genericShow)
 import Effect.Aff (Aff)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
+import Toestand as T
+
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Hooks.Loader (useLoader)
@@ -18,30 +24,17 @@ import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Argonaut (genericSumEncodeJson)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Frame"
 
-data Hyperdata = Hyperdata { base :: String, frame_id :: String }
-
+newtype Hyperdata = Hyperdata { base :: String, frame_id :: String }
 derive instance Generic Hyperdata _
-instance Eq Hyperdata where
-  eq = genericEq
-instance Show Hyperdata where
-  show = genericShow
-instance Argonaut.DecodeJson Hyperdata where
--- TODO
---  decodeJson = genericSumDecodeJson
-  decodeJson json = do
-    obj      <- decodeJson json
-    base     <- obj .: "base"
-    frame_id <- obj .: "frame_id"
-    pure $ Hyperdata {base, frame_id}
-instance Argonaut.EncodeJson Hyperdata where
-  encodeJson = genericSumEncodeJson
+derive instance Newtype Hyperdata _
+instance Eq Hyperdata where eq = genericEq
+instance Show Hyperdata where show = genericShow
+derive newtype instance JSON.ReadForeign Hyperdata
+derive newtype instance JSON.WriteForeign Hyperdata
 
 type Props =
   ( nodeId   :: Int

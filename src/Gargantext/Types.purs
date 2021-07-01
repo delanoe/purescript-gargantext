@@ -1,7 +1,5 @@
 module Gargantext.Types where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (:=), (~>))
-import Data.Argonaut.Decode.Error (JsonDecodeError(..))
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Newtype (class Newtype)
@@ -58,8 +56,8 @@ instance Show SessionId where
 data TermSize = MonoTerm | MultiTerm
 
 data Term = Term String TermList
-
-derive instance Eq TermSize
+derive instance Generic TermSize _
+instance Eq TermSize where eq = genericEq
 
 -- | Converts a data structure to a query string
 class ToQuery a where
@@ -83,28 +81,12 @@ termSizes = [ { desc: "All types",        mval: Nothing        }
 
 data TermList = MapTerm | StopTerm | CandidateTerm
 -- TODO use generic JSON instance
-
-derive instance Eq TermList
-derive instance Ord TermList
-
-instance EncodeJson TermList where
-  encodeJson MapTerm       = encodeJson "MapTerm"
-  encodeJson StopTerm      = encodeJson "StopTerm"
-  encodeJson CandidateTerm = encodeJson "CandidateTerm"
-
-instance DecodeJson TermList where
-  decodeJson json = do
-    s <- decodeJson json
-    case s of
-      "MapTerm"       -> pure MapTerm
-      "StopTerm"      -> pure StopTerm
-      "CandidateTerm" -> pure CandidateTerm
-      s'              -> Left (AtKey s' $ TypeMismatch "Unexpected list name")
-
-instance Show TermList where
-  show MapTerm       = "MapTerm"
-  show StopTerm      = "StopTerm"
-  show CandidateTerm = "CandidateTerm"
+derive instance Generic TermList _
+instance Eq TermList where eq = genericEq
+instance Ord TermList where compare = genericCompare
+instance JSON.WriteForeign TermList where writeImpl = JSON.writeImpl <<< show
+instance JSON.ReadForeign TermList where readImpl = JSONG.enumSumRep
+instance Show TermList where show = genericShow
 
 -- TODO: Can we replace the show instance above with this?
 termListName :: TermList -> String
@@ -135,22 +117,16 @@ showTabType' (TabCorpus   t) = show t
 showTabType' (TabDocument t) = show t
 showTabType' (TabPairing  t) = show t
 
-data TabPostQuery = TabPostQuery {
+newtype TabPostQuery = TabPostQuery {
     offset :: Int
   , limit :: Int
   , orderBy :: OrderBy
   , tabType :: TabType
   , query :: String
   }
-
-instance EncodeJson TabPostQuery where
-  encodeJson (TabPostQuery post) =
-        "view"       := showTabType' post.tabType
-     ~> "offset"     := post.offset
-     ~> "limit"      := post.limit
-     ~> "orderBy"    := show post.orderBy
-     ~> "query"      := post.query
-     ~> jsonEmptyObject
+derive instance Generic TabPostQuery _
+derive instance Newtype TabPostQuery _
+derive newtype instance JSON.WriteForeign TabPostQuery
 
 data NodeType = Annuaire
               | Corpus
@@ -324,14 +300,6 @@ instance Eq NodeType where
   eq n1 n2  = eq (show n1) (show n2)
 -}
 ------------------------------------------------------------
-instance DecodeJson NodeType where
-  decodeJson json = do
-    obj <- decodeJson json
-    pure $ fromMaybe Error $ read obj
-
-instance EncodeJson NodeType where
-  encodeJson nodeType = encodeJson $ show nodeType
-
 nodeTypePath :: NodeType -> String
 nodeTypePath Folder          = "folder"
 nodeTypePath FolderPrivate   = "folderPrivate"
@@ -370,10 +338,8 @@ type ContactId  = Int
 data ScoreType = Occurrences
 
 derive instance Generic ScoreType _
-instance Eq ScoreType where
-  eq = genericEq
-instance Show ScoreType where
-  show = genericShow
+instance Eq ScoreType where eq = genericEq
+instance Show ScoreType where show = genericShow
 
 type SearchQuery = String
 
@@ -450,9 +416,9 @@ data OrderBy = DateAsc  | DateDesc
              | SourceAsc | SourceDesc
 
 derive instance Generic OrderBy _
-
-instance Show OrderBy where
-  show = genericShow
+instance Show OrderBy where show = genericShow
+instance JSON.ReadForeign OrderBy where readImpl = JSONG.enumSumRep
+instance JSON.WriteForeign OrderBy where writeImpl = JSON.writeImpl <<< show
 
 ------------------------------------------------------------
 -- V0 is the dummy case (impossible)
@@ -474,23 +440,12 @@ instance Eq ApiVersion where
   eq V10 V10 = true
   eq V11 V11 = true
   eq _ _ = false
-
-instance EncodeJson ApiVersion where
-  encodeJson v = encodeJson (show v)
-
-instance DecodeJson ApiVersion where
-  decodeJson json = do
-    v <- decodeJson json
-    case v of
-         "v1.0" -> pure V10
-         "v1.1" -> pure V11
-         _      -> pure V0
 ------------------------------------------------------------
 
 -- Types of ngrams. Used to display user-selectable tabs and is sent via API,
 -- wrapped in `TabNgramType a :: TabSubType`
 data CTabNgramType = CTabTerms | CTabSources | CTabAuthors | CTabInstitutes
-
+derive instance Generic CTabNgramType _
 derive instance Eq CTabNgramType
 derive instance Ord CTabNgramType
 instance Show CTabNgramType where
@@ -498,45 +453,33 @@ instance Show CTabNgramType where
   show CTabSources    = "Sources"
   show CTabAuthors    = "Authors"
   show CTabInstitutes = "Institutes"
-instance EncodeJson CTabNgramType where
-  encodeJson t = encodeJson $ show t
+instance JSON.WriteForeign CTabNgramType where writeImpl = JSON.writeImpl <<< show
 
 data PTabNgramType = PTabPatents | PTabBooks | PTabCommunication
-
-derive instance Eq PTabNgramType
-derive instance Ord PTabNgramType
+derive instance Generic PTabNgramType _
+instance Eq PTabNgramType where eq = genericEq
+instance Ord PTabNgramType where compare = genericCompare
 instance Show PTabNgramType where
   show PTabPatents       = "Patents"
   show PTabBooks         = "Books"
   show PTabCommunication = "Communication"
-instance EncodeJson PTabNgramType where
-  encodeJson t = encodeJson $ show t
+instance JSON.WriteForeign PTabNgramType where writeImpl = JSON.writeImpl <<< show
 
 data TabSubType a = TabDocs | TabNgramType a | TabTrash | TabMoreLikeFav | TabMoreLikeTrash
-
-derive instance Eq a => Eq (TabSubType a)
-derive instance Ord a => Ord (TabSubType a)
-instance EncodeJson a => EncodeJson (TabSubType a) where
-  encodeJson TabDocs =
-       "type" := "TabDocs"
-    ~> "data" := (Nothing :: Maybe String)
-    ~> jsonEmptyObject
-  encodeJson (TabNgramType a) =
-       "type" := "TabNgramType"
-    ~> "data" := encodeJson a
-    ~> jsonEmptyObject
-  encodeJson TabTrash =
-       "type" := "TabTrash"
-    ~> "data" := (Nothing :: Maybe String)
-    ~> jsonEmptyObject
-  encodeJson TabMoreLikeFav =
-       "type" := "TabMoreLikeFav"
-    ~> "data" := (Nothing :: Maybe String)
-    ~> jsonEmptyObject
-  encodeJson TabMoreLikeTrash =
-       "type" := "TabMoreLikeTrash"
-    ~> "data" := (Nothing :: Maybe String)
-    ~> jsonEmptyObject
+derive instance Generic (TabSubType a) _
+instance Eq a => Eq (TabSubType a) where eq = genericEq
+instance Ord a => Ord (TabSubType a) where compare = genericCompare
+instance JSON.WriteForeign a => JSON.WriteForeign (TabSubType a) where
+  writeImpl TabDocs = JSON.writeImpl { type: "TabDocs"
+                                     , data: (Nothing :: Maybe String) }
+  writeImpl (TabNgramType a) = JSON.writeImpl { type: "TabNgramType"
+                                              , data: a }
+  writeImpl TabTrash = JSON.writeImpl { type: "TabTrash"
+                                      , data: (Nothing :: Maybe String) }
+  writeImpl TabMoreLikeFav = JSON.writeImpl { type: "TabMoreLikeFav"
+                                            , data: (Nothing :: Maybe String) }
+  writeImpl TabMoreLikeTrash = JSON.writeImpl { type: "TabMoreLikeTrash"
+                                              , data: (Nothing :: Maybe String) }
 {-
 instance DecodeJson a => DecodeJson (TabSubType a) where
   decodeJson j = do
@@ -566,26 +509,25 @@ data TabType
 derive instance Generic TabType _
 derive instance Eq TabType
 derive instance Ord TabType
-instance Show TabType where
-  show = genericShow
-instance EncodeJson TabType where
-  encodeJson (TabCorpus TabDocs)                         = encodeJson "Docs"
-  encodeJson (TabCorpus (TabNgramType CTabAuthors))      = encodeJson "Authors"
-  encodeJson (TabCorpus (TabNgramType CTabInstitutes))   = encodeJson "Institutes"
-  encodeJson (TabCorpus (TabNgramType CTabSources))      = encodeJson "Sources"
-  encodeJson (TabCorpus (TabNgramType CTabTerms))        = encodeJson "Terms"
-  encodeJson (TabCorpus TabMoreLikeFav)                  = encodeJson "MoreFav"
-  encodeJson (TabCorpus TabMoreLikeTrash)                = encodeJson "MoreTrash"
-  encodeJson (TabCorpus TabTrash)                        = encodeJson "Trash"
-  encodeJson (TabDocument TabDocs)                       = encodeJson "Docs"
-  encodeJson (TabDocument (TabNgramType CTabAuthors))    = encodeJson "Authors"
-  encodeJson (TabDocument (TabNgramType CTabInstitutes)) = encodeJson "Institutes"
-  encodeJson (TabDocument (TabNgramType CTabSources))    = encodeJson "Sources"
-  encodeJson (TabDocument (TabNgramType CTabTerms))      = encodeJson "Terms"
-  encodeJson (TabDocument TabMoreLikeFav)                = encodeJson "MoreFav"
-  encodeJson (TabDocument TabMoreLikeTrash)              = encodeJson "MoreTrash"
-  encodeJson (TabDocument TabTrash)                      = encodeJson "Trash"
-  encodeJson (TabPairing _d)                              = encodeJson "TabPairing"  -- TODO
+instance Show TabType where show = genericShow
+instance JSON.WriteForeign TabType where
+  writeImpl (TabCorpus TabDocs)                         = JSON.writeImpl "Docs"
+  writeImpl (TabCorpus (TabNgramType CTabAuthors))      = JSON.writeImpl "Authors"
+  writeImpl (TabCorpus (TabNgramType CTabInstitutes))   = JSON.writeImpl "Institutes"
+  writeImpl (TabCorpus (TabNgramType CTabSources))      = JSON.writeImpl "Sources"
+  writeImpl (TabCorpus (TabNgramType CTabTerms))        = JSON.writeImpl "Terms"
+  writeImpl (TabCorpus TabMoreLikeFav)                  = JSON.writeImpl "MoreFav"
+  writeImpl (TabCorpus TabMoreLikeTrash)                = JSON.writeImpl "MoreTrash"
+  writeImpl (TabCorpus TabTrash)                        = JSON.writeImpl "Trash"
+  writeImpl (TabDocument TabDocs)                       = JSON.writeImpl "Docs"
+  writeImpl (TabDocument (TabNgramType CTabAuthors))    = JSON.writeImpl "Authors"
+  writeImpl (TabDocument (TabNgramType CTabInstitutes)) = JSON.writeImpl "Institutes"
+  writeImpl (TabDocument (TabNgramType CTabSources))    = JSON.writeImpl "Sources"
+  writeImpl (TabDocument (TabNgramType CTabTerms))      = JSON.writeImpl "Terms"
+  writeImpl (TabDocument TabMoreLikeFav)                = JSON.writeImpl "MoreFav"
+  writeImpl (TabDocument TabMoreLikeTrash)              = JSON.writeImpl "MoreTrash"
+  writeImpl (TabDocument TabTrash)                      = JSON.writeImpl "Trash"
+  writeImpl (TabPairing _d)                             = JSON.writeImpl "TabPairing"  -- TODO
 -- ["Docs","Trash","MoreFav","MoreTrash","Terms","Sources","Authors","Institutes","Contacts"]
 {-
 instance DecodeJson TabType where
@@ -608,13 +550,10 @@ data Mode = Authors
           | Terms
 
 derive instance Generic Mode _
-instance Show Mode where
-  show = genericShow
-derive instance Eq Mode
-instance Ord Mode where
-  compare = genericCompare
-instance EncodeJson Mode where
-  encodeJson x = encodeJson $ show x
+instance Show Mode where show = genericShow
+instance Eq Mode where eq = genericEq
+instance Ord Mode where compare = genericCompare
+instance JSON.WriteForeign Mode where writeImpl = JSON.writeImpl <<< show
 
 modeTabType :: Mode -> CTabNgramType
 modeTabType Authors    = CTabAuthors

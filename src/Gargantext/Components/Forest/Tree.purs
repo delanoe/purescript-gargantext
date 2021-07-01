@@ -4,7 +4,6 @@ import Gargantext.Prelude
 
 import Data.Array as A
 import Data.Maybe (Maybe(..))
-import Data.Set as Set
 import Data.Traversable (traverse_, traverse)
 import DOM.Simple.Console (log, log2)
 import Effect (Effect)
@@ -35,7 +34,8 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Routes as GR
-import Gargantext.Sessions (OpenNodes, Session, mkNodeId, get)
+import Gargantext.Sessions (OpenNodes, Session, get, mkNodeId)
+import Gargantext.Sessions.Types (useOpenNodesMemberBox, openNodesInsert, openNodesDelete)
 import Gargantext.Types (Handed, ID, isPublic, publicize, switchHanded)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
@@ -99,7 +99,7 @@ treeCpt :: R.Component TreeProps
 treeCpt = here.component "tree" cpt where
   cpt p@{ reload, session, tree: NTree (LNode { id, name, nodeType }) children } _ = do
     setPopoverRef <- R.useRef Nothing
-    folderOpen <- T2.useMemberBox nodeId p.forestOpen
+    folderOpen <- useOpenNodesMemberBox nodeId p.forestOpen
     pure $ H.ul { className: ulClass }
       [ H.li { className: childrenClass children' }
         [ nodeSpan (nsprops { folderOpen, name, id, nodeType, setPopoverRef, isLeaf })
@@ -193,73 +193,198 @@ childLoaderCpt = here.component "childLoader" cpt where
 type PerformActionProps =
   ( setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit)) | PACommon )
 
+closePopover :: forall t187 t191 t194 t195.
+  MonadEffect t191 => Foldable t195 => { setPopoverRef :: Ref (t195 (Boolean -> Effect t194))
+                                       | t187
+                                       }
+                                       -> t191 Unit
 closePopover { setPopoverRef } =
    liftEffect $ traverse_ (\set -> set false) (R.readRef setPopoverRef)
 
+refreshTree :: forall t203 t208 t213 t214 t215.
+  MonadEffect t203 => Reloadable t208 => Foldable t214 => { reloadTree :: t208
+                                                          , setPopoverRef :: Ref (t214 (Boolean -> Effect t213))
+                                                          | t215
+                                                          }
+                                                          -> t203 Unit
 refreshTree p = liftEffect $ T2.reload p.reloadTree *> closePopover p
 
+deleteNode' :: forall t254 t261 t262 t263 t265.
+  Read t254 OpenNodes => Write t254 OpenNodes => Reloadable t261 => Foldable t263 => NodeType
+                                                                                     -> { forestOpen :: t254
+                                                                                        , reloadTree :: t261
+                                                                                        , session :: Session
+                                                                                        , setPopoverRef :: Ref (t263 (Boolean -> Effect t262))
+                                                                                        , tree :: NTree LNode
+                                                                                        | t265
+                                                                                        }
+                                                                                        -> Aff Unit
 deleteNode' nt p@{ tree: (NTree (LNode {id, parent_id}) _) } = do
   case nt of
     GT.NodePublic GT.FolderPublic -> void $ deleteNode p.session nt id
     GT.NodePublic _               -> void $ unpublishNode p.session parent_id id
     _                             -> void $ deleteNode p.session nt id
-  liftEffect $ T.modify_ (Set.delete (mkNodeId p.session id)) p.forestOpen
+  liftEffect $ T.modify_ (openNodesDelete (mkNodeId p.session id)) p.forestOpen
   refreshTree p
 
+doSearch :: forall t167 t176.
+  MonadEffect t176 => AsyncTaskWithType
+                      -> { tasks :: Box Storage
+                         , tree :: NTree LNode
+                         | t167
+                         }
+                         -> t176 Unit
 doSearch task p@{ tasks, tree: NTree (LNode {id}) _ } = liftEffect $ do
   GAT.insert id task tasks
   log2 "[performAction] DoSearch task:" task
   
+updateNode :: forall t119.
+  UpdateNodeParams
+  -> { session :: Session
+     , tasks :: Box Storage
+     , tree :: NTree LNode
+     | t119
+     }
+     -> Aff Unit
 updateNode params p@{ tasks, tree: (NTree (LNode {id}) _) } = do
   task <- updateRequest params p.session id
   liftEffect $ do
     GAT.insert id task tasks
     log2 "[performAction] UpdateNode task:" task
 
+renameNode :: forall t390 t391 t392 t394.
+  Reloadable t390 => Foldable t392 => String
+                                      -> { reloadTree :: t390
+                                         , session :: Session
+                                         , setPopoverRef :: Ref (t392 (Boolean -> Effect t391))
+                                         , tree :: NTree LNode
+                                         | t394
+                                         }
+                                         -> Aff Unit
 renameNode name p@{ tree: (NTree (LNode {id}) _) } = do
   void $ rename p.session id $ RenameValue { text: name }
   refreshTree p
 
+shareTeam :: forall t147.
+  String
+  -> { session :: Session
+     , tree :: NTree LNode
+     | t147
+     }
+     -> Aff Unit
 shareTeam username p@{ tree: (NTree (LNode {id}) _)} =
   void $ Share.shareReq p.session id $ Share.ShareTeamParams {username}
 
+sharePublic :: forall t427 t431 t432 t433 t435 t438.
+  Read t427 OpenNodes => Write t427 OpenNodes => Reloadable t431 => Foldable t433 => Foldable t438 => t438 SubTreeOut
+                                                                                                      -> { forestOpen :: t427
+                                                                                                         , reloadTree :: t431
+                                                                                                         , session :: Session
+                                                                                                         , setPopoverRef :: Ref (t433 (Boolean -> Effect t432))
+                                                                                                         | t435
+                                                                                                         }
+                                                                                                         -> Aff Unit
 sharePublic params p@{ forestOpen } = traverse_ f params where
   f (SubTreeOut { in: inId, out }) = do
     void $ Share.shareReq p.session inId $ Share.SharePublicParams { node_id: out }
-    liftEffect $ T.modify_ (Set.insert (mkNodeId p.session out)) forestOpen
+    liftEffect $ T.modify_ (openNodesInsert (mkNodeId p.session out)) forestOpen
     refreshTree p
 
+addContact :: forall t638.
+  AddContactParams
+  -> { session :: Session
+     , tree :: NTree LNode
+     | t638
+     }
+     -> Aff Unit
 addContact params p@{ tree: (NTree (LNode {id}) _) } =
   void $ Contact.contactReq p.session id params
 
+addNode' :: forall t612 t616 t617 t618 t620.
+  Read t612 OpenNodes => Write t612 OpenNodes => Reloadable t616 => Foldable t618 => String
+                                                                                     -> NodeType
+                                                                                        -> { forestOpen :: t612
+                                                                                           , reloadTree :: t616
+                                                                                           , session :: Session
+                                                                                           , setPopoverRef :: Ref (t618 (Boolean -> Effect t617))
+                                                                                           , tree :: NTree LNode
+                                                                                           | t620
+                                                                                           }
+                                                                                           -> Aff Unit
 addNode' name nodeType p@{ forestOpen, tree: (NTree (LNode { id }) _) } = do
   task <- addNode p.session id $ AddNodeValue {name, nodeType}
-  liftEffect $ T.modify_ (Set.insert (mkNodeId p.session id)) forestOpen
+  liftEffect $ T.modify_ (openNodesInsert (mkNodeId p.session id)) forestOpen
   refreshTree p
 
+uploadFile' :: forall t66.
+  NodeType
+  -> FileType
+     -> Maybe String
+        -> UploadFileBlob
+           -> { session :: Session
+              , tasks :: Box Storage
+              , tree :: NTree LNode
+              | t66
+              }
+              -> Aff Unit
 uploadFile' nodeType fileType mName blob p@{ tasks, tree: (NTree (LNode { id }) _) } = do
   task <- uploadFile p.session nodeType id fileType {mName, blob}
   liftEffect $ do
     GAT.insert id task tasks
     log2 "[performAction] UploadFile, uploaded, task:" task
 
+uploadArbitraryFile' :: forall t93.
+  Maybe String
+  -> UploadFileBlob
+     -> { session :: Session
+        , tasks :: Box Storage
+        , tree :: NTree LNode
+        | t93
+        }
+        -> Aff Unit
 uploadArbitraryFile' mName blob p@{ tasks, tree: (NTree (LNode { id }) _) } = do
   task <- uploadArbitraryFile p.session id { blob, mName }
   liftEffect $ do
     GAT.insert id task tasks
     log2 "[performAction] UploadArbitraryFile, uploaded, task:" task
 
+moveNode :: forall t354 t357 t358 t359 t361 t364.
+  Read t354 OpenNodes => Write t354 OpenNodes => Reloadable t357 => Foldable t359 => Foldable t364 => t364 SubTreeOut
+                                                                                                      -> { forestOpen :: t354
+                                                                                                         , reloadTree :: t357
+                                                                                                         , session :: Session
+                                                                                                         , setPopoverRef :: Ref (t359 (Boolean -> Effect t358))
+                                                                                                         | t361
+                                                                                                         }
+                                                                                                         -> Aff Unit
 moveNode params p@{ forestOpen, session } = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     void $ moveNodeReq p.session in' out
-    liftEffect $ T.modify_ (Set.insert (mkNodeId session out)) forestOpen
+    liftEffect $ T.modify_ (openNodesInsert (mkNodeId session out)) forestOpen
     refreshTree p
 
+mergeNode :: forall t315 t316 t317 t319 t322.
+  Reloadable t315 => Foldable t317 => Foldable t322 => t322 SubTreeOut
+                                                       -> { reloadTree :: t315
+                                                          , session :: Session
+                                                          , setPopoverRef :: Ref (t317 (Boolean -> Effect t316))
+                                                          | t319
+                                                          }
+                                                          -> Aff Unit
 mergeNode params p = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     void $ mergeNodeReq p.session in' out
     refreshTree p
 
+linkNode :: forall t287 t288 t289 t291 t294.
+  Reloadable t287 => Foldable t289 => Foldable t294 => Maybe NodeType
+                                                       -> t294 SubTreeOut
+                                                          -> { reloadTree :: t287
+                                                             , session :: Session
+                                                             , setPopoverRef :: Ref (t289 (Boolean -> Effect t288))
+                                                             | t291
+                                                             }
+                                                             -> Aff Unit
 linkNode nodeType params p = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     void $ linkNodeReq p.session nodeType in' out

@@ -1,8 +1,5 @@
 module Gargantext.Components.Nodes.Corpus where
 
-import DOM.Simple.Console (log2)
-import Data.Argonaut (class DecodeJson, decodeJson, encodeJson)
-import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
@@ -11,17 +8,23 @@ import Data.Show.Generic (genericShow)
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (Tuple(..))
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
+import Toestand as T
+
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..))
-import Gargantext.Components.Nodes.Types (FTField, FTFieldWithIndex, FTFieldsWithIndex, Field(..), FieldType(..), Hash, Index, defaultField, defaultHaskell', defaultJSON', defaultMarkdown', defaultPython')
+import Gargantext.Components.Nodes.Types (FTField, FTFieldList(..), FTFieldWithIndex, FTFieldsWithIndex(..), Field(..), FieldType(..), Hash, Index, defaultField, defaultHaskell', defaultJSON', defaultMarkdown', defaultPython')
 import Gargantext.Data.Array as GDA
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (class Eq, class Show, Unit, bind, discard, pure, show, unit, ($), (+), (-), (<), (<$>), (<<<), (<>), (==), (>))
@@ -31,9 +34,6 @@ import Gargantext.Types (AffTableResult, NodeType(..))
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus"
@@ -130,8 +130,8 @@ corpusLayoutView props = R.createElement corpusLayoutViewCpt props []
 corpusLayoutViewCpt :: R.Component ViewProps
 corpusLayoutViewCpt = here.component "corpusLayoutView" cpt
   where
-    cpt {corpus: (NodePoly {hyperdata: Hyperdata {fields}}), nodeId, reload, session} _ = do
-      let fieldsWithIndex = List.mapWithIndex (\idx -> \t -> Tuple idx t) fields
+    cpt {corpus: (NodePoly {hyperdata: Hyperdata {fields: FTFieldList fields}}), nodeId, reload, session} _ = do
+      let fieldsWithIndex = FTFieldsWithIndex $ List.mapWithIndex (\idx -> \ftField -> { idx, ftField }) fields
       fieldsS <- T.useBox fieldsWithIndex
       fields' <- T.useLive T.unequal fieldsS
       fieldsRef <- R.useRef fields
@@ -171,16 +171,17 @@ corpusLayoutViewCpt = here.component "corpusLayoutView" cpt
                              , nodeId :: Int
                              , reload :: T2.ReloadS
                              , session :: Session } -> e -> Effect Unit
-    onClickSave {fields, nodeId, reload, session} _ = do
+    onClickSave {fields: FTFieldsWithIndex fields, nodeId, reload, session} _ = do
       launchAff_ do
-        saveCorpus $ { hyperdata: Hyperdata {fields: (\(Tuple _ f) -> f) <$> fields}
+        saveCorpus $ { hyperdata: Hyperdata {fields: FTFieldList $ (_.ftField) <$> fields}
                      , nodeId
                      , session }
         liftEffect $ T2.reload reload
 
     onClickAdd :: forall e. T.Box FTFieldsWithIndex -> e -> Effect Unit
     onClickAdd fieldsS _ = do
-      T.modify_ (\fields -> List.snoc fields $ Tuple (List.length fields) defaultField) fieldsS
+      T.modify_ (\(FTFieldsWithIndex fs) -> FTFieldsWithIndex $ 
+        List.snoc fs $ { idx: List.length fs, ftField: defaultField }) fieldsS
 
 
 type FieldsCodeEditorProps =
@@ -191,19 +192,18 @@ type FieldsCodeEditorProps =
 
 fieldsCodeEditor :: R2.Component FieldsCodeEditorProps
 fieldsCodeEditor = R.createElement fieldsCodeEditorCpt
-
 fieldsCodeEditorCpt :: R.Component FieldsCodeEditorProps
 fieldsCodeEditorCpt = here.component "fieldsCodeEditorCpt" cpt
   where
     cpt { fields, nodeId, session } _ = do
-      fields' <- T.useLive T.unequal fields
+      (FTFieldsWithIndex fields') <- T.useLive T.unequal fields
       masterKey <- T.useBox T2.newReload
       masterKey' <- T.useLive T.unequal masterKey
 
-      let editorsMap (Tuple idx field) =
+      let editorsMap { idx, ftField } =
             fieldCodeEditorWrapper { canMoveDown: idx < (List.length fields' - 1)
                                    , canMoveUp: idx > 0
-                                   , field
+                                   , field: ftField
                                    , key: (show masterKey') <> "-" <> (show idx)
                                    , onChange: onChange idx
                                    , onMoveDown: onMoveDown masterKey idx
@@ -216,34 +216,35 @@ fieldsCodeEditorCpt = here.component "fieldsCodeEditorCpt" cpt
       where
         onChange :: Index -> FieldType -> Effect Unit
         onChange idx typ = do
-          T.modify_ (\fs ->
-            fromMaybe fs $
-              List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { typ = typ })) fs) fields
+          T.modify_ (\(FTFieldsWithIndex fs) ->
+            FTFieldsWithIndex $ fromMaybe fs $
+              List.modifyAt idx (\{ ftField: Field f} -> { idx, ftField: Field $ f { typ = typ } }) fs) fields
 
         onMoveDown :: T2.ReloadS -> Index -> Unit -> Effect Unit
         onMoveDown masterKey idx _ = do
           T2.reload masterKey
-          T.modify_ (recomputeIndices <<< (GDA.swapList idx (idx + 1))) fields
+          T.modify_ (\(FTFieldsWithIndex fs) -> recomputeIndices $ FTFieldsWithIndex $ GDA.swapList idx (idx + 1) fs) fields
 
         onMoveUp :: T2.ReloadS -> Index -> Unit -> Effect Unit
         onMoveUp masterKey idx _ = do
           T2.reload masterKey
-          T.modify_ (recomputeIndices <<< (GDA.swapList idx (idx - 1))) fields
+          T.modify_ (\(FTFieldsWithIndex fs) -> recomputeIndices $ FTFieldsWithIndex $ GDA.swapList idx (idx - 1) fs) fields
 
         onRemove :: Index -> Unit -> Effect Unit
         onRemove idx _ = do
-          T.modify_ (\fs -> fromMaybe fs $ List.deleteAt idx fs) fields
+          T.modify_ (\(FTFieldsWithIndex fs) -> FTFieldsWithIndex $ fromMaybe fs $ List.deleteAt idx fs) fields
 
         onRename :: Index -> String -> Effect Unit
         onRename idx newName = do
-          T.modify_ (\fs ->
-            fromMaybe fs $ List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { name = newName })) fs) fields
+          T.modify_ (\(FTFieldsWithIndex fs) ->
+            FTFieldsWithIndex $ fromMaybe fs $
+              List.modifyAt idx (\{ ftField: Field f } -> { idx, ftField: Field $ f { name = newName } }) fs) fields
 
     recomputeIndices :: FTFieldsWithIndex -> FTFieldsWithIndex
-    recomputeIndices = List.mapWithIndex $ \idx -> \(Tuple _ t) -> Tuple idx t
+    recomputeIndices (FTFieldsWithIndex lst) = FTFieldsWithIndex $ List.mapWithIndex (\idx -> \{ ftField } -> { idx, ftField }) lst
 
 hash :: FTFieldWithIndex -> Hash
-hash (Tuple idx f) = Crypto.hash $ "--idx--" <> (show idx) <> "--field--" <> (show f)
+hash { idx, ftField } = Crypto.hash $ "--idx--" <> (show idx) <> "--field--" <> (show ftField)
 
 type FieldCodeEditorProps =
   (
@@ -402,7 +403,7 @@ fieldCodeEditorCpt = here.component "fieldCodeEditorCpt" cpt
     cpt {field: Field {typ: typ@(JSON j)}, onChange} _ = do
       pure $ CE.codeEditor {code, defaultCodeType: CE.JSON, onChange: changeCode onChange typ}
       where
-        code = R2.stringify (encodeJson j) 2
+        code = R2.stringify (JSON.writeImpl j) 2
 
     cpt {field: Field {typ: typ@(Markdown {text})}, onChange} _ = do
       pure $ CE.codeEditor {code: text, defaultCodeType: CE.Markdown, onChange: changeCode onChange typ}
@@ -430,19 +431,22 @@ changeCode onc (Markdown md) CE.Markdown c = onc $ Markdown $ md               {
 
 changeCode onc (JSON j@{desc}) CE.Haskell c = onc $ Haskell $ defaultHaskell' { haskell = haskell }
   where
-    haskell = R2.stringify (encodeJson j) 2
+    haskell = R2.stringify (JSON.writeImpl j) 2
 changeCode onc (JSON j@{desc}) CE.Python c = onc $ Python $ defaultPython' { python = toCode }
   where
-    toCode = R2.stringify (encodeJson j) 2
-changeCode onc (JSON j) CE.JSON c = do
-  case jsonParser c of
+    toCode = R2.stringify (JSON.writeImpl j) 2
+changeCode onc _ CE.JSON c = do
+  case JSON.readJSON c of
     Left err -> log2 "[fieldCodeEditor'] cannot parse json" c
-    Right j' -> case decodeJson j' of
-      Left err -> log2 "[fieldCodeEditor'] cannot decode json" j'
-      Right j'' -> onc $ JSON j''
-changeCode onc (JSON j) CE.Markdown c = onc $ Markdown $ defaultMarkdown' { text = text }
+    Right j' -> onc $ JSON j'
+  -- case jsonParser c of
+  --   Left err -> log2 "[fieldCodeEditor'] cannot parse json" c
+  --   Right j' -> case decodeJson j' of
+  --     Left err -> log2 "[fieldCodeEditor'] cannot decode json" j'
+  --     Right j'' -> onc $ JSON j''
+changeCode onc (JSON j) CE.Markdown _ = onc $ Markdown $ defaultMarkdown' { text = text }
   where
-    text = R2.stringify (encodeJson j) 2
+    text = R2.stringify (JSON.writeImpl j) 2
 
 
 
@@ -475,7 +479,7 @@ loadCorpus {nodeId, session} = do
   (NodePoly {parentId: corpusId} :: NodePoly {}) <- get session nodePolyRoute
   corpusNode     <-  get session $ corpusNodeRoute     corpusId ""
   defaultListIds <- (get session $ defaultListIdsRoute corpusId)
-                    :: forall a. DecodeJson a => AffTableResult (NodePoly a)
+                    :: forall a. JSON.ReadForeign a => AffTableResult (NodePoly a)
   case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
     Just (NodePoly { id: defaultListId }) ->
       pure {corpusId, corpusNode, defaultListId}
@@ -493,7 +497,7 @@ loadCorpusWithChild { nodeId: childId, session } = do
   (NodePoly {parentId: corpusId} :: NodePoly {}) <- get session $ listNodeRoute childId ""
   corpusNode     <-  get session $ corpusNodeRoute     corpusId ""
   defaultListIds <- (get session $ defaultListIdsRoute corpusId)
-                    :: forall a. DecodeJson a => AffTableResult (NodePoly a)
+                    :: forall a. JSON.ReadForeign a => AffTableResult (NodePoly a)
   case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
     Just (NodePoly { id: defaultListId }) ->
       pure { corpusId, corpusNode, defaultListId }

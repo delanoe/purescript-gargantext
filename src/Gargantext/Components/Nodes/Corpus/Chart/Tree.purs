@@ -1,14 +1,16 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Tree where
 
-import Prelude (bind, pure, ($), (==))
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
-import Data.Argonaut.Core (jsonEmptyObject)
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
+import Data.Newtype (class Newtype)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
 import Toestand as T
+
+import Gargantext.Prelude
 
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
 import Gargantext.Components.Charts.Options.Series (TreeNode, Trees(..), mkTree)
@@ -29,16 +31,10 @@ here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Tree"
 newtype Metrics = Metrics {
     "data" :: Array TreeNode
   }
-
-instance DecodeJson Metrics where
-  decodeJson json = do
-    obj <- decodeJson json
-    d   <- obj .: "data"
-    pure $ Metrics { "data": d }
-instance EncodeJson Metrics where
-  encodeJson (Metrics { "data": d }) =
-       "data" := encodeJson d
-    ~> jsonEmptyObject
+derive instance Generic Metrics _
+derive instance Newtype Metrics _
+derive newtype instance JSON.ReadForeign Metrics
+derive newtype instance JSON.WriteForeign Metrics
 
 type Loaded  = Array TreeNode
 

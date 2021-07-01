@@ -3,6 +3,7 @@ module Gargantext.Components.NgramsTable.Core
   , CoreParams
   , NgramsElement(..)
   , _NgramsElement
+  , NgramsRepoElementT
   , NgramsRepoElement(..)
   , _NgramsRepoElement
   , ngramsRepoElementToNgramsElement
@@ -79,8 +80,6 @@ module Gargantext.Components.NgramsTable.Core
   where
 
 import Control.Monad.State (class MonadState, execState)
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (.:!), (.:?), (:=), (:=?), (~>), (~>?))
-import Data.Argonaut.Decode.Error (JsonDecodeError(..))
 import Data.Array (head)
 import Data.Array as A
 import Data.Bifunctor (lmap)
@@ -104,6 +103,7 @@ import Data.List as L
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, fromMaybe', isJust)
+import Data.Monoid (class Monoid)
 import Data.Monoid.Additive (Additive(..))
 import Data.Newtype (class Newtype)
 import Data.Set (Set)
@@ -124,12 +124,15 @@ import Effect.Aff (Aff, launchAff_)
 import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Exception.Unsafe (unsafeThrow)
+import Foreign as F
 import Foreign.Object as FO
 import FFI.Simple.Functions (delay)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record as Record
 import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
+import Simple.JSON as JSON
 import Toestand as T
 
 import Gargantext.Prelude
@@ -158,19 +161,10 @@ newtype Versioned a = Versioned
   , data    :: a
   }
 derive instance Generic (Versioned a) _
-instance Eq a => Eq (Versioned a) where
-  eq = genericEq
-instance EncodeJson a => EncodeJson (Versioned a) where
-  encodeJson (Versioned {version, data: data_})
-     = "version" := version
-    ~> "data" := data_
-    ~> jsonEmptyObject
-instance DecodeJson a => DecodeJson (Versioned a) where
-  decodeJson json = do
-    obj     <- decodeJson json
-    version <- obj .: "version"
-    data_   <- obj .: "data"
-    pure $ Versioned {version, data: data_}
+derive instance Newtype (Versioned a) _
+instance Eq a => Eq (Versioned a) where eq = genericEq
+derive newtype instance JSON.ReadForeign a => JSON.ReadForeign (Versioned a)
+derive newtype instance JSON.WriteForeign a => JSON.WriteForeign (Versioned a)
 ------------------------------------------------------------------------
 type Count = Int
 
@@ -180,22 +174,10 @@ newtype VersionedWithCount a = VersionedWithCount
   , data    :: a
   }
 derive instance Generic (VersionedWithCount a) _
-instance Eq a => Eq (VersionedWithCount a) where
-  eq = genericEq
-instance EncodeJson a => EncodeJson (VersionedWithCount a) where
-  encodeJson (VersionedWithCount {count, version, data: data_})
-     = "version" := version
-    ~> "count" := count
-    ~> "data" := data_
-    ~> jsonEmptyObject
-
-instance DecodeJson a => DecodeJson (VersionedWithCount a) where
-  decodeJson json = do
-    obj     <- decodeJson json
-    count   <- obj .: "count"
-    data_   <- obj .: "data"
-    version <- obj .: "version"
-    pure $ VersionedWithCount {count, version, data: data_}
+derive instance Newtype (VersionedWithCount a) _
+instance Eq a => Eq (VersionedWithCount a) where eq = genericEq
+derive newtype instance JSON.ReadForeign a => JSON.ReadForeign (VersionedWithCount a)
+derive newtype instance JSON.WriteForeign a => JSON.WriteForeign (VersionedWithCount a)
 
 toVersioned :: forall a. VersionedWithCount a -> Tuple Count (Versioned a)
 toVersioned (VersionedWithCount { count, data: d, version }) = Tuple count $ Versioned { data: d, version }
@@ -205,6 +187,20 @@ toVersioned (VersionedWithCount { count, data: d, version }) = Tuple count $ Ver
 type NgramsTablePatch = { ngramsPatches :: NgramsPatches }
 
 newtype PatchMap k p = PatchMap (Map k p)
+
+derive instance Generic (PatchMap k p) _
+derive instance Newtype (PatchMap k p) _
+derive instance (Eq k, Eq p) => Eq (PatchMap k p)
+
+-- TODO generalize
+instance JSON.WriteForeign p => JSON.WriteForeign (PatchMap NgramsTerm p) where
+  writeImpl (PatchMap m) =
+    JSON.writeImpl $ FO.fromFoldable $ map (lmap ngramsTermText) (Map.toUnfoldable m :: Array _)
+instance (JSON.ReadForeign p, Monoid p) => JSON.ReadForeign (PatchMap NgramsTerm p) where
+  readImpl f = do
+    inst <- JSON.readImpl f
+    pure $ PatchMap $ foldlWithIndex (\k m v -> Map.insert (NormNgramsTerm k) v m) Map.empty (inst :: FO.Object p)
+    -- TODO we assume that the ngrams are already normalized ^^^^^^^^^^^^^
 
 type NgramsPatches = PatchMap NgramsTerm NgramsPatch
 
@@ -217,25 +213,46 @@ data NgramsPatch
       { patch_children :: PatchSet NgramsTerm
       , patch_list     :: Replace TermList
       }
+derive instance Generic NgramsPatch _
+derive instance Eq NgramsPatch
+instance Monoid NgramsPatch where
+  mempty = NgramsPatch { patch_children: mempty, patch_list: mempty }
+instance Semigroup NgramsPatch where
+  append (NgramsReplace p) (NgramsReplace q)
+    | p.patch_old /= q.patch_new = unsafeThrow "append/NgramsPatch: old != new"
+    | otherwise                  = ngramsReplace q.patch_old p.patch_new
+  append (NgramsPatch p)   (NgramsPatch q) = NgramsPatch
+    { patch_children: p.patch_children <> q.patch_children
+    , patch_list:     p.patch_list     <> q.patch_list
+    }
+  append (NgramsPatch p) (NgramsReplace q) = ngramsReplace q.patch_old (q.patch_new # _Just <<< _Newtype %~ applyNgramsPatch' p)
+  append (NgramsReplace p) (NgramsPatch q) = ngramsReplace (p.patch_old # _Just <<< _Newtype %~ applyNgramsPatch' (invert q)) p.patch_new
+instance JSON.WriteForeign NgramsPatch where
+  writeImpl (NgramsReplace { patch_old, patch_new }) = JSON.writeImpl { patch_old, patch_new }
+  writeImpl (NgramsPatch { patch_children, patch_list }) = JSON.writeImpl { patch_children, patch_list }
+instance JSON.ReadForeign NgramsPatch where
+  readImpl f = do
+    inst :: { patch_old :: Maybe NgramsRepoElement
+            , patch_new :: Maybe NgramsRepoElement
+            , patch_children :: PatchSet NgramsTerm
+            , patch_list :: Replace TermList } <- JSON.readImpl f
+    -- TODO handle empty fields
+    -- TODO handle patch_new
+    if isJust inst.patch_new || isJust inst.patch_old then
+      pure $ NgramsReplace { patch_old: inst.patch_old, patch_new: inst.patch_new }
+    else do
+      pure $ NgramsPatch { patch_list: inst.patch_list, patch_children: inst.patch_children }
 
 ------------------------------------------------------------------------
 newtype NgramsTerm = NormNgramsTerm String
 derive instance Generic NgramsTerm _
-instance Eq NgramsTerm where
-  eq = genericEq
-instance Ord NgramsTerm where
-  compare = genericCompare
-instance Show NgramsTerm where
-  show = genericShow
-
-instance EncodeJson NgramsTerm where
-  encodeJson (NormNgramsTerm s) = encodeJson s
-
--- TODO we assume that the ngrams are already normalized.
-instance DecodeJson NgramsTerm where
-  decodeJson = map NormNgramsTerm <<< decodeJson
-
-
+derive instance Newtype NgramsTerm _
+instance Eq NgramsTerm where eq = genericEq
+instance Ord NgramsTerm where compare = genericCompare
+instance Show NgramsTerm where show = genericShow
+derive newtype instance JSON.ReadForeign NgramsTerm
+derive newtype instance JSON.WriteForeign NgramsTerm
+derive newtype instance Monoid NgramsTerm
 
 ------------------------------------------------------------------------
 
@@ -331,8 +348,7 @@ _ngrams_scores = prop (SProxy :: SProxy "ngrams_scores")
 
 derive instance Newtype NgramsElement _
 derive instance Generic NgramsElement _
-instance Show NgramsElement where
-  show = genericShow
+instance Show NgramsElement where show = genericShow
 
 _NgramsElement  :: Iso' NgramsElement {
     children    :: Set NgramsTerm
@@ -345,65 +361,40 @@ _NgramsElement  :: Iso' NgramsElement {
   }
 _NgramsElement = _Newtype
 
-instance DecodeJson NgramsElement where
-  decodeJson json = do
-    obj         <- decodeJson json
-    ngrams      <- obj .:  "ngrams"
-    size        <- obj .:  "size"
-    list        <- obj .:  "list"
-    occurrences <- obj .:  "occurrences"
-    parent      <- obj .:? "parent"
-    root        <- obj .:? "root"
-    children'   <- obj .:  "children"
-    let children = Set.fromFoldable (children' :: Array NgramsTerm)
-    pure $ NgramsElement {ngrams, size, list, occurrences, parent, root, children}
+instance JSON.ReadForeign NgramsElement where
+  readImpl f = do
+    inst :: { children :: Array NgramsTerm
+            , size :: Int
+            , list :: TermList
+            , ngrams :: NgramsTerm
+            , occurrences :: Int
+            , parent :: Maybe NgramsTerm
+            , root :: Maybe NgramsTerm }<- JSON.readImpl f
+    pure $ NgramsElement $ inst { children = Set.fromFoldable inst.children }
+instance JSON.WriteForeign NgramsElement where
+  writeImpl (NgramsElement ne) =
+    JSON.writeImpl $ ne { children = Set.toUnfoldable ne.children :: Array _ }
 
-instance EncodeJson NgramsElement where
-  encodeJson (NgramsElement { children, list, ngrams, occurrences, parent, root }) = 
-       "children"    := children
-    ~> "list"        := list
-    ~> "ngrams"      := ngrams
-    ~> "occurrences" := occurrences
-    ~> "parent"      :=? parent
-    ~>? "root"        :=? root
-    ~>? jsonEmptyObject
-
-newtype NgramsRepoElement = NgramsRepoElement
-  { size     :: Int
+type NgramsRepoElementT =
+  ( size :: Int
   , list     :: TermList
   , root     :: Maybe NgramsTerm
   , parent   :: Maybe NgramsTerm
-  , children :: Set NgramsTerm
---  , occurrences :: Int -- TODO
-  }
-
-derive instance Eq NgramsRepoElement
-
-instance DecodeJson NgramsRepoElement where
-  decodeJson json = do
-    obj         <- decodeJson json
-    size        <- obj .:  "size"
-    list        <- obj .:  "list"
-    parent      <- obj .:? "parent"
-    root        <- obj .:? "root"
-    children'   <- obj .:  "children"
-    let children = Set.fromFoldable (children' :: Array NgramsTerm)
-    pure $ NgramsRepoElement {size, list, parent, root, children}
-
-instance EncodeJson NgramsRepoElement where
-  encodeJson (NgramsRepoElement { size, list, root, parent, children {-occurrences-} })
-     =  "size"       :=  size
-    ~>  "list"       :=  list
-    ~>  "root"       :=? root
-    ~>? "parent"     :=? parent
-    ~>? "children"   :=  children
---    ~>  "occurrences" := occurrences
-    ~>  jsonEmptyObject
-
-derive instance Newtype NgramsRepoElement _
+  )
+newtype NgramsRepoElement = NgramsRepoElement
+  { children :: Set NgramsTerm
+  | NgramsRepoElementT }
 derive instance Generic NgramsRepoElement _
-instance Show NgramsRepoElement where
-  show = genericShow
+derive instance Newtype NgramsRepoElement _
+derive instance Eq NgramsRepoElement
+instance JSON.ReadForeign NgramsRepoElement where
+  readImpl f = do
+    inst :: { children :: Array NgramsTerm | NgramsRepoElementT } <- JSON.readImpl f
+    pure $ NgramsRepoElement $ inst { children = Set.fromFoldable inst.children }
+instance JSON.WriteForeign NgramsRepoElement where
+  writeImpl (NgramsRepoElement nre) =
+    JSON.writeImpl $ nre { children = Set.toUnfoldable nre.children :: Array _ }
+instance Show NgramsRepoElement where show = genericShow
 
 _NgramsRepoElement  :: Iso' NgramsRepoElement {
     children    :: Set NgramsTerm
@@ -447,10 +438,8 @@ newtype NgramsTable = NgramsTable
 
 derive instance Newtype NgramsTable _
 derive instance Generic NgramsTable _
-instance Eq NgramsTable where
-  eq = genericEq
-instance Show NgramsTable where
-  show = genericShow
+instance Eq NgramsTable where eq = genericEq
+instance Show NgramsTable where show = genericShow
 
 _NgramsTable :: Iso' NgramsTable
                      { ngrams_repo_elements :: Map NgramsTerm NgramsRepoElement
@@ -464,12 +453,12 @@ instance Index NgramsTable NgramsTerm NgramsRepoElement where
 instance At NgramsTable NgramsTerm NgramsRepoElement where
   at k = _NgramsTable <<< _ngrams_repo_elements <<< at k
 
-instance DecodeJson NgramsTable where
-  decodeJson json = do
-    elements <- decodeJson json
+instance JSON.ReadForeign NgramsTable where
+  readImpl ff = do
+    inst <- JSON.readImpl ff
     pure $ NgramsTable
-      { ngrams_repo_elements: Map.fromFoldable $ f <$> (elements :: Array NgramsElement)
-      , ngrams_scores:        Map.fromFoldable $ g <$> elements
+      { ngrams_repo_elements: Map.fromFoldable $ f <$> (inst :: Array NgramsElement)
+      , ngrams_scores:        Map.fromFoldable $ g <$> inst
       }
     where
       f (NgramsElement {ngrams, size, list, root, parent, children}) =
@@ -580,6 +569,8 @@ data Replace a
   = Keep
   | Replace { old :: a, new :: a }
 
+derive instance Generic (Replace a) _
+
 replace :: forall a. Eq a => a -> a -> Replace a
 replace old new
   | old == new = Keep
@@ -593,8 +584,7 @@ instance Eq a => Semigroup (Replace a) where
   append (Replace { old }) (Replace { new }) | old /= new = unsafeThrow "old != new"
   append (Replace { new }) (Replace { old }) = replace old new
 
-instance Eq a => Monoid (Replace a) where
-  mempty = Keep
+instance Eq a => Monoid (Replace a) where mempty = Keep
 
 applyReplace :: forall a. Eq a => Replace a -> a -> a
 applyReplace Keep a = a
@@ -602,25 +592,16 @@ applyReplace (Replace { old, new }) a
   | a == old  = new
   | otherwise = a
 
-instance EncodeJson a => EncodeJson (Replace a) where
-  encodeJson Keep
-    = "tag" := "Keep"
-   ~> jsonEmptyObject
-  encodeJson (Replace {old, new})
-    = "old" := old
-   ~> "new" := new
-   ~> "tag" := "Replace"
-   ~> jsonEmptyObject
-
-instance (DecodeJson a, Eq a) => DecodeJson (Replace a) where
-  decodeJson json = do
-    obj  <- decodeJson json
-    mold <- obj .:! "old"
-    mnew <- obj .:! "new"
-    case Tuple mold mnew of
+instance JSON.WriteForeign a => JSON.WriteForeign (Replace a) where
+  writeImpl Keep = JSON.writeImpl { tag: "Keep" }
+  writeImpl (Replace {old, new}) = JSON.writeImpl { old, new, tag: "Replace" }
+instance (JSON.ReadForeign a, Eq a) => JSON.ReadForeign (Replace a) where
+  readImpl f = do
+    impl :: { old :: Maybe a, new :: Maybe a }  <- JSON.readImpl f
+    case Tuple impl.old impl.new of
       Tuple (Just old) (Just new) -> pure $ replace old new
       Tuple Nothing Nothing       -> pure Keep
-      _                           -> Left $ TypeMismatch "decodeJsonReplace"
+      _                           -> F.fail $ F.ForeignError "decodeJsonReplace"
 
 -- Representing a PatchSet as `Map a Boolean` would have the advantage
 -- of enforcing rem and add to be disjoint.
@@ -628,6 +609,9 @@ newtype PatchSet a = PatchSet
   { rem :: Set a
   , add :: Set a
   }
+
+derive instance Generic (PatchSet a) _
+derive instance Newtype (PatchSet a) _
 
 instance Ord a => Semigroup (PatchSet a) where
   append (PatchSet p) (PatchSet q) = PatchSet
@@ -638,19 +622,16 @@ instance Ord a => Semigroup (PatchSet a) where
 instance Ord a => Monoid (PatchSet a) where
   mempty = PatchSet { rem: Set.empty, add: Set.empty }
 
-instance EncodeJson a => EncodeJson (PatchSet a) where
-  encodeJson (PatchSet {rem, add})
-    -- TODO only include non empty fields
-    = "rem" := (Set.toUnfoldable rem :: Array a)
-   ~> "add" := (Set.toUnfoldable add :: Array a)
-   ~> jsonEmptyObject
+instance JSON.WriteForeign a => JSON.WriteForeign (PatchSet a) where
+  writeImpl (PatchSet {rem, add}) = JSON.writeImpl { rem: (Set.toUnfoldable rem :: Array a)
+                                                   , add: (Set.toUnfoldable add :: Array a) }
 
-instance (Ord a, DecodeJson a) => DecodeJson (PatchSet a) where
-  decodeJson json = do
+instance (Ord a, JSON.ReadForeign a) => JSON.ReadForeign (PatchSet a) where
+  readImpl f = do
     -- TODO handle empty fields
-    obj <- decodeJson json
-    rem <- mkSet <$> (obj .: "rem")
-    add <- mkSet <$> (obj .: "add")
+    inst :: { rem :: Array a, add :: Array a } <- JSON.readImpl f
+    let rem = mkSet inst.rem
+        add = mkSet inst.add
     pure $ PatchSet { rem, add }
    where
     mkSet :: forall b. Ord b => Array b -> Set b
@@ -668,54 +649,13 @@ patchSetFromMap m = PatchSet { rem: Map.keys (Map.filter not m)
 ngramsReplace :: Maybe NgramsRepoElement -> Maybe NgramsRepoElement -> NgramsPatch
 ngramsReplace patch_old patch_new = NgramsReplace {patch_old, patch_new}
 
-derive instance Eq NgramsPatch
 derive instance Eq (PatchSet NgramsTerm)
-
-instance Semigroup NgramsPatch where
-  append (NgramsReplace p) (NgramsReplace q)
-    | p.patch_old /= q.patch_new = unsafeThrow "append/NgramsPatch: old != new"
-    | otherwise                  = ngramsReplace q.patch_old p.patch_new
-  append (NgramsPatch p)   (NgramsPatch q) = NgramsPatch
-    { patch_children: p.patch_children <> q.patch_children
-    , patch_list:     p.patch_list     <> q.patch_list
-    }
-  append (NgramsPatch p) (NgramsReplace q) = ngramsReplace q.patch_old (q.patch_new # _Just <<< _Newtype %~ applyNgramsPatch' p)
-  append (NgramsReplace p) (NgramsPatch q) = ngramsReplace (p.patch_old # _Just <<< _Newtype %~ applyNgramsPatch' (invert q)) p.patch_new
 
 -- TODO
 invert :: forall a. a -> a
 invert _ = unsafeThrow "invert: TODO"
 
 
-
-
-instance Monoid NgramsPatch where
-  mempty = NgramsPatch { patch_children: mempty, patch_list: mempty }
-
-instance EncodeJson NgramsPatch where
-  encodeJson (NgramsReplace { patch_old, patch_new })
-     = "patch_old" := patch_old
-    ~> "patch_new" := patch_new
-    ~> jsonEmptyObject
-  encodeJson (NgramsPatch { patch_children, patch_list })
-  -- TODO only include non empty fields
-     = "patch_children" := patch_children
-    ~> "patch_list"     := patch_list
-    ~> jsonEmptyObject
-
-instance DecodeJson NgramsPatch where
-  decodeJson json = do
-    obj            <- decodeJson json
-    -- TODO handle empty fields
-    -- TODO handle patch_new
-    patch_new <- obj .:? "patch_new"
-    patch_old <- obj .:? "patch_old"
-    if isJust patch_new || isJust patch_old then
-      pure $ NgramsReplace { patch_old, patch_new }
-    else do
-      patch_list     <- obj .: "patch_list"
-      patch_children <- obj .: "patch_children"
-      pure $ NgramsPatch { patch_list, patch_children }
 
 applyNgramsPatch' :: forall row.
                           { patch_children :: PatchSet NgramsTerm
@@ -743,9 +683,6 @@ instance (Ord k, Eq p, Monoid p) => Semigroup (PatchMap k p) where
 
 instance (Ord k, Eq p, Monoid p) => Monoid (PatchMap k p) where
   mempty = PatchMap Map.empty
-
-derive instance Newtype (PatchMap k p) _
-derive instance (Eq k, Eq p) => Eq (PatchMap k p)
 
 _PatchMap :: forall k p. Iso' (PatchMap k p) (Map k p)
 _PatchMap = _Newtype
@@ -783,17 +720,6 @@ traversePatchMapWithIndex :: forall f a b k.
                              (k -> a -> f b) -> PatchMap k a -> f (PatchMap k b)
 traversePatchMapWithIndex f (PatchMap m) = fromMap <$> traverseWithIndex f m
 
--- TODO generalize
-instance EncodeJson p => EncodeJson (PatchMap NgramsTerm p) where
-  encodeJson (PatchMap m) =
-    encodeJson $ FO.fromFoldable $ map (lmap ngramsTermText) (Map.toUnfoldable m :: Array _)
-
-instance DecodeJson p => DecodeJson (PatchMap NgramsTerm p) where
-  decodeJson json = do
-    obj <- decodeJson json
-    pure $ PatchMap $ foldlWithIndex (\k m v -> Map.insert (NormNgramsTerm k) v m) mempty (obj :: FO.Object p)
-    -- TODO we assume that the ngrams are already normalized ^^^^^^^^^^^^^
-
 singletonPatchMap :: forall k p. k -> p -> PatchMap k p
 singletonPatchMap k p = PatchMap (Map.singleton k p)
 
@@ -825,11 +751,11 @@ newtype AsyncNgramsChartsUpdate = AsyncNgramsChartsUpdate {
     listId  :: Maybe ListId
   , tabType :: TabType
   }
-instance EncodeJson AsyncNgramsChartsUpdate where
-  encodeJson (AsyncNgramsChartsUpdate { listId, tabType }) = do
-      "list_id"  := listId
-    ~> "tab_type" := tabType
-    ~> jsonEmptyObject
+derive instance Generic AsyncNgramsChartsUpdate _
+derive instance Newtype AsyncNgramsChartsUpdate _
+instance JSON.WriteForeign AsyncNgramsChartsUpdate where
+  writeImpl (AsyncNgramsChartsUpdate { listId, tabType }) =
+    JSON.writeImpl { list_id: listId, tab_type: tabType }
 
 type NewElems = Map NgramsTerm TermList
 

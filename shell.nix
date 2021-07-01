@@ -48,6 +48,7 @@ pkgs.mkShell {
     build-purs
     build
     repl
+    pkgs.spago
     pkgs.yarn
     test-ps
   ];

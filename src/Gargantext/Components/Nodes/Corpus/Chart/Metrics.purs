@@ -1,17 +1,17 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Metrics where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
-import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
 import Data.Map as Map
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
+import Data.Newtype (class Newtype)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
 import Toestand as T
 
 import Gargantext.Prelude (class Eq, bind, negate, pure, ($), (<$>), (<>))
@@ -43,33 +43,17 @@ newtype Metric = Metric
   , cat   :: TermList
   }
 derive instance Generic Metric _
-instance Eq Metric where
-  eq = genericEq
-instance DecodeJson Metric where
-  decodeJson json = do
-    obj   <- decodeJson json
-    label <- obj .: "label"
-    x     <- obj .: "x"
-    y     <- obj .: "y"
-    cat   <- obj .: "cat"
-    pure $ Metric { label, x, y, cat }
-instance EncodeJson Metric where
-  encodeJson (Metric { label, x, y, cat }) =
-       "label"  := encodeJson label
-    ~> "x"      := encodeJson x
-    ~> "y"      := encodeJson y
-    ~> "cat"    := encodeJson cat
-    ~> jsonEmptyObject
+derive instance Newtype Metric _
+instance Eq Metric where eq = genericEq
+derive newtype instance JSON.ReadForeign Metric
+derive newtype instance JSON.WriteForeign Metric
 
 newtype Metrics = Metrics {
      "data" :: Array Metric
   }
-
-instance DecodeJson Metrics where
-  decodeJson json = do
-    obj <- decodeJson json
-    d   <- obj .: "data"
-    pure $ Metrics { "data": d }
+derive instance Generic Metrics _
+derive instance Newtype Metrics _
+derive newtype instance JSON.ReadForeign Metrics
 
 type Loaded  = Array Metric
 

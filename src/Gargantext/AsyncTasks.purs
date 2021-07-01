@@ -24,12 +24,15 @@ localStorageKey = "garg-async-tasks"
 
 
 type TaskList = Array GT.AsyncTaskWithType
-type Storage = Map.Map GT.NodeID TaskList
+newtype Storage = Storage (Map.Map GT.NodeID TaskList)
 
-instance JSON.ReadForeign Storage where readImpl = GUJ.readMap 
+instance JSON.ReadForeign Storage where
+  readImpl f = do
+    m <- GUJ.readMapInt f
+    pure $ Storage m
 
 empty :: Storage
-empty = Map.empty
+empty = Storage $ Map.empty
 
 getAsyncTasks :: Effect Storage
 getAsyncTasks = R2.getls >>= WSS.getItem localStorageKey >>= handleMaybe
@@ -44,10 +47,10 @@ getAsyncTasks = R2.getls >>= WSS.getItem localStorageKey >>= handleMaybe
     parse  s = GU.mapLeft (log2 "Error parsing serialised sessions:") (JSON.readJSON s)
 
 getTasks :: GT.NodeID -> Storage -> TaskList
-getTasks nodeId storage = fromMaybe [] $ Map.lookup nodeId storage
+getTasks nodeId (Storage storage) = fromMaybe [] $ Map.lookup nodeId storage
 
 setTasks :: GT.NodeID -> TaskList -> Storage -> Storage
-setTasks id tasks s = Map.insert id tasks s
+setTasks id tasks (Storage s) = Storage $ Map.insert id tasks s
 
 focus :: GT.NodeID -> T.Box Storage -> R.Hooks (T.Box TaskList)
 focus id tasks = T.useFocused (getTasks id) (setTasks id) tasks
@@ -65,7 +68,7 @@ type ReductorProps = (
 insert :: GT.NodeID -> GT.AsyncTaskWithType -> T.Box Storage -> Effect Unit
 insert id task storage = T.modify_ newStorage storage
   where
-    newStorage s = Map.alter (maybe (Just [task]) (\ts -> Just $ A.cons task ts)) id s
+    newStorage (Storage s) = Storage $ Map.alter (maybe (Just [task]) (\ts -> Just $ A.cons task ts)) id s
 
 finish :: GT.NodeID -> GT.AsyncTaskWithType -> T.Box Storage -> Effect Unit
 finish id task storage = remove id task storage
@@ -73,7 +76,7 @@ finish id task storage = remove id task storage
 remove :: GT.NodeID -> GT.AsyncTaskWithType -> T.Box Storage -> Effect Unit
 remove id task storage = T.modify_ newStorage storage
   where
-    newStorage s = Map.alter (maybe Nothing $ (\ts -> Just $ removeTaskFromList ts task)) id s
+    newStorage (Storage s) = Storage $ Map.alter (maybe Nothing $ (\ts -> Just $ removeTaskFromList ts task)) id s
 
 
 -- When a task is finished: which tasks cause forest or app reload

@@ -2,7 +2,6 @@ module Gargantext.Utils.CacheAPI where
 
 import Control.Monad.Except (runExcept)
 import Control.Promise (Promise, toAffE)
-import Data.Argonaut (class DecodeJson, decodeJson)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
@@ -12,6 +11,7 @@ import Effect.Exception (error)
 import Foreign as F
 import Foreign.Object as O
 import Milkis as M
+import Simple.JSON as JSON
 import Type.Row (class Union)
 
 import Gargantext.Prelude hiding (add)
@@ -19,14 +19,14 @@ import Gargantext.Ends (class ToUrl, toUrl)
 import Gargantext.Sessions (Session(..))
 
 
-get :: forall a p. DecodeJson a => ToUrl Session p => Cache -> Session -> p -> Aff a
+get :: forall a p. JSON.ReadForeign a => ToUrl Session p => Cache -> Session -> p -> Aff a
 get cache session p = do
   let req = makeGetRequest session p
   res <- cached cache req
 
-  j <- M.json res
+  j <- M.text res
 
-  case decodeJson (F.unsafeFromForeign j) of
+  case JSON.readJSON j of
     Left err -> throwError $ error $ "decodeJson affResp.body: " <> show err
     Right b -> pure b
 
@@ -88,14 +88,14 @@ cached cache req = do
         Just res -> pure res
         Nothing -> throwError $ error $ "Cannot add to cache"
 
-cachedJson :: forall a. DecodeJson a => Cache -> Request -> Aff a
+cachedJson :: forall a. JSON.ReadForeign a => Cache -> Request -> Aff a
 cachedJson cache req = do
   res <- cached cache req
   -- liftEffect $ do
   --   log2 "[cachedJson] res" res
-  j <- M.json res
+  j <- M.text res
 
-  case decodeJson (F.unsafeFromForeign j) of
+  case JSON.readJSON j of
     Left err -> throwError $ error $ "[cachedJson] decodeJson affResp.body: " <> show err
     Right b -> pure b
 
@@ -110,11 +110,11 @@ fetch req = do
   res <- toAffE $ _fetch req
   pure $ F.unsafeFromForeign res
 
-pureJson :: forall a. DecodeJson a => Request -> Aff a
+pureJson :: forall a. JSON.ReadForeign a => Request -> Aff a
 pureJson req = do
   res <- fetch req
-  j <- M.json res
-  case decodeJson (F.unsafeFromForeign j) of
+  j <- M.text res
+  case JSON.readJSON j of
     Left err -> throwError $ error $ "[pureJson] decodeJson affResp.body: " <> show err
     Right b -> pure b
 

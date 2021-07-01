@@ -1,14 +1,16 @@
 module Gargantext.Components.Charts.Options.Series where
 
-import Prelude (class Eq, class Show, bind, map, pure, show, ($), (+), (<<<), (<>), eq)
-
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
-import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Array (foldl)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), maybe)
+import Data.Newtype (class Newtype)
+import Data.Symbol (SProxy(..))
+import Record as Record
 import Record.Unsafe (unsafeSet)
+import Simple.JSON as JSON
 import Unsafe.Coerce (unsafeCoerce)
+
+import Gargantext.Prelude
 
 import Gargantext.Types (class Optional)
 import Gargantext.Components.Charts.Options.Font (ItemStyle, Tooltip)
@@ -186,28 +188,20 @@ toJsTree maybeSurname (TreeNode x) =
     where
       name = maybe "" (\x' -> x' <> ">") maybeSurname  <> x.name
 
-data TreeNode = TreeNode {
+newtype TreeNode = TreeNode {
     children :: Array TreeNode
   , name     :: String
   , value    :: Int
   }
-
 derive instance Generic TreeNode _
-instance Eq TreeNode where
-  eq (TreeNode n1) (TreeNode n2) = eq n1 n2
-instance DecodeJson TreeNode where
-  decodeJson json = do
-    obj <- decodeJson json
-    children <- obj .: "children"
-    name <- obj .: "label"
-    value <- obj .: "value"
-    pure $ TreeNode { children, name, value }
-instance EncodeJson TreeNode where
-  encodeJson (TreeNode { children, name, value }) =
-       "children" := encodeJson children
-    ~> "label"    := encodeJson name
-    ~> "value"    := encodeJson value
-    ~> jsonEmptyObject
+derive instance Newtype TreeNode _
+derive instance Eq TreeNode
+instance JSON.ReadForeign TreeNode where
+  readImpl f = do
+    inst <- JSON.readImpl f
+    pure $ TreeNode $ Record.rename labelP nameP inst
+instance JSON.WriteForeign TreeNode where
+  writeImpl (TreeNode t) = JSON.writeImpl $ Record.rename nameP labelP t
 
 treeNode :: String -> Int -> Array TreeNode -> TreeNode
 treeNode n v ts = TreeNode {name : n, value:v, children:ts}
@@ -216,7 +210,12 @@ treeLeaf :: String -> Int -> TreeNode
 treeLeaf n v = TreeNode { name : n, value : v, children : []}
 
 
+nameP = SProxy :: SProxy "name"
+labelP = SProxy :: SProxy "label"
+
+
 -- | TODO
 -- https://ecomfe.github.io/echarts-examples/public/data/asset/data/life-expectancy-table.json
 -- https://ecomfe.github.io/echarts-examples/public/editor.html?c=scatter3D-dataset&gl=1
+
 

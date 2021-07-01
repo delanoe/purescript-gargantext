@@ -28,8 +28,14 @@ type Title = String
 -- We need FTFields with indices because it's the only way to identify the
 -- FTField element inside a component (there are no UUIDs and such)
 type Index = Int
-type FTFieldWithIndex = Tuple Index FTField
-type FTFieldsWithIndex = List.List FTFieldWithIndex
+type FTFieldWithIndex = { idx :: Index, ftField :: FTField }
+
+newtype FTFieldsWithIndex = FTFieldsWithIndex (List.List FTFieldWithIndex)
+derive instance Generic FTFieldsWithIndex _
+derive instance Newtype FTFieldsWithIndex _
+instance Eq FTFieldsWithIndex where eq = genericEq
+instance JSON.ReadForeign FTFieldsWithIndex where readImpl f = FTFieldsWithIndex <$> GUJ.readList f
+instance JSON.WriteForeign FTFieldsWithIndex where writeImpl (FTFieldsWithIndex lst) = GUJ.writeList lst
 
 newtype Field a =
   Field { name :: String
@@ -54,18 +60,18 @@ type FieldFieldTypeJSONRead =
   { name :: String
   , type :: String
   , data :: { tag :: Tag
-           -- HaskellFT
-           , haskell :: Maybe HaskellCode
-           -- JSONFT
-           , authors :: Maybe Author
-           , desc :: Maybe Description
-           , query :: Maybe Query
-           , title :: Maybe Title
-           -- MarkdownFT
-           , text :: Maybe MarkdownText
-           -- PythonFT
-           , python :: Maybe PythonCode
-           }
+            -- HaskellFT
+            , haskell :: Maybe HaskellCode
+             -- JSONFT
+            , authors :: Maybe Author
+            , desc :: Maybe Description
+            , query :: Maybe Query
+            , title :: Maybe Title
+            -- MarkdownFT
+            , text :: Maybe MarkdownText
+            -- PythonFT
+            , python :: Maybe PythonCode
+            }
   }
 
 derive instance Generic (Field FieldType) _
@@ -93,10 +99,8 @@ instance JSON.WriteForeign (Field FieldType) where
       typ' (JSON _)     = "JSON"
       typ' (Markdown _) = "Markdown"
       typ' (Python _)   = "Python"
-instance Eq (Field FieldType) where
-  eq = genericEq
-instance Show (Field FieldType) where
-  show = genericShow
+instance Eq (Field FieldType) where eq = genericEq
+instance Show (Field FieldType) where show = genericShow
 
 data FieldType =
     Haskell { tag :: Tag | HaskellFT }
@@ -116,10 +120,8 @@ newtype FTFieldList = FTFieldList (List.List FTField)
 derive instance Generic FTFieldList _
 derive instance Newtype FTFieldList _
 instance Eq FTFieldList where eq = genericEq
-instance JSON.ReadForeign FTFieldList where
-  readImpl f = FTFieldList <$> GUJ.readList f
-instance JSON.WriteForeign FTFieldList where
-  writeImpl (FTFieldList lst) = GUJ.writeList lst
+instance JSON.ReadForeign FTFieldList where readImpl f = FTFieldList <$> GUJ.readList f
+instance JSON.WriteForeign FTFieldList where writeImpl (FTFieldList lst) = GUJ.writeList lst
 
 
 isJSON :: FTField -> Boolean

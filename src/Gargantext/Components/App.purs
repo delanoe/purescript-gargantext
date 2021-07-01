@@ -1,4 +1,6 @@
 module Gargantext.Components.App (app) where
+
+import Data.Set as Set
 import Reactix as R
 import Toestand as T
 

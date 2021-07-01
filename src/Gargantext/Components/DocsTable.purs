@@ -1,15 +1,14 @@
 -- TODO: this module should be replaced by FacetsTable
 module Gargantext.Components.DocsTable where
 
-import Gargantext.Prelude
-  ( class Ord, Unit, bind, const, discard, identity, mempty
-  , otherwise, pure, show, unit, ($), (/=), (<$>), (<<<), (<>), (==) )
-import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Array as A
+import Data.Generic.Rep (class Generic)
 import Data.Lens ((^.))
 import Data.Lens.At (at)
 import Data.Lens.Record (prop)
 import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
+import Data.Map as Map
+import Data.Newtype (class Newtype)
 import Data.Ord.Down (Down(..))
 import Data.Set (Set)
 import Data.Set as Set
@@ -23,7 +22,10 @@ import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
 import Toestand as T
+
+import Gargantext.Prelude
 
 import Gargantext.Components.Category (rating)
 import Gargantext.Components.Category.Types (Star(..))
@@ -290,7 +292,7 @@ pageLayoutCpt = here.component "pageLayout" cpt where
           , renderer: paint
           }
       NT.CacheOff -> do
-        localCategories <- T.useBox (mempty :: LocalUserScore)
+        localCategories <- T.useBox (Map.empty :: LocalUserScore)
         paramsS <- T.useBox params
         paramsS' <- T.useLive T.unequal paramsS
         let loader p = do
@@ -338,7 +340,7 @@ pagePaintCpt = here.component "pagePaintCpt" cpt
     cpt { documents, layout, params } _ = do
       params' <- T.useLive T.unequal params
 
-      localCategories <- T.useBox (mempty :: LocalUserScore)
+      localCategories <- T.useBox (Map.empty :: LocalUserScore)
       pure $ pagePaintRaw { documents: A.fromFoldable (filteredRows params')
                           , layout
                           , localCategories
@@ -505,13 +507,9 @@ newtype SearchQuery = SearchQuery {
     parent_id :: Int
   , query :: Array String
   }
-
-
-instance EncodeJson SearchQuery where
-  encodeJson (SearchQuery {query, parent_id})
-    = "query" := query
-    ~> "parent_id" := parent_id
-    ~> jsonEmptyObject
+derive instance Generic SearchQuery _
+derive instance Newtype SearchQuery _
+derive newtype instance JSON.ReadForeign SearchQuery
 
 
 documentsRoute :: Int -> SessionRoute

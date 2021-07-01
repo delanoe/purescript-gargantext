@@ -2,17 +2,18 @@ module Gargantext.Components.Nodes.Annuaire
  -- ( annuaire )
  where
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Array as A
 import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
+import Data.Newtype (class Newtype)
 import Data.Sequence as Seq
-import Data.Tuple (fst, snd)
-import Data.Tuple.Nested ((/\))
+import Data.Symbol (SProxy(..))
 import Effect.Aff (Aff, launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record as Record
+import Simple.JSON as JSON
 import Toestand as T
 
 import Gargantext.Prelude
@@ -20,8 +21,8 @@ import Gargantext.Prelude
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types as CT
 import Gargantext.Components.Nodes.Lists.Types as NT
-import Gargantext.Components.Table as TT
-import Gargantext.Components.Table.Types as TT
+import Gargantext.Components.Table (defaultContainer, initialParams, makeRow, table, tableHeaderLayout) as TT
+import Gargantext.Components.Table.Types (ColumnName(..), Params) as TT
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
@@ -236,18 +237,13 @@ contactCellsCpt = here.component "contactCells" cpt where
         contactWhereRole (CT.ContactWhere { role: Nothing }) = "Empty Role"
         contactWhereRole (CT.ContactWhere { role: Just role }) = role
 
-data HyperdataAnnuaire = HyperdataAnnuaire
+newtype HyperdataAnnuaire = HyperdataAnnuaire
   { title :: Maybe String
   , desc  :: Maybe String }
 derive instance Generic HyperdataAnnuaire _
-instance Eq HyperdataAnnuaire where
-  eq = genericEq
-instance DecodeJson HyperdataAnnuaire where
-  decodeJson json = do
-    obj   <- decodeJson json
-    title <- obj .:? "title"
-    desc  <- obj .:? "desc"
-    pure $ HyperdataAnnuaire { title, desc }
+derive instance Newtype HyperdataAnnuaire _
+instance Eq HyperdataAnnuaire where eq = genericEq
+derive newtype instance JSON.ReadForeign HyperdataAnnuaire
 
 ------------------------------------------------------------------------------
 newtype AnnuaireInfo =
@@ -261,27 +257,17 @@ newtype AnnuaireInfo =
   , hyperdata :: HyperdataAnnuaire
   }
 derive instance Generic AnnuaireInfo _
-instance Eq AnnuaireInfo where
-  eq = genericEq
-instance DecodeJson AnnuaireInfo where
-  decodeJson json = do
-    obj <- decodeJson json
-    id        <- obj .: "id"
-    typename  <- obj .: "typename"
-    userId    <- obj .: "user_id"
-    parentId  <- obj .: "parent_id"
-    name      <- obj .: "name"
-    date      <- obj .: "date"
-    hyperdata <- obj .: "hyperdata"
-    pure $ AnnuaireInfo
-      { id : id
-      , typename : typename
-      , userId   : userId
-      , parentId : parentId
-      , name     : name
-      , date     : date
-      , hyperdata: hyperdata
-      }
+derive instance Newtype AnnuaireInfo _
+instance Eq AnnuaireInfo where eq = genericEq
+instance JSON.ReadForeign AnnuaireInfo where
+  readImpl f = do
+    inst <- JSON.readImpl f
+    pure $ AnnuaireInfo $ Record.rename user_idP userIdP $ Record.rename parent_idP parentIdP inst
+    where
+      user_idP = SProxy :: SProxy "user_id"
+      userIdP = SProxy :: SProxy "userId"
+      parent_idP = SProxy :: SProxy "parent_id"
+      parentIdP = SProxy :: SProxy "parentId"
 
 --newtype AnnuaireTable  = AnnuaireTable  { annuaireTable :: Array (Maybe Contact)}
 

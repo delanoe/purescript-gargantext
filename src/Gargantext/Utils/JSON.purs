@@ -6,8 +6,9 @@ import Control.Monad.Except (withExcept)
 import Data.Int as Int
 import Data.List as List
 import Data.Map as Map
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, Maybe(..))
 import Data.Sequence as Seq
+import Data.Traversable (sequence)
 import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple (Tuple(..))
 import Foreign (F, Foreign, ForeignError(..), readArray, unsafeToForeign)
@@ -42,9 +43,16 @@ writeList xs = unsafeToForeign $ JSON.writeImpl <$> xs
 
 readMapInt :: forall v. JSON.ReadForeign v => Foreign -> F (Map.Map Int v)
 readMapInt f = do
-  inst <- readObject' f
-  let mapped = GUT.mapFst (fromJust <<< Int.fromString) <$> Object.toUnfoldable inst
-  pure $ Map.fromFoldable mapped
+  (inst :: Object.Object Foreign) <- readObject' f
+  let (mapped :: Array (F (Tuple Int v))) = (\(Tuple k v) ->
+                                              case Int.fromString k of
+                                                Nothing -> F.fail $ ErrorAtProperty k $ ForeignError "Cannot convert to int"
+                                                Just kInt -> do
+                                                  v' <- JSON.readImpl v
+                                                  pure $ Tuple kInt v'
+                                            ) <$> Object.toUnfoldable inst
+  seq <- sequence mapped
+  pure $ Map.fromFoldable seq
   where
     readObject' :: Foreign -> F (Object.Object Foreign)
     readObject' value

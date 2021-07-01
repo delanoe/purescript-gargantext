@@ -1,10 +1,10 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Common where
 
-import Data.Argonaut (class DecodeJson)
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
+import Simple.JSON as JSON
 import Toestand as T
 
 import Gargantext.Prelude
@@ -49,12 +49,12 @@ type MetricsWithCacheLoadViewProps res ret = (
   )
 
 metricsWithCacheLoadView :: forall res ret.
-                            Eq ret => DecodeJson res =>
+                            Eq ret => JSON.ReadForeign res =>
                             Record (MetricsWithCacheLoadViewProps res ret) -> R.Element
 metricsWithCacheLoadView p = R.createElement metricsWithCacheLoadViewCpt p []
 
 metricsWithCacheLoadViewCpt :: forall res ret.
-                               Eq ret => DecodeJson res =>
+                               Eq ret => JSON.ReadForeign res =>
                                R.Component (MetricsWithCacheLoadViewProps res ret)
 metricsWithCacheLoadViewCpt = here.component "metricsWithCacheLoadView" cpt
   where

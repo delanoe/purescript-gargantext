@@ -1,6 +1,5 @@
 module Gargantext.Components.NgramsTable.Loader where
 
-import Data.Argonaut (class DecodeJson)
 import Data.Maybe (Maybe(..), maybe, isJust)
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
@@ -8,6 +7,7 @@ import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Reactix as R
+import Simple.JSON as JSON
 import Toestand as T
 
 import Gargantext.Prelude
@@ -34,7 +34,7 @@ type LoaderWithCacheAPIProps path res ret = (
   )
 
 
-useLoaderWithCacheAPI :: forall path res ret. Eq path => DecodeJson res => Eq ret =>
+useLoaderWithCacheAPI :: forall path res ret. Eq path => JSON.ReadForeign res => Eq ret =>
                          Record (LoaderWithCacheAPIProps path res ret)
                       -> R.Hooks R.Element
 useLoaderWithCacheAPI { cacheEndpoint, handleResponse, mkRequest, path, renderer } = do
@@ -56,7 +56,7 @@ type LoaderWithCacheAPIEffectProps path res ret = (
   , state          :: T.Box (Maybe ret)
   )
 
-useCachedAPILoaderEffect :: forall path res ret. Eq path => DecodeJson res => Eq ret =>
+useCachedAPILoaderEffect :: forall path res ret. Eq path => JSON.ReadForeign res => Eq ret =>
                             Record (LoaderWithCacheAPIEffectProps path res ret)
                          -> R.Hooks Unit
 useCachedAPILoaderEffect { cacheEndpoint

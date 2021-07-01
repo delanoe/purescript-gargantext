@@ -1,13 +1,15 @@
 module Gargantext.Hooks.Loader where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (:=), (~>), jsonEmptyObject)
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), isJust, maybe)
+import Data.Newtype (class Newtype)
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Reactix as R
+import Simple.JSON as JSON
 import Toestand as T
 
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
@@ -77,20 +79,10 @@ useLoaderEffect path state loader = do
 
 
 newtype HashedResponse a = HashedResponse { hash  :: Hash, value :: a }
-
-instance DecodeJson a => DecodeJson (HashedResponse a) where
-  decodeJson json = do
-    obj   <- decodeJson json
-    hash  <- obj .: "hash"
-    value <- obj .: "value"
-    pure $ HashedResponse { hash, value }
-
-instance EncodeJson a => EncodeJson (HashedResponse a) where
-  encodeJson (HashedResponse { hash, value }) = do
-       "hash" := encodeJson hash
-    ~> "value" := encodeJson value
-    ~> jsonEmptyObject
-
+derive instance Generic (HashedResponse a) _
+derive instance Newtype (HashedResponse a) _
+derive newtype instance JSON.ReadForeign a => JSON.ReadForeign (HashedResponse a)
+derive newtype instance JSON.WriteForeign a => JSON.WriteForeign (HashedResponse a)
 
 type LoaderWithCacheAPIProps path res ret = (
     cacheEndpoint :: path -> Aff Hash
@@ -102,7 +94,7 @@ type LoaderWithCacheAPIProps path res ret = (
 
 
 useLoaderWithCacheAPI :: forall path res ret.
-                         Eq ret => Eq path => DecodeJson res =>
+                         Eq ret => Eq path => JSON.ReadForeign res =>
                          Record (LoaderWithCacheAPIProps path res ret)
                       -> R.Hooks R.Element
 useLoaderWithCacheAPI { cacheEndpoint, handleResponse, mkRequest, path, renderer } = do
@@ -125,7 +117,7 @@ type LoaderWithCacheAPIEffectProps path res ret = (
   )
 
 useCachedAPILoaderEffect :: forall path res ret.
-                            Eq ret => Eq path => DecodeJson res =>
+                            Eq ret => Eq path => JSON.ReadForeign res =>
                             Record (LoaderWithCacheAPIEffectProps path res ret)
                          -> R.Hooks Unit
 useCachedAPILoaderEffect { cacheEndpoint

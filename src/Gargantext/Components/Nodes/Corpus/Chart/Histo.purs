@@ -1,14 +1,14 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Histo where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
-import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..))
+import Data.Newtype (class Newtype)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
 import Toestand as T
 
 import Gargantext.Prelude (class Eq, bind, map, pure, ($), (==))
@@ -35,29 +35,16 @@ newtype ChartMetrics = ChartMetrics {
     "data" :: HistoMetrics
    }
 derive instance Generic ChartMetrics _
-instance Eq ChartMetrics where
-  eq = genericEq
-instance DecodeJson ChartMetrics where
-  decodeJson json = do
-    obj <- decodeJson json
-    d <- obj .: "data"
-    pure $ ChartMetrics { "data": d }
+derive instance Newtype ChartMetrics _
+instance Eq ChartMetrics where eq = genericEq
+derive newtype instance JSON.ReadForeign ChartMetrics
 
 newtype HistoMetrics = HistoMetrics { dates :: Array String, count :: Array Number }
 derive instance Generic HistoMetrics _
-instance Eq HistoMetrics where
-  eq = genericEq
-instance DecodeJson HistoMetrics where
-  decodeJson json = do
-    obj   <- decodeJson json
-    d <- obj .: "dates"
-    c <- obj .: "count"
-    pure $ HistoMetrics { dates : d , count: c}
-instance EncodeJson HistoMetrics where
-  encodeJson (HistoMetrics { dates, count }) =
-       "count" := encodeJson count
-    ~> "dates"    := encodeJson dates
-    ~> jsonEmptyObject
+derive instance Newtype HistoMetrics _
+instance Eq HistoMetrics where eq = genericEq
+derive newtype instance JSON.ReadForeign HistoMetrics
+derive newtype instance JSON.WriteForeign HistoMetrics
 
 type Loaded = HistoMetrics
 

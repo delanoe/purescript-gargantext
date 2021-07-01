@@ -39,7 +39,6 @@ publicationDate (Document doc@{publication_year: Just py, publication_month: Jus
 
 docViewWrapper :: R2.Component Props
 docViewWrapper = R.createElement docViewWrapperCpt
-
 docViewWrapperCpt :: R.Component Props
 docViewWrapperCpt = here.component "docViewWrapper" cpt
   where
@@ -55,7 +54,6 @@ type DocViewProps = (
 
 docView :: R2.Component DocViewProps
 docView = R.createElement docViewCpt
-
 docViewCpt :: R.Component DocViewProps
 docViewCpt = here.component "docView" cpt
   where
@@ -123,14 +121,12 @@ type LayoutProps =
 
 documentMainLayout :: R2.Component LayoutProps
 documentMainLayout = R.createElement documentMainLayoutCpt
-
 documentMainLayoutCpt :: R.Component LayoutProps
 documentMainLayoutCpt = here.component "documentMainLayout" cpt where
     cpt props _ = pure $ R2.row [ R2.col 10 [ documentLayout props [] ] ]
 
 documentLayout :: R2.Component LayoutProps
 documentLayout = R.createElement documentLayoutCpt
-
 documentLayoutCpt :: R.Component LayoutProps
 documentLayoutCpt = here.component "documentLayout" cpt where
   cpt { listId, mCorpusId, nodeId, session } children = do
@@ -148,7 +144,6 @@ type KeyLayoutProps =
 
 documentLayoutWithKey :: R2.Component KeyLayoutProps
 documentLayoutWithKey = R.createElement documentLayoutWithKeyCpt
-
 documentLayoutWithKeyCpt :: R.Component KeyLayoutProps
 documentLayoutWithKeyCpt = here.component "documentLayoutWithKey" cpt
   where

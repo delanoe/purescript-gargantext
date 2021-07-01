@@ -3,11 +3,11 @@
 --       has not been ported to this module yet.
 module Gargantext.Components.FacetsTable where
 
-import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
 import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Newtype (class Newtype)
 import Data.Sequence (Seq)
 import Data.Sequence as Seq
 import Data.Set (Set)
@@ -18,6 +18,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
 import Toestand as T
 
 import Gargantext.Prelude
@@ -412,10 +413,9 @@ publicationDate (DocumentsView {publication_year, publication_month, publication
 ---------------------------------------------------------
 
 newtype DeleteDocumentQuery = DeleteDocumentQuery { documents :: Array Int }
-
-instance EncodeJson DeleteDocumentQuery where
-  encodeJson (DeleteDocumentQuery {documents}) =
-    "documents" := documents ~> jsonEmptyObject
+derive instance Generic DeleteDocumentQuery _
+derive instance Newtype DeleteDocumentQuery _
+derive newtype instance JSON.WriteForeign DeleteDocumentQuery
 
 deleteDocuments :: Session -> Int -> DeleteDocumentQuery -> Aff (Array Int)
 deleteDocuments session nodeId =

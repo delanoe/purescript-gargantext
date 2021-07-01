@@ -74,7 +74,7 @@ type State =
 
 initialState :: VersionedNgramsTable -> State
 initialState (Versioned {version}) = {
-    ngramsChildren:   mempty
+    ngramsChildren:   Map.empty
   , ngramsLocalPatch: mempty
   , ngramsParent:     Nothing
   , ngramsSelection:  mempty
@@ -444,7 +444,7 @@ mkDispatch { filteredRows
     allNgramsSelected = allNgramsSelectedOnFirstPage ngramsSelection filteredRows
 
     setParentResetChildren :: Maybe NgramsTerm -> State -> State
-    setParentResetChildren p = _ { ngramsParent = p, ngramsChildren = mempty }
+    setParentResetChildren p = _ { ngramsParent = p, ngramsChildren = Map.empty }
 
     performAction :: Action -> Effect Unit
     performAction (SetParentResetChildren p) =

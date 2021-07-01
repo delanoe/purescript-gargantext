@@ -1,13 +1,10 @@
 module Gargantext.Components.Nodes.Corpus.Dashboard where
 
-import Gargantext.Prelude
-  ( Unit, bind, const, discard, pure, read, show, unit, ($), (<$>), (<>), (==) )
+import Gargantext.Prelude (Unit, bind, discard, pure, read, show, unit, ($), (<$>), (<>), (==))
 
 import Data.Array as A
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (Tuple(..), snd)
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
@@ -18,7 +15,7 @@ import Toestand as T
 import Gargantext.Components.Nodes.Corpus (fieldsCodeEditor)
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
 import Gargantext.Components.Nodes.Dashboard.Types as DT
-import Gargantext.Components.Nodes.Types (FTField, FTFieldsWithIndex, defaultField)
+import Gargantext.Components.Nodes.Types (FTFieldList(..), FTFieldsWithIndex(..), defaultField)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (NodeID)
@@ -32,7 +29,6 @@ type Props = ( nodeId :: NodeID, session :: Session )
 
 dashboardLayout :: R2.Component Props
 dashboardLayout = R.createElement dashboardLayoutCpt
-
 dashboardLayoutCpt :: R.Component Props
 dashboardLayoutCpt = here.component "dashboardLayout" cpt where
   cpt { nodeId, session } content = do
@@ -47,7 +43,6 @@ type KeyProps =
 
 dashboardLayoutWithKey :: R2.Component KeyProps
 dashboardLayoutWithKey = R.createElement dashboardLayoutWithKeyCpt
-
 dashboardLayoutWithKeyCpt :: R.Component KeyProps
 dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
   where
@@ -67,7 +62,7 @@ dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
                                 , session } []
       where
         onChange :: NodeID -> T2.ReloadS -> DT.Hyperdata -> { charts :: Array P.PredefinedChart
-                                                            , fields :: List.List FTField } -> Effect Unit
+                                                            , fields :: FTFieldList } -> Effect Unit
         onChange nodeId' reload (DT.Hyperdata h) { charts, fields } = do
           launchAff_ do
             DT.saveDashboard { hyperdata: DT.Hyperdata $ h { charts = charts, fields = fields }
@@ -79,16 +74,15 @@ type LoadedProps =
   ( charts        :: Array P.PredefinedChart
   , corpusId      :: NodeID
   , defaultListId :: Int
-  , fields        :: List.List FTField
+  , fields        :: FTFieldList
   , onChange      :: { charts :: Array P.PredefinedChart
-                     , fields :: List.List FTField } -> Effect Unit
+                     , fields :: FTFieldList } -> Effect Unit
   , nodeId        :: NodeID
   , session       :: Session
   )
 
 dashboardLayoutLoaded :: R2.Component LoadedProps
 dashboardLayoutLoaded = R.createElement dashboardLayoutLoadedCpt
-
 dashboardLayoutLoadedCpt :: R.Component LoadedProps
 dashboardLayoutLoadedCpt = here.component "dashboardLayoutLoaded" cpt
   where
@@ -125,20 +119,19 @@ dashboardLayoutLoadedCpt = here.component "dashboardLayoutLoaded" cpt
                                   , fields }
 
 type CodeEditorProps =
-  ( fields   :: List.List FTField
-  , onChange :: List.List FTField -> Effect Unit
+  ( fields   :: FTFieldList
+  , onChange :: FTFieldList -> Effect Unit
   , nodeId   :: NodeID
   , session  :: Session
   )
 
 dashboardCodeEditor :: R2.Component CodeEditorProps
 dashboardCodeEditor = R.createElement dashboardCodeEditorCpt
-
 dashboardCodeEditorCpt :: R.Component CodeEditorProps
 dashboardCodeEditorCpt = here.component "dashboardCodeEditor" cpt
   where
-    cpt props@{ fields, nodeId, onChange, session } _ = do
-      let fieldsWithIndex = List.mapWithIndex (\idx -> \t -> Tuple idx t) fields
+    cpt props@{ fields: FTFieldList fields, nodeId, onChange, session } _ = do
+      let fieldsWithIndex = FTFieldsWithIndex $ List.mapWithIndex (\idx -> \ftField -> { idx, ftField }) fields
       fieldsS <- T.useBox fieldsWithIndex
       fields' <- T.useLive T.unequal fieldsS
       fieldsRef <- R.useRef fields'
@@ -179,9 +172,9 @@ dashboardCodeEditorCpt = here.component "dashboardCodeEditor" cpt
         saveEnabled fs fsS = if fs == fsS then "disabled" else "enabled"
 
         onClickSave :: forall e. FTFieldsWithIndex -> e -> Effect Unit
-        onClickSave fields' _ = do
+        onClickSave (FTFieldsWithIndex fields') _ = do
           here.log "saving (TODO)"
-          onChange $ snd <$> fields'
+          onChange $ FTFieldList $ (_.ftField) <$> fields'
           -- launchAff_ do
             -- saveCorpus $ { hyperdata: Hyperdata {fields: (\(Tuple _ f) -> f) <$> fieldsS}
             --             , nodeId
@@ -189,7 +182,8 @@ dashboardCodeEditorCpt = here.component "dashboardCodeEditor" cpt
 
         onClickAddField :: forall e. T.Box FTFieldsWithIndex -> e -> Effect Unit
         onClickAddField fieldsS _ = do
-          T.modify_ (\fs -> List.snoc fs $ Tuple (List.length fs) defaultField) fieldsS
+          T.modify_ (\(FTFieldsWithIndex fs) -> FTFieldsWithIndex $
+            List.snoc fs $ { idx: List.length fs, ftField: defaultField }) fieldsS
 
 type PredefinedChartProps =
   ( chart         :: P.PredefinedChart
@@ -202,7 +196,6 @@ type PredefinedChartProps =
 
 renderChart :: R2.Component PredefinedChartProps
 renderChart = R.createElement renderChartCpt
-
 renderChartCpt :: R.Component PredefinedChartProps
 renderChartCpt = here.component "renderChart" cpt
   where

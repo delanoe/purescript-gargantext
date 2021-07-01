@@ -1,7 +1,8 @@
 module Gargantext.Sessions.Types
-  ( Session(..), Sessions(..), OpenNodes, NodeId, mkNodeId
+  ( Session(..), Sessions(..), OpenNodes(..), NodeId, mkNodeId
   , sessionUrl, sessionId
   , empty, null, unSessions, lookup, cons, tryCons, update, remove, tryRemove
+  , useOpenNodesMemberBox, openNodesInsert, openNodesDelete
   ) where
 
 import Data.Array as A
@@ -16,10 +17,12 @@ import Data.Newtype (class Newtype)
 import Data.Sequence (Seq)
 import Data.Sequence as Seq
 import Data.Set (Set)
-import Data.Traversable (traverse)
-import Data.Tuple (Tuple(..))
+import Data.Set as Set
+import Data.Tuple (Tuple)
 import Foreign.Object as Object
+import Reactix as R
 import Simple.JSON as JSON
+import Toestand as T
 
 import Gargantext.Prelude
 
@@ -29,7 +32,6 @@ import Gargantext.Ends (class ToUrl, Backend(..), backendUrl, sessionPath)
 import Gargantext.Routes (SessionRoute)
 import Gargantext.Types (NodePath, SessionId(..), nodePath)
 import Gargantext.Utils.JSON as GJSON
-import Gargantext.Utils.String as GUS
 import Gargantext.Utils.Tuple as GUT
 
 -- | A Session represents an authenticated session for a user at a
@@ -138,7 +140,36 @@ tryRemove sid old@(Sessions ss) = ret where
     | otherwise =  Right new
 
 -- open tree nodes data
-type OpenNodes = Set NodeId
+newtype OpenNodes = OpenNodes (Set NodeId)
+
+derive instance Generic OpenNodes _
+derive instance Newtype OpenNodes _
+instance JSON.ReadForeign OpenNodes where
+  readImpl f = do
+    inst :: Array NodeId <- JSON.readImpl f
+    pure $ OpenNodes $ Set.fromFoldable inst
+instance JSON.WriteForeign OpenNodes where
+  writeImpl (OpenNodes ns) = JSON.writeImpl $ (Set.toUnfoldable ns :: Array NodeId)
+
+openNodesInsert :: NodeId -> OpenNodes -> OpenNodes
+openNodesInsert nodeId (OpenNodes set) = OpenNodes $ Set.insert nodeId set
+
+openNodesDelete :: NodeId -> OpenNodes -> OpenNodes
+openNodesDelete nodeId (OpenNodes set) = OpenNodes $ Set.delete nodeId set
+
+-- | Creates a cursor which presents a Boolean over whether the member
+-- | is in the set. Adjusting the value will toggle whether the value
+-- | is in the underlying set.
+useOpenNodesMemberBox
+  :: forall box. T.ReadWrite box OpenNodes
+  => NodeId -> box -> R.Hooks (T.Box Boolean)
+useOpenNodesMemberBox val box = T.useFocused (\(OpenNodes ns) -> Set.member val ns) (toggleSet val) box
+
+-- utility for useOpenNodesMemberBox
+toggleSet :: NodeId -> Boolean -> OpenNodes -> OpenNodes
+toggleSet val true  (OpenNodes ns) = OpenNodes $ Set.insert val ns
+toggleSet val false (OpenNodes ns) = OpenNodes $ Set.delete val ns
+
 
 type NodeId =
   { treeId :: TreeId  -- Id of the node

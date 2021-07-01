@@ -4,6 +4,8 @@ import Data.Set as Set
 import Data.Maybe (Maybe(..))
 import Toestand as T
 
+import Gargantext.Prelude
+
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
 import Gargantext.Components.Nodes.Lists.Types as ListsT
@@ -11,7 +13,8 @@ import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Ends (Backend)
 import Gargantext.Routes (AppRoute(Home))
 import Gargantext.Sessions as Sessions
-import Gargantext.Sessions (OpenNodes, Session, Sessions)
+import Gargantext.Sessions (Session, Sessions)
+import Gargantext.Sessions.Types (OpenNodes(..))
 import Gargantext.Types (Handed(RightHanded), SidePanelState(..))
 import Gargantext.Utils.Toestand as T2
 
@@ -39,7 +42,7 @@ type App =
 emptyApp :: App
 emptyApp =
   { backend        : Nothing
-  , forestOpen     : Set.empty
+  , forestOpen     : OpenNodes $ Set.empty
   , graphVersion   : T2.newReload
   , handed         : RightHanded
   , reloadForest   : T2.newReload
