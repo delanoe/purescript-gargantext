@@ -5,12 +5,6 @@ import Gargantext.Prelude
 import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Record as Record
-import Record.Extra as RE
-import Toestand as T
-
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Footer (footer)
 import Gargantext.Components.Forest as Forest
@@ -26,8 +20,8 @@ import Gargantext.Components.Nodes.Annuaire.User (userLayout)
 import Gargantext.Components.Nodes.Annuaire.User.Contact (contactLayout)
 import Gargantext.Components.Nodes.Corpus (corpusLayout)
 import Gargantext.Components.Nodes.Corpus.Dashboard (dashboardLayout)
-import Gargantext.Components.Nodes.Corpus.Phylo (phyloLayout)
 import Gargantext.Components.Nodes.Corpus.Document (documentMainLayout)
+import Gargantext.Components.Nodes.Corpus.Phylo (phyloLayout)
 import Gargantext.Components.Nodes.File (fileLayout)
 import Gargantext.Components.Nodes.Frame (frameLayout)
 import Gargantext.Components.Nodes.Home (homeLayout)
@@ -42,6 +36,11 @@ import Gargantext.Sessions (Session, WithSession)
 import Gargantext.Sessions as Sessions
 import Gargantext.Types (CorpusId, Handed(..), ListId, NodeID, NodeType(..), SessionId, SidePanelState(..), reverseHanded)
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Record.Extra as RE
+import Toestand as T
 
 
 here :: R2.Here
@@ -58,7 +57,7 @@ router :: R2.Leaf Props
 router props = R.createElement routerCpt props []
 routerCpt :: R.Component Props
 routerCpt = here.component "router" cpt where
-  cpt { boxes: boxes@{ handed } } _ = do
+  cpt { boxes: boxes@{ handed, showTree } } _ = do
     handed'       <- T.useLive T.unequal handed
 
     let handedClassName = case handed' of
@@ -68,7 +67,7 @@ routerCpt = here.component "router" cpt where
     pure $ R.fragment
       ([ loginModal { boxes }
        , topBar { boxes } ] <>
-       [ H.div { className: handedClassName } $ reverseHanded handed' $
+       [ H.div { className: handedClassName <> " router-inner" } $ reverseHanded handed' $
          [ forest { boxes }
          , mainPage { boxes }
          , sidePanel { boxes }
@@ -123,18 +122,25 @@ forestCpt = here.component "forest" cpt where
                , showLogin
                , showTree
                , tasks } } _ = do
-    pure $ Forest.forestLayout { backend
-                               , forestOpen
-                               , frontends: defaultFrontends
-                               , handed
-                               , reloadForest
-                               , reloadMainPage
-                               , reloadRoot
-                               , route
-                               , sessions
-                               , showLogin
-                               , showTree
-                               , tasks } []
+
+    showTree' <- T.useLive T.unequal showTree
+
+    pure $
+
+      if not showTree'
+      then mempty
+      else Forest.forestLayout
+        { backend
+        , forestOpen
+        , frontends: defaultFrontends
+        , handed
+        , reloadForest
+        , reloadMainPage
+        , reloadRoot
+        , route
+        , sessions
+        , showLogin
+        , tasks } []
 
 sidePanel :: R2.Leaf Props
 sidePanel p = R.createElement sidePanelCpt p []

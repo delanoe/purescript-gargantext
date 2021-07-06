@@ -9993,6 +9993,28 @@ h3 {
     border-color: rgba(255, 255, 255, 0.3);
   }
 }
+.with-icon-font {
+  font-family: ForkAwesome, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+.right-handed .forest-layout {
+  border-right: 1px solid #000;
+}
+.right-handed .forest-layout:hover {
+  border-right: 1px solid #dee2e6;
+}
+
+.left-handed .forest-layout {
+  border-left: 1px solid #000;
+}
+.left-handed .forest-layout:hover {
+  border-left: 1px solid #dee2e6;
+}
+
+.forest-layout-teaser {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, black 45%);
+}
+
 .navbar-dark.bg-primary {
   background-color: #111111 !important;
 }

@@ -9950,5 +9950,26 @@ h3 {
     border-color: #dee2e6;
   }
 }
+.with-icon-font {
+  font-family: ForkAwesome, Montserrat;
+}
+
+.right-handed .forest-layout {
+  border-right: 1px solid #fff;
+}
+.right-handed .forest-layout:hover {
+  border-right: 1px solid #dee2e6;
+}
+
+.left-handed .forest-layout {
+  border-left: 1px solid #fff;
+}
+.left-handed .forest-layout:hover {
+  border-left: 1px solid #dee2e6;
+}
+
+.forest-layout-teaser {
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, white 45%);
+}
 
 /*# sourceMappingURL=bootstrap-monotony.css.map */

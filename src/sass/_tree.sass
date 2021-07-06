@@ -28,7 +28,7 @@ li
       a.settings
         visibility: visible
 
-.forest
+.forest-layout-content
   & > .tree
     margin-top: 20px
 
@@ -153,12 +153,44 @@ li
       opacity: var(--over50, 0)
 
 #node-popup-tooltip
+  // @XXX "react-awesome-popover" lack of parent host parameter
+  //
+  //      hence, the popover will be added from within the overflow context
+  //      of component where its CTA lies, causing an issue with the hidden
+  //      overflow of its parent component
+  //
+  //      to avoid a truncated popover, this position workaround has to be set
+  //      (so the popover will be hoisted to the overflow context of the window)
+  //
+  // @link https://gitlab.iscpif.fr/gargantext/purescript-gargantext/issues/302
+  position: fixed
+
   .tree
     .node
       margin-top: 5px
     .children
       .node
         padding-left: 15px
+
+// @XXX "react-awesome-popover" lack of parent host parameter
+//
+//       as the container where the popover will be appended is actually a
+//       a heighthy sidebar (which a large is hidden with a scrollbar),
+//       the library tends to add the tooltip position in the middle of the
+//       sidebar height: which can be off screen
+//
+//       this workaround appends the tooltip in a static position
+.right-handed #node-popup-tooltip
+  $offset-x: 16.6666666667% // simulate "col-2" sidebar attributes
+  top: 50%
+  left: $offset-x
+  transform: translateY(-50%)
+
+.left-handed #node-popup-tooltip
+  $offset-x: 16.6666666667% // simulate "col-2" sidebar attributes
+  top: 50%
+  right: $offset-x
+  transform: translateY(-50%)
 
 .panel-actions
   .almost-useable
@@ -172,16 +204,61 @@ li
   // empirical value (see issue #308)
   max-height: 50vh
   overflow-y: scroll
+.forest-layout-wrapper
+  // removing Bootstrap "col" padding
+  padding-left: 0
+  padding-right: 0
 
 .forest-layout
-  background-color: #fff
-  position: fixed
-  top: 3.7em
-  width: 15%
+  $offset-y: 56px
+
+  padding-top: 8px
   z-index: 909
-.left-handed
-  .forest-layout
-    left: 80%
-.right-handed
-  .forest-layout
-    left: 2%
+
+  // make the sidebar a scrollable component
+  // `max-width` rule is an addition due to Bootstrap "col-2" applied on its
+  // parent
+  position: fixed
+  height: calc(100vh - #{ $offset-y })
+  width: 100%
+  max-width: inherit
+
+  // avoiding ugly scrollbar
+  scrollbar-width: none
+  overflow-y: scroll
+  overflow-x: visible
+
+  &::-webkit-scrollbar
+    display: none
+
+  transition: border 150ms
+
+// UX addition: visually delimiting the sidebar on hover
+// -- for now in "_common.scss" file (see @TODO: More SASS structure)
+
+// UX best pratice: when a lengthy column is overflowy hidden (with a scroll), a teaser
+// UI element shows to the user that a scroll is possible
+.forest-layout-teaser
+  $height: 24px             // ~line-height to 1.5
+  $width: 16.6666666667%    // simulate "col-2" sidebar attributes
+  $minus-parent-border: 1px // border size of the sidebar on hover
+
+  pointer-events: none
+  position: fixed
+  bottom: 0
+  height: $height
+  width: calc(#{ $width } - #{ $minus-parent-border})
+  // background -- for now in "_common.scss" file (@TODO: More SASS structure)
+
+.right-handed .forest-layout-teaser
+  left: 0
+
+.left-handed .forest-layout-teaser
+  right: 0
+
+.left-handed .forest-layout
+    padding-left: 8px
+    padding-right: 16px
+.right-handed .forest-layout
+    padding-left: 16px
+    padding-right: 8px

@@ -1,7 +1,6 @@
 module Gargantext.Components.TopBar where
 
 import Data.Foldable (intercalate)
-import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
@@ -27,7 +26,7 @@ topBarCpt = here.component "topBar" cpt
     cpt { handed, showTree } children = do
       handed' <- T.useLive T.unequal handed
 
-      pure $ H.div { className: "navbar navbar-expand-lg navbar-dark bg-dark fixed-top"
+      pure $ H.div { className: "navbar navbar-expand-lg navbar-dark bg-dark"
                    , id: "dafixedtop"
                    , role: "navigation"
                    }

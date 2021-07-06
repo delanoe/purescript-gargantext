@@ -26,7 +26,7 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Forest"
 
 -- Shared by components here with Tree
-type Common = 
+type Common =
   ( frontends      :: Frontends
   , handed         :: T.Box Handed
   , reloadMainPage :: T2.ReloadS
@@ -40,9 +40,8 @@ type Props =
   , reloadForest       :: T2.ReloadS
   , sessions           :: T.Box Sessions
   , showLogin          :: T.Box Boolean
-  , showTree           :: T.Box Boolean
   , tasks              :: T.Box GAT.Storage
-  | Common 
+  | Common
   )
 
 type TreeExtra = (
@@ -63,7 +62,6 @@ forestCpt = here.component "forest" cpt where
             , route
             , sessions
             , showLogin
-            , showTree
             , tasks } _ = do
     -- TODO Fix this. I think tasks shouldn't be a Box but only a Reductor
     -- tasks'        <- GAT.useTasks reloadRoot reloadForest
@@ -75,11 +73,9 @@ forestCpt = here.component "forest" cpt where
     -- reloadRoot'   <- T.useLive T.unequal reloadRoot
     -- route'        <- T.useLive T.unequal route
 
-    showTree' <- T.useLive T.unequal showTree
-
     -- TODO If `reloadForest` is set, `reload` state should be updated
     -- TODO fix tasks ref
-    pure $ H.div { className: "forest " <> if showTree' then "" else "d-none" }
+    pure $ H.div { className: "forest-layout-content" }
       (A.cons (plus { backend, handed, showLogin }) (trees handed' sessions'))
     where
       common = RX.pick props :: Record Common
@@ -108,7 +104,7 @@ plusCpt = here.component "plus" cpt where
   cpt { backend, handed, showLogin } _ = do
     handed' <- T.useLive T.unequal handed
 
-    pure $ H.div { className: "row" }
+    pure $ H.div {}
       [ H.button { className: buttonClass handed'
                 , on: { click }
                 , title }
@@ -128,12 +124,20 @@ plusCpt = here.component "plus" cpt where
       title = "Add or remove connections to the server(s)."
       divClass = "fa fa-universal-access"
       buttonClass handed' =
-        "btn btn-primary col-5 " <> switchHanded "mr-1 ml-auto" "ml-1 mr-auto" handed'
+        "btn btn-primary d-block " <> switchHanded "mr-1 ml-auto" "ml-1 mr-auto" handed'
 
 forestLayout :: R2.Component Props
 forestLayout = R.createElement forestLayoutCpt
 forestLayoutCpt :: R.Component Props
 forestLayoutCpt = here.component "forestLayout" cpt where
-  cpt p _ = do
-    pure $ H.div { className: "forest-layout" }
-      [ forest p [] ]
+  cpt p _ = pure $
+
+    H.div { className: "forest-layout-wrapper col-md-2" }
+    [
+      H.div { className: "forest-layout" }
+      [
+        forest p []
+      ,
+        H.div { className: "forest-layout-teaser" } []
+      ]
+    ]
