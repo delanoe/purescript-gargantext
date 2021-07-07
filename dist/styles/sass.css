@@ -535,6 +535,11 @@ li .leaf:hover a.settings {
   color: black;
 }
 
+.forest-tree-node-action-move {
+  max-height: 50vh;
+  overflow-y: scroll;
+}
+
 .forest-layout {
   background-color: #fff;
   position: fixed;
