@@ -3,15 +3,19 @@ module Gargantext.Types where
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Argonaut.Decode.Error (JsonDecodeError(..))
 import Data.Array as A
+import Data.Char (fromCharCode)
 import Data.Either (Either(..))
-import Data.String as S
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Ord (genericCompare)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Int (toNumber)
-import Data.Maybe (Maybe(..), maybe, fromMaybe)
+import Data.Maybe (Maybe(..), fromJust, fromMaybe, maybe)
+import Data.String as S
+import Data.String.CodeUnits (singleton)
 import Effect.Aff (Aff)
+import Gargantext.Components.Lang (class Translate, Lang(..))
+import Partial.Unsafe (unsafePartial)
 import Prim.Row (class Union)
 import Reactix as R
 import URI.Query (Query)
@@ -239,6 +243,120 @@ instance readNodeType :: Read NodeType where
   -- TODO NodePublic read ?
   read _                   = Nothing
 
+------------------------------------------------------
+
+-- (?) UI print Glyphicon directly on text node
+--
+--    * convert "Glyphicon ForkAwesome" classNames to CharCode [1]
+--    * bypass React "dangerousInnerHTML" via vanilla JavaScript coerce [2]
+--      (see "forkawesome.css" dist file for conversion matching)
+--
+-- [1] https://stackoverflow.com/a/54002856/6003907
+-- [2] https://github.com/facebook/react/issues/3769#issuecomment-97163582
+--
+-- @TODO thinking of a purs file for glyphicon conversion?
+charCodeIcon :: NodeType -> String
+charCodeIcon = _toString <<< case _ of
+  Annuaire            -> 0xf2bb
+  Corpus              -> 0xf2b9
+  Dashboard           -> 0xf012
+  Error               -> _defaultCharCode
+  Folder              -> 0xf07b
+  FolderPrivate       -> 0xf023
+  FolderPublic        -> 0xf33f
+  FolderShared        -> 0xf1e0
+  Graph               -> 0xf2eb
+  Individu            -> _defaultCharCode
+  Node                -> _defaultCharCode
+  NodeContact         -> 0xf2bb
+  NodeList            -> 0xf00b
+  NodeUser            -> 0xf007
+  Nodes               -> _defaultCharCode
+  Phylo               -> 0xf126
+  Team                -> 0xf0c0
+  Texts               -> 0xf1ea
+  Tree                -> _defaultCharCode
+  Url_Document        -> _defaultCharCode
+  --
+  NodeFile            -> 0xf15b
+  NodeFrameCalc       -> 0xf1ec
+  NodeFrameNotebook   -> 0xf1c9
+  NodeFrameWrite      -> 0xf15c
+  NodeFrameVisio      -> 0xf03d
+  NodePublic n        -> _defaultCharCode
+
+  where
+    _defaultCharCode = 0xf309
+    _toString i = singleton $ unsafePartial $ fromJust $ fromCharCode i
+
+------------------------------------------------------
+
+instance translateNodeType :: Translate NodeType where
+  translate l n = case l of
+    FR -> _translateFR n
+    _  -> _translateEN n
+
+_translateFR :: NodeType -> String
+_translateFR = case _ of
+  Annuaire            -> "Annuaire"
+  Corpus              -> "Corpus"
+  Dashboard           -> "Dashboard"
+  Error               -> "Erreur"
+  Folder              -> "Dossier"
+  FolderPrivate       -> "Dossier privé"
+  FolderPublic        -> "Dossier public"
+  FolderShared        -> "Dossier partagé"
+  Graph               -> "Graphe"
+  Individu            -> "Individu"
+  Node                -> "Nœud"
+  NodeContact         -> "Contact"
+  NodeList            -> "Liste"
+  NodeUser            -> "Utilisateur"
+  Nodes               -> "Nœuds"
+  Phylo               -> "Phylo"
+  Team                -> "Équipe"
+  Texts               -> "Textes"
+  Tree                -> "Arbre"
+  Url_Document        -> "Document URL"
+  --
+  NodeFile            -> "Fichier"
+  NodeFrameCalc       -> "Feuilles de calcul"
+  NodeFrameNotebook   -> "Carnet de notes"
+  NodeFrameWrite      -> "Éditeur de texte"
+  NodeFrameVisio      -> "Visio"
+  NodePublic n        -> "Nœud public"
+
+_translateEN :: NodeType -> String
+_translateEN = case _ of
+  Annuaire            -> "Annuaire"
+  Corpus              -> "Corpus"
+  Dashboard           -> "Dashboard"
+  Error               -> "Error"
+  Folder              -> "Folder"
+  FolderPrivate       -> "Private folder"
+  FolderPublic        -> "Public folder"
+  FolderShared        -> "Shared folder"
+  Graph               -> "Graph"
+  Individu            -> "Person"
+  Node                -> "Node"
+  NodeContact         -> "Contact"
+  NodeList            -> "List"
+  NodeUser            -> "User"
+  Nodes               -> "Nodes"
+  Phylo               -> "Phylo"
+  Team                -> "Team"
+  Texts               -> "Texts"
+  Tree                -> "Tree"
+  Url_Document        -> "URL document"
+  --
+  NodeFile            -> "File"
+  NodeFrameCalc       -> "Calc"
+  NodeFrameNotebook   -> "Notebook"
+  NodeFrameWrite      -> "Write"
+  NodeFrameVisio      -> "Visio"
+  NodePublic n        -> "Public node"
+
+------------------------------------------------------
 
 fldr :: NodeType -> Boolean -> String
 fldr NodeUser false = "fa fa-user-circle"
