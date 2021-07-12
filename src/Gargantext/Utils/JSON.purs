@@ -6,7 +6,7 @@ import Control.Monad.Except (withExcept)
 import Data.Int as Int
 import Data.List as List
 import Data.Map as Map
-import Data.Maybe (fromJust, Maybe(..))
+import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
 import Data.Traversable (sequence)
 import Data.TraversableWithIndex (traverseWithIndex)
@@ -14,10 +14,8 @@ import Data.Tuple (Tuple(..))
 import Foreign (F, Foreign, ForeignError(..), readArray, unsafeToForeign)
 import Foreign as F
 import Foreign.Object as Object
-import Simple.JSON (writeImpl)
 import Simple.JSON as JSON
 
-import Gargantext.Utils.Tuple as GUT
 
 readSequence :: forall a. JSON.ReadForeign a => Foreign -> F (Seq.Seq a)
 readSequence f = do
@@ -28,7 +26,7 @@ readSequence f = do
     readAtIdx i f' = withExcept (map (ErrorAtIndex i)) (JSON.readImpl f')
 
 writeSequence :: forall a. JSON.WriteForeign a => Seq.Seq a -> Foreign
-writeSequence xs = unsafeToForeign $ JSON.writeImpl <$> xs
+writeSequence xs = unsafeToForeign $ JSON.writeImpl $ (Seq.toUnfoldable xs :: Array a)
 
 readList :: forall a. JSON.ReadForeign a => Foreign -> F (List.List a)
 readList f = do

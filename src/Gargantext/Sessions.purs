@@ -8,28 +8,28 @@ module Gargantext.Sessions
   , getCacheState, setCacheState
   ) where
 
-import Gargantext.Prelude
-
 import DOM.Simple.Console (log2)
 import Data.Either (Either(..), hush)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
 import Effect.Aff (Aff)
+import Reactix as R
+import Simple.JSON as JSON
+import Toestand as T
+import Web.Storage.Storage (getItem, removeItem, setItem)
+
+import Gargantext.Prelude
+
 import Gargantext.Components.Login.Types (AuthData(..), AuthInvalid(..), AuthRequest(..), AuthResponse(..))
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Config.REST as REST
 import Gargantext.Ends (class ToUrl, Backend, toUrl)
 import Gargantext.Sessions.Types (Session(..), Sessions(..), OpenNodes, NodeId, mkNodeId, sessionUrl, sessionId, empty, null, unSessions, lookup, cons, tryCons, update, remove, tryRemove)
-import Gargantext.Utils.Reactix (getls, stringify)
-import Prim.Row (class Lacks, class Nub)
-import Reactix as R
-import Record as Record
-import Record.Extra as REX
-import Simple.JSON as JSON
-import Toestand as T
-import Web.HTML.Event.EventTypes (offline)
-import Web.Storage.Storage (getItem, removeItem, setItem)
+import Gargantext.Utils.Reactix as R2
+
+here :: R2.Here
+here = R2.here "Gargantext.Sessions"
 
 type WithSession c =
   ( session :: Session
@@ -86,7 +86,7 @@ setCacheState (Session session@{ caches }) nodeId cacheState =
 -- | if decoding fails
 loadSessions :: Effect Sessions
 loadSessions = do
-  storage <- getls
+  storage <- R2.getls
   mItem :: Maybe String <- getItem localStorageKey storage
   case mItem of
     Nothing -> pure empty
@@ -95,7 +95,7 @@ loadSessions = do
       case hush r of
         Nothing -> pure empty
         Just p -> pure p
--- loadSessions = getls >>= getItem localStorageKey >>= handleMaybe
+-- loadSessions = R2.getls >>= getItem localStorageKey >>= handleMaybe
 --   where
 --     -- a localstorage lookup can find nothing
 --     handleMaybe (Just val) = handleEither (JSON.readJSON val)
@@ -105,14 +105,10 @@ loadSessions = do
 --     handleEither (Left err) = err *> pure empty
 --     handleEither (Right ss) = pure ss
 
-mapLeft :: forall l m r. (l -> m) -> Either l r -> Either m r
-mapLeft f (Left  l) = Left (f l)
-mapLeft _ (Right r) = Right r
-
 saveSessions :: Sessions -> Effect Sessions
 saveSessions sessions = effect *> pure sessions where
-  rem = getls >>= removeItem localStorageKey
-  set v  = getls >>= setItem    localStorageKey v
+  rem = R2.getls >>= removeItem localStorageKey
+  set v  = R2.getls >>= setItem    localStorageKey v
   effect
     | null sessions = rem
     | otherwise = set (JSON.writeJSON sessions)

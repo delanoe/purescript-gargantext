@@ -101,7 +101,7 @@ let additions =
         , repo = "https://github.com/purescript-contrib/purescript-precise"
         , version = "v4.0.0"
         }
-      , reactix =
+      {- , reactix =
         { dependencies =
           [ "aff"
           , "dom-simple"
@@ -114,7 +114,7 @@ let additions =
           ]
         , repo = "https://github.com/irresponsible/purescript-reactix"
         , version = "v0.4.11"
-        }
+        } -}
       , simple-json-generics =
         { dependencies =
           [ "simple-json" ]
@@ -172,4 +172,8 @@ let additions =
         }
       }
 
-in  upstream // overrides // additions
+let localPackages = {
+    reactix = ../../purescript-reactix/spago.dhall as Location
+  }
+
+in  upstream // overrides // additions // localPackages

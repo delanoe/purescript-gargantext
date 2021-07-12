@@ -18,6 +18,7 @@ import Data.Sequence (Seq)
 import Data.Sequence as Seq
 import Data.Set (Set)
 import Data.Set as Set
+import Data.Show.Generic (genericShow)
 import Data.Tuple (Tuple)
 import Foreign.Object as Object
 import Reactix as R
@@ -60,21 +61,11 @@ instance JSON.WriteForeign Session where
       JSON.writeImpl { backend, caches: caches', token, treeId, username }
     where
       caches' = JSON.writeImpl $ Object.fromFoldable (GUT.mapFst show <$> Map.toUnfoldable caches :: Array (Tuple String NT.CacheState))
-
-instance Eq Session where
-  eq = genericEq
-
-instance Show Session where
-  show (Session {backend, username}) = username <> "@" <> show backend
-
-instance ToUrl Session SessionRoute where
-  toUrl (Session {backend}) r = backendUrl backend (sessionPath r)
-
-instance ToUrl Session NodePath where
-  toUrl (Session {backend}) np = backendUrl backend (nodePath np)
-
-instance ToUrl Session String where
-  toUrl = sessionUrl
+instance Eq Session where eq = genericEq
+instance Show Session where show (Session {backend, username}) = username <> "@" <> show backend
+instance ToUrl Session SessionRoute where toUrl (Session {backend}) r = backendUrl backend (sessionPath r)
+instance ToUrl Session NodePath where toUrl (Session {backend}) np = backendUrl backend (nodePath np)
+instance ToUrl Session String where toUrl = sessionUrl
 
 sessionUrl :: Session -> String -> String
 sessionUrl (Session {backend}) = backendUrl backend
@@ -93,9 +84,8 @@ instance JSON.ReadForeign Sessions where
     pure $ Sessions { sessions }
 instance JSON.WriteForeign Sessions where
   writeImpl (Sessions { sessions }) = GJSON.writeSequence sessions
-
-instance Eq Sessions where
-  eq = genericEq
+instance Eq Sessions where eq = genericEq
+instance Show Sessions where show = genericShow
 
 empty :: Sessions
 empty = Sessions { sessions: Seq.empty }

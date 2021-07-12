@@ -425,17 +425,20 @@ instance JSON.WriteForeign OrderBy where writeImpl = JSON.writeImpl <<< show
 data ApiVersion = V0 | V10 | V11
 
 derive instance Generic ApiVersion _
-instance JSON.ReadForeign ApiVersion where readImpl = JSONG.enumSumRep
+instance JSON.ReadForeign ApiVersion where
+  readImpl f = do
+    s <- JSON.readImpl f
+    case s of
+      "v0" -> pure V0
+      "v1.0" -> pure V10
+      "v1.1" -> pure V11
+      x -> F.fail $ F.ErrorAtProperty x $ F.ForeignError "unknown API value"
 instance JSON.WriteForeign ApiVersion where
-  writeImpl V0 = F.unsafeToForeign $ JSON.writeImpl "v0"
-  writeImpl V10 = F.unsafeToForeign $ JSON.writeImpl "v1.0"
-  writeImpl V11 = F.unsafeToForeign $ JSON.writeImpl "v1.1"
-
+  writeImpl v = F.unsafeToForeign $ JSON.writeImpl $ show v
 instance Show ApiVersion where
   show V0  = "v0"
   show V10 = "v1.0"
   show V11 = "v1.1"
-
 instance Eq ApiVersion where
   eq V10 V10 = true
   eq V11 V11 = true

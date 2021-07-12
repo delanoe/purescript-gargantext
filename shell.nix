@@ -19,7 +19,23 @@ let
     #build-purs
     echo "Bundling"
     #yarn pulp browserify --skip-compile -t dist/bundle.js --src-path output
-    yarn spago bundle-app --to dist/bundle.js
+    yarn spago build
+    browserify
+  '';
+
+  build-watch = pkgs.writeShellScriptBin "build-watch" ''
+    #!/usr/bin/env bash
+    set -e
+
+    echo "Build watch"
+    yarn spago build -w --then browserify
+  '';
+
+  browserify = pkgs.writeShellScriptBin "browserify" ''
+    #!/usr/bin/env bash
+    set -e
+
+    yarn pulp browserify --skip-compile -t dist/bundle.js --src-path output
   '';
 
   repl = pkgs.writeShellScriptBin "repl" ''
@@ -45,7 +61,9 @@ pkgs.mkShell {
     easy-ps.purs-0_14_2
     easy-ps.psc-package
     easy-ps.dhall-json-simple
+    browserify
     build-purs
+    build-watch
     build
     repl
     pkgs.spago

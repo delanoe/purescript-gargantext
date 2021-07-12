@@ -3,6 +3,7 @@ module Gargantext.Components.Node
 
 import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
+import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype)
 import Simple.JSON as JSON
 
@@ -34,7 +35,7 @@ instance JSON.ReadForeign a => JSON.ReadForeign (NodePoly a) where
                     , date: inst.date
                     , hyperdata: inst.hyperdata }
 
-newtype HyperdataList = HyperdataList { preferences :: String }
+newtype HyperdataList = HyperdataList { preferences :: Maybe String }
 derive instance Generic HyperdataList _
 derive instance Newtype HyperdataList _
 derive newtype instance JSON.ReadForeign HyperdataList

@@ -7,7 +7,6 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Record as Record
 import Toestand as T
 
 import Gargantext.Prelude

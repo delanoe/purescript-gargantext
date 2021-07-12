@@ -3,12 +3,7 @@ module Gargantext.Ends
   -- ( )
   where
 
-import Prelude
-  ( class Eq, class Show, bind, pure, show
-  , ($), (/=), (<<<), (<>), (==) )
-import Data.Argonaut
-  ( class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject
-  , (:=), (~>), (.:) )
+import Prelude (class Eq, class Show, show, ($), (/=), (<<<), (<>), (==))
 import Data.Foldable (foldMap)
 import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
@@ -18,7 +13,6 @@ import Simple.JSON as JSON
 
 import Gargantext.Routes as R
 import Gargantext.Types (ApiVersion, ChartType(..), Limit, NodePath, NodeType(..), Offset, TabType(..), TermSize(..), nodePath, nodeTypePath, showTabType', TermList(MapTerm))
-import Prelude (class Eq, class Show, identity, show, ($), (<>), bind, pure, (<<<), (==), (/=))
 
 -- | A means of generating a url to visit, a destination
 class ToUrl conf p where
@@ -38,6 +32,9 @@ derive instance Generic Backend _
 derive instance Newtype Backend _
 derive newtype instance JSON.ReadForeign Backend
 derive newtype instance JSON.WriteForeign Backend
+instance Eq Backend where eq = genericEq
+instance Show Backend where show (Backend {name}) = name
+instance ToUrl Backend String where toUrl = backendUrl
 
 backend :: ApiVersion -> String -> String -> String -> Backend
 backend version prePath baseUrl name = Backend { name, version, prePath, baseUrl }
@@ -45,15 +42,6 @@ backend version prePath baseUrl name = Backend { name, version, prePath, baseUrl
 -- | Creates a backend url from a backend and the path as a string
 backendUrl :: Backend -> String -> String
 backendUrl (Backend b) path = b.baseUrl <> b.prePath <> show b.version <> "/" <> path
-
-instance Eq Backend where
-  eq = genericEq
-
-instance Show Backend where
-  show (Backend {name}) = name
-
-instance ToUrl Backend String where
-  toUrl = backendUrl
 
 -- | Encapsulates the data needed to construct a url to a frontend
 -- | server (either for the app or static content)
@@ -63,12 +51,11 @@ newtype Frontend = Frontend
   , prePath :: String }
 
 derive instance Generic Frontend _
-
-instance Eq Frontend where
-  eq = genericEq
-
-instance ToUrl Frontend NodePath where
-  toUrl front np = frontendUrl front (nodePath np)
+instance Eq Frontend where eq = genericEq
+instance ToUrl Frontend NodePath where toUrl front np = frontendUrl front (nodePath np)
+instance Show Frontend where show (Frontend {name}) = name
+instance ToUrl Frontend String where toUrl = frontendUrl
+instance ToUrl Frontend R.AppRoute where toUrl f r = frontendUrl f (R.appPath r)
 
 -- | Creates a frontend
 frontend :: String -> String -> String -> Frontend
@@ -78,25 +65,12 @@ frontend baseUrl prePath name = Frontend { name, baseUrl, prePath }
 frontendUrl :: Frontend -> String -> String
 frontendUrl (Frontend f) path = f.baseUrl <> f.prePath <> path
 
-instance Show Frontend where
-  show (Frontend {name}) = name
-
-instance ToUrl Frontend String where
-  toUrl = frontendUrl
-
-instance ToUrl Frontend R.AppRoute where
-  toUrl f r = frontendUrl f (R.appPath r)
-
 -- | The currently selected App and Static configurations
 newtype Frontends = Frontends { app :: Frontend, static :: Frontend }
 
 derive instance Eq Frontends
-
-instance ToUrl Frontends R.AppRoute where
-  toUrl f r = appUrl f (R.appPath r)
-
-instance ToUrl Frontends NodePath where
-  toUrl (Frontends {app}) np = frontendUrl app (nodePath np)
+instance ToUrl Frontends R.AppRoute where toUrl f r = appUrl f (R.appPath r)
+instance ToUrl Frontends NodePath where toUrl (Frontends {app}) np = frontendUrl app (nodePath np)
 
 -- | Creates an app url from a Frontends and the path as a string
 appUrl :: Frontends -> String -> String
