@@ -1,7 +1,6 @@
 module Gargantext.Types where
 
 import Data.Array as A
-import Data.Either (Either(..))
 import Data.Newtype (class Newtype)
 import Data.String as S
 import Data.Generic.Rep (class Generic)
@@ -9,7 +8,7 @@ import Data.Eq.Generic (genericEq)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.Int (toNumber)
-import Data.Maybe (Maybe(..), maybe, fromMaybe)
+import Data.Maybe (Maybe(..), maybe)
 import Effect.Aff (Aff)
 import Foreign as F
 import Prim.Row (class Union)
@@ -429,10 +428,10 @@ instance JSON.ReadForeign ApiVersion where
   readImpl f = do
     s <- JSON.readImpl f
     case s of
-      "v0" -> pure V0
+      "v0"   -> pure V0
       "v1.0" -> pure V10
       "v1.1" -> pure V11
-      x -> F.fail $ F.ErrorAtProperty x $ F.ForeignError "unknown API value"
+      x      -> F.fail $ F.ErrorAtProperty x $ F.ForeignError "unknown API value"
 instance JSON.WriteForeign ApiVersion where
   writeImpl v = F.unsafeToForeign $ JSON.writeImpl $ show v
 instance Show ApiVersion where
@@ -633,8 +632,7 @@ newtype AsyncTask =
 derive instance Generic AsyncTask _
 derive instance Newtype AsyncTask _
 derive newtype instance JSON.ReadForeign AsyncTask
-instance Eq AsyncTask where
-  eq = genericEq
+instance Eq AsyncTask where eq = genericEq
 
 newtype AsyncTaskWithType = AsyncTaskWithType {
     task :: AsyncTask
@@ -687,8 +685,7 @@ prettyNodeType nt = S.replace (S.Pattern "Node")   (S.Replacement " ")
 
 data SidePanelState = InitialClosed | Opened | Closed
 derive instance Generic SidePanelState _
-instance Eq SidePanelState where
-  eq = genericEq
+instance Eq SidePanelState where eq = genericEq
 
 toggleSidePanelState :: SidePanelState -> SidePanelState
 toggleSidePanelState InitialClosed = Opened

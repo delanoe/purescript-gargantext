@@ -36,6 +36,8 @@ cameraP = SProxy :: SProxy "camera"
 mCameraP = SProxy :: SProxy "mCamera"
 idP = SProxy :: SProxy "id"
 id_P = SProxy :: SProxy "id_"
+typeP = SProxy :: SProxy "type"
+type_P = SProxy :: SProxy "type_"
 
 derive instance Generic Node _
 derive instance Newtype Node _
@@ -44,9 +46,17 @@ instance Ord Node where compare (Node n1) (Node n2) = compare n1.id_ n2.id_
 instance JSON.ReadForeign Node where
   readImpl f = do
     inst <- JSON.readImpl f
-    pure $ Node $ Record.rename x_coordP xP $ Record.rename y_coordP yP inst
+    pure $ Node $
+      Record.rename idP id_P $
+      Record.rename typeP type_P $
+      Record.rename x_coordP xP $
+      Record.rename y_coordP yP inst
 instance JSON.WriteForeign Node where
-  writeImpl (Node nd) = JSON.writeImpl $ Record.rename xP x_coordP $ Record.rename yP y_coordP nd
+  writeImpl (Node nd) = JSON.writeImpl $
+                        Record.rename id_P idP $
+                        Record.rename type_P typeP $
+                        Record.rename xP x_coordP $
+                        Record.rename yP y_coordP nd
 
 
 newtype Cluster = Cluster { clustDefault :: Int }
@@ -110,15 +120,16 @@ instance JSON.ReadForeign GraphData where
   readImpl f = do
     inst :: { nodes :: Array Node
             , edges :: Array Edge
-            , metadata :: Maybe MetaData
-            , corpusId :: Array CorpusId
-            , listId :: ListId } <- JSON.readImpl f
-    let side x = GraphSideCorpus { corpusId: x, corpusLabel: "Publications", listId : inst.listId}
-    let sides = side <$> inst.corpusId
+            , metadata :: MetaData } <- JSON.readImpl f
+    let (MetaData metadata) = inst.metadata
+    let side x = GraphSideCorpus { corpusId: x
+                                 , corpusLabel: "Publications"
+                                 , listId : metadata.list.listId }
+    let sides = side <$> metadata.corpusId
     pure $ GraphData { nodes: inst.nodes
                      , edges: inst.edges
                      , sides
-                     , metaData: inst.metadata }
+                     , metaData: Just inst.metadata }
 instance JSON.WriteForeign GraphData where
   writeImpl (GraphData gd) = JSON.writeImpl { nodes: gd.nodes
                                             , edges: gd.edges
@@ -127,9 +138,9 @@ instance JSON.WriteForeign GraphData where
 newtype MetaData = MetaData
   { corpusId :: Array Int
   , legend   :: Array Legend
-  , list :: { listId   :: ListId
-           , version  :: Version
-           }
+  , list :: { listId  :: ListId
+            , version :: Version
+            }
   , metric :: String  -- dummy value
   , startForceAtlas :: Boolean
   , title    :: String
@@ -188,8 +199,12 @@ derive instance Generic Legend _
 derive instance Newtype Legend _
 instance Eq Legend where eq (Legend l1) (Legend l2) = eq l1.id_ l2.id_
 instance Ord Legend where compare (Legend l1) (Legend l2) = compare l1.id_ l2.id_
-derive newtype instance JSON.ReadForeign Legend
-derive newtype instance JSON.WriteForeign Legend
+instance JSON.ReadForeign Legend where
+  readImpl f = do
+    inst <- JSON.readImpl f
+    pure $ Legend $ Record.rename idP id_P inst
+instance JSON.WriteForeign Legend where
+  writeImpl (Legend l) = JSON.writeImpl $ Record.rename id_P idP l
 
 
 getLegendData :: GraphData -> Array Legend
