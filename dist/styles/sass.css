@@ -540,7 +540,7 @@ li .leaf:hover a.settings {
   position: fixed;
   top: 3.7em;
   width: 15%;
-  z-index: 910;
+  z-index: 909;
 }
 
 .left-handed .forest-layout {

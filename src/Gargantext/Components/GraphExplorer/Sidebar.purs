@@ -209,15 +209,15 @@ selectedNodesCpt = here.component "selectedNodes" cpt
               ]
             ]
           , RH.div { className: "tab-content flex-space-between" }
-            [ removeButton (Record.merge { buttonType: "primary"
-                                         , rType: CandidateTerm
-                                         , nodesMap
-                                         , text: "Move as candidate" } commonProps) []
+            [ updateTermButton (Record.merge { buttonType: "primary"
+                                             , rType: CandidateTerm
+                                             , nodesMap
+                                             , text: "Move as candidate" } commonProps) []
             , H.br {}
-            , removeButton (Record.merge { buttonType: "danger"
-                                         , nodesMap
-                                         , rType: StopTerm
-                                         , text: "Move as stop" } commonProps) []
+            , updateTermButton (Record.merge { buttonType: "danger"
+                                             , nodesMap
+                                             , rType: StopTerm
+                                             , text: "Move as stop" } commonProps) []
             ]
           ]
         ]
@@ -246,7 +246,7 @@ neighborhoodCpt = here.component "neighborhood" cpt
         ]
 
 
-type RemoveButtonProps = (
+type UpdateTermButtonProps = (
     buttonType :: String
   , nodesMap   :: SigmaxT.NodesMap
   , rType      :: TermList
@@ -254,11 +254,10 @@ type RemoveButtonProps = (
   | Common
   )
 
-removeButton :: R2.Component RemoveButtonProps
-removeButton = R.createElement removeButtonCpt
-
-removeButtonCpt :: R.Component RemoveButtonProps
-removeButtonCpt = here.component "removeButton" cpt
+updateTermButton :: R2.Component UpdateTermButtonProps
+updateTermButton = R.createElement updateTermButtonCpt
+updateTermButtonCpt :: R.Component UpdateTermButtonProps
+updateTermButtonCpt = here.component "updateTermButton" cpt
   where
     cpt { buttonType
         , graphId
@@ -282,7 +281,7 @@ removeButtonCpt = here.component "removeButton" cpt
         onClickRemove selectedNodeIds' e = do
           let nodes = mapMaybe (\id -> Map.lookup id nodesMap)
                               $ Set.toUnfoldable selectedNodeIds'
-          deleteNodes { graphId: graphId
+          sendPatches { graphId: graphId
                       , metaData: metaData
                       , nodes
                       , session: session
@@ -309,7 +308,7 @@ neighbourBadges :: SigmaxT.SGraph -> SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.
 neighbourBadges graph selectedNodeIds = SigmaxT.neighbours graph selectedNodes' where
   selectedNodes' = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
 
-type DeleteNodes =
+type SendPatches =
   ( graphId      :: NodeID
   , metaData     :: GET.MetaData
   , nodes        :: Array (Record SigmaxT.Node)
@@ -318,10 +317,10 @@ type DeleteNodes =
   , termList     :: TermList
   )
 
-deleteNodes :: Record DeleteNodes -> Effect Unit
-deleteNodes { graphId, metaData, nodes, session, termList, reloadForest } = do
+sendPatches :: Record SendPatches -> Effect Unit
+sendPatches { graphId, metaData, nodes, session, termList, reloadForest } = do
   launchAff_ do
-    patches <- (parTraverse (deleteNode termList session metaData) nodes) :: Aff (Array NTC.VersionedNgramsPatches)
+    patches <- (parTraverse (sendPatch termList session metaData) nodes) :: Aff (Array NTC.VersionedNgramsPatches)
     let mPatch = last patches
     case mPatch of
       Nothing -> pure unit
@@ -329,12 +328,12 @@ deleteNodes { graphId, metaData, nodes, session, termList, reloadForest } = do
         liftEffect $ T2.reload reloadForest
 
 -- Why is this called delete node?
-deleteNode :: TermList
-           -> Session
-           -> GET.MetaData
-           -> Record SigmaxT.Node
-           -> Aff NTC.VersionedNgramsPatches
-deleteNode termList session (GET.MetaData metaData) node = do
+sendPatch :: TermList
+          -> Session
+          -> GET.MetaData
+          -> Record SigmaxT.Node
+          -> Aff NTC.VersionedNgramsPatches
+sendPatch termList session (GET.MetaData metaData) node = do
     ret  <- NTC.putNgramsPatches coreParams versioned
     task <- NTC.postNgramsChartsAsync coreParams  -- TODO add task
     pure ret
