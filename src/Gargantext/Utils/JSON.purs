@@ -37,7 +37,7 @@ readList f = do
     readAtIdx i f' = withExcept (map (ErrorAtIndex i)) (JSON.readImpl f')
 
 writeList :: forall a. JSON.WriteForeign a => List.List a -> Foreign
-writeList xs = unsafeToForeign $ JSON.writeImpl <$> xs
+writeList xs = unsafeToForeign $ JSON.writeImpl <$> (List.toUnfoldable xs :: Array a)
 
 readMapInt :: forall v. JSON.ReadForeign v => Foreign -> F (Map.Map Int v)
 readMapInt f = do

@@ -4,16 +4,17 @@ import Gargantext.Prelude
 
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
-import Data.List as List
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Effect.Aff (Aff)
+import Simple.JSON as JSON
+
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
-import Gargantext.Components.Nodes.Types (FTField, FTFieldList(..))
+
+import Gargantext.Components.Nodes.Types (FTFieldList)
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, get, put)
 import Gargantext.Types (NodeType(..))
-import Simple.JSON as JSON
 
 type Preferences = Maybe String
 
@@ -50,7 +51,7 @@ type SaveProps = ( hyperdata :: Hyperdata | LoadProps )
 
 saveDashboard :: Record SaveProps -> Aff Unit
 saveDashboard {hyperdata, nodeId, session} = do
-  id_ <- (put session (NodeAPI Node (Just nodeId) "") hyperdata) :: Aff Int
+  _id <- (put session (NodeAPI Node (Just nodeId) "") hyperdata) :: Aff Int
   pure unit
 
 newtype DashboardData =

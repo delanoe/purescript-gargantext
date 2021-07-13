@@ -8,7 +8,6 @@ import Data.List as List
 import Data.Maybe (Maybe, fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.Show.Generic (genericShow)
-import Data.Tuple (Tuple)
 import Foreign as F
 import Simple.JSON as JSON
 

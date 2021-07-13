@@ -51,7 +51,7 @@ dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
       reload' <- T.useLive T.unequal reload
 
       useLoader {nodeId, reload: reload', session} DT.loadDashboardWithReload $
-        \(DT.DashboardData dashboardData@{hyperdata: DT.Hyperdata h, parentId}) -> do
+        \(DT.DashboardData { hyperdata: DT.Hyperdata h, parentId }) -> do
           let { charts, fields } = h
           dashboardLayoutLoaded { charts
                                 , corpusId: parentId
@@ -86,7 +86,7 @@ dashboardLayoutLoaded = R.createElement dashboardLayoutLoadedCpt
 dashboardLayoutLoadedCpt :: R.Component LoadedProps
 dashboardLayoutLoadedCpt = here.component "dashboardLayoutLoaded" cpt
   where
-    cpt props@{ charts, corpusId, defaultListId, fields, nodeId, onChange, session } _ = do
+    cpt { charts, corpusId, defaultListId, fields, nodeId, onChange, session } _ = do
       pure $ H.div {}
         [ dashboardCodeEditor { fields
                               , nodeId
@@ -130,7 +130,7 @@ dashboardCodeEditor = R.createElement dashboardCodeEditorCpt
 dashboardCodeEditorCpt :: R.Component CodeEditorProps
 dashboardCodeEditorCpt = here.component "dashboardCodeEditor" cpt
   where
-    cpt props@{ fields: FTFieldList fields, nodeId, onChange, session } _ = do
+    cpt { fields: FTFieldList fields, nodeId, onChange, session } _ = do
       let fieldsWithIndex = FTFieldsWithIndex $ List.mapWithIndex (\idx -> \ftField -> { idx, ftField }) fields
       fieldsS <- T.useBox fieldsWithIndex
       fields' <- T.useLive T.unequal fieldsS
@@ -173,12 +173,7 @@ dashboardCodeEditorCpt = here.component "dashboardCodeEditor" cpt
 
         onClickSave :: forall e. FTFieldsWithIndex -> e -> Effect Unit
         onClickSave (FTFieldsWithIndex fields') _ = do
-          here.log "saving (TODO)"
           onChange $ FTFieldList $ (_.ftField) <$> fields'
-          -- launchAff_ do
-            -- saveCorpus $ { hyperdata: Hyperdata {fields: (\(Tuple _ f) -> f) <$> fieldsS}
-            --             , nodeId
-            --             , session }
 
         onClickAddField :: forall e. T.Box FTFieldsWithIndex -> e -> Effect Unit
         onClickAddField fieldsS _ = do

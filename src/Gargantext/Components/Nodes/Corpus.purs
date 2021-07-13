@@ -119,14 +119,13 @@ corpusLayoutWithKeyCpt = here.component "corpusLayoutWithKey" cpt where
 
 type ViewProps =
   ( corpus  :: NodePoly Hyperdata
-  , reload  :: T2.ReloadS
   , nodeId  :: Int
+  , reload  :: T2.ReloadS
   , session :: Session
   )
 
 corpusLayoutView :: Record ViewProps -> R.Element
 corpusLayoutView props = R.createElement corpusLayoutViewCpt props []
-
 corpusLayoutViewCpt :: R.Component ViewProps
 corpusLayoutViewCpt = here.component "corpusLayoutView" cpt
   where
@@ -449,8 +448,6 @@ changeCode onc (JSON j) CE.Markdown _ = onc $ Markdown $ defaultMarkdown' { text
     text = R2.stringify (JSON.writeImpl j) 2
 
 
-
-
 type LoadProps =
   ( nodeId  :: Int
   , session :: Session
@@ -470,7 +467,7 @@ type SaveProps = (
 
 saveCorpus :: Record SaveProps -> Aff Unit
 saveCorpus {hyperdata, nodeId, session} = do
-  id_ <- (put session (NodeAPI Corpus (Just nodeId) "") hyperdata) :: Aff Int
+  _id <- (put session (NodeAPI Corpus (Just nodeId) "") hyperdata) :: Aff Int
   pure unit
 
 loadCorpus :: Record LoadProps -> Aff CorpusData

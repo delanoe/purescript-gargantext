@@ -9,8 +9,6 @@ import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, null, toMaybe)
 import Data.String.Utils (endsWith)
-import Data.Tuple (fst, snd)
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import FFI.Simple ((.=))
 import Reactix as R
@@ -24,7 +22,6 @@ import Toestand as T
 import Gargantext.Prelude
 import Gargantext.Utils.HighlightJS as HLJS
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.CodeEditor"
@@ -214,8 +211,8 @@ toolbar p = R.createElement toolbarCpt p []
 toolbarCpt :: R.Component ToolbarProps
 toolbarCpt = here.component "toolbar" cpt
   where
-    cpt props@{ controls: { codeS, codeType, error, viewType }
-              , onChange } _ = do
+    cpt { controls: { codeS, codeType, viewType }
+        , onChange } _ = do
       codeS' <- T.useLive T.unequal codeS
       codeType' <- T.useLive T.unequal codeType
 
