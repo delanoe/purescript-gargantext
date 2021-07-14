@@ -78,9 +78,8 @@ explorerWriteGraph :: R2.Component GraphWriteProps
 explorerWriteGraph = R.createElement explorerWriteGraphCpt
 explorerWriteGraphCpt :: R.Component GraphWriteProps
 explorerWriteGraphCpt = here.component "explorerWriteGraph" cpt where
-  cpt props@{ boxes: { sidePanelGraph, sidePanelState }
+  cpt props@{ boxes: { sidePanelGraph }
             , graph
-            , hyperdataGraph
             , mMetaData' } _ = do
       R.useEffectOnce' $ do
         T.write_ (Just { mGraph: Just graph
@@ -99,13 +98,13 @@ explorer = R.createElement explorerCpt
 explorerCpt :: R.Component Props
 explorerCpt = here.component "explorer" cpt
   where
-    cpt props@{ boxes: boxes@{ graphVersion, handed, reloadForest, showTree, sidePanelGraph, sidePanelState }
-              , graph
-              , graphId
-              , hyperdataGraph
-              , session
-              } _ = do
-      { mMetaData, sideTab } <- GEST.focusedSidePanel sidePanelGraph
+    cpt { boxes: { graphVersion, handed, reloadForest, showTree, sidePanelGraph, sidePanelState }
+        , graph
+        , graphId
+        , hyperdataGraph
+        , session
+        } _ = do
+      { mMetaData } <- GEST.focusedSidePanel sidePanelGraph
       graphVersion' <- T.useLive T.unequal graphVersion
       handed' <- T.useLive T.unequal handed
       mMetaData' <- T.useLive T.unequal mMetaData
@@ -318,7 +317,10 @@ transformGraph graph { edgeConfluence'
     hasSelection = not $ Set.isEmpty selectedNodeIds'
 
     newEdges' = Seq.filter edgeFilter $ Seq.map (
-      edgeHideWeight <<< edgeHideConfluence <<< edgeShowFilter <<< edgeMarked
+      -- NOTE We don't use edgeShowFilter anymore because of
+      -- https://gitlab.iscpif.fr/gargantext/purescript-gargantext/issues/304
+      -- edgeHideWeight <<< edgeHideConfluence <<< edgeShowFilter <<< edgeMarked
+      edgeHideWeight <<< edgeHideConfluence <<< edgeMarked
       ) edges
     newNodes  = Seq.filter nodeFilter $ Seq.map (nodeMarked <<< nodeHideSize) nodes
     newEdges  = Seq.filter (edgeInGraph $ Set.fromFoldable $ Seq.map _.id newNodes) newEdges'

@@ -6,7 +6,6 @@ import DOM.Simple.Types (Element)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Maybe (Maybe)
-import Data.Nullable (null)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Traversable (traverse_)
@@ -48,7 +47,7 @@ sigma = runEffectFn3 _sigma Left Right
 
 -- | Kill a sigmajs instance.
 kill :: Sigma -> Effect Unit
-kill sigma = pure $ sigma ... "kill" $ []
+kill s = pure $ s ... "kill" $ []
 
 -- | Call the `refresh()` method on a sigmajs instance.
 refresh :: Sigma -> Effect Unit

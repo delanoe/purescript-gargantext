@@ -2,10 +2,8 @@ module Gargantext.Hooks.Sigmax.Sigmajs where
 
 import Prelude
 
-import Data.Nullable (Nullable)
 import Effect (Effect)
 import Effect.Uncurried (EffectFn1, runEffectFn1)
-import React (SyntheticEventHandler)
 import React.Ref as RR
 import Record.Unsafe (unsafeGet)
 import Unsafe.Coerce (unsafeCoerce)
