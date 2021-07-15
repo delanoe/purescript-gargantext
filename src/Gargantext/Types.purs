@@ -229,11 +229,11 @@ instance Read NodeType where
 
 instance translateNodeType :: Translate NodeType where
   translate l n = case l of
-    FR -> _translateFR n
-    _  -> _translateEN n
+    FR -> translateFR n
+    _  -> translateEN n
 
-_translateFR :: NodeType -> String
-_translateFR = case _ of
+translateFR :: NodeType -> String
+translateFR = case _ of
   Annuaire            -> "Annuaire"
   Corpus              -> "Corpus"
   Dashboard           -> "Dashboard"
@@ -260,10 +260,10 @@ _translateFR = case _ of
   NodeFrameNotebook   -> "Carnet de notes"
   NodeFrameWrite      -> "Éditeur de texte"
   NodeFrameVisio      -> "Visio"
-  NodePublic n        -> _translateFR n
+  NodePublic n        -> translateFR n
 
-_translateEN :: NodeType -> String
-_translateEN = case _ of
+translateEN :: NodeType -> String
+translateEN = case _ of
   Annuaire            -> "Annuaire"
   Corpus              -> "Corpus"
   Dashboard           -> "Dashboard"
@@ -290,72 +290,72 @@ _translateEN = case _ of
   NodeFrameNotebook   -> "Notebook"
   NodeFrameWrite      -> "Write"
   NodeFrameVisio      -> "Visio"
-  NodePublic n        -> _translateEN n
+  NodePublic n        -> translateEN n
 
 ------------------------------------------------------
 
-_getIcon :: NodeType -> Boolean -> String
-_getIcon NodeUser false = "user-circle"
-_getIcon NodeUser true  = "user"
+getIcon :: NodeType -> Boolean -> String
+getIcon NodeUser false = "user-circle"
+getIcon NodeUser true  = "user"
 ------------------------------------------------------
-_getIcon Folder  false  = "folder"
-_getIcon Folder  true   = "folder-open-o"
+getIcon Folder  false  = "folder"
+getIcon Folder  true   = "folder-open-o"
 ------------------------------------------------------
-_getIcon FolderPrivate true  = "lock"
-_getIcon FolderPrivate false = "lock-circle"
+getIcon FolderPrivate true  = "lock"
+getIcon FolderPrivate false = "lock-circle"
 
-_getIcon FolderShared  true  = "share-alt"
-_getIcon FolderShared  false = "share-circle"
-_getIcon Team  true   = "users"
-_getIcon Team  false  = "users-closed"
+getIcon FolderShared  true  = "share-alt"
+getIcon FolderShared  false = "share-circle"
+getIcon Team  true   = "users"
+getIcon Team  false  = "users-closed"
 
-_getIcon FolderPublic true  = "globe-circle"
-_getIcon FolderPublic false = "globe"
+getIcon FolderPublic true  = "globe-circle"
+getIcon FolderPublic false = "globe"
 ------------------------------------------------------
 
-_getIcon Corpus true  = "book"
-_getIcon Corpus false = "book-circle"
+getIcon Corpus true  = "book"
+getIcon Corpus false = "book-circle"
 
-_getIcon Phylo _ = "code-fork"
+getIcon Phylo _ = "code-fork"
 
-_getIcon Graph _ = "hubzilla"
-_getIcon Texts _ = "newspaper-o"
-_getIcon Dashboard _ = "signal"
-_getIcon NodeList _ = "list"
-_getIcon NodeFile _ = "file"  -- TODO depending on mime type we can use fa-file-image etc
+getIcon Graph _ = "hubzilla"
+getIcon Texts _ = "newspaper-o"
+getIcon Dashboard _ = "signal"
+getIcon NodeList _ = "list"
+getIcon NodeFile _ = "file"  -- TODO depending on mime type we can use fa-file-image etc
 
-_getIcon Annuaire true  = "address-card-o"
-_getIcon Annuaire false = "address-card"
+getIcon Annuaire true  = "address-card-o"
+getIcon Annuaire false = "address-card"
 
-_getIcon NodeContact true  = "address-card-o"
-_getIcon NodeContact false = "address-card"
+getIcon NodeContact true  = "address-card-o"
+getIcon NodeContact false = "address-card"
 
-_getIcon NodeFrameWrite true  = "file-text-o"
-_getIcon NodeFrameWrite false = "file-text"
+getIcon NodeFrameWrite true  = "file-text-o"
+getIcon NodeFrameWrite false = "file-text"
 
-_getIcon NodeFrameCalc true  = "calculator"
-_getIcon NodeFrameCalc false = "calculator"
+getIcon NodeFrameCalc true  = "calculator"
+getIcon NodeFrameCalc false = "calculator"
 
-_getIcon NodeFrameNotebook true  = "file-code-o"
-_getIcon NodeFrameNotebook false = "code"
+getIcon NodeFrameNotebook true  = "file-code-o"
+getIcon NodeFrameNotebook false = "code"
 
-_getIcon NodeFrameVisio true  = "video-camera"
-_getIcon NodeFrameVisio false = "video-camera"
+getIcon NodeFrameVisio true  = "video-camera"
+getIcon NodeFrameVisio false = "video-camera"
 
 
 
-_getIcon (NodePublic nt) b   = _getIcon nt b
+getIcon (NodePublic nt) b   = getIcon nt b
 
-_getIcon _        true   = "folder-open"
-_getIcon _        false  = "folder-o"
+getIcon _        true   = "folder-open"
+getIcon _        false  = "folder-o"
 
 ------------------------------------------------------
 
 fldr :: NodeType -> Boolean -> String
-fldr nt flag = classNamePrefix <> _getIcon nt flag
+fldr nt flag = classNamePrefix <> getIcon nt flag
 
 charCodeIcon :: NodeType -> Boolean -> String
-charCodeIcon nt flag = glyphiconToCharCode $ _getIcon nt flag
+charCodeIcon nt flag = glyphiconToCharCode $ getIcon nt flag
 
 publicize :: NodeType -> NodeType
 publicize (NodePublic nt) = NodePublic nt
