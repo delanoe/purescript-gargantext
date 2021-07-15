@@ -8,8 +8,6 @@ import Simple.JSON.Generics as JSONG
 
 import Gargantext.Prelude
 
-import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson, genericEnumDecodeJson, genericEnumEncodeJson)
-
 
 data UpdateNodeParams = UpdateNodeParamsList  { methodList  :: Method      }
                       | UpdateNodeParamsGraph { methodGraph :: GraphMetric }

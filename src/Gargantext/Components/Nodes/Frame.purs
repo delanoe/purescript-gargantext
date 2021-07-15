@@ -21,7 +21,6 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, get, sessionId)
 import Gargantext.Types (NodeType(..))
-import Gargantext.Utils.Argonaut (genericSumEncodeJson)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 
