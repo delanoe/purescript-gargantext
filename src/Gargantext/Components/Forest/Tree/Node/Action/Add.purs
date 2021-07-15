@@ -13,7 +13,7 @@ import Gargantext.Prelude
 
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
-import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe', panel, submitButton)
+import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, panel, submitButton)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Lang (Lang(..), translate)
 import Gargantext.Routes as GR
@@ -76,7 +76,9 @@ addNodeViewCpt = here.component "addNodeView" cpt where
     nodeType' <- T.useLive T.unequal nodeType
 
     let
-        print nt = charCodeIcon nt
+        print nt = charCodeIcon nt true
+                -- as we are printing within an HTML text node,
+                -- margins will directly rely on content text spacing
                 <> nbsp 4
                 <> translate EN nt -- @TODO "EN" assumption
 
@@ -85,7 +87,7 @@ addNodeViewCpt = here.component "addNodeView" cpt where
           T.write_ (GT.prettyNodeType nt) nodeName
           T.write_ nt nodeType
         (maybeChoose /\ nt') = if length nodeTypes > 1
-                         then ([ formChoiceSafe' nodeTypes Error setNodeType' print ] /\ nodeType')
+                         then ([ formChoiceSafe nodeTypes Error setNodeType' print ] /\ nodeType')
                          else ([H.div {} [H.text $ "Creating a node of type "
                                                 <> show defaultNt
                                                 <> " with name:"

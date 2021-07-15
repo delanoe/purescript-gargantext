@@ -120,12 +120,14 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
                                  , WOS
                                  , PresseRIS
                                  , Arbitrary
-                                 ] CSV setFileType'
+                                 ] CSV setFileType' show
                 ]
               ]
             , R2.row
               [ H.div {className:"col-6 flex-space-around"}
-                [ formChoiceSafe [EN, FR, No_extraction, Universal] EN setLang' ]
+                [ formChoiceSafe [EN, FR, No_extraction, Universal] EN setLang'
+                  show
+                ]
               ]
             ]
 

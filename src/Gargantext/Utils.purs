@@ -61,12 +61,6 @@ invertOrdering EQ = EQ
 _unit :: forall s. Lens' s Unit
 _unit = lens (\_ -> unit) (\s _ -> s)
 
-glyphicon :: String -> String
-glyphicon t = "btn glyphitem fa fa-" <> t
-
-glyphiconActive :: String -> Boolean -> String
-glyphiconActive icon b = glyphicon icon <> if b then " active" else ""
-
 -- | Format a number with specified amount of zero-padding
 zeroPad :: Int -> Int -> String
 zeroPad pad num = zeros <> (show num)

@@ -3,19 +3,17 @@ module Gargantext.Types where
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Argonaut.Decode.Error (JsonDecodeError(..))
 import Data.Array as A
-import Data.Char (fromCharCode)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Eq (genericEq)
 import Data.Generic.Rep.Ord (genericCompare)
 import Data.Generic.Rep.Show (genericShow)
 import Data.Int (toNumber)
-import Data.Maybe (Maybe(..), fromJust, fromMaybe, maybe)
+import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.String as S
-import Data.String.CodeUnits (singleton)
 import Effect.Aff (Aff)
 import Gargantext.Components.Lang (class Translate, Lang(..))
-import Partial.Unsafe (unsafePartial)
+import Gargantext.Utils.Glyphicon (classNamePrefix, glyphiconToCharCode)
 import Prim.Row (class Union)
 import Reactix as R
 import URI.Query (Query)
@@ -245,52 +243,6 @@ instance readNodeType :: Read NodeType where
 
 ------------------------------------------------------
 
--- (?) UI print Glyphicon directly on text node
---
---    * convert "Glyphicon ForkAwesome" classNames to CharCode [1]
---    * bypass React "dangerousInnerHTML" via vanilla JavaScript coerce [2]
---      (see "forkawesome.css" dist file for conversion matching)
---
--- [1] https://stackoverflow.com/a/54002856/6003907
--- [2] https://github.com/facebook/react/issues/3769#issuecomment-97163582
---
--- @TODO thinking of a purs file for glyphicon conversion?
-charCodeIcon :: NodeType -> String
-charCodeIcon = _toString <<< case _ of
-  Annuaire            -> 0xf2bb
-  Corpus              -> 0xf2b9
-  Dashboard           -> 0xf012
-  Error               -> _defaultCharCode
-  Folder              -> 0xf07b
-  FolderPrivate       -> 0xf023
-  FolderPublic        -> 0xf33f
-  FolderShared        -> 0xf1e0
-  Graph               -> 0xf2eb
-  Individu            -> _defaultCharCode
-  Node                -> _defaultCharCode
-  NodeContact         -> 0xf2bb
-  NodeList            -> 0xf00b
-  NodeUser            -> 0xf007
-  Nodes               -> _defaultCharCode
-  Phylo               -> 0xf126
-  Team                -> 0xf0c0
-  Texts               -> 0xf1ea
-  Tree                -> _defaultCharCode
-  Url_Document        -> _defaultCharCode
-  --
-  NodeFile            -> 0xf15b
-  NodeFrameCalc       -> 0xf1ec
-  NodeFrameNotebook   -> 0xf1c9
-  NodeFrameWrite      -> 0xf15c
-  NodeFrameVisio      -> 0xf03d
-  NodePublic n        -> _defaultCharCode
-
-  where
-    _defaultCharCode = 0xf309
-    _toString i = singleton $ unsafePartial $ fromJust $ fromCharCode i
-
-------------------------------------------------------
-
 instance translateNodeType :: Translate NodeType where
   translate l n = case l of
     FR -> _translateFR n
@@ -324,7 +276,7 @@ _translateFR = case _ of
   NodeFrameNotebook   -> "Carnet de notes"
   NodeFrameWrite      -> "Éditeur de texte"
   NodeFrameVisio      -> "Visio"
-  NodePublic n        -> "Nœud public"
+  NodePublic n        -> _translateFR n
 
 _translateEN :: NodeType -> String
 _translateEN = case _ of
@@ -354,65 +306,72 @@ _translateEN = case _ of
   NodeFrameNotebook   -> "Notebook"
   NodeFrameWrite      -> "Write"
   NodeFrameVisio      -> "Visio"
-  NodePublic n        -> "Public node"
+  NodePublic n        -> _translateEN n
+
+------------------------------------------------------
+
+_getIcon :: NodeType -> Boolean -> String
+_getIcon NodeUser false = "user-circle"
+_getIcon NodeUser true  = "user"
+------------------------------------------------------
+_getIcon Folder  false  = "folder"
+_getIcon Folder  true   = "folder-open-o"
+------------------------------------------------------
+_getIcon FolderPrivate true  = "lock"
+_getIcon FolderPrivate false = "lock-circle"
+
+_getIcon FolderShared  true  = "share-alt"
+_getIcon FolderShared  false = "share-circle"
+_getIcon Team  true   = "users"
+_getIcon Team  false  = "users-closed"
+
+_getIcon FolderPublic true  = "globe-circle"
+_getIcon FolderPublic false = "globe"
+------------------------------------------------------
+
+_getIcon Corpus true  = "book"
+_getIcon Corpus false = "book-circle"
+
+_getIcon Phylo _ = "code-fork"
+
+_getIcon Graph _ = "hubzilla"
+_getIcon Texts _ = "newspaper-o"
+_getIcon Dashboard _ = "signal"
+_getIcon NodeList _ = "list"
+_getIcon NodeFile _ = "file"  -- TODO depending on mime type we can use fa-file-image etc
+
+_getIcon Annuaire true  = "address-card-o"
+_getIcon Annuaire false = "address-card"
+
+_getIcon NodeContact true  = "address-card-o"
+_getIcon NodeContact false = "address-card"
+
+_getIcon NodeFrameWrite true  = "file-text-o"
+_getIcon NodeFrameWrite false = "file-text"
+
+_getIcon NodeFrameCalc true  = "calculator"
+_getIcon NodeFrameCalc false = "calculator"
+
+_getIcon NodeFrameNotebook true  = "file-code-o"
+_getIcon NodeFrameNotebook false = "code"
+
+_getIcon NodeFrameVisio true  = "video-camera"
+_getIcon NodeFrameVisio false = "video-camera"
+
+
+
+_getIcon (NodePublic nt) b   = _getIcon nt b
+
+_getIcon _        true   = "folder-open"
+_getIcon _        false  = "folder-o"
 
 ------------------------------------------------------
 
 fldr :: NodeType -> Boolean -> String
-fldr NodeUser false = "fa fa-user-circle"
-fldr NodeUser true  = "fa fa-user"
-------------------------------------------------------
-fldr Folder  false  = "fa fa-folder"
-fldr Folder  true   = "fa fa-folder-open-o"
-------------------------------------------------------
-fldr FolderPrivate true  = "fa fa-lock"
-fldr FolderPrivate false = "fa fa-lock-circle"
+fldr nt flag = classNamePrefix <> _getIcon nt flag
 
-fldr FolderShared  true  = "fa fa-share-alt"
-fldr FolderShared  false = "fa fa-share-circle"
-fldr Team  true   = "fa fa-users"
-fldr Team  false  = "fa fa-users-closed"
-
-fldr FolderPublic true  = "fa fa-globe-circle"
-fldr FolderPublic false = "fa fa-globe"
-------------------------------------------------------
-
-fldr Corpus true  = "fa fa-book"
-fldr Corpus false = "fa fa-book-circle"
-
-fldr Phylo _ = "fa fa-code-fork"
-
-fldr Graph _ = "fa fa-hubzilla"
-fldr Texts _ = "fa fa-newspaper-o"
-fldr Dashboard _ = "fa fa-signal"
-fldr NodeList _ = "fa fa-list"
-fldr NodeFile _ = "fa fa-file"  -- TODO depending on mime type we can use fa-file-image etc
-
-fldr Annuaire true  = "fa fa-address-card-o"
-fldr Annuaire false = "fa fa-address-card"
-
-fldr NodeContact true  = "fa fa-address-card-o"
-fldr NodeContact false = "fa fa-address-card"
-
-fldr NodeFrameWrite true  = "fa fa-file-text-o"
-fldr NodeFrameWrite false = "fa fa-file-text"
-
-fldr NodeFrameCalc true  = "fa fa-calculator"
-fldr NodeFrameCalc false = "fa fa-calculator"
-
-fldr NodeFrameNotebook true  = "fa fa-file-code-o"
-fldr NodeFrameNotebook false = "fa fa-code"
-
-fldr NodeFrameVisio true  = "fa fa-video-camera"
-fldr NodeFrameVisio false = "fa fa-video-camera"
-
-
-
-fldr (NodePublic nt) b   = fldr nt b
-
-fldr _        true   = "fa fa-folder-open"
-fldr _        false  = "fa fa-folder-o"
-
+charCodeIcon :: NodeType -> Boolean -> String
+charCodeIcon nt flag = glyphiconToCharCode $ _getIcon nt flag
 
 publicize :: NodeType -> NodeType
 publicize (NodePublic nt) = NodePublic nt

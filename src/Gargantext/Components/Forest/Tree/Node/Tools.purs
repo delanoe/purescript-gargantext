@@ -21,7 +21,8 @@ import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types as GT
-import Gargantext.Utils (glyphicon, toggleSet)
+import Gargantext.Utils (toggleSet)
+import Gargantext.Utils.Glyphicon (glyphicon)
 import Gargantext.Utils.ReactTooltip as ReactTooltip
 import Gargantext.Utils.Reactix as R2
 
@@ -108,62 +109,20 @@ formEdit defaultValue setter =
 
 -- | Form Choice input
 -- if the list of options is not big enough, a button is used instead
-formChoiceSafe :: forall a b c
-               .  Read  a
-               => Show  a
-               => Array a
-               -> a
-               -> (a -> Effect c)
-               -- -> ((b -> a) -> Effect c)
-               -> R.Element
-formChoiceSafe [] _ _ = H.div {} []
-
-formChoiceSafe [n] _defaultNodeType setNodeType =
-  formButton n setNodeType
-
-formChoiceSafe nodeTypes defaultNodeType setNodeType =
-  formChoice nodeTypes defaultNodeType setNodeType
+formChoiceSafe :: forall item m
+  .  Read item
+  => Show item
+  => Array item
+  -> item
+  -> (item -> Effect m)
+  -> (item -> String)
+  -> R.Element
+formChoiceSafe []  _   _   _    = mempty
+formChoiceSafe [n] _   cbk prnt = formButton n cbk prnt
+formChoiceSafe arr def cbk prnt = formChoice arr def cbk prnt
 
 -- | List Form
-formChoice :: forall a b c d
-           .  Read b
-           => Show d
-           => Array d
-           -> b
-           -> (b -> Effect a)
-           -- -> ((c -> b) -> Effect a)
-           -> R.Element
-formChoice nodeTypes defaultNodeType setNodeType =
-  H.div { className: "form-group"}
-        [ R2.select { className: "form-control"
-                    , on: { change: \e -> setNodeType $ fromMaybe defaultNodeType $ read $ R.unsafeEventValue e }
-                    }
-          (map (\opt -> H.option {} [ H.text $ show opt ]) nodeTypes)
-         ]
-
--- | Button Form
--- FIXME: currently needs a click from the user (by default, we could avoid such click)
-formButton :: forall a b c
-           . Show a
-           =>   a
-           -> (a -> Effect c)
-           -- -> ((b -> a) -> Effect c)
-           -> R.Element
-formButton nodeType setNodeType =
-  H.div {} [ H.text $ "Confirm the selection of: " <> show nodeType
-           , bouton
-           ]
-    where
-      bouton = H.button { className : "cold-md-5 btn btn-primary center"
-                        , type : "button"
-                        , title: "Form Button"
-                        , style : { width: "100%" }
-                        , on: { click: \_ -> setNodeType nodeType }
-                        } [H.text $ "Confirmation"]
-
-------------------------------------------------------------------------
-
-formChoiceSafe' :: forall item m
+formChoice :: forall item m
   .  Read item
   => Show item
   => Array item
@@ -171,19 +130,7 @@ formChoiceSafe' :: forall item m
   -> (item -> Effect m)
   -> (item -> String)
   -> R.Element
-formChoiceSafe' []  _   _   _    = mempty
-formChoiceSafe' [n] _   cbk prnt = formButton' n cbk prnt
-formChoiceSafe' arr def cbk prnt = formChoice' arr def cbk prnt
-
-formChoice' :: forall item m
-  .  Read item
-  => Show item
-  => Array item
-  -> item
-  -> (item -> Effect m)
-  -> (item -> String)
-  -> R.Element
-formChoice' items def cbk prnt =
+formChoice items def cbk prnt =
 
   H.div { className: "form-group"}
   [
@@ -201,12 +148,14 @@ formChoice' items def cbk prnt =
       H.option { value: show opt }
       [ H.text $ prnt opt ]
 
-formButton' :: forall item m
+-- | Button Form
+-- FIXME: currently needs a click from the user (by default, we could avoid such click)
+formButton :: forall item m
   .  item
   -> (item -> Effect m)
   -> (item -> String)
   -> R.Element
-formButton' item cbk prnt =
+formButton item cbk prnt =
 
   H.div {}
   [

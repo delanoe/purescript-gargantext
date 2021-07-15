@@ -26,7 +26,7 @@ import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT, p
 import Gargantext.Sessions (Session)
 import Gargantext.Types (Name, ID, prettyNodeType)
 import Gargantext.Types as GT
-import Gargantext.Utils (glyphicon, glyphiconActive)
+import Gargantext.Utils.Glyphicon (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
