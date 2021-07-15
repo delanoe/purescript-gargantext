@@ -170,6 +170,11 @@ let additions =
         , repo = "https://github.com/alpacaaa/purescript-simplecrypto"
         , version = "v1.0.1"
         }
+      , web-url =
+        { dependencies = [ "prelude" ]
+	, repo = "https://github.com/mjepronk/purescript-web-url"
+	, version = "v1.0.2"
+	}
       }
 
 let localPackages = {

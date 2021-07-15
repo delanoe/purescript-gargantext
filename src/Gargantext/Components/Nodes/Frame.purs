@@ -8,12 +8,15 @@ import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
+import Data.Nullable (Nullable, null)
 import Data.Show.Generic (genericShow)
+import DOM.Simple as DOM
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
 import Toestand as T
+import Web.URL as WURL
 
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Node (NodePoly(..))
@@ -49,7 +52,6 @@ type KeyProps =
 
 frameLayout :: R2.Leaf Props
 frameLayout props = R.createElement frameLayoutCpt props []
-
 frameLayoutCpt :: R.Component Props
 frameLayoutCpt = here.component "frameLayout" cpt where
   cpt { nodeId, nodeType, session } _ = do
@@ -59,7 +61,6 @@ frameLayoutCpt = here.component "frameLayout" cpt where
 
 frameLayoutWithKey :: R2.Leaf KeyProps
 frameLayoutWithKey props = R.createElement frameLayoutWithKeyCpt props []
-
 frameLayoutWithKeyCpt :: R.Component KeyProps
 frameLayoutWithKeyCpt = here.component "frameLayoutWithKey" cpt where
   cpt { nodeId, session, nodeType} _ = do
@@ -86,29 +87,74 @@ hframeUrl NodeFrameCalc  base frame_id = base <> "/" <> frame_id
 hframeUrl NodeFrameVisio base frame_id = base <> "/" <> frame_id
 hframeUrl _ base frame_id = base <> "/" <> frame_id <> "?view" -- "?both"
 
-frameLayoutView :: Record ViewProps -> R.Element
-frameLayoutView props = R.createElement frameLayoutViewCpt props []
-
+frameLayoutView :: R2.Leaf ViewProps
+frameLayoutView props  = R.createElement frameLayoutViewCpt props []
 frameLayoutViewCpt :: R.Component ViewProps
 frameLayoutViewCpt = here.component "frameLayoutView" cpt
   where
-    cpt { frame: (NodePoly { hyperdata: Hyperdata { base, frame_id }})
+    cpt { frame: NodePoly { hyperdata: Hyperdata { base, frame_id }}
         , nodeId
         , nodeType
         , reload
-        , session } _ =
-      pure $ H.div{} [
-        FV.backButton
-      , FV.homeButton
-      , H.div { className : "frame"
-              , rows: "100%,*" }
+        , session } _ = do
+      case nodeType of
+        NodeFrameVisio ->
+          case WURL.fromAbsolute base of
+            Nothing  -> pure $ H.div {} [ H.text $ "Wrong base url: " <> base ]
+            Just url -> pure $ nodeFrameVisio { frame_id, reload, url }
+        _              ->
+          pure $ H.div{} [
+            FV.backButton
+            , FV.homeButton
+            , H.div { className : "frame"
+                    , rows: "100%,*" }
               [ -- H.script { src: "https://visio.gargantext.org/external_api.js"} [],
-               H.iframe { src: hframeUrl nodeType base frame_id
+                H.iframe { src: hframeUrl nodeType base frame_id
                          , width: "100%"
                          , height: "100%"
                          } []
-          ]
-      ]
+              ]
+            ]
+
+type NodeFrameVisioProps =
+  ( frame_id  :: String
+  , reload    :: T2.ReloadS
+  , url       :: WURL.URL
+  )
+
+nodeFrameVisio :: R2.Leaf NodeFrameVisioProps
+nodeFrameVisio props = R.createElement nodeFrameVisioCpt props []
+nodeFrameVisioCpt :: R.Component NodeFrameVisioProps
+nodeFrameVisioCpt = here.component "nodeFrameVisio" cpt
+  where
+    cpt { frame_id
+        , reload
+        , url } _  = do
+      -- api = new JitsiMeetExternalAPI("visio.gargantext.org", {roomName: frame_id})
+      ref <- R.useRef (null :: Nullable DOM.Element)
+
+      R.useEffect' $ do
+        here.log2 "[nodeFrameVisio] ref" $ R.readRef ref
+      
+      pure $ H.div { ref } [ nodeFrameVisioPlaceholder { frame_id, ref, reload, url } ]
+
+type NodeFrameVisioPlaceholderProps =
+  ( ref :: R.Ref (Nullable DOM.Element)
+  | NodeFrameVisioProps
+  )
+
+nodeFrameVisioPlaceholder :: R2.Leaf NodeFrameVisioPlaceholderProps
+nodeFrameVisioPlaceholder props = R.createElement nodeFrameVisioPlaceholderCpt props []
+nodeFrameVisioPlaceholder :: R.Component NodeFrameVisioPlaceholderProps
+nodeFrameVisioPlaceholder = here.component "nodeFrameVisioPlaceholder" cpt
+  where
+    cpt { frame_id
+        , ref
+        , url } _ = do
+      R.useEffect' $ do
+        here.log2 "[nodeFrameVisioPlaceholder] ref" $ R.readRef ref
+
+      pure $ H.text $ WURL.host url
 
 type LoadProps   = ( nodeId  :: Int
                    , session :: Session )
