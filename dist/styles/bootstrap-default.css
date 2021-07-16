@@ -9945,5 +9945,8 @@ h3 {
     border-color: #dee2e6;
   }
 }
+.with-icon-font {
+  font-family: ForkAwesome, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
 
 /*# sourceMappingURL=bootstrap-default.css.map */

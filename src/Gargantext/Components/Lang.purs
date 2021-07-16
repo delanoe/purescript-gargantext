@@ -35,3 +35,7 @@ instance EncodeJson Lang where
 
 -- Language used for the landing page
 data LandingLang = LL_EN | LL_FR
+
+-- @TODO a possible method/class that a real i18n logic could later replace
+class Show t <= Translate t where
+  translate :: Lang -> t -> String
