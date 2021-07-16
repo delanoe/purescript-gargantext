@@ -480,11 +480,11 @@
   };
   "markdown-smolder" = {
     name = "markdown-smolder";
-    version = "2021-06-22";
+    version = "v2.2.0";
     src = pkgs.fetchgit {
-      url = "https://github.com/poorscript/purescript-markdown-smolder";
-      rev = "2021-06-22";
-      sha256 = "0m1jjfzwn4qz30ri9f0yj08p55l06a8mqdcw0n3rgcg0dxsvlgnm";
+      url = "https://github.com/hgiasac/purescript-markdown-smolder";
+      rev = "v2.2.0";
+      sha256 = "1zlchz0qrhn89ih4rsywjqilm1lcffchjm8za53z2wh16kd3287w";
     };
   };
   "math" = {
@@ -750,11 +750,11 @@
   };
   "reactix" = {
     name = "reactix";
-    version = "v0.4.11";
+    version = "v0.4.12";
     src = pkgs.fetchgit {
       url = "https://github.com/irresponsible/purescript-reactix";
-      rev = "v0.4.11";
-      sha256 = "1prxqww81lk32cp4mr318yanvf51kf9hz7x4n6rxdbcprj27710d";
+      rev = "v0.4.12";
+      sha256 = "0xm01r4b7k54qyrs4v76i2ybqdkyg11hsay47l71z9qbnzzpsrff";
     };
   };
   "read" = {
@@ -883,6 +883,15 @@
       sha256 = "0kwc4nvy6rpbnhayang92h74fgyr28bh82pskwj7lm4sy513vhfw";
     };
   };
+  "spec-mocha" = {
+    name = "spec-mocha";
+    version = "v4.0.0";
+    src = pkgs.fetchgit {
+      url = "https://github.com/purescript-spec/purescript-spec-mocha.git";
+      rev = "v4.0.0";
+      sha256 = "1qhxwq0812zgfnsf4qqg8ilc45sdg9xzjgkszv6z57ych68f075j";
+    };
+  };
   "spec-quickcheck" = {
     name = "spec-quickcheck";
     version = "v3.1.0";
@@ -957,11 +966,11 @@
   };
   "toestand" = {
     name = "toestand";
-    version = "v0.6.1";
+    version = "v0.6.2";
     src = pkgs.fetchgit {
       url = "https://github.com/poorscript/purescript-toestand";
-      rev = "v0.6.1";
-      sha256 = "007g6h7q1d7pzh5c4dp00367kym0wycwxnryps94r6w09fyhkmis";
+      rev = "v0.6.2";
+      sha256 = "0wgav789ii14gsz0xc67nl5lc82sisdjd5wi6pwl5kj0i7ayz66y";
     };
   };
   "transformers" = {

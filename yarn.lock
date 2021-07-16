@@ -6161,7 +6161,11 @@ purescript-language-server@^0.15.2:
     vscode-uri "^2.1.1"
     which "^2.0.2"
 
+<<<<<<< HEAD
 purescript@^0.14.2:
+=======
+purescript@^0.14.3:
+>>>>>>> ca976a1fe93a4404208e21e7e7ffa9ff6eedec51
   version "0.14.3"
   resolved "https://registry.yarnpkg.com/purescript/-/purescript-0.14.3.tgz#8a725c5dc640afeebb1fe9e2512477827ca05ee8"
   integrity sha512-lAzHU/tcmxF4n3YUwUTwG/sIwHzjUq1zsIOBNmaVpbm7hxM+RhOTKMJdwdbTeCjxlilyVPWOLUQ6Exll4DYuMA==
