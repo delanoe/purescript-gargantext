@@ -33,16 +33,6 @@ derive instance Generic DocumentsView _
 instance Eq DocumentsView where
   eq = genericEq
 
-{-
-derive instance Generic DocumentsView _
-instance Show DocumentsView where
-  show = genericShow
-instance Argonaut.DecodeJson SearchType where
-  decodeJson = genericSumDecodeJson
-instance Argonaut.EncodeJson SearchType where
-  encodeJson = genericSumEncodeJson
-  -}
-
 instance JSON.ReadForeign DocumentsView where
   readImpl f = do
     { id, category, date, ngramCount, score, source, title, url } :: { id :: Int | DocumentsViewT } <- JSON.readImpl f

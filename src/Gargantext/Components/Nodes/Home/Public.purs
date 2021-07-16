@@ -16,7 +16,6 @@ import Gargantext.Config.REST (get)
 import Gargantext.Ends (backendUrl)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude
-import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson)
 import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here

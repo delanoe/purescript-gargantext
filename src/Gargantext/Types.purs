@@ -1,26 +1,24 @@
 module Gargantext.Types where
 
 import Data.Array as A
-import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
-import Data.Ord.Generic (genericCompare)
-import Data.Show.Generic (genericShow)
+import Data.Generic.Rep (class Generic)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (class Newtype)
+import Data.Ord.Generic (genericCompare)
+import Data.Show.Generic (genericShow)
 import Data.String as S
 import Effect.Aff (Aff)
 import Foreign as F
+import Gargantext.Components.Lang (class Translate, Lang(..))
+import Gargantext.Prelude
+import Gargantext.Utils.Glyphicon (classNamePrefix, glyphiconToCharCode)
 import Prim.Row (class Union)
 import Reactix as R
 import Simple.JSON as JSON
 import Simple.JSON.Generics as JSONG
 import URI.Query (Query)
-
-import Gargantext.Prelude
-
-import Gargantext.Components.Lang (class Translate, Lang(..))
-import Gargantext.Utils.Glyphicon (classNamePrefix, glyphiconToCharCode)
 
 data Handed = LeftHanded | RightHanded
 
