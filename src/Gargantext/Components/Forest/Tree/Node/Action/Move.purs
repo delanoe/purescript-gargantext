@@ -38,7 +38,12 @@ moveNodeCpt = here.component "moveNode" cpt
                 Nothing -> H.div {} []
               _                   -> H.div {} []
 
-      pure $ panel [ subTreeView { action
+      pure $
+
+        H.div
+        { className: "forest-tree-node-action-move" }
+        [
+          panel [ subTreeView { action
                                  , dispatch
                                  , handed
                                  , id
@@ -47,3 +52,4 @@ moveNodeCpt = here.component "moveNode" cpt
                                  , subTreeParams
                                  } []
               ] button
+        ]

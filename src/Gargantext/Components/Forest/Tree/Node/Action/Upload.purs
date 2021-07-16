@@ -80,7 +80,7 @@ instance Eq DroppedFile where
 type FileHash = String
 
 
-type UploadFile = 
+type UploadFile =
   { blob     :: UploadFileBlob
   , name     :: String
   }
@@ -120,12 +120,14 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
                                  , WOS
                                  , PresseRIS
                                  , Arbitrary
-                                 ] CSV setFileType'
+                                 ] CSV setFileType' show
                 ]
               ]
             , R2.row
               [ H.div {className:"col-6 flex-space-around"}
-                [ formChoiceSafe [EN, FR, No_extraction, Universal] EN setLang' ]
+                [ formChoiceSafe [EN, FR, No_extraction, Universal] EN setLang'
+                  show
+                ]
               ]
             ]
 
@@ -326,7 +328,7 @@ uploadFile session nodeType id fileType {mName, blob: UploadFileBlob blob} = do
       Corpus   -> GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.Form
       Annuaire -> GR.NodeAPI nodeType (Just id) "annuaire"
       _        -> GR.NodeAPI nodeType (Just id) ""
-      
+
     bodyParams c = [ Tuple "_wf_data"     (Just c)
                    , Tuple "_wf_filetype" (Just $ show fileType)
                    , Tuple "_wf_name"      mName
