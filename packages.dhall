@@ -122,8 +122,8 @@ let additions =
 	, "unfoldable"
 	, "unsafe-coerce"
           ]
-        , repo = "https://github.com/irresponsible/purescript-reactix"
-        , version = "v0.4.12"
+        , repo = "https://github.com/poorscript/purescript-reactix"
+        , version = "v0.4.13"
         }
       , simple-json-generics =
         { dependencies =
