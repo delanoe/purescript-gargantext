@@ -91,6 +91,7 @@ to generate this file without the comments in this block.
   , "web-file"
   , "web-html"
   , "web-storage"
+  , "web-url"
   , "web-xhr"
   ]
 , packages = ./packages.dhall
