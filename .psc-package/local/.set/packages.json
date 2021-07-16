@@ -2082,8 +2082,8 @@
       "markdown",
       "smolder"
     ],
-    "repo": "https://github.com/poorscript/purescript-markdown-smolder",
-    "version": "2021-06-22"
+    "repo": "https://github.com/hgiasac/purescript-markdown-smolder",
+    "version": "v2.2.0"
   },
   "math": {
     "dependencies": [],
@@ -3319,16 +3319,26 @@
   "reactix": {
     "dependencies": [
       "aff",
+      "arrays",
       "dom-simple",
       "effect",
       "ffi-simple",
+      "foldable-traversable",
       "functions",
+      "maybe",
       "nullable",
       "prelude",
+      "psci-support",
+      "refs",
+      "spec",
+      "spec-mocha",
+      "strings",
+      "tuples",
+      "unfoldable",
       "unsafe-coerce"
     ],
     "repo": "https://github.com/irresponsible/purescript-reactix",
-    "version": "v0.4.11"
+    "version": "v0.4.12"
   },
   "read": {
     "dependencies": [
@@ -4108,7 +4118,7 @@
       "typisch"
     ],
     "repo": "https://github.com/poorscript/purescript-toestand",
-    "version": "v0.6.1"
+    "version": "v0.6.2"
   },
   "toppokki": {
     "dependencies": [
