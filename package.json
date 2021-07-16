@@ -4,11 +4,6 @@
     "scripts": {
         "generate-purs-packages-nix": "./nix/generate-purs-packages.nix",
         "generate-psc-packages-nix": "./nix/generate-packages-json.bash",
-        "rebase-set": "spago upgrade-set && yarn generate-psc-packages-nix",
-        "rebuild-set": "yarn generate-psc-packages-nix",
-        "install-ps": "psc-package install",
-        "compile": "pulp build",
-        "build": "pulp browserify -t dist/bundle.js",
         "css": "sass src/sass/sass.sass:dist/styles/sass.css && yarn css-themes",
         "css-themes": "yarn css-default-theme && yarn css-dark-theme && yarn css-darkster-theme && yarn css-greyson-theme && yarn css-herbie-theme && yarn css-monotony-theme",
         "css-default-theme": "sass src/sass/bootstrap/default.sass:dist/styles/bootstrap-default.css",
@@ -34,13 +29,13 @@
         "@popperjs/core": "^2.9.2",
         "aes-js": "^3.1.1",
         "base-x": "^3.0.2",
-        "bootstrap": "^5.0.1",
+        "bootstrap": "^5.0.2",
         "bootstrap-dark": "^1.0.3",
         "create-react-class": "^15.6.3",
         "echarts": "^5.1.2",
         "echarts-for-react": "^3.0.1",
         "highlightjs": "^9.16.2",
-        "immer": "^9.0.3",
+        "immer": "^9.0.5",
         "prop-types": "^15.6.2",
         "pullstate": "^1.20.6",
         "react": "^17.0.2",
@@ -55,17 +50,13 @@
         "@babel/core": "^7.12.9",
         "@babel/preset-react": "^7.12.7",
         "parcel": "^2.0.0-beta.2",
-        "psc-package": "^4.0.1",
-        "pulp": "^15.0.0",
         "react-testing-library": "^8.0.1",
-        "sass": "^1.23.7",
+        "sass": "^1.35.2",
         "serve": "^12.0.0",
-        "spago": "^0.20.3",
         "vscode-languageserver": "^7.0.0",
         "xhr2": "^0.2.1"
     },
     "optionalDependencies": {
-        "purescript": "^0.14.3",
         "purescript-language-server": "^0.15.2"
     }
 }

@@ -18,8 +18,8 @@ let
     echo "Compiling"
     #build-purs
     echo "Bundling"
-    #yarn pulp browserify --skip-compile -t dist/bundle.js --src-path output
-    yarn spago build
+    #pulp browserify --skip-compile -t dist/bundle.js --src-path output
+    spago build
     browserify
   '';
 
@@ -28,20 +28,20 @@ let
     set -e
 
     echo "Build watch"
-    yarn spago build -w --then browserify
+    spago build -w --then browserify
   '';
 
   browserify = pkgs.writeShellScriptBin "browserify" ''
     #!/usr/bin/env bash
     set -e
 
-    yarn pulp browserify --skip-compile -t dist/bundle.js --src-path output
+    pulp browserify --skip-compile -t dist/bundle.js --src-path output
   '';
 
   repl = pkgs.writeShellScriptBin "repl" ''
     #!/usr/bin/env bash
 
-    yarn pulp repl
+    pulp repl
   '';
 
   test-ps = pkgs.writeShellScriptBin "test-ps" ''
@@ -51,8 +51,8 @@ let
     echo "Compiling"
     build-purs
     echo "Testing"
-    # yarn pulp browserify --skip-compile -t dist/bundle.js --src-path output
-    # yarn pulp test --src-path output --test-path output
+    # pulp browserify --skip-compile -t dist/bundle.js --src-path output
+    # pulp test --src-path output --test-path output
     NODE_PATH=output node -e "require('Test.Main').main();"
   '';
 in
@@ -66,6 +66,7 @@ pkgs.mkShell {
     build-watch
     build
     repl
+    pkgs.pulp
     pkgs.spago
     pkgs.yarn
     test-ps
