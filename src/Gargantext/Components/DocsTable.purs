@@ -1,51 +1,51 @@
 -- TODO: this module should be replaced by FacetsTable
 module Gargantext.Components.DocsTable where
 
+import DOM.Simple.Console (log2)
+import DOM.Simple.Event as DE
+import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Array as A
 import Data.Generic.Rep (class Generic)
 import Data.Lens ((^.))
 import Data.Lens.At (at)
 import Data.Lens.Record (prop)
+import Data.Map    as Map
 import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
-import Data.Map as Map
 import Data.Newtype (class Newtype)
 import Data.Ord.Down (Down(..))
 import Data.Set (Set)
-import Data.Set as Set
+import Data.Set    as Set
 import Data.String as Str
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
-import DOM.Simple.Console (log2)
-import DOM.Simple.Event as DE
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Simple.JSON as JSON
-import Toestand as T
-
-import Gargantext.Prelude
-
 import Gargantext.Components.Category (rating)
 import Gargantext.Components.Category.Types (Star(..))
-import Gargantext.Components.DocsTable.Types
-  ( DocumentsView(..), Hyperdata(..), LocalUserScore, Query, Response(..), sampleData )
-import Gargantext.Components.Table.Types as TT
+import Gargantext.Components.DocsTable.Types (DocumentsView(..), Hyperdata(..), LocalUserScore, Query, Response(..), Year, sampleData)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Nodes.Texts.Types as TextsT
-import Gargantext.Components.Table as TT
+import Gargantext.Components.Table             as TT
+import Gargantext.Components.Table.Types       as TT
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
-import Gargantext.Routes as Routes
+import Gargantext.Prelude
+import Gargantext.Prelude (class Ord, Unit, bind, const, discard, identity, mempty, otherwise, pure, show, unit, ($), (/=), (<$>), (<<<), (<>), (==))
 import Gargantext.Routes (SessionRoute(NodeAPI))
+import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, get, delete)
 import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), SidePanelState(..), TableResult, TabSubType, TabType, showTabType')
 import Gargantext.Utils (sortWith)
 import Gargantext.Utils.CacheAPI as GUC
-import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParamS, queryParam, queryParamS)
+import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParam, mQueryParamS, queryParam, queryParamS)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Prelude
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.DocsTable"
@@ -72,7 +72,8 @@ type CommonProps =
   , tabType        :: TabType
   -- ^ tabType is not ideal here since it is too much entangled with tabs and
   -- ngramtable. Let's see how this evolves.  )
-  , totalRecords  :: Int
+  , totalRecords   :: Int
+  , yearFilter     :: T.Box (Maybe Year)
   )
 
 type LayoutProps =
@@ -128,6 +129,7 @@ docViewCpt = here.component "docView" cpt where
                 , sidePanelState
                 , tabType
                 , totalRecords
+                , yearFilter
                 }
       , params
       , query
@@ -153,6 +155,7 @@ docViewCpt = here.component "docView" cpt where
                        , sidePanelState
                        , tabType
                        , totalRecords
+                       , yearFilter
                        } [] ] ] ]
 
 type SearchBarProps =
@@ -209,12 +212,13 @@ mock :: Boolean
 mock = false
 
 type PageParams = {
-    listId    :: Int
-  , mCorpusId :: Maybe Int
-  , nodeId    :: Int
-  , tabType   :: TabType
-  , query     :: Query
-  , params    :: TT.Params
+    listId      :: Int
+  , mCorpusId   :: Maybe Int
+  , nodeId      :: Int
+  , tabType     :: TabType
+  , query       :: Query
+  , params      :: TT.Params
+  , yearFilter  :: Maybe Year
   }
 
 getPageHash :: Session -> PageParams -> Aff String
@@ -249,6 +253,12 @@ filterDocs query docs = A.filter filterFunc docs
     filterFunc (Response { hyperdata: Hyperdata { title } }) =
       isJust $ Str.indexOf (Str.Pattern $ Str.toLower query) $ Str.toLower title
 
+filterDocsByYear :: Year -> Array Response -> Array Response
+filterDocsByYear year docs = A.filter filterFunc docs
+  where
+    filterFunc :: Response -> Boolean
+    filterFunc (Response { hyperdata: Hyperdata { pub_year } }) = eq year $ show pub_year
+
 pageLayout :: R2.Component PageLayoutProps
 pageLayout = R.createElement pageLayoutCpt
 
@@ -263,19 +273,30 @@ pageLayoutCpt = here.component "pageLayout" cpt where
             , query
             , session
             , sidePanel
-            , tabType } _ = do
+            , tabType
+            , yearFilter
+            } _ = do
     cacheState' <- T.useLive T.unequal cacheState
+    yearFilter' <- T.useLive T.unequal yearFilter
 
-    let path = { listId, mCorpusId, nodeId, params, query, tabType }
+    let path = { listId, mCorpusId, nodeId, params, query, tabType, yearFilter: yearFilter' }
         handleResponse :: HashedResponse (TableResult Response) -> Tuple Int (Array DocumentsView)
         handleResponse (HashedResponse { hash, value: res }) = ret
           where
-            docs = res2corpus <$> filterDocs query res.docs
+
+            filters = filterDocs query
+                    >>> \res' -> case yearFilter' of
+                      Nothing -> res'
+                      Just year -> filterDocsByYear year res'
+
+            docs = res2corpus <$> filters res.docs
+
             ret = if mock then
                       --Tuple 0 (take limit $ drop offset sampleData)
                       Tuple 0 sampleData
                     else
                       Tuple res.count docs
+
     case cacheState' of
       NT.CacheOn -> do
         let paint (Tuple count docs) = page { documents: docs
@@ -527,9 +548,10 @@ tableRouteWithPage :: forall row.
                       , params :: TT.Params
                       , query ::  Query
                       , tabType :: TabType
+                      , yearFilter :: Maybe Year
                       | row } -> SessionRoute
-tableRouteWithPage { listId, nodeId, params: { limit, offset, orderBy, searchType }, query, tabType } =
-  NodeAPI Node (Just nodeId) $ "table" <> joinQueryStrings [tt, lst, lmt, odb, ofs, st, q]
+tableRouteWithPage { listId, nodeId, params: { limit, offset, orderBy, searchType }, query, tabType, yearFilter } =
+  NodeAPI Node (Just nodeId) $ "table" <> joinQueryStrings [tt, lst, lmt, odb, ofs, st, q, y]
   where
     lmt = queryParam "limit" limit
     lst = queryParam "list" listId
@@ -538,6 +560,7 @@ tableRouteWithPage { listId, nodeId, params: { limit, offset, orderBy, searchTyp
     st  = queryParam "searchType" searchType
     tt  = queryParamS "tabType" (showTabType' tabType)
     q   = queryParamS "query" query
+    y   = mQueryParam "year" yearFilter
 
 deleteAllDocuments :: Session -> Int -> Aff (Array Int)
 deleteAllDocuments session = delete session <<< documentsRoute

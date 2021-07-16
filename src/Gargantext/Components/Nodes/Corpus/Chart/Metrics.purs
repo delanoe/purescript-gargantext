@@ -57,8 +57,8 @@ derive newtype instance JSON.ReadForeign Metrics
 
 type Loaded  = Array Metric
 
-scatterOptions :: Array Metric -> Options
-scatterOptions metrics' = Options
+scatterOptions :: Record MetricsProps -> Array Metric -> Options
+scatterOptions { onClick, onInit } metrics' = Options
   { mainTitle : "Ngrams Selection Metrics"
   , subTitle  : "Local metrics (Inc/Exc, Spe/Gen), Global metrics (TFICF maillage)"
   , xAxis     : xAxis { min: -1 }
@@ -66,6 +66,8 @@ scatterOptions metrics' = Options
   , series    : map2series $ metric2map metrics'
   , addZoom   : false
   , tooltip   : mkTooltip { formatter: templateFormatter "{b0}" }
+  , onClick
+  , onInit
   }
   where
     metric2map :: Array Metric -> Map TermList (Array Metric)
@@ -110,7 +112,7 @@ metrics props = R.createElement metricsCpt props []
 metricsCpt :: R.Component Props
 metricsCpt = here.component "etrics" cpt
   where
-    cpt {path, session} _ = do
+    cpt {path, session, onClick, onInit } _ = do
       reload <- T.useBox T2.newReload
 
       pure $ metricsWithCacheLoadView {
@@ -121,13 +123,15 @@ metricsCpt = here.component "etrics" cpt
         , path
         , reload
         , session
+        , onClick
+        , onInit
         }
 
 
 loaded :: Record MetricsProps -> Loaded -> R.Element
-loaded { path, reload, session } loaded' =
+loaded p@{ path, reload, session } loaded' =
   H.div {} [
   {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: Scatter, path, reload, session }
-  , -} chart $ scatterOptions loaded'
+  , -} chart $ scatterOptions p loaded'
   ]
