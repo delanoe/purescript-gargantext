@@ -8,7 +8,7 @@ import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
-import Data.Nullable (Nullable, null)
+import Data.Nullable (Nullable, null, toMaybe)
 import Data.Show.Generic (genericShow)
 import DOM.Simple as DOM
 import Effect.Aff (Aff)
@@ -24,6 +24,7 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, get, sessionId)
 import Gargantext.Types (NodeType(..))
+import Gargantext.Utils.JitsiMeet as JM
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 
@@ -130,30 +131,19 @@ nodeFrameVisioCpt = here.component "nodeFrameVisio" cpt
         , reload
         , url } _  = do
       -- api = new JitsiMeetExternalAPI("visio.gargantext.org", {roomName: frame_id})
+      api <- T.useBox (Nothing :: Maybe JM.JitsiMeet)
       ref <- R.useRef (null :: Nullable DOM.Element)
 
       R.useEffect' $ do
         here.log2 "[nodeFrameVisio] ref" $ R.readRef ref
+        here.log2 "[nodeFrameVisio] JM.api" JM._api
+        case toMaybe (R.readRef ref) of
+          Nothing -> pure unit
+          Just r  -> do
+            api <- JM.jitsiMeetAPI (WURL.host url) { parentNode: r, roomName: frame_id }
+            here.log2 "[nodeFrameVisio] api" api
       
-      pure $ H.div { ref } [ nodeFrameVisioPlaceholder { frame_id, ref, reload, url } ]
-
-type NodeFrameVisioPlaceholderProps =
-  ( ref :: R.Ref (Nullable DOM.Element)
-  | NodeFrameVisioProps
-  )
-
-nodeFrameVisioPlaceholder :: R2.Leaf NodeFrameVisioPlaceholderProps
-nodeFrameVisioPlaceholder props = R.createElement nodeFrameVisioPlaceholderCpt props []
-nodeFrameVisioPlaceholder :: R.Component NodeFrameVisioPlaceholderProps
-nodeFrameVisioPlaceholder = here.component "nodeFrameVisioPlaceholder" cpt
-  where
-    cpt { frame_id
-        , ref
-        , url } _ = do
-      R.useEffect' $ do
-        here.log2 "[nodeFrameVisioPlaceholder] ref" $ R.readRef ref
-
-      pure $ H.text $ WURL.host url
+      pure $ H.div { ref } [ H.text $ WURL.host url ]
 
 type LoadProps   = ( nodeId  :: Int
                    , session :: Session )
