@@ -13,14 +13,16 @@ import Toestand as T
 
 import Gargantext.Prelude
 
-import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, formChoiceSafe, panel)
+import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
+import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, panel, submitButton)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
+import Gargantext.Components.Lang (Lang(..), translate)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
-import Gargantext.Types  as GT
-import Gargantext.Types (NodeType(..))
+import Gargantext.Types (NodeType(..), charCodeIcon)
+import Gargantext.Types as GT
+import Gargantext.Utils (nbsp)
 import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
@@ -75,12 +77,18 @@ addNodeViewCpt = here.component "addNodeView" cpt where
     nodeType' <- T.useLive T.unequal nodeType
 
     let
+        print nt = charCodeIcon nt true
+                -- as we are printing within an HTML text node,
+                -- margins will directly rely on content text spacing
+                <> nbsp 4
+                <> translate EN nt -- @TODO "EN" assumption
+
         SettingsBox {edit} = settingsBox nodeType'
         setNodeType' nt = do
           T.write_ (GT.prettyNodeType nt) nodeName
           T.write_ nt nodeType
         (maybeChoose /\ nt') = if length nodeTypes > 1
-                         then ([ formChoiceSafe nodeTypes Error setNodeType' ] /\ nodeType')
+                         then ([ formChoiceSafe nodeTypes Error setNodeType' print ] /\ nodeType')
                          else ([H.div {} [H.text $ "Creating a node of type "
                                                 <> show defaultNt
                                                 <> " with name:"
@@ -113,4 +121,3 @@ showConfig FolderPrivate = H.div {} [H.text "This folder will be private only"]
 showConfig FolderShared  = H.div {} [H.text "This folder will be shared"]
 showConfig FolderPublic  = H.div {} [H.text "This folder will be public"]
 showConfig nt            = H.div {} [H.h4  {} [H.text $ "Config of " <> show nt ]]
-

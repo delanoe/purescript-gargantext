@@ -52,7 +52,7 @@ updateDashboardCpt = here.component "updateDashboard" cpt where
     methodBoard' <- T.useLive T.unequal methodBoard
 
     pure $ panel [ -- H.text "Update with"
-                  formChoiceSafe [All, Sources, Authors, Institutes, Ngrams] All (\val -> T.write_ val methodBoard)
+                  formChoiceSafe [All, Sources, Authors, Institutes, Ngrams] All (\val -> T.write_ val methodBoard) show
                  ]
                  (submitButton (UpdateNode $ UpdateNodeParamsBoard { methodBoard: methodBoard' }) dispatch)
 
@@ -65,7 +65,7 @@ updateGraphCpt = here.component "updateGraph" cpt where
     methodGraph' <- T.useLive T.unequal methodGraph
 
     pure $ panel [ -- H.text "Update with"
-                  formChoiceSafe [Order1, Order2] Order1 (\val -> T.write_ val methodGraph)
+                  formChoiceSafe [Order1, Order2] Order1 (\val -> T.write_ val methodGraph) show
                  ]
                  (submitButton (UpdateNode $ UpdateNodeParamsGraph { methodGraph: methodGraph' }) dispatch)
 
@@ -78,7 +78,7 @@ updateNodeListCpt = here.component "updateNodeList" cpt where
     methodList' <- T.useLive T.unequal methodList
 
     pure $ panel [ -- H.text "Update with"
-                  formChoiceSafe [Basic, Advanced, WithModel] Basic (\val -> T.write_ val methodList)
+                  formChoiceSafe [Basic, Advanced, WithModel] Basic (\val -> T.write_ val methodList) show
                  ]
                  (submitButton (UpdateNode $ UpdateNodeParamsList { methodList: methodList' }) dispatch)
 
@@ -91,7 +91,7 @@ updateTextsCpt = here.component "updateTexts" cpt where
     methodTexts' <- T.useLive T.unequal methodTexts
 
     pure $ panel [ -- H.text "Update with"
-                  formChoiceSafe [NewNgrams, NewTexts, Both] NewNgrams (\val -> T.write_ val methodTexts)
+                  formChoiceSafe [NewNgrams, NewTexts, Both] NewNgrams (\val -> T.write_ val methodTexts) show
                  ]
                  (submitButton (UpdateNode $ UpdateNodeParamsTexts { methodTexts: methodTexts' }) dispatch)
 
