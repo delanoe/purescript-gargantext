@@ -101,20 +101,30 @@ let additions =
         , repo = "https://github.com/purescript-contrib/purescript-precise"
         , version = "v4.0.0"
         }
-      {- , reactix =
+      , reactix =
         { dependencies =
-          [ "aff"
-          , "dom-simple"
-          , "effect"
-          , "ffi-simple"
-          , "functions"
-          , "nullable"
-          , "prelude"
-          , "unsafe-coerce"
+        [ "aff"
+	, "arrays"
+	, "dom-simple"
+	, "effect"
+	, "ffi-simple"
+	, "foldable-traversable"
+	, "functions"
+	, "maybe"
+	, "nullable"
+	, "prelude"
+	, "psci-support"
+	, "refs"
+	, "spec"
+	, "spec-mocha"
+	, "strings"
+	, "tuples"
+	, "unfoldable"
+	, "unsafe-coerce"
           ]
         , repo = "https://github.com/irresponsible/purescript-reactix"
-        , version = "v0.4.11"
-        } -}
+        , version = "v0.4.12"
+        }
       , simple-json-generics =
         { dependencies =
           [ "simple-json" ]
@@ -172,8 +182,8 @@ let additions =
         }
       }
 
-let localPackages = {
-    reactix = ../../purescript-reactix/spago.dhall as Location
-  }
+--let localPackages = {
+--    reactix = ../../purescript-reactix/spago.dhall as Location
+--  }
 
-in  upstream // overrides // additions // localPackages
+in  upstream // overrides // additions -- // localPackages
