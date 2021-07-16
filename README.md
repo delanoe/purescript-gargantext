@@ -215,7 +215,7 @@ runtime or `devDependencies` if it is not.
 
 #### Add a purescript dependency?
 
-Add it to `psc-package.json` without the `purescript-` prefix.
+Add it to `spago.dhall` (or run `spago install ...`).
 
 If is not in the package set, you will need to read the next section.
 
@@ -224,18 +224,6 @@ If is not in the package set, you will need to read the next section.
 You need to add an entry to the relevant map in
 `packages.dhall`. There are comments in the file explaining how it
 works. It's written in dhall, so you can use comments and such.
-
-You will then need to rebuild the package set:
-
-```shell
-yarn rebuild-set # or darn rebuild-set
-```
-
-#### Upgrade the base package set local is based on to latest?
-
-```shell
-yarn rebase-set && yarn rebuild-set # or darn rebase-set && darn rebuild-set
-```
 
 ## Theory Introduction
 
