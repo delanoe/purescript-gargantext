@@ -58,7 +58,7 @@ let
 in
 pkgs.mkShell {
   buildInputs = [
-    easy-ps.purs-0_14_2
+    easy-ps.purs-0_14_3
     easy-ps.psc-package
     easy-ps.dhall-json-simple
     browserify

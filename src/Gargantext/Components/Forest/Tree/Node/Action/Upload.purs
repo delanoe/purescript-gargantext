@@ -88,7 +88,6 @@ type UploadFile =
 
 uploadFileView :: Record Props -> R.Element
 uploadFileView props = R.createElement uploadFileViewCpt props []
-
 uploadFileViewCpt :: R.Component Props
 uploadFileViewCpt = here.component "uploadFileView" cpt
   where
@@ -172,7 +171,6 @@ type UploadButtonProps =
 
 uploadButton :: Record UploadButtonProps -> R.Element
 uploadButton props = R.createElement uploadButtonCpt props []
-
 uploadButtonCpt :: R.Component UploadButtonProps
 uploadButtonCpt = here.component "uploadButton" cpt
   where
@@ -223,7 +221,6 @@ type FileTypeProps =
 
 fileTypeView :: Record FileTypeProps -> R.Element
 fileTypeView p = R.createElement fileTypeViewCpt p []
-
 fileTypeViewCpt :: R.Component FileTypeProps
 fileTypeViewCpt = here.component "fileTypeView" cpt
   where
@@ -364,7 +361,6 @@ uploadArbitraryDataURL session id mName contents' = do
 
 uploadTermListView :: Record Props -> R.Element
 uploadTermListView props = R.createElement uploadTermListViewCpt props []
-
 uploadTermListViewCpt :: R.Component Props
 uploadTermListViewCpt = here.component "uploadTermListView" cpt
   where
@@ -410,7 +406,6 @@ type UploadTermButtonProps =
 
 uploadTermButton :: R2.Leaf UploadTermButtonProps
 uploadTermButton props = R.createElement uploadTermButtonCpt props []
-
 uploadTermButtonCpt :: R.Component UploadTermButtonProps
 uploadTermButtonCpt = here.component "uploadTermButton" cpt
   where
