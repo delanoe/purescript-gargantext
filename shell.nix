@@ -15,6 +15,9 @@ let
     #!/usr/bin/env bash
     set -e
 
+    echo "Installing JS Dependencies"
+    yarn
+
     echo "Compiling"
     #build-purs
     echo "Bundling"

@@ -1,5 +1,5 @@
 let upstream =
-      https://github.com/purescript/package-sets/releases/download/psc-0.14.3-20210716/packages.dhall sha256:64d7b5a1921e8458589add8a1499a1c82168e726a87fc4f958b3f8760cca2efe
+      https://github.com/purescript/package-sets/releases/download/psc-0.14.3-20210716/packages.dhall sha256:1f9af624ddfd5352455b7ac6df714f950d499e7e3c6504f62ff467eebd11042c
 
 let overrides =
       { globals =
@@ -8,8 +8,8 @@ let overrides =
         , version = "v4.1.0"
         }
       , smolder =
-        { dependencies = [
-            "bifunctors"
+        { dependencies =
+          [ "bifunctors"
           , "catenable-lists"
           , "free"
           , "ordered-collections"
@@ -17,7 +17,8 @@ let overrides =
           , "strings"
           , "test-unit"
           , "transformers"
-          , "tuples"]
+          , "tuples"
+          ]
         , repo = "https://github.com/bodil/purescript-smolder"
         , version = "v12.3.0"
         }
@@ -81,8 +82,17 @@ let additions =
         , repo = "https://github.com/nwolverson/purescript-dom-filereader"
         , version = "v5.0.0"
         }
-      , formula = 
-        { dependencies = [ "effect", "prelude", "reactix", "record", "toestand", "tuples", "typelevel-prelude", "typisch" ]
+      , formula =
+        { dependencies =
+          [ "effect"
+          , "prelude"
+          , "reactix"
+          , "record"
+          , "toestand"
+          , "tuples"
+          , "typelevel-prelude"
+          , "typisch"
+          ]
         , repo = "https://github.com/poorscript/purescript-formula"
         , version = "v0.2.1"
         }
@@ -103,47 +113,53 @@ let additions =
         }
       , reactix =
         { dependencies =
-        [ "aff"
-	, "arrays"
-	, "dom-simple"
-	, "effect"
-	, "ffi-simple"
-	, "foldable-traversable"
-	, "functions"
-	, "maybe"
-	, "nullable"
-	, "prelude"
-	, "psci-support"
-	, "refs"
-	, "spec"
-	, "spec-mocha"
-	, "strings"
-	, "tuples"
-	, "unfoldable"
-	, "unsafe-coerce"
+          [ "aff"
+          , "arrays"
+          , "dom-simple"
+          , "effect"
+          , "ffi-simple"
+          , "foldable-traversable"
+          , "functions"
+          , "maybe"
+          , "nullable"
+          , "prelude"
+          , "psci-support"
+          , "refs"
+          , "spec"
+          , "spec-mocha"
+          , "strings"
+          , "tuples"
+          , "unfoldable"
+          , "unsafe-coerce"
           ]
         , repo = "https://github.com/poorscript/purescript-reactix"
         , version = "v0.4.13"
         }
       , simple-json-generics =
-        { dependencies =
-          [ "simple-json" ]
+        { dependencies = [ "simple-json" ]
         , repo = "https://github.com/justinwoo/purescript-simple-json-generics"
         , version = "v0.1.0"
         }
-      , toestand = 
-        { dependencies = [ "effect", "reactix", "prelude", "record", "tuples", "typelevel-prelude", "typisch" ]
+      , toestand =
+        { dependencies =
+          [ "effect"
+          , "reactix"
+          , "prelude"
+          , "record"
+          , "tuples"
+          , "typelevel-prelude"
+          , "typisch"
+          ]
         , repo = "https://github.com/poorscript/purescript-toestand"
         , version = "v0.6.2"
         }
-      , typisch = 
+      , typisch =
         { dependencies = [ "prelude" ]
         , repo = "https://github.com/poorscript/purescript-typisch"
         , version = "v0.2.1"
         }
       , tuples-native =
-        { dependencies =
-          [ "prelude", "typelevel", "unsafe-coerce" ]
+        { dependencies = [ "prelude", "typelevel", "unsafe-coerce" ]
         , repo = "https://github.com/poorscript/purescript-tuples-native"
         , version = "v2.2.0"
         }
@@ -182,13 +198,9 @@ let additions =
         }
       , web-url =
         { dependencies = [ "prelude" ]
-	, repo = "https://github.com/mjepronk/purescript-web-url"
-	, version = "v1.0.2"
-	}
+        , repo = "https://github.com/mjepronk/purescript-web-url"
+        , version = "v1.0.2"
+        }
       }
 
---let localPackages = {
---    reactix = ../../purescript-reactix/spago.dhall as Location
---  }
-
-in  upstream // overrides // additions -- // localPackages
+in  upstream // overrides // additions
