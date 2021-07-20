@@ -1,20 +1,25 @@
 module Gargantext.Components.Charts.Options.Series where
 
+import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
+import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Array (foldl)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype)
 import Data.Symbol (SProxy(..))
-import Record as Record
+import Gargantext.Components.Charts.Options.Data (DataD1, DataD2)
+import Gargantext.Components.Charts.Options.Data (DataD1, DataD2)
+import Gargantext.Components.Charts.Options.Font (ItemStyle, Tooltip)
+import Gargantext.Components.Charts.Options.Font (ItemStyle, Tooltip)
+import Gargantext.Components.Charts.Options.Legend (SelectedMode)
+import Gargantext.Prelude
+import Gargantext.Types (class Optional)
+import Prelude (class Eq, class Show, bind, map, pure, show, ($), (+), (<<<), (<>), eq)
+import Record      as Record
 import Record.Unsafe (unsafeSet)
 import Simple.JSON as JSON
 import Unsafe.Coerce (unsafeCoerce)
 
-import Gargantext.Prelude
-
-import Gargantext.Types (class Optional)
-import Gargantext.Components.Charts.Options.Font (ItemStyle, Tooltip)
-import Gargantext.Components.Charts.Options.Data (DataD1, DataD2)
 
 newtype SeriesType = SeriesType String
 
@@ -59,13 +64,16 @@ seriesType = SeriesType <<< show
 
 -- | Scatter Dimension 2 data
 type OptionalSeries =
-  ( name       :: String
-  , symbolSize :: Number
-  , itemStyle  :: ItemStyle
+  ( name          :: String
+  , symbolSize    :: Number
+  , itemStyle     :: ItemStyle
     -- ^ Graphic style of, *emphasis* is the style when it is highlighted, like being hovered by mouse, or highlighted via legend connect.
     --   https://ecomfe.github.io/echarts-doc/public/en/option.html#series-scatter.itemStyle
-  , tooltip    :: Tooltip
-
+  , tooltip       :: Tooltip
+  , emphasis      :: { itemStyle :: ItemStyle }
+  , selectedMode  :: SelectedMode
+  , select        :: { itemStyle :: ItemStyle }
+  -- ^ need "selectedMode" to be defined
   -- many more...
   )
 
@@ -217,5 +225,3 @@ labelP = SProxy :: SProxy "label"
 -- | TODO
 -- https://ecomfe.github.io/echarts-examples/public/data/asset/data/life-expectancy-table.json
 -- https://ecomfe.github.io/echarts-examples/public/editor.html?c=scatter3D-dataset&gl=1
-
-

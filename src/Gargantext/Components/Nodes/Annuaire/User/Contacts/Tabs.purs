@@ -2,27 +2,28 @@
 module Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs where
 
 import Prelude hiding (div)
+
 import Data.Generic.Rep (class Generic)
 import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
-import Reactix as R
-import Toestand as T
-
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.DocsTable as DT
+import Gargantext.Components.DocsTable.Types (Year)
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.NgramsTable.Core as NTC
-import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (ContactData')
 import Gargantext.Components.Nodes.Lists.Types as LTypes
 import Gargantext.Components.Nodes.Texts.Types as TTypes
+import Gargantext.Components.Tab as Tab
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType(..), PTabNgramType(..), SidePanelState, TabType(..), TabSubType(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs"
@@ -78,10 +79,11 @@ tabsCpt = here.component "tabs" cpt
         , sidePanelState
         , reloadForest } _ = do
       activeTab <- T.useBox 0
+      yearFilter <- T.useBox (Nothing :: Maybe Year)
 
-      pure $ Tab.tabs { activeTab, tabs: tabs' }
+      pure $ Tab.tabs { activeTab, tabs: tabs' yearFilter }
       where
-        tabs' =
+        tabs' yearFilter =
           [ "Documents"     /\ docs
           , "Patents"       /\ ngramsView patentsView []
           , "Books"         /\ ngramsView booksView []
@@ -127,6 +129,7 @@ tabsCpt = here.component "tabs" cpt
               , sidePanelState
               , tabType: TabPairing TabDocs
               , totalRecords
+              , yearFilter
               }
 
 
