@@ -9,7 +9,7 @@ import Web.File.Blob (Blob, size)
 import Gargantext.Prelude
 
 
-data FileType = CSV | CSV_HAL | WOS | PresseRIS | Arbitrary
+data FileType = CSV | CSV_HAL | WOS | PresseRIS | Arbitrary | JSON
 
 derive instance Generic FileType _
 instance Eq FileType where
@@ -23,6 +23,7 @@ instance Read FileType where
   read "CSV_HAL"   = Just CSV_HAL
   read "PresseRIS" = Just PresseRIS
   read "WOS"       = Just WOS
+  read "JSON"      = Just JSON
   read _           = Nothing
 
 
