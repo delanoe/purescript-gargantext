@@ -59,7 +59,7 @@ chartWith options =
 
       execOnInit fn = toMaybe >>> case _ of
         Nothing                        -> pure unit
-        Just (ref :: Record EChartRef) -> fn =<< ref.getEchartsInstance
+        Just (ref :: Record EChartRef) -> pure unit -- fn =<< ref.getEchartsInstance
 
 echarts :: Echarts -> R.Element
 echarts c = R2.buff $ unsafeCreateElementDynamic (unsafeCoerce eChartsClass) c []
