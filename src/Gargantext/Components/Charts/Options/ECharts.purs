@@ -21,8 +21,7 @@ import Unsafe.Coerce (unsafeCoerce)
 
 foreign import eChartsClass :: ReactClass Echarts
 foreign import listenerFn1 :: forall evt. (evt -> Effect Unit) -> Effect Unit
--- | @XXX some eCharts "actions" not working ("select", ...)
--- | https://echarts.apache.org/en/api.html#echartsInstance.dispatchAction
+-- | https://echarts.apache.org/v4/en/api.html#echartsInstance.dispatchAction
 foreign import dispatchAction :: forall payload. EChartsInstance -> payload -> Effect Unit
 
 chart :: Options -> R.Element
@@ -59,7 +58,11 @@ chartWith options =
 
       execOnInit fn = toMaybe >>> case _ of
         Nothing                        -> pure unit
-        Just (ref :: Record EChartRef) -> pure unit -- fn =<< ref.getEchartsInstance
+        -- Just (ref :: Record EChartRef) -> fn =<< ref.getEchartsInstance
+        -- ^ this line can break for some reasons... (see Issue #312)
+        Just (ref :: Record EChartRef) -> do
+          i <- ref.getEchartsInstance
+          fn i
 
 echarts :: Echarts -> R.Element
 echarts c = R2.buff $ unsafeCreateElementDynamic (unsafeCoerce eChartsClass) c []
@@ -190,7 +193,7 @@ data Options = Options
   --        it intends to return the `eChartsInstance` used for every
   --        library actions
   --
-  -- [1] https://echarts.apache.org/en/api.html#echarts.init
+  -- [1] https://echarts.apache.org/v4/en/api.html#echarts.init
   , onInit    :: Maybe (EChartsInstance -> Effect Unit)
   }
 
