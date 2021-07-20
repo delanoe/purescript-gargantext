@@ -67,7 +67,7 @@ chartOptions { onClick, onInit } (HistoMetrics { dates: dates', count: count'}) 
         , emphasis: { itemStyle: itemStyle { color: blue } }
         -- @XXX "select" action not working
         -- , selectedMode: selectedMode Single
-        , select: { itemStyle: itemStyle { color: green }}
+        -- , select: { itemStyle: itemStyle { color: green }}
         }
 
       series =
