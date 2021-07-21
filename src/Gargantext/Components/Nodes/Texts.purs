@@ -1,32 +1,36 @@
 module Gargantext.Components.Nodes.Texts where
 
+import DOM.Simple.Console (log2)
 import Data.Generic.Rep (class Generic)
-import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..))
+import Data.Show.Generic (genericShow)
+import Data.Symbol (SProxy(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (launchAff_)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
-import Gargantext.Prelude
-
+import Gargantext.Components.Charts.Options.ECharts (dispatchAction)
+import Gargantext.Components.Charts.Options.Type (EChartsInstance)
 import Gargantext.Components.DocsTable as DT
+import Gargantext.Components.DocsTable.Types (Year)
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
 import Gargantext.Components.Nodes.Corpus.Document as D
-import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..), getCorpusInfo, CorpusInfo(..))
+import Gargantext.Components.Nodes.Corpus.Types (CorpusData, CorpusInfo(..), Hyperdata(..), getCorpusInfo)
 import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Components.Nodes.Texts.Types as TT
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Sessions (WithSession, WithSessionContext, Session, sessionId, getCacheState)
+import Gargantext.Prelude
+import Gargantext.Sessions (WithSession, Session, getCacheState)
 import Gargantext.Types (CTabNgramType(..), ListId, NodeID, SidePanelState(..), TabSubType(..), TabType(..))
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record (set)
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Texts"
@@ -81,6 +85,10 @@ textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
       cacheState <- T.useBox $ getCacheState LT.CacheOff session nodeId
       cacheState' <- T.useLive T.unequal cacheState
 
+      yearFilter <- T.useBox (Nothing :: Maybe Year)
+
+      eChartsInstance <- T.useBox (Nothing :: Maybe EChartsInstance)
+
       R.useEffectOnce' $ do
         T.listen (\{ new } -> afterCacheStateChange new) cacheState
 
@@ -89,6 +97,7 @@ textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
           let NodePoly { date, hyperdata: Hyperdata h, name } = corpusNode
               CorpusInfo { authors, desc, query } = getCorpusInfo h.fields
               title = "Corpus " <> name
+
           R.fragment
             [ Table.tableHeaderLayout { cacheState
                                       , date
@@ -103,7 +112,10 @@ textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
                    , frontends
                    , session
                    , sidePanel
-                   , sidePanelState }
+                   , sidePanelState
+                   , yearFilter
+                   , eChartsInstance
+                   }
             ]
       where
         afterCacheStateChange cacheState = do
@@ -126,13 +138,15 @@ modeTabType MoreLikeFav    = CTabAuthors  -- TODO
 modeTabType MoreLikeTrash  = CTabSources  -- TODO
 
 type TabsProps =
-  ( cacheState     :: T.Box LT.CacheState
-  , corpusData     :: CorpusData
-  , corpusId       :: NodeID
-  , frontends      :: Frontends
-  , session        :: Session
-  , sidePanel      :: T.Box (Maybe (Record TT.SidePanel))
-  , sidePanelState :: T.Box SidePanelState
+  ( cacheState      :: T.Box LT.CacheState
+  , corpusData      :: CorpusData
+  , corpusId        :: NodeID
+  , frontends       :: Frontends
+  , session         :: Session
+  , sidePanel       :: T.Box (Maybe (Record TT.SidePanel))
+  , sidePanelState  :: T.Box SidePanelState
+  , yearFilter      :: T.Box (Maybe Year)
+  , eChartsInstance :: T.Box (Maybe EChartsInstance)
   )
 
 tabs :: Record TabsProps -> R.Element
@@ -141,8 +155,23 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component TabsProps
 tabsCpt = here.component "tabs" cpt
   where
-    cpt { cacheState, corpusId, corpusData, frontends, session, sidePanel, sidePanelState } _ = do
-      let path = initialPath
+    cpt { cacheState, corpusId, corpusData, frontends, session, sidePanel, sidePanelState, yearFilter, eChartsInstance } _ = do
+
+      let
+        path = initialPath
+
+        onInit = Just \i -> T.write_ (Just i) eChartsInstance
+
+        onClick = Just \opts@{ name } -> do
+          T.write_ (Just name) yearFilter
+          T.read eChartsInstance >>= case _ of
+            Nothing -> pure unit
+            Just i  -> do
+              -- @XXX due to lack of support for "echart.select" action,
+              --      have to manually rely on a set/unset selection
+              --      targeting the "echart.emphasis" action
+              dispatchAction i { type: "downplay" }
+              dispatchAction i $ set (SProxy :: SProxy "type") "highlight" opts
 
       activeTab <- T.useBox 0
 
@@ -150,7 +179,7 @@ tabsCpt = here.component "tabs" cpt
           activeTab
         , tabs: [
             "Documents"       /\ R.fragment [
-                histo { path, session }
+                histo { path, session, onClick, onInit }
               , docView' path TabDocs
               ]
           , "Trash"           /\ docView' path TabTrash
@@ -173,7 +202,9 @@ tabsCpt = here.component "tabs" cpt
                                         , session
                                         , tabType
                                         , sidePanel
-                                        , sidePanelState } []
+                                        , sidePanelState
+                                        , yearFilter
+                                        } []
 
 type DocViewProps a = (
     cacheState     :: T.Box LT.CacheState
@@ -186,6 +217,7 @@ type DocViewProps a = (
   , tabType        :: TabSubType a
   , sidePanel      :: T.Box (Maybe (Record TT.SidePanel))
   , sidePanelState :: T.Box SidePanelState
+  , yearFilter     :: T.Box (Maybe Year)
   )
 
 docView :: forall a. R2.Component (DocViewProps a)
@@ -205,7 +237,9 @@ docViewLayoutRec { cacheState
                  , session
                  , tabType: TabDocs
                  , sidePanel
-                 , sidePanelState } =
+                 , sidePanelState
+                 , yearFilter
+                 } =
   { cacheState
   , chart  : H.div {} []
   , frontends
@@ -219,6 +253,7 @@ docViewLayoutRec { cacheState
   , sidePanelState
   , tabType: TabCorpus TabDocs
   , totalRecords: 4737
+  , yearFilter
   }
 docViewLayoutRec { cacheState
                  , corpusId
@@ -227,7 +262,9 @@ docViewLayoutRec { cacheState
                  , session
                  , tabType: TabMoreLikeFav
                  , sidePanel
-                 , sidePanelState } =
+                 , sidePanelState
+                 , yearFilter
+                 } =
   { cacheState
   , chart  : H.div {} []
   , frontends
@@ -241,6 +278,7 @@ docViewLayoutRec { cacheState
   , sidePanelState
   , tabType: TabCorpus TabMoreLikeFav
   , totalRecords: 4737
+  , yearFilter
   }
 docViewLayoutRec { cacheState
                  , corpusId
@@ -249,7 +287,9 @@ docViewLayoutRec { cacheState
                  , session
                  , tabType: TabMoreLikeTrash
                  , sidePanel
-                 , sidePanelState } =
+                 , sidePanelState
+                 , yearFilter
+                 } =
   { cacheState
   , chart  : H.div {} []
   , frontends
@@ -263,6 +303,7 @@ docViewLayoutRec { cacheState
   , sidePanelState
   , tabType: TabCorpus TabMoreLikeTrash
   , totalRecords: 4737
+  , yearFilter
   }
 docViewLayoutRec { cacheState
                  , corpusId
@@ -271,7 +312,9 @@ docViewLayoutRec { cacheState
                  , session
                  , tabType: TabTrash
                  , sidePanel
-                 , sidePanelState } =
+                 , sidePanelState
+                 , yearFilter
+                 } =
   { cacheState
   , chart  : H.div {} []
   , frontends
@@ -285,6 +328,7 @@ docViewLayoutRec { cacheState
   , sidePanelState
   , tabType: TabCorpus TabTrash
   , totalRecords: 4737
+  , yearFilter
   }
 -- DUMMY
 docViewLayoutRec { cacheState
@@ -294,7 +338,9 @@ docViewLayoutRec { cacheState
                  , session
                  , tabType
                  , sidePanel
-                 , sidePanelState } =
+                 , sidePanelState
+                 , yearFilter
+                 } =
   { cacheState
   , chart  : H.div {} []
   , frontends
@@ -308,6 +354,7 @@ docViewLayoutRec { cacheState
   , sidePanelState
   , tabType: TabCorpus TabTrash
   , totalRecords: 4737
+  , yearFilter
   }
 
 

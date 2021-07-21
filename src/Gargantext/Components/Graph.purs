@@ -54,14 +54,9 @@ graph = R.createElement graphCpt
 graphCpt :: forall s fa2. R.Component (Props s fa2)
 graphCpt = here.component "graph" cpt where
     cpt props@{ elRef
-              , mCamera
-              , multiSelectEnabledRef
-              , selectedNodeIds
               , showEdges
               , sigmaRef
-              , stage
-              , startForceAtlas
-              , transformedGraph } _ = do
+              , stage } _ = do
       showEdges' <- T.useLive T.unequal showEdges
       stage' <- T.useLive T.unequal stage
 
@@ -83,8 +78,16 @@ graphCpt = here.component "graph" cpt where
         Nothing -> RH.div {} []
         Just el -> R.createPortal [] el
 
-    stageHooks props@{ elRef, mCamera, multiSelectEnabledRef, selectedNodeIds, forceAtlas2Settings: fa2, graph: graph'
-                     , sigmaRef, stage, stage': Init, startForceAtlas } = do
+    stageHooks { elRef
+               , mCamera
+               , multiSelectEnabledRef
+               , selectedNodeIds
+               , forceAtlas2Settings: fa2
+               , graph: graph'
+               , sigmaRef
+               , stage
+               , stage': Init
+               , startForceAtlas } = do
       R.useEffectOnce' $ do
         let rSigma = R.readRef sigmaRef
 
@@ -126,7 +129,7 @@ graphCpt = here.component "graph" cpt where
                     Sigma.updateCamera sig { ratio, x, y }
 
                 pure unit
-          Just sig -> do
+          Just _sig -> do
             pure unit
 
         T.write Ready stage
@@ -145,7 +148,9 @@ graphCpt = here.component "graph" cpt where
           Sigmax.performDiff sigma transformedGraph
           Sigmax.updateEdges sigma tEdgesMap
           Sigmax.updateNodes sigma tNodesMap
-          Sigmax.setEdges sigma (not $ SigmaxTypes.edgeStateHidden showEdges')
+          let edgesState = not $ SigmaxTypes.edgeStateHidden showEdges'
+          here.log2 "[graphCpt] edgesState" edgesState
+          Sigmax.setEdges sigma edgesState
 
     stageHooks _ = pure unit
 
@@ -300,13 +305,15 @@ sigmaSettings =
   , zoomMin : 0.0
   , zoomingRatio : 1.4
   }
-  
+
 type ForceAtlas2Settings =
   ( adjustSizes                    :: Boolean
   , barnesHutOptimize              :: Boolean
   -- , barnesHutTheta              :: Number
+  , batchEdgesDrawing              :: Boolean
   , edgeWeightInfluence            :: Number
   -- , fixedY                      :: Boolean
+  , hideEdgesOnMove                :: Boolean
   , gravity                        :: Number
   , includeHiddenEdges             :: Boolean
   , includeHiddenNodes             :: Boolean
@@ -324,19 +331,21 @@ type ForceAtlas2Settings =
 
 forceAtlas2Settings :: {|ForceAtlas2Settings}
 forceAtlas2Settings =
-  { adjustSizes : true
-  , barnesHutOptimize   : true
-  , edgeWeightInfluence : 1.0
-    -- fixedY : false
-  , gravity : 0.01
-  , includeHiddenEdges: false
-  , includeHiddenNodes: true
-  , iterationsPerRender : 50.0 -- 10.0
-  , linLogMode : false  -- false
-  , outboundAttractionDistribution: false
-  , scalingRatio : 1000.0
-  , skipHidden: false
-  , slowDown : 1.0
-  , startingIterations : 10.0
-  , strongGravityMode : false
+  { adjustSizes                    : true
+  , barnesHutOptimize              : true
+  , batchEdgesDrawing              : true
+  , edgeWeightInfluence            : 1.0
+    -- fixedY                      : false
+  , gravity                        : 0.01
+  , hideEdgesOnMove                : true
+  , includeHiddenEdges             : false
+  , includeHiddenNodes             : true
+  , iterationsPerRender            : 50.0 -- 10.0
+  , linLogMode                     : false  -- false
+  , outboundAttractionDistribution : false
+  , scalingRatio                   : 1000.0
+  , skipHidden                     : false
+  , slowDown                       : 1.0
+  , startingIterations             : 10.0
+  , strongGravityMode              : false
   }

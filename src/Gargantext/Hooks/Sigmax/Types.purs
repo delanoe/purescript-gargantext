@@ -173,6 +173,8 @@ toggleForceAtlasState Killed = InitialRunning
 -- | Custom state for show edges. Normally it is EShow or EHide (show/hide
 -- | edges). However, edges are temporarily turned off when forceAtlas is
 -- | running.
+-- | NOTE ETempHiddenThenShow state is a hack for force atlas
+-- | flickering. Ideally it should be removed from here.
 data ShowEdgesState = EShow | EHide | ETempHiddenThenShow
 
 derive instance Generic ShowEdgesState _
