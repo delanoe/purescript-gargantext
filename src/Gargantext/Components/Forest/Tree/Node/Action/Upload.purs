@@ -375,8 +375,9 @@ uploadTermListViewCpt :: R.Component Props
 uploadTermListViewCpt = here.component "uploadTermListView" cpt
   where
     cpt {dispatch, id, nodeType} _ = do
+      let defaultUploadType = JSON
       mFile <- T.useBox (Nothing :: Maybe UploadFile)
-      uploadType <- T.useBox CSV
+      uploadType <- T.useBox defaultUploadType
 
       let input = H.input { type: "file"
                           , placeholder: "Choose file"
@@ -387,7 +388,7 @@ uploadTermListViewCpt = here.component "uploadTermListView" cpt
       let opt fileType = H.option { value: show fileType } [ H.text $ show fileType ]
       
       let uploadTypeHtml = R2.select { className: "form-control"
-                                     , defaultValue: show JSON
+                                     , defaultValue: show defaultUploadType
                                      , on: { change: onUploadTypeChange uploadType } } (opt <$> [ CSV, JSON ])
 
       let footer = H.div {} [ uploadTermButton { dispatch
@@ -446,6 +447,9 @@ uploadTermButtonCpt = here.component "uploadTermButton" cpt
         , uploadType } _ = do
       mFile' <- T.useLive T.unequal mFile
       uploadType' <- T.useLive T.unequal uploadType
+
+      R.useEffect' $ do
+        here.log2 "[uploadTermButton] uploadType'" uploadType'
 
       let disabled = case mFile' of
             Nothing -> "1"
