@@ -1,14 +1,14 @@
 module Gargantext.Components.Nodes.Texts where
 
-import DOM.Simple.Console (log2)
+import Gargantext.Prelude
+
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
-import Data.Symbol (SProxy(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (launchAff_)
 import Gargantext.Components.Charts.Options.ECharts (dispatchAction)
-import Gargantext.Components.Charts.Options.Type (EChartsInstance)
+import Gargantext.Components.Charts.Options.Type (EChartsInstance, EChartActionData)
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.DocsTable.Types (Year)
 import Gargantext.Components.NgramsTable.Loader (clearCache)
@@ -23,13 +23,11 @@ import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude
 import Gargantext.Sessions (WithSession, Session, getCacheState)
 import Gargantext.Types (CTabNgramType(..), ListId, NodeID, SidePanelState(..), TabSubType(..), TabType(..))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Record (set)
 import Toestand as T
 
 here :: R2.Here
@@ -170,8 +168,18 @@ tabsCpt = here.component "tabs" cpt
               -- @XXX due to lack of support for "echart.select" action,
               --      have to manually rely on a set/unset selection
               --      targeting the "echart.emphasis" action
+              let
+                opts' :: Record EChartActionData
+                opts' =
+                  { dataIndex   : opts.dataIndex
+                  , name        : opts.name
+                  , seriesId    : opts.seriesId
+                  , seriesIndex : opts.seriesIndex
+                  , seriesName  : opts.seriesName
+                  , type        : "highlight"
+                  }
               dispatchAction i { type: "downplay" }
-              dispatchAction i $ set (SProxy :: SProxy "type") "highlight" opts
+              dispatchAction i opts'
 
       activeTab <- T.useBox 0
 

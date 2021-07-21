@@ -670,7 +670,7 @@ asyncTaskTypePath :: AsyncTaskType -> String
 asyncTaskTypePath AddNode            = "async/nobody/"
 asyncTaskTypePath Form               = "add/form/async/"
 asyncTaskTypePath GraphRecompute     = "async/recompute/"
-asyncTaskTypePath ListUpload         = "add/form/async/"
+asyncTaskTypePath ListUpload         = "add/form/async/nobody"
 asyncTaskTypePath Query              = "query/"
 asyncTaskTypePath UpdateNgramsCharts = "ngrams/async/charts/update/"
 asyncTaskTypePath UpdateNode         = "update/"

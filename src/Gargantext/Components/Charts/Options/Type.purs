@@ -216,3 +216,19 @@ type EChartRef =
   ( getEchartsInstance :: Effect EChartsInstance
   -- ...
   )
+
+----
+
+-- | As "dispatchAction" call has a variadic arity, we can dissociate a type
+-- | where the cliked item (bar, pie section, etc.) need this dispatchAction
+-- | To do so, we have to trimmed its given properties to match this example [1]
+-- |
+-- | [1] https://echarts.apache.org/en/api.html#action.highlight
+type EChartActionData =
+  ( dataIndex   :: Int
+  , name        :: String
+  , seriesId    :: Nullable String
+  , seriesIndex :: Int
+  , seriesName  :: String
+  , type        :: String
+  )
