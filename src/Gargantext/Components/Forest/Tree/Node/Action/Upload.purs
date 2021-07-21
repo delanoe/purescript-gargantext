@@ -202,8 +202,9 @@ uploadButtonCpt = here.component "uploadButton" cpt
             case fileType' of
               Arbitrary ->
                 dispatch $ UploadArbitraryFile (Just name) blob
-              _ ->
-                dispatch $ UploadFile nodeType fileType' (Just name) blob
+              _ -> do
+                contents <- readAsText blob
+                dispatch $ UploadFile nodeType fileType' (Just name) contents
             liftEffect $ do
               T.write_ Nothing mFile
               T.write_ CSV fileType
@@ -313,10 +314,10 @@ uploadFile :: Session
            -> GT.NodeType
            -> ID
            -> FileType
-           -> {blob :: UploadFileBlob, mName :: Maybe String}
+           -> {contents :: String, mName :: Maybe String}
            -> Aff GT.AsyncTaskWithType
-uploadFile session nodeType id fileType {mName, blob: UploadFileBlob blob} = do
-  contents <- readAsText blob
+uploadFile session nodeType id fileType { mName, contents } = do
+  -- contents <- readAsText blob
   task <- postWwwUrlencoded session p (bodyParams contents)
   pure $ GT.AsyncTaskWithType {task, typ: GT.Form}
     --postMultipartFormData session p fileContents
@@ -453,6 +454,7 @@ uploadTermButtonCpt = here.component "uploadTermButton" cpt
         onClick mFile' uploadType' e = do
           let {name, blob} = unsafePartial $ fromJust mFile'
           void $ launchAff do
-            _ <- dispatch $ UploadFile nodeType uploadType' (Just name) blob
+            contents <- readAsText blob
+            _ <- dispatch $ UploadFile nodeType uploadType' (Just name) contents
             liftEffect $ do
               T.write_ Nothing mFile
