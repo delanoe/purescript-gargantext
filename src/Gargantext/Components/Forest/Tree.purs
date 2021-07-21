@@ -237,8 +237,8 @@ addNode' name nodeType p@{ forestOpen, tree: (NTree (LNode { id }) _) } = do
   liftEffect $ T.modify_ (openNodesInsert (mkNodeId p.session id)) forestOpen
   refreshTree p
 
-uploadFile' nodeType fileType mName blob p@{ tasks, tree: (NTree (LNode { id }) _) } = do
-  task <- uploadFile p.session nodeType id fileType {mName, blob}
+uploadFile' nodeType fileType mName contents p@{ tasks, tree: (NTree (LNode { id }) _) } = do
+  task <- uploadFile p.session nodeType id fileType {mName, contents}
   liftEffect $ do
     GAT.insert id task tasks
     log2 "[performAction] UploadFile, uploaded, task:" task

@@ -20,16 +20,16 @@ import Reactix.DOM.HTML         as H
 import Toestand as T
 import URI.Extra.QueryPairs     as QP
 -- import Web.File.Blob (Blob)
-import Web.File.FileReader.Aff (readAsDataURL, readAsText)
+import Web.File.FileReader.Aff (readAsDataURL)
 
 import Gargantext.Prelude
 
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), Props)
-import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..), readUFBAsText)
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe, panel)
 import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Routes       as GR
-import Gargantext.Sessions (Session, postWwwUrlencoded)
+import Gargantext.Sessions (Session, postWwwUrlencoded, post)
 import Gargantext.Types (NodeType(..), ID)
 import Gargantext.Types         as GT
 import Gargantext.Utils.Reactix as R2
@@ -79,12 +79,11 @@ instance Eq DroppedFile where
 
 type FileHash = String
 
-
 type UploadFile =
-  { blob     :: UploadFileBlob
-  , name     :: String
+  { blob :: UploadFileBlob
+  , name :: String
   }
-
+  
 
 uploadFileView :: Record Props -> R.Element
 uploadFileView props = R.createElement uploadFileViewCpt props []
@@ -203,7 +202,7 @@ uploadButtonCpt = here.component "uploadButton" cpt
               Arbitrary ->
                 dispatch $ UploadArbitraryFile (Just name) blob
               _ -> do
-                contents <- readAsText blob
+                contents <- readUFBAsText blob
                 dispatch $ UploadFile nodeType fileType' (Just name) contents
             liftEffect $ do
               T.write_ Nothing mFile
@@ -289,7 +288,9 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
                          , type: "button"
                          , on: {click: \_ -> do
                                    T.write_ Nothing droppedFile
-                                   launchAff $ dispatch $ UploadFile nodeType ft Nothing blob
+                                   launchAff $ do
+                                     contents <- readUFBAsText blob
+                                     dispatch $ UploadFile nodeType ft Nothing contents
                                }
                          } [H.text "Upload"]
               Nothing ->
@@ -316,25 +317,29 @@ uploadFile :: Session
            -> FileType
            -> {contents :: String, mName :: Maybe String}
            -> Aff GT.AsyncTaskWithType
+uploadFile session NodeList id fileType { mName, contents } = do
+  let url = GR.NodeAPI NodeList (Just id) $ GT.asyncTaskTypePath GT.ListUpload
+    -- { input: { data: ..., filetype: "JSON", name: "..." } }
+  let body = { input: { data: contents
+                      , filetype: "JSON"
+                      , name: fromMaybe "" mName } }
+  task <- post session url body
+  pure $ GT.AsyncTaskWithType { task, typ: GT.Form }
 uploadFile session nodeType id fileType { mName, contents } = do
   -- contents <- readAsText blob
-  task <- postWwwUrlencoded session p (bodyParams contents)
+  task <- postWwwUrlencoded session p bodyParams
   pure $ GT.AsyncTaskWithType {task, typ: GT.Form}
     --postMultipartFormData session p fileContents
   where
     p = case nodeType of
       Corpus   -> GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.Form
       Annuaire -> GR.NodeAPI nodeType (Just id) "annuaire"
-      NodeList -> GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.ListUpload
       _        -> GR.NodeAPI nodeType (Just id) ""
 
-    -- { input: { data: ..., filetype: "JSON", name: "..." } }
-    bodyParams c = case nodeType of
-      NodeList -> []
-      _        -> [ Tuple "_wf_data"     (Just c)
-                  , Tuple "_wf_filetype" (Just $ show fileType)
-                  , Tuple "_wf_name"      mName
-                  ]
+    bodyParams = [ Tuple "_wf_data"     (Just contents)
+                 , Tuple "_wf_filetype" (Just $ show fileType)
+                 , Tuple "_wf_name"      mName
+                 ]
 
 
 uploadArbitraryFile :: Session
@@ -454,7 +459,7 @@ uploadTermButtonCpt = here.component "uploadTermButton" cpt
         onClick mFile' uploadType' e = do
           let {name, blob} = unsafePartial $ fromJust mFile'
           void $ launchAff do
-            contents <- readAsText blob
+            contents <- readUFBAsText blob
             _ <- dispatch $ UploadFile nodeType uploadType' (Just name) contents
             liftEffect $ do
               T.write_ Nothing mFile

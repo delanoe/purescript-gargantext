@@ -4,7 +4,9 @@ import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
 import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..))
+import Effect.Aff (Aff)
 import Web.File.Blob (Blob, size)
+import Web.File.FileReader.Aff (readAsText)
 
 import Gargantext.Prelude
 
@@ -31,3 +33,6 @@ newtype UploadFileBlob = UploadFileBlob Blob
 derive instance Generic UploadFileBlob _
 instance Eq UploadFileBlob where
   eq (UploadFileBlob b1) (UploadFileBlob b2) = eq (size b1) (size b2)
+
+readUFBAsText :: UploadFileBlob -> Aff String
+readUFBAsText (UploadFileBlob b) = readAsText b
