@@ -28,7 +28,7 @@ data Action = AddNode     String GT.NodeType
             | RenameNode  String
             | UpdateNode  UpdateNodeParams
             | DoSearch    GT.AsyncTaskWithType
-            | UploadFile  GT.NodeType FileType (Maybe String) UploadFileBlob
+            | UploadFile  GT.NodeType FileType (Maybe String) String
             | UploadArbitraryFile  (Maybe String) UploadFileBlob
             | DownloadNode
             | RefreshTree

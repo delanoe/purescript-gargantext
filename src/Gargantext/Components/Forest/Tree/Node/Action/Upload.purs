@@ -20,16 +20,16 @@ import Reactix.DOM.HTML         as H
 import Toestand as T
 import URI.Extra.QueryPairs     as QP
 -- import Web.File.Blob (Blob)
-import Web.File.FileReader.Aff (readAsDataURL, readAsText)
+import Web.File.FileReader.Aff (readAsDataURL)
 
 import Gargantext.Prelude
 
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), Props)
-import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..), readUFBAsText)
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe, panel)
 import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Routes       as GR
-import Gargantext.Sessions (Session, postWwwUrlencoded)
+import Gargantext.Sessions (Session, postWwwUrlencoded, post)
 import Gargantext.Types (NodeType(..), ID)
 import Gargantext.Types         as GT
 import Gargantext.Utils.Reactix as R2
@@ -79,12 +79,11 @@ instance Eq DroppedFile where
 
 type FileHash = String
 
-
 type UploadFile =
-  { blob     :: UploadFileBlob
-  , name     :: String
+  { blob :: UploadFileBlob
+  , name :: String
   }
-
+  
 
 uploadFileView :: Record Props -> R.Element
 uploadFileView props = R.createElement uploadFileViewCpt props []
@@ -202,8 +201,9 @@ uploadButtonCpt = here.component "uploadButton" cpt
             case fileType' of
               Arbitrary ->
                 dispatch $ UploadArbitraryFile (Just name) blob
-              _ ->
-                dispatch $ UploadFile nodeType fileType' (Just name) blob
+              _ -> do
+                contents <- readUFBAsText blob
+                dispatch $ UploadFile nodeType fileType' (Just name) contents
             liftEffect $ do
               T.write_ Nothing mFile
               T.write_ CSV fileType
@@ -288,7 +288,9 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
                          , type: "button"
                          , on: {click: \_ -> do
                                    T.write_ Nothing droppedFile
-                                   launchAff $ dispatch $ UploadFile nodeType ft Nothing blob
+                                   launchAff $ do
+                                     contents <- readUFBAsText blob
+                                     dispatch $ UploadFile nodeType ft Nothing contents
                                }
                          } [H.text "Upload"]
               Nothing ->
@@ -313,11 +315,19 @@ uploadFile :: Session
            -> GT.NodeType
            -> ID
            -> FileType
-           -> {blob :: UploadFileBlob, mName :: Maybe String}
+           -> {contents :: String, mName :: Maybe String}
            -> Aff GT.AsyncTaskWithType
-uploadFile session nodeType id fileType {mName, blob: UploadFileBlob blob} = do
-  contents <- readAsText blob
-  task <- postWwwUrlencoded session p (bodyParams contents)
+uploadFile session NodeList id fileType { mName, contents } = do
+  let url = GR.NodeAPI NodeList (Just id) $ GT.asyncTaskTypePath GT.ListUpload
+    -- { input: { data: ..., filetype: "JSON", name: "..." } }
+  let body = { input: { data: contents
+                      , filetype: "JSON"
+                      , name: fromMaybe "" mName } }
+  task <- post session url body
+  pure $ GT.AsyncTaskWithType { task, typ: GT.Form }
+uploadFile session nodeType id fileType { mName, contents } = do
+  -- contents <- readAsText blob
+  task <- postWwwUrlencoded session p bodyParams
   pure $ GT.AsyncTaskWithType {task, typ: GT.Form}
     --postMultipartFormData session p fileContents
   where
@@ -326,10 +336,10 @@ uploadFile session nodeType id fileType {mName, blob: UploadFileBlob blob} = do
       Annuaire -> GR.NodeAPI nodeType (Just id) "annuaire"
       _        -> GR.NodeAPI nodeType (Just id) ""
 
-    bodyParams c = [ Tuple "_wf_data"     (Just c)
-                   , Tuple "_wf_filetype" (Just $ show fileType)
-                   , Tuple "_wf_name"      mName
-                   ]
+    bodyParams = [ Tuple "_wf_data"     (Just contents)
+                 , Tuple "_wf_filetype" (Just $ show fileType)
+                 , Tuple "_wf_name"      mName
+                 ]
 
 
 uploadArbitraryFile :: Session
@@ -366,20 +376,34 @@ uploadTermListViewCpt = here.component "uploadTermListView" cpt
   where
     cpt {dispatch, id, nodeType} _ = do
       mFile <- T.useBox (Nothing :: Maybe UploadFile)
+      uploadType <- T.useBox CSV
 
-      let body = H.input { type: "file"
-                            , placeholder: "Choose file"
-                            , on: {change: onChangeContents mFile}
-                            }
+      let input = H.input { type: "file"
+                          , placeholder: "Choose file"
+                          , on: {change: onChangeContents mFile}
+                          , className: "form-control"
+                          }
+
+      let opt fileType = H.option { value: show fileType } [ H.text $ show fileType ]
+      
+      let uploadTypeHtml = R2.select { className: "form-control"
+                                     , defaultValue: show JSON
+                                     , on: { change: onUploadTypeChange uploadType } } (opt <$> [ CSV, JSON ])
 
       let footer = H.div {} [ uploadTermButton { dispatch
                                                , id
                                                , mFile
                                                , nodeType
+                                               , uploadType
                                                }
                             ]
 
-      pure $ panel [body] footer
+      pure $ panel
+        [ H.form {}
+          [ R2.row [ R2.col 12 [ input ] ]
+          , R2.row [ R2.col 12 [ uploadTypeHtml ] ]
+        ]
+      ] footer
 
     onChangeContents :: forall e. T.Box (Maybe UploadFile)
                      -> E.SyntheticEvent_ e
@@ -396,12 +420,18 @@ uploadTermListViewCpt = here.component "uploadTermListView" cpt
             T.write_ (Just $ { blob: UploadFileBlob blob
                              , name }) mFile
 
+    onUploadTypeChange uploadType e = do
+      case read (R.unsafeEventValue e) of
+        Nothing -> pure unit
+        Just fileType -> T.write_ fileType uploadType
+
 
 type UploadTermButtonProps =
   ( dispatch :: Action -> Aff Unit
   , id       :: Int
   , mFile    :: T.Box (Maybe UploadFile)
   , nodeType :: GT.NodeType
+  , uploadType :: T.Box FileType
   )
 
 uploadTermButton :: R2.Leaf UploadTermButtonProps
@@ -412,21 +442,24 @@ uploadTermButtonCpt = here.component "uploadTermButton" cpt
     cpt { dispatch
         , id
         , mFile
-        , nodeType } _ = do
+        , nodeType
+        , uploadType } _ = do
       mFile' <- T.useLive T.unequal mFile
+      uploadType' <- T.useLive T.unequal uploadType
 
-      let  disabled = case mFile' of
-             Nothing -> "1"
-             Just _  -> ""
+      let disabled = case mFile' of
+            Nothing -> "1"
+            Just _  -> ""
 
       pure $ H.button { className: "btn btn-primary"
                       , disabled
-                      , on: {click: onClick mFile'}
+                      , on: { click: onClick mFile' uploadType' }
                       } [ H.text "Upload" ]
       where
-        onClick mFile' e = do
+        onClick mFile' uploadType' e = do
           let {name, blob} = unsafePartial $ fromJust mFile'
           void $ launchAff do
-            _ <- dispatch $ UploadFile nodeType CSV (Just name) blob
+            contents <- readUFBAsText blob
+            _ <- dispatch $ UploadFile nodeType uploadType' (Just name) contents
             liftEffect $ do
               T.write_ Nothing mFile

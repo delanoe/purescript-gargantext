@@ -652,6 +652,7 @@ modeFromString _            = Nothing
 data AsyncTaskType = AddNode
                    | Form  -- this is file upload too
                    | GraphRecompute
+                   | ListUpload
                    | Query
                    | UpdateNgramsCharts
                    | UpdateNode
@@ -669,6 +670,7 @@ asyncTaskTypePath :: AsyncTaskType -> String
 asyncTaskTypePath AddNode            = "async/nobody/"
 asyncTaskTypePath Form               = "add/form/async/"
 asyncTaskTypePath GraphRecompute     = "async/recompute/"
+asyncTaskTypePath ListUpload         = "add/form/async/"
 asyncTaskTypePath Query              = "query/"
 asyncTaskTypePath UpdateNgramsCharts = "ngrams/async/charts/update/"
 asyncTaskTypePath UpdateNode         = "update/"

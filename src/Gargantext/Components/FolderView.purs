@@ -270,7 +270,7 @@ performAction = performAction' where
   performAction' (SharePublic { params }) p = sharePublic params p
   performAction' (AddContact params) p = addContact params p
   performAction' (AddNode name nodeType) p = addNode' name nodeType p
-  performAction' (UploadFile nodeType fileType mName blob) p = uploadFile' nodeType fileType mName blob p
+  performAction' (UploadFile nodeType fileType mName contents) p = uploadFile' nodeType fileType mName contents p
   performAction' (UploadArbitraryFile mName blob) p = uploadArbitraryFile' mName blob p
   performAction' DownloadNode _ = liftEffect $ log "[performAction] DownloadNode"
   performAction' (MoveNode {params}) p = moveNode params p
@@ -316,8 +316,8 @@ performAction = performAction' where
   addContact params p@{ nodeId: id } =
     void $ Contact.contactReq p.session id params
 
-  uploadFile' nodeType fileType mName blob p@{ tasks, nodeId: id } = do
-    task <- uploadFile p.session nodeType id fileType {mName, blob}
+  uploadFile' nodeType fileType mName contents p@{ tasks, nodeId: id } = do
+    task <- uploadFile p.session nodeType id fileType {mName, contents}
     liftEffect $ do
       GAT.insert id task tasks
       log2 "[performAction] UploadFile, uploaded, task:" task
