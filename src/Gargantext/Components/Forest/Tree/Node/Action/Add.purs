@@ -2,17 +2,12 @@ module Gargantext.Components.Forest.Tree.Node.Action.Add where
 
 import Data.Array (head, length)
 import Data.Generic.Rep (class Generic)
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Newtype (class Newtype)
+import Data.String (Pattern(..), indexOf)
 import Data.Tuple.Nested ((/\))
+import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Simple.JSON as JSON
-import Toestand as T
-
-import Gargantext.Prelude
-
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, panel, submitButton)
@@ -24,6 +19,15 @@ import Gargantext.Types (NodeType(..), charCodeIcon)
 import Gargantext.Types as GT
 import Gargantext.Utils (nbsp)
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
+import Toestand as T
+import Web.HTML (window)
+import Web.HTML.Navigator (userAgent)
+import Web.HTML.Window (navigator)
+
+import Gargantext.Prelude
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Add"
@@ -76,19 +80,16 @@ addNodeViewCpt = here.component "addNodeView" cpt where
     nodeType <- T.useBox $ fromMaybe Folder $ head nodeTypes
     nodeType' <- T.useLive T.unequal nodeType
 
+    hasChromeAgent' <- R.unsafeHooksEffect hasChromeAgent
+
     let
-        print nt = charCodeIcon nt true
-                -- as we are printing within an HTML text node,
-                -- margins will directly rely on content text spacing
-                <> nbsp 4
-                <> translate EN nt -- @TODO "EN" assumption
 
         SettingsBox {edit} = settingsBox nodeType'
         setNodeType' nt = do
           T.write_ (GT.prettyNodeType nt) nodeName
           T.write_ nt nodeType
         (maybeChoose /\ nt') = if length nodeTypes > 1
-                         then ([ formChoiceSafe nodeTypes Error setNodeType' print ] /\ nodeType')
+                         then ([ formChoiceSafe nodeTypes Error setNodeType' (print hasChromeAgent') ] /\ nodeType')
                          else ([H.div {} [H.text $ "Creating a node of type "
                                                 <> show defaultNt
                                                 <> " with name:"
@@ -115,9 +116,39 @@ addNodeViewCpt = here.component "addNodeView" cpt where
 
 -- END Create Node
 
+
 showConfig :: NodeType -> R.Element
 showConfig NodeUser      = H.div {} []
 showConfig FolderPrivate = H.div {} [H.text "This folder will be private only"]
 showConfig FolderShared  = H.div {} [H.text "This folder will be shared"]
 showConfig FolderPublic  = H.div {} [H.text "This folder will be public"]
 showConfig nt            = H.div {} [H.h4  {} [H.text $ "Config of " <> show nt ]]
+
+-- (?) Regarding `print` and `hasChromeAgent`
+--
+--  As described in #309:
+--    * while sticking to solution a) for icon display, it only works on
+--      Chrome engine
+--    * for now, we just patch surgery the like of display according to the
+--      user browser (ie. has Chrome -> has icons)
+
+print :: Boolean -> NodeType -> String
+print withIconFlag nt =
+  let txt = translate EN -- @TODO "EN" assumption
+
+  in if withIconFlag
+
+  then
+    charCodeIcon nt true
+    --- as we are printing within an HTML text node,
+    -- margins will directly rely on content text spacing
+    <> nbsp 4
+    <> txt nt
+
+  else
+    txt nt
+
+hasChromeAgent :: Effect Boolean
+hasChromeAgent = window >>= navigator >>= userAgent >>= \ua -> pure $ check ua
+  where
+    check = indexOf (Pattern "Chrome") >>> isJust
