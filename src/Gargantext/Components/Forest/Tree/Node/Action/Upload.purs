@@ -334,6 +334,7 @@ uploadFile session nodeType id fileType { mName, contents } = do
     p = case nodeType of
       Corpus   -> GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.Form
       Annuaire -> GR.NodeAPI nodeType (Just id) "annuaire"
+      NodeList -> GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.ListCSVUpload
       _        -> GR.NodeAPI nodeType (Just id) ""
 
     bodyParams = [ Tuple "_wf_data"     (Just contents)
