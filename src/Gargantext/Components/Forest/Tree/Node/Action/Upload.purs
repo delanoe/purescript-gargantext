@@ -317,7 +317,7 @@ uploadFile :: Session
            -> FileType
            -> {contents :: String, mName :: Maybe String}
            -> Aff GT.AsyncTaskWithType
-uploadFile session NodeList id fileType { mName, contents } = do
+uploadFile session NodeList id JSON { mName, contents } = do
   let url = GR.NodeAPI NodeList (Just id) $ GT.asyncTaskTypePath GT.ListUpload
     -- { input: { data: ..., filetype: "JSON", name: "..." } }
   let body = { input: { data: contents
