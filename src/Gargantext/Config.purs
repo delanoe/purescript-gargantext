@@ -1,17 +1,15 @@
 module Gargantext.Config where
 
 import Data.Array as A
-import Data.Maybe (Maybe)
 import Data.Array.NonEmpty as AN
+import Data.Maybe (Maybe)
 import Data.NonEmpty (NonEmpty, (:|), head)
 import Data.String as S
 import Data.String.Utils as S
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-
-import Gargantext.Prelude (bind, pure, ($))
-
 import Gargantext.Ends
+import Gargantext.Prelude (bind, pure, ($))
 import Gargantext.Types (ApiVersion(..))
 import Gargantext.Utils (href)
 

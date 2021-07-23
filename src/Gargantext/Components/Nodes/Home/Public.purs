@@ -1,22 +1,20 @@
 module Gargantext.Components.Nodes.Home.Public where
 
 import Data.Generic.Rep (class Generic)
-import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..))
+import Data.Show.Generic (genericShow)
 import Data.String (take)
-import Data.Tuple (fst)
 import Effect.Aff (Aff)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Simple.JSON as JSON
-import Simple.JSON.Generics as JSONG
-
 import Gargantext.Config (publicBackend)
 import Gargantext.Config.REST (get)
 import Gargantext.Ends (backendUrl)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
+import Simple.JSON.Generics as JSONG
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Home.Public"
@@ -40,7 +38,9 @@ instance Show PublicData where
   show = genericShow
 
 ------------------------------------------------------------------------
+type LoadData :: forall k. Row k
 type LoadData  = ()
+
 type LoadProps = (reload :: Int)
 
 -- | WIP still finding the right way to chose the default public backend

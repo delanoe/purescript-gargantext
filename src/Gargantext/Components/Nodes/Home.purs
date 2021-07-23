@@ -1,8 +1,5 @@
 module Gargantext.Components.Nodes.Home where
 
-import Gargantext.Prelude
-
-import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Effect (Effect)
@@ -16,15 +13,16 @@ import Gargantext.Components.Nodes.Home.Public (renderPublic)
 import Gargantext.Config as Config
 import Gargantext.Ends (Backend(..))
 import Gargantext.License (license)
+import Gargantext.Prelude
 import Gargantext.Sessions (Sessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Sessions.Types (Session(..))
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Routing.Hash (setHash)
 import Toestand as T
-import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Home"
@@ -98,7 +96,7 @@ homeLayoutCpt = here.component "homeLayout" cpt
                 Just b -> do
                   T.write_ (Just b) backend
                   T.write_ true showLogin
-            Just b -> T.write_ true showLogin
+            Just _ -> T.write_ true showLogin
 
 joinButtonOrTutorial :: forall e. T.Box GAT.Storage -> T2.ReloadS -> Sessions -> (e -> Effect Unit) -> R.Element
 joinButtonOrTutorial tasks reloadForest sessions click =
@@ -167,11 +165,13 @@ tutorialCpt = here.component "tutorial" cpt where
       -- , section "How to master?" "alert-danger" expertTutos
       ]
     where
+      {-
       section name class' tutos =
         H.div {} $ Array.cons (H.h4 {} [ H.text name ]) (map (makeTuto class') tutos)
       makeTuto class' (Tuto x) =
         H.div { className : "alert " <> class', id: x.id}
         [ video x.id, H.h4 {} [ H.text x.title ], H.p  {} [ H.text x.text ] ]
+      -}
 
       makeFolders :: Array Session -> Array R.Element
       makeFolders s = sessionToFolder <$> s where
