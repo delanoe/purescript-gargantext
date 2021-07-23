@@ -217,6 +217,16 @@ settingsBox Graph =
                           ]
               }
 
+settingsBox Phylo =
+  SettingsBox { show : true
+              , edit : true
+              , doc  : Documentation Phylo
+              , buttons : [ Delete
+                          ]
+              }
+
+
+
 settingsBox (NodePublic Graph) =
   SettingsBox { show : true
               , edit : true
