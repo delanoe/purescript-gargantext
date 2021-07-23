@@ -317,6 +317,7 @@ uploadFile :: Session
            -> FileType
            -> {contents :: String, mName :: Maybe String}
            -> Aff GT.AsyncTaskWithType
+{-
 uploadFile session NodeList id JSON { mName, contents } = do
   let url = GR.NodeAPI NodeList (Just id) $ GT.asyncTaskTypePath GT.ListUpload
     -- { input: { data: ..., filetype: "JSON", name: "..." } }
@@ -325,6 +326,7 @@ uploadFile session NodeList id JSON { mName, contents } = do
                       , name: fromMaybe "" mName } }
   task <- post session url body
   pure $ GT.AsyncTaskWithType { task, typ: GT.Form }
+  -}
 uploadFile session nodeType id fileType { mName, contents } = do
   -- contents <- readAsText blob
   task <- postWwwUrlencoded session p bodyParams
@@ -334,7 +336,10 @@ uploadFile session nodeType id fileType { mName, contents } = do
     p = case nodeType of
       Corpus   -> GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.Form
       Annuaire -> GR.NodeAPI nodeType (Just id) "annuaire"
-      NodeList -> GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.ListCSVUpload
+      NodeList -> case fileType of
+        JSON -> GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.ListUpload
+        CSV  -> GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.ListCSVUpload
+        _    -> GR.NodeAPI nodeType (Just id) ""
       _        -> GR.NodeAPI nodeType (Just id) ""
 
     bodyParams = [ Tuple "_wf_data"     (Just contents)
