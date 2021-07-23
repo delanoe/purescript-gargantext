@@ -4,10 +4,9 @@ module Gargantext.Components.Nodes.Annuaire.User
   )
   where
 
-import Gargantext.Prelude (Unit, bind, const, discard, pure, show, ($), (<$>), (<<<), (<>))
+import Gargantext.Prelude (Unit, bind, discard, pure, show, ($), (<$>), (<<<), (<>))
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
@@ -147,8 +146,10 @@ contactInfoItemCpt = here.component "contactInfoItem" cpt
               let newHyperdata = (L.over cLens (\_ -> R.readRef valueRef) hyperdata) :: HyperdataUser
               onUpdateHyperdata newHyperdata
 
+{-
 listElement :: Array R.Element -> R.Element
 listElement = H.li { className: "list-group-item justify-content-between" }
+-}
 
 type LayoutNoSessionProps =
   ( frontends      :: Frontends

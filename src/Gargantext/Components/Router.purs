@@ -57,7 +57,7 @@ router :: R2.Leaf Props
 router props = R.createElement routerCpt props []
 routerCpt :: R.Component Props
 routerCpt = here.component "router" cpt where
-  cpt { boxes: boxes@{ handed, showTree } } _ = do
+  cpt { boxes: boxes@{ handed } } _ = do
     handed'       <- T.useLive T.unequal handed
 
     let handedClassName = case handed' of
