@@ -4,9 +4,8 @@ import Data.Array as A
 import Data.Array.NonEmpty as AN
 import Data.Maybe (Maybe)
 import Data.NonEmpty (NonEmpty, (:|), head)
-import Data.String as S
-import Data.String.Utils as S
-import Data.Tuple.Nested ((/\))
+import Data.String (Pattern(..), Replacement(..), replace) as S
+import Data.String.Utils (startsWith) as S
 import Effect (Effect)
 import Gargantext.Ends
 import Gargantext.Prelude (bind, pure, ($))
@@ -42,7 +41,6 @@ localUrl = "http://localhost:8008"
 backend_local :: Backend
 backend_local   = backend V10 "/api/" localUrl   "local.cnrs"
 
-
 matchCurrentLocation :: Effect (Maybe Backend)
 matchCurrentLocation = do
   href <- href
@@ -55,7 +53,6 @@ matchCurrentLocation = do
 publicBackend :: Backend
 publicBackend = backend_local
 
-
 publicBackend' :: Effect Backend
 publicBackend' = do
   href <- href
@@ -65,9 +62,8 @@ publicBackend' = do
                  , version : V10
                  }
 
-
 defaultApps :: NonEmpty Array Frontend
-defaultApps = relative :| [prod, dev, demo, haskell, caddy]
+defaultApps = relative :| [prod, dev, demo, haskell, python, caddy]
   where
     relative = frontend "/#/" ""                            "Relative"
     prod     = frontend "/#/" "https://v4.gargantext.org"   "v4.gargantext.org"
@@ -93,5 +89,4 @@ defaultFrontends = Frontends { app: defaultApp, static: defaultStatic }
 
 changePort :: String -> String
 changePort = S.replace (S.Pattern "http://localhost:8000/") (S.Replacement "http://localhost:8008/")
-
 
