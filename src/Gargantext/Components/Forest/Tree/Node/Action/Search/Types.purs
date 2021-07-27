@@ -11,7 +11,6 @@ import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Simple.JSON as JSON
-import Simple.JSON.Generics as JSONG
 import URI.Extra.QueryPairs as QP
 import URI.Query as Q
 
@@ -75,6 +74,7 @@ derive instance Eq DataField
 instance JSON.WriteForeign DataField where
   writeImpl Gargantext = JSON.writeImpl "Internal PubMed"
   writeImpl (External (Just db)) = JSON.writeImpl $ "External " <> show db
+  writeImpl Web = JSON.writeImpl $ "Web"
   writeImpl f = JSON.writeImpl $ show f
 
 ----------------------------------------
@@ -361,7 +361,8 @@ instance GT.ToQuery SearchQuery where
 instance JSON.WriteForeign SearchQuery where
   writeImpl (SearchQuery { datafield, databases, lang, node_id, query }) =
     JSON.writeImpl { query: String.replace (String.Pattern "\"") (String.Replacement "\\\"") query
-                   , databases: databases
+                   , databases
+                   , datafield
                    , lang: maybe "EN" show lang
                    , node_id: fromMaybe 0 node_id
                    }

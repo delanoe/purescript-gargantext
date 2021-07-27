@@ -32,7 +32,7 @@ defaultSearch = { databases: Empty
                 , node_id  : Nothing
                 , lang     : Nothing
                 , term     : ""
-                , url: ""
+                , url      : ""
                 }
 
 type Props =
@@ -130,7 +130,7 @@ componentCNRS = R.createElement componentCNRSCpt
 componentCNRSCpt :: R.Component ComponentProps
 componentCNRSCpt = here.component "componentCNRS" cpt
   where
-    cpt { search } _ = do
+    cpt _ _ = do
       pure $ R.fragment [
         H.div {} []
       --, filterInput fi
@@ -273,7 +273,7 @@ dataFieldNavCpt = here.component "dataFieldNav" cpt
       search'@{ datafield } <- T.useLive T.unequal search
 
       pure $ R.fragment [ H.div { className: "text-primary center"} [H.text "with DataField"]
-                        , H.div {className: "nav nav-tabs"} ((liItem search') <$> dataFields)
+                        , H.div {className: "nav nav-tabs"} ((liItem search') <$> datafields)
                         , H.div {className: "center"} [ H.text
                                                         $ maybe "TODO: add Doc Instance" doc datafield
                                                       ]
