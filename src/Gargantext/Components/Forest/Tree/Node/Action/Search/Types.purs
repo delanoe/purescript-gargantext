@@ -72,7 +72,6 @@ instance Doc DataField where
   doc Files        = "Zip files with formats.."
 derive instance Eq DataField
 instance JSON.WriteForeign DataField where
-  writeImpl Gargantext = JSON.writeImpl "Internal PubMed"
   writeImpl (External (Just db)) = JSON.writeImpl $ "External " <> show db
   writeImpl Web = JSON.writeImpl $ "Web"
   writeImpl f = JSON.writeImpl $ show f

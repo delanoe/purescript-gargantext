@@ -40,7 +40,6 @@ type CommonProps = ( dispatch :: Action -> Aff Unit, session :: Session )
 
 nodePopupView :: Record NodePopupProps -> R.Element
 nodePopupView p = R.createElement nodePopupCpt p []
-
 nodePopupCpt :: R.Component NodePopupProps
 nodePopupCpt = here.component "nodePopupView" cpt where
   cpt p@{ id, name, nodeType }  _ = do
