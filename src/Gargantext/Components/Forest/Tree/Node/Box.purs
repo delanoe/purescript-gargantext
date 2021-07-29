@@ -5,7 +5,11 @@ import Gargantext.Prelude
 import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
+
+import Gargantext.Components.Forest.Tree.Node.Action (Action)
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (actionDelete)
@@ -22,15 +26,12 @@ import Gargantext.Components.Forest.Tree.Node.Action.Upload (actionUpload)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (NodePopupProps, NodePopupS)
 import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Status (Status(..), hasStatus)
-import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT, panel)
+import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, textInputBox)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (Name, ID, prettyNodeType)
 import Gargantext.Types as GT
 import Gargantext.Utils.Glyphicon (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Box"

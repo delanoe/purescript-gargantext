@@ -1,10 +1,10 @@
 module Gargantext.Config.REST where
 
 import Affjax (defaultRequest, printError, request)
-import Affjax.RequestBody (RequestBody(..), formData, formURLEncoded, string)
+import Affjax.RequestBody (formData, formURLEncoded, string)
 import Affjax.RequestHeader as ARH
 import Affjax.ResponseFormat as ResponseFormat
-import DOM.Simple.Console (log, log2)
+import DOM.Simple.Console (log)
 import Data.Argonaut.Core as AC
 import Data.Either (Either(..))
 import Data.Foldable (foldMap)
@@ -12,13 +12,10 @@ import Data.FormURLEncoded as FormURLEncoded
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.MediaType.Common (applicationFormURLEncoded, applicationJSON, multipartFormData)
-import Data.Tuple (Tuple(..))
-import DOM.Simple.Console (log2)
+import Data.Tuple (Tuple)
 import Effect.Aff (Aff, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Milkis as Milkis
-import Unsafe.Coerce (unsafeCoerce)
 import Simple.JSON as JSON
 import Web.XHR.FormData as XHRFormData
 

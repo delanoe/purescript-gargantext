@@ -650,7 +650,7 @@ modeFromString _            = Nothing
 
 -- corresponds to /add/form/async or /add/query/async
 data AsyncTaskType = AddNode
-                   | Form  -- this is file upload too
+                   | CorpusFormUpload  -- this is file upload too
                    | GraphRecompute
                    | ListUpload
                    | ListCSVUpload  -- legacy v3 CSV upload for lists
@@ -658,6 +658,7 @@ data AsyncTaskType = AddNode
                    | UpdateNgramsCharts
                    | UpdateNode
                    | UploadFile
+                   | UploadFrameCalc
 
 derive instance Generic AsyncTaskType _
 instance JSON.ReadForeign AsyncTaskType where
@@ -669,7 +670,7 @@ instance Show AsyncTaskType where
 
 asyncTaskTypePath :: AsyncTaskType -> String
 asyncTaskTypePath AddNode            = "async/nobody/"
-asyncTaskTypePath Form               = "add/form/async/"
+asyncTaskTypePath CorpusFormUpload   = "add/form/async/"
 asyncTaskTypePath GraphRecompute     = "async/recompute/"
 asyncTaskTypePath ListUpload         = "add/form/async/"
 asyncTaskTypePath ListCSVUpload      = "csv/add/form/async/"
@@ -677,6 +678,7 @@ asyncTaskTypePath Query              = "query/"
 asyncTaskTypePath UpdateNgramsCharts = "ngrams/async/charts/update/"
 asyncTaskTypePath UpdateNode         = "update/"
 asyncTaskTypePath UploadFile         = "async/file/add/"
+asyncTaskTypePath UploadFrameCalc    = "add/framecalc/async/"
 
 
 type AsyncTaskID = String

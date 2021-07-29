@@ -12,7 +12,7 @@ module Gargantext.Components.NgramsTable.Core
   , NgramsPatch(..)
   , NgramsPatches
   , _NgramsTable
-  , NgramsTerm
+  , NgramsTerm(..)
   , normNgram
   , ngramsTermText
   , findNgramRoot
@@ -23,7 +23,7 @@ module Gargantext.Components.NgramsTable.Core
   , VersionedWithCount(..)
   , toVersioned
   , VersionedNgramsPatches
-  , AsyncNgramsChartsUpdate
+  , AsyncNgramsChartsUpdate(..)
   , VersionedNgramsTable
   , VersionedWithCountNgramsTable
   , NgramsTablePatch
@@ -103,7 +103,6 @@ import Data.List as L
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, fromMaybe', isJust)
-import Data.Monoid (class Monoid)
 import Data.Monoid.Additive (Additive(..))
 import Data.Newtype (class Newtype)
 import Data.Set (Set)
@@ -117,9 +116,9 @@ import Data.Symbol (SProxy(..))
 import Data.These (These(..))
 import Data.Traversable (for, traverse_, traverse)
 import Data.TraversableWithIndex (traverseWithIndex)
-import Data.Tuple (Tuple(..), snd)
+import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log, log2)
+import DOM.Simple.Console (log2)
 import Effect.Aff (Aff, launchAff_)
 import Effect (Effect)
 import Effect.Class (liftEffect)
@@ -127,25 +126,23 @@ import Effect.Exception.Unsafe (unsafeThrow)
 import Foreign as F
 import Foreign.Object as FO
 import FFI.Simple.Functions (delay)
-import Reactix as R
+import Reactix (Component, Element, createElement) as R
 import Reactix.DOM.HTML as H
-import Record as Record
 import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON as JSON
-import Toestand as T
+import Toestand (Box, modify_, read, unequal, useBox, useLive, write_) as T
 
 import Gargantext.Prelude
 
 import Gargantext.AsyncTasks as GAT
-import Gargantext.Components.Table       as T
-import Gargantext.Components.Table.Types as T
+import Gargantext.Components.Table (initialParams) as T
+import Gargantext.Components.Table.Types (ColumnName(..), OrderByDirection(..), Params) as T
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, post, put)
 import Gargantext.Types (AsyncTaskType(..), AsyncTaskWithType(..), CTabNgramType(..), ListId, OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize(..))
 import Gargantext.Utils.KarpRabin (indicesOfAny)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
   
 here :: R2.Here
 here = R2.here "Gargantext.Components.NgramsTable.Core"

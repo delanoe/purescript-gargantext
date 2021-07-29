@@ -3,11 +3,9 @@ module Gargantext.Components.Nodes.Annuaire.User.Contact
   , contactLayout
   ) where
 
-import Gargantext.Prelude
-  ( Unit, bind, const, discard, pure, show, ($), (<$>), (*>), (<<<), (<>) )
+import Gargantext.Prelude (Unit, bind, discard, pure, show, ($), (*>), (<$>), (<<<), (<>))
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)

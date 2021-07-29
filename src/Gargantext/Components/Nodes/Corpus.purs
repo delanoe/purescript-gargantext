@@ -7,7 +7,6 @@ import Data.Eq.Generic (genericEq)
 import Data.Show.Generic (genericShow)
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (Tuple(..))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, throwError)

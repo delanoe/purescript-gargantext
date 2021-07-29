@@ -27,7 +27,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Move (moveNodeReq)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
 import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Update (updateRequest)
-import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile, uploadArbitraryFile)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile, uploadArbitraryFile, uploadFrameCalc)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
 import Gargantext.Ends (Frontends)
@@ -249,6 +249,12 @@ uploadArbitraryFile' mName blob p@{ tasks, tree: (NTree (LNode { id }) _) } = do
     GAT.insert id task tasks
     log2 "[performAction] UploadArbitraryFile, uploaded, task:" task
 
+uploadFrameCalc' p@{ tasks, tree: (NTree (LNode { id }) _) } = do
+  task <- uploadFrameCalc p.session id
+  liftEffect $ do
+    GAT.insert id task tasks
+    log2 "[performAction] UploadFrameCalc, uploaded, task:" task
+
 moveNode params p@{ forestOpen, session } = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     void $ moveNodeReq p.session in' out
@@ -278,6 +284,7 @@ performAction (AddContact params) p = addContact params p
 performAction (AddNode name nodeType) p = addNode' name nodeType p
 performAction (UploadFile nodeType fileType mName contents) p = uploadFile' nodeType fileType mName contents p
 performAction (UploadArbitraryFile mName blob) p = uploadArbitraryFile' mName blob p
+performAction UploadFrameCalc p = uploadFrameCalc' p
 performAction DownloadNode _ = liftEffect $ log "[performAction] DownloadNode"
 performAction (MoveNode {params}) p = moveNode params p
 performAction (MergeNode {params}) p = mergeNode params p

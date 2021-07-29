@@ -1,19 +1,18 @@
 module Gargantext.Components.Forest.Tree.Node.Action where
 
+import Gargantext.Prelude
+
 import Data.Generic.Rep (class Generic)
-import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 
-import Gargantext.Prelude
-
-import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut, SubTreeParams(..))
-import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), glyphiconNodeAction)
-import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType, UploadFileBlob)
-import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (UpdateNodeParams)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact.Types (AddContactParams)
+import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (UpdateNodeParams)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType, UploadFileBlob)
+import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), glyphiconNodeAction)
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut, SubTreeParams(..))
 import Gargantext.Sessions (Session)
-import Gargantext.Types  as GT
+import Gargantext.Types as GT
 
 type Props =
   ( dispatch :: Action -> Aff Unit
@@ -30,6 +29,7 @@ data Action = AddNode     String GT.NodeType
             | DoSearch    GT.AsyncTaskWithType
             | UploadFile  GT.NodeType FileType (Maybe String) String
             | UploadArbitraryFile  (Maybe String) UploadFileBlob
+            | UploadFrameCalc
             | DownloadNode
             | RefreshTree
             | ClosePopover
@@ -68,6 +68,7 @@ instance Eq Action where
   eq (DoSearch at1) (DoSearch at2) = eq at1 at2
   eq (UploadFile nt1 ft1 s1 _) (UploadFile nt2 ft2 s2 _) = (eq nt1 nt2) && (eq ft1 ft2) && (eq s1 s2)
   eq (UploadArbitraryFile s1 _) (UploadArbitraryFile s2 _) = eq s1 s2
+  eq UploadFrameCalc UploadFrameCalc = eq true true
   eq DownloadNode DownloadNode = true
   eq RefreshTree RefreshTree = true
   eq ClosePopover ClosePopover = true
@@ -91,6 +92,7 @@ instance Show Action where
   show (DoSearch    _      )      = "SearchQuery"
   show (UploadFile  _ _ _ _)      = "UploadFile"
   show (UploadArbitraryFile  _ _) = "UploadArbitraryFile"
+  show  UploadFrameCalc           = "UploadFrameCalc"
   show  RefreshTree               = "RefreshTree"
   show  ClosePopover              = "ClosePopover"
   show  DownloadNode              = "Download"
@@ -110,7 +112,8 @@ icon (AddContact  _)              = glyphiconNodeAction Share
 icon (SharePublic _ )             = glyphiconNodeAction (Publish { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
 icon (DoSearch   _)               = glyphiconNodeAction SearchBox
 icon (UploadFile _ _ _ _)         = glyphiconNodeAction Upload
-icon (UploadArbitraryFile _ _ ) = glyphiconNodeAction Upload
+icon (UploadArbitraryFile _ _ )   = glyphiconNodeAction Upload
+icon  UploadFrameCalc             = glyphiconNodeAction Upload
 icon  RefreshTree                 = glyphiconNodeAction Refresh
 icon  ClosePopover                = glyphiconNodeAction CloseNodePopover
 icon  DownloadNode                = glyphiconNodeAction Download
@@ -133,6 +136,7 @@ text (SharePublic _      )      = "Publish !"
 text (DoSearch    _      )      = "Launch search !"
 text (UploadFile  _ _ _ _)      = "Upload File !"
 text (UploadArbitraryFile  _ _) = "Upload arbitrary file !"
+text  UploadFrameCalc           = "Upload frame calc !"
 text  RefreshTree               = "Refresh Tree !"
 text  ClosePopover              = "Close Popover !"
 text DownloadNode               = "Download !"

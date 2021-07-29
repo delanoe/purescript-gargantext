@@ -5,8 +5,6 @@ import Gargantext.Prelude
 import Data.Maybe (Maybe(..))
 import Data.Nullable (null)
 import Data.Symbol (SProxy(..))
-import Data.Tuple (fst, snd)
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
@@ -127,7 +125,7 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
                    , nodeType
                    , session } []
 
-                , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType }
+                , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType } []
                 , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
                                                        , barType: Pie
                                                        , nodeId: id
