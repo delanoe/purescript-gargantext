@@ -1,16 +1,7 @@
-/// Abtstract
-
-/// Add alpha channel to a color
-/// @access public
-/// @param {Color} $color - color to work with
-/// @param {Number} $percentage - percentage of `$color` opacity
-/// @return {Color}
-@function mixAlpha($color, $percentage) {
-  @return rgba($color, $percentage);
-}
-
+@use '../abstract/_members' as main;
 
 /// Misc
+///--------------------------
 
 .with-icon-font {
   font-family: ForkAwesome, $font-family-base;
@@ -18,19 +9,54 @@
 
 
 /// Tree
+///--------------------------
 
-/// (?) @TODO: More SASS structure (eg. exporting variables into component
+/// (?) @TODO: More SASS structure (eg. exporting theme variables into component
 ///            SASS files)
-///            For now we have cut-copy the rules here
+.forest-layout {
 
-.right-handed .forest-layout {
-  border-right: 1px solid $body-bg;
-  &:hover { border-right: 1px solid $border-color; }
+  @include main.right-handed {
+    border-right: 2px solid $border-color;
+  }
+
+  @include main.left-handed {
+    border-left: 2px solid $border-color;
+  }
 }
-.left-handed .forest-layout {
-  border-left: 1px solid $body-bg;
-  &:hover { border-left: 1px solid $border-color; }
+
+.forest-layout-bottom-teaser {
+  background: linear-gradient(
+    to bottom,
+    mixAlpha($body-bg, 0%) 0%,
+    mixAlpha($body-bg, 100%) 45%
+  );
 }
-.forest-layout-teaser {
-  background: linear-gradient(to bottom, mixAlpha($body-bg, 0%) 0%, mixAlpha($body-bg, 100%) 45%);
+
+.forest-layout-top-teaser {
+  background: linear-gradient(
+    to top,
+    mixAlpha($body-bg, 0%) 0%,
+    mixAlpha($body-bg, 100%) 45%
+  );
+}
+
+.main-page__horizontal-tiles {
+  border-top: 2px solid $border-color;
+
+  .tile-block:not(:first-child) {
+    border-left: 2px solid $border-color;
+  }
+}
+
+.main-page__vertical-tiles {
+  border-left: 2px solid $border-color;
+
+  .tile-block:not(:first-child) {
+    border-top: 2px solid $border-color;
+  }
+}
+
+.tile-menu__popover {
+  border-radius: $border-radius;
+  background-color: $body-bg;
 }

@@ -3,16 +3,15 @@ module Gargantext.Routes where
 import Prelude
 
 import Data.Maybe (Maybe(..))
-
-import Gargantext.Types (ChartOpts, ChartType, CorpusMetricOpts, CTabNgramType, Id, Limit,
-                         ListId, DocId, ContactId, NgramsGetOpts, NgramsGetTableAllOpts, NodeType,
-                         Offset, OrderBy, SearchOpts, SessionId, TabSubType, TabType, TermList)
+import Data.UUID (UUID)
+import Gargantext.Types (ChartOpts, ChartType, CorpusMetricOpts, CTabNgramType, Id, Limit, ListId, DocId, NgramsGetOpts, NgramsGetTableAllOpts, NodeType, Offset, OrderBy, SearchOpts, SessionId, TabSubType, TabType, TermList)
 import Gargantext.Types as GT
 
 data AppRoute
   = Annuaire       SessionId Int
   | ContactPage    SessionId Int Int
   | Corpus         SessionId Int
+  | CorpusCode     SessionId Int
   | CorpusDocument SessionId Int Int Int
   | Dashboard      SessionId Int
   | Document       SessionId Int Int
@@ -69,6 +68,7 @@ instance Show AppRoute where
   show (FolderShared  s i)      = "FolderShared"   <> show i <> " (" <> show s <> ")"
   show (Team          s i)      = "Team"           <> show i <> " (" <> show s <> ")"
   show (Corpus        s i)      = "Corpus"         <> show i <> " (" <> show s <> ")"
+  show (CorpusCode    s i)      = "CorpusCode"     <> show i <> " (" <> show s <> ")"
   show (Document    _ s i)      = "Document"       <> show i <> " (" <> show s <> ")"
   show (CorpusDocument s _ _ i) = "CorpusDocument" <> show i <> " (" <> show s <> ")"
   show (PGraphExplorer s i)     = "graphExplorer"  <> show i <> " (" <> show s <> ")"
@@ -96,6 +96,7 @@ appPath (FolderShared s i)       = "folderShared/"  <> show s <> "/" <> show i
 appPath (Team s i)               = "team/"          <> show s <> "/" <> show i
 appPath (CorpusDocument s c l i) = "corpus/" <> show s <> "/" <> show c <> "/list/" <> show l <> "/document/" <> show i
 appPath (Corpus s i)             = "corpus/"     <> show s <> "/" <> show i
+appPath (CorpusCode s i)         = "corpusCode/" <> show s <> "/" <> show i
 appPath (Document s l i)         = "list/"       <> show s <> "/" <> show l <> "/document/" <> show i
 appPath (Dashboard s i)          = "dashboard/"  <> show s <> "/" <> show i
 appPath (PGraphExplorer s i)     = "graph/"      <> show s <> "/" <> show i
@@ -131,3 +132,11 @@ nodeTypeAppRoute GT.NodeFrameWrite s i = Just $ RouteFrameWrite s i
 nodeTypeAppRoute GT.NodeFrameCalc  s i = Just $ RouteFrameCalc  s i
 nodeTypeAppRoute GT.NodeFrameVisio s i = Just $ RouteFrameVisio s i
 nodeTypeAppRoute _ _ _                 = Nothing
+
+
+------------------------------------------------------
+
+type Tile =
+  ( id    :: UUID
+  , route :: AppRoute
+  )

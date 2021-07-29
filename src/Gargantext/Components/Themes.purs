@@ -1,17 +1,34 @@
 module Gargantext.Components.Themes where
 
+import Gargantext.Prelude
+
+import DOM.Simple (document)
 import Data.Array as A
-import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
+import Data.Nullable (toMaybe)
 import Effect (Effect)
-import FFI.Simple ((.=))
+import FFI.Simple ((...), (.=))
+import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
-import Gargantext.Prelude
-import Gargantext.Utils.Reactix as R2
+-- (?) Unknown runtime DOM errors lead to a FFI workaround for setting the
+--     property of the element (see `markThemeToDOMTree` method)
+--
+--     Both use cases throw the error:
+--
+--       ```
+--       TypeError: FFI_Simple_Functions.applyMethod'(...)(...)(...) is not a function
+--       ```
+--
+--       ```purescript
+--        _ <- el ... "setAttribute" $ [ "data-theme", name ]
+--        _ <- pure $ (el .= "data-theme") name
+--       ```
+foreign import setAttribute :: R.Element -> String -> String -> Effect Unit
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Themes"
@@ -60,6 +77,14 @@ switchTheme (Theme { location }) = do
       _ <- pure $ (el .= "href") location
       pure unit
 
+markThemeToDOMTree :: Theme -> Effect Unit
+markThemeToDOMTree (Theme { name }) = do
+  mEl <- pure $ toMaybe (document ... "getElementById" $ [ "app" ])
+  case mEl of
+    Nothing -> pure unit
+    Just el -> setAttribute el "data-theme" name
+
+
 type ThemeSwitcherProps = (
     theme  :: Theme
   , themes :: Array Theme
@@ -78,6 +103,8 @@ themeSwitcherCpt = here.component "themeSwitcher" cpt
       let option (Theme { name }) = H.option { value: name } [ H.text name ]
       let options = map option themes
 
+      R.useEffectOnce' $ markThemeToDOMTree currentTheme'
+
       pure $ R2.select { className: "form-control"
                        , defaultValue: themeName currentTheme'
                        , on: { change: onChange currentTheme } } options
@@ -90,4 +117,5 @@ themeSwitcherCpt = here.component "themeSwitcher" cpt
             Nothing -> pure unit
             Just t  -> do
               switchTheme t
+              markThemeToDOMTree t
               T.write_ t currentTheme
