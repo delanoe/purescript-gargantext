@@ -20,7 +20,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..),
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe, panel)
 import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Routes as GR
-import Gargantext.Sessions (Session, postWwwUrlencoded)
+import Gargantext.Sessions (Session, postWwwUrlencoded, post)
 import Gargantext.Types (ID, NodeType(..))
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
@@ -89,7 +89,7 @@ uploadFileView = R.createElement uploadFileViewCpt
 uploadFileViewCpt :: R.Component Props
 uploadFileViewCpt = here.component "uploadFileView" cpt
   where
-    cpt {dispatch, id, nodeType} _ = do
+    cpt { dispatch, nodeType } _ = do
       -- mFile    :: R.State (Maybe UploadFile) <- R.useState' Nothing
       mFile <- T.useBox (Nothing :: Maybe UploadFile)
       fileType <- T.useBox CSV
@@ -393,7 +393,7 @@ uploadFrameCalcView = R.createElement uploadFrameCalcViewCpt
 uploadFrameCalcViewCpt :: R.Component Props
 uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt
   where
-    cpt { dispatch, id, nodeType, session } _ = do
+    cpt { dispatch } _ = do
       let bodies =
             [ R2.row
               [ H.div { className: "col-12 flex-space-around" }
@@ -497,7 +497,6 @@ uploadFrameCalc :: Session
                     -> Aff GT.AsyncTaskWithType
 uploadFrameCalc session id = do
   let p = GR.NodeAPI GT.Node (Just id) $ GT.asyncTaskTypePath GT.UploadFrameCalc
-      bodyParams = []
 
-  task <- postWwwUrlencoded session p bodyParams
+  task <- post session p ([] :: Array String)
   pure $ GT.AsyncTaskWithType { task, typ: GT.UploadFrameCalc }
