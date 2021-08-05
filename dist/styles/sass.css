@@ -266,7 +266,7 @@ li#rename #rename-a {
   border: 1px solid rgba(0, 0, 0, 0.2);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   height: 600px;
-  width: 1300px;
+  width: 1000px;
 }
 
 #create-node-tooltip {
@@ -557,9 +557,13 @@ li .leaf:hover a.settings {
   color: black;
 }
 
-.forest-tree-node-action-move {
-  max-height: 50vh;
-  overflow-y: scroll;
+.popup-container > .card {
+  width: auto !important;
+}
+
+.popup-container-body {
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 .forest-layout-wrapper {

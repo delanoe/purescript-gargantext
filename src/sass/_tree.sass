@@ -200,10 +200,18 @@ li
   .ok-to-use
     color: black
 
-.forest-tree-node-action-move
-  // empirical value (see issue #308)
-  max-height: 50vh
-  overflow-y: scroll
+
+.popup-container
+
+  // will enlarge popup when inner content is larger (see issue #315)
+  & > .card
+    width: auto !important
+
+.popup-container-body
+  // empirical value (see issue #308, #315)
+  max-height: 70vh
+  overflow-y: auto
+
 .forest-layout-wrapper
   // removing Bootstrap "col" padding
   padding-left: 0

@@ -54,7 +54,7 @@ searchFieldCpt = here.component "searchField" cpt
     cpt props@{ onSearch, search } _ = do
       search' <- T.useLive T.unequal search
       iframeRef <- R.useRef    null
-      let params = 
+      let params =
                 [ searchInput { search } []
                 -- , if length s.term < 3  -- search with love : <3
                 --   then
@@ -65,15 +65,15 @@ searchFieldCpt = here.component "searchField" cpt
                              , if isExternal search'.datafield
                                  then databaseInput { databases: props.databases, search } []
                                  else H.div {} []
- 
+
                              , if isHAL search'.datafield
                                  then orgInput { orgs: allOrgs, search } []
                                  else H.div {} []
- 
+
                              , if isIMT search'.datafield
                                  then componentIMT { search } []
                                  else H.div {} []
- 
+
                              , if isCNRS search'.datafield
                                  then componentCNRS { search } []
                                  else H.div {} []
@@ -81,18 +81,20 @@ searchFieldCpt = here.component "searchField" cpt
                              , if needsLang search'.datafield
                                 then langNav { langs: props.langs, search } []
                                 else H.div {} []
- 
+
                              , H.div {} [ searchIframes { iframeRef, search } [] ]
                              ]
 
                 ]
       let button =  submitButton {onSearch, search, session: props.session} []
 
-      pure $ H.div { className: "search-field" }
-        [ H.div { className: "row" }
-          [ H.div { className: "col-12" } params ]
-        , H.div { className: "row" }
-          [ H.div { className: "col-12" } [ button ] ]
+      pure $
+
+        H.div { className: "search-field" }
+        [
+          R.fragment params
+        ,
+          button
         ]
       --pure $ panel params button
 
@@ -143,7 +145,7 @@ isExternal _ = false
 
 isHAL :: Maybe DataField -> Boolean
 isHAL (Just
-        ( External 
+        ( External
           ( Just (HAL _ )
           )
         )
@@ -161,10 +163,10 @@ isIsTex _ = false
 
 
 isIMT :: Maybe DataField -> Boolean
-isIMT ( Just 
+isIMT ( Just
         ( External
-          ( Just 
-            ( HAL 
+          ( Just
+            ( HAL
               ( Just ( IMT _)
               )
             )
@@ -376,7 +378,7 @@ filterInput (term /\ setTerm) =
                   -- TODO                          ^FIXME not sure about the regex comprehension: that should match "123 2334 44545" only (Integers separated by one space)
                   -- form validation with CSS
                   -- DOC: https://developer.mozilla.org/en-US/docs/Learn/HTML/Forms/Form_validation
-                  , placeholder : "Filter with struct_Ids as integer" 
+                  , placeholder : "Filter with struct_Ids as integer"
                   }
          ]
 -}
