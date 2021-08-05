@@ -3,7 +3,6 @@ module Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar
   , searchBar
   ) where
 
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
