@@ -3,6 +3,7 @@ module Gargantext.Components.Nodes.Corpus.Chart.Pie where
 import Data.Array (zip, filter)
 import Data.Array as A
 import Data.Generic.Rep (class Generic)
+import Data.Either (Either)
 import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
@@ -22,6 +23,7 @@ import Gargantext.Components.Charts.Options.Data (dataSerie)
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Series (seriesBarD1, seriesPieD1)
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types
   (MetricsProps, Path, Props, ReloadPath)
@@ -82,7 +84,7 @@ chartOptionsPie { onClick, onInit } (HistoMetrics { dates: dates', count: count'
   , onInit
   }
 
-getMetricsHash :: Session -> ReloadPath -> Aff String
+getMetricsHash :: Session -> ReloadPath -> Aff (Either RESTError String)
 getMetricsHash session (_ /\ { corpusId, limit, listId, tabType }) = do
   get session $ ChartHash { chartType: ChartPie, listId: mListId, tabType } (Just corpusId)
   where

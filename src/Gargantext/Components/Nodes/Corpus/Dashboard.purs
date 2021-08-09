@@ -1,10 +1,10 @@
 module Gargantext.Components.Nodes.Corpus.Dashboard where
 
-import Gargantext.Prelude (Unit, bind, discard, pure, read, show, unit, ($), (<$>), (<>), (==))
-
 import Data.Array as A
+import Data.Either (Either(..))
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
+import DOM.Simple.Console (log, log2)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
@@ -12,11 +12,13 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
+import Gargantext.Components.Forest.Tree (doSearch)
 import Gargantext.Components.Nodes.Corpus (fieldsCodeEditor)
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
 import Gargantext.Components.Nodes.Dashboard.Types as DT
 import Gargantext.Components.Nodes.Types (FTFieldList(..), FTFieldsWithIndex(..), defaultField)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude (Unit, bind, discard, pure, read, show, unit, ($), (<$>), (<>), (==))
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (NodeID)
 import Gargantext.Utils.Reactix as R2
@@ -65,10 +67,14 @@ dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
                                                             , fields :: FTFieldList } -> Effect Unit
         onChange nodeId' reload (DT.Hyperdata h) { charts, fields } = do
           launchAff_ do
-            DT.saveDashboard { hyperdata: DT.Hyperdata $ h { charts = charts, fields = fields }
-                             , nodeId:nodeId'
-                             , session }
-            liftEffect $ T2.reload reload
+            res <- DT.saveDashboard { hyperdata: DT.Hyperdata $ h { charts = charts, fields = fields }
+                                    , nodeId:nodeId'
+                                    , session }
+            liftEffect $ do
+              _ <- case res of
+                Left err -> log2 "[dashboardLayoutWithKey] onChange RESTError" err
+                _ -> pure unit
+              T2.reload reload
 
 type LoadedProps =
   ( charts        :: Array P.PredefinedChart

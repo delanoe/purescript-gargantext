@@ -4,7 +4,10 @@ module Gargantext.Components.NgramsTable
   , mainNgramsTable
   ) where
 
+import Gargantext.Prelude
+
 import Data.Array as A
+import Data.Either (Either(..))
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Lens (Lens', to, (%~), (.~), (^.), (^?), view)
 import Data.Lens.At (at)
@@ -28,20 +31,18 @@ import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
-
 import Unsafe.Coerce (unsafeCoerce)
-
-import Gargantext.Prelude
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
-import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Components.Table as TT
-import Gargantext.Components.Table.Types as TT
 import Gargantext.Components.NgramsTable.Components as NTC
 import Gargantext.Components.NgramsTable.Core (Action(..), CoreAction(..), CoreState, Dispatch, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTerm, PageParams, PatchMap(..), Version, Versioned(..), VersionedNgramsTable, VersionedWithCountNgramsTable, _NgramsElement, _NgramsRepoElement, _NgramsTable, _children, _list, _ngrams, _ngrams_repo_elements, _ngrams_scores, _occurrences, _root, addNewNgramA, applyNgramsPatches, applyPatchSet, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, fromNgramsPatches, ngramsRepoElementToNgramsElement, ngramsTermText, normNgram, patchSetFromMap, replace, rootsOf, singletonNgramsTablePatch, syncResetButtons, toVersioned)
 import Gargantext.Components.NgramsTable.Loader (useLoaderWithCacheAPI)
 import Gargantext.Components.Nodes.Lists.Types as NT
+import Gargantext.Components.Table as TT
+import Gargantext.Components.Table.Types as TT
+import Gargantext.Config.REST (RESTError)
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..)) as R
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
@@ -113,7 +114,6 @@ type TableContainerProps =
 
 tableContainer :: Record TableContainerProps -> Record TT.TableContainerProps -> R.Element
 tableContainer p q = R.createElement (tableContainerCpt p) q []
-
 tableContainerCpt :: Record TableContainerProps -> R.Component TT.TableContainerProps
 tableContainerCpt { dispatch
                   , ngramsChildren
@@ -277,7 +277,6 @@ type Props =
 
 loadedNgramsTable :: R2.Component Props
 loadedNgramsTable = R.createElement loadedNgramsTableCpt
-
 loadedNgramsTableCpt :: R.Component Props
 loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
   cpt props@{ afterSync
@@ -534,7 +533,6 @@ type MainNgramsTableProps = (
 
 mainNgramsTable :: R2.Component MainNgramsTableProps
 mainNgramsTable = R.createElement mainNgramsTableCpt
-
 mainNgramsTableCpt :: R.Component MainNgramsTableProps
 mainNgramsTableCpt = here.component "mainNgramsTable" cpt
   where
@@ -588,7 +586,7 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
     versionEndpoint { defaultListId, path: { nodeId, tabType, session } } _ = get session $ R.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
 
     -- NOTE With cache off
-    loader :: PageParams -> Aff VersionedWithCountNgramsTable
+    loader :: PageParams -> Aff (Either RESTError VersionedWithCountNgramsTable)
     loader path@{ listIds
                 , nodeId
                 , params: { limit, offset, orderBy }

@@ -1,26 +1,26 @@
 module Gargantext.Components.Forest.Tree.Node.Tools.SubTree where
 
-import Data.Array as A
-import Data.Maybe (Maybe(..))
-import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff)
-import React.SyntheticEvent     as E
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Record as Record
-import Toestand as T
-
 import Gargantext.Prelude
 
+import Data.Array as A
+import Data.Either (Either)
+import Data.Maybe (Maybe(..))
+import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Action (Props, Action, subTreeOut, setTreeOut)
-import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..), SubTreeOut(..))
-import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (nodeText)
+import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..), SubTreeOut(..))
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import React.SyntheticEvent as E
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools.SubTree"
@@ -42,14 +42,14 @@ subTreeView = R.createElement subTreeViewCpt
 subTreeViewCpt :: R.Component SubTreeParamsProps
 subTreeViewCpt = here.component "subTreeView" cpt
   where
-    cpt params@{ action
-               , dispatch
-               , handed
-               , id
-               , nodeType
-               , session
-               , subTreeParams
-               } _ = do
+    cpt { action
+        , dispatch
+        , handed
+        , id
+        , nodeType
+        , session
+        , subTreeParams
+        } _ = do
       let
         SubTreeParams {showtypes} = subTreeParams
       --  (valAction /\ setAction)  = action
@@ -67,12 +67,12 @@ subTreeViewCpt = here.component "subTreeView" cpt
                             , tree
                             } []
 
-loadSubTree :: Array GT.NodeType -> Session -> Aff FTree
+loadSubTree :: Array GT.NodeType -> Session -> Aff (Either RESTError FTree)
 loadSubTree nodetypes session = getSubTree session treeId nodetypes
   where
     Session { treeId } = session
 
-getSubTree :: Session -> Int -> Array GT.NodeType -> Aff FTree
+getSubTree :: Session -> Int -> Array GT.NodeType -> Aff (Either RESTError FTree)
 getSubTree session treeId showtypes = get session $ GR.NodeAPI GT.Tree (Just treeId) nodeTypes
   where
     nodeTypes     = A.foldl (\a b -> a <> "type=" <> show b <> "&") "?" showtypes
@@ -88,7 +88,7 @@ subTreeViewLoaded = R.createElement subTreeViewLoadedCpt
 subTreeViewLoadedCpt :: R.Component CorpusTreeProps
 subTreeViewLoadedCpt = here.component "subTreeViewLoaded" cpt
   where
-    cpt p@{ dispatch, handed, id, nodeType, session, tree } _ = do
+    cpt p@{ handed } _ = do
       let pRender = Record.merge { render: subTreeTreeView } p
 
       pure $ H.div {className:"tree"}
@@ -108,7 +108,6 @@ subTreeTreeView = R2.ntCreateElement subTreeTreeViewCpt
 subTreeTreeViewCpt :: R2.NTComponent CorpusTreeRenderProps
 subTreeTreeViewCpt = here.ntComponent "subTreeTreeView" cpt where
   cpt (CorpusTreeRenderProps p@{ action
-                               , dispatch
                                , handed
                                , id
                                , render
@@ -142,7 +141,6 @@ subTreeTreeViewCpt = here.ntComponent "subTreeTreeView" cpt where
       sortedAry = A.sortWith (\(NTree (LNode {id:id'}) _) -> id')
         $ A.filter (\(NTree (LNode {id:id'}) _) -> id'/= id) ary
       validNodeType = (A.elem nodeType valitypes) && (id /= targetId)
-      clickable    = if validNodeType then "clickable" else ""
       isSelected n action' = case (subTreeOut action') of
         Nothing                   -> false
         (Just (SubTreeOut {out})) -> n == out

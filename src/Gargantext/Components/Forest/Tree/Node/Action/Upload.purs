@@ -1,38 +1,39 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
-import Data.Either (fromRight')
-import Data.Generic.Rep (class Generic)
+import Gargantext.Prelude
+
+import Control.Monad.Error.Class (throwError)
+import DOM.Simple.Console (log2)
+import Data.Either (Either(..), fromRight')
 import Data.Eq.Generic (genericEq)
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.String.Regex as DSR
 import Data.String.Regex.Flags as DSRF
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
-import Partial.Unsafe (unsafePartial, unsafeCrashWith)
-import React.SyntheticEvent     as E
-import Reactix                  as R
-import Reactix.DOM.HTML         as H
-import Toestand as T
-import URI.Extra.QueryPairs     as QP
--- import Web.File.Blob (Blob)
-import Web.File.FileReader.Aff (readAsDataURL)
-
-import Gargantext.Prelude
-
+import Effect.Exception (error)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), Props)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..), readUFBAsText)
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe, panel)
 import Gargantext.Components.Lang (Lang(..))
-import Gargantext.Routes       as GR
-import Gargantext.Sessions (Session, postWwwUrlencoded, post)
+import Gargantext.Config.REST (RESTError)
+import Gargantext.Routes as GR
+import Gargantext.Sessions (Session, postWwwUrlencoded)
 import Gargantext.Types (NodeType(..), ID)
-import Gargantext.Types         as GT
+import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import Partial.Unsafe (unsafePartial, unsafeCrashWith)
+import React.SyntheticEvent as E
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
+import URI.Extra.QueryPairs as QP
+import Web.File.FileReader.Aff (readAsDataURL)
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Upload"
@@ -52,7 +53,7 @@ actionUploadCpt :: R.Component ActionUpload
 actionUploadCpt = here.component "actionUpload" cpt where
   cpt { nodeType: Corpus, dispatch, id, session } _ = pure $ uploadFileView {dispatch, id, nodeType: GT.Corpus, session}
   cpt { nodeType: NodeList, dispatch, id, session } _ = pure $ uploadTermListView {dispatch, id, nodeType: GT.NodeList, session}
-  cpt props@{ nodeType: _, dispatch, id, session } _ = pure $ actionUploadOther props []
+  cpt props@{ nodeType: _ } _ = pure $ actionUploadOther props []
 
 {-
 actionUpload Annuaire id session dispatch =
@@ -138,12 +139,6 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
                                            }
                             ]
       pure $ panel bodies footer
-
-    renderOptionFT :: FileType -> R.Element
-    renderOptionFT opt = H.option {} [ H.text $ show opt ]
-
-    renderOptionLang :: Lang -> R.Element
-    renderOptionLang opt = H.option {} [ H.text $ show opt ]
 
     onChangeContents :: forall e. T.Box (Maybe UploadFile) -> E.SyntheticEvent_ e -> Effect Unit
     onChangeContents mFile e = do
@@ -329,8 +324,10 @@ uploadFile session NodeList id JSON { mName, contents } = do
   -}
 uploadFile session nodeType id fileType { mName, contents } = do
   -- contents <- readAsText blob
-  task <- postWwwUrlencoded session p bodyParams
-  pure $ GT.AsyncTaskWithType {task, typ: GT.Form}
+  eTask :: Either RESTError GT.AsyncTask <- postWwwUrlencoded session p bodyParams
+  case eTask of
+    Left _err -> liftEffect $ throwError $ error "[uploadFile] RESTError"
+    Right task -> pure $ GT.AsyncTaskWithType { task, typ: GT.Form }
     --postMultipartFormData session p fileContents
   where
     p = case nodeType of
@@ -351,7 +348,7 @@ uploadFile session nodeType id fileType { mName, contents } = do
 uploadArbitraryFile :: Session
                     -> ID
                     -> {blob :: UploadFileBlob, mName :: Maybe String}
-                    -> Aff GT.AsyncTaskWithType
+                    -> Aff (Either RESTError GT.AsyncTaskWithType)
 uploadArbitraryFile session id {mName, blob: UploadFileBlob blob} = do
     contents <- readAsDataURL blob
     uploadArbitraryDataURL session id mName contents
@@ -360,12 +357,12 @@ uploadArbitraryDataURL :: Session
                        -> ID
                        -> Maybe String
                        -> String
-                       -> Aff GT.AsyncTaskWithType
+                       -> Aff (Either RESTError GT.AsyncTaskWithType)
 uploadArbitraryDataURL session id mName contents' = do
     let re = fromRight' (\_ -> unsafeCrashWith "Unexpected Left") $ DSR.regex "data:.*;base64," DSRF.noFlags
         contents = DSR.replace re "" contents'
-    task <- postWwwUrlencoded session p (bodyParams contents)
-    pure $ GT.AsyncTaskWithType { task, typ: GT.Form }
+    eTask :: Either RESTError GT.AsyncTask <- postWwwUrlencoded session p (bodyParams contents)
+    pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.Form }) <$> eTask
   where
     p = GR.NodeAPI GT.Node (Just id) $ GT.asyncTaskTypePath GT.UploadFile
 
@@ -447,7 +444,6 @@ uploadTermButtonCpt :: R.Component UploadTermButtonProps
 uploadTermButtonCpt = here.component "uploadTermButton" cpt
   where
     cpt { dispatch
-        , id
         , mFile
         , nodeType
         , uploadType } _ = do

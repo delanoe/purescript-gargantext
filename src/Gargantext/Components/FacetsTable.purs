@@ -3,16 +3,18 @@
 --       has not been ported to this module yet.
 module Gargantext.Components.FacetsTable where
 
-import Data.Generic.Rep (class Generic)
+import Gargantext.Prelude
+
+import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
-import Data.Show.Generic (genericShow)
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.Sequence (Seq)
 import Data.Sequence as Seq
 import Data.Set (Set)
 import Data.Set as Set
-import Data.Tuple (fst, snd)
+import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
@@ -21,16 +23,12 @@ import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
 import Toestand as T
 
-import Gargantext.Prelude
-
 import Gargantext.Components.Category (CategoryQuery(..), putCategories)
 import Gargantext.Components.Category.Types (Category(..), decodeCategory, favCategory)
-import Gargantext.Components.Search
-  ( Contact(..), Document(..), HyperdataRowContact(..), HyperdataRowDocument(..)
-  , SearchQuery, SearchResult(..), SearchResultTypes(..) )
-
+import Gargantext.Components.Search (Contact(..), Document(..), HyperdataRowContact(..), HyperdataRowDocument(..), SearchQuery, SearchResult(..), SearchResultTypes(..))
 import Gargantext.Components.Table as T
 import Gargantext.Components.Table.Types as T
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(Search, NodeAPI))
@@ -153,12 +151,6 @@ docViewCpt = here.component "docView" cpt
             ] 
     -}      ] 
         ]
-      where
-        buttonStyle = { backgroundColor: "peru"
-                      , border: "white"
-                      , color: "white"
-                      , float: "right"
-                      , padding: "9px" }
 
 performDeletions :: Session -> Int -> T.Box Deletions -> Deletions -> Effect Unit
 performDeletions session nodeId deletions deletions' = do
@@ -221,8 +213,8 @@ type PagePath = { nodeId :: Int
 initialPagePath :: {session :: Session, nodeId :: Int, listId :: Int, query :: SearchQuery} -> PagePath
 initialPagePath {session, nodeId, listId, query} = {session, nodeId, listId, query, params: T.initialParams}
 
-loadPage :: PagePath -> Aff Rows
-loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy, searchType}} = do
+loadPage :: PagePath -> Aff (Either RESTError Rows)
+loadPage { session, nodeId, listId, query, params: {limit, offset, orderBy }} = do
   let
     convOrderBy (T.ASC  (T.ColumnName "Date")) = DateAsc
     convOrderBy (T.DESC (T.ColumnName "Date")) = DateDesc
@@ -235,12 +227,15 @@ loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy, searc
     p = Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy } (Just nodeId)
 
   --SearchResult {result} <- post session p $ SearchQuery {query: concat query, expected:searchType}
-  SearchResult {result} <- post session p query
-  -- $ SearchQuery {query: concat query, expected: SearchDoc}
-  pure $ case result of
-          SearchResultDoc     {docs}     -> Docs     {docs: doc2view     <$> Seq.fromFoldable docs}
-          SearchResultContact {contacts} -> Contacts {contacts: contact2view <$> Seq.fromFoldable contacts}
-          errMessage                     -> Docs     {docs: Seq.fromFoldable [err2view errMessage]} -- TODO better error view
+  eSearchResult <- post session p query
+  case eSearchResult of
+    Left err -> pure $ Left err
+    Right (SearchResult {result}) ->
+      -- $ SearchQuery {query: concat query, expected: SearchDoc}
+      pure $ Right $ case result of
+              SearchResultDoc     {docs}     -> Docs     {docs: doc2view     <$> Seq.fromFoldable docs}
+              SearchResultContact {contacts} -> Contacts {contacts: contact2view <$> Seq.fromFoldable contacts}
+              errMessage                     -> Docs     {docs: Seq.fromFoldable [err2view errMessage]} -- TODO better error view
 
 doc2view :: Document -> DocumentsView
 doc2view ( Document { id
@@ -417,7 +412,7 @@ derive instance Generic DeleteDocumentQuery _
 derive instance Newtype DeleteDocumentQuery _
 derive newtype instance JSON.WriteForeign DeleteDocumentQuery
 
-deleteDocuments :: Session -> Int -> DeleteDocumentQuery -> Aff (Array Int)
+deleteDocuments :: Session -> Int -> DeleteDocumentQuery -> Aff (Either RESTError (Array Int))
 deleteDocuments session nodeId =
   deleteWithBody session $ NodeAPI Node (Just nodeId) "documents"
 

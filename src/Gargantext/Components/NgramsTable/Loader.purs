@@ -1,20 +1,19 @@
 module Gargantext.Components.NgramsTable.Loader where
 
+import Gargantext.Prelude
+
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), maybe, isJust)
-import Data.Tuple (fst)
-import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
+import Gargantext.Components.LoadingSpinner (loadingSpinner)
+import Gargantext.Components.NgramsTable.Core (Version, Versioned(..))
+import Gargantext.Config.REST (RESTError)
+import Gargantext.Utils.CacheAPI as GUC
 import Reactix as R
 import Simple.JSON as JSON
 import Toestand as T
-
-import Gargantext.Prelude
-
-import Gargantext.Components.LoadingSpinner (loadingSpinner)
-import Gargantext.Components.NgramsTable.Core (Version, Versioned(..))
-import Gargantext.Utils.CacheAPI as GUC
 
 
 cacheName :: String
@@ -26,7 +25,7 @@ clearCache _ = GUC.delete $ GUC.CacheName cacheName
 
 
 type LoaderWithCacheAPIProps path res ret = (
-    cacheEndpoint :: path -> Aff Version
+    cacheEndpoint :: path -> Aff (Either RESTError Version)
   , handleResponse :: Versioned res -> ret
   , mkRequest :: path -> GUC.Request
   , path :: path
@@ -49,7 +48,7 @@ useLoaderWithCacheAPI { cacheEndpoint, handleResponse, mkRequest, path, renderer
   pure $ maybe (loadingSpinner {}) renderer state'
 
 type LoaderWithCacheAPIEffectProps path res ret = (
-    cacheEndpoint  :: path -> Aff Version
+    cacheEndpoint  :: path -> Aff (Either RESTError Version)
   , handleResponse :: Versioned res -> ret
   , mkRequest      :: path -> GUC.Request
   , path           :: path
@@ -79,19 +78,22 @@ useCachedAPILoaderEffect { cacheEndpoint
         cache <- GUC.openCache $ GUC.CacheName cacheName
         -- TODO Parallelize?
         vr@(Versioned { version, "data": d }) <- GUC.cachedJson cache req
-        cacheReal <- cacheEndpoint path
-        val <- if version == cacheReal then
-          pure vr
-        else do
-          -- liftEffect $ do
-          --   log "[useCachedAPILoaderEffect] versions dont match"
-          --   log2 "[useCachedAPILoaderEffect] cached version" version
-          --   log2 "[useCachedAPILoaderEffect] real version" cacheReal
-          _ <- GUC.deleteReq cache req
-          vr'@(Versioned { version: version', data: _ }) <- GUC.cachedJson cache req
-          if version' == cacheReal then
-            pure vr'
-          else
-            throwError $ error $ "[NgramsTable.Loader] Fetched clean cache but hashes don't match: " <> show version <> " != " <> show cacheReal
-        liftEffect $ do
-          T.write_ (Just $ handleResponse val) state
+        eCacheReal <- cacheEndpoint path
+        case eCacheReal of
+          Left err -> throwError $ error $ "[useCachedAPILoaderEffect] RESTError"
+          Right cacheReal -> do
+            val <- if version == cacheReal then
+              pure vr
+            else do
+              -- liftEffect $ do
+              --   log "[useCachedAPILoaderEffect] versions dont match"
+              --   log2 "[useCachedAPILoaderEffect] cached version" version
+              --   log2 "[useCachedAPILoaderEffect] real version" cacheReal
+              _ <- GUC.deleteReq cache req
+              vr'@(Versioned { version: version', data: _ }) <- GUC.cachedJson cache req
+              if version' == cacheReal then
+               pure vr'
+              else
+                throwError $ error $ "[useCachedAPILoaderEffect] Fetched clean cache but hashes don't match: " <> show version <> " != " <> show cacheReal
+            liftEffect $ do
+              T.write_ (Just $ handleResponse val) state

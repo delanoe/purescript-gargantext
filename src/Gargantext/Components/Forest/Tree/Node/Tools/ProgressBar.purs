@@ -1,21 +1,24 @@
 module Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar where
 
+import Gargantext.Prelude
+
+import Control.Monad.Error.Class (throwError)
+import Data.Either (Either(..))
 import Data.Int (fromNumber)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (Aff, error, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Timer (clearInterval, setInterval)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
-import Gargantext.Prelude
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar"
@@ -34,13 +37,11 @@ type Props = (
 
 asyncProgressBar :: R2.Component Props
 asyncProgressBar = R.createElement asyncProgressBarCpt
-
 asyncProgressBarCpt :: R.Component Props
 asyncProgressBarCpt = here.component "asyncProgressBar" cpt
   where
     cpt props@{ asyncTask: (GT.AsyncTaskWithType {task: GT.AsyncTask {id}})
               , barType
-              , nodeId
               , onFinish
               } _ = do
       progress <- T.useBox 0.0
@@ -49,16 +50,20 @@ asyncProgressBarCpt = here.component "asyncProgressBar" cpt
       R.useEffectOnce' $ do
         intervalId <- setInterval 1000 $ do
           launchAff_ $ do
-            asyncProgress@(GT.AsyncProgress {status}) <- queryProgress props
-            liftEffect do
-              T.write_ (min 100.0 $ GT.progressPercent asyncProgress) progress
-              if (status == GT.IsFinished) || (status == GT.IsKilled) || (status == GT.IsFailure) then do
-                _ <- case R.readRef intervalIdRef of
-                  Nothing -> pure unit
-                  Just iid -> clearInterval iid
-                onFinish unit
-              else
-                pure unit
+            eAsyncProgress <- queryProgress props
+            case eAsyncProgress of
+              Left _err -> throwError $ error "[asyncProgressBar] RESTError"
+              Right asyncProgress -> do
+                let GT.AsyncProgress { status } = asyncProgress
+                liftEffect do
+                  T.write_ (min 100.0 $ GT.progressPercent asyncProgress) progress
+                  if (status == GT.IsFinished) || (status == GT.IsKilled) || (status == GT.IsFailure) then do
+                    _ <- case R.readRef intervalIdRef of
+                      Nothing -> pure unit
+                      Just iid -> clearInterval iid
+                    onFinish unit
+                  else
+                    pure unit
 
         R.setRef intervalIdRef $ Just intervalId
 
@@ -104,7 +109,7 @@ progressIndicatorCpt = here.component "progressIndicator" cpt
         Nothing -> 0
         Just x  -> x
 
-queryProgress :: Record Props -> Aff GT.AsyncProgress
+queryProgress :: Record Props -> Aff (Either RESTError GT.AsyncProgress)
 queryProgress { asyncTask: GT.AsyncTaskWithType { task: GT.AsyncTask {id}
                                                 , typ
                                                 }

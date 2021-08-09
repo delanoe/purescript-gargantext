@@ -1,6 +1,6 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Common where
 
-import Data.Tuple (fst)
+import Data.Either (Either)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
@@ -10,6 +10,7 @@ import Toestand as T
 import Gargantext.Prelude
 
 import Gargantext.Components.Nodes.Corpus.Chart.Types (MetricsProps, ReloadPath)
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Hooks.Loader (HashedResponse, useLoader, useLoaderWithCacheAPI)
 import Gargantext.Utils.Crypto (Hash)
 import Gargantext.Sessions (Session)
@@ -20,7 +21,7 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Common"
 
 type MetricsLoadViewProps a = (
-    getMetrics :: Session -> ReloadPath -> Aff a
+    getMetrics :: Session -> ReloadPath -> Aff (Either RESTError a)
   , loaded :: Record MetricsProps -> a -> R.Element
   | MetricsProps
   )
@@ -30,7 +31,6 @@ cacheName = "metrics"
 
 metricsLoadView :: forall a. Eq a => Record (MetricsLoadViewProps a) -> R.Element
 metricsLoadView p = R.createElement metricsLoadViewCpt p []
-
 metricsLoadViewCpt :: forall a. Eq a => R.Component (MetricsLoadViewProps a)
 metricsLoadViewCpt = here.component "metricsLoadView" cpt
   where
@@ -41,7 +41,7 @@ metricsLoadViewCpt = here.component "metricsLoadView" cpt
         loaded { path, reload, session, onClick, onInit } l
 
 type MetricsWithCacheLoadViewProps res ret = (
-    getMetricsHash :: Session -> ReloadPath -> Aff Hash
+    getMetricsHash :: Session -> ReloadPath -> Aff (Either RESTError Hash)
   , handleResponse :: HashedResponse res -> ret
   , loaded :: Record MetricsProps -> ret -> R.Element
   , mkRequest :: ReloadPath -> GUC.Request
@@ -52,7 +52,6 @@ metricsWithCacheLoadView :: forall res ret.
                             Eq ret => JSON.ReadForeign res =>
                             Record (MetricsWithCacheLoadViewProps res ret) -> R.Element
 metricsWithCacheLoadView p = R.createElement metricsWithCacheLoadViewCpt p []
-
 metricsWithCacheLoadViewCpt :: forall res ret.
                                Eq ret => JSON.ReadForeign res =>
                                R.Component (MetricsWithCacheLoadViewProps res ret)

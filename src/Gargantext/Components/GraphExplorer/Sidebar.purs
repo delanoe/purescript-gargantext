@@ -2,33 +2,28 @@ module Gargantext.Components.GraphExplorer.Sidebar
   -- (Props, sidebar)
   where
 
+import Gargantext.Prelude
+
+import Control.Monad.Error.Class (throwError)
 import Control.Parallel (parTraverse)
 import Data.Array (head, last, concat)
+import Data.Either (Either(..))
 import Data.Int (fromString)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (Aff, error, launchAff_)
 import Effect.Class (liftEffect)
-import Partial.Unsafe (unsafePartial)
-import Reactix as R
-import Reactix.DOM.HTML as RH
-import Reactix.DOM.HTML as H
-import Record as Record
-import Record.Extra as RX
-import Toestand as T
-
-import Gargantext.Prelude
-
-import Gargantext.Components.Lang (Lang(..))
-import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.GraphExplorer.Legend as Legend
+import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Components.Nodes.Corpus.Graph.Tabs (tabs) as CGT
 import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Search (SearchType(..), SearchQuery(..))
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Data.Array (mapMaybe)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
@@ -36,6 +31,13 @@ import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, NodeID, TabSubType(..), TabType(..), TermList(..), modeTabType)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Partial.Unsafe (unsafePartial)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Reactix.DOM.HTML as RH
+import Record as Record
+import Record.Extra as RX
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.Sidebar"
@@ -318,13 +320,14 @@ type SendPatches =
   )
 
 sendPatches :: Record SendPatches -> Effect Unit
-sendPatches { graphId, metaData, nodes, session, termList, reloadForest } = do
+sendPatches { metaData, nodes, session, termList, reloadForest } = do
   launchAff_ do
-    patches <- (parTraverse (sendPatch termList session metaData) nodes) :: Aff (Array NTC.VersionedNgramsPatches)
+    patches <- (parTraverse (sendPatch termList session metaData) nodes) -- :: Aff (Array NTC.VersionedNgramsPatches)
     let mPatch = last patches
     case mPatch of
       Nothing -> pure unit
-      Just (NTC.Versioned patch) -> do
+      Just (Left _err) -> throwError $ error $ "[sendPatches] RESTError"
+      Just (Right (NTC.Versioned _patch)) -> do
         liftEffect $ T2.reload reloadForest
 
 -- Why is this called delete node?
@@ -332,11 +335,14 @@ sendPatch :: TermList
           -> Session
           -> GET.MetaData
           -> Record SigmaxT.Node
-          -> Aff NTC.VersionedNgramsPatches
+          -> Aff (Either RESTError NTC.VersionedNgramsPatches)
 sendPatch termList session (GET.MetaData metaData) node = do
-    ret  <- NTC.putNgramsPatches coreParams versioned
-    task <- NTC.postNgramsChartsAsync coreParams  -- TODO add task
-    pure ret
+    eRet  <- NTC.putNgramsPatches coreParams versioned
+    case eRet of
+      Left err -> pure $ Left err
+      Right ret -> do
+        task <- NTC.postNgramsChartsAsync coreParams  -- TODO add task
+        pure $ Right ret
   where
     nodeId :: NodeID
     nodeId = unsafePartial $ fromJust $ fromString node.id

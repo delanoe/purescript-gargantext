@@ -1,36 +1,41 @@
 -- TODO: this module should be replaced by FacetsTable
 module Gargantext.Components.DocsTable where
 
+import Gargantext.Prelude
+import Prelude
+
+import Control.Monad.Error.Class (throwError)
 import DOM.Simple.Console (log2)
 import DOM.Simple.Event as DE
 import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Array as A
+import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Lens ((^.))
 import Data.Lens.At (at)
 import Data.Lens.Record (prop)
-import Data.Map    as Map
+import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
 import Data.Newtype (class Newtype)
 import Data.Ord.Down (Down(..))
 import Data.Set (Set)
-import Data.Set    as Set
+import Data.Set as Set
 import Data.String as Str
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (Aff, error, launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Category (rating)
 import Gargantext.Components.Category.Types (Star(..))
 import Gargantext.Components.DocsTable.Types (DocumentsView(..), Hyperdata(..), LocalUserScore, Query, Response(..), Year, sampleData)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Nodes.Texts.Types as TextsT
-import Gargantext.Components.Table             as TT
-import Gargantext.Components.Table.Types       as TT
+import Gargantext.Components.Table as TT
+import Gargantext.Components.Table.Types as TT
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
-import Gargantext.Prelude
 import Gargantext.Prelude (class Ord, Unit, bind, const, discard, identity, mempty, otherwise, pure, show, unit, ($), (/=), (<$>), (<<<), (<>), (==))
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Routes as Routes
@@ -41,7 +46,6 @@ import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParam, mQueryParamS, queryParam, queryParamS)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
-import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
@@ -221,9 +225,9 @@ type PageParams = {
   , yearFilter  :: Maybe Year
   }
 
-getPageHash :: Session -> PageParams -> Aff String
-getPageHash session { nodeId, tabType } = do
-  (get session $ tableHashRoute nodeId tabType) :: Aff String
+getPageHash :: Session -> PageParams -> Aff (Either RESTError String)
+getPageHash session { nodeId, tabType } =
+  get session $ tableHashRoute nodeId tabType
 
 convOrderBy :: Maybe (TT.OrderByDirection TT.ColumnName) -> Maybe OrderBy
 convOrderBy (Just (TT.ASC  (TT.ColumnName "Date")))  = Just DateAsc
@@ -261,7 +265,6 @@ filterDocsByYear year docs = A.filter filterFunc docs
 
 pageLayout :: R2.Component PageLayoutProps
 pageLayout = R.createElement pageLayoutCpt
-
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = here.component "pageLayout" cpt where
   cpt props@{ cacheState
@@ -318,12 +321,12 @@ pageLayoutCpt = here.component "pageLayout" cpt where
         paramsS' <- T.useLive T.unequal paramsS
         let loader p = do
               let route = tableRouteWithPage (p { params = paramsS', query = query })
-              res <- get session $ route
+              eRes <- get session $ route
               liftEffect $ do
                 here.log2 "table route" route
-                here.log2 "table res" res
-              pure $ handleResponse res
-            render (Tuple count documents) = pagePaintRaw { documents
+                here.log2 "table res" eRes
+              pure $ handleResponse <$> eRes
+        let render (Tuple count documents) = pagePaintRaw { documents
                                                           , layout: props { params = paramsS'
                                                                           , totalRecords = count }
                                                           , localCategories
@@ -562,7 +565,7 @@ tableRouteWithPage { listId, nodeId, params: { limit, offset, orderBy, searchTyp
     q   = queryParamS "query" query
     y   = mQueryParam "year" yearFilter
 
-deleteAllDocuments :: Session -> Int -> Aff (Array Int)
+deleteAllDocuments :: Session -> Int -> Aff (Either RESTError (Array Int))
 deleteAllDocuments session = delete session <<< documentsRoute
 
 -- TODO: not optimal but Data.Set lacks some function (Set.alter)

@@ -2,12 +2,11 @@ module Gargantext.Components.Nodes.Corpus where
 
 import Data.Array as A
 import Data.Either (Either(..))
-import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
-import Data.Show.Generic (genericShow)
+import Data.Generic.Rep (class Generic)
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (Tuple(..))
+import Data.Show.Generic (genericShow)
 import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, throwError)
@@ -25,12 +24,13 @@ import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..))
 import Gargantext.Components.Nodes.Types (FTField, FTFieldList(..), FTFieldWithIndex, FTFieldsWithIndex(..), Field(..), FieldType(..), Hash, Index, defaultField, defaultHaskell', defaultJSON', defaultMarkdown', defaultPython')
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Data.Array as GDA
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (class Eq, class Show, Unit, bind, discard, pure, show, unit, ($), (+), (-), (<), (<$>), (<<<), (<>), (==), (>))
 import Gargantext.Routes (SessionRoute(Children, NodeAPI))
 import Gargantext.Sessions (Session, get, put, sessionId)
-import Gargantext.Types (AffTableResult, NodeType(..))
+import Gargantext.Types (AffETableResult, NodeType(..))
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
@@ -172,10 +172,14 @@ corpusLayoutViewCpt = here.component "corpusLayoutView" cpt
                              , session :: Session } -> e -> Effect Unit
     onClickSave {fields: FTFieldsWithIndex fields, nodeId, reload, session} _ = do
       launchAff_ do
-        saveCorpus $ { hyperdata: Hyperdata {fields: FTFieldList $ (_.ftField) <$> fields}
-                     , nodeId
-                     , session }
-        liftEffect $ T2.reload reload
+        res <- saveCorpus $ { hyperdata: Hyperdata {fields: FTFieldList $ (_.ftField) <$> fields}
+                            , nodeId
+                            , session }
+        liftEffect $ do
+          _ <- case res of
+                Left err -> log2 "[corpusLayoutView] onClickSave RESTError" err
+                _ -> pure unit
+          T2.reload reload
 
     onClickAdd :: forall e. T.Box FTFieldsWithIndex -> e -> Effect Unit
     onClickAdd fieldsS _ = do
@@ -453,11 +457,11 @@ type LoadProps =
   , session :: Session
   )
 
-loadCorpus' :: Record LoadProps -> Aff (NodePoly Hyperdata)
+loadCorpus' :: Record LoadProps -> Aff (Either RESTError (NodePoly Hyperdata))
 loadCorpus' {nodeId, session} = get session $ NodeAPI Corpus (Just nodeId) ""
 
 -- Just to make reloading effective
-loadCorpusWithReload :: { reload :: T2.Reload  | LoadProps } -> Aff (NodePoly Hyperdata)
+loadCorpusWithReload :: { reload :: T2.Reload  | LoadProps } -> Aff (Either RESTError (NodePoly Hyperdata))
 loadCorpusWithReload {nodeId, session} = loadCorpus' {nodeId, session}
 
 type SaveProps = (
@@ -465,41 +469,69 @@ type SaveProps = (
   | LoadProps
   )
 
-saveCorpus :: Record SaveProps -> Aff Unit
+saveCorpus :: Record SaveProps -> Aff (Either RESTError Int)
 saveCorpus {hyperdata, nodeId, session} = do
-  _id <- (put session (NodeAPI Corpus (Just nodeId) "") hyperdata) :: Aff Int
-  pure unit
+  put session (NodeAPI Corpus (Just nodeId) "") hyperdata
 
-loadCorpus :: Record LoadProps -> Aff CorpusData
+loadCorpus :: Record LoadProps -> Aff (Either RESTError CorpusData)
 loadCorpus {nodeId, session} = do
   -- fetch corpus via lists parentId
-  (NodePoly {parentId: corpusId} :: NodePoly {}) <- get session nodePolyRoute
-  corpusNode     <-  get session $ corpusNodeRoute     corpusId ""
-  defaultListIds <- (get session $ defaultListIdsRoute corpusId)
-                    :: forall a. JSON.ReadForeign a => AffTableResult (NodePoly a)
-  case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
-    Just (NodePoly { id: defaultListId }) ->
-      pure {corpusId, corpusNode, defaultListId}
-    Nothing ->
-      throwError $ error "Missing default list"
+  res <- get session nodePolyRoute
+  case res of
+    Left err -> pure $ Left err
+    Right (NodePoly {parentId: corpusId} :: NodePoly {}) -> do
+      eCorpusNode     <-  get session $ corpusNodeRoute     corpusId ""
+      eDefaultListIds <- (get session $ defaultListIdsRoute corpusId)
+                      :: forall a. JSON.ReadForeign a => AffETableResult (NodePoly a)
+      case eCorpusNode of
+        Left err -> pure $ Left err
+        Right corpusNode -> do
+          case eDefaultListIds of
+            Left err -> pure $ Left err
+            Right defaultListIds -> do
+              case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
+                Just (NodePoly { id: defaultListId }) ->
+                  pure $ Right { corpusId, corpusNode, defaultListId }
+                Nothing ->
+                  throwError $ error "Missing default list"
+
+--  (NodePoly {parentId: corpusId} :: NodePoly {}) <- get session nodePolyRoute
+--  corpusNode     <-  get session $ corpusNodeRoute     corpusId ""
+--  defaultListIds <- (get session $ defaultListIdsRoute corpusId)
+--                    :: forall a. JSON.ReadForeign a => AffTableResult (NodePoly a)
+--  case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
+--    Just (NodePoly { id: defaultListId }) ->
+--      pure {corpusId, corpusNode, defaultListId}
+--    Nothing ->
+--      throwError $ error "Missing default list"
   where
     nodePolyRoute       = NodeAPI Corpus (Just nodeId) ""
     corpusNodeRoute     = NodeAPI Corpus <<< Just
     defaultListIdsRoute = Children NodeList 0 1 Nothing <<< Just
 
 
-loadCorpusWithChild :: Record LoadProps -> Aff CorpusData
+loadCorpusWithChild :: Record LoadProps -> Aff (Either RESTError CorpusData)
 loadCorpusWithChild { nodeId: childId, session } = do
   -- fetch corpus via lists parentId
-  (NodePoly {parentId: corpusId} :: NodePoly {}) <- get session $ listNodeRoute childId ""
-  corpusNode     <-  get session $ corpusNodeRoute     corpusId ""
-  defaultListIds <- (get session $ defaultListIdsRoute corpusId)
-                    :: forall a. JSON.ReadForeign a => AffTableResult (NodePoly a)
-  case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
-    Just (NodePoly { id: defaultListId }) ->
-      pure { corpusId, corpusNode, defaultListId }
-    Nothing ->
-      throwError $ error "Missing default list"
+  eListNode <- get session $ listNodeRoute childId ""
+  case eListNode of
+    Left err -> pure $ Left err
+    Right listNode -> do
+      let (NodePoly {parentId: corpusId} :: NodePoly {}) = listNode
+      eCorpusNode     <-  get session $ corpusNodeRoute     corpusId ""
+      case eCorpusNode of
+        Left err -> pure $ Left err
+        Right corpusNode -> do
+          eDefaultListIds <- (get session $ defaultListIdsRoute corpusId)
+                             :: forall a. JSON.ReadForeign a => AffETableResult (NodePoly a)
+          case eDefaultListIds of
+            Left err -> pure $ Left err
+            Right defaultListIds -> do
+              case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
+                Just (NodePoly { id: defaultListId }) ->
+                  pure $ Right { corpusId, corpusNode, defaultListId }
+                Nothing ->
+                  throwError $ error "Missing default list"
   where
     corpusNodeRoute     = NodeAPI Corpus <<< Just
     listNodeRoute       = NodeAPI Node <<< Just
@@ -514,7 +546,7 @@ type LoadWithReloadProps =
 
 
 -- Just to make reloading effective
-loadCorpusWithChildAndReload :: Record LoadWithReloadProps -> Aff CorpusData
+loadCorpusWithChildAndReload :: Record LoadWithReloadProps -> Aff (Either RESTError CorpusData)
 loadCorpusWithChildAndReload {nodeId, reload, session} = loadCorpusWithChild {nodeId, session}
 
 data ViewType = Code | Folders

@@ -12,7 +12,7 @@ module Gargantext.Components.NgramsTable.Core
   , NgramsPatch(..)
   , NgramsPatches
   , _NgramsTable
-  , NgramsTerm
+  , NgramsTerm(..)
   , normNgram
   , ngramsTermText
   , findNgramRoot
@@ -23,7 +23,7 @@ module Gargantext.Components.NgramsTable.Core
   , VersionedWithCount(..)
   , toVersioned
   , VersionedNgramsPatches
-  , AsyncNgramsChartsUpdate
+  , AsyncNgramsChartsUpdate(..)
   , VersionedNgramsTable
   , VersionedWithCountNgramsTable
   , NgramsTablePatch
@@ -79,18 +79,18 @@ module Gargantext.Components.NgramsTable.Core
   )
   where
 
+import Gargantext.Prelude
+
+import Control.Monad.Error.Class (throwError)
 import Control.Monad.State (class MonadState, execState)
 import Data.Array (head)
 import Data.Array as A
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
+import Data.Eq.Generic (genericEq)
 import Data.Foldable (class Foldable, foldMap, foldl, foldr)
 import Data.FoldableWithIndex (class FoldableWithIndex, foldMapWithIndex, foldlWithIndex, foldrWithIndex)
---import Data.FunctorWithIndex (class FunctorWithIndex, mapWithIndex)
 import Data.Generic.Rep (class Generic)
-import Data.Eq.Generic (genericEq)
-import Data.Ord.Generic (genericCompare)
-import Data.Show.Generic (genericShow)
 import Data.Lens (Iso', Lens', use, view, (%=), (%~), (.~), (?=), (^?))
 import Data.Lens.At (class At, at)
 import Data.Lens.Common (_Just)
@@ -103,11 +103,12 @@ import Data.List as L
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, fromMaybe', isJust)
-import Data.Monoid (class Monoid)
 import Data.Monoid.Additive (Additive(..))
 import Data.Newtype (class Newtype)
+import Data.Ord.Generic (genericCompare)
 import Data.Set (Set)
 import Data.Set as Set
+import Data.Show.Generic (genericShow)
 import Data.String as S
 import Data.String.Common as DSC
 import Data.String.Regex (Regex, regex, replace) as R
@@ -117,36 +118,34 @@ import Data.Symbol (SProxy(..))
 import Data.These (These(..))
 import Data.Traversable (for, traverse_, traverse)
 import Data.TraversableWithIndex (traverseWithIndex)
-import Data.Tuple (Tuple(..), snd)
+import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log, log2)
-import Effect.Aff (Aff, launchAff_)
+import DOM.Simple.Console (log2)
 import Effect (Effect)
+import Effect.Aff (Aff, error, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Exception.Unsafe (unsafeThrow)
+import FFI.Simple.Functions (delay)
 import Foreign as F
 import Foreign.Object as FO
-import FFI.Simple.Functions (delay)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Record as Record
 import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
+import Reactix as R
+import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
 import Toestand as T
 
-import Gargantext.Prelude
-
 import Gargantext.AsyncTasks as GAT
-import Gargantext.Components.Table       as T
+import Gargantext.Components.Table as T
 import Gargantext.Components.Table.Types as T
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, post, put)
-import Gargantext.Types (AsyncTaskType(..), AsyncTaskWithType(..), CTabNgramType(..), ListId, OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize(..))
+import Gargantext.Types (AsyncTask, AsyncTaskType(..), AsyncTaskWithType(..), CTabNgramType(..), ListId, OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize(..))
+import Gargantext.Utils.Either (eitherMap)
 import Gargantext.Utils.KarpRabin (indicesOfAny)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
-  
+
 here :: R2.Here
 here = R2.here "Gargantext.Components.NgramsTable.Core"
 
@@ -905,7 +904,7 @@ setTermListP ngram patch_list = singletonNgramsTablePatch ngram pe
 setTermListA :: NgramsTerm -> Replace TermList -> CoreAction
 setTermListA ngram termList = CommitPatch $ setTermListP ngram termList
 
-putNgramsPatches :: forall s. CoreParams s -> VersionedNgramsPatches -> Aff VersionedNgramsPatches
+putNgramsPatches :: forall s. CoreParams s -> VersionedNgramsPatches -> Aff (Either RESTError VersionedNgramsPatches)
 putNgramsPatches { listIds, nodeId, session, tabType } = put session putNgrams
   where putNgrams = PutNgrams tabType (head listIds) Nothing (Just nodeId)
 
@@ -918,22 +917,25 @@ syncPatches props state callback = do
   when (isEmptyNgramsTablePatch ngramsStagePatch) $ do
     let pt = Versioned { data: ngramsPatches, version: ngramsVersion }
     launchAff_ $ do
-      Versioned { data: newPatch, version: newVersion } <- putNgramsPatches props pt
-      callback unit
-      liftEffect $ do
-        log2 "[syncPatches] setting state, newVersion" newVersion
-        T.modify_ (\s ->
-          -- I think that sometimes this setState does not fully go through.
-          -- This is an issue because the version number does not get updated and the subsequent calls
-          -- can mess up the patches.
-          s {
-              ngramsLocalPatch = fromNgramsPatches mempty
-            , ngramsStagePatch = fromNgramsPatches mempty
-            , ngramsValidPatch = fromNgramsPatches newPatch <> ngramsLocalPatch <> s.ngramsValidPatch
+      ePatches <- putNgramsPatches props pt
+      case ePatches of
+        Left err -> liftEffect $ log2 "[syncPatches] RESTError" err
+        Right (Versioned { data: newPatch, version: newVersion }) -> do
+          callback unit
+          liftEffect $ do
+            log2 "[syncPatches] setting state, newVersion" newVersion
+            T.modify_ (\s ->
+              -- I think that sometimes this setState does not fully go through.
+              -- This is an issue because the version number does not get updated and the subsequent calls
+              -- can mess up the patches.
+              s {
+                  ngramsLocalPatch = fromNgramsPatches mempty
+                , ngramsStagePatch = fromNgramsPatches mempty
+                , ngramsValidPatch = fromNgramsPatches newPatch <> ngramsLocalPatch <> s.ngramsValidPatch
                               -- First the already valid patch, then the local patch, then the newly received newPatch.
-            , ngramsVersion    = newVersion
-            }) state
-        log2 "[syncPatches] ngramsVersion" newVersion
+                , ngramsVersion    = newVersion
+                }) state
+            log2 "[syncPatches] ngramsVersion" newVersion
     pure unit
 
 {-
@@ -967,7 +969,7 @@ commitPatch tablePatch state = do
   T.modify_ (\s -> s { ngramsLocalPatch = tablePatch <> s.ngramsLocalPatch }) state
     -- First we apply the patches we have locally and then the new patch (tablePatch).
 
-loadNgramsTable :: PageParams -> Aff VersionedNgramsTable
+loadNgramsTable :: PageParams -> Aff (Either RESTError VersionedNgramsTable)
 loadNgramsTable
   { nodeId, listIds, termListFilter, termSizeFilter, session, scoreType
   , searchQuery, tabType, params: {offset, limit, orderBy}}
@@ -986,7 +988,7 @@ loadNgramsTable
 
 type NgramsListByTabType = Map TabType VersionedNgramsTable
 
-loadNgramsTableAll :: PageParams -> Aff NgramsListByTabType
+loadNgramsTableAll :: PageParams -> Aff (Either RESTError NgramsListByTabType)
 loadNgramsTableAll { nodeId, listIds, session, scoreType } = do
   let
     cTagNgramTypes =
@@ -997,10 +999,12 @@ loadNgramsTableAll { nodeId, listIds, session, scoreType } = do
       ]
     query tabType = GetNgramsTableAll { listIds, tabType } (Just nodeId)
 
-  Map.fromFoldable <$> for cTagNgramTypes \cTagNgramType -> do
+  ret <- Map.fromFoldable <$> for cTagNgramTypes \cTagNgramType -> do
     let tabType = TabCorpus $ TabNgramType cTagNgramType
-    result :: VersionedNgramsTable <- get session $ query tabType
+    result :: Either RESTError VersionedNgramsTable <- get session $ query tabType
     pure $ Tuple tabType result
+
+  pure $ eitherMap ret
 
 convOrderBy :: T.OrderByDirection T.ColumnName -> OrderBy
 convOrderBy (T.ASC  (T.ColumnName "Score")) = ScoreAsc
@@ -1124,8 +1128,10 @@ chartsAfterSync path'@{ nodeId } tasks _ = do
 
 postNgramsChartsAsync :: forall s. CoreParams s -> Aff AsyncTaskWithType
 postNgramsChartsAsync { listIds, nodeId, session, tabType } = do
-    task <- post session putNgramsAsync acu
-    pure $ AsyncTaskWithType { task, typ: UpdateNgramsCharts }
+    eTask :: Either RESTError AsyncTask <- post session putNgramsAsync acu
+    case eTask of
+      Left _err -> liftEffect $ throwError $ error "[postNgramsChartsAsync] RESTError"
+      Right task -> pure $ AsyncTaskWithType { task, typ: UpdateNgramsCharts }
   where
     acu = AsyncNgramsChartsUpdate { listId: head listIds
                                   , tabType }

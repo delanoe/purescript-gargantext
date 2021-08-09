@@ -1,6 +1,7 @@
 module Gargantext.Components.Nodes.File where
 
 import Data.Generic.Rep (class Generic)
+import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
@@ -10,10 +11,12 @@ import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
 
 import Gargantext.Prelude
+
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (toUrl)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session, get, sessionId)
+import Gargantext.Sessions (Session, get)
 import Gargantext.Types (NodeType(..), NodeID)
 import Gargantext.Utils.Reactix as R2
 
@@ -49,16 +52,14 @@ type FileLayoutProps = ( nodeId :: NodeID, session :: Session )
 
 fileLayout :: R2.Leaf FileLayoutProps
 fileLayout props = R.createElement fileLayoutCpt props []
-
 fileLayoutCpt :: R.Component FileLayoutProps
 fileLayoutCpt = here.component "fileLayout" cpt where
   cpt { nodeId, session } _ = do
     useLoader nodeId (loadFile session) onLoad
       where
         onLoad loaded = fileLayoutLoaded { loaded, nodeId, session }
-        key = show (sessionId session) <> "-" <> show nodeId
 
-loadFile :: Session -> NodeID -> Aff File
+loadFile :: Session -> NodeID -> Aff (Either RESTError File)
 loadFile session nodeId = get session $ NodeAPI Node (Just nodeId) ""
 
 type FileLayoutLoadedProps =
@@ -68,7 +69,6 @@ type FileLayoutLoadedProps =
 
 fileLayoutLoaded :: Record FileLayoutLoadedProps -> R.Element
 fileLayoutLoaded props = R.createElement fileLayoutLoadedCpt props []
-
 fileLayoutLoadedCpt :: R.Component FileLayoutLoadedProps
 fileLayoutLoadedCpt = here.component "fileLayoutLoaded" cpt where
   cpt { loaded: File { hyperdata: HyperdataFile hyperdata }, nodeId, session } _ = do

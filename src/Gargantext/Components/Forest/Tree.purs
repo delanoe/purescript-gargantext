@@ -2,12 +2,14 @@ module Gargantext.Components.Forest.Tree where
 
 import Gargantext.Prelude
 
+import Control.Monad.Error.Class (throwError)
 import Data.Array as A
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse_, traverse)
 import DOM.Simple.Console (log, log2)
 import Effect (Effect)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, error)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -30,6 +32,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Update (updateRequest)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile, uploadArbitraryFile)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (AppRoute)
@@ -83,10 +86,10 @@ treeLoaderCpt = here.component "treeLoader" cpt where
           common = RecordE.pick p :: Record Common
           extra = { tree: tree', reloadTree: p.reload, session }
 
-getNodeTree :: Session -> ID -> Aff FTree
+getNodeTree :: Session -> ID -> Aff (Either RESTError FTree)
 getNodeTree session nodeId = get session $ GR.NodeAPI GT.Tree (Just nodeId) ""
 
-getNodeTreeFirstLevel :: Session -> ID -> Aff FTree
+getNodeTreeFirstLevel :: Session -> ID -> Aff (Either RESTError FTree)
 getNodeTreeFirstLevel session nodeId = get session $ GR.TreeFirstLevel (Just nodeId) ""
 
 type NodeProps = ( reloadTree :: T2.ReloadS, session :: Session | Common )
@@ -244,10 +247,13 @@ uploadFile' nodeType fileType mName contents p@{ tasks, tree: (NTree (LNode { id
     log2 "[performAction] UploadFile, uploaded, task:" task
 
 uploadArbitraryFile' mName blob p@{ tasks, tree: (NTree (LNode { id }) _) } = do
-  task <- uploadArbitraryFile p.session id { blob, mName }
-  liftEffect $ do
-    GAT.insert id task tasks
-    log2 "[performAction] UploadArbitraryFile, uploaded, task:" task
+  eTask <- uploadArbitraryFile p.session id { blob, mName }
+  case eTask of
+    Left err -> throwError $ error $ "[uploadArbitraryFile'] RESTError"
+    Right task -> do
+      liftEffect $ do
+        GAT.insert id task tasks
+        log2 "[performAction] UploadArbitraryFile, uploaded, task:" task
 
 moveNode params p@{ forestOpen, session } = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do

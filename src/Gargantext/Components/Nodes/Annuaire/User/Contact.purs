@@ -3,17 +3,17 @@ module Gargantext.Components.Nodes.Annuaire.User.Contact
   , contactLayout
   ) where
 
-import Gargantext.Prelude
-  ( Unit, bind, const, discard, pure, show, ($), (<$>), (*>), (<<<), (<>) )
+import Data.Either (Either)
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
+
+import Gargantext.Prelude
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.InputWithEnter (inputWithEnter)
@@ -27,6 +27,7 @@ import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
   , defaultContactWho, defaultHyperdataContact, defaultHyperdataUser )
 import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Components.Nodes.Texts.Types as TT
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
@@ -138,9 +139,6 @@ contactInfoItemCpt = here.component "contactInfoItem" cpt
               let newHyperdata = (L.over cLens (\_ -> R.readRef valueRef) hyperdata) :: HyperdataContact
               onUpdateHyperdata newHyperdata
 
-listElement :: Array R.Element -> R.Element
-listElement = H.li { className: "list-group-item justify-content-between" }
-
 type BasicProps =
   ( frontends      :: Frontends
   , nodeId         :: Int
@@ -159,7 +157,7 @@ type LayoutProps = ( session :: Session | ReloadProps )
 
 type KeyLayoutProps = ( key :: String, session :: Session | ReloadProps )
 
-saveContactHyperdata :: Session -> Int -> HyperdataContact -> Aff Int
+saveContactHyperdata :: Session -> Int -> HyperdataContact -> Aff (Either RESTError Int)
 saveContactHyperdata session id = put session (Routes.NodeAPI Node (Just id) "")
 
 type AnnuaireLayoutProps = ( annuaireId :: Int, session :: Session | ReloadProps )
@@ -234,9 +232,9 @@ contactLayoutWithKeyCpt = here.component "contactLayoutWithKey" cpt where
           launchAff_ $
             saveContactHyperdata session nodeId hd *> liftEffect (T2.reload reload)
 
-getAnnuaireContact :: Session -> Int -> Int -> Aff ContactData'
+getAnnuaireContact :: Session -> Int -> Int -> Aff (Either RESTError ContactData')
 getAnnuaireContact session annuaireId id = do
-  contactNode :: Contact' <- get session $ Routes.NodeAPI Annuaire (Just annuaireId) $ show id
+  eContactNode <- get session $ Routes.NodeAPI Annuaire (Just annuaireId) $ show id
   -- TODO: we need a default list for the pairings
   --defaultListIds <- get $ toUrl endConfigStateful Back (Children NodeList 0 1 Nothing) $ Just id
   --case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
@@ -244,4 +242,4 @@ getAnnuaireContact session annuaireId id = do
   --    pure {contactNode, defaultListId}
   --  Nothing ->
   --    throwError $ error "Missing default list"
-  pure {contactNode, defaultListId: 424242}
+  pure $ (\contactNode -> { contactNode, defaultListId: 424242 }) <$> eContactNode

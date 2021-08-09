@@ -2,15 +2,14 @@ module Gargantext.Components.Nodes.Frame where
 
 import Gargantext.Prelude
 
-import Data.Argonaut (decodeJson, (.:))
-import Data.Argonaut as Argonaut
+import DOM.Simple as DOM
+import Data.Either (Either)
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.Nullable (Nullable, null, toMaybe)
 import Data.Show.Generic (genericShow)
-import DOM.Simple as DOM
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -20,6 +19,7 @@ import Web.URL as WURL
 
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Node (NodePoly(..))
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, get, sessionId)
@@ -93,10 +93,8 @@ frameLayoutViewCpt :: R.Component ViewProps
 frameLayoutViewCpt = here.component "frameLayoutView" cpt
   where
     cpt { frame: NodePoly { hyperdata: Hyperdata { base, frame_id }}
-        , nodeId
         , nodeType
-        , reload
-        , session } _ = do
+        , reload } _ = do
       case nodeType of
         NodeFrameVisio ->
           case WURL.fromAbsolute base of
@@ -128,10 +126,7 @@ nodeFrameVisioCpt :: R.Component NodeFrameVisioProps
 nodeFrameVisioCpt = here.component "nodeFrameVisio" cpt
   where
     cpt { frame_id
-        , reload
         , url } _  = do
-      -- api = new JitsiMeetExternalAPI("visio.gargantext.org", {roomName: frame_id})
-      api <- T.useBox (Nothing :: Maybe JM.JitsiMeet)
       ref <- R.useRef (null :: Nullable DOM.Element)
 
       R.useEffect' $ do
@@ -152,9 +147,9 @@ type ReloadProps = ( nodeId  :: Int
                    , reload :: T2.Reload
                    , session :: Session )
 
-loadframe' :: Record LoadProps -> Aff (NodePoly Hyperdata)
+loadframe' :: Record LoadProps -> Aff (Either RESTError (NodePoly Hyperdata))
 loadframe' { nodeId, session } = get session $ NodeAPI Node (Just nodeId) ""
 
 -- Just to make reloading effective
-loadframeWithReload :: Record ReloadProps -> Aff (NodePoly Hyperdata)
+loadframeWithReload :: Record ReloadProps -> Aff (Either RESTError (NodePoly Hyperdata))
 loadframeWithReload { nodeId, session } = loadframe' { nodeId, session }

@@ -1,9 +1,11 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Update where
 
-import Gargantext.Components.Forest.Tree.Node.Action.Update.Types
-
+import Control.Monad.Error.Class (throwError)
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
+import Effect.Class (liftEffect)
+import Effect.Exception (error)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
@@ -11,7 +13,9 @@ import Toestand as T
 import Gargantext.Prelude
 
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Update.Types
 import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, submitButton, panel)
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types (NodeType(..), ID)
@@ -23,8 +27,10 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Update"
 
 updateRequest :: UpdateNodeParams -> Session -> ID -> Aff GT.AsyncTaskWithType
 updateRequest updateNodeParams session nodeId = do
-  task <- post session p updateNodeParams
-  pure $ GT.AsyncTaskWithType {task, typ: GT.UpdateNode }
+  eTask :: Either RESTError GT.AsyncTask <- post session p updateNodeParams
+  case eTask of
+    Left _err -> liftEffect $ throwError $ error "[updateRequest] RESTError"
+    Right task -> pure $ GT.AsyncTaskWithType { task, typ: GT.UpdateNode }
     where
       p = GR.NodeAPI GT.Node (Just nodeId) "update"
 
@@ -37,11 +43,11 @@ update ::  R2.Component UpdateProps
 update = R.createElement updateCpt
 updateCpt :: R.Component UpdateProps
 updateCpt = here.component "update" cpt where
-  cpt props@{ dispatch, nodeType: Dashboard } _ = pure $ updateDashboard props []
-  cpt props@{ dispatch, nodeType: Graph } _     = pure $ updateGraph props []
-  cpt props@{ dispatch, nodeType: NodeList } _  = pure $ updateNodeList props []
-  cpt props@{ dispatch, nodeType: Texts } _     = pure $ updateTexts props []
-  cpt props@{ dispatch, nodeType: _ } _         = pure $ updateOther props []
+  cpt props@{ nodeType: Dashboard } _ = pure $ updateDashboard props []
+  cpt props@{ nodeType: Graph } _     = pure $ updateGraph props []
+  cpt props@{ nodeType: NodeList } _  = pure $ updateNodeList props []
+  cpt props@{ nodeType: Texts } _     = pure $ updateTexts props []
+  cpt props@{ nodeType: _ } _         = pure $ updateOther props []
 
 updateDashboard :: R2.Component UpdateProps
 updateDashboard = R.createElement updateDashboardCpt
@@ -99,7 +105,7 @@ updateOther :: R2.Component UpdateProps
 updateOther = R.createElement updateOtherCpt
 updateOtherCpt :: R.Component UpdateProps
 updateOtherCpt = here.component "updateOther" cpt where
-  cpt { dispatch } _ = do
+  cpt _ _ = do
     pure $ H.div {} []
 
 -- fragmentPT $ "Update " <> show nodeType

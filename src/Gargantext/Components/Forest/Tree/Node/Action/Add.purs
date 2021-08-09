@@ -1,24 +1,18 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Add where
 
+import Gargantext.Prelude
+
+import Control.Monad.Error.Class (throwError)
 import Data.Array (head, length)
+import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Newtype (class Newtype)
 import Data.String (Pattern(..), indexOf)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
-import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, panel, submitButton)
-import Gargantext.Components.InputWithEnter (inputWithEnter)
-import Gargantext.Components.Lang (Lang(..), translate)
-import Gargantext.Routes as GR
-import Gargantext.Sessions (Session, post)
-import Gargantext.Types (NodeType(..), charCodeIcon)
-import Gargantext.Types as GT
-import Gargantext.Utils (nbsp)
-import Gargantext.Utils.Reactix as R2
+import Effect.Aff (Aff, error, launchAff_)
+import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
@@ -27,12 +21,23 @@ import Web.HTML (window)
 import Web.HTML.Navigator (userAgent)
 import Web.HTML.Window (navigator)
 
-import Gargantext.Prelude
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
+import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
+import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, panel, submitButton)
+import Gargantext.Components.InputWithEnter (inputWithEnter)
+import Gargantext.Components.Lang (Lang(..), translate)
+import Gargantext.Config.REST (RESTError)
+import Gargantext.Routes as GR
+import Gargantext.Sessions (Session, post)
+import Gargantext.Types (NodeType(..), charCodeIcon)
+import Gargantext.Types as GT
+import Gargantext.Utils (nbsp)
+import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Add"
 
-addNode :: Session -> GT.ID -> AddNodeValue -> Aff (Array GT.ID)
+addNode :: Session -> GT.ID -> AddNodeValue -> Aff (Either RESTError (Array GT.ID))
 addNode session parentId = post session $ GR.NodeAPI GT.Node (Just parentId) ""
 
 addNodeAsync :: Session
@@ -40,9 +45,12 @@ addNodeAsync :: Session
              -> AddNodeValue
              -> Aff GT.AsyncTaskWithType
 addNodeAsync session parentId q = do
-  task <- post session p q
-  pure $ GT.AsyncTaskWithType {task, typ: GT.AddNode}
-  where p = GR.NodeAPI GT.Node (Just parentId) (GT.asyncTaskTypePath GT.AddNode)
+  eTask :: Either RESTError GT.AsyncTask <- post session p q
+  case eTask of
+    Left _err -> liftEffect $ throwError $ error "[addNodeAsync] RESTError"
+    Right task -> pure $ GT.AsyncTaskWithType { task, typ: GT.AddNode }
+  where
+    p = GR.NodeAPI GT.Node (Just parentId) (GT.asyncTaskTypePath GT.AddNode)
 
 ----------------------------------------------------------------------
 -- TODO AddNodeParams

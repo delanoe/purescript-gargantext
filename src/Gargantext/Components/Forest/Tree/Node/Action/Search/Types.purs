@@ -1,6 +1,8 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Search.Types where
 
+import Control.Monad.Error.Class (throwError)
 import Data.Array (concat)
+import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (class Newtype)
@@ -9,15 +11,17 @@ import Data.Set as Set
 import Data.String as String
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, error)
+import Effect.Class (liftEffect)
 import Simple.JSON as JSON
-import Simple.JSON.Generics as JSONG
 import URI.Extra.QueryPairs as QP
 import URI.Query as Q
 
+
 import Gargantext.Prelude
 
-import Gargantext.Components.Lang
+import Gargantext.Components.Lang (Lang)
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (class ToUrl, backendUrl)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), post)
@@ -368,7 +372,9 @@ instance JSON.WriteForeign SearchQuery where
 
 performSearch :: Session -> Int -> SearchQuery -> Aff GT.AsyncTaskWithType
 performSearch session nodeId q = do
-  task <- post session p q
-  pure $ GT.AsyncTaskWithType {task, typ: GT.Query}
+  eTask :: Either RESTError GT.AsyncTask <- post session p q
+  case eTask of
+    Left _err -> liftEffect $ throwError $ error "[performSearch] RESTError"
+    Right task -> pure $ GT.AsyncTaskWithType { task, typ: GT.Query }
   where
     p = GR.NodeAPI GT.Corpus (Just nodeId) $ GT.asyncTaskTypePath GT.Query

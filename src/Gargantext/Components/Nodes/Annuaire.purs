@@ -3,6 +3,7 @@ module Gargantext.Components.Nodes.Annuaire
  where
 
 import Data.Array as A
+import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
@@ -23,12 +24,13 @@ import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types as CT
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table (defaultContainer, initialParams, makeRow, table, tableHeaderLayout) as TT
 import Gargantext.Components.Table.Types (ColumnName(..), Params) as TT
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, get)
-import Gargantext.Types (NodeType(..), AffTableResult, TableResult)
+import Gargantext.Types (NodeType(..), AffETableResult, TableResult)
 import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
@@ -120,7 +122,6 @@ annuaireCpt = here.component "annuaire" cpt
           , pageLayout { info, session, pagePath, frontends} ]
       where
         date = "Last update: " <> date'
-        style = {width: "250px", display: "inline-block"}
         initialPagePath nodeId = {nodeId, params: TT.initialParams}
 
 type PagePath = { nodeId :: Int, params :: TT.Params }
@@ -138,7 +139,7 @@ pageLayout props = R.createElement pageLayoutCpt props []
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = here.component "pageLayout" cpt
   where
-    cpt { info, frontends, pagePath, session } _ = do
+    cpt { frontends, pagePath, session } _ = do
       pagePath' <- T.useLive T.unequal pagePath
 
       useLoader pagePath' (loadPage session) $
@@ -175,8 +176,8 @@ pageCpt = here.component "page" cpt
                       }
       where
         rows pagePath' = (row pagePath') <$> Seq.fromFoldable docs
-        row pagePath'@{ nodeId } contact = { row: contactCells { annuaireId: nodeId, frontends, contact, session }
-                                           , delete: false }
+        row { nodeId } contact = { row: contactCells { annuaireId: nodeId, frontends, contact, session }
+                                 , delete: false }
         container = TT.defaultContainer { title: "Annuaire" } -- TODO
         colNames = TT.ColumnName <$> [ "", "First Name", "Last Name", "Company", "Role"]
         wrapColElts = const identity
@@ -194,9 +195,8 @@ contactCells :: Record ContactCellsProps -> R.Element
 contactCells p = R.createElement contactCellsCpt p []
 contactCellsCpt :: R.Component ContactCellsProps
 contactCellsCpt = here.component "contactCells" cpt where
-  cpt { annuaireId, frontends, session
-      , contact: CT.NodeContact
-        { id, hyperdata: CT.HyperdataContact { who : Nothing }}} _ =
+  cpt { contact: CT.NodeContact
+        { hyperdata: CT.HyperdataContact { who : Nothing } } } _ =
     pure $ TT.makeRow
     [ H.text ""
     , H.span {} [ H.text "Name" ]
@@ -224,9 +224,6 @@ contactCellsCpt = here.component "contactCells" cpt where
         --     H.text $ maybe "No ContactWhereRole" contactWhereRole (A.head $ ou)
       ]
       where
-        --nodepath = NodePath (sessionId session) NodeContact (Just id)
-        nodepath = Routes.ContactPage (sessionId session) annuaireId id
-        href = url frontends nodepath
         contactUrl aId id' = url frontends $ Routes.ContactPage (sessionId session) aId id'
         contactWhereOrg (CT.ContactWhere { organization: [] }) = "No Organization"
         contactWhereOrg (CT.ContactWhere { organization: orga }) =
@@ -234,8 +231,6 @@ contactCellsCpt = here.component "contactCells" cpt where
         contactWhereDept (CT.ContactWhere { labTeamDepts : [] }) = "Empty Dept"
         contactWhereDept (CT.ContactWhere { labTeamDepts : dept }) =
           fromMaybe "No Dept (list)" (A.head dept)
-        contactWhereRole (CT.ContactWhere { role: Nothing }) = "Empty Role"
-        contactWhereRole (CT.ContactWhere { role: Just role }) = role
 
 newtype HyperdataAnnuaire = HyperdataAnnuaire
   { title :: Maybe String
@@ -278,8 +273,8 @@ instance JSON.ReadForeign AnnuaireInfo where
 
 ------------------------------------------------------------------------
 
-loadPage :: Session -> PagePath -> AffTableResult CT.NodeContact
-loadPage session {nodeId, params: { offset, limit, orderBy }} =
+loadPage :: Session -> PagePath -> AffETableResult CT.NodeContact
+loadPage session {nodeId, params: { offset, limit }} =
     get session children
  -- TODO orderBy
  -- where
@@ -291,6 +286,6 @@ loadPage session {nodeId, params: { offset, limit, orderBy }} =
   where
     children = Children NodeContact offset limit Nothing {-(convOrderBy <$> orderBy)-} (Just nodeId)
 
-getAnnuaireInfo :: Session -> Int -> Aff AnnuaireInfo
+getAnnuaireInfo :: Session -> Int -> Aff (Either RESTError AnnuaireInfo)
 getAnnuaireInfo session id = get session (NodeAPI Node (Just id) "")
 

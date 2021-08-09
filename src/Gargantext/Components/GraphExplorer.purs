@@ -1,6 +1,9 @@
 module Gargantext.Components.GraphExplorer where
 
+import Gargantext.Prelude hiding (max, min)
+
 import Data.Array as A
+import Data.Either (Either)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Int (toNumber)
 import Data.Map as Map
@@ -19,13 +22,12 @@ import Record as Record
 import Record.Extra as RX
 import Toestand as T
 
-import Gargantext.Prelude hiding (max,min)
-
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Controls as Controls
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
 import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Data.Louvain as Louvain
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
@@ -105,7 +107,7 @@ explorerCpt = here.component "explorer" cpt
         , session
         } _ = do
       { mMetaData } <- GEST.focusedSidePanel sidePanelGraph
-      graphVersion' <- T.useLive T.unequal graphVersion
+      _graphVersion' <- T.useLive T.unequal graphVersion
       handed' <- T.useLive T.unequal handed
       mMetaData' <- T.useLive T.unequal mMetaData
 
@@ -115,7 +117,7 @@ explorerCpt = here.component "explorer" cpt
                           then SigmaxT.InitialRunning
                           else SigmaxT.InitialStopped
 
-      dataRef <- R.useRef graph
+      _dataRef <- R.useRef graph
       graphRef <- R.useRef null
       controls <- Controls.useGraphControls { forceAtlasS
                                             , graph
@@ -285,7 +287,7 @@ modeGraphType Types.Sources = "star"
 modeGraphType Types.Terms = "def"
 
 
-getNodes :: Session -> T2.Reload -> GET.GraphId -> Aff GET.HyperdataGraph
+getNodes :: Session -> T2.Reload -> GET.GraphId -> Aff (Either RESTError GET.HyperdataGraph)
 getNodes session graphVersion graphId =
   get session $ NodeAPI Types.Graph
                         (Just graphId)
@@ -305,8 +307,7 @@ transformGraph graph { edgeConfluence'
                      , edgeWeight'
                      , nodeSize'
                      , removedNodeIds'
-                     , selectedNodeIds'
-                     , showEdges' } = SigmaxT.Graph {nodes: newNodes, edges: newEdges}
+                     , selectedNodeIds' } = SigmaxT.Graph {nodes: newNodes, edges: newEdges}
   where
     edges = SigmaxT.graphEdges graph
     nodes = SigmaxT.graphNodes graph
@@ -325,18 +326,10 @@ transformGraph graph { edgeConfluence'
     newNodes  = Seq.filter nodeFilter $ Seq.map (nodeMarked <<< nodeHideSize) nodes
     newEdges  = Seq.filter (edgeInGraph $ Set.fromFoldable $ Seq.map _.id newNodes) newEdges'
 
-    edgeFilter e = true
+    edgeFilter _e = true
     nodeFilter n = nodeRemovedFilter n
 
-    nodeSizeFilter :: Record SigmaxT.Node -> Boolean
-    nodeSizeFilter node@{ size } = Range.within nodeSize' size
-
-    nodeRemovedFilter node@{ id } = not $ Set.member id removedNodeIds'
-
-    edgeConfluenceFilter :: Record SigmaxT.Edge -> Boolean
-    edgeConfluenceFilter edge@{ confluence } = Range.within edgeConfluence' confluence
-    edgeWeightFilter :: Record SigmaxT.Edge -> Boolean
-    edgeWeightFilter edge@{ weightIdx } = Range.within edgeWeight' $ toNumber weightIdx
+    nodeRemovedFilter { id } = not $ Set.member id removedNodeIds'
 
     edgeHideConfluence :: Record SigmaxT.Edge -> Record SigmaxT.Edge
     edgeHideConfluence edge@{ confluence } =
@@ -351,13 +344,6 @@ transformGraph graph { edgeConfluence'
         edge
       else
         edge { hidden = true }
-
-    edgeShowFilter :: Record SigmaxT.Edge -> Record SigmaxT.Edge
-    edgeShowFilter edge =
-      if SigmaxT.edgeStateHidden showEdges' then
-        edge { hidden = true }
-      else
-        edge
 
     edgeInGraph :: SigmaxT.NodeIds -> Record SigmaxT.Edge -> Boolean
     edgeInGraph nodeIds e = (Set.member e.source nodeIds) && (Set.member e.target nodeIds)

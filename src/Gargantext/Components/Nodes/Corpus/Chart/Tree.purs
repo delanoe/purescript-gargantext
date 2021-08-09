@@ -1,5 +1,6 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Tree where
 
+import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
@@ -17,6 +18,7 @@ import Gargantext.Components.Charts.Options.Series (TreeNode, Trees(..), mkTree)
 import Gargantext.Components.Charts.Options.Font (mkTooltip, templateFormatter)
 import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types (MetricsProps, Path, Props, ReloadPath)
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Hooks.Loader (HashedResponse(..))
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
@@ -54,7 +56,7 @@ scatterOptions { onClick, onInit } nodes = Options
 
   }
 
-getMetricsHash :: Session -> ReloadPath -> Aff String
+getMetricsHash :: Session -> ReloadPath -> Aff (Either RESTError String)
 getMetricsHash session (_ /\ { corpusId, limit, listId, tabType }) = do
   get session $ ChartHash { chartType: ChartTree, listId: mListId, tabType } (Just corpusId)
   where

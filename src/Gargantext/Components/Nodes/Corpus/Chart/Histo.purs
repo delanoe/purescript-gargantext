@@ -1,20 +1,25 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Histo where
 
+import Data.Either (Either)
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Gargantext.Components.Charts.Options.Color (grey)
-import Gargantext.Components.Charts.Options.Color (grey, blue, green)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
+import Toestand as T
+
+import Gargantext.Components.Charts.Options.Color (grey, blue)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
-import Gargantext.Components.Charts.Options.Legend (LegendMode(..), selectedMode)
 import Gargantext.Components.Charts.Options.Series (seriesBarD1)
 import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types (MetricsProps, Path, Props, ReloadPath)
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Hooks.Loader (HashedResponse(..))
 import Gargantext.Prelude (class Eq, bind, map, pure, ($), (==))
 import Gargantext.Routes (SessionRoute(..))
@@ -23,10 +28,6 @@ import Gargantext.Types (ChartType(..))
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Simple.JSON as JSON
-import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Histo"
@@ -75,8 +76,8 @@ chartOptions { onClick, onInit } (HistoMetrics { dates: dates', count: count'}) 
           map mapSeriesBar count'
         ]
 
-getMetricsHash :: Session -> ReloadPath -> Aff String
-getMetricsHash session (_ /\ { corpusId, limit, listId, tabType }) = do
+getMetricsHash :: Session -> ReloadPath -> Aff (Either RESTError String)
+getMetricsHash session (_ /\ { corpusId, listId, tabType }) = do
   get session $ ChartHash { chartType: Histo, listId: mListId, tabType } (Just corpusId)
   where
     mListId = if listId == 0 then Nothing else (Just listId)
@@ -90,7 +91,7 @@ handleResponse :: HashedResponse ChartMetrics -> HistoMetrics
 handleResponse (HashedResponse { value: ChartMetrics ms }) = ms."data"
 
 mkRequest :: Session -> ReloadPath -> GUC.Request
-mkRequest session (_ /\ path@{ corpusId, limit, listId, tabType }) = GUC.makeGetRequest session $ chartUrl path
+mkRequest session (_ /\ path) = GUC.makeGetRequest session $ chartUrl path
 
 histo :: Record Props -> R.Element
 histo props = R.createElement histoCpt props []
@@ -114,7 +115,7 @@ histoCpt = here.component "histo" cpt
         }
 
 loaded :: Record MetricsProps -> HistoMetrics -> R.Element
-loaded p@{ path, reload, session } l =
+loaded p l =
   H.div {} [
   {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: Histo, path, reload, session }

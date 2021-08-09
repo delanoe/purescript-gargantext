@@ -1,8 +1,9 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Share where
 
+import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
-import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..))
+import Data.Show.Generic (genericShow)
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -16,7 +17,7 @@ import Gargantext.Components.Forest.Tree.Node.Action (Action)
 import Gargantext.Components.Forest.Tree.Node.Action as Action
 import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
-import Gargantext.Prelude (class Eq, class Show, bind, pure, Unit)
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types (ID)
@@ -27,7 +28,7 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Share"
 
 ------------------------------------------------------------------------
-shareReq :: Session -> ID -> ShareNodeParams -> Aff ID
+shareReq :: Session -> ID -> ShareNodeParams -> Aff (Either RESTError ID)
 shareReq session nodeId =
   post session $ GR.NodeAPI GT.Node (Just nodeId) "share"
 
@@ -70,7 +71,7 @@ publishNode = R.createElement publishNodeCpt
 publishNodeCpt :: R.Component SubTreeParamsIn
 publishNodeCpt = here.component "publishNode" cpt
   where
-    cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
+    cpt { dispatch, handed, id, nodeType, session, subTreeParams } _ = do
       action <- T.useBox (Action.SharePublic { params: Nothing })
       action' <- T.useLive T.unequal action
 

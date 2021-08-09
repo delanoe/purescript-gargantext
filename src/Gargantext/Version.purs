@@ -1,10 +1,12 @@
 module Gargantext.Version where
 
+import Prelude
+
+import DOM.Simple.Console (log2)
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
-import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
@@ -22,7 +24,7 @@ type Version = String
 
 foreign import version :: Version
 
-getBackendVersion :: Session -> Aff Version
+getBackendVersion :: Session -> Aff (Either REST.RESTError Version)
 getBackendVersion (Session { backend }) = REST.get Nothing (toUrl backend "version")
 
 
@@ -33,7 +35,6 @@ type VersionProps =
 
 versionView :: R2.Component VersionProps
 versionView = R.createElement versionCpt
-
 versionCpt :: R.Component VersionProps
 versionCpt = here.component "version" cpt
   where
@@ -44,7 +45,9 @@ versionCpt = here.component "version" cpt
       R.useEffect' $ do
         launchAff_ $ do
           v <- getBackendVersion session
-          liftEffect $ T.write_ v versionBack
+          case v of
+            Right v' -> liftEffect $ T.write_ v' versionBack
+            Left err -> liftEffect $ log2 "[version] error" err
 
       pure $ case version == versionBack' of
         true  -> H.a { className: "fa fa-check-circle-o"

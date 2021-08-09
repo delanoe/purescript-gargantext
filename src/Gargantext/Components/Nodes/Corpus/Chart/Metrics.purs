@@ -1,6 +1,7 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Metrics where
 
 import Data.Generic.Rep (class Generic)
+import Data.Either (Either)
 import Data.Eq.Generic (genericEq)
 import Data.Map as Map
 import Data.Map (Map)
@@ -25,6 +26,7 @@ import Gargantext.Components.Charts.Options.Data (dataSerie)
 import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types
   (MetricsProps, Path, Props, ReloadPath)
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Hooks.Loader (HashedResponse(..))
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
@@ -93,7 +95,7 @@ scatterOptions { onClick, onInit } metrics' = Options
                         }
     --}
 
-getMetricsHash :: Session -> ReloadPath -> Aff String
+getMetricsHash :: Session -> ReloadPath -> Aff (Either RESTError String)
 getMetricsHash session (_ /\ { corpusId, listId, tabType }) =
   get session $ CorpusMetricsHash { listId, tabType } (Just corpusId)
 
@@ -104,7 +106,7 @@ handleResponse :: HashedResponse Metrics -> Loaded
 handleResponse (HashedResponse { value: Metrics ms }) = ms."data"
 
 mkRequest :: Session -> ReloadPath -> GUC.Request
-mkRequest session (_ /\ path@{ corpusId, limit, listId, tabType }) = GUC.makeGetRequest session $ chartUrl path
+mkRequest session (_ /\ path) = GUC.makeGetRequest session $ chartUrl path
 
 metrics :: Record Props -> R.Element
 metrics props = R.createElement metricsCpt props []
@@ -129,7 +131,7 @@ metricsCpt = here.component "etrics" cpt
 
 
 loaded :: Record MetricsProps -> Loaded -> R.Element
-loaded p@{ path, reload, session } loaded' =
+loaded p loaded' =
   H.div {} [
   {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: Scatter, path, reload, session }

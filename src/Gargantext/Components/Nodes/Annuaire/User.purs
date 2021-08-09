@@ -4,7 +4,7 @@ module Gargantext.Components.Nodes.Annuaire.User
   )
   where
 
-import Gargantext.Prelude (Unit, bind, discard, pure, show, ($), (<$>), (<<<), (<>))
+import Data.Either (Either(..))
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
@@ -14,12 +14,15 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
+import Gargantext.Prelude
+
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
 import Gargantext.Components.Nodes.Annuaire.Tabs as Tabs
 import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Components.Nodes.Texts.Types as TT
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
@@ -91,7 +94,6 @@ type ContactInfoItemProps =
 
 contactInfoItem :: Record ContactInfoItemProps -> R.Element
 contactInfoItem props = R.createElement contactInfoItemCpt props []
-
 contactInfoItemCpt :: R.Component ContactInfoItemProps
 contactInfoItemCpt = here.component "contactInfoItem" cpt
   where
@@ -172,7 +174,6 @@ type KeyLayoutProps = (
 
 userLayout :: R2.Component LayoutProps
 userLayout = R.createElement userLayoutCpt
-
 userLayoutCpt :: R.Component LayoutProps
 userLayoutCpt = here.component "userLayout" cpt
   where
@@ -200,7 +201,6 @@ userLayoutCpt = here.component "userLayout" cpt
 
 userLayoutWithKey :: Record KeyLayoutProps -> R.Element
 userLayoutWithKey props = R.createElement userLayoutWithKeyCpt props []
-
 userLayoutWithKeyCpt :: R.Component KeyLayoutProps
 userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt
   where
@@ -243,9 +243,9 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt
             liftEffect $ T2.reload reload
 
 -- | toUrl to get data XXX
-getContact :: Session -> Int -> Aff ContactData
+getContact :: Session -> Int -> Aff (Either RESTError ContactData)
 getContact session id = do
-  contactNode :: Contact <- get session $ Routes.NodeAPI Node (Just id) ""
+  eContactNode <- get session $ Routes.NodeAPI Node (Just id) ""
   -- TODO: we need a default list for the pairings
   --defaultListIds <- get $ toUrl endConfigStateful Back (Children NodeList 0 1 Nothing) $ Just id
   --case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
@@ -253,14 +253,14 @@ getContact session id = do
   --    pure {contactNode, defaultListId}
   --  Nothing ->
   --    throwError $ error "Missing default list"
-  pure {contactNode, defaultListId: 424242}
+  pure $ (\contactNode -> { contactNode, defaultListId: 424242 }) <$> eContactNode
 
 getUserWithReload :: { nodeId :: Int
                      , reload :: T2.Reload
-                     , session :: Session} -> Aff ContactData
+                     , session :: Session} -> Aff (Either RESTError ContactData)
 getUserWithReload {nodeId, session} = getContact session nodeId
 
-saveContactHyperdata :: Session -> Int -> HyperdataUser -> Aff Int
+saveContactHyperdata :: Session -> Int -> HyperdataUser -> Aff (Either RESTError Int)
 saveContactHyperdata session id h = do
   put session (Routes.NodeAPI Node (Just id) "") h
 

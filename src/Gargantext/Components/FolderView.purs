@@ -1,13 +1,20 @@
 module Gargantext.Components.FolderView where
 
-import DOM.Simple.Console (log, log2)
+import Control.Monad.Error.Class (throwError)
 import Data.Array as A
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Nullable (null)
 import Data.Traversable (traverse_)
+import DOM.Simple.Console (log, log2)
 import Effect (Effect)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, error)
 import Effect.Class (liftEffect)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Toestand as T
+
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
@@ -23,6 +30,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadArbitraryFile
 import Gargantext.Components.Forest.Tree.Node.Box (nodePopupView)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Ordering, Unit, bind, compare, discard, pure, unit, void, ($), (<$>), (<>))
 import Gargantext.Routes (AppRoute(Home), SessionRoute(..), appPath, nodeTypeAppRoute)
@@ -32,10 +40,6 @@ import Gargantext.Types as GT
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Record as Record
-import Toestand as T
 
 foreign import back :: Effect Unit
 foreign import link :: String -> Effect Unit
@@ -246,7 +250,7 @@ type LoadProps =
     reload :: T2.Reload
   )
 
-loadFolders :: Record LoadProps -> Aff FTree
+loadFolders :: Record LoadProps -> Aff (Either RESTError FTree)
 loadFolders {nodeId, session} = get session $ TreeFirstLevel (Just nodeId) ""
 
 type PerformActionProps =
@@ -295,7 +299,7 @@ performAction = performAction' where
       _                        -> void $ deleteNode p.session nt id
     refreshFolders p
 
-  doSearch task p@{ tasks, nodeId: id } = liftEffect $ do
+  doSearch task { tasks, nodeId: id } = liftEffect $ do
     GAT.insert id task tasks
     log2 "[performAction] DoSearch task:" task
 
@@ -323,12 +327,15 @@ performAction = performAction' where
       log2 "[performAction] UploadFile, uploaded, task:" task
 
   uploadArbitraryFile' mName blob p@{ tasks, nodeId: id } = do
-    task <- uploadArbitraryFile p.session id { blob, mName }
-    liftEffect $ do
-      GAT.insert id task tasks
-      log2 "[performAction] UploadArbitraryFile, uploaded, task:" task
+    eTask <- uploadArbitraryFile p.session id { blob, mName }
+    case eTask of
+      Left _err -> throwError $ error "[uploadArbitraryFile] RESTError"
+      Right task -> do
+        liftEffect $ do
+          GAT.insert id task tasks
+          log2 "[performAction] UploadArbitraryFile, uploaded, task:" task
 
-  moveNode params p@{ session } = traverse_ f params where
+  moveNode params p = traverse_ f params where
     f (SubTreeOut { in: in', out }) = do
       void $ moveNodeReq p.session in' out
       refreshFolders p
