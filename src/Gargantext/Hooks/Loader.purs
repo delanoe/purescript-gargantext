@@ -2,8 +2,6 @@ module Gargantext.Hooks.Loader where
 
 import Gargantext.Prelude
 
-import Control.Bind ((=<<))
-import Control.Monad.RWS (state)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), isJust, maybe)
@@ -13,7 +11,6 @@ import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Reactix as R
-import Record as Record
 import Simple.JSON as JSON
 import Toestand as T
 
@@ -105,7 +102,6 @@ type LoaderWithCacheAPIProps path res ret = (
   , path :: path
   , renderer :: ret -> R.Element
   )
-
 
 useLoaderWithCacheAPI :: forall path res ret.
                          Eq ret => Eq path => JSON.ReadForeign res =>

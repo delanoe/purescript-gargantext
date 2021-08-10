@@ -7,14 +7,13 @@ module Gargantext.Components.NgramsTable
 import Gargantext.Prelude
 
 import Data.Array as A
-import Data.Either (Either(..))
+import Data.Either (Either)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Lens (Lens', to, (%~), (.~), (^.), (^?), view)
 import Data.Lens.At (at)
 import Data.Lens.Common (_Just)
 import Data.Lens.Fold (folded)
 import Data.Lens.Index (ix)
-import Data.Lens.Record (prop)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isNothing, maybe)
@@ -23,11 +22,15 @@ import Data.Ord.Down (Down(..))
 import Data.Sequence (Seq, length) as Seq
 import Data.Set (Set)
 import Data.Set as Set
-import Data.Symbol (SProxy(..))
-import Data.Tuple (Tuple(..), fst)
+import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
+import Unsafe.Coerce (unsafeCoerce)
+
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.NgramsTable.Components as NTC
@@ -37,7 +40,7 @@ import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as TT
 import Gargantext.Components.Table.Types as TT
 import Gargantext.Config.REST (RESTError)
-import Gargantext.Hooks.Loader (loader, useLoader)
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..)) as R
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
@@ -46,19 +49,9 @@ import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Seq as Seq
 import Gargantext.Utils.Toestand as T2
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-import Unsafe.Coerce (unsafeCoerce)
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.NgramsTable"
-
-_ngramsChildren :: forall row. Lens' { ngramsChildren :: Map NgramsTerm Boolean | row } (Map NgramsTerm Boolean)
-_ngramsChildren = prop (SProxy :: SProxy "ngramsChildren")
-
-_ngramsSelection :: forall row. Lens' { ngramsSelection :: Set NgramsTerm | row } (Set NgramsTerm)
-_ngramsSelection = prop (SProxy :: SProxy "ngramsSelection")
 
 type State =
   CoreState (
@@ -278,27 +271,25 @@ loadedNgramsTable :: R2.Component Props
 loadedNgramsTable = R.createElement loadedNgramsTableCpt
 loadedNgramsTableCpt :: R.Component Props
 loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
-  cpt props@{ afterSync
-            , cacheState
-            , mTotalRows
-            , path
-            , reloadForest
-            , reloadRoot
-            , state
-            , tabNgramType
-            , tasks
-            , versioned: Versioned { data: initTable }
-            , withAutoUpdate } _ = do
-    state'@{ ngramsChildren, ngramsLocalPatch, ngramsParent, ngramsSelection, ngramsVersion } <- T.useLive T.unequal state
-    path'@{ listIds, params, scoreType, termListFilter, termSizeFilter } <- T.useLive T.unequal path
+  cpt { afterSync
+      , cacheState
+      , mTotalRows
+      , path
+      , reloadForest
+      , reloadRoot
+      , state
+      , tabNgramType
+      , tasks
+      , versioned: Versioned { data: initTable }
+      , withAutoUpdate } _ = do
+    state'@{ ngramsChildren, ngramsLocalPatch, ngramsParent, ngramsSelection } <- T.useLive T.unequal state
+    path'@{ scoreType, termListFilter, termSizeFilter } <- T.useLive T.unequal path
     params <- T.useFocused (_.params) (\a b -> b { params = a }) path
     params'@{ orderBy } <- T.useLive T.unequal params
     searchQuery <- T.useFocused (_.searchQuery) (\a b -> b { searchQuery = a }) path
     searchQuery' <- T.useLive T.unequal searchQuery
 
     let ngramsTable = applyNgramsPatches state' initTable
-        roots = rootsOf ngramsTable
-
         rowMap (Tuple ng nre) =
           let ng_scores :: Map NgramsTerm (Additive Int)
               ng_scores = ngramsTable ^. _NgramsTable <<< _ngrams_scores
@@ -317,7 +308,6 @@ loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
         rowsFilter ngramsElement =
           if displayRow { ngramsElement
                         , ngramsParentRoot
-                        , ngramsTable
                         , searchQuery: searchQuery'
                         , state: state'
                         , termListFilter
@@ -477,17 +467,15 @@ mkDispatch { filteredRows
 
 displayRow :: { ngramsElement    :: NgramsElement
               , ngramsParentRoot :: Maybe NgramsTerm
-              , ngramsTable      :: NgramsTable
               , searchQuery      :: SearchQuery
               , state            :: State
               , termListFilter   :: Maybe TermList
               , termSizeFilter   :: Maybe TermSize } -> Boolean
 displayRow { ngramsElement: NgramsElement {ngrams, root, list}
            , ngramsParentRoot
-           , ngramsTable
-           , state: state@{ ngramsChildren
-                          , ngramsLocalPatch
-                          , ngramsParent }
+           , state: { ngramsChildren
+                    , ngramsLocalPatch
+                    , ngramsParent }
            , searchQuery
            , termListFilter
            , termSizeFilter } =
@@ -535,17 +523,17 @@ mainNgramsTable = R.createElement mainNgramsTableCpt
 mainNgramsTableCpt :: R.Component MainNgramsTableProps
 mainNgramsTableCpt = here.component "mainNgramsTable" cpt
   where
-    cpt props@{ afterSync
-              , cacheState
-              , defaultListId
-              , path
-              , reloadForest
-              , reloadRoot
-              , tabNgramType
-              , tasks
-              , withAutoUpdate } _ = do
+    cpt { afterSync
+        , cacheState
+        , defaultListId
+        , path
+        , reloadForest
+        , reloadRoot
+        , tabNgramType
+        , tasks
+        , withAutoUpdate } _ = do
       cacheState' <- T.useLive T.unequal cacheState
-      path'@{ nodeId, tabType, session } <- T.useLive T.unequal path
+      path' <- T.useLive T.unequal path
 
       -- let path = initialPageParams session nodeId [defaultListId] tabType
 
@@ -562,6 +550,7 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
                                                       , withAutoUpdate } []
           useLoaderWithCacheAPI {
               cacheEndpoint: versionEndpoint { defaultListId, path: path' }
+            , errorHandler
             , handleResponse
             , mkRequest
             , path: path'
@@ -591,15 +580,15 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
 
     -- NOTE With cache off
     loader :: PageParams -> Aff (Either RESTError VersionedWithCountNgramsTable)
-    loader path@{ listIds
-                , nodeId
-                , params: { limit, offset, orderBy }
-                , searchQuery
-                , session
-                , tabType
-                , termListFilter
-                , termSizeFilter
-                } =
+    loader { listIds
+           , nodeId
+           , params: { limit, offset }
+           , searchQuery
+           , session
+           , tabType
+           , termListFilter
+           , termSizeFilter
+           } =
       get session $ R.GetNgrams params (Just nodeId)
       where
         params = { limit
@@ -618,12 +607,7 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
       where
         url { listIds
             , nodeId
-            , params: { limit, offset, orderBy }
-            , searchQuery
-            , scoreType
             , tabType
-            , termListFilter
-            , termSizeFilter
             } = R.GetNgramsTableAll { listIds
                                     , tabType } (Just nodeId)
 
@@ -643,15 +627,15 @@ mainNgramsTablePaint = R.createElement mainNgramsTablePaintCpt
 mainNgramsTablePaintCpt :: R.Component MainNgramsTablePaintProps
 mainNgramsTablePaintCpt = here.component "mainNgramsTablePaint" cpt
   where
-    cpt props@{ afterSync
-              , cacheState
-              , path
-              , reloadForest
-              , reloadRoot
-              , tabNgramType
-              , tasks
-              , versioned
-              , withAutoUpdate } _ = do
+    cpt { afterSync
+        , cacheState
+        , path
+        , reloadForest
+        , reloadRoot
+        , tabNgramType
+        , tasks
+        , versioned
+        , withAutoUpdate } _ = do
       state <- T.useBox $ initialState versioned
 
       pure $ loadedNgramsTable { afterSync
@@ -680,15 +664,15 @@ mainNgramsTablePaintNoCache = R.createElement mainNgramsTablePaintNoCacheCpt
 mainNgramsTablePaintNoCacheCpt :: R.Component MainNgramsTablePaintNoCacheProps
 mainNgramsTablePaintNoCacheCpt = here.component "mainNgramsTablePaintNoCache" cpt
   where
-    cpt props@{ afterSync
-              , cacheState
-              , path
-              , reloadForest
-              , reloadRoot
-              , tabNgramType
-              , tasks
-              , versionedWithCount
-              , withAutoUpdate } _ = do
+    cpt { afterSync
+        , cacheState
+        , path
+        , reloadForest
+        , reloadRoot
+        , tabNgramType
+        , tasks
+        , versionedWithCount
+        , withAutoUpdate } _ = do
       let count /\ versioned = toVersioned versionedWithCount
 
       state <- T.useBox $ initialState versioned

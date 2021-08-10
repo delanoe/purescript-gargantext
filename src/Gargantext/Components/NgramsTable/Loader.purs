@@ -2,19 +2,20 @@ module Gargantext.Components.NgramsTable.Loader where
 
 import Gargantext.Prelude
 
+import Affjax (Error(..))
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), maybe, isJust)
+import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
 import Gargantext.Components.NgramsTable.Core (Version, Versioned(..))
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (RESTError(..))
 import Gargantext.Utils.CacheAPI as GUC
 import Reactix as R
 import Simple.JSON as JSON
 import Toestand as T
-
 
 cacheName :: String
 cacheName = "ngrams-cache-api-loader"
@@ -25,22 +26,24 @@ clearCache _ = GUC.delete $ GUC.CacheName cacheName
 
 
 type LoaderWithCacheAPIProps path res ret = (
-    cacheEndpoint :: path -> Aff (Either RESTError Version)
+    cacheEndpoint  :: path -> Aff (Either RESTError Version)
+  , errorHandler   :: RESTError -> Effect Unit
   , handleResponse :: Versioned res -> ret
-  , mkRequest :: path -> GUC.Request
-  , path :: path
-  , renderer :: ret -> R.Element
+  , mkRequest      :: path -> GUC.Request
+  , path           :: path
+  , renderer       :: ret -> R.Element
   )
 
 
 useLoaderWithCacheAPI :: forall path res ret. Eq path => JSON.ReadForeign res => Eq ret =>
                          Record (LoaderWithCacheAPIProps path res ret)
                       -> R.Hooks R.Element
-useLoaderWithCacheAPI { cacheEndpoint, handleResponse, mkRequest, path, renderer } = do
+useLoaderWithCacheAPI { cacheEndpoint, errorHandler, handleResponse, mkRequest, path, renderer } = do
   state <- T.useBox Nothing
   state' <- T.useLive T.unequal state
 
   useCachedAPILoaderEffect { cacheEndpoint
+                           , errorHandler
                            , handleResponse
                            , mkRequest
                            , path
@@ -49,6 +52,7 @@ useLoaderWithCacheAPI { cacheEndpoint, handleResponse, mkRequest, path, renderer
 
 type LoaderWithCacheAPIEffectProps path res ret = (
     cacheEndpoint  :: path -> Aff (Either RESTError Version)
+  , errorHandler   :: RESTError -> Effect Unit
   , handleResponse :: Versioned res -> ret
   , mkRequest      :: path -> GUC.Request
   , path           :: path
@@ -59,6 +63,7 @@ useCachedAPILoaderEffect :: forall path res ret. Eq path => JSON.ReadForeign res
                             Record (LoaderWithCacheAPIEffectProps path res ret)
                          -> R.Hooks Unit
 useCachedAPILoaderEffect { cacheEndpoint
+                         , errorHandler
                          , handleResponse
                          , mkRequest
                          , path
@@ -77,10 +82,10 @@ useCachedAPILoaderEffect { cacheEndpoint
       launchAff_ $ do
         cache <- GUC.openCache $ GUC.CacheName cacheName
         -- TODO Parallelize?
-        vr@(Versioned { version, "data": d }) <- GUC.cachedJson cache req
+        vr@(Versioned { version }) <- GUC.cachedJson cache req
         eCacheReal <- cacheEndpoint path
         case eCacheReal of
-          Left err -> throwError $ error $ "[useCachedAPILoaderEffect] RESTError"
+          Left err -> liftEffect $ errorHandler err
           Right cacheReal -> do
             val <- if version == cacheReal then
               pure vr
@@ -92,8 +97,9 @@ useCachedAPILoaderEffect { cacheEndpoint
               _ <- GUC.deleteReq cache req
               vr'@(Versioned { version: version', data: _ }) <- GUC.cachedJson cache req
               if version' == cacheReal then
-               pure vr'
-              else
-                throwError $ error $ "[useCachedAPILoaderEffect] Fetched clean cache but hashes don't match: " <> show version <> " != " <> show cacheReal
+                pure vr'
+              else do
+                liftEffect $ errorHandler $ SendResponseError $ RequestContentError $ "[useCachedAPILoaderEffect] Fetched clean cache but hashes don't match: " <> show version <> " != " <> show cacheReal
+                throwError $ error  $"[useCachedAPILoaderEffect] Fetched clean cache but hashes don't match: " <> show version <> " != " <> show cacheReal
             liftEffect $ do
               T.write_ (Just $ handleResponse val) state
