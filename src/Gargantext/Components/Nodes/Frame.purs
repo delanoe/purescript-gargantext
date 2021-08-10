@@ -66,8 +66,12 @@ frameLayoutWithKeyCpt = here.component "frameLayoutWithKey" cpt where
   cpt { nodeId, session, nodeType} _ = do
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
-    useLoader {nodeId, reload: reload', session} loadframeWithReload $
-      \frame -> frameLayoutView {frame, nodeId, reload, session, nodeType}
+    useLoader { errorHandler
+              , loader: loadframeWithReload
+              , path: {nodeId, reload: reload', session}
+              , render: \frame -> frameLayoutView {frame, nodeId, reload, session, nodeType} }
+    where
+      errorHandler err = here.log2 "[frameLayoutWithKey] RESTError" err
 
 type ViewProps =
   ( frame    :: NodePoly Hyperdata

@@ -80,11 +80,16 @@ treeLoaderCpt = here.component "treeLoader" cpt where
   cpt p@{ root, session } _ = do
     -- app     <- T.useLive T.unequal p.reloadRoot
     let fetch { root: r } = getNodeTree session r
-    useLoader { root } fetch loaded where
-      loaded tree' = tree props where
-        props = Record.merge common extra where
-          common = RecordE.pick p :: Record Common
-          extra = { tree: tree', reloadTree: p.reload, session }
+    useLoader { errorHandler
+              , loader: fetch
+              , path: { root }
+              , render: loaded }
+      where
+        loaded tree' = tree props where
+          props = Record.merge common extra where
+            common = RecordE.pick p :: Record Common
+            extra = { tree: tree', reloadTree: p.reload, session }
+        errorHandler err = here.log2 "[treeLoader] RESTError" err
 
 getNodeTree :: Session -> ID -> Aff (Either RESTError FTree)
 getNodeTree session nodeId = get session $ GR.NodeAPI GT.Tree (Just nodeId) ""
@@ -185,8 +190,12 @@ childLoaderCpt = here.component "childLoader" cpt where
     reload <- T.useBox T2.newReload
     let reloads = [ reload, p.reloadRoot, p.reloadTree ]
     cache <- (A.cons p.id) <$> traverse (T.useLive T.unequal) reloads
-    useLoader cache fetch (paint reload)
+    useLoader { errorHandler
+              , loader: fetch
+              , path: cache
+              , render: paint reload }
     where
+      errorHandler err = here.log2 "[childLoader] RESTError" err
       fetch _ = getNodeTreeFirstLevel p.session p.id
       paint reload tree' = render (Record.merge base extra) where
         base = nodeProps { reload = reload }

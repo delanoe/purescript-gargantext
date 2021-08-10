@@ -114,8 +114,12 @@ corpusLayoutWithKeyCpt = here.component "corpusLayoutWithKey" cpt where
   cpt { nodeId, session } _ = do
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
-    useLoader { nodeId, reload: reload', session } loadCorpusWithReload $
-      \corpus -> corpusLayoutView { corpus, nodeId, reload, session }
+    useLoader { errorHandler
+              , loader: loadCorpusWithReload
+              , path: { nodeId, reload: reload', session }
+              , render: \corpus -> corpusLayoutView { corpus, nodeId, reload, session } }
+    where
+      errorHandler err = here.log2 "[corpusLayoutWithKey] RESTError" err
 
 type ViewProps =
   ( corpus  :: NodePoly Hyperdata

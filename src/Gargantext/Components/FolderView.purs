@@ -59,15 +59,18 @@ data FolderStyle = FolderUp | FolderChild
 
 folderView :: R2.Leaf Props
 folderView props = R.createElement folderViewCpt props []
-
 folderViewCpt :: R.Component Props
 folderViewCpt = here.component "folderViewCpt" cpt where
   cpt {nodeId, session, backFolder, tasks, reloadForest} _ = do
     setPopoverRef <- R.useRef Nothing
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
-    useLoader { nodeId, session, reload: reload'} loadFolders $
-      \folders -> folderViewMain {folders, nodeId, session, backFolder, tasks, reload, setPopoverRef, reloadForest}
+    useLoader { errorHandler
+              , loader: loadFolders
+              , path: { nodeId, session, reload: reload'}
+              , render: \folders -> folderViewMain {folders, nodeId, session, backFolder, tasks, reload, setPopoverRef, reloadForest} }
+    where
+      errorHandler err = here.log2 "[folderView] RESTError" err
 
 type FolderViewProps = 
   ( 
@@ -86,7 +89,14 @@ folderViewMain props = R.createElement folderViewMainCpt props []
 
 folderViewMainCpt :: R.Component FolderViewProps
 folderViewMainCpt = here.component "folderViewMainCpt" cpt where
-  cpt {nodeId, session, backFolder, tasks, setPopoverRef, reload, reloadForest, folders: tree@(NTree (LNode {parent_id: parentId, nodeType}) (folders))} _ = do
+  cpt { backFolder
+      , folders: NTree (LNode {parent_id: parentId, nodeType}) (folders)
+      , nodeId
+      , reload
+      , reloadForest
+      , session
+      , setPopoverRef
+      , tasks } _ = do
     let foldersS = A.sortBy sortFolders folders
     let backHome = isBackHome nodeType
     let parent = makeParentFolder parentId session backFolder backHome

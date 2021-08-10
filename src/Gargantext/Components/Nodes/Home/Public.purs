@@ -73,8 +73,13 @@ renderPublic props = R.createElement renderPublicCpt props []
 renderPublicCpt :: R.Component ()
 renderPublicCpt = here.component "renderPublic" cpt where
   cpt _ _ = do
-    useLoader { reload: 0 } loadPublicData loaded where
-      loaded publicData = publicLayout { publicData }
+    useLoader { errorHandler
+              , loader: loadPublicData
+              , path: { reload: 0 }
+              , render:  loaded }
+      where
+        loaded publicData = publicLayout { publicData }
+        errorHandler err = here.log2 "RESTError" err
 
 publicLayout :: Record PublicDataProps -> R.Element
 publicLayout props = R.createElement publicLayoutCpt props []

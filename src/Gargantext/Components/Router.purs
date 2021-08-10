@@ -227,7 +227,6 @@ openedSidePanelCpt = here.component "openedSidePanel" cpt where
                , route
                , sidePanelGraph
                , sidePanelState
-               , sidePanelLists
                , sidePanelTexts }
       , session} _ = do
     { mGraph, mMetaData, removedNodeIds, selectedNodeIds, sideTab } <- GEST.focusedSidePanel sidePanelGraph
@@ -241,7 +240,6 @@ openedSidePanelCpt = here.component "openedSidePanel" cpt where
       GR.Lists _s _n -> do
         pure $ wrapper
           [ Lists.sidePanel { session
-                            , sidePanel: sidePanelLists
                             , sidePanelState } [] ]
       GR.PGraphExplorer _s g -> do
         case (mGraph' /\ mGraphMetaData') of

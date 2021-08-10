@@ -150,11 +150,14 @@ documentLayoutWithKeyCpt :: R.Component KeyLayoutProps
 documentLayoutWithKeyCpt = here.component "documentLayoutWithKey" cpt
   where
     cpt { listId, mCorpusId, nodeId, session } _ = do
-      useLoader path loadData $ \loaded ->
-        docViewWrapper { loaded, path } []
+      useLoader { errorHandler
+                , loader: loadData
+                , path
+                , render: \loaded -> docViewWrapper { loaded, path } [] }
       where
         tabType = TabDocument (TabNgramType CTabTerms)
         path = { listIds: [listId], mCorpusId, nodeId, session, tabType }
+        errorHandler err = here.log2 "[documentLayoutWithKey] RESTError" err
 
 ------------------------------------------------------------------------
 

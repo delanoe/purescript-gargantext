@@ -79,8 +79,12 @@ annuaireLayoutWithKeyCpt = here.component "annuaireLayoutWithKey" cpt where
     path <- T.useBox nodeId
     path' <- T.useLive T.unequal path
 
-    useLoader path' (getAnnuaireInfo session) $
-      \info -> annuaire { frontends, info, path, session }
+    useLoader { errorHandler
+              , loader: getAnnuaireInfo session
+              , path: path'
+              , render: \info -> annuaire { frontends, info, path, session } }
+    where
+      errorHandler err = here.log2 "[annuaireLayoutWithKey] RESTError" err
 
 type AnnuaireProps =
   ( session   :: Session
@@ -142,8 +146,12 @@ pageLayoutCpt = here.component "pageLayout" cpt
     cpt { frontends, pagePath, session } _ = do
       pagePath' <- T.useLive T.unequal pagePath
 
-      useLoader pagePath' (loadPage session) $
-        \table -> page { session, table, frontends, pagePath }
+      useLoader { errorHandler
+                , loader: loadPage session
+                , path: pagePath'
+                , render: \table -> page { session, table, frontends, pagePath } }
+      where
+        errorHandler err = here.log2 "[pageLayout] RESTError" err
 
 type PageProps = 
   ( session   :: Session

@@ -28,11 +28,6 @@ import Data.Tuple (Tuple(..), fst)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-import Unsafe.Coerce (unsafeCoerce)
-
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.NgramsTable.Components as NTC
@@ -42,7 +37,7 @@ import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as TT
 import Gargantext.Components.Table.Types as TT
 import Gargantext.Config.REST (RESTError)
-import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Hooks.Loader (loader, useLoader)
 import Gargantext.Routes (SessionRoute(..)) as R
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
@@ -51,6 +46,10 @@ import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Seq as Seq
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
+import Unsafe.Coerce (unsafeCoerce)
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.NgramsTable"
@@ -579,7 +578,12 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
                                                                       , tasks
                                                                       , versionedWithCount
                                                                       , withAutoUpdate } []
-          useLoader path' loader render
+          useLoader { errorHandler
+                    , loader
+                    , path: path'
+                    , render }
+
+    errorHandler err = here.log2 "[mainNgramsTable] RESTError" err
 
     -- NOTE With cache on
     -- versionEndpoint :: Record MainNgramsTableProps -> PageParams -> Aff Version

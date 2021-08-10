@@ -55,8 +55,12 @@ fileLayout props = R.createElement fileLayoutCpt props []
 fileLayoutCpt :: R.Component FileLayoutProps
 fileLayoutCpt = here.component "fileLayout" cpt where
   cpt { nodeId, session } _ = do
-    useLoader nodeId (loadFile session) onLoad
+    useLoader { errorHandler
+              , loader: loadFile session
+              , path: nodeId
+              , render: onLoad }
       where
+        errorHandler err = here.log2 "RESTError" err
         onLoad loaded = fileLayoutLoaded { loaded, nodeId, session }
 
 loadFile :: Session -> NodeID -> Aff (Either RESTError File)

@@ -331,7 +331,11 @@ pageLayoutCpt = here.component "pageLayout" cpt where
                                                                           , totalRecords = count }
                                                           , localCategories
                                                           , params: paramsS } []
-        useLoader (path { params = paramsS' }) loader render
+        let errorHandler err = here.log2 "[pageLayout] RESTError" err
+        useLoader { errorHandler
+                  , path: path { params = paramsS' }
+                  , loader
+                  , render }
 
 type PageProps = (
     documents :: Array DocumentsView

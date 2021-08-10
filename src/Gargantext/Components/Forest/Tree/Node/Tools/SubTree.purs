@@ -6,6 +6,12 @@ import Data.Array as A
 import Data.Either (Either)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
+import React.SyntheticEvent as E
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Toestand as T
+
 import Gargantext.Components.Forest.Tree.Node.Action (Props, Action, subTreeOut, setTreeOut)
 import Gargantext.Components.Forest.Tree.Node.Tools (nodeText)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
@@ -16,11 +22,6 @@ import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
-import React.SyntheticEvent as E
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Record as Record
-import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools.SubTree"
@@ -55,17 +56,21 @@ subTreeViewCpt = here.component "subTreeView" cpt
       --  (valAction /\ setAction)  = action
       -- _ <- pure $ setAction (const $ setTreeOut valAction Nothing)
 
-      useLoader session (loadSubTree showtypes) $
-        \tree ->
-          subTreeViewLoaded { action
-                            , dispatch
-                            , handed
-                            , id
-                            , nodeType
-                            , session
-                            , subTreeParams
-                            , tree
-                            } []
+      useLoader { errorHandler
+                , loader: loadSubTree showtypes
+                , path: session
+                , render: \tree ->
+                    subTreeViewLoaded { action
+                                      , dispatch
+                                      , handed
+                                      , id
+                                      , nodeType
+                                      , session
+                                      , subTreeParams
+                                      , tree
+                                      } []  }
+      where
+        errorHandler err = here.log2 "RESTError" err
 
 loadSubTree :: Array GT.NodeType -> Session -> Aff (Either RESTError FTree)
 loadSubTree nodetypes session = getSubTree session treeId nodetypes

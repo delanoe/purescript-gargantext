@@ -52,17 +52,20 @@ dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
       reload <- T.useBox T2.newReload
       reload' <- T.useLive T.unequal reload
 
-      useLoader {nodeId, reload: reload', session} DT.loadDashboardWithReload $
-        \(DT.DashboardData { hyperdata: DT.Hyperdata h, parentId }) -> do
-          let { charts, fields } = h
-          dashboardLayoutLoaded { charts
-                                , corpusId: parentId
-                                , defaultListId: 0
-                                , fields
-                                , nodeId
-                                , onChange: onChange nodeId reload (DT.Hyperdata h)
-                                , session } []
+      useLoader { errorHandler
+                , loader: DT.loadDashboardWithReload
+                , path: { nodeId, reload: reload', session }
+                , render: \(DT.DashboardData { hyperdata: DT.Hyperdata h, parentId }) -> do
+                      let { charts, fields } = h
+                      dashboardLayoutLoaded { charts
+                                            , corpusId: parentId
+                                            , defaultListId: 0
+                                            , fields
+                                            , nodeId
+                                            , onChange: onChange nodeId reload (DT.Hyperdata h)
+                                            , session } [] }
       where
+        errorHandler err = here.log2 "[dashboardLayoutWithKey] RESTError" err
         onChange :: NodeID -> T2.ReloadS -> DT.Hyperdata -> { charts :: Array P.PredefinedChart
                                                             , fields :: FTFieldList } -> Effect Unit
         onChange nodeId' reload (DT.Hyperdata h) { charts, fields } = do

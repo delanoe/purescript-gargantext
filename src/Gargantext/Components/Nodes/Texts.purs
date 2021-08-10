@@ -7,6 +7,10 @@ import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (launchAff_)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
+
 import Gargantext.Components.Charts.Options.ECharts (dispatchAction)
 import Gargantext.Components.Charts.Options.Type (EChartsInstance, EChartActionData)
 import Gargantext.Components.DocsTable as DT
@@ -26,9 +30,6 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (WithSession, Session, getCacheState)
 import Gargantext.Types (CTabNgramType(..), ListId, NodeID, SidePanelState(..), TabSubType(..), TabType(..))
 import Gargantext.Utils.Reactix as R2
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Texts"
@@ -75,7 +76,6 @@ type KeyProps = (
 
 textsLayoutWithKey :: R2.Component KeyProps
 textsLayoutWithKey = R.createElement textsLayoutWithKeyCpt
-
 textsLayoutWithKeyCpt :: R.Component KeyProps
 textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
   where
@@ -90,32 +90,35 @@ textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
       R.useEffectOnce' $ do
         T.listen (\{ new } -> afterCacheStateChange new) cacheState
 
-      useLoader { nodeId, session } loadCorpusWithChild $
-        \corpusData@{ corpusId, corpusNode, defaultListId } -> do
-          let NodePoly { date, hyperdata: Hyperdata h, name } = corpusNode
-              CorpusInfo { authors, desc, query } = getCorpusInfo h.fields
-              title = "Corpus " <> name
+      useLoader { errorHandler
+                , loader: loadCorpusWithChild
+                , path: { nodeId, session }
+                , render: \corpusData@{ corpusId, corpusNode } -> do
+                    let NodePoly { date, hyperdata: Hyperdata h, name } = corpusNode
+                        CorpusInfo { authors, desc, query } = getCorpusInfo h.fields
+                        title = "Corpus " <> name
 
-          R.fragment
-            [ Table.tableHeaderLayout { cacheState
-                                      , date
-                                      , desc
-                                      , query
-                                      , title
-                                      , user: authors
-                                      , key: "textsLayoutWithKey-" <> (show cacheState') } []
-            , tabs { cacheState
-                   , corpusData
-                   , corpusId
-                   , frontends
-                   , session
-                   , sidePanel
-                   , sidePanelState
-                   , yearFilter
-                   , eChartsInstance
-                   }
-            ]
+                    R.fragment
+                      [ Table.tableHeaderLayout { cacheState
+                                                , date
+                                                , desc
+                                                , query
+                                                , title
+                                                , user: authors
+                                                , key: "textsLayoutWithKey-" <> (show cacheState') } []
+                      , tabs { cacheState
+                             , corpusData
+                             , corpusId
+                             , frontends
+                             , session
+                             , sidePanel
+                             , sidePanelState
+                             , yearFilter
+                             , eChartsInstance
+                             }
+                      ] }
       where
+        errorHandler err = here.log2 "[textsLayoutWithKey] RESTError" err
         afterCacheStateChange cacheState = do
           launchAff_ $ clearCache unit
           -- TODO
@@ -139,21 +142,28 @@ type TabsProps =
   ( cacheState      :: T.Box LT.CacheState
   , corpusData      :: CorpusData
   , corpusId        :: NodeID
+  , eChartsInstance :: T.Box (Maybe EChartsInstance)
   , frontends       :: Frontends
   , session         :: Session
   , sidePanel       :: T.Box (Maybe (Record TT.SidePanel))
   , sidePanelState  :: T.Box SidePanelState
   , yearFilter      :: T.Box (Maybe Year)
-  , eChartsInstance :: T.Box (Maybe EChartsInstance)
   )
 
 tabs :: Record TabsProps -> R.Element
 tabs props = R.createElement tabsCpt props []
-
 tabsCpt :: R.Component TabsProps
 tabsCpt = here.component "tabs" cpt
   where
-    cpt { cacheState, corpusId, corpusData, frontends, session, sidePanel, sidePanelState, yearFilter, eChartsInstance } _ = do
+    cpt { cacheState
+        , corpusId
+        , corpusData
+        , eChartsInstance
+        , frontends
+        , session
+        , sidePanel
+        , sidePanelState
+        , yearFilter } _ = do
 
       let
         path = initialPath
@@ -344,9 +354,9 @@ docViewLayoutRec { cacheState
                  , frontends
                  , listId
                  , session
-                 , tabType
                  , sidePanel
                  , sidePanelState
+                 , tabType
                  , yearFilter
                  } =
   { cacheState

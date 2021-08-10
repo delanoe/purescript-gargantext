@@ -307,22 +307,27 @@ nodeActionsCpt = here.component "nodeActions" cpt where
 
 graphNodeActions :: R2.Leaf NodeActionsCommon
 graphNodeActions props = R.createElement graphNodeActionsCpt props []
-
 graphNodeActionsCpt :: R.Component NodeActionsCommon
 graphNodeActionsCpt = here.component "graphNodeActions" cpt where
   cpt { id, session, refresh } _ =
-    useLoader id (graphVersions session) $ \gv ->
-      nodeActionsGraph { graphVersions: gv, session, id, refresh } []
+    useLoader { errorHandler
+              , loader: graphVersions session
+              , path: id
+              , render: \gv -> nodeActionsGraph { graphVersions: gv, session, id, refresh } [] }
   graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
+  errorHandler err = here.log2 "[graphNodeActions] RESTError" err
 
 listNodeActions :: R2.Leaf NodeActionsCommon
 listNodeActions props = R.createElement listNodeActionsCpt props []
-
 listNodeActionsCpt :: R.Component NodeActionsCommon
 listNodeActionsCpt = here.component "listNodeActions" cpt where
   cpt { id, session, refresh } _ =
-    useLoader { nodeId: id, session } loadCorpusWithChild $ \{ corpusId } ->
-      nodeActionsNodeList
-      { listId: id, nodeId: corpusId, session, refresh: refresh
-      , nodeType: GT.TabNgramType GT.CTabTerms }
+    useLoader { errorHandler
+              , path: { nodeId: id, session }
+              , loader: loadCorpusWithChild
+              , render: \{ corpusId } -> nodeActionsNodeList
+                 { listId: id, nodeId: corpusId, session, refresh: refresh
+                 , nodeType: GT.TabNgramType GT.CTabTerms } }
+    where
+      errorHandler err = here.log2 "[listNodeActions] RESTError" err
 

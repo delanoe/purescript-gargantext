@@ -195,7 +195,6 @@ contactLayoutCpt = here.component "contactLayout" cpt where
 
 contactLayoutWithKey :: R2.Leaf AnnuaireKeyLayoutProps
 contactLayoutWithKey props = R.createElement contactLayoutWithKeyCpt props []
-
 contactLayoutWithKeyCpt :: R.Component AnnuaireKeyLayoutProps
 contactLayoutWithKeyCpt = here.component "contactLayoutWithKey" cpt where
     cpt { annuaireId
@@ -210,23 +209,26 @@ contactLayoutWithKeyCpt = here.component "contactLayoutWithKey" cpt where
       reload <- T.useBox T2.newReload
       _ <- T.useLive T.unequal reload
       cacheState <- T.useBox LT.CacheOn
-      useLoader nodeId (getAnnuaireContact session annuaireId) $
-        \contactData@{contactNode: Contact' {name, hyperdata}} ->
-          H.ul { className: "col-md-12 list-group" }
-               [ display { title: fromMaybe "no name" name }
-                         (contactInfos hyperdata (onUpdateHyperdata reload))
-               , Tabs.tabs
-                   { cacheState
-                   , contactData
-                   , frontends
-                   , nodeId
-                   , session
-                   , sidePanel
-                   , sidePanelState
-                   , reloadForest
-                   , reloadRoot
-                   , tasks } ]
+      useLoader { errorHandler
+                , loader: getAnnuaireContact session annuaireId
+                , path: nodeId
+                , render: \contactData@{contactNode: Contact' {name, hyperdata}} ->
+                    H.ul { className: "col-md-12 list-group" }
+                         [ display { title: fromMaybe "no name" name }
+                                   (contactInfos hyperdata (onUpdateHyperdata reload))
+                         , Tabs.tabs
+                             { cacheState
+                             , contactData
+                             , frontends
+                             , nodeId
+                             , session
+                             , sidePanel
+                             , sidePanelState
+                             , reloadForest
+                             , reloadRoot
+                             , tasks } ] }
       where
+        errorHandler err = here.log2 "[contactLayoutWithKey] RESTError" err
         onUpdateHyperdata :: T2.ReloadS -> HyperdataContact -> Effect Unit
         onUpdateHyperdata reload hd =
           launchAff_ $

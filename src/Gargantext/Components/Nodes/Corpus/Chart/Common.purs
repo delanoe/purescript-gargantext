@@ -37,8 +37,12 @@ metricsLoadViewCpt = here.component "metricsLoadView" cpt
     cpt { getMetrics, loaded, path, reload, session, onClick, onInit } _ = do
       reload' <- T.useLive T.unequal reload
 
-      useLoader (reload' /\ path) (getMetrics session) $ \l ->
-        loaded { path, reload, session, onClick, onInit } l
+      useLoader { errorHandler
+                , loader: getMetrics session
+                , path: reload' /\ path
+                , render: \l -> loaded { path, reload, session, onClick, onInit } l }
+      where
+        errorHandler err = here.log2 "RESTError" err
 
 type MetricsWithCacheLoadViewProps res ret = (
     getMetricsHash :: Session -> ReloadPath -> Aff (Either RESTError Hash)

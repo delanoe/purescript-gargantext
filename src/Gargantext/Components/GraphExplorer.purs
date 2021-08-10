@@ -69,8 +69,12 @@ explorerLayoutCpt = here.component "explorerLayout" cpt where
   cpt props@{ boxes: { graphVersion }, graphId, session } _ = do
     graphVersion' <- T.useLive T.unequal graphVersion
 
-    useLoader graphId (getNodes session graphVersion') handler
+    useLoader { errorHandler
+              , loader: getNodes session graphVersion'
+              , path: graphId
+              , render: handler }
     where
+      errorHandler err = here.log2 "[explorerLayout] RESTError" err
       handler loaded@(GET.HyperdataGraph { graph: hyperdataGraph }) =
         explorerWriteGraph (Record.merge props { graph, hyperdataGraph: loaded, mMetaData' }) []
         where
