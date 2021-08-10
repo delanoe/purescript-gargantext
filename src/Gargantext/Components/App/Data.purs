@@ -1,10 +1,10 @@
 module Gargantext.Components.App.Data (App, Boxes, emptyApp) where
 
+import Gargantext.Prelude
+
 import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Toestand as T
-
-import Gargantext.Prelude
 
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
@@ -12,10 +12,10 @@ import Gargantext.Components.Nodes.Lists.Types as ListsT
 import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Ends (Backend)
 import Gargantext.Routes (AppRoute(Home))
-import Gargantext.Sessions as Sessions
 import Gargantext.Sessions (Session, Sessions)
+import Gargantext.Sessions as Sessions
 import Gargantext.Sessions.Types (OpenNodes(..))
-import Gargantext.Types (FrontendError, Handed(RightHanded), SidePanelState(..))
+import Gargantext.Types (FrontendError(..), Handed(RightHanded), SidePanelState(..))
 import Gargantext.Utils.Toestand as T2
 
 type App =

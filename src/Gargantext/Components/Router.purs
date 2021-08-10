@@ -12,6 +12,7 @@ import Record.Extra as RE
 import Toestand as T
 
 import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.ErrorsView (errorsView)
 import Gargantext.Components.Footer (footer)
 import Gargantext.Components.Forest as Forest
 import Gargantext.Components.GraphExplorer as GraphExplorer
@@ -43,7 +44,6 @@ import Gargantext.Sessions as Sessions
 import Gargantext.Types (CorpusId, Handed(..), ListId, NodeID, NodeType(..), SessionId, SidePanelState(..), reverseHanded)
 import Gargantext.Utils.Reactix as R2
 
-
 here :: R2.Here
 here = R2.here "Gargantext.Components.Router"
 
@@ -67,8 +67,9 @@ routerCpt = here.component "router" cpt where
 
     pure $ R.fragment
       ([ loginModal { boxes }
-       , topBar { boxes } ] <>
-       [ H.div { className: handedClassName <> " router-inner" } $ reverseHanded handed' $
+       , topBar { boxes }
+       , errorsView { errors: boxes.errors } []
+       , H.div { className: handedClassName <> " router-inner" } $ reverseHanded handed' $
          [ forest { boxes }
          , mainPage { boxes }
          , sidePanel { boxes }

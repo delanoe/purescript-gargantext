@@ -2,13 +2,12 @@ module Gargantext.Types where
 
 import Gargantext.Prelude
 
-import CSS.Cursor (Cursor(..))
 import Data.Array as A
 import Data.Either (Either)
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.Int (toNumber)
-import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
@@ -783,3 +782,6 @@ toggleSidePanelState Opened        = Closed
 newtype FrontendError = FrontendError
   { error :: String
   }
+
+derive instance Generic FrontendError _
+instance Eq FrontendError where eq = genericEq

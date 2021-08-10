@@ -82,7 +82,6 @@ send m mtoken url reqbody = do
       let cookie = "JWT-Cookie=" <> token <> "; Path=/;" --" HttpOnly; Secure; SameSite=Lax"
       R2.setCookie cookie
   affResp <- request req
-  liftEffect $ log2 "affResp" affResp
   pure $ readJSON affResp
 
 noReqBody :: Maybe String
