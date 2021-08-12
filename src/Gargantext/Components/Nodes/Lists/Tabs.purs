@@ -95,6 +95,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
         <> [ NT.mainNgramsTable { afterSync: afterSync chartsReload
                                 , cacheState
                                 , defaultListId
+                                , errors
                                 , path
                                 , reloadForest
                                 , reloadRoot

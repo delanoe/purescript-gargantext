@@ -4,9 +4,9 @@ module Gargantext.Components.GraphExplorer.Sidebar
 
 import Gargantext.Prelude
 
-import Control.Monad.Error.Class (throwError)
 import Control.Parallel (parTraverse)
 import Data.Array (head, last, concat)
+import Data.Array as A
 import Data.Either (Either(..))
 import Data.Int (fromString)
 import Data.Map as Map
@@ -14,7 +14,7 @@ import Data.Maybe (Maybe(..), fromJust)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Effect (Effect)
-import Effect.Aff (Aff, error, launchAff_)
+import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.GraphExplorer.Legend as Legend
 import Gargantext.Components.GraphExplorer.Types as GET
@@ -28,7 +28,7 @@ import Gargantext.Data.Array (mapMaybe)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType, NodeID, TabSubType(..), TabType(..), TermList(..), modeTabType)
+import Gargantext.Types (CTabNgramType, FrontendError(..), NodeID, TabSubType(..), TabType(..), TermList(..), modeTabType)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Partial.Unsafe (unsafePartial)
@@ -43,7 +43,8 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.Sidebar"
 
 type Common = (
-    graphId         :: NodeID
+    errors          :: T.Box (Array FrontendError)
+  , graphId         :: NodeID
   , metaData        :: GET.MetaData
   , reloadForest    :: T2.ReloadS
   , removedNodeIds  :: T.Box SigmaxT.NodeIds
@@ -61,7 +62,6 @@ type Props = (
 
 sidebar :: R2.Component Props
 sidebar = R.createElement sidebarCpt
-
 sidebarCpt :: R.Component Props
 sidebarCpt = here.component "sidebar" cpt
   where
@@ -86,7 +86,6 @@ type SideTabNavProps = (
 
 sideTabNav :: R2.Component SideTabNavProps
 sideTabNav = R.createElement sideTabNavCpt
-
 sideTabNavCpt :: R.Component SideTabNavProps
 sideTabNavCpt = here.component "sideTabNav" cpt
   where
@@ -111,11 +110,10 @@ type SideTabProps = Props
 
 sideTabLegend :: R2.Component SideTabProps
 sideTabLegend = R.createElement sideTabLegendCpt
-
 sideTabLegendCpt :: R.Component SideTabProps
 sideTabLegendCpt = here.component "sideTabLegend" cpt
   where
-    cpt props@{ metaData: GET.MetaData { legend } } _ = do
+    cpt { metaData: GET.MetaData { legend } } _ = do
       pure $ H.div {}
         [ Legend.legend { items: Seq.fromFoldable legend }
         , documentation EN
@@ -123,7 +121,6 @@ sideTabLegendCpt = here.component "sideTabLegend" cpt
 
 sideTabData :: R2.Component SideTabProps
 sideTabData = R.createElement sideTabDataCpt
-
 sideTabDataCpt :: R.Component SideTabProps
 sideTabDataCpt = here.component "sideTabData" cpt
   where
@@ -143,18 +140,10 @@ sideTabDataCpt = here.component "sideTabData" cpt
                   } []
           ]
         ]
-        where
-          checkbox text = RH.li {}
-                          [ RH.span {} [ RH.text text ]
-                          , RH.input { type: "checkbox"
-                                     , className: "checkbox"
-                                     , defaultChecked: true
-                                     , title: "Mark as completed" } ]
 
 
 sideTabCommunity :: R2.Component SideTabProps
 sideTabCommunity = R.createElement sideTabCommunityCpt
-
 sideTabCommunityCpt :: R.Component SideTabProps
 sideTabCommunityCpt = here.component "sideTabCommunity" cpt
   where
@@ -185,7 +174,6 @@ type SelectedNodesProps = (
 
 selectedNodes :: R2.Component SelectedNodesProps
 selectedNodes = R.createElement selectedNodesCpt
-
 selectedNodesCpt :: R.Component SelectedNodesProps
 selectedNodesCpt = here.component "selectedNodes" cpt
   where
@@ -228,7 +216,6 @@ selectedNodesCpt = here.component "selectedNodes" cpt
 
 neighborhood :: R2.Component Props
 neighborhood = R.createElement neighborhoodCpt
-
 neighborhoodCpt :: R.Component Props
 neighborhoodCpt = here.component "neighborhood" cpt
   where
@@ -262,6 +249,7 @@ updateTermButtonCpt :: R.Component UpdateTermButtonProps
 updateTermButtonCpt = here.component "updateTermButton" cpt
   where
     cpt { buttonType
+        , errors
         , graphId
         , metaData
         , nodesMap
@@ -280,10 +268,11 @@ updateTermButtonCpt = here.component "updateTermButton" cpt
                          , on: { click: onClickRemove selectedNodeIds' }
                          } [ RH.text text ]
       where
-        onClickRemove selectedNodeIds' e = do
+        onClickRemove selectedNodeIds' _ = do
           let nodes = mapMaybe (\id -> Map.lookup id nodesMap)
                               $ Set.toUnfoldable selectedNodeIds'
-          sendPatches { graphId: graphId
+          sendPatches { errors
+                      , graphId: graphId
                       , metaData: metaData
                       , nodes
                       , session: session
@@ -300,7 +289,7 @@ badge selectedNodeIds {id, label} =
        , on: { click: onClick }
        } [ RH.h6 {} [ RH.text label ] ]
   where
-    onClick e = do
+    onClick _ = do
       T.write_ (Set.singleton id) selectedNodeIds
 
 badges :: SigmaxT.SGraph -> SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
@@ -311,7 +300,8 @@ neighbourBadges graph selectedNodeIds = SigmaxT.neighbours graph selectedNodes' 
   selectedNodes' = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
 
 type SendPatches =
-  ( graphId      :: NodeID
+  ( errors       :: T.Box (Array FrontendError)
+  , graphId      :: NodeID
   , metaData     :: GET.MetaData
   , nodes        :: Array (Record SigmaxT.Node)
   , reloadForest :: T2.ReloadS
@@ -320,13 +310,15 @@ type SendPatches =
   )
 
 sendPatches :: Record SendPatches -> Effect Unit
-sendPatches { metaData, nodes, session, termList, reloadForest } = do
+sendPatches { errors, metaData, nodes, reloadForest, session, termList } = do
   launchAff_ do
     patches <- (parTraverse (sendPatch termList session metaData) nodes) -- :: Aff (Array NTC.VersionedNgramsPatches)
     let mPatch = last patches
     case mPatch of
       Nothing -> pure unit
-      Just (Left _err) -> throwError $ error $ "[sendPatches] RESTError"
+      Just (Left err) -> liftEffect $ do
+        T.modify_ (A.cons $ FRESTError { error: err }) errors
+        here.log2 "[sendPatches] RESTError" err
       Just (Right (NTC.Versioned _patch)) -> do
         liftEffect $ T2.reload reloadForest
 
@@ -341,7 +333,7 @@ sendPatch termList session (GET.MetaData metaData) node = do
     case eRet of
       Left err -> pure $ Left err
       Right ret -> do
-        task <- NTC.postNgramsChartsAsync coreParams  -- TODO add task
+        _task <- NTC.postNgramsChartsAsync coreParams  -- TODO add task
         pure $ Right ret
   where
     nodeId :: NodeID
@@ -361,9 +353,6 @@ sendPatch termList session (GET.MetaData metaData) node = do
 
     term :: NTC.NgramsTerm
     term = NTC.normNgram tabNgramType node.label
-
-    pt :: NTC.NgramsTablePatch
-    pt = NTC.fromNgramsPatches np
 
     np :: NTC.NgramsPatches
     np = NTC.singletonPatchMap term $ NTC.NgramsPatch { patch_children: mempty, patch_list }

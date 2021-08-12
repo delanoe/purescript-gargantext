@@ -113,10 +113,9 @@ type NgramsViewTabsProps =
 
 ngramsView :: R2.Leaf NgramsViewTabsProps
 ngramsView props = R.createElement ngramsViewCpt props []
-
 ngramsViewCpt :: R.Component NgramsViewTabsProps
 ngramsViewCpt = here.component "ngramsView" cpt where
-  cpt props@{ defaultListId, mode, nodeId, session } _ = do
+  cpt props@{ defaultListId, errors, mode, nodeId, session } _ = do
     path <- T.useBox $
       NTC.initialPageParams session nodeId
       [ defaultListId ] (TabDocument TabDocs)
@@ -126,6 +125,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
       props' path =
         (Record.merge most
           { afterSync
+          , errors
           , path
           , tabType:        TabPairing (TabNgramType $ modeTabType mode)
           , tabNgramType:   modeTabType' mode

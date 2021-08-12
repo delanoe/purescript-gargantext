@@ -26,11 +26,6 @@ import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-import Unsafe.Coerce (unsafeCoerce)
-
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.AutoUpdate (autoUpdateElt)
 import Gargantext.Components.NgramsTable.Components as NTC
@@ -43,12 +38,16 @@ import Gargantext.Config.REST (RESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..)) as R
 import Gargantext.Sessions (Session, get)
-import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
+import Gargantext.Types (CTabNgramType, FrontendError, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
 import Gargantext.Utils (queryMatchesLabel, toggleSet, sortWith)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Seq as Seq
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
+import Unsafe.Coerce (unsafeCoerce)
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.NgramsTable"
@@ -250,12 +249,13 @@ tableContainerCpt { dispatch
 -- NEXT
 
 type CommonProps = (
-    afterSync         :: Unit -> Aff Unit
-  , reloadForest      :: T2.ReloadS
-  , reloadRoot        :: T2.ReloadS
-  , tabNgramType      :: CTabNgramType
-  , tasks             :: T.Box GAT.Storage
-  , withAutoUpdate    :: Boolean
+    afterSync      :: Unit -> Aff Unit
+  , errors         :: T.Box (Array FrontendError)
+  , reloadForest   :: T2.ReloadS
+  , reloadRoot     :: T2.ReloadS
+  , tabNgramType   :: CTabNgramType
+  , tasks          :: T.Box GAT.Storage
+  , withAutoUpdate :: Boolean
   )
 
 type Props =
@@ -273,6 +273,7 @@ loadedNgramsTableCpt :: R.Component Props
 loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
   cpt { afterSync
       , cacheState
+      , errors
       , mTotalRows
       , path
       , reloadForest
@@ -343,7 +344,7 @@ loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
         totalRecords = fromMaybe (Seq.length rows) mTotalRows
 
         afterSync' _ = do
-          chartsAfterSync path' tasks unit
+          chartsAfterSync path' errors tasks unit
           afterSync unit
 
         syncResetButton = syncResetButtons { afterSync: afterSync'
@@ -509,12 +510,12 @@ selectNgramsOnFirstPage rows = Set.fromFoldable $ (view $ _NgramsElement <<< _ng
 
 
 type MainNgramsTableProps = (
-    cacheState        :: T.Box NT.CacheState
-  , defaultListId     :: Int
+    cacheState    :: T.Box NT.CacheState
+  , defaultListId :: Int
     -- ^ This node can be a corpus or contact.
-  , path              :: T.Box PageParams
-  , session           :: Session
-  , tabType           :: TabType
+  , path          :: T.Box PageParams
+  , session       :: Session
+  , tabType       :: TabType
   | CommonProps
   )
 
@@ -526,6 +527,7 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
     cpt { afterSync
         , cacheState
         , defaultListId
+        , errors
         , path
         , reloadForest
         , reloadRoot
@@ -541,6 +543,7 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
         NT.CacheOn -> do
           let render versioned = mainNgramsTablePaint { afterSync
                                                       , cacheState: cacheState'
+                                                      , errors
                                                       , path
                                                       , reloadForest
                                                       , reloadRoot
@@ -560,6 +563,7 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
           -- path <- R.useState' path
           let render versionedWithCount = mainNgramsTablePaintNoCache { afterSync
                                                                       , cacheState: cacheState'
+                                                                      , errors
                                                                       , path
                                                                       , reloadForest
                                                                       , reloadRoot
@@ -615,20 +619,20 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
     handleResponse v = v
 
 type MainNgramsTablePaintProps = (
-    cacheState        :: NT.CacheState
-  , path              :: T.Box PageParams
-  , versioned         :: VersionedNgramsTable
+    cacheState :: NT.CacheState
+  , path       :: T.Box PageParams
+  , versioned  :: VersionedNgramsTable
   | CommonProps
   )
 
 mainNgramsTablePaint :: R2.Component MainNgramsTablePaintProps
 mainNgramsTablePaint = R.createElement mainNgramsTablePaintCpt
-
 mainNgramsTablePaintCpt :: R.Component MainNgramsTablePaintProps
 mainNgramsTablePaintCpt = here.component "mainNgramsTablePaint" cpt
   where
     cpt { afterSync
         , cacheState
+        , errors
         , path
         , reloadForest
         , reloadRoot
@@ -640,6 +644,7 @@ mainNgramsTablePaintCpt = here.component "mainNgramsTablePaint" cpt
 
       pure $ loadedNgramsTable { afterSync
                                , cacheState
+                               , errors
                                , mTotalRows: Nothing
                                , path
                                , reloadForest
@@ -666,6 +671,7 @@ mainNgramsTablePaintNoCacheCpt = here.component "mainNgramsTablePaintNoCache" cp
   where
     cpt { afterSync
         , cacheState
+        , errors
         , path
         , reloadForest
         , reloadRoot
@@ -680,6 +686,7 @@ mainNgramsTablePaintNoCacheCpt = here.component "mainNgramsTablePaintNoCache" cp
       pure $ loadedNgramsTable {
         afterSync
       , cacheState
+      , errors
       , mTotalRows: Just count
       , path: path
       , reloadForest

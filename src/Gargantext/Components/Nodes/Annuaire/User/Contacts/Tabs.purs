@@ -92,29 +92,36 @@ tabsCpt = here.component "tabs" cpt
           , "Trash"         /\ docs -- TODO pass-in trash mode
           ]
           where
-            patentsView = { reloadRoot
-                          , tasks
-                          , cacheState
+            patentsView = { cacheState
                           , defaultListId
+                          , errors
                           , mode: Patents
                           , nodeId
                           , reloadForest
-                          , session }
-            booksView   = { reloadRoot
+                          , reloadRoot
+                          , session
                           , tasks
-                          , cacheState
+                          }
+            booksView   = { cacheState
                           , defaultListId
+                          , errors
                           , mode: Books
                           , nodeId
                           , reloadForest
-                          , session }
-            commView    = { reloadRoot, tasks
-                          , cacheState
+                          , reloadRoot
+                          , session
+                          , tasks
+                          }
+            commView    = { cacheState
                           , defaultListId
+                          , errors
                           , mode: Communication
                           , nodeId
                           , reloadForest
-                          , session }
+                          , reloadRoot
+                          , session
+                          , tasks
+                          }
             chart       = mempty
             totalRecords = 4736 -- TODO
             docs = DT.docViewLayout
@@ -138,6 +145,7 @@ tabsCpt = here.component "tabs" cpt
 type NgramsViewTabsProps = (
     cacheState     :: T.Box LTypes.CacheState
   , defaultListId  :: Int
+  , errors         :: T.Box (Array FrontendError)
   , mode           :: Mode
   , nodeId         :: Int
   , reloadForest   :: T2.ReloadS
@@ -154,6 +162,7 @@ ngramsViewCpt = here.component "ngramsView" cpt
   where
     cpt { cacheState
         , defaultListId
+        , errors
         , reloadForest
         , reloadRoot
         , mode
@@ -166,6 +175,7 @@ ngramsViewCpt = here.component "ngramsView" cpt
           afterSync: \_ -> pure unit
         , cacheState
         , defaultListId
+        , errors
         , path
         , reloadForest
         , reloadRoot

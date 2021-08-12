@@ -81,8 +81,8 @@ module Gargantext.Components.NgramsTable.Core
 
 import Gargantext.Prelude
 
-import Control.Monad.Error.Class (throwError)
 import Control.Monad.State (class MonadState, execState)
+import DOM.Simple.Console (log2)
 import Data.Array (head)
 import Data.Array as A
 import Data.Bifunctor (lmap)
@@ -120,7 +120,6 @@ import Data.Traversable (for, traverse_, traverse)
 import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, error, launchAff_)
 import Effect.Class (liftEffect)
@@ -128,23 +127,23 @@ import Effect.Exception.Unsafe (unsafeThrow)
 import FFI.Simple.Functions (delay)
 import Foreign as F
 import Foreign.Object as FO
+import Gargantext.AsyncTasks as GAT
+import Gargantext.Components.Table as T
+import Gargantext.Components.Table.Types as T
+import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.Utils (handleRESTError)
+import Gargantext.Routes (SessionRoute(..))
+import Gargantext.Sessions (Session, get, post, put)
+import Gargantext.Types (AsyncTask, AsyncTaskType(..), AsyncTaskWithType(..), CTabNgramType(..), FrontendError, ListId, OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize(..))
+import Gargantext.Utils.Either (eitherMap)
+import Gargantext.Utils.KarpRabin (indicesOfAny)
+import Gargantext.Utils.Reactix as R2
 import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
 import Toestand as T
-
-import Gargantext.AsyncTasks as GAT
-import Gargantext.Components.Table as T
-import Gargantext.Components.Table.Types as T
-import Gargantext.Config.REST (RESTError)
-import Gargantext.Routes (SessionRoute(..))
-import Gargantext.Sessions (Session, get, post, put)
-import Gargantext.Types (AsyncTask, AsyncTaskType(..), AsyncTaskWithType(..), CTabNgramType(..), ListId, OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize(..))
-import Gargantext.Utils.Either (eitherMap)
-import Gargantext.Utils.KarpRabin (indicesOfAny)
-import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.NgramsTable.Core"
@@ -1117,21 +1116,20 @@ chartsAfterSync :: forall props discard.
   , tabType :: TabType
   | props
   }
+  -> T.Box (Array FrontendError)
   -> T.Box GAT.Storage
   -> discard
   -> Aff Unit
-chartsAfterSync path'@{ nodeId } tasks _ = do
-  task <- postNgramsChartsAsync path'
-  liftEffect $ do
+chartsAfterSync path'@{ nodeId } errors tasks _ = do
+  eTask <- postNgramsChartsAsync path'
+  handleRESTError errors eTask $ \task -> liftEffect $ do
     log2 "[chartsAfterSync] Synchronize task" task
     GAT.insert nodeId task tasks
 
-postNgramsChartsAsync :: forall s. CoreParams s -> Aff AsyncTaskWithType
+postNgramsChartsAsync :: forall s. CoreParams s -> Aff (Either RESTError AsyncTaskWithType)
 postNgramsChartsAsync { listIds, nodeId, session, tabType } = do
     eTask :: Either RESTError AsyncTask <- post session putNgramsAsync acu
-    case eTask of
-      Left _err -> liftEffect $ throwError $ error "[postNgramsChartsAsync] RESTError"
-      Right task -> pure $ AsyncTaskWithType { task, typ: UpdateNgramsCharts }
+    pure $ (\task -> AsyncTaskWithType { task, typ: UpdateNgramsCharts }) <$> eTask
   where
     acu = AsyncNgramsChartsUpdate { listId: head listIds
                                   , tabType }

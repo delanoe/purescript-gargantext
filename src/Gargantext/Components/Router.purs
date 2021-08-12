@@ -224,7 +224,8 @@ openedSidePanel :: R2.Component (WithSession Props)
 openedSidePanel = R.createElement openedSidePanelCpt
 openedSidePanelCpt :: R.Component (WithSession Props)
 openedSidePanelCpt = here.component "openedSidePanel" cpt where
-  cpt { boxes: { graphVersion
+  cpt { boxes: { errors
+               , graphVersion
                , reloadForest
                , route
                , sidePanelGraph
@@ -249,7 +250,8 @@ openedSidePanelCpt = here.component "openedSidePanel" cpt where
           (_ /\ Nothing) -> pure $ wrapper []
           (Just graph /\ Just metaData) -> do
             pure $ wrapper
-              [ GES.sidebar { frontends: defaultFrontends
+              [ GES.sidebar { errors
+                            , frontends: defaultFrontends
                             , graph
                             , graphId: g
                             , graphVersion
