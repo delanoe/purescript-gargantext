@@ -4,12 +4,13 @@ import DOM.Simple as DOM
 import Data.Maybe (Maybe)
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction)
 import Gargantext.Components.Forest.Tree.Node.Action (Action)
+import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction)
 import Gargantext.Prelude (Unit)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (ID, Name)
+import Gargantext.Types (FrontendError, ID, Name)
 import Gargantext.Types as GT
+import Toestand as T
 
 type CommonProps =
   ( dispatch :: Action -> Aff Unit
@@ -18,7 +19,8 @@ type CommonProps =
   )
 
 type NodePopupProps =
-  ( id             :: ID
+  ( errors         :: T.Box (Array FrontendError)
+  , id             :: ID
   , name           :: Name
   , nodeType       :: GT.NodeType
   , onPopoverClose :: DOM.Element -> Effect Unit

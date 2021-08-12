@@ -23,7 +23,7 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (WithSession, WithSessionContext, Session, get, put, sessionId)
-import Gargantext.Types (NodeType(..), SidePanelState)
+import Gargantext.Types (FrontendError, NodeType(..), SidePanelState)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
@@ -153,7 +153,8 @@ listElement = H.li { className: "list-group-item justify-content-between" }
 -}
 
 type LayoutNoSessionProps =
-  ( frontends      :: Frontends
+  ( errors         :: T.Box (Array FrontendError)
+  , frontends      :: Frontends
   , nodeId         :: Int
   , reloadForest   :: T2.ReloadS
   , reloadRoot     :: T2.ReloadS
@@ -176,7 +177,8 @@ userLayout = R.createElement userLayoutCpt
 userLayoutCpt :: R.Component LayoutProps
 userLayoutCpt = here.component "userLayout" cpt
   where
-    cpt { frontends
+    cpt { errors
+        , frontends
         , nodeId
         , reloadForest
         , reloadRoot
@@ -187,7 +189,8 @@ userLayoutCpt = here.component "userLayout" cpt
       let sid = sessionId session
 
       pure $ userLayoutWithKey {
-          frontends
+          errors
+        , frontends
         , key: show sid <> "-" <> show nodeId
         , nodeId
         , reloadForest
@@ -198,52 +201,53 @@ userLayoutCpt = here.component "userLayout" cpt
         , tasks
         }
 
-userLayoutWithKey :: Record KeyLayoutProps -> R.Element
+userLayoutWithKey :: R2.Leaf KeyLayoutProps
 userLayoutWithKey props = R.createElement userLayoutWithKeyCpt props []
 userLayoutWithKeyCpt :: R.Component KeyLayoutProps
-userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt
-  where
-    cpt { frontends
-        , nodeId
-        , reloadForest
-        , reloadRoot
-        , session
-        , sidePanel
-        , sidePanelState
-        , tasks } _ = do
-      reload <- T.useBox T2.newReload
-      reload' <- T.useLive T.unequal reload
+userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
+  cpt { errors
+      , frontends
+      , nodeId
+      , reloadForest
+      , reloadRoot
+      , session
+      , sidePanel
+      , sidePanelState
+      , tasks } _ = do
+    reload <- T.useBox T2.newReload
+    reload' <- T.useLive T.unequal reload
 
-      cacheState <- T.useBox LT.CacheOn
+    cacheState <- T.useBox LT.CacheOn
 
-      useLoader { errorHandler
-                , loader: getUserWithReload
-                , path: { nodeId, reload: reload', session }
-                , render: \contactData@{contactNode: Contact {name, hyperdata}} ->
-                    H.ul { className: "col-md-12 list-group" } [
-                      display { title: fromMaybe "no name" name }
-                              (contactInfos hyperdata (onUpdateHyperdata reload))
+    useLoader { errorHandler
+              , loader: getUserWithReload
+              , path: { nodeId, reload: reload', session }
+              , render: \contactData@{contactNode: Contact {name, hyperdata}} ->
+                  H.ul { className: "col-md-12 list-group" } [
+                    display { title: fromMaybe "no name" name }
+                    (contactInfos hyperdata (onUpdateHyperdata reload))
                     , Tabs.tabs {
-                           cacheState
-                         , contactData
-                         , frontends
-                         , nodeId
-                         , reloadForest
-                         , reloadRoot
-                         , session
-                         , sidePanel
-                  , sidePanelState
-                         , tasks
-                         }
+                         cacheState
+                       , contactData
+                       , errors
+                       , frontends
+                       , nodeId
+                       , reloadForest
+                       , reloadRoot
+                       , session
+                       , sidePanel
+                       , sidePanelState
+                       , tasks
+                       }
                     ]
-                }
-      where
-        errorHandler err = here.log2 "[userLayoutWithKey] RESTError" err
-        onUpdateHyperdata :: T2.ReloadS -> HyperdataUser -> Effect Unit
-        onUpdateHyperdata reload hd = do
-          launchAff_ $ do
-            _ <- saveContactHyperdata session nodeId hd
-            liftEffect $ T2.reload reload
+              }
+    where
+      errorHandler err = here.log2 "[userLayoutWithKey] RESTError" err
+      onUpdateHyperdata :: T2.ReloadS -> HyperdataUser -> Effect Unit
+      onUpdateHyperdata reload hd = do
+        launchAff_ $ do
+          _ <- saveContactHyperdata session nodeId hd
+          liftEffect $ T2.reload reload
 
 -- | toUrl to get data XXX
 getContact :: Session -> Int -> Aff (Either RESTError ContactData)

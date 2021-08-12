@@ -1,5 +1,6 @@
 module Gargantext.Components.Nodes.Corpus where
 
+import DOM.Simple.Console (log2)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
@@ -7,16 +8,10 @@ import Data.Generic.Rep (class Generic)
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Show.Generic (genericShow)
-import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Simple.JSON as JSON
-import Toestand as T
-
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.FolderView as FV
@@ -30,41 +25,49 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (class Eq, class Show, Unit, bind, discard, pure, show, unit, ($), (+), (-), (<), (<$>), (<<<), (<>), (==), (>))
 import Gargantext.Routes (SessionRoute(Children, NodeAPI))
 import Gargantext.Sessions (Session, get, put, sessionId)
-import Gargantext.Types (AffETableResult, NodeType(..))
+import Gargantext.Types (AffETableResult, FrontendError, NodeType(..))
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus"
 
-type Props = ( nodeId  :: Int, session :: Session, tasks :: T.Box GAT.Storage, reloadForest :: T2.ReloadS )
+type Props =
+  ( errors :: T.Box (Array FrontendError)
+  , nodeId  :: Int
+  , reloadForest :: T2.ReloadS
+  , session :: Session
+  , tasks :: T.Box GAT.Storage )
 
 corpusLayout :: R2.Leaf Props
 corpusLayout props = R.createElement corpusLayoutCpt props []
-
 corpusLayoutCpt :: R.Component Props
 corpusLayoutCpt = here.component "corpusLayout" cpt where
-  cpt { nodeId, session, tasks, reloadForest } _ = do
-    pure $ corpusLayoutMain { key, nodeId, session, tasks, reloadForest }
+  cpt { errors, nodeId, session, tasks, reloadForest } _ = do
+    pure $ corpusLayoutMain { errors, key, nodeId, session, tasks, reloadForest }
       where
         key = show (sessionId session) <> "-" <> show nodeId
 
 type KeyProps =
-  ( nodeId  :: Int
+  ( errors  :: T.Box (Array FrontendError)
   , key     :: String
+  , nodeId  :: Int
+  , reloadForest :: T2.ReloadS
   , session :: Session
   , tasks   :: T.Box GAT.Storage
-  , reloadForest :: T2.ReloadS
   )
 
 corpusLayoutMain :: R2.Leaf KeyProps
 corpusLayoutMain props = R.createElement corpusLayoutMainCpt props []
-
 corpusLayoutMainCpt :: R.Component KeyProps
 corpusLayoutMainCpt = here.component "corpusLayoutMain" cpt
   where
-    cpt { nodeId, key, session, tasks, reloadForest } _ = do
+    cpt { errors, nodeId, key, session, tasks, reloadForest } _ = do
       viewType <- T.useBox Folders
 
       pure $ H.div {} [
@@ -74,11 +77,12 @@ corpusLayoutMainCpt = here.component "corpusLayoutMain" cpt
           , H.div { className: "col-1" } [ FV.homeButton ]
           ]
         ]
-      , H.div {} [corpusLayoutSelection {state: viewType, key, session, nodeId, tasks, reloadForest}]
+      , H.div {} [corpusLayoutSelection { errors, state: viewType, key, session, nodeId, tasks, reloadForest }]
       ]
 
 type SelectionProps = 
-  ( nodeId  :: Int
+  ( errors  :: T.Box (Array FrontendError)
+  , nodeId  :: Int
   , key     :: String
   , session :: Session
   , state   :: T.Box ViewType
@@ -88,17 +92,17 @@ type SelectionProps =
 
 corpusLayoutSelection :: R2.Leaf SelectionProps
 corpusLayoutSelection props = R.createElement corpusLayoutSelectionCpt props []
-
 corpusLayoutSelectionCpt :: R.Component SelectionProps
 corpusLayoutSelectionCpt = here.component "corpusLayoutSelection" cpt where
-  cpt { nodeId, session, key, state, tasks, reloadForest} _ = do
+  cpt { errors, nodeId, session, key, state, tasks, reloadForest} _ = do
     state' <- T.useLive T.unequal state
     viewType <- T.read state
 
-    pure $ renderContent viewType nodeId session key tasks reloadForest
+    pure $ renderContent viewType nodeId session key tasks reloadForest errors
 
-  renderContent Folders nodeId session key tasks reloadForest = FV.folderView { nodeId, session, backFolder: true, tasks, reloadForest }
-  renderContent Code nodeId session key tasks _ = corpusLayoutWithKey { key, nodeId, session }
+  renderContent Folders nodeId session key tasks reloadForest errors =
+    FV.folderView { errors, nodeId, session, backFolder: true, tasks, reloadForest }
+  renderContent Code nodeId session key tasks _ _ = corpusLayoutWithKey { key, nodeId, session }
 
 type CorpusKeyProps =
   ( nodeId  :: Int
@@ -108,7 +112,6 @@ type CorpusKeyProps =
 
 corpusLayoutWithKey :: R2.Leaf CorpusKeyProps
 corpusLayoutWithKey props = R.createElement corpusLayoutWithKeyCpt props []
-
 corpusLayoutWithKeyCpt :: R.Component CorpusKeyProps
 corpusLayoutWithKeyCpt = here.component "corpusLayoutWithKey" cpt where
   cpt { nodeId, session } _ = do

@@ -7,10 +7,6 @@ import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (launchAff_)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
 import Gargantext.Components.Charts.Options.ECharts (dispatchAction)
 import Gargantext.Components.Charts.Options.Type (EChartsInstance, EChartActionData)
 import Gargantext.Components.DocsTable as DT
@@ -28,8 +24,11 @@ import Gargantext.Components.Table as Table
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (WithSession, Session, getCacheState)
-import Gargantext.Types (CTabNgramType(..), ListId, NodeID, SidePanelState(..), TabSubType(..), TabType(..))
+import Gargantext.Types (CTabNgramType(..), FrontendError, ListId, NodeID, SidePanelState(..), TabSubType(..), TabType(..))
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Texts"
@@ -37,8 +36,9 @@ here = R2.here "Gargantext.Components.Nodes.Texts"
 --------------------------------------------------------
 
 
-type CommonPropsNoSession = (
-    frontends      :: Frontends
+type CommonPropsNoSession =
+  ( errors         :: T.Box (Array FrontendError)
+  , frontends      :: Frontends
   , nodeId         :: NodeID
   , sidePanel      :: T.Box (Maybe (Record TT.SidePanel))
   , sidePanelState :: T.Box SidePanelState
@@ -49,12 +49,12 @@ type Props = WithSession CommonPropsNoSession
 
 textsLayout :: R2.Component Props
 textsLayout = R.createElement textsLayoutCpt
-
 textsLayoutCpt :: R.Component Props
 textsLayoutCpt = here.component "textsLayout" cpt where
-  cpt { frontends, nodeId, session, sidePanel, sidePanelState } children = do
-    pure $ textsLayoutWithKey { frontends
-                              , key
+  cpt { errors, frontends, nodeId, session, sidePanel, sidePanelState } children = do
+    pure $ textsLayoutWithKey { key
+                              , errors
+                              , frontends
                               , nodeId
                               , session
                               , sidePanel
@@ -67,6 +67,7 @@ textsLayoutCpt = here.component "textsLayout" cpt where
 
 type KeyProps = (
     key            :: String
+  , errors         :: T.Box (Array FrontendError)
   , frontends      :: Frontends
   , nodeId         :: NodeID
   , session        :: Session
@@ -79,7 +80,12 @@ textsLayoutWithKey = R.createElement textsLayoutWithKeyCpt
 textsLayoutWithKeyCpt :: R.Component KeyProps
 textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
   where
-    cpt { frontends, nodeId, session, sidePanel, sidePanelState } _children = do
+    cpt { errors
+        , frontends
+        , nodeId
+        , session
+        , sidePanel
+        , sidePanelState } _children = do
       cacheState <- T.useBox $ getCacheState LT.CacheOff session nodeId
       cacheState' <- T.useLive T.unequal cacheState
 
@@ -109,6 +115,7 @@ textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
                       , tabs { cacheState
                              , corpusData
                              , corpusId
+                             , errors
                              , frontends
                              , session
                              , sidePanel
@@ -143,6 +150,7 @@ type TabsProps =
   , corpusData      :: CorpusData
   , corpusId        :: NodeID
   , eChartsInstance :: T.Box (Maybe EChartsInstance)
+  , errors          :: T.Box (Array FrontendError)
   , frontends       :: Frontends
   , session         :: Session
   , sidePanel       :: T.Box (Maybe (Record TT.SidePanel))
@@ -159,6 +167,7 @@ tabsCpt = here.component "tabs" cpt
         , corpusId
         , corpusData
         , eChartsInstance
+        , errors
         , frontends
         , session
         , sidePanel
@@ -197,7 +206,7 @@ tabsCpt = here.component "tabs" cpt
           activeTab
         , tabs: [
             "Documents"       /\ R.fragment [
-                histo { path, session, onClick, onInit }
+                histo { errors, path, session, onClick, onInit }
               , docView' path TabDocs
               ]
           , "Trash"           /\ docView' path TabTrash
@@ -214,6 +223,7 @@ tabsCpt = here.component "tabs" cpt
         docView' path tabType = docView { cacheState
                                         , corpusData
                                         , corpusId
+                                        , errors
                                         , frontends
                                         , listId: path.listId
                                         -- , path
@@ -228,6 +238,7 @@ type DocViewProps a = (
     cacheState     :: T.Box LT.CacheState
   , corpusData     :: CorpusData
   , corpusId       :: NodeID
+  , errors         :: T.Box (Array FrontendError)
   , frontends      :: Frontends
   , listId         :: ListId
   -- , path        :: Record DT.Path
@@ -240,7 +251,6 @@ type DocViewProps a = (
 
 docView :: forall a. R2.Component (DocViewProps a)
 docView = R.createElement docViewCpt
-
 docViewCpt :: forall a. R.Component (DocViewProps a)
 docViewCpt = here.component "docView" cpt
   where
@@ -250,6 +260,7 @@ docViewCpt = here.component "docView" cpt
 -- docViewLayoutRec :: forall a. DocViewProps a -> Record DT.LayoutProps
 docViewLayoutRec { cacheState
                  , corpusId
+                 , errors
                  , frontends
                  , listId
                  , session
@@ -260,6 +271,7 @@ docViewLayoutRec { cacheState
                  } =
   { cacheState
   , chart  : H.div {} []
+  , errors
   , frontends
   , listId
   , mCorpusId: Just corpusId
@@ -275,6 +287,7 @@ docViewLayoutRec { cacheState
   }
 docViewLayoutRec { cacheState
                  , corpusId
+                 , errors
                  , frontends
                  , listId
                  , session
@@ -285,6 +298,7 @@ docViewLayoutRec { cacheState
                  } =
   { cacheState
   , chart  : H.div {} []
+  , errors
   , frontends
   , listId
   , mCorpusId: Just corpusId
@@ -300,6 +314,7 @@ docViewLayoutRec { cacheState
   }
 docViewLayoutRec { cacheState
                  , corpusId
+                 , errors
                  , frontends
                  , listId
                  , session
@@ -310,6 +325,7 @@ docViewLayoutRec { cacheState
                  } =
   { cacheState
   , chart  : H.div {} []
+  , errors
   , frontends
   , listId
   , mCorpusId: Just corpusId
@@ -325,6 +341,7 @@ docViewLayoutRec { cacheState
   }
 docViewLayoutRec { cacheState
                  , corpusId
+                 , errors
                  , frontends
                  , listId
                  , session
@@ -335,6 +352,7 @@ docViewLayoutRec { cacheState
                  } =
   { cacheState
   , chart  : H.div {} []
+  , errors
   , frontends
   , listId
   , mCorpusId: Just corpusId
@@ -351,6 +369,7 @@ docViewLayoutRec { cacheState
 -- DUMMY
 docViewLayoutRec { cacheState
                  , corpusId
+                 , errors
                  , frontends
                  , listId
                  , session
@@ -361,6 +380,7 @@ docViewLayoutRec { cacheState
                  } =
   { cacheState
   , chart  : H.div {} []
+  , errors
   , frontends
   , listId
   , mCorpusId: Just corpusId

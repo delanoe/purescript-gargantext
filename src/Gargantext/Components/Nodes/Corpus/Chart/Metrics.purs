@@ -110,15 +110,15 @@ mkRequest session (_ /\ path) = GUC.makeGetRequest session $ chartUrl path
 
 metrics :: Record Props -> R.Element
 metrics props = R.createElement metricsCpt props []
-
 metricsCpt :: R.Component Props
 metricsCpt = here.component "etrics" cpt
   where
-    cpt {path, session, onClick, onInit } _ = do
+    cpt { errors, onClick, onInit, path, session } _ = do
       reload <- T.useBox T2.newReload
 
       pure $ metricsWithCacheLoadView {
-          getMetricsHash
+          errors
+        , getMetricsHash
         , handleResponse
         , loaded
         , mkRequest: mkRequest session

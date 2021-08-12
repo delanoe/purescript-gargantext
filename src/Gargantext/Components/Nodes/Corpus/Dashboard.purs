@@ -4,15 +4,9 @@ import Data.Array as A
 import Data.Either (Either(..))
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
-import DOM.Simple.Console (log, log2)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
-import Gargantext.Components.Forest.Tree (doSearch)
 import Gargantext.Components.Nodes.Corpus (fieldsCodeEditor)
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
 import Gargantext.Components.Nodes.Dashboard.Types as DT
@@ -20,21 +14,28 @@ import Gargantext.Components.Nodes.Types (FTFieldList(..), FTFieldsWithIndex(..)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, discard, pure, read, show, unit, ($), (<$>), (<>), (==))
 import Gargantext.Sessions (Session, sessionId)
-import Gargantext.Types (NodeID)
+import Gargantext.Types (FrontendError, NodeID)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Dashboard"
 
-type Props = ( nodeId :: NodeID, session :: Session )
+type Props =
+  ( errors  :: T.Box (Array FrontendError)
+  , nodeId  :: NodeID
+  , session :: Session )
 
 dashboardLayout :: R2.Component Props
 dashboardLayout = R.createElement dashboardLayoutCpt
 dashboardLayoutCpt :: R.Component Props
 dashboardLayoutCpt = here.component "dashboardLayout" cpt where
-  cpt { nodeId, session } content = do
-    pure $ dashboardLayoutWithKey { key, nodeId, session } content
+  cpt props@{ nodeId, session } content = do
+    pure $ dashboardLayoutWithKey (Record.merge props { key }) content
       where
         key = show (sessionId session) <> "-" <> show nodeId
 
@@ -48,7 +49,7 @@ dashboardLayoutWithKey = R.createElement dashboardLayoutWithKeyCpt
 dashboardLayoutWithKeyCpt :: R.Component KeyProps
 dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
   where
-    cpt { nodeId, session } _ = do
+    cpt { errors, nodeId, session } _ = do
       reload <- T.useBox T2.newReload
       reload' <- T.useLive T.unequal reload
 
@@ -60,6 +61,7 @@ dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
                       dashboardLayoutLoaded { charts
                                             , corpusId: parentId
                                             , defaultListId: 0
+                                            , errors
                                             , fields
                                             , nodeId
                                             , onChange: onChange nodeId reload (DT.Hyperdata h)
@@ -75,7 +77,7 @@ dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
                                     , session }
             liftEffect $ do
               _ <- case res of
-                Left err -> log2 "[dashboardLayoutWithKey] onChange RESTError" err
+                Left err -> here.log2 "[dashboardLayoutWithKey] onChange RESTError" err
                 _ -> pure unit
               T2.reload reload
 
@@ -83,6 +85,7 @@ type LoadedProps =
   ( charts        :: Array P.PredefinedChart
   , corpusId      :: NodeID
   , defaultListId :: Int
+  , errors        :: T.Box (Array FrontendError)
   , fields        :: FTFieldList
   , onChange      :: { charts :: Array P.PredefinedChart
                      , fields :: FTFieldList } -> Effect Unit
@@ -95,7 +98,7 @@ dashboardLayoutLoaded = R.createElement dashboardLayoutLoadedCpt
 dashboardLayoutLoadedCpt :: R.Component LoadedProps
 dashboardLayoutLoadedCpt = here.component "dashboardLayoutLoaded" cpt
   where
-    cpt { charts, corpusId, defaultListId, fields, nodeId, onChange, session } _ = do
+    cpt { charts, corpusId, defaultListId, errors, fields, nodeId, onChange, session } _ = do
       pure $ H.div {}
         [ dashboardCodeEditor { fields
                               , nodeId
@@ -119,7 +122,13 @@ dashboardLayoutLoadedCpt = here.component "dashboardLayoutLoaded" cpt
                                          , fields }
         chartsEls = A.mapWithIndex chartIdx charts
         chartIdx idx chart =
-          renderChart { chart, corpusId, defaultListId, onChange: onChangeChart, onRemove, session } []
+          renderChart { chart
+                      , corpusId
+                      , defaultListId
+                      , errors
+                      , onChange: onChangeChart
+                      , onRemove
+                      , session } []
           where
             onChangeChart c = do
               onChange { charts: fromMaybe charts (A.modifyAt idx (\_ -> c) charts)
@@ -193,6 +202,7 @@ type PredefinedChartProps =
   ( chart         :: P.PredefinedChart
   , corpusId      :: NodeID
   , defaultListId :: Int
+  , errors        :: T.Box (Array FrontendError)
   , onChange      :: P.PredefinedChart -> Effect Unit
   , onRemove      :: Unit -> Effect Unit
   , session       :: Session
@@ -203,7 +213,7 @@ renderChart = R.createElement renderChartCpt
 renderChartCpt :: R.Component PredefinedChartProps
 renderChartCpt = here.component "renderChart" cpt
   where
-    cpt { chart, corpusId, defaultListId, onChange, onRemove, session } _ = do
+    cpt { chart, corpusId, defaultListId, errors, onChange, onRemove, session } _ = do
       pure $ H.div { className: "row chart card" }
         [ H.div { className: "card-header" }
           [ H.div { className: "row" }
@@ -234,6 +244,7 @@ renderChartCpt = here.component "renderChart" cpt
             value = R.unsafeEventValue e
         onRemoveClick _ = onRemove unit
         params = { corpusId
+                 , errors
                  , limit: Just 1000
                  , listId: Just defaultListId
                  , session

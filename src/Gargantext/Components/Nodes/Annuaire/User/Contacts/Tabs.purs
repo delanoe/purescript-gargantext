@@ -1,12 +1,11 @@
 -- TODO copy of Gargantext.Components.Nodes.Corpus.Tabs.Specs
 module Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs where
 
-import Prelude hiding (div)
+import Gargantext.Prelude
 
 import Data.Generic.Rep (class Generic)
-import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..))
-import Data.Tuple (fst)
+import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.DocsTable as DT
@@ -19,7 +18,7 @@ import Gargantext.Components.Nodes.Texts.Types as TTypes
 import Gargantext.Components.Tab as Tab
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType(..), PTabNgramType(..), SidePanelState, TabType(..), TabSubType(..))
+import Gargantext.Types (CTabNgramType(..), FrontendError, PTabNgramType(..), SidePanelState, TabSubType(..), TabType(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
@@ -52,6 +51,7 @@ modeTabType' Communication = CTabAuthors
 type TabsProps = (
     cacheState     :: T.Box LTypes.CacheState
   , contactData    :: ContactData'
+  , errors         :: T.Box (Array FrontendError)
   , frontends      :: Frontends
   , nodeId         :: Int
   , reloadForest   :: T2.ReloadS
@@ -62,22 +62,23 @@ type TabsProps = (
   , tasks          :: T.Box GAT.Storage
   )
 
-tabs :: Record TabsProps -> R.Element
+tabs :: R2.Leaf TabsProps
 tabs props = R.createElement tabsCpt props []
-
 tabsCpt :: R.Component TabsProps
 tabsCpt = here.component "tabs" cpt
   where
-    cpt { reloadRoot
-        , tasks
-        , cacheState
+    cpt { cacheState
         , contactData: {defaultListId}
+        , errors
         , frontends
         , nodeId
+        , reloadRoot
+        , reloadForest
         , session
         , sidePanel
         , sidePanelState
-        , reloadForest } _ = do
+        , tasks
+        } _ = do
       activeTab <- T.useBox 0
       yearFilter <- T.useBox (Nothing :: Maybe Year)
 
@@ -119,6 +120,7 @@ tabsCpt = here.component "tabs" cpt
             docs = DT.docViewLayout
               { cacheState
               , chart
+              , errors
               , frontends
               , listId: defaultListId
               , mCorpusId: Nothing

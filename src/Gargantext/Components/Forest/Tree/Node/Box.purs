@@ -5,7 +5,7 @@ import Gargantext.Prelude
 import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
+import Gargantext.Components.Forest.Tree.Node.Action (Action)
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (actionDelete)
@@ -22,9 +22,9 @@ import Gargantext.Components.Forest.Tree.Node.Action.Upload (actionUpload)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (NodePopupProps, NodePopupS)
 import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Status (Status(..), hasStatus)
-import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT, panel)
+import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (Name, ID, prettyNodeType)
+import Gargantext.Types (FrontendError, ID, Name, prettyNodeType)
 import Gargantext.Types as GT
 import Gargantext.Utils.Glyphicon (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
@@ -35,11 +35,12 @@ import Toestand as T
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Box"
 
-type CommonProps = ( dispatch :: Action -> Aff Unit, session :: Session )
+type CommonProps =
+  ( dispatch :: Action -> Aff Unit
+  , session :: Session )
 
 nodePopupView :: Record NodePopupProps -> R.Element
 nodePopupView p = R.createElement nodePopupCpt p []
-
 nodePopupCpt :: R.Component NodePopupProps
 nodePopupCpt = here.component "nodePopupView" cpt where
   cpt p@{ id, name, nodeType }  _ = do
@@ -101,8 +102,8 @@ nodePopupCpt = here.component "nodePopupView" cpt where
            else []
   mPanelAction :: Record NodePopupS -> Record NodePopupProps -> R.Element
   mPanelAction { action: Just action }
-               { dispatch, id, name, nodeType, session, handed } =
-    panelAction { action, dispatch, id, name, nodeType, session
+               { dispatch, errors, id, name, nodeType, session, handed } =
+    panelAction { action, dispatch, errors, id, name, nodeType, session
                 , handed, nodePopup: Just NodePopup }
   mPanelAction { action: Nothing } _ =
     H.div { className: "card-footer" }
@@ -162,6 +163,7 @@ type PanelActionProps =
   ( id        :: ID
   , action    :: NodeAction
   , dispatch  :: Action -> Aff Unit
+  , errors    :: T.Box (Array FrontendError)
   , name      :: Name
   , nodePopup :: Maybe NodePopup
   , nodeType  :: GT.NodeType
@@ -169,9 +171,8 @@ type PanelActionProps =
   , handed    :: GT.Handed
   )
 
-panelAction :: Record PanelActionProps -> R.Element
+panelAction :: R2.Leaf PanelActionProps
 panelAction p = R.createElement panelActionCpt p []
-
 panelActionCpt :: R.Component PanelActionProps
 panelActionCpt = here.component "panelAction" cpt
   where
@@ -195,6 +196,6 @@ panelActionCpt = here.component "panelAction" cpt
     cpt {action : AddingContact, dispatch, id, name } _ = pure $ Contact.actionAddContact { dispatch, id } []
     cpt {action : Publish {subTreeParams}, dispatch, id, nodeType, session, handed} _ =
       pure $ Share.publishNode { dispatch, handed, id, nodeType, session, subTreeParams } []
-    cpt props@{action: SearchBox, id, session, dispatch, nodePopup} _ =
-      pure $ actionSearch { dispatch, id: (Just id), nodePopup, session } []
+    cpt props@{action: SearchBox, errors, id, session, dispatch, nodePopup} _ =
+      pure $ actionSearch { dispatch, errors, id: (Just id), nodePopup, session } []
     cpt _ _ = pure $ H.div {} []

@@ -1,11 +1,8 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Update where
 
-import Control.Monad.Error.Class (throwError)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-import Effect.Class (liftEffect)
-import Effect.Exception (error)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
@@ -25,12 +22,12 @@ import Gargantext.Utils.Reactix as R2
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Update"
 
-updateRequest :: UpdateNodeParams -> Session -> ID -> Aff GT.AsyncTaskWithType
+updateRequest :: UpdateNodeParams -> Session -> ID -> Aff (Either RESTError GT.AsyncTaskWithType)
 updateRequest updateNodeParams session nodeId = do
   eTask :: Either RESTError GT.AsyncTask <- post session p updateNodeParams
   case eTask of
-    Left _err -> liftEffect $ throwError $ error "[updateRequest] RESTError"
-    Right task -> pure $ GT.AsyncTaskWithType { task, typ: GT.UpdateNode }
+    Left err -> pure $ Left err
+    Right task -> pure $ Right $ GT.AsyncTaskWithType { task, typ: GT.UpdateNode }
     where
       p = GR.NodeAPI GT.Node (Just nodeId) "update"
 

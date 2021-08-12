@@ -2,12 +2,11 @@ module Gargantext.Config.REST where
 
 import Gargantext.Prelude
 
-import Affjax (defaultRequest, request)
+import Affjax (Error(..), defaultRequest, request)
 import Affjax as Affjax
 import Affjax.RequestBody (formData, formURLEncoded, string)
 import Affjax.RequestHeader as ARH
 import Affjax.ResponseFormat as ResponseFormat
-import DOM.Simple.Console (log2)
 import Data.Argonaut.Core as AC
 import Data.Either (Either(..))
 import Data.Foldable (foldMap)
@@ -20,10 +19,9 @@ import Data.Tuple (Tuple)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Foreign as Foreign
+import Gargantext.Utils.Reactix as R2
 import Simple.JSON as JSON
 import Web.XHR.FormData as XHRFormData
-
-import Gargantext.Utils.Reactix as R2
 
 type Token = String
 
@@ -32,9 +30,19 @@ data RESTError =
   | ReadJSONError     Foreign.MultipleErrors
 
 derive instance Generic RESTError _
+instance Show RESTError where
+  show (SendResponseError e) = "SendResponseError " <> showError e
+    where
+      showError (RequestContentError e') = "(RequestContentError " <> show e' <> ")"
+      showError (ResponseBodyError fe rf) = "(ResponseBodyError " <> show fe <> " (rf)"  -- <> show rf <> ")"
+      showError (TimeoutError) = "(TimeoutError)"
+      showError (RequestFailedError) = "(RequestFailedError)"
+      showError (XHROtherError e') = "(XHROtherError " <> show e' <> ")"
+  show (ReadJSONError     e) = "ReadJSONError " <> show e
 instance Eq RESTError where
   -- this is crude but we need it only because of useLoader
   eq _ _ = false
+
 
 readJSON :: forall a b. JSON.ReadForeign a =>
             Either Affjax.Error

@@ -95,15 +95,15 @@ mkRequest session (_ /\ path) = GUC.makeGetRequest session $ chartUrl path
 
 histo :: Record Props -> R.Element
 histo props = R.createElement histoCpt props []
-
 histoCpt :: R.Component Props
 histoCpt = here.component "histo" cpt
   where
-    cpt { path, session, onClick, onInit } _ = do
+    cpt { errors, path, session, onClick, onInit } _ = do
       reload <- T.useBox T2.newReload
 
       pure $ metricsWithCacheLoadView {
-          getMetricsHash
+          errors
+        , getMetricsHash
         , handleResponse
         , loaded
         , mkRequest: mkRequest session

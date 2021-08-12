@@ -14,7 +14,7 @@ import Gargantext.Components.Forest.Tree (treeLoader)
 import Gargantext.Ends (Frontends, Backend)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Sessions (Session(..), Sessions, OpenNodes, unSessions)
-import Gargantext.Types (Handed, switchHanded)
+import Gargantext.Types (FrontendError, Handed, switchHanded)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
@@ -36,6 +36,7 @@ type Common =
 
 type Props =
   ( backend            :: T.Box (Maybe Backend)
+  , errors             :: T.Box (Array FrontendError)
   , forestOpen         :: T.Box OpenNodes
   , reloadForest       :: T2.ReloadS
   , sessions           :: T.Box Sessions
@@ -53,6 +54,7 @@ forest = R.createElement forestCpt
 forestCpt :: R.Component Props
 forestCpt = here.component "forest" cpt where
   cpt props@{ backend
+            , errors
             , forestOpen
             , frontends
             , handed
@@ -81,7 +83,8 @@ forestCpt = here.component "forest" cpt where
       common = RX.pick props :: Record Common
       trees handed' sessions' = (tree handed') <$> unSessions sessions'
       tree handed' s@(Session {treeId}) =
-        treeLoader { forestOpen
+        treeLoader { errors
+                   , forestOpen
                    , frontends
                    , handed: handed'
                    , reload: reloadForest

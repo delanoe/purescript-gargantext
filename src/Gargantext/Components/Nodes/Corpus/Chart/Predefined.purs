@@ -1,9 +1,9 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Predefined where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson)
+import Gargantext.Prelude
+
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Nullable (Nullable)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Effect (Effect)
@@ -12,13 +12,12 @@ import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
 import Gargantext.Components.Nodes.Corpus.Chart.Pie (pie)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
-import Gargantext.Prelude
 import Gargantext.Sessions (Session)
-import Gargantext.Types (NodeID, Mode(..), TabSubType(..), TabType(..), modeTabType)
+import Gargantext.Types (FrontendError, Mode(..), NodeID, TabSubType(..), TabType(..), modeTabType)
 import Reactix as R
 import Simple.JSON as JSON
 import Simple.JSON.Generics as JSONG
-
+import Toestand as T
 
 data PredefinedChart =
     CDocsHistogram
@@ -57,44 +56,50 @@ allPredefinedCharts =
 
 type Params =
   ( corpusId :: NodeID
-  , session  :: Session
   -- optinal params
+  , errors   :: T.Box (Array FrontendError)
   , limit    :: Maybe Int
   , listId   :: Maybe Int
   , onClick  :: Maybe (MouseEvent -> Effect Unit)
   , onInit   :: Maybe (EChartsInstance -> Effect Unit)
+  , session  :: Session
   )
 
 render :: PredefinedChart -> Record Params -> R.Element
-render CDocsHistogram { corpusId, listId, session, onClick, onInit } = histo { path, session, onClick, onInit }
+render CDocsHistogram { corpusId, errors, listId, session, onClick, onInit } =
+  histo { errors, path, session, onClick, onInit }
   where
     path = { corpusId
            , listId: fromMaybe 0 listId
            , limit: Nothing
            , tabType: TabCorpus TabDocs
            }
-render CAuthorsPie { corpusId, listId, session, onClick, onInit } = pie { path, session, onClick, onInit }
+render CAuthorsPie { corpusId, errors, listId, session, onClick, onInit } =
+  pie { errors, path, session, onClick, onInit }
   where
     path = { corpusId
            , listId: fromMaybe 0 listId
            , limit: Nothing
            , tabType: TabCorpus (TabNgramType $ modeTabType Authors)
            }
-render CInstitutesTree { corpusId, limit, listId, session, onClick, onInit } = tree { path, session, onClick, onInit }
+render CInstitutesTree { corpusId, errors, limit, listId, session, onClick, onInit } =
+  tree { errors, path, session, onClick, onInit }
   where
     path = { corpusId
            , limit
            , listId: fromMaybe 0 listId
            , tabType: TabCorpus (TabNgramType $ modeTabType Institutes)
            }
-render CTermsMetrics { corpusId, limit, listId, session, onClick, onInit } = metrics { path, session, onClick, onInit }
+render CTermsMetrics { corpusId, errors, limit, listId, session, onClick, onInit } =
+  metrics { errors, path, session, onClick, onInit }
   where
     path = { corpusId
            , limit
            , listId: fromMaybe 0 listId
            , tabType: TabCorpus (TabNgramType $ modeTabType Terms)
            }
-render CSourcesBar { corpusId, limit, listId, session, onClick, onInit } = metrics { path, session, onClick, onInit }
+render CSourcesBar { corpusId, errors, limit, listId, session, onClick, onInit } =
+  metrics { errors, path, session, onClick, onInit }
   where
     path = { corpusId
            , limit

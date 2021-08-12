@@ -3,28 +3,18 @@ module Gargantext.Components.Nodes.Annuaire.User.Contact
   , contactLayout
   ) where
 
+import Gargantext.Prelude
+
 import Data.Either (Either)
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
-import Gargantext.Prelude
-
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
-import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
-  ( Contact'(..), ContactData', ContactTouch(..), ContactWhere(..)
-  , ContactWho(..), HyperdataContact(..), HyperdataUser(..)
-  , _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName
-  , _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role
-  , _shared, _touch, _who, defaultContactTouch, defaultContactWhere
-  , defaultContactWho, defaultHyperdataContact, defaultHyperdataUser )
+import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact'(..), ContactData', ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
 import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Components.Nodes.Texts.Types as TT
 import Gargantext.Config.REST (RESTError)
@@ -32,9 +22,12 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, get, put, sessionId)
-import Gargantext.Types (NodeType(..), SidePanelState)
+import Gargantext.Types (FrontendError, NodeType(..), SidePanelState)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Annuaire.User.Contact"
@@ -43,7 +36,6 @@ type DisplayProps = ( title :: String )
 
 display :: R2.Component DisplayProps
 display = R.createElement displayCpt
-
 displayCpt :: R.Component DisplayProps
 displayCpt = here.component "display" cpt
   where
@@ -140,7 +132,8 @@ contactInfoItemCpt = here.component "contactInfoItem" cpt
               onUpdateHyperdata newHyperdata
 
 type BasicProps =
-  ( frontends      :: Frontends
+  ( errors         :: T.Box (Array FrontendError)
+  , frontends      :: Frontends
   , nodeId         :: Int
   , sidePanelState :: T.Box SidePanelState
   , sidePanel      :: T.Box (Maybe (Record TT.SidePanel))
@@ -166,10 +159,10 @@ type AnnuaireKeyLayoutProps = ( annuaireId :: Int | KeyLayoutProps )
 
 contactLayout :: R2.Component AnnuaireLayoutProps
 contactLayout = R.createElement contactLayoutCpt
-
 contactLayoutCpt :: R.Component AnnuaireLayoutProps
 contactLayoutCpt = here.component "contactLayout" cpt where
   cpt { annuaireId
+      , errors
       , frontends
       , nodeId
       , reloadForest
@@ -182,6 +175,7 @@ contactLayoutCpt = here.component "contactLayout" cpt where
     pure $
       contactLayoutWithKey
       { annuaireId
+      , errors
       , frontends
       , key
       , nodeId
@@ -198,6 +192,7 @@ contactLayoutWithKey props = R.createElement contactLayoutWithKeyCpt props []
 contactLayoutWithKeyCpt :: R.Component AnnuaireKeyLayoutProps
 contactLayoutWithKeyCpt = here.component "contactLayoutWithKey" cpt where
     cpt { annuaireId
+        , errors
         , frontends
         , reloadForest
         , reloadRoot
@@ -219,6 +214,7 @@ contactLayoutWithKeyCpt = here.component "contactLayoutWithKey" cpt where
                          , Tabs.tabs
                              { cacheState
                              , contactData
+                             , errors
                              , frontends
                              , nodeId
                              , session

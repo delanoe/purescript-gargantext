@@ -75,15 +75,15 @@ mkRequest session (_ /\ path@{ corpusId, limit, listId, tabType }) = GUC.makeGet
 
 tree :: Record Props -> R.Element
 tree props = R.createElement treeCpt props []
-
 treeCpt :: R.Component Props
 treeCpt = here.component "tree" cpt
   where
-    cpt {path, session, onClick, onInit} _ = do
+    cpt { errors, path, session, onClick, onInit } _ = do
       reload <- T.useBox T2.newReload
 
       pure $ metricsWithCacheLoadView {
-          getMetricsHash
+          errors
+        , getMetricsHash
         , handleResponse
         , loaded
         , mkRequest: mkRequest session

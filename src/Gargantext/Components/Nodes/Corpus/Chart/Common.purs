@@ -1,21 +1,22 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Common where
 
+import Gargantext.Prelude
+
+import Data.Array as A
 import Data.Either (Either)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Reactix as R
-import Simple.JSON as JSON
-import Toestand as T
-
-import Gargantext.Prelude
-
 import Gargantext.Components.Nodes.Corpus.Chart.Types (MetricsProps, ReloadPath)
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Hooks.Loader (HashedResponse, useLoader, useLoaderWithCacheAPI)
-import Gargantext.Utils.Crypto (Hash)
 import Gargantext.Sessions (Session)
+import Gargantext.Types (FrontendError(..))
 import Gargantext.Utils.CacheAPI as GUC
+import Gargantext.Utils.Crypto (Hash)
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Simple.JSON as JSON
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Common"
@@ -34,21 +35,23 @@ metricsLoadView p = R.createElement metricsLoadViewCpt p []
 metricsLoadViewCpt :: forall a. Eq a => R.Component (MetricsLoadViewProps a)
 metricsLoadViewCpt = here.component "metricsLoadView" cpt
   where
-    cpt { getMetrics, loaded, path, reload, session, onClick, onInit } _ = do
+    cpt { errors, getMetrics, loaded, onClick, onInit, path, reload, session } _ = do
       reload' <- T.useLive T.unequal reload
 
       useLoader { errorHandler
                 , loader: getMetrics session
                 , path: reload' /\ path
-                , render: \l -> loaded { path, reload, session, onClick, onInit } l }
+                , render: \l -> loaded { errors, path, reload, session, onClick, onInit } l }
       where
-        errorHandler err = here.log2 "RESTError" err
+        errorHandler error = do
+          T.modify_ (A.cons $ FRESTError { error }) errors
+          here.log2 "RESTError" error
 
-type MetricsWithCacheLoadViewProps res ret = (
-    getMetricsHash :: Session -> ReloadPath -> Aff (Either RESTError Hash)
+type MetricsWithCacheLoadViewProps res ret =
+  ( getMetricsHash :: Session -> ReloadPath -> Aff (Either RESTError Hash)
   , handleResponse :: HashedResponse res -> ret
-  , loaded :: Record MetricsProps -> ret -> R.Element
-  , mkRequest :: ReloadPath -> GUC.Request
+  , loaded         :: Record MetricsProps -> ret -> R.Element
+  , mkRequest      :: ReloadPath -> GUC.Request
   | MetricsProps
   )
 
@@ -61,11 +64,21 @@ metricsWithCacheLoadViewCpt :: forall res ret.
                                R.Component (MetricsWithCacheLoadViewProps res ret)
 metricsWithCacheLoadViewCpt = here.component "metricsWithCacheLoadView" cpt
   where
-    cpt { getMetricsHash, handleResponse, loaded, mkRequest, path, reload, session, onClick, onInit } _ = do
+    cpt { errors
+        , getMetricsHash
+        , handleResponse
+        , loaded
+        , mkRequest
+        , path
+        , reload
+        , session
+        , onClick
+        , onInit } _ = do
       reload' <- T.useLive T.unequal reload
 
       useLoaderWithCacheAPI { cacheEndpoint: (getMetricsHash session)
+                            , errors
                             , handleResponse
                             , mkRequest
                             , path: (reload' /\ path)
-                            , renderer: loaded { path, reload, session, onClick, onInit } }
+                            , renderer: loaded { errors, path, reload, session, onClick, onInit } }

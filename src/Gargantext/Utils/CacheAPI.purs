@@ -86,7 +86,7 @@ cached cache req = do
       mResFresh <- match cache req
       case mResFresh of
         Just res -> pure res
-        Nothing -> throwError $ error $ "Cannot add to cache"
+        Nothing -> throwError $ error $ "[cached] Cannot add to cache"
 
 cachedJson :: forall a. JSON.ReadForeign a => Cache -> Request -> Aff a
 cachedJson cache req = do

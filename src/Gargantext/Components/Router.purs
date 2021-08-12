@@ -5,12 +5,6 @@ import Gargantext.Prelude
 import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Record as Record
-import Record.Extra as RE
-import Toestand as T
-
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.ErrorsView (errorsView)
 import Gargantext.Components.Footer (footer)
@@ -43,6 +37,11 @@ import Gargantext.Sessions (Session, WithSession)
 import Gargantext.Sessions as Sessions
 import Gargantext.Types (CorpusId, Handed(..), ListId, NodeID, NodeType(..), SessionId, SidePanelState(..), reverseHanded)
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Record.Extra as RE
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Router"
@@ -114,6 +113,7 @@ forest p = R.createElement forestCpt p []
 forestCpt :: R.Component Props
 forestCpt = here.component "forest" cpt where
   cpt { boxes: { backend
+               , errors
                , forestOpen
                , handed
                , reloadForest
@@ -133,6 +133,7 @@ forestCpt = here.component "forest" cpt where
       then mempty
       else Forest.forestLayout
         { backend
+        , errors
         , forestOpen
         , frontends: defaultFrontends
         , handed
@@ -284,7 +285,11 @@ corpusCpt = here.component "corpus" cpt where
   cpt props@{ boxes, nodeId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
-                                   corpusLayout { nodeId, session, tasks: boxes.tasks, reloadForest: boxes.reloadForest } } sessionProps) []
+                                   corpusLayout { errors: boxes.errors
+                                                , nodeId
+                                                , session
+                                                , tasks: boxes.tasks
+                                                , reloadForest: boxes.reloadForest } } sessionProps) []
 
 type CorpusDocumentProps =
   ( corpusId :: CorpusId
@@ -310,10 +315,10 @@ dashboard = R.createElement dashboardCpt
 dashboardCpt :: R.Component SessionNodeProps
 dashboardCpt = here.component "dashboard" cpt
   where
-    cpt props@{ nodeId } _ = do
+    cpt props@{ boxes: { errors }, nodeId } _ = do
       let sessionProps = RE.pick props :: Record SessionProps
       pure $ authed (Record.merge { content: \session ->
-                                     dashboardLayout { nodeId, session } [] } sessionProps) []
+                                     dashboardLayout { errors, nodeId, session } [] } sessionProps) []
 
 type DocumentProps = ( listId :: ListId | SessionNodeProps )
 
@@ -356,14 +361,15 @@ home :: R2.Component Props
 home = R.createElement homeCpt
 homeCpt :: R.Component Props
 homeCpt = here.component "home" cpt where
-  cpt { boxes: { backend, sessions, showLogin, tasks, reloadForest} } _ = do
-    pure $ homeLayout { backend, lang: LL_EN, sessions, showLogin, tasks, reloadForest }
+  cpt { boxes: { backend, errors, sessions, showLogin, tasks, reloadForest} } _ = do
+    pure $ homeLayout { backend, errors, lang: LL_EN, sessions, showLogin, tasks, reloadForest }
 
 lists :: R2.Component SessionNodeProps
 lists = R.createElement listsCpt
 listsCpt :: R.Component SessionNodeProps
 listsCpt = here.component "lists" cpt where
-  cpt props@{ boxes: { reloadForest
+  cpt props@{ boxes: { errors
+                     , reloadForest
                      , reloadMainPage
                      , reloadRoot
                      , sidePanelState
@@ -372,7 +378,8 @@ listsCpt = here.component "lists" cpt where
             , nodeId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
-                                   Lists.listsLayout { nodeId
+                                   Lists.listsLayout { errors
+                                                     , nodeId
                                                      , reloadForest
                                                      , reloadMainPage
                                                      , reloadRoot
@@ -420,22 +427,25 @@ teamCpt = here.component "team" cpt where
   cpt props@{ boxes, nodeId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
-                                   corpusLayout { nodeId
+                                   corpusLayout { errors: boxes.errors
+                                                , nodeId
+                                                , reloadForest: boxes.reloadForest
                                                 , session
-                                                , tasks: boxes.tasks
-                                                , reloadForest: boxes.reloadForest } } sessionProps) []
+                                                , tasks: boxes.tasks } } sessionProps) []
 
 texts :: R2.Component SessionNodeProps
 texts = R.createElement textsCpt
 textsCpt :: R.Component SessionNodeProps
 textsCpt = here.component "texts" cpt
   where
-    cpt props@{ boxes: { sidePanelState
+    cpt props@{ boxes: { errors
+                       , sidePanelState
                        , sidePanelTexts }
               , nodeId } _ = do
       let sessionProps = RE.pick props :: Record SessionProps
       pure $ authed (Record.merge { content: \session ->
-                                     Texts.textsLayout { frontends: defaultFrontends
+                                     Texts.textsLayout { errors
+                                                       , frontends: defaultFrontends
                                                        , nodeId
                                                        , session
                                                        , sidePanel: sidePanelTexts
@@ -445,7 +455,8 @@ user :: R2.Component SessionNodeProps
 user = R.createElement userCpt
 userCpt :: R.Component SessionNodeProps
 userCpt = here.component "user" cpt where
-  cpt props@{ boxes: { reloadForest
+  cpt props@{ boxes: { errors
+                     , reloadForest
                      , reloadRoot
                      , sidePanelState
                      , sidePanelTexts
@@ -453,7 +464,8 @@ userCpt = here.component "user" cpt where
             , nodeId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
-                                   userLayout { frontends: defaultFrontends
+                                   userLayout { errors
+                                              , frontends: defaultFrontends
                                               , nodeId
                                               , reloadForest
                                               , reloadRoot
@@ -469,7 +481,8 @@ contact = R.createElement contactCpt
 contactCpt :: R.Component ContactProps
 contactCpt = here.component "contact" cpt where
   cpt props@{ annuaireId
-            , boxes: { reloadForest
+            , boxes: { errors
+                     , reloadForest
                      , reloadRoot
                      , sidePanelTexts
                      , sidePanelState
@@ -479,6 +492,7 @@ contactCpt = here.component "contact" cpt where
     -- let forestedProps = RE.pick props :: Record Props
     pure $ authed (Record.merge { content: \session ->
                                    contactLayout { annuaireId
+                                                 , errors
                                                  , frontends: defaultFrontends
                                                  , nodeId
                                                  , reloadForest

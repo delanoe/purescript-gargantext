@@ -2,6 +2,7 @@ module Gargantext.Hooks.Loader where
 
 import Gargantext.Prelude
 
+import Data.Array as A
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), isJust, maybe)
@@ -10,15 +11,16 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Reactix as R
-import Simple.JSON as JSON
-import Toestand as T
-
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
 import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.Utils (handleRESTError)
+import Gargantext.Types (FrontendError(..))
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Crypto (Hash)
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Simple.JSON as JSON
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Hooks.Loader"
@@ -96,22 +98,24 @@ derive newtype instance JSON.ReadForeign a => JSON.ReadForeign (HashedResponse a
 derive newtype instance JSON.WriteForeign a => JSON.WriteForeign (HashedResponse a)
 
 type LoaderWithCacheAPIProps path res ret = (
-    cacheEndpoint :: path -> Aff (Either RESTError Hash)
+    cacheEndpoint  :: path -> Aff (Either RESTError Hash)
+  , errors         :: T.Box (Array FrontendError)
   , handleResponse :: HashedResponse res -> ret
-  , mkRequest :: path -> GUC.Request
-  , path :: path
-  , renderer :: ret -> R.Element
+  , mkRequest      :: path -> GUC.Request
+  , path           :: path
+  , renderer       :: ret -> R.Element
   )
 
 useLoaderWithCacheAPI :: forall path res ret.
                          Eq ret => Eq path => JSON.ReadForeign res =>
                          Record (LoaderWithCacheAPIProps path res ret)
                       -> R.Hooks R.Element
-useLoaderWithCacheAPI { cacheEndpoint, handleResponse, mkRequest, path, renderer } = do
+useLoaderWithCacheAPI { cacheEndpoint, errors, handleResponse, mkRequest, path, renderer } = do
   state <- T.useBox Nothing
   state' <- T.useLive T.unequal state
 
   useCachedAPILoaderEffect { cacheEndpoint
+                           , errors
                            , handleResponse
                            , mkRequest
                            , path
@@ -120,6 +124,7 @@ useLoaderWithCacheAPI { cacheEndpoint, handleResponse, mkRequest, path, renderer
 
 type LoaderWithCacheAPIEffectProps path res ret = (
     cacheEndpoint  :: path -> Aff (Either RESTError Hash)
+  , errors         :: T.Box (Array FrontendError)
   , handleResponse :: HashedResponse res -> ret
   , mkRequest      :: path -> GUC.Request
   , path           :: path
@@ -131,6 +136,7 @@ useCachedAPILoaderEffect :: forall path res ret.
                             Record (LoaderWithCacheAPIEffectProps path res ret)
                          -> R.Hooks Unit
 useCachedAPILoaderEffect { cacheEndpoint
+                         , errors
                          , handleResponse
                          , mkRequest
                          , path
@@ -150,18 +156,18 @@ useCachedAPILoaderEffect { cacheEndpoint
         cache <- GUC.openCache $ GUC.CacheName cacheName
         -- TODO Parallelize?
         hr@(HashedResponse { hash }) <- GUC.cachedJson cache req
-        cacheReal <- cacheEndpoint path
-        case cacheReal of
-          Left _err -> throwError $ error $ "[useCachedAPILoaderEffect] RESTError"
-          Right cacheReal' -> do
-            val <- if hash == cacheReal' then
-              pure hr
+        eCacheReal <- cacheEndpoint path
+        handleRESTError errors eCacheReal $ \cacheReal -> do
+          val <- if hash == cacheReal then
+            pure hr
+          else do
+            _ <- GUC.deleteReq cache req
+            hr'@(HashedResponse { hash: h }) <- GUC.cachedJson cache req
+            if h == cacheReal then
+              pure hr'
             else do
-              _ <- GUC.deleteReq cache req
-              hr'@(HashedResponse { hash: h }) <- GUC.cachedJson cache req
-              if h == cacheReal' then
-                pure hr'
-              else
-                throwError $ error $ "[Hooks.Loader] Fetched clean cache but hashes don't match: " <> h <> " != " <> cacheReal'
-            liftEffect $ do
-              T.write_ (Just $ handleResponse val) state
+              let err = "[Hooks.Loader] Fetched clean cache but hashes don't match: " <> h <> " != " <> cacheReal
+              liftEffect $ T.modify_ (A.cons $ FStringError { error: err }) errors
+              throwError $ error err
+          liftEffect $ do
+            T.write_ (Just $ handleResponse val) state

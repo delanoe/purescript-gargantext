@@ -2,19 +2,11 @@ module Gargantext.Components.Forest.Tree.Node.Action.Link where
 
 import Gargantext.Prelude
 
-import Control.Monad.Error.Class (throwError)
-import Data.Either (Either(..))
+import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Effect.Aff (Aff)
-import Effect.Class (liftEffect)
-import Effect.Exception (error)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Simple.JSON as JSON
-import Toestand as T
-
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
@@ -23,6 +15,10 @@ import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Link"
@@ -35,13 +31,11 @@ derive newtype instance JSON.ReadForeign LinkNodeReq
 derive newtype instance JSON.WriteForeign LinkNodeReq
 
 
-linkNodeReq :: Session -> Maybe GT.NodeType -> GT.ID -> GT.ID -> Aff GT.AsyncTaskWithType
+linkNodeReq :: Session -> Maybe GT.NodeType -> GT.ID -> GT.ID -> Aff (Either RESTError GT.AsyncTaskWithType)
 linkNodeReq session nt fromId toId = do
   eTask :: Either RESTError GT.AsyncTask <- post session (NodeAPI GT.Node (Just fromId) "update")
                         (LinkNodeReq { nodeType: linkNodeType nt, id: toId })
-  case eTask of
-    Left _err -> liftEffect $ throwError $ error "[linkNodeReq] RESTError"
-    Right task -> pure $ GT.AsyncTaskWithType { task, typ: GT.UpdateNode }
+  pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.UpdateNode }) <$> eTask
 
 linkNodeType :: Maybe GT.NodeType -> GT.NodeType
 linkNodeType (Just GT.Corpus)   = GT.Annuaire

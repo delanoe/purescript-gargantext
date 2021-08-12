@@ -6,8 +6,9 @@ import Effect (Effect)
 import Gargantext.Components.Charts.Options.Type (EChartsInstance, MouseEvent)
 import Gargantext.Prelude (Unit)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (TabType)
+import Gargantext.Types (FrontendError, TabType)
 import Gargantext.Utils.Toestand as T2
+import Toestand as T
 
 type Path = (
     corpusId :: Int
@@ -17,7 +18,8 @@ type Path = (
   )
 
 type Props = (
-    path    :: Record Path
+    errors  :: T.Box (Array FrontendError)
+  , path    :: Record Path
   , session :: Session
   , onClick :: Maybe (MouseEvent -> Effect Unit)
   , onInit  :: Maybe (EChartsInstance -> Effect Unit)

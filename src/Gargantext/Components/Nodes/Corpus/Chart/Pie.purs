@@ -85,7 +85,7 @@ chartOptionsPie { onClick, onInit } (HistoMetrics { dates: dates', count: count'
   }
 
 getMetricsHash :: Session -> ReloadPath -> Aff (Either RESTError String)
-getMetricsHash session (_ /\ { corpusId, limit, listId, tabType }) = do
+getMetricsHash session (_ /\ { corpusId, listId, tabType }) = do
   get session $ ChartHash { chartType: ChartPie, listId: mListId, tabType } (Just corpusId)
   where
     mListId = if listId == 0 then Nothing else (Just listId)
@@ -99,19 +99,19 @@ handleResponse :: HashedResponse ChartMetrics -> HistoMetrics
 handleResponse (HashedResponse { value: ChartMetrics ms }) = ms."data"
 
 mkRequest :: Session -> ReloadPath -> GUC.Request
-mkRequest session (_ /\ path@{ corpusId, limit, listId, tabType }) = GUC.makeGetRequest session $ chartUrl path
+mkRequest session (_ /\ path) = GUC.makeGetRequest session $ chartUrl path
 
 pie :: R2.Leaf Props
 pie props = R.createElement pieCpt props []
-
 pieCpt :: R.Component Props
 pieCpt = here.component "pie" cpt
   where
-    cpt { path, session, onClick, onInit } _ = do
+    cpt { errors, path, session, onClick, onInit } _ = do
       reload <- T.useBox T2.newReload
 
       pure $ metricsWithCacheLoadView {
-          getMetricsHash
+          errors
+        , getMetricsHash
         , handleResponse
         , loaded: loadedPie
         , mkRequest: mkRequest session
@@ -123,7 +123,7 @@ pieCpt = here.component "pie" cpt
         }
 
 loadedPie :: Record MetricsProps -> HistoMetrics -> R.Element
-loadedPie p@{ path, reload, session } loaded =
+loadedPie p loaded =
   H.div {} [
   {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: ChartPie, path, reload, session }
@@ -133,15 +133,15 @@ loadedPie p@{ path, reload, session } loaded =
 
 bar :: Record Props -> R.Element
 bar props = R.createElement barCpt props []
-
 barCpt :: R.Component Props
 barCpt = here.component "bar" cpt
   where
-    cpt {path, session, onClick, onInit} _ = do
+    cpt { errors, path, session, onClick, onInit} _ = do
       reload <- T.useBox T2.newReload
 
       pure $ metricsWithCacheLoadView {
-           getMetricsHash
+           errors
+         , getMetricsHash
          , handleResponse
          , loaded: loadedBar
          , mkRequest: mkRequest session
@@ -153,7 +153,7 @@ barCpt = here.component "bar" cpt
          }
 
 loadedBar :: Record MetricsProps -> Loaded -> R.Element
-loadedBar p@{ path, reload, session } loaded =
+loadedBar p loaded =
   H.div {} [
   {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: ChartBar, path, reload, session }

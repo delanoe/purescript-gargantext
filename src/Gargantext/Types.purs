@@ -677,7 +677,7 @@ asyncTaskTypePath AddNode            = "async/nobody/"
 asyncTaskTypePath Form               = "add/form/async/"
 asyncTaskTypePath GraphRecompute     = "async/recompute/"
 asyncTaskTypePath ListUpload         = "add/form/async/"
-asyncTaskTypePath ListCSVUpload      = "csv/add/form/async/"
+asyncTaskTypePath ListCSVUpload      = "add/form/async/"
 asyncTaskTypePath Query              = "query/"
 asyncTaskTypePath UpdateNgramsCharts = "ngrams/async/charts/update/"
 asyncTaskTypePath UpdateNode         = "update/"
@@ -779,9 +779,10 @@ toggleSidePanelState Opened        = Closed
 
 ---------------------------------------------------------------------------
 
-newtype FrontendError = FrontendError
+data FrontendError = FStringError
   { error :: String
-  }
+  } | FRESTError
+  { error :: RESTError }
 
 derive instance Generic FrontendError _
 instance Eq FrontendError where eq = genericEq

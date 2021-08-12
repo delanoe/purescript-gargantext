@@ -2,21 +2,13 @@ module Gargantext.Components.Forest.Tree where
 
 import Gargantext.Prelude
 
-import Control.Monad.Error.Class (throwError)
 import Data.Array as A
-import Data.Either (Either(..))
+import Data.Either (Either)
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse_, traverse)
-import DOM.Simple.Console (log, log2)
 import Effect (Effect)
-import Effect.Aff (Aff, error)
+import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Record as Record
-import Record.Extra as RecordE
-import Toestand as T
-
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node (nodeSpan)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
@@ -33,16 +25,22 @@ import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile, uploadA
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
 import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (AppRoute)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (OpenNodes, Session, get, mkNodeId)
 import Gargantext.Sessions.Types (useOpenNodesMemberBox, openNodesInsert, openNodesDelete)
-import Gargantext.Types (Handed, ID, isPublic, publicize, switchHanded)
+import Gargantext.Types (FrontendError, Handed, ID, isPublic, publicize, switchHanded)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Record.Extra as RecordE
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree"
@@ -61,8 +59,9 @@ type Global =
   | Universal )
 
 -- Shared by every component here
-type Common = (
-   forestOpen :: T.Box OpenNodes
+type Common =
+  ( errors    :: T.Box (Array FrontendError)
+ , forestOpen :: T.Box OpenNodes
  , reload     :: T2.ReloadS
  | Global
  )
@@ -105,12 +104,12 @@ tree :: R2.Leaf TreeProps
 tree props = R.createElement treeCpt props []
 treeCpt :: R.Component TreeProps
 treeCpt = here.component "tree" cpt where
-  cpt p@{ reload, session, tree: NTree (LNode { id, name, nodeType }) children } _ = do
+  cpt p@{ errors, reload, session, tree: NTree (LNode { id, name, nodeType }) children } _ = do
     setPopoverRef <- R.useRef Nothing
     folderOpen <- useOpenNodesMemberBox nodeId p.forestOpen
     pure $ H.ul { className: ulClass }
       [ H.li { className: childrenClass children' }
-        [ nodeSpan (nsprops { folderOpen, name, id, nodeType, setPopoverRef, isLeaf })
+        [ nodeSpan (nsprops { errors, folderOpen, name, id, nodeType, setPopoverRef, isLeaf })
           [ renderChildren (Record.merge p { childProps: { children', folderOpen, render: tree } } ) [] ]
         ]
       ]
@@ -125,7 +124,7 @@ treeCpt = here.component "tree" cpt where
         extra' = Record.merge extra { dispatch, reload } where
           dispatch a = performAction a (Record.merge common' spr) where
             common' = RecordE.pick p :: Record PACommon
-            spr = { setPopoverRef: extra.setPopoverRef }
+            spr = { errors, setPopoverRef: extra.setPopoverRef }
   pub (LNode n@{ nodeType: t }) = LNode (n { nodeType = publicize t })
   childrenClass [] = "no-children"
   childrenClass _  = "with-children"
@@ -167,7 +166,8 @@ renderTreeChildrenCpt = here.component "renderTreeChildren" cpt where
 
 --- The properties tree shares in common with performAction
 type PACommon =
-  ( forestOpen   :: T.Box OpenNodes
+  ( errors       :: T.Box (Array FrontendError)
+  , forestOpen   :: T.Box OpenNodes
   , reloadTree   :: T2.ReloadS
   , session      :: Session
   , tasks        :: T.Box GAT.Storage
@@ -220,83 +220,88 @@ deleteNode' nt p@{ tree: (NTree (LNode {id, parent_id}) _) } = do
 
 doSearch task p@{ tasks, tree: NTree (LNode {id}) _ } = liftEffect $ do
   GAT.insert id task tasks
-  log2 "[performAction] DoSearch task:" task
-  
-updateNode params p@{ tasks, tree: (NTree (LNode {id}) _) } = do
-  task <- updateRequest params p.session id
-  liftEffect $ do
-    GAT.insert id task tasks
-    log2 "[performAction] UpdateNode task:" task
+  here.log2 "[doSearch] DoSearch task:" task
 
-renameNode name p@{ tree: (NTree (LNode {id}) _) } = do
-  void $ rename p.session id $ RenameValue { text: name }
+updateNode params p@{ errors, tasks, tree: (NTree (LNode {id}) _) } = do
+  eTask <- updateRequest params p.session id
+  handleRESTError errors eTask $ \task -> liftEffect $ do
+    GAT.insert id task tasks
+    here.log2 "[updateNode] UpdateNode task:" task
+
+renameNode name p@{ errors, tree: (NTree (LNode {id}) _) } = do
+  eTask <- rename p.session id $ RenameValue { text: name }
+  handleRESTError errors eTask $ \_task -> pure unit
   refreshTree p
 
-shareTeam username p@{ tree: (NTree (LNode {id}) _)} =
-  void $ Share.shareReq p.session id $ Share.ShareTeamParams {username}
+shareTeam username p@{ errors, tree: (NTree (LNode {id}) _)} = do
+  eTask <- Share.shareReq p.session id $ Share.ShareTeamParams {username}
+  handleRESTError errors eTask $ \_task -> pure unit
 
-sharePublic params p@{ forestOpen } = traverse_ f params where
+sharePublic params p@{ errors, forestOpen } = traverse_ f params where
   f (SubTreeOut { in: inId, out }) = do
-    void $ Share.shareReq p.session inId $ Share.SharePublicParams { node_id: out }
-    liftEffect $ T.modify_ (openNodesInsert (mkNodeId p.session out)) forestOpen
+    eTask <- Share.shareReq p.session inId $ Share.SharePublicParams { node_id: out }
+    handleRESTError errors eTask $ \_task -> do
+      liftEffect $ T.modify_ (openNodesInsert (mkNodeId p.session out)) forestOpen
+      refreshTree p
+
+addContact params p@{ errors, tree: (NTree (LNode {id}) _) } = do
+  eTask <- Contact.contactReq p.session id params
+  handleRESTError errors eTask $ \_task -> pure unit
+
+addNode' name nodeType p@{ errors, forestOpen, tree: (NTree (LNode { id }) _) } = do
+  eId <- addNode p.session id $ AddNodeValue {name, nodeType}
+  handleRESTError errors eId $ \_id -> liftEffect $ do
+    liftEffect $ T.modify_ (openNodesInsert (mkNodeId p.session id)) forestOpen
     refreshTree p
 
-addContact params p@{ tree: (NTree (LNode {id}) _) } =
-  void $ Contact.contactReq p.session id params
-
-addNode' name nodeType p@{ forestOpen, tree: (NTree (LNode { id }) _) } = do
-  task <- addNode p.session id $ AddNodeValue {name, nodeType}
-  liftEffect $ T.modify_ (openNodesInsert (mkNodeId p.session id)) forestOpen
-  refreshTree p
-
-uploadFile' nodeType fileType mName contents p@{ tasks, tree: (NTree (LNode { id }) _) } = do
-  task <- uploadFile p.session nodeType id fileType {mName, contents}
-  liftEffect $ do
+uploadFile' nodeType fileType mName contents p@{ errors, tasks, tree: (NTree (LNode { id }) _) } = do
+  eTask <- uploadFile { contents, fileType, id, mName, nodeType, session: p.session }
+  handleRESTError errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
-    log2 "[performAction] UploadFile, uploaded, task:" task
+    here.log2 "[uploadFile'] UploadFile, uploaded, task:" task
 
-uploadArbitraryFile' mName blob p@{ tasks, tree: (NTree (LNode { id }) _) } = do
+uploadArbitraryFile' mName blob p@{ errors, tasks, tree: (NTree (LNode { id }) _) } = do
   eTask <- uploadArbitraryFile p.session id { blob, mName }
-  case eTask of
-    Left err -> throwError $ error $ "[uploadArbitraryFile'] RESTError"
-    Right task -> do
-      liftEffect $ do
-        GAT.insert id task tasks
-        log2 "[performAction] UploadArbitraryFile, uploaded, task:" task
+  handleRESTError errors eTask $ \task -> liftEffect $ do
+    GAT.insert id task tasks
+    here.log2 "[uploadArbitraryFile'] UploadArbitraryFile, uploaded, task:" task
 
-moveNode params p@{ forestOpen, session } = traverse_ f params where
+moveNode params p@{ errors, forestOpen, session } = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
-    void $ moveNodeReq p.session in' out
+    eTask <- moveNodeReq p.session in' out
+    handleRESTError errors eTask $ \_task -> pure unit
     liftEffect $ T.modify_ (openNodesInsert (mkNodeId session out)) forestOpen
     refreshTree p
 
-mergeNode params p = traverse_ f params where
+mergeNode params p@{ errors } = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
-    void $ mergeNodeReq p.session in' out
+    eTask <- mergeNodeReq p.session in' out
+    handleRESTError errors eTask $ \_task -> pure unit
     refreshTree p
 
-linkNode nodeType params p = traverse_ f params where
+linkNode nodeType params p@{ errors } = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
-    void $ linkNodeReq p.session nodeType in' out
+    eTask <- linkNodeReq p.session nodeType in' out
+    handleRESTError errors eTask $ \_task -> pure unit
     refreshTree p
 
 -- | This thing is basically a hangover from when garg was a thermite
 -- | application. we should slowly get rid of it.
 performAction :: Action -> Record PerformActionProps -> Aff Unit
-performAction (DeleteNode nt) p = deleteNode' nt p
-performAction (DoSearch task) p = doSearch task p
-performAction (UpdateNode params) p = updateNode params p
-performAction (RenameNode name) p = renameNode name p
-performAction (ShareTeam username) p = shareTeam username p
-performAction (SharePublic { params }) p = sharePublic params p
-performAction (AddContact params) p = addContact params p
-performAction (AddNode name nodeType) p = addNode' name nodeType p
+performAction (DeleteNode nt) p                               = deleteNode' nt p
+performAction (DoSearch task) p                               = doSearch task p
+performAction (UpdateNode params) p                           = updateNode params p
+performAction (RenameNode name) p                             = renameNode name p
+performAction (ShareTeam username) p                          = shareTeam username p
+performAction (SharePublic { params }) p                      = sharePublic params p
+performAction (AddContact params) p                           = addContact params p
+performAction (AddNode name nodeType) p                       = addNode' name nodeType p
 performAction (UploadFile nodeType fileType mName contents) p = uploadFile' nodeType fileType mName contents p
-performAction (UploadArbitraryFile mName blob) p = uploadArbitraryFile' mName blob p
-performAction DownloadNode _ = liftEffect $ log "[performAction] DownloadNode"
-performAction (MoveNode {params}) p = moveNode params p
-performAction (MergeNode {params}) p = mergeNode params p
-performAction (LinkNode { nodeType, params }) p = linkNode nodeType params p
-performAction RefreshTree p = refreshTree p
-performAction NoAction _ = liftEffect $ log "[performAction] NoAction"
-performAction ClosePopover p = closePopover p
+performAction (UploadArbitraryFile mName blob) p              = uploadArbitraryFile' mName blob p
+performAction DownloadNode _                                  = liftEffect $ here.log "[performAction] DownloadNode"
+performAction (MoveNode {params}) p                           = moveNode params p
+performAction (MergeNode {params}) p                          = mergeNode params p
+performAction (LinkNode { nodeType, params }) p               = linkNode nodeType params p
+performAction RefreshTree p                                   = refreshTree p
+performAction NoAction _                                      = liftEffect $ here.log "[performAction] NoAction"
+performAction ClosePopover p                                  = closePopover p

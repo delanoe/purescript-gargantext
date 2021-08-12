@@ -10,12 +10,6 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
-import React.SyntheticEvent as E
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Record as Record
-import Toestand as T
-
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (DroppedFile(..), fileTypeView)
@@ -33,19 +27,25 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId)
-import Gargantext.Types (Name, ID, reverseHanded)
+import Gargantext.Types (FrontendError, ID, Name, reverseHanded)
 import Gargantext.Types as GT
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Gargantext.Version as GV
+import React.SyntheticEvent as E
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node"
 
 -- Main Node
 type NodeMainSpanProps =
-  ( folderOpen     :: T.Box Boolean
+  ( errors         :: T.Box (Array FrontendError)
+  , folderOpen     :: T.Box Boolean
   , frontends      :: Frontends
   , id             :: ID
   , isLeaf         :: IsLeaf
@@ -64,7 +64,6 @@ type IsLeaf = Boolean
 
 nodeSpan :: R2.Component NodeMainSpanProps
 nodeSpan = R.createElement nodeSpanCpt
-
 nodeSpanCpt :: R.Component NodeMainSpanProps
 nodeSpanCpt = here.component "nodeSpan" cpt
   where
@@ -77,11 +76,11 @@ nodeSpanCpt = here.component "nodeSpan" cpt
 
 nodeMainSpan :: R2.Component NodeMainSpanProps
 nodeMainSpan = R.createElement nodeMainSpanCpt
-
 nodeMainSpanCpt :: R.Component NodeMainSpanProps
 nodeMainSpanCpt = here.component "nodeMainSpan" cpt
   where
     cpt props@{ dispatch
+              , errors
               , folderOpen
               , frontends
               , handed
@@ -129,10 +128,11 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
 
                 , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType }
                 , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
-                                                       , barType: Pie
-                                                       , nodeId: id
-                                                       , onFinish: onTaskFinish id t
-                                                       , session } []
+                                                        , barType: Pie
+                                                         , errors
+                                                         , nodeId: id
+                                                         , onFinish: onTaskFinish id t
+                                                         , session } []
                                 ) currentTasks'
                            )
                 , if nodeType == GT.NodeUser
@@ -188,7 +188,7 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
           name' {name: n, nodeType: nt} = if nt == GT.NodeUser then show session else n
 
           mNodePopupView props'@{ id: i, nodeType: nt, handed: h } opc =
-            nodePopupView { dispatch, handed: h, id: i, name: name' props'
+            nodePopupView { dispatch, errors, handed: h, id: i, name: name' props'
                           , nodeType: nt, onPopoverClose: opc, session }
 
     popOverIcon =

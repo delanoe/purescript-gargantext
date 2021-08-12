@@ -1,10 +1,7 @@
 module Gargantext.Components.Nodes.Lists.Tabs where
 
-import Gargantext.Components.Nodes.Lists.Types
-
 import Data.Array as A
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
 import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
@@ -15,11 +12,11 @@ import Gargantext.Components.Nodes.Corpus.Chart.Pie (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils (mNgramsTypeFromTabType)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
-import Gargantext.Components.Search as S
+import Gargantext.Components.Nodes.Lists.Types
 import Gargantext.Components.Tab as Tab
 import Gargantext.Prelude (bind, pure, unit, ($), (<>))
 import Gargantext.Sessions (Session)
-import Gargantext.Types (ChartType(..), CTabNgramType(..), Mode(..), TabSubType(..), TabType(..), modeTabType)
+import Gargantext.Types (CTabNgramType(..), FrontendError, Mode(..), TabSubType(..), TabType(..), modeTabType)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
@@ -36,6 +33,7 @@ type Props = (
   , cacheState   :: T.Box CacheState
   , corpusData   :: CorpusData
   , corpusId     :: Int
+  , errors       :: T.Box (Array FrontendError)
   , reloadForest :: T2.ReloadS
   , reloadRoot   :: T2.ReloadS
   , session      :: Session
@@ -64,12 +62,12 @@ type NgramsViewProps = ( mode :: Mode | Props )
 
 ngramsView :: R2.Component NgramsViewProps
 ngramsView = R.createElement ngramsViewCpt
-
 ngramsViewCpt :: R.Component NgramsViewProps
 ngramsViewCpt = here.component "ngramsView" cpt where
   cpt props@{ cacheState
             , corpusData: { defaultListId }
             , corpusId
+            , errors
             , reloadForest
             , reloadRoot
             , mode
@@ -161,7 +159,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
         ]
         charts params _        = [ chart params mode ]
 
-        chart path Authors    = pie     { path, session, onClick: Nothing, onInit: Nothing }
-        chart path Institutes = tree    { path, session, onClick: Nothing, onInit: Nothing }
-        chart path Sources    = bar     { path, session, onClick: Nothing, onInit: Nothing }
-        chart path Terms      = metrics { path, session, onClick: Nothing, onInit: Nothing }
+        chart path Authors    = pie     { errors, path, session, onClick: Nothing, onInit: Nothing }
+        chart path Institutes = tree    { errors, path, session, onClick: Nothing, onInit: Nothing }
+        chart path Sources    = bar     { errors, path, session, onClick: Nothing, onInit: Nothing }
+        chart path Terms      = metrics { errors, path, session, onClick: Nothing, onInit: Nothing }

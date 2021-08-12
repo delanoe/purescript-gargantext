@@ -2,7 +2,6 @@ module Gargantext.Components.Forest.Tree.Node.Action.Add where
 
 import Gargantext.Prelude
 
-import Control.Monad.Error.Class (throwError)
 import Data.Array (head, length)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
@@ -11,16 +10,7 @@ import Data.Newtype (class Newtype)
 import Data.String (Pattern(..), indexOf)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Aff (Aff, error, launchAff_)
-import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Simple.JSON as JSON
-import Toestand as T
-import Web.HTML (window)
-import Web.HTML.Navigator (userAgent)
-import Web.HTML.Window (navigator)
-
+import Effect.Aff (Aff, launchAff_)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, panel, submitButton)
@@ -33,6 +23,13 @@ import Gargantext.Types (NodeType(..), charCodeIcon)
 import Gargantext.Types as GT
 import Gargantext.Utils (nbsp)
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
+import Toestand as T
+import Web.HTML (window)
+import Web.HTML.Navigator (userAgent)
+import Web.HTML.Window (navigator)
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Add"
@@ -43,12 +40,12 @@ addNode session parentId = post session $ GR.NodeAPI GT.Node (Just parentId) ""
 addNodeAsync :: Session
              -> GT.ID
              -> AddNodeValue
-             -> Aff GT.AsyncTaskWithType
+             -> Aff (Either RESTError GT.AsyncTaskWithType)
 addNodeAsync session parentId q = do
   eTask :: Either RESTError GT.AsyncTask <- post session p q
   case eTask of
-    Left _err -> liftEffect $ throwError $ error "[addNodeAsync] RESTError"
-    Right task -> pure $ GT.AsyncTaskWithType { task, typ: GT.AddNode }
+    Left err -> pure $ Left err
+    Right task -> pure $ Right $ GT.AsyncTaskWithType { task, typ: GT.AddNode }
   where
     p = GR.NodeAPI GT.Node (Just parentId) (GT.asyncTaskTypePath GT.AddNode)
 

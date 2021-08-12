@@ -1,13 +1,10 @@
 module Gargantext.Components.Nodes.Lists where
 
+import Gargantext.Prelude
+
 import Data.Maybe (Maybe)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Record as Record
-import Toestand as T
-
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
@@ -17,18 +14,23 @@ import Gargantext.Components.Nodes.Lists.Tabs as Tabs
 import Gargantext.Components.Nodes.Lists.Types (CacheState(..), SidePanel)
 import Gargantext.Components.Table as Table
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude
 import Gargantext.Sessions (WithSession, WithSessionContext, Session, sessionId, getCacheState, setCacheState)
+import Gargantext.Types (FrontendError)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Lists"
 --------------------------------------------------------
 
 type CommonPropsNoSession =
-  ( nodeId         :: Int
+  ( errors         :: T.Box (Array FrontendError)
+  , nodeId         :: Int
   , reloadForest   :: T2.ReloadS
   , reloadMainPage :: T2.ReloadS
   , reloadRoot     :: T2.ReloadS
@@ -59,7 +61,8 @@ listsLayoutWithKey :: R2.Component KeyProps
 listsLayoutWithKey = R.createElement listsLayoutWithKeyCpt
 listsLayoutWithKeyCpt :: R.Component KeyProps
 listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
-  cpt { nodeId
+  cpt { errors
+      , nodeId
       , reloadForest
       , reloadMainPage
       , reloadRoot
@@ -98,6 +101,7 @@ listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
                               , cacheState
                               , corpusData
                               , corpusId
+                              , errors
                               , key: "listsLayoutWithKey-tabs-" <> (show cacheState')
                               , reloadForest
                               , reloadRoot

@@ -6,15 +6,9 @@ import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Nullable (null)
 import Data.Traversable (traverse_)
-import DOM.Simple.Console (log, log2)
 import Effect (Effect)
 import Effect.Aff (Aff, error)
 import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Record as Record
-import Toestand as T
-
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
@@ -31,15 +25,20 @@ import Gargantext.Components.Forest.Tree.Node.Box (nodePopupView)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
 import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Ordering, Unit, bind, compare, discard, pure, unit, void, ($), (<$>), (<>))
 import Gargantext.Routes (AppRoute(Home), SessionRoute(..), appPath, nodeTypeAppRoute)
 import Gargantext.Sessions (Session, get, sessionId)
-import Gargantext.Types (NodeType(..))
+import Gargantext.Types (FrontendError, NodeType(..))
 import Gargantext.Types as GT
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Toestand as T
 
 foreign import back :: Effect Unit
 foreign import link :: String -> Effect Unit
@@ -48,11 +47,12 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.FolderView"
 
 type Props =
-  ( nodeId  :: Int
-  , session :: Session
-  , backFolder :: Boolean
-  , tasks :: T.Box GAT.Storage
+  ( backFolder   :: Boolean
+  , errors       :: T.Box (Array FrontendError)
+  , nodeId       :: Int
   , reloadForest :: T.Box T2.Reload
+  , session      :: Session
+  , tasks        :: T.Box GAT.Storage
   )
 
 data FolderStyle = FolderUp | FolderChild
@@ -61,35 +61,43 @@ folderView :: R2.Leaf Props
 folderView props = R.createElement folderViewCpt props []
 folderViewCpt :: R.Component Props
 folderViewCpt = here.component "folderViewCpt" cpt where
-  cpt {nodeId, session, backFolder, tasks, reloadForest} _ = do
+  cpt { errors, nodeId, session, backFolder, tasks, reloadForest } _ = do
     setPopoverRef <- R.useRef Nothing
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
     useLoader { errorHandler
               , loader: loadFolders
               , path: { nodeId, session, reload: reload'}
-              , render: \folders -> folderViewMain {folders, nodeId, session, backFolder, tasks, reload, setPopoverRef, reloadForest} }
+              , render: \folders -> folderViewMain { backFolder
+                                                   , errors
+                                                   , folders
+                                                   , nodeId
+                                                   , session
+                                                   , tasks
+                                                   , reload
+                                                   , setPopoverRef
+                                                   , reloadForest} }
     where
       errorHandler err = here.log2 "[folderView] RESTError" err
 
 type FolderViewProps = 
-  ( 
-    nodeId :: Int
-  , folders:: FTree
-  , session :: Session
-  , backFolder :: Boolean
-  , tasks :: T.Box GAT.Storage
-  , reload :: T.Box T2.Reload
-  , reloadForest :: T.Box T2.Reload
+  ( backFolder    :: Boolean
+  , errors        :: T.Box (Array FrontendError)
+  , folders       :: FTree
+  , nodeId        :: Int
+  , reload        :: T.Box T2.Reload
+  , reloadForest  :: T.Box T2.Reload
+  , session       :: Session
   , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
+  , tasks         :: T.Box GAT.Storage
   )
 
 folderViewMain :: Record FolderViewProps -> R.Element
 folderViewMain props = R.createElement folderViewMainCpt props []
-
 folderViewMainCpt :: R.Component FolderViewProps
 folderViewMainCpt = here.component "folderViewMainCpt" cpt where
   cpt { backFolder
+      , errors
       , folders: NTree (LNode {parent_id: parentId, nodeType}) (folders)
       , nodeId
       , reload
@@ -100,22 +108,23 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
     let foldersS = A.sortBy sortFolders folders
     let backHome = isBackHome nodeType
     let parent = makeParentFolder parentId session backFolder backHome
-    let children = makeFolderElements foldersS {session, setPopoverRef, nodeId, tasks, reload, reloadForest}
+    let children = makeFolderElements foldersS { errors, session, setPopoverRef, nodeId, tasks, reload, reloadForest }
 
     pure $ H.div {className: "fv folders"} $ parent <> children
 
   makeFolderElements foldersS props = makeFolderElementsMap <$> foldersS where
     makeFolderElementsMap :: NTree LNode -> R.Element
-    makeFolderElementsMap (NTree (LNode node) _) = folder {style: FolderChild
-                                                          , text: node.name
+    makeFolderElementsMap (NTree (LNode node) _) = folder { errors: props.errors
                                                           , nodeId: node.id
                                                           , nodeType: node.nodeType
-                                                          , session: props.session
-                                                          , setPopoverRef: props.setPopoverRef
                                                           , parentId: props.nodeId
                                                           , tasks: props.tasks
                                                           , reload: props.reload
-                                                          , reloadForest: props.reloadForest} []
+                                                          , reloadForest: props.reloadForest
+                                                          , session: props.session
+                                                          , setPopoverRef: props.setPopoverRef
+                                                          , style: FolderChild
+                                                          , text: node.name } []
 
   makeParentFolder :: Maybe Int -> Session -> Boolean -> Boolean -> Array R.Element
   makeParentFolder (Just parentId) session _ _ =
@@ -171,23 +180,22 @@ folderSimpleCpt = here.component "folderSimpleCpt" cpt where
   getFolderPath nodeType sid nodeId = appPath $ fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
 
 type FolderProps = 
-  (
-    setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
-  , parentId :: Int
-  , tasks :: T.Box GAT.Storage
-  , reload :: T.Box T2.Reload
-  , reloadForest :: T.Box T2.Reload
+  ( errors        :: T.Box (Array FrontendError)
+  , parentId      :: Int
+  , reload        :: T.Box T2.Reload
+  , reloadForest  :: T.Box T2.Reload
+  , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
+  , tasks         :: T.Box GAT.Storage
   | FolderSimpleProps
   )
 
 folder :: R2.Component FolderProps
 folder = R.createElement folderCpt
-
 folderCpt :: R.Component FolderProps
 folderCpt = here.component "folderCpt" cpt where
-  cpt props@{style, text, nodeId, session, nodeType, setPopoverRef, parentId, tasks, reload, reloadForest} _ = do
+  cpt props@{ errors, style, text, nodeId, session, nodeType, setPopoverRef, parentId, tasks, reload, reloadForest } _ = do
     let sid = sessionId session
-    let dispatch a = performAction a {setPopoverRef, session, nodeId, parentId, tasks, reload, reloadForest}
+    let dispatch a = performAction a { errors, nodeId, parentId, tasks, reload, reloadForest, session, setPopoverRef }
     popoverRef <- R.useRef null
 
     R.useEffect' $ do
@@ -226,11 +234,12 @@ folderCpt = here.component "folderCpt" cpt where
             <> "Click here to execute one of them." } []
       ]
 
-  mNodePopupView props opc = nodePopupView {onPopoverClose: opc
-                                           ,nodeType: props.nodeType
-                                           , name: props.text
+  mNodePopupView props opc = nodePopupView { dispatch: props.dispatch
+                                           , errors: props.errors
                                            , id: props.nodeId
-                                           , dispatch: props.dispatch
+                                           , onPopoverClose: opc
+                                           , nodeType: props.nodeType
+                                           , name: props.text
                                            , session: props.session
                                            , handed: GT.RightHanded
                                            }
@@ -264,14 +273,14 @@ loadFolders :: Record LoadProps -> Aff (Either RESTError FTree)
 loadFolders {nodeId, session} = get session $ TreeFirstLevel (Just nodeId) ""
 
 type PerformActionProps =
-  (
-    setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
-  , session :: Session
-  , nodeId :: Int
-  , parentId :: Int
-  , tasks :: T.Box GAT.Storage
-  , reload :: T.Box T2.Reload
-  , reloadForest :: T.Box T2.Reload
+  ( errors       :: T.Box (Array FrontendError)
+  , nodeId        :: Int
+  , parentId      :: Int
+  , reload        :: T.Box T2.Reload
+  , reloadForest  :: T.Box T2.Reload
+  , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
+  , session       :: Session
+  , tasks         :: T.Box GAT.Storage
   )
 
 performAction :: Action -> Record PerformActionProps -> Aff Unit
@@ -286,13 +295,13 @@ performAction = performAction' where
   performAction' (AddNode name nodeType) p = addNode' name nodeType p
   performAction' (UploadFile nodeType fileType mName contents) p = uploadFile' nodeType fileType mName contents p
   performAction' (UploadArbitraryFile mName blob) p = uploadArbitraryFile' mName blob p
-  performAction' DownloadNode _ = liftEffect $ log "[performAction] DownloadNode"
+  performAction' DownloadNode _ = liftEffect $ here.log "[performAction] DownloadNode"
   performAction' (MoveNode {params}) p = moveNode params p
   performAction' (MergeNode {params}) p = mergeNode params p
   performAction' (LinkNode { nodeType, params }) p = linkNode nodeType params p
-  performAction' NoAction _ = liftEffect $ log "[performAction] NoAction"
+  performAction' NoAction _ = liftEffect $ here.log "[performAction] NoAction"
   performAction' ClosePopover p = closePopover p
-  performAction' _ _ = liftEffect $ log "[performAction] unsupported action"
+  performAction' _ _ = liftEffect $ here.log "[performAction] unsupported action"
 
   closePopover { setPopoverRef } =
     liftEffect $ traverse_ (\set -> set false) (R.readRef setPopoverRef)
@@ -311,59 +320,63 @@ performAction = performAction' where
 
   doSearch task { tasks, nodeId: id } = liftEffect $ do
     GAT.insert id task tasks
-    log2 "[performAction] DoSearch task:" task
+    here.log2 "[performAction] DoSearch task:" task
 
-  updateNode params p@{ tasks, nodeId: id } = do
-    task <- updateRequest params p.session id
-    liftEffect $ do
+  updateNode params p@{ errors, tasks, nodeId: id } = do
+    eTask <- updateRequest params p.session id
+    handleRESTError errors eTask $ \task -> liftEffect $ do
       GAT.insert id task tasks
-      log2 "[performAction] UpdateNode task:" task
+      here.log2 "[performAction] UpdateNode task:" task
   
-  shareTeam username p@{ nodeId: id} =
-    void $ Share.shareReq p.session id $ Share.ShareTeamParams {username}
+  shareTeam username p@{ errors, nodeId: id} = do
+    eTask <- Share.shareReq p.session id $ Share.ShareTeamParams {username}
+    handleRESTError errors eTask $ \_task -> pure unit
 
-  sharePublic params p = traverse_ f params where
+  sharePublic params p@{ errors } = traverse_ f params where
     f (SubTreeOut { in: inId, out }) = do
-      void $ Share.shareReq p.session inId $ Share.SharePublicParams { node_id: out }
+      eTask <- Share.shareReq p.session inId $ Share.SharePublicParams { node_id: out }
+      handleRESTError errors eTask $ \_task -> pure unit
       refreshFolders p
 
   addContact params p@{ nodeId: id } =
     void $ Contact.contactReq p.session id params
 
-  uploadFile' nodeType fileType mName contents p@{ tasks, nodeId: id } = do
-    task <- uploadFile p.session nodeType id fileType {mName, contents}
-    liftEffect $ do
+  uploadFile' nodeType fileType mName contents p@{ errors, tasks, nodeId: id } = do
+    eTask <- uploadFile { contents, fileType, id, nodeType, mName, session: p.session }
+    handleRESTError errors eTask $ \task -> liftEffect $ do
       GAT.insert id task tasks
-      log2 "[performAction] UploadFile, uploaded, task:" task
+      here.log2 "[performAction] UploadFile, uploaded, task:" task
 
-  uploadArbitraryFile' mName blob p@{ tasks, nodeId: id } = do
+  uploadArbitraryFile' mName blob p@{ errors, tasks, nodeId: id } = do
     eTask <- uploadArbitraryFile p.session id { blob, mName }
-    case eTask of
-      Left _err -> throwError $ error "[uploadArbitraryFile] RESTError"
-      Right task -> do
-        liftEffect $ do
-          GAT.insert id task tasks
-          log2 "[performAction] UploadArbitraryFile, uploaded, task:" task
+    handleRESTError errors eTask $ \task -> liftEffect $ do
+      GAT.insert id task tasks
+      here.log2 "[performAction] UploadArbitraryFile, uploaded, task:" task
 
-  moveNode params p = traverse_ f params where
+  moveNode params p@{ errors } = traverse_ f params where
     f (SubTreeOut { in: in', out }) = do
-      void $ moveNodeReq p.session in' out
+      eTask <- moveNodeReq p.session in' out
+      handleRESTError errors eTask $ \_task -> pure unit
       refreshFolders p
 
-  mergeNode params p = traverse_ f params where
+  mergeNode params p@{ errors } = traverse_ f params where
     f (SubTreeOut { in: in', out }) = do
-      void $ mergeNodeReq p.session in' out
+      eTask <- mergeNodeReq p.session in' out
+      handleRESTError errors eTask $ \_task -> pure unit
       refreshFolders p
 
-  linkNode nodeType params p = traverse_ f params where
+  linkNode nodeType params p@{ errors } = traverse_ f params where
     f (SubTreeOut { in: in', out }) = do
-      void $ linkNodeReq p.session nodeType in' out
+      eTask <- linkNodeReq p.session nodeType in' out
+      handleRESTError errors eTask $ \_task -> pure unit
       refreshFolders p
 
-  renameNode name p@{ nodeId: id } = do
-    void $ rename p.session id $ RenameValue { text: name }
+  renameNode name p@{ errors, nodeId: id } = do
+    eTask <- rename p.session id $ RenameValue { text: name }
+    handleRESTError errors eTask $ \_task -> pure unit
     refreshFolders p
 
-  addNode' name nodeType p@{ nodeId: id } = do
-    void $ addNode p.session id $ AddNodeValue {name, nodeType}
+  addNode' name nodeType p@{ errors, nodeId: id } = do
+    eTask <- addNode p.session id $ AddNodeValue {name, nodeType}
+    handleRESTError errors eTask $ \_task -> pure unit
     refreshFolders p

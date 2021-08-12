@@ -1,15 +1,10 @@
 -- TODO: this module should be replaced by FacetsTable
 module Gargantext.Components.DocsTable where
 
-import Gargantext.Prelude
-import Prelude
-
-import Control.Monad.Error.Class (throwError)
 import DOM.Simple.Console (log2)
 import DOM.Simple.Event as DE
-import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Array as A
-import Data.Either (Either(..))
+import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
 import Data.Lens ((^.))
 import Data.Lens.At (at)
@@ -24,7 +19,7 @@ import Data.String as Str
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
-import Effect.Aff (Aff, error, launchAff_)
+import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Category (rating)
 import Gargantext.Components.Category.Types (Star(..))
@@ -36,11 +31,11 @@ import Gargantext.Components.Table.Types as TT
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
-import Gargantext.Prelude (class Ord, Unit, bind, const, discard, identity, mempty, otherwise, pure, show, unit, ($), (/=), (<$>), (<<<), (<>), (==))
+import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, get, delete)
-import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), SidePanelState(..), TableResult, TabSubType, TabType, showTabType')
+import Gargantext.Types (FrontendError, ListId, NodeID, NodeType(..), OrderBy(..), SidePanelState(..), TabSubType, TabType, TableResult, showTabType')
 import Gargantext.Utils (sortWith)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParam, mQueryParamS, queryParam, queryParamS)
@@ -66,6 +61,7 @@ type Path a =
 
 type CommonProps =
   ( cacheState     :: T.Box NT.CacheState
+  , errors         :: T.Box (Array FrontendError)
   , frontends      :: Frontends
   , listId         :: Int
   , mCorpusId      :: Maybe Int
@@ -101,7 +97,6 @@ _localCategories     = prop (SProxy :: SProxy "localCategories")
 
 docViewLayout :: Record LayoutProps -> R.Element
 docViewLayout props = R.createElement docViewLayoutCpt props []
-
 docViewLayoutCpt :: R.Component LayoutProps
 docViewLayoutCpt = here.component "docViewLayout" cpt
   where
@@ -118,11 +113,11 @@ type Props = (
 
 docView :: R2.Component Props
 docView = R.createElement docViewCpt
-
 docViewCpt :: R.Component Props
 docViewCpt = here.component "docView" cpt where
   cpt { layout: { cacheState
                 , chart
+                , errors
                 , frontends
                 , listId
                 , mCorpusId
@@ -147,6 +142,7 @@ docViewCpt = here.component "docView" cpt where
         , if showSearch then searchBar { query } [] else H.div {} []
         , H.div {className: "col-md-12"}
           [ pageLayout { cacheState
+                       , errors
                        , frontends
                        , key: "docView-" <> (show cacheState')
                        , listId
@@ -167,7 +163,6 @@ type SearchBarProps =
 
 searchBar :: R2.Component SearchBarProps
 searchBar = R.createElement searchBarCpt
-
 searchBarCpt :: R.Component SearchBarProps
 searchBarCpt = here.component "searchBar" cpt
   where
@@ -268,6 +263,7 @@ pageLayout = R.createElement pageLayoutCpt
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = here.component "pageLayout" cpt where
   cpt props@{ cacheState
+            , errors
             , frontends
             , listId
             , mCorpusId
@@ -303,6 +299,7 @@ pageLayoutCpt = here.component "pageLayout" cpt where
     case cacheState' of
       NT.CacheOn -> do
         let paint (Tuple count docs) = page { documents: docs
+                                            , errors
                                             , layout: props { totalRecords = count }
                                             , params } []
             mkRequest :: PageParams -> GUC.Request
@@ -310,6 +307,7 @@ pageLayoutCpt = here.component "pageLayout" cpt where
 
         useLoaderWithCacheAPI {
             cacheEndpoint: getPageHash session
+          , errors
           , handleResponse
           , mkRequest
           , path
@@ -339,13 +337,13 @@ pageLayoutCpt = here.component "pageLayout" cpt where
 
 type PageProps = (
     documents :: Array DocumentsView
-  , layout :: Record PageLayoutProps
-  , params :: TT.Params
+  , errors    :: T.Box (Array FrontendError)
+  , layout    :: Record PageLayoutProps
+  , params    :: TT.Params
   )
 
 page :: R2.Component PageProps
 page = R.createElement pageCpt
-
 pageCpt :: R.Component PageProps
 pageCpt = here.component "pageCpt" cpt where
   cpt { documents, layout, params } _ = do
@@ -361,7 +359,6 @@ type PagePaintProps = (
 
 pagePaint :: R2.Component PagePaintProps
 pagePaint = R.createElement pagePaintCpt
-
 pagePaintCpt :: R.Component PagePaintProps
 pagePaintCpt = here.component "pagePaintCpt" cpt
   where

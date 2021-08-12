@@ -2,8 +2,6 @@ module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
 import Gargantext.Prelude
 
-import Control.Monad.Error.Class (throwError)
-import DOM.Simple.Console (log2)
 import Data.Either (Either(..), fromRight')
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
@@ -16,7 +14,6 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
-import Effect.Exception (error)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..), Props)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..), readUFBAsText)
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe, panel)
@@ -86,7 +83,7 @@ type UploadFile =
   }
   
 
-uploadFileView :: Record Props -> R.Element
+uploadFileView :: R2.Leaf Props
 uploadFileView props = R.createElement uploadFileViewCpt props []
 uploadFileViewCpt :: R.Component Props
 uploadFileViewCpt = here.component "uploadFileView" cpt
@@ -191,7 +188,7 @@ uploadButtonCpt = here.component "uploadButton" cpt
       where
         onClick fileType' mFile' e = do
           let { blob, name } = unsafePartial $ fromJust mFile'
-          log2 "[uploadButton] fileType" fileType'
+          here.log2 "[uploadButton] fileType" fileType'
           void $ launchAff do
             case fileType' of
               Arbitrary ->
@@ -306,12 +303,13 @@ instance GT.ToQuery FileUploadQuery where
     where pair :: forall a. Show a => String -> a -> Array (Tuple QP.Key (Maybe QP.Value))
           pair k v = [ QP.keyFromString k /\ (Just $ QP.valueFromString $ show v) ]
 
-uploadFile :: Session
-           -> GT.NodeType
-           -> ID
-           -> FileType
-           -> {contents :: String, mName :: Maybe String}
-           -> Aff GT.AsyncTaskWithType
+uploadFile :: { contents     :: String
+              , fileType     :: FileType
+              , id           :: ID
+              , nodeType     :: GT.NodeType
+              , mName        :: Maybe String
+              , session      :: Session }
+           -> Aff (Either RESTError GT.AsyncTaskWithType)
 {-
 uploadFile session NodeList id JSON { mName, contents } = do
   let url = GR.NodeAPI NodeList (Just id) $ GT.asyncTaskTypePath GT.ListUpload
@@ -322,12 +320,12 @@ uploadFile session NodeList id JSON { mName, contents } = do
   task <- post session url body
   pure $ GT.AsyncTaskWithType { task, typ: GT.Form }
   -}
-uploadFile session nodeType id fileType { mName, contents } = do
+uploadFile { contents, fileType, id, nodeType, mName, session } = do
   -- contents <- readAsText blob
   eTask :: Either RESTError GT.AsyncTask <- postWwwUrlencoded session p bodyParams
   case eTask of
-    Left _err -> liftEffect $ throwError $ error "[uploadFile] RESTError"
-    Right task -> pure $ GT.AsyncTaskWithType { task, typ: GT.Form }
+    Left err -> pure $ Left err
+    Right task -> pure $ Right $ GT.AsyncTaskWithType { task, typ: GT.Form }
     --postMultipartFormData session p fileContents
   where
     p = case nodeType of
