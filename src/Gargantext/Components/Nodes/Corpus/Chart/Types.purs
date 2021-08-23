@@ -3,6 +3,7 @@ module Gargantext.Components.Nodes.Corpus.Chart.Types where
 import Data.Maybe (Maybe)
 import Data.Tuple (Tuple)
 import Effect (Effect)
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Charts.Options.Type (EChartsInstance, MouseEvent)
 import Gargantext.Prelude (Unit)
 import Gargantext.Sessions (Session)
@@ -18,7 +19,7 @@ type Path = (
   )
 
 type Props = (
-    errors  :: T.Box (Array FrontendError)
+    boxes   :: Boxes
   , path    :: Record Path
   , session :: Session
   , onClick :: Maybe (MouseEvent -> Effect Unit)

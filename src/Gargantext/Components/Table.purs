@@ -164,8 +164,8 @@ filterRows { params: { limit, offset, orderBy } } rs = newRs
   where
     newRs = Seq.take limit $ Seq.drop offset $ rs
 
-defaultContainer :: {title :: String} -> Record TableContainerProps -> R.Element
-defaultContainer {title} props = R.fragment $ props.syncResetButton <> controls
+defaultContainer :: Record TableContainerProps -> R.Element
+defaultContainer props = R.fragment $ props.syncResetButton <> controls
   where
     controls = [ R2.row
                  [ H.div {className: "col-md-4"} [ props.pageSizeDescription ]
@@ -181,8 +181,8 @@ defaultContainer {title} props = R.fragment $ props.syncResetButton <> controls
                ]
 
 -- TODO: this needs to be in Gargantext.Pages.Corpus.Graph.Tabs
-graphContainer :: {title :: String} -> Record TableContainerProps -> R.Element
-graphContainer {title} props =
+graphContainer :: Record TableContainerProps -> R.Element
+graphContainer props =
   -- TODO title in tabs name (above)
   H.table {className: "table"}
   [ H.thead {className: ""} [ props.tableHead ]

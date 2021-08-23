@@ -3,28 +3,27 @@ module Gargantext.Components.TopBar where
 import Gargantext.Prelude
 
 import Data.Foldable (intercalate)
+import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
+import Gargantext.Components.Themes (themeSwitcher, defaultTheme, allThemes)
+import Gargantext.Types (Handed(..), reverseHanded)
+import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
-
-import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
-import Gargantext.Components.Themes (themeSwitcher, defaultTheme, allThemes)
-import Gargantext.Types (FrontendError(..), Handed(..), reverseHanded)
-import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.TopBar"
 
 type TopBarProps =
-  ( handed :: T.Box Handed
-  , showTree :: T.Box Boolean )
+  ( boxes :: Boxes )
 
 topBar :: R2.Component TopBarProps
 topBar = R.createElement topBarCpt
 topBarCpt :: R.Component TopBarProps
 topBarCpt = here.component "topBar" cpt
   where
-    cpt { handed, showTree } children = do
+    cpt { boxes: { handed, showTree } } children = do
       handed' <- T.useLive T.unequal handed
 
       pure $ H.div { className: "navbar navbar-expand-lg navbar-dark bg-dark"

@@ -5,13 +5,14 @@ import Gargantext.Prelude
 import Data.Maybe (Maybe)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar (searchBar)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (defaultSearch)
 import Gargantext.Components.Lang (allLangs)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (FrontendError, ID)
+import Gargantext.Types (ID)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -23,8 +24,8 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Search"
 
 
 type Props =
-  ( dispatch  :: Action -> Aff Unit
-  , errors    :: T.Box (Array FrontendError)
+  ( boxes     :: Boxes
+  , dispatch  :: Action -> Aff Unit
   , id        :: Maybe ID
   , nodePopup :: Maybe NodePopup
   , session   :: Session )
@@ -35,7 +36,7 @@ actionSearch = R.createElement actionSearchCpt
 actionSearchCpt :: R.Component Props
 actionSearchCpt = here.component "actionSearch" cpt
   where
-    cpt { dispatch, errors, id, nodePopup, session } _ = do
+    cpt { boxes: { errors }, dispatch, id, nodePopup, session } _ = do
       search <- T.useBox $ defaultSearch { node_id = id }
       pure $ R.fragment [ H.p { className: "action-search" }
                               [ H.text $ "Search and create a private "

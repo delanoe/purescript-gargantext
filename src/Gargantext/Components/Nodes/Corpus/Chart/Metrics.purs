@@ -113,11 +113,11 @@ metrics props = R.createElement metricsCpt props []
 metricsCpt :: R.Component Props
 metricsCpt = here.component "etrics" cpt
   where
-    cpt { errors, onClick, onInit, path, session } _ = do
+    cpt { boxes, onClick, onInit, path, session } _ = do
       reload <- T.useBox T2.newReload
 
       pure $ metricsWithCacheLoadView {
-          errors
+          boxes
         , getMetricsHash
         , handleResponse
         , loaded

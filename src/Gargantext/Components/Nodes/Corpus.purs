@@ -1,6 +1,5 @@
 module Gargantext.Components.Nodes.Corpus where
 
-import DOM.Simple.Console (log2)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
@@ -12,20 +11,20 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Gargantext.AsyncTasks as GAT
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..))
 import Gargantext.Components.Nodes.Types (FTField, FTFieldList(..), FTFieldWithIndex, FTFieldsWithIndex(..), Field(..), FieldType(..), Hash, Index, defaultField, defaultHaskell', defaultJSON', defaultMarkdown', defaultPython')
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (RESTError(..))
 import Gargantext.Data.Array as GDA
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (class Eq, class Show, Unit, bind, discard, pure, show, unit, ($), (+), (-), (<), (<$>), (<<<), (<>), (==), (>))
 import Gargantext.Routes (SessionRoute(Children, NodeAPI))
 import Gargantext.Sessions (Session, get, put, sessionId)
-import Gargantext.Types (AffETableResult, FrontendError, NodeType(..))
+import Gargantext.Types (AffETableResult, NodeType(..))
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
@@ -38,28 +37,24 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus"
 
 type Props =
-  ( errors :: T.Box (Array FrontendError)
+  ( boxes   :: Boxes
   , nodeId  :: Int
-  , reloadForest :: T2.ReloadS
-  , session :: Session
-  , tasks :: T.Box GAT.Storage )
+  , session :: Session )
 
 corpusLayout :: R2.Leaf Props
 corpusLayout props = R.createElement corpusLayoutCpt props []
 corpusLayoutCpt :: R.Component Props
 corpusLayoutCpt = here.component "corpusLayout" cpt where
-  cpt { errors, nodeId, session, tasks, reloadForest } _ = do
-    pure $ corpusLayoutMain { errors, key, nodeId, session, tasks, reloadForest }
+  cpt { boxes, nodeId, session } _ = do
+    pure $ corpusLayoutMain { boxes, key, nodeId, session }
       where
         key = show (sessionId session) <> "-" <> show nodeId
 
 type KeyProps =
-  ( errors  :: T.Box (Array FrontendError)
+  ( boxes :: Boxes
   , key     :: String
   , nodeId  :: Int
-  , reloadForest :: T2.ReloadS
   , session :: Session
-  , tasks   :: T.Box GAT.Storage
   )
 
 corpusLayoutMain :: R2.Leaf KeyProps
@@ -67,7 +62,7 @@ corpusLayoutMain props = R.createElement corpusLayoutMainCpt props []
 corpusLayoutMainCpt :: R.Component KeyProps
 corpusLayoutMainCpt = here.component "corpusLayoutMain" cpt
   where
-    cpt { errors, nodeId, key, session, tasks, reloadForest } _ = do
+    cpt { boxes, key, nodeId, session } _ = do
       viewType <- T.useBox Folders
 
       pure $ H.div {} [
@@ -77,32 +72,34 @@ corpusLayoutMainCpt = here.component "corpusLayoutMain" cpt
           , H.div { className: "col-1" } [ FV.homeButton ]
           ]
         ]
-      , H.div {} [corpusLayoutSelection { errors, state: viewType, key, session, nodeId, tasks, reloadForest }]
+      , H.div {} [corpusLayoutSelection { boxes, key, session, state: viewType, nodeId }]
       ]
 
 type SelectionProps = 
-  ( errors  :: T.Box (Array FrontendError)
+  ( boxes   :: Boxes
   , nodeId  :: Int
   , key     :: String
   , session :: Session
   , state   :: T.Box ViewType
-  , tasks   :: T.Box GAT.Storage
-  , reloadForest :: T2.ReloadS
   )
 
 corpusLayoutSelection :: R2.Leaf SelectionProps
 corpusLayoutSelection props = R.createElement corpusLayoutSelectionCpt props []
 corpusLayoutSelectionCpt :: R.Component SelectionProps
 corpusLayoutSelectionCpt = here.component "corpusLayoutSelection" cpt where
-  cpt { errors, nodeId, session, key, state, tasks, reloadForest} _ = do
+  cpt { boxes, key, nodeId, session, state } _ = do
     state' <- T.useLive T.unequal state
     viewType <- T.read state
 
-    pure $ renderContent viewType nodeId session key tasks reloadForest errors
+    pure $ renderContent viewType nodeId session key boxes
 
-  renderContent Folders nodeId session key tasks reloadForest errors =
-    FV.folderView { errors, nodeId, session, backFolder: true, tasks, reloadForest }
-  renderContent Code nodeId session key tasks _ _ = corpusLayoutWithKey { key, nodeId, session }
+  renderContent Folders nodeId session _ boxes =
+    FV.folderView { backFolder: true
+                  , boxes
+                  , nodeId
+                  , session
+                   }
+  renderContent Code nodeId session key _ = corpusLayoutWithKey { key, nodeId, session }
 
 type CorpusKeyProps =
   ( nodeId  :: Int
@@ -184,7 +181,7 @@ corpusLayoutViewCpt = here.component "corpusLayoutView" cpt
                             , session }
         liftEffect $ do
           _ <- case res of
-                Left err -> log2 "[corpusLayoutView] onClickSave RESTError" err
+                Left err -> here.log2 "[corpusLayoutView] onClickSave RESTError" err
                 _ -> pure unit
           T2.reload reload
 
@@ -357,7 +354,6 @@ type RenameableTextProps =
 
 renameableText :: Record RenameableTextProps -> R.Element
 renameableText props = R.createElement renameableTextCpt props []
-
 renameableTextCpt :: R.Component RenameableTextProps
 renameableTextCpt = here.component "renameableTextCpt" cpt
   where
@@ -400,7 +396,6 @@ renameableTextCpt = here.component "renameableTextCpt" cpt
 
 fieldCodeEditor :: Record FieldCodeEditorProps -> R.Element
 fieldCodeEditor props = R.createElement fieldCodeEditorCpt props []
-
 fieldCodeEditorCpt :: R.Component FieldCodeEditorProps
 fieldCodeEditorCpt = here.component "fieldCodeEditorCpt" cpt
   where
@@ -447,12 +442,12 @@ changeCode onc (JSON j@{desc}) CE.Python c = onc $ Python $ defaultPython' { pyt
     toCode = R2.stringify (JSON.writeImpl j) 2
 changeCode onc _ CE.JSON c = do
   case JSON.readJSON c of
-    Left err -> log2 "[fieldCodeEditor'] cannot parse json" c
+    Left err -> here.log2 "[fieldCodeEditor'] cannot parse json" c
     Right j' -> onc $ JSON j'
   -- case jsonParser c of
-  --   Left err -> log2 "[fieldCodeEditor'] cannot parse json" c
+  --   Left err -> here.log2 "[fieldCodeEditor'] cannot parse json" c
   --   Right j' -> case decodeJson j' of
-  --     Left err -> log2 "[fieldCodeEditor'] cannot decode json" j'
+  --     Left err -> here.log2 "[fieldCodeEditor'] cannot decode json" j'
   --     Right j'' -> onc $ JSON j''
 changeCode onc (JSON j) CE.Markdown _ = onc $ Markdown $ defaultMarkdown' { text = text }
   where
@@ -500,7 +495,7 @@ loadCorpus {nodeId, session} = do
                 Just (NodePoly { id: defaultListId }) ->
                   pure $ Right { corpusId, corpusNode, defaultListId }
                 Nothing ->
-                  throwError $ error "Missing default list"
+                  pure $ Left $ CustomError "Missing default list"
 
 --  (NodePoly {parentId: corpusId} :: NodePoly {}) <- get session nodePolyRoute
 --  corpusNode     <-  get session $ corpusNodeRoute     corpusId ""
@@ -570,7 +565,6 @@ type ViewTypeSelectorProps =
 
 viewTypeSelector :: Record ViewTypeSelectorProps -> R.Element
 viewTypeSelector p = R.createElement viewTypeSelectorCpt p []
-
 viewTypeSelectorCpt :: R.Component ViewTypeSelectorProps
 viewTypeSelectorCpt = here.component "viewTypeSelector" cpt
   where

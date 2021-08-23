@@ -1,9 +1,5 @@
 module Gargantext.Components.Forest.Tree.Node.Tools where
 
-import Gargantext.Prelude
-  ( class Ord, class Read, class Show, Unit
-  , bind, const, discard, map, not, pure, read, show, when, mempty
-  , ($), (<), (<<<), (<>), (<$>), (<*>) )
 import Data.Maybe (fromMaybe, Maybe(..))
 import Data.Nullable (null)
 import Data.Set (Set)
@@ -12,19 +8,20 @@ import Data.String as S
 import Data.String.CodeUnits as DSCU
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Action (Action, icon, text)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Ends (Frontends, url)
+import Gargantext.Prelude (class Ord, class Read, class Show, Unit, bind, const, discard, map, not, pure, read, show, when, mempty, ($), (<), (<<<), (<>), (<$>), (<*>))
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types as GT
 import Gargantext.Utils (toggleSet)
 import Gargantext.Utils.Glyphicon (glyphicon)
 import Gargantext.Utils.ReactTooltip as ReactTooltip
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools"
@@ -58,7 +55,6 @@ type TextInputBoxProps =
 
 textInputBox :: R2.Component TextInputBoxProps
 textInputBox = R.createElement textInputBoxCpt
-
 textInputBoxCpt :: R.Component TextInputBoxProps
 textInputBoxCpt = here.component "textInputBox" cpt where
   cpt { boxAction, boxName, dispatch, id, isOpen, text } _ =
@@ -258,9 +254,9 @@ tooltipId id = "node-link-" <> show id
 -- START node link
 
 type NodeLinkProps = (
-    frontends  :: Frontends
+    boxes      :: Boxes
   , folderOpen :: T.Box Boolean
-  , handed     :: GT.Handed
+  , frontends  :: Frontends
   , id         :: Int
   , isSelected :: Boolean
   , name       :: GT.Name
@@ -270,13 +266,12 @@ type NodeLinkProps = (
 
 nodeLink :: R2.Component NodeLinkProps
 nodeLink = R.createElement nodeLinkCpt
-
 nodeLinkCpt :: R.Component NodeLinkProps
 nodeLinkCpt = here.component "nodeLink" cpt
   where
-    cpt { folderOpen
+    cpt { boxes: { handed }
+        , folderOpen
         , frontends
-        , handed
         , id
         , isSelected
         , name
@@ -310,23 +305,23 @@ nodeLinkCpt = here.component "nodeLink" cpt
 
 type NodeTextProps =
   ( isSelected :: Boolean
-  , handed     :: GT.Handed
+  , handed     :: T.Box GT.Handed
   , name       :: GT.Name
   )
 
 nodeText :: R2.Component NodeTextProps
 nodeText = R.createElement nodeTextCpt
-
 nodeTextCpt :: R.Component NodeTextProps
 nodeTextCpt = here.component "nodeText" cpt where
-  cpt { isSelected, handed, name } _ =
+  cpt { isSelected, handed, name } _ = do
+    handed' <- T.useLive T.unequal handed
     pure $ if isSelected then
               H.u { className }
                 [ H.b {}
                   [ H.text ("| " <> name15 name <> " |    ") ]
                 ]
               else
-                GT.flipHanded l r handed where
+                GT.flipHanded l r handed' where
                   l = H.text "..."
                   r = H.text (name15 name)
   name_ len n =

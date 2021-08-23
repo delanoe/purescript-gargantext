@@ -186,7 +186,7 @@ pageCpt = here.component "page" cpt
         rows pagePath' = (row pagePath') <$> Seq.fromFoldable docs
         row { nodeId } contact = { row: contactCells { annuaireId: nodeId, frontends, contact, session }
                                  , delete: false }
-        container = TT.defaultContainer { title: "Annuaire" } -- TODO
+        container = TT.defaultContainer -- TODO
         colNames = TT.ColumnName <$> [ "", "First Name", "Last Name", "Company", "Role"]
         wrapColElts = const identity
 

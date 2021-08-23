@@ -7,6 +7,7 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Nodes.Corpus (fieldsCodeEditor)
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
 import Gargantext.Components.Nodes.Dashboard.Types as DT
@@ -26,7 +27,7 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Dashboard"
 
 type Props =
-  ( errors  :: T.Box (Array FrontendError)
+  ( boxes   :: Boxes
   , nodeId  :: NodeID
   , session :: Session )
 
@@ -49,7 +50,7 @@ dashboardLayoutWithKey = R.createElement dashboardLayoutWithKeyCpt
 dashboardLayoutWithKeyCpt :: R.Component KeyProps
 dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
   where
-    cpt { errors, nodeId, session } _ = do
+    cpt { boxes, nodeId, session } _ = do
       reload <- T.useBox T2.newReload
       reload' <- T.useLive T.unequal reload
 
@@ -58,10 +59,10 @@ dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
                 , path: { nodeId, reload: reload', session }
                 , render: \(DT.DashboardData { hyperdata: DT.Hyperdata h, parentId }) -> do
                       let { charts, fields } = h
-                      dashboardLayoutLoaded { charts
+                      dashboardLayoutLoaded { boxes
+                                            , charts
                                             , corpusId: parentId
                                             , defaultListId: 0
-                                            , errors
                                             , fields
                                             , nodeId
                                             , onChange: onChange nodeId reload (DT.Hyperdata h)
@@ -82,13 +83,13 @@ dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
               T2.reload reload
 
 type LoadedProps =
-  ( charts        :: Array P.PredefinedChart
+  ( boxes         :: Boxes
+  , charts        :: Array P.PredefinedChart
   , corpusId      :: NodeID
   , defaultListId :: Int
-  , errors        :: T.Box (Array FrontendError)
   , fields        :: FTFieldList
   , onChange      :: { charts :: Array P.PredefinedChart
-                     , fields :: FTFieldList } -> Effect Unit
+                  , fields :: FTFieldList } -> Effect Unit
   , nodeId        :: NodeID
   , session       :: Session
   )
@@ -98,7 +99,14 @@ dashboardLayoutLoaded = R.createElement dashboardLayoutLoadedCpt
 dashboardLayoutLoadedCpt :: R.Component LoadedProps
 dashboardLayoutLoadedCpt = here.component "dashboardLayoutLoaded" cpt
   where
-    cpt { charts, corpusId, defaultListId, errors, fields, nodeId, onChange, session } _ = do
+    cpt { boxes
+        , charts
+        , corpusId
+        , defaultListId
+        , fields
+        , nodeId
+        , onChange
+        , session } _ = do
       pure $ H.div {}
         [ dashboardCodeEditor { fields
                               , nodeId
@@ -122,10 +130,10 @@ dashboardLayoutLoadedCpt = here.component "dashboardLayoutLoaded" cpt
                                          , fields }
         chartsEls = A.mapWithIndex chartIdx charts
         chartIdx idx chart =
-          renderChart { chart
+          renderChart { boxes
+                      , chart
                       , corpusId
                       , defaultListId
-                      , errors
                       , onChange: onChangeChart
                       , onRemove
                       , session } []
@@ -199,10 +207,10 @@ dashboardCodeEditorCpt = here.component "dashboardCodeEditor" cpt
             List.snoc fs $ { idx: List.length fs, ftField: defaultField }) fieldsS
 
 type PredefinedChartProps =
-  ( chart         :: P.PredefinedChart
+  ( boxes         :: Boxes
+  , chart         :: P.PredefinedChart
   , corpusId      :: NodeID
   , defaultListId :: Int
-  , errors        :: T.Box (Array FrontendError)
   , onChange      :: P.PredefinedChart -> Effect Unit
   , onRemove      :: Unit -> Effect Unit
   , session       :: Session
@@ -213,7 +221,13 @@ renderChart = R.createElement renderChartCpt
 renderChartCpt :: R.Component PredefinedChartProps
 renderChartCpt = here.component "renderChart" cpt
   where
-    cpt { chart, corpusId, defaultListId, errors, onChange, onRemove, session } _ = do
+    cpt { boxes
+        , chart
+        , corpusId
+        , defaultListId
+        , onChange
+        , onRemove
+        , session } _ = do
       pure $ H.div { className: "row chart card" }
         [ H.div { className: "card-header" }
           [ H.div { className: "row" }
@@ -243,13 +257,13 @@ renderChartCpt = here.component "renderChart" cpt
           where
             value = R.unsafeEventValue e
         onRemoveClick _ = onRemove unit
-        params = { corpusId
-                 , errors
+        params = { boxes
+                 , corpusId
                  , limit: Just 1000
                  , listId: Just defaultListId
-                 , session
                  , onClick: Nothing
                  , onInit: Nothing
+                 , session
                  }
 
     -- aSchool school = H.div {className: "col-md-4 content"} [ chart $ focus school ]

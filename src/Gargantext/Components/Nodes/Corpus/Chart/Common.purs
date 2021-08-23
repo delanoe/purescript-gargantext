@@ -35,13 +35,20 @@ metricsLoadView p = R.createElement metricsLoadViewCpt p []
 metricsLoadViewCpt :: forall a. Eq a => R.Component (MetricsLoadViewProps a)
 metricsLoadViewCpt = here.component "metricsLoadView" cpt
   where
-    cpt { errors, getMetrics, loaded, onClick, onInit, path, reload, session } _ = do
+    cpt { boxes: boxes@{ errors }
+        , getMetrics
+        , loaded
+        , onClick
+        , onInit
+        , path
+        , reload
+        , session } _ = do
       reload' <- T.useLive T.unequal reload
 
       useLoader { errorHandler
                 , loader: getMetrics session
                 , path: reload' /\ path
-                , render: \l -> loaded { errors, path, reload, session, onClick, onInit } l }
+                , render: \l -> loaded { boxes, path, reload, session, onClick, onInit } l }
       where
         errorHandler error = do
           T.modify_ (A.cons $ FRESTError { error }) errors
@@ -64,7 +71,7 @@ metricsWithCacheLoadViewCpt :: forall res ret.
                                R.Component (MetricsWithCacheLoadViewProps res ret)
 metricsWithCacheLoadViewCpt = here.component "metricsWithCacheLoadView" cpt
   where
-    cpt { errors
+    cpt { boxes
         , getMetricsHash
         , handleResponse
         , loaded
@@ -76,9 +83,9 @@ metricsWithCacheLoadViewCpt = here.component "metricsWithCacheLoadView" cpt
         , onInit } _ = do
       reload' <- T.useLive T.unequal reload
 
-      useLoaderWithCacheAPI { cacheEndpoint: (getMetricsHash session)
-                            , errors
+      useLoaderWithCacheAPI { boxes
+                            , cacheEndpoint: (getMetricsHash session)
                             , handleResponse
                             , mkRequest
                             , path: (reload' /\ path)
-                            , renderer: loaded { errors, path, reload, session, onClick, onInit } }
+                            , renderer: loaded { boxes, path, reload, session, onClick, onInit } }

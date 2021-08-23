@@ -28,17 +28,19 @@ type Token = String
 data RESTError =
     SendResponseError Affjax.Error
   | ReadJSONError     Foreign.MultipleErrors
+  | CustomError       String
 
 derive instance Generic RESTError _
 instance Show RESTError where
   show (SendResponseError e) = "SendResponseError " <> showError e
     where
-      showError (RequestContentError e') = "(RequestContentError " <> show e' <> ")"
+      showError (RequestContentError e')  = "(RequestContentError " <> show e' <> ")"
       showError (ResponseBodyError fe rf) = "(ResponseBodyError " <> show fe <> " (rf)"  -- <> show rf <> ")"
-      showError (TimeoutError) = "(TimeoutError)"
-      showError (RequestFailedError) = "(RequestFailedError)"
-      showError (XHROtherError e') = "(XHROtherError " <> show e' <> ")"
-  show (ReadJSONError     e) = "ReadJSONError " <> show e
+      showError (TimeoutError)            = "(TimeoutError)"
+      showError (RequestFailedError)      = "(RequestFailedError)"
+      showError (XHROtherError e')        = "(XHROtherError " <> show e' <> ")"
+  show (ReadJSONError     e)              = "ReadJSONError " <> show e
+  show (CustomError       s)              = "CustomError " <> s
 instance Eq RESTError where
   -- this is crude but we need it only because of useLoader
   eq _ _ = false

@@ -2,11 +2,10 @@ module Gargantext.Components.Nodes.Home where
 
 import Gargantext.Prelude
 
-import Control.Bind ((=<<))
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Effect (Effect)
-import Gargantext.AsyncTasks as GAT
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Lang (LandingLang(..))
@@ -19,9 +18,7 @@ import Gargantext.License (license)
 import Gargantext.Sessions (Sessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Sessions.Types (Session(..))
-import Gargantext.Types (FrontendError)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Routing.Hash (setHash)
@@ -55,24 +52,20 @@ langLandingData LL_EN = En.landingData
 
 ------------------------------------------------------------------------
 
-type HomeProps s l =
-  ( backend   :: T.Box (Maybe Backend)
-  , errors    :: T.Box (Array FrontendError)
+type HomeProps =
+  ( boxes     :: Boxes
   , lang      :: LandingLang
-  , sessions  :: s
-  , showLogin :: l
-  , tasks     :: T.Box GAT.Storage
-  , reloadForest :: T.Box T2.Reload
   )
 
-homeLayout :: forall s l. T.Read s Sessions => T.ReadWrite l Boolean
-           => R2.Leaf (HomeProps s l)
+homeLayout :: R2.Leaf HomeProps
 homeLayout props = R.createElement homeLayoutCpt props []
-homeLayoutCpt :: forall s l. T.Read s Sessions => T.ReadWrite l Boolean
-             => R.Component (HomeProps s l)
+homeLayoutCpt :: R.Component HomeProps
 homeLayoutCpt = here.component "homeLayout" cpt
   where
-    cpt { backend, errors, lang, sessions, showLogin, tasks, reloadForest} _ = do
+    cpt { boxes: boxes@{ backend
+                       , sessions
+                       , showLogin }
+        , lang } _ = do
       backend' <- T.useLive T.unequal backend
       sessions' <- T.useLive T.unequal sessions
       let landingData = langLandingData lang
@@ -81,7 +74,7 @@ homeLayoutCpt = here.component "homeLayout" cpt
         [ H.div { className: "home-title container1" }
           [ jumboTitle landingData ]
         , H.div { className: "home-research-form container1" } [] -- TODO
-        , joinButtonOrTutorial errors tasks reloadForest sessions' (click backend')
+        , joinButtonOrTutorial boxes sessions' (click backend')
         , H.div { className: "home-public container1" }
           [ renderPublic { }
           , H.div { className:"col-12 d-flex justify-content-center" }
@@ -102,16 +95,14 @@ homeLayoutCpt = here.component "homeLayout" cpt
                   T.write_ true showLogin
             Just _ -> T.write_ true showLogin
 
-joinButtonOrTutorial :: forall e. T.Box (Array FrontendError)
-                     -> T.Box GAT.Storage
-                     -> T2.ReloadS
+joinButtonOrTutorial :: forall e. Boxes
                      -> Sessions
                      -> (e -> Effect Unit)
                      -> R.Element
-joinButtonOrTutorial errors tasks reloadForest sessions click =
+joinButtonOrTutorial boxes sessions click =
   if Sessions.null sessions
   then joinButton click
-  else tutorial { errors, tasks, reloadForest, sessions: Sessions.unSessions sessions }
+  else tutorial { boxes, sessions: Sessions.unSessions sessions }
      
 joinButton :: forall e. (e -> Effect Unit) -> R.Element
 joinButton click =
@@ -158,16 +149,15 @@ summary =
     toSummary (Tuto x) = H.li {} [ H.a {href: "#" <> x.id} [ H.text x.title ]]
 
 type TutorialProps =
-  ( errors :: T.Box (Array FrontendError)
-  , sessions :: Array Session
-  , tasks :: T.Box GAT.Storage
-  , reloadForest :: T.Box T2.Reload )
+  ( boxes :: Boxes
+  , sessions :: Array Session )
 
 tutorial :: R2.Leaf TutorialProps
 tutorial props = R.createElement tutorialCpt props []
 tutorialCpt :: R.Component TutorialProps
 tutorialCpt = here.component "tutorial" cpt where
-  cpt { errors, sessions, tasks, reloadForest } _ = do
+  cpt { boxes
+      , sessions } _ = do
     let folders = makeFolders sessions
 
     pure $ H.div { className: "mx-auto container" }
@@ -193,7 +183,7 @@ tutorialCpt = here.component "tutorial" cpt where
         sessionToFolder session@(Session {treeId, username, backend: (Backend {name})}) = 
           H.span { className: "folder" } [
             H.div { className: "d-flex justify-content-center" } [ H.text (username <> "@" <> name) ]
-          , H.div {} [ FV.folderView { errors, session, tasks, reloadForest, nodeId: treeId, backFolder: false} ] ]
+          , H.div {} [ FV.folderView { backFolder: false, boxes, nodeId: treeId, session } ] ]
 
 startTutos :: Array Tuto
 startTutos =

@@ -6,12 +6,7 @@ import Data.Array as A
 import Data.Either (Either)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-import React.SyntheticEvent as E
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Record as Record
-import Toestand as T
-
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Action (Props, Action, subTreeOut, setTreeOut)
 import Gargantext.Components.Forest.Tree.Node.Tools (nodeText)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
@@ -22,12 +17,17 @@ import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import React.SyntheticEvent as E
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools.SubTree"
 
 type SubTreeParamsIn =
-  ( handed        :: GT.Handed
+  ( boxes         :: Boxes
   , subTreeParams :: SubTreeParams
   | Props
   )
@@ -44,8 +44,8 @@ subTreeViewCpt :: R.Component SubTreeParamsProps
 subTreeViewCpt = here.component "subTreeView" cpt
   where
     cpt { action
+        , boxes
         , dispatch
-        , handed
         , id
         , nodeType
         , session
@@ -61,8 +61,8 @@ subTreeViewCpt = here.component "subTreeView" cpt
                 , path: session
                 , render: \tree ->
                     subTreeViewLoaded { action
+                                      , boxes
                                       , dispatch
-                                      , handed
                                       , id
                                       , nodeType
                                       , session
@@ -93,11 +93,12 @@ subTreeViewLoaded = R.createElement subTreeViewLoadedCpt
 subTreeViewLoadedCpt :: R.Component CorpusTreeProps
 subTreeViewLoadedCpt = here.component "subTreeViewLoaded" cpt
   where
-    cpt p@{ handed } _ = do
+    cpt p@{ boxes: { handed } } _ = do
+      handed' <- T.useLive T.unequal handed
       let pRender = Record.merge { render: subTreeTreeView } p
 
       pure $ H.div {className:"tree"}
-        [ H.div { className: if handed == GT.RightHanded
+        [ H.div { className: if handed' == GT.RightHanded
                              then "righthanded"
                              else "lefthanded"
                 }
@@ -113,12 +114,13 @@ subTreeTreeView = R2.ntCreateElement subTreeTreeViewCpt
 subTreeTreeViewCpt :: R2.NTComponent CorpusTreeRenderProps
 subTreeTreeViewCpt = here.ntComponent "subTreeTreeView" cpt where
   cpt (CorpusTreeRenderProps p@{ action
-                               , handed
+                               , boxes: { handed }
                                , id
                                , render
                                , subTreeParams
                                , tree: NTree (LNode { id: targetId, name, nodeType }) ary }) _ = do
     action' <- T.useLive T.unequal action
+    handed' <- T.useLive T.unequal handed
 
     let click e = do
           let action'' = if not validNodeType then Nothing else Just $ SubTreeOut { in: id, out: targetId }
@@ -128,7 +130,7 @@ subTreeTreeViewCpt = here.ntComponent "subTreeTreeView" cpt where
 
         children = (map (\ctree -> render (CorpusTreeRenderProps (p { tree = ctree })) []) sortedAry) :: Array R.Element
 
-    pure $ H.div {} $ GT.reverseHanded handed
+    pure $ H.div {} $ GT.reverseHanded handed'
       [ H.div { className: nodeClass validNodeType }
         [ H.span { className: "text"
                  , on: { click } }

@@ -71,7 +71,7 @@ publishNode = R.createElement publishNodeCpt
 publishNodeCpt :: R.Component SubTreeParamsIn
 publishNodeCpt = here.component "publishNode" cpt
   where
-    cpt { dispatch, handed, id, nodeType, session, subTreeParams } _ = do
+    cpt { boxes, dispatch, id, nodeType, session, subTreeParams } _ = do
       action <- T.useBox (Action.SharePublic { params: Nothing })
       action' <- T.useLive T.unequal action
 
@@ -83,8 +83,8 @@ publishNodeCpt = here.component "publishNode" cpt
 
       pure $ Tools.panel
         [ subTreeView { action
+                      , boxes
                       , dispatch
-                      , handed
                       , id
                       , nodeType
                       , session

@@ -11,22 +11,22 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
-import Gargantext.AsyncTasks as GAT
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact'(..), ContactData', ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
 import Gargantext.Components.Nodes.Lists.Types as LT
-import Gargantext.Components.Nodes.Texts.Types as TT
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, get, put, sessionId)
-import Gargantext.Types (FrontendError, NodeType(..), SidePanelState)
+import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record as Record
 import Toestand as T
 
 here :: R2.Here
@@ -131,24 +131,20 @@ contactInfoItemCpt = here.component "contactInfoItem" cpt
               let newHyperdata = (L.over cLens (\_ -> R.readRef valueRef) hyperdata) :: HyperdataContact
               onUpdateHyperdata newHyperdata
 
-type BasicProps =
-  ( errors         :: T.Box (Array FrontendError)
-  , frontends      :: Frontends
-  , nodeId         :: Int
-  , sidePanelState :: T.Box SidePanelState
-  , sidePanel      :: T.Box (Maybe (Record TT.SidePanel))
-  , tasks          :: T.Box GAT.Storage
-  )
-
 type ReloadProps =
-  ( reloadForest :: T2.ReloadS
-  , reloadRoot   :: T2.ReloadS
-  | BasicProps
+  ( boxes     :: Boxes
+  , frontends :: Frontends
+  , nodeId    :: Int
   )
 
-type LayoutProps = ( session :: Session | ReloadProps )
+type LayoutProps =
+  ( session :: Session
+  | ReloadProps )
 
-type KeyLayoutProps = ( key :: String, session :: Session | ReloadProps )
+type KeyLayoutProps =
+ ( key :: String
+ , session :: Session
+ | ReloadProps )
 
 saveContactHyperdata :: Session -> Int -> HyperdataContact -> Aff (Either RESTError Int)
 saveContactHyperdata session id = put session (Routes.NodeAPI Node (Just id) "")
@@ -161,46 +157,21 @@ contactLayout :: R2.Component AnnuaireLayoutProps
 contactLayout = R.createElement contactLayoutCpt
 contactLayoutCpt :: R.Component AnnuaireLayoutProps
 contactLayoutCpt = here.component "contactLayout" cpt where
-  cpt { annuaireId
-      , errors
-      , frontends
-      , nodeId
-      , reloadForest
-      , reloadRoot
-      , session
-      , sidePanel
-      , sidePanelState
-      , tasks } _ = do
+  cpt props@{ nodeId
+            , session } _ = do
     let key = show (sessionId session) <> "-" <> show nodeId
     pure $
-      contactLayoutWithKey
-      { annuaireId
-      , errors
-      , frontends
-      , key
-      , nodeId
-      , reloadForest
-      , reloadRoot
-      , session
-      , sidePanel
-      , sidePanelState
-      , tasks
-      }
+      contactLayoutWithKey $ Record.merge props { key }
 
 contactLayoutWithKey :: R2.Leaf AnnuaireKeyLayoutProps
 contactLayoutWithKey props = R.createElement contactLayoutWithKeyCpt props []
 contactLayoutWithKeyCpt :: R.Component AnnuaireKeyLayoutProps
 contactLayoutWithKeyCpt = here.component "contactLayoutWithKey" cpt where
     cpt { annuaireId
-        , errors
+        , boxes: boxes@{ sidePanelTexts }
         , frontends
-        , reloadForest
-        , reloadRoot
         , nodeId
-        , session
-        , sidePanel
-        , sidePanelState
-        , tasks } _ = do
+        , session } _ = do
       reload <- T.useBox T2.newReload
       _ <- T.useLive T.unequal reload
       cacheState <- T.useBox LT.CacheOn
@@ -212,17 +183,14 @@ contactLayoutWithKeyCpt = here.component "contactLayoutWithKey" cpt where
                          [ display { title: fromMaybe "no name" name }
                                    (contactInfos hyperdata (onUpdateHyperdata reload))
                          , Tabs.tabs
-                             { cacheState
+                             { boxes
+                             , cacheState
                              , contactData
-                             , errors
                              , frontends
                              , nodeId
                              , session
-                             , sidePanel
-                             , sidePanelState
-                             , reloadForest
-                             , reloadRoot
-                             , tasks } ] }
+                             , sidePanel: sidePanelTexts
+                             } ] }
       where
         errorHandler err = here.log2 "[contactLayoutWithKey] RESTError" err
         onUpdateHyperdata :: T2.ReloadS -> HyperdataContact -> Effect Unit

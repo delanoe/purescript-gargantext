@@ -8,6 +8,7 @@ import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
 import Gargantext.AsyncTasks as GAT
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.DocsTable.Types (Year)
 import Gargantext.Components.NgramsTable as NT
@@ -49,17 +50,13 @@ modeTabType' Books = CTabAuthors
 modeTabType' Communication = CTabAuthors
 
 type TabsProps = (
-    cacheState     :: T.Box LTypes.CacheState
-  , contactData    :: ContactData'
-  , errors         :: T.Box (Array FrontendError)
-  , frontends      :: Frontends
-  , nodeId         :: Int
-  , reloadForest   :: T2.ReloadS
-  , reloadRoot     :: T2.ReloadS
-  , session        :: Session
-  , sidePanel      :: T.Box (Maybe (Record TTypes.SidePanel))
-  , sidePanelState :: T.Box SidePanelState
-  , tasks          :: T.Box GAT.Storage
+    boxes       :: Boxes
+  , cacheState  :: T.Box LTypes.CacheState
+  , contactData :: ContactData'
+  , frontends   :: Frontends
+  , nodeId      :: Int
+  , session     :: Session
+  , sidePanel   :: T.Box (Maybe (Record TTypes.SidePanel))
   )
 
 tabs :: R2.Leaf TabsProps
@@ -67,17 +64,13 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component TabsProps
 tabsCpt = here.component "tabs" cpt
   where
-    cpt { cacheState
+    cpt { boxes
+        , cacheState
         , contactData: {defaultListId}
-        , errors
         , frontends
         , nodeId
-        , reloadRoot
-        , reloadForest
         , session
         , sidePanel
-        , sidePanelState
-        , tasks
         } _ = do
       activeTab <- T.useBox 0
       yearFilter <- T.useBox (Nothing :: Maybe Year)
@@ -92,42 +85,33 @@ tabsCpt = here.component "tabs" cpt
           , "Trash"         /\ docs -- TODO pass-in trash mode
           ]
           where
-            patentsView = { cacheState
+            patentsView = { boxes
+                          , cacheState
                           , defaultListId
-                          , errors
                           , mode: Patents
                           , nodeId
-                          , reloadForest
-                          , reloadRoot
                           , session
-                          , tasks
                           }
-            booksView   = { cacheState
+            booksView   = { boxes
+                          , cacheState
                           , defaultListId
-                          , errors
                           , mode: Books
                           , nodeId
-                          , reloadForest
-                          , reloadRoot
                           , session
-                          , tasks
                           }
-            commView    = { cacheState
+            commView    = { boxes
+                          , cacheState
                           , defaultListId
-                          , errors
                           , mode: Communication
                           , nodeId
-                          , reloadForest
-                          , reloadRoot
                           , session
-                          , tasks
                           }
             chart       = mempty
             totalRecords = 4736 -- TODO
             docs = DT.docViewLayout
-              { cacheState
+              { boxes
+              , cacheState
               , chart
-              , errors
               , frontends
               , listId: defaultListId
               , mCorpusId: Nothing
@@ -135,7 +119,6 @@ tabsCpt = here.component "tabs" cpt
               , session
               , showSearch: true
               , sidePanel
-              , sidePanelState
               , tabType: TabPairing TabDocs
               , totalRecords
               , yearFilter
@@ -143,15 +126,12 @@ tabsCpt = here.component "tabs" cpt
 
 
 type NgramsViewTabsProps = (
-    cacheState     :: T.Box LTypes.CacheState
+    boxes          :: Boxes
+  , cacheState     :: T.Box LTypes.CacheState
   , defaultListId  :: Int
-  , errors         :: T.Box (Array FrontendError)
   , mode           :: Mode
   , nodeId         :: Int
-  , reloadForest   :: T2.ReloadS
-  , reloadRoot     :: T2.ReloadS
   , session        :: Session
-  , tasks          :: T.Box GAT.Storage
   )
 
 ngramsView :: R2.Component NgramsViewTabsProps
@@ -160,29 +140,23 @@ ngramsView = R.createElement ngramsViewCpt
 ngramsViewCpt :: R.Component NgramsViewTabsProps
 ngramsViewCpt = here.component "ngramsView" cpt
   where
-    cpt { cacheState
+    cpt { boxes
+        , cacheState
         , defaultListId
-        , errors
-        , reloadForest
-        , reloadRoot
         , mode
         , nodeId
-        , session
-        , tasks } _ = do
+        , session } _ = do
       path <- T.useBox $ NTC.initialPageParams session nodeId [defaultListId] (TabDocument TabDocs)
 
       pure $ NT.mainNgramsTable {
           afterSync: \_ -> pure unit
+        , boxes
         , cacheState
         , defaultListId
-        , errors
         , path
-        , reloadForest
-        , reloadRoot
         , session
         , tabNgramType
         , tabType
-        , tasks
         , withAutoUpdate: false
         } []
       where

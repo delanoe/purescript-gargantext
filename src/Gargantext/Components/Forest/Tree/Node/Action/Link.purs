@@ -48,7 +48,7 @@ linkNode = R.createElement linkNodeCpt
 linkNodeCpt :: R.Component SubTreeParamsIn
 linkNodeCpt = here.component "linkNode" cpt
   where
-    cpt { dispatch, handed, id, nodeType, session, subTreeParams } _ = do
+    cpt { boxes, dispatch, id, nodeType, session, subTreeParams } _ = do
       action <- T.useBox (LinkNode { nodeType: Nothing, params: Nothing})
       action' <- T.useLive T.unequal action
 
@@ -60,8 +60,8 @@ linkNodeCpt = here.component "linkNode" cpt
 
       pure $ panel [
           subTreeView { action
+                      , boxes
                       , dispatch
-                      , handed
                       , id
                       , nodeType
                       , session

@@ -16,7 +16,9 @@ import Data.Set as Set
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.GraphExplorer.Legend as Legend
+import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Components.NgramsTable.Core as NTC
@@ -43,20 +45,15 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.Sidebar"
 
 type Common = (
-    errors          :: T.Box (Array FrontendError)
+    boxes           :: Boxes
   , graphId         :: NodeID
   , metaData        :: GET.MetaData
-  , reloadForest    :: T2.ReloadS
-  , removedNodeIds  :: T.Box SigmaxT.NodeIds
-  , selectedNodeIds :: T.Box SigmaxT.NodeIds
   , session         :: Session
   )
 
 type Props = (
     frontends       :: Frontends
   , graph           :: SigmaxT.SGraph
-  , graphVersion    :: T2.ReloadS
-  , sideTab         :: T.Box GET.SideTab
   | Common
   )
 
@@ -65,7 +62,8 @@ sidebar = R.createElement sidebarCpt
 sidebarCpt :: R.Component Props
 sidebarCpt = here.component "sidebar" cpt
   where
-    cpt props@{ sideTab } _ = do
+    cpt props@{ boxes: { sidePanelGraph } } _ = do
+      { sideTab } <- GEST.focusedSidePanel sidePanelGraph
       sideTab' <- T.useLive T.unequal sideTab
 
       pure $ RH.div { id: "sp-container" }
@@ -77,7 +75,7 @@ sidebarCpt = here.component "sidebar" cpt
             GET.SideTabCommunity -> sideTabCommunity sideTabProps []
         ]
       where
-        sideTabProps = RX.pick props :: Record SideTabProps
+        sideTabProps = RX.pick props :: Record Props
 
 type SideTabNavProps = (
     sideTab  :: T.Box GET.SideTab
@@ -106,11 +104,9 @@ sideTabNavCpt = here.component "sideTabNav" cpt
                 , on: { click: \_ -> T.write_ tab sideTab }
                 } [ H.text $ show tab ]
 
-type SideTabProps = Props
-
-sideTabLegend :: R2.Component SideTabProps
+sideTabLegend :: R2.Component Props
 sideTabLegend = R.createElement sideTabLegendCpt
-sideTabLegendCpt :: R.Component SideTabProps
+sideTabLegendCpt :: R.Component Props
 sideTabLegendCpt = here.component "sideTabLegend" cpt
   where
     cpt { metaData: GET.MetaData { legend } } _ = do
@@ -119,13 +115,14 @@ sideTabLegendCpt = here.component "sideTabLegend" cpt
         , documentation EN
         ]
 
-sideTabData :: R2.Component SideTabProps
+sideTabData :: R2.Component Props
 sideTabData = R.createElement sideTabDataCpt
-sideTabDataCpt :: R.Component SideTabProps
+sideTabDataCpt :: R.Component Props
 sideTabDataCpt = here.component "sideTabData" cpt
   where
-    cpt props _ = do
-      selectedNodeIds' <- T.useLive T.unequal props.selectedNodeIds
+    cpt props@{ boxes: { sidePanelGraph } } _ = do
+      { selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
+      selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
 
       pure $ RH.div {}
         [ selectedNodes (Record.merge { nodesMap: SigmaxT.nodesGraphMap props.graph } props) []
@@ -142,18 +139,20 @@ sideTabDataCpt = here.component "sideTabData" cpt
         ]
 
 
-sideTabCommunity :: R2.Component SideTabProps
+sideTabCommunity :: R2.Component Props
 sideTabCommunity = R.createElement sideTabCommunityCpt
-sideTabCommunityCpt :: R.Component SideTabProps
+sideTabCommunityCpt :: R.Component Props
 sideTabCommunityCpt = here.component "sideTabCommunity" cpt
   where
-    cpt props _ = do
-      selectedNodeIds' <- T.useLive T.unequal props.selectedNodeIds
+    cpt props@{ boxes: { sidePanelGraph }
+              , frontends } _ = do
+      { selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
+      selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
 
       pure $ RH.div { className: "col-md-12", id: "query" }
         [ selectedNodes (Record.merge { nodesMap: SigmaxT.nodesGraphMap props.graph } props) []
         , neighborhood props []
-        , query { frontends: props.frontends
+        , query { frontends
                 , metaData: props.metaData
                 , nodesMap: SigmaxT.nodesGraphMap props.graph
                 , searchType: SearchContact
@@ -177,9 +176,10 @@ selectedNodes = R.createElement selectedNodesCpt
 selectedNodesCpt :: R.Component SelectedNodesProps
 selectedNodesCpt = here.component "selectedNodes" cpt
   where
-    cpt props@{ graph
-              , nodesMap
-              , selectedNodeIds } _ = do
+    cpt props@{ boxes: { sidePanelGraph }
+              , graph
+              , nodesMap } _ = do
+      { selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
       selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
 
       pure $ R2.row
@@ -219,8 +219,10 @@ neighborhood = R.createElement neighborhoodCpt
 neighborhoodCpt :: R.Component Props
 neighborhoodCpt = here.component "neighborhood" cpt
   where
-    cpt { graph
-        , selectedNodeIds } _ = do
+    cpt { boxes: { sidePanelGraph }
+        , graph
+         } _ = do
+      { selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
       selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
 
       pure $ RH.div { className: "tab-content", id: "myTabContent" }
@@ -248,27 +250,27 @@ updateTermButton = R.createElement updateTermButtonCpt
 updateTermButtonCpt :: R.Component UpdateTermButtonProps
 updateTermButtonCpt = here.component "updateTermButton" cpt
   where
-    cpt { buttonType
-        , errors
+    cpt { boxes: { errors
+                 , reloadForest
+                 , sidePanelGraph }
+        , buttonType
         , graphId
         , metaData
         , nodesMap
-        , reloadForest
-        , removedNodeIds
         , rType
-        , selectedNodeIds
         , session
         , text } _ = do
+      { removedNodeIds, sideTab, selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
       selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
 
       pure $ if Set.isEmpty selectedNodeIds' then
                RH.div {} []
              else
                RH.button { className: "btn btn-sm btn-" <> buttonType
-                         , on: { click: onClickRemove selectedNodeIds' }
+                         , on: { click: onClickRemove removedNodeIds selectedNodeIds selectedNodeIds' }
                          } [ RH.text text ]
       where
-        onClickRemove selectedNodeIds' _ = do
+        onClickRemove removedNodeIds selectedNodeIds selectedNodeIds' _ = do
           let nodes = mapMaybe (\id -> Map.lookup id nodesMap)
                               $ Set.toUnfoldable selectedNodeIds'
           sendPatches { errors

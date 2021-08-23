@@ -45,4 +45,4 @@ tab frontends session query (GraphSideCorpus {corpusId: nodeId, corpusLabel, lis
   where
     dvProps   = {frontends, session, nodeId, listId, query, chart, totalRecords: 0, container}
     chart     = mempty
-    container = Table.graphContainer {title: corpusLabel}
+    container = Table.graphContainer

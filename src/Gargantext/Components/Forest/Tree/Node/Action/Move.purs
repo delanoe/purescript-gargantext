@@ -30,7 +30,7 @@ moveNode = R.createElement moveNodeCpt
 moveNodeCpt :: R.Component SubTreeParamsIn
 moveNodeCpt = here.component "moveNode" cpt
   where
-    cpt { dispatch, handed, id, nodeType, session, subTreeParams } _ = do
+    cpt { boxes, dispatch, id, nodeType, session, subTreeParams } _ = do
       action :: T.Box Action <- T.useBox (MoveNode {params: Nothing})
       action' <- T.useLive T.unequal action
 
@@ -43,11 +43,11 @@ moveNodeCpt = here.component "moveNode" cpt
       pure $
 
         panel [ subTreeView { action
-                                , dispatch
-                                , handed
-                                , id
-                                , nodeType
-                                , session
-                                , subTreeParams
-                                } []
+                            , boxes
+                            , dispatch
+                            , id
+                            , nodeType
+                            , session
+                            , subTreeParams
+                            } []
             ] button

@@ -106,11 +106,11 @@ pie props = R.createElement pieCpt props []
 pieCpt :: R.Component Props
 pieCpt = here.component "pie" cpt
   where
-    cpt { errors, path, session, onClick, onInit } _ = do
+    cpt { boxes, path, session, onClick, onInit } _ = do
       reload <- T.useBox T2.newReload
 
-      pure $ metricsWithCacheLoadView {
-          errors
+      pure $ metricsWithCacheLoadView
+        { boxes
         , getMetricsHash
         , handleResponse
         , loaded: loadedPie
@@ -136,11 +136,11 @@ bar props = R.createElement barCpt props []
 barCpt :: R.Component Props
 barCpt = here.component "bar" cpt
   where
-    cpt { errors, path, session, onClick, onInit} _ = do
+    cpt { boxes, path, session, onClick, onInit} _ = do
       reload <- T.useBox T2.newReload
 
       pure $ metricsWithCacheLoadView {
-           errors
+           boxes
          , getMetricsHash
          , handleResponse
          , loaded: loadedBar

@@ -1,10 +1,13 @@
 module Gargantext.Components.Nodes.Lists.Tabs where
 
+import Gargantext.Components.Nodes.Lists.Types
+
 import Data.Array as A
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
 import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
@@ -12,7 +15,6 @@ import Gargantext.Components.Nodes.Corpus.Chart.Pie (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils (mNgramsTypeFromTabType)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
-import Gargantext.Components.Nodes.Lists.Types
 import Gargantext.Components.Tab as Tab
 import Gargantext.Prelude (bind, pure, unit, ($), (<>))
 import Gargantext.Sessions (Session)
@@ -29,22 +31,18 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Lists.Tabs"
 
 type Props = (
-    activeTab    :: T.Box Int
-  , cacheState   :: T.Box CacheState
-  , corpusData   :: CorpusData
-  , corpusId     :: Int
-  , errors       :: T.Box (Array FrontendError)
-  , reloadForest :: T2.ReloadS
-  , reloadRoot   :: T2.ReloadS
-  , session      :: Session
-  , tasks        :: T.Box GAT.Storage
+    activeTab  :: T.Box Int
+  , boxes      :: Boxes
+  , cacheState :: T.Box CacheState
+  , corpusData :: CorpusData
+  , corpusId   :: Int
+  , session    :: Session
   )
 
 type PropsWithKey = ( key :: String | Props )
 
 tabs :: Record PropsWithKey -> R.Element
 tabs props = R.createElement tabsCpt props []
-
 tabsCpt :: R.Component PropsWithKey
 tabsCpt = here.component "tabs" cpt where
   cpt props@{ activeTab } _ = do
@@ -64,15 +62,12 @@ ngramsView :: R2.Component NgramsViewProps
 ngramsView = R.createElement ngramsViewCpt
 ngramsViewCpt :: R.Component NgramsViewProps
 ngramsViewCpt = here.component "ngramsView" cpt where
-  cpt props@{ cacheState
+  cpt props@{ boxes
+            , cacheState
             , corpusData: { defaultListId }
             , corpusId
-            , errors
-            , reloadForest
-            , reloadRoot
             , mode
-            , session
-            , tasks } _ = do
+            , session } _ = do
       chartsReload <- T.useBox T2.newReload
 
       path <- T.useBox $ NTC.initialPageParams props.session initialPath.corpusId [initialPath.listId] initialPath.tabType
@@ -93,16 +88,13 @@ ngramsViewCpt = here.component "ngramsView" cpt where
       pure $ R.fragment
         ( charts chartParams tabNgramType
         <> [ NT.mainNgramsTable { afterSync: afterSync chartsReload
+                                , boxes
                                 , cacheState
                                 , defaultListId
-                                , errors
                                 , path
-                                , reloadForest
-                                , reloadRoot
                                 , session
                                 , tabNgramType
                                 , tabType
-                                , tasks
                                 , withAutoUpdate: false
                                 } []
            ]
@@ -160,7 +152,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
         ]
         charts params _        = [ chart params mode ]
 
-        chart path Authors    = pie     { errors, path, session, onClick: Nothing, onInit: Nothing }
-        chart path Institutes = tree    { errors, path, session, onClick: Nothing, onInit: Nothing }
-        chart path Sources    = bar     { errors, path, session, onClick: Nothing, onInit: Nothing }
-        chart path Terms      = metrics { errors, path, session, onClick: Nothing, onInit: Nothing }
+        chart path Authors    = pie     { boxes, path, session, onClick: Nothing, onInit: Nothing }
+        chart path Institutes = tree    { boxes, path, session, onClick: Nothing, onInit: Nothing }
+        chart path Sources    = bar     { boxes, path, session, onClick: Nothing, onInit: Nothing }
+        chart path Terms      = metrics { boxes, path, session, onClick: Nothing, onInit: Nothing }

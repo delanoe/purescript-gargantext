@@ -1,6 +1,8 @@
 -- TODO: this module should be replaced by FacetsTable
 module Gargantext.Components.DocsTable where
 
+import Gargantext.Prelude
+
 import DOM.Simple.Console (log2)
 import DOM.Simple.Event as DE
 import Data.Array as A
@@ -21,6 +23,7 @@ import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Category (rating)
 import Gargantext.Components.Category.Types (Star(..))
 import Gargantext.Components.DocsTable.Types (DocumentsView(..), Hyperdata(..), LocalUserScore, Query, Response(..), Year, sampleData)
@@ -31,7 +34,6 @@ import Gargantext.Components.Table.Types as TT
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
-import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, get, delete)
@@ -60,15 +62,14 @@ type Path a =
   )
 
 type CommonProps =
-  ( cacheState     :: T.Box NT.CacheState
-  , errors         :: T.Box (Array FrontendError)
+  ( boxes          :: Boxes
+  , cacheState     :: T.Box NT.CacheState
   , frontends      :: Frontends
   , listId         :: Int
   , mCorpusId      :: Maybe Int
   , nodeId         :: Int
   , session        :: Session
   , sidePanel      :: T.Box (Maybe (Record TextsT.SidePanel))
-  , sidePanelState :: T.Box SidePanelState
   , tabType        :: TabType
   -- ^ tabType is not ideal here since it is too much entangled with tabs and
   -- ngramtable. Let's see how this evolves.  )
@@ -77,16 +78,14 @@ type CommonProps =
   )
 
 type LayoutProps =
-  (
-    chart      :: R.Element
+  ( chart      :: R.Element
   , showSearch :: Boolean
   | CommonProps
   -- , path      :: Record (Path a)
   )
 
 type PageLayoutProps =
-  (
-    key    :: String  -- NOTE Necessary to clear the component when cache state changes
+  ( key    :: String  -- NOTE Necessary to clear the component when cache state changes
   , params :: TT.Params
   , query  :: Query
   | CommonProps
@@ -115,9 +114,9 @@ docView :: R2.Component Props
 docView = R.createElement docViewCpt
 docViewCpt :: R.Component Props
 docViewCpt = here.component "docView" cpt where
-  cpt { layout: { cacheState
+  cpt { layout: { boxes
+                , cacheState
                 , chart
-                , errors
                 , frontends
                 , listId
                 , mCorpusId
@@ -125,7 +124,6 @@ docViewCpt = here.component "docView" cpt where
                 , session
                 , showSearch
                 , sidePanel
-                , sidePanelState
                 , tabType
                 , totalRecords
                 , yearFilter
@@ -141,8 +139,8 @@ docViewCpt = here.component "docView" cpt where
         [ chart
         , if showSearch then searchBar { query } [] else H.div {} []
         , H.div {className: "col-md-12"}
-          [ pageLayout { cacheState
-                       , errors
+          [ pageLayout { boxes
+                       , cacheState
                        , frontends
                        , key: "docView-" <> (show cacheState')
                        , listId
@@ -152,7 +150,6 @@ docViewCpt = here.component "docView" cpt where
                        , query: query'
                        , session
                        , sidePanel
-                       , sidePanelState
                        , tabType
                        , totalRecords
                        , yearFilter
@@ -262,9 +259,8 @@ pageLayout :: R2.Component PageLayoutProps
 pageLayout = R.createElement pageLayoutCpt
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = here.component "pageLayout" cpt where
-  cpt props@{ cacheState
-            , errors
-            , frontends
+  cpt props@{ boxes
+            , cacheState
             , listId
             , mCorpusId
             , nodeId
@@ -298,16 +294,16 @@ pageLayoutCpt = here.component "pageLayout" cpt where
 
     case cacheState' of
       NT.CacheOn -> do
-        let paint (Tuple count docs) = page { documents: docs
-                                            , errors
+        let paint (Tuple count docs) = page { boxes
+                                            , documents: docs
                                             , layout: props { totalRecords = count }
                                             , params } []
             mkRequest :: PageParams -> GUC.Request
             mkRequest p = GUC.makeGetRequest session $ tableRoute p
 
-        useLoaderWithCacheAPI {
-            cacheEndpoint: getPageHash session
-          , errors
+        useLoaderWithCacheAPI
+          { boxes
+          , cacheEndpoint: getPageHash session
           , handleResponse
           , mkRequest
           , path
@@ -335,9 +331,9 @@ pageLayoutCpt = here.component "pageLayout" cpt where
                   , loader
                   , render }
 
-type PageProps = (
-    documents :: Array DocumentsView
-  , errors    :: T.Box (Array FrontendError)
+type PageProps =
+  ( boxes     :: Boxes
+  , documents :: Array DocumentsView
   , layout    :: Record PageLayoutProps
   , params    :: TT.Params
   )
@@ -383,8 +379,8 @@ pagePaintCpt = here.component "pagePaintCpt" cpt
           filteredRows params' = TT.filterRows { params: params' } $ (orderWith params') $ A.toUnfoldable documents
 
 
-type PagePaintRawProps = (
-    documents       :: Array DocumentsView
+type PagePaintRawProps =
+  ( documents       :: Array DocumentsView
   , layout          :: Record PageLayoutProps
   , localCategories :: T.Box LocalUserScore
   , params          :: T.Box TT.Params
@@ -392,21 +388,19 @@ type PagePaintRawProps = (
 
 pagePaintRaw :: R2.Component PagePaintRawProps
 pagePaintRaw = R.createElement pagePaintRawCpt
-
 pagePaintRawCpt :: R.Component PagePaintRawProps
 pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
   cpt { documents
-      , layout: { frontends
+      , layout: { boxes
+                , frontends
                 , listId
                 , mCorpusId
                 , nodeId
                 , session
                 , sidePanel
-                , sidePanelState
                 , totalRecords }
       , localCategories
       , params } _ = do
-    reload <- T.useBox T2.newReload
     mCurrentDocId <- T.useFocused
           (maybe Nothing _.mCurrentDocId)
           (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentDocId = val })) sidePanel
@@ -416,17 +410,15 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
 
     pure $ TT.table
       { colNames
-      , container: TT.defaultContainer { title: "Documents" }
+      , container: TT.defaultContainer
       , params
-      , rows: rows reload localCategories' mCurrentDocId'
+      , rows: rows localCategories' mCurrentDocId'
       , syncResetButton : [ H.div {} [] ]
       , totalRecords
       , wrapColElts
       }
       where
         sid = sessionId session
-        gi Star_1  = "fa fa-star"
-        gi _       = "fa fa-star-empty"
         trashClassName Star_0 _ = "trash"
         trashClassName _ true = "active"
         trashClassName _ false = ""
@@ -435,18 +427,17 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
           | otherwise = Routes.Document sid listId
         colNames = TT.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source", "Score" ]
         wrapColElts = const identity
-        rows reload localCategories' mCurrentDocId' = row <$> A.toUnfoldable documents
+        rows localCategories' mCurrentDocId' = row <$> A.toUnfoldable documents
           where
             row dv@(DocumentsView r@{ _id, category }) =
               { row:
                 TT.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
                             H.div { className: "" }
-                                  [ docChooser { listId
+                                  [ docChooser { boxes
+                                               , listId
                                                , mCorpusId
                                                , nodeId: r._id
-                                               , sidePanel
-                                               , sidePanelState
-                                               , tableReload: reload } []
+                                               , sidePanel } []
                                   ]
                           --, H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
                           , H.div { className: "column-tag flex" }
@@ -471,32 +462,28 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
                 -- checked    = Star_1 == cat
                 selected   = mCurrentDocId' == Just r._id
                 tClassName = trashClassName cat selected
-                className  = gi cat
 
 type DocChooser = (
-    listId         :: ListId
+    boxes :: Boxes
+  , listId         :: ListId
   , mCorpusId      :: Maybe NodeID
   , nodeId         :: NodeID
   , sidePanel      :: T.Box (Maybe (Record TextsT.SidePanel))
-  , sidePanelState :: T.Box SidePanelState
-  , tableReload    :: T2.ReloadS
   )
 
 docChooser :: R2.Component DocChooser
 docChooser = R.createElement docChooserCpt
-
 docChooserCpt :: R.Component DocChooser
 docChooserCpt = here.component "docChooser" cpt
   where
     cpt { mCorpusId: Nothing } _ = do
       pure $ H.div {} []
 
-    cpt { listId
+    cpt { boxes: { sidePanelState }
+        , listId
         , mCorpusId: Just corpusId
         , nodeId
-        , sidePanel
-        , sidePanelState
-        , tableReload } _ = do
+        , sidePanel } _ = do
       mCurrentDocId <- T.useFocused
             (maybe Nothing _.mCurrentDocId)
             (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentDocId = val })) sidePanel

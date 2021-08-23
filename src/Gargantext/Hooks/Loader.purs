@@ -11,6 +11,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Config.Utils (handleRESTError)
@@ -20,6 +21,7 @@ import Gargantext.Utils.Crypto (Hash)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Simple.JSON as JSON
+import Toestand (Box)
 import Toestand as T
 
 here :: R2.Here
@@ -97,9 +99,9 @@ derive instance Newtype (HashedResponse a) _
 derive newtype instance JSON.ReadForeign a => JSON.ReadForeign (HashedResponse a)
 derive newtype instance JSON.WriteForeign a => JSON.WriteForeign (HashedResponse a)
 
-type LoaderWithCacheAPIProps path res ret = (
-    cacheEndpoint  :: path -> Aff (Either RESTError Hash)
-  , errors         :: T.Box (Array FrontendError)
+type LoaderWithCacheAPIProps path res ret =
+  ( boxes          :: Boxes
+  , cacheEndpoint  :: path -> Aff (Either RESTError Hash)
   , handleResponse :: HashedResponse res -> ret
   , mkRequest      :: path -> GUC.Request
   , path           :: path
@@ -110,12 +112,17 @@ useLoaderWithCacheAPI :: forall path res ret.
                          Eq ret => Eq path => JSON.ReadForeign res =>
                          Record (LoaderWithCacheAPIProps path res ret)
                       -> R.Hooks R.Element
-useLoaderWithCacheAPI { cacheEndpoint, errors, handleResponse, mkRequest, path, renderer } = do
+useLoaderWithCacheAPI { boxes
+                      , cacheEndpoint
+                      , handleResponse
+                      , mkRequest
+                      , path
+                      , renderer } = do
   state <- T.useBox Nothing
   state' <- T.useLive T.unequal state
 
-  useCachedAPILoaderEffect { cacheEndpoint
-                           , errors
+  useCachedAPILoaderEffect { boxes
+                           , cacheEndpoint
                            , handleResponse
                            , mkRequest
                            , path
@@ -123,8 +130,8 @@ useLoaderWithCacheAPI { cacheEndpoint, errors, handleResponse, mkRequest, path, 
   pure $ maybe (loadingSpinner {}) renderer state'
 
 type LoaderWithCacheAPIEffectProps path res ret = (
-    cacheEndpoint  :: path -> Aff (Either RESTError Hash)
-  , errors         :: T.Box (Array FrontendError)
+    boxes          :: Boxes
+  , cacheEndpoint  :: path -> Aff (Either RESTError Hash)
   , handleResponse :: HashedResponse res -> ret
   , mkRequest      :: path -> GUC.Request
   , path           :: path
@@ -135,8 +142,8 @@ useCachedAPILoaderEffect :: forall path res ret.
                             Eq ret => Eq path => JSON.ReadForeign res =>
                             Record (LoaderWithCacheAPIEffectProps path res ret)
                          -> R.Hooks Unit
-useCachedAPILoaderEffect { cacheEndpoint
-                         , errors
+useCachedAPILoaderEffect { boxes: { errors }
+                         , cacheEndpoint
                          , handleResponse
                          , mkRequest
                          , path

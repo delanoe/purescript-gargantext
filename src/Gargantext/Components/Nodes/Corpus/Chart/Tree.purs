@@ -57,7 +57,7 @@ scatterOptions { onClick, onInit } nodes = Options
   }
 
 getMetricsHash :: Session -> ReloadPath -> Aff (Either RESTError String)
-getMetricsHash session (_ /\ { corpusId, limit, listId, tabType }) = do
+getMetricsHash session (_ /\ { corpusId, listId, tabType }) = do
   get session $ ChartHash { chartType: ChartTree, listId: mListId, tabType } (Just corpusId)
   where
     mListId = if listId == 0 then Nothing else (Just listId)
@@ -71,18 +71,18 @@ handleResponse :: HashedResponse Metrics -> Loaded
 handleResponse (HashedResponse { value: Metrics ms }) = ms."data"
 
 mkRequest :: Session -> ReloadPath -> GUC.Request
-mkRequest session (_ /\ path@{ corpusId, limit, listId, tabType }) = GUC.makeGetRequest session $ chartUrl path
+mkRequest session (_ /\ path) = GUC.makeGetRequest session $ chartUrl path
 
 tree :: Record Props -> R.Element
 tree props = R.createElement treeCpt props []
 treeCpt :: R.Component Props
 treeCpt = here.component "tree" cpt
   where
-    cpt { errors, path, session, onClick, onInit } _ = do
+    cpt { boxes, path, session, onClick, onInit } _ = do
       reload <- T.useBox T2.newReload
 
-      pure $ metricsWithCacheLoadView {
-          errors
+      pure $ metricsWithCacheLoadView
+        { boxes
         , getMetricsHash
         , handleResponse
         , loaded
@@ -95,7 +95,7 @@ treeCpt = here.component "tree" cpt
         }
 
 loaded :: Record MetricsProps -> Loaded -> R.Element
-loaded p@{ path, reload, session } loaded' =
+loaded p loaded' =
   H.div {} [
   {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: ChartTree, path, reload, session }

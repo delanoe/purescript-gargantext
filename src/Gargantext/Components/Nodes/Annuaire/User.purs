@@ -12,22 +12,22 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
-import Gargantext.AsyncTasks as GAT
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
 import Gargantext.Components.Nodes.Lists.Types as LT
-import Gargantext.Components.Nodes.Texts.Types as TT
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (WithSession, WithSessionContext, Session, get, put, sessionId)
-import Gargantext.Types (FrontendError, NodeType(..), SidePanelState)
+import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record as Record
 import Toestand as T
 
 here :: R2.Here
@@ -37,7 +37,6 @@ type DisplayProps = ( title :: String )
 
 display :: R2.Component DisplayProps
 display = R.createElement displayCpt
-
 displayCpt :: R.Component DisplayProps
 displayCpt = here.component "display" cpt
   where
@@ -153,14 +152,9 @@ listElement = H.li { className: "list-group-item justify-content-between" }
 -}
 
 type LayoutNoSessionProps =
-  ( errors         :: T.Box (Array FrontendError)
-  , frontends      :: Frontends
-  , nodeId         :: Int
-  , reloadForest   :: T2.ReloadS
-  , reloadRoot     :: T2.ReloadS
-  , sidePanel      :: T.Box (Maybe (Record TT.SidePanel))
-  , sidePanelState :: T.Box SidePanelState
-  , tasks          :: T.Box GAT.Storage
+  ( boxes     :: Boxes
+  , frontends :: Frontends
+  , nodeId    :: Int
   )
 
 type LayoutProps = WithSession LayoutNoSessionProps
@@ -177,43 +171,20 @@ userLayout = R.createElement userLayoutCpt
 userLayoutCpt :: R.Component LayoutProps
 userLayoutCpt = here.component "userLayout" cpt
   where
-    cpt { errors
-        , frontends
-        , nodeId
-        , reloadForest
-        , reloadRoot
-        , session
-        , sidePanel
-        , sidePanelState
-        , tasks } _ = do
+    cpt props@{ nodeId
+              , session } _ = do
       let sid = sessionId session
 
-      pure $ userLayoutWithKey {
-          errors
-        , frontends
-        , key: show sid <> "-" <> show nodeId
-        , nodeId
-        , reloadForest
-        , reloadRoot
-        , session
-        , sidePanel
-        , sidePanelState
-        , tasks
-        }
+      pure $ userLayoutWithKey $ Record.merge props { key: show sid <> "-" <> show nodeId }
 
 userLayoutWithKey :: R2.Leaf KeyLayoutProps
 userLayoutWithKey props = R.createElement userLayoutWithKeyCpt props []
 userLayoutWithKeyCpt :: R.Component KeyLayoutProps
 userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
-  cpt { errors
+  cpt { boxes: boxes@{ sidePanelTexts }
       , frontends
       , nodeId
-      , reloadForest
-      , reloadRoot
-      , session
-      , sidePanel
-      , sidePanelState
-      , tasks } _ = do
+      , session } _ = do
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
 
@@ -227,17 +198,13 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
                     display { title: fromMaybe "no name" name }
                     (contactInfos hyperdata (onUpdateHyperdata reload))
                     , Tabs.tabs {
-                         cacheState
+                         boxes
+                       , cacheState
                        , contactData
-                       , errors
                        , frontends
                        , nodeId
-                       , reloadForest
-                       , reloadRoot
                        , session
-                       , sidePanel
-                       , sidePanelState
-                       , tasks
+                       , sidePanel: sidePanelTexts
                        }
                     ]
               }

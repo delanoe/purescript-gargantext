@@ -98,11 +98,11 @@ histo props = R.createElement histoCpt props []
 histoCpt :: R.Component Props
 histoCpt = here.component "histo" cpt
   where
-    cpt { errors, path, session, onClick, onInit } _ = do
+    cpt { boxes, path, session, onClick, onInit } _ = do
       reload <- T.useBox T2.newReload
 
-      pure $ metricsWithCacheLoadView {
-          errors
+      pure $ metricsWithCacheLoadView
+        { boxes
         , getMetricsHash
         , handleResponse
         , loaded

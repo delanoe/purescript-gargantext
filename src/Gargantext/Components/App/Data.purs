@@ -15,7 +15,7 @@ import Gargantext.Routes (AppRoute(Home))
 import Gargantext.Sessions (Session, Sessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Sessions.Types (OpenNodes(..))
-import Gargantext.Types (FrontendError(..), Handed(RightHanded), SidePanelState(..))
+import Gargantext.Types (FrontendError, Handed(RightHanded), SidePanelState(..))
 import Gargantext.Utils.Toestand as T2
 
 type App =
