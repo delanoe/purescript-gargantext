@@ -112,7 +112,7 @@ tableHeaderLayoutCpt = here.component "tableHeaderLayout" cpt
     cacheStateToggle NT.CacheOn = NT.CacheOff
     cacheStateToggle NT.CacheOff = NT.CacheOn
   
-table :: Record Props -> R.Element
+table :: R2.Leaf Props
 table props = R.createElement tableCpt props []
 tableCpt :: R.Component Props
 tableCpt = here.component "table" cpt
@@ -200,7 +200,6 @@ type SizeDDProps =
 
 sizeDD :: Record SizeDDProps -> R.Element
 sizeDD p = R.createElement sizeDDCpt p []
-
 sizeDDCpt :: R.Component SizeDDProps
 sizeDDCpt = here.component "sizeDD" cpt
   where
@@ -239,7 +238,6 @@ type PaginationProps =
 
 pagination :: R2.Leaf PaginationProps
 pagination props = R.createElement paginationCpt props []
-
 paginationCpt :: R.Component PaginationProps
 paginationCpt = here.component "pagination" cpt
   where
