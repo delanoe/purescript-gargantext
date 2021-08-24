@@ -2,7 +2,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
 import Gargantext.Prelude
 
-import Data.Either (Either(..), fromRight')
+import Data.Either (Either, fromRight')
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
@@ -320,12 +320,17 @@ uploadFile session NodeList id JSON { mName, contents } = do
   task <- post session url body
   pure $ GT.AsyncTaskWithType { task, typ: GT.Form }
   -}
+uploadFile { contents, fileType: CSV, id, nodeType: NodeList, mName, session } = do
+  let url = GR.NodeAPI NodeList (Just id) $ GT.asyncTaskTypePath GT.ListCSVUpload
+  let body = [ Tuple "_wtf_data" (Just contents)
+             , Tuple "_wtf_filetype" (Just $ show NodeList)
+             , Tuple "_wtf_name" mName ]
+  eTask <- postWwwUrlencoded session url body
+  pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.Form }) <$> eTask
 uploadFile { contents, fileType, id, nodeType, mName, session } = do
   -- contents <- readAsText blob
   eTask :: Either RESTError GT.AsyncTask <- postWwwUrlencoded session p bodyParams
-  case eTask of
-    Left err -> pure $ Left err
-    Right task -> pure $ Right $ GT.AsyncTaskWithType { task, typ: GT.Form }
+  pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.Form }) <$> eTask
     --postMultipartFormData session p fileContents
   where
     p = case nodeType of
@@ -333,7 +338,6 @@ uploadFile { contents, fileType, id, nodeType, mName, session } = do
       Annuaire -> GR.NodeAPI nodeType (Just id) "annuaire"
       NodeList -> case fileType of
         JSON -> GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.ListUpload
-        CSV  -> GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.ListCSVUpload
         _    -> GR.NodeAPI nodeType (Just id) ""
       _        -> GR.NodeAPI nodeType (Just id) ""
 

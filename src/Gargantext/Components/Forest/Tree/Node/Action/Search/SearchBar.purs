@@ -3,10 +3,9 @@ module Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar
   , searchBar
   ) where
 
-import Gargantext.Components.Forest.Tree.Node.Action.Search.Types
-
 import Effect (Effect)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (searchField)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (Search, allDatabases)
 import Gargantext.Components.Lang (Lang)
 import Gargantext.Prelude (Unit, pure, ($))
 import Gargantext.Sessions (Session)
@@ -35,7 +34,7 @@ searchBarCpt = here.component "searchBar" cpt
     cpt { errors, langs, onSearch, search, session } _ = do
       --onSearchChange session s
       pure $ H.div { className: "search-bar" }
-                   [ searchField { databases:allDatabases
+                   [ searchField { databases: allDatabases
                                  , errors
                                  , langs
                                  , onSearch
