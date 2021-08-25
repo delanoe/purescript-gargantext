@@ -25,7 +25,6 @@ import Gargantext.Components.NgramsTable.Core
   ( Action(..), Dispatch, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm
   , _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list
   , _ngrams, _occurrences, ngramsTermText, replace, setTermListA )
-import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as Tbl
 import Gargantext.Types as T
 import Gargantext.Utils.Reactix as R2
@@ -38,44 +37,57 @@ type SearchInputProps =
   , searchQuery :: T.Box String
   )
 
-searchInput :: Record SearchInputProps -> R.Element
+searchInput :: R2.Leaf SearchInputProps
 searchInput props = R.createElement searchInputCpt props []
-
 searchInputCpt :: R.Component SearchInputProps
 searchInputCpt = here.component "searchInput" cpt
   where
     cpt { searchQuery } _ = do
-      searchQuery' <- T.useLive T.unequal searchQuery
-
       pure $ R2.row [
         H.div { className: "col-12" } [
           H.div { className: "input-group" }
-            [ searchButton searchQuery'
-            , fieldInput searchQuery'
+            [ searchButton { searchQuery } []
+            , searchFieldInput { searchQuery } []
             ]
           ]
         ]
-        where
-          searchButton searchQuery' =
-            H.div { className: "input-group-prepend" }
-              [ if searchQuery' /= ""
-                then removeButton
-                else H.span { className: "fa fa-search input-group-text" } []
-              ]
-          removeButton =
-            H.button { className: "btn btn-danger"
-                     , on: {click: \e -> T.write "" searchQuery}}
-              [ H.span {className: "fa fa-times"} []]
 
-          fieldInput searchQuery' =
-            H.input { className: "form-control"
-                    , defaultValue: searchQuery'
-                    , name: "search"
-                    , on: { input: \e -> T.write (R.unsafeEventValue e) searchQuery }
-                    , placeholder: "Search"
-                    , type: "value"
-                    }
+type SearchButtonProps =
+  ( searchQuery :: T.Box String
+  )
 
+searchButton :: R2.Component SearchButtonProps
+searchButton = R.createElement searchButtonCpt
+searchButtonCpt :: R.Component SearchButtonProps
+searchButtonCpt = here.component "searchButton" cpt where
+  cpt { searchQuery } _ = do
+    searchQuery' <- T.useLive T.unequal searchQuery
+    
+    pure $ H.div { className: "input-group-prepend" }
+      [ if searchQuery' /= ""
+        then
+          H.button { className: "btn btn-danger"
+                   , on: {click: \_ -> T.write "" searchQuery}}
+          [ H.span {className: "fa fa-times"} []]
+        else H.span { className: "fa fa-search input-group-text" } []
+      ]
+
+type SearchFieldInputProps =
+  ( searchQuery :: T.Box String
+  )
+
+searchFieldInput :: R2.Component SearchFieldInputProps
+searchFieldInput = R.createElement searchFieldInputCpt
+searchFieldInputCpt :: R.Component SearchFieldInputProps
+searchFieldInputCpt = here.component "searchFieldInput" cpt where
+  cpt { searchQuery } _ = do
+    pure $ H.input { className: "form-control"
+                   , name: "search"
+                   , on: { input: \e -> T.write (R.unsafeEventValue e) searchQuery }
+                   , placeholder: "Search"
+                   , type: "value"
+                   }
+    
 type SelectionCheckboxProps =
   ( allNgramsSelected :: Boolean
   , dispatch          :: Dispatch

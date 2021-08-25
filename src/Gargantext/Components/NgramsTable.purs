@@ -273,6 +273,33 @@ loadedNgramsTable :: R2.Component PropsNoReload
 loadedNgramsTable = R.createElement loadedNgramsTableCpt
 loadedNgramsTableCpt :: R.Component PropsNoReload
 loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
+  cpt props@{ path } _ = do
+    searchQuery <- T.useFocused (_.searchQuery) (\a b -> b { searchQuery = a }) path
+    
+    pure $ R.fragment $
+      [ loadedNgramsTableHeader { searchQuery } []
+      , loadedNgramsTableBody props [] ]
+
+type LoadedNgramsTableHeaderProps =
+  ( searchQuery :: T.Box SearchQuery ) 
+
+loadedNgramsTableHeader :: R2.Component LoadedNgramsTableHeaderProps
+loadedNgramsTableHeader = R.createElement loadedNgramsTableHeaderCpt
+loadedNgramsTableHeaderCpt :: R.Component LoadedNgramsTableHeaderProps
+loadedNgramsTableHeaderCpt = here.component "loadedNgramsTableHeader" cpt where
+  cpt { searchQuery } _ = do
+    pure $ R.fragment
+      [ H.h4 {style: {textAlign : "center"}}
+        [ H.span {className: "fa fa-hand-o-down"} []
+        , H.text "Extracted Terms" ]
+      , NTC.searchInput { key: "search-input"
+                        , searchQuery }
+      ]
+
+loadedNgramsTableBody :: R2.Component PropsNoReload
+loadedNgramsTableBody = R.createElement loadedNgramsTableBodyCpt
+loadedNgramsTableBodyCpt :: R.Component PropsNoReload
+loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
   cpt { afterSync
       , boxes: { errors
                , tasks }
@@ -370,31 +397,25 @@ loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
                             <<< _Just
             ) =<< ngramsParent
 
-    pure $ R.fragment $
-      autoUpdate path' <>
-      [ H.h4 {style: {textAlign : "center"}}
-        [ H.span {className: "fa fa-hand-o-down"} []
-        , H.text "Extracted Terms" ]
-      , NTC.searchInput { key: "search-input"
-                        , searchQuery }
-      , TT.table
-          { colNames
-          , container: tableContainer
-              { dispatch: performAction
-              , ngramsChildren
-              , ngramsParent
-              , ngramsSelection
-              , ngramsTable
-              , path
-              , syncResetButton: [ syncResetButton ]
-              , tabNgramType }
-          , params
-          , rows: filteredConvertedRows
+    pure $ R.fragment
+      [ TT.table
+        { colNames
+        , container: tableContainer
+          { dispatch: performAction
+          , ngramsChildren
+          , ngramsParent
+          , ngramsSelection
+          , ngramsTable
+          , path
           , syncResetButton: [ syncResetButton ]
-          , totalRecords
-          , wrapColElts:
-            wrapColElts { allNgramsSelected, dispatch: performAction, ngramsSelection } scoreType
-          }
+          , tabNgramType }
+        , params
+        , rows: filteredConvertedRows
+        , syncResetButton: [ syncResetButton ]
+        , totalRecords
+        , wrapColElts:
+          wrapColElts { allNgramsSelected, dispatch: performAction, ngramsSelection } scoreType
+        }
       , syncResetButton
       ]
       where
