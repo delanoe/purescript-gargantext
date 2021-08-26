@@ -306,9 +306,9 @@ performAction = performAction' where
 
   deleteNode' nt p@{ nodeId: id, parentId: parent_id, session } = do
     case nt of
-      NodePublic FolderPublic  -> void $ deleteNode session nt id
+      NodePublic FolderPublic  -> void $ deleteNode session id
       NodePublic _             -> void $ unpublishNode session (Just parent_id) id
-      _                        -> void $ deleteNode session nt id
+      _                        -> void $ deleteNode session id
     refreshFolders p
 
   doSearch task { boxes: { tasks }, nodeId: id } = liftEffect $ do

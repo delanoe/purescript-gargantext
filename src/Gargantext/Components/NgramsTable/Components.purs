@@ -25,7 +25,6 @@ import Gargantext.Components.NgramsTable.Core
   ( Action(..), Dispatch, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm
   , _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list
   , _ngrams, _occurrences, ngramsTermText, replace, setTermListA )
-import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as Tbl
 import Gargantext.Types as T
 import Gargantext.Utils.Reactix as R2
@@ -64,7 +63,7 @@ searchInputCpt = here.component "searchInput" cpt
               ]
           removeButton =
             H.button { className: "btn btn-danger"
-                     , on: {click: \e -> T.write "" searchQuery}}
+                     , on: {click: \_ -> T.write "" searchQuery}}
               [ H.span {className: "fa fa-times"} []]
 
           fieldInput searchQuery' =

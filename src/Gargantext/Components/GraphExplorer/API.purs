@@ -2,7 +2,7 @@ module Gargantext.Components.GraphExplorer.API where
 
 import Gargantext.Prelude
 
-import Data.Either (Either(..))
+import Data.Either (Either)
 import Data.Maybe (Maybe)
 import Effect.Aff (Aff)
 import Gargantext.Components.GraphExplorer.Types as GET

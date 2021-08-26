@@ -4,8 +4,6 @@ module Gargantext.Components.Nodes.Corpus.Document where
 --import Data.Argonaut.Core (stringifyWithIndent) -- DEBUG
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (fst)
-import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -34,10 +32,10 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Document"
 
 publicationDate :: Document -> String
-publicationDate (Document doc@{publication_year: Nothing}) = ""
-publicationDate (Document doc@{publication_year: Just py, publication_month: Nothing}) = U.zeroPad 2 py
-publicationDate (Document doc@{publication_year: Just py, publication_month: Just pm, publication_day: Nothing}) = (U.zeroPad 2 py) <> "-" <> (U.zeroPad 2 pm)
-publicationDate (Document doc@{publication_year: Just py, publication_month: Just pm, publication_day: Just pd}) = (U.zeroPad 2 py) <> "-" <> (U.zeroPad 2 pm) <> "-" <> (U.zeroPad 2 pd)
+publicationDate (Document {publication_year: Nothing}) = ""
+publicationDate (Document {publication_year: Just py, publication_month: Nothing}) = U.zeroPad 2 py
+publicationDate (Document {publication_year: Just py, publication_month: Just pm, publication_day: Nothing}) = (U.zeroPad 2 py) <> "-" <> (U.zeroPad 2 pm)
+publicationDate (Document {publication_year: Just py, publication_month: Just pm, publication_day: Just pd}) = (U.zeroPad 2 py) <> "-" <> (U.zeroPad 2 pm) <> "-" <> (U.zeroPad 2 pd)
 
 docViewWrapper :: R2.Component Props
 docViewWrapper = R.createElement docViewWrapperCpt
@@ -60,10 +58,10 @@ docViewCpt :: R.Component DocViewProps
 docViewCpt = here.component "docView" cpt
   where
     cpt { path
-        , loaded: loaded@{ ngramsTable: Versioned { data: initTable }, document }
+        , loaded: { ngramsTable: Versioned { data: initTable }, document }
         , state
         } _children = do
-      state'@{ ngramsLocalPatch, ngramsVersion: version } <- T.useLive T.unequal state
+      state'@{ ngramsLocalPatch } <- T.useLive T.unequal state
 
       let
         afterSync = \_ -> pure unit

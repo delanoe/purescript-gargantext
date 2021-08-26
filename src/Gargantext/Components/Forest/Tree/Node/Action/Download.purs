@@ -77,5 +77,5 @@ actionDownloadOther :: R2.Component ActionDownload
 actionDownloadOther = R.createElement actionDownloadOtherCpt
 actionDownloadOtherCpt :: R.Component ActionDownload
 actionDownloadOtherCpt = here.component "actionDownloadOther" cpt where
-  cpt { id, session } _ = do
+  cpt _ _ = do
     pure $ fragmentPT $ "Soon, you will be able to download your file here "

@@ -25,7 +25,7 @@ import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), Settings
 import Gargantext.Components.Forest.Tree.Node.Status (Status(..), hasStatus)
 import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (FrontendError, ID, Name, prettyNodeType)
+import Gargantext.Types (ID, Name, prettyNodeType)
 import Gargantext.Types as GT
 import Gargantext.Utils.Glyphicon (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
@@ -83,14 +83,14 @@ nodePopupCpt = here.component "nodePopupView" cpt where
       , H.div { className: "col-1" }
         [ H.a { type: "button", on: { click: closePopover p }, title: "Close"
               , className: glyphicon "window-close" } [] ]]] where
-           SettingsBox { edit, doc, buttons } = settingsBox nodeType
+           SettingsBox _ = settingsBox nodeType
   editIcon _ true = H.div {} []
   editIcon isOpen false =
     H.a { className: glyphicon "pencil", id: "rename1"
         , title    : "Rename", on: { click: \_ -> T.write_ true isOpen } } []
   panelBody :: T.Box (Maybe NodeAction) -> Record NodePopupProps -> R.Element
-  panelBody nodePopupState {dispatch: d, nodeType} =
-    let (SettingsBox { edit, doc, buttons}) = settingsBox nodeType in
+  panelBody nodePopupState { nodeType } =
+    let (SettingsBox { doc, buttons }) = settingsBox nodeType in
     H.div {className: "card-body flex-space-between"}
     $ [ H.p { className: "spacer" } []
       , H.div { className: "flex-center" }
@@ -183,26 +183,26 @@ panelAction p = R.createElement panelActionCpt p []
 panelActionCpt :: R.Component PanelActionProps
 panelActionCpt = here.component "panelAction" cpt
   where
-    cpt {action: Documentation nodeType}                  _ = pure $ actionDoc { nodeType } []
-    cpt {action: Download, id, nodeType, session}         _ = pure $ actionDownload { id, nodeType, session } []
-    cpt {action: Upload, dispatch, id, nodeType, session} _ = pure $ actionUpload { dispatch, id, nodeType, session } []
-    cpt {action: Delete, nodeType, dispatch}              _ = pure $ actionDelete { dispatch, nodeType } []
-    cpt {action: Add xs, dispatch, id, name, nodeType} _ =
+    cpt { action: Documentation nodeType}                  _ = pure $ actionDoc { nodeType } []
+    cpt { action: Download, id, nodeType, session}         _ = pure $ actionDownload { id, nodeType, session } []
+    cpt { action: Upload, dispatch, id, nodeType, session} _ = pure $ actionUpload { dispatch, id, nodeType, session } []
+    cpt { action: Delete, nodeType, dispatch}              _ = pure $ actionDelete { dispatch, nodeType } []
+    cpt { action: Add xs, dispatch, id, name, nodeType} _ =
       pure $ addNodeView {dispatch, id, name, nodeType, nodeTypes: xs} []
-    cpt {action: Refresh , dispatch, id, nodeType, session} _ = pure $ update { dispatch, nodeType } []
-    cpt {action: Config , dispatch, id, nodeType, session} _ =
+    cpt { action: Refresh , dispatch, nodeType } _ = pure $ update { dispatch, nodeType } []
+    cpt { action: Config, nodeType } _ =
       pure $ fragmentPT $ "Config " <> show nodeType
     -- Functions using SubTree
     cpt { action: Merge {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
       pure $ mergeNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
-    cpt {action: Move {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
+    cpt { action: Move {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
       pure $ moveNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
-    cpt {action: Link {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
+    cpt { action: Link {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
       pure $ linkNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
-    cpt {action : Share, dispatch, id, name } _ = pure $ Share.shareNode { dispatch, id } []
-    cpt {action : AddingContact, dispatch, id, name } _ = pure $ Contact.actionAddContact { dispatch, id } []
-    cpt {action : Publish {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
+    cpt { action : Share, dispatch, id } _ = pure $ Share.shareNode { dispatch, id } []
+    cpt { action : AddingContact, dispatch, id } _ = pure $ Contact.actionAddContact { dispatch, id } []
+    cpt { action : Publish {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
       pure $ Share.publishNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
-    cpt props@{action: SearchBox, boxes, id, session, dispatch, nodePopup} _ =
-      pure $ actionSearch { boxes, dispatch, id: (Just id), nodePopup, session } []
+    cpt { action: SearchBox, boxes, id, session, dispatch } _ =
+      pure $ actionSearch { boxes, dispatch, id: (Just id), session } []
     cpt _ _ = pure $ H.div {} []

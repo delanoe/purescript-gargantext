@@ -121,7 +121,7 @@ import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Aff (Aff, error, launchAff_)
+import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Exception.Unsafe (unsafeThrow)
 import FFI.Simple.Functions (delay)
@@ -503,7 +503,7 @@ highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
     A.fromFoldable ((\(s /\ ls)-> undb s /\ ls) <$> unsafePartial (foldl goFold ((input /\ Nil) : Nil) ixs))
   where
     spR x = " " <> R.replace wordBoundaryReg "$1$1" x <> " "
-    reR = R.replace wordBoundaryReg " "
+    -- reR = R.replace wordBoundaryReg " "
     db = S.replaceAll (S.Pattern " ") (S.Replacement "  ")
     sp x = " " <> db x <> " "
     undb = R.replace wordBoundaryReg2 "$1"
@@ -911,7 +911,6 @@ syncPatches :: forall p s. CoreParams p -> T.Box (CoreState s) -> (Unit -> Aff U
 syncPatches props state callback = do
   { ngramsLocalPatch: ngramsLocalPatch@{ ngramsPatches }
   , ngramsStagePatch
-  , ngramsValidPatch
   , ngramsVersion } <- T.read state
   when (isEmptyNgramsTablePatch ngramsStagePatch) $ do
     let pt = Versioned { data: ngramsPatches, version: ngramsVersion }
@@ -970,8 +969,10 @@ commitPatch tablePatch state = do
 
 loadNgramsTable :: PageParams -> Aff (Either RESTError VersionedNgramsTable)
 loadNgramsTable
-  { nodeId, listIds, termListFilter, termSizeFilter, session, scoreType
-  , searchQuery, tabType, params: {offset, limit, orderBy}}
+  { nodeId
+  , listIds
+  , session
+  , tabType }
   = get session query
     where
       query = GetNgramsTableAll { listIds
@@ -988,7 +989,7 @@ loadNgramsTable
 type NgramsListByTabType = Map TabType VersionedNgramsTable
 
 loadNgramsTableAll :: PageParams -> Aff (Either RESTError NgramsListByTabType)
-loadNgramsTableAll { nodeId, listIds, session, scoreType } = do
+loadNgramsTableAll { nodeId, listIds, session } = do
   let
     cTagNgramTypes =
       [ CTabTerms

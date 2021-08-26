@@ -80,7 +80,7 @@ setTermListSetA ngramsTable ns new_list =
   CoreAction $ CommitPatch $ fromNgramsPatches $ PatchMap $ mapWithIndex f $ toMap ns
   where
     f :: NgramsTerm -> Unit -> NgramsPatch
-    f n unit = NgramsPatch { patch_list, patch_children: mempty }
+    f n _unit = NgramsPatch { patch_list, patch_children: mempty }
       where
         cur_list = ngramsTable ^? at n <<< _Just <<< _NgramsRepoElement <<< _list
         patch_list = maybe mempty (\c -> replace c new_list) cur_list
@@ -352,7 +352,7 @@ loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
                                            , performAction: performAction <<< CoreAction }
 
         -- autoUpdate :: Array R.Element
-        autoUpdate path' = if withAutoUpdate then
+        autoUpdate = if withAutoUpdate then
                        [ R2.buff
                        $ autoUpdateElt
                          { duration: 5000
@@ -371,7 +371,7 @@ loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
             ) =<< ngramsParent
 
     pure $ R.fragment $
-      autoUpdate path' <>
+      autoUpdate <>
       [ H.h4 {style: {textAlign : "center"}}
         [ H.span {className: "fa fa-hand-o-down"} []
         , H.text "Extracted Terms" ]

@@ -7,9 +7,8 @@ import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Charts.Options.Type (EChartsInstance, MouseEvent)
 import Gargantext.Prelude (Unit)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (FrontendError, TabType)
+import Gargantext.Types (TabType)
 import Gargantext.Utils.Toestand as T2
-import Toestand as T
 
 type Path = (
     corpusId :: Int

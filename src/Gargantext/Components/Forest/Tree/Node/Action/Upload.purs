@@ -88,7 +88,7 @@ uploadFileView props = R.createElement uploadFileViewCpt props []
 uploadFileViewCpt :: R.Component Props
 uploadFileViewCpt = here.component "uploadFileView" cpt
   where
-    cpt {dispatch, id, nodeType} _ = do
+    cpt {dispatch, nodeType} _ = do
       -- mFile    :: R.State (Maybe UploadFile) <- R.useState' Nothing
       mFile <- T.useBox (Nothing :: Maybe UploadFile)
       fileType <- T.useBox CSV
@@ -130,7 +130,6 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
       let footer = H.div {} [ uploadButton { dispatch
                                            , fileType
                                            , lang
-                                           , id
                                            , mFile
                                            , nodeType
                                            }
@@ -154,7 +153,6 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
 type UploadButtonProps =
   ( dispatch :: Action -> Aff Unit
   , fileType :: T.Box FileType
-  , id       :: GT.ID
   , lang     :: T.Box Lang
   , mFile    :: T.Box (Maybe UploadFile)
   , nodeType :: GT.NodeType
@@ -167,7 +165,6 @@ uploadButtonCpt = here.component "uploadButton" cpt
   where
     cpt { dispatch
         , fileType
-        , id
         , lang
         , mFile
         , nodeType
@@ -186,7 +183,7 @@ uploadButtonCpt = here.component "uploadButton" cpt
                       , on: {click: onClick fileType' mFile'}
                       } [ H.text "Upload" ]
       where
-        onClick fileType' mFile' e = do
+        onClick fileType' mFile' _ = do
           let { blob, name } = unsafePartial $ fromJust mFile'
           here.log2 "[uploadButton] fileType" fileType'
           void $ launchAff do
@@ -225,7 +222,7 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
 
       case droppedFile' of
         Nothing -> pure $ H.div {} []
-        Just df@(DroppedFile { blob, fileType }) ->
+        Just df@(DroppedFile _) ->
           pure $ H.div tooltipProps [ H.div { className: "card"}
                                       [ panelHeading
                                       , panelBody df
@@ -259,12 +256,12 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
         panelBody (DroppedFile { blob }) =
           H.div {className: "card-body"}
           [ R2.select {className: "col-md-12 form-control"
-                      , on: {change: onChange blob}
+                      , on: {change: onChange}
                       }
                       (map renderOption [CSV, CSV_HAL, WOS])
           ]
           where
-            onChange blob e l =
+            onChange e l =
               T.write_ (Just $ DroppedFile $ { blob
                                              , fileType: read $ R.unsafeEventValue e
                                              , lang    : fromMaybe EN $ read $ R.unsafeEventValue l
@@ -464,7 +461,7 @@ uploadTermButtonCpt = here.component "uploadTermButton" cpt
                       , on: { click: onClick mFile' uploadType' }
                       } [ H.text "Upload" ]
       where
-        onClick mFile' uploadType' e = do
+        onClick mFile' uploadType' _ = do
           let {name, blob} = unsafePartial $ fromJust mFile'
           void $ launchAff do
             contents <- readUFBAsText blob

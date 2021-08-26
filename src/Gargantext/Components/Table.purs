@@ -160,7 +160,7 @@ type FilterRowsParams =
   )
 
 filterRows :: forall a. Record FilterRowsParams -> Seq.Seq a -> Seq.Seq a
-filterRows { params: { limit, offset, orderBy } } rs = newRs
+filterRows { params: { limit, offset } } rs = newRs
   where
     newRs = Seq.take limit $ Seq.drop offset $ rs
 

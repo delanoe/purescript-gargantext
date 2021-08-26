@@ -1,7 +1,6 @@
 module Gargantext.Components.Forest.Tree.Node.Tools where
 
 import Data.Maybe (fromMaybe, Maybe(..))
-import Data.Nullable (null)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as S
@@ -201,7 +200,6 @@ type CheckboxProps =
 
 checkbox :: R2.Leaf CheckboxProps
 checkbox props = R.createElement checkboxCpt props []
-
 checkboxCpt :: R.Component CheckboxProps
 checkboxCpt = here.component "checkbox" cpt
   where
@@ -223,11 +221,10 @@ type CheckboxesListGroup a =
 
 checkboxesListGroup :: forall a. Ord a => Show a => R2.Component (CheckboxesListGroup a)
 checkboxesListGroup = R.createElement checkboxesListGroupCpt
-
 checkboxesListGroupCpt :: forall a. Ord a => Show a => R.Component (CheckboxesListGroup a)
 checkboxesListGroupCpt = here.component "checkboxesListGroup" cpt
   where
-    cpt { groups, options } _ = do
+    cpt { options } _ = do
       options' <- T.useLive T.unequal options
 
       let one a =
@@ -278,8 +275,6 @@ nodeLinkCpt = here.component "nodeLink" cpt
         , nodeType
         , session
         } _ = do
-      popoverRef <- R.useRef null
-
       pure $
         H.div { className: "node-link"
               , on: { click } }

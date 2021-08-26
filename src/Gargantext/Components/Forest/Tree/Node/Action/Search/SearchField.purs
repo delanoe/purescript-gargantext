@@ -7,7 +7,6 @@ import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Newtype (over)
 import Data.Nullable (null)
 import Data.Set as Set
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
@@ -61,7 +60,7 @@ searchFieldCpt = here.component "searchField" cpt
                 --   then
                 --     H.div {}[]
                 --   else
-                , H.div {} [ dataFieldNav { datafields: dataFields, search } []
+                , H.div {} [ dataFieldNav { search } []
 
                              , if isExternal search'.datafield
                                  then databaseInput { databases: props.databases, search } []
@@ -128,11 +127,10 @@ componentIMTCpt = here.component "componentIMT" cpt
 
 componentCNRS :: R2.Component ComponentProps
 componentCNRS = R.createElement componentCNRSCpt
-
 componentCNRSCpt :: R.Component ComponentProps
 componentCNRSCpt = here.component "componentCNRS" cpt
   where
-    cpt { search } _ = do
+    cpt _ _ = do
       pure $ R.fragment [
         H.div {} []
       --, filterInput fi
@@ -261,15 +259,14 @@ langNavCpt = here.component "langNav" cpt
 ------------------------------------------------------------------------
 
 type DataFieldNavProps =
-  ( datafields :: Array DataField
-  , search     :: T.Box Search )
+  ( search :: T.Box Search )
 
 dataFieldNav :: R2.Component DataFieldNavProps
 dataFieldNav = R.createElement dataFieldNavCpt
 dataFieldNavCpt :: R.Component DataFieldNavProps
 dataFieldNavCpt = here.component "dataFieldNav" cpt
   where
-    cpt { datafields, search } _ = do
+    cpt { search } _ = do
       search'@{ datafield } <- T.useLive T.unequal search
 
       pure $ R.fragment [ H.div { className: "text-primary center"} [H.text "with DataField"]

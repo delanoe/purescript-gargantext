@@ -21,7 +21,6 @@ import Gargantext.Utils.Crypto (Hash)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Simple.JSON as JSON
-import Toestand (Box)
 import Toestand as T
 
 here :: R2.Here

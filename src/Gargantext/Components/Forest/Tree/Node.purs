@@ -112,7 +112,7 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
       pure $ H.span (dropProps droppedFile droppedFile' isDragOver isDragOver')
         $ reverseHanded handed'
         [ folderIcon  { folderOpen, nodeType } []
-        , chevronIcon { folderOpen, handed, isLeaf, nodeType } []
+        , chevronIcon { folderOpen, handed, isLeaf } []
         , nodeLink { boxes
                    , folderOpen
                    , frontends
@@ -200,14 +200,14 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
       { className: "leaf " <> (dropClass droppedFile' isDragOver')
       , on: { dragLeave: onDragLeave isDragOver
             , dragOver: onDragOverHandler isDragOver
-            , drop: dropHandler droppedFile }
+            , drop: dropHandler }
       }
       where
         dropClass (Just _) _    = "file-dropped"
         dropClass _        true = "file-dropped"
         dropClass Nothing  _    = ""
 
-        dropHandler droppedFile e          = do
+        dropHandler e = do
           -- prevent redirection when file is dropped
           E.preventDefault e
           E.stopPropagation e
@@ -247,7 +247,6 @@ type ChevronIconProps = (
     folderOpen :: T.Box Boolean
   , handed     :: T.Box GT.Handed
   , isLeaf     :: Boolean
-  , nodeType   :: GT.NodeType
   )
 
 chevronIcon :: R2.Component ChevronIconProps
@@ -255,9 +254,9 @@ chevronIcon = R.createElement chevronIconCpt
 chevronIconCpt :: R.Component ChevronIconProps
 chevronIconCpt = here.component "chevronIcon" cpt
   where
-    cpt { folderOpen, handed, isLeaf: true, nodeType } _ = do
+    cpt { isLeaf: true } _ = do
       pure $ H.div {} []
-    cpt { folderOpen, handed, isLeaf: false, nodeType } _ = do
+    cpt { folderOpen, handed, isLeaf: false } _ = do
       handed' <- T.useLive T.unequal handed
       open <- T.useLive T.unequal folderOpen
       pure $ H.a { className: "chevron-icon"

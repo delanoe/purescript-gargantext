@@ -194,13 +194,13 @@ searchBarCpt = here.component "searchBar" cpt
 
     searchButton query queryText' =
       H.button { className: "btn btn-primary"
-               , on: { click: \e -> T.write_ queryText' query }
+               , on: { click: \_ -> T.write_ queryText' query }
                , type: "submit" }
         [ H.span {className: "fa fa-search"} [] ]
 
     clearButton query =
       H.button { className: "btn btn-danger"
-               , on: { click: \e -> T.write_ "" query } }
+               , on: { click: \_ -> T.write_ "" query } }
         [ H.span {className: "fa fa-times"} [] ]
 
 mock :: Boolean
@@ -274,7 +274,7 @@ pageLayoutCpt = here.component "pageLayout" cpt where
 
     let path = { listId, mCorpusId, nodeId, params, query, tabType, yearFilter: yearFilter' }
         handleResponse :: HashedResponse (TableResult Response) -> Tuple Int (Array DocumentsView)
-        handleResponse (HashedResponse { hash, value: res }) = ret
+        handleResponse (HashedResponse { value: res }) = ret
           where
 
             filters = filterDocs query

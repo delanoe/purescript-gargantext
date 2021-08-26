@@ -65,7 +65,7 @@ contextMenuCpt = here.component "contextMenu" cpt
         , style: position menu rect
         , data: { placement: "right", toggle: "popover" }
         }
-    elems ref menu Nothing = HTML.div
+    elems ref _menu Nothing = HTML.div
         { ref
         , key: "context-menu"
         , className: "context-menu"
@@ -98,7 +98,7 @@ documentClickHandler onClose menu =
 
 documentScrollHandler :: Effect Unit -> Callback DE.MouseEvent
 documentScrollHandler onClose =
-  R2.named "hideMenuOnScroll" $ callback $ \e -> onClose
+  R2.named "hideMenuOnScroll" $ callback $ \_ -> onClose
 
 position :: forall t. Record (Props t) -> DOMRect -> { left :: Number, top :: Number }
 position mouse {width: menuWidth, height: menuHeight} = {left, top}

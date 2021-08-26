@@ -260,7 +260,7 @@ updateTermButtonCpt = here.component "updateTermButton" cpt
         , rType
         , session
         , text } _ = do
-      { removedNodeIds, sideTab, selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
+      { removedNodeIds, selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
       selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
 
       pure $ if Set.isEmpty selectedNodeIds' then

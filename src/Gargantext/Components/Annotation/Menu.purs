@@ -7,7 +7,6 @@ import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
-import Effect.Uncurried (mkEffectFn1)
 import Reactix as R
 import Reactix.DOM.HTML as HTML
 import Toestand as T

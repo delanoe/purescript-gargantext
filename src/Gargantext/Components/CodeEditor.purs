@@ -1,6 +1,5 @@
 module Gargantext.Components.CodeEditor where
 
-import DOM.Simple.Types (Element)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Either (either, Either(..))
 import Data.Generic.Rep (class Generic)
@@ -9,6 +8,7 @@ import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, null, toMaybe)
 import Data.String.Utils (endsWith)
+import DOM.Simple.Types (Element)
 import Effect (Effect)
 import FFI.Simple ((.=))
 import Reactix as R
@@ -355,7 +355,7 @@ initControls code defaultCodeType = do
     }
 
 reinitControls :: Record Controls -> Code -> CodeType -> Effect Unit
-reinitControls c@{ codeType, codeS, error } code defaultCodeType = do
+reinitControls { codeType, codeS, error } code defaultCodeType = do
   T.write_ defaultCodeType codeType
   T.write_ code codeS
   T.write_ Nothing error
