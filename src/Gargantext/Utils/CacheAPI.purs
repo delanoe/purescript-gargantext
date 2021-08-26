@@ -1,5 +1,7 @@
 module Gargantext.Utils.CacheAPI where
 
+import Gargantext.Prelude hiding (add)
+
 import Control.Monad.Except (runExcept)
 import Control.Promise (Promise, toAffE)
 import Data.Either (Either(..))
@@ -10,25 +12,12 @@ import Effect.Aff (Aff, throwError)
 import Effect.Exception (error)
 import Foreign as F
 import Foreign.Object as O
+import Gargantext.Ends (class ToUrl, toUrl)
+import Gargantext.Sessions (Session(..))
 import Milkis as M
 import Simple.JSON as JSON
 import Type.Row (class Union)
 
-import Gargantext.Prelude hiding (add)
-import Gargantext.Ends (class ToUrl, toUrl)
-import Gargantext.Sessions (Session(..))
-
-
-get :: forall a p. JSON.ReadForeign a => ToUrl Session p => Cache -> Session -> p -> Aff a
-get cache session p = do
-  let req = makeGetRequest session p
-  res <- cached cache req
-
-  j <- M.text res
-
-  case JSON.readJSON j of
-    Left err -> throwError $ error $ "decodeJson affResp.body: " <> show err
-    Right b -> pure b
 
 foreign import data Cache :: Type
 foreign import data Request :: Type
@@ -119,7 +108,7 @@ pureJson req = do
     Right b -> pure b
 
 
-foreign import _makeRequest :: forall options trash.
+foreign import _makeRequest :: forall options.
                                M.URL -> { method :: M.Method, headers :: M.Headers | options } -> Request
 foreign import _openCache :: String -> Effect (Promise Cache)
 foreign import _delete :: String -> Effect (Promise Unit)

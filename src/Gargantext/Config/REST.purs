@@ -65,11 +65,6 @@ readJSON affResp =
         Left err -> Left $ ReadJSONError err
         Right r -> Right r
 
--- readJSONOrFail affResp = do
---   case readJSON affResp of
---     Left err -> throwError $ error $ "decodeJson affResp.body: " <> show err
---     Right b -> pure b
-
 -- TODO too much duplicate code in `postWwwUrlencoded`
 send :: forall body res. JSON.WriteForeign body => JSON.ReadForeign res =>
         Method -> Maybe Token -> String -> Maybe body -> Aff (Either RESTError res)
