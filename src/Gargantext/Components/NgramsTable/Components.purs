@@ -9,25 +9,19 @@ import Data.Maybe (Maybe(..), maybe, isJust)
 import Data.Nullable (null, toMaybe)
 import Data.Set (Set)
 import Data.Set as Set
-import React.DOM (a, span, text)
-import React.DOM.Props as DOM
 import Effect (Effect)
 import FFI.Simple (delay)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (searchQuery)
+import Gargantext.Components.NgramsTable.Core (Action(..), Dispatch, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm, _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list, _ngrams, _occurrences, ngramsTermText, replace, setTermListA)
+import Gargantext.Components.Table as Tbl
+import Gargantext.Prelude (Unit, bind, const, discard, map, not, otherwise, pure, show, unit, ($), (+), (/=), (<<<), (<>), (==), (>), (||))
+import Gargantext.Types as T
+import Gargantext.Utils.Reactix as R2
+import React.DOM (a, span, text)
+import React.DOM.Props as DOM
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
-
-import Gargantext.Prelude
-  ( Unit, bind, const, discard, map, not, otherwise
-  , pure, show, unit, ($), (+), (/=), (<<<), (<>), (==), (>), (||) )
-
-import Gargantext.Components.NgramsTable.Core
-  ( Action(..), Dispatch, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm
-  , _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list
-  , _ngrams, _occurrences, ngramsTermText, replace, setTermListA )
-import Gargantext.Components.Table as Tbl
-import Gargantext.Types as T
-import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.NgramsTable.Components"
@@ -81,7 +75,10 @@ searchFieldInput = R.createElement searchFieldInputCpt
 searchFieldInputCpt :: R.Component SearchFieldInputProps
 searchFieldInputCpt = here.component "searchFieldInput" cpt where
   cpt { searchQuery } _ = do
+    -- searchQuery' <- T.useLive T.unequal searchQuery
+    
     pure $ H.input { className: "form-control"
+                   -- , defaultValue: searchQuery'
                    , name: "search"
                    , on: { input: \e -> T.write (R.unsafeEventValue e) searchQuery }
                    , placeholder: "Search"
@@ -96,7 +93,6 @@ type SelectionCheckboxProps =
 
 selectionCheckbox :: Record SelectionCheckboxProps -> R.Element
 selectionCheckbox props = R.createElement selectionCheckboxCpt props []
-
 selectionCheckboxCpt :: R.Component SelectionCheckboxProps
 selectionCheckboxCpt = here.component "selectionCheckbox" cpt
   where
