@@ -2,8 +2,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
 import Gargantext.Prelude
 
-import DOM.Simple.Console (log2)
-import Data.Either (fromRight')
+import Data.Either (Either, fromRight')
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
@@ -19,6 +18,8 @@ import Gargantext.Components.Forest.Tree.Node.Action (Action(..), Props)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..), readUFBAsText)
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe, panel)
 import Gargantext.Components.Lang (Lang(..))
+import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, postWwwUrlencoded, post)
 import Gargantext.Types (ID, NodeType(..))
@@ -48,7 +49,7 @@ actionUpload :: R2.Component ActionUpload
 actionUpload = R.createElement actionUploadCpt
 actionUploadCpt :: R.Component ActionUpload
 actionUploadCpt = here.component "actionUpload" cpt where
-  cpt props@{ nodeType: Corpus }        _ = pure $ uploadFileView props []
+  cpt props@{ nodeType: Corpus }        _ = pure $ uploadFileView props
   cpt props@{ nodeType: NodeList }      _ = pure $ uploadTermListView props []
   cpt props@{ nodeType: NodeFrameCalc } _ = pure $ uploadFrameCalcView props []
   cpt props                             _ = pure $ actionUploadOther props []
@@ -84,8 +85,8 @@ type UploadFile =
   }
   
 
-uploadFileView :: R2.Component Props
-uploadFileView = R.createElement uploadFileViewCpt
+uploadFileView :: R2.Leaf Props
+uploadFileView props = R.createElement uploadFileViewCpt props []
 uploadFileViewCpt :: R.Component Props
 uploadFileViewCpt = here.component "uploadFileView" cpt
   where
@@ -186,7 +187,7 @@ uploadButtonCpt = here.component "uploadButton" cpt
       where
         onClick fileType' mFile' e = do
           let { blob, name } = unsafePartial $ fromJust mFile'
-          log2 "[uploadButton] fileType" fileType'
+          here.log2 "[uploadButton] fileType" fileType'
           void $ launchAff do
             case fileType' of
               Arbitrary ->
@@ -288,6 +289,88 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
                          , type: "button"
                          } [H.text "Upload"]
           ]
+
+
+
+newtype FileUploadQuery = FileUploadQuery {
+    fileType :: FileType
+  }
+derive instance Newtype FileUploadQuery _
+instance GT.ToQuery FileUploadQuery where
+  toQuery (FileUploadQuery {fileType}) =
+    QP.print id id $ QP.QueryPairs $
+         pair "fileType" fileType
+    where pair :: forall a. Show a => String -> a -> Array (Tuple QP.Key (Maybe QP.Value))
+          pair k v = [ QP.keyFromString k /\ (Just $ QP.valueFromString $ show v) ]
+
+uploadFile :: { contents     :: String
+              , fileType     :: FileType
+              , id           :: ID
+              , nodeType     :: GT.NodeType
+              , mName        :: Maybe String
+              , session      :: Session }
+           -> Aff (Either RESTError GT.AsyncTaskWithType)
+{-
+uploadFile session NodeList id JSON { mName, contents } = do
+  let url = GR.NodeAPI NodeList (Just id) $ GT.asyncTaskTypePath GT.ListUpload
+    -- { input: { data: ..., filetype: "JSON", name: "..." } }
+  let body = { input: { data: contents
+                      , filetype: "JSON"
+                      , name: fromMaybe "" mName } }
+  task <- post session url body
+  pure $ GT.AsyncTaskWithType { task, typ: GT.Form }
+  -}
+uploadFile { contents, fileType: CSV, id, nodeType: NodeList, mName, session } = do
+  let url = GR.NodeAPI NodeList (Just id) $ GT.asyncTaskTypePath GT.ListCSVUpload
+  let body = [ Tuple "_wtf_data" (Just contents)
+             , Tuple "_wtf_filetype" (Just $ show NodeList)
+             , Tuple "_wtf_name" mName ]
+  eTask <- postWwwUrlencoded session url body
+  pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.ListCSVUpload }) <$> eTask
+uploadFile { contents, fileType, id, nodeType, mName, session } = do
+  -- contents <- readAsText blob
+  eTask :: Either RESTError GT.AsyncTask <- postWwwUrlencoded session p bodyParams
+  pure $ (\task -> GT.AsyncTaskWithType { task, typ }) <$> eTask
+    --postMultipartFormData session p fileContents
+  where
+    Tuple typ p = case nodeType of
+      Corpus   -> Tuple GT.CorpusFormUpload (GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.CorpusFormUpload)
+      Annuaire -> Tuple GT.UploadFile (GR.NodeAPI nodeType (Just id) "annuaire")
+      NodeList -> case fileType of
+        JSON -> Tuple GT.ListUpload (GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.ListUpload)
+        _    -> Tuple GT.UploadFile (GR.NodeAPI nodeType (Just id) "")
+      _        -> Tuple GT.UploadFile (GR.NodeAPI nodeType (Just id) "")
+
+    bodyParams = [ Tuple "_wf_data"     (Just contents)
+                 , Tuple "_wf_filetype" (Just $ show fileType)
+                 , Tuple "_wf_name"      mName
+                 ]
+
+
+uploadArbitraryFile :: Session
+                    -> ID
+                    -> {blob :: UploadFileBlob, mName :: Maybe String}
+                    -> Aff (Either RESTError GT.AsyncTaskWithType)
+uploadArbitraryFile session id {mName, blob: UploadFileBlob blob} = do
+    contents <- readAsDataURL blob
+    uploadArbitraryDataURL session id mName contents
+
+uploadArbitraryDataURL :: Session
+                       -> ID
+                       -> Maybe String
+                       -> String
+                       -> Aff (Either RESTError GT.AsyncTaskWithType)
+uploadArbitraryDataURL session id mName contents' = do
+    let re = fromRight' (\_ -> unsafeCrashWith "Unexpected Left") $ DSR.regex "data:.*;base64," DSRF.noFlags
+        contents = DSR.replace re "" contents'
+    eTask :: Either RESTError GT.AsyncTask <- postWwwUrlencoded session p (bodyParams contents)
+    pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.UploadFile }) <$> eTask
+  where
+    p = GR.NodeAPI GT.Node (Just id) $ GT.asyncTaskTypePath GT.UploadFile
+
+    bodyParams c = [ Tuple "_wfi_b64_data"  (Just c)
+                   , Tuple "_wfi_name"      mName
+                   ]
 
 ------------------------------------------------------------------------
 
@@ -415,88 +498,11 @@ uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt
           void $ launchAff do
             dispatch UploadFrameCalc
 
-------------------------------------------------------------------------
-
-
-newtype FileUploadQuery = FileUploadQuery {
-    fileType :: FileType
-  }
-derive instance Newtype FileUploadQuery _
-instance GT.ToQuery FileUploadQuery where
-  toQuery (FileUploadQuery {fileType}) =
-    QP.print id id $ QP.QueryPairs $
-         pair "fileType" fileType
-    where pair :: forall a. Show a => String -> a -> Array (Tuple QP.Key (Maybe QP.Value))
-          pair k v = [ QP.keyFromString k /\ (Just $ QP.valueFromString $ show v) ]
-
-uploadFile :: Session
-           -> GT.NodeType
-           -> ID
-           -> FileType
-           -> {contents :: String, mName :: Maybe String}
-           -> Aff GT.AsyncTaskWithType
-{-
-uploadFile session NodeList id JSON { mName, contents } = do
-  let url = GR.NodeAPI NodeList (Just id) $ GT.asyncTaskTypePath GT.ListUpload
-    -- { input: { data: ..., filetype: "JSON", name: "..." } }
-  let body = { input: { data: contents
-                      , filetype: "JSON"
-                      , name: fromMaybe "" mName } }
-  task <- post session url body
-  pure $ GT.AsyncTaskWithType { task, typ: GT.CorpusFormUpload }
-  -}
-uploadFile session nodeType id fileType { mName, contents } = do
-  -- contents <- readAsText blob
-  task <- postWwwUrlencoded session p bodyParams
-  pure $ GT.AsyncTaskWithType { task, typ: GT.CorpusFormUpload }
-    --postMultipartFormData session p fileContents
-  where
-    p = case nodeType of
-      Corpus   -> GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.CorpusFormUpload
-      Annuaire -> GR.NodeAPI nodeType (Just id) "annuaire"
-      NodeList -> case fileType of
-        JSON -> GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.ListUpload
-        CSV  -> GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.ListCSVUpload
-        _    -> GR.NodeAPI nodeType (Just id) ""
-      NodeFrameCalc -> GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.UploadFrameCalc
-      _        -> GR.NodeAPI nodeType (Just id) ""
-
-    bodyParams = [ Tuple "_wf_data"     (Just contents)
-                 , Tuple "_wf_filetype" (Just $ show fileType)
-                 , Tuple "_wf_name"      mName
-                 ]
-
-
-uploadArbitraryFile :: Session
-                    -> ID
-                    -> {blob :: UploadFileBlob, mName :: Maybe String}
-                    -> Aff GT.AsyncTaskWithType
-uploadArbitraryFile session id {mName, blob: UploadFileBlob blob} = do
-    contents <- readAsDataURL blob
-    uploadArbitraryDataURL session id mName contents
-
-uploadArbitraryDataURL :: Session
-                       -> ID
-                       -> Maybe String
-                       -> String
-                       -> Aff GT.AsyncTaskWithType
-uploadArbitraryDataURL session id mName contents' = do
-    let re = fromRight' (\_ -> unsafeCrashWith "Unexpected Left") $ DSR.regex "data:.*;base64," DSRF.noFlags
-        contents = DSR.replace re "" contents'
-    task <- postWwwUrlencoded session p (bodyParams contents)
-    pure $ GT.AsyncTaskWithType { task, typ: GT.CorpusFormUpload }
-  where
-    p = GR.NodeAPI GT.Node (Just id) $ GT.asyncTaskTypePath GT.UploadFile
-
-    bodyParams c = [ Tuple "_wfi_b64_data"  (Just c)
-                   , Tuple "_wfi_name"      mName
-                   ]
-
 uploadFrameCalc :: Session
                     -> ID
-                    -> Aff GT.AsyncTaskWithType
+                    -> Aff (Either RESTError GT.AsyncTaskWithType)
 uploadFrameCalc session id = do
   let p = GR.NodeAPI GT.Node (Just id) $ GT.asyncTaskTypePath GT.UploadFrameCalc
 
-  task <- post session p ([] :: Array String)
-  pure $ GT.AsyncTaskWithType { task, typ: GT.UploadFrameCalc }
+  eTask <- post session p ([] :: Array String)
+  pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.UploadFrameCalc }) <$> eTask

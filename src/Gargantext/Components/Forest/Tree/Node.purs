@@ -8,18 +8,12 @@ import Data.Symbol (SProxy(..))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
-import React.SyntheticEvent as E
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Record as Record
-import Toestand as T
-
 import Gargantext.AsyncTasks as GAT
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (DroppedFile(..), fileTypeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..))
 import Gargantext.Components.Forest.Tree.Node.Box (nodePopupView)
-import Gargantext.Components.Forest.Tree.Node.Box.Types (CommonProps)
 import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Tools (nodeLink)
 import Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar (asyncProgressBar, BarType(..))
@@ -31,43 +25,46 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId)
-import Gargantext.Types (Name, ID, reverseHanded)
+import Gargantext.Types (ID, Name, reverseHanded)
 import Gargantext.Types as GT
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Gargantext.Version as GV
+import React.SyntheticEvent as E
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node"
 
 -- Main Node
 type NodeMainSpanProps =
-  ( folderOpen     :: T.Box Boolean
-  , frontends      :: Frontends
-  , id             :: ID
-  , isLeaf         :: IsLeaf
-  , name           :: Name
-  , nodeType       :: GT.NodeType
-  , reload         :: T2.ReloadS
-  , reloadMainPage :: T2.ReloadS
-  , reloadRoot     :: T2.ReloadS
-  , route          :: T.Box Routes.AppRoute
-  , setPopoverRef  :: R.Ref (Maybe (Boolean -> Effect Unit))
-  , tasks          :: T.Box GAT.Storage
-  | CommonProps
+  ( boxes         :: Boxes
+  , dispatch      :: Action -> Aff Unit
+  , folderOpen    :: T.Box Boolean
+  , frontends     :: Frontends
+  , id            :: ID
+  , isLeaf        :: IsLeaf
+  , name          :: Name
+  , nodeType      :: GT.NodeType
+  , reload        :: T2.ReloadS
+  , session       :: Session
+  , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
   )
 
 type IsLeaf = Boolean
 
 nodeSpan :: R2.Component NodeMainSpanProps
 nodeSpan = R.createElement nodeSpanCpt
-
 nodeSpanCpt :: R.Component NodeMainSpanProps
 nodeSpanCpt = here.component "nodeSpan" cpt
   where
-    cpt props@{ handed } children = do
-      let className = case handed of
+    cpt props@{ boxes: { handed } } children = do
+      handed' <- T.useLive T.unequal handed
+      let className = case handed' of
             GT.LeftHanded  -> "lefthanded"
             GT.RightHanded -> "righthanded"
 
@@ -75,26 +72,26 @@ nodeSpanCpt = here.component "nodeSpan" cpt
 
 nodeMainSpan :: R2.Component NodeMainSpanProps
 nodeMainSpan = R.createElement nodeMainSpanCpt
-
 nodeMainSpanCpt :: R.Component NodeMainSpanProps
 nodeMainSpanCpt = here.component "nodeMainSpan" cpt
   where
-    cpt props@{ dispatch
+    cpt props@{ boxes: boxes@{ errors
+                             , handed
+                             , reloadMainPage
+                             , reloadRoot
+                             , route
+                             , tasks }
+              , dispatch
               , folderOpen
               , frontends
-              , handed
               , id
               , isLeaf
-              , name
               , nodeType
               , reload
-              , reloadMainPage
-              , reloadRoot
-              , route
               , session
               , setPopoverRef
-              , tasks
               } _ = do
+      handed' <- T.useLive T.unequal handed
       route' <- T.useLive T.unequal route
       -- only 1 popup at a time is allowed to be opened
       droppedFile   <- T.useBox (Nothing :: Maybe DroppedFile)
@@ -113,12 +110,12 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
       -- tasks' <- T.read tasks
 
       pure $ H.span (dropProps droppedFile droppedFile' isDragOver isDragOver')
-        $ reverseHanded handed
+        $ reverseHanded handed'
         [ folderIcon  { folderOpen, nodeType } []
         , chevronIcon { folderOpen, handed, isLeaf, nodeType } []
-        , nodeLink { frontends
-                   , handed
+        , nodeLink { boxes
                    , folderOpen
+                   , frontends
                    , id
                    , isSelected
                    , name: name' props
@@ -127,10 +124,11 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
 
                 , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType } []
                 , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
-                                                       , barType: Pie
-                                                       , nodeId: id
-                                                       , onFinish: onTaskFinish id t
-                                                       , session } []
+                                                        , barType: Pie
+                                                        , errors
+                                                        , nodeId: id
+                                                        , onFinish: onTaskFinish id t
+                                                        , session } []
                                 ) currentTasks'
                            )
                 , if nodeType == GT.NodeUser
@@ -185,9 +183,14 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
 
           name' {name: n, nodeType: nt} = if nt == GT.NodeUser then show session else n
 
-          mNodePopupView props'@{ id: i, nodeType: nt, handed: h } opc =
-            nodePopupView { dispatch, handed: h, id: i, name: name' props'
-                          , nodeType: nt, onPopoverClose: opc, session }
+          mNodePopupView props'@{ boxes: b, id: i, nodeType: nt } opc =
+            nodePopupView { boxes: b
+                          , dispatch
+                          , id: i
+                          , name: name' props'
+                          , nodeType: nt
+                          , onPopoverClose: opc
+                          , session }
 
     popOverIcon =
       H.a { className: "settings fa fa-cog" 
@@ -232,7 +235,6 @@ type FolderIconProps = (
 
 folderIcon :: R2.Component FolderIconProps
 folderIcon = R.createElement folderIconCpt
-
 folderIconCpt :: R.Component FolderIconProps
 folderIconCpt = here.component "folderIcon" cpt
   where
@@ -243,27 +245,27 @@ folderIconCpt = here.component "folderIcon" cpt
 
 type ChevronIconProps = (
     folderOpen :: T.Box Boolean
-  , handed     :: GT.Handed
+  , handed     :: T.Box GT.Handed
   , isLeaf     :: Boolean
   , nodeType   :: GT.NodeType
   )
 
 chevronIcon :: R2.Component ChevronIconProps
 chevronIcon = R.createElement chevronIconCpt
-
 chevronIconCpt :: R.Component ChevronIconProps
 chevronIconCpt = here.component "chevronIcon" cpt
   where
     cpt { folderOpen, handed, isLeaf: true, nodeType } _ = do
       pure $ H.div {} []
     cpt { folderOpen, handed, isLeaf: false, nodeType } _ = do
+      handed' <- T.useLive T.unequal handed
       open <- T.useLive T.unequal folderOpen
       pure $ H.a { className: "chevron-icon"
           , on: { click: \_ -> T.modify_ not folderOpen }
           }
         [ H.i { className: if open
                             then "fa fa-chevron-down"
-                            else if handed == GT.RightHanded
+                            else if handed' == GT.RightHanded
                                     then "fa fa-chevron-right"
                                     else "fa fa-chevron-left"
                 } [] ]
@@ -305,22 +307,27 @@ nodeActionsCpt = here.component "nodeActions" cpt where
 
 graphNodeActions :: R2.Leaf NodeActionsCommon
 graphNodeActions props = R.createElement graphNodeActionsCpt props []
-
 graphNodeActionsCpt :: R.Component NodeActionsCommon
 graphNodeActionsCpt = here.component "graphNodeActions" cpt where
   cpt { id, session, refresh } _ =
-    useLoader id (graphVersions session) $ \gv ->
-      nodeActionsGraph { graphVersions: gv, session, id, refresh } []
+    useLoader { errorHandler
+              , loader: graphVersions session
+              , path: id
+              , render: \gv -> nodeActionsGraph { graphVersions: gv, session, id, refresh } [] }
   graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
+  errorHandler err = here.log2 "[graphNodeActions] RESTError" err
 
 listNodeActions :: R2.Leaf NodeActionsCommon
 listNodeActions props = R.createElement listNodeActionsCpt props []
-
 listNodeActionsCpt :: R.Component NodeActionsCommon
 listNodeActionsCpt = here.component "listNodeActions" cpt where
   cpt { id, session, refresh } _ =
-    useLoader { nodeId: id, session } loadCorpusWithChild $ \{ corpusId } ->
-      nodeActionsNodeList
-      { listId: id, nodeId: corpusId, session, refresh: refresh
-      , nodeType: GT.TabNgramType GT.CTabTerms }
+    useLoader { errorHandler
+              , path: { nodeId: id, session }
+              , loader: loadCorpusWithChild
+              , render: \{ corpusId } -> nodeActionsNodeList
+                 { listId: id, nodeId: corpusId, session, refresh: refresh
+                 , nodeType: GT.TabNgramType GT.CTabTerms } }
+    where
+      errorHandler err = here.log2 "[listNodeActions] RESTError" err
 

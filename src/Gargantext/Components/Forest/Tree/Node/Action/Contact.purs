@@ -2,6 +2,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Contact where
 
 import Prelude
 
+import Data.Either (Either)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff, launchAff)
 import Formula as F
@@ -11,6 +12,7 @@ import Toestand as T
 
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Contact.Types (AddContactParams(..))
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types (ID)
@@ -20,7 +22,7 @@ import Gargantext.Utils.Reactix as R2
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Contact"
 
-contactReq :: Session -> ID -> AddContactParams -> Aff ID
+contactReq :: Session -> ID -> AddContactParams -> Aff (Either RESTError ID)
 contactReq session nodeId =
   post session $ GR.NodeAPI GT.Annuaire (Just nodeId) "contact"
 
@@ -56,8 +58,8 @@ textInputBox :: R2.Leaf TextInputBoxProps
 textInputBox props = R.createElement textInputBoxCpt props []
 textInputBoxCpt :: R.Component TextInputBoxProps
 textInputBoxCpt = here.component "textInputBox" cpt where
-  cpt p@{ boxName, boxAction, dispatch, isOpen
-        , params: { firstname, lastname } } _ =
+  cpt { boxName, boxAction, dispatch, isOpen
+      , params: { firstname, lastname } } _ =
     content <$> T.useLive T.unequal isOpen
             <*> T.useBox firstname <*> T.useBox lastname
     where

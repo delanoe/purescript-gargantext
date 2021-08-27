@@ -1,5 +1,8 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Merge where
 
+import Gargantext.Prelude
+
+import Data.Either (Either)
 import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Effect.Aff (Aff)
@@ -10,16 +13,16 @@ import Toestand as T
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel, checkbox, checkboxesListGroup)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
-import Gargantext.Prelude
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, put_)
-import Gargantext.Types  as GT
+import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Merge"
 
-mergeNodeReq :: Session -> GT.ID -> GT.ID -> Aff (Array GT.ID)
+mergeNodeReq :: Session -> GT.ID -> GT.ID -> Aff (Either RESTError (Array GT.ID))
 mergeNodeReq session fromId toId =
   put_ session $ NodeAPI GT.Node (Just fromId) ("merge/" <> show toId)
 
@@ -28,7 +31,7 @@ mergeNode = R.createElement mergeNodeCpt
 mergeNodeCpt :: R.Component SubTreeParamsIn
 mergeNodeCpt = here.component "mergeNode" cpt
   where
-    cpt p@{dispatch, subTreeParams, id, nodeType, session, handed} _ = do
+    cpt { boxes, dispatch, id, nodeType, session, subTreeParams } _ = do
       action <- T.useBox (MergeNode { params: Nothing })
       action' <- T.useLive T.unequal action
 
@@ -43,8 +46,8 @@ mergeNodeCpt = here.component "mergeNode" cpt
 
       pure $ panel
         [ subTreeView { action
+                      , boxes
                       , dispatch
-                      , handed
                       , id
                       , nodeType
                       , session

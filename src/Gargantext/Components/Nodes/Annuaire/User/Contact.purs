@@ -3,35 +3,30 @@ module Gargantext.Components.Nodes.Annuaire.User.Contact
   , contactLayout
   ) where
 
-import Gargantext.Prelude (Unit, bind, discard, pure, show, ($), (*>), (<$>), (<<<), (<>))
+import Data.Either (Either)
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
-import Gargantext.AsyncTasks as GAT
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
-import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types
-  ( Contact'(..), ContactData', ContactTouch(..), ContactWhere(..)
-  , ContactWho(..), HyperdataContact(..), HyperdataUser(..)
-  , _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName
-  , _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role
-  , _shared, _touch, _who, defaultContactTouch, defaultContactWhere
-  , defaultContactWho, defaultHyperdataContact, defaultHyperdataUser )
+import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact'(..), ContactData', ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
 import Gargantext.Components.Nodes.Lists.Types as LT
-import Gargantext.Components.Nodes.Texts.Types as TT
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, get, put, sessionId)
-import Gargantext.Types (NodeType(..), SidePanelState)
+import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Annuaire.User.Contact"
@@ -40,7 +35,6 @@ type DisplayProps = ( title :: String )
 
 display :: R2.Component DisplayProps
 display = R.createElement displayCpt
-
 displayCpt :: R.Component DisplayProps
 displayCpt = here.component "display" cpt
   where
@@ -136,28 +130,22 @@ contactInfoItemCpt = here.component "contactInfoItem" cpt
               let newHyperdata = (L.over cLens (\_ -> R.readRef valueRef) hyperdata) :: HyperdataContact
               onUpdateHyperdata newHyperdata
 
-listElement :: Array R.Element -> R.Element
-listElement = H.li { className: "list-group-item justify-content-between" }
-
-type BasicProps =
-  ( frontends      :: Frontends
-  , nodeId         :: Int
-  , sidePanelState :: T.Box SidePanelState
-  , sidePanel      :: T.Box (Maybe (Record TT.SidePanel))
-  , tasks          :: T.Box GAT.Storage
-  )
-
 type ReloadProps =
-  ( reloadForest :: T2.ReloadS
-  , reloadRoot   :: T2.ReloadS
-  | BasicProps
+  ( boxes     :: Boxes
+  , frontends :: Frontends
+  , nodeId    :: Int
   )
 
-type LayoutProps = ( session :: Session | ReloadProps )
+type LayoutProps =
+  ( session :: Session
+  | ReloadProps )
 
-type KeyLayoutProps = ( key :: String, session :: Session | ReloadProps )
+type KeyLayoutProps =
+ ( key :: String
+ , session :: Session
+ | ReloadProps )
 
-saveContactHyperdata :: Session -> Int -> HyperdataContact -> Aff Int
+saveContactHyperdata :: Session -> Int -> HyperdataContact -> Aff (Either RESTError Int)
 saveContactHyperdata session id = put session (Routes.NodeAPI Node (Just id) "")
 
 type AnnuaireLayoutProps = ( annuaireId :: Int, session :: Session | ReloadProps )
@@ -166,75 +154,52 @@ type AnnuaireKeyLayoutProps = ( annuaireId :: Int | KeyLayoutProps )
 
 contactLayout :: R2.Component AnnuaireLayoutProps
 contactLayout = R.createElement contactLayoutCpt
-
 contactLayoutCpt :: R.Component AnnuaireLayoutProps
 contactLayoutCpt = here.component "contactLayout" cpt where
-  cpt { annuaireId
-      , frontends
-      , nodeId
-      , reloadForest
-      , reloadRoot
-      , session
-      , sidePanel
-      , sidePanelState
-      , tasks } _ = do
+  cpt props@{ nodeId
+            , session } _ = do
     let key = show (sessionId session) <> "-" <> show nodeId
     pure $
-      contactLayoutWithKey
-      { annuaireId
-      , frontends
-      , key
-      , nodeId
-      , reloadForest
-      , reloadRoot
-      , session
-      , sidePanel
-      , sidePanelState
-      , tasks
-      }
+      contactLayoutWithKey $ Record.merge props { key }
 
 contactLayoutWithKey :: R2.Leaf AnnuaireKeyLayoutProps
 contactLayoutWithKey props = R.createElement contactLayoutWithKeyCpt props []
-
 contactLayoutWithKeyCpt :: R.Component AnnuaireKeyLayoutProps
 contactLayoutWithKeyCpt = here.component "contactLayoutWithKey" cpt where
     cpt { annuaireId
+        , boxes: boxes@{ sidePanelTexts }
         , frontends
-        , reloadForest
-        , reloadRoot
         , nodeId
-        , session
-        , sidePanel
-        , sidePanelState
-        , tasks } _ = do
+        , session } _ = do
       reload <- T.useBox T2.newReload
       _ <- T.useLive T.unequal reload
       cacheState <- T.useBox LT.CacheOn
-      useLoader nodeId (getAnnuaireContact session annuaireId) $
-        \contactData@{contactNode: Contact' {name, hyperdata}} ->
-          H.ul { className: "col-md-12 list-group" }
-               [ display { title: fromMaybe "no name" name }
-                         (contactInfos hyperdata (onUpdateHyperdata reload))
-               , Tabs.tabs
-                   { cacheState
-                   , contactData
-                   , frontends
-                   , nodeId
-                   , session
-                   , sidePanel
-                   , sidePanelState
-                   , reloadForest
-                   , reloadRoot
-                   , tasks } ]
+      useLoader { errorHandler
+                , loader: getAnnuaireContact session annuaireId
+                , path: nodeId
+                , render: \contactData@{contactNode: Contact' {name, hyperdata}} ->
+                    H.ul { className: "col-md-12 list-group" }
+                         [ display { title: fromMaybe "no name" name }
+                                   (contactInfos hyperdata (onUpdateHyperdata reload))
+                         , Tabs.tabs
+                             { boxes
+                             , cacheState
+                             , contactData
+                             , frontends
+                             , nodeId
+                             , session
+                             , sidePanel: sidePanelTexts
+                             } ] }
       where
+        errorHandler err = here.log2 "[contactLayoutWithKey] RESTError" err
         onUpdateHyperdata :: T2.ReloadS -> HyperdataContact -> Effect Unit
         onUpdateHyperdata reload hd =
           launchAff_ $
             saveContactHyperdata session nodeId hd *> liftEffect (T2.reload reload)
 
-getAnnuaireContact :: Session -> Int -> Int -> Aff ContactData'
+getAnnuaireContact :: Session -> Int -> Int -> Aff (Either RESTError ContactData')
 getAnnuaireContact session annuaireId id = do
-  contactNode :: Contact' <- get session $ Routes.NodeAPI Annuaire (Just annuaireId) $ show id
+  eContactNode <- get session $ Routes.NodeAPI Annuaire (Just annuaireId) $ show id
   -- TODO: we need a default list for the pairings
   --defaultListIds <- get $ toUrl endConfigStateful Back (Children NodeList 0 1 Nothing) $ Just id
   --case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
@@ -242,4 +207,4 @@ getAnnuaireContact session annuaireId id = do
   --    pure {contactNode, defaultListId}
   --  Nothing ->
   --    throwError $ error "Missing default list"
-  pure {contactNode, defaultListId: 424242}
+  pure $ (\contactNode -> { contactNode, defaultListId: 424242 }) <$> eContactNode

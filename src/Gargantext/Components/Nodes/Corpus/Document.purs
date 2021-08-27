@@ -2,6 +2,7 @@ module Gargantext.Components.Nodes.Corpus.Document where
 
 --import Data.Argonaut (encodeJson) -- DEBUG
 --import Data.Argonaut.Core (stringifyWithIndent) -- DEBUG
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (fst)
 import Data.Tuple.Nested ((/\))
@@ -21,6 +22,7 @@ import Gargantext.Components.NgramsTable.Core
   ( CoreAction(..), Versioned(..), addNewNgramA, applyNgramsPatches, coreDispatch, loadNgramsTable
   , replace, setTermListA, syncResetButtons, findNgramRoot )
 import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, sessionId)
@@ -148,29 +150,35 @@ documentLayoutWithKeyCpt :: R.Component KeyLayoutProps
 documentLayoutWithKeyCpt = here.component "documentLayoutWithKey" cpt
   where
     cpt { listId, mCorpusId, nodeId, session } _ = do
-      useLoader path loadData $ \loaded ->
-        docViewWrapper { loaded, path } []
+      useLoader { errorHandler
+                , loader: loadData
+                , path
+                , render: \loaded -> docViewWrapper { loaded, path } [] }
       where
         tabType = TabDocument (TabNgramType CTabTerms)
         path = { listIds: [listId], mCorpusId, nodeId, session, tabType }
+        errorHandler err = here.log2 "[documentLayoutWithKey] RESTError" err
 
 ------------------------------------------------------------------------
 
-loadDocument :: Session -> Int -> Aff NodeDocument
+loadDocument :: Session -> Int -> Aff (Either RESTError NodeDocument)
 loadDocument session nodeId = get session $ NodeAPI Node (Just nodeId) ""
 
-loadData :: DocPath -> Aff LoadedData
+loadData :: DocPath -> Aff (Either RESTError LoadedData)
 loadData { listIds, nodeId, session, tabType } = do
-  document <- loadDocument session nodeId
-  ngramsTable <- loadNgramsTable
-    { listIds
-    , nodeId
-    , params: { offset : 0, limit : 100, orderBy: Nothing, searchType: SearchDoc}
-    , scoreType: Occurrences
-    , searchQuery: ""
-    , session
-    , tabType
-    , termListFilter: Nothing
-    , termSizeFilter: Nothing
-    }
-  pure { document, ngramsTable }
+  eDocument <- loadDocument session nodeId
+  case eDocument of
+    Left err -> pure $ Left err
+    Right document -> do
+      eNgramsTable <- loadNgramsTable
+        { listIds
+        , nodeId
+        , params: { offset : 0, limit : 100, orderBy: Nothing, searchType: SearchDoc}
+        , scoreType: Occurrences
+        , searchQuery: ""
+        , session
+        , tabType
+        , termListFilter: Nothing
+        , termSizeFilter: Nothing
+        }
+      pure $ (\ngramsTable -> { document, ngramsTable }) <$> eNgramsTable

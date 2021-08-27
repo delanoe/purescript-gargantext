@@ -1,24 +1,28 @@
 module Gargantext.Types where
 
+import Gargantext.Prelude
+
 import Data.Array as A
+import Data.Either (Either)
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.Int (toNumber)
-import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Data.String as S
 import Effect.Aff (Aff)
 import Foreign as F
-import Gargantext.Components.Lang (class Translate, Lang(..))
-import Gargantext.Prelude
-import Gargantext.Utils.Glyphicon (classNamePrefix, glyphiconToCharCode)
 import Prim.Row (class Union)
 import Reactix as R
 import Simple.JSON as JSON
 import Simple.JSON.Generics as JSONG
 import URI.Query (Query)
+
+import Gargantext.Components.Lang (class Translate, Lang(..))
+import Gargantext.Config.REST (RESTError)
+import Gargantext.Utils.Glyphicon (classNamePrefix, glyphiconToCharCode)
 
 data Handed = LeftHanded | RightHanded
 
@@ -621,6 +625,7 @@ instance DecodeJson TabType where
 
 type TableResult a = {count :: Int, docs :: Array a}
 type AffTableResult a = Aff (TableResult a)
+type AffETableResult a = Aff (Either RESTError (TableResult a))
 
 data Mode = Authors
           | Sources
@@ -773,3 +778,13 @@ toggleSidePanelState :: SidePanelState -> SidePanelState
 toggleSidePanelState InitialClosed = Opened
 toggleSidePanelState Closed        = Opened
 toggleSidePanelState Opened        = Closed
+
+---------------------------------------------------------------------------
+
+data FrontendError = FStringError
+  { error :: String
+  } | FRESTError
+  { error :: RESTError }
+
+derive instance Generic FrontendError _
+instance Eq FrontendError where eq = genericEq

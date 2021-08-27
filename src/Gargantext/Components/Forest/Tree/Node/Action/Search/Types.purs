@@ -1,6 +1,7 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Search.Types where
 
 import Data.Array (concat)
+import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (class Newtype)
@@ -11,13 +12,14 @@ import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Simple.JSON as JSON
-import Simple.JSON.Generics as JSONG
 import URI.Extra.QueryPairs as QP
 import URI.Query as Q
 
+
 import Gargantext.Prelude
 
-import Gargantext.Components.Lang
+import Gargantext.Components.Lang (Lang)
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (class ToUrl, backendUrl)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), post)
@@ -359,16 +361,16 @@ instance GT.ToQuery SearchQuery where
           pair k = maybe [] $ \v ->
             [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
 instance JSON.WriteForeign SearchQuery where
-  writeImpl (SearchQuery { datafield, databases, lang, node_id, query }) =
+  writeImpl (SearchQuery { databases, lang, node_id, query }) =
     JSON.writeImpl { query: String.replace (String.Pattern "\"") (String.Replacement "\\\"") query
                    , databases: databases
                    , lang: maybe "EN" show lang
                    , node_id: fromMaybe 0 node_id
                    }
 
-performSearch :: Session -> Int -> SearchQuery -> Aff GT.AsyncTaskWithType
+performSearch :: Session -> Int -> SearchQuery -> Aff (Either RESTError GT.AsyncTaskWithType)
 performSearch session nodeId q = do
-  task <- post session p q
-  pure $ GT.AsyncTaskWithType {task, typ: GT.Query}
+  eTask :: Either RESTError GT.AsyncTask <- post session p q
+  pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.Query }) <$> eTask
   where
     p = GR.NodeAPI GT.Corpus (Just nodeId) $ GT.asyncTaskTypePath GT.Query

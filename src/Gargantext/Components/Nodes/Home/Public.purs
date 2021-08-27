@@ -1,20 +1,22 @@
 module Gargantext.Components.Nodes.Home.Public where
 
+import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.String (take)
 import Effect.Aff (Aff)
-import Gargantext.Config (publicBackend)
-import Gargantext.Config.REST (get)
-import Gargantext.Ends (backendUrl)
-import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude
-import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
 import Simple.JSON.Generics as JSONG
+
+import Gargantext.Config (publicBackend)
+import Gargantext.Config.REST (get, RESTError)
+import Gargantext.Ends (backendUrl)
+import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude
+import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Home.Public"
@@ -44,7 +46,7 @@ type LoadData  = ()
 type LoadProps = (reload :: Int)
 
 -- | WIP still finding the right way to chose the default public backend
-loadPublicData :: Record LoadProps -> Aff (Array PublicData)
+loadPublicData :: Record LoadProps -> Aff (Either RESTError (Array PublicData))
 loadPublicData _l = do
   -- This solution is error prone (url needs to be cleaned)
   --backend <- liftEffect public
@@ -71,12 +73,16 @@ renderPublic props = R.createElement renderPublicCpt props []
 renderPublicCpt :: R.Component ()
 renderPublicCpt = here.component "renderPublic" cpt where
   cpt _ _ = do
-    useLoader { reload: 0 } loadPublicData loaded where
-      loaded publicData = publicLayout { publicData }
+    useLoader { errorHandler
+              , loader: loadPublicData
+              , path: { reload: 0 }
+              , render:  loaded }
+      where
+        loaded publicData = publicLayout { publicData }
+        errorHandler err = here.log2 "RESTError" err
 
 publicLayout :: Record PublicDataProps -> R.Element
 publicLayout props = R.createElement publicLayoutCpt props []
-
 publicLayoutCpt :: R.Component PublicDataProps
 publicLayoutCpt = here.component "publicLayout" cpt
   where
