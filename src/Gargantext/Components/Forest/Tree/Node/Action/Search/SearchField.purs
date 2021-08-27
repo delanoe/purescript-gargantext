@@ -1,27 +1,28 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField where
 
+import Gargantext.Prelude
+
 import DOM.Simple.Console (log, log2)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
-import Data.Nullable (null)
 import Data.Newtype (over)
+import Data.Nullable (null)
 import Data.Set as Set
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
-import Gargantext.Prelude
-
+import Gargantext.Components.Forest.Tree.Node.Action.Search.Frame (searchIframes)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allIMTorgs, allOrgs, dataFields, defaultSearchQuery, doc, performSearch, datafield2database, Search)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Lang (Lang)
+import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Sessions (Session)
-import Gargantext.Components.Forest.Tree.Node.Action.Search.Frame (searchIframes)
+import Gargantext.Types (FrontendError)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField"
@@ -38,6 +39,7 @@ defaultSearch = { databases: Empty
 type Props =
   -- list of databases to search, or parsers to use on uploads
   ( databases :: Array Database
+  , errors    :: T.Box (Array FrontendError)
   , langs     :: Array Lang
   -- State hook for a search, how we get data in and out
   , onSearch  :: GT.AsyncTaskWithType -> Effect Unit
@@ -47,11 +49,10 @@ type Props =
 
 searchField :: R2.Component Props
 searchField = R.createElement searchFieldCpt
-
 searchFieldCpt :: R.Component Props
 searchFieldCpt = here.component "searchField" cpt
   where
-    cpt props@{ onSearch, search } _ = do
+    cpt props@{ errors, onSearch, search, session } _ = do
       search' <- T.useLive T.unequal search
       iframeRef <- R.useRef    null
       let params =
@@ -86,7 +87,7 @@ searchFieldCpt = here.component "searchField" cpt
                              ]
 
                 ]
-      let button =  submitButton {onSearch, search, session: props.session} []
+      let button =  submitButton { errors, onSearch, search, session } []
 
       pure $
 
@@ -103,7 +104,6 @@ type ComponentProps =
 
 componentIMT :: R2.Component ComponentProps
 componentIMT = R.createElement componentIMTCpt
-
 componentIMTCpt :: R.Component ComponentProps
 componentIMTCpt = here.component "componentIMT" cpt
   where
@@ -242,7 +242,6 @@ type LangNavProps =
 
 langNav :: R2.Component LangNavProps
 langNav = R.createElement langNavCpt
-
 langNavCpt :: R.Component LangNavProps
 langNavCpt = here.component "langNav" cpt
   where
@@ -267,7 +266,6 @@ type DataFieldNavProps =
 
 dataFieldNav :: R2.Component DataFieldNavProps
 dataFieldNav = R.createElement dataFieldNavCpt
-
 dataFieldNavCpt :: R.Component DataFieldNavProps
 dataFieldNavCpt = here.component "dataFieldNav" cpt
   where
@@ -306,7 +304,6 @@ type DatabaseInputProps = (
 
 databaseInput :: R2.Component DatabaseInputProps
 databaseInput = R.createElement databaseInputCpt
-
 databaseInputCpt :: R.Component DatabaseInputProps
 databaseInputCpt = here.component "databaseInput" cpt
   where
@@ -347,7 +344,6 @@ type OrgInputProps =
 
 orgInput :: R2.Component OrgInputProps
 orgInput = R.createElement orgInputCpt
-
 orgInputCpt :: R.Component OrgInputProps
 orgInputCpt = here.component "orgInput" cpt
   where
@@ -390,7 +386,6 @@ type SearchInputProps =
 
 searchInput :: R2.Component SearchInputProps
 searchInput = R.createElement searchInputCpt
-
 searchInputCpt :: R.Component SearchInputProps
 searchInputCpt = here.component "searchInput" cpt
   where
@@ -429,39 +424,40 @@ searchInputCpt = here.component "searchInput" cpt
       -- setSearch $ _ { term = value }
 
 type SubmitButtonProps =
-  ( onSearch :: GT.AsyncTaskWithType -> Effect Unit
+  ( errors   :: T.Box (Array FrontendError)
+  , onSearch :: GT.AsyncTaskWithType -> Effect Unit
   , search   :: T.Box Search
   , session  :: Session
   )
 
 submitButton :: R2.Component SubmitButtonProps
 submitButton = R.createElement submitButtonComponent
-
 submitButtonComponent :: R.Component SubmitButtonProps
 submitButtonComponent = here.component "submitButton" cpt
   where
-    cpt { onSearch, search, session } _ = do
+    cpt { errors, onSearch, search, session } _ = do
       search' <- T.useLive T.unequal search
 
       pure $
         H.button { className: "btn btn-primary"
                  , "type"   : "button"
-                 , on       : { click: doSearch onSearch session search' }
+                 , on       : { click: doSearch onSearch errors session search' }
                  , style    : { width: "100%" }
                  } [ H.text "Launch Search" ]
 
-    doSearch os s q = \_ -> do
+    doSearch os errors s q = \_ -> do
       log2 "[submitButton] searching" q
-      triggerSearch os s q
+      triggerSearch os errors s q
       --case search.term of
       --  "" -> setSearch $ const defaultSearch
       --  _  -> setSearch $ const q
 
 triggerSearch :: (GT.AsyncTaskWithType -> Effect Unit)
+              -> T.Box (Array FrontendError)
               -> Session
               -> Search
               -> Effect Unit
-triggerSearch os s q =
+triggerSearch os errors s q =
   launchAff_ $ do
     liftEffect $ do
       let here' = "[triggerSearch] Searching "
@@ -473,8 +469,8 @@ triggerSearch os s q =
     case q.node_id of
       Nothing -> liftEffect $ log "[triggerSearch] node_id is Nothing, don't know what to do"
       Just id -> do
-        task <- performSearch s id $ searchQuery q
-        liftEffect $ do
+        eTask <- performSearch s id $ searchQuery q
+        handleRESTError errors eTask $ \task -> liftEffect $ do
           log2 "[triggerSearch] task" task
           os task
 

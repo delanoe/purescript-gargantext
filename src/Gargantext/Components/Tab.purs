@@ -21,27 +21,27 @@ type TabsProps = (
 
 tabs :: R2.Leaf TabsProps
 tabs props = R.createElement tabsCpt props []
-
 -- this is actually just the list of tabs, not the tab contents itself
 tabsCpt :: R.Component TabsProps
 tabsCpt = here.component "tabs" cpt where
-  cpt props@{ activeTab, tabs } _ = do
+  cpt { activeTab
+      , tabs: tabs' } _ = do
     activeTab' <- T.useLive T.unequal activeTab
 
     pure $ H.div {}
       [ H.nav {}
         [ H.br {}
         , H.div { className: "nav nav-tabs", title: "Search result" }
-          (mapWithIndex (button activeTab activeTab') tabs)
+          (mapWithIndex (button activeTab activeTab') tabs')
         ]
       , H.div { className: "tab-content" }
-        (mapWithIndex (item activeTab') tabs)
+        (mapWithIndex (item activeTab') tabs')
       ]
   button activeTab selected index (name /\ _) =
     H.a { className, on: { click } } [ H.text name ] where
       eq = index == selected
       className = "nav-item nav-link" <> (if eq then " active" else "")
-      click e = T.write_ index activeTab
+      click _ = T.write_ index activeTab
   item selected index (_ /\ cpt') = tab { selected, index } [ cpt' ]
 
 -- TODO: document what these are (selection, item indices)

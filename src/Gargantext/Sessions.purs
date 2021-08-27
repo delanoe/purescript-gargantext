@@ -28,9 +28,6 @@ import Gargantext.Ends (class ToUrl, Backend, toUrl)
 import Gargantext.Sessions.Types (Session(..), Sessions(..), OpenNodes, NodeId, mkNodeId, sessionUrl, sessionId, empty, null, unSessions, lookup, cons, tryCons, update, remove, tryRemove)
 import Gargantext.Utils.Reactix as R2
 
-here :: R2.Here
-here = R2.here "Gargantext.Sessions"
-
 type WithSession c =
   ( session :: Session
   | c )
@@ -113,44 +110,42 @@ saveSessions sessions = effect *> pure sessions where
     | null sessions = rem
     | otherwise = set (JSON.writeJSON sessions)
 
-updateSession :: Session -> Effect Unit
-updateSession s = do
-  ss <- loadSessions
-  _ <- saveSessions $ update s ss
-  pure unit
-
 postAuthRequest :: Backend -> AuthRequest -> Aff (Either String Session)
 postAuthRequest backend ar@(AuthRequest {username}) =
   decode <$> REST.post Nothing (toUrl backend "auth") ar
   where
-    decode (AuthResponse ar2)
+    decode (Left _err) = Left "Error when sending REST.post"
+    decode (Right (AuthResponse ar2))
       | {inval: Just (AuthInvalid {message})}     <- ar2 = Left message
       | {valid: Just (AuthData {token, tree_id})} <- ar2 =
           Right $ Session { backend, caches: Map.empty, token, treeId: tree_id, username }
       | otherwise = Left "Invalid response from server"
 
-get :: forall a p. JSON.ReadForeign a => ToUrl Session p => Session -> p -> Aff a
+get :: forall a p. JSON.ReadForeign a => ToUrl Session p =>
+       Session -> p -> Aff (Either REST.RESTError a)
 get session@(Session {token}) p = REST.get (Just token) (toUrl session p)
 
-put :: forall a b p. JSON.WriteForeign a => JSON.ReadForeign b => ToUrl Session p => Session -> p -> a -> Aff b
+put :: forall a b p. JSON.WriteForeign a => JSON.ReadForeign b => ToUrl Session p =>
+       Session -> p -> a -> Aff (Either REST.RESTError b)
 put session@(Session {token}) p = REST.put (Just token) (toUrl session p)
 
-put_ :: forall b p. JSON.ReadForeign b => ToUrl Session p => Session -> p -> Aff b
+put_ :: forall b p. JSON.ReadForeign b => ToUrl Session p => Session -> p -> Aff (Either REST.RESTError b)
 put_ session@(Session {token}) p = REST.put_ (Just token) (toUrl session p)
 
-delete :: forall a p. JSON.ReadForeign a => ToUrl Session p => Session -> p -> Aff a
+delete :: forall a p. JSON.ReadForeign a => ToUrl Session p =>
+          Session -> p -> Aff (Either REST.RESTError a)
 delete session@(Session {token}) p = REST.delete (Just token) (toUrl session p)
 
 -- This might not be a good idea:
 -- https://stackoverflow.com/questions/14323716/restful-alternatives-to-delete-request-body
-deleteWithBody :: forall a b p. JSON.WriteForeign a => JSON.ReadForeign b => ToUrl Session p => Session -> p -> a -> Aff b
+deleteWithBody :: forall a b p. JSON.WriteForeign a => JSON.ReadForeign b => ToUrl Session p =>
+                  Session -> p -> a -> Aff (Either REST.RESTError b)
 deleteWithBody session@(Session {token}) p = REST.deleteWithBody (Just token) (toUrl session p)
 
-post :: forall a b p. JSON.WriteForeign a => JSON.ReadForeign b => ToUrl Session p => Session -> p -> a -> Aff b
+post :: forall a b p. JSON.WriteForeign a => JSON.ReadForeign b => ToUrl Session p =>
+        Session -> p -> a -> Aff (Either REST.RESTError b)
 post session@(Session {token}) p = REST.post (Just token) (toUrl session p)
 
-postWwwUrlencoded :: forall b p. JSON.ReadForeign b => ToUrl Session p => Session -> p -> REST.FormDataParams -> Aff b
+postWwwUrlencoded :: forall b p. JSON.ReadForeign b => ToUrl Session p =>
+                     Session -> p -> REST.FormDataParams -> Aff (Either REST.RESTError b)
 postWwwUrlencoded session@(Session {token}) p = REST.postWwwUrlencoded (Just token) (toUrl session p)
-
-postMultipartFormData :: forall b p. JSON.ReadForeign b => ToUrl Session p => Session -> p -> String -> Aff b
-postMultipartFormData session@(Session {token}) p = REST.postMultipartFormData (Just token) (toUrl session p)

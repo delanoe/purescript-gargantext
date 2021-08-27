@@ -11,6 +11,7 @@ import Toestand as T
 
 import Gargantext.Components.Forest.Tree.Node.Action (Action)
 import Gargantext.Components.Forest.Tree.Node.Action.Add (addNodeView)
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (actionDelete)
 import Gargantext.Components.Forest.Tree.Node.Action.Documentation (actionDoc)
@@ -28,7 +29,7 @@ import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), Settings
 import Gargantext.Components.Forest.Tree.Node.Status (Status(..), hasStatus)
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, textInputBox)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (Name, ID, prettyNodeType)
+import Gargantext.Types (FrontendError, ID, Name, prettyNodeType)
 import Gargantext.Types as GT
 import Gargantext.Utils.Glyphicon (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
@@ -36,7 +37,9 @@ import Gargantext.Utils.Reactix as R2
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Box"
 
-type CommonProps = ( dispatch :: Action -> Aff Unit, session :: Session )
+type CommonProps =
+  ( dispatch :: Action -> Aff Unit
+  , session :: Session )
 
 nodePopupView :: Record NodePopupProps -> R.Element
 nodePopupView p = R.createElement nodePopupCpt p []
@@ -100,14 +103,15 @@ nodePopupCpt = here.component "nodePopupView" cpt where
            else []
   mPanelAction :: Record NodePopupS -> Record NodePopupProps -> R.Element
   mPanelAction { action: Just action }
-               { dispatch, id, name, nodeType, session, handed } =
+               { boxes, dispatch, id, name, nodeType, session } =
     panelAction { action
+                , boxes
                 , dispatch
-                , handed
                 , id
                 , name
                 , nodeType
-                , session }
+                , session
+                }
   mPanelAction { action: Nothing } _ =
     H.div { className: "card-footer" }
     [ H.div {className:"center fa-hand-pointer-o"}
@@ -163,16 +167,16 @@ type NodeProps =
 
 
 type PanelActionProps =
-  ( id        :: ID
-  , action    :: NodeAction
+  ( action    :: NodeAction
+  , boxes     :: Boxes
+  , id        :: ID
   , dispatch  :: Action -> Aff Unit
-  , handed    :: GT.Handed
   , name      :: Name
   , nodeType  :: GT.NodeType
   , session   :: Session
   )
 
-panelAction :: Record PanelActionProps -> R.Element
+panelAction :: R2.Leaf PanelActionProps
 panelAction p = R.createElement panelActionCpt p []
 panelActionCpt :: R.Component PanelActionProps
 panelActionCpt = here.component "panelAction" cpt
@@ -187,16 +191,16 @@ panelActionCpt = here.component "panelAction" cpt
     cpt {action: Config, nodeType} _                        =
       pure $ fragmentPT $ "Config " <> show nodeType
     -- Functions using SubTree
-    cpt {action: Merge {subTreeParams}, dispatch, id, nodeType, session, handed} _ =
-      pure $ mergeNode {dispatch, id, nodeType, session, subTreeParams, handed} []
-    cpt {action: Move {subTreeParams}, dispatch, id, nodeType, session, handed} _ =
-      pure $ moveNode { dispatch, id, nodeType, session, subTreeParams, handed } []
-    cpt {action: Link {subTreeParams}, dispatch, id, nodeType, session, handed} _ =
-      pure $ linkNode {dispatch, id, nodeType, session, subTreeParams, handed} []
+    cpt { action: Merge {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
+      pure $ mergeNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
+    cpt {action: Move {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
+      pure $ moveNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
+    cpt {action: Link {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
+      pure $ linkNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
     cpt {action : Share, dispatch, id } _ = pure $ Share.shareNode { dispatch, id } []
     cpt {action : AddingContact, dispatch, id } _ = pure $ Contact.actionAddContact { dispatch, id } []
-    cpt {action : Publish {subTreeParams}, dispatch, id, nodeType, session, handed} _ =
-      pure $ Share.publishNode { dispatch, handed, id, nodeType, session, subTreeParams } []
-    cpt {action: SearchBox, id, session, dispatch} _ =
-      pure $ actionSearch { dispatch, id: (Just id), session } []
+    cpt {action : Publish {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
+      pure $ Share.publishNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
+    cpt { action: SearchBox, boxes, dispatch, id, session } _ =
+      pure $ actionSearch { boxes, dispatch, id: (Just id), session } []
     cpt _ _ = pure $ H.div {} []

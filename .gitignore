@@ -1,3 +1,16 @@
+# Gauge - metadata dir
+.gauge
+
+# Gauge - log files dir
+logs
+
+# Gauge - reports dir
+reports
+
+# Gauge - JavaScript node dependencies
+node_modules
+.DS_Store
+
 /bower_components/
 /node_modules/
 /.cache/
@@ -32,3 +45,4 @@ bundle.js
 /.lesshst
 /dist/js/**/*.map
 /dist/styles/**/*.map
+

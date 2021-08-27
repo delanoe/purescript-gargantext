@@ -1,5 +1,7 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Rename where
 
+
+import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
@@ -8,14 +10,15 @@ import Simple.JSON as JSON
 
 import Gargantext.Prelude
 
-import Gargantext.Components.Forest.Tree.Node.Action
-import Gargantext.Types as GT
-import Gargantext.Types (ID)
+import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, put)
+import Gargantext.Types (ID)
+import Gargantext.Types as GT
 
 ------------------------------------------------------------------------
-rename :: Session -> ID -> RenameValue -> Aff (Array ID)
+rename :: Session -> ID -> RenameValue -> Aff (Either RESTError (Array ID))
 rename session renameNodeId =
   put session $ GR.NodeAPI GT.Node (Just renameNodeId) "rename"
 

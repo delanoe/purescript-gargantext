@@ -7,6 +7,7 @@ import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (launchAff_)
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Charts.Options.ECharts (dispatchAction)
 import Gargantext.Components.Charts.Options.Type (EChartsInstance, EChartActionData)
 import Gargantext.Components.DocsTable as DT
@@ -36,11 +37,10 @@ here = R2.here "Gargantext.Components.Nodes.Texts"
 --------------------------------------------------------
 
 
-type CommonPropsNoSession = (
-    frontends      :: Frontends
-  , nodeId         :: NodeID
-  , sidePanel      :: T.Box (Maybe (Record TT.SidePanel))
-  , sidePanelState :: T.Box SidePanelState
+type CommonPropsNoSession =
+  ( boxes     :: Boxes
+  , frontends :: Frontends
+  , nodeId    :: NodeID
   )
 
 type Props = WithSession CommonPropsNoSession
@@ -48,16 +48,14 @@ type Props = WithSession CommonPropsNoSession
 
 textsLayout :: R2.Component Props
 textsLayout = R.createElement textsLayoutCpt
-
 textsLayoutCpt :: R.Component Props
 textsLayoutCpt = here.component "textsLayout" cpt where
-  cpt { frontends, nodeId, session, sidePanel, sidePanelState } children = do
-    pure $ textsLayoutWithKey { frontends
-                              , key
+  cpt { boxes, frontends, nodeId, session } children = do
+    pure $ textsLayoutWithKey { key
+                              , boxes
+                              , frontends
                               , nodeId
-                              , session
-                              , sidePanel
-                              , sidePanelState } children
+                              , session } children
       where
         key = show nodeId
         -- key = show sid <> "-" <> show nodeId
@@ -65,21 +63,22 @@ textsLayoutCpt = here.component "textsLayout" cpt where
         --     sid = sessionId session
 
 type KeyProps = (
-    key            :: String
-  , frontends      :: Frontends
-  , nodeId         :: NodeID
-  , session        :: Session
-  , sidePanel      :: T.Box (Maybe (Record TT.SidePanel))
-  , sidePanelState :: T.Box SidePanelState
+    key       :: String
+  , boxes     :: Boxes
+  , frontends :: Frontends
+  , nodeId    :: NodeID
+  , session   :: Session
   )
 
 textsLayoutWithKey :: R2.Component KeyProps
 textsLayoutWithKey = R.createElement textsLayoutWithKeyCpt
-
 textsLayoutWithKeyCpt :: R.Component KeyProps
 textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
   where
-    cpt { frontends, nodeId, session, sidePanel, sidePanelState } _children = do
+    cpt { boxes: boxes@{ sidePanelTexts }
+        , frontends
+        , nodeId
+        , session } _children = do
       cacheState <- T.useBox $ getCacheState LT.CacheOff session nodeId
       cacheState' <- T.useLive T.unequal cacheState
 
@@ -90,32 +89,35 @@ textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
       R.useEffectOnce' $ do
         T.listen (\{ new } -> afterCacheStateChange new) cacheState
 
-      useLoader { nodeId, session } loadCorpusWithChild $
-        \corpusData@{ corpusId, corpusNode, defaultListId } -> do
-          let NodePoly { date, hyperdata: Hyperdata h, name } = corpusNode
-              CorpusInfo { authors, desc, query } = getCorpusInfo h.fields
-              title = "Corpus " <> name
+      useLoader { errorHandler
+                , loader: loadCorpusWithChild
+                , path: { nodeId, session }
+                , render: \corpusData@{ corpusId, corpusNode } -> do
+                    let NodePoly { date, hyperdata: Hyperdata h, name } = corpusNode
+                        CorpusInfo { authors, desc, query } = getCorpusInfo h.fields
+                        title = "Corpus " <> name
 
-          R.fragment
-            [ Table.tableHeaderLayout { cacheState
-                                      , date
-                                      , desc
-                                      , query
-                                      , title
-                                      , user: authors
-                                      , key: "textsLayoutWithKey-" <> (show cacheState') } []
-            , tabs { cacheState
-                   , corpusData
-                   , corpusId
-                   , frontends
-                   , session
-                   , sidePanel
-                   , sidePanelState
-                   , yearFilter
-                   , eChartsInstance
-                   }
-            ]
+                    R.fragment
+                      [ Table.tableHeaderLayout { cacheState
+                                                , date
+                                                , desc
+                                                , query
+                                                , title
+                                                , user: authors
+                                                , key: "textsLayoutWithKey-" <> (show cacheState') } []
+                      , tabs { boxes
+                             , cacheState
+                             , corpusData
+                             , corpusId
+                             , eChartsInstance
+                             , frontends
+                             , session
+                             , sidePanel: sidePanelTexts
+                             , yearFilter
+                             }
+                      ] }
       where
+        errorHandler err = here.log2 "[textsLayoutWithKey] RESTError" err
         afterCacheStateChange cacheState = do
           launchAff_ $ clearCache unit
           -- TODO
@@ -136,24 +138,31 @@ modeTabType MoreLikeFav    = CTabAuthors  -- TODO
 modeTabType MoreLikeTrash  = CTabSources  -- TODO
 
 type TabsProps =
-  ( cacheState      :: T.Box LT.CacheState
+  ( boxes           :: Boxes
+  , cacheState      :: T.Box LT.CacheState
   , corpusData      :: CorpusData
   , corpusId        :: NodeID
+  , eChartsInstance :: T.Box (Maybe EChartsInstance)
   , frontends       :: Frontends
   , session         :: Session
   , sidePanel       :: T.Box (Maybe (Record TT.SidePanel))
-  , sidePanelState  :: T.Box SidePanelState
   , yearFilter      :: T.Box (Maybe Year)
-  , eChartsInstance :: T.Box (Maybe EChartsInstance)
   )
 
 tabs :: Record TabsProps -> R.Element
 tabs props = R.createElement tabsCpt props []
-
 tabsCpt :: R.Component TabsProps
 tabsCpt = here.component "tabs" cpt
   where
-    cpt { cacheState, corpusId, corpusData, frontends, session, sidePanel, sidePanelState, yearFilter, eChartsInstance } _ = do
+    cpt { boxes
+        , cacheState
+        , corpusId
+        , corpusData
+        , eChartsInstance
+        , frontends
+        , session
+        , sidePanel
+        , yearFilter } _ = do
 
       let
         path = initialPath
@@ -187,7 +196,7 @@ tabsCpt = here.component "tabs" cpt
           activeTab
         , tabs: [
             "Documents"       /\ R.fragment [
-                histo { path, session, onClick, onInit }
+                histo { boxes, path, session, onClick, onInit }
               , docView' path TabDocs
               ]
           , "Trash"           /\ docView' path TabTrash
@@ -201,7 +210,8 @@ tabsCpt = here.component "tabs" cpt
                       , listId: corpusData.defaultListId
                       , limit: Nothing
                       , tabType: TabCorpus TabDocs }
-        docView' path tabType = docView { cacheState
+        docView' path tabType = docView { boxes
+                                        , cacheState
                                         , corpusData
                                         , corpusId
                                         , frontends
@@ -210,27 +220,25 @@ tabsCpt = here.component "tabs" cpt
                                         , session
                                         , tabType
                                         , sidePanel
-                                        , sidePanelState
                                         , yearFilter
                                         } []
 
-type DocViewProps a = (
-    cacheState     :: T.Box LT.CacheState
-  , corpusData     :: CorpusData
-  , corpusId       :: NodeID
-  , frontends      :: Frontends
-  , listId         :: ListId
-  -- , path        :: Record DT.Path
-  , session        :: Session
-  , tabType        :: TabSubType a
-  , sidePanel      :: T.Box (Maybe (Record TT.SidePanel))
-  , sidePanelState :: T.Box SidePanelState
-  , yearFilter     :: T.Box (Maybe Year)
+type DocViewProps a =
+  ( boxes      :: Boxes
+  , cacheState :: T.Box LT.CacheState
+  , corpusData :: CorpusData
+  , corpusId   :: NodeID
+  , frontends  :: Frontends
+  , listId     :: ListId
+  -- , path    :: Record DT.Path
+  , session    :: Session
+  , tabType    :: TabSubType a
+  , sidePanel  :: T.Box (Maybe (Record TT.SidePanel))
+  , yearFilter :: T.Box (Maybe Year)
   )
 
 docView :: forall a. R2.Component (DocViewProps a)
 docView = R.createElement docViewCpt
-
 docViewCpt :: forall a. R.Component (DocViewProps a)
 docViewCpt = here.component "docView" cpt
   where
@@ -238,17 +246,18 @@ docViewCpt = here.component "docView" cpt
       pure $ DT.docViewLayout $ docViewLayoutRec props
 
 -- docViewLayoutRec :: forall a. DocViewProps a -> Record DT.LayoutProps
-docViewLayoutRec { cacheState
+docViewLayoutRec { boxes
+                 , cacheState
                  , corpusId
                  , frontends
                  , listId
                  , session
                  , tabType: TabDocs
                  , sidePanel
-                 , sidePanelState
                  , yearFilter
                  } =
-  { cacheState
+  { boxes
+  , cacheState
   , chart  : H.div {} []
   , frontends
   , listId
@@ -258,22 +267,22 @@ docViewLayoutRec { cacheState
   , session
   , showSearch: true
   , sidePanel
-  , sidePanelState
   , tabType: TabCorpus TabDocs
   , totalRecords: 4737
   , yearFilter
   }
-docViewLayoutRec { cacheState
+docViewLayoutRec { boxes
+                 , cacheState
                  , corpusId
                  , frontends
                  , listId
                  , session
                  , tabType: TabMoreLikeFav
                  , sidePanel
-                 , sidePanelState
                  , yearFilter
                  } =
-  { cacheState
+  { boxes
+  , cacheState
   , chart  : H.div {} []
   , frontends
   , listId
@@ -283,22 +292,22 @@ docViewLayoutRec { cacheState
   , session
   , showSearch: false
   , sidePanel
-  , sidePanelState
   , tabType: TabCorpus TabMoreLikeFav
   , totalRecords: 4737
   , yearFilter
   }
-docViewLayoutRec { cacheState
+docViewLayoutRec { boxes
+                 , cacheState
                  , corpusId
                  , frontends
                  , listId
                  , session
                  , tabType: TabMoreLikeTrash
                  , sidePanel
-                 , sidePanelState
                  , yearFilter
                  } =
-  { cacheState
+  { boxes
+  , cacheState
   , chart  : H.div {} []
   , frontends
   , listId
@@ -308,22 +317,22 @@ docViewLayoutRec { cacheState
   , session
   , showSearch: false
   , sidePanel
-  , sidePanelState
   , tabType: TabCorpus TabMoreLikeTrash
   , totalRecords: 4737
   , yearFilter
   }
-docViewLayoutRec { cacheState
+docViewLayoutRec { boxes
+                 , cacheState
                  , corpusId
                  , frontends
                  , listId
                  , session
                  , tabType: TabTrash
                  , sidePanel
-                 , sidePanelState
                  , yearFilter
                  } =
-  { cacheState
+  { boxes
+  , cacheState
   , chart  : H.div {} []
   , frontends
   , listId
@@ -333,23 +342,23 @@ docViewLayoutRec { cacheState
   , session
   , showSearch: true
   , sidePanel
-  , sidePanelState
   , tabType: TabCorpus TabTrash
   , totalRecords: 4737
   , yearFilter
   }
 -- DUMMY
-docViewLayoutRec { cacheState
+docViewLayoutRec { boxes
+                 , cacheState
                  , corpusId
                  , frontends
                  , listId
                  , session
-                 , tabType
                  , sidePanel
-                 , sidePanelState
+                 , tabType
                  , yearFilter
                  } =
-  { cacheState
+  { boxes
+  , cacheState
   , chart  : H.div {} []
   , frontends
   , listId
@@ -359,7 +368,6 @@ docViewLayoutRec { cacheState
   , session
   , showSearch: true
   , sidePanel
-  , sidePanelState
   , tabType: TabCorpus TabTrash
   , totalRecords: 4737
   , yearFilter
@@ -368,20 +376,19 @@ docViewLayoutRec { cacheState
 
 --------------------------------------------------------
 type SidePanelProps = (
-    session        :: Session
-  , sidePanel      :: T.Box (Maybe (Record TT.SidePanel))
-  , sidePanelState :: T.Box SidePanelState
+    boxes     :: Boxes
+  , session   :: Session
+  , sidePanel :: T.Box (Maybe (Record TT.SidePanel))
   )
 
 sidePanel :: R2.Component SidePanelProps
 sidePanel = R.createElement sidePanelCpt
-
 sidePanelCpt :: R.Component SidePanelProps
 sidePanelCpt = here.component "sidePanel" cpt
   where
-    cpt { session
-        , sidePanel
-        , sidePanelState } _ = do
+    cpt { boxes: { sidePanelState }
+        , session
+        , sidePanel } _ = do
 
       sidePanelState' <- T.useLive T.unequal sidePanelState
       sidePanel' <- T.useLive T.unequal sidePanel

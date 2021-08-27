@@ -2,8 +2,12 @@ module Gargantext.Components.GraphExplorer.Sidebar
   -- (Props, sidebar)
   where
 
+import Gargantext.Prelude
+
 import Control.Parallel (parTraverse)
 import Data.Array (head, last, concat)
+import Data.Array as A
+import Data.Either (Either(..))
 import Data.Int (fromString)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
@@ -12,58 +16,54 @@ import Data.Set as Set
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
-import Partial.Unsafe (unsafePartial)
-import Reactix as R
-import Reactix.DOM.HTML as RH
-import Reactix.DOM.HTML as H
-import Record as Record
-import Record.Extra as RX
-import Toestand as T
-
-import Gargantext.Prelude
-
-import Gargantext.Components.Lang (Lang(..))
-import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.GraphExplorer.Legend as Legend
+import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
+import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Components.Nodes.Corpus.Graph.Tabs (tabs) as CGT
 import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Search (SearchType(..), SearchQuery(..))
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Data.Array (mapMaybe)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType, NodeID, TabSubType(..), TabType(..), TermList(..), modeTabType)
+import Gargantext.Types (CTabNgramType, FrontendError(..), NodeID, TabSubType(..), TabType(..), TermList(..), modeTabType)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Partial.Unsafe (unsafePartial)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Reactix.DOM.HTML as RH
+import Record as Record
+import Record.Extra as RX
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.Sidebar"
 
 type Common = (
-    graphId         :: NodeID
+    boxes           :: Boxes
+  , graphId         :: NodeID
   , metaData        :: GET.MetaData
-  , reloadForest    :: T2.ReloadS
-  , removedNodeIds  :: T.Box SigmaxT.NodeIds
-  , selectedNodeIds :: T.Box SigmaxT.NodeIds
   , session         :: Session
   )
 
 type Props = (
     frontends       :: Frontends
   , graph           :: SigmaxT.SGraph
-  , graphVersion    :: T2.ReloadS
-  , sideTab         :: T.Box GET.SideTab
   | Common
   )
 
 sidebar :: R2.Component Props
 sidebar = R.createElement sidebarCpt
-
 sidebarCpt :: R.Component Props
 sidebarCpt = here.component "sidebar" cpt
   where
-    cpt props@{ sideTab } _ = do
+    cpt props@{ boxes: { sidePanelGraph } } _ = do
+      { sideTab } <- GEST.focusedSidePanel sidePanelGraph
       sideTab' <- T.useLive T.unequal sideTab
 
       pure $ RH.div { id: "sp-container" }
@@ -75,7 +75,7 @@ sidebarCpt = here.component "sidebar" cpt
             GET.SideTabCommunity -> sideTabCommunity sideTabProps []
         ]
       where
-        sideTabProps = RX.pick props :: Record SideTabProps
+        sideTabProps = RX.pick props :: Record Props
 
 type SideTabNavProps = (
     sideTab  :: T.Box GET.SideTab
@@ -84,7 +84,6 @@ type SideTabNavProps = (
 
 sideTabNav :: R2.Component SideTabNavProps
 sideTabNav = R.createElement sideTabNavCpt
-
 sideTabNavCpt :: R.Component SideTabNavProps
 sideTabNavCpt = here.component "sideTabNav" cpt
   where
@@ -105,28 +104,25 @@ sideTabNavCpt = here.component "sideTabNav" cpt
                 , on: { click: \_ -> T.write_ tab sideTab }
                 } [ H.text $ show tab ]
 
-type SideTabProps = Props
-
-sideTabLegend :: R2.Component SideTabProps
+sideTabLegend :: R2.Component Props
 sideTabLegend = R.createElement sideTabLegendCpt
-
-sideTabLegendCpt :: R.Component SideTabProps
+sideTabLegendCpt :: R.Component Props
 sideTabLegendCpt = here.component "sideTabLegend" cpt
   where
-    cpt props@{ metaData: GET.MetaData { legend } } _ = do
+    cpt { metaData: GET.MetaData { legend } } _ = do
       pure $ H.div {}
         [ Legend.legend { items: Seq.fromFoldable legend }
         , documentation EN
         ]
 
-sideTabData :: R2.Component SideTabProps
+sideTabData :: R2.Component Props
 sideTabData = R.createElement sideTabDataCpt
-
-sideTabDataCpt :: R.Component SideTabProps
+sideTabDataCpt :: R.Component Props
 sideTabDataCpt = here.component "sideTabData" cpt
   where
-    cpt props _ = do
-      selectedNodeIds' <- T.useLive T.unequal props.selectedNodeIds
+    cpt props@{ boxes: { sidePanelGraph } } _ = do
+      { selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
+      selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
 
       pure $ RH.div {}
         [ selectedNodes (Record.merge { nodesMap: SigmaxT.nodesGraphMap props.graph } props) []
@@ -141,28 +137,22 @@ sideTabDataCpt = here.component "sideTabData" cpt
                   } []
           ]
         ]
-        where
-          checkbox text = RH.li {}
-                          [ RH.span {} [ RH.text text ]
-                          , RH.input { type: "checkbox"
-                                     , className: "checkbox"
-                                     , defaultChecked: true
-                                     , title: "Mark as completed" } ]
 
 
-sideTabCommunity :: R2.Component SideTabProps
+sideTabCommunity :: R2.Component Props
 sideTabCommunity = R.createElement sideTabCommunityCpt
-
-sideTabCommunityCpt :: R.Component SideTabProps
+sideTabCommunityCpt :: R.Component Props
 sideTabCommunityCpt = here.component "sideTabCommunity" cpt
   where
-    cpt props _ = do
-      selectedNodeIds' <- T.useLive T.unequal props.selectedNodeIds
+    cpt props@{ boxes: { sidePanelGraph }
+              , frontends } _ = do
+      { selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
+      selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
 
       pure $ RH.div { className: "col-md-12", id: "query" }
         [ selectedNodes (Record.merge { nodesMap: SigmaxT.nodesGraphMap props.graph } props) []
         , neighborhood props []
-        , query { frontends: props.frontends
+        , query { frontends
                 , metaData: props.metaData
                 , nodesMap: SigmaxT.nodesGraphMap props.graph
                 , searchType: SearchContact
@@ -183,13 +173,13 @@ type SelectedNodesProps = (
 
 selectedNodes :: R2.Component SelectedNodesProps
 selectedNodes = R.createElement selectedNodesCpt
-
 selectedNodesCpt :: R.Component SelectedNodesProps
 selectedNodesCpt = here.component "selectedNodes" cpt
   where
-    cpt props@{ graph
-              , nodesMap
-              , selectedNodeIds } _ = do
+    cpt props@{ boxes: { sidePanelGraph }
+              , graph
+              , nodesMap } _ = do
+      { selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
       selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
 
       pure $ R2.row
@@ -226,12 +216,13 @@ selectedNodesCpt = here.component "selectedNodes" cpt
 
 neighborhood :: R2.Component Props
 neighborhood = R.createElement neighborhoodCpt
-
 neighborhoodCpt :: R.Component Props
 neighborhoodCpt = here.component "neighborhood" cpt
   where
-    cpt { graph
-        , selectedNodeIds } _ = do
+    cpt { boxes: { sidePanelGraph }
+        , graph
+         } _ = do
+      { selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
       selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
 
       pure $ RH.div { className: "tab-content", id: "myTabContent" }
@@ -259,29 +250,31 @@ updateTermButton = R.createElement updateTermButtonCpt
 updateTermButtonCpt :: R.Component UpdateTermButtonProps
 updateTermButtonCpt = here.component "updateTermButton" cpt
   where
-    cpt { buttonType
+    cpt { boxes: { errors
+                 , reloadForest
+                 , sidePanelGraph }
+        , buttonType
         , graphId
         , metaData
         , nodesMap
-        , reloadForest
-        , removedNodeIds
         , rType
-        , selectedNodeIds
         , session
         , text } _ = do
+      { removedNodeIds, sideTab, selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
       selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
 
       pure $ if Set.isEmpty selectedNodeIds' then
                RH.div {} []
              else
                RH.button { className: "btn btn-sm btn-" <> buttonType
-                         , on: { click: onClickRemove selectedNodeIds' }
+                         , on: { click: onClickRemove removedNodeIds selectedNodeIds selectedNodeIds' }
                          } [ RH.text text ]
       where
-        onClickRemove selectedNodeIds' e = do
+        onClickRemove removedNodeIds selectedNodeIds selectedNodeIds' _ = do
           let nodes = mapMaybe (\id -> Map.lookup id nodesMap)
                               $ Set.toUnfoldable selectedNodeIds'
-          sendPatches { graphId: graphId
+          sendPatches { errors
+                      , graphId: graphId
                       , metaData: metaData
                       , nodes
                       , session: session
@@ -298,7 +291,7 @@ badge selectedNodeIds {id, label} =
        , on: { click: onClick }
        } [ RH.h6 {} [ RH.text label ] ]
   where
-    onClick e = do
+    onClick _ = do
       T.write_ (Set.singleton id) selectedNodeIds
 
 badges :: SigmaxT.SGraph -> SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
@@ -309,7 +302,8 @@ neighbourBadges graph selectedNodeIds = SigmaxT.neighbours graph selectedNodes' 
   selectedNodes' = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
 
 type SendPatches =
-  ( graphId      :: NodeID
+  ( errors       :: T.Box (Array FrontendError)
+  , graphId      :: NodeID
   , metaData     :: GET.MetaData
   , nodes        :: Array (Record SigmaxT.Node)
   , reloadForest :: T2.ReloadS
@@ -318,13 +312,16 @@ type SendPatches =
   )
 
 sendPatches :: Record SendPatches -> Effect Unit
-sendPatches { graphId, metaData, nodes, session, termList, reloadForest } = do
+sendPatches { errors, metaData, nodes, reloadForest, session, termList } = do
   launchAff_ do
-    patches <- (parTraverse (sendPatch termList session metaData) nodes) :: Aff (Array NTC.VersionedNgramsPatches)
+    patches <- (parTraverse (sendPatch termList session metaData) nodes) -- :: Aff (Array NTC.VersionedNgramsPatches)
     let mPatch = last patches
     case mPatch of
       Nothing -> pure unit
-      Just (NTC.Versioned patch) -> do
+      Just (Left err) -> liftEffect $ do
+        T.modify_ (A.cons $ FRESTError { error: err }) errors
+        here.log2 "[sendPatches] RESTError" err
+      Just (Right (NTC.Versioned _patch)) -> do
         liftEffect $ T2.reload reloadForest
 
 -- Why is this called delete node?
@@ -332,11 +329,14 @@ sendPatch :: TermList
           -> Session
           -> GET.MetaData
           -> Record SigmaxT.Node
-          -> Aff NTC.VersionedNgramsPatches
+          -> Aff (Either RESTError NTC.VersionedNgramsPatches)
 sendPatch termList session (GET.MetaData metaData) node = do
-    ret  <- NTC.putNgramsPatches coreParams versioned
-    task <- NTC.postNgramsChartsAsync coreParams  -- TODO add task
-    pure ret
+    eRet  <- NTC.putNgramsPatches coreParams versioned
+    case eRet of
+      Left err -> pure $ Left err
+      Right ret -> do
+        _task <- NTC.postNgramsChartsAsync coreParams  -- TODO add task
+        pure $ Right ret
   where
     nodeId :: NodeID
     nodeId = unsafePartial $ fromJust $ fromString node.id
@@ -355,9 +355,6 @@ sendPatch termList session (GET.MetaData metaData) node = do
 
     term :: NTC.NgramsTerm
     term = NTC.normNgram tabNgramType node.label
-
-    pt :: NTC.NgramsTablePatch
-    pt = NTC.fromNgramsPatches np
 
     np :: NTC.NgramsPatches
     np = NTC.singletonPatchMap term $ NTC.NgramsPatch { patch_children: mempty, patch_list }

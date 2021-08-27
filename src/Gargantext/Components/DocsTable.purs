@@ -1,47 +1,47 @@
 -- TODO: this module should be replaced by FacetsTable
 module Gargantext.Components.DocsTable where
 
+import Gargantext.Prelude
+
 import DOM.Simple.Console (log2)
 import DOM.Simple.Event as DE
-import Data.Argonaut (class EncodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Array as A
+import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
 import Data.Lens ((^.))
 import Data.Lens.At (at)
 import Data.Lens.Record (prop)
-import Data.Map    as Map
+import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
 import Data.Newtype (class Newtype)
 import Data.Ord.Down (Down(..))
 import Data.Set (Set)
-import Data.Set    as Set
+import Data.Set as Set
 import Data.String as Str
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Category (rating)
 import Gargantext.Components.Category.Types (Star(..))
 import Gargantext.Components.DocsTable.Types (DocumentsView(..), Hyperdata(..), LocalUserScore, Query, Response(..), Year, sampleData)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Nodes.Texts.Types as TextsT
-import Gargantext.Components.Table             as TT
-import Gargantext.Components.Table.Types       as TT
+import Gargantext.Components.Table as TT
+import Gargantext.Components.Table.Types as TT
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
-import Gargantext.Prelude
-import Gargantext.Prelude (class Ord, Unit, bind, const, discard, identity, mempty, otherwise, pure, show, unit, ($), (/=), (<$>), (<<<), (<>), (==))
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, get, delete)
-import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), SidePanelState(..), TableResult, TabSubType, TabType, showTabType')
+import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), SidePanelState(..), TabSubType, TabType, TableResult, showTabType')
 import Gargantext.Utils (sortWith)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParam, mQueryParamS, queryParam, queryParamS)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
-import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
@@ -61,14 +61,14 @@ type Path a =
   )
 
 type CommonProps =
-  ( cacheState     :: T.Box NT.CacheState
+  ( boxes          :: Boxes
+  , cacheState     :: T.Box NT.CacheState
   , frontends      :: Frontends
   , listId         :: Int
   , mCorpusId      :: Maybe Int
   , nodeId         :: Int
   , session        :: Session
   , sidePanel      :: T.Box (Maybe (Record TextsT.SidePanel))
-  , sidePanelState :: T.Box SidePanelState
   , tabType        :: TabType
   -- ^ tabType is not ideal here since it is too much entangled with tabs and
   -- ngramtable. Let's see how this evolves.  )
@@ -77,16 +77,14 @@ type CommonProps =
   )
 
 type LayoutProps =
-  (
-    chart      :: R.Element
+  ( chart      :: R.Element
   , showSearch :: Boolean
   | CommonProps
   -- , path      :: Record (Path a)
   )
 
 type PageLayoutProps =
-  (
-    key    :: String  -- NOTE Necessary to clear the component when cache state changes
+  ( key    :: String  -- NOTE Necessary to clear the component when cache state changes
   , params :: TT.Params
   , query  :: Query
   | CommonProps
@@ -97,7 +95,6 @@ _localCategories     = prop (SProxy :: SProxy "localCategories")
 
 docViewLayout :: Record LayoutProps -> R.Element
 docViewLayout props = R.createElement docViewLayoutCpt props []
-
 docViewLayoutCpt :: R.Component LayoutProps
 docViewLayoutCpt = here.component "docViewLayout" cpt
   where
@@ -114,10 +111,10 @@ type Props = (
 
 docView :: R2.Component Props
 docView = R.createElement docViewCpt
-
 docViewCpt :: R.Component Props
 docViewCpt = here.component "docView" cpt where
-  cpt { layout: { cacheState
+  cpt { layout: { boxes
+                , cacheState
                 , chart
                 , frontends
                 , listId
@@ -126,7 +123,6 @@ docViewCpt = here.component "docView" cpt where
                 , session
                 , showSearch
                 , sidePanel
-                , sidePanelState
                 , tabType
                 , totalRecords
                 , yearFilter
@@ -142,7 +138,8 @@ docViewCpt = here.component "docView" cpt where
         [ chart
         , if showSearch then searchBar { query } [] else H.div {} []
         , H.div {className: "col-md-12"}
-          [ pageLayout { cacheState
+          [ pageLayout { boxes
+                       , cacheState
                        , frontends
                        , key: "docView-" <> (show cacheState')
                        , listId
@@ -152,7 +149,6 @@ docViewCpt = here.component "docView" cpt where
                        , query: query'
                        , session
                        , sidePanel
-                       , sidePanelState
                        , tabType
                        , totalRecords
                        , yearFilter
@@ -163,7 +159,6 @@ type SearchBarProps =
 
 searchBar :: R2.Component SearchBarProps
 searchBar = R.createElement searchBarCpt
-
 searchBarCpt :: R.Component SearchBarProps
 searchBarCpt = here.component "searchBar" cpt
   where
@@ -221,9 +216,9 @@ type PageParams = {
   , yearFilter  :: Maybe Year
   }
 
-getPageHash :: Session -> PageParams -> Aff String
-getPageHash session { nodeId, tabType } = do
-  (get session $ tableHashRoute nodeId tabType) :: Aff String
+getPageHash :: Session -> PageParams -> Aff (Either RESTError String)
+getPageHash session { nodeId, tabType } =
+  get session $ tableHashRoute nodeId tabType
 
 convOrderBy :: Maybe (TT.OrderByDirection TT.ColumnName) -> Maybe OrderBy
 convOrderBy (Just (TT.ASC  (TT.ColumnName "Date")))  = Just DateAsc
@@ -261,18 +256,16 @@ filterDocsByYear year docs = A.filter filterFunc docs
 
 pageLayout :: R2.Component PageLayoutProps
 pageLayout = R.createElement pageLayoutCpt
-
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = here.component "pageLayout" cpt where
-  cpt props@{ cacheState
-            , frontends
+  cpt props@{ boxes
+            , cacheState
             , listId
             , mCorpusId
             , nodeId
             , params
             , query
             , session
-            , sidePanel
             , tabType
             , yearFilter
             } _ = do
@@ -299,14 +292,16 @@ pageLayoutCpt = here.component "pageLayout" cpt where
 
     case cacheState' of
       NT.CacheOn -> do
-        let paint (Tuple count docs) = page { documents: docs
+        let paint (Tuple count docs) = page { boxes
+                                            , documents: docs
                                             , layout: props { totalRecords = count }
                                             , params } []
             mkRequest :: PageParams -> GUC.Request
             mkRequest p = GUC.makeGetRequest session $ tableRoute p
 
-        useLoaderWithCacheAPI {
-            cacheEndpoint: getPageHash session
+        useLoaderWithCacheAPI
+          { boxes
+          , cacheEndpoint: getPageHash session
           , handleResponse
           , mkRequest
           , path
@@ -318,27 +313,31 @@ pageLayoutCpt = here.component "pageLayout" cpt where
         paramsS' <- T.useLive T.unequal paramsS
         let loader p = do
               let route = tableRouteWithPage (p { params = paramsS', query = query })
-              res <- get session $ route
+              eRes <- get session $ route
               liftEffect $ do
                 here.log2 "table route" route
-                here.log2 "table res" res
-              pure $ handleResponse res
-            render (Tuple count documents) = pagePaintRaw { documents
+                here.log2 "table res" eRes
+              pure $ handleResponse <$> eRes
+        let render (Tuple count documents) = pagePaintRaw { documents
                                                           , layout: props { params = paramsS'
                                                                           , totalRecords = count }
                                                           , localCategories
                                                           , params: paramsS } []
-        useLoader (path { params = paramsS' }) loader render
+        let errorHandler err = here.log2 "[pageLayout] RESTError" err
+        useLoader { errorHandler
+                  , path: path { params = paramsS' }
+                  , loader
+                  , render }
 
-type PageProps = (
-    documents :: Array DocumentsView
-  , layout :: Record PageLayoutProps
-  , params :: TT.Params
+type PageProps =
+  ( boxes     :: Boxes
+  , documents :: Array DocumentsView
+  , layout    :: Record PageLayoutProps
+  , params    :: TT.Params
   )
 
 page :: R2.Component PageProps
 page = R.createElement pageCpt
-
 pageCpt :: R.Component PageProps
 pageCpt = here.component "pageCpt" cpt where
   cpt { documents, layout, params } _ = do
@@ -354,7 +353,6 @@ type PagePaintProps = (
 
 pagePaint :: R2.Component PagePaintProps
 pagePaint = R.createElement pagePaintCpt
-
 pagePaintCpt :: R.Component PagePaintProps
 pagePaintCpt = here.component "pagePaintCpt" cpt
   where
@@ -379,8 +377,8 @@ pagePaintCpt = here.component "pagePaintCpt" cpt
           filteredRows params' = TT.filterRows { params: params' } $ (orderWith params') $ A.toUnfoldable documents
 
 
-type PagePaintRawProps = (
-    documents       :: Array DocumentsView
+type PagePaintRawProps =
+  ( documents       :: Array DocumentsView
   , layout          :: Record PageLayoutProps
   , localCategories :: T.Box LocalUserScore
   , params          :: T.Box TT.Params
@@ -388,21 +386,19 @@ type PagePaintRawProps = (
 
 pagePaintRaw :: R2.Component PagePaintRawProps
 pagePaintRaw = R.createElement pagePaintRawCpt
-
 pagePaintRawCpt :: R.Component PagePaintRawProps
 pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
   cpt { documents
-      , layout: { frontends
+      , layout: { boxes
+                , frontends
                 , listId
                 , mCorpusId
                 , nodeId
                 , session
                 , sidePanel
-                , sidePanelState
                 , totalRecords }
       , localCategories
       , params } _ = do
-    reload <- T.useBox T2.newReload
     mCurrentDocId <- T.useFocused
           (maybe Nothing _.mCurrentDocId)
           (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentDocId = val })) sidePanel
@@ -412,17 +408,15 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
 
     pure $ TT.table
       { colNames
-      , container: TT.defaultContainer { title: "Documents" }
+      , container: TT.defaultContainer
       , params
-      , rows: rows reload localCategories' mCurrentDocId'
+      , rows: rows localCategories' mCurrentDocId'
       , syncResetButton : [ H.div {} [] ]
       , totalRecords
       , wrapColElts
       }
       where
         sid = sessionId session
-        gi Star_1  = "fa fa-star"
-        gi _       = "fa fa-star-empty"
         trashClassName Star_0 _ = "trash"
         trashClassName _ true = "active"
         trashClassName _ false = ""
@@ -431,18 +425,17 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
           | otherwise = Routes.Document sid listId
         colNames = TT.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source", "Score" ]
         wrapColElts = const identity
-        rows reload localCategories' mCurrentDocId' = row <$> A.toUnfoldable documents
+        rows localCategories' mCurrentDocId' = row <$> A.toUnfoldable documents
           where
             row dv@(DocumentsView r@{ _id, category }) =
               { row:
                 TT.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
                             H.div { className: "" }
-                                  [ docChooser { listId
+                                  [ docChooser { boxes
+                                               , listId
                                                , mCorpusId
                                                , nodeId: r._id
-                                               , sidePanel
-                                               , sidePanelState
-                                               , tableReload: reload } []
+                                               , sidePanel } []
                                   ]
                           --, H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
                           , H.div { className: "column-tag flex" }
@@ -467,32 +460,28 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
                 -- checked    = Star_1 == cat
                 selected   = mCurrentDocId' == Just r._id
                 tClassName = trashClassName cat selected
-                className  = gi cat
 
 type DocChooser = (
-    listId         :: ListId
+    boxes :: Boxes
+  , listId         :: ListId
   , mCorpusId      :: Maybe NodeID
   , nodeId         :: NodeID
   , sidePanel      :: T.Box (Maybe (Record TextsT.SidePanel))
-  , sidePanelState :: T.Box SidePanelState
-  , tableReload    :: T2.ReloadS
   )
 
 docChooser :: R2.Component DocChooser
 docChooser = R.createElement docChooserCpt
-
 docChooserCpt :: R.Component DocChooser
 docChooserCpt = here.component "docChooser" cpt
   where
     cpt { mCorpusId: Nothing } _ = do
       pure $ H.div {} []
 
-    cpt { listId
+    cpt { boxes: { sidePanelState }
+        , listId
         , mCorpusId: Just corpusId
         , nodeId
-        , sidePanel
-        , sidePanelState
-        , tableReload } _ = do
+        , sidePanel } _ = do
       mCurrentDocId <- T.useFocused
             (maybe Nothing _.mCurrentDocId)
             (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentDocId = val })) sidePanel
@@ -562,7 +551,7 @@ tableRouteWithPage { listId, nodeId, params: { limit, offset, orderBy, searchTyp
     q   = queryParamS "query" query
     y   = mQueryParam "year" yearFilter
 
-deleteAllDocuments :: Session -> Int -> Aff (Array Int)
+deleteAllDocuments :: Session -> Int -> Aff (Either RESTError (Array Int))
 deleteAllDocuments session = delete session <<< documentsRoute
 
 -- TODO: not optimal but Data.Set lacks some function (Set.alter)

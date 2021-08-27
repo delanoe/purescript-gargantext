@@ -1,7 +1,6 @@
 module Gargantext.Components.Forest
   ( forest
   , forestLayout
-  , Common
   , Props
   ) where
 
@@ -9,60 +8,33 @@ import Gargantext.Prelude
 
 import Data.Array as A
 import Data.Maybe (Maybe(..))
-import Gargantext.AsyncTasks as GAT
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Forest.Tree (treeLoader)
-import Gargantext.Ends (Frontends, Backend)
-import Gargantext.Routes (AppRoute)
-import Gargantext.Sessions (Session(..), Sessions, OpenNodes, unSessions)
-import Gargantext.Types (Handed, switchHanded)
+import Gargantext.Ends (Frontends)
+import Gargantext.Sessions (Session(..), unSessions)
+import Gargantext.Types (switchHanded)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Record.Extra as RX
 import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest"
 
 -- Shared by components here with Tree
-type Common =
-  ( frontends      :: Frontends
-  , handed         :: T.Box Handed
-  , reloadMainPage :: T2.ReloadS
-  , reloadRoot     :: T2.ReloadS
-  , route          :: T.Box AppRoute
-  )
-
 type Props =
-  ( backend            :: T.Box (Maybe Backend)
-  , forestOpen         :: T.Box OpenNodes
-  , reloadForest       :: T2.ReloadS
-  , sessions           :: T.Box Sessions
-  , showLogin          :: T.Box Boolean
-  , tasks              :: T.Box GAT.Storage
-  | Common
-  )
-
-type TreeExtra = (
-    forestOpen :: T.Box OpenNodes
+  ( boxes     :: Boxes
+  , frontends :: Frontends
   )
 
 forest :: R2.Component Props
 forest = R.createElement forestCpt
 forestCpt :: R.Component Props
 forestCpt = here.component "forest" cpt where
-  cpt props@{ backend
-            , forestOpen
-            , frontends
-            , handed
-            , reloadForest
-            , reloadMainPage
-            , reloadRoot
-            , route
-            , sessions
-            , showLogin
-            , tasks } _ = do
+  cpt { boxes: boxes@{ handed
+                     , reloadForest
+                     , sessions }
+      , frontends } _ = do
     -- TODO Fix this. I think tasks shouldn't be a Box but only a Reductor
     -- tasks'        <- GAT.useTasks reloadRoot reloadForest
     -- R.useEffect' $ do
@@ -76,32 +48,24 @@ forestCpt = here.component "forest" cpt where
     -- TODO If `reloadForest` is set, `reload` state should be updated
     -- TODO fix tasks ref
     pure $ H.div { className: "forest-layout-content" }
-      (A.cons (plus { backend, handed, showLogin }) (trees handed' sessions'))
+      (A.cons (plus { boxes }) (trees handed' sessions'))
     where
-      common = RX.pick props :: Record Common
       trees handed' sessions' = (tree handed') <$> unSessions sessions'
-      tree handed' s@(Session {treeId}) =
-        treeLoader { forestOpen
+      tree handed' s@(Session { treeId }) = 
+        treeLoader { boxes
                    , frontends
                    , handed: handed'
                    , reload: reloadForest
-                   , reloadMainPage
-                   , reloadRoot
                    , root: treeId
-                   , route
-                   , session: s
-                   , tasks } []
+                   , session: s } []
 
-type Plus =
-  ( backend   :: T.Box (Maybe Backend)
-  , handed    :: T.Box Handed
-  , showLogin :: T.Box Boolean )
+type Plus = ( boxes :: Boxes )
 
 plus :: R2.Leaf Plus
 plus p = R.createElement plusCpt p []
 plusCpt :: R.Component Plus
 plusCpt = here.component "plus" cpt where
-  cpt { backend, handed, showLogin } _ = do
+  cpt { boxes: { backend, handed, showLogin } } _ = do
     handed' <- T.useLive T.unequal handed
 
     pure $ H.div {}

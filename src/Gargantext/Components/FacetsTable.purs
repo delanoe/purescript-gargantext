@@ -3,16 +3,18 @@
 --       has not been ported to this module yet.
 module Gargantext.Components.FacetsTable where
 
-import Data.Generic.Rep (class Generic)
+import Gargantext.Prelude
+
+import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
-import Data.Show.Generic (genericShow)
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.Sequence (Seq)
 import Data.Sequence as Seq
 import Data.Set (Set)
 import Data.Set as Set
-import Data.Tuple (fst, snd)
+import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
@@ -21,22 +23,18 @@ import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
 import Toestand as T
 
-import Gargantext.Prelude
-
 import Gargantext.Components.Category (CategoryQuery(..), putCategories)
 import Gargantext.Components.Category.Types (Category(..), decodeCategory, favCategory)
-import Gargantext.Components.Search
-  ( Contact(..), Document(..), HyperdataRowContact(..), HyperdataRowDocument(..)
-  , SearchQuery, SearchResult(..), SearchResultTypes(..) )
-
+import Gargantext.Components.Search (Contact(..), Document(..), HyperdataRowContact(..), HyperdataRowDocument(..), SearchQuery, SearchResult(..), SearchResultTypes(..))
 import Gargantext.Components.Table as T
 import Gargantext.Components.Table.Types as T
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(Search, NodeAPI))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, post, deleteWithBody)
-import Gargantext.Types (NodeType(..), OrderBy(..), NodePath(..), NodeID)
+import Gargantext.Types (NodeType(..), OrderBy(..), NodeID)
 import Gargantext.Utils (toggleSet, zeroPad)
 import Gargantext.Utils.Reactix as R2
 
@@ -124,7 +122,6 @@ instance Eq Rows where
 -- | Main layout of the Documents Tab of a Corpus
 docView :: Record Props -> R.Element
 docView props = R.createElement docViewCpt props []
-
 docViewCpt :: R.Component Props
 docViewCpt = here.component "docView" cpt
   where
@@ -153,12 +150,6 @@ docViewCpt = here.component "docView" cpt
             ] 
     -}      ] 
         ]
-      where
-        buttonStyle = { backgroundColor: "peru"
-                      , border: "white"
-                      , color: "white"
-                      , float: "right"
-                      , padding: "9px" }
 
 performDeletions :: Session -> Int -> T.Box Deletions -> Deletions -> Effect Unit
 performDeletions session nodeId deletions deletions' = do
@@ -180,7 +171,6 @@ togglePendingDeletion (_ /\ setDeletions) nid = setDeletions setter
 
 docViewGraph :: Record Props -> R.Element
 docViewGraph props = R.createElement docViewCpt props []
-
 docViewGraphCpt :: R.Component Props
 docViewGraphCpt = here.component "docViewGraph" cpt
   where
@@ -221,8 +211,8 @@ type PagePath = { nodeId :: Int
 initialPagePath :: {session :: Session, nodeId :: Int, listId :: Int, query :: SearchQuery} -> PagePath
 initialPagePath {session, nodeId, listId, query} = {session, nodeId, listId, query, params: T.initialParams}
 
-loadPage :: PagePath -> Aff Rows
-loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy, searchType}} = do
+loadPage :: PagePath -> Aff (Either RESTError Rows)
+loadPage { session, nodeId, listId, query, params: {limit, offset, orderBy }} = do
   let
     convOrderBy (T.ASC  (T.ColumnName "Date")) = DateAsc
     convOrderBy (T.DESC (T.ColumnName "Date")) = DateDesc
@@ -235,12 +225,15 @@ loadPage {session, nodeId, listId, query, params: {limit, offset, orderBy, searc
     p = Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy } (Just nodeId)
 
   --SearchResult {result} <- post session p $ SearchQuery {query: concat query, expected:searchType}
-  SearchResult {result} <- post session p query
-  -- $ SearchQuery {query: concat query, expected: SearchDoc}
-  pure $ case result of
-          SearchResultDoc     {docs}     -> Docs     {docs: doc2view     <$> Seq.fromFoldable docs}
-          SearchResultContact {contacts} -> Contacts {contacts: contact2view <$> Seq.fromFoldable contacts}
-          errMessage                     -> Docs     {docs: Seq.fromFoldable [err2view errMessage]} -- TODO better error view
+  eSearchResult <- post session p query
+  case eSearchResult of
+    Left err -> pure $ Left err
+    Right (SearchResult {result}) ->
+      -- $ SearchQuery {query: concat query, expected: SearchDoc}
+      pure $ Right $ case result of
+              SearchResultDoc     {docs}     -> Docs     {docs: doc2view     <$> Seq.fromFoldable docs}
+              SearchResultContact {contacts} -> Contacts {contacts: contact2view <$> Seq.fromFoldable contacts}
+              errMessage                     -> Docs     {docs: Seq.fromFoldable [err2view errMessage]} -- TODO better error view
 
 doc2view :: Document -> DocumentsView
 doc2view ( Document { id
@@ -271,7 +264,6 @@ doc2view ( Document { id
 
 contact2view :: Contact -> ContactsView
 contact2view (Contact { c_id
-                      , c_created: date
                       , c_hyperdata
                       , c_annuaireId
                       , c_score
@@ -283,7 +275,8 @@ contact2view (Contact { c_id
                          , delete: false
                          }
 
-err2view message =
+err2view :: forall a. a -> DocumentsView
+err2view _message =
   DocumentsView { id: 1
                 , date: ""
                 , title : "SearchNoResult"
@@ -312,15 +305,17 @@ type PageProps = ( rowsLoaded :: Rows | PageLayoutProps )
 -- | Loads and renders a page
 pageLayout :: R2.Component PageLayoutProps
 pageLayout = R.createElement pageLayoutCpt
-
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = here.component "pageLayout" cpt
   where
     cpt { container, deletions, frontends, path, session, totalRecords } _ = do
       path' <- T.useLive T.unequal path
 
-      useLoader path' loadPage $ \rowsLoaded ->
-        page { container, deletions, frontends, path, rowsLoaded, session, totalRecords } []
+      useLoader { errorHandler
+                , loader: loadPage
+                , path: path'
+                , render: \rowsLoaded -> page { container, deletions, frontends, path, rowsLoaded, session, totalRecords } [] }
+    errorHandler err = here.log2 "[pageLayout] RESTError" err
 
 page :: R2.Component PageProps
 page = R.createElement pageCpt
@@ -335,12 +330,11 @@ pageCpt = here.component "page" cpt
         , rowsLoaded
         , session
         , totalRecords } _ = do
-      path'@{ nodeId, listId, query } <- T.useLive T.unequal path
+      path' <- T.useLive T.unequal path
       params <- T.useFocused (_.params) (\a b -> b { params = a }) path
       deletions' <- T.useLive T.unequal deletions
 
-      let isChecked id = Set.member id deletions'.pending
-          isDeleted (DocumentsView {id}) = Set.member id deletions'.deleted
+      let isDeleted (DocumentsView {id}) = Set.member id deletions'.deleted
 
           rows path' = case rowsLoaded of
             Docs     {docs}     -> docRow path'     <$> Seq.filter (not <<< isDeleted) docs
@@ -367,17 +361,12 @@ pageCpt = here.component "page" cpt
         documentUrl id { listId, nodeId } =
             url frontends $ Routes.CorpusDocument (sessionId session) nodeId listId id
 
-        pairUrl (Pair {id,label})
-          | id > 1 = H.a { href, target: "blank" } [ H.text label ]
-            where href = url session $ NodePath (sessionId session) NodeContact (Just id)
-          | otherwise = H.text label
-
         contactRow path' (ContactsView { id, hyperdata: HyperdataRowContact { firstname, lastname, labs }
-                                       , score, annuaireId, delete
+                                       , annuaireId, delete
                                }) =
           { row:
             T.makeRow [ H.div {} [ H.a { className: gi Favorite, on: {click: markClick path'} } [] ]
-                      , maybeStricken delete [ H.a {target: "_blank", href: contactUrl annuaireId id}
+                      , maybeStricken delete [ H.a { target: "_blank", href: contactUrl id }
                                                    [ H.text $ firstname <> " " <> lastname ]
                                              ]
                       , maybeStricken delete [ H.text labs ]
@@ -386,9 +375,9 @@ pageCpt = here.component "page" cpt
           }
           where
             markClick { nodeId }  _     = markCategory session nodeId Favorite [id]
-            contactUrl aId id' = url frontends $ Routes.ContactPage (sessionId session) annuaireId id'
+            contactUrl id' = url frontends $ Routes.ContactPage (sessionId session) annuaireId id'
 
-        docRow path' dv@(DocumentsView {id, score, title, source, authors, pairs, delete, category}) =
+        docRow path' dv@(DocumentsView {id, title, source, delete, category}) =
           { row:
             T.makeRow [ H.div {} [ H.a { className: gi category, on: {click: markClick path'} } [] ]
                       , maybeStricken delete [ H.text $ publicationDate dv ]
@@ -405,7 +394,7 @@ pageCpt = here.component "page" cpt
           | otherwise = H.div {}
 
 publicationDate :: DocumentsView -> String
-publicationDate (DocumentsView {publication_year, publication_month, publication_day}) =
+publicationDate (DocumentsView { publication_year, publication_month }) =
   (zeroPad 2 publication_year) <> "-" <> (zeroPad 2 publication_month)
   -- <> "-" <> (zeroPad 2 publication_day)
 
@@ -417,7 +406,7 @@ derive instance Generic DeleteDocumentQuery _
 derive instance Newtype DeleteDocumentQuery _
 derive newtype instance JSON.WriteForeign DeleteDocumentQuery
 
-deleteDocuments :: Session -> Int -> DeleteDocumentQuery -> Aff (Array Int)
+deleteDocuments :: Session -> Int -> DeleteDocumentQuery -> Aff (Either RESTError (Array Int))
 deleteDocuments session nodeId =
   deleteWithBody session $ NodeAPI Node (Just nodeId) "documents"
 

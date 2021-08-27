@@ -1,6 +1,9 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Add where
 
+import Gargantext.Prelude
+
 import Data.Array (head, length)
+import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Newtype (class Newtype)
@@ -13,6 +16,7 @@ import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), setting
 import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, panel, submitButton)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Lang (Lang(..), translate)
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types (NodeType(..), charCodeIcon)
@@ -27,22 +31,23 @@ import Web.HTML (window)
 import Web.HTML.Navigator (userAgent)
 import Web.HTML.Window (navigator)
 
-import Gargantext.Prelude
-
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Add"
 
-addNode :: Session -> GT.ID -> AddNodeValue -> Aff (Array GT.ID)
+addNode :: Session -> GT.ID -> AddNodeValue -> Aff (Either RESTError (Array GT.ID))
 addNode session parentId = post session $ GR.NodeAPI GT.Node (Just parentId) ""
 
 addNodeAsync :: Session
              -> GT.ID
              -> AddNodeValue
-             -> Aff GT.AsyncTaskWithType
+             -> Aff (Either RESTError GT.AsyncTaskWithType)
 addNodeAsync session parentId q = do
-  task <- post session p q
-  pure $ GT.AsyncTaskWithType {task, typ: GT.AddNode}
-  where p = GR.NodeAPI GT.Node (Just parentId) (GT.asyncTaskTypePath GT.AddNode)
+  eTask :: Either RESTError GT.AsyncTask <- post session p q
+  case eTask of
+    Left err -> pure $ Left err
+    Right task -> pure $ Right $ GT.AsyncTaskWithType { task, typ: GT.AddNode }
+  where
+    p = GR.NodeAPI GT.Node (Just parentId) (GT.asyncTaskTypePath GT.AddNode)
 
 ----------------------------------------------------------------------
 -- TODO AddNodeParams

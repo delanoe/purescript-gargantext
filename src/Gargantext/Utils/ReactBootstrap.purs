@@ -1,8 +1,11 @@
 module Gargantext.Utils.ReactBootstrap where
 
+import Effect (Effect)
 import Reactix as R
 
 import Gargantext.Prelude
+
+import Gargantext.Utils.Reactix as R2
 
 type OverlayTriggerProps =
   (
@@ -15,6 +18,12 @@ type Props =
   (
   )
 
+type AlertProps =
+  ( dismissible :: Boolean
+  , onClose     :: Effect Unit
+  , variant     :: String
+  )
+
 type ContentProps =
   (
   )
@@ -24,21 +33,25 @@ type TitleProps =
     "as" :: String
   )
 
+foreign import alertCpt :: R.Component AlertProps
 foreign import overlayTriggerCpt :: R.Component OverlayTriggerProps
 foreign import popoverCpt :: R.Component Props
 foreign import popoverContentCpt :: R.Component ContentProps
 foreign import popoverTitleCpt :: R.Component TitleProps
 
-overlayTrigger :: Record OverlayTriggerProps -> Array R.Element -> R.Element
+alert :: R2.Component AlertProps
+alert = R.rawCreateElement alertCpt
+
+overlayTrigger :: R2.Component OverlayTriggerProps
 overlayTrigger = R.rawCreateElement overlayTriggerCpt
 
-popover :: Record Props -> Array R.Element -> R.Element
+popover :: R2.Component Props
 popover = R.rawCreateElement popoverCpt
 
-popoverContent :: Record ContentProps -> Array R.Element -> R.Element
+popoverContent :: R2.Component ContentProps
 popoverContent = R.rawCreateElement popoverContentCpt
 
-popoverTitle :: Record TitleProps -> Array R.Element -> R.Element
+popoverTitle :: R2.Component TitleProps
 popoverTitle = R.rawCreateElement popoverTitleCpt
 
 

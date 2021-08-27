@@ -3,6 +3,7 @@ module Gargantext.Components.Nodes.Corpus.Chart.Pie where
 import Data.Array (zip, filter)
 import Data.Array as A
 import Data.Generic.Rep (class Generic)
+import Data.Either (Either)
 import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
@@ -22,6 +23,7 @@ import Gargantext.Components.Charts.Options.Data (dataSerie)
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Series (seriesBarD1, seriesPieD1)
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types
   (MetricsProps, Path, Props, ReloadPath)
@@ -82,8 +84,8 @@ chartOptionsPie { onClick, onInit } (HistoMetrics { dates: dates', count: count'
   , onInit
   }
 
-getMetricsHash :: Session -> ReloadPath -> Aff String
-getMetricsHash session (_ /\ { corpusId, limit, listId, tabType }) = do
+getMetricsHash :: Session -> ReloadPath -> Aff (Either RESTError String)
+getMetricsHash session (_ /\ { corpusId, listId, tabType }) = do
   get session $ ChartHash { chartType: ChartPie, listId: mListId, tabType } (Just corpusId)
   where
     mListId = if listId == 0 then Nothing else (Just listId)
@@ -97,19 +99,19 @@ handleResponse :: HashedResponse ChartMetrics -> HistoMetrics
 handleResponse (HashedResponse { value: ChartMetrics ms }) = ms."data"
 
 mkRequest :: Session -> ReloadPath -> GUC.Request
-mkRequest session (_ /\ path@{ corpusId, limit, listId, tabType }) = GUC.makeGetRequest session $ chartUrl path
+mkRequest session (_ /\ path) = GUC.makeGetRequest session $ chartUrl path
 
 pie :: R2.Leaf Props
 pie props = R.createElement pieCpt props []
-
 pieCpt :: R.Component Props
 pieCpt = here.component "pie" cpt
   where
-    cpt { path, session, onClick, onInit } _ = do
+    cpt { boxes, path, session, onClick, onInit } _ = do
       reload <- T.useBox T2.newReload
 
-      pure $ metricsWithCacheLoadView {
-          getMetricsHash
+      pure $ metricsWithCacheLoadView
+        { boxes
+        , getMetricsHash
         , handleResponse
         , loaded: loadedPie
         , mkRequest: mkRequest session
@@ -121,7 +123,7 @@ pieCpt = here.component "pie" cpt
         }
 
 loadedPie :: Record MetricsProps -> HistoMetrics -> R.Element
-loadedPie p@{ path, reload, session } loaded =
+loadedPie p loaded =
   H.div {} [
   {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: ChartPie, path, reload, session }
@@ -131,15 +133,15 @@ loadedPie p@{ path, reload, session } loaded =
 
 bar :: Record Props -> R.Element
 bar props = R.createElement barCpt props []
-
 barCpt :: R.Component Props
 barCpt = here.component "bar" cpt
   where
-    cpt {path, session, onClick, onInit} _ = do
+    cpt { boxes, path, session, onClick, onInit} _ = do
       reload <- T.useBox T2.newReload
 
       pure $ metricsWithCacheLoadView {
-           getMetricsHash
+           boxes
+         , getMetricsHash
          , handleResponse
          , loaded: loadedBar
          , mkRequest: mkRequest session
@@ -151,7 +153,7 @@ barCpt = here.component "bar" cpt
          }
 
 loadedBar :: Record MetricsProps -> Loaded -> R.Element
-loadedBar p@{ path, reload, session } loaded =
+loadedBar p loaded =
   H.div {} [
   {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: ChartBar, path, reload, session }

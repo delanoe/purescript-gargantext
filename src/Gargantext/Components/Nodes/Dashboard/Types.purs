@@ -2,19 +2,19 @@ module Gargantext.Components.Nodes.Dashboard.Types where
 
 import Gargantext.Prelude
 
+import Data.Either (Either)
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Effect.Aff (Aff)
-import Simple.JSON as JSON
-
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
-
 import Gargantext.Components.Nodes.Types (FTFieldList)
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, get, put)
 import Gargantext.Types (NodeType(..))
+import Simple.JSON as JSON
 
 type Preferences = Maybe String
 
@@ -40,19 +40,18 @@ instance Eq Hyperdata where
 
 type LoadProps = ( nodeId  :: Int, session :: Session )
 
-loadDashboard' :: Record LoadProps -> Aff DashboardData
+loadDashboard' :: Record LoadProps -> Aff (Either RESTError DashboardData)
 loadDashboard' {nodeId, session} = get session $ NodeAPI Node (Just nodeId) ""
 
 -- Just to make reloading effective
-loadDashboardWithReload :: {reload :: Int  | LoadProps} -> Aff DashboardData
+loadDashboardWithReload :: {reload :: Int  | LoadProps} -> Aff (Either RESTError DashboardData)
 loadDashboardWithReload {nodeId, session} = loadDashboard' {nodeId, session}
 
 type SaveProps = ( hyperdata :: Hyperdata | LoadProps )
 
-saveDashboard :: Record SaveProps -> Aff Unit
+saveDashboard :: Record SaveProps -> Aff (Either RESTError Int)
 saveDashboard {hyperdata, nodeId, session} = do
-  _id <- (put session (NodeAPI Node (Just nodeId) "") hyperdata) :: Aff Int
-  pure unit
+  put session (NodeAPI Node (Just nodeId) "") hyperdata
 
 newtype DashboardData =
   DashboardData
