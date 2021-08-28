@@ -35,7 +35,7 @@ import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as TT
 import Gargantext.Components.Table.Types as TT
 import Gargantext.Config.REST (RESTError)
-import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Hooks.Loader (useLoader, useLoaderBox)
 import Gargantext.Routes (SessionRoute(..)) as R
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
@@ -543,90 +543,104 @@ mainNgramsTable = R.createElement mainNgramsTableCpt
 mainNgramsTableCpt :: R.Component MainNgramsTableProps
 mainNgramsTableCpt = here.component "mainNgramsTable" cpt
   where
-    cpt { afterSync
-        , boxes
-        , cacheState
-        , defaultListId
-        , path
-        , tabNgramType
-        , withAutoUpdate } _ = do
+    cpt props@{ cacheState } _ = do
       cacheState' <- T.useLive T.unequal cacheState
-      path' <- T.useLive T.unequal path
 
       -- let path = initialPageParams session nodeId [defaultListId] tabType
 
       case cacheState' of
-        NT.CacheOn -> do
-          let render versioned = mainNgramsTablePaint { afterSync
-                                                      , boxes
-                                                      , cacheState: cacheState'
-                                                      , path
-                                                      , tabNgramType
-                                                      , versioned
-                                                      , withAutoUpdate } []
-          useLoaderWithCacheAPI {
-              cacheEndpoint: versionEndpoint { defaultListId, path: path' }
-            , errorHandler
-            , handleResponse
-            , mkRequest
-            , path: path'
-            , renderer: render
-            }
-        NT.CacheOff -> do
-          -- path <- R.useState' path
-          let render versionedWithCount = mainNgramsTablePaintNoCache { afterSync
-                                                                      , boxes
-                                                                      , cacheState: cacheState'
-                                                                      , path
-                                                                      , tabNgramType
-                                                                      , versionedWithCount
-                                                                      , withAutoUpdate } []
-          useLoader { errorHandler
-                    , loader
-                    , path: path'
-                    , render }
+        NT.CacheOn -> pure $ mainNgramsTableCacheOn props []
+        NT.CacheOff -> pure $ mainNgramsTableCacheOff props []
 
-    errorHandler err = here.log2 "[mainNgramsTable] RESTError" err
+mainNgramsTableCacheOn :: R2.Component MainNgramsTableProps
+mainNgramsTableCacheOn = R.createElement mainNgramsTableCacheOnCpt
+mainNgramsTableCacheOnCpt :: R.Component MainNgramsTableProps
+mainNgramsTableCacheOnCpt = here.component "mainNgramsTableCacheOn" cpt where
+  cpt { afterSync
+      , boxes
+      , defaultListId
+      , path
+      , tabNgramType
+      , withAutoUpdate } _ = do
+    
+    -- let path = initialPageParams session nodeId [defaultListId] tabType
 
-    -- NOTE With cache on
-    -- versionEndpoint :: Record MainNgramsTableProps -> PageParams -> Aff Version
-    versionEndpoint { defaultListId, path: { nodeId, tabType, session } } _ = get session $ R.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
+    path' <- T.useLive T.unequal path
+    let render versioned = mainNgramsTablePaint { afterSync
+                                                , boxes
+                                                , cacheState: NT.CacheOn
+                                                , path
+                                                , tabNgramType
+                                                , versioned
+                                                , withAutoUpdate } []
+    useLoaderWithCacheAPI {
+        cacheEndpoint: versionEndpoint { defaultListId, path: path' }
+      , errorHandler
+      , handleResponse
+      , mkRequest
+      , path: path'
+      , renderer: render
+      }
+  versionEndpoint { defaultListId, path: { nodeId, tabType, session } } _ = get session $ R.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
+  errorHandler err = here.log2 "[mainNgramsTable] RESTError" err
+  mkRequest :: PageParams -> GUC.Request
+  mkRequest path@{ session } = GUC.makeGetRequest session $ url path
+    where
+      url { listIds
+          , nodeId
+          , tabType
+          } = R.GetNgramsTableAll { listIds
+                                  , tabType } (Just nodeId)
+  handleResponse :: VersionedNgramsTable -> VersionedNgramsTable
+  handleResponse v = v
 
-    -- NOTE With cache off
-    loader :: PageParams -> Aff (Either RESTError VersionedWithCountNgramsTable)
-    loader { listIds
-           , nodeId
-           , params: { limit, offset }
-           , searchQuery
-           , session
-           , tabType
-           , termListFilter
-           , termSizeFilter
-           } =
-      get session $ R.GetNgrams params (Just nodeId)
-      where
-        params = { limit
-                 , listIds
-                 , offset: Just offset
-                 , orderBy: Nothing  -- TODO
-                 , searchQuery
-                 , tabType
-                 , termListFilter
-                 , termSizeFilter
-                 }
+mainNgramsTableCacheOff :: R2.Component MainNgramsTableProps
+mainNgramsTableCacheOff = R.createElement mainNgramsTableCacheOnCpt
+mainNgramsTableCacheOffCpt :: R.Component MainNgramsTableProps
+mainNgramsTableCacheOffCpt = here.component "mainNgramsTableCacheOff" cpt where
+  cpt { afterSync
+      , boxes
+      , defaultListId
+      , path
+      , tabNgramType
+      , withAutoUpdate } _ = do
+    let render versionedWithCount = mainNgramsTablePaintNoCache { afterSync
+                                                                , boxes
+                                                                , cacheState: NT.CacheOff
+                                                                , path
+                                                                , tabNgramType
+                                                                , versionedWithCount
+                                                                , withAutoUpdate } []
+    useLoaderBox { errorHandler
+                 , loader
+                 , path
+                 , render }
 
-    -- NOTE With cache on
-    mkRequest :: PageParams -> GUC.Request
-    mkRequest path@{ session } = GUC.makeGetRequest session $ url path
-      where
-        url { listIds
-            , nodeId
-            , tabType
-            } = R.GetNgramsTableAll { listIds
-                                    , tabType } (Just nodeId)
+  errorHandler err = here.log2 "[mainNgramsTable] RESTError" err
 
-    handleResponse :: VersionedNgramsTable -> VersionedNgramsTable
-    handleResponse v = v
+  -- NOTE With cache off
+  loader :: PageParams -> Aff (Either RESTError VersionedWithCountNgramsTable)
+  loader { listIds
+         , nodeId
+         , params: { limit, offset }
+         , searchQuery
+         , session
+         , tabType
+         , termListFilter
+         , termSizeFilter
+         } =
+    get session $ R.GetNgrams params (Just nodeId)
+    where
+      params = { limit
+               , listIds
+               , offset: Just offset
+               , orderBy: Nothing  -- TODO
+               , searchQuery
+               , tabType
+               , termListFilter
+               , termSizeFilter
+               }
+
 
 type MainNgramsTablePaintProps = (
     cacheState :: NT.CacheState

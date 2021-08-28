@@ -7,7 +7,6 @@ import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Newtype (over)
 import Data.Nullable (null)
 import Data.Set as Set
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
