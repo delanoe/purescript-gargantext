@@ -18,6 +18,7 @@ import Gargantext.Components.Forest.Tree.Node.Action (Action(..), Props)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..), readUFBAsText)
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe, panel)
 import Gargantext.Components.Lang (Lang(..))
+import Gargantext.Components.ListSelection as ListSelection
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, postWwwUrlencoded)
@@ -72,8 +73,7 @@ data DroppedFile =
               , lang     :: Lang
               }
 derive instance Generic DroppedFile _
-instance Eq DroppedFile where
-  eq = genericEq
+instance Eq DroppedFile where eq = genericEq
 
 type FileHash = String
 
@@ -93,6 +93,7 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
       mFile <- T.useBox (Nothing :: Maybe UploadFile)
       fileType <- T.useBox CSV
       lang <- T.useBox EN
+      selection <- T.useBox ListSelection.MyListsFirst
 
       let setFileType' val = T.write_ val fileType
       let setLang' val = T.write_ val lang
@@ -124,6 +125,10 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
                 [ formChoiceSafe [EN, FR, No_extraction, Universal] EN setLang'
                   show
                 ]
+              ]
+            , R2.row
+              [ H.div { className: "col-6 flex-space-around" }
+                [ ListSelection.selection { selection } [] ]
               ]
             ]
 

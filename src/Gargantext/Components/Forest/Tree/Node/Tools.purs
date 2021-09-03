@@ -201,7 +201,6 @@ type CheckboxProps =
 
 checkbox :: R2.Leaf CheckboxProps
 checkbox props = R.createElement checkboxCpt props []
-
 checkboxCpt :: R.Component CheckboxProps
 checkboxCpt = here.component "checkbox" cpt
   where
