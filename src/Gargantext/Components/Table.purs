@@ -64,7 +64,7 @@ tableHeaderLayoutCpt = here.component "tableHeaderLayout" cpt
       cacheState' <- T.useLive T.unequal cacheState
 
       pure $ R.fragment
-        [ R2.row [FV.backButton, FV.homeButton]
+        [ R2.row [FV.backButton]
         ,
           R2.row
           [ H.div {className: "col-md-3"} [ H.h3 {} [H.text title] ]
@@ -111,7 +111,7 @@ tableHeaderLayoutCpt = here.component "tableHeaderLayout" cpt
 
     cacheStateToggle NT.CacheOn = NT.CacheOff
     cacheStateToggle NT.CacheOff = NT.CacheOn
-  
+
 table :: R2.Leaf Props
 table props = R.createElement tableCpt props []
 tableCpt :: R.Component Props
@@ -325,11 +325,3 @@ string2PageSize "50" = PS50
 string2PageSize "100" = PS100
 string2PageSize "200" = PS200
 string2PageSize _    = PS10
-
-
-
-
-
-
-
-

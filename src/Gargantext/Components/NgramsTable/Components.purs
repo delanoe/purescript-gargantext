@@ -9,25 +9,19 @@ import Data.Maybe (Maybe(..), maybe, isJust)
 import Data.Nullable (null, toMaybe)
 import Data.Set (Set)
 import Data.Set as Set
-import React.DOM (a, span, text)
-import React.DOM.Props as DOM
 import Effect (Effect)
 import FFI.Simple (delay)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (searchQuery)
+import Gargantext.Components.NgramsTable.Core (Action(..), Dispatch, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm, _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list, _ngrams, _occurrences, ngramsTermText, replace, setTermListA)
+import Gargantext.Components.Table as Tbl
+import Gargantext.Prelude (Unit, bind, const, discard, map, not, otherwise, pure, show, unit, ($), (+), (/=), (<<<), (<>), (==), (>), (||))
+import Gargantext.Types as T
+import Gargantext.Utils.Reactix as R2
+import React.DOM (a, span, text)
+import React.DOM.Props as DOM
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
-
-import Gargantext.Prelude
-  ( Unit, bind, const, discard, map, not, otherwise
-  , pure, show, unit, ($), (+), (/=), (<<<), (<>), (==), (>), (||) )
-
-import Gargantext.Components.NgramsTable.Core
-  ( Action(..), Dispatch, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm
-  , _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list
-  , _ngrams, _occurrences, ngramsTermText, replace, setTermListA )
-import Gargantext.Components.Table as Tbl
-import Gargantext.Types as T
-import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.NgramsTable.Components"
@@ -37,44 +31,60 @@ type SearchInputProps =
   , searchQuery :: T.Box String
   )
 
-searchInput :: Record SearchInputProps -> R.Element
+searchInput :: R2.Leaf SearchInputProps
 searchInput props = R.createElement searchInputCpt props []
-
 searchInputCpt :: R.Component SearchInputProps
 searchInputCpt = here.component "searchInput" cpt
   where
     cpt { searchQuery } _ = do
-      searchQuery' <- T.useLive T.unequal searchQuery
-
       pure $ R2.row [
         H.div { className: "col-12" } [
           H.div { className: "input-group" }
-            [ searchButton searchQuery'
-            , fieldInput searchQuery'
+            [ searchButton { searchQuery } []
+            , searchFieldInput { searchQuery } []
             ]
           ]
         ]
-        where
-          searchButton searchQuery' =
-            H.div { className: "input-group-prepend" }
-              [ if searchQuery' /= ""
-                then removeButton
-                else H.span { className: "fa fa-search input-group-text" } []
-              ]
-          removeButton =
-            H.button { className: "btn btn-danger"
-                     , on: {click: \_ -> T.write "" searchQuery}}
-              [ H.span {className: "fa fa-times"} []]
 
-          fieldInput searchQuery' =
-            H.input { className: "form-control"
-                    , defaultValue: searchQuery'
-                    , name: "search"
-                    , on: { input: \e -> T.write (R.unsafeEventValue e) searchQuery }
-                    , placeholder: "Search"
-                    , type: "value"
-                    }
+type SearchButtonProps =
+  ( searchQuery :: T.Box String
+  )
 
+searchButton :: R2.Component SearchButtonProps
+searchButton = R.createElement searchButtonCpt
+searchButtonCpt :: R.Component SearchButtonProps
+searchButtonCpt = here.component "searchButton" cpt where
+  cpt { searchQuery } _ = do
+    searchQuery' <- T.useLive T.unequal searchQuery
+    
+    pure $ H.div { className: "input-group-prepend" }
+      [ if searchQuery' /= ""
+        then
+          H.button { className: "btn btn-danger"
+                   , on: {click: \_ -> T.write "" searchQuery}}
+          [ H.span {className: "fa fa-times"} []]
+        else H.span { className: "fa fa-search input-group-text" } []
+      ]
+
+type SearchFieldInputProps =
+  ( searchQuery :: T.Box String
+  )
+
+searchFieldInput :: R2.Component SearchFieldInputProps
+searchFieldInput = R.createElement searchFieldInputCpt
+searchFieldInputCpt :: R.Component SearchFieldInputProps
+searchFieldInputCpt = here.component "searchFieldInput" cpt where
+  cpt { searchQuery } _ = do
+    -- searchQuery' <- T.useLive T.unequal searchQuery
+    
+    pure $ H.input { className: "form-control"
+                   -- , defaultValue: searchQuery'
+                   , name: "search"
+                   , on: { input: \e -> T.write (R.unsafeEventValue e) searchQuery }
+                   , placeholder: "Search"
+                   , type: "value"
+                   }
+    
 type SelectionCheckboxProps =
   ( allNgramsSelected :: Boolean
   , dispatch          :: Dispatch
@@ -83,7 +93,6 @@ type SelectionCheckboxProps =
 
 selectionCheckbox :: Record SelectionCheckboxProps -> R.Element
 selectionCheckbox props = R.createElement selectionCheckboxCpt props []
-
 selectionCheckboxCpt :: R.Component SelectionCheckboxProps
 selectionCheckboxCpt = here.component "selectionCheckbox" cpt
   where

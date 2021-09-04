@@ -123,9 +123,9 @@ codeEditorCpt = here.component "codeEditor" cpt
 
       pure $ H.div { className: "code-editor" }
         [ toolbar { controls, onChange }
-        , H.div { className: "row error" }
+        , H.div { className: "row no-gutters error" }
           [ errorComponent {error: controls.error} ]
-        , H.div { className: "row editor" }
+        , H.div { className: "row no-gutters editor" }
           [ H.div { className: "code-area " <> (codeHidden viewType') }
             [ H.div { className: "code-container" }
               [ H.textarea { defaultValue: codeS'
@@ -217,15 +217,15 @@ toolbarCpt = here.component "toolbar" cpt
       codeType' <- T.useLive T.unequal codeType
 
       pure $
-        H.div { className: "row toolbar" }
-          [ H.div { className: "col-2" }
+        H.div { className: "row no-gutters align-items-center mb-3 code-editor__toolbar" }
+          [ H.div { className: "code-editor__toolbar__type" }
                [ codeTypeSelector {
                    codeType
                   -- Handle rerendering of preview when viewType changed
                  , onChange: \ct -> onChange ct codeS'
                  }
                ]
-          , H.div { className: "col-1" }
+          , H.div {}
              [ viewTypeSelector {state: viewType} [] ]
           ]
 
@@ -246,7 +246,7 @@ errorComponentCpt = here.component "errorComponent" cpt
 
       pure $ case error' of
         Nothing -> H.div {} []
-        Just err -> H.div { className: "text-danger" } [ H.text err ]
+        Just err -> H.div { className: "text-danger mb-3" } [ H.text err ]
 
 
 type CodeTypeSelectorProps =

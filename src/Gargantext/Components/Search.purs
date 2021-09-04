@@ -1,14 +1,16 @@
 module Gargantext.Components.Search where
 
-import Data.Generic.Rep (class Generic)
+import Gargantext.Prelude
+
+import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
-import Data.Show.Generic (genericShow)
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype)
+import Data.Show.Generic (genericShow)
+import Gargantext.Utils.SimpleJSON as GUSJ
 import Simple.JSON as JSON
 import Simple.JSON.Generics as JSONG
-
-import Gargantext.Prelude
 
 -- Example:
 --   [["machine","learning"],["artificial","intelligence"]]
@@ -43,13 +45,13 @@ derive newtype instance JSON.ReadForeign SearchResult
 derive newtype instance JSON.WriteForeign SearchResult
 
 ------------------------------------------------------------------------
-data SearchResultTypes = SearchResultDoc     { docs     :: Array Document}
-                       | SearchNoResult      { message  :: String        }
-                       | SearchResultContact { contacts :: Array Contact }
+data SearchResultTypes = SearchResultDoc     { docs     :: Array Document }
+                       | SearchNoResult      { message  :: String         }
+                       | SearchResultContact { contacts :: Array Contact  }
 derive instance Generic SearchResultTypes _
 instance Eq SearchResultTypes where eq = genericEq
 instance Show SearchResultTypes where show = genericShow
-instance JSON.ReadForeign SearchResultTypes where readImpl = JSONG.untaggedSumRep
+instance JSON.ReadForeign SearchResultTypes where readImpl = GUSJ.taggedSumRep
 instance JSON.WriteForeign SearchResultTypes where
   writeImpl (SearchResultDoc s)     = JSON.writeImpl s
   writeImpl (SearchNoResult s)      = JSON.writeImpl s
@@ -73,25 +75,25 @@ derive newtype instance JSON.WriteForeign Document
 
 ------------------------------------------------------------------------
 newtype HyperdataRowDocument =
-  HyperdataRowDocument { bdd                :: Maybe String
-                       , doi                :: Maybe String
-                       , url                :: Maybe String
-                       , uniqId             :: Maybe String
-                       , uniqIdBdd          :: Maybe String
-                       , page               :: Maybe Int
-                       , title              :: Maybe String
+  HyperdataRowDocument { abstract           :: Maybe String
                        , authors            :: Maybe String
+                       , bdd                :: Maybe String
+                       , doi                :: Maybe String
                        , institutes         :: Maybe String
-                       , source             :: Maybe String
-                       , abstract           :: Maybe String
+                       , language_iso2      :: Maybe String
+                       , page               :: Maybe Int
                        , publication_date   :: Maybe String
-                       , publication_year   :: Maybe Int
-                       , publication_month  :: Maybe Int
                        , publication_day    :: Maybe Int
                        , publication_hour   :: Maybe Int
                        , publication_minute :: Maybe Int
+                       , publication_month  :: Maybe Int
                        , publication_second :: Maybe Int
-                       , language_iso2      :: Maybe String
+                       , publication_year   :: Maybe Int
+                       , source             :: Maybe String
+                       , title              :: Maybe String
+                       , url                :: Maybe String
+                       , uniqId             :: Maybe String
+                       , uniqIdBdd          :: Maybe String
                        }
 
 derive instance Generic HyperdataRowDocument _

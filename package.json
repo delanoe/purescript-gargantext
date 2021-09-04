@@ -1,6 +1,6 @@
 {
     "name": "Gargantext",
-    "version": "0.0.2.9.6.1",
+    "version": "0.0.3.1",
     "scripts": {
         "generate-purs-packages-nix": "./nix/generate-purs-packages.nix",
         "generate-psc-packages-nix": "./nix/generate-packages-json.bash",
@@ -17,13 +17,14 @@
         "clean": "rm -Rf output node_modules",
         "clean-js": "rm -Rf node_modules",
         "clean-ps": "rm -Rf output",
-        "test": "pulp test",
         "server": "serve dist",
         "prod": "yarn prod:compile && yarn prod:dce && yarn prod:bundle && yarn prod:pack",
         "prod:compile": "pulp build -- -g corefn",
         "prod:dce": "zephyr -f Main.main",
         "prod:bundle": "pulp browserify --skip-compile -o dce-output -t app.js",
-        "prod:pack": "parcel build index.html -d prod --public-url . --no-source-maps"
+        "prod:pack": "parcel build index.html -d prod --public-url . --no-source-maps",
+        "test-pulp": "pulp test",
+	"test": "gauge run specs/"
     },
     "dependencies": {
         "@popperjs/core": "^2.9.2",
@@ -47,12 +48,14 @@
         "sigma": "git://github.com/poorscript/sigma.js#garg"
     },
     "devDependencies": {
-        "@babel/core": "^7.12.9",
+        "@babel/core": "^7.15.0",
         "@babel/preset-react": "^7.12.7",
+	"@getgauge/cli": "^1.4.0",
         "parcel": "^2.0.0-beta.2",
         "react-testing-library": "^8.0.1",
         "sass": "^1.35.2",
         "serve": "^12.0.0",
+	"taiko": "latest",
         "vscode-languageserver": "^7.0.0",
         "xhr2": "^0.2.1"
     },

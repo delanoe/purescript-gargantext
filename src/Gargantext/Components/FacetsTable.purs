@@ -5,6 +5,7 @@ module Gargantext.Components.FacetsTable where
 
 import Gargantext.Prelude
 
+import DOM.Simple.Console (log2)
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
@@ -18,17 +19,13 @@ import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Simple.JSON as JSON
-import Toestand as T
-
+import Effect.Class (liftEffect)
 import Gargantext.Components.Category (CategoryQuery(..), putCategories)
 import Gargantext.Components.Category.Types (Category(..), decodeCategory, favCategory)
 import Gargantext.Components.Search (Contact(..), Document(..), HyperdataRowContact(..), HyperdataRowDocument(..), SearchQuery, SearchResult(..), SearchResultTypes(..))
 import Gargantext.Components.Table as T
 import Gargantext.Components.Table.Types as T
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (RESTError(..))
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(Search, NodeAPI))
@@ -37,6 +34,10 @@ import Gargantext.Sessions (Session, sessionId, post, deleteWithBody)
 import Gargantext.Types (NodeType(..), OrderBy(..), NodeID)
 import Gargantext.Utils (toggleSet, zeroPad)
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.FacetsTable"
@@ -67,10 +68,8 @@ newtype Pair =
        }
 
 derive instance Generic Pair _
-instance Eq Pair where
-  eq = genericEq
-instance Show Pair where
-  show = genericShow
+instance Eq Pair where eq = genericEq
+instance Show Pair where show = genericShow
 
 ----------------------------------------------------------------------
 newtype DocumentsView =
@@ -90,10 +89,8 @@ newtype DocumentsView =
   }
 
 derive instance Generic DocumentsView _
-instance Eq DocumentsView where
-  eq = genericEq
-instance Show DocumentsView where
-  show = genericShow
+instance Eq DocumentsView where eq = genericEq
+instance Show DocumentsView where show = genericShow
 
 ----------------------------------------------------------------------
 newtype ContactsView =
@@ -105,17 +102,14 @@ newtype ContactsView =
   , delete     :: Boolean
   }
 derive instance Generic ContactsView _
-instance Eq ContactsView where
-  eq = genericEq
-instance Show ContactsView where
-  show = genericShow
+instance Eq ContactsView where eq = genericEq
+instance Show ContactsView where show = genericShow
 
 ----------------------------------------------------------------------
 data Rows = Docs     { docs     :: Seq DocumentsView }
           | Contacts { contacts :: Seq ContactsView  }
 derive instance Generic Rows _
-instance Eq Rows where
-  eq = genericEq
+instance Eq Rows where eq = genericEq
 
 ----------------------------------------------------------------------
 
@@ -212,7 +206,7 @@ initialPagePath :: {session :: Session, nodeId :: Int, listId :: Int, query :: S
 initialPagePath {session, nodeId, listId, query} = {session, nodeId, listId, query, params: T.initialParams}
 
 loadPage :: PagePath -> Aff (Either RESTError Rows)
-loadPage { session, nodeId, listId, query, params: {limit, offset, orderBy }} = do
+loadPage { session, nodeId, listId, query, params: {limit, offset, orderBy } } = do
   let
     convOrderBy (T.ASC  (T.ColumnName "Date")) = DateAsc
     convOrderBy (T.DESC (T.ColumnName "Date")) = DateDesc
@@ -228,7 +222,8 @@ loadPage { session, nodeId, listId, query, params: {limit, offset, orderBy }} = 
   eSearchResult <- post session p query
   case eSearchResult of
     Left err -> pure $ Left err
-    Right (SearchResult {result}) ->
+    Right (SearchResult {result}) -> do
+      liftEffect $ log2 "[loadPage] result" result
       -- $ SearchQuery {query: concat query, expected: SearchDoc}
       pure $ Right $ case result of
               SearchResultDoc     {docs}     -> Docs     {docs: doc2view     <$> Seq.fromFoldable docs}
@@ -239,7 +234,6 @@ doc2view :: Document -> DocumentsView
 doc2view ( Document { id
                     , created: date
                     , hyperdata:  HyperdataRowDocument { authors
-                                                       , title
                                                        , source
                                                        , publication_year
                                                        , publication_month
@@ -247,10 +241,11 @@ doc2view ( Document { id
                                                        }
                     , category
                     , score
+                    , title
                     }
         ) = DocumentsView { id
                           , date
-                          , title: fromMaybe "Title" title
+                          , title: title
                           , source: fromMaybe "Source" source
                           , score
                           , authors: fromMaybe "Authors" authors
@@ -315,11 +310,14 @@ pageLayoutCpt = here.component "pageLayout" cpt
                 , loader: loadPage
                 , path: path'
                 , render: \rowsLoaded -> page { container, deletions, frontends, path, rowsLoaded, session, totalRecords } [] }
-    errorHandler err = here.log2 "[pageLayout] RESTError" err
+    errorHandler err = do
+      here.log2 "[pageLayout] RESTError" err
+      case err of
+        ReadJSONError err' -> here.log2 "[pageLayout] ReadJSONError" $ show err'
+        _ -> pure unit
 
 page :: R2.Component PageProps
 page = R.createElement pageCpt
-
 pageCpt :: R.Component PageProps
 pageCpt = here.component "page" cpt
   where
@@ -350,8 +348,8 @@ pageCpt = here.component "page" cpt
                      }
       where
         colNames = case rowsLoaded of
-            Docs     _ -> T.ColumnName <$> [ "", "Date", "Title", "Journal", "", "" ]
-            Contacts _ -> T.ColumnName <$> [ "", "Contact", "Organization", "", "", "" ]
+          Docs     _ -> T.ColumnName <$> [ "", "Date", "Title", "Journal", "", "" ]
+          Contacts _ -> T.ColumnName <$> [ "", "Contact", "Organization", "", "", "" ]
 
         wrapColElts = const identity
         -- TODO: how to interprete other scores?

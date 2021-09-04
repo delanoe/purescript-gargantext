@@ -47,17 +47,16 @@ useLoader { errorHandler, loader: loader', path, render } = do
 
   useLoaderEffect { errorHandler, loader: loader', path, state: state }
 
-  pure $ loader { path, render, state } []
+  pure $ loader { render, state } []
 
 
-type LoaderProps path st =
-  ( path   :: path
-  , render :: st -> R.Element
+type LoaderProps st =
+  ( render :: st -> R.Element
   , state  :: T.Box (Maybe st) )
 
-loader :: forall path st. Eq path => Eq st => R2.Component (LoaderProps path st)
+loader :: forall st. Eq st => R2.Component (LoaderProps st)
 loader = R.createElement loaderCpt
-loaderCpt :: forall path st. Eq path => Eq st => R.Component (LoaderProps path st)
+loaderCpt :: forall st. Eq st => R.Component (LoaderProps st)
 loaderCpt = here.component "loader" cpt
   where
     cpt { render, state } _ = do
@@ -90,6 +89,44 @@ useLoaderEffect { errorHandler, loader: loader', path, state } = do
         case l of
           Left err -> liftEffect $ errorHandler err
           Right l' -> liftEffect $ T.write_ (Just l') state
+
+
+type UseLoaderBox path state =
+  ( errorHandler :: RESTError -> Effect Unit
+  , loader       :: path -> Aff (Either RESTError state)
+  , path         :: T.Box path
+  , render       :: state -> R.Element
+  )
+
+useLoaderBox :: forall path st. Eq path => Eq st
+          => Record (UseLoaderBox path st)
+          -> R.Hooks R.Element
+useLoaderBox { errorHandler, loader: loader', path, render } = do
+  state <- T.useBox Nothing
+
+  useLoaderBoxEffect { errorHandler, loader: loader', path, state: state }
+
+  pure $ loader { render, state } []
+
+type UseLoaderBoxEffect path state =
+  ( errorHandler :: RESTError -> Effect Unit
+  , loader       :: path -> Aff (Either RESTError state)
+  , path         :: T.Box path
+  , state        :: T.Box (Maybe state)
+  )
+
+useLoaderBoxEffect :: forall st path. Eq path => Eq st
+                   => Record (UseLoaderBoxEffect path st)
+                   -> R.Hooks Unit
+useLoaderBoxEffect { errorHandler, loader: loader', path, state } = do
+  path' <- T.useLive T.unequal path
+
+  R.useEffect' $ do
+    R2.affEffect "G.H.Loader.useLoaderBoxEffect" $ do
+      l <- loader' path'
+      case l of
+        Left err -> liftEffect $ errorHandler err
+        Right l' -> liftEffect $ T.write_ (Just l') state
 
 
 newtype HashedResponse a = HashedResponse { hash  :: Hash, value :: a }

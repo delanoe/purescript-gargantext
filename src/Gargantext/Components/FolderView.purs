@@ -76,7 +76,7 @@ folderViewCpt = here.component "folderViewCpt" cpt where
     where
       errorHandler err = here.log2 "[folderView] RESTError" err
 
-type FolderViewProps = 
+type FolderViewProps =
   ( backFolder    :: Boolean
   , boxes         :: Boxes
   , folders       :: FTree
@@ -140,7 +140,7 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
   isBackHome _ = false
 
 
-type FolderSimpleProps = 
+type FolderSimpleProps =
   (
     style :: FolderStyle
   , text :: String
@@ -161,7 +161,7 @@ folderSimpleCpt = here.component "folderSimpleCpt" cpt where
       [ H.i { className: icon style nodeType } []
       , H.br {}
       , H.text text ]
-  
+
   icon :: FolderStyle -> GT.NodeType -> String
   icon FolderUp _ = "fa fa-folder-open"
   icon _ nodeType = GT.fldr nodeType false
@@ -169,7 +169,7 @@ folderSimpleCpt = here.component "folderSimpleCpt" cpt where
   getFolderPath :: GT.NodeType -> GT.SessionId -> Int -> String
   getFolderPath nodeType sid nodeId = appPath $ fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
 
-type FolderProps = 
+type FolderProps =
   ( boxes         :: Boxes
   , parentId      :: Int
   , reload        :: T.Box T2.Reload
@@ -197,24 +197,24 @@ folderCpt = here.component "folderCpt" cpt where
     R.useEffect' $ do
         R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
 
-    pure $ 
+    pure $
         H.div {} [
         H.span{style: {position: "absolute"}} [ Popover.popover {
             arrow: false
           , open: false
           , onClose: \_ -> pure unit
           , onOpen:  \_ -> pure unit
-          , ref: popoverRef 
+          , ref: popoverRef
           } [
               popOverIcon
               , mNodePopupView (Record.merge props { dispatch }) (onPopoverClose popoverRef)
               ]]
-      , H.button {on: {click: link ("/#/" <> getFolderPath nodeType sid nodeId) }, className: "btn btn-primary fv btn" } [ 
+      , H.button {on: {click: link ("/#/" <> getFolderPath nodeType sid nodeId) }, className: "btn btn-primary fv btn" } [
           H.i {className: icon style nodeType} []
         , H.br {}
         , H.text text]]
-    
-    
+
+
   icon :: FolderStyle -> GT.NodeType -> String
   icon FolderUp _ = "fa fa-folder-open"
   icon _ nodeType = GT.fldr nodeType false
@@ -225,7 +225,7 @@ folderCpt = here.component "folderCpt" cpt where
   onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
 
   popOverIcon = H.span { className: "fv action" } [
-        H.a { className: "settings fa fa-cog" 
+        H.a { className: "settings fa fa-cog"
           , title : "Each node of the Tree can perform some actions.\n"
             <> "Click here to execute one of them." } []
       ]
@@ -240,21 +240,12 @@ folderCpt = here.component "folderCpt" cpt where
                                            }
 
 backButton :: R.Element
-backButton = 
+backButton =
   H.button {
     className: "btn btn-primary"
   , on: {click: back}
   } [
     H.i { className: "fa fa-arrow-left", title: "Previous view"} []
-  ]
-
-homeButton :: R.Element
-homeButton =
-  H.a {
-    className: "btn btn-primary"
-  , href: appPath Home
-  } [
-    H.i { className: "fa fa-home", title: "Back to home"} []
   ]
 
 type LoadProps =
@@ -299,7 +290,7 @@ performAction = performAction' where
   closePopover { setPopoverRef } =
     liftEffect $ traverse_ (\set -> set false) (R.readRef setPopoverRef)
 
-  refreshFolders p@{ boxes: { reloadForest }, reload } = do 
+  refreshFolders p@{ boxes: { reloadForest }, reload } = do
     liftEffect $ T2.reload reload
     liftEffect $ T2.reload reloadForest
     closePopover p
@@ -320,7 +311,7 @@ performAction = performAction' where
     handleRESTError errors eTask $ \task -> liftEffect $ do
       GAT.insert id task tasks
       here.log2 "[performAction] UpdateNode task:" task
-  
+
   shareTeam username { boxes: { errors }, nodeId: id, session } = do
     eTask <- Share.shareReq session id $ Share.ShareTeamParams { username }
     handleRESTError errors eTask $ \_task -> pure unit

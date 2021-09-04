@@ -8,21 +8,21 @@ import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Show.Generic (genericShow)
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_, throwError)
-import Effect.Class (liftEffect)
+import Effect.Aff (Aff, throwError)
 import Effect.Exception (error)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
-import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..))
-import Gargantext.Components.Nodes.Types (FTField, FTFieldList(..), FTFieldWithIndex, FTFieldsWithIndex(..), Field(..), FieldType(..), Hash, Index, defaultField, defaultHaskell', defaultJSON', defaultMarkdown', defaultPython')
+import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata)
+import Gargantext.Components.Nodes.Types (FTField, FTFieldWithIndex, FTFieldsWithIndex(..), Field(..), FieldType(..), Hash, Index, defaultHaskell', defaultJSON', defaultMarkdown', defaultPython')
+import Gargantext.Components.TileMenu (tileMenu)
 import Gargantext.Config.REST (RESTError(..))
 import Gargantext.Data.Array as GDA
-import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (class Eq, class Show, Unit, bind, discard, pure, show, unit, ($), (+), (-), (<), (<$>), (<<<), (<>), (==), (>))
+import Gargantext.Prelude (class Eq, class Show, Unit, bind, discard, pure, show, unit, ($), (<>), const, (<<<), (+), (==), (-), (<), (>), (<$>))
 import Gargantext.Routes (SessionRoute(Children, NodeAPI))
+import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, get, put, sessionId)
 import Gargantext.Types (AffETableResult, NodeType(..))
 import Gargantext.Utils.Crypto as Crypto
@@ -51,7 +51,7 @@ corpusLayoutCpt = here.component "corpusLayout" cpt where
         key = show (sessionId session) <> "-" <> show nodeId
 
 type KeyProps =
-  ( boxes :: Boxes
+  ( boxes   :: Boxes
   , key     :: String
   , nodeId  :: Int
   , session :: Session
@@ -62,132 +62,40 @@ corpusLayoutMain props = R.createElement corpusLayoutMainCpt props []
 corpusLayoutMainCpt :: R.Component KeyProps
 corpusLayoutMainCpt = here.component "corpusLayoutMain" cpt
   where
-    cpt { boxes, key, nodeId, session } _ = do
-      viewType <- T.useBox Folders
+    cpt { boxes, nodeId, session } _ = do
+      -- Computed
+      corpusCodeRoute <- pure $ const do
+        pure $ GR.CorpusCode (sessionId session) nodeId
+      -- Render
+      pure $
 
-      pure $ H.div {} [
-        H.div {} [
-          H.div { className: "row" } [
-            H.div { className: "col-1" } [ viewTypeSelector {state: viewType} ]
-          , H.div { className: "col-1" } [ FV.homeButton ]
-          ]
-        ]
-      , H.div {} [corpusLayoutSelection { boxes, key, session, state: viewType, nodeId }]
-      ]
-
-type SelectionProps = 
-  ( boxes   :: Boxes
-  , nodeId  :: Int
-  , key     :: String
-  , session :: Session
-  , state   :: T.Box ViewType
-  )
-
-corpusLayoutSelection :: R2.Leaf SelectionProps
-corpusLayoutSelection props = R.createElement corpusLayoutSelectionCpt props []
-corpusLayoutSelectionCpt :: R.Component SelectionProps
-corpusLayoutSelectionCpt = here.component "corpusLayoutSelection" cpt where
-  cpt { boxes, key, nodeId, session, state } _ = do
-    state' <- T.useLive T.unequal state
-
-    pure $ renderContent state' nodeId session key boxes
-
-  renderContent Folders nodeId session _ boxes =
-    FV.folderView { backFolder: true
-                  , boxes
-                  , nodeId
-                  , session
-                   }
-  renderContent Code nodeId session key _ = corpusLayoutWithKey { key, nodeId, session }
-
-type CorpusKeyProps =
-  ( nodeId  :: Int
-  , key     :: String
-  , session :: Session
-  )
-
-corpusLayoutWithKey :: R2.Leaf CorpusKeyProps
-corpusLayoutWithKey props = R.createElement corpusLayoutWithKeyCpt props []
-corpusLayoutWithKeyCpt :: R.Component CorpusKeyProps
-corpusLayoutWithKeyCpt = here.component "corpusLayoutWithKey" cpt where
-  cpt { nodeId, session } _ = do
-    reload <- T.useBox T2.newReload
-    reload' <- T.useLive T.unequal reload
-    useLoader { errorHandler
-              , loader: loadCorpusWithReload
-              , path: { nodeId, reload: reload', session }
-              , render: \corpus -> corpusLayoutView { corpus, nodeId, reload, session } }
-    where
-      errorHandler err = here.log2 "[corpusLayoutWithKey] RESTError" err
-
-type ViewProps =
-  ( corpus  :: NodePoly Hyperdata
-  , nodeId  :: Int
-  , reload  :: T2.ReloadS
-  , session :: Session
-  )
-
-corpusLayoutView :: Record ViewProps -> R.Element
-corpusLayoutView props = R.createElement corpusLayoutViewCpt props []
-corpusLayoutViewCpt :: R.Component ViewProps
-corpusLayoutViewCpt = here.component "corpusLayoutView" cpt
-  where
-    cpt {corpus: (NodePoly {hyperdata: Hyperdata {fields: FTFieldList fields}}), nodeId, reload, session} _ = do
-      let fieldsWithIndex = FTFieldsWithIndex $ List.mapWithIndex (\idx -> \ftField -> { idx, ftField }) fields
-      fieldsS <- T.useBox fieldsWithIndex
-      fields' <- T.useLive T.unequal fieldsS
-      fieldsRef <- R.useRef fields
-      
-      -- handle props change of fields
-      R.useEffect1' fields $ do
-        if R.readRef fieldsRef == fields then
-          pure unit
-        else do
-          R.setRef fieldsRef fields
-          T.write_ fieldsWithIndex fieldsS
-
-      pure $ H.div {}
-        [ H.div { className: "row" }
-          [ H.div { className: "btn btn-primary " <> (saveEnabled fieldsWithIndex fields')
-                  , on: { click: onClickSave {fields: fields', nodeId, reload, session} }
-                  }
-            [ H.span { className: "fa fa-floppy-o" } [  ] ]
-          ]
-        , H.div {}
-          [ fieldsCodeEditor { fields: fieldsS
-                             , nodeId
-                             , session } [] ]
-        , H.div { className: "row" }
-          [ H.div { className: "btn btn-primary"
-                  , on: { click: onClickAdd fieldsS }
-                  }
-            [ H.span { className: "fa fa-plus" } [  ]
+        H.div {}
+        [
+          tileMenu
+          { boxes
+          , currentTile: Just corpusCodeRoute
+          , xTile: Just corpusCodeRoute
+          , yTile: Just corpusCodeRoute
+          }
+          [
+            H.button
+            { className: "btn btn-primary" }
+            [
+              H.i { className: "fa fa-code" } []
             ]
           ]
+        ,
+          H.hr {}
+        ,
+          FV.folderView
+          { nodeId
+          , session
+          , backFolder: true
+          , boxes
+          }
         ]
 
-    saveEnabled :: FTFieldsWithIndex -> FTFieldsWithIndex -> String
-    saveEnabled fs fsS = if fs == fsS then "disabled" else "enabled"
-
-    onClickSave :: forall e. { fields :: FTFieldsWithIndex
-                             , nodeId :: Int
-                             , reload :: T2.ReloadS
-                             , session :: Session } -> e -> Effect Unit
-    onClickSave {fields: FTFieldsWithIndex fields, nodeId, reload, session} _ = do
-      launchAff_ do
-        res <- saveCorpus $ { hyperdata: Hyperdata {fields: FTFieldList $ (_.ftField) <$> fields}
-                            , nodeId
-                            , session }
-        liftEffect $ do
-          _ <- case res of
-                Left err -> here.log2 "[corpusLayoutView] onClickSave RESTError" err
-                _ -> pure unit
-          T2.reload reload
-
-    onClickAdd :: forall e. T.Box FTFieldsWithIndex -> e -> Effect Unit
-    onClickAdd fieldsS _ = do
-      T.modify_ (\(FTFieldsWithIndex fs) -> FTFieldsWithIndex $ 
-        List.snoc fs $ { idx: List.length fs, ftField: defaultField }) fieldsS
+-----------------------------------
 
 
 type FieldsCodeEditorProps =
@@ -270,11 +178,11 @@ fieldCodeEditorWrapper props = R.createElement fieldCodeEditorWrapperCpt props [
 fieldCodeEditorWrapperCpt :: R.Component FieldCodeEditorProps
 fieldCodeEditorWrapperCpt = here.component "fieldCodeEditorWrapperCpt" cpt
   where
-    cpt props@{canMoveDown, canMoveUp, field: Field {name, typ}, onMoveDown, onMoveUp, onRemove, onRename} _ = do
-      pure $ H.div { className: "row card" } [
+    cpt props@{canMoveDown, canMoveUp, field: Field { name }, onMoveDown, onMoveUp, onRemove, onRename} _ = do
+      pure $ H.div { className: "card mb-3" } [
         H.div { className: "card-header" } [
-          H.div { className: "code-editor-heading row" } [
-              H.div { className: "col-4" } [
+          H.div { className: "code-editor-heading row no-gutters justify-content-between" } [
+              H.div { className: "col-5" } [
                  inputWithEnter { onBlur: onRename
                                 , onEnter: \_ -> pure unit
                                 , onValueChanged: onRename
@@ -284,9 +192,8 @@ fieldCodeEditorWrapperCpt = here.component "fieldCodeEditorWrapperCpt" cpt
                                 , placeholder: "Enter file name"
                                 , type: "text" }
               ]
-            , H.div { className: "col-7" } []
-            , H.div { className: "buttons-right col-1" } ([
-                H.div { className: "btn btn-danger"
+            , H.div { className: "d-flex flex-column" } ([
+                H.div { className: "btn btn-danger mb-1"
                       , on: { click: \_ -> onRemove unit }
                       } [
                   H.span { className: "fa fa-trash" } [  ]
