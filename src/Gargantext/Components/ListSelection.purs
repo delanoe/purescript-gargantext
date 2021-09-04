@@ -86,3 +86,10 @@ idsSelectorCpt = here.component "idsSelector" cpt where
                   else SelectedLists (A.cons val lst)
                 f x = x
             T.modify_ f selection
+
+listTree :: R2.Component IdsSelectorProps
+listTree = R.createElement listTreeCpt
+listTreeCpt :: R.Component IdsSelectorProps
+listTreeCpt = here.component "listTree" cpt where
+  cpt { ids, selection } _ = do
+    pure $ H.div {} []
