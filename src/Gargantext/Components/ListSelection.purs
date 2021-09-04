@@ -6,7 +6,9 @@ import Data.Array as A
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe)
+import Gargantext.Sessions (Session(..), unSessions)
 import Gargantext.Types (ListId)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -30,18 +32,19 @@ instance Read Selection where
   read _ = Nothing
 
 type Props =
-  ( selection   :: T.Box Selection )
+  ( root      :: Int
+  , selection :: T.Box Selection )
 
 selection :: R2.Component Props
 selection = R.createElement selectionCpt
 selectionCpt :: R.Component Props
 selectionCpt = here.component "selection" cpt where
-  cpt { selection } _ = do
+  cpt { root, selection } _ = do
     pure $ H.div {}
       [ formChoiceSafe [ MyListsFirst
                        , OtherListsFirst
                        , SelectedLists [] ] MyListsFirst setSelection show
-      , selectedIds { selection } []
+      , selectedIds { root, selection } []
       ]
     where
       setSelection val = T.write_ val selection
@@ -50,26 +53,27 @@ selectedIds :: R2.Component Props
 selectedIds = R.createElement selectedIdsCpt
 selectedIdsCpt :: R.Component Props
 selectedIdsCpt = here.component "selectedIds" cpt where
-  cpt { selection } _ = do
+  cpt { root, selection } _ = do
     selection' <- T.useLive T.unequal selection
 
     pure $ case selection' of
-      SelectedLists ids -> H.div {} [ idsSelector { ids, selection } [] ]
+      SelectedLists ids -> H.div {} [ idsSelector { ids, root, selection } [] ]
       _ -> H.div {} []
 
 type IdsSelectorProps =
   ( ids       :: Array ListId
+  , root      :: Int
   , selection :: T.Box Selection )
 
 idsSelector :: R2.Component IdsSelectorProps
 idsSelector = R.createElement idsSelectorCpt
 idsSelectorCpt :: R.Component IdsSelectorProps
 idsSelectorCpt = here.component "idsSelector" cpt where
-  cpt { ids, selection } _ = do
+  cpt { ids, root, selection } _ = do
     R.useEffect' $ do
       here.log2 "[idsSelector] ids" ids
     
-    pure $ H.div {} $ map checkbox [1, 2, 3, 4]
+    pure $ H.div {} [ listTree { ids, root, selection } [] ] -- $ map checkbox [1, 2, 3, 4]
     where
       checkbox val = H.div {}
         [ H.input { className: "form-check-input"
@@ -91,5 +95,6 @@ listTree :: R2.Component IdsSelectorProps
 listTree = R.createElement listTreeCpt
 listTreeCpt :: R.Component IdsSelectorProps
 listTreeCpt = here.component "listTree" cpt where
-  cpt { ids, selection } _ = do
-    pure $ H.div {} []
+  cpt { ids, root, selection } _ = do
+
+    pure $ H.div {} [ H.text $ show root ]

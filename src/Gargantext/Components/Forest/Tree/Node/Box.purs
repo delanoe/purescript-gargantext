@@ -25,7 +25,7 @@ import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), Settings
 import Gargantext.Components.Forest.Tree.Node.Status (Status(..), hasStatus)
 import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (FrontendError, ID, Name, prettyNodeType)
+import Gargantext.Types (ID, Name, prettyNodeType)
 import Gargantext.Types as GT
 import Gargantext.Utils.Glyphicon (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
@@ -40,7 +40,7 @@ type CommonProps =
   ( dispatch :: Action -> Aff Unit
   , session :: Session )
 
-nodePopupView :: Record NodePopupProps -> R.Element
+nodePopupView :: R2.Leaf NodePopupProps
 nodePopupView p = R.createElement nodePopupCpt p []
 nodePopupCpt :: R.Component NodePopupProps
 nodePopupCpt = here.component "nodePopupView" cpt where

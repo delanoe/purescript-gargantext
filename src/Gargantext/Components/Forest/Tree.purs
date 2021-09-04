@@ -64,7 +64,8 @@ type NodeProps =
  | Common )
 
 type TreeProps =
- ( tree :: FTree
+ ( root :: ID
+ , tree :: FTree
  | NodeProps )
 
 type ChildrenTreeProps =
@@ -91,8 +92,9 @@ type NSCommon =
 -- way. This function is only called by functions in this module, so
 -- we just have to careful in what we pass.
 type ChildLoaderProps =
-  ( id :: ID
+  ( id     :: ID
   , render :: R2.Leaf TreeProps
+  , root   :: ID
   | NodeProps )
 
 type PerformActionProps =
@@ -118,7 +120,7 @@ treeLoaderCpt = here.component "treeLoader" cpt where
         loaded tree' = tree props where
           props = Record.merge common extra where
             common = RecordE.pick p :: Record Common
-            extra = { tree: tree', reloadTree: p.reload, session }
+            extra = { reloadTree: p.reload, root, session, tree: tree' }
         errorHandler err = here.log2 "[treeLoader] RESTError" err
 
 getNodeTree :: Session -> ID -> Aff (Either RESTError FTree)
@@ -135,6 +137,7 @@ treeCpt = here.component "tree" cpt where
         , frontends
         , handed
         , reload
+        , root
         , session
         , tree: NTree (LNode { id, name, nodeType }) children } _ = do
     setPopoverRef <- R.useRef Nothing
@@ -150,6 +153,7 @@ treeCpt = here.component "tree" cpt where
                    , name
                    , nodeType
                    , reload
+                   , root
                    , session
                    , setPopoverRef }
           [ renderChildren (Record.merge p { childProps: { children', folderOpen, render: tree } } ) [] ]
@@ -186,13 +190,14 @@ renderTreeChildren = R.createElement renderTreeChildrenCpt
 renderTreeChildrenCpt :: R.Component ChildrenTreeProps
 renderTreeChildrenCpt = here.component "renderTreeChildren" cpt where
   cpt p@{ childProps: { children'
-                      , render } } _ = do
+                      , render }
+        , root } _ = do
     pure $ R.fragment (map renderChild children')
 
     where
       nodeProps = RecordE.pick p :: Record NodeProps
       renderChild (NTree (LNode {id: cId}) _) = childLoader props [] where
-        props = Record.merge nodeProps { id: cId, render }
+        props = Record.merge nodeProps { id: cId, render, root }
 
 childLoader :: R2.Component ChildLoaderProps
 childLoader = R.createElement childLoaderCpt
@@ -200,7 +205,8 @@ childLoaderCpt :: R.Component ChildLoaderProps
 childLoaderCpt = here.component "childLoader" cpt where
   cpt p@{ boxes: { reloadRoot }
         , reloadTree
-        , render } _ = do
+        , render
+        , root } _ = do
     reload <- T.useBox T2.newReload
     let reloads = [ reload, reloadRoot, reloadTree ]
     cache <- (A.cons p.id) <$> traverse (T.useLive T.unequal) reloads
@@ -213,7 +219,7 @@ childLoaderCpt = here.component "childLoader" cpt where
       fetch _ = getNodeTreeFirstLevel p.session p.id
       paint reload tree' = render (Record.merge base extra) where
         base = nodeProps { reload = reload }
-        extra = { tree: tree' }
+        extra = { root, tree: tree' }
         nodeProps = RecordE.pick p :: Record NodeProps
 
 closePopover { setPopoverRef } =

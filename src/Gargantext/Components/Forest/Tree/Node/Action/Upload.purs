@@ -21,7 +21,7 @@ import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Components.ListSelection as ListSelection
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Routes as GR
-import Gargantext.Sessions (Session, postWwwUrlencoded)
+import Gargantext.Sessions (Session(..), postWwwUrlencoded)
 import Gargantext.Types (NodeType(..), ID)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
@@ -49,8 +49,10 @@ actionUpload :: R2.Component ActionUpload
 actionUpload = R.createElement actionUploadCpt
 actionUploadCpt :: R.Component ActionUpload
 actionUploadCpt = here.component "actionUpload" cpt where
-  cpt { nodeType: Corpus, dispatch, id, session } _ = pure $ uploadFileView {dispatch, id, nodeType: GT.Corpus, session}
-  cpt { nodeType: NodeList, dispatch, id, session } _ = pure $ uploadTermListView {dispatch, id, nodeType: GT.NodeList, session}
+  cpt { nodeType: Corpus, dispatch, id, session } _ =
+    pure $ uploadFileView { dispatch, id, nodeType: GT.Corpus, session }
+  cpt { nodeType: NodeList, dispatch, id, session } _ =
+    pure $ uploadTermListView { dispatch, id, nodeType: GT.NodeList, session }
   cpt props@{ nodeType: _ } _ = pure $ actionUploadOther props []
 
 {-
@@ -88,13 +90,14 @@ uploadFileView props = R.createElement uploadFileViewCpt props []
 uploadFileViewCpt :: R.Component Props
 uploadFileViewCpt = here.component "uploadFileView" cpt
   where
-    cpt {dispatch, id, nodeType} _ = do
+    cpt { dispatch, id, nodeType, session } _ = do
       -- mFile    :: R.State (Maybe UploadFile) <- R.useState' Nothing
       mFile <- T.useBox (Nothing :: Maybe UploadFile)
       fileType <- T.useBox CSV
       lang <- T.useBox EN
       selection <- T.useBox ListSelection.MyListsFirst
 
+      let Session { treeId: root } = session
       let setFileType' val = T.write_ val fileType
       let setLang' val = T.write_ val lang
 
@@ -128,7 +131,7 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
               ]
             , R2.row
               [ H.div { className: "col-6 flex-space-around" }
-                [ ListSelection.selection { selection } [] ]
+                [ ListSelection.selection { root, selection } [] ]
               ]
             ]
 

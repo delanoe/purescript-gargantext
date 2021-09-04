@@ -1,22 +1,22 @@
 module Gargantext.Components.Forest.Tree.Node.Action where
 
+import Gargantext.Prelude
+
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-
-import Gargantext.Prelude
-
-import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut, SubTreeParams(..))
-import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), glyphiconNodeAction)
-import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType, UploadFileBlob)
-import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (UpdateNodeParams)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact.Types (AddContactParams)
+import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (UpdateNodeParams)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType, UploadFileBlob)
+import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), glyphiconNodeAction)
+import Gargantext.Components.Forest.Tree.Node.Tools.FTree (ID)
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut, SubTreeParams(..))
 import Gargantext.Sessions (Session)
-import Gargantext.Types  as GT
+import Gargantext.Types as GT
 
 type Props =
   ( dispatch :: Action -> Aff Unit
-  , id       :: Int
+  , id       :: ID
   , nodeType :: GT.NodeType
   , session  :: Session
   )

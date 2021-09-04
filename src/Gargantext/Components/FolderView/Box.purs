@@ -3,9 +3,7 @@ module Gargantext.Components.FolderView.Box where
 import Gargantext.Prelude
 
 import DOM.Simple as DOM
-import Data.Maybe (Maybe(..))
 import Effect (Effect)
-import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Tools (prettyNodeType)
 import Gargantext.Types (ID, Name)
 import Gargantext.Types as GT
@@ -13,7 +11,6 @@ import Gargantext.Utils.Glyphicon (glyphicon)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.FolderView.Box"
@@ -25,12 +22,11 @@ type NodePopupProps =
   , onPopoverClose :: DOM.Element -> Effect Unit
   )
 
-nodePopupView :: Record NodePopupProps -> R.Element
-nodePopupView props = R.createElement nodePopupCpt props []
-
-nodePopupCpt :: R.Component NodePopupProps
-nodePopupCpt = here.component "nodePopupView" cpt where
-  cpt props@{ id, name, nodeType }  _ = do
+nodePopupView :: R2.Leaf NodePopupProps
+nodePopupView props = R.createElement nodePopupViewCpt props []
+nodePopupViewCpt :: R.Component NodePopupProps
+nodePopupViewCpt = here.component "nodePopupView" cpt where
+  cpt props  _ = do
 
     pure $ H.div tooltipProps
       [ H.div { className: "popup-container" }
@@ -43,7 +39,7 @@ nodePopupCpt = here.component "nodePopupView" cpt where
   tooltipProps = { id: "node-popup-tooltip", title: "Node settings"
                  , data: { toggle: "tooltip", placement: "right" } }
 
-  panelHeading props@{id, name, nodeType } =
+  panelHeading props@{ nodeType } =
     H.div { className: "card-header" }
     [ R2.row
       [ H.div { className: "col-4" }
@@ -53,5 +49,4 @@ nodePopupCpt = here.component "nodePopupView" cpt where
         [ H.span { className: "text-primary center" } [ H.text props.name ] ]
       , H.div { className: "col-1" }
         [ H.a { type: "button", on: { click: closePopover props }, title: "Close"
-              , className: glyphicon "window-close" } [] ]]] where
-           SettingsBox { edit, doc, buttons } = settingsBox nodeType
+              , className: glyphicon "window-close" } [] ]]] 

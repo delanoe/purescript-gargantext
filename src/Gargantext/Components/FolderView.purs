@@ -22,7 +22,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Update (updateRequest)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadArbitraryFile, uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Box (nodePopupView)
-import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
+import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), ID, fTreeID)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Config.Utils (handleRESTError)
@@ -70,8 +70,8 @@ folderViewCpt = here.component "folderViewCpt" cpt where
                                                    , boxes
                                                    , folders
                                                    , nodeId
-                                                   , session
                                                    , reload
+                                                   , session
                                                    , setPopoverRef } }
     where
       errorHandler err = here.log2 "[folderView] RESTError" err

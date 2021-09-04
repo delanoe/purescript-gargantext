@@ -24,7 +24,7 @@ import Gargantext.Prelude (class Eq, class Show, Unit, bind, discard, pure, show
 import Gargantext.Routes (SessionRoute(Children, NodeAPI))
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, get, put, sessionId)
-import Gargantext.Types (AffETableResult, NodeType(..))
+import Gargantext.Types (AffETableResult, NodeType(..), ID)
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
@@ -38,7 +38,7 @@ here = R2.here "Gargantext.Components.Nodes.Corpus"
 
 type Props =
   ( boxes   :: Boxes
-  , nodeId  :: Int
+  , nodeId  :: ID
   , session :: Session )
 
 corpusLayout :: R2.Leaf Props
@@ -53,7 +53,7 @@ corpusLayoutCpt = here.component "corpusLayout" cpt where
 type KeyProps =
   ( boxes   :: Boxes
   , key     :: String
-  , nodeId  :: Int
+  , nodeId  :: ID
   , session :: Session
   )
 
@@ -88,11 +88,11 @@ corpusLayoutMainCpt = here.component "corpusLayoutMain" cpt
           H.hr {}
         ,
           FV.folderView
-          { nodeId
-          , session
-          , backFolder: true
-          , boxes
-          }
+            { backFolder: true
+            , boxes
+            , nodeId
+            , session
+            }
         ]
 
 -----------------------------------

@@ -51,6 +51,7 @@ type NodeMainSpanProps =
   , name          :: Name
   , nodeType      :: GT.NodeType
   , reload        :: T2.ReloadS
+  , root          :: ID
   , session       :: Session
   , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
   )
