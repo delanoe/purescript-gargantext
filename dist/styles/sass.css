@@ -441,6 +441,63 @@ li .leaf:hover a.settings {
   text-decoration: underline;
 }
 
+.subtree__node {
+  margin-top: 2px;
+}
+.subtree__node__text {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-size: 15px;
+}
+.subtree__node__icons {
+  display: flex;
+}
+.subtree__node__icons .fa {
+  margin-left: 2px;
+  margin-right: 2px;
+}
+.subtree__node--can-be-selected {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.right-handed .subtree__node__text {
+  flex-direction: row;
+  text-align: left;
+}
+.right-handed .subtree__node__icons {
+  flex-direction: row;
+}
+.right-handed .subtree__node__children > .subtree__node {
+  padding-left: 16px;
+}
+
+.left-handed .subtree__node__text {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+.left-handed .subtree__node__icons {
+  flex-direction: row-reverse;
+}
+.left-handed .subtree__node__children > .subtree__node {
+  padding-right: 20px;
+}
+
+.node-text {
+  display: inline-flex;
+}
+.node-text--selected {
+  font-weight: bold;
+  text-decoration: underline;
+}
+.right-handed .node-text {
+  flex-direction: row;
+}
+
+.left-handed .node-text {
+  flex-direction: row-reverse;
+}
+
 .progress-pie {
   background: rgba(51, 122, 183, 0.1);
   border-radius: 100%;

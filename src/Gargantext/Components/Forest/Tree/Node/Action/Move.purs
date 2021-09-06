@@ -5,10 +5,6 @@ import Gargantext.Prelude
 import Data.Either (Either)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
 import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
@@ -17,6 +13,9 @@ import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, put_)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Move"

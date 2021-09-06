@@ -132,6 +132,70 @@ li
       .text
         text-decoration: underline
 
+
+.subtree
+  $self: &
+
+  &__node
+    margin-top: space-x(0.25)
+
+    &__text
+      display: flex
+      align-items: center // align icon with text
+      cursor: pointer
+      font-size: 15px
+
+    &__icons
+      display: flex
+
+      .fa
+        margin-left: space-x(0.25)
+        margin-right: space-x(0.25)
+
+    &--can-be-selected
+      text-decoration: underline
+      text-underline-offset: 2px // easing node reading (empirical)
+
+    @include right-handed
+
+      &__text
+        flex-direction: row
+        text-align: left
+
+      &__icons
+        flex-direction: row
+
+      &__children > #{ $self }__node
+        padding-left: space-x(2)
+
+    @include left-handed
+
+      &__text
+        flex-direction: row-reverse
+        text-align: right
+
+      &__icons
+        flex-direction: row-reverse
+
+      &__children > #{ $self }__node
+        padding-right: space-x(2.5)
+
+
+.node-text
+  display: inline-flex
+
+  &--selected
+    font-weight: bold
+    text-decoration: underline
+
+  @include right-handed
+    flex-direction: row
+
+  @include left-handed
+    flex-direction: row-reverse
+
+
+
 // based on https://codeburst.io/how-to-pure-css-pie-charts-w-css-variables-38287aea161e
 .progress-pie
   background: rgba(51, 122, 183, 0.1)
