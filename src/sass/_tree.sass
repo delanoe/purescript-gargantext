@@ -2,6 +2,9 @@
 
 $forest-layout-top-teaser-height: 24px
 $forest-layout-bottom-teaser-height: 24px // ~line-height to 1.5 (covering tree)
+$node-popop-radius: 6px
+$node-popup-width: 544px
+
 
 @mixin forest-layout-gutter
 
@@ -180,6 +183,35 @@ li
   // @link https://gitlab.iscpif.fr/gargantext/purescript-gargantext/issues/302
   position: fixed
 
+
+  background-color: white
+  border-radius: $node-popop-radius
+
+  &:hover
+    border: none
+    text-decoration: none
+
+
+  // @XXX "react-awesome-popover" lack of parent host parameter
+  //
+  //       as the container where the popover will be appended is actually a
+  //       a heighthy sidebar (which a large is hidden with a scrollbar),
+  //       the library tends to add the tooltip position in the middle of the
+  //       sidebar height: which can be off screen
+  //
+  //       this workaround appends the tooltip in a static position
+  @include right-handed
+    $offset-x: 16.6666666667% // simulate "col-2" sidebar attributes
+    top: 50%
+    left: $offset-x
+    transform: translateY(-50%)
+
+  @include left-handed
+    $offset-x: 16.6666666667% // simulate "col-2" sidebar attributes
+    top: 50%
+    right: $offset-x
+    transform: translateY(-50%)
+
   .tree
     .node
       margin-top: 5px
@@ -187,45 +219,51 @@ li
       .node
         padding-left: 15px
 
-// @XXX "react-awesome-popover" lack of parent host parameter
-//
-//       as the container where the popover will be appended is actually a
-//       a heighthy sidebar (which a large is hidden with a scrollbar),
-//       the library tends to add the tooltip position in the middle of the
-//       sidebar height: which can be off screen
-//
-//       this workaround appends the tooltip in a static position
-.right-handed #node-popup-tooltip
-  $offset-x: 16.6666666667% // simulate "col-2" sidebar attributes
-  top: 50%
-  left: $offset-x
-  transform: translateY(-50%)
-
-.left-handed #node-popup-tooltip
-  $offset-x: 16.6666666667% // simulate "col-2" sidebar attributes
-  top: 50%
-  right: $offset-x
-  transform: translateY(-50%)
-
-.panel-actions
-  .almost-useable
-    color: orange
-  .development-in-progress
-    color: red
-  .ok-to-use
-    color: black
+  .panel-actions
+    .almost-useable
+      color: orange
+    .development-in-progress
+      color: red
+    .ok-to-use
+      color: black
 
 
-.popup-container
+  .popup-container
+    display: flex
+    flex-direction: colum
 
-  // will enlarge popup when inner content is larger (see issue #315)
-  & > .card
-    width: auto !important
+    & > .card
+      // will enlarge popup when inner content is larger (see issue #315),
+      // with a minimal width to avoid row item collapsing (see issue #324)
+      width: auto !important
+      min-width: $node-popup-width
 
-.popup-container-body
-  // empirical value (see issue #308, #315)
-  max-height: 70vh
-  overflow-y: auto
+
+      border: 1px solid rgba(0,0,0,0.2)
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2)
+      margin-bottom: initial
+
+      .fa-pencil
+        color: black
+
+      .card-body
+        display: flex
+        justify-content: center
+        background-color: white
+        border: none
+        .spacer
+          margin: space-x(1)
+
+    .frame-search.card
+      border: 1px solid rgba(0,0,0,0.2)
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2)
+      height: 600px
+      width: 1000px
+
+  .popup-container-body
+    // empirical value (see issue #308, #315)
+    max-height: 70vh
+    overflow-y: auto
 
 .forest-layout-wrapper
   // removing Bootstrap "col" padding
