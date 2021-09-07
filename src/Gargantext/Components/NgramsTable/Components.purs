@@ -11,11 +11,10 @@ import Data.Set (Set)
 import Data.Set as Set
 import Effect (Effect)
 import FFI.Simple (delay)
-import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (searchQuery)
 import Gargantext.Components.NgramsTable.Core (Action(..), Dispatch, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm, _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list, _ngrams, _occurrences, ngramsTermText, replace, setTermListA)
 import Gargantext.Components.Table as Tbl
 import Gargantext.Prelude (Unit, bind, const, discard, map, not, otherwise, pure, show, unit, ($), (+), (/=), (<<<), (<>), (==), (>), (||))
-import Gargantext.Types as T
+import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import React.DOM (a, span, text)
 import React.DOM.Props as DOM
@@ -241,8 +240,8 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
                    , on: { click: onClick } } []
           ]
         , selected
-        , checkbox T.MapTerm
-        , checkbox T.StopTerm
+        , checkbox GT.MapTerm
+        , checkbox GT.StopTerm
         , H.div {} ( if ngramsParent == Nothing
                        then [renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit }]
                        else [H.a { on: { click: const $ dispatch $ ToggleChild true ngrams } }
@@ -283,7 +282,7 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
                   }
         checkbox termList' =
           let chkd = termList == termList'
-              termList'' = if chkd then T.CandidateTerm else termList'
+              termList'' = if chkd then GT.CandidateTerm else termList'
           in
           H.input { checked: chkd
                   , className: "checkbox"
@@ -300,18 +299,18 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         cycleTermListItem n = setTermListA n (replace termList (nextTermList termList))
 
 
-termStyle :: T.TermList -> Number -> DOM.Props
-termStyle T.MapTerm     opacity = DOM.style { color: "green", opacity }
-termStyle T.StopTerm      opacity = DOM.style { color: "red",   opacity
+termStyle :: GT.TermList -> Number -> DOM.Props
+termStyle GT.MapTerm     opacity = DOM.style { color: "green", opacity }
+termStyle GT.StopTerm      opacity = DOM.style { color: "red",   opacity
                                               , textDecoration: "line-through" }
-termStyle T.CandidateTerm opacity = DOM.style { color: "#767676", opacity }
+termStyle GT.CandidateTerm opacity = DOM.style { color: "#767676", opacity }
 
 tablePatchHasNgrams :: NgramsTablePatch -> NgramsTerm -> Boolean
 tablePatchHasNgrams ngramsTablePatch ngrams =
   isJust $ ngramsTablePatch.ngramsPatches ^. _PatchMap <<< at ngrams
 
 
-nextTermList :: T.TermList -> T.TermList
-nextTermList T.MapTerm     = T.StopTerm
-nextTermList T.StopTerm      = T.CandidateTerm
-nextTermList T.CandidateTerm = T.MapTerm
+nextTermList :: GT.TermList -> GT.TermList
+nextTermList GT.MapTerm       = GT.StopTerm
+nextTermList GT.StopTerm      = GT.CandidateTerm
+nextTermList GT.CandidateTerm = GT.MapTerm

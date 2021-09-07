@@ -35,7 +35,7 @@ import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as TT
 import Gargantext.Components.Table.Types as TT
 import Gargantext.Config.REST (RESTError)
-import Gargantext.Hooks.Loader (useLoader, useLoaderBox)
+import Gargantext.Hooks.Loader (useLoaderBox)
 import Gargantext.Routes (SessionRoute(..)) as R
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
@@ -379,14 +379,14 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
                                            , performAction: performAction <<< CoreAction }
 
         -- autoUpdate :: Array R.Element
-        autoUpdate path' = if withAutoUpdate then
-                       [ R2.buff
-                       $ autoUpdateElt
-                         { duration: 5000
-                         , effect: performAction $ CoreAction $ Synchronize { afterSync: afterSync' }
-                         }
-                       ]
-                     else []
+        -- autoUpdate path' = if withAutoUpdate then
+        --                [ R2.buff
+        --                $ autoUpdateElt
+        --                  { duration: 5000
+        --                  , effect: performAction $ CoreAction $ Synchronize { afterSync: afterSync' }
+        --                  }
+        --                ]
+        --              else []
 
         ngramsParentRoot :: Maybe NgramsTerm
         ngramsParentRoot =
@@ -595,7 +595,7 @@ mainNgramsTableCacheOnCpt = here.component "mainNgramsTableCacheOn" cpt where
   handleResponse v = v
 
 mainNgramsTableCacheOff :: R2.Component MainNgramsTableProps
-mainNgramsTableCacheOff = R.createElement mainNgramsTableCacheOnCpt
+mainNgramsTableCacheOff = R.createElement mainNgramsTableCacheOffCpt
 mainNgramsTableCacheOffCpt :: R.Component MainNgramsTableProps
 mainNgramsTableCacheOffCpt = here.component "mainNgramsTableCacheOff" cpt where
   cpt { afterSync

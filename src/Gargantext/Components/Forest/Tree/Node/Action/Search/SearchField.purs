@@ -55,41 +55,40 @@ searchFieldCpt = here.component "searchField" cpt
       search' <- T.useLive T.unequal search
       iframeRef <- R.useRef    null
       let params =
-                [ searchInput { search } []
-                -- , if length s.term < 3  -- search with love : <3
-                --   then
-                --     H.div {}[]
-                --   else
-                , H.div {} [ dataFieldNav { datafields: dataFields, search } []
-
-                             , if isExternal search'.datafield
-                                 then databaseInput { databases: props.databases, search } []
-                                 else H.div {} []
-
-                             , if isHAL search'.datafield
-                                 then orgInput { orgs: allOrgs, search } []
-                                 else H.div {} []
-
-                             , if isIMT search'.datafield
-                                 then componentIMT { search } []
-                                 else H.div {} []
-
-                             , if isCNRS search'.datafield
-                                 then componentCNRS { search } []
-                                 else H.div {} []
-
-                             , if needsLang search'.datafield
-                                then langNav { langs: props.langs, search } []
-                                else H.div {} []
-
-                             , H.div {} [ searchIframes { iframeRef, search } [] ]
-                             ]
-
-                ]
+            [ searchInput { search } []
+              -- , if length s.term < 3  -- search with love : <3
+              --   then
+              --     H.div {}[]
+              --   else
+            , H.div {}
+              [ dataFieldNav { datafields: dataFields, search } []
+                
+              , if isExternal search'.datafield
+                then databaseInput { databases: props.databases, search } []
+                else H.div {} []
+                     
+              , if isHAL search'.datafield
+                then orgInput { orgs: allOrgs, search } []
+                else H.div {} []
+                     
+              , if isIMT search'.datafield
+                then componentIMT { search } []
+                else H.div {} []
+                     
+              , if isCNRS search'.datafield
+                then componentCNRS { search } []
+                else H.div {} []
+                     
+              , if needsLang search'.datafield
+                then langNav { langs: props.langs, search } []
+                else H.div {} []
+                     
+              , H.div {} [ searchIframes { iframeRef, search } [] ]
+              ]
+            ]
       let button =  submitButton { errors, onSearch, search, session } []
 
       pure $
-
         H.div { className: "search-field" }
         [
           R.fragment params
@@ -109,16 +108,17 @@ componentIMTCpt = here.component "componentIMT" cpt
     cpt { search } _ = do
       search' <- T.useLive T.unequal search
 
-      let liCpt org = H.li {}
-                        [ H.input { type: "checkbox"
-                                  , checked: isIn org search'.datafield
-                                  , on: { change: \_ -> ( T.modify_ (_ { datafield = updateFilter org search'.datafield }) search)
-                                        }
-                                  }
-                        , if org == All_IMT
-                          then H.i {} [H.text  $ " " <> show org]
-                          else H.text $ " " <> show org
-                        ]
+      let liCpt org =
+            H.li {}
+            [ H.input { type: "checkbox"
+                      , checked: isIn org search'.datafield
+                      , on: { change: \_ -> ( T.modify_ (_ { datafield = updateFilter org search'.datafield }) search)
+                            }
+                      }
+            , if org == All_IMT
+              then H.i {} [H.text  $ " " <> show org]
+              else H.text $ " " <> show org
+            ]
 
       pure $ R.fragment
         [ H.ul {} $ map liCpt allIMTorgs
@@ -132,10 +132,10 @@ componentCNRSCpt :: R.Component ComponentProps
 componentCNRSCpt = here.component "componentCNRS" cpt
   where
     cpt { search } _ = do
-      pure $ R.fragment [
-        H.div {} []
-      --, filterInput fi
-      ]
+      pure $ R.fragment
+        [ H.div {} []
+          --, filterInput fi
+        ]
 
 
 isExternal :: Maybe DataField -> Boolean
@@ -247,15 +247,17 @@ langNavCpt = here.component "langNav" cpt
     cpt { langs, search } _ = do
       search' <- T.useLive T.unequal search
 
-      pure $ R.fragment [ H.div {className: "text-primary center"} [H.text "with lang"]
-                        , H.div {className: "nav nav-tabs"} ((liItem search') <$> langs)
-                        ]
+      pure $ R.fragment
+        [ H.div {className: "text-primary center"} [H.text "with lang"]
+        , H.div {className: "nav nav-tabs"} ((liItem search') <$> langs)
+        ]
         where
           liItem :: Search -> Lang -> R.Element
           liItem { lang } lang' =
             H.div { className : "nav-item nav-link" <> if (Just lang') == lang then " active" else ""
                   , on: { click: \_ -> T.modify_ (_ { lang = Just lang' }) search }
-                  } [ H.text (show lang') ]
+                  }
+            [ H.text (show lang') ]
 
 ------------------------------------------------------------------------
 
@@ -271,12 +273,13 @@ dataFieldNavCpt = here.component "dataFieldNav" cpt
     cpt { datafields, search } _ = do
       search'@{ datafield } <- T.useLive T.unequal search
 
-      pure $ R.fragment [ H.div { className: "text-primary center"} [H.text "with DataField"]
-                        , H.div {className: "nav nav-tabs"} ((liItem search') <$> dataFields)
-                        , H.div {className: "center"} [ H.text
-                                                        $ maybe "TODO: add Doc Instance" doc datafield
-                                                      ]
-                        ]
+      pure $ R.fragment
+        [ H.div { className: "text-primary center"} [H.text "with DataField"]
+        , H.div {className: "nav nav-tabs"} ((liItem search') <$> dataFields)
+        , H.div {className: "center"} [ H.text
+                                        $ maybe "TODO: add Doc Instance" doc datafield
+                                      ]
+        ]
       where
         liItem :: Search -> DataField -> R.Element
         liItem { datafield } df' =
@@ -325,8 +328,8 @@ databaseInputCpt = here.component "databaseInput" cpt
                          }) search
 
       pure $
-        H.div { className: "form-group" } [
-          H.div {className: "text-primary center"} [ H.text "in database" ]
+        H.div { className: "form-group" }
+        [ H.div {className: "text-primary center"} [ H.text "in database" ]
         , R2.select { className: "form-control"
                     , defaultValue: defaultValue search'.datafield
                     , on: { change }
@@ -392,16 +395,16 @@ searchInputCpt = here.component "searchInput" cpt
       { term } <- T.useLive T.unequal search
       valueRef <- R.useRef term
 
-      pure $ H.div { className: "" } [
-        inputWithEnter { onBlur: onBlur valueRef search
-                       , onEnter: onEnter valueRef search
-                       , onValueChanged: onValueChanged valueRef
-                       , autoFocus: false
-                       , className: "form-control"
-                       , defaultValue: R.readRef valueRef
-                       , placeholder: "Your query here"
-                       , type: "text" }
-      ]
+      pure $ H.div { className: "" }
+        [ inputWithEnter { onBlur: onBlur valueRef search
+                         , onEnter: onEnter valueRef search
+                         , onValueChanged: onValueChanged valueRef
+                         , autoFocus: false
+                         , className: "form-control"
+                         , defaultValue: R.readRef valueRef
+                         , placeholder: "Your query here"
+                         , type: "text" }
+        ]
 
       -- pure $
       --   H.div { className : "" }
@@ -442,7 +445,8 @@ submitButtonComponent = here.component "submitButton" cpt
                  , "type"   : "button"
                  , on       : { click: doSearch onSearch errors session search' }
                  , style    : { width: "100%" }
-                 } [ H.text "Launch Search" ]
+                 }
+        [ H.text "Launch Search" ]
 
     doSearch os errors s q = \_ -> do
       log2 "[submitButton] searching" q

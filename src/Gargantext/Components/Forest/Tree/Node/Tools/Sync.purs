@@ -1,11 +1,9 @@
 module Gargantext.Components.Forest.Tree.Node.Tools.Sync where
 
 import Gargantext.Prelude
-  ( Unit, bind, const, discard, pure, unit, ($), (<>), (==) )
+  ( Unit, bind, discard, pure, unit, ($), (<>), (==) )
 import Effect.Aff (Aff, launchAff_)
-import Data.Tuple.Nested ((/\))
 import Data.Maybe (Maybe(..))
-import Data.Tuple (fst)
 import Effect.Class (liftEffect)
 import Reactix.DOM.HTML as H
 import Reactix as R
@@ -69,7 +67,7 @@ graphUpdateButtonCpt = here.component "graphUpdateButton" cpt
         onClick true enabled = do
           launchAff_ $ do
             liftEffect $ T.write_ false enabled
-            g <- GraphAPI.updateGraphVersions { graphId: id, session }
+            _g <- GraphAPI.updateGraphVersions { graphId: id, session }
             liftEffect $ T.write_ true enabled
             refresh unit
           pure unit
@@ -105,7 +103,6 @@ type NodeListUpdateButtonProps =
 
 nodeListUpdateButton :: Record NodeListUpdateButtonProps -> R.Element
 nodeListUpdateButton p = R.createElement nodeListUpdateButtonCpt p []
-
 nodeListUpdateButtonCpt :: R.Component NodeListUpdateButtonProps
 nodeListUpdateButtonCpt = here.component "nodeListUpdateButton" cpt
   where

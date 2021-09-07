@@ -12,7 +12,6 @@ import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Forest.Tree.Node (nodeSpan)
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (deleteNode, unpublishNode)
@@ -21,6 +20,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Merge (mergeNodeReq)
 import Gargantext.Components.Forest.Tree.Node.Action.Move (moveNodeReq)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
 import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
+import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Update (updateRequest)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile, uploadArbitraryFile)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
@@ -271,14 +271,14 @@ addNode' name nodeType p@{ boxes: { errors, forestOpen }, session, tree: (NTree 
     liftEffect $ T.modify_ (openNodesInsert (mkNodeId session id)) forestOpen
     refreshTree p
 
-uploadFile' nodeType fileType mName contents p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } = do
-  eTask <- uploadFile { contents, fileType, id, mName, nodeType, session }
+uploadFile' nodeType fileType mName contents p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
+  eTask <- uploadFile { contents, fileType, id, mName, nodeType, selection, session }
   handleRESTError errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
     here.log2 "[uploadFile'] UploadFile, uploaded, task:" task
 
-uploadArbitraryFile' mName blob p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } = do
-  eTask <- uploadArbitraryFile session id { blob, mName }
+uploadArbitraryFile' mName blob p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
+  eTask <- uploadArbitraryFile session id { blob, mName } selection
   handleRESTError errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
     here.log2 "[uploadArbitraryFile'] UploadArbitraryFile, uploaded, task:" task
@@ -313,8 +313,10 @@ performAction (ShareTeam username) p                          = shareTeam userna
 performAction (SharePublic { params }) p                      = sharePublic params p
 performAction (AddContact params) p                           = addContact params p
 performAction (AddNode name nodeType) p                       = addNode' name nodeType p
-performAction (UploadFile nodeType fileType mName contents) p = uploadFile' nodeType fileType mName contents p
-performAction (UploadArbitraryFile mName blob) p              = uploadArbitraryFile' mName blob p
+performAction (UploadFile nodeType fileType mName contents selection) p =
+  uploadFile' nodeType fileType mName contents p selection
+performAction (UploadArbitraryFile mName blob selection) p              =
+  uploadArbitraryFile' mName blob p selection
 performAction DownloadNode _                                  = liftEffect $ here.log "[performAction] DownloadNode"
 performAction (MoveNode {params}) p                           = moveNode params p
 performAction (MergeNode {params}) p                          = mergeNode params p

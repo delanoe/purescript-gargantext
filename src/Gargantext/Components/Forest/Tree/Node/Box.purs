@@ -6,7 +6,6 @@ import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Gargantext.Components.App.Data (Boxes)
-import Gargantext.Components.Forest.Tree.Node.Action (Action)
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (actionDelete)
@@ -18,6 +17,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Move (moveNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameAction)
 import Gargantext.Components.Forest.Tree.Node.Action.Search (actionSearch)
 import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
+import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
 import Gargantext.Components.Forest.Tree.Node.Action.Update (update)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (actionUpload)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (NodePopupProps, NodePopupS)

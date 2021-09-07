@@ -9,7 +9,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
 import Gargantext.Config.REST (RESTError)

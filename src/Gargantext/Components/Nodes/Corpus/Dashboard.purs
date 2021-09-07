@@ -15,7 +15,7 @@ import Gargantext.Components.Nodes.Types (FTFieldList(..), FTFieldsWithIndex(..)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, discard, pure, read, show, unit, ($), (<$>), (<>), (==))
 import Gargantext.Sessions (Session, sessionId)
-import Gargantext.Types (FrontendError, NodeID)
+import Gargantext.Types (NodeID)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
