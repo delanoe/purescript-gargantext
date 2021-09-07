@@ -97,7 +97,6 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
       lang <- T.useBox EN
       selection <- T.useBox ListSelection.MyListsFirst
 
-      let Session { treeId: root } = session
       let setFileType' val = T.write_ val fileType
       let setLang' val = T.write_ val lang
 
@@ -131,7 +130,7 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
               ]
             , R2.row
               [ H.div { className: "col-6 flex-space-around" }
-                [ ListSelection.selection { root, selection } [] ]
+                [ ListSelection.selection { selection, session } [] ]
               ]
             ]
 

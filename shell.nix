@@ -68,6 +68,7 @@ pkgs.mkShell {
     build-purs
     build-watch
     build
+    pkgs.nodejs
     repl
     pkgs.pulp
     pkgs.spago

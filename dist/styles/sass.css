@@ -656,6 +656,14 @@ li .leaf:hover a.settings {
   margin-bottom: 24px;
 }
 
+.ids-selector .tree .children {
+  padding-left: 0.5em;
+}
+.ids-selector .tree .children .leaf input {
+  padding-left: 0.1em;
+  padding-right: 0.1em;
+}
+
 .code-editor .editor .code-area {
   flex-grow: 1;
   max-height: 200px;

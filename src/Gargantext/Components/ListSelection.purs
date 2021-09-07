@@ -2,17 +2,23 @@ module Gargantext.Components.ListSelection where
 
 import Gargantext.Prelude
 
+import Control.Bind ((=<<))
 import Data.Array as A
+import Data.Either (Either)
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
-import Gargantext.Components.App.Data (Boxes)
+import Data.Newtype (class Newtype)
 import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe)
-import Gargantext.Sessions (Session(..), unSessions)
-import Gargantext.Types (ListId)
+import Gargantext.Config.REST (RESTError(..), AffRESTError)
+import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Routes (SessionRoute(..))
+import Gargantext.Sessions (Session(..), get)
+import Gargantext.Types (ID, ListId, NodeType(..), fldr)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
 import Toestand as T
 
 here :: R2.Here
@@ -31,20 +37,25 @@ instance Read Selection where
   read "Selected lists" = Just $ SelectedLists []
   read _ = Nothing
 
+selectedListIds :: Selection -> Array ListId
+selectedListIds (SelectedLists ids) = ids
+selectedListIds _                   = []
+
 type Props =
-  ( root      :: Int
-  , selection :: T.Box Selection )
+  ( selection :: T.Box Selection
+  , session   :: Session
+  )
 
 selection :: R2.Component Props
 selection = R.createElement selectionCpt
 selectionCpt :: R.Component Props
 selectionCpt = here.component "selection" cpt where
-  cpt { root, selection } _ = do
-    pure $ H.div {}
+  cpt { selection, session } _ = do
+    pure $ H.div { className: "list-selection" }
       [ formChoiceSafe [ MyListsFirst
                        , OtherListsFirst
                        , SelectedLists [] ] MyListsFirst setSelection show
-      , selectedIds { root, selection } []
+      , selectedIds { selection, session } []
       ]
     where
       setSelection val = T.write_ val selection
@@ -53,48 +64,155 @@ selectedIds :: R2.Component Props
 selectedIds = R.createElement selectedIdsCpt
 selectedIdsCpt :: R.Component Props
 selectedIdsCpt = here.component "selectedIds" cpt where
-  cpt { root, selection } _ = do
+  cpt { selection, session } _ = do
     selection' <- T.useLive T.unequal selection
 
     pure $ case selection' of
-      SelectedLists ids -> H.div {} [ idsSelector { ids, root, selection } [] ]
+      SelectedLists ids -> H.div {} [ idsSelector { selection, session } [] ]
       _ -> H.div {} []
 
 type IdsSelectorProps =
-  ( ids       :: Array ListId
-  , root      :: Int
-  , selection :: T.Box Selection )
+  ( selection :: T.Box Selection
+  , session   :: Session )
 
 idsSelector :: R2.Component IdsSelectorProps
 idsSelector = R.createElement idsSelectorCpt
 idsSelectorCpt :: R.Component IdsSelectorProps
 idsSelectorCpt = here.component "idsSelector" cpt where
-  cpt { ids, root, selection } _ = do
-    R.useEffect' $ do
-      here.log2 "[idsSelector] ids" ids
-    
-    pure $ H.div {} [ listTree { ids, root, selection } [] ] -- $ map checkbox [1, 2, 3, 4]
+  cpt { selection, session } _ = do
+    pure $ H.div { className: "ids-selector" }
+      [ listTree { name: "", root, selection, session } ] -- $ map checkbox [1, 2, 3, 4]
     where
-      checkbox val = H.div {}
-        [ H.input { className: "form-check-input"
-                  , on: { click }
-                  , type: "checkbox"
-                  , value: A.elem val ids }
-        , H.label {} [ H.text $ show val ]
-        ]
-        where
-          click _ = do
-            let f (SelectedLists lst) =
-                  if A.elem val ids
-                  then SelectedLists (A.delete val lst)
-                  else SelectedLists (A.cons val lst)
-                f x = x
-            T.modify_ f selection
+      Session { treeId: root } = session
 
-listTree :: R2.Component IdsSelectorProps
-listTree = R.createElement listTreeCpt
-listTreeCpt :: R.Component IdsSelectorProps
+listIdsRoute :: ID -> SessionRoute
+listIdsRoute = Children NodeList 0 1 Nothing <<< Just
+
+treeFirstLevelRoute :: ID -> SessionRoute
+treeFirstLevelRoute id = TreeFirstLevel (Just id) ""
+
+-- A simplified data structure (we don't want the full-blown (NodePoly
+-- a), we care only about Corpus and NodeList node types, with id,
+-- name and that's all).
+newtype NodeSimple =
+  NodeSimple { id       :: ID
+             , name     :: String
+             , nodeType :: NodeType }
+derive instance Generic NodeSimple _
+derive instance Newtype NodeSimple _
+derive instance Eq NodeSimple
+instance JSON.ReadForeign NodeSimple where
+  readImpl f = do
+    { node } :: { node :: { id   :: ID
+                          , name :: String
+                          , type :: NodeType } } <- JSON.read' f
+    pure $ NodeSimple { id: node.id
+                      , name: node.name
+                      , nodeType: node.type }
+
+loadTreeChildren :: { root :: ID, session :: Session } -> AffRESTError (Array NodeSimple)
+loadTreeChildren { root, session } = do
+  eResult :: (Either RESTError { children :: Array NodeSimple }) <- get session $ treeFirstLevelRoute root
+  pure $ (\{ children } -> children) <$> eResult
+
+type ListTreeProps =
+  ( name      :: String
+  , root      :: ID
+  , selection :: T.Box Selection
+  , session   :: Session )
+
+listTree :: R2.Leaf ListTreeProps
+listTree props = R.createElement listTreeCpt props []
+listTreeCpt :: R.Component ListTreeProps
 listTreeCpt = here.component "listTree" cpt where
-  cpt { ids, root, selection } _ = do
+  cpt { name, root, selection, session } _ = do
+    pure $ H.div { className: "tree" }
+      [ H.div { className: "root" }
+        [ H.i { className: fldr Corpus true } []
+        , H.text $ "[" <> show root <> "] " <> name ]
+      , listTreeChildren { render: listTree
+                         , root
+                         , selection
+                         , session } []
+      ]
 
-    pure $ H.div {} [ H.text $ show root ]
+type Render = Record ListTreeProps -> R.Element
+type ListTreeChildrenProps =
+  ( render    :: Render
+  , root      :: ID
+  , selection :: T.Box Selection
+  , session   :: Session )
+
+listTreeChildren :: R2.Component ListTreeChildrenProps
+listTreeChildren = R.createElement listTreeChildrenCpt
+listTreeChildrenCpt :: R.Component ListTreeChildrenProps
+listTreeChildrenCpt = here.component "listTreeChildren" cpt where
+  cpt { render, root, selection, session } _ = do
+    useLoader { errorHandler
+              , loader: loadTreeChildren
+              , path: { root, session }
+              , render: \loaded ->
+                  listTreeChildrenLoaded { loaded
+                                         , render
+                                         , root
+                                         , selection
+                                         , session } [] }
+    where
+      errorHandler err = case err of
+        ReadJSONError err' -> here.log2 "[listTreeChildren] ReadJSONError" $ show err'
+        _                  -> here.log2 "[listTreeChildren] RESTError" err
+
+type ListTreeChildrenLoadedProps =
+  ( loaded    :: Array NodeSimple
+  , render    :: Render
+  , root      :: ID
+  , selection :: T.Box Selection
+  , session   :: Session )
+
+listTreeChildrenLoaded :: R2.Component ListTreeChildrenLoadedProps
+listTreeChildrenLoaded = R.createElement listTreeChildrenLoadedCpt
+listTreeChildrenLoadedCpt :: R.Component ListTreeChildrenLoadedProps
+listTreeChildrenLoadedCpt = here.component "listTreeChildrenLoaded" cpt where
+  cpt { loaded, render, root, selection, session } _  = do
+    pure $ H.div { className: "children" } (element <$> loaded)
+    where
+      element (NodeSimple { id, name, nodeType: Corpus }) =
+        render { root: id, name, selection, session }
+      element (NodeSimple { id, name, nodeType: NodeList}) =
+        renderListElement { id, name, selection }
+      element _ = H.div {} []
+
+type RenderListElementProps =
+  ( id        :: ID
+  , name      :: String
+  , selection :: T.Box Selection )
+
+renderListElement :: R2.Leaf RenderListElementProps
+renderListElement props = R.createElement renderListElementCpt props []
+renderListElementCpt :: R.Component RenderListElementProps
+renderListElementCpt = here.component "renderListElement" cpt where
+  cpt { id, name, selection } _ = do
+    selection' <- T.useLive T.unequal selection
+
+    let ids = selectedListIds selection'
+
+    R.useEffect' $ do
+      here.log2 "[renderListElement] ids" ids
+      here.log2 "[renderListElement] value" $ A.elem id ids
+
+    pure $ H.div { className: "leaf" }
+      [ H.input { checked: A.elem id ids
+                , on: { click: click ids }
+                , type: "checkbox" }
+      , H.i { className: fldr NodeList true } []
+      , H.text $ "[" <> show id <> "] " <> name
+      ]
+      where
+        click ids _ = do
+          let f (SelectedLists lst) =
+                if A.elem id ids
+                then SelectedLists (A.delete id lst)
+                else SelectedLists (A.cons id lst)
+              f x = x
+          T.modify_ f selection
+

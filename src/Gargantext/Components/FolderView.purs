@@ -72,7 +72,7 @@ folderViewCpt = here.component "folderViewCpt" cpt where
                                                    , nodeId
                                                    , reload
                                                    , session
-                                                   , setPopoverRef } }
+                                                   , setPopoverRef } [] }
     where
       errorHandler err = here.log2 "[folderView] RESTError" err
 
@@ -86,8 +86,8 @@ type FolderViewProps =
   , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
   )
 
-folderViewMain :: Record FolderViewProps -> R.Element
-folderViewMain props = R.createElement folderViewMainCpt props []
+folderViewMain :: R2.Component FolderViewProps
+folderViewMain = R.createElement folderViewMainCpt
 folderViewMainCpt :: R.Component FolderViewProps
 folderViewMainCpt = here.component "folderViewMainCpt" cpt where
   cpt { backFolder
