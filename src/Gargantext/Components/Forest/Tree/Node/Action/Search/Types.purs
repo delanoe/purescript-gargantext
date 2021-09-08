@@ -19,6 +19,7 @@ import URI.Query as Q
 import Gargantext.Prelude
 
 import Gargantext.Components.Lang (Lang)
+import Gargantext.Components.ListSelection.Types as ListSelection
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (class ToUrl, backendUrl)
 import Gargantext.Routes as GR
@@ -330,21 +331,23 @@ newtype SearchQuery = SearchQuery
   , node_id   :: Maybe Int
   , offset    :: Maybe Int
   , order     :: Maybe SearchOrder
+  , selection :: ListSelection.Selection
   }
 derive instance Generic SearchQuery _
 derive instance Newtype SearchQuery _
 
 defaultSearchQuery :: SearchQuery
 defaultSearchQuery = SearchQuery
-  { query: ""
-  , databases: Empty
-  , datafield: Nothing
-  , files_id : []
-  , lang     : Nothing
-  , limit    : Nothing
-  , node_id  : Nothing
-  , offset   : Nothing
-  , order    : Nothing
+  { query     : ""
+  , databases : Empty
+  , datafield : Nothing
+  , files_id  : []
+  , lang      : Nothing
+  , limit     : Nothing
+  , node_id   : Nothing
+  , offset    : Nothing
+  , order     : Nothing
+  , selection : ListSelection.MyListsFirst
   }
 
 instance ToUrl Session SearchQuery where

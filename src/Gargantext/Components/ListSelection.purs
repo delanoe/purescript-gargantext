@@ -60,7 +60,7 @@ idsSelectorCpt :: R.Component IdsSelectorProps
 idsSelectorCpt = here.component "idsSelector" cpt where
   cpt { selection, session } _ = do
     pure $ H.div { className: "ids-selector" }
-      [ listTree { name: "", root, selection, session } ] -- $ map checkbox [1, 2, 3, 4]
+      [ listTree { name: "", nodeType: NodeUser, root, selection, session } ] -- $ map checkbox [1, 2, 3, 4]
     where
       Session { treeId: root } = session
 
@@ -77,6 +77,7 @@ loadTreeChildren { root, session } = do
 
 type ListTreeProps =
   ( name      :: String
+  , nodeType  :: NodeType
   , root      :: ID
   , selection :: T.Box Selection
   , session   :: Session )
@@ -85,10 +86,10 @@ listTree :: R2.Leaf ListTreeProps
 listTree props = R.createElement listTreeCpt props []
 listTreeCpt :: R.Component ListTreeProps
 listTreeCpt = here.component "listTree" cpt where
-  cpt { name, root, selection, session } _ = do
+  cpt { name, nodeType, root, selection, session } _ = do
     pure $ H.div { className: "tree" }
       [ H.div { className: "root" }
-        [ H.i { className: fldr Corpus true } []
+        [ H.i { className: fldr nodeType true } []
         , H.text $ "[" <> show root <> "] " <> name ]
       , listTreeChildren { render: listTree
                          , root
@@ -136,8 +137,16 @@ listTreeChildrenLoadedCpt = here.component "listTreeChildrenLoaded" cpt where
   cpt { loaded, render, root, selection, session } _  = do
     pure $ H.div { className: "children" } (element <$> loaded)
     where
-      element (NodeSimple { id, name, nodeType: Corpus }) =
-        render { root: id, name, selection, session }
+      element (NodeSimple { id, name, nodeType: nodeType@Folder }) =
+        render { root: id, name, nodeType, selection, session }
+      element (NodeSimple { id, name, nodeType: nodeType@FolderPrivate }) =
+        render { root: id, name, nodeType, selection, session }
+      element (NodeSimple { id, name, nodeType: nodeType@FolderPublic }) =
+        render { root: id, name, nodeType, selection, session }
+      element (NodeSimple { id, name, nodeType: nodeType@FolderShared }) =
+        render { root: id, name, nodeType, selection, session }
+      element (NodeSimple { id, name, nodeType: nodeType@Corpus }) =
+        render { root: id, name, nodeType, selection, session }
       element (NodeSimple { id, name, nodeType: NodeList}) =
         renderListElement { id, name, selection }
       element _ = H.div {} []
@@ -156,12 +165,8 @@ renderListElementCpt = here.component "renderListElement" cpt where
 
     let ids = selectedListIds selection'
 
-    R.useEffect' $ do
-      here.log2 "[renderListElement] ids" ids
-      here.log2 "[renderListElement] value" $ A.elem id ids
-
     pure $ H.div { className: "leaf" }
-      [ H.input { checked: A.elem id ids
+      [ H.input { defaultChecked: A.elem id ids
                 , on: { click: click ids }
                 , type: "checkbox" }
       , H.i { className: fldr NodeList true } []
