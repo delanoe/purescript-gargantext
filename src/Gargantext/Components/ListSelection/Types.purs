@@ -21,6 +21,10 @@ instance Read Selection where
   read "Other lists first" = Just OtherListsFirst
   read "Selected lists" = Just $ SelectedLists []
   read _ = Nothing
+instance JSON.WriteForeign Selection where
+  writeImpl MyListsFirst = JSON.writeImpl { "type": "MyListsFirst" }
+  writeImpl OtherListsFirst = JSON.writeImpl { "type": "OtherListsFirst" }
+  writeImpl (SelectedLists ids) = JSON.writeImpl { "type": "SelectedLists", value: ids }
 
 selectedListIds :: Selection -> Array ListId
 selectedListIds (SelectedLists ids) = ids
@@ -29,6 +33,9 @@ selectedListIds _                   = []
 
 ----------------------
 
+
+-- TODO Make a separate endpoint on the backend for fetching the whole
+-- tree with NodeSimple results?
 
 -- A simplified data structure (we don't want the full-blown (NodePoly
 -- a), we care only about Corpus and NodeList node types, with id,
