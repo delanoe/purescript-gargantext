@@ -335,6 +335,26 @@ newtype SearchQuery = SearchQuery
   }
 derive instance Generic SearchQuery _
 derive instance Newtype SearchQuery _
+instance ToUrl Session SearchQuery where
+  toUrl (Session {backend}) q = backendUrl backend q2
+    where q2 = "new" <> Q.print (GT.toQuery q)
+instance GT.ToQuery SearchQuery where
+  toQuery (SearchQuery {offset, limit, order}) =
+    QP.print id id $ QP.QueryPairs
+                   $ pair "offset" offset
+                   <> pair "limit" limit
+                   <> pair "order" order
+    where pair :: forall a. Show a => String -> Maybe a -> Array (Tuple QP.Key (Maybe QP.Value))
+          pair k = maybe [] $ \v ->
+            [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
+instance JSON.WriteForeign SearchQuery where
+  writeImpl (SearchQuery { databases, lang, node_id, query, selection }) =
+    JSON.writeImpl { query: String.replace (String.Pattern "\"") (String.Replacement "\\\"") query
+                   , databases: databases
+                   , lang: maybe "EN" show lang
+                   , node_id: fromMaybe 0 node_id
+                   , flowListWith: selection
+                   }
 
 defaultSearchQuery :: SearchQuery
 defaultSearchQuery = SearchQuery
@@ -349,27 +369,6 @@ defaultSearchQuery = SearchQuery
   , order     : Nothing
   , selection : ListSelection.MyListsFirst
   }
-
-instance ToUrl Session SearchQuery where
-  toUrl (Session {backend}) q = backendUrl backend q2
-    where q2 = "new" <> Q.print (GT.toQuery q)
-  
-instance GT.ToQuery SearchQuery where
-  toQuery (SearchQuery {offset, limit, order}) =
-    QP.print id id $ QP.QueryPairs
-                   $ pair "offset" offset
-                   <> pair "limit" limit
-                   <> pair "order" order
-    where pair :: forall a. Show a => String -> Maybe a -> Array (Tuple QP.Key (Maybe QP.Value))
-          pair k = maybe [] $ \v ->
-            [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
-instance JSON.WriteForeign SearchQuery where
-  writeImpl (SearchQuery { databases, lang, node_id, query }) =
-    JSON.writeImpl { query: String.replace (String.Pattern "\"") (String.Replacement "\\\"") query
-                   , databases: databases
-                   , lang: maybe "EN" show lang
-                   , node_id: fromMaybe 0 node_id
-                   }
 
 performSearch :: Session -> Int -> SearchQuery -> Aff (Either RESTError GT.AsyncTaskWithType)
 performSearch session nodeId q = do
