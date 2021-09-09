@@ -120,6 +120,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
                        }
 
         charts params CTabTerms = [
+          {-
           H.div {className: "row"}
                 [ H.div {className: "col-12 d-flex justify-content-center"}
                   [ H.img { src: "images/Gargantextuel-212x300.jpg"
@@ -128,7 +129,6 @@ ngramsViewCpt = here.component "ngramsView" cpt where
                   ]
                 ]
 
-          {-
               R2.select { className: "form-control"
                         , defaultValue: show chartType
                         , on: { change: \e -> setChartType
