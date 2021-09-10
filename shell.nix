@@ -26,6 +26,17 @@ let
     browserify
   '';
 
+
+  build-css = pkgs.writeShellScriptBin "build-css" ''
+    #!/usr/bin/env bash
+    set -e
+
+    yarn css
+
+  '';
+
+
+
   build-watch = pkgs.writeShellScriptBin "build-watch" ''
     #!/usr/bin/env bash
     set -e
@@ -68,6 +79,8 @@ pkgs.mkShell {
     build-purs
     build-watch
     build
+    build-css
+    pkgs.nodejs
     repl
     pkgs.pulp
     pkgs.spago
