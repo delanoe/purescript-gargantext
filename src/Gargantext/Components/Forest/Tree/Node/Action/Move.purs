@@ -1,11 +1,14 @@
-module Gargantext.Components.Forest.Tree.Node.Action.Move where
+module Gargantext.Components.Forest.Tree.Node.Action.Move
+  ( moveNodeReq
+  , moveNode
+  ) where
 
 import Data.Either (Either)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
-import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (SubTreeParamsIn, subTreeView)
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
@@ -30,22 +33,47 @@ moveNodeCpt = here.component "moveNode" cpt
   where
     cpt { boxes, dispatch, id, nodeType, session, subTreeParams } _ = do
       action :: T.Box Action <- T.useBox (MoveNode {params: Nothing})
-      action' <- T.useLive T.unequal action
-
-      let button = case action' of
-              MoveNode { params } -> case params of
-                Just val -> submitButton (MoveNode {params: Just val}) dispatch
-                Nothing -> H.div {} []
-              _                   -> H.div {} []
 
       pure $
 
-        panel [ subTreeView { action
-                            , boxes
-                            , dispatch
-                            , id
-                            , nodeType
-                            , session
-                            , subTreeParams
-                            } []
-            ] button
+        moveNode' { action
+            , boxes
+            , dispatch
+            , id
+            , nodeType
+            , session
+            , subTreeParams
+            } []
+
+type Props =
+  ( action :: T.Box Action
+  | SubTreeParamsIn
+  )
+
+-- @XXX re-render issue -> clone component
+moveNode' :: R2.Component Props
+moveNode' = R.createElement moveNodeCpt'
+moveNodeCpt' :: R.Component Props
+moveNodeCpt' = here.component "foo" cpt where
+  cpt { boxes, dispatch, id, nodeType, session, subTreeParams, action } _ = do
+
+    action' <- T.useLive T.unequal action
+
+    let button = case action' of
+            MoveNode { params } -> case params of
+              Just val -> submitButton (MoveNode {params: Just val}) dispatch
+              Nothing -> H.div {} []
+            _                   -> H.div {} []
+
+    pure $
+
+      panel
+      [ subTreeView { action
+                      , boxes
+                      , dispatch
+                      , id
+                      , nodeType
+                      , session
+                      , subTreeParams
+                      } []
+      ] button
