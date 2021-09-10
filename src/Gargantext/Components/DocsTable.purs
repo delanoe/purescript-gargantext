@@ -276,8 +276,10 @@ pageLayoutCpt = here.component "pageLayout" cpt where
         handleResponse :: HashedResponse (TableResult Response) -> Tuple Int (Array DocumentsView)
         handleResponse (HashedResponse { hash, value: res }) = ret
           where
-
-            filters = filterDocs query
+            filterDocs' q ds = case cacheState' of
+              NT.CacheOff -> ds
+              NT.CacheOn -> filterDocs q ds
+            filters = filterDocs' query
                     >>> \res' -> case yearFilter' of
                       Nothing -> res'
                       Just year -> filterDocsByYear year res'
