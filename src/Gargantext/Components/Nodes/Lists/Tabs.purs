@@ -6,7 +6,6 @@ import Data.Array as A
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
 import Effect.Class (liftEffect)
-import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.NgramsTable.Core as NTC
@@ -18,7 +17,7 @@ import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
 import Gargantext.Components.Tab as Tab
 import Gargantext.Prelude (bind, pure, unit, ($), (<>))
 import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType(..), FrontendError, Mode(..), TabSubType(..), TabType(..), modeTabType)
+import Gargantext.Types (CTabNgramType(..), Mode(..), TabSubType(..), TabType(..), modeTabType)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R

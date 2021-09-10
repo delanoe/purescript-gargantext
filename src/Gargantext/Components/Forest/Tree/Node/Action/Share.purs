@@ -13,8 +13,8 @@ import Toestand as T
 
 import Gargantext.Prelude
 
-import Gargantext.Components.Forest.Tree.Node.Action (Action)
-import Gargantext.Components.Forest.Tree.Node.Action as Action
+import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
+import Gargantext.Components.Forest.Tree.Node.Action.Types as Action
 import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
 import Gargantext.Config.REST (RESTError)

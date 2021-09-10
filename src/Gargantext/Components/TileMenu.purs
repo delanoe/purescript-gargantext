@@ -13,9 +13,13 @@ import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Hooks.LinkHandler (useLinkHandler)
 import Gargantext.Routes (AppRoute, Tile)
 import Gargantext.Utils.Popover as Popover
+import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
+
+here :: R2.Here
+here = R2.here "Gargantext.Components.TileMenu"
 
 type Props =
   ( boxes       :: Boxes
@@ -24,11 +28,10 @@ type Props =
   , yTile       :: Maybe (Unit -> Effect AppRoute)
   )
 
-tileMenu :: Record Props -> Array (R.Element) -> R.Element
+tileMenu :: R2.Component Props
 tileMenu = R.createElement tileMenuCpt
-
 tileMenuCpt :: R.Component Props
-tileMenuCpt = R.hooksComponent "tileMenu" cpt where
+tileMenuCpt = here.component "tileMenu" cpt where
   cpt props@{ boxes } children = do
     -- Hooks
     { goToRoute } <- useLinkHandler
