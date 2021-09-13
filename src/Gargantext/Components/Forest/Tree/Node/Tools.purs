@@ -223,11 +223,10 @@ type CheckboxesListGroup a =
 
 checkboxesListGroup :: forall a. Ord a => Show a => R2.Component (CheckboxesListGroup a)
 checkboxesListGroup = R.createElement checkboxesListGroupCpt
-
 checkboxesListGroupCpt :: forall a. Ord a => Show a => R.Component (CheckboxesListGroup a)
 checkboxesListGroupCpt = here.component "checkboxesListGroup" cpt
   where
-    cpt { groups, options } _ = do
+    cpt { options } _ = do
       options' <- T.useLive T.unequal options
 
       let one a =
@@ -278,7 +277,6 @@ nodeLinkCpt = here.component "nodeLink" cpt
         , nodeType
         , session
         } _ = do
-
       pure $
         H.div { className: "node-link"
               , on: { click } }

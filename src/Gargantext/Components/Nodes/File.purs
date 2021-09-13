@@ -1,7 +1,7 @@
 module Gargantext.Components.Nodes.File where
 
 import Data.Generic.Rep (class Generic)
-import Data.Either (Either(..))
+import Data.Either (Either)
 import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)

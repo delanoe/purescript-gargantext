@@ -381,10 +381,10 @@ type SidePanelProps = (
   , sidePanel :: T.Box (Maybe (Record TT.SidePanel))
   )
 
-sidePanel :: R2.Component SidePanelProps
-sidePanel = R.createElement sidePanelCpt
-sidePanelCpt :: R.Component SidePanelProps
-sidePanelCpt = here.component "sidePanel" cpt
+textsSidePanel :: R2.Component SidePanelProps
+textsSidePanel = R.createElement textsSidePanelCpt
+textsSidePanelCpt :: R.Component SidePanelProps
+textsSidePanelCpt = here.component "sidePanel" cpt
   where
     cpt { boxes: { sidePanelState }
         , session
@@ -465,7 +465,6 @@ type SidePanelDocView = (
 
 sidePanelDocView :: R2.Component SidePanelDocView
 sidePanelDocView = R.createElement sidePanelDocViewCpt
-
 sidePanelDocViewCpt :: R.Component SidePanelDocView
 sidePanelDocViewCpt = here.component "sidePanelDocView" cpt
   where

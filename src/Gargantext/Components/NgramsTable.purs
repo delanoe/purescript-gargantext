@@ -80,7 +80,7 @@ setTermListSetA ngramsTable ns new_list =
   CoreAction $ CommitPatch $ fromNgramsPatches $ PatchMap $ mapWithIndex f $ toMap ns
   where
     f :: NgramsTerm -> Unit -> NgramsPatch
-    f n unit = NgramsPatch { patch_list, patch_children: mempty }
+    f n _unit = NgramsPatch { patch_list, patch_children: mempty }
       where
         cur_list = ngramsTable ^? at n <<< _Just <<< _NgramsRepoElement <<< _list
         patch_list = maybe mempty (\c -> replace c new_list) cur_list
@@ -379,14 +379,14 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
                                            , performAction: performAction <<< CoreAction }
 
         -- autoUpdate :: Array R.Element
-        -- autoUpdate path' = if withAutoUpdate then
-        --                [ R2.buff
-        --                $ autoUpdateElt
-        --                  { duration: 5000
-        --                  , effect: performAction $ CoreAction $ Synchronize { afterSync: afterSync' }
-        --                  }
-        --                ]
-        --              else []
+--         autoUpdate = if withAutoUpdate then
+--                        [ R2.buff
+--                        $ autoUpdateElt
+--                          { duration: 5000
+--                          , effect: performAction $ CoreAction $ Synchronize { afterSync: afterSync' }
+--                          }
+--                        ]
+--                      else []
 
         ngramsParentRoot :: Maybe NgramsTerm
         ngramsParentRoot =

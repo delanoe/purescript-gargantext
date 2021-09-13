@@ -62,7 +62,7 @@ let
   repl = pkgs.writeShellScriptBin "repl" ''
     #!/usr/bin/env bash
 
-    pulp repl
+    spago repl
   '';
 
   test-ps = pkgs.writeShellScriptBin "test-ps" ''

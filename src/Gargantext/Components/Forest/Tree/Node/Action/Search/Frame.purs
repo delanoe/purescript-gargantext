@@ -9,7 +9,6 @@ import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
 import Data.Tuple (Tuple(..))
-import Data.Tuple.Nested ((/\))
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
@@ -44,7 +43,6 @@ type SearchIFramesProps = (
 
 searchIframes :: R2.Component SearchIFramesProps
 searchIframes = R.createElement searchIframesCpt
-
 searchIframesCpt :: R.Component SearchIFramesProps
 searchIframesCpt = here.component "searchIframes" cpt
   where
@@ -67,7 +65,6 @@ type IFrameProps = (
 
 divIframe :: R2.Component IFrameProps
 divIframe = R.createElement divIframeCpt
-
 divIframeCpt :: R.Component IFrameProps
 divIframeCpt = here.component "divIframe" cpt
   where
@@ -82,7 +79,6 @@ frameUrl Searx = "https://searx.frame.gargantext.org" -- 192.168.1.4:8080"
 
 iframeWith :: R2.Component IFrameProps
 iframeWith = R.createElement iframeWithCpt
-
 iframeWithCpt :: R.Component IFrameProps
 iframeWithCpt = here.component "iframeWith" cpt
   where

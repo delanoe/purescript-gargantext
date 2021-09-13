@@ -1,13 +1,10 @@
 module Gargantext.Components.Forest.Tree.Node.Tools.FTree where
 
-import Data.Array as A
 import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
-import Foreign as F
 import Simple.JSON as JSON
-import Simple.JSON.Generics as JSONG
 
 import Gargantext.Prelude
 

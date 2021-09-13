@@ -330,9 +330,9 @@ openedSidePanelCpt = here.component "openedSidePanel" cpt where
                             } [] ]
       GR.Texts _s _n -> do
         pure $ wrapper
-          [ Texts.sidePanel { boxes
-                            , session
-                            , sidePanel: sidePanelTexts } [] ]
+          [ Texts.textsSidePanel { boxes
+                                 , session
+                                 , sidePanel: sidePanelTexts } [] ]
       _ -> pure $ wrapper []
 
 annuaire :: R2.Component SessionNodeProps

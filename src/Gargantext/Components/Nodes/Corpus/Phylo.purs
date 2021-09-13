@@ -5,8 +5,6 @@ import Gargantext.Prelude
 
 -- import Gargantext.Utils.Toestand as T2
 -- import Toestand as T
-import Data.Tuple.Nested ((/\))
-import Effect (Effect)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeID)
 import Gargantext.Utils.Reactix as R2
@@ -20,7 +18,6 @@ type Props = ( nodeId :: NodeID, session :: Session )
 
 phyloLayout :: R2.Component Props
 phyloLayout = R.createElement phyloLayoutCpt
-
 phyloLayoutCpt :: R.Component Props
 phyloLayoutCpt = here.component "phyloLayout" cpt where
   cpt { nodeId, session } content = do

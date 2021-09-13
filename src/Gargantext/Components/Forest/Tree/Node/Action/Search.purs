@@ -6,10 +6,9 @@ import Data.Maybe (Maybe)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Gargantext.Components.App.Data (Boxes)
-import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar (searchBar)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (defaultSearch)
+import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Lang (allLangs)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (ID)
@@ -50,8 +49,8 @@ actionSearchCpt = here.component "actionSearch" cpt
         ]
         where
           searchOn :: (Action -> Aff Unit)
-                  -> GT.AsyncTaskWithType
-                  -> Effect Unit
+                   -> GT.AsyncTaskWithType
+                   -> Effect Unit
           searchOn dispatch' task = do
             _ <- launchAff $ dispatch' (DoSearch task)
             -- close popup

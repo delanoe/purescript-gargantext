@@ -55,7 +55,7 @@ form props = R.createElement formCpt props []
 formCpt :: forall s v. T.ReadWrite s Sessions => T.ReadWrite v Boolean
         => R.Component (Props s v)
 formCpt = here.component "form" cpt where
-  cpt props@{ backend, sessions, visible } _ = do
+  cpt { backend, sessions, visible } _ = do
     cell    <- T.useBox emptyForm
     cursors <- useFocusedFields cell {}
     pure $ R2.row

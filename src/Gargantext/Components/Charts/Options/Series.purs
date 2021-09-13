@@ -1,20 +1,15 @@
 module Gargantext.Components.Charts.Options.Series where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
-import Data.Argonaut.Core (jsonEmptyObject)
 import Data.Array (foldl)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype)
 import Data.Symbol (SProxy(..))
 import Gargantext.Components.Charts.Options.Data (DataD1, DataD2)
-import Gargantext.Components.Charts.Options.Data (DataD1, DataD2)
-import Gargantext.Components.Charts.Options.Font (ItemStyle, Tooltip)
 import Gargantext.Components.Charts.Options.Font (ItemStyle, Tooltip)
 import Gargantext.Components.Charts.Options.Legend (SelectedMode)
-import Gargantext.Prelude
 import Gargantext.Types (class Optional)
-import Prelude (class Eq, class Show, bind, map, pure, show, ($), (+), (<<<), (<>), eq)
+import Prelude (class Eq, class Show, bind, map, pure, show, ($), (+), (<<<), (<>))
 import Record      as Record
 import Record.Unsafe (unsafeSet)
 import Simple.JSON as JSON
