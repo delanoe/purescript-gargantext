@@ -13,8 +13,8 @@ import Toestand as T
 
 import Gargantext.Prelude
 
-import Gargantext.Components.Forest.Tree.Node.Action (Action)
-import Gargantext.Components.Forest.Tree.Node.Action as Action
+import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
+import Gargantext.Components.Forest.Tree.Node.Action.Types as Action
 import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
 import Gargantext.Config.REST (RESTError)
@@ -22,6 +22,7 @@ import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types (ID)
 import Gargantext.Types as GT
+import Gargantext.Utils.SimpleJSON as GUSJ
 import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
@@ -41,8 +42,12 @@ data ShareNodeParams = ShareTeamParams   { username :: String }
                | SharePublicParams { node_id  :: Int    }
 derive instance Eq ShareNodeParams
 derive instance Generic ShareNodeParams _
-instance JSON.ReadForeign ShareNodeParams where readImpl = JSONG.untaggedSumRep
-instance JSON.WriteForeign ShareNodeParams where writeImpl = JSON.writeImpl <<< show
+instance JSON.ReadForeign ShareNodeParams where readImpl = GUSJ.taggedSumRep
+instance JSON.WriteForeign ShareNodeParams where
+  writeImpl (ShareTeamParams { username }) = JSON.writeImpl { "type": "ShareTeamParams"
+                                                            , username }
+  writeImpl (SharePublicParams { node_id }) = JSON.writeImpl { "type": "SharePublicParams"
+                                                             , node_id }
 instance Show ShareNodeParams where show = genericShow
 
 ------------------------------------------------------------------------

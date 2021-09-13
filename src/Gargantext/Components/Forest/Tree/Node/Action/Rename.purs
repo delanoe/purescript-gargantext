@@ -10,7 +10,7 @@ import Simple.JSON as JSON
 
 import Gargantext.Prelude
 
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, put)

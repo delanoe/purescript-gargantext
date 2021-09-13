@@ -112,3 +112,8 @@ nbsp = nbsp' ""
     nbsp' acc n
       | n <= 0 = acc
       | otherwise = nbsp' (acc <> char) (n - 1)
+
+ifElse :: forall a. Boolean -> a -> a -> a
+ifElse predicate a b = if predicate then a else b
+
+infixl 1 ifElse as ?
