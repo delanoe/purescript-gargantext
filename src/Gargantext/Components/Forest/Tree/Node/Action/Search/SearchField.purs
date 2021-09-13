@@ -365,7 +365,7 @@ datafieldInputCpt = here.component "datafieldInput" cpt where
     iframeRef <- R.useRef null
     
     pure $ H.div {}
-      [ dataFieldNav { datafields: dataFields, search } []
+      [ dataFieldNav { search } []
         
       , if isExternal search'.datafield
         then databaseInput { databases, search } []
