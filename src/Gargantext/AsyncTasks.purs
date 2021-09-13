@@ -94,9 +94,9 @@ asyncTaskTTriggersMainPageReload :: GT.AsyncTaskWithType -> Boolean
 asyncTaskTTriggersMainPageReload (GT.AsyncTaskWithType { typ }) = asyncTaskTriggersMainPageReload typ
 
 asyncTaskTriggersTreeReload :: GT.AsyncTaskType -> Boolean
-asyncTaskTriggersTreeReload GT.Form       = true
-asyncTaskTriggersTreeReload GT.UploadFile = true
-asyncTaskTriggersTreeReload _            = false
+asyncTaskTriggersTreeReload GT.CorpusFormUpload = true
+asyncTaskTriggersTreeReload GT.UploadFile       = true
+asyncTaskTriggersTreeReload _                   = false
 
 asyncTaskTTriggersTreeReload :: GT.AsyncTaskWithType -> Boolean
 asyncTaskTTriggersTreeReload (GT.AsyncTaskWithType { typ }) = asyncTaskTriggersTreeReload typ

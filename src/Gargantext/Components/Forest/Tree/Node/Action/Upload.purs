@@ -24,8 +24,8 @@ import Gargantext.Components.ListSelection.Types (Selection(..))
 import Gargantext.Components.ListSelection.Types as ListSelection
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Routes as GR
-import Gargantext.Sessions (Session(..), postWwwUrlencoded)
-import Gargantext.Types (NodeType(..), ID)
+import Gargantext.Types (ID, NodeType(..))
+import Gargantext.Sessions (Session, postWwwUrlencoded, post)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import Partial.Unsafe (unsafePartial, unsafeCrashWith)
@@ -55,7 +55,8 @@ actionUploadCpt = here.component "actionUpload" cpt where
   cpt { nodeType: Corpus, dispatch, id, session } _ =
     pure $ uploadFileView { dispatch, id, nodeType: GT.Corpus, session }
   cpt { nodeType: NodeList, dispatch, id, session } _ =
-    pure $ uploadTermListView { dispatch, id, nodeType: GT.NodeList, session }
+    pure $ uploadTermListView { dispatch, id, nodeType: GT.NodeList, session } []
+  cpt props@{ nodeType: NodeFrameCalc } _ = pure $ uploadFrameCalcView props []
   cpt props@{ nodeType: _ } _ = pure $ actionUploadOther props []
 
 {-
@@ -143,7 +144,7 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
                                            , mFile
                                            , nodeType
                                            , selection
-                                           }
+                                           } []
                             ]
       pure $ panel bodies footer
 
@@ -170,8 +171,8 @@ type UploadButtonProps =
   , selection :: T.Box ListSelection.Selection
   )
 
-uploadButton :: Record UploadButtonProps -> R.Element
-uploadButton props = R.createElement uploadButtonCpt props []
+uploadButton :: R2.Component UploadButtonProps
+uploadButton = R.createElement uploadButtonCpt
 uploadButtonCpt :: R.Component UploadButtonProps
 uploadButtonCpt = here.component "uploadButton" cpt
   where
@@ -222,8 +223,8 @@ type FileTypeProps =
   , nodeType    :: GT.NodeType
   )
 
-fileTypeView :: Record FileTypeProps -> R.Element
-fileTypeView p = R.createElement fileTypeViewCpt p []
+fileTypeView :: R2.Component FileTypeProps
+fileTypeView = R.createElement fileTypeViewCpt
 fileTypeViewCpt :: R.Component FileTypeProps
 fileTypeViewCpt = here.component "fileTypeView" cpt
   where
@@ -236,7 +237,7 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
 
       case droppedFile' of
         Nothing -> pure $ H.div {} []
-        Just df@(DroppedFile _) ->
+        Just df ->
           pure $ H.div tooltipProps [ H.div { className: "card"}
                                       [ panelHeading
                                       , panelBody df
@@ -303,6 +304,7 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
           ]
 
 
+
 newtype FileUploadQuery = FileUploadQuery {
     fileType :: FileType
   }
@@ -338,20 +340,20 @@ uploadFile { contents, fileType: CSV, id, nodeType: NodeList, mName, session } =
              , Tuple "_wtf_filetype" (Just $ show NodeList)
              , Tuple "_wtf_name" mName ]
   eTask <- postWwwUrlencoded session url body
-  pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.Form }) <$> eTask
+  pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.ListCSVUpload }) <$> eTask
 uploadFile { contents, fileType, id, nodeType, mName, session } = do
   -- contents <- readAsText blob
   eTask :: Either RESTError GT.AsyncTask <- postWwwUrlencoded session p bodyParams
-  pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.Form }) <$> eTask
+  pure $ (\task -> GT.AsyncTaskWithType { task, typ }) <$> eTask
     --postMultipartFormData session p fileContents
   where
-    p = case nodeType of
-      Corpus   -> GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.Form
-      Annuaire -> GR.NodeAPI nodeType (Just id) "annuaire"
+    Tuple typ p = case nodeType of
+      Corpus   -> Tuple GT.CorpusFormUpload (GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.CorpusFormUpload)
+      Annuaire -> Tuple GT.UploadFile (GR.NodeAPI nodeType (Just id) "annuaire")
       NodeList -> case fileType of
-        JSON -> GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.ListUpload
-        _    -> GR.NodeAPI nodeType (Just id) ""
-      _        -> GR.NodeAPI nodeType (Just id) ""
+        JSON -> Tuple GT.ListUpload (GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.ListUpload)
+        _    -> Tuple GT.UploadFile (GR.NodeAPI nodeType (Just id) "")
+      _        -> Tuple GT.UploadFile (GR.NodeAPI nodeType (Just id) "")
 
     bodyParams = [ Tuple "_wf_data"     (Just contents)
                  , Tuple "_wf_filetype" (Just $ show fileType)
@@ -377,7 +379,7 @@ uploadArbitraryDataURL session id mName contents' = do
     let re = fromRight' (\_ -> unsafeCrashWith "Unexpected Left") $ DSR.regex "data:.*;base64," DSRF.noFlags
         contents = DSR.replace re "" contents'
     eTask :: Either RESTError GT.AsyncTask <- postWwwUrlencoded session p (bodyParams contents)
-    pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.Form }) <$> eTask
+    pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.UploadFile }) <$> eTask
   where
     p = GR.NodeAPI GT.Node (Just id) $ GT.asyncTaskTypePath GT.UploadFile
 
@@ -387,12 +389,12 @@ uploadArbitraryDataURL session id mName contents' = do
 
 ------------------------------------------------------------------------
 
-uploadTermListView :: Record Props -> R.Element
-uploadTermListView props = R.createElement uploadTermListViewCpt props []
+uploadTermListView :: R2.Component Props
+uploadTermListView = R.createElement uploadTermListViewCpt
 uploadTermListViewCpt :: R.Component Props
 uploadTermListViewCpt = here.component "uploadTermListView" cpt
   where
-    cpt {dispatch, id, nodeType} _ = do
+    cpt { dispatch, nodeType } _ = do
       let defaultUploadType = JSON
       mFile <- T.useBox (Nothing :: Maybe UploadFile)
       uploadType <- T.useBox defaultUploadType
@@ -410,7 +412,6 @@ uploadTermListViewCpt = here.component "uploadTermListView" cpt
                                      , on: { change: onUploadTypeChange uploadType } } (opt <$> [ CSV, JSON ])
 
       let footer = H.div {} [ uploadTermButton { dispatch
-                                               , id
                                                , mFile
                                                , nodeType
                                                , uploadType
@@ -447,7 +448,6 @@ uploadTermListViewCpt = here.component "uploadTermListView" cpt
 
 type UploadTermButtonProps =
   ( dispatch :: Action -> Aff Unit
-  , id       :: Int
   , mFile    :: T.Box (Maybe UploadFile)
   , nodeType :: GT.NodeType
   , uploadType :: T.Box FileType
@@ -484,3 +484,40 @@ uploadTermButtonCpt = here.component "uploadTermButton" cpt
             _ <- dispatch $ UploadFile nodeType uploadType' (Just name) contents (SelectedLists [])
             liftEffect $ do
               T.write_ Nothing mFile
+------------------------------------------------------------------------
+
+uploadFrameCalcView :: R2.Component Props
+uploadFrameCalcView = R.createElement uploadFrameCalcViewCpt
+uploadFrameCalcViewCpt :: R.Component Props
+uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt
+  where
+    cpt { dispatch } _ = do
+      let bodies =
+            [ R2.row
+              [ H.div { className: "col-12 flex-space-around" }
+                [ H.h4 {}
+                  [ H.text "This will upload current calc as Corpus CSV" ]
+                ]
+              ]
+            ]
+      let footer = H.div {}
+                   [ H.button { className: "btn btn-primary"
+                              , on: { click: onClick } }
+                     [ H.text "Upload!" ]
+                   ]
+      
+      pure $ panel bodies footer
+
+      where
+        onClick _ = do
+          void $ launchAff do
+            dispatch UploadFrameCalc
+
+uploadFrameCalc :: Session
+                    -> ID
+                    -> Aff (Either RESTError GT.AsyncTaskWithType)
+uploadFrameCalc session id = do
+  let p = GR.NodeAPI GT.Node (Just id) $ GT.asyncTaskTypePath GT.UploadFrameCalc
+
+  eTask <- post session p ([] :: Array String)
+  pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.UploadFrameCalc }) <$> eTask

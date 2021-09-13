@@ -137,6 +137,8 @@ listTreeChildrenLoadedCpt = here.component "listTreeChildrenLoaded" cpt where
   cpt { loaded, render, root, selection, session } _  = do
     pure $ H.div { className: "children" } (element <$> loaded)
     where
+      element (NodeSimple { id, name, nodeType: nodeType@Corpus }) =
+        render { root: id, name, nodeType, selection, session }
       element (NodeSimple { id, name, nodeType: nodeType@Folder }) =
         render { root: id, name, nodeType, selection, session }
       element (NodeSimple { id, name, nodeType: nodeType@FolderPrivate }) =
@@ -145,10 +147,10 @@ listTreeChildrenLoadedCpt = here.component "listTreeChildrenLoaded" cpt where
         render { root: id, name, nodeType, selection, session }
       element (NodeSimple { id, name, nodeType: nodeType@FolderShared }) =
         render { root: id, name, nodeType, selection, session }
-      element (NodeSimple { id, name, nodeType: nodeType@Corpus }) =
-        render { root: id, name, nodeType, selection, session }
       element (NodeSimple { id, name, nodeType: NodeList}) =
         renderListElement { id, name, selection }
+      element (NodeSimple { id, name, nodeType: nodeType@Team }) =
+        render { root: id, name, nodeType, selection, session }
       element _ = H.div {} []
 
 type RenderListElementProps =

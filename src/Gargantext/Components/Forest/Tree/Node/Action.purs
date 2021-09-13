@@ -18,7 +18,6 @@ type Props =
   , session  :: Session
   )
 
-
 subTreeOut :: Action -> Maybe SubTreeOut
 subTreeOut (MoveNode    {params}) = params
 subTreeOut (MergeNode   {params}) = params
@@ -45,6 +44,7 @@ icon (SharePublic _ )             = glyphiconNodeAction (Publish { subTreeParams
 icon (DoSearch   _)               = glyphiconNodeAction SearchBox
 icon (UploadFile _ _ _ _ _)       = glyphiconNodeAction Upload
 icon (UploadArbitraryFile _ _ _ ) = glyphiconNodeAction Upload
+icon UploadFrameCalc              = glyphiconNodeAction Upload
 icon  RefreshTree                 = glyphiconNodeAction Refresh
 icon  ClosePopover                = glyphiconNodeAction CloseNodePopover
 icon  DownloadNode                = glyphiconNodeAction Download
@@ -67,6 +67,7 @@ text (SharePublic _      )        = "Publish !"
 text (DoSearch    _      )        = "Launch search !"
 text (UploadFile  _ _ _ _ _)      = "Upload File !"
 text (UploadArbitraryFile _  _ _) = "Upload arbitrary file !"
+text UploadFrameCalc              = "Upload frame calc"
 text  RefreshTree                 = "Refresh Tree !"
 text  ClosePopover                = "Close Popover !"
 text DownloadNode                 = "Download !"

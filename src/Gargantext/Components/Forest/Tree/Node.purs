@@ -123,7 +123,7 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
                    , nodeType
                    , session } []
 
-                , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType }
+                , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType } []
                 , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
                                                         , barType: Pie
                                                         , errors

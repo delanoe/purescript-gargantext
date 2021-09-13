@@ -323,7 +323,8 @@ settingsBox NodeFrameCalc =
   SettingsBox { show : true
               , edit : true
               , doc  : Documentation NodeFrameCalc
-              , buttons : [ Add [ NodeFrameCalc
+              , buttons : [ Upload
+                          , Add [ NodeFrameCalc
                                 , NodeFrameWrite
                                 ]
                           , Move moveFrameParameters

@@ -8,6 +8,11 @@ import Data.Traversable (traverse_)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Toestand as T
+
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
@@ -35,10 +40,6 @@ import Gargantext.Types as GT
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Record as Record
-import Toestand as T
 
 foreign import back :: Effect Unit
 foreign import link :: String -> Effect Unit

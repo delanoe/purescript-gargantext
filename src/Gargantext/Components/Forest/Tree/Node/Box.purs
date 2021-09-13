@@ -202,5 +202,5 @@ panelActionCpt = here.component "panelAction" cpt
     cpt { action : Publish {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
       pure $ Share.publishNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
     cpt { action: SearchBox, boxes, dispatch, id, session } _ =
-      pure $ actionSearch { boxes, dispatch, id: (Just id), session } []
+      pure $ actionSearch { boxes, dispatch, id: Just id, session } []
     cpt _ _ = pure $ H.div {} []
