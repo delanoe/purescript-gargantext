@@ -1,3 +1,5 @@
+@use "./abstract/_members" as *
+
 @mixin font-inherit()
   font-family: inherit
   font-size: inherit
@@ -67,8 +69,10 @@
       width: 1px
     .html
       flex-grow: 2
-      margin-left: 25px
-      padding-left: 25px
+      margin-left: 8px
+      margin-right: 8px
+      padding-left: 8px
+      padding-right: 8px
       &.language-haskell
         font-family: Fira code,Fira Mono,Consolas,Menlo,Courier,monospace
         white-space: pre
@@ -85,3 +89,9 @@
         ol
           li
             list-style: decimal !important
+
+  &__toolbar
+    margin-bottom: space-x(2.5)
+
+    &__type
+      width: 200px

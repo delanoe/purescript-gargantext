@@ -26,7 +26,7 @@ errorsViewCpt = here.component "errorsView" cpt
   where
     cpt { errors } _ = do
       errors' <- T.useLive T.unequal errors
-      
+
       pure $ H.div {}
         ( mapWithIndex (showError errors) errors' )
     showError errors i (FStringError { error }) =

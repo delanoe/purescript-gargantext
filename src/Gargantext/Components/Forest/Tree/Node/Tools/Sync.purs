@@ -66,7 +66,7 @@ graphUpdateButtonCpt = here.component "graphUpdateButton" cpt
         onClick true enabled = do
           launchAff_ $ do
             liftEffect $ T.write_ false enabled
-            g <- GraphAPI.updateGraphVersions { graphId: id, session }
+            _g <- GraphAPI.updateGraphVersions { graphId: id, session }
             liftEffect $ T.write_ true enabled
             refresh unit
           pure unit
@@ -102,7 +102,6 @@ type NodeListUpdateButtonProps =
 
 nodeListUpdateButton :: Record NodeListUpdateButtonProps -> R.Element
 nodeListUpdateButton p = R.createElement nodeListUpdateButtonCpt p []
-
 nodeListUpdateButtonCpt :: R.Component NodeListUpdateButtonProps
 nodeListUpdateButtonCpt = here.component "nodeListUpdateButton" cpt
   where

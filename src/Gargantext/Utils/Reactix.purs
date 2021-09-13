@@ -437,3 +437,25 @@ boundingRect els =
                            , y: miny
                            , width: maxx - minx
                            , height: maxy - miny }
+
+-- | One-liner `if` simplifying render writing
+-- | (best for one child)
+if' :: Boolean -> R.Element -> R.Element
+if' = if _ then _ else mempty
+
+-- | One-liner `if` simplifying render writing
+-- | (best for multiple children)
+if_ :: Boolean -> Array (R.Element) -> R.Element
+if_ pred arr = if pred then (R.fragment arr) else mempty
+
+-- | Toestand `useLive` automatically sets to "unchanged" behavior
+useLive' :: forall box b. T.Read box b => Eq b => box -> R.Hooks b
+useLive' = T.useLive T.unequal
+
+-- | Toestand `useBox` + `useLive'` shorthand following same patterns as
+-- | React StateHooks API
+useBox' :: forall b. Eq b => b -> R.Hooks (Tuple b (T.Box b))
+useBox' default = do
+  box <- T.useBox default
+  b <- useLive' box
+  pure $ b /\ box

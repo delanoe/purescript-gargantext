@@ -1,3 +1,24 @@
+@use "./abstract/_members" as *
+
+$forest-layout-top-teaser-height: 24px
+$forest-layout-bottom-teaser-height: 24px // ~line-height to 1.5 (covering tree)
+$node-popop-radius: 6px
+$node-popup-width: 544px
+
+
+@mixin forest-layout-gutter
+
+  @include right-handed
+    padding-left: space-x(2)
+    padding-right: space-x(1)
+
+  @include left-handed
+    padding-left: space-x(1)
+    padding-right: space-x(2)
+
+
+/////////////////////////////////////////
+
 body > .tree ul > li:first-child::before
   top: 12px
 
@@ -28,11 +49,8 @@ li
       a.settings
         visibility: visible
 
-.forest-layout-content
-  & > .tree
-    margin-top: 20px
-
 .tree
+
   ul
     li
       position: relative
@@ -114,6 +132,70 @@ li
       .text
         text-decoration: underline
 
+
+.subtree
+  $self: &
+
+  &__node
+    margin-top: space-x(0.25)
+
+    &__text
+      display: flex
+      align-items: center // align icon with text
+      cursor: pointer
+      font-size: 15px
+
+    &__icons
+      display: flex
+
+      .fa
+        margin-left: space-x(0.25)
+        margin-right: space-x(0.25)
+
+    &--can-be-selected
+      text-decoration: underline
+      text-underline-offset: 2px // easing node reading (empirical)
+
+    @include right-handed
+
+      &__text
+        flex-direction: row
+        text-align: left
+
+      &__icons
+        flex-direction: row
+
+      &__children > #{ $self }__node
+        padding-left: space-x(2)
+
+    @include left-handed
+
+      &__text
+        flex-direction: row-reverse
+        text-align: right
+
+      &__icons
+        flex-direction: row-reverse
+
+      &__children > #{ $self }__node
+        padding-right: space-x(2.5)
+
+
+.node-text
+  display: inline-flex
+
+  &--selected
+    font-weight: bold
+    text-decoration: underline
+
+  @include right-handed
+    flex-direction: row
+
+  @include left-handed
+    flex-direction: row-reverse
+
+
+
 // based on https://codeburst.io/how-to-pure-css-pie-charts-w-css-variables-38287aea161e
 .progress-pie
   background: rgba(51, 122, 183, 0.1)
@@ -165,6 +247,35 @@ li
   // @link https://gitlab.iscpif.fr/gargantext/purescript-gargantext/issues/302
   position: fixed
 
+
+  background-color: white
+  border-radius: $node-popop-radius
+
+  &:hover
+    border: none
+    text-decoration: none
+
+
+  // @XXX "react-awesome-popover" lack of parent host parameter
+  //
+  //       as the container where the popover will be appended is actually a
+  //       a heighthy sidebar (which a large is hidden with a scrollbar),
+  //       the library tends to add the tooltip position in the middle of the
+  //       sidebar height: which can be off screen
+  //
+  //       this workaround appends the tooltip in a static position
+  @include right-handed
+    $offset-x: 16.6666666667% // simulate "col-2" sidebar attributes
+    top: 50%
+    left: $offset-x
+    transform: translateY(-50%)
+
+  @include left-handed
+    $offset-x: 16.6666666667% // simulate "col-2" sidebar attributes
+    top: 50%
+    right: $offset-x
+    transform: translateY(-50%)
+
   .tree
     .node
       margin-top: 5px
@@ -172,45 +283,51 @@ li
       .node
         padding-left: 15px
 
-// @XXX "react-awesome-popover" lack of parent host parameter
-//
-//       as the container where the popover will be appended is actually a
-//       a heighthy sidebar (which a large is hidden with a scrollbar),
-//       the library tends to add the tooltip position in the middle of the
-//       sidebar height: which can be off screen
-//
-//       this workaround appends the tooltip in a static position
-.right-handed #node-popup-tooltip
-  $offset-x: 16.6666666667% // simulate "col-2" sidebar attributes
-  top: 50%
-  left: $offset-x
-  transform: translateY(-50%)
-
-.left-handed #node-popup-tooltip
-  $offset-x: 16.6666666667% // simulate "col-2" sidebar attributes
-  top: 50%
-  right: $offset-x
-  transform: translateY(-50%)
-
-.panel-actions
-  .almost-useable
-    color: orange
-  .development-in-progress
-    color: red
-  .ok-to-use
-    color: black
+  .panel-actions
+    .almost-useable
+      color: orange
+    .development-in-progress
+      color: red
+    .ok-to-use
+      color: black
 
 
-.popup-container
+  .popup-container
+    display: flex
+    flex-direction: colum
 
-  // will enlarge popup when inner content is larger (see issue #315)
-  & > .card
-    width: auto !important
+    & > .card
+      // will enlarge popup when inner content is larger (see issue #315),
+      // with a minimal width to avoid row item collapsing (see issue #324)
+      width: auto !important
+      min-width: $node-popup-width
 
-.popup-container-body
-  // empirical value (see issue #308, #315)
-  max-height: 70vh
-  overflow-y: auto
+
+      border: 1px solid rgba(0,0,0,0.2)
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2)
+      margin-bottom: initial
+
+      .fa-pencil
+        color: black
+
+      .card-body
+        display: flex
+        justify-content: center
+        background-color: white
+        border: none
+        .spacer
+          margin: space-x(1)
+
+    .frame-search.card
+      border: 1px solid rgba(0,0,0,0.2)
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2)
+      height: 600px
+      width: 1000px
+
+  .popup-container-body
+    // empirical value (see issue #308, #315)
+    max-height: 70vh
+    overflow-y: auto
 
 .forest-layout-wrapper
   // removing Bootstrap "col" padding
@@ -220,7 +337,6 @@ li
 .forest-layout
   $offset-y: 56px
 
-  padding-top: 8px
   z-index: 909
 
   // make the sidebar a scrollable component
@@ -241,32 +357,85 @@ li
 
   transition: border 150ms
 
+
+.forest-layout-action
+  @include forest-layout-gutter
+
+  display: flex
+
+  @include right-handed
+    flex-direction: row
+
+    &__button
+      margin-right: space-x(2)
+
+  @include left-handed
+    flex-direction: row-reverse
+
+    &__button
+      margin-left: space-x(2)
+
 // UX addition: visually delimiting the sidebar on hover
 // -- for now in "_common.scss" file (see @TODO: More SASS structure)
 
 // UX best pratice: when a lengthy column is overflowy hidden (with a scroll), a teaser
 // UI element shows to the user that a scroll is possible
-.forest-layout-teaser
-  $height: 24px             // ~line-height to 1.5
+.forest-layout-bottom-teaser
   $width: 16.6666666667%    // simulate "col-2" sidebar attributes
   $minus-parent-border: 1px // border size of the sidebar on hover
+
+  z-index: 1 // @TODO z-index stacking context management
 
   pointer-events: none
   position: fixed
   bottom: 0
-  height: $height
+  height: $forest-layout-bottom-teaser-height
   width: calc(#{ $width } - #{ $minus-parent-border})
   // background -- for now in "_common.scss" file (@TODO: More SASS structure)
 
-.right-handed .forest-layout-teaser
-  left: 0
+  @include right-handed
+    left: 0
 
-.left-handed .forest-layout-teaser
-  right: 0
+  @include left-handed
+    right: 0
 
-.left-handed .forest-layout
-    padding-left: 8px
-    padding-right: 16px
-.right-handed .forest-layout
-    padding-left: 16px
-    padding-right: 8px
+.forest-layout-top-teaser
+  $minus-parent-border: 1px // border size of the sidebar on hover
+
+  z-index: 1 // @TODO z-index stacking context management
+
+  pointer-events: none
+  position: sticky
+  top: 0
+  height: $forest-layout-top-teaser-height
+  width: calc(100% - #{ $minus-parent-border})
+  // background -- for now in "_common.scss" file (@TODO: More SASS structure)
+
+  @include right-handed
+    left: 0
+
+  @include left-handed
+    right: 0
+
+
+.forest-layout-content
+
+  & > ul.tree // `ul` prefixed to override bootstrap "_reboot.scss" rules
+
+    @include forest-layout-gutter
+
+    margin-top: space-x(3)
+    margin-bottom: 0
+
+    &:last-child
+      margin-bottom: $forest-layout-bottom-teaser-height
+
+/////////////////////////////////////////
+
+.ids-selector
+  .tree
+    .children
+      padding-left: 0.5em
+      .leaf
+        input
+          margin: 0.1em

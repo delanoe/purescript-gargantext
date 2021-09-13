@@ -26,6 +26,17 @@ let
     browserify
   '';
 
+
+  build-css = pkgs.writeShellScriptBin "build-css" ''
+    #!/usr/bin/env bash
+    set -e
+
+    yarn css
+
+  '';
+
+
+
   build-watch = pkgs.writeShellScriptBin "build-watch" ''
     #!/usr/bin/env bash
     set -e
@@ -61,13 +72,15 @@ let
 in
 pkgs.mkShell {
   buildInputs = [
-    easy-ps.purs-0_14_3
+    easy-ps.purs-0_14_4
     easy-ps.psc-package
     easy-ps.dhall-json-simple
     browserify
     build-purs
     build-watch
     build
+    build-css
+    pkgs.nodejs
     repl
     pkgs.pulp
     pkgs.spago

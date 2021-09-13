@@ -1,3 +1,5 @@
+@use "./abstract/_members" as *
+
 .cache-toggle
   cursor: pointer
 .left-handed
@@ -114,3 +116,62 @@ ul
 
   &.right-handed
     flex-direction: row
+
+
+.main-page
+  $self: &
+  $page-padding: space-x(3) space-x(4)
+  $topbar-height: 56px // ~ unworthy empirical value (@TODO topbar height calculation)
+
+  flex-grow: 1 // quick workaround, stretching block when subjected to flex API
+
+  &__main-row
+    display: flex
+
+    &--with-y-tiles
+
+      #{ $self }__main-route
+        width: 60%
+      #{ $self }__vertical-tiles
+        width: 40%
+
+    &--only-y-tiles
+      // ensure minimum height, so that the border delimiting "main route" and
+      // its "vertical tiles" will not end abruptly
+      min-height: calc( 100vh - #{ $topbar-height })
+
+  // main route ~ main tile
+  &__main-route
+    padding: $page-padding
+    width: 100%
+
+  // optional vertical tiles ~ y axis column
+  &__vertical-tiles
+    display: flex
+    flex-direction: column
+
+  // optional horizontal tiles ~ x axis row
+  &__horizontal-tiles
+    display: flex
+    flex-direction: row
+
+    // dynamic width according to number of tiles
+    @for $i from 1 through 10
+
+      &--#{ $i } .tile-block
+        width: calc( 100% / #{ $i })
+
+.tile-block
+  $tile-padding: space-x(0.5) space-x(2) space-x(1.5)
+
+  &__header
+    display: flex
+
+    @include right-handed
+      justify-content: flex-end
+
+    @include left-handed
+      justify-content: flex-start
+
+  &__body
+    padding: $tile-padding

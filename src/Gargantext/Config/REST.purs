@@ -28,7 +28,6 @@ data RESTError =
     SendResponseError Affjax.Error
   | ReadJSONError     Foreign.MultipleErrors
   | CustomError       String
-
 derive instance Generic RESTError _
 instance Show RESTError where
   show (SendResponseError e) = "SendResponseError " <> showError e
@@ -43,6 +42,8 @@ instance Show RESTError where
 instance Eq RESTError where
   -- this is crude but we need it only because of useLoader
   eq _ _ = false
+
+type AffRESTError a = Aff (Either RESTError a)
 
 
 readJSON :: forall a b. JSON.ReadForeign a =>
