@@ -49,7 +49,7 @@ let
 
     spago build --purs-args '--codegen corefn,js'
     zephyr -f Main.main
-    yarn parcel build dist/index.html --public-url '.' --no-source-maps
+    browserify-zephyr
   '';
 
   browserify = pkgs.writeShellScriptBin "browserify" ''
@@ -57,6 +57,13 @@ let
     set -e
 
     pulp browserify --skip-compile -t dist/bundle.js --src-path output
+  '';
+
+  browserify-zephyr = pkgs.writeShellScriptBin "browserify-zephyr" ''
+    #!/usr/bin/env bash
+    set -e
+
+    pulp browserify --skip-compile -t dist/bundle.js --src-path dce-output
   '';
 
   minify-bundle = pkgs.writeShellScriptBin "minify-bundle" ''
@@ -91,12 +98,14 @@ pkgs.mkShell {
     easy-ps.dhall-json-simple
     easy-ps.zephyr
     browserify
+    browserify-zephyr
     build-css
     build-purs
     build-watch
     build-zephyr
     build
     minify-bundle
+    pkgs.closurecompiler
     pkgs.minify
     pkgs.nodejs
     repl
