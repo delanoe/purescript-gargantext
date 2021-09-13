@@ -84,7 +84,6 @@ type NodeActionsNodeListProps =
 
 nodeActionsNodeList :: Record NodeActionsNodeListProps -> R.Element
 nodeActionsNodeList p = R.createElement nodeActionsNodeListCpt p []
-
 nodeActionsNodeListCpt :: R.Component NodeActionsNodeListProps
 nodeActionsNodeListCpt = here.component "nodeActionsNodeList" cpt
   where
@@ -106,7 +105,7 @@ nodeListUpdateButton p = R.createElement nodeListUpdateButtonCpt p []
 nodeListUpdateButtonCpt :: R.Component NodeListUpdateButtonProps
 nodeListUpdateButtonCpt = here.component "nodeListUpdateButton" cpt
   where
-    cpt { listId, nodeId, nodeType, session, refresh } _ = do
+    cpt _ _ = do
       -- enabled <- T.useBox true
 
       pure $ H.div {} [] {- { className: "update-button " 

@@ -23,8 +23,8 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Delete"
 
 -- TODO Delete with asyncTaskWithType
 
-deleteNode :: Session -> NodeType -> GT.ID -> Aff (Either RESTError GT.ID)
-deleteNode session nt nodeId = delete session $ NodeAPI GT.Node (Just nodeId) ""
+deleteNode :: Session -> GT.ID -> Aff (Either RESTError GT.ID)
+deleteNode session nodeId = delete session $ NodeAPI GT.Node (Just nodeId) ""
 
 {-
   case nt of

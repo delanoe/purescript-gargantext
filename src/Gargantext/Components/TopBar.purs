@@ -163,7 +163,7 @@ menuButton = R.createElement menuButtonCpt
 menuButtonCpt :: R.Component MenuButtonProps
 menuButtonCpt = here.component "menuButton" cpt
   where
-    cpt { element: LiNav { title, href, icon, text }, show } _ = do
+    cpt { element: LiNav { icon, text, title }, show } _ = do
       pure $ H.a { className: "dropdown-toggle navbar-text"
                 -- , data: {toggle: "dropdown"}
                 , title

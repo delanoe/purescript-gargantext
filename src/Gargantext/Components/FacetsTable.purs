@@ -333,14 +333,14 @@ pageCpt = here.component "page" cpt
 
       let isDeleted (DocumentsView {id}) = Set.member id deletions'.deleted
 
-          rows path' = case rowsLoaded of
+          rows = case rowsLoaded of
             Docs     {docs}     -> docRow path'     <$> Seq.filter (not <<< isDeleted) docs
             Contacts {contacts} -> contactRow path' <$>  contacts
 
       pure $ T.table { colNames
                      , container
                      , params
-                     , rows: rows path'
+                     , rows
                      , syncResetButton : [ H.div {} [] ]
                      , totalRecords
                      , wrapColElts

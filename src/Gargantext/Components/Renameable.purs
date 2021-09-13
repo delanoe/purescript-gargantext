@@ -1,7 +1,5 @@
 module Gargantext.Components.Renameable where
 
-import Data.Tuple (Tuple(..), fst, snd)
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -24,7 +22,6 @@ type RenameableProps =
 
 renameable :: R2.Component RenameableProps
 renameable = R.createElement renameableCpt
-
 renameableCpt :: R.Component RenameableProps
 renameableCpt = here.component "renameableCpt" cpt
   where
@@ -54,11 +51,10 @@ type RenameableTextProps =
 
 renameableText :: R2.Component RenameableTextProps
 renameableText = R.createElement renameableTextCpt
-
 renameableTextCpt :: R.Component RenameableTextProps
 renameableTextCpt = here.component "renameableText" cpt
   where
-    cpt props@{ isEditing, state } _ = do
+    cpt props@{ isEditing } _ = do
       isEditing' <- T.useLive T.unequal isEditing
 
       pure $ if isEditing' then
@@ -69,11 +65,10 @@ renameableTextCpt = here.component "renameableText" cpt
 
 notEditing :: R2.Component RenameableTextProps
 notEditing = R.createElement notEditingCpt
-
 notEditingCpt :: R.Component RenameableTextProps
 notEditingCpt = here.component "notEditing" cpt
   where
-    cpt props@{ isEditing, state } _ = do
+    cpt { isEditing, state } _ = do
       state' <- T.useLive T.unequal state
 
       pure $ H.div { className: "input-group" }
@@ -90,11 +85,10 @@ notEditingCpt = here.component "notEditing" cpt
 
 editing :: R2.Component RenameableTextProps
 editing = R.createElement editingCpt
-
 editingCpt :: R.Component RenameableTextProps
 editingCpt = here.component "editing" cpt
   where
-    cpt props@{ isEditing, onRename, state } _ = do
+    cpt { isEditing, onRename, state } _ = do
       state' <- T.useLive T.unequal state
 
       pure $ H.div { className: "input-group" }

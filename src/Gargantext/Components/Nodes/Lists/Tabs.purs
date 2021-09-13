@@ -1,7 +1,5 @@
 module Gargantext.Components.Nodes.Lists.Tabs where
 
-import Gargantext.Components.Nodes.Lists.Types
-
 import Data.Array as A
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
@@ -14,6 +12,7 @@ import Gargantext.Components.Nodes.Corpus.Chart.Pie (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils (mNgramsTypeFromTabType)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
+import Gargantext.Components.Nodes.Lists.Types hiding (here)
 import Gargantext.Components.Tab as Tab
 import Gargantext.Prelude (bind, pure, unit, ($), (<>))
 import Gargantext.Sessions (Session)
@@ -70,7 +69,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
       chartsReload <- T.useBox T2.newReload
 
       path <- T.useBox $ NTC.initialPageParams props.session initialPath.corpusId [initialPath.listId] initialPath.tabType
-      { listIds, nodeId, params, tabType } <- T.useLive T.unequal path
+      { listIds, nodeId, params } <- T.useLive T.unequal path
       let path' = {
           corpusId: nodeId
         , limit: params.limit
@@ -101,7 +100,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
       where
         afterSync chartsReload _ = do
           case mNgramsType of
-            Just ngramsType -> do
+            Just _ -> do
               -- NOTE: No need to recompute chart, after ngrams are sync this
               -- should be recomputed already
               -- We just refresh it
@@ -119,7 +118,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
                        , tabType
                        }
 
-        charts params CTabTerms = [
+        charts _params CTabTerms = [
           {-
           H.div {className: "row"}
                 [ H.div {className: "col-12 d-flex justify-content-center"}

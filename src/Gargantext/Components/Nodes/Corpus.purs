@@ -109,7 +109,7 @@ fieldsCodeEditor = R.createElement fieldsCodeEditorCpt
 fieldsCodeEditorCpt :: R.Component FieldsCodeEditorProps
 fieldsCodeEditorCpt = here.component "fieldsCodeEditorCpt" cpt
   where
-    cpt { fields, nodeId, session } _ = do
+    cpt { fields } _ = do
       (FTFieldsWithIndex fields') <- T.useLive T.unequal fields
       masterKey <- T.useBox T2.newReload
       masterKey' <- T.useLive T.unequal masterKey
@@ -175,7 +175,6 @@ type FieldCodeEditorProps =
 
 fieldCodeEditorWrapper :: Record FieldCodeEditorProps -> R.Element
 fieldCodeEditorWrapper props = R.createElement fieldCodeEditorWrapperCpt props []
-
 fieldCodeEditorWrapperCpt :: R.Component FieldCodeEditorProps
 fieldCodeEditorWrapperCpt = here.component "fieldCodeEditorWrapperCpt" cpt
   where
@@ -230,7 +229,6 @@ type RenameableProps =
 
 renameable :: Record RenameableProps -> R.Element
 renameable props = R.createElement renameableCpt props []
-
 renameableCpt :: R.Component RenameableProps
 renameableCpt = here.component "renameableCpt" cpt
   where
@@ -326,29 +324,29 @@ fieldCodeEditorCpt = here.component "fieldCodeEditorCpt" cpt
 -- CE.Code is the editor code (might have been the cause of the trigger)
 changeCode :: (FieldType -> Effect Unit) -> FieldType -> CE.CodeType -> CE.Code -> Effect Unit
 changeCode onc (Haskell hs)        CE.Haskell  c = onc $ Haskell $ hs { haskell = c }
-changeCode onc (Haskell hs)        CE.Python   c = onc $ Python   $ defaultPython'   { python  = c }
-changeCode onc (Haskell {haskell}) CE.JSON     c = onc $ JSON     $ defaultJSON'     { desc = haskell }
-changeCode onc (Haskell {haskell}) CE.Markdown c = onc $ Markdown $ defaultMarkdown' { text = haskell }
+changeCode onc (Haskell _)         CE.Python   c = onc $ Python   $ defaultPython'   { python  = c }
+changeCode onc (Haskell {haskell}) CE.JSON     _ = onc $ JSON     $ defaultJSON'     { desc = haskell }
+changeCode onc (Haskell {haskell}) CE.Markdown _ = onc $ Markdown $ defaultMarkdown' { text = haskell }
 
 changeCode onc (Python hs)       CE.Python   c = onc $ Python  $ hs { python  = c }
-changeCode onc (Python hs)       CE.Haskell  c = onc $ Haskell $ defaultHaskell' { haskell = c }
-changeCode onc (Python {python}) CE.JSON     c = onc $ JSON     $ defaultJSON' { desc = python }
-changeCode onc (Python {python}) CE.Markdown c = onc $ Markdown $ defaultMarkdown' { text = python }
+changeCode onc (Python _)        CE.Haskell  c = onc $ Haskell $ defaultHaskell' { haskell = c }
+changeCode onc (Python {python}) CE.JSON     _ = onc $ JSON     $ defaultJSON' { desc = python }
+changeCode onc (Python {python}) CE.Markdown _ = onc $ Markdown $ defaultMarkdown' { text = python }
 
-changeCode onc (Markdown md) CE.Haskell  c = onc $ Haskell  $ defaultHaskell'  { haskell = c }
-changeCode onc (Markdown md) CE.Python   c = onc $ Python   $ defaultPython'   { python  = c }
-changeCode onc (Markdown md) CE.JSON     c = onc $ Markdown $ defaultMarkdown' { text    = c }
+changeCode onc (Markdown _)  CE.Haskell  c = onc $ Haskell  $ defaultHaskell'  { haskell = c }
+changeCode onc (Markdown _)  CE.Python   c = onc $ Python   $ defaultPython'   { python  = c }
+changeCode onc (Markdown _)  CE.JSON     c = onc $ Markdown $ defaultMarkdown' { text    = c }
 changeCode onc (Markdown md) CE.Markdown c = onc $ Markdown $ md               { text    = c }
 
-changeCode onc (JSON j@{desc}) CE.Haskell c = onc $ Haskell $ defaultHaskell' { haskell = haskell }
+changeCode onc (JSON j) CE.Haskell _ = onc $ Haskell $ defaultHaskell' { haskell = haskell }
   where
     haskell = R2.stringify (JSON.writeImpl j) 2
-changeCode onc (JSON j@{desc}) CE.Python c = onc $ Python $ defaultPython' { python = toCode }
+changeCode onc (JSON j) CE.Python _ = onc $ Python $ defaultPython' { python = toCode }
   where
     toCode = R2.stringify (JSON.writeImpl j) 2
 changeCode onc _ CE.JSON c = do
   case JSON.readJSON c of
-    Left err -> here.log2 "[fieldCodeEditor'] cannot parse json" c
+    Left err -> here.log2 "[fieldCodeEditor'] cannot parse json" c  -- TODO Refactor?
     Right j' -> onc $ JSON j'
   -- case jsonParser c of
   --   Left err -> here.log2 "[fieldCodeEditor'] cannot parse json" c
@@ -455,7 +453,7 @@ type LoadWithReloadProps =
 
 -- Just to make reloading effective
 loadCorpusWithChildAndReload :: Record LoadWithReloadProps -> Aff (Either RESTError CorpusData)
-loadCorpusWithChildAndReload {nodeId, reload, session} = loadCorpusWithChild {nodeId, session}
+loadCorpusWithChildAndReload {nodeId, session} = loadCorpusWithChild {nodeId, session}
 
 data ViewType = Code | Folders
 derive instance Generic ViewType _

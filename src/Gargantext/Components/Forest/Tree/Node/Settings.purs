@@ -1,11 +1,7 @@
 module Gargantext.Components.Forest.Tree.Node.Settings where
 
-import Data.Generic.Rep (class Generic)
-import Data.Show.Generic (genericShow)
-import Data.Eq.Generic   (genericEq)
 import Gargantext.Prelude (class Eq, class Show, show, (&&), (<>), (==))
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..))
-import Data.Array (foldl)
 import Gargantext.Types
 
 ------------------------------------------------------------------------
@@ -55,15 +51,15 @@ instance Show NodeAction where
   show Download          = "Download"
   show Upload            = "Upload"
   show Refresh           = "Refresh"
-  show (Move t)          = "Move with subtree params" -- <> show t
+  show (Move _)          = "Move with subtree params" -- <> show t
   show Clone             = "Clone"
   show Delete            = "Delete"
   show Share             = "Share"
   show Config            = "Config"
-  show (Link x)          = "Link to " -- <> show x
-  show (Add xs)          = "Add Child" -- foldl (\a b -> a <> show b) "Add " xs
-  show (Merge t)         = "Merge with subtree" -- <> show t
-  show (Publish x)       = "Publish" -- <> show x
+  show (Link _)          = "Link to " -- <> show x
+  show (Add _)          = "Add Child" -- foldl (\a b -> a <> show b) "Add " xs
+  show (Merge _)         = "Merge with subtree" -- <> show t
+  show (Publish _)       = "Publish" -- <> show x
   show AddingContact     = "AddingContact"
   show CloseNodePopover  = "CloseNodePopover"
 

@@ -72,7 +72,7 @@ chooserCpt = here.component "chooser" cpt where
 
 -- Shown in the chooser
 activeConnections :: forall s. T.ReadWrite s Sessions => s -> Sessions -> Array R.Element
-activeConnections sessions sessions' | Sessions.null sessions' = []
+activeConnections _        sessions' | Sessions.null sessions' = []
 activeConnections sessions sessions' =
   [ H.h3 {} [ H.text "Active connection(s)" ]
   , H.ul {} [ renderSessions sessions sessions' ] ]
