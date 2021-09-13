@@ -12,7 +12,6 @@ import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Forest.Tree.Node (nodeSpan)
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (deleteNode, unpublishNode)
@@ -21,6 +20,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Merge (mergeNodeReq)
 import Gargantext.Components.Forest.Tree.Node.Action.Move (moveNodeReq)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
 import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
+import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Update (updateRequest)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile, uploadArbitraryFile)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
@@ -64,7 +64,8 @@ type NodeProps =
  | Common )
 
 type TreeProps =
- ( tree :: FTree
+ ( root :: ID
+ , tree :: FTree
  | NodeProps )
 
 type ChildrenTreeProps =
@@ -91,8 +92,9 @@ type NSCommon =
 -- way. This function is only called by functions in this module, so
 -- we just have to careful in what we pass.
 type ChildLoaderProps =
-  ( id :: ID
+  ( id     :: ID
   , render :: R2.Leaf TreeProps
+  , root   :: ID
   | NodeProps )
 
 type PerformActionProps =
@@ -118,7 +120,7 @@ treeLoaderCpt = here.component "treeLoader" cpt where
         loaded tree' = tree props where
           props = Record.merge common extra where
             common = RecordE.pick p :: Record Common
-            extra = { tree: tree', reloadTree: p.reload, session }
+            extra = { reloadTree: p.reload, root, session, tree: tree' }
         errorHandler err = here.log2 "[treeLoader] RESTError" err
 
 getNodeTree :: Session -> ID -> Aff (Either RESTError FTree)
@@ -135,6 +137,7 @@ treeCpt = here.component "tree" cpt where
         , frontends
         , handed
         , reload
+        , root
         , session
         , tree: NTree (LNode { id, name, nodeType }) children } _ = do
     setPopoverRef <- R.useRef Nothing
@@ -150,6 +153,7 @@ treeCpt = here.component "tree" cpt where
                    , name
                    , nodeType
                    , reload
+                   , root
                    , session
                    , setPopoverRef }
           [ renderChildren (Record.merge p { childProps: { children', folderOpen, render: tree } } ) [] ]
@@ -186,13 +190,14 @@ renderTreeChildren = R.createElement renderTreeChildrenCpt
 renderTreeChildrenCpt :: R.Component ChildrenTreeProps
 renderTreeChildrenCpt = here.component "renderTreeChildren" cpt where
   cpt p@{ childProps: { children'
-                      , render } } _ = do
+                      , render }
+        , root } _ = do
     pure $ R.fragment (map renderChild children')
 
     where
       nodeProps = RecordE.pick p :: Record NodeProps
       renderChild (NTree (LNode {id: cId}) _) = childLoader props [] where
-        props = Record.merge nodeProps { id: cId, render }
+        props = Record.merge nodeProps { id: cId, render, root }
 
 childLoader :: R2.Component ChildLoaderProps
 childLoader = R.createElement childLoaderCpt
@@ -200,7 +205,8 @@ childLoaderCpt :: R.Component ChildLoaderProps
 childLoaderCpt = here.component "childLoader" cpt where
   cpt p@{ boxes: { reloadRoot }
         , reloadTree
-        , render } _ = do
+        , render
+        , root } _ = do
     reload <- T.useBox T2.newReload
     let reloads = [ reload, reloadRoot, reloadTree ]
     cache <- (A.cons p.id) <$> traverse (T.useLive T.unequal) reloads
@@ -213,7 +219,7 @@ childLoaderCpt = here.component "childLoader" cpt where
       fetch _ = getNodeTreeFirstLevel p.session p.id
       paint reload tree' = render (Record.merge base extra) where
         base = nodeProps { reload = reload }
-        extra = { tree: tree' }
+        extra = { root, tree: tree' }
         nodeProps = RecordE.pick p :: Record NodeProps
 
 closePopover { setPopoverRef } =
@@ -265,14 +271,14 @@ addNode' name nodeType p@{ boxes: { errors, forestOpen }, session, tree: (NTree 
     liftEffect $ T.modify_ (openNodesInsert (mkNodeId session id)) forestOpen
     refreshTree p
 
-uploadFile' nodeType fileType mName contents { boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } = do
-  eTask <- uploadFile { contents, fileType, id, mName, nodeType, session }
+uploadFile' nodeType fileType mName contents p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
+  eTask <- uploadFile { contents, fileType, id, mName, nodeType, selection, session }
   handleRESTError errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
     here.log2 "[uploadFile'] UploadFile, uploaded, task:" task
 
-uploadArbitraryFile' mName blob { boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } = do
-  eTask <- uploadArbitraryFile session id { blob, mName }
+uploadArbitraryFile' mName blob p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
+  eTask <- uploadArbitraryFile session id { blob, mName } selection
   handleRESTError errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
     here.log2 "[uploadArbitraryFile'] UploadArbitraryFile, uploaded, task:" task
@@ -307,8 +313,10 @@ performAction (ShareTeam username) p                          = shareTeam userna
 performAction (SharePublic { params }) p                      = sharePublic params p
 performAction (AddContact params) p                           = addContact params p
 performAction (AddNode name nodeType) p                       = addNode' name nodeType p
-performAction (UploadFile nodeType fileType mName contents) p = uploadFile' nodeType fileType mName contents p
-performAction (UploadArbitraryFile mName blob) p              = uploadArbitraryFile' mName blob p
+performAction (UploadFile nodeType fileType mName contents selection) p =
+  uploadFile' nodeType fileType mName contents p selection
+performAction (UploadArbitraryFile mName blob selection) p              =
+  uploadArbitraryFile' mName blob p selection
 performAction DownloadNode _                                  = liftEffect $ here.log "[performAction] DownloadNode"
 performAction (MoveNode {params}) p                           = moveNode params p
 performAction (MergeNode {params}) p                          = mergeNode params p

@@ -10,7 +10,7 @@ import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Data (Boxes)
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (DroppedFile(..), fileTypeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..))
 import Gargantext.Components.Forest.Tree.Node.Box (nodePopupView)
@@ -51,6 +51,7 @@ type NodeMainSpanProps =
   , name          :: Name
   , nodeType      :: GT.NodeType
   , reload        :: T2.ReloadS
+  , root          :: ID
   , session       :: Session
   , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
   )

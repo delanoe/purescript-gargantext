@@ -4,7 +4,6 @@ import Gargantext.Prelude
 
 import DOM.Simple as DOM
 import Effect (Effect)
-import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Tools (prettyNodeType)
 import Gargantext.Types (ID, Name)
 import Gargantext.Types as GT
@@ -23,11 +22,10 @@ type NodePopupProps =
   , onPopoverClose :: DOM.Element -> Effect Unit
   )
 
-nodePopupView :: Record NodePopupProps -> R.Element
-nodePopupView props = R.createElement nodePopupCpt props []
-
-nodePopupCpt :: R.Component NodePopupProps
-nodePopupCpt = here.component "nodePopupView" cpt where
+nodePopupView :: R2.Leaf NodePopupProps
+nodePopupView props = R.createElement nodePopupViewCpt props []
+nodePopupViewCpt :: R.Component NodePopupProps
+nodePopupViewCpt = here.component "nodePopupView" cpt where
   cpt props  _ = do
 
     pure $ H.div tooltipProps
@@ -51,5 +49,4 @@ nodePopupCpt = here.component "nodePopupView" cpt where
         [ H.span { className: "text-primary center" } [ H.text props.name ] ]
       , H.div { className: "col-1" }
         [ H.a { type: "button", on: { click: closePopover props }, title: "Close"
-              , className: glyphicon "window-close" } [] ]]] where
-           SettingsBox _ = settingsBox nodeType
+              , className: glyphicon "window-close" } [] ]]] 

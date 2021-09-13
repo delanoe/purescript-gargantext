@@ -1,5 +1,6 @@
 module Gargantext.Components.Forest.Tree.Node.Tools where
 
+import Data.Foldable (intercalate)
 import Data.Maybe (fromMaybe, Maybe(..))
 import Data.Set (Set)
 import Data.Set as Set
@@ -8,13 +9,14 @@ import Data.String.CodeUnits as DSCU
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
 import Gargantext.Components.App.Data (Boxes)
-import Gargantext.Components.Forest.Tree.Node.Action (Action, icon, text)
+import Gargantext.Components.Forest.Tree.Node.Action (icon, text)
+import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Prelude (class Ord, class Read, class Show, Unit, bind, const, discard, map, not, pure, read, show, when, mempty, ($), (<), (<<<), (<>), (<$>), (<*>))
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types as GT
-import Gargantext.Utils (toggleSet)
+import Gargantext.Utils (toggleSet, (?))
 import Gargantext.Utils.Glyphicon (glyphicon)
 import Gargantext.Utils.ReactTooltip as ReactTooltip
 import Gargantext.Utils.Reactix as R2
@@ -266,7 +268,7 @@ nodeLink = R.createElement nodeLinkCpt
 nodeLinkCpt :: R.Component NodeLinkProps
 nodeLinkCpt = here.component "nodeLink" cpt
   where
-    cpt { boxes: { handed }
+    cpt { boxes
         , folderOpen
         , frontends
         , id
@@ -279,7 +281,7 @@ nodeLinkCpt = here.component "nodeLink" cpt
         H.div { className: "node-link"
               , on: { click } }
           [ H.a { href, data: { for: tooltipId id, tip: true } }
-            [ nodeText { handed, isSelected, name } []
+            [ nodeText { isSelected, name }
             , ReactTooltip.reactTooltip { effect: "float", id: tooltipId id, type: "dark" }
                 [ R2.row
                     [ H.h4 {className: GT.fldr nodeType true}
@@ -300,29 +302,45 @@ nodeLinkCpt = here.component "nodeLink" cpt
 
 type NodeTextProps =
   ( isSelected :: Boolean
-  , handed     :: T.Box GT.Handed
   , name       :: GT.Name
   )
 
-nodeText :: R2.Component NodeTextProps
-nodeText = R.createElement nodeTextCpt
-nodeTextCpt :: R.Component NodeTextProps
-nodeTextCpt = here.component "nodeText" cpt where
-  cpt { isSelected, handed, name } _ = do
-    handed' <- T.useLive T.unequal handed
-    pure $ if isSelected then
-              H.u { className }
-                [ H.b {}
-                  [ H.text ("| " <> name15 name <> " |    ") ]
-                ]
-              else
-                GT.flipHanded l r handed' where
-                  l = H.text "..."
-                  r = H.text (name15 name)
-  name_ len n =
-    if S.length n < len then n
-    else case (DSCU.slice 0 len n) of
-      Nothing -> "???"
-      Just s  -> s <> "..."
-  name15 = name_ 15
-  className = "node-text"
+nodeText :: R2.Leaf NodeTextProps
+nodeText p = R.createElement nodeTextCpt p []
+nodeTextCpt :: R.Memo NodeTextProps
+nodeTextCpt = R.memo' $ here.component "nodeText" cpt where
+  cpt props@{ isSelected } _ = do
+    -- Computed
+    let
+
+      className = intercalate " "
+        [ "node-text"
+        , isSelected ? "node-text--selected" $ ""
+        ]
+
+      prefix = isSelected ?
+        "" $
+        "..."
+
+      name = isSelected ?
+        "| " <> (textEllipsisBreak 15 props.name) <> " |    " $
+        textEllipsisBreak 15 props.name
+
+    -- Render
+    pure $
+
+      H.span { className }
+      [
+        H.span {}
+        [ H.text prefix ]
+      ,
+        H.span {}
+        [ H.text name ]
+      ]
+
+textEllipsisBreak :: Int -> String -> String
+textEllipsisBreak len n =
+  if S.length n < len then n
+  else case (DSCU.slice 0 len n) of
+    Nothing -> "???"
+    Just s  -> s <> "..."

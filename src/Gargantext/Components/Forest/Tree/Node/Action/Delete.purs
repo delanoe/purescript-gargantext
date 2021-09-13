@@ -9,7 +9,7 @@ import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Routes (SessionRoute(..))

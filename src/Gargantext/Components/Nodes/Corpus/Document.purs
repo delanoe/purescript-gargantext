@@ -1,7 +1,5 @@
 module Gargantext.Components.Nodes.Corpus.Document where
 
---import Data.Argonaut (encodeJson) -- DEBUG
---import Data.Argonaut.Core (stringifyWithIndent) -- DEBUG
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect.Aff (Aff)

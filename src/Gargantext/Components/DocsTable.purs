@@ -3,7 +3,6 @@ module Gargantext.Components.DocsTable where
 
 import Gargantext.Prelude
 
-import DOM.Simple.Console (log2)
 import DOM.Simple.Event as DE
 import Data.Array as A
 import Data.Either (Either)
@@ -496,9 +495,9 @@ docChooserCpt = here.component "docChooser" cpt
       ]
       where
         onClick selected _ = do
-          -- log2 "[docChooser] onClick, listId" listId
-          -- log2 "[docChooser] onClick, corpusId" corpusId
-          -- log2 "[docChooser] onClick, nodeId" nodeId
+          -- here.log2 "[docChooser] onClick, listId" listId
+          -- here.log2 "[docChooser] onClick, corpusId" corpusId
+          -- here.log2 "[docChooser] onClick, nodeId" nodeId
           -- R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
           -- T2.reload tableReload
           if selected then do
@@ -510,7 +509,7 @@ docChooserCpt = here.component "docChooser" cpt
                           , mCurrentDocId: Just nodeId
                           , nodeId: nodeId }) sidePanel
             T.write_ Opened sidePanelState
-          log2 "[docChooser] sidePanel opened" sidePanelState
+          here.log2 "[docChooser] sidePanel opened" sidePanelState
 
 
 newtype SearchQuery = SearchQuery {

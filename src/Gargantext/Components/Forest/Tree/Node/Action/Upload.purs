@@ -14,13 +14,17 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..), Props)
+import Gargantext.Components.Forest.Tree.Node.Action (Props)
+import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..), readUFBAsText)
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe, panel)
 import Gargantext.Components.Lang (Lang(..))
+import Gargantext.Components.ListSelection as ListSelection
+import Gargantext.Components.ListSelection.Types (Selection(..))
+import Gargantext.Components.ListSelection.Types as ListSelection
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Routes as GR
-import Gargantext.Sessions (Session, postWwwUrlencoded)
+import Gargantext.Sessions (Session(..), postWwwUrlencoded)
 import Gargantext.Types (NodeType(..), ID)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
@@ -48,8 +52,10 @@ actionUpload :: R2.Component ActionUpload
 actionUpload = R.createElement actionUploadCpt
 actionUploadCpt :: R.Component ActionUpload
 actionUploadCpt = here.component "actionUpload" cpt where
-  cpt { nodeType: Corpus, dispatch, id, session } _ = pure $ uploadFileView {dispatch, id, nodeType: GT.Corpus, session}
-  cpt { nodeType: NodeList, dispatch, id, session } _ = pure $ uploadTermListView {dispatch, id, nodeType: GT.NodeList, session}
+  cpt { nodeType: Corpus, dispatch, id, session } _ =
+    pure $ uploadFileView { dispatch, id, nodeType: GT.Corpus, session }
+  cpt { nodeType: NodeList, dispatch, id, session } _ =
+    pure $ uploadTermListView { dispatch, id, nodeType: GT.NodeList, session }
   cpt props@{ nodeType: _ } _ = pure $ actionUploadOther props []
 
 {-
@@ -72,8 +78,7 @@ data DroppedFile =
               , lang     :: Lang
               }
 derive instance Generic DroppedFile _
-instance Eq DroppedFile where
-  eq = genericEq
+instance Eq DroppedFile where eq = genericEq
 
 type FileHash = String
 
@@ -88,11 +93,12 @@ uploadFileView props = R.createElement uploadFileViewCpt props []
 uploadFileViewCpt :: R.Component Props
 uploadFileViewCpt = here.component "uploadFileView" cpt
   where
-    cpt {dispatch, nodeType} _ = do
+    cpt { dispatch, id, nodeType, session } _ = do
       -- mFile    :: R.State (Maybe UploadFile) <- R.useState' Nothing
       mFile <- T.useBox (Nothing :: Maybe UploadFile)
       fileType <- T.useBox CSV
       lang <- T.useBox EN
+      selection <- T.useBox ListSelection.MyListsFirst
 
       let setFileType' val = T.write_ val fileType
       let setLang' val = T.write_ val lang
@@ -125,6 +131,10 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
                   show
                 ]
               ]
+            , R2.row
+              [ H.div { className: "col-6 flex-space-around" }
+                [ ListSelection.selection { selection, session } [] ]
+              ]
             ]
 
       let footer = H.div {} [ uploadButton { dispatch
@@ -132,6 +142,7 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
                                            , lang
                                            , mFile
                                            , nodeType
+                                           , selection
                                            }
                             ]
       pure $ panel bodies footer
@@ -151,11 +162,12 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
 
 
 type UploadButtonProps =
-  ( dispatch :: Action -> Aff Unit
-  , fileType :: T.Box FileType
-  , lang     :: T.Box Lang
-  , mFile    :: T.Box (Maybe UploadFile)
-  , nodeType :: GT.NodeType
+  ( dispatch  :: Action -> Aff Unit
+  , fileType  :: T.Box FileType
+  , lang      :: T.Box Lang
+  , mFile     :: T.Box (Maybe UploadFile)
+  , nodeType  :: GT.NodeType
+  , selection :: T.Box ListSelection.Selection
   )
 
 uploadButton :: Record UploadButtonProps -> R.Element
@@ -168,9 +180,11 @@ uploadButtonCpt = here.component "uploadButton" cpt
         , lang
         , mFile
         , nodeType
+        , selection
         } _ = do
       fileType' <- T.useLive T.unequal fileType
       mFile' <- T.useLive T.unequal mFile
+      selection' <- T.useLive T.unequal selection
 
       let disabled = case mFile' of
             Nothing -> "1"
@@ -180,19 +194,19 @@ uploadButtonCpt = here.component "uploadButton" cpt
                       , "type" : "button"
                       , disabled
                       , style    : { width: "100%" }
-                      , on: {click: onClick fileType' mFile'}
+                      , on: { click: onClick fileType' mFile' selection' }
                       } [ H.text "Upload" ]
       where
-        onClick fileType' mFile' _ = do
+        onClick fileType' mFile' selection' e = do
           let { blob, name } = unsafePartial $ fromJust mFile'
           here.log2 "[uploadButton] fileType" fileType'
           void $ launchAff do
             case fileType' of
               Arbitrary ->
-                dispatch $ UploadArbitraryFile (Just name) blob
+                dispatch $ UploadArbitraryFile (Just name) blob selection'
               _ -> do
                 contents <- readUFBAsText blob
-                dispatch $ UploadFile nodeType fileType' (Just name) contents
+                dispatch $ UploadFile nodeType fileType' (Just name) contents selection'
             liftEffect $ do
               T.write_ Nothing mFile
               T.write_ CSV fileType
@@ -279,7 +293,7 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
                                    T.write_ Nothing droppedFile
                                    launchAff $ do
                                      contents <- readUFBAsText blob
-                                     dispatch $ UploadFile nodeType ft Nothing contents
+                                     dispatch $ UploadFile nodeType ft Nothing contents (SelectedLists [])
                                }
                          } [H.text "Upload"]
               Nothing ->
@@ -300,12 +314,13 @@ instance GT.ToQuery FileUploadQuery where
     where pair :: forall a. Show a => String -> a -> Array (Tuple QP.Key (Maybe QP.Value))
           pair k v = [ QP.keyFromString k /\ (Just $ QP.valueFromString $ show v) ]
 
-uploadFile :: { contents     :: String
-              , fileType     :: FileType
-              , id           :: ID
-              , nodeType     :: GT.NodeType
-              , mName        :: Maybe String
-              , session      :: Session }
+uploadFile :: { contents  :: String
+              , fileType  :: FileType
+              , id        :: ID
+              , nodeType  :: GT.NodeType
+              , mName     :: Maybe String
+              , selection :: ListSelection.Selection
+              , session   :: Session }
            -> Aff (Either RESTError GT.AsyncTaskWithType)
 {-
 uploadFile session NodeList id JSON { mName, contents } = do
@@ -347,8 +362,9 @@ uploadFile { contents, fileType, id, nodeType, mName, session } = do
 uploadArbitraryFile :: Session
                     -> ID
                     -> {blob :: UploadFileBlob, mName :: Maybe String}
+                    -> ListSelection.Selection
                     -> Aff (Either RESTError GT.AsyncTaskWithType)
-uploadArbitraryFile session id {mName, blob: UploadFileBlob blob} = do
+uploadArbitraryFile session id {mName, blob: UploadFileBlob blob} selection = do
     contents <- readAsDataURL blob
     uploadArbitraryDataURL session id mName contents
 
@@ -465,6 +481,6 @@ uploadTermButtonCpt = here.component "uploadTermButton" cpt
           let {name, blob} = unsafePartial $ fromJust mFile'
           void $ launchAff do
             contents <- readUFBAsText blob
-            _ <- dispatch $ UploadFile nodeType uploadType' (Just name) contents
+            _ <- dispatch $ UploadFile nodeType uploadType' (Just name) contents (SelectedLists [])
             liftEffect $ do
               T.write_ Nothing mFile
