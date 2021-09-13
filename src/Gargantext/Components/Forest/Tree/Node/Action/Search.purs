@@ -6,7 +6,8 @@ import Data.Maybe (Maybe)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Gargantext.Components.App.Data (Boxes)
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar (searchBar)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (defaultSearch)
 import Gargantext.Components.Lang (allLangs)
@@ -36,16 +37,17 @@ actionSearchCpt = here.component "actionSearch" cpt
   where
     cpt { boxes: { errors }, dispatch, id, session } _ = do
       search <- T.useBox $ defaultSearch { node_id = id }
-      pure $ R.fragment [ H.p { className: "action-search" }
-                              [ H.text $ "Search and create a private "
-                                      <> "corpus with the search query as corpus name." ]
-                        , searchBar { errors
-                                    , langs: allLangs
-                                    , onSearch: searchOn dispatch
-                                    , search
-                                    , session
-                                    } []
-                        ]
+      pure $ R.fragment
+        [ H.p { className: "action-search" }
+          [ H.text $ "Search and create a private "
+            <> "corpus with the search query as corpus name." ]
+        , searchBar { errors
+                    , langs: allLangs
+                    , onSearch: searchOn dispatch
+                    , search
+                    , session
+                    } []
+        ]
         where
           searchOn :: (Action -> Aff Unit)
                   -> GT.AsyncTaskWithType

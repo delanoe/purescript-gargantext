@@ -19,6 +19,7 @@ import URI.Query as Q
 import Gargantext.Prelude
 
 import Gargantext.Components.Lang (Lang)
+import Gargantext.Components.ListSelection.Types as ListSelection
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (class ToUrl, backendUrl)
 import Gargantext.Routes as GR
@@ -330,27 +331,13 @@ newtype SearchQuery = SearchQuery
   , node_id   :: Maybe Int
   , offset    :: Maybe Int
   , order     :: Maybe SearchOrder
+  , selection :: ListSelection.Selection
   }
 derive instance Generic SearchQuery _
 derive instance Newtype SearchQuery _
-
-defaultSearchQuery :: SearchQuery
-defaultSearchQuery = SearchQuery
-  { query: ""
-  , databases: Empty
-  , datafield: Nothing
-  , files_id : []
-  , lang     : Nothing
-  , limit    : Nothing
-  , node_id  : Nothing
-  , offset   : Nothing
-  , order    : Nothing
-  }
-
 instance ToUrl Session SearchQuery where
   toUrl (Session {backend}) q = backendUrl backend q2
     where q2 = "new" <> Q.print (GT.toQuery q)
-  
 instance GT.ToQuery SearchQuery where
   toQuery (SearchQuery {offset, limit, order}) =
     QP.print id id $ QP.QueryPairs
@@ -361,13 +348,28 @@ instance GT.ToQuery SearchQuery where
           pair k = maybe [] $ \v ->
             [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
 instance JSON.WriteForeign SearchQuery where
-  writeImpl (SearchQuery { databases, datafield, lang, node_id, query }) =
+  writeImpl (SearchQuery { databases, datafield, lang, node_id, query, selection }) =
     JSON.writeImpl { query: String.replace (String.Pattern "\"") (String.Replacement "\\\"") query
                    , databases
                    , datafield
                    , lang: maybe "EN" show lang
                    , node_id: fromMaybe 0 node_id
+                   , flowListWith: selection
                    }
+
+defaultSearchQuery :: SearchQuery
+defaultSearchQuery = SearchQuery
+  { query     : ""
+  , databases : Empty
+  , datafield : Nothing
+  , files_id  : []
+  , lang      : Nothing
+  , limit     : Nothing
+  , node_id   : Nothing
+  , offset    : Nothing
+  , order     : Nothing
+  , selection : ListSelection.MyListsFirst
+  }
 
 performSearch :: Session -> Int -> SearchQuery -> Aff (Either RESTError GT.AsyncTaskWithType)
 performSearch session nodeId q = do

@@ -10,7 +10,6 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Data (Boxes)
-import Gargantext.Components.Forest.Tree.Node.Action (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (deleteNode, unpublishNode)
@@ -19,10 +18,11 @@ import Gargantext.Components.Forest.Tree.Node.Action.Merge (mergeNodeReq)
 import Gargantext.Components.Forest.Tree.Node.Action.Move (moveNodeReq)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
 import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
+import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Update (updateRequest)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadArbitraryFile, uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Box (nodePopupView)
-import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
+import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), ID, fTreeID)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Config.Utils (handleRESTError)
@@ -70,13 +70,13 @@ folderViewCpt = here.component "folderViewCpt" cpt where
                                                    , boxes
                                                    , folders
                                                    , nodeId
-                                                   , session
                                                    , reload
-                                                   , setPopoverRef } }
+                                                   , session
+                                                   , setPopoverRef } [] }
     where
       errorHandler err = here.log2 "[folderView] RESTError" err
 
-type FolderViewProps = 
+type FolderViewProps =
   ( backFolder    :: Boolean
   , boxes         :: Boxes
   , folders       :: FTree
@@ -86,8 +86,8 @@ type FolderViewProps =
   , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
   )
 
-folderViewMain :: Record FolderViewProps -> R.Element
-folderViewMain props = R.createElement folderViewMainCpt props []
+folderViewMain :: R2.Component FolderViewProps
+folderViewMain = R.createElement folderViewMainCpt
 folderViewMainCpt :: R.Component FolderViewProps
 folderViewMainCpt = here.component "folderViewMainCpt" cpt where
   cpt { backFolder
@@ -140,7 +140,7 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
   isBackHome _ = false
 
 
-type FolderSimpleProps = 
+type FolderSimpleProps =
   (
     style :: FolderStyle
   , text :: String
@@ -161,7 +161,7 @@ folderSimpleCpt = here.component "folderSimpleCpt" cpt where
       [ H.i { className: icon style nodeType } []
       , H.br {}
       , H.text text ]
-  
+
   icon :: FolderStyle -> GT.NodeType -> String
   icon FolderUp _ = "fa fa-folder-open"
   icon _ nodeType = GT.fldr nodeType false
@@ -169,7 +169,7 @@ folderSimpleCpt = here.component "folderSimpleCpt" cpt where
   getFolderPath :: GT.NodeType -> GT.SessionId -> Int -> String
   getFolderPath nodeType sid nodeId = appPath $ fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
 
-type FolderProps = 
+type FolderProps =
   ( boxes         :: Boxes
   , parentId      :: Int
   , reload        :: T.Box T2.Reload
@@ -197,24 +197,24 @@ folderCpt = here.component "folderCpt" cpt where
     R.useEffect' $ do
         R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
 
-    pure $ 
+    pure $
         H.div {} [
         H.span{style: {position: "absolute"}} [ Popover.popover {
             arrow: false
           , open: false
           , onClose: \_ -> pure unit
           , onOpen:  \_ -> pure unit
-          , ref: popoverRef 
+          , ref: popoverRef
           } [
               popOverIcon
               , mNodePopupView (Record.merge props { dispatch }) (onPopoverClose popoverRef)
               ]]
-      , H.button {on: {click: link ("/#/" <> getFolderPath nodeType sid nodeId) }, className: "btn btn-primary fv btn" } [ 
+      , H.button {on: {click: link ("/#/" <> getFolderPath nodeType sid nodeId) }, className: "btn btn-primary fv btn" } [
           H.i {className: icon style nodeType} []
         , H.br {}
         , H.text text]]
-    
-    
+
+
   icon :: FolderStyle -> GT.NodeType -> String
   icon FolderUp _ = "fa fa-folder-open"
   icon _ nodeType = GT.fldr nodeType false
@@ -225,7 +225,7 @@ folderCpt = here.component "folderCpt" cpt where
   onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
 
   popOverIcon = H.span { className: "fv action" } [
-        H.a { className: "settings fa fa-cog" 
+        H.a { className: "settings fa fa-cog"
           , title : "Each node of the Tree can perform some actions.\n"
             <> "Click here to execute one of them." } []
       ]
@@ -240,21 +240,12 @@ folderCpt = here.component "folderCpt" cpt where
                                            }
 
 backButton :: R.Element
-backButton = 
+backButton =
   H.button {
     className: "btn btn-primary"
   , on: {click: back}
   } [
     H.i { className: "fa fa-arrow-left", title: "Previous view"} []
-  ]
-
-homeButton :: R.Element
-homeButton =
-  H.a {
-    className: "btn btn-primary"
-  , href: appPath Home
-  } [
-    H.i { className: "fa fa-home", title: "Back to home"} []
   ]
 
 type LoadProps =
@@ -286,8 +277,10 @@ performAction = performAction' where
   performAction' (SharePublic { params }) p = sharePublic params p
   performAction' (AddContact params) p = addContact params p
   performAction' (AddNode name nodeType) p = addNode' name nodeType p
-  performAction' (UploadFile nodeType fileType mName contents) p = uploadFile' nodeType fileType mName contents p
-  performAction' (UploadArbitraryFile mName blob) p = uploadArbitraryFile' mName blob p
+  performAction' (UploadFile nodeType fileType mName contents selection) p =
+    uploadFile' nodeType fileType mName contents p selection
+  performAction' (UploadArbitraryFile mName blob selection) p =
+    uploadArbitraryFile' mName blob p selection
   performAction' DownloadNode _ = liftEffect $ here.log "[performAction] DownloadNode"
   performAction' (MoveNode {params}) p = moveNode params p
   performAction' (MergeNode {params}) p = mergeNode params p
@@ -299,7 +292,7 @@ performAction = performAction' where
   closePopover { setPopoverRef } =
     liftEffect $ traverse_ (\set -> set false) (R.readRef setPopoverRef)
 
-  refreshFolders p@{ boxes: { reloadForest }, reload } = do 
+  refreshFolders p@{ boxes: { reloadForest }, reload } = do
     liftEffect $ T2.reload reload
     liftEffect $ T2.reload reloadForest
     closePopover p
@@ -320,7 +313,7 @@ performAction = performAction' where
     handleRESTError errors eTask $ \task -> liftEffect $ do
       GAT.insert id task tasks
       here.log2 "[performAction] UpdateNode task:" task
-  
+
   shareTeam username { boxes: { errors }, nodeId: id, session } = do
     eTask <- Share.shareReq session id $ Share.ShareTeamParams { username }
     handleRESTError errors eTask $ \_task -> pure unit
@@ -334,14 +327,14 @@ performAction = performAction' where
   addContact params { nodeId: id, session } =
     void $ Contact.contactReq session id params
 
-  uploadFile' nodeType fileType mName contents { boxes: { errors, tasks }, nodeId: id, session } = do
-    eTask <- uploadFile { contents, fileType, id, nodeType, mName, session }
+  uploadFile' nodeType fileType mName contents { boxes: { errors, tasks }, nodeId: id, session } selection = do
+    eTask <- uploadFile { contents, fileType, id, nodeType, mName, selection, session }
     handleRESTError errors eTask $ \task -> liftEffect $ do
       GAT.insert id task tasks
       here.log2 "[performAction] UploadFile, uploaded, task:" task
 
-  uploadArbitraryFile' mName blob { boxes: { errors, tasks }, nodeId: id, session } = do
-    eTask <- uploadArbitraryFile session id { blob, mName }
+  uploadArbitraryFile' mName blob { boxes: { errors, tasks }, nodeId: id, session } selection = do
+    eTask <- uploadArbitraryFile session id { blob, mName } selection
     handleRESTError errors eTask $ \task -> liftEffect $ do
       GAT.insert id task tasks
       here.log2 "[performAction] UploadArbitraryFile, uploaded, task:" task

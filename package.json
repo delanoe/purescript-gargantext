@@ -1,6 +1,6 @@
 {
     "name": "Gargantext",
-    "version": "0.0.2.9.6.1",
+    "version": "0.0.3.4",
     "scripts": {
         "generate-purs-packages-nix": "./nix/generate-purs-packages.nix",
         "generate-psc-packages-nix": "./nix/generate-packages-json.bash",
@@ -24,13 +24,13 @@
         "prod:bundle": "pulp browserify --skip-compile -o dce-output -t app.js",
         "prod:pack": "parcel build index.html -d prod --public-url . --no-source-maps",
         "test-pulp": "pulp test",
-	"test": "gauge run specs/"
+        "test": "gauge run specs/"
     },
     "dependencies": {
         "@popperjs/core": "^2.9.2",
         "aes-js": "^3.1.1",
         "base-x": "^3.0.2",
-        "bootstrap": "^4.6.0",
+        "bootstrap": "^5.1.0",
         "bootstrap-dark": "^1.0.3",
         "create-react-class": "^15.6.3",
         "echarts": "^5.1.2",
@@ -50,12 +50,12 @@
     "devDependencies": {
         "@babel/core": "^7.15.0",
         "@babel/preset-react": "^7.12.7",
-	"@getgauge/cli": "^1.4.0",
+        "@getgauge/cli": "^1.4.0",
         "parcel": "^2.0.0-beta.2",
         "react-testing-library": "^8.0.1",
         "sass": "^1.35.2",
         "serve": "^12.0.0",
-	"taiko": "latest",
+        "taiko": "latest",
         "vscode-languageserver": "^7.0.0",
         "xhr2": "^0.2.1"
     },

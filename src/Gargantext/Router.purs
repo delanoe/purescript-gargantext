@@ -1,12 +1,12 @@
 module Gargantext.Router where
 
 import Prelude
+
 import Data.Foldable (oneOf)
 import Data.Int (floor)
-import Routing.Match (Match, lit, num, str)
-
 import Gargantext.Routes (AppRoute(..))
 import Gargantext.Types (SessionId(..))
+import Routing.Match (Match, lit, num, str)
 
 router :: Match AppRoute
 router = oneOf
@@ -20,7 +20,8 @@ router = oneOf
                         <*> (lit "list" *> int)
                         <*> (lit "document" *> int)
   , Corpus            <$> (route "corpus"     *> sid) <*> int
-     , Document       <$> (route "list"      *> sid) <*> int 
+     , CorpusCode     <$> (route "corpusCode" *> sid) <*> int
+     , Document       <$> (route "list"      *> sid) <*> int
                         <*> (lit "document" *> int)
      , Dashboard      <$> (route "dashboard" *> sid) <*> int
      , PGraphExplorer <$> (route "graph"     *> sid) <*> int
@@ -47,4 +48,3 @@ router = oneOf
 
     sid :: Match SessionId
     sid = SessionId <$> str
-

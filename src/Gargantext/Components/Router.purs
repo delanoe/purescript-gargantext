@@ -2,9 +2,14 @@ module Gargantext.Components.Router (router) where
 
 import Gargantext.Prelude
 
+import Data.Array (filter, length)
 import Data.Array as A
+import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
+import Data.UUID (UUID)
+import Data.UUID as UUID
+import Effect (Effect)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.ErrorsView (errorsView)
 import Gargantext.Components.Footer (footer)
@@ -15,11 +20,11 @@ import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
 import Gargantext.Components.GraphExplorer.TopBar as GETB
 import Gargantext.Components.Lang (LandingLang(LL_EN))
 import Gargantext.Components.Login (login)
-import Gargantext.Components.MainPage as MainPage
 import Gargantext.Components.Nodes.Annuaire (annuaireLayout)
 import Gargantext.Components.Nodes.Annuaire.User (userLayout)
 import Gargantext.Components.Nodes.Annuaire.User.Contact (contactLayout)
 import Gargantext.Components.Nodes.Corpus (corpusLayout)
+import Gargantext.Components.Nodes.Corpus.Code (corpusCodeLayout)
 import Gargantext.Components.Nodes.Corpus.Dashboard (dashboardLayout)
 import Gargantext.Components.Nodes.Corpus.Document (documentMainLayout)
 import Gargantext.Components.Nodes.Corpus.Phylo (phyloLayout)
@@ -28,10 +33,11 @@ import Gargantext.Components.Nodes.Frame (frameLayout)
 import Gargantext.Components.Nodes.Home (homeLayout)
 import Gargantext.Components.Nodes.Lists as Lists
 import Gargantext.Components.Nodes.Texts as Texts
+import Gargantext.Components.Tile (tileBlock)
 import Gargantext.Components.TopBar as TopBar
 import Gargantext.Config (defaultFrontends, defaultBackends)
 import Gargantext.Ends (Backend)
-import Gargantext.Routes (AppRoute)
+import Gargantext.Routes (AppRoute, Tile)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, WithSession)
 import Gargantext.Sessions as Sessions
@@ -39,9 +45,11 @@ import Gargantext.Types (CorpusId, Handed(..), ListId, NodeID, NodeType(..), Ses
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record (get)
 import Record as Record
 import Record.Extra as RE
 import Toestand as T
+import Type.Proxy (Proxy(..))
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Router"
@@ -104,7 +112,89 @@ mainPage p = R.createElement mainPageCpt p []
 mainPageCpt :: R.Component Props
 mainPageCpt = here.component "mainPage" cpt where
   cpt { boxes } _ = do
-    pure $ MainPage.mainPage { boxes } [ renderRoute { boxes } ]
+    -- States
+    route         <- R2.useLive' boxes.route
+    tileAxisXList <- R2.useLive' boxes.tileAxisXList
+    tileAxisYList <- R2.useLive' boxes.tileAxisYList
+    -- Computed
+    let
+      findTile :: UUID -> Record Tile -> Boolean
+      findTile id tile = eq id $ get (Proxy :: Proxy "id") tile
+
+      deleteTile :: Record Tile -> T.Box (Array (Record Tile)) -> (Unit -> Effect Unit)
+      deleteTile tile listBox = const do
+        list <- T.read listBox
+        newList <- pure $ filter (_ # tile.id # findTile # not) list
+        T.write_ newList listBox
+
+    let hasHorizontalTiles = not $ eq 0 $ length tileAxisXList
+    let hasVerticalTiles = not $ eq 0 $ length tileAxisYList
+    -- Render
+    pure $
+
+      H.div { className: "main-page" }
+      [
+        H.div
+        { className: intercalate " "
+          [ "main-page__main-row"
+          , if (hasVerticalTiles)
+            then "main-page__main-row--with-y-tiles"
+            else ""
+          , if (hasVerticalTiles && not hasHorizontalTiles)
+            then "main-page__main-row--only-y-tiles"
+            else ""
+          ]
+        }
+        [
+          -- main render route
+          H.div { className: "main-page__main-route" }
+          [
+            renderRoute { boxes, route }
+          ]
+        ,
+          -- optional tile render route [Y Axis ~ aside vertical column]
+          case tileAxisYList of
+            [] -> mempty
+            _  ->
+              H.div
+              { className: intercalate " "
+                [ "main-page__vertical-tiles"
+                , "main-page__vertical-tiles--" <> (show $ length tileAxisYList)
+                ]
+              } $
+              tileAxisYList <#> \tile -> tileBlock
+                { boxes
+                , tile
+                , key: UUID.toString tile.id
+                , closeCallback: deleteTile tile boxes.tileAxisYList
+                }
+                [
+                  renderRoute { boxes, route: tile.route }
+                ]
+        ]
+
+      ,
+        -- optional tile render route [X Axis ~ bottom horizontal row]
+        case tileAxisXList of
+          [] -> mempty
+          _  ->
+            H.div
+            { className: intercalate " "
+              [ "main-page__horizontal-tiles"
+              , "main-page__horizontal-tiles--" <> (show $ length tileAxisXList)
+              ]
+            } $
+            tileAxisXList <#> \tile -> tileBlock
+              { boxes
+              , tile
+              , key: UUID.toString tile.id
+              , closeCallback: deleteTile tile boxes.tileAxisXList
+              }
+              [
+                renderRoute { boxes, route: tile.route }
+              ]
+      ]
+
 
 forest :: R2.Leaf Props
 forest p = R.createElement forestCpt p []
@@ -137,20 +227,28 @@ sidePanelCpt = here.component "sidePanel" cpt where
           Opened -> pure $ openedSidePanel (Record.merge { session: s } props) []
           _      -> pure $ H.div {} []
 
-renderRoute :: R2.Leaf Props
-renderRoute p = R.createElement renderRouteCpt p []
-renderRouteCpt :: R.Component Props
-renderRouteCpt = here.component "renderRoute" cpt where
-  cpt props@{ boxes } _ = do
-    let sessionNodeProps sId nId = Record.merge { nodeId: nId, sessionId: sId } props
+type RenderRouteProps =
+  ( route :: AppRoute
+  | Props
+  )
 
-    route' <- T.useLive T.unequal boxes.route
+renderRoute :: R2.Leaf RenderRouteProps
+renderRoute p = R.createElement renderRouteCpt p []
+renderRouteCpt :: R.Component RenderRouteProps
+renderRouteCpt = here.component "renderRoute" cpt where
+  cpt { boxes, route } _ = do
+    let sessionNodeProps sId nId =
+          { nodeId: nId
+          , sessionId: sId
+          , boxes
+          }
 
     pure $ R.fragment
-      [ case route' of
+      [ case route of
         GR.Annuaire s n           -> annuaire (sessionNodeProps s n) []
         GR.ContactPage s a n      -> contact (Record.merge { annuaireId: a } $ sessionNodeProps s n) []
         GR.Corpus s n             -> corpus (sessionNodeProps s n) []
+        GR.CorpusCode s n         -> corpusCode (sessionNodeProps s n) []
         GR.CorpusDocument s c l n -> corpusDocument (Record.merge { corpusId: c, listId: l } $ sessionNodeProps s n) []
         GR.Dashboard s n          -> dashboard (sessionNodeProps s n) []
         GR.Document s l n         -> document (Record.merge { listId: l } $ sessionNodeProps s n) []
@@ -258,6 +356,25 @@ corpusCpt = here.component "corpus" cpt where
                                    corpusLayout { boxes
                                                 , nodeId
                                                 , session } } sessionProps) []
+
+corpusCode :: R2.Component SessionNodeProps
+corpusCode = R.createElement corpusCodeCpt
+corpusCodeCpt :: R.Component SessionNodeProps
+corpusCodeCpt = here.component "corpusCode" cpt where
+  cpt props@{ boxes, nodeId } _ = do
+    let
+      sessionProps = RE.pick props :: Record SessionProps
+
+      authedProps = Record.merge
+        { content: \session -> corpusCodeLayout
+            { nodeId
+            , session
+            , boxes
+            }
+        }
+        sessionProps
+
+    pure $ authed authedProps []
 
 type CorpusDocumentProps =
   ( corpusId :: CorpusId

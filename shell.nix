@@ -26,6 +26,17 @@ let
     browserify
   '';
 
+
+  build-css = pkgs.writeShellScriptBin "build-css" ''
+    #!/usr/bin/env bash
+    set -e
+
+    yarn css
+
+  '';
+
+
+
   build-watch = pkgs.writeShellScriptBin "build-watch" ''
     #!/usr/bin/env bash
     set -e
@@ -39,6 +50,13 @@ let
     set -e
 
     pulp browserify --skip-compile -t dist/bundle.js --src-path output
+  '';
+
+  minify-bundle = pkgs.writeShellScriptBin "minify-bundle" ''
+    #!/usr/bin/env bash
+    set -e
+
+    minify dist/bundle.js > dist/bundle.min.js
   '';
 
   repl = pkgs.writeShellScriptBin "repl" ''
@@ -61,13 +79,17 @@ let
 in
 pkgs.mkShell {
   buildInputs = [
-    easy-ps.purs-0_14_3
+    easy-ps.purs-0_14_4
     easy-ps.psc-package
     easy-ps.dhall-json-simple
     browserify
+    build-css
     build-purs
     build-watch
     build
+    minify-bundle
+    pkgs.minify
+    pkgs.nodejs
     repl
     pkgs.pulp
     pkgs.spago

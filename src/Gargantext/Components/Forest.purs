@@ -7,12 +7,13 @@ module Gargantext.Components.Forest
 import Gargantext.Prelude
 
 import Data.Array as A
+import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Forest.Tree (treeLoader)
 import Gargantext.Ends (Frontends)
+import Gargantext.Routes (AppRoute(..), appPath)
 import Gargantext.Sessions (Session(..), unSessions)
-import Gargantext.Types (switchHanded)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -51,7 +52,7 @@ forestCpt = here.component "forest" cpt where
       (A.cons (plus { boxes }) (trees handed' sessions'))
     where
       trees handed' sessions' = (tree handed') <$> unSessions sessions'
-      tree handed' s@(Session { treeId }) = 
+      tree handed' s@(Session { treeId }) =
         treeLoader { boxes
                    , frontends
                    , handed: handed'
@@ -65,16 +66,41 @@ plus :: R2.Leaf Plus
 plus p = R.createElement plusCpt p []
 plusCpt :: R.Component Plus
 plusCpt = here.component "plus" cpt where
-  cpt { boxes: { backend, handed, showLogin } } _ = do
-    handed' <- T.useLive T.unequal handed
+  cpt { boxes: { backend, showLogin } } _ = pure $
 
-    pure $ H.div {}
-      [ H.button { className: buttonClass handed'
-                , on: { click }
-                , title }
-          [ H.div { className: divClass } [ H.text " Log in/out " ] -- fa-lg
-          , H.div {} [ H.text "    " ] ]
+    H.div
+    { className: "forest-layout-action" }
+    [
+      H.a
+      { className: intercalate " "
+          [ "btn btn-primary"
+          , "forest-layout-action__button"
+          ]
+      , href: appPath Home
+      }
+      [
+        H.i
+        { className: "fa fa-home"
+        , title: "Back to home"
+        }
+        []
       ]
+    ,
+      H.button
+      { className: intercalate " "
+          [ "btn btn-primary d-block"
+          , "forest-layout-action__button"
+          ]
+      , on: { click }
+      , title: "Add or remove connections to the server(s)."
+      }
+      [
+        H.span
+        { className: "fa fa-universal-access" }
+        [ H.text " Log in/out " ]
+      ]
+    ]
+
   --, H.div { "type": "", className: "fa fa-plus-circle fa-lg"} []
   --, H.div { "type": "", className: "fa fa-minus-circle fa-lg"} []
   -- TODO same as the one in the Login Modal (same CSS)
@@ -85,10 +111,7 @@ plusCpt = here.component "plus" cpt where
         -- from current url
         _ <- T.write Nothing backend
         T.write_ true showLogin
-      title = "Add or remove connections to the server(s)."
-      divClass = "fa fa-universal-access"
-      buttonClass handed' =
-        "btn btn-primary d-block " <> switchHanded "mr-1 ml-auto" "ml-1 mr-auto" handed'
+
 
 forestLayout :: R2.Component Props
 forestLayout = R.createElement forestLayoutCpt
@@ -100,8 +123,10 @@ forestLayoutCpt = here.component "forestLayout" cpt where
     [
       H.div { className: "forest-layout" }
       [
+        H.div { className: "forest-layout-top-teaser" } []
+      ,
         forest p []
       ,
-        H.div { className: "forest-layout-teaser" } []
+        H.div { className: "forest-layout-bottom-teaser" } []
       ]
     ]

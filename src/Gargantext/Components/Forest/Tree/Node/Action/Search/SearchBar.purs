@@ -34,11 +34,11 @@ searchBarCpt = here.component "searchBar" cpt
     cpt { errors, langs, onSearch, search, session } _ = do
       --onSearchChange session s
       pure $ H.div { className: "search-bar" }
-                   [ searchField { databases: allDatabases
-                                 , errors
-                                 , langs
-                                 , onSearch
-                                 , search
-                                 , session
-                                 } []
-                   ]
+        [ searchField { databases: allDatabases
+                      , errors
+                      , langs
+                      , onSearch
+                      , search
+                      , session
+                      } []
+        ]

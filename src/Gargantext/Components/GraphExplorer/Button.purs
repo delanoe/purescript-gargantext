@@ -21,7 +21,6 @@ import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadArbitraryData
 import Gargantext.Components.GraphExplorer.API (cloneGraph)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.GraphExplorer.Utils as GEU
-import Gargantext.Config.REST (RESTError)
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Sessions (Session)

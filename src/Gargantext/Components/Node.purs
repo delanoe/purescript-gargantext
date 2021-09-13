@@ -38,4 +38,5 @@ instance JSON.ReadForeign a => JSON.ReadForeign (NodePoly a) where
 newtype HyperdataList = HyperdataList { preferences :: Maybe String }
 derive instance Generic HyperdataList _
 derive instance Newtype HyperdataList _
+derive instance Eq HyperdataList
 derive newtype instance JSON.ReadForeign HyperdataList

@@ -9,9 +9,8 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
-import Gargantext.Components.Forest.Tree.Node.Action (Action)
-import Gargantext.Components.Forest.Tree.Node.Action.Add (addNodeView)
 import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.Forest.Tree.Node.Action.Add (addNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (actionDelete)
 import Gargantext.Components.Forest.Tree.Node.Action.Documentation (actionDoc)
@@ -22,6 +21,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Move (moveNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (renameAction)
 import Gargantext.Components.Forest.Tree.Node.Action.Search (actionSearch)
 import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
+import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
 import Gargantext.Components.Forest.Tree.Node.Action.Update (update)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (actionUpload)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (NodePopupProps, NodePopupS)
@@ -29,7 +29,7 @@ import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), Settings
 import Gargantext.Components.Forest.Tree.Node.Status (Status(..), hasStatus)
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, textInputBox)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (FrontendError, ID, Name, prettyNodeType)
+import Gargantext.Types (ID, Name, prettyNodeType)
 import Gargantext.Types as GT
 import Gargantext.Utils.Glyphicon (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
@@ -41,7 +41,7 @@ type CommonProps =
   ( dispatch :: Action -> Aff Unit
   , session :: Session )
 
-nodePopupView :: Record NodePopupProps -> R.Element
+nodePopupView :: R2.Leaf NodePopupProps
 nodePopupView p = R.createElement nodePopupCpt p []
 nodePopupCpt :: R.Component NodePopupProps
 nodePopupCpt = here.component "nodePopupView" cpt where

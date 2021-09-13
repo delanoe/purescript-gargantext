@@ -18,10 +18,18 @@ derive instance Generic UpdateNodeParams _
 instance Show UpdateNodeParams where show = genericShow
 instance JSON.ReadForeign UpdateNodeParams where readImpl = JSONG.untaggedSumRep
 instance JSON.WriteForeign UpdateNodeParams where
-  writeImpl (UpdateNodeParamsList { methodList }) = JSON.writeImpl { methodList }
-  writeImpl (UpdateNodeParamsGraph { methodGraph }) = JSON.writeImpl { methodGraph }
-  writeImpl (UpdateNodeParamsTexts { methodTexts }) = JSON.writeImpl { methodTexts }
-  writeImpl (UpdateNodeParamsBoard { methodBoard }) = JSON.writeImpl { methodBoard }
+  writeImpl (UpdateNodeParamsList { methodList }) =
+    JSON.writeImpl { type: "UpdateNodeParamsList"
+                   , values: methodList }
+  writeImpl (UpdateNodeParamsGraph { methodGraph }) =
+    JSON.writeImpl { type: "UpdateNodeParamsGraph"
+                   , methodGraph }
+  writeImpl (UpdateNodeParamsTexts { methodTexts }) =
+    JSON.writeImpl { type: "UpdateNodeParamsTexts"
+                   , methodTexts }
+  writeImpl (UpdateNodeParamsBoard { methodBoard }) =
+    JSON.writeImpl { type: "UpdateNodeParamsBoard"
+                   , methodBoard }
 
 ----------------------------------------------------------------------
 data Method = Basic | Advanced | WithModel
