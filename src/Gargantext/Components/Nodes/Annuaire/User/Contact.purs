@@ -3,8 +3,6 @@ module Gargantext.Components.Nodes.Annuaire.User.Contact
   , contactLayout
   ) where
 
-import Gargantext.Prelude
-
 import Data.Either (Either)
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -19,6 +17,7 @@ import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, get, put, sessionId)
 import Gargantext.Types (NodeType(..))

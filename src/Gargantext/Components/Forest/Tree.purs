@@ -22,7 +22,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), re
 import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Update (updateRequest)
-import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile, uploadArbitraryFile)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile, uploadArbitraryFile, uploadFrameCalc)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
 import Gargantext.Config.REST (RESTError)
@@ -283,6 +283,12 @@ uploadArbitraryFile' mName blob p@{ boxes: { errors, tasks }, session, tree: (NT
     GAT.insert id task tasks
     here.log2 "[uploadArbitraryFile'] UploadArbitraryFile, uploaded, task:" task
 
+uploadFrameCalc' p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } = do
+  eTask <- uploadFrameCalc session id
+  handleRESTError errors eTask $ \task -> liftEffect $ do
+    GAT.insert id task tasks
+    here.log2 "[performAction] UploadFrameCalc, uploaded, task:" task
+
 moveNode params p@{ boxes: { errors, forestOpen }, session } = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     eTask <- moveNodeReq session in' out
@@ -313,6 +319,7 @@ performAction (ShareTeam username) p                          = shareTeam userna
 performAction (SharePublic { params }) p                      = sharePublic params p
 performAction (AddContact params) p                           = addContact params p
 performAction (AddNode name nodeType) p                       = addNode' name nodeType p
+performAction UploadFrameCalc p                               = uploadFrameCalc' p
 performAction (UploadFile nodeType fileType mName contents selection) p =
   uploadFile' nodeType fileType mName contents p selection
 performAction (UploadArbitraryFile mName blob selection) p              =

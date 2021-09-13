@@ -79,8 +79,6 @@ module Gargantext.Components.NgramsTable.Core
   )
   where
 
-import Gargantext.Prelude
-
 import Control.Monad.State (class MonadState, execState)
 import DOM.Simple.Console (log2)
 import Data.Array (head)
@@ -127,21 +125,23 @@ import Effect.Exception.Unsafe (unsafeThrow)
 import FFI.Simple.Functions (delay)
 import Foreign as F
 import Foreign.Object as FO
+import Reactix (Component, Element, createElement) as R
+import Reactix.DOM.HTML as H
+import Partial (crashWith)
+import Partial.Unsafe (unsafePartial)
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Table as T
 import Gargantext.Components.Table.Types as T
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Config.Utils (handleRESTError)
+import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, post, put)
 import Gargantext.Types (AsyncTask, AsyncTaskType(..), AsyncTaskWithType(..), CTabNgramType(..), FrontendError, ListId, OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize(..))
 import Gargantext.Utils.Either (eitherMap)
 import Gargantext.Utils.KarpRabin (indicesOfAny)
 import Gargantext.Utils.Reactix as R2
-import Partial (crashWith)
-import Partial.Unsafe (unsafePartial)
 import Reactix as R
-import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
 import Toestand as T
 

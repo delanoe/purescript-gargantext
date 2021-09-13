@@ -5,6 +5,10 @@ import Gargantext.Prelude
 import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
+
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
@@ -23,15 +27,12 @@ import Gargantext.Components.Forest.Tree.Node.Action.Upload (actionUpload)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (NodePopupProps, NodePopupS)
 import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Status (Status(..), hasStatus)
-import Gargantext.Components.Forest.Tree.Node.Tools (textInputBox, fragmentPT)
+import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, textInputBox)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (ID, Name, prettyNodeType)
 import Gargantext.Types as GT
 import Gargantext.Utils.Glyphicon (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Box"
@@ -203,6 +204,6 @@ panelActionCpt = here.component "panelAction" cpt
     cpt { action : AddingContact, dispatch, id } _ = pure $ Contact.actionAddContact { dispatch, id } []
     cpt { action : Publish {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
       pure $ Share.publishNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
-    cpt { action: SearchBox, boxes, id, session, dispatch } _ =
-      pure $ actionSearch { boxes, dispatch, id: (Just id), session } []
+    cpt { action: SearchBox, boxes, dispatch, id, session } _ =
+      pure $ actionSearch { boxes, dispatch, id: Just id, session } []
     cpt _ _ = pure $ H.div {} []

@@ -1,7 +1,6 @@
 module Gargantext.Components.Forest.Tree.Node.Tools.Sync where
 
-import Gargantext.Prelude
-  ( Unit, bind, discard, pure, unit, ($), (<>), (==) )
+import Gargantext.Prelude (Unit, bind, discard, pure, unit, ($), (<>), (==))
 import Effect.Aff (Aff, launchAff_)
 import Data.Maybe (Maybe(..))
 import Effect.Class (liftEffect)

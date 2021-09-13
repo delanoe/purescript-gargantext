@@ -1,7 +1,5 @@
 module Gargantext.Config.REST where
 
-import Gargantext.Prelude
-
 import Affjax (Error(..), defaultRequest, request)
 import Affjax as Affjax
 import Affjax.RequestBody (formData, formURLEncoded, string)
@@ -19,6 +17,7 @@ import Data.Tuple (Tuple)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Foreign as Foreign
+import Gargantext.Prelude
 import Gargantext.Utils.Reactix as R2
 import Simple.JSON as JSON
 import Web.XHR.FormData as XHRFormData
