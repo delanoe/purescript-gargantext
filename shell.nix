@@ -41,6 +41,13 @@ let
     pulp browserify --skip-compile -t dist/bundle.js --src-path output
   '';
 
+  minify-bundle = pkgs.writeShellScriptBin "minify-bundle" ''
+    #!/usr/bin/env bash
+    set -e
+
+    minify dist/bundle.js > dist/bundle.min.js
+  '';
+
   repl = pkgs.writeShellScriptBin "repl" ''
     #!/usr/bin/env bash
 
@@ -68,6 +75,8 @@ pkgs.mkShell {
     build-purs
     build-watch
     build
+    minify-bundle
+    pkgs.minify
     repl
     pkgs.pulp
     pkgs.spago
