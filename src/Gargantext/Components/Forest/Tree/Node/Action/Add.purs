@@ -77,8 +77,6 @@ addNodeView = R.createElement addNodeViewCpt
 addNodeViewCpt :: R.Component CreateNodeProps
 addNodeViewCpt = here.component "addNodeView" cpt where
   cpt { dispatch
-      , id
-      , name
       , nodeTypes } _ = do
     nodeName <- T.useBox "Name"
     nodeName' <- T.useLive T.unequal nodeName

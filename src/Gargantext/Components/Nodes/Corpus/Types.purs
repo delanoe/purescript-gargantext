@@ -1,18 +1,15 @@
 module Gargantext.Components.Nodes.Corpus.Types where
 
-import Data.Argonaut     (class DecodeJson, class EncodeJson, decodeJson, (.:), (:=), (~>), jsonEmptyObject)
 import Data.Eq.Generic   (genericEq)
 import Data.Generic.Rep  (class Generic)
 import Data.List   as List
 import Data.Maybe        (Maybe(..))
 import Data.Newtype      (class Newtype)
 import Gargantext.Components.Node (NodePoly)
-import Gargantext.Components.Nodes.Types (FTField, Field(..), FieldType(..), FTField, FTFieldList(..), isJSON)
+import Gargantext.Components.Nodes.Types (Field(..), FieldType(..), FTFieldList(..), isJSON)
 import Gargantext.Prelude
-import Reactix     as R
 import Record      as Record
 import Simple.JSON as JSON
-import Toestand    as T
 
 newtype Hyperdata =
   Hyperdata { fields :: FTFieldList }

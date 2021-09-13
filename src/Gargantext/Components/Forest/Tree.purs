@@ -229,13 +229,13 @@ refreshTree p@{ reloadTree } = liftEffect $ T2.reload reloadTree *> closePopover
 
 deleteNode' nt p@{ boxes: { forestOpen }, session, tree: (NTree (LNode {id, parent_id}) _) } = do
   case nt of
-    GT.NodePublic GT.FolderPublic -> void $ deleteNode session nt id
+    GT.NodePublic GT.FolderPublic -> void $ deleteNode session id
     GT.NodePublic _               -> void $ unpublishNode session parent_id id
-    _                             -> void $ deleteNode session nt id
+    _                             -> void $ deleteNode session id
   liftEffect $ T.modify_ (openNodesDelete (mkNodeId session id)) forestOpen
   refreshTree p
 
-doSearch task p@{ boxes: { tasks }, tree: NTree (LNode {id}) _ } = liftEffect $ do
+doSearch task { boxes: { tasks }, tree: NTree (LNode {id}) _ } = liftEffect $ do
   GAT.insert id task tasks
   here.log2 "[doSearch] DoSearch task:" task
 
@@ -250,7 +250,7 @@ renameNode name p@{ boxes: { errors }, session, tree: (NTree (LNode {id}) _) } =
   handleRESTError errors eTask $ \_task -> pure unit
   refreshTree p
 
-shareTeam username p@{ boxes: { errors }, session, tree: (NTree (LNode {id}) _)} = do
+shareTeam username { boxes: { errors }, session, tree: (NTree (LNode {id}) _)} = do
   eTask <- Share.shareReq session id $ Share.ShareTeamParams { username }
   handleRESTError errors eTask $ \_task -> pure unit
 
@@ -261,7 +261,7 @@ sharePublic params p@{ boxes: { errors, forestOpen }, session } = traverse_ f pa
       liftEffect $ T.modify_ (openNodesInsert (mkNodeId p.session out)) forestOpen
       refreshTree p
 
-addContact params p@{ boxes: { errors }, session, tree: (NTree (LNode {id}) _) } = do
+addContact params { boxes: { errors }, session, tree: (NTree (LNode {id}) _) } = do
   eTask <- Contact.contactReq session id params
   handleRESTError errors eTask $ \_task -> pure unit
 

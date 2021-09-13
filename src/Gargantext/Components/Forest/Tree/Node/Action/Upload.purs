@@ -271,13 +271,13 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
         panelBody (DroppedFile { blob }) =
           H.div {className: "card-body"}
           [ R2.select {className: "col-md-12 form-control"
-                      , on: { change: onChange blob }
+                      , on: {change: onChange}
                       }
                       (map renderOption [CSV, CSV_HAL, WOS])
           ]
           where
-            onChange b e l =
-              T.write_ (Just $ DroppedFile $ { blob: b
+            onChange e l =
+              T.write_ (Just $ DroppedFile $ { blob
                                              , fileType: read $ R.unsafeEventValue e
                                              , lang    : fromMaybe EN $ read $ R.unsafeEventValue l
                                              }) droppedFile
@@ -477,7 +477,7 @@ uploadTermButtonCpt = here.component "uploadTermButton" cpt
                       , on: { click: onClick mFile' uploadType' }
                       } [ H.text "Upload" ]
       where
-        onClick mFile' uploadType' e = do
+        onClick mFile' uploadType' _ = do
           let {name, blob} = unsafePartial $ fromJust mFile'
           void $ launchAff do
             contents <- readUFBAsText blob

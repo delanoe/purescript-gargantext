@@ -1,6 +1,6 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Tree where
 
-import Data.Either (Either(..))
+import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)

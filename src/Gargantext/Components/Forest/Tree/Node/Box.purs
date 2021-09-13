@@ -84,14 +84,14 @@ nodePopupCpt = here.component "nodePopupView" cpt where
       , H.div { className: "col-1" }
         [ H.a { type: "button", on: { click: closePopover p }, title: "Close"
               , className: glyphicon "window-close" } [] ]]] where
-           SettingsBox { edit, doc, buttons } = settingsBox nodeType
+           SettingsBox _ = settingsBox nodeType
   editIcon _ true = H.div {} []
   editIcon isOpen false =
     H.a { className: glyphicon "pencil", id: "rename1"
         , title    : "Rename", on: { click: \_ -> T.write_ true isOpen } } []
   panelBody :: T.Box (Maybe NodeAction) -> Record NodePopupProps -> R.Element
-  panelBody nodePopupState {dispatch: d, nodeType} =
-    let (SettingsBox { edit, doc, buttons}) = settingsBox nodeType in
+  panelBody nodePopupState { nodeType } =
+    let (SettingsBox { doc, buttons }) = settingsBox nodeType in
     H.div {className: "card-body flex-space-between"}
     $ [ H.p { className: "spacer" } []
       , H.div { className: "flex-center" }
@@ -184,12 +184,12 @@ panelAction p = R.createElement panelActionCpt p []
 panelActionCpt :: R.Component PanelActionProps
 panelActionCpt = here.component "panelAction" cpt
   where
-    cpt { action: Documentation nodeType }                  _ = pure $ actionDoc { nodeType } []
-    cpt { action: Download, id, nodeType, session }         _ = pure $ actionDownload { id, nodeType, session } []
-    cpt { action: Upload, dispatch, id, nodeType, session } _ = pure $ actionUpload { dispatch, id, nodeType, session } []
-    cpt { action: Delete, dispatch, nodeType }              _ = pure $ actionDelete { dispatch, nodeType } []
-    cpt { action: Add xs, dispatch, id, name, nodeType } _ =
-      pure $ addNodeView {dispatch, id, name, nodeType, nodeTypes: xs } []
+    cpt { action: Documentation nodeType}                  _ = pure $ actionDoc { nodeType } []
+    cpt { action: Download, id, nodeType, session}         _ = pure $ actionDownload { id, nodeType, session } []
+    cpt { action: Upload, dispatch, id, nodeType, session} _ = pure $ actionUpload { dispatch, id, nodeType, session } []
+    cpt { action: Delete, nodeType, dispatch}              _ = pure $ actionDelete { dispatch, nodeType } []
+    cpt { action: Add xs, dispatch, id, name, nodeType} _ =
+      pure $ addNodeView {dispatch, id, name, nodeType, nodeTypes: xs} []
     cpt { action: Refresh , dispatch, nodeType } _ = pure $ update { dispatch, nodeType } []
     cpt { action: Config, nodeType } _ =
       pure $ fragmentPT $ "Config " <> show nodeType
@@ -204,6 +204,6 @@ panelActionCpt = here.component "panelAction" cpt
     cpt { action : AddingContact, dispatch, id } _ = pure $ Contact.actionAddContact { dispatch, id } []
     cpt { action : Publish {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
       pure $ Share.publishNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
-    cpt { action: SearchBox, boxes, dispatch, id, nodePopup, session } _ =
-      pure $ actionSearch { boxes, dispatch, id: (Just id), nodePopup, session } []
+    cpt { action: SearchBox, boxes, dispatch, id, session } _ =
+      pure $ actionSearch { boxes, dispatch, id: Just id, session } []
     cpt _ _ = pure $ H.div {} []
