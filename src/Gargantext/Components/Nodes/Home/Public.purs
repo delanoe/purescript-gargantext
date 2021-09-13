@@ -9,7 +9,6 @@ import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
-import Simple.JSON.Generics as JSONG
 
 import Gargantext.Config (publicBackend)
 import Gargantext.Config.REST (get, RESTError)
@@ -17,6 +16,7 @@ import Gargantext.Ends (backendUrl)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.SimpleJSON as GUSJ
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Home.Public"
@@ -35,9 +35,8 @@ data PublicData = PublicData
 
 derive instance Eq PublicData
 derive instance Generic PublicData _
-instance JSON.ReadForeign PublicData where readImpl = JSONG.untaggedSumRep
-instance Show PublicData where
-  show = genericShow
+instance JSON.ReadForeign PublicData where readImpl = GUSJ.taggedSumRep
+instance Show PublicData where show = genericShow
 
 ------------------------------------------------------------------------
 type LoadData :: forall k. Row k

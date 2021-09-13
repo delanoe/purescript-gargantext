@@ -44,7 +44,7 @@ type SubTreeParamsProps =
   )
 
 subTreeView :: R2.Component SubTreeParamsProps
-subTreeView = R.createElement subTreeViewCpt
+subTreeView = R.createElement $ R.memo' subTreeViewCpt
 subTreeViewCpt :: R.Component SubTreeParamsProps
 subTreeViewCpt = here.component "subTreeView" cpt
   where
