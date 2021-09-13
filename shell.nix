@@ -35,14 +35,21 @@ let
 
   '';
 
-
-
   build-watch = pkgs.writeShellScriptBin "build-watch" ''
     #!/usr/bin/env bash
     set -e
 
     echo "Build watch"
     spago build -w --then browserify
+  '';
+
+  build-zephyr = pkgs.writeShellScriptBin "build-zephyr" ''
+    #!/usr/bin/env bash
+    set -e
+
+    spago build --purs-args '--codegen corefn,js'
+    zephyr -f Main.main
+    yarn parcel build dist/index.html --public-url '.' --no-source-maps
   '';
 
   browserify = pkgs.writeShellScriptBin "browserify" ''
@@ -82,10 +89,12 @@ pkgs.mkShell {
     easy-ps.purs-0_14_4
     easy-ps.psc-package
     easy-ps.dhall-json-simple
+    easy-ps.zephyr
     browserify
     build-css
     build-purs
     build-watch
+    build-zephyr
     build
     minify-bundle
     pkgs.minify
