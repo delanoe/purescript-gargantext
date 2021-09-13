@@ -52,6 +52,13 @@ let
     pulp browserify --skip-compile -t dist/bundle.js --src-path output
   '';
 
+  minify-bundle = pkgs.writeShellScriptBin "minify-bundle" ''
+    #!/usr/bin/env bash
+    set -e
+
+    minify dist/bundle.js > dist/bundle.min.js
+  '';
+
   repl = pkgs.writeShellScriptBin "repl" ''
     #!/usr/bin/env bash
 
@@ -76,10 +83,12 @@ pkgs.mkShell {
     easy-ps.psc-package
     easy-ps.dhall-json-simple
     browserify
+    build-css
     build-purs
     build-watch
     build
-    build-css
+    minify-bundle
+    pkgs.minify
     pkgs.nodejs
     repl
     pkgs.pulp
