@@ -63,7 +63,8 @@ let
     #!/usr/bin/env bash
     set -e
 
-    pulp browserify --skip-compile -t dist/bundle.js --src-path dce-output
+    pulp browserify --skip-compile -t dist/bundle.js -o dce-output
+    #purs bundle -o dist/bundle.js -m Main dce-output/**/*.js
   '';
 
   minify-bundle = pkgs.writeShellScriptBin "minify-bundle" ''
