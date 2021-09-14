@@ -1,6 +1,6 @@
 {
     "name": "Gargantext",
-    "version": "0.0.3.5",
+    "version": "0.0.3.6",
     "scripts": {
         "generate-purs-packages-nix": "./nix/generate-purs-packages.nix",
         "generate-psc-packages-nix": "./nix/generate-packages-json.bash",
@@ -30,7 +30,7 @@
         "@popperjs/core": "^2.9.2",
         "aes-js": "^3.1.1",
         "base-x": "^3.0.2",
-        "bootstrap": "^5.1.0",
+        "bootstrap": "^4.6.0",
         "bootstrap-dark": "^1.0.3",
         "create-react-class": "^15.6.3",
         "echarts": "^5.1.2",
