@@ -10,7 +10,7 @@ import Reactix.DOM.HTML as H
 import Toestand as T
 
 import Gargantext.Components.App.Data (Boxes)
-import Gargantext.Components.Forest.Tree.Node.Action.Add (NodePopup(..), addNodeView)
+import Gargantext.Components.Forest.Tree.Node.Action.Add (addNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (actionDelete)
 import Gargantext.Components.Forest.Tree.Node.Action.Documentation (actionDoc)
@@ -83,8 +83,7 @@ nodePopupCpt = here.component "nodePopupView" cpt where
       , H.div { className: "col-1" } [ editIcon renameIsOpen open ]
       , H.div { className: "col-1" }
         [ H.a { type: "button", on: { click: closePopover p }, title: "Close"
-              , className: glyphicon "window-close" } [] ]]] where
-           SettingsBox _ = settingsBox nodeType
+              , className: glyphicon "window-close" } [] ]]]
   editIcon _ true = H.div {} []
   editIcon isOpen false =
     H.a { className: glyphicon "pencil", id: "rename1"
@@ -110,7 +109,6 @@ nodePopupCpt = here.component "nodePopupView" cpt where
                 , dispatch
                 , id
                 , name
-                , nodePopup: Just NodePopup
                 , nodeType
                 , session
                 }
@@ -174,7 +172,6 @@ type PanelActionProps =
   , id        :: ID
   , dispatch  :: Action -> Aff Unit
   , name      :: Name
-  , nodePopup :: Maybe NodePopup
   , nodeType  :: GT.NodeType
   , session   :: Session
   )

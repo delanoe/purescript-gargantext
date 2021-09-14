@@ -76,8 +76,8 @@ instance Doc DataField where
   doc Files        = "Zip files with formats.."
 derive instance Eq DataField
 instance JSON.WriteForeign DataField where
-  writeImpl Gargantext = JSON.writeImpl "Internal PubMed"
   writeImpl (External (Just db)) = JSON.writeImpl $ "External " <> show db
+  writeImpl Web = JSON.writeImpl $ "Web"
   writeImpl f = JSON.writeImpl $ show f
 
 ----------------------------------------
@@ -348,9 +348,10 @@ instance GT.ToQuery SearchQuery where
           pair k = maybe [] $ \v ->
             [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
 instance JSON.WriteForeign SearchQuery where
-  writeImpl (SearchQuery { databases, lang, node_id, query, selection }) =
+  writeImpl (SearchQuery { databases, datafield, lang, node_id, query, selection }) =
     JSON.writeImpl { query: String.replace (String.Pattern "\"") (String.Replacement "\\\"") query
-                   , databases: databases
+                   , databases
+                   , datafield
                    , lang: maybe "EN" show lang
                    , node_id: fromMaybe 0 node_id
                    , flowListWith: selection

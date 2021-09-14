@@ -34,7 +34,7 @@ defaultSearch = { databases: Empty
                 , node_id  : Nothing
                 , lang     : Nothing
                 , term     : ""
-                , url: ""
+                , url      : ""
                 }
 
 type Props =
@@ -245,8 +245,8 @@ dataFieldNavCpt = here.component "dataFieldNav" cpt
 
       pure $ R.fragment
         [ H.div { className: "text-primary center"} [H.text "with DataField"]
-        , H.div {className: "nav nav-tabs"} ((liItem search') <$> dataFields)
-        , H.div {className: "center"} [ H.text
+        , H.div { className: "nav nav-tabs" } ((liItem search') <$> dataFields)
+        , H.div { className: "center" } [ H.text
                                         $ maybe "TODO: add Doc Instance" doc datafield
                                       ]
         ]
