@@ -5,23 +5,27 @@ module Gargantext.Components.Graph
   -- )
   where
 
+import Gargantext.Prelude
+
+import DOM.Simple (window)
+import DOM.Simple.Types (Element)
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
-import DOM.Simple.Types (Element)
+import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Components.Themes (darksterTheme)
+import Gargantext.Components.Themes as Themes
+import Gargantext.Hooks.Sigmax as Sigmax
+import Gargantext.Hooks.Sigmax.Sigma as Sigma
+import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
+import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as RH
+import Record (merge)
 import Record as Record
 import Toestand as T
-
-import Gargantext.Prelude
-
-import Gargantext.Components.GraphExplorer.Types as GET
-import Gargantext.Hooks.Sigmax as Sigmax
-import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
-import Gargantext.Hooks.Sigmax.Sigma as Sigma
-import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Graph"
@@ -34,7 +38,8 @@ derive instance Eq Stage
 
 
 type Props sigma forceatlas2 =
-  ( elRef                 :: R.Ref (Nullable Element)
+  ( boxes                 :: Boxes
+  , elRef                 :: R.Ref (Nullable Element)
   , forceAtlas2Settings   :: forceatlas2
   , graph                 :: SigmaxTypes.SGraph
   , mCamera               :: Maybe GET.Camera
@@ -87,13 +92,16 @@ graphCpt = here.component "graph" cpt where
                , sigmaRef
                , stage
                , stage': Init
-               , startForceAtlas } = do
+               , startForceAtlas
+               , boxes
+               } = do
       R.useEffectOnce' $ do
         let rSigma = R.readRef sigmaRef
 
         case Sigmax.readSigma rSigma of
           Nothing -> do
-            eSigma <- Sigma.sigma {settings: sigmaSettings}
+            theme <- T.read boxes.theme
+            eSigma <- Sigma.sigma {settings: sigmaSettings theme}
             case eSigma of
               Left err -> here.log2 "[graphCpt] error creating sigma" err
               Right sig -> do
@@ -128,6 +136,11 @@ graphCpt = here.component "graph" cpt where
                   Just (GET.Camera { ratio, x, y }) -> do
                     Sigma.updateCamera sig { ratio, x, y }
 
+                -- Reload Sigma on Theme changes
+                _ <- flip T.listen boxes.theme \{ old, new } ->
+                  if (eq old new) then pure unit
+                  else Sigma.proxySetSettings window sig $ sigmaSettings new
+
                 pure unit
           Just _sig -> do
             pure unit
@@ -138,7 +151,8 @@ graphCpt = here.component "graph" cpt where
     stageHooks { showEdges'
                , sigmaRef
                , stage': Ready
-               , transformedGraph } = do
+               , transformedGraph
+               } = do
       let tEdgesMap = SigmaxTypes.edgesGraphMap transformedGraph
       let tNodesMap = SigmaxTypes.nodesGraphMap transformedGraph
 
@@ -151,6 +165,7 @@ graphCpt = here.component "graph" cpt where
           let edgesState = not $ SigmaxTypes.edgeStateHidden showEdges'
           here.log2 "[graphCpt] edgesState" edgesState
           Sigmax.setEdges sigma edgesState
+
 
     stageHooks _ = pure unit
 
@@ -248,8 +263,8 @@ type SigmaSettings =
 
   -- not selected <=> (1-greyness)
   -- selected nodes <=> special label
-sigmaSettings :: {|SigmaSettings}
-sigmaSettings =
+sigmaSettings :: Themes.Theme -> {|SigmaSettings}
+sigmaSettings theme =
   { animationsTime : 30000.0
   , autoRescale : true
   , autoResize : true
@@ -257,9 +272,9 @@ sigmaSettings =
   , borderSize : 1.0                   -- for ex, bigger border when hover
   , defaultEdgeHoverColor : "#f00"
   , defaultEdgeType : "curve"          -- 'curve' or 'line' (curve iff ourRendering)
-  , defaultHoverLabelBGColor : "#fff"
-  , defaultHoverLabelColor : "#000"
-  , defaultLabelColor : "#000"         -- labels text color
+  -- , defaultHoverLabelBGColor : "#fff"
+  -- , defaultHoverLabelColor : "#000"
+  -- , defaultLabelColor : "#000"         -- labels text color
   , defaultLabelSize : 15.0                -- (old tina: showLabelsIfZoom)
   , defaultNodeBorderColor  : "#000"   -- <- if nodeBorderColor = 'default'
   , defaultNodeColor : "#FFF"
@@ -304,7 +319,19 @@ sigmaSettings =
   , zoomMax : 1.7
   , zoomMin : 0.0
   , zoomingRatio : 1.4
-  }
+  } `merge` themeSettings theme
+  where
+    themeSettings t
+      | eq t darksterTheme =
+          { defaultHoverLabelBGColor: "#FFF"
+          , defaultHoverLabelColor : "#000"
+          , defaultLabelColor: "#FFF"
+          }
+      | otherwise =
+          { defaultHoverLabelBGColor: "#FFF"
+          , defaultHoverLabelColor : "#000"
+          , defaultLabelColor: "#000"
+          }
 
 type ForceAtlas2Settings =
   ( adjustSizes                    :: Boolean

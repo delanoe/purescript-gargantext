@@ -1,15 +1,15 @@
 module Gargantext.Components.App.Data (App, Boxes, emptyApp) where
 
+
 import Gargantext.Prelude
 
 import Data.Maybe (Maybe(..))
 import Data.Set as Set
-import Toestand as T
-
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
 import Gargantext.Components.Nodes.Lists.Types as ListsT
 import Gargantext.Components.Nodes.Texts.Types as TextsT
+import Gargantext.Components.Themes as Themes
 import Gargantext.Ends (Backend)
 import Gargantext.Routes (AppRoute(Home), Tile)
 import Gargantext.Sessions (Session, Sessions)
@@ -17,6 +17,7 @@ import Gargantext.Sessions as Sessions
 import Gargantext.Sessions.Types (OpenNodes(..))
 import Gargantext.Types (FrontendError, Handed(RightHanded), SidePanelState(..))
 import Gargantext.Utils.Toestand as T2
+import Toestand as T
 
 type App =
   { backend             :: Maybe Backend
@@ -38,6 +39,7 @@ type App =
   , sidePanelTexts      :: Maybe (Record TextsT.SidePanel)
   , sidePanelState      :: SidePanelState
   , tasks               :: GAT.Storage
+  , theme               :: Themes.Theme
   , tileAxisXList       :: Array (Record Tile)
   , tileAxisYList       :: Array (Record Tile)
   }
@@ -63,6 +65,7 @@ emptyApp =
   , sidePanelTexts      : TextsT.initialSidePanel
   , sidePanelState      : InitialClosed
   , tasks               : GAT.empty
+  , theme               : Themes.defaultTheme
   , tileAxisXList       : mempty
   , tileAxisYList       : mempty
   }
@@ -87,6 +90,7 @@ type Boxes =
   , sidePanelTexts      :: T.Box (Maybe (Record TextsT.SidePanel))
   , sidePanelState      :: T.Box SidePanelState
   , tasks               :: T.Box GAT.Storage
+  , theme               :: T.Box Themes.Theme
   , tileAxisXList       :: T.Box (Array (Record Tile))
   , tileAxisYList       :: T.Box (Array (Record Tile))
   }

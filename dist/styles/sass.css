@@ -938,6 +938,10 @@ ul li {
   padding-top: 100px;
 }
 
+select.form-control {
+  cursor: pointer;
+}
+
 #app {
   width: 100%;
 }
