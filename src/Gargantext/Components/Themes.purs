@@ -86,7 +86,7 @@ markThemeToDOMTree (Theme { name }) = do
 
 
 type ThemeSwitcherProps = (
-    theme  :: Theme
+    theme  :: T.Box Theme
   , themes :: Array Theme
   )
 
@@ -97,19 +97,18 @@ themeSwitcherCpt :: R.Component ThemeSwitcherProps
 themeSwitcherCpt = here.component "themeSwitcher" cpt
   where
     cpt { theme, themes } _ = do
-      currentTheme <- T.useBox theme
-      currentTheme' <- T.useLive T.unequal currentTheme
+      currentTheme <- T.useLive T.unequal theme
 
       let option (Theme { name }) = H.option { value: name } [ H.text name ]
       let options = map option themes
 
-      R.useEffectOnce' $ markThemeToDOMTree currentTheme'
+      R.useEffectOnce' $ markThemeToDOMTree currentTheme
 
       pure $ R2.select { className: "form-control"
-                       , defaultValue: themeName currentTheme'
-                       , on: { change: onChange currentTheme } } options
+                       , defaultValue: themeName currentTheme
+                       , on: { change: onChange theme } } options
       where
-        onChange currentTheme e = do
+        onChange box e = do
           let value = R.unsafeEventValue e
           let mTheme = A.head $ A.filter (\(Theme { name }) -> value == name) themes
 
@@ -118,4 +117,4 @@ themeSwitcherCpt = here.component "themeSwitcher" cpt
             Just t  -> do
               switchTheme t
               markThemeToDOMTree t
-              T.write_ t currentTheme
+              T.write_ t box

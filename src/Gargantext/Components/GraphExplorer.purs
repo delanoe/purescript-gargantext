@@ -104,7 +104,7 @@ explorer = R.createElement explorerCpt
 explorerCpt :: R.Component Props
 explorerCpt = here.component "explorer" cpt
   where
-    cpt { boxes: { graphVersion, handed, reloadForest, showTree, sidePanelGraph, sidePanelState }
+    cpt props@{ boxes: { graphVersion, handed, reloadForest, showTree, sidePanelGraph, sidePanelState }
         , graph
         , graphId
         , hyperdataGraph
@@ -160,7 +160,8 @@ explorerCpt = here.component "explorer" cpt
             [ RH.div { id: "controls-container" } [ Controls.controls controls [] ]
             , RH.div { className: "row graph-row" }
               [ RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []
-              , graphView { controls
+              , graphView { boxes: props.boxes
+                          , controls
                           , elRef: graphRef
                           , graph
                           , hyperdataGraph
@@ -175,8 +176,9 @@ explorerCpt = here.component "explorer" cpt
       Types.LeftHanded  -> "lefthanded"
       Types.RightHanded -> "righthanded"
 
-type GraphProps = (
-    controls       :: Record Controls.Controls
+type GraphProps =
+  ( boxes          :: Boxes
+  , controls       :: Record Controls.Controls
   , elRef          :: R.Ref (Nullable Element)
   , graph          :: SigmaxT.SGraph
   , hyperdataGraph :: GET.HyperdataGraph
@@ -188,7 +190,8 @@ graphView = R.createElement graphViewCpt
 graphViewCpt :: R.Component GraphProps
 graphViewCpt = here.component "graphView" cpt
   where
-    cpt { controls
+    cpt { boxes
+        , controls
         , elRef
         , graph
         , hyperdataGraph: GET.HyperdataGraph { mCamera }
@@ -224,7 +227,8 @@ graphViewCpt = here.component "graphView" cpt
       R.useEffect1' multiSelectEnabled' $ do
         R.setRef multiSelectEnabledRef multiSelectEnabled'
 
-      pure $ Graph.graph { elRef
+      pure $ Graph.graph { boxes
+                         , elRef
                          , forceAtlas2Settings: Graph.forceAtlas2Settings
                          , graph
                          , mCamera
