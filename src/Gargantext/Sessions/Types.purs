@@ -7,8 +7,8 @@ module Gargantext.Sessions.Types
 
 import Data.Array as A
 import Data.Either (Either(..))
-import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
+import Data.Generic.Rep (class Generic)
 import Data.Int as Int
 import Data.Map (Map)
 import Data.Map as Map
@@ -19,21 +19,20 @@ import Data.Sequence as Seq
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Show.Generic (genericShow)
+import Data.String as DST
 import Data.Tuple (Tuple)
 import Foreign.Object as Object
-import Reactix as R
-import Simple.JSON as JSON
-import Toestand as T
-
-import Gargantext.Prelude
-
 import Gargantext.Components.Login.Types (TreeId)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Ends (class ToUrl, Backend(..), backendUrl, sessionPath)
+import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute)
 import Gargantext.Types (NodePath, SessionId(..), nodePath)
 import Gargantext.Utils.JSON as GJSON
 import Gargantext.Utils.Tuple as GUT
+import Reactix as R
+import Simple.JSON as JSON
+import Toestand as T
 
 -- | A Session represents an authenticated session for a user at a
 -- | backend. It contains a token and root tree id.
@@ -61,9 +60,18 @@ instance JSON.WriteForeign Session where
       JSON.writeImpl { backend, caches: caches', token, treeId, username }
     where
       caches' = JSON.writeImpl $ Object.fromFoldable (GUT.mapFst show <$> Map.toUnfoldable caches :: Array (Tuple String NT.CacheState))
+
 instance Eq Session where eq = genericEq
-instance Show Session where show (Session {backend, username}) = username <> "@" <> show backend
+
+instance Show Session where
+  show (Session {backend, username}) = username <> "@" <> url
+    where
+      Backend {baseUrl} = backend
+      url = DST.replace (DST.Pattern "http://") (DST.Replacement "")
+          $ DST.replace (DST.Pattern "https://") (DST.Replacement "") baseUrl
+
 instance ToUrl Session SessionRoute where toUrl (Session {backend}) r = backendUrl backend (sessionPath r)
+
 instance ToUrl Session NodePath where toUrl (Session {backend}) np = backendUrl backend (nodePath np)
 instance ToUrl Session String where toUrl = sessionUrl
 

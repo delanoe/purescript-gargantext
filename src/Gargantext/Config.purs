@@ -12,34 +12,24 @@ import Gargantext.Prelude (bind, pure, ($))
 import Gargantext.Types (ApiVersion(..))
 import Gargantext.Utils (href)
 
+
+
 defaultBackends :: NonEmpty Array Backend
-defaultBackends =
- backend_local :| [ backend_prod, backend_partner, backend_demo, backend_dev ]
+defaultBackends =   backend' "Show Room (Demo)"                        "https://demo.gargantext.org"
+               :| [ backend' "Laboratory Room (CNRS/ISCPIF)"           "https://cnrs.gargantext.org"
+                  , backend' "Class Room"                              "https://learn.gargantext.org"
+                  , backend' "Funding Partner (IMT)"                   "https://imtv5.gargantext.org"
+                  , backend' "Scientific Community (Complex Systems)"  "https://community.gargantext.org"
+                  , backend' "European Project (VIGIE)"                "https://europa.gargantext.org"
+                  , backend' "Dev SandBox"                             "https://dev.gargantext.org"
+                  , backend' "Private Bunker (Local Only)"             "http://localhost:8008"
+                  , backend' "Business Room (Hello Word)"              "https://garg.helloword.io"
+                  ]
+ 
 
-prodUrl :: String
-prodUrl = "https://v4.gargantext.org"
-backend_prod :: Backend
-backend_prod    = backend V10 "/api/" prodUrl    "iscpif.cnrs"
+  where
+    backend' n u = backend n V10 "/api/" u
 
-partnerUrl :: String
-partnerUrl = "https://imtv4.gargantext.org"
-backend_partner :: Backend
-backend_partner = backend V10 "/api/" partnerUrl "institut-mines-telecom.imt"
-
-demoUrl :: String
-demoUrl = "https://demo.gargantext.org"
-backend_demo :: Backend
-backend_demo    = backend V10 "/api/" demoUrl    "demo.inshs.cnrs"
-
-devUrl :: String
-devUrl = "https://dev.gargantext.org"
-backend_dev :: Backend
-backend_dev     = backend V10 "/api/" devUrl     "devel.inshs.cnrs"
-
-localUrl :: String
-localUrl = "http://localhost:8008"
-backend_local :: Backend
-backend_local   = backend V10 "/api/" localUrl   "local.cnrs"
 
 matchCurrentLocation :: Effect (Maybe Backend)
 matchCurrentLocation = do
@@ -51,7 +41,7 @@ matchCurrentLocation = do
 -- | public Backend
 -- When user is not logged, use the location of the window
 publicBackend :: Backend
-publicBackend = backend_local
+publicBackend = backend "local" V10 "/api/" "http://localhost:8008"
 
 publicBackend' :: Effect Backend
 publicBackend' = do

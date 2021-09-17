@@ -36,8 +36,11 @@ instance Eq Backend where eq = genericEq
 instance Show Backend where show (Backend {name}) = name
 instance ToUrl Backend String where toUrl = backendUrl
 
-backend :: ApiVersion -> String -> String -> String -> Backend
-backend version prePath baseUrl name = Backend { name, version, prePath, baseUrl }
+type BaseUrl = String
+type PrePath = String
+type Name    = String
+backend :: Name -> ApiVersion -> PrePath -> BaseUrl -> Backend
+backend name version prePath baseUrl = Backend { name, version, prePath, baseUrl }
 
 -- | Creates a backend url from a backend and the path as a string
 backendUrl :: Backend -> String -> String

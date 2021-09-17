@@ -57,24 +57,23 @@ chooserCpt = here.component "chooser" cpt where
     sessions' <- T.useLive T.unequal sessions
     pure $
       R.fragment $
-        [ H.h2 { className: "center modal-title" }
-          [ H.text "Instances manager" ]]
-        <> activeConnections sessions sessions' <>
-        [ H.h3 {} [ H.text "Existing connections" ]
+        {- [ H.h2 { className: "mx-auto" } [ H.text "Workspace manager" ]]
+        <> -} activeConnections sessions sessions' <>
+        [ H.h3 {} [ H.text "Existing places" ]
         , H.table { className : "table" }
           [ H.thead { className: "thead-light" }
             [ H.tr {} (map header headers) ]
           , H.tbody {} (map (renderBackend backend) backends) ]
         , H.input { className: "form-control", type:"text", placeholder } ]
   placeholder = "Search for your institute"
-  headers = [ "", "Label of instance", "Gargurl" ]
+  headers = [ "", "GarganText places", "Garg protocol url" ]
   header label = H.th {} [ H.text label ]
 
 -- Shown in the chooser
 activeConnections :: forall s. T.ReadWrite s Sessions => s -> Sessions -> Array R.Element
 activeConnections _        sessions' | Sessions.null sessions' = []
 activeConnections sessions sessions' =
-  [ H.h3 {} [ H.text "Active connection(s)" ]
+  [ H.h3 {} [ H.text "Active place(s)" ]
   , H.ul {} [ renderSessions sessions sessions' ] ]
 
 renderSessions :: forall s. T.ReadWrite s Sessions => s -> Sessions -> R.Element
@@ -103,11 +102,11 @@ clearCacheButton =
         *> liftEffect (here.log "cache cleared")
 
 renderBackend :: forall b. T.Write b (Maybe Backend) => b -> Backend -> R.Element
-renderBackend cursor backend@(Backend {name}) =
+renderBackend cursor backend@(Backend {name, baseUrl}) =
   H.tr {}
   [ H.td {} [ H.a { on: { click }, title: "Log In", className } [] ]
   , H.td {} [ H.a { on: { click }} [ H.text (backendLabel name) ]]
-  , H.td {} [ H.text $ "garg://" <> name ]] where
+  , H.td {} [ H.text $ DST.replace (DST.Pattern "http") (DST.Replacement "garg") $ baseUrl ]] where
     className = "fa fa-hand-o-right" -- "glyphitem fa fa-log-in"
     click _ = T.write_ (Just backend) cursor
 

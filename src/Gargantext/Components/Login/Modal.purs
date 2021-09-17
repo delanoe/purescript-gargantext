@@ -31,7 +31,7 @@ modalCpt = here.component "modal" cpt where
                 [ H.h2 { className: "text-primary center m-a-2" }
                   -- H.i {className: "material-icons md-36"}
                   -- [ H.text "control_point" ]
-                  [ H.span {className: "icon-text"} [ H.text "GarganText" ]]]
+                  [ H.span {className: "center icon-text"} [ H.text "Exploring the eco-system with the workspace manager" ]]]
               , H.button -- TODO , font-size : "50px"
                 { type: "button", className: "close"
                 , data: { dismiss: "modal" }}
