@@ -23,7 +23,7 @@ defaultBackends =   backend' "Demo"            "Public Show room"          "http
                   , backend' "Networking"      "Digeing European Project"  "https://europa.gargantext.org"
                   , backend' "Development"     "Main SandBox"              "https://dev.gargantext.org"
                   , backend' "Private"         "Offline Bunker"            "http://localhost:8008"
-                  , backend' "Networking"      "Hello Word Company"        "https://helloword.gargantext.org"
+                  , backend' "Organization"    "Hello Word Company"        "https://helloword.gargantext.org"
                   ]
  
 
