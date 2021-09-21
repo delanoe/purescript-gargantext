@@ -18,7 +18,7 @@ import Gargantext.Components.Login.Form (form)
 import Gargantext.Components.NgramsTable.Loader as NTL
 import Gargantext.Ends (Backend(..))
 import Gargantext.Hooks.Loader as GHL
-import Gargantext.Sessions (Session, Sessions, Action(Logout), unSessions)
+import Gargantext.Sessions (Session(..), Sessions, Action(Logout), unSessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Utils.Reactix as R2
 
@@ -57,16 +57,17 @@ chooserCpt = here.component "chooser" cpt where
     sessions' <- T.useLive T.unequal sessions
     pure $
       R.fragment $
-        {- [ H.h2 { className: "mx-auto" } [ H.text "Workspace manager" ]]
-        <> -} activeConnections sessions sessions' <>
-        [ H.h3 {} [ H.text "Existing places" ]
+        [ H.h2 { className: "mx-auto" } [ H.text "Workspace manager" ]]
+        <> activeConnections sessions sessions' <>
+        [ H.h3 {} [ H.text "Existing places (click to login)" ]
         , H.table { className : "table" }
-          [ H.thead { className: "thead-light" }
-            [ H.tr {} (map header headers) ]
-          , H.tbody {} (map (renderBackend backend) backends) ]
+                  [ H.thead { className: "thead-light" }
+                            [ H.tr {} (map header headers) ]
+                  , H.tbody {} (map (renderBackend backend) backends)
+                  ]
         , H.input { className: "form-control", type:"text", placeholder } ]
   placeholder = "Search for your institute"
-  headers = [ "", "GarganText places", "Garg protocol url" ]
+  headers = [ "", "GarganText places", "Fonction", "Garg protocol url" ]
   header label = H.th {} [ H.text label ]
 
 -- Shown in the chooser
@@ -74,16 +75,31 @@ activeConnections :: forall s. T.ReadWrite s Sessions => s -> Sessions -> Array 
 activeConnections _        sessions' | Sessions.null sessions' = []
 activeConnections sessions sessions' =
   [ H.h3 {} [ H.text "Active place(s)" ]
-  , H.ul {} [ renderSessions sessions sessions' ] ]
+  , H.table { className : "table" }
+                  [ H.thead { className: "thead-light" }
+                            [ H.tr {} (map header headers) ]
+                  , H.tbody {} [renderSessions sessions sessions']
+                  ]
+  ]
+    where
+      headers = [ "", "Active(s) connection(s)", "Fonction", "Clear data/Logout"]
+      header label = H.th {} [ H.text label ]
+
+
 
 renderSessions :: forall s. T.ReadWrite s Sessions => s -> Sessions -> R.Element
 renderSessions sessions sessions' =
-  R.fragment (map renderSession $ unSessions sessions') where
-    renderSession session =
-      H.li {}
-      [ H.text $ show session
-      , signOutButton sessions session
-      , clearCacheButton ]
+  R.fragment (map renderSession $ unSessions sessions')
+    where
+      renderSession session@(Session {backend}) =
+        H.tr {}
+        [ H.td {} [H.text ""] 
+        , H.td {} [H.text $ show session]
+        , H.td {} [H.text backendType]
+        , H.td {} [signOutButton sessions session, clearCacheButton]
+        ]
+          where
+            Backend {backendType} = backend
 
 signOutButton :: forall c. T.ReadWrite c Sessions => c -> Session -> R.Element
 signOutButton sessions session =
@@ -94,7 +110,7 @@ signOutButton sessions session =
 clearCacheButton :: R.Element
 clearCacheButton =
   H.a { className, on: { click }, id: "log-out", title: "Clear cache" } [] where
-    className = "glyphitem fa fa-eraser" 
+    className = "glyphitem fa fa-eraser"
     click _ =
       launchAff_
         $  GHL.clearCache unit
@@ -102,13 +118,16 @@ clearCacheButton =
         *> liftEffect (here.log "cache cleared")
 
 renderBackend :: forall b. T.Write b (Maybe Backend) => b -> Backend -> R.Element
-renderBackend cursor backend@(Backend {name, baseUrl}) =
+renderBackend cursor backend@(Backend {name, baseUrl, backendType}) =
   H.tr {}
   [ H.td {} [ H.a { on: { click }, title: "Log In", className } [] ]
   , H.td {} [ H.a { on: { click }} [ H.text (backendLabel name) ]]
-  , H.td {} [ H.text $ DST.replace (DST.Pattern "http") (DST.Replacement "garg") $ baseUrl ]] where
-    className = "fa fa-hand-o-right" -- "glyphitem fa fa-log-in"
-    click _ = T.write_ (Just backend) cursor
+  , H.td {} [ H.a { on: { click }} [ H.text backendType ]]
+  , H.td {} [ H.text $ DST.replace (DST.Pattern "http") (DST.Replacement "garg") $ baseUrl ]
+  ]
+    where
+      className = "fa fa-hand-o-right" -- "glyphitem fa fa-log-in"
+      click _ = T.write_ (Just backend) cursor
 
 backendLabel :: String -> String
 backendLabel =

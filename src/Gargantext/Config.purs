@@ -15,20 +15,20 @@ import Gargantext.Utils (href)
 
 
 defaultBackends :: NonEmpty Array Backend
-defaultBackends =   backend' "Show Room (Demo)"                        "https://demo.gargantext.org"
-               :| [ backend' "Laboratory Room (CNRS/ISCPIF)"           "https://cnrs.gargantext.org"
-                  , backend' "Class Room"                              "https://learn.gargantext.org"
-                  , backend' "Funding Partner (IMT)"                   "https://imtv5.gargantext.org"
-                  , backend' "Scientific Community (Complex Systems)"  "https://community.gargantext.org"
-                  , backend' "European Project (VIGIE)"                "https://europa.gargantext.org"
-                  , backend' "Dev SandBox"                             "https://dev.gargantext.org"
-                  , backend' "Private Bunker (Local Only)"             "http://localhost:8008"
-                  , backend' "Business Room (Hello Word)"              "https://garg.helloword.io"
+defaultBackends =   backend' "Demo"            "Show room"                 "https://demo.gargantext.org"
+               :| [ backend' "Organization"    "CNRS/ISCPIF Unit"          "https://cnrs.gargantext.org"
+                  , backend' "Education"       "Class Rooms"               "https://formation.gargantext.org"
+                  , backend' "Funding partner" "Mines Telecom Institute" "https://imt.sub.gargantext.org"
+                  , backend' "Networking"      "Complex Systems Community" "https://complexsystems.gargantext.org"
+                  , backend' "Networking"      "Digeing European Project"  "https://europa.gargantext.org"
+                  , backend' "Development"     "Main SandBox"              "https://dev.gargantext.org"
+                  , backend' "Private"         "Offline Bunker"            "http://localhost:8008"
+                  , backend' "Business"        "Hello Word Company"        "https://helloword.gargantext.org"
                   ]
  
 
   where
-    backend' n u = backend n V10 "/api/" u
+    backend' t n u = backend t n V10 "/api/" u
 
 
 matchCurrentLocation :: Effect (Maybe Backend)
@@ -41,7 +41,7 @@ matchCurrentLocation = do
 -- | public Backend
 -- When user is not logged, use the location of the window
 publicBackend :: Backend
-publicBackend = backend "local" V10 "/api/" "http://localhost:8008"
+publicBackend = backend "Private" "local" V10 "/api/" "http://localhost:8008"
 
 publicBackend' :: Effect Backend
 publicBackend' = do
@@ -50,6 +50,7 @@ publicBackend' = do
                  , baseUrl : href
                  , prePath : "api/"
                  , version : V10
+                 , backendType : "Public home"
                  }
 
 defaultApps :: NonEmpty Array Frontend

@@ -21,12 +21,14 @@ class ToUrl conf p where
 url :: forall conf p. ToUrl conf p => conf -> p -> String
 url = toUrl
 
+
 -- | Encapsulates the data we need to talk to a backend server
 newtype Backend = Backend
   { name    :: String
   , baseUrl :: String
   , prePath :: String
   , version :: ApiVersion
+  , backendType :: String
   }
 derive instance Generic Backend _
 derive instance Newtype Backend _
@@ -39,8 +41,10 @@ instance ToUrl Backend String where toUrl = backendUrl
 type BaseUrl = String
 type PrePath = String
 type Name    = String
-backend :: Name -> ApiVersion -> PrePath -> BaseUrl -> Backend
-backend name version prePath baseUrl = Backend { name, version, prePath, baseUrl }
+type BackendType = String
+
+backend :: BackendType -> Name -> ApiVersion -> PrePath -> BaseUrl -> Backend
+backend backendType name version prePath baseUrl = Backend { name, version, prePath, baseUrl, backendType}
 
 -- | Creates a backend url from a backend and the path as a string
 backendUrl :: Backend -> String -> String
@@ -51,7 +55,8 @@ backendUrl (Backend b) path = b.baseUrl <> b.prePath <> show b.version <> "/" <>
 newtype Frontend = Frontend
   { name    :: String
   , baseUrl :: String
-  , prePath :: String }
+  , prePath :: String
+  }
 
 derive instance Generic Frontend _
 instance Eq Frontend where eq = genericEq

@@ -13,11 +13,10 @@ import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
 import Gargantext.Components.Nodes.Home.Public (renderPublic)
 import Gargantext.Config as Config
-import Gargantext.Ends (Backend(..))
 import Gargantext.License (license)
 import Gargantext.Sessions (Sessions)
 import Gargantext.Sessions as Sessions
-import Gargantext.Sessions.Types (Session(..))
+import Gargantext.Sessions.Types (Session(..), cleanBackendUrl)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -66,7 +65,7 @@ homeLayoutCpt = here.component "homeLayout" cpt
                        , sessions
                        , showLogin }
         , lang } _ = do
-      backend' <- T.useLive T.unequal backend
+      backend'  <- T.useLive T.unequal backend
       sessions' <- T.useLive T.unequal sessions
       let landingData = langLandingData lang
       pure $
@@ -179,14 +178,15 @@ tutorialCpt = here.component "tutorial" cpt where
       -}
 
       makeFolders :: Array Session -> Array R.Element
-      makeFolders s = sessionToFolder <$> s where
-        sessionToFolder session@(Session {treeId, username, backend: (Backend {name})}) = 
-          H.span { className: "folder" } [
-            H.div { className: "d-flex justify-content-center" } [ H.text (username <> "@" <> name) ]
-          , H.div {} [ FV.folderView { backFolder: false
-                                     , boxes
-                                     , nodeId: treeId
-                                     , session } ] ]
+      makeFolders s = sessionToFolder <$> s
+        where
+          sessionToFolder session@(Session {treeId, username, backend}) = 
+            H.span { className: "folder" } [
+              H.div { className: "d-flex justify-content-center" } [ H.text (username <> "@" <> (cleanBackendUrl backend)) ]
+            , H.div {} [ FV.folderView { backFolder: false
+                                       , boxes
+                                       , nodeId: treeId
+                                       , session } ] ]
 
 startTutos :: Array Tuto
 startTutos =

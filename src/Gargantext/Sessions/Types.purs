@@ -3,6 +3,7 @@ module Gargantext.Sessions.Types
   , sessionUrl, sessionId
   , empty, null, unSessions, lookup, cons, tryCons, update, remove, tryRemove
   , useOpenNodesMemberBox, openNodesInsert, openNodesDelete
+  , cleanBackendUrl
   ) where
 
 import Data.Array as A
@@ -64,11 +65,12 @@ instance JSON.WriteForeign Session where
 instance Eq Session where eq = genericEq
 
 instance Show Session where
-  show (Session {backend, username}) = username <> "@" <> url
-    where
-      Backend {baseUrl} = backend
-      url = DST.replace (DST.Pattern "http://") (DST.Replacement "")
-          $ DST.replace (DST.Pattern "https://") (DST.Replacement "") baseUrl
+  show (Session {backend, username}) = username <> "@" <> (cleanBackendUrl backend)
+
+cleanBackendUrl :: Backend -> String
+cleanBackendUrl (Backend {baseUrl}) = 
+     DST.replace (DST.Pattern "http://")  (DST.Replacement "")
+   $ DST.replace (DST.Pattern "https://") (DST.Replacement "") baseUrl
 
 instance ToUrl Session SessionRoute where toUrl (Session {backend}) r = backendUrl backend (sessionPath r)
 
