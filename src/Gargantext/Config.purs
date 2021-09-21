@@ -16,14 +16,14 @@ import Gargantext.Utils (href)
 
 defaultBackends :: NonEmpty Array Backend
 defaultBackends =   backend' "Demo"            "Public Show room"          "https://demo.gargantext.org"
-               :| [ backend' "Organization"    "CNRS/ISCPIF Unit"          "https://cnrs.gargantext.org"
-                  , backend' "Education"       "Class Rooms"               "https://formation.gargantext.org"
+               :| [ backend' "Education"       "Class Rooms"               "https://formation.gargantext.org"
+                  , backend' "Organization"    "CNRS/ISCPIF Unit"          "https://cnrs.gargantext.org"
                   , backend' "Organization"    "Mines Telecom Institute"   "https://imt.sub.gargantext.org"
+                  , backend' "Organization"    "Hello Word Company"        "https://helloword.gargantext.org"
                   , backend' "Networking"      "Complex Systems Community" "https://complexsystems.gargantext.org"
                   , backend' "Networking"      "Digeing European Project"  "https://europa.gargantext.org"
                   , backend' "Development"     "Main SandBox"              "https://dev.gargantext.org"
                   , backend' "Private"         "Offline Bunker"            "http://localhost:8008"
-                  , backend' "Organization"    "Hello Word Company"        "https://helloword.gargantext.org"
                   ]
  
 
