@@ -62,7 +62,7 @@ herbieTheme = Theme { name: "herbie"
                       , location: "styles/bootstrap-herbie.css" }
 
 darksterTheme :: Theme
-darksterTheme = Theme { name: "darkster (bêta)"
+darksterTheme = Theme { name: "darkster"
                       , location: "styles/bootstrap-darkster.css" }
 
 allThemes :: Array Theme
