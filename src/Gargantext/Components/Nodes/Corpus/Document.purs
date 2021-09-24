@@ -96,7 +96,9 @@ docViewCpt = here.component "docView" cpt
                 , li' [ badgeLi "date", H.text $ publicationDate $ Document doc ]
                 ]
               , H.span {} [ badge "abstract", annotate doc.abstract [] ]
-              , H.div { className: "jumbotron" } [ H.p {} [ H.text "Empty Full Text" ] ]
+              -- (?) remove "Full text" block (unused feature for now,
+              --     see #334)
+              -- , H.div { className: "jumbotron" } [ H.p {} [ H.text "Empty Full Text" ] ]
               ]]]]
       where
         dispatch = coreDispatch path state

@@ -824,44 +824,33 @@ li .leaf:hover a.settings {
   cursor: pointer;
 }
 
-.left-handed .side-panel {
-  left: 2%;
-  padding: 0.3em;
-  position: fixed;
-  top: 3.7em;
+.side-panel {
   background-color: #fff;
+  padding: 0.3em;
   width: 28%;
+  top: 3.7em;
+  position: fixed;
 }
-.left-handed .side-panel .header {
-  float: left;
-}
-.left-handed .side-panel .corpus-doc-view .annotated-field-wrapper .annotated-field-runs {
+.side-panel .corpus-doc-view .annotated-field-wrapper .annotated-field-runs {
   max-height: 200px;
   overflow-y: scroll;
 }
-.left-handed .side-panel .corpus-doc-view .list-group .list-group-item-heading {
+.side-panel .list-group .list-group-item-heading {
   display: inline-block;
   width: 60px;
 }
-
 .right-handed .side-panel {
   left: 70%;
-  padding: 0.3em;
-  position: fixed;
-  top: 3.7em;
-  background-color: #fff;
-  width: 28%;
 }
 .right-handed .side-panel .header {
   float: right;
 }
-.right-handed .side-panel .corpus-doc-view .annotated-field-wrapper .annotated-field-runs {
-  max-height: 200px;
-  overflow-y: scroll;
+
+.left-handed .side-panel {
+  left: 2%;
 }
-.right-handed .side-panel .corpus-doc-view .list-group .list-group-item-heading {
-  display: inline-block;
-  width: 60px;
+.left-handed .side-panel .header {
+  float: left;
 }
 
 .simple-layout {

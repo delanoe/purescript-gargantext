@@ -2,46 +2,36 @@
 
 .cache-toggle
   cursor: pointer
-.left-handed
-  .side-panel
-    //background-color: $dark
-    left: 2%
-    padding: 0.3em
-    position: fixed
-    top: 3.7em
-    background-color: #fff
-    width: 28%
-    .header
-      float: left
-    .corpus-doc-view
-      .annotated-field-wrapper
-        .annotated-field-runs
-          max-height: 200px
-          overflow-y: scroll
-      .list-group
-        .list-group-item-heading
-          display: inline-block
-          width: 60px
-.right-handed
-  .side-panel
-    //background-color: $dark
+
+.side-panel
+  background-color: #fff
+  padding: 0.3em
+  width: 28%
+  top: 3.7em
+  position: fixed
+
+  .corpus-doc-view
+    .annotated-field-wrapper
+      .annotated-field-runs
+        max-height: 200px
+        overflow-y: scroll
+  .list-group
+    .list-group-item-heading
+      display: inline-block
+      width: 60px
+
+  @include right-handed
     left: 70%
-    padding: 0.3em
-    position: fixed
-    top: 3.7em
-    background-color: #fff
-    width: 28%
+
     .header
       float: right
-    .corpus-doc-view
-      .annotated-field-wrapper
-        .annotated-field-runs
-          max-height: 200px
-          overflow-y: scroll
-      .list-group
-        .list-group-item-heading
-          display: inline-block
-          width: 60px
+
+  @include left-handed
+    left: 2%
+
+    .header
+      float: left
+
 
 .simple-layout
   height: 100%
