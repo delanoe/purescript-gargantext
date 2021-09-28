@@ -4,6 +4,7 @@ module Gargantext.Components.DocsTable where
 import Gargantext.Prelude
 
 import DOM.Simple.Event as DE
+import Data.Array (any)
 import Data.Array as A
 import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
@@ -21,28 +22,29 @@ import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Aff (Aff, Milliseconds(..), delay, launchAff_)
+import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
+import Effect.Timer (setTimeout)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..))
 import Gargantext.Components.Category (rating)
 import Gargantext.Components.Category.Types (Star(..))
-import Gargantext.Components.DocsTable.DocumentFormCreation (documentFormCreation)
+import Gargantext.Components.DocsTable.DocumentFormCreation as DFC
 import Gargantext.Components.DocsTable.Types (DocumentsView(..), Hyperdata(..), LocalUserScore, Query, Response(..), Year, sampleData, showSource)
 import Gargantext.Components.Nodes.Lists.Types as NT
-import Gargantext.Components.Nodes.Texts.Types (SidePanelTriggers)
-import Gargantext.Components.Score as GCS
 import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Table as TT
 import Gargantext.Components.Table.Types as TT
 import Gargantext.Config.REST (RESTError, logRESTError)
+import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, get, delete)
 import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), SidePanelState(..), TabSubType, TabType, TableResult, showTabType')
+import Gargantext.Types as GT
 import Gargantext.Utils (sortWith, (?))
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParam, mQueryParamS, queryParam, queryParamS)
@@ -148,14 +150,15 @@ docViewCpt = here.component "docView" cpt where
       T.modify_ not isDocumentModalVisibleBox
 
     -- @createDocumentCallback
-    -- @WIP: remote business for document creation
     createDocumentCallback <- pure $ \fdata -> launchAff_ do
 
-      liftEffect $ T.write_ true onDocumentCreationPendingBox
+      liftEffect $
+        T.write_ true onDocumentCreationPendingBox
 
-      delay $ Milliseconds 2000.0
+      eTask <- DFC.create session nodeId fdata
 
-      liftEffect $ T.write_ false onDocumentCreationPendingBox
+      handleRESTError boxes.errors eTask
+        \t -> liftEffect $ launchDocumentCreationProgress boxes session nodeId t
 
     -- Render
     pure $
@@ -206,12 +209,52 @@ docViewCpt = here.component "docView" cpt where
         , hasCollapsibleBackground: false
         }
         [
-          documentFormCreation
+          DFC.documentFormCreation
           { callback: createDocumentCallback
           , status: onDocumentCreationPending ? Deferred $ Enabled
           }
         ]
       ]
+
+launchDocumentCreationProgress ::
+     Boxes
+  -> Session
+  -> GT.ID
+  -> GT.AsyncTaskWithType
+  -> Effect Unit
+launchDocumentCreationProgress boxes session nodeId currentTask
+  = void $ setTimeout 1000 $
+      launchAff_ $ scanDocumentCreationProgress boxes session nodeId currentTask
+
+scanDocumentCreationProgress ::
+     Boxes
+  -> Session
+  -> GT.ID
+  -> GT.AsyncTaskWithType
+  -> Aff Unit
+scanDocumentCreationProgress boxes session nodeId currentTask = do
+
+  eTask <- DFC.createProgress session nodeId currentTask
+
+  handleRESTError boxes.errors eTask
+    \asyncProgress -> liftEffect do
+      let
+        GT.AsyncProgress { status } = asyncProgress
+        endingStatusList =
+          [ GT.IsFinished
+          , GT.IsKilled
+          , GT.IsFailure
+          ]
+        hasEndingStatus s = any (_ # s # eq) endingStatusList
+
+      if (hasEndingStatus status)
+      then
+        here.log2 "[DocsTables] NodeDocument task:" asyncProgress
+        -- @WIP: close modal, reload docs table
+      else
+        launchDocumentCreationProgress boxes session nodeId currentTask
+
+---------------------------------------------------
 
 type SearchBarProps =
   ( query :: T.Box Query )
