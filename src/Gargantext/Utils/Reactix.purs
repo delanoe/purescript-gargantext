@@ -2,26 +2,25 @@ module Gargantext.Utils.Reactix where
 
 import Prelude
 
-import Data.Array as A
-import Data.Either (hush)
-import Data.Function.Uncurried (Fn1, runFn1, Fn2, runFn2)
-import Data.Maybe (Maybe(..), fromJust, fromMaybe, isJust)
-import Data.Nullable (Nullable, null, toMaybe)
-import Data.Tuple (Tuple(..))
-import Data.Tuple.Nested ((/\))
+import ConvertableOptions as CO
 import DOM.Simple as DOM
 import DOM.Simple.Console (log2)
 import DOM.Simple.Document (document)
 import DOM.Simple.Element as Element
 import DOM.Simple.Event as DE
 import DOM.Simple.Types (class IsNode, class IsElement, DOMRect)
+import Data.Array as A
+import Data.Either (hush)
+import Data.Function.Uncurried (Fn1, runFn1, Fn2, runFn2)
+import Data.Maybe (Maybe(..), fromJust, fromMaybe)
+import Data.Nullable (Nullable, null, toMaybe)
+import Data.Tuple (Tuple)
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Console (logShow)
 import Effect.Aff (Aff, launchAff, launchAff_, killFiber)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, mkEffectFn1, mkEffectFn2, runEffectFn1, runEffectFn2, runEffectFn3)
-import Effect.Unsafe (unsafePerformEffect)
+import Effect.Uncurried (EffectFn1, EffectFn3, mkEffectFn1, mkEffectFn2, runEffectFn1, runEffectFn3)
 import FFI.Simple ((..), (...), (.=), defineProperty, delay, args2, args3)
 import Partial.Unsafe (unsafePartial)
 import React (class ReactPropFields, Children, ReactClass, ReactElement)
@@ -42,11 +41,45 @@ import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (Storage, getItem, setItem)
 
-type Module = String
-
+-- | UI Component type with only required props and children
 type Component p = Record p -> Array R.Element -> R.Element
 
+-- | UI Component type with only required props and no child
 type Leaf p = Record p -> R.Element
+
+-- | UI Component type containing optional props and children
+type OptComponent options props provided = CO.Defaults (Record options) (Record provided) (Record props)
+  => Record provided -> Array R.Element -> R.Element
+
+-- | UI Component type containing optional props and no child
+type OptLeaf options props provided = CO.Defaults (Record options) (Record provided) (Record props)
+  => Record provided -> R.Element
+
+component :: forall cpt p. R.IsComponent cpt p (Array R.Element)
+  => cpt -> Record p -> Array R.Element -> R.Element
+component cpt props children = R.createElement cpt props children
+
+leaf :: forall cpt p. R.IsComponent cpt p (Array R.Element)
+  => cpt -> Record p -> R.Element
+leaf cpt props = R.createElement cpt props []
+
+optComponent :: forall r r' cpt p.
+     CO.Defaults r r' (Record p)
+  => R.IsComponent cpt p (Array R.Element)
+  => cpt -> r -> r' -> Array R.Element -> R.Element
+optComponent cpt options props children = R.createElement cpt props' children where
+  props' = CO.defaults options props
+
+optLeaf :: forall r r' cpt p.
+     CO.Defaults r r' (Record p)
+  => R.IsComponent cpt p (Array R.Element)
+  => cpt -> r -> r' -> R.Element
+optLeaf cpt options props = R.createElement cpt props' [] where
+  props' = CO.defaults options props
+
+-----------------------------------------
+
+type Module = String
 
 type Here =
   { component   :: forall p. String -> R.HooksComponent p -> R.Component p
@@ -437,6 +470,9 @@ boundingRect els =
                            , y: miny
                            , width: maxx - minx
                            , height: maxy - miny }
+
+--------------------------------------
+
 
 -- | One-liner `if` simplifying render writing
 -- | (best for one child)

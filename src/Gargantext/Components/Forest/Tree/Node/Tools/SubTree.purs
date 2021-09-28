@@ -21,7 +21,6 @@ import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
 import Gargantext.Types as GT
 import Gargantext.Utils ((?))
-import Gargantext.Utils.Reactix (if', useBox', useLive')
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -120,8 +119,8 @@ subTreeTreeViewCpt = here.ntComponent "subTreeTreeView" cpt where
                                , subTreeParams
                                , tree: NTree (LNode { id: targetId, name, nodeType }) ary }) _ = do
     -- Hooks
-    action <- useLive' p.action
-    isExpanded /\ isExpandedBox <- useBox' false
+    action <- R2.useLive' p.action
+    isExpanded /\ isExpandedBox <- R2.useBox' false
     -- Computed
     let
         expandCbk _ = T.modify_ not isExpandedBox
@@ -157,7 +156,7 @@ subTreeTreeViewCpt = here.ntComponent "subTreeTreeView" cpt where
             [
               H.span { className: GT.fldr nodeType true } []
             ,
-              if' hasChild $
+              R2.if' hasChild $
 
                 if isExpanded then
                   H.span { className: "fa fa-chevron-down" } []
@@ -175,7 +174,7 @@ subTreeTreeViewCpt = here.ntComponent "subTreeTreeView" cpt where
             ]
           ]
       ,
-        if' (hasChild && isExpanded) $
+        R2.if' (hasChild && isExpanded) $
           H.div { className: "subtree__node__children" }
           children
       ]
