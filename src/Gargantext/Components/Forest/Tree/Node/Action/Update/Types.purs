@@ -20,7 +20,7 @@ instance JSON.ReadForeign UpdateNodeParams where readImpl = JSONG.untaggedSumRep
 instance JSON.WriteForeign UpdateNodeParams where
   writeImpl (UpdateNodeParamsList { methodList }) =
     JSON.writeImpl { type: "UpdateNodeParamsList"
-                   , values: methodList }
+                   , methodList }
   writeImpl (UpdateNodeParamsGraph { methodGraph }) =
     JSON.writeImpl { type: "UpdateNodeParamsGraph"
                    , methodGraph }
