@@ -85,7 +85,6 @@ controlsCpt = here.component "controls" cpt
         , showControls
         , showEdges
         , showLouvain
-        , showTree
         , sidePanelState
         , sideTab
         , sigmaRef } _ = do
@@ -112,6 +111,7 @@ controlsCpt = here.component "controls" cpt
 
       -- Handle automatic edge hiding when FA is running (to prevent flickering).
       -- TODO Commented temporarily: this breaks forceatlas rendering after reset
+      -- NOTE This is a hack anyways. It's force atlas that should be fixed.
       R.useEffect2' sigmaRef forceAtlasState' $ do
         T.modify_ (SigmaxT.forceAtlasEdgeState forceAtlasState') showEdges
 

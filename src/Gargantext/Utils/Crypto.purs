@@ -18,15 +18,15 @@ hash' = Crypto.toString <<< Crypto.hash Crypto.SHA256
 class IsHashable a where
   hash :: a -> Hash
 
-instance isHashableString :: IsHashable String
+instance IsHashable String
   where
     hash = hash'
 
-instance isHashableArray :: (Crypto.Hashable a, IsHashable a) => IsHashable (Array a)
+instance (Crypto.Hashable a, IsHashable a) => IsHashable (Array a)
   where
     hash = hash <<< Set.fromFoldable <<< map hash
 
-instance isHashableSet :: IsHashable (Set String) where
+instance IsHashable (Set String) where
   hash = hash <<< concat <<< toArray
     where
       toArray :: forall a. Set a -> Array a

@@ -25,8 +25,7 @@ topBar :: R2.Leaf TopBar
 topBar p = R.createElement topBarCpt p []
 topBarCpt :: R.Component TopBar
 topBarCpt = here.component "topBar" cpt where
-  cpt { boxes: { showTree
-               , sidePanelGraph
+  cpt { boxes: { sidePanelGraph
                , sidePanelState } } _ = do
     { mGraph, multiSelectEnabled, selectedNodeIds, showControls } <- GEST.focusedSidePanel sidePanelGraph
 
@@ -39,12 +38,7 @@ topBarCpt = here.component "topBar" cpt where
           Nothing -> RH.div {} []
 
     pure $ RH.form { className: "d-flex" }
-      [ Toggle.treeToggleButton { state: showTree } []
-      , Toggle.controlsToggleButton { state: showControls } []
+      [ Toggle.controlsToggleButton { state: showControls } []
       , Toggle.sidebarToggleButton { state: sidePanelState } []
       , search
       ]
-    where
-      rowToggle  = RH.ul { className: "navbar-nav ml-auto mr-auto" }
-      col = RH.li { className: "nav-item" }
-      spaces = RH.a { className: "nav-link" }

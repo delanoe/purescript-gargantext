@@ -1,10 +1,7 @@
 module Gargantext.Components.Nodes.Corpus.Document where
 
---import Data.Argonaut (encodeJson) -- DEBUG
---import Data.Argonaut.Core (stringifyWithIndent) -- DEBUG
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (fst)
-import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -21,6 +18,7 @@ import Gargantext.Components.NgramsTable.Core
   ( CoreAction(..), Versioned(..), addNewNgramA, applyNgramsPatches, coreDispatch, loadNgramsTable
   , replace, setTermListA, syncResetButtons, findNgramRoot )
 import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, sessionId)
@@ -32,14 +30,13 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Document"
 
 publicationDate :: Document -> String
-publicationDate (Document doc@{publication_year: Nothing}) = ""
-publicationDate (Document doc@{publication_year: Just py, publication_month: Nothing}) = U.zeroPad 2 py
-publicationDate (Document doc@{publication_year: Just py, publication_month: Just pm, publication_day: Nothing}) = (U.zeroPad 2 py) <> "-" <> (U.zeroPad 2 pm)
-publicationDate (Document doc@{publication_year: Just py, publication_month: Just pm, publication_day: Just pd}) = (U.zeroPad 2 py) <> "-" <> (U.zeroPad 2 pm) <> "-" <> (U.zeroPad 2 pd)
+publicationDate (Document {publication_year: Nothing}) = ""
+publicationDate (Document {publication_year: Just py, publication_month: Nothing}) = U.zeroPad 2 py
+publicationDate (Document {publication_year: Just py, publication_month: Just pm, publication_day: Nothing}) = (U.zeroPad 2 py) <> "-" <> (U.zeroPad 2 pm)
+publicationDate (Document {publication_year: Just py, publication_month: Just pm, publication_day: Just pd}) = (U.zeroPad 2 py) <> "-" <> (U.zeroPad 2 pm) <> "-" <> (U.zeroPad 2 pd)
 
 docViewWrapper :: R2.Component Props
 docViewWrapper = R.createElement docViewWrapperCpt
-
 docViewWrapperCpt :: R.Component Props
 docViewWrapperCpt = here.component "docViewWrapper" cpt
   where
@@ -55,15 +52,14 @@ type DocViewProps = (
 
 docView :: R2.Component DocViewProps
 docView = R.createElement docViewCpt
-
 docViewCpt :: R.Component DocViewProps
 docViewCpt = here.component "docView" cpt
   where
     cpt { path
-        , loaded: loaded@{ ngramsTable: Versioned { data: initTable }, document }
+        , loaded: { ngramsTable: Versioned { data: initTable }, document }
         , state
         } _children = do
-      state'@{ ngramsLocalPatch, ngramsVersion: version } <- T.useLive T.unequal state
+      state'@{ ngramsLocalPatch } <- T.useLive T.unequal state
 
       let
         afterSync = \_ -> pure unit
@@ -100,7 +96,9 @@ docViewCpt = here.component "docView" cpt
                 , li' [ badgeLi "date", H.text $ publicationDate $ Document doc ]
                 ]
               , H.span {} [ badge "abstract", annotate doc.abstract [] ]
-              , H.div { className: "jumbotron" } [ H.p {} [ H.text "Empty Full Text" ] ]
+              -- (?) remove "Full text" block (unused feature for now,
+              --     see #334)
+              -- , H.div { className: "jumbotron" } [ H.p {} [ H.text "Empty Full Text" ] ]
               ]]]]
       where
         dispatch = coreDispatch path state
@@ -123,14 +121,12 @@ type LayoutProps =
 
 documentMainLayout :: R2.Component LayoutProps
 documentMainLayout = R.createElement documentMainLayoutCpt
-
 documentMainLayoutCpt :: R.Component LayoutProps
 documentMainLayoutCpt = here.component "documentMainLayout" cpt where
     cpt props _ = pure $ R2.row [ R2.col 10 [ documentLayout props [] ] ]
 
 documentLayout :: R2.Component LayoutProps
 documentLayout = R.createElement documentLayoutCpt
-
 documentLayoutCpt :: R.Component LayoutProps
 documentLayoutCpt = here.component "documentLayout" cpt where
   cpt { listId, mCorpusId, nodeId, session } children = do
@@ -148,34 +144,39 @@ type KeyLayoutProps =
 
 documentLayoutWithKey :: R2.Component KeyLayoutProps
 documentLayoutWithKey = R.createElement documentLayoutWithKeyCpt
-
 documentLayoutWithKeyCpt :: R.Component KeyLayoutProps
 documentLayoutWithKeyCpt = here.component "documentLayoutWithKey" cpt
   where
     cpt { listId, mCorpusId, nodeId, session } _ = do
-      useLoader path loadData $ \loaded ->
-        docViewWrapper { loaded, path } []
+      useLoader { errorHandler
+                , loader: loadData
+                , path
+                , render: \loaded -> docViewWrapper { loaded, path } [] }
       where
         tabType = TabDocument (TabNgramType CTabTerms)
         path = { listIds: [listId], mCorpusId, nodeId, session, tabType }
+        errorHandler err = here.log2 "[documentLayoutWithKey] RESTError" err
 
 ------------------------------------------------------------------------
 
-loadDocument :: Session -> Int -> Aff NodeDocument
+loadDocument :: Session -> Int -> Aff (Either RESTError NodeDocument)
 loadDocument session nodeId = get session $ NodeAPI Node (Just nodeId) ""
 
-loadData :: DocPath -> Aff LoadedData
+loadData :: DocPath -> Aff (Either RESTError LoadedData)
 loadData { listIds, nodeId, session, tabType } = do
-  document <- loadDocument session nodeId
-  ngramsTable <- loadNgramsTable
-    { listIds
-    , nodeId
-    , params: { offset : 0, limit : 100, orderBy: Nothing, searchType: SearchDoc}
-    , scoreType: Occurrences
-    , searchQuery: ""
-    , session
-    , tabType
-    , termListFilter: Nothing
-    , termSizeFilter: Nothing
-    }
-  pure { document, ngramsTable }
+  eDocument <- loadDocument session nodeId
+  case eDocument of
+    Left err -> pure $ Left err
+    Right document -> do
+      eNgramsTable <- loadNgramsTable
+        { listIds
+        , nodeId
+        , params: { offset : 0, limit : 100, orderBy: Nothing, searchType: SearchDoc}
+        , scoreType: Occurrences
+        , searchQuery: ""
+        , session
+        , tabType
+        , termListFilter: Nothing
+        , termSizeFilter: Nothing
+        }
+      pure $ (\ngramsTable -> { document, ngramsTable }) <$> eNgramsTable

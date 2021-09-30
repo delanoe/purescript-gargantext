@@ -1,24 +1,26 @@
 let upstream =
-      https://github.com/purescript/package-sets/releases/download/psc-0.13.8-20210226/packages.dhall sha256:7e973070e323137f27e12af93bc2c2f600d53ce4ae73bb51f34eb7d7ce0a43ea
+      https://github.com/purescript/package-sets/releases/download/psc-0.14.4-20210826/packages.dhall sha256:eee0765aa98e0da8fc414768870ad588e7cada060f9f7c23c37385c169f74d9f
 
 let overrides =
-      { thermite =
-        { dependencies =
-          [ "aff"
-          , "coroutines"
-          , "web-dom"
-          , "freet"
-          , "profunctor-lenses"
-          , "react"
-          , "react-dom"
-          ]
-        , repo = "https://github.com/poorscript/purescript-thermite.git"
-        , version = "hide-2020-03-04"
-        }
-      , globals =
+      { globals =
         { dependencies = [ "functions", "maybe" ]
         , repo = "https://github.com/purescript/purescript-globals"
         , version = "v4.1.0"
+        }
+      , smolder =
+        { dependencies =
+          [ "bifunctors"
+          , "catenable-lists"
+          , "free"
+          , "ordered-collections"
+          , "prelude"
+          , "strings"
+          , "test-unit"
+          , "transformers"
+          , "tuples"
+          ]
+        , repo = "https://github.com/bodil/purescript-smolder"
+        , version = "v12.3.0"
         }
       }
 
@@ -37,7 +39,7 @@ let additions =
           , "newtype"
           ]
         , repo = "https://github.com/hdgarrood/purescript-sequences.git"
-        , version = "v2.1.0"
+        , version = "v3.0.2"
         }
       , spec-discovery =
         { dependencies = [ "prelude", "effect", "arrays", "spec", "node-fs" ]
@@ -80,20 +82,29 @@ let additions =
         , repo = "https://github.com/nwolverson/purescript-dom-filereader"
         , version = "v5.0.0"
         }
-      , formula = 
-        { dependencies = [ "effect", "prelude", "reactix", "record", "toestand", "tuples", "typelevel-prelude", "typisch" ]
+      , formula =
+        { dependencies =
+          [ "effect"
+          , "prelude"
+          , "reactix"
+          , "record"
+          , "toestand"
+          , "tuples"
+          , "typelevel-prelude"
+          , "typisch"
+          ]
         , repo = "https://github.com/poorscript/purescript-formula"
         , version = "v0.2.1"
         }
       , markdown =
         { dependencies = [ "precise" ]
         , repo = "https://github.com/poorscript/purescript-markdown"
-        , version = "2020-03-04"
+        , version = "2021-06-22"
         }
       , markdown-smolder =
         { dependencies = [ "markdown", "smolder" ]
-        , repo = "https://github.com/poorscript/purescript-markdown-smolder"
-        , version = "2020-03-04"
+        , repo = "https://github.com/hgiasac/purescript-markdown-smolder"
+        , version = "v2.2.0"
         }
       , precise =
         { dependencies = [ "prelude" ]
@@ -103,35 +114,57 @@ let additions =
       , reactix =
         { dependencies =
           [ "aff"
+          , "arrays"
           , "dom-simple"
           , "effect"
           , "ffi-simple"
+          , "foldable-traversable"
           , "functions"
+          , "maybe"
           , "nullable"
           , "prelude"
+          , "psci-support"
+          , "refs"
+          , "spec"
+          , "spec-mocha"
+          , "strings"
+          , "tuples"
+          , "unfoldable"
           , "unsafe-coerce"
           ]
-        , repo = "https://github.com/irresponsible/purescript-reactix"
-        , version = "v0.4.11"
+        , repo = "https://github.com/poorscript/purescript-reactix"
+        , version = "v0.4.13"
         }
-      , toestand = 
-        { dependencies = [ "effect", "reactix", "prelude", "record", "tuples", "typelevel-prelude", "typisch" ]
+      , simple-json-generics =
+        { dependencies = [ "simple-json" ]
+        , repo = "https://github.com/justinwoo/purescript-simple-json-generics"
+        , version = "v0.1.0"
+        }
+      , toestand =
+        { dependencies =
+          [ "effect"
+          , "reactix"
+          , "prelude"
+          , "record"
+          , "tuples"
+          , "typelevel-prelude"
+          , "typisch"
+          ]
         , repo = "https://github.com/poorscript/purescript-toestand"
-        , version = "v0.6.1"
+        , version = "v0.6.2"
         }
-      , typisch = 
+      , typisch =
         { dependencies = [ "prelude" ]
         , repo = "https://github.com/poorscript/purescript-typisch"
         , version = "v0.2.1"
         }
       , tuples-native =
-        { dependencies =
-          [ "generics-rep", "prelude", "typelevel", "unsafe-coerce" ]
-        , repo = "https://github.com/athanclark/purescript-tuples-native"
-        , version = "v2.0.1"
+        { dependencies = [ "prelude", "typelevel", "unsafe-coerce" ]
+        , repo = "https://github.com/poorscript/purescript-tuples-native"
+        , version = "v2.2.0"
         }
       , uint =
-        { dependencies = [ "maybe", "math", "generics-rep" ]
+        { dependencies = [ "maybe", "math" ]
         , repo = "https://github.com/zaquest/purescript-uint"
         , version = "v5.1.1"
         }
@@ -144,10 +177,9 @@ let additions =
           , "parsing"
           , "integers"
           , "globals"
-          , "generics-rep"
           ]
         , repo = "https://github.com/slamdata/purescript-uri"
-        , version = "v7.0.0"
+        , version = "v8.0.1"
         }
       , read =
         { dependencies = [ "prelude", "maybe", "strings" ]
@@ -157,12 +189,17 @@ let additions =
       , versions =
         { dependencies = [ "prelude" ]
         , repo = "https://github.com/hdgarrood/purescript-versions.git"
-        , version = "v5.0.1"
+        , version = "v6.0.0"
         }
       , simplecrypto =
         { dependencies = [ "prelude", "maybe", "node-buffer" ]
         , repo = "https://github.com/alpacaaa/purescript-simplecrypto"
         , version = "v1.0.1"
+        }
+      , web-url =
+        { dependencies = [ "prelude" ]
+        , repo = "https://github.com/mjepronk/purescript-web-url"
+        , version = "v1.0.2"
         }
       }
 

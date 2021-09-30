@@ -4,10 +4,9 @@ module Gargantext.Components.Annotation.Menu where
 
 import Data.Array as A
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
+import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
-import Effect.Uncurried (mkEffectFn1)
 import Reactix as R
 import Reactix.DOM.HTML as HTML
 import Toestand as T
@@ -24,8 +23,8 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Annotation.Menu"
 
 data MenuType = NewNgram | SetTermListItem
-derive instance genericMenuType :: Generic MenuType _
-instance eqMenuType :: Eq MenuType where
+derive instance Generic MenuType _
+instance Eq MenuType where
   eq = genericEq
 
 type Props =

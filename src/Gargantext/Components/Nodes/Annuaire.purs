@@ -2,17 +2,19 @@ module Gargantext.Components.Nodes.Annuaire
  -- ( annuaire )
  where
 
-import Data.Argonaut (class DecodeJson, decodeJson, (.:), (.:?))
 import Data.Array as A
+import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
+import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
+import Data.Newtype (class Newtype)
 import Data.Sequence as Seq
-import Data.Tuple (fst, snd)
-import Data.Tuple.Nested ((/\))
+import Data.Symbol (SProxy(..))
 import Effect.Aff (Aff, launchAff_)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record as Record
+import Simple.JSON as JSON
 import Toestand as T
 
 import Gargantext.Prelude
@@ -20,14 +22,15 @@ import Gargantext.Prelude
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types as CT
 import Gargantext.Components.Nodes.Lists.Types as NT
-import Gargantext.Components.Table as TT
-import Gargantext.Components.Table.Types as TT
+import Gargantext.Components.Table (defaultContainer, initialParams, makeRow, table, tableHeaderLayout) as TT
+import Gargantext.Components.Table.Types (ColumnName(..), Params) as TT
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, get)
-import Gargantext.Types (NodeType(..), AffTableResult, TableResult)
+import Gargantext.Types (NodeType(..), AffETableResult, TableResult)
 import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
@@ -76,8 +79,12 @@ annuaireLayoutWithKeyCpt = here.component "annuaireLayoutWithKey" cpt where
     path <- T.useBox nodeId
     path' <- T.useLive T.unequal path
 
-    useLoader path' (getAnnuaireInfo session) $
-      \info -> annuaire { frontends, info, path, session }
+    useLoader { errorHandler
+              , loader: getAnnuaireInfo session
+              , path: path'
+              , render: \info -> annuaire { frontends, info, path, session } }
+    where
+      errorHandler err = here.log2 "[annuaireLayoutWithKey] RESTError" err
 
 type AnnuaireProps =
   ( session   :: Session
@@ -119,7 +126,6 @@ annuaireCpt = here.component "annuaire" cpt
           , pageLayout { info, session, pagePath, frontends} ]
       where
         date = "Last update: " <> date'
-        style = {width: "250px", display: "inline-block"}
         initialPagePath nodeId = {nodeId, params: TT.initialParams}
 
 type PagePath = { nodeId :: Int, params :: TT.Params }
@@ -137,11 +143,15 @@ pageLayout props = R.createElement pageLayoutCpt props []
 pageLayoutCpt :: R.Component PageLayoutProps
 pageLayoutCpt = here.component "pageLayout" cpt
   where
-    cpt { info, frontends, pagePath, session } _ = do
+    cpt { frontends, pagePath, session } _ = do
       pagePath' <- T.useLive T.unequal pagePath
 
-      useLoader pagePath' (loadPage session) $
-        \table -> page { session, table, frontends, pagePath }
+      useLoader { errorHandler
+                , loader: loadPage session
+                , path: pagePath'
+                , render: \table -> page { session, table, frontends, pagePath } }
+      where
+        errorHandler err = here.log2 "[pageLayout] RESTError" err
 
 type PageProps = 
   ( session   :: Session
@@ -174,9 +184,9 @@ pageCpt = here.component "page" cpt
                       }
       where
         rows pagePath' = (row pagePath') <$> Seq.fromFoldable docs
-        row pagePath'@{ nodeId } contact = { row: contactCells { annuaireId: nodeId, frontends, contact, session }
-                                           , delete: false }
-        container = TT.defaultContainer { title: "Annuaire" } -- TODO
+        row { nodeId } contact = { row: contactCells { annuaireId: nodeId, frontends, contact, session }
+                                 , delete: false }
+        container = TT.defaultContainer -- TODO
         colNames = TT.ColumnName <$> [ "", "First Name", "Last Name", "Company", "Role"]
         wrapColElts = const identity
 
@@ -193,9 +203,8 @@ contactCells :: Record ContactCellsProps -> R.Element
 contactCells p = R.createElement contactCellsCpt p []
 contactCellsCpt :: R.Component ContactCellsProps
 contactCellsCpt = here.component "contactCells" cpt where
-  cpt { annuaireId, frontends, session
-      , contact: CT.NodeContact
-        { id, hyperdata: CT.HyperdataContact { who : Nothing }}} _ =
+  cpt { contact: CT.NodeContact
+        { hyperdata: CT.HyperdataContact { who : Nothing } } } _ =
     pure $ TT.makeRow
     [ H.text ""
     , H.span {} [ H.text "Name" ]
@@ -223,9 +232,6 @@ contactCellsCpt = here.component "contactCells" cpt where
         --     H.text $ maybe "No ContactWhereRole" contactWhereRole (A.head $ ou)
       ]
       where
-        --nodepath = NodePath (sessionId session) NodeContact (Just id)
-        nodepath = Routes.ContactPage (sessionId session) annuaireId id
-        href = url frontends nodepath
         contactUrl aId id' = url frontends $ Routes.ContactPage (sessionId session) aId id'
         contactWhereOrg (CT.ContactWhere { organization: [] }) = "No Organization"
         contactWhereOrg (CT.ContactWhere { organization: orga }) =
@@ -233,21 +239,14 @@ contactCellsCpt = here.component "contactCells" cpt where
         contactWhereDept (CT.ContactWhere { labTeamDepts : [] }) = "Empty Dept"
         contactWhereDept (CT.ContactWhere { labTeamDepts : dept }) =
           fromMaybe "No Dept (list)" (A.head dept)
-        contactWhereRole (CT.ContactWhere { role: Nothing }) = "Empty Role"
-        contactWhereRole (CT.ContactWhere { role: Just role }) = role
 
-data HyperdataAnnuaire = HyperdataAnnuaire
+newtype HyperdataAnnuaire = HyperdataAnnuaire
   { title :: Maybe String
   , desc  :: Maybe String }
-derive instance genericHyperdataAnnuaire :: Generic HyperdataAnnuaire _
-instance eqHyperdataAnnuaire :: Eq HyperdataAnnuaire where
-  eq = genericEq
-instance decodeHyperdataAnnuaire :: DecodeJson HyperdataAnnuaire where
-  decodeJson json = do
-    obj   <- decodeJson json
-    title <- obj .:? "title"
-    desc  <- obj .:? "desc"
-    pure $ HyperdataAnnuaire { title, desc }
+derive instance Generic HyperdataAnnuaire _
+derive instance Newtype HyperdataAnnuaire _
+instance Eq HyperdataAnnuaire where eq = genericEq
+derive newtype instance JSON.ReadForeign HyperdataAnnuaire
 
 ------------------------------------------------------------------------------
 newtype AnnuaireInfo =
@@ -260,40 +259,30 @@ newtype AnnuaireInfo =
   , date      :: String
   , hyperdata :: HyperdataAnnuaire
   }
-derive instance genericAnnuaireInfo :: Generic AnnuaireInfo _
-instance eqAnnuaireInfo :: Eq AnnuaireInfo where
-  eq = genericEq
-instance decodeAnnuaireInfo :: DecodeJson AnnuaireInfo where
-  decodeJson json = do
-    obj <- decodeJson json
-    id        <- obj .: "id"
-    typename  <- obj .: "typename"
-    userId    <- obj .: "user_id"
-    parentId  <- obj .: "parent_id"
-    name      <- obj .: "name"
-    date      <- obj .: "date"
-    hyperdata <- obj .: "hyperdata"
-    pure $ AnnuaireInfo
-      { id : id
-      , typename : typename
-      , userId   : userId
-      , parentId : parentId
-      , name     : name
-      , date     : date
-      , hyperdata: hyperdata
-      }
+derive instance Generic AnnuaireInfo _
+derive instance Newtype AnnuaireInfo _
+instance Eq AnnuaireInfo where eq = genericEq
+instance JSON.ReadForeign AnnuaireInfo where
+  readImpl f = do
+    inst <- JSON.readImpl f
+    pure $ AnnuaireInfo $ Record.rename user_idP userIdP $ Record.rename parent_idP parentIdP inst
+    where
+      user_idP = SProxy :: SProxy "user_id"
+      userIdP = SProxy :: SProxy "userId"
+      parent_idP = SProxy :: SProxy "parent_id"
+      parentIdP = SProxy :: SProxy "parentId"
 
 --newtype AnnuaireTable  = AnnuaireTable  { annuaireTable :: Array (Maybe Contact)}
 
---instance decodeAnnuaireTable :: DecodeJson AnnuaireTable where
+--instance DecodeJson AnnuaireTable where
 --  decodeJson json = do
 --    rows <- decodeJson json
 --    pure $ AnnuaireTable { annuaireTable : rows}
 
 ------------------------------------------------------------------------
 
-loadPage :: Session -> PagePath -> AffTableResult CT.NodeContact
-loadPage session {nodeId, params: { offset, limit, orderBy }} =
+loadPage :: Session -> PagePath -> AffETableResult CT.NodeContact
+loadPage session {nodeId, params: { offset, limit }} =
     get session children
  -- TODO orderBy
  -- where
@@ -305,6 +294,6 @@ loadPage session {nodeId, params: { offset, limit, orderBy }} =
   where
     children = Children NodeContact offset limit Nothing {-(convOrderBy <$> orderBy)-} (Just nodeId)
 
-getAnnuaireInfo :: Session -> Int -> Aff AnnuaireInfo
+getAnnuaireInfo :: Session -> Int -> Aff (Either RESTError AnnuaireInfo)
 getAnnuaireInfo session id = get session (NodeAPI Node (Just id) "")
 

@@ -508,7 +508,7 @@ referring to both the `Read` and `Write` classes:
 ```purescript
 class (Read box val, Write box val) <= ReadWrite box val | box -> val
 
-instance readWrite :: (Read box val, Write box val) => ReadWrite box val
+instance (Read box val, Write box val) => ReadWrite box val
 ```
 
 When you don't care about the current value, you can use `write`, the

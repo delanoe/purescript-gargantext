@@ -2,7 +2,6 @@ module Gargantext.Components.Nodes.Texts.SidePanelToggleButton
   ( Props, sidePanelToggleButton
   ) where
 
-import Data.Tuple.Nested ((/\))
 import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as H

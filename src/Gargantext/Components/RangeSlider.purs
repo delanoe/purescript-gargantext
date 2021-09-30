@@ -7,7 +7,7 @@
 module Gargantext.Components.RangeSlider where
 
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
+import Data.Eq.Generic (genericEq)
 import Data.Int (fromNumber)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Nullable (Nullable, null)
@@ -54,8 +54,8 @@ rangeSlider :: Record Props -> R.Element
 rangeSlider props = R.createElement rangeSliderCpt props []
 
 data Knob = MinKnob | MaxKnob
-derive instance genericKnob :: Generic Knob _
-instance eqKnob :: Eq Knob where
+derive instance Generic Knob _
+instance Eq Knob where
   eq = genericEq
 
 data RangeUpdate = SetMin Number | SetMax Number

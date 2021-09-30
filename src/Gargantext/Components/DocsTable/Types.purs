@@ -1,12 +1,12 @@
 module Gargantext.Components.DocsTable.Types where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
+import Data.Eq.Generic (genericEq)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
+import Simple.JSON as JSON
 
 import Gargantext.Prelude
 
@@ -15,96 +15,89 @@ import Gargantext.Components.Category.Types (Category(..), decodeCategory, Star(
 data Action
   = MarkCategory Int Category
 
+type DocumentsViewT =
+  ( category   :: Star
+  , date       :: Int
+  , ngramCount :: Maybe Int
+  , score      :: Maybe Int
+  , source     :: String
+  , title      :: String
+  , url        :: String
+  )
 newtype DocumentsView
   = DocumentsView
     { _id        :: Int
-    , category   :: Star
-    , date       :: Int
-    , ngramCount :: Maybe Int
-    , score      :: Maybe Int
-    , source     :: String
-    , title      :: String
-    , url        :: String
+    | DocumentsViewT
     }
-derive instance genericDocumentsView :: Generic DocumentsView _
-instance eqDocumentsView :: Eq DocumentsView where
+derive instance Generic DocumentsView _
+instance Eq DocumentsView where
   eq = genericEq
 
-{-
-derive instance genericDocumentsView :: Generic DocumentsView _
-instance showDocumentsView :: Show DocumentsView where
-  show = genericShow
-instance decodeJsonSearchType :: Argonaut.DecodeJson SearchType where
-  decodeJson = genericSumDecodeJson
-instance encodeJsonSearchType :: Argonaut.EncodeJson SearchType where
-  encodeJson = genericSumEncodeJson
-  -}
+instance JSON.ReadForeign DocumentsView where
+  readImpl f = do
+    { id, category, date, ngramCount, score, source, title, url } :: { id :: Int | DocumentsViewT } <- JSON.readImpl f
+    pure $ DocumentsView { _id: id
+                         , category
+                         , date
+                         , ngramCount
+                         , score
+                         , source
+                         , title
+                         , url }
+instance JSON.WriteForeign DocumentsView where
+  writeImpl (DocumentsView { _id, category, date, ngramCount, score, source, title, url }) =
+    JSON.writeImpl { id: _id
+                   , category
+                   , date
+                   , ngramCount
+                   , score
+                   , source
+                   , title
+                   , url }
 
-instance decodeDocumentsView :: DecodeJson DocumentsView where
-  decodeJson json = do
-    obj <- decodeJson json
-    _id <- obj        .: "id"
-    category <- obj   .: "category"
-    date <- obj       .: "date"
-    ngramCount <- obj .: "ngramCount"
-    score <- obj      .: "score"
-    source <- obj     .: "source"
-    title <- obj      .: "title"
-    url <- obj        .: "url"
-    pure $ DocumentsView { _id, category, date, ngramCount, score, source, title, url }
-instance encodeDocumentsView :: EncodeJson DocumentsView where
-  encodeJson (DocumentsView dv) =
-       "id"        := dv._id
-    ~> "category"   := dv.category
-    ~> "date"       := dv.date
-    ~> "ngramCount" := dv.ngramCount
-    ~> "score"      := dv.score
-    ~> "source"     := dv.source
-    ~> "title"      := dv.title
-    ~> "url"        := dv.url
-    ~> jsonEmptyObject
-
-
+type ResponseT =
+  ( hyperdata :: Hyperdata
+  , ngramCount :: Maybe Int
+  , score :: Maybe Int
+  , title :: String )
 newtype Response = Response
   { cid        :: Int
-  , hyperdata  :: Hyperdata
-  , category   :: Star
-  , ngramCount :: Maybe Int
-  , score      :: Maybe Int
-  , title      :: String
+  , category :: Star
+  | ResponseT
   }
 
-
-newtype Hyperdata = Hyperdata
-  { title    :: String
-  , source   :: String
-  , pub_year :: Int
-  }
-
-
-instance decodeHyperdata :: DecodeJson Hyperdata where
-  decodeJson json = do
-    obj    <- decodeJson json
-    pub_year <- obj .: "publication_year"
-    source <- obj   .: "source"
-    title  <- obj   .: "title"
-    pure $ Hyperdata { title,source, pub_year}
-
-instance decodeResponse :: DecodeJson Response where
-  decodeJson json = do
-    obj        <- decodeJson json
-    category   <- obj .: "category"
-    cid        <- obj .: "id"
-    hyperdata  <- obj .: "hyperdata"
-    ngramCount <- obj .: "ngramCount"
-    score      <- obj .: "score"
-    title      <- obj .: "title"
+instance JSON.ReadForeign Response where
+  readImpl f = do
+    { category, id, hyperdata, ngramCount, score, title } :: { category :: Int, id :: Int | ResponseT } <- JSON.readImpl f
     --pure $ Response { category: decodeCategory category, cid, hyperdata, ngramCount, score, title }
-    pure $ Response { category: decodeStar category, cid, hyperdata, ngramCount, score, title }
+    pure $ Response { category: decodeStar category
+                    , cid: id
+                    , hyperdata
+                    , ngramCount
+                    , score
+                    , title }
+
+
+type HyperdataT =
+  ( title :: String
+  , source :: String )
+newtype Hyperdata = Hyperdata
+  { pub_year :: Int
+  | HyperdataT
+  }
+derive instance Generic Hyperdata _
+
+instance JSON.ReadForeign Hyperdata where
+  readImpl f = do
+    { publication_year, source, title} :: { publication_year :: Int | HyperdataT } <- JSON.readImpl f
+    pure $ Hyperdata { pub_year: publication_year
+                     , title
+                     , source }
 
 type LocalCategories = Map Int Category
 type LocalUserScore  = Map Int Star
 type Query = String
+type Year = String
 
 ---------------------------------------------------------
 sampleData' :: DocumentsView

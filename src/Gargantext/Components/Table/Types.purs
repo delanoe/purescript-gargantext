@@ -1,7 +1,7 @@
 module Gargantext.Components.Table.Types where
 
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe)
 import Data.Sequence as Seq
 import Reactix as R
@@ -20,19 +20,19 @@ type Params = { limit      :: Int
 type OrderBy = Maybe (OrderByDirection ColumnName)
 
 data OrderByDirection a = ASC a | DESC a
-derive instance genericOrderByDirection :: Generic (OrderByDirection a) _
-instance showOrderByDirection :: Show a => Show (OrderByDirection a) where
+derive instance Generic (OrderByDirection a) _
+instance Show a => Show (OrderByDirection a) where
   show = genericShow
-derive instance eqOrderByDirection :: Eq a => Eq (OrderByDirection a)
+derive instance Eq a => Eq (OrderByDirection a)
 orderByToForm :: OrderByDirection ColumnName -> String
 orderByToForm (ASC  (ColumnName x)) = x <> "Asc"
 orderByToForm (DESC (ColumnName x)) = x <> "Desc"
 
 newtype ColumnName = ColumnName String
-derive instance genericColumnName :: Generic ColumnName _
-instance showColumnName :: Show ColumnName where
+derive instance Generic ColumnName _
+instance Show ColumnName where
   show = genericShow
-derive instance eqColumnName :: Eq ColumnName
+derive instance Eq ColumnName
 columnName :: ColumnName -> String
 columnName (ColumnName c) = c
 

@@ -1,42 +1,42 @@
 module Gargantext.Components.Nodes.Corpus.Dashboard where
 
-import Gargantext.Prelude
-  ( Unit, bind, const, discard, pure, read, show, unit, ($), (<$>), (<>), (==) )
-
 import Data.Array as A
+import Data.Either (Either(..))
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (Tuple(..), snd)
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Nodes.Corpus (fieldsCodeEditor)
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
 import Gargantext.Components.Nodes.Dashboard.Types as DT
-import Gargantext.Components.Nodes.Types (FTField, FTFieldsWithIndex, defaultField)
+import Gargantext.Components.Nodes.Types (FTFieldList(..), FTFieldsWithIndex(..), defaultField)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude (Unit, bind, discard, pure, read, show, unit, ($), (<$>), (<>), (==))
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (NodeID)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Dashboard"
 
-type Props = ( nodeId :: NodeID, session :: Session )
+type Props =
+  ( boxes   :: Boxes
+  , nodeId  :: NodeID
+  , session :: Session )
 
 dashboardLayout :: R2.Component Props
 dashboardLayout = R.createElement dashboardLayoutCpt
-
 dashboardLayoutCpt :: R.Component Props
 dashboardLayoutCpt = here.component "dashboardLayout" cpt where
-  cpt { nodeId, session } content = do
-    pure $ dashboardLayoutWithKey { key, nodeId, session } content
+  cpt props@{ nodeId, session } content = do
+    pure $ dashboardLayoutWithKey (Record.merge props { key }) content
       where
         key = show (sessionId session) <> "-" <> show nodeId
 
@@ -47,52 +47,66 @@ type KeyProps =
 
 dashboardLayoutWithKey :: R2.Component KeyProps
 dashboardLayoutWithKey = R.createElement dashboardLayoutWithKeyCpt
-
 dashboardLayoutWithKeyCpt :: R.Component KeyProps
 dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
   where
-    cpt { nodeId, session } _ = do
+    cpt { boxes, nodeId, session } _ = do
       reload <- T.useBox T2.newReload
       reload' <- T.useLive T.unequal reload
 
-      useLoader {nodeId, reload: reload', session} DT.loadDashboardWithReload $
-        \(DT.DashboardData dashboardData@{hyperdata: DT.Hyperdata h, parentId}) -> do
-          let { charts, fields } = h
-          dashboardLayoutLoaded { charts
-                                , corpusId: parentId
-                                , defaultListId: 0
-                                , fields
-                                , nodeId
-                                , onChange: onChange nodeId reload (DT.Hyperdata h)
-                                , session } []
+      useLoader { errorHandler
+                , loader: DT.loadDashboardWithReload
+                , path: { nodeId, reload: reload', session }
+                , render: \(DT.DashboardData { hyperdata: DT.Hyperdata h, parentId }) -> do
+                      let { charts, fields } = h
+                      dashboardLayoutLoaded { boxes
+                                            , charts
+                                            , corpusId: parentId
+                                            , defaultListId: 0
+                                            , fields
+                                            , nodeId
+                                            , onChange: onChange nodeId reload (DT.Hyperdata h)
+                                            , session } [] }
       where
+        errorHandler err = here.log2 "[dashboardLayoutWithKey] RESTError" err
         onChange :: NodeID -> T2.ReloadS -> DT.Hyperdata -> { charts :: Array P.PredefinedChart
-                                                            , fields :: List.List FTField } -> Effect Unit
+                                                            , fields :: FTFieldList } -> Effect Unit
         onChange nodeId' reload (DT.Hyperdata h) { charts, fields } = do
           launchAff_ do
-            DT.saveDashboard { hyperdata: DT.Hyperdata $ h { charts = charts, fields = fields }
-                             , nodeId:nodeId'
-                             , session }
-            liftEffect $ T2.reload reload
+            res <- DT.saveDashboard { hyperdata: DT.Hyperdata $ h { charts = charts, fields = fields }
+                                    , nodeId:nodeId'
+                                    , session }
+            liftEffect $ do
+              _ <- case res of
+                Left err -> here.log2 "[dashboardLayoutWithKey] onChange RESTError" err
+                _ -> pure unit
+              T2.reload reload
 
 type LoadedProps =
-  ( charts        :: Array P.PredefinedChart
+  ( boxes         :: Boxes
+  , charts        :: Array P.PredefinedChart
   , corpusId      :: NodeID
   , defaultListId :: Int
-  , fields        :: List.List FTField
+  , fields        :: FTFieldList
   , onChange      :: { charts :: Array P.PredefinedChart
-                     , fields :: List.List FTField } -> Effect Unit
+                  , fields :: FTFieldList } -> Effect Unit
   , nodeId        :: NodeID
   , session       :: Session
   )
 
 dashboardLayoutLoaded :: R2.Component LoadedProps
 dashboardLayoutLoaded = R.createElement dashboardLayoutLoadedCpt
-
 dashboardLayoutLoadedCpt :: R.Component LoadedProps
 dashboardLayoutLoadedCpt = here.component "dashboardLayoutLoaded" cpt
   where
-    cpt props@{ charts, corpusId, defaultListId, fields, nodeId, onChange, session } _ = do
+    cpt { boxes
+        , charts
+        , corpusId
+        , defaultListId
+        , fields
+        , nodeId
+        , onChange
+        , session } _ = do
       pure $ H.div {}
         [ dashboardCodeEditor { fields
                               , nodeId
@@ -116,7 +130,13 @@ dashboardLayoutLoadedCpt = here.component "dashboardLayoutLoaded" cpt
                                          , fields }
         chartsEls = A.mapWithIndex chartIdx charts
         chartIdx idx chart =
-          renderChart { chart, corpusId, defaultListId, onChange: onChangeChart, onRemove, session } []
+          renderChart { boxes
+                      , chart
+                      , corpusId
+                      , defaultListId
+                      , onChange: onChangeChart
+                      , onRemove
+                      , session } []
           where
             onChangeChart c = do
               onChange { charts: fromMaybe charts (A.modifyAt idx (\_ -> c) charts)
@@ -125,20 +145,19 @@ dashboardLayoutLoadedCpt = here.component "dashboardLayoutLoaded" cpt
                                   , fields }
 
 type CodeEditorProps =
-  ( fields   :: List.List FTField
-  , onChange :: List.List FTField -> Effect Unit
+  ( fields   :: FTFieldList
+  , onChange :: FTFieldList -> Effect Unit
   , nodeId   :: NodeID
   , session  :: Session
   )
 
 dashboardCodeEditor :: R2.Component CodeEditorProps
 dashboardCodeEditor = R.createElement dashboardCodeEditorCpt
-
 dashboardCodeEditorCpt :: R.Component CodeEditorProps
 dashboardCodeEditorCpt = here.component "dashboardCodeEditor" cpt
   where
-    cpt props@{ fields, nodeId, onChange, session } _ = do
-      let fieldsWithIndex = List.mapWithIndex (\idx -> \t -> Tuple idx t) fields
+    cpt { fields: FTFieldList fields, nodeId, onChange, session } _ = do
+      let fieldsWithIndex = FTFieldsWithIndex $ List.mapWithIndex (\idx -> \ftField -> { idx, ftField }) fields
       fieldsS <- T.useBox fieldsWithIndex
       fields' <- T.useLive T.unequal fieldsS
       fieldsRef <- R.useRef fields'
@@ -179,20 +198,17 @@ dashboardCodeEditorCpt = here.component "dashboardCodeEditor" cpt
         saveEnabled fs fsS = if fs == fsS then "disabled" else "enabled"
 
         onClickSave :: forall e. FTFieldsWithIndex -> e -> Effect Unit
-        onClickSave fields' _ = do
-          here.log "saving (TODO)"
-          onChange $ snd <$> fields'
-          -- launchAff_ do
-            -- saveCorpus $ { hyperdata: Hyperdata {fields: (\(Tuple _ f) -> f) <$> fieldsS}
-            --             , nodeId
-            --             , session }
+        onClickSave (FTFieldsWithIndex fields') _ = do
+          onChange $ FTFieldList $ (_.ftField) <$> fields'
 
         onClickAddField :: forall e. T.Box FTFieldsWithIndex -> e -> Effect Unit
         onClickAddField fieldsS _ = do
-          T.modify_ (\fs -> List.snoc fs $ Tuple (List.length fs) defaultField) fieldsS
+          T.modify_ (\(FTFieldsWithIndex fs) -> FTFieldsWithIndex $
+            List.snoc fs $ { idx: List.length fs, ftField: defaultField }) fieldsS
 
 type PredefinedChartProps =
-  ( chart         :: P.PredefinedChart
+  ( boxes         :: Boxes
+  , chart         :: P.PredefinedChart
   , corpusId      :: NodeID
   , defaultListId :: Int
   , onChange      :: P.PredefinedChart -> Effect Unit
@@ -202,11 +218,16 @@ type PredefinedChartProps =
 
 renderChart :: R2.Component PredefinedChartProps
 renderChart = R.createElement renderChartCpt
-
 renderChartCpt :: R.Component PredefinedChartProps
 renderChartCpt = here.component "renderChart" cpt
   where
-    cpt { chart, corpusId, defaultListId, onChange, onRemove, session } _ = do
+    cpt { boxes
+        , chart
+        , corpusId
+        , defaultListId
+        , onChange
+        , onRemove
+        , session } _ = do
       pure $ H.div { className: "row chart card" }
         [ H.div { className: "card-header" }
           [ H.div { className: "row" }
@@ -236,9 +257,12 @@ renderChartCpt = here.component "renderChart" cpt
           where
             value = R.unsafeEventValue e
         onRemoveClick _ = onRemove unit
-        params = { corpusId
+        params = { boxes
+                 , corpusId
                  , limit: Just 1000
                  , listId: Just defaultListId
+                 , onClick: Nothing
+                 , onInit: Nothing
                  , session
                  }
 

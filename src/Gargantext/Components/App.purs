@@ -1,4 +1,5 @@
 module Gargantext.Components.App (app) where
+
 import Reactix as R
 import Toestand as T
 

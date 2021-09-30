@@ -1,17 +1,34 @@
 module Gargantext.Components.Themes where
 
+import Gargantext.Prelude
+
+import DOM.Simple (document)
 import Data.Array as A
+import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
 import Data.Maybe (Maybe(..))
+import Data.Nullable (toMaybe)
 import Effect (Effect)
-import FFI.Simple ((.=))
+import FFI.Simple ((...), (.=))
+import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
-import Gargantext.Prelude
-import Gargantext.Utils.Reactix as R2
+-- (?) Unknown runtime DOM errors lead to a FFI workaround for setting the
+--     property of the element (see `markThemeToDOMTree` method)
+--
+--     Both use cases throw the error:
+--
+--       ```
+--       TypeError: FFI_Simple_Functions.applyMethod'(...)(...)(...) is not a function
+--       ```
+--
+--       ```purescript
+--        _ <- el ... "setAttribute" $ [ "data-theme", name ]
+--        _ <- pure $ (el .= "data-theme") name
+--       ```
+foreign import setAttribute :: R.Element -> String -> String -> Effect Unit
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Themes"
@@ -21,8 +38,8 @@ stylesheetElId = "bootstrap-css"
 
 newtype Theme = Theme { location :: String
                       , name :: String }
-derive instance genericTheme :: Generic Theme _
-instance genericEq :: Eq Theme where
+derive instance Generic Theme _
+instance Eq Theme where
   eq = genericEq
 
 themeName :: Theme -> String
@@ -45,7 +62,7 @@ herbieTheme = Theme { name: "herbie"
                       , location: "styles/bootstrap-herbie.css" }
 
 darksterTheme :: Theme
-darksterTheme = Theme { name: "darkster (bêta)"
+darksterTheme = Theme { name: "darkster"
                       , location: "styles/bootstrap-darkster.css" }
 
 allThemes :: Array Theme
@@ -60,8 +77,16 @@ switchTheme (Theme { location }) = do
       _ <- pure $ (el .= "href") location
       pure unit
 
+markThemeToDOMTree :: Theme -> Effect Unit
+markThemeToDOMTree (Theme { name }) = do
+  mEl <- pure $ toMaybe (document ... "getElementById" $ [ "app" ])
+  case mEl of
+    Nothing -> pure unit
+    Just el -> setAttribute el "data-theme" name
+
+
 type ThemeSwitcherProps = (
-    theme  :: Theme
+    theme  :: T.Box Theme
   , themes :: Array Theme
   )
 
@@ -72,17 +97,18 @@ themeSwitcherCpt :: R.Component ThemeSwitcherProps
 themeSwitcherCpt = here.component "themeSwitcher" cpt
   where
     cpt { theme, themes } _ = do
-      currentTheme <- T.useBox theme
-      currentTheme' <- T.useLive T.unequal currentTheme
+      currentTheme <- T.useLive T.unequal theme
 
       let option (Theme { name }) = H.option { value: name } [ H.text name ]
       let options = map option themes
 
+      R.useEffectOnce' $ markThemeToDOMTree currentTheme
+
       pure $ R2.select { className: "form-control"
-                       , defaultValue: themeName currentTheme'
-                       , on: { change: onChange currentTheme } } options
+                       , defaultValue: themeName currentTheme
+                       , on: { change: onChange theme } } options
       where
-        onChange currentTheme e = do
+        onChange box e = do
           let value = R.unsafeEventValue e
           let mTheme = A.head $ A.filter (\(Theme { name }) -> value == name) themes
 
@@ -90,4 +116,5 @@ themeSwitcherCpt = here.component "themeSwitcher" cpt
             Nothing -> pure unit
             Just t  -> do
               switchTheme t
-              T.write_ t currentTheme
+              markThemeToDOMTree t
+              T.write_ t box

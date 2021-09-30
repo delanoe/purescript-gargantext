@@ -1,22 +1,22 @@
 module Gargantext.Components.Nodes.Home.Public where
 
-import Data.Argonaut as Argonaut
+import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
+import Data.Show.Generic (genericShow)
 import Data.String (take)
-import Data.Tuple (fst)
 import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
 
 import Gargantext.Config (publicBackend)
-import Gargantext.Config.REST (get)
+import Gargantext.Config.REST (get, RESTError)
 import Gargantext.Ends (backendUrl)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude
-import Gargantext.Utils.Argonaut (genericSumDecodeJson, genericSumEncodeJson)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.SimpleJSON as GUSJ
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Home.Public"
@@ -33,25 +33,19 @@ data PublicData = PublicData
   , author   :: String
   } | NoData { nodata :: String }
 
-derive instance eqPublicData :: Eq PublicData
-
-derive instance genericPublicData :: Generic PublicData _
-
-instance showPublicData :: Show PublicData where
-  show = genericShow
-
-instance decodeJsonPublicData :: Argonaut.DecodeJson PublicData where
-  decodeJson = genericSumDecodeJson
-
-instance encodeJsonPublicData :: Argonaut.EncodeJson PublicData where
-  encodeJson = genericSumEncodeJson
+derive instance Eq PublicData
+derive instance Generic PublicData _
+instance JSON.ReadForeign PublicData where readImpl = GUSJ.taggedSumRep
+instance Show PublicData where show = genericShow
 
 ------------------------------------------------------------------------
+type LoadData :: forall k. Row k
 type LoadData  = ()
+
 type LoadProps = (reload :: Int)
 
 -- | WIP still finding the right way to chose the default public backend
-loadPublicData :: Record LoadProps -> Aff (Array PublicData)
+loadPublicData :: Record LoadProps -> Aff (Either RESTError (Array PublicData))
 loadPublicData _l = do
   -- This solution is error prone (url needs to be cleaned)
   --backend <- liftEffect public
@@ -78,12 +72,16 @@ renderPublic props = R.createElement renderPublicCpt props []
 renderPublicCpt :: R.Component ()
 renderPublicCpt = here.component "renderPublic" cpt where
   cpt _ _ = do
-    useLoader { reload: 0 } loadPublicData loaded where
-      loaded publicData = publicLayout { publicData }
+    useLoader { errorHandler
+              , loader: loadPublicData
+              , path: { reload: 0 }
+              , render:  loaded }
+      where
+        loaded publicData = publicLayout { publicData }
+        errorHandler err = here.log2 "RESTError" err
 
 publicLayout :: Record PublicDataProps -> R.Element
 publicLayout props = R.createElement publicLayoutCpt props []
-
 publicLayoutCpt :: R.Component PublicDataProps
 publicLayoutCpt = here.component "publicLayout" cpt
   where

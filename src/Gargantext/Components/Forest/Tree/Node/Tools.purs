@@ -1,33 +1,28 @@
 module Gargantext.Components.Forest.Tree.Node.Tools where
 
-import Gargantext.Prelude
-  ( class Ord, class Read, class Show, Unit
-  , bind, const, discard, map, not, pure, read, show, when
-  , ($), (<), (<<<), (<>), (<$>), (<*>) )
+import Data.Foldable (intercalate)
 import Data.Maybe (fromMaybe, Maybe(..))
-import Data.Nullable (null)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as S
 import Data.String.CodeUnits as DSCU
-import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
+import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.Forest.Tree.Node.Action (icon, text)
+import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
+import Gargantext.Components.InputWithEnter (inputWithEnter)
+import Gargantext.Ends (Frontends, url)
+import Gargantext.Prelude (class Ord, class Read, class Show, Unit, bind, const, discard, map, not, pure, read, show, when, mempty, ($), (<), (<<<), (<>), (<$>), (<*>))
+import Gargantext.Sessions (Session, sessionId)
+import Gargantext.Types as GT
+import Gargantext.Utils (toggleSet, (?))
+import Gargantext.Utils.Glyphicon (glyphicon)
+import Gargantext.Utils.ReactTooltip as ReactTooltip
+import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
-
-import Gargantext.Components.Forest.Tree.Node.Action (Action, icon, text)
-import Gargantext.Components.InputWithEnter (inputWithEnter)
-import Gargantext.Ends (Frontends, url)
-import Gargantext.Components.GraphExplorer.API as GraphAPI
-import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Sessions (Session, sessionId)
-import Gargantext.Types as GT
-import Gargantext.Utils (glyphicon, toggleSet)
-import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.ReactTooltip as ReactTooltip
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools"
@@ -61,7 +56,6 @@ type TextInputBoxProps =
 
 textInputBox :: R2.Component TextInputBoxProps
 textInputBox = R.createElement textInputBoxCpt
-
 textInputBoxCpt :: R.Component TextInputBoxProps
 textInputBoxCpt = here.component "textInputBox" cpt where
   cpt { boxAction, boxName, dispatch, id, isOpen, text } _ =
@@ -104,7 +98,7 @@ type DefaultText = String
 
 formEdit :: forall prev next
           . DefaultText -> ((prev -> String) -> Effect next) -> R.Element
-formEdit defaultValue setter = 
+formEdit defaultValue setter =
   H.div { className: "form-group" }
   [ H.input { defaultValue, type: "text", on: { input }
             , placeholder: defaultValue, className: "form-control" }
@@ -112,58 +106,71 @@ formEdit defaultValue setter =
 
 -- | Form Choice input
 -- if the list of options is not big enough, a button is used instead
-formChoiceSafe :: forall a b c
-               .  Read  a
-               => Show  a
-               => Array a
-               -> a
-               -> (a -> Effect c)
-               -- -> ((b -> a) -> Effect c)
-               -> R.Element
-formChoiceSafe [] _ _ = H.div {} []
-
-formChoiceSafe [n] _defaultNodeType setNodeType =
-  formButton n setNodeType
-
-formChoiceSafe nodeTypes defaultNodeType setNodeType =
-  formChoice nodeTypes defaultNodeType setNodeType
+formChoiceSafe :: forall item m
+  .  Read item
+  => Show item
+  => Array item
+  -> item
+  -> (item -> Effect m)
+  -> (item -> String)
+  -> R.Element
+formChoiceSafe []  _   _   _    = mempty
+formChoiceSafe [n] _   cbk prnt = formButton n cbk prnt
+formChoiceSafe arr def cbk prnt = formChoice arr def cbk prnt
 
 -- | List Form
-formChoice :: forall a b c d
-           .  Read b
-           => Show d
-           => Array d
-           -> b
-           -> (b -> Effect a)
-           -- -> ((c -> b) -> Effect a)
-           -> R.Element
-formChoice nodeTypes defaultNodeType setNodeType = 
+formChoice :: forall item m
+  .  Read item
+  => Show item
+  => Array item
+  -> item
+  -> (item -> Effect m)
+  -> (item -> String)
+  -> R.Element
+formChoice items def cbk prnt =
+
   H.div { className: "form-group"}
-        [ R2.select { className: "form-control"
-                    , on: { change: \e -> setNodeType $ fromMaybe defaultNodeType $ read $ R.unsafeEventValue e }
-                    }
-          (map (\opt -> H.option {} [ H.text $ show opt ]) nodeTypes)
-         ]
+  [
+    R2.select
+    { className: "form-control with-icon-font"
+    , on: { change }
+    } $
+    map option items
+  ]
+
+  where
+    change e = cbk $ fromMaybe def $ read $ R.unsafeEventValue e
+
+    option opt =
+      H.option { value: show opt }
+      [ H.text $ prnt opt ]
 
 -- | Button Form
 -- FIXME: currently needs a click from the user (by default, we could avoid such click)
-formButton :: forall a b c
-           . Show a
-           =>   a
-           -> (a -> Effect c)
-           -- -> ((b -> a) -> Effect c)
-           -> R.Element
-formButton nodeType setNodeType =
-  H.div {} [ H.text $ "Confirm the selection of: " <> show nodeType
-           , bouton
-           ]
-    where
-      bouton = H.button { className : "cold-md-5 btn btn-primary center"
-                        , type : "button"
-                        , title: "Form Button"
-                        , style : { width: "100%" }
-                        , on: { click: \_ -> setNodeType nodeType }
-                        } [H.text $ "Confirmation"]
+formButton :: forall item m
+  .  item
+  -> (item -> Effect m)
+  -> (item -> String)
+  -> R.Element
+formButton item cbk prnt =
+
+  H.div {}
+  [
+    H.text $ "Confirm the selection of: " <> prnt item
+  ,
+    cta
+  ]
+
+  where
+    cta =
+      H.button
+      { className : "cold-md-5 btn btn-primary center"
+      , type : "button"
+      , title: "Form Button"
+      , style : { width: "100%" }
+      , on: { click: \_ -> cbk item }
+      }
+      [ H.text "Confirmation" ]
 
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
@@ -195,7 +202,6 @@ type CheckboxProps =
 
 checkbox :: R2.Leaf CheckboxProps
 checkbox props = R.createElement checkboxCpt props []
-
 checkboxCpt :: R.Component CheckboxProps
 checkboxCpt = here.component "checkbox" cpt
   where
@@ -217,11 +223,10 @@ type CheckboxesListGroup a =
 
 checkboxesListGroup :: forall a. Ord a => Show a => R2.Component (CheckboxesListGroup a)
 checkboxesListGroup = R.createElement checkboxesListGroupCpt
-
 checkboxesListGroupCpt :: forall a. Ord a => Show a => R.Component (CheckboxesListGroup a)
 checkboxesListGroupCpt = here.component "checkboxesListGroup" cpt
   where
-    cpt { groups, options } _ = do
+    cpt { options } _ = do
       options' <- T.useLive T.unequal options
 
       let one a =
@@ -248,9 +253,9 @@ tooltipId id = "node-link-" <> show id
 -- START node link
 
 type NodeLinkProps = (
-    frontends  :: Frontends
+    boxes      :: Boxes
   , folderOpen :: T.Box Boolean
-  , handed     :: GT.Handed
+  , frontends  :: Frontends
   , id         :: Int
   , isSelected :: Boolean
   , name       :: GT.Name
@@ -260,26 +265,23 @@ type NodeLinkProps = (
 
 nodeLink :: R2.Component NodeLinkProps
 nodeLink = R.createElement nodeLinkCpt
-
 nodeLinkCpt :: R.Component NodeLinkProps
 nodeLinkCpt = here.component "nodeLink" cpt
   where
-    cpt { folderOpen
+    cpt { boxes
+        , folderOpen
         , frontends
-        , handed
         , id
         , isSelected
         , name
         , nodeType
         , session
         } _ = do
-      popoverRef <- R.useRef null
-
       pure $
         H.div { className: "node-link"
               , on: { click } }
           [ H.a { href, data: { for: tooltipId id, tip: true } }
-            [ nodeText { handed, isSelected, name } []
+            [ nodeText { isSelected, name }
             , ReactTooltip.reactTooltip { effect: "float", id: tooltipId id, type: "dark" }
                 [ R2.row
                     [ H.h4 {className: GT.fldr nodeType true}
@@ -300,29 +302,45 @@ nodeLinkCpt = here.component "nodeLink" cpt
 
 type NodeTextProps =
   ( isSelected :: Boolean
-  , handed     :: GT.Handed
   , name       :: GT.Name
   )
 
-nodeText :: R2.Component NodeTextProps
-nodeText = R.createElement nodeTextCpt
+nodeText :: R2.Leaf NodeTextProps
+nodeText p = R.createElement nodeTextCpt p []
+nodeTextCpt :: R.Memo NodeTextProps
+nodeTextCpt = R.memo' $ here.component "nodeText" cpt where
+  cpt props@{ isSelected } _ = do
+    -- Computed
+    let
 
-nodeTextCpt :: R.Component NodeTextProps
-nodeTextCpt = here.component "nodeText" cpt where
-  cpt { isSelected, handed, name } _ =
-    pure $ if isSelected then
-              H.u { className }
-                [ H.b {}
-                  [ H.text ("| " <> name15 name <> " |    ") ]
-                ]
-              else
-                GT.flipHanded l r handed where
-                  l = H.text "..."
-                  r = H.text (name15 name)
-  name_ len n =
-    if S.length n < len then n
-    else case (DSCU.slice 0 len n) of
-      Nothing -> "???"
-      Just s  -> s <> "..."
-  name15 = name_ 15
-  className = "node-text"
+      className = intercalate " "
+        [ "node-text"
+        , isSelected ? "node-text--selected" $ ""
+        ]
+
+      prefix = isSelected ?
+        "" $
+        "..."
+
+      name = isSelected ?
+        "| " <> (textEllipsisBreak 15 props.name) <> " |    " $
+        textEllipsisBreak 15 props.name
+
+    -- Render
+    pure $
+
+      H.span { className }
+      [
+        H.span {}
+        [ H.text prefix ]
+      ,
+        H.span {}
+        [ H.text name ]
+      ]
+
+textEllipsisBreak :: Int -> String -> String
+textEllipsisBreak len n =
+  if S.length n < len then n
+  else case (DSCU.slice 0 len n) of
+    Nothing -> "???"
+    Just s  -> s <> "..."

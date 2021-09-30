@@ -9,26 +9,18 @@ import Data.Maybe (Maybe(..), maybe, isJust)
 import Data.Nullable (null, toMaybe)
 import Data.Set (Set)
 import Data.Set as Set
-import React.DOM (a, span, text)
-import React.DOM.Props as DOM
 import Effect (Effect)
 import FFI.Simple (delay)
+import Gargantext.Components.NgramsTable.Core (Action(..), Dispatch, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm, _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list, _ngrams, _occurrences, ngramsTermText, replace, setTermListA)
+import Gargantext.Components.Table as Tbl
+import Gargantext.Prelude (Unit, bind, const, discard, map, not, otherwise, pure, show, unit, ($), (+), (/=), (<<<), (<>), (==), (>), (||))
+import Gargantext.Types as GT
+import Gargantext.Utils.Reactix as R2
+import React.DOM (a, span, text)
+import React.DOM.Props as DOM
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
-
-import Gargantext.Prelude
-  ( Unit, bind, const, discard, map, not, otherwise
-  , pure, show, unit, ($), (+), (/=), (<<<), (<>), (==), (>), (||) )
-
-import Gargantext.Components.NgramsTable.Core
-  ( Action(..), Dispatch, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm
-  , _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list
-  , _ngrams, _occurrences, ngramsTermText, replace, setTermListA )
-import Gargantext.Components.Nodes.Lists.Types as NT
-import Gargantext.Components.Table as Tbl
-import Gargantext.Types as T
-import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.NgramsTable.Components"
@@ -38,44 +30,60 @@ type SearchInputProps =
   , searchQuery :: T.Box String
   )
 
-searchInput :: Record SearchInputProps -> R.Element
+searchInput :: R2.Leaf SearchInputProps
 searchInput props = R.createElement searchInputCpt props []
-
 searchInputCpt :: R.Component SearchInputProps
 searchInputCpt = here.component "searchInput" cpt
   where
     cpt { searchQuery } _ = do
-      searchQuery' <- T.useLive T.unequal searchQuery
-
       pure $ R2.row [
         H.div { className: "col-12" } [
           H.div { className: "input-group" }
-            [ searchButton searchQuery'
-            , fieldInput searchQuery'
+            [ searchButton { searchQuery } []
+            , searchFieldInput { searchQuery } []
             ]
           ]
         ]
-        where
-          searchButton searchQuery' =
-            H.div { className: "input-group-prepend" }
-              [ if searchQuery' /= ""
-                then removeButton
-                else H.span { className: "fa fa-search input-group-text" } []
-              ]
-          removeButton =
-            H.button { className: "btn btn-danger"
-                     , on: {click: \e -> T.write "" searchQuery}}
-              [ H.span {className: "fa fa-times"} []]
 
-          fieldInput searchQuery' =
-            H.input { className: "form-control"
-                    , defaultValue: searchQuery'
-                    , name: "search"
-                    , on: { input: \e -> T.write (R.unsafeEventValue e) searchQuery }
-                    , placeholder: "Search"
-                    , type: "value"
-                    }
+type SearchButtonProps =
+  ( searchQuery :: T.Box String
+  )
 
+searchButton :: R2.Component SearchButtonProps
+searchButton = R.createElement searchButtonCpt
+searchButtonCpt :: R.Component SearchButtonProps
+searchButtonCpt = here.component "searchButton" cpt where
+  cpt { searchQuery } _ = do
+    searchQuery' <- T.useLive T.unequal searchQuery
+    
+    pure $ H.div { className: "input-group-prepend" }
+      [ if searchQuery' /= ""
+        then
+          H.button { className: "btn btn-danger"
+                   , on: {click: \_ -> T.write "" searchQuery}}
+          [ H.span {className: "fa fa-times"} []]
+        else H.span { className: "fa fa-search input-group-text" } []
+      ]
+
+type SearchFieldInputProps =
+  ( searchQuery :: T.Box String
+  )
+
+searchFieldInput :: R2.Component SearchFieldInputProps
+searchFieldInput = R.createElement searchFieldInputCpt
+searchFieldInputCpt :: R.Component SearchFieldInputProps
+searchFieldInputCpt = here.component "searchFieldInput" cpt where
+  cpt { searchQuery } _ = do
+    -- searchQuery' <- T.useLive T.unequal searchQuery
+    
+    pure $ H.input { className: "form-control"
+                   -- , defaultValue: searchQuery'
+                   , name: "search"
+                   , on: { input: \e -> T.write (R.unsafeEventValue e) searchQuery }
+                   , placeholder: "Search"
+                   , type: "value"
+                   }
+    
 type SelectionCheckboxProps =
   ( allNgramsSelected :: Boolean
   , dispatch          :: Dispatch
@@ -84,7 +92,6 @@ type SelectionCheckboxProps =
 
 selectionCheckbox :: Record SelectionCheckboxProps -> R.Element
 selectionCheckbox props = R.createElement selectionCheckboxCpt props []
-
 selectionCheckboxCpt :: R.Component SelectionCheckboxProps
 selectionCheckboxCpt = here.component "selectionCheckbox" cpt
   where
@@ -233,8 +240,8 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
                    , on: { click: onClick } } []
           ]
         , selected
-        , checkbox T.MapTerm
-        , checkbox T.StopTerm
+        , checkbox GT.MapTerm
+        , checkbox GT.StopTerm
         , H.div {} ( if ngramsParent == Nothing
                        then [renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit }]
                        else [H.a { on: { click: const $ dispatch $ ToggleChild true ngrams } }
@@ -275,7 +282,7 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
                   }
         checkbox termList' =
           let chkd = termList == termList'
-              termList'' = if chkd then T.CandidateTerm else termList'
+              termList'' = if chkd then GT.CandidateTerm else termList'
           in
           H.input { checked: chkd
                   , className: "checkbox"
@@ -292,18 +299,18 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         cycleTermListItem n = setTermListA n (replace termList (nextTermList termList))
 
 
-termStyle :: T.TermList -> Number -> DOM.Props
-termStyle T.MapTerm     opacity = DOM.style { color: "green", opacity }
-termStyle T.StopTerm      opacity = DOM.style { color: "red",   opacity
+termStyle :: GT.TermList -> Number -> DOM.Props
+termStyle GT.MapTerm     opacity = DOM.style { color: "green", opacity }
+termStyle GT.StopTerm      opacity = DOM.style { color: "red",   opacity
                                               , textDecoration: "line-through" }
-termStyle T.CandidateTerm opacity = DOM.style { color: "#767676", opacity }
+termStyle GT.CandidateTerm opacity = DOM.style { color: "#767676", opacity }
 
 tablePatchHasNgrams :: NgramsTablePatch -> NgramsTerm -> Boolean
 tablePatchHasNgrams ngramsTablePatch ngrams =
   isJust $ ngramsTablePatch.ngramsPatches ^. _PatchMap <<< at ngrams
 
 
-nextTermList :: T.TermList -> T.TermList
-nextTermList T.MapTerm     = T.StopTerm
-nextTermList T.StopTerm      = T.CandidateTerm
-nextTermList T.CandidateTerm = T.MapTerm
+nextTermList :: GT.TermList -> GT.TermList
+nextTermList GT.MapTerm       = GT.StopTerm
+nextTermList GT.StopTerm      = GT.CandidateTerm
+nextTermList GT.CandidateTerm = GT.MapTerm

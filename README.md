@@ -1,32 +1,51 @@
-# Gargantext Purescript
+# Gargantext with Purescript (FrontEnd instance)
 
-## About this project
+## About the project
 
-Gargantext is a collaborative web platform for the exploration of sets
-of unstructured documents. It combines tools from natural language
-processing, text-mining, complex networks analysis and interactive data
-visualization to pave the way toward new kinds of interactions with your
-digital corpora.
+GarganText is a collaborative web-decentralized-based macro-service
+platform for the exploration of unstructured texts. It combines tools
+from natural language processing, text-data-mining tricks, complex
+networks analysis algorithms and interactive data visualization tools to
+pave the way toward new kinds of interactions with your digital corpora.
 
-This repo deals with the frontend or client which needs
-a backend server running or being granted access to a
+This software is free software, developed and offered by the CNRS
+Complex Systems Institute of Paris Île-de-France (ISC-PIF) and its
+partners.
+
+GarganText Project: this repo builds the
+frontend for the backend server built by
 [backend](https://gitlab.iscpif.fr/gargantext/haskell-gargantext).
 
-This software is free software, developed by the CNRS Complex Systems
-Institute of Paris Île-de-France (ISC-PIF) and its partners.
 
 ## Getting set up
 
 There are two approaches to working with the build:
-1. Use our docker setup
+1. Use our Nix or Docker setup
 2. Install our dependencies yourself
 
-The javascript ecosystem kind of assumes if you're on linux, you're
-running on debian or ubuntu. I haven't yet managed to get garg to
-build on alpine linux, for example. If you're on an oddball system, I
-*strongly* recommend you just use the docker setup.
+### With Nix setup
 
-### Docker setup
+First install [nix](https://nixos.org/guides/install-nix.html): 
+
+```shell
+sh < (curl -L https://nixos.org/nix/install) --daemon
+```
+
+Verify the installation is complete
+```shell
+$ nix-env
+nix-env (Nix) 2.3.12
+```
+
+To build the frontend just do:
+```
+nix-shell --run build
+```
+Just serve dist/index.html with any server and you are ready to be
+connected to any backend.
+
+
+### With Docker setup
 
 You will need docker and docker-compose installed.
 
@@ -215,7 +234,7 @@ runtime or `devDependencies` if it is not.
 
 #### Add a purescript dependency?
 
-Add it to `psc-package.json` without the `purescript-` prefix.
+Add it to `spago.dhall` (or run `spago install ...`).
 
 If is not in the package set, you will need to read the next section.
 
@@ -224,18 +243,6 @@ If is not in the package set, you will need to read the next section.
 You need to add an entry to the relevant map in
 `packages.dhall`. There are comments in the file explaining how it
 works. It's written in dhall, so you can use comments and such.
-
-You will then need to rebuild the package set:
-
-```shell
-yarn rebuild-set # or darn rebuild-set
-```
-
-#### Upgrade the base package set local is based on to latest?
-
-```shell
-yarn rebase-set && yarn rebuild-set # or darn rebase-set && darn rebuild-set
-```
 
 ## Theory Introduction
 

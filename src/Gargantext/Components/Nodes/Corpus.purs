@@ -1,176 +1,101 @@
 module Gargantext.Components.Nodes.Corpus where
 
-import DOM.Simple.Console (log2)
-import Data.Argonaut (class DecodeJson, decodeJson, encodeJson)
-import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
 import Data.Either (Either(..))
+import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Show (genericShow)
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (Tuple(..))
+import Data.Show.Generic (genericShow)
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_, throwError)
-import Effect.Class (liftEffect)
+import Effect.Aff (Aff, throwError)
 import Effect.Exception (error)
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
-import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..))
-import Gargantext.Components.Nodes.Types (FTField, FTFieldWithIndex, FTFieldsWithIndex, Field(..), FieldType(..), Hash, Index, defaultField, defaultHaskell', defaultJSON', defaultMarkdown', defaultPython')
+import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata)
+import Gargantext.Components.Nodes.Types (FTField, FTFieldWithIndex, FTFieldsWithIndex(..), Field(..), FieldType(..), Hash, Index, defaultHaskell', defaultJSON', defaultMarkdown', defaultPython')
+import Gargantext.Components.TileMenu (tileMenu)
+import Gargantext.Config.REST (RESTError(..))
 import Gargantext.Data.Array as GDA
-import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (class Eq, class Show, Unit, bind, discard, pure, show, unit, ($), (+), (-), (<), (<$>), (<<<), (<>), (==), (>))
+import Gargantext.Prelude (class Eq, class Show, Unit, bind, discard, pure, show, unit, ($), (<>), const, (<<<), (+), (==), (-), (<), (>), (<$>))
 import Gargantext.Routes (SessionRoute(Children, NodeAPI))
+import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, get, put, sessionId)
-import Gargantext.Types (AffTableResult, NodeType(..))
+import Gargantext.Types (AffETableResult, NodeType(..), ID)
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
 import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus"
 
-type Props = ( nodeId  :: Int, session :: Session )
+type Props =
+  ( boxes   :: Boxes
+  , nodeId  :: ID
+  , session :: Session )
 
 corpusLayout :: R2.Leaf Props
 corpusLayout props = R.createElement corpusLayoutCpt props []
-
 corpusLayoutCpt :: R.Component Props
 corpusLayoutCpt = here.component "corpusLayout" cpt where
-  cpt { nodeId, session } _ = do
-    pure $ corpusLayoutMain { key, nodeId, session }
+  cpt { boxes, nodeId, session } _ = do
+    pure $ corpusLayoutMain { boxes, key, nodeId, session }
       where
         key = show (sessionId session) <> "-" <> show nodeId
 
 type KeyProps =
-  ( nodeId  :: Int
+  ( boxes   :: Boxes
   , key     :: String
+  , nodeId  :: ID
   , session :: Session
   )
 
 corpusLayoutMain :: R2.Leaf KeyProps
 corpusLayoutMain props = R.createElement corpusLayoutMainCpt props []
-
 corpusLayoutMainCpt :: R.Component KeyProps
 corpusLayoutMainCpt = here.component "corpusLayoutMain" cpt
   where
-    cpt { nodeId, key, session } _ = do
-      viewType <- T.useBox Folders
+    cpt { boxes, nodeId, session } _ = do
+      -- Computed
+      corpusCodeRoute <- pure $ const do
+        pure $ GR.CorpusCode (sessionId session) nodeId
+      -- Render
+      pure $
 
-      pure $ H.div {} [
-        H.div {} [
-          H.div { className: "row" } [
-            H.div { className: "col-1" } [ viewTypeSelector {state: viewType} ]
-          , H.div { className: "col-1" } [ FV.homeButton ]
-          ]
-        ]
-      , H.div {} [corpusLayoutSelection {state: viewType, key, session, nodeId}]
-      ]
-
-type SelectionProps = 
-  ( nodeId  :: Int
-  , key     :: String
-  , session :: Session
-  , state   :: T.Box ViewType
-  )
-
-corpusLayoutSelection :: R2.Leaf SelectionProps
-corpusLayoutSelection props = R.createElement corpusLayoutSelectionCpt props []
-
-corpusLayoutSelectionCpt :: R.Component SelectionProps
-corpusLayoutSelectionCpt = here.component "corpusLayoutSelection" cpt where
-  cpt { nodeId, session, key, state} _ = do
-    state' <- T.useLive T.unequal state
-    viewType <- T.read state
-
-    pure $ renderContent viewType nodeId session key
-
-  renderContent Folders nodeId session key = FV.folderView { nodeId, session, backFolder: true }
-  renderContent Code nodeId session key = corpusLayoutWithKey { key, nodeId, session }
-
-
-corpusLayoutWithKey :: R2.Leaf KeyProps
-corpusLayoutWithKey props = R.createElement corpusLayoutWithKeyCpt props []
-
-corpusLayoutWithKeyCpt :: R.Component KeyProps
-corpusLayoutWithKeyCpt = here.component "corpusLayoutWithKey" cpt where
-  cpt { nodeId, session } _ = do
-    reload <- T.useBox T2.newReload
-    reload' <- T.useLive T.unequal reload
-    useLoader { nodeId, reload: reload', session } loadCorpusWithReload $
-      \corpus -> corpusLayoutView { corpus, nodeId, reload, session }
-
-type ViewProps =
-  ( corpus  :: NodePoly Hyperdata
-  , reload  :: T2.ReloadS
-  , nodeId  :: Int
-  , session :: Session
-  )
-
-corpusLayoutView :: Record ViewProps -> R.Element
-corpusLayoutView props = R.createElement corpusLayoutViewCpt props []
-
-corpusLayoutViewCpt :: R.Component ViewProps
-corpusLayoutViewCpt = here.component "corpusLayoutView" cpt
-  where
-    cpt {corpus: (NodePoly {hyperdata: Hyperdata {fields}}), nodeId, reload, session} _ = do
-      let fieldsWithIndex = List.mapWithIndex (\idx -> \t -> Tuple idx t) fields
-      fieldsS <- T.useBox fieldsWithIndex
-      fields' <- T.useLive T.unequal fieldsS
-      fieldsRef <- R.useRef fields
-      
-      -- handle props change of fields
-      R.useEffect1' fields $ do
-        if R.readRef fieldsRef == fields then
-          pure unit
-        else do
-          R.setRef fieldsRef fields
-          T.write_ fieldsWithIndex fieldsS
-
-      pure $ H.div {}
-        [ H.div { className: "row" }
-          [ H.div { className: "btn btn-primary " <> (saveEnabled fieldsWithIndex fields')
-                  , on: { click: onClickSave {fields: fields', nodeId, reload, session} }
-                  }
-            [ H.span { className: "fa fa-floppy-o" } [  ] ]
-          ]
-        , H.div {}
-          [ fieldsCodeEditor { fields: fieldsS
-                             , nodeId
-                             , session } [] ]
-        , H.div { className: "row" }
-          [ H.div { className: "btn btn-primary"
-                  , on: { click: onClickAdd fieldsS }
-                  }
-            [ H.span { className: "fa fa-plus" } [  ]
+        H.div {}
+        [
+          tileMenu
+          { boxes
+          , currentTile: Just corpusCodeRoute
+          , xTile: Just corpusCodeRoute
+          , yTile: Just corpusCodeRoute
+          }
+          [
+            H.button
+            { className: "btn btn-primary" }
+            [
+              H.i { className: "fa fa-code" } []
             ]
           ]
+        ,
+          H.hr {}
+        ,
+          FV.folderView
+            { backFolder: true
+            , boxes
+            , nodeId
+            , session
+            }
         ]
 
-    saveEnabled :: FTFieldsWithIndex -> FTFieldsWithIndex -> String
-    saveEnabled fs fsS = if fs == fsS then "disabled" else "enabled"
-
-    onClickSave :: forall e. { fields :: FTFieldsWithIndex
-                             , nodeId :: Int
-                             , reload :: T2.ReloadS
-                             , session :: Session } -> e -> Effect Unit
-    onClickSave {fields, nodeId, reload, session} _ = do
-      launchAff_ do
-        saveCorpus $ { hyperdata: Hyperdata {fields: (\(Tuple _ f) -> f) <$> fields}
-                     , nodeId
-                     , session }
-        liftEffect $ T2.reload reload
-
-    onClickAdd :: forall e. T.Box FTFieldsWithIndex -> e -> Effect Unit
-    onClickAdd fieldsS _ = do
-      T.modify_ (\fields -> List.snoc fields $ Tuple (List.length fields) defaultField) fieldsS
+-----------------------------------
 
 
 type FieldsCodeEditorProps =
@@ -181,19 +106,18 @@ type FieldsCodeEditorProps =
 
 fieldsCodeEditor :: R2.Component FieldsCodeEditorProps
 fieldsCodeEditor = R.createElement fieldsCodeEditorCpt
-
 fieldsCodeEditorCpt :: R.Component FieldsCodeEditorProps
 fieldsCodeEditorCpt = here.component "fieldsCodeEditorCpt" cpt
   where
-    cpt { fields, nodeId, session } _ = do
-      fields' <- T.useLive T.unequal fields
+    cpt { fields } _ = do
+      (FTFieldsWithIndex fields') <- T.useLive T.unequal fields
       masterKey <- T.useBox T2.newReload
       masterKey' <- T.useLive T.unequal masterKey
 
-      let editorsMap (Tuple idx field) =
+      let editorsMap { idx, ftField } =
             fieldCodeEditorWrapper { canMoveDown: idx < (List.length fields' - 1)
                                    , canMoveUp: idx > 0
-                                   , field
+                                   , field: ftField
                                    , key: (show masterKey') <> "-" <> (show idx)
                                    , onChange: onChange idx
                                    , onMoveDown: onMoveDown masterKey idx
@@ -206,34 +130,35 @@ fieldsCodeEditorCpt = here.component "fieldsCodeEditorCpt" cpt
       where
         onChange :: Index -> FieldType -> Effect Unit
         onChange idx typ = do
-          T.modify_ (\fs ->
-            fromMaybe fs $
-              List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { typ = typ })) fs) fields
+          T.modify_ (\(FTFieldsWithIndex fs) ->
+            FTFieldsWithIndex $ fromMaybe fs $
+              List.modifyAt idx (\{ ftField: Field f} -> { idx, ftField: Field $ f { typ = typ } }) fs) fields
 
         onMoveDown :: T2.ReloadS -> Index -> Unit -> Effect Unit
         onMoveDown masterKey idx _ = do
           T2.reload masterKey
-          T.modify_ (recomputeIndices <<< (GDA.swapList idx (idx + 1))) fields
+          T.modify_ (\(FTFieldsWithIndex fs) -> recomputeIndices $ FTFieldsWithIndex $ GDA.swapList idx (idx + 1) fs) fields
 
         onMoveUp :: T2.ReloadS -> Index -> Unit -> Effect Unit
         onMoveUp masterKey idx _ = do
           T2.reload masterKey
-          T.modify_ (recomputeIndices <<< (GDA.swapList idx (idx - 1))) fields
+          T.modify_ (\(FTFieldsWithIndex fs) -> recomputeIndices $ FTFieldsWithIndex $ GDA.swapList idx (idx - 1) fs) fields
 
         onRemove :: Index -> Unit -> Effect Unit
         onRemove idx _ = do
-          T.modify_ (\fs -> fromMaybe fs $ List.deleteAt idx fs) fields
+          T.modify_ (\(FTFieldsWithIndex fs) -> FTFieldsWithIndex $ fromMaybe fs $ List.deleteAt idx fs) fields
 
         onRename :: Index -> String -> Effect Unit
         onRename idx newName = do
-          T.modify_ (\fs ->
-            fromMaybe fs $ List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { name = newName })) fs) fields
+          T.modify_ (\(FTFieldsWithIndex fs) ->
+            FTFieldsWithIndex $ fromMaybe fs $
+              List.modifyAt idx (\{ ftField: Field f } -> { idx, ftField: Field $ f { name = newName } }) fs) fields
 
     recomputeIndices :: FTFieldsWithIndex -> FTFieldsWithIndex
-    recomputeIndices = List.mapWithIndex $ \idx -> \(Tuple _ t) -> Tuple idx t
+    recomputeIndices (FTFieldsWithIndex lst) = FTFieldsWithIndex $ List.mapWithIndex (\idx -> \{ ftField } -> { idx, ftField }) lst
 
 hash :: FTFieldWithIndex -> Hash
-hash (Tuple idx f) = Crypto.hash $ "--idx--" <> (show idx) <> "--field--" <> (show f)
+hash { idx, ftField } = Crypto.hash $ "--idx--" <> (show idx) <> "--field--" <> (show ftField)
 
 type FieldCodeEditorProps =
   (
@@ -250,15 +175,14 @@ type FieldCodeEditorProps =
 
 fieldCodeEditorWrapper :: Record FieldCodeEditorProps -> R.Element
 fieldCodeEditorWrapper props = R.createElement fieldCodeEditorWrapperCpt props []
-
 fieldCodeEditorWrapperCpt :: R.Component FieldCodeEditorProps
 fieldCodeEditorWrapperCpt = here.component "fieldCodeEditorWrapperCpt" cpt
   where
-    cpt props@{canMoveDown, canMoveUp, field: Field {name, typ}, onMoveDown, onMoveUp, onRemove, onRename} _ = do
-      pure $ H.div { className: "row card" } [
+    cpt props@{canMoveDown, canMoveUp, field: Field { name }, onMoveDown, onMoveUp, onRemove, onRename} _ = do
+      pure $ H.div { className: "card mb-3" } [
         H.div { className: "card-header" } [
-          H.div { className: "code-editor-heading row" } [
-              H.div { className: "col-4" } [
+          H.div { className: "code-editor-heading row no-gutters justify-content-between" } [
+              H.div { className: "col-5" } [
                  inputWithEnter { onBlur: onRename
                                 , onEnter: \_ -> pure unit
                                 , onValueChanged: onRename
@@ -268,9 +192,8 @@ fieldCodeEditorWrapperCpt = here.component "fieldCodeEditorWrapperCpt" cpt
                                 , placeholder: "Enter file name"
                                 , type: "text" }
               ]
-            , H.div { className: "col-7" } []
-            , H.div { className: "buttons-right col-1" } ([
-                H.div { className: "btn btn-danger"
+            , H.div { className: "d-flex flex-column" } ([
+                H.div { className: "btn btn-danger mb-1"
                       , on: { click: \_ -> onRemove unit }
                       } [
                   H.span { className: "fa fa-trash" } [  ]
@@ -306,7 +229,6 @@ type RenameableProps =
 
 renameable :: Record RenameableProps -> R.Element
 renameable props = R.createElement renameableCpt props []
-
 renameableCpt :: R.Component RenameableProps
 renameableCpt = here.component "renameableCpt" cpt
   where
@@ -336,7 +258,6 @@ type RenameableTextProps =
 
 renameableText :: Record RenameableTextProps -> R.Element
 renameableText props = R.createElement renameableTextCpt props []
-
 renameableTextCpt :: R.Component RenameableTextProps
 renameableTextCpt = here.component "renameableTextCpt" cpt
   where
@@ -379,7 +300,6 @@ renameableTextCpt = here.component "renameableTextCpt" cpt
 
 fieldCodeEditor :: Record FieldCodeEditorProps -> R.Element
 fieldCodeEditor props = R.createElement fieldCodeEditorCpt props []
-
 fieldCodeEditorCpt :: R.Component FieldCodeEditorProps
 fieldCodeEditorCpt = here.component "fieldCodeEditorCpt" cpt
   where
@@ -392,7 +312,7 @@ fieldCodeEditorCpt = here.component "fieldCodeEditorCpt" cpt
     cpt {field: Field {typ: typ@(JSON j)}, onChange} _ = do
       pure $ CE.codeEditor {code, defaultCodeType: CE.JSON, onChange: changeCode onChange typ}
       where
-        code = R2.stringify (encodeJson j) 2
+        code = R2.stringify (JSON.writeImpl j) 2
 
     cpt {field: Field {typ: typ@(Markdown {text})}, onChange} _ = do
       pure $ CE.codeEditor {code: text, defaultCodeType: CE.Markdown, onChange: changeCode onChange typ}
@@ -404,37 +324,38 @@ fieldCodeEditorCpt = here.component "fieldCodeEditorCpt" cpt
 -- CE.Code is the editor code (might have been the cause of the trigger)
 changeCode :: (FieldType -> Effect Unit) -> FieldType -> CE.CodeType -> CE.Code -> Effect Unit
 changeCode onc (Haskell hs)        CE.Haskell  c = onc $ Haskell $ hs { haskell = c }
-changeCode onc (Haskell hs)        CE.Python   c = onc $ Python   $ defaultPython'   { python  = c }
-changeCode onc (Haskell {haskell}) CE.JSON     c = onc $ JSON     $ defaultJSON'     { desc = haskell }
-changeCode onc (Haskell {haskell}) CE.Markdown c = onc $ Markdown $ defaultMarkdown' { text = haskell }
+changeCode onc (Haskell _)         CE.Python   c = onc $ Python   $ defaultPython'   { python  = c }
+changeCode onc (Haskell {haskell}) CE.JSON     _ = onc $ JSON     $ defaultJSON'     { desc = haskell }
+changeCode onc (Haskell {haskell}) CE.Markdown _ = onc $ Markdown $ defaultMarkdown' { text = haskell }
 
 changeCode onc (Python hs)       CE.Python   c = onc $ Python  $ hs { python  = c }
-changeCode onc (Python hs)       CE.Haskell  c = onc $ Haskell $ defaultHaskell' { haskell = c }
-changeCode onc (Python {python}) CE.JSON     c = onc $ JSON     $ defaultJSON' { desc = python }
-changeCode onc (Python {python}) CE.Markdown c = onc $ Markdown $ defaultMarkdown' { text = python }
+changeCode onc (Python _)        CE.Haskell  c = onc $ Haskell $ defaultHaskell' { haskell = c }
+changeCode onc (Python {python}) CE.JSON     _ = onc $ JSON     $ defaultJSON' { desc = python }
+changeCode onc (Python {python}) CE.Markdown _ = onc $ Markdown $ defaultMarkdown' { text = python }
 
-changeCode onc (Markdown md) CE.Haskell  c = onc $ Haskell  $ defaultHaskell'  { haskell = c }
-changeCode onc (Markdown md) CE.Python   c = onc $ Python   $ defaultPython'   { python  = c }
-changeCode onc (Markdown md) CE.JSON     c = onc $ Markdown $ defaultMarkdown' { text    = c }
+changeCode onc (Markdown _)  CE.Haskell  c = onc $ Haskell  $ defaultHaskell'  { haskell = c }
+changeCode onc (Markdown _)  CE.Python   c = onc $ Python   $ defaultPython'   { python  = c }
+changeCode onc (Markdown _)  CE.JSON     c = onc $ Markdown $ defaultMarkdown' { text    = c }
 changeCode onc (Markdown md) CE.Markdown c = onc $ Markdown $ md               { text    = c }
 
-changeCode onc (JSON j@{desc}) CE.Haskell c = onc $ Haskell $ defaultHaskell' { haskell = haskell }
+changeCode onc (JSON j) CE.Haskell _ = onc $ Haskell $ defaultHaskell' { haskell = haskell }
   where
-    haskell = R2.stringify (encodeJson j) 2
-changeCode onc (JSON j@{desc}) CE.Python c = onc $ Python $ defaultPython' { python = toCode }
+    haskell = R2.stringify (JSON.writeImpl j) 2
+changeCode onc (JSON j) CE.Python _ = onc $ Python $ defaultPython' { python = toCode }
   where
-    toCode = R2.stringify (encodeJson j) 2
-changeCode onc (JSON j) CE.JSON c = do
-  case jsonParser c of
-    Left err -> log2 "[fieldCodeEditor'] cannot parse json" c
-    Right j' -> case decodeJson j' of
-      Left err -> log2 "[fieldCodeEditor'] cannot decode json" j'
-      Right j'' -> onc $ JSON j''
-changeCode onc (JSON j) CE.Markdown c = onc $ Markdown $ defaultMarkdown' { text = text }
+    toCode = R2.stringify (JSON.writeImpl j) 2
+changeCode onc _ CE.JSON c = do
+  case JSON.readJSON c of
+    Left err -> here.log2 "[fieldCodeEditor'] cannot parse json" c  -- TODO Refactor?
+    Right j' -> onc $ JSON j'
+  -- case jsonParser c of
+  --   Left err -> here.log2 "[fieldCodeEditor'] cannot parse json" c
+  --   Right j' -> case decodeJson j' of
+  --     Left err -> here.log2 "[fieldCodeEditor'] cannot decode json" j'
+  --     Right j'' -> onc $ JSON j''
+changeCode onc (JSON j) CE.Markdown _ = onc $ Markdown $ defaultMarkdown' { text = text }
   where
-    text = R2.stringify (encodeJson j) 2
-
-
+    text = R2.stringify (JSON.writeImpl j) 2
 
 
 type LoadProps =
@@ -442,11 +363,11 @@ type LoadProps =
   , session :: Session
   )
 
-loadCorpus' :: Record LoadProps -> Aff (NodePoly Hyperdata)
+loadCorpus' :: Record LoadProps -> Aff (Either RESTError (NodePoly Hyperdata))
 loadCorpus' {nodeId, session} = get session $ NodeAPI Corpus (Just nodeId) ""
 
 -- Just to make reloading effective
-loadCorpusWithReload :: { reload :: T2.Reload  | LoadProps } -> Aff (NodePoly Hyperdata)
+loadCorpusWithReload :: { reload :: T2.Reload  | LoadProps } -> Aff (Either RESTError (NodePoly Hyperdata))
 loadCorpusWithReload {nodeId, session} = loadCorpus' {nodeId, session}
 
 type SaveProps = (
@@ -454,41 +375,69 @@ type SaveProps = (
   | LoadProps
   )
 
-saveCorpus :: Record SaveProps -> Aff Unit
+saveCorpus :: Record SaveProps -> Aff (Either RESTError Int)
 saveCorpus {hyperdata, nodeId, session} = do
-  id_ <- (put session (NodeAPI Corpus (Just nodeId) "") hyperdata) :: Aff Int
-  pure unit
+  put session (NodeAPI Corpus (Just nodeId) "") hyperdata
 
-loadCorpus :: Record LoadProps -> Aff CorpusData
+loadCorpus :: Record LoadProps -> Aff (Either RESTError CorpusData)
 loadCorpus {nodeId, session} = do
   -- fetch corpus via lists parentId
-  (NodePoly {parentId: corpusId} :: NodePoly {}) <- get session nodePolyRoute
-  corpusNode     <-  get session $ corpusNodeRoute     corpusId ""
-  defaultListIds <- (get session $ defaultListIdsRoute corpusId)
-                    :: forall a. DecodeJson a => AffTableResult (NodePoly a)
-  case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
-    Just (NodePoly { id: defaultListId }) ->
-      pure {corpusId, corpusNode, defaultListId}
-    Nothing ->
-      throwError $ error "Missing default list"
+  res <- get session nodePolyRoute
+  case res of
+    Left err -> pure $ Left err
+    Right (NodePoly {parentId: corpusId} :: NodePoly {}) -> do
+      eCorpusNode     <-  get session $ corpusNodeRoute     corpusId ""
+      eDefaultListIds <- (get session $ defaultListIdsRoute corpusId)
+                      :: forall a. JSON.ReadForeign a => AffETableResult (NodePoly a)
+      case eCorpusNode of
+        Left err -> pure $ Left err
+        Right corpusNode -> do
+          case eDefaultListIds of
+            Left err -> pure $ Left err
+            Right defaultListIds -> do
+              case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
+                Just (NodePoly { id: defaultListId }) ->
+                  pure $ Right { corpusId, corpusNode, defaultListId }
+                Nothing ->
+                  pure $ Left $ CustomError "Missing default list"
+
+--  (NodePoly {parentId: corpusId} :: NodePoly {}) <- get session nodePolyRoute
+--  corpusNode     <-  get session $ corpusNodeRoute     corpusId ""
+--  defaultListIds <- (get session $ defaultListIdsRoute corpusId)
+--                    :: forall a. JSON.ReadForeign a => AffTableResult (NodePoly a)
+--  case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
+--    Just (NodePoly { id: defaultListId }) ->
+--      pure {corpusId, corpusNode, defaultListId}
+--    Nothing ->
+--      throwError $ error "Missing default list"
   where
     nodePolyRoute       = NodeAPI Corpus (Just nodeId) ""
     corpusNodeRoute     = NodeAPI Corpus <<< Just
     defaultListIdsRoute = Children NodeList 0 1 Nothing <<< Just
 
 
-loadCorpusWithChild :: Record LoadProps -> Aff CorpusData
+loadCorpusWithChild :: Record LoadProps -> Aff (Either RESTError CorpusData)
 loadCorpusWithChild { nodeId: childId, session } = do
   -- fetch corpus via lists parentId
-  (NodePoly {parentId: corpusId} :: NodePoly {}) <- get session $ listNodeRoute childId ""
-  corpusNode     <-  get session $ corpusNodeRoute     corpusId ""
-  defaultListIds <- (get session $ defaultListIdsRoute corpusId)
-                    :: forall a. DecodeJson a => AffTableResult (NodePoly a)
-  case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
-    Just (NodePoly { id: defaultListId }) ->
-      pure { corpusId, corpusNode, defaultListId }
-    Nothing ->
-      throwError $ error "Missing default list"
+  eListNode <- get session $ listNodeRoute childId ""
+  case eListNode of
+    Left err -> pure $ Left err
+    Right listNode -> do
+      let (NodePoly {parentId: corpusId} :: NodePoly {}) = listNode
+      eCorpusNode     <-  get session $ corpusNodeRoute     corpusId ""
+      case eCorpusNode of
+        Left err -> pure $ Left err
+        Right corpusNode -> do
+          eDefaultListIds <- (get session $ defaultListIdsRoute corpusId)
+                             :: forall a. JSON.ReadForeign a => AffETableResult (NodePoly a)
+          case eDefaultListIds of
+            Left err -> pure $ Left err
+            Right defaultListIds -> do
+              case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
+                Just (NodePoly { id: defaultListId }) ->
+                  pure $ Right { corpusId, corpusNode, defaultListId }
+                Nothing ->
+                  throwError $ error "Missing default list"
   where
     corpusNodeRoute     = NodeAPI Corpus <<< Just
     listNodeRoute       = NodeAPI Node <<< Just
@@ -503,14 +452,14 @@ type LoadWithReloadProps =
 
 
 -- Just to make reloading effective
-loadCorpusWithChildAndReload :: Record LoadWithReloadProps -> Aff CorpusData
-loadCorpusWithChildAndReload {nodeId, reload, session} = loadCorpusWithChild {nodeId, session}
+loadCorpusWithChildAndReload :: Record LoadWithReloadProps -> Aff (Either RESTError CorpusData)
+loadCorpusWithChildAndReload {nodeId, session} = loadCorpusWithChild {nodeId, session}
 
 data ViewType = Code | Folders
-derive instance genericViewType :: Generic ViewType _
-instance eqViewType :: Eq ViewType where
+derive instance Generic ViewType _
+instance Eq ViewType where
   eq = genericEq
-instance showViewType :: Show ViewType where
+instance Show ViewType where
   show = genericShow
 
 type ViewTypeSelectorProps =
@@ -520,7 +469,6 @@ type ViewTypeSelectorProps =
 
 viewTypeSelector :: Record ViewTypeSelectorProps -> R.Element
 viewTypeSelector p = R.createElement viewTypeSelectorCpt p []
-
 viewTypeSelectorCpt :: R.Component ViewTypeSelectorProps
 viewTypeSelectorCpt = here.component "viewTypeSelector" cpt
   where

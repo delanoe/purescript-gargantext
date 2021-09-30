@@ -15,16 +15,69 @@ let
     #!/usr/bin/env bash
     set -e
 
+    echo "Installing JS Dependencies"
+    yarn
+
     echo "Compiling"
-    build-purs
+    #build-purs
     echo "Bundling"
-    yarn pulp browserify --skip-compile -t dist/bundle.js --src-path output
+    #pulp browserify --skip-compile -t dist/bundle.js --src-path output
+    spago build
+    browserify
+  '';
+
+
+  build-css = pkgs.writeShellScriptBin "build-css" ''
+    #!/usr/bin/env bash
+    set -e
+
+    yarn css
+
+  '';
+
+  build-watch = pkgs.writeShellScriptBin "build-watch" ''
+    #!/usr/bin/env bash
+    set -e
+
+    echo "Build watch"
+    spago build -w --then browserify
+  '';
+
+  build-zephyr = pkgs.writeShellScriptBin "build-zephyr" ''
+    #!/usr/bin/env bash
+    set -e
+
+    spago build --purs-args '--codegen corefn,js'
+    zephyr -f Main.main
+    browserify-zephyr
+  '';
+
+  browserify = pkgs.writeShellScriptBin "browserify" ''
+    #!/usr/bin/env bash
+    set -e
+
+    pulp browserify --skip-compile -t dist/bundle.js --src-path output
+  '';
+
+  browserify-zephyr = pkgs.writeShellScriptBin "browserify-zephyr" ''
+    #!/usr/bin/env bash
+    set -e
+
+    pulp browserify --skip-compile -t dist/bundle.js -o dce-output
+    #purs bundle -o dist/bundle.js -m Main dce-output/**/*.js
+  '';
+
+  minify-bundle = pkgs.writeShellScriptBin "minify-bundle" ''
+    #!/usr/bin/env bash
+    set -e
+
+    minify dist/bundle.js > dist/bundle.min.js
   '';
 
   repl = pkgs.writeShellScriptBin "repl" ''
     #!/usr/bin/env bash
 
-    yarn pulp repl
+    spago repl
   '';
 
   test-ps = pkgs.writeShellScriptBin "test-ps" ''
@@ -34,19 +87,31 @@ let
     echo "Compiling"
     build-purs
     echo "Testing"
-    # yarn pulp browserify --skip-compile -t dist/bundle.js --src-path output
-    # yarn pulp test --src-path output --test-path output
+    # pulp browserify --skip-compile -t dist/bundle.js --src-path output
+    # pulp test --src-path output --test-path output
     NODE_PATH=output node -e "require('Test.Main').main();"
   '';
 in
 pkgs.mkShell {
   buildInputs = [
-    easy-ps.purs
+    easy-ps.purs-0_14_4
     easy-ps.psc-package
     easy-ps.dhall-json-simple
+    easy-ps.zephyr
+    browserify
+    browserify-zephyr
+    build-css
     build-purs
+    build-watch
+    build-zephyr
     build
+    minify-bundle
+    pkgs.closurecompiler
+    pkgs.minify
+    pkgs.nodejs
     repl
+    pkgs.pulp
+    pkgs.spago
     pkgs.yarn
     test-ps
   ];

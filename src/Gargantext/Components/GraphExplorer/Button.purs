@@ -3,11 +3,13 @@ module Gargantext.Components.GraphExplorer.Button
 
 import Prelude
 
+import Data.Either (Either(..))
 import Data.Enum (fromEnum)
 import Data.Maybe (Maybe(..))
 import Data.DateTime as DDT
 import Data.DateTime.Instant as DDI
 import Data.String as DS
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
@@ -93,9 +95,14 @@ cameraButton { id
               _   -> GET.Camera { ratio: 1.0, x: 0.0, y: 0.0 }
         let hyperdataGraph' = GET.HyperdataGraph { graph: graphData, mCamera: Just camera }
         launchAff_ $ do
-          clonedGraphId <- cloneGraph { id, hyperdataGraph: hyperdataGraph', session }
-          ret <- uploadArbitraryDataURL session clonedGraphId (Just $ nowStr <> "-" <> "screenshot.png") screen
-          liftEffect $ T2.reload reloadForest
-          pure ret
+          eClonedGraphId <- cloneGraph { id, hyperdataGraph: hyperdataGraph', session }
+          case eClonedGraphId of
+            Left err -> liftEffect $ log2 "[cameraButton] RESTError" err
+            Right clonedGraphId -> do
+              eRet <- uploadArbitraryDataURL session clonedGraphId (Just $ nowStr <> "-" <> "screenshot.png") screen
+              case eRet of
+                Left err -> liftEffect $ log2 "[cameraButton] RESTError" err
+                Right _ret -> do
+                  liftEffect $ T2.reload reloadForest
   , text: "Screenshot"
   }

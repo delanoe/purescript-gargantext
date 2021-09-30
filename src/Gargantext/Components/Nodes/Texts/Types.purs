@@ -9,7 +9,7 @@ import Gargantext.Types (ListId, NodeID)
 import Gargantext.Utils.Reactix as R2
 
 data SidePanelState = InitialClosed | Opened | Closed
-derive instance eqSidePanelState :: Eq SidePanelState
+derive instance Eq SidePanelState
 
 toggleSidePanelState :: SidePanelState -> SidePanelState
 toggleSidePanelState InitialClosed = Opened

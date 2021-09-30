@@ -1,57 +1,59 @@
 module Gargantext.Components.TopBar where
 
+import Gargantext.Prelude
+
 import Data.Foldable (intercalate)
-import Data.Tuple.Nested ((/\))
+import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
+import Gargantext.Components.Themes (themeSwitcher, allThemes)
+import Gargantext.Types (Handed(..), reverseHanded)
+import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
-import Gargantext.Prelude
-
-import Gargantext.Components.Themes (themeSwitcher, defaultTheme, allThemes)
-import Gargantext.Types (Handed(..), reverseHanded)
-import Gargantext.Utils.Reactix as R2
-
 here :: R2.Here
 here = R2.here "Gargantext.Components.TopBar"
 
-type TopBarProps = ( handed :: T.Box Handed )
+type TopBarProps =
+  ( boxes :: Boxes )
 
 topBar :: R2.Component TopBarProps
 topBar = R.createElement topBarCpt
-
 topBarCpt :: R.Component TopBarProps
 topBarCpt = here.component "topBar" cpt
   where
-    cpt { handed } children = do
+    cpt { boxes: { handed, showTree, theme } } children = do
       handed' <- T.useLive T.unequal handed
 
-      pure $ H.div { className: "navbar navbar-expand-lg navbar-dark bg-dark fixed-top"
+      pure $ H.div { className: "navbar navbar-expand-lg navbar-dark bg-dark"
                    , id: "dafixedtop"
                    , role: "navigation"
                    }
-        [ H.div { className: "container-fluid" } $ reverseHanded handed' [
-             -- NOTE: first (and only) entry in the sorted array should have the "ml-auto class"
-             -- https://stackoverflow.com/questions/19733447/bootstrap-navbar-with-left-center-or-right-aligned-items
-             -- In practice: only apply "ml-auto" to the last element of this list, if handed == LeftHanded
-             logo
-             , H.div { className: "collapse navbar-collapse" }
-               [ H.ul { className: "navbar-nav " <> if handed' == LeftHanded then "ml-auto" else "" } $ reverseHanded handed'
-               ([ divDropdownLeft {} []
-                , handButton handed'
-                , smiley
-                , H.li { className: "nav-item" } [ themeSwitcher { theme: defaultTheme
-                                                                 , themes: allThemes } [] ]
-                ] <> children)
-               ]
-             ]
+        [ H.div { className: "container-fluid" } $ reverseHanded handed'
+          [
+            -- NOTE: first (and only) entry in the sorted array should have the "ml-auto class"
+            -- https://stackoverflow.com/questions/19733447/bootstrap-navbar-with-left-center-or-right-aligned-items
+            -- In practice: only apply "ml-auto" to the last element of this list, if handed == LeftHanded
+            logo
+          , H.div { className: "collapse navbar-collapse" }
+            [ H.ul { className: "navbar-nav " <> if handed' == LeftHanded then "ml-auto" else "" } $ reverseHanded handed'
+              ([ divDropdownLeft {} []
+               , handButton
+               , smiley
+               , H.li { className: "nav-item" } [ themeSwitcher { theme
+                                                                , themes: allThemes } [] ]
+               , Toggle.treeToggleButton { state: showTree } []
+               ] <> children)
+            ]
+          ]
         ]
           where
-            handButton handed' = H.li { title: "If you are Left Handed you can change\n"
-                                            <> "the interface by clicking on me. Click\n"
-                                            <> "again to come back to previous state."
-                                      , className: "nav-item"
-                                      } [handedChooser { handed } []]
+            handButton = H.li { title: "If you are Left Handed you can change\n"
+                                <> "the interface by clicking on me. Click\n"
+                                <> "again to come back to previous state."
+                              , className: "nav-item"
+                              } [handedChooser { handed } []]
 
             smiley = H.li { title: "Hello! Looking for the tree ?\n"
                                 <> "Just watch on the other side!\n"
@@ -69,7 +71,6 @@ topBarCpt = here.component "topBar" cpt
                               -}
 
             -- SB.searchBar {session, databases: allDatabases}
-
 
 logo :: R.Element
 logo =
@@ -162,7 +163,7 @@ menuButton = R.createElement menuButtonCpt
 menuButtonCpt :: R.Component MenuButtonProps
 menuButtonCpt = here.component "menuButton" cpt
   where
-    cpt { element: LiNav { title, href, icon, text }, show } _ = do
+    cpt { element: LiNav { icon, text, title }, show } _ = do
       pure $ H.a { className: "dropdown-toggle navbar-text"
                 -- , data: {toggle: "dropdown"}
                 , title

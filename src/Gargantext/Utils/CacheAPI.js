@@ -1,9 +1,6 @@
-exports._makeRequest = function() {
-    return function(url) {
-        return function(options) {
-            return new Request(url, options);
-
-        }
+exports._makeRequest = function(url) {
+    return function(options) {
+        return new Request(url, options);
     }
 }
 

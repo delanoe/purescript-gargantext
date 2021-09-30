@@ -4,7 +4,7 @@ import Data.Maybe (Maybe(..))
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-import Gargantext.Components.Forest.Tree.Node.Action (Action(DownloadNode))
+import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(DownloadNode))
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, panel, submitButtonHref)
 import Gargantext.Ends (url)
 import Gargantext.Prelude (pure, ($))
@@ -77,5 +77,5 @@ actionDownloadOther :: R2.Component ActionDownload
 actionDownloadOther = R.createElement actionDownloadOtherCpt
 actionDownloadOtherCpt :: R.Component ActionDownload
 actionDownloadOtherCpt = here.component "actionDownloadOther" cpt where
-  cpt { id, session } _ = do
+  cpt _ _ = do
     pure $ fragmentPT $ "Soon, you will be able to download your file here "

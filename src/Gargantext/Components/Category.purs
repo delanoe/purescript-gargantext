@@ -1,23 +1,25 @@
 -- TODO: this module should be replaced by FacetsTable
 module Gargantext.Components.Category where
 
-import Gargantext.Prelude (discard, map, pure, void, ($), (-), (<), (<>), (==))
-import Data.Argonaut (class EncodeJson, encodeJson, jsonEmptyObject, (:=), (~>))
+import Gargantext.Prelude
+
 import Data.Array as A
+import Data.Either (Either)
+import Data.Generic.Rep (class Generic)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff, launchAff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
 
-import Gargantext.Components.Category.Types
-  ( Category(..), Star(..), cat2score, categories, clickAgain, star2score, stars )
-import Gargantext.Components.DocsTable.Types
-  ( DocumentsView(..), LocalCategories, LocalUserScore )
-import Gargantext.Utils.Reactix as R2
+import Gargantext.Components.Category.Types (Category(..), Star(..), cat2score, categories, clickAgain, star2score, stars)
+import Gargantext.Components.DocsTable.Types (DocumentsView(..), LocalCategories, LocalUserScore)
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, put)
 import Gargantext.Types (NodeID, NodeType(..))
+import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Category"
@@ -56,14 +58,12 @@ newtype RatingQuery =
   RatingQuery { nodeIds :: Array Int
               , rating  :: Star
               }
+derive instance Generic RatingQuery _
+instance JSON.WriteForeign RatingQuery where
+  writeImpl (RatingQuery post) = JSON.writeImpl { ntc_nodesId: post.nodeIds
+                                                , ntc_category: post.rating }
 
-instance encodeJsonRatingQuery :: EncodeJson RatingQuery where
-  encodeJson (RatingQuery post) =
-    "ntc_nodesId" := post.nodeIds
-    ~> "ntc_category" := encodeJson post.rating
-    ~> jsonEmptyObject
-
-putRating :: Session -> Int -> RatingQuery -> Aff (Array Int)
+putRating :: Session -> Int -> RatingQuery -> Aff (Either RESTError (Array Int))
 putRating session nodeId = put session $ ratingRoute where
   ratingRoute = NodeAPI Node (Just nodeId) "category"
 
@@ -139,15 +139,13 @@ newtype CategoryQuery = CategoryQuery {
     nodeIds :: Array Int
   , category :: Category
   }
-
-instance encodeJsonCategoryQuery :: EncodeJson CategoryQuery where
-  encodeJson (CategoryQuery post) =
-    "ntc_nodesId" := post.nodeIds
-    ~> "ntc_category" := encodeJson post.category
-    ~> jsonEmptyObject
+derive instance Generic CategoryQuery _
+instance JSON.WriteForeign CategoryQuery where
+  writeImpl (CategoryQuery post) = JSON.writeImpl { ntc_nodesId: post.nodeIds
+                                                  , ntc_category: post.category }
 
 categoryRoute :: Int -> SessionRoute
 categoryRoute nodeId = NodeAPI Node (Just nodeId) "category"
 
-putCategories :: Session -> Int -> CategoryQuery -> Aff (Array Int)
+putCategories :: Session -> Int -> CategoryQuery -> Aff (Either RESTError (Array Int))
 putCategories session nodeId = put session $ categoryRoute nodeId

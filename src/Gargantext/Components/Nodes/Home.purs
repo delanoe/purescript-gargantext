@@ -2,10 +2,10 @@ module Gargantext.Components.Nodes.Home where
 
 import Gargantext.Prelude
 
-import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Effect (Effect)
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Lang (LandingLang(..))
@@ -13,11 +13,10 @@ import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
 import Gargantext.Components.Nodes.Home.Public (renderPublic)
 import Gargantext.Config as Config
-import Gargantext.Ends (Backend(..))
 import Gargantext.License (license)
 import Gargantext.Sessions (Sessions)
 import Gargantext.Sessions as Sessions
-import Gargantext.Sessions.Types (Session(..))
+import Gargantext.Sessions.Types (Session(..), cleanBackendUrl)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -29,7 +28,7 @@ here = R2.here "Gargantext.Components.Nodes.Home"
 
 newtype State = State { userName :: String, password :: String }
 
-derive instance newtypeState :: Newtype State _
+derive instance Newtype State _
 
 initialState :: State
 initialState = State { userName: "", password: "" }
@@ -52,22 +51,21 @@ langLandingData LL_EN = En.landingData
 
 ------------------------------------------------------------------------
 
-type HomeProps s l =
-  ( backend :: T.Box (Maybe Backend)
+type HomeProps =
+  ( boxes     :: Boxes
   , lang      :: LandingLang
-  , sessions  :: s
-  , showLogin :: l
   )
 
-homeLayout :: forall s l. T.Read s Sessions => T.ReadWrite l Boolean
-           => R2.Leaf (HomeProps s l)
+homeLayout :: R2.Leaf HomeProps
 homeLayout props = R.createElement homeLayoutCpt props []
-homeLayoutCpt :: forall s l. T.Read s Sessions => T.ReadWrite l Boolean
-             => R.Component (HomeProps s l)
+homeLayoutCpt :: R.Component HomeProps
 homeLayoutCpt = here.component "homeLayout" cpt
   where
-    cpt { backend, lang, sessions, showLogin } _ = do
-      backend' <- T.useLive T.unequal backend
+    cpt { boxes: boxes@{ backend
+                       , sessions
+                       , showLogin }
+        , lang } _ = do
+      backend'  <- T.useLive T.unequal backend
       sessions' <- T.useLive T.unequal sessions
       let landingData = langLandingData lang
       pure $
@@ -75,7 +73,7 @@ homeLayoutCpt = here.component "homeLayout" cpt
         [ H.div { className: "home-title container1" }
           [ jumboTitle landingData ]
         , H.div { className: "home-research-form container1" } [] -- TODO
-        , joinButtonOrTutorial sessions' (click backend')
+        , joinButtonOrTutorial boxes sessions' (click backend')
         , H.div { className: "home-public container1" }
           [ renderPublic { }
           , H.div { className:"col-12 d-flex justify-content-center" }
@@ -94,13 +92,16 @@ homeLayoutCpt = here.component "homeLayout" cpt
                 Just b -> do
                   T.write_ (Just b) backend
                   T.write_ true showLogin
-            Just b -> T.write_ true showLogin
+            Just _ -> T.write_ true showLogin
 
-joinButtonOrTutorial :: forall e. Sessions -> (e -> Effect Unit) -> R.Element
-joinButtonOrTutorial sessions click =
+joinButtonOrTutorial :: forall e. Boxes
+                     -> Sessions
+                     -> (e -> Effect Unit)
+                     -> R.Element
+joinButtonOrTutorial boxes sessions click =
   if Sessions.null sessions
   then joinButton click
-  else tutorial {sessions: Sessions.unSessions sessions}
+  else tutorial { boxes, sessions: Sessions.unSessions sessions }
      
 joinButton :: forall e. (e -> Effect Unit) -> R.Element
 joinButton click =
@@ -108,10 +109,10 @@ joinButton click =
   -- form { backend, sessions, visible }
   H.div { className: divClass
         , style: { paddingTop: "100px", paddingBottom: "100px" } }
-  [ H.button { className: buttonClass, title, on: { click } } [ H.text "Join" ] ] where
+        [ H.button { className: buttonClass, title, on: { click } } [ H.text "Log in" ] ] where
     title = "Connect to the server"
     divClass = "flex-space-around d-flex justify-content-center" 
-    buttonClass = "btn btn-primary my-2"
+    buttonClass = "btn btn-primary btn-lg btn-block"
 
 incompatible :: String
 incompatible =
@@ -132,9 +133,9 @@ data Tuto = Tuto { title :: String, id :: String, text  :: String }
 summary :: R.Element
 summary =
   H.div {}
-  [ H.h3 {} [ H.text "Tutorial summary"]
+  [ H.h3 {} [ H.text "Summary"]
   , H.ol {}
-    [ sum "Getting Started (beginners)" startTutos "alert-info"
+    [ sum "Getting Started for beginners" startTutos "alert-info"
     -- , sum "How to play (advanced users)?" playTutos "alert-warning"
     -- , sum "How to master (expert users)?" expertTutos "alert-danger"
     ]]
@@ -146,41 +147,50 @@ summary =
         , H.ol {} (map toSummary tutos) ] ]          
     toSummary (Tuto x) = H.li {} [ H.a {href: "#" <> x.id} [ H.text x.title ]]
 
-tutorial :: R2.Leaf (sessions :: Array Session)
-tutorial props = R.createElement tutorialCpt props []
+type TutorialProps =
+  ( boxes :: Boxes
+  , sessions :: Array Session )
 
-tutorialCpt :: R.Component (sessions :: Array Session)
+tutorial :: R2.Leaf TutorialProps
+tutorial props = R.createElement tutorialCpt props []
+tutorialCpt :: R.Component TutorialProps
 tutorialCpt = here.component "tutorial" cpt where
-  cpt {sessions} _ = do
+  cpt { boxes
+      , sessions } _ = do
     let folders = makeFolders sessions
 
     pure $ H.div { className: "mx-auto container" }
-      [ H.div {className: "d-flex justify-content-center"} [ H.table {} folders ]
-      , H.h1 {} [H.text "Welcome!"]
-      , H.h2 {} [H.text "For easy start, just watch the tutorials"]
-      , summary
-      , H.h3 {} [H.text "Tutorial resources"]
-      , section "How to start?" "alert-info" startTutos
+      [ H.div {className: "d-flex justify-content-center"} [ H.div { className: "folders" } folders ]
+      -- , H.h1 {} [H.text "Tutorials"]
+      -- , summary
+      -- , H.h3 {} [H.text "Resources"]
+      -- , section "How to start?" "alert-info" startTutos
       -- , section "How to play?" "alert-warning" playTutos
       -- , section "How to master?" "alert-danger" expertTutos
       ]
     where
+      {-
       section name class' tutos =
         H.div {} $ Array.cons (H.h4 {} [ H.text name ]) (map (makeTuto class') tutos)
       makeTuto class' (Tuto x) =
         H.div { className : "alert " <> class', id: x.id}
         [ video x.id, H.h4 {} [ H.text x.title ], H.p  {} [ H.text x.text ] ]
+      -}
 
       makeFolders :: Array Session -> Array R.Element
-      makeFolders s = sessionToFolder <$> s where
-        sessionToFolder session@(Session {treeId, username, backend: (Backend {name})}) = 
-          H.tr {} [
-            H.div { className: "d-flex justify-content-center" } [ H.text (username <> "@" <> name) ]
-          , H.div {} [ FV.folderView {session, nodeId: treeId, backFolder: false} ] ]
+      makeFolders s = sessionToFolder <$> s
+        where
+          sessionToFolder session@(Session {treeId, username, backend}) = 
+            H.span { className: "folder" } [
+              H.div { className: "d-flex justify-content-center" } [ H.text (username <> "@" <> (cleanBackendUrl backend)) ]
+            , H.div {} [ FV.folderView { backFolder: false
+                                       , boxes
+                                       , nodeId: treeId
+                                       , session } ] ]
 
 startTutos :: Array Tuto
 startTutos =
-  [ Tuto { title: "The tree is your friend"
+  [ Tuto { title: "The tree to manage your data"
          , id: "0_tree.ogv"
          , text : "The tree enables you to control all your actions. The Tree has typed nodes. Each node has some attributes and some methods which depend on its type. This specific ergonomy helps the memorization of all the complexity of the GarganTexts' features: hence you do not need to remember all the documentation! Just remember these simple axioms, the Tree is built with parent-children relations of nodes which have specific attributes and methods. To get its methods and attributes, just click on the wheel near its name (for this feature, see advanced tutorial: how to play with GarganText)." }
   -- ,  Tuto { title : "Edit your profile"

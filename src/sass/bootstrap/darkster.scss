@@ -74,5 +74,9 @@ $breadcrumb-active-color:$gray-500;
 @import "../../../node_modules/bootstrap/scss/bootstrap";
 
 // Add SASS theme customizations here..
+@import "../abstract/_members";
+@import "./common";
+
 .navbar-dark.bg-primary {background-color:#111111 !important;}
 .table.able {color:#ccccc5}
+#sp-container .table tr td a { color: #005a9aff; }

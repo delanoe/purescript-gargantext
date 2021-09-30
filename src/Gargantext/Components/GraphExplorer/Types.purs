@@ -1,13 +1,16 @@
 module Gargantext.Components.GraphExplorer.Types where
 
-import Data.Argonaut (class DecodeJson, decodeJson, class EncodeJson, encodeJson, (.:), (.:?), jsonEmptyObject, (~>), (:=))
 import Data.Array ((!!), length)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
+import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
 import Data.Ord
+import Data.Ord.Generic (genericCompare)
+import Data.Symbol (SProxy(..))
 import Partial.Unsafe (unsafePartial)
+import Record as Record
+import Simple.JSON as JSON
 
 import Gargantext.Prelude
 
@@ -23,19 +26,51 @@ newtype Node = Node {
   , y :: Number
   }
 
-derive instance genericNode :: Generic Node _
-derive instance newtypeNode :: Newtype Node _
-instance eqNode :: Eq Node where
-  eq = genericEq
-instance ordNode :: Ord Node where
-  compare (Node n1) (Node n2) = compare n1.id_ n2.id_
+x_coordP = SProxy :: SProxy "x_coord"
+xP = SProxy :: SProxy "x"
+y_coordP = SProxy :: SProxy "y_coord"
+yP = SProxy :: SProxy "y"
+clustDefaultP = SProxy :: SProxy "clustDefault"
+clust_defaultP = SProxy :: SProxy "clust_default"
+cameraP = SProxy :: SProxy "camera"
+mCameraP = SProxy :: SProxy "mCamera"
+idP = SProxy :: SProxy "id"
+id_P = SProxy :: SProxy "id_"
+typeP = SProxy :: SProxy "type"
+type_P = SProxy :: SProxy "type_"
+
+derive instance Generic Node _
+derive instance Newtype Node _
+instance Eq Node where eq = genericEq
+instance Ord Node where compare (Node n1) (Node n2) = compare n1.id_ n2.id_
+instance JSON.ReadForeign Node where
+  readImpl f = do
+    inst <- JSON.readImpl f
+    pure $ Node $
+      Record.rename idP id_P $
+      Record.rename typeP type_P $
+      Record.rename x_coordP xP $
+      Record.rename y_coordP yP inst
+instance JSON.WriteForeign Node where
+  writeImpl (Node nd) = JSON.writeImpl $
+                        Record.rename id_P idP $
+                        Record.rename type_P typeP $
+                        Record.rename xP x_coordP $
+                        Record.rename yP y_coordP nd
+
 
 newtype Cluster = Cluster { clustDefault :: Int }
 
-derive instance genericCluster :: Generic Cluster _
-derive instance newtypeCluster :: Newtype Cluster _
-instance eqCluster :: Eq Cluster where
-  eq = genericEq
+derive instance Generic Cluster _
+derive instance Newtype Cluster _
+instance Eq Cluster where eq = genericEq
+instance JSON.ReadForeign Cluster where
+  readImpl f = do
+    inst <- JSON.readImpl f
+    pure $ Cluster $ Record.rename clust_defaultP clustDefaultP inst
+instance JSON.WriteForeign Cluster where
+  writeImpl (Cluster cl) = JSON.writeImpl $ Record.rename clustDefaultP clust_defaultP cl
+
 
 newtype Edge = Edge {
     confluence :: Number
@@ -45,12 +80,16 @@ newtype Edge = Edge {
   , weight :: Number
   }
 
-derive instance genericEdge :: Generic Edge _
-derive instance newtypeEdge :: Newtype Edge _
-instance eqEdge :: Eq Edge where
-  eq = genericEq
-instance ordEdge :: Ord Edge where
-  compare (Edge e1) (Edge e2) = compare e1.id_ e2.id_
+derive instance Generic Edge _
+derive instance Newtype Edge _
+instance Eq Edge where eq = genericEq
+instance Ord Edge where compare (Edge e1) (Edge e2) = compare e1.id_ e2.id_
+instance JSON.ReadForeign Edge where
+  readImpl f = do
+    inst <- JSON.readImpl f
+    pure $ Edge $ Record.rename idP id_P inst
+instance JSON.WriteForeign Edge where
+  writeImpl (Edge ed) = JSON.writeImpl $ Record.rename id_P idP ed
 
 -- | A 'fully closed interval' in CS parlance
 type InclusiveRange t = { min :: t, max :: t }
@@ -65,9 +104,8 @@ newtype GraphSideCorpus = GraphSideCorpus
   , corpusLabel :: CorpusLabel
   , listId      :: ListId
   }
-derive instance genericGraphSideCorpus :: Generic GraphSideCorpus _
-instance eqGraphSideCorpus :: Eq GraphSideCorpus where
-  eq = genericEq
+derive instance Generic GraphSideCorpus _
+instance Eq GraphSideCorpus where eq = genericEq
 
 newtype GraphData = GraphData
   { nodes :: Array Node
@@ -75,37 +113,55 @@ newtype GraphData = GraphData
   , sides :: Array GraphSideCorpus
   , metaData :: Maybe MetaData
   }
-derive instance newtypeGraphData :: Newtype GraphData _
-derive instance genericGraphData :: Generic GraphData _
-instance eqGraphData :: Eq GraphData where
-  eq = genericEq
-
+derive instance Newtype GraphData _
+derive instance Generic GraphData _
+instance Eq GraphData where eq = genericEq
+instance JSON.ReadForeign GraphData where
+  readImpl f = do
+    inst :: { nodes :: Array Node
+            , edges :: Array Edge
+            , metadata :: MetaData } <- JSON.readImpl f
+    let (MetaData metadata) = inst.metadata
+    let side x = GraphSideCorpus { corpusId: x
+                                 , corpusLabel: "Publications"
+                                 , listId : metadata.list.listId }
+    let sides = side <$> metadata.corpusId
+    pure $ GraphData { nodes: inst.nodes
+                     , edges: inst.edges
+                     , sides
+                     , metaData: Just inst.metadata }
+instance JSON.WriteForeign GraphData where
+  writeImpl (GraphData gd) = JSON.writeImpl { nodes: gd.nodes
+                                            , edges: gd.edges
+                                            , metadata: gd.metaData }
 
 newtype MetaData = MetaData
   { corpusId :: Array Int
   , legend   :: Array Legend
-  , list :: { listId   :: ListId
-           , version  :: Version
-           }
+  , list :: { listId  :: ListId
+            , version :: Version
+            }
   , metric :: String  -- dummy value
   , startForceAtlas :: Boolean
   , title    :: String
   }
-derive instance genericMetaData :: Generic MetaData _
-instance eqMetaData :: Eq MetaData where
-  eq = genericEq
+derive instance Generic MetaData _
+derive instance Newtype MetaData _
+instance Eq MetaData where eq = genericEq
+derive newtype instance JSON.ReadForeign MetaData
+derive newtype instance JSON.WriteForeign MetaData
 
 getLegend :: GraphData -> Maybe (Array Legend)
 getLegend (GraphData {metaData}) = (\(MetaData m) -> m.legend) <$> metaData
 
 newtype SelectedNode = SelectedNode {id :: String, label :: String}
 
-derive instance eqSelectedNode :: Eq SelectedNode
-derive instance newtypeSelectedNode :: Newtype SelectedNode _
-derive instance ordSelectedNode :: Ord SelectedNode
+derive instance Generic SelectedNode _
+derive instance Newtype SelectedNode _
+instance Eq SelectedNode where eq = genericEq
+instance Ord SelectedNode where compare = genericCompare
 
-instance showSelectedNode :: Show SelectedNode where
-  show (SelectedNode node) = node.label
+instance Show SelectedNode where show (SelectedNode node) = node.label
 
 type State = (
   --  corpusId :: R.State Int
@@ -137,135 +193,19 @@ initialGraphData = GraphData {
      }
   }
 
-instance decodeJsonGraphData :: DecodeJson GraphData where
-  decodeJson json = do
-    obj <- decodeJson json
-    nodes <- obj .: "nodes"
-    edges <- obj .: "edges"
-    -- TODO: sides
-    metadata <- obj .: "metadata"
-    corpusIds <- metadata .: "corpusId"
-    list      <- metadata .: "list"
-    listId'   <- list .: "listId"
-    metaData <- obj .: "metadata"
-    let side x = GraphSideCorpus { corpusId: x, corpusLabel: "Publications", listId : listId'}
-    let sides = side <$> corpusIds
-    pure $ GraphData { nodes, edges, sides, metaData }
-
-instance encodeJsonGraphData :: EncodeJson GraphData where
-  encodeJson (GraphData gd) =
-       "nodes"    := gd.nodes
-     ~> "edges"    := gd.edges
-     ~> "metadata" := gd.metaData
-     ~> jsonEmptyObject
-
-instance decodeJsonNode :: DecodeJson Node where
-  decodeJson json = do
-    obj <- decodeJson json
-    id_ <- obj .: "id"
-    type_ <- obj .: "type"
-    label <- obj .: "label"
-    size  <- obj .: "size"
-    attributes <- obj .: "attributes"
-    x <- obj .: "x_coord"
-    y <- obj .: "y_coord"
-    pure $ Node { id_, type_, size, label, attributes, x, y }
-
-instance encodeJsonNode :: EncodeJson Node where
-  encodeJson (Node nd) =
-       "id"         := nd.id_
-     ~> "attributes" := nd.attributes
-     ~> "label"      := nd.label
-     ~> "size"       := nd.size
-     ~> "type"       := nd.type_
-     ~> "x_coord"    := nd.x
-     ~> "y_coord"    := nd.y
-     ~> jsonEmptyObject
-
-
-instance decodeJsonMetaData :: DecodeJson MetaData where
-  decodeJson json = do
-    obj      <- decodeJson json
-    legend   <- obj .: "legend"
-    corpusId <- obj .: "corpusId"
-    list     <- obj .: "list"
-    listId   <- list .: "listId"
-    metric   <- obj .: "metric"
-    startForceAtlas <- obj .: "startForceAtlas"
-    title   <- obj .: "title"
-    version <- list .: "version"
-    pure $ MetaData {
-        corpusId
-      , legend
-      , list: {listId, version}
-      , metric
-      , startForceAtlas
-      , title
-    }
-
-instance encodeJsonMetaData :: EncodeJson MetaData where
-  encodeJson (MetaData md) =
-       "corpusId"        := md.corpusId
-     ~> "legend"          := md.legend
-     ~> "list"            := md.list
-     ~> "metric"          := md.metric
-     ~> "startForceAtlas" := md.startForceAtlas
-     ~> "title"           := md.title
-     ~> jsonEmptyObject
-
-instance decodeJsonLegend :: DecodeJson Legend where
-  decodeJson json = do
-    obj <- decodeJson json
-    id_   <- obj .: "id"
-    color <- obj .: "color"
-    label <- obj .: "label"
-    pure $ Legend { id_, color, label }
-
-instance encodeJsonLegend :: EncodeJson Legend where
-  encodeJson (Legend lg) =
-       "id"    := lg.id_
-     ~> "color" := lg.color
-     ~> "label" := lg.label
-     ~> jsonEmptyObject
-
-
-instance decodeJsonCluster :: DecodeJson Cluster where
-  decodeJson json = do
-    obj <- decodeJson json
-    clustDefault <- obj .: "clust_default"
-    pure $ Cluster { clustDefault }
-
-instance encodeJsonCluster :: EncodeJson Cluster where
-  encodeJson (Cluster cl) =
-       "clust_default" := cl.clustDefault
-     ~> jsonEmptyObject
-
-instance decodeJsonEdge :: DecodeJson Edge where
-  decodeJson json = do
-    obj <- decodeJson json
-    id_ <- obj .: "id"
-    source <- obj .: "source"
-    target <- obj .: "target"
-    weight <- obj .: "weight"
-    confluence <- obj .: "confluence"
-    pure $ Edge { id_, source, target, weight, confluence }
-
-instance jsonEncodeEdge :: EncodeJson Edge where
-  encodeJson (Edge ed) =
-       "id"         := ed.id_
-     ~> "confluence" := ed.confluence
-     ~> "source"     := ed.source
-     ~> "target"     := ed.target
-     ~> "weight"     := ed.weight
-     ~> jsonEmptyObject
-
 newtype Legend = Legend  {id_ ::Int , color :: String, label :: String}
 
-instance eqLegend :: Eq Legend where
-  eq (Legend l1) (Legend l2) = eq l1.id_ l2.id_
+derive instance Generic Legend _
+derive instance Newtype Legend _
+instance Eq Legend where eq (Legend l1) (Legend l2) = eq l1.id_ l2.id_
+instance Ord Legend where compare (Legend l1) (Legend l2) = compare l1.id_ l2.id_
+instance JSON.ReadForeign Legend where
+  readImpl f = do
+    inst <- JSON.readImpl f
+    pure $ Legend $ Record.rename idP id_P inst
+instance JSON.WriteForeign Legend where
+  writeImpl (Legend l) = JSON.writeImpl $ Record.rename id_P idP l
 
-instance ordLegend :: Ord Legend where
-  compare (Legend l1) (Legend l2) = compare l1.id_ l2.id_
 
 getLegendData :: GraphData -> Array Legend
 getLegendData (GraphData {metaData: Just (MetaData {legend})}) = legend
@@ -283,8 +223,8 @@ intColor i = unsafePartial $ fromJust $ defaultPalette !! (i `mod` length defaul
 
 data SideTab = SideTabLegend | SideTabData | SideTabCommunity
 
-derive instance eqSideTab :: Eq SideTab
-instance showSideTab :: Show SideTab where
+derive instance Eq SideTab
+instance Show SideTab where
   show SideTabLegend    = "Legend"
   show SideTabData      = "Data"
   show SideTabCommunity = "Community"
@@ -295,39 +235,22 @@ newtype Camera =
          , x     :: Number
          , y     :: Number
          }
-derive instance genericCamera :: Generic Camera _
-instance eqCamera :: Eq Camera where
-  eq = genericEq
-instance decodeCamera :: DecodeJson Camera where
-  decodeJson json = do
-    obj   <- decodeJson json
-    ratio <- obj .: "ratio"
-    x     <- obj .: "x"
-    y     <- obj .: "y"
-    pure $ Camera { ratio, x, y }
-instance jsonEncodeCamera :: EncodeJson Camera where
-  encodeJson (Camera c) =
-       "ratio" := c.ratio
-     ~> "x"     := c.x
-     ~> "y"     := c.y
-     ~> jsonEmptyObject
-
+derive instance Generic Camera _
+derive instance Newtype Camera _
+instance Eq Camera where eq = genericEq
+derive newtype instance JSON.ReadForeign Camera
+derive newtype instance JSON.WriteForeign Camera
 
 newtype HyperdataGraph = HyperdataGraph {
     graph   :: GraphData
   , mCamera :: Maybe Camera
   }
-derive instance genericHyperdataGraph :: Generic HyperdataGraph _
-instance eqHyperdataGraph :: Eq HyperdataGraph where
-  eq = genericEq
-instance decodeHyperdataGraph :: DecodeJson HyperdataGraph where
-  decodeJson json = do
-    obj <- decodeJson json
-    graph   <- obj .: "graph"
-    mCamera <- obj .:? "camera"
-    pure $ HyperdataGraph { graph, mCamera }
-instance jsonEncodeHyperdataGraph :: EncodeJson HyperdataGraph where
-  encodeJson (HyperdataGraph c) =
-      "camera"  := c.mCamera
-     ~> "graph"  := c.graph
-     ~> jsonEmptyObject
+derive instance Generic HyperdataGraph _
+derive instance Newtype HyperdataGraph _
+instance Eq HyperdataGraph where eq = genericEq
+instance JSON.ReadForeign HyperdataGraph where
+  readImpl f = do
+    inst <- JSON.readImpl f
+    pure $ HyperdataGraph $ Record.rename cameraP mCameraP inst
+instance JSON.WriteForeign HyperdataGraph where
+  writeImpl (HyperdataGraph c) = JSON.writeImpl $ Record.rename mCameraP cameraP c

@@ -1,6 +1,9 @@
 module Gargantext.Components.GraphExplorer where
 
+import Gargantext.Prelude hiding (max, min)
+
 import Data.Array as A
+import Data.Either (Either)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Int (toNumber)
 import Data.Map as Map
@@ -19,13 +22,12 @@ import Record as Record
 import Record.Extra as RX
 import Toestand as T
 
-import Gargantext.Prelude hiding (max,min)
-
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Controls as Controls
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
 import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Data.Louvain as Louvain
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
@@ -67,8 +69,12 @@ explorerLayoutCpt = here.component "explorerLayout" cpt where
   cpt props@{ boxes: { graphVersion }, graphId, session } _ = do
     graphVersion' <- T.useLive T.unequal graphVersion
 
-    useLoader graphId (getNodes session graphVersion') handler
+    useLoader { errorHandler
+              , loader: getNodes session graphVersion'
+              , path: graphId
+              , render: handler }
     where
+      errorHandler err = here.log2 "[explorerLayout] RESTError" err
       handler loaded@(GET.HyperdataGraph { graph: hyperdataGraph }) =
         explorerWriteGraph (Record.merge props { graph, hyperdataGraph: loaded, mMetaData' }) []
         where
@@ -78,9 +84,8 @@ explorerWriteGraph :: R2.Component GraphWriteProps
 explorerWriteGraph = R.createElement explorerWriteGraphCpt
 explorerWriteGraphCpt :: R.Component GraphWriteProps
 explorerWriteGraphCpt = here.component "explorerWriteGraph" cpt where
-  cpt props@{ boxes: { sidePanelGraph, sidePanelState }
+  cpt props@{ boxes: { sidePanelGraph }
             , graph
-            , hyperdataGraph
             , mMetaData' } _ = do
       R.useEffectOnce' $ do
         T.write_ (Just { mGraph: Just graph
@@ -99,14 +104,14 @@ explorer = R.createElement explorerCpt
 explorerCpt :: R.Component Props
 explorerCpt = here.component "explorer" cpt
   where
-    cpt props@{ boxes: boxes@{ graphVersion, handed, reloadForest, showTree, sidePanelGraph, sidePanelState }
-              , graph
-              , graphId
-              , hyperdataGraph
-              , session
-              } _ = do
-      { mMetaData, sideTab } <- GEST.focusedSidePanel sidePanelGraph
-      graphVersion' <- T.useLive T.unequal graphVersion
+    cpt props@{ boxes: { graphVersion, handed, reloadForest, showTree, sidePanelGraph, sidePanelState }
+        , graph
+        , graphId
+        , hyperdataGraph
+        , session
+        } _ = do
+      { mMetaData } <- GEST.focusedSidePanel sidePanelGraph
+      _graphVersion' <- T.useLive T.unequal graphVersion
       handed' <- T.useLive T.unequal handed
       mMetaData' <- T.useLive T.unequal mMetaData
 
@@ -116,7 +121,7 @@ explorerCpt = here.component "explorer" cpt
                           then SigmaxT.InitialRunning
                           else SigmaxT.InitialStopped
 
-      dataRef <- R.useRef graph
+      _dataRef <- R.useRef graph
       graphRef <- R.useRef null
       controls <- Controls.useGraphControls { forceAtlasS
                                             , graph
@@ -155,7 +160,8 @@ explorerCpt = here.component "explorer" cpt
             [ RH.div { id: "controls-container" } [ Controls.controls controls [] ]
             , RH.div { className: "row graph-row" }
               [ RH.div { ref: graphRef, id: "graph-view", className: "col-md-12" } []
-              , graphView { controls
+              , graphView { boxes: props.boxes
+                          , controls
                           , elRef: graphRef
                           , graph
                           , hyperdataGraph
@@ -170,8 +176,9 @@ explorerCpt = here.component "explorer" cpt
       Types.LeftHanded  -> "lefthanded"
       Types.RightHanded -> "righthanded"
 
-type GraphProps = (
-    controls       :: Record Controls.Controls
+type GraphProps =
+  ( boxes          :: Boxes
+  , controls       :: Record Controls.Controls
   , elRef          :: R.Ref (Nullable Element)
   , graph          :: SigmaxT.SGraph
   , hyperdataGraph :: GET.HyperdataGraph
@@ -183,7 +190,8 @@ graphView = R.createElement graphViewCpt
 graphViewCpt :: R.Component GraphProps
 graphViewCpt = here.component "graphView" cpt
   where
-    cpt { controls
+    cpt { boxes
+        , controls
         , elRef
         , graph
         , hyperdataGraph: GET.HyperdataGraph { mCamera }
@@ -219,7 +227,8 @@ graphViewCpt = here.component "graphView" cpt
       R.useEffect1' multiSelectEnabled' $ do
         R.setRef multiSelectEnabledRef multiSelectEnabled'
 
-      pure $ Graph.graph { elRef
+      pure $ Graph.graph { boxes
+                         , elRef
                          , forceAtlas2Settings: Graph.forceAtlas2Settings
                          , graph
                          , mCamera
@@ -286,7 +295,7 @@ modeGraphType Types.Sources = "star"
 modeGraphType Types.Terms = "def"
 
 
-getNodes :: Session -> T2.Reload -> GET.GraphId -> Aff GET.HyperdataGraph
+getNodes :: Session -> T2.Reload -> GET.GraphId -> Aff (Either RESTError GET.HyperdataGraph)
 getNodes session graphVersion graphId =
   get session $ NodeAPI Types.Graph
                         (Just graphId)
@@ -306,8 +315,7 @@ transformGraph graph { edgeConfluence'
                      , edgeWeight'
                      , nodeSize'
                      , removedNodeIds'
-                     , selectedNodeIds'
-                     , showEdges' } = SigmaxT.Graph {nodes: newNodes, edges: newEdges}
+                     , selectedNodeIds' } = SigmaxT.Graph {nodes: newNodes, edges: newEdges}
   where
     edges = SigmaxT.graphEdges graph
     nodes = SigmaxT.graphNodes graph
@@ -318,23 +326,18 @@ transformGraph graph { edgeConfluence'
     hasSelection = not $ Set.isEmpty selectedNodeIds'
 
     newEdges' = Seq.filter edgeFilter $ Seq.map (
-      edgeHideWeight <<< edgeHideConfluence <<< edgeShowFilter <<< edgeMarked
+      -- NOTE We don't use edgeShowFilter anymore because of
+      -- https://gitlab.iscpif.fr/gargantext/purescript-gargantext/issues/304
+      -- edgeHideWeight <<< edgeHideConfluence <<< edgeShowFilter <<< edgeMarked
+      edgeHideWeight <<< edgeHideConfluence <<< edgeMarked
       ) edges
     newNodes  = Seq.filter nodeFilter $ Seq.map (nodeMarked <<< nodeHideSize) nodes
     newEdges  = Seq.filter (edgeInGraph $ Set.fromFoldable $ Seq.map _.id newNodes) newEdges'
 
-    edgeFilter e = true
+    edgeFilter _e = true
     nodeFilter n = nodeRemovedFilter n
 
-    nodeSizeFilter :: Record SigmaxT.Node -> Boolean
-    nodeSizeFilter node@{ size } = Range.within nodeSize' size
-
-    nodeRemovedFilter node@{ id } = not $ Set.member id removedNodeIds'
-
-    edgeConfluenceFilter :: Record SigmaxT.Edge -> Boolean
-    edgeConfluenceFilter edge@{ confluence } = Range.within edgeConfluence' confluence
-    edgeWeightFilter :: Record SigmaxT.Edge -> Boolean
-    edgeWeightFilter edge@{ weightIdx } = Range.within edgeWeight' $ toNumber weightIdx
+    nodeRemovedFilter { id } = not $ Set.member id removedNodeIds'
 
     edgeHideConfluence :: Record SigmaxT.Edge -> Record SigmaxT.Edge
     edgeHideConfluence edge@{ confluence } =
@@ -349,13 +352,6 @@ transformGraph graph { edgeConfluence'
         edge
       else
         edge { hidden = true }
-
-    edgeShowFilter :: Record SigmaxT.Edge -> Record SigmaxT.Edge
-    edgeShowFilter edge =
-      if SigmaxT.edgeStateHidden showEdges' then
-        edge { hidden = true }
-      else
-        edge
 
     edgeInGraph :: SigmaxT.NodeIds -> Record SigmaxT.Edge -> Boolean
     edgeInGraph nodeIds e = (Set.member e.source nodeIds) && (Set.member e.target nodeIds)

@@ -1,22 +1,28 @@
 module Gargantext.Types where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, jsonEmptyObject, (.:), (:=), (~>))
-import Data.Argonaut.Decode.Error (JsonDecodeError(..))
+import Gargantext.Prelude
+
 import Data.Array as A
-import Data.Either (Either(..))
-import Data.String as S
+import Data.Either (Either)
+import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Ord (genericCompare)
-import Data.Generic.Rep.Show (genericShow)
 import Data.Int (toNumber)
-import Data.Maybe (Maybe(..), maybe, fromMaybe)
+import Data.Maybe (Maybe(..), maybe)
+import Data.Newtype (class Newtype)
+import Data.Ord.Generic (genericCompare)
+import Data.Show.Generic (genericShow)
+import Data.String as S
 import Effect.Aff (Aff)
+import Foreign as F
 import Prim.Row (class Union)
 import Reactix as R
+import Simple.JSON as JSON
+import Simple.JSON.Generics as JSONG
 import URI.Query (Query)
 
-import Gargantext.Prelude
+import Gargantext.Components.Lang (class Translate, Lang(..))
+import Gargantext.Config.REST (RESTError)
+import Gargantext.Utils.Glyphicon (classNamePrefix, glyphiconToCharCode)
 
 data Handed = LeftHanded | RightHanded
 
@@ -32,8 +38,8 @@ flipHanded :: R.Element -> R.Element -> Handed -> R.Element
 flipHanded l r LeftHanded  = R.fragment [r, l]
 flipHanded l r RightHanded = R.fragment [l, r]
 
-derive instance ed :: Generic Handed _
-instance eqHanded :: Eq Handed where
+derive instance Generic Handed _
+instance Eq Handed where
   eq = genericEq
 
 
@@ -43,29 +49,29 @@ type Name    = String
 newtype SessionId = SessionId String
 type NodeID = Int
 
-derive instance genericSessionId :: Generic SessionId _
+derive instance Generic SessionId _
 
-instance eqSessionId :: Eq SessionId where
+instance Eq SessionId where
   eq = genericEq
 
-instance showSessionId :: Show SessionId where
+instance Show SessionId where
   show (SessionId s) = s
 
 data TermSize = MonoTerm | MultiTerm
 
 data Term = Term String TermList
-
-derive instance eqTermSize :: Eq TermSize
+derive instance Generic TermSize _
+instance Eq TermSize where eq = genericEq
 
 -- | Converts a data structure to a query string
 class ToQuery a where
   toQuery :: a -> Query
 
-instance showTermSize :: Show TermSize where
+instance Show TermSize where
   show MonoTerm  = "MonoTerm"
   show MultiTerm = "MultiTerm"
 
-instance readTermSize :: Read TermSize where
+instance Read TermSize where
   read :: String -> Maybe TermSize
   read "MonoTerm"  = Just MonoTerm
   read "MultiTerm" = Just MultiTerm
@@ -79,28 +85,12 @@ termSizes = [ { desc: "All types",        mval: Nothing        }
 
 data TermList = MapTerm | StopTerm | CandidateTerm
 -- TODO use generic JSON instance
-
-derive instance eqTermList :: Eq TermList
-derive instance ordTermList :: Ord TermList
-
-instance encodeJsonTermList :: EncodeJson TermList where
-  encodeJson MapTerm       = encodeJson "MapTerm"
-  encodeJson StopTerm      = encodeJson "StopTerm"
-  encodeJson CandidateTerm = encodeJson "CandidateTerm"
-
-instance decodeJsonTermList :: DecodeJson TermList where
-  decodeJson json = do
-    s <- decodeJson json
-    case s of
-      "MapTerm"       -> pure MapTerm
-      "StopTerm"      -> pure StopTerm
-      "CandidateTerm" -> pure CandidateTerm
-      s'              -> Left (AtKey s' $ TypeMismatch "Unexpected list name")
-
-instance showTermList :: Show TermList where
-  show MapTerm       = "MapTerm"
-  show StopTerm      = "StopTerm"
-  show CandidateTerm = "CandidateTerm"
+derive instance Generic TermList _
+instance Eq TermList where eq = genericEq
+instance Ord TermList where compare = genericCompare
+instance JSON.WriteForeign TermList where writeImpl = JSON.writeImpl <<< show
+instance JSON.ReadForeign TermList where readImpl = JSONG.enumSumRep
+instance Show TermList where show = genericShow
 
 -- TODO: Can we replace the show instance above with this?
 termListName :: TermList -> String
@@ -108,7 +98,7 @@ termListName MapTerm = "Map List"
 termListName StopTerm = "Stop List"
 termListName CandidateTerm = "Candidate List"
 
-instance readTermList :: Read TermList where
+instance Read TermList where
   read :: String -> Maybe TermList
   read "MapTerm"     = Just MapTerm
   read "StopTerm"      = Just StopTerm
@@ -123,30 +113,24 @@ termLists = [ { desc: "All terms",   mval: Nothing      }
             ]
 
 -- | Proof that row `r` is a subset of row `s`
-class Optional (r :: # Type) (s :: # Type)
-instance optionalInstance :: Union r t s => Optional r s
+class Optional (r :: Row Type) (s :: Row Type)
+instance Union r t s => Optional r s
 
 showTabType' :: TabType -> String
 showTabType' (TabCorpus   t) = show t
 showTabType' (TabDocument t) = show t
 showTabType' (TabPairing  t) = show t
 
-data TabPostQuery = TabPostQuery {
+newtype TabPostQuery = TabPostQuery {
     offset :: Int
   , limit :: Int
   , orderBy :: OrderBy
   , tabType :: TabType
   , query :: String
   }
-
-instance encodeJsonTabPostQuery :: EncodeJson TabPostQuery where
-  encodeJson (TabPostQuery post) =
-        "view"       := showTabType' post.tabType
-     ~> "offset"     := post.offset
-     ~> "limit"      := post.limit
-     ~> "orderBy"    := show post.orderBy
-     ~> "query"      := post.query
-     ~> jsonEmptyObject
+derive instance Generic TabPostQuery _
+derive instance Newtype TabPostQuery _
+derive newtype instance JSON.WriteForeign TabPostQuery
 
 data NodeType = Annuaire
               | Corpus
@@ -173,12 +157,19 @@ data NodeType = Annuaire
               | NodeFrameCalc
               | NodeFrameNotebook
               | NodeFrameWrite
+              | NodeFrameVisio
               | NodePublic NodeType
+derive instance Generic NodeType _
+derive instance Eq NodeType
+instance JSON.ReadForeign NodeType where
+  readImpl f = do
+    s <- F.readString f
+    case read s of
+      Nothing -> F.fail $ F.ErrorAtProperty s $ F.ForeignError "unknown property"
+      Just nt -> pure nt
+instance JSON.WriteForeign NodeType where writeImpl = JSON.writeImpl <<< show
 
-
-derive instance eqNodeType :: Eq NodeType
-
-instance showNodeType :: Show NodeType where
+instance Show NodeType where
   show NodeUser        = "NodeUser"
 
   show Folder          = "NodeFolder"
@@ -203,12 +194,13 @@ instance showNodeType :: Show NodeType where
   show Texts           = "NodeDocs"
   show NodeFrameWrite  = "NodeFrameWrite"
   show NodeFrameCalc   = "NodeFrameCalc"
-  show NodeFrameNotebook   = "NodeFrameNotebook"
+  show NodeFrameNotebook = "NodeFrameNotebook"
+  show NodeFrameVisio    = "NodeFrameVisio"
   show (NodePublic nt) = "NodePublic" <> show nt
   show NodeFile        = "NodeFile"
 
 
-instance readNodeType :: Read NodeType where
+instance Read NodeType where
   read "NodeUser"          = Just NodeUser
   read "NodeFolder"        = Just Folder
   read "NodeFolderPrivate" = Just FolderPrivate
@@ -232,62 +224,142 @@ instance readNodeType :: Read NodeType where
   read "NodeFrameWrite"    = Just NodeFrameWrite
   read "NodeFrameCalc"     = Just NodeFrameCalc
   read "NodeFrameNotebook"     = Just NodeFrameNotebook
+  read "NodeFrameVisio"    = Just NodeFrameVisio
   read "NodeFile"          = Just NodeFile
   -- TODO NodePublic read ?
   read _                   = Nothing
 
+------------------------------------------------------
+
+instance translateNodeType :: Translate NodeType where
+  translate l n = case l of
+    FR -> translateFR n
+    _  -> translateEN n
+
+translateFR :: NodeType -> String
+translateFR = case _ of
+  Annuaire            -> "Annuaire"
+  Corpus              -> "Corpus"
+  Dashboard           -> "Dashboard"
+  Error               -> "Erreur"
+  Folder              -> "Dossier"
+  FolderPrivate       -> "Dossier privé"
+  FolderPublic        -> "Dossier public"
+  FolderShared        -> "Dossier partagé"
+  Graph               -> "Graphe"
+  Individu            -> "Individu"
+  Node                -> "Nœud"
+  NodeContact         -> "Contact"
+  NodeList            -> "Liste"
+  NodeUser            -> "Utilisateur"
+  Nodes               -> "Nœuds"
+  Phylo               -> "Phylo"
+  Team                -> "Équipe"
+  Texts               -> "Textes"
+  Tree                -> "Arbre"
+  Url_Document        -> "Document URL"
+  --
+  NodeFile            -> "Fichier"
+  NodeFrameCalc       -> "Feuilles de calcul"
+  NodeFrameNotebook   -> "Carnet de notes"
+  NodeFrameWrite      -> "Éditeur de texte"
+  NodeFrameVisio      -> "Visio"
+  NodePublic n        -> translateFR n
+
+translateEN :: NodeType -> String
+translateEN = case _ of
+  Annuaire            -> "Annuaire"
+  Corpus              -> "Corpus"
+  Dashboard           -> "Dashboard"
+  Error               -> "Error"
+  Folder              -> "Folder"
+  FolderPrivate       -> "Private folder"
+  FolderPublic        -> "Public folder"
+  FolderShared        -> "Shared folder"
+  Graph               -> "Graph"
+  Individu            -> "Person"
+  Node                -> "Node"
+  NodeContact         -> "Contact"
+  NodeList            -> "List"
+  NodeUser            -> "User"
+  Nodes               -> "Nodes"
+  Phylo               -> "Phylo"
+  Team                -> "Team"
+  Texts               -> "Texts"
+  Tree                -> "Tree"
+  Url_Document        -> "URL document"
+  --
+  NodeFile            -> "File"
+  NodeFrameCalc       -> "Calc"
+  NodeFrameNotebook   -> "Notebook"
+  NodeFrameWrite      -> "Write"
+  NodeFrameVisio      -> "Visio"
+  NodePublic n        -> translateEN n
+
+------------------------------------------------------
+
+getIcon :: NodeType -> Boolean -> String
+getIcon NodeUser false = "user-circle"
+getIcon NodeUser true  = "user"
+------------------------------------------------------
+getIcon Folder  false  = "folder"
+getIcon Folder  true   = "folder-open-o"
+------------------------------------------------------
+getIcon FolderPrivate true  = "lock"
+getIcon FolderPrivate false = "lock-circle"
+
+getIcon FolderShared  true  = "share-alt"
+getIcon FolderShared  false = "share-circle"
+getIcon Team  true   = "users"
+getIcon Team  false  = "users-closed"
+
+getIcon FolderPublic true  = "globe-circle"
+getIcon FolderPublic false = "globe"
+------------------------------------------------------
+
+getIcon Corpus true  = "book"
+getIcon Corpus false = "book-circle"
+
+getIcon Phylo _ = "code-fork"
+
+getIcon Graph _ = "hubzilla"
+getIcon Texts _ = "newspaper-o"
+getIcon Dashboard _ = "signal"
+getIcon NodeList _ = "list"
+getIcon NodeFile _ = "file"  -- TODO depending on mime type we can use fa-file-image etc
+
+getIcon Annuaire true  = "address-card-o"
+getIcon Annuaire false = "address-card"
+
+getIcon NodeContact true  = "address-card-o"
+getIcon NodeContact false = "address-card"
+
+getIcon NodeFrameWrite true  = "file-text-o"
+getIcon NodeFrameWrite false = "file-text"
+
+getIcon NodeFrameCalc true  = "calculator"
+getIcon NodeFrameCalc false = "calculator"
+
+getIcon NodeFrameNotebook true  = "file-code-o"
+getIcon NodeFrameNotebook false = "code"
+
+getIcon NodeFrameVisio true  = "video-camera"
+getIcon NodeFrameVisio false = "video-camera"
+
+
+
+getIcon (NodePublic nt) b   = getIcon nt b
+
+getIcon _        true   = "folder-open"
+getIcon _        false  = "folder-o"
+
+------------------------------------------------------
 
 fldr :: NodeType -> Boolean -> String
-fldr NodeUser false = "fa fa-user-circle"
-fldr NodeUser true  = "fa fa-user"
-------------------------------------------------------
-fldr Folder  false  = "fa fa-folder"
-fldr Folder  true   = "fa fa-folder-open-o"
-------------------------------------------------------
-fldr FolderPrivate true  = "fa fa-lock"
-fldr FolderPrivate false = "fa fa-lock-circle"
+fldr nt flag = classNamePrefix <> getIcon nt flag
 
-fldr FolderShared  true  = "fa fa-share-alt"
-fldr FolderShared  false = "fa fa-share-circle"
-fldr Team  true   = "fa fa-users"
-fldr Team  false  = "fa fa-users-closed"
-
-fldr FolderPublic true  = "fa fa-globe-circle"
-fldr FolderPublic false = "fa fa-globe"
-------------------------------------------------------
-
-fldr Corpus true  = "fa fa-book"
-fldr Corpus false = "fa fa-book-circle"
-
-fldr Phylo _ = "fa fa-code-fork"
-
-fldr Graph _ = "fa fa-hubzilla"
-fldr Texts _ = "fa fa-newspaper-o"
-fldr Dashboard _ = "fa fa-signal"
-fldr NodeList _ = "fa fa-list"
-fldr NodeFile _ = "fa fa-file"  -- TODO depending on mime type we can use fa-file-image etc
-
-fldr Annuaire true  = "fa fa-address-card-o"
-fldr Annuaire false = "fa fa-address-card"
-
-fldr NodeContact true  = "fa fa-address-card-o"
-fldr NodeContact false = "fa fa-address-card"
-
-fldr NodeFrameWrite true  = "fa fa-file-text-o"
-fldr NodeFrameWrite false = "fa fa-file-text"
-
-fldr NodeFrameCalc true  = "fa fa-calculator"
-fldr NodeFrameCalc false = "fa fa-calculator"
-
-fldr NodeFrameNotebook true  = "fa fa-file-code-o"
-fldr NodeFrameNotebook false = "fa fa-code"
-
-
-fldr (NodePublic nt) b   = fldr nt b
-
-fldr _        true   = "fa fa-folder-open"
-fldr _        false  = "fa fa-folder-o"
-
+charCodeIcon :: NodeType -> Boolean -> String
+charCodeIcon nt flag = glyphiconToCharCode $ getIcon nt flag
 
 publicize :: NodeType -> NodeType
 publicize (NodePublic nt) = NodePublic nt
@@ -300,21 +372,13 @@ isPublic _              = false
 
 {-
 ------------------------------------------------------------
-instance ordNodeType :: Ord NodeType where
+instance Ord NodeType where
   compare n1 n2 = compare (show n1) (show n2)
 
-instance eqNodeType :: Eq NodeType where
+instance Eq NodeType where
   eq n1 n2  = eq (show n1) (show n2)
 -}
 ------------------------------------------------------------
-instance decodeJsonNodeType :: DecodeJson NodeType where
-  decodeJson json = do
-    obj <- decodeJson json
-    pure $ fromMaybe Error $ read obj
-
-instance encodeJsonNodeType :: EncodeJson NodeType where
-  encodeJson nodeType = encodeJson $ show nodeType
-
 nodeTypePath :: NodeType -> String
 nodeTypePath Folder          = "folder"
 nodeTypePath FolderPrivate   = "folderPrivate"
@@ -338,7 +402,8 @@ nodeTypePath Texts           = "texts"
 nodeTypePath Team            = "team"
 nodeTypePath NodeFrameWrite  = "write"
 nodeTypePath NodeFrameCalc   = "calc"
-nodeTypePath NodeFrameNotebook   = "code"
+nodeTypePath NodeFrameNotebook = "code"
+nodeTypePath NodeFrameVisio    = "visio"
 nodeTypePath (NodePublic nt) = nodeTypePath nt
 nodeTypePath NodeFile        = "file"
 
@@ -351,11 +416,9 @@ type ContactId  = Int
 
 data ScoreType = Occurrences
 
-derive instance genericScoreType :: Generic ScoreType _
-instance eqScoreType :: Eq ScoreType where
-  eq = genericEq
-instance showScoreType :: Show ScoreType where
-  show = genericShow
+derive instance Generic ScoreType _
+instance Eq ScoreType where eq = genericEq
+instance Show ScoreType where show = genericShow
 
 type SearchQuery = String
 
@@ -406,7 +469,7 @@ nodePath (NodePath s t i) = nodeTypePath t <> "/" <> show s <> id
 
 data ChartType = Histo | Scatter | ChartPie | ChartBar | ChartTree
 
-instance showChartType :: Show ChartType
+instance Show ChartType
   where
     show Histo     = "chart"
     show Scatter   = "scatter"
@@ -431,89 +494,76 @@ data OrderBy = DateAsc  | DateDesc
              | TermAsc  | TermDesc
              | SourceAsc | SourceDesc
 
-derive instance genericOrderBy :: Generic OrderBy _
-
-instance showOrderBy :: Show OrderBy where
-  show = genericShow
+derive instance Generic OrderBy _
+instance Show OrderBy where show = genericShow
+instance JSON.ReadForeign OrderBy where readImpl = JSONG.enumSumRep
+instance JSON.WriteForeign OrderBy where writeImpl = JSON.writeImpl <<< show
 
 ------------------------------------------------------------
 -- V0 is the dummy case (impossible)
 data ApiVersion = V0 | V10 | V11
 
-instance showApiVersion :: Show ApiVersion where
+derive instance Generic ApiVersion _
+instance JSON.ReadForeign ApiVersion where
+  readImpl f = do
+    s <- JSON.readImpl f
+    case s of
+      "v0"   -> pure V0
+      "v1.0" -> pure V10
+      "v1.1" -> pure V11
+      x      -> F.fail $ F.ErrorAtProperty x $ F.ForeignError "unknown API value"
+instance JSON.WriteForeign ApiVersion where
+  writeImpl v = F.unsafeToForeign $ JSON.writeImpl $ show v
+instance Show ApiVersion where
   show V0  = "v0"
   show V10 = "v1.0"
   show V11 = "v1.1"
-
-instance eqApiVersion :: Eq ApiVersion where
+instance Eq ApiVersion where
   eq V10 V10 = true
   eq V11 V11 = true
   eq _ _ = false
-
-instance encodeJsonApiVersion :: EncodeJson ApiVersion where
-  encodeJson v = encodeJson (show v)
-
-instance decodeJsonApiVersion :: DecodeJson ApiVersion where
-  decodeJson json = do
-    v <- decodeJson json
-    case v of
-         "v1.0" -> pure V10
-         "v1.1" -> pure V11
-         _      -> pure V0
 ------------------------------------------------------------
 
 -- Types of ngrams. Used to display user-selectable tabs and is sent via API,
 -- wrapped in `TabNgramType a :: TabSubType`
 data CTabNgramType = CTabTerms | CTabSources | CTabAuthors | CTabInstitutes
-
-derive instance eqCTabNgramType :: Eq CTabNgramType
-derive instance ordCTabNgramType :: Ord CTabNgramType
-instance showCTabNgramType :: Show CTabNgramType where
+derive instance Generic CTabNgramType _
+derive instance Eq CTabNgramType
+derive instance Ord CTabNgramType
+instance Show CTabNgramType where
   show CTabTerms      = "Terms"
   show CTabSources    = "Sources"
   show CTabAuthors    = "Authors"
   show CTabInstitutes = "Institutes"
-instance encodeCTabNgramType :: EncodeJson CTabNgramType where
-  encodeJson t = encodeJson $ show t
+instance JSON.WriteForeign CTabNgramType where writeImpl = JSON.writeImpl <<< show
 
 data PTabNgramType = PTabPatents | PTabBooks | PTabCommunication
-
-derive instance eqPTabNgramType :: Eq PTabNgramType
-derive instance ordPTabNgramType :: Ord PTabNgramType
-instance showPTabNgramType :: Show PTabNgramType where
+derive instance Generic PTabNgramType _
+instance Eq PTabNgramType where eq = genericEq
+instance Ord PTabNgramType where compare = genericCompare
+instance Show PTabNgramType where
   show PTabPatents       = "Patents"
   show PTabBooks         = "Books"
   show PTabCommunication = "Communication"
-instance encodePTabNgramType :: EncodeJson PTabNgramType where
-  encodeJson t = encodeJson $ show t
+instance JSON.WriteForeign PTabNgramType where writeImpl = JSON.writeImpl <<< show
 
 data TabSubType a = TabDocs | TabNgramType a | TabTrash | TabMoreLikeFav | TabMoreLikeTrash
-
-derive instance eqTabSubType :: Eq a => Eq (TabSubType a)
-derive instance ordTabSubType :: Ord a => Ord (TabSubType a)
-instance encodeTabSubType :: EncodeJson a => EncodeJson (TabSubType a) where
-  encodeJson TabDocs =
-       "type" := "TabDocs"
-    ~> "data" := (Nothing :: Maybe String)
-    ~> jsonEmptyObject
-  encodeJson (TabNgramType a) =
-       "type" := "TabNgramType"
-    ~> "data" := encodeJson a
-    ~> jsonEmptyObject
-  encodeJson TabTrash =
-       "type" := "TabTrash"
-    ~> "data" := (Nothing :: Maybe String)
-    ~> jsonEmptyObject
-  encodeJson TabMoreLikeFav =
-       "type" := "TabMoreLikeFav"
-    ~> "data" := (Nothing :: Maybe String)
-    ~> jsonEmptyObject
-  encodeJson TabMoreLikeTrash =
-       "type" := "TabMoreLikeTrash"
-    ~> "data" := (Nothing :: Maybe String)
-    ~> jsonEmptyObject
+derive instance Generic (TabSubType a) _
+instance Eq a => Eq (TabSubType a) where eq = genericEq
+instance Ord a => Ord (TabSubType a) where compare = genericCompare
+instance JSON.WriteForeign a => JSON.WriteForeign (TabSubType a) where
+  writeImpl TabDocs = JSON.writeImpl { type: "TabDocs"
+                                     , data: (Nothing :: Maybe String) }
+  writeImpl (TabNgramType a) = JSON.writeImpl { type: "TabNgramType"
+                                              , data: a }
+  writeImpl TabTrash = JSON.writeImpl { type: "TabTrash"
+                                      , data: (Nothing :: Maybe String) }
+  writeImpl TabMoreLikeFav = JSON.writeImpl { type: "TabMoreLikeFav"
+                                            , data: (Nothing :: Maybe String) }
+  writeImpl TabMoreLikeTrash = JSON.writeImpl { type: "TabMoreLikeTrash"
+                                              , data: (Nothing :: Maybe String) }
 {-
-instance decodeTabSubType a :: DecodeJson a => DecodeJson (TabSubType a) where
+instance DecodeJson a => DecodeJson (TabSubType a) where
   decodeJson j = do
     obj <- decodeJson j
     typ <- obj .: "type"
@@ -526,7 +576,7 @@ instance decodeTabSubType a :: DecodeJson a => DecodeJson (TabSubType a) where
       "TabMoreLikeTrash" -> TabMoreLikeTrash
       _ -> Left ("Unknown type '" <> typ <> "'") -}
 
-instance showTabSubType :: Show a => Show (TabSubType a) where
+instance Show a => Show (TabSubType a) where
   show TabDocs          = "Docs"
   show (TabNgramType a) = show a
   show TabTrash         = "Trash"
@@ -538,32 +588,31 @@ data TabType
   | TabPairing  (TabSubType PTabNgramType)
   | TabDocument (TabSubType CTabNgramType)
 
-derive instance genericTabType :: Generic TabType _
-derive instance eqTabType :: Eq TabType
-derive instance ordTabType :: Ord TabType
-instance showTabType :: Show TabType where
-  show = genericShow
-instance encodeTabType :: EncodeJson TabType where
-  encodeJson (TabCorpus TabDocs)                         = encodeJson "Docs"
-  encodeJson (TabCorpus (TabNgramType CTabAuthors))      = encodeJson "Authors"
-  encodeJson (TabCorpus (TabNgramType CTabInstitutes))   = encodeJson "Institutes"
-  encodeJson (TabCorpus (TabNgramType CTabSources))      = encodeJson "Sources"
-  encodeJson (TabCorpus (TabNgramType CTabTerms))        = encodeJson "Terms"
-  encodeJson (TabCorpus TabMoreLikeFav)                  = encodeJson "MoreFav"
-  encodeJson (TabCorpus TabMoreLikeTrash)                = encodeJson "MoreTrash"
-  encodeJson (TabCorpus TabTrash)                        = encodeJson "Trash"
-  encodeJson (TabDocument TabDocs)                       = encodeJson "Docs"
-  encodeJson (TabDocument (TabNgramType CTabAuthors))    = encodeJson "Authors"
-  encodeJson (TabDocument (TabNgramType CTabInstitutes)) = encodeJson "Institutes"
-  encodeJson (TabDocument (TabNgramType CTabSources))    = encodeJson "Sources"
-  encodeJson (TabDocument (TabNgramType CTabTerms))      = encodeJson "Terms"
-  encodeJson (TabDocument TabMoreLikeFav)                = encodeJson "MoreFav"
-  encodeJson (TabDocument TabMoreLikeTrash)              = encodeJson "MoreTrash"
-  encodeJson (TabDocument TabTrash)                      = encodeJson "Trash"
-  encodeJson (TabPairing d)                              = encodeJson "TabPairing"  -- TODO
+derive instance Generic TabType _
+derive instance Eq TabType
+derive instance Ord TabType
+instance Show TabType where show = genericShow
+instance JSON.WriteForeign TabType where
+  writeImpl (TabCorpus TabDocs)                         = JSON.writeImpl "Docs"
+  writeImpl (TabCorpus (TabNgramType CTabAuthors))      = JSON.writeImpl "Authors"
+  writeImpl (TabCorpus (TabNgramType CTabInstitutes))   = JSON.writeImpl "Institutes"
+  writeImpl (TabCorpus (TabNgramType CTabSources))      = JSON.writeImpl "Sources"
+  writeImpl (TabCorpus (TabNgramType CTabTerms))        = JSON.writeImpl "Terms"
+  writeImpl (TabCorpus TabMoreLikeFav)                  = JSON.writeImpl "MoreFav"
+  writeImpl (TabCorpus TabMoreLikeTrash)                = JSON.writeImpl "MoreTrash"
+  writeImpl (TabCorpus TabTrash)                        = JSON.writeImpl "Trash"
+  writeImpl (TabDocument TabDocs)                       = JSON.writeImpl "Docs"
+  writeImpl (TabDocument (TabNgramType CTabAuthors))    = JSON.writeImpl "Authors"
+  writeImpl (TabDocument (TabNgramType CTabInstitutes)) = JSON.writeImpl "Institutes"
+  writeImpl (TabDocument (TabNgramType CTabSources))    = JSON.writeImpl "Sources"
+  writeImpl (TabDocument (TabNgramType CTabTerms))      = JSON.writeImpl "Terms"
+  writeImpl (TabDocument TabMoreLikeFav)                = JSON.writeImpl "MoreFav"
+  writeImpl (TabDocument TabMoreLikeTrash)              = JSON.writeImpl "MoreTrash"
+  writeImpl (TabDocument TabTrash)                      = JSON.writeImpl "Trash"
+  writeImpl (TabPairing _d)                             = JSON.writeImpl "TabPairing"  -- TODO
 -- ["Docs","Trash","MoreFav","MoreTrash","Terms","Sources","Authors","Institutes","Contacts"]
 {-
-instance decodeTabType :: DecodeJson TabType where
+instance DecodeJson TabType where
   decodeJson j = do
     obj <- decodeJson j
     typ <- obj .: "type"
@@ -576,20 +625,18 @@ instance decodeTabType :: DecodeJson TabType where
 
 type TableResult a = {count :: Int, docs :: Array a}
 type AffTableResult a = Aff (TableResult a)
+type AffETableResult a = Aff (Either RESTError (TableResult a))
 
 data Mode = Authors
           | Sources
           | Institutes
           | Terms
 
-derive instance genericMode :: Generic Mode _
-instance showMode :: Show Mode where
-  show = genericShow
-derive instance eqMode :: Eq Mode
-instance ordMode :: Ord Mode where
-  compare = genericCompare
-instance encodeMode :: EncodeJson Mode where
-  encodeJson x = encodeJson $ show x
+derive instance Generic Mode _
+instance Show Mode where show = genericShow
+instance Eq Mode where eq = genericEq
+instance Ord Mode where compare = genericCompare
+instance JSON.WriteForeign Mode where writeImpl = JSON.writeImpl <<< show
 
 modeTabType :: Mode -> CTabNgramType
 modeTabType Authors    = CTabAuthors
@@ -608,128 +655,90 @@ modeFromString _            = Nothing
 
 -- corresponds to /add/form/async or /add/query/async
 data AsyncTaskType = AddNode
-                   | Form  -- this is file upload too
+                   | CorpusFormUpload  -- this is file upload too
                    | GraphRecompute
+                   | ListUpload
+                   | ListCSVUpload  -- legacy v3 CSV upload for lists
                    | Query
                    | UpdateNgramsCharts
                    | UpdateNode
                    | UploadFile
+                   | UploadFrameCalc
 
-derive instance genericAsyncTaskType :: Generic AsyncTaskType _
-instance eqAsyncTaskType :: Eq AsyncTaskType where
+derive instance Generic AsyncTaskType _
+instance JSON.ReadForeign AsyncTaskType where
+  readImpl = JSONG.enumSumRep
+instance Eq AsyncTaskType where
   eq = genericEq
-instance showAsyncTaskType :: Show AsyncTaskType where
+instance Show AsyncTaskType where
   show = genericShow
-instance encodeJsonAsyncTaskType :: EncodeJson AsyncTaskType where
-  encodeJson t     = encodeJson $ show t
-instance decodeJsonAsyncTaskType :: DecodeJson AsyncTaskType where
-  decodeJson json = do
-    obj <- decodeJson json
-    case obj of
-      "AddNode"            -> pure AddNode
-      "Form"               -> pure Form
-      "GraphRecompute"     -> pure GraphRecompute
-      "Query"              -> pure Query
-      "UpdateNgramsCharts" -> pure UpdateNgramsCharts
-      "UpdateNode"         -> pure UpdateNode
-      "UploadFile"         -> pure UploadFile
-      s                    -> Left $ AtKey s $ TypeMismatch "Unknown string"
 
 asyncTaskTypePath :: AsyncTaskType -> String
 asyncTaskTypePath AddNode            = "async/nobody/"
-asyncTaskTypePath Form               = "add/form/async/"
+asyncTaskTypePath CorpusFormUpload   = "add/form/async/"
 asyncTaskTypePath GraphRecompute     = "async/recompute/"
+asyncTaskTypePath ListUpload         = "add/form/async/"
+asyncTaskTypePath ListCSVUpload      = "csv/add/form/async/"
 asyncTaskTypePath Query              = "query/"
 asyncTaskTypePath UpdateNgramsCharts = "ngrams/async/charts/update/"
 asyncTaskTypePath UpdateNode         = "update/"
 asyncTaskTypePath UploadFile         = "async/file/add/"
+asyncTaskTypePath UploadFrameCalc    = "add/framecalc/async/"
 
 
 type AsyncTaskID = String
 
-data AsyncTaskStatus = Running
-                     | Pending
-                     | Received
-                     | Started
-                     | Failed
-                     | Finished
-                     | Killed
-derive instance genericAsyncTaskStatus :: Generic AsyncTaskStatus _
-
-instance showAsyncTaskStatus :: Show AsyncTaskStatus where
+data AsyncTaskStatus = IsRunning
+                     | IsPending
+                     | IsReceived
+                     | IsStarted
+                     | IsFailure
+                     | IsFinished
+                     | IsKilled
+derive instance Generic AsyncTaskStatus _
+instance JSON.ReadForeign AsyncTaskStatus where
+  readImpl = JSONG.enumSumRep
+instance Show AsyncTaskStatus where
   show = genericShow
-derive instance eqAsyncTaskStatus :: Eq AsyncTaskStatus
-
-instance encodeJsonAsyncTaskStatus :: EncodeJson AsyncTaskStatus where
-  encodeJson s = encodeJson $ show s
-
-instance decodeJsonAsyncTaskStatus :: DecodeJson AsyncTaskStatus where
-  decodeJson json = do
-    obj <- decodeJson json
-    pure $ fromMaybe Running $ read obj
-
-instance readAsyncTaskStatus :: Read AsyncTaskStatus where
-  read "IsFailure"  = Just Failed
-  read "IsFinished" = Just Finished
-  read "IsKilled"   = Just Killed
-  read "IsPending"  = Just Pending
-  read "IsReceived" = Just Received
-  read "IsRunning"  = Just Running
-  read "IsStarted"  = Just Started
-  read _            = Nothing
+derive instance Eq AsyncTaskStatus
+-- instance Read AsyncTaskStatus where
+--   read "IsFailure"  = Just Failed
+--   read "IsFinished" = Just Finished
+--   read "IsKilled"   = Just Killed
+--   read "IsPending"  = Just Pending
+--   read "IsReceived" = Just Received
+--   read "IsRunning"  = Just Running
+--   read "IsStarted"  = Just Started
+--   read _            = Nothing
 
 newtype AsyncTask =
   AsyncTask { id     :: AsyncTaskID
             , status :: AsyncTaskStatus
             }
 
-derive instance genericAsyncTask :: Generic AsyncTask _
-instance eqAsyncTask :: Eq AsyncTask where
-  eq = genericEq
-instance encodeJsonAsyncTask :: EncodeJson AsyncTask where
-  encodeJson (AsyncTask { id, status }) =
-        "id"       := id
-     ~> "status"   := status
-     ~> jsonEmptyObject
-instance decodeJsonAsyncTask :: DecodeJson AsyncTask where
-  decodeJson json = do
-    obj    <- decodeJson json
-    id     <- obj .: "id"
-    status <- obj .: "status"
-    pure $ AsyncTask { id, status }
+derive instance Generic AsyncTask _
+derive instance Newtype AsyncTask _
+derive newtype instance JSON.ReadForeign AsyncTask
+instance Eq AsyncTask where eq = genericEq
 
 newtype AsyncTaskWithType = AsyncTaskWithType {
     task :: AsyncTask
   , typ  :: AsyncTaskType
   }
-derive instance genericAsyncTaskWithType :: Generic AsyncTaskWithType _
-instance eqAsyncTaskWithType :: Eq AsyncTaskWithType where
+derive instance Generic AsyncTaskWithType _
+derive instance Newtype AsyncTaskWithType _
+derive newtype instance JSON.ReadForeign AsyncTaskWithType
+instance Eq AsyncTaskWithType where
   eq = genericEq
-instance encodeJsonAsyncTaskWithType :: EncodeJson AsyncTaskWithType where
-  encodeJson (AsyncTaskWithType { task, typ }) =
-        "task"       := task
-     ~> "typ"        := typ
-     ~> jsonEmptyObject
-instance decodeJsonAsyncTaskWithType :: DecodeJson AsyncTaskWithType where
-  decodeJson json = do
-    obj  <- decodeJson json
-    task <- obj .: "task"
-    typ  <- obj .: "typ"
-    pure $ AsyncTaskWithType { task, typ }
 
 newtype AsyncProgress = AsyncProgress {
     id :: AsyncTaskID
   , log :: Array AsyncTaskLog
   , status :: AsyncTaskStatus
   }
-derive instance genericAsyncProgress :: Generic AsyncProgress _
-instance decodeJsonAsyncProgress :: DecodeJson AsyncProgress where
-  decodeJson json = do
-    obj    <- decodeJson json
-    id     <- obj .: "id"
-    log    <- obj .: "log"
-    status <- obj .: "status"
-    pure $ AsyncProgress {id, log, status}
+derive instance Generic AsyncProgress _
+derive instance Newtype AsyncProgress _
+derive newtype instance JSON.ReadForeign AsyncProgress
 
 newtype AsyncTaskLog = AsyncTaskLog {
     events :: Array String
@@ -737,15 +746,9 @@ newtype AsyncTaskLog = AsyncTaskLog {
   , remaining :: Int
   , succeeded :: Int
   }
-derive instance genericAsyncTaskLog :: Generic AsyncTaskLog _
-instance decodeJsonAsyncTaskLog :: DecodeJson AsyncTaskLog where
-  decodeJson json = do
-    obj       <- decodeJson json
-    events    <- obj .: "events"
-    failed    <- obj .: "failed"
-    remaining <- obj .: "remaining"
-    succeeded <- obj .: "succeeded"
-    pure $ AsyncTaskLog {events, failed, remaining, succeeded}
+derive instance Generic AsyncTaskLog _
+derive instance Newtype AsyncTaskLog _
+derive newtype instance JSON.ReadForeign AsyncTaskLog
 
 progressPercent :: AsyncProgress -> Number
 progressPercent (AsyncProgress {log}) = perc
@@ -768,11 +771,20 @@ prettyNodeType nt = S.replace (S.Pattern "Node")   (S.Replacement " ")
 ---------------------------------------------------------------------------
 
 data SidePanelState = InitialClosed | Opened | Closed
-derive instance genericSidePanelState :: Generic SidePanelState _
-instance eqSidePanelState :: Eq SidePanelState where
-  eq = genericEq
+derive instance Generic SidePanelState _
+instance Eq SidePanelState where eq = genericEq
 
 toggleSidePanelState :: SidePanelState -> SidePanelState
 toggleSidePanelState InitialClosed = Opened
 toggleSidePanelState Closed        = Opened
 toggleSidePanelState Opened        = Closed
+
+---------------------------------------------------------------------------
+
+data FrontendError = FStringError
+  { error :: String
+  } | FRESTError
+  { error :: RESTError }
+
+derive instance Generic FrontendError _
+instance Eq FrontendError where eq = genericEq

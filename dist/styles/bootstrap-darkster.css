@@ -9993,12 +9993,55 @@ h3 {
     border-color: rgba(255, 255, 255, 0.3);
   }
 }
+.with-icon-font {
+  font-family: ForkAwesome, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+.right-handed .forest-layout {
+  border-right: 2px solid #dee2e6;
+}
+
+.left-handed .forest-layout {
+  border-left: 2px solid #dee2e6;
+}
+
+.forest-layout-bottom-teaser {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, black 45%);
+}
+
+.forest-layout-top-teaser {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0) 0%, black 45%);
+}
+
+.main-page__horizontal-tiles {
+  border-top: 2px solid #dee2e6;
+}
+.main-page__horizontal-tiles .tile-block:not(:first-child) {
+  border-left: 2px solid #dee2e6;
+}
+
+.main-page__vertical-tiles {
+  border-left: 2px solid #dee2e6;
+}
+.main-page__vertical-tiles .tile-block:not(:first-child) {
+  border-top: 2px solid #dee2e6;
+}
+
+.tile-menu__popover {
+  border-radius: 0.25rem;
+  background-color: #000;
+}
+
 .navbar-dark.bg-primary {
   background-color: #111111 !important;
 }
 
 .table.able {
   color: #ccccc5;
+}
+
+#sp-container .table tr td a {
+  color: #005a9aff;
 }
 
 /*# sourceMappingURL=bootstrap-darkster.css.map */

@@ -70,7 +70,7 @@ annotatedFieldInner p = R.createElement annotatedFieldInnerCpt p []
 annotatedFieldInnerCpt :: R.Component InnerProps
 annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
   cpt { menuRef, ngrams, redrawMenu, setTermList, text: fieldText } _ = do
-    redrawMenu' <- T.useLive T.unequal redrawMenu
+    _redrawMenu' <- T.useLive T.unequal redrawMenu
 
     -- menu <- T.useBox (Nothing :: Maybe (Record AnnotationMenu))
 
@@ -109,7 +109,7 @@ onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList } Nothing event = 
                    , redrawMenu
                    , setTermList }
     Nothing -> hideMenu { menuRef, redrawMenu }
-onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList } (Just (Tuple ngram list)) event = do
+onAnnotationSelect { menuRef, redrawMenu, setTermList } (Just (Tuple ngram list)) event = do
   showMenu { event
            , getList: const (Just list)
            , menuRef

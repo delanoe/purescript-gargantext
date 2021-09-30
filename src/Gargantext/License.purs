@@ -5,7 +5,7 @@ import Reactix.DOM.HTML as H
 
 license :: R.Element
 license = H.p { className: "license" }
-            [ H.text "Gargantext "
+            [ H.text "GarganText "
             , H.span { className: "fa fa-registered"} []
             , H.text " is made by "
             , H.a { href: "https://iscpif.fr"

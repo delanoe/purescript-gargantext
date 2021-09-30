@@ -4,7 +4,7 @@ import Data.Argonaut as Argonaut
 import Data.Argonaut.Decode.Error (JsonDecodeError)
 import Data.Either (Either(..), isLeft)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Show.Generic (genericShow)
 import Test.Spec (Spec, describe, it)
 import Test.Spec.Assertions (shouldEqual)
 
@@ -20,13 +20,13 @@ data Fruit
   | Gravy String
   | Pork Int
 
-derive instance eqFruit :: Eq Fruit
-derive instance genericFruit :: Generic Fruit _
-instance showFruit :: Show Fruit where
+derive instance Eq Fruit
+derive instance Generic Fruit _
+instance Show Fruit where
   show = genericShow
-instance decodeJsonFruit :: Argonaut.DecodeJson Fruit where
+instance Argonaut.DecodeJson Fruit where
   decodeJson = genericSumDecodeJson
-instance encodeJsonFruit :: Argonaut.EncodeJson Fruit where
+instance Argonaut.EncodeJson Fruit where
   encodeJson = genericSumEncodeJson
 
 data EnumTest
@@ -34,13 +34,13 @@ data EnumTest
   | Member2
   | Member3
 
-derive instance eqEnumTest :: Eq EnumTest
-derive instance genericEnumTest :: Generic EnumTest _
-instance showEnumTest :: Show EnumTest where
+derive instance Eq EnumTest
+derive instance Generic EnumTest _
+instance Show EnumTest where
   show = genericShow
-instance decodeJsonEnumTest :: Argonaut.DecodeJson EnumTest where
+instance Argonaut.DecodeJson EnumTest where
   decodeJson = genericEnumDecodeJson
-instance encodeJsonEnumTest :: Argonaut.EncodeJson EnumTest where
+instance Argonaut.EncodeJson EnumTest where
   encodeJson = genericEnumEncodeJson
 
 spec :: Spec Unit

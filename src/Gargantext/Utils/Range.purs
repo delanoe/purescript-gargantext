@@ -10,13 +10,13 @@ class Range r v where
 -- | A Closed Interval, in math speak
 newtype Closed t = Closed { min :: t, max :: t }
 
-derive instance newtypeClosed :: Newtype (Closed t) _
+derive instance Newtype (Closed t) _
 
-instance closedRange :: Ord t => Range (Closed t) t where
+instance Ord t => Range (Closed t) t where
   clamp (Closed r) = max r.min <<< min r.max
   within (Closed r) v = (v <= r.max) && (v >= r.min)
 
-instance eqRange :: Eq t => Eq (Closed t) where
+instance Eq t => Eq (Closed t) where
   eq (Closed r1) (Closed r2) = (r1.min == r2.min) && (r1.max == r2.max)
 
 type NumberRange = Closed Number

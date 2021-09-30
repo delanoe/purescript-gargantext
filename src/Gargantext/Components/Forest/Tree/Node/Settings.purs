@@ -1,11 +1,7 @@
 module Gargantext.Components.Forest.Tree.Node.Settings where
 
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
-import Data.Generic.Rep.Eq   (genericEq)
 import Gargantext.Prelude (class Eq, class Show, show, (&&), (<>), (==))
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..))
-import Data.Array (foldl)
 import Gargantext.Types
 
 ------------------------------------------------------------------------
@@ -30,7 +26,7 @@ data NodeAction = Documentation NodeType
                 | CloseNodePopover
 
 ------------------------------------------------------------------------
-instance eqNodeAction :: Eq NodeAction where
+instance Eq NodeAction where
   eq (Documentation x) (Documentation y) = true && (x == y)
   eq SearchBox SearchBox                 = true
   eq Download Download                   = true
@@ -49,21 +45,21 @@ instance eqNodeAction :: Eq NodeAction where
   eq CloseNodePopover CloseNodePopover   = true
   eq _ _                                 = false
 
-instance showNodeAction :: Show NodeAction where
+instance Show NodeAction where
   show (Documentation x) = "Documentation of " <> show x
   show SearchBox         = "SearchBox"
   show Download          = "Download"
   show Upload            = "Upload"
   show Refresh           = "Refresh"
-  show (Move t)          = "Move with subtree params" -- <> show t
+  show (Move _)          = "Move with subtree params" -- <> show t
   show Clone             = "Clone"
   show Delete            = "Delete"
   show Share             = "Share"
   show Config            = "Config"
-  show (Link x)          = "Link to " -- <> show x
-  show (Add xs)          = "Add Child" -- foldl (\a b -> a <> show b) "Add " xs
-  show (Merge t)         = "Merge with subtree" -- <> show t
-  show (Publish x)       = "Publish" -- <> show x
+  show (Link _)          = "Link to " -- <> show x
+  show (Add _)          = "Add Child" -- foldl (\a b -> a <> show b) "Add " xs
+  show (Merge _)         = "Merge with subtree" -- <> show t
+  show (Publish _)       = "Publish" -- <> show x
   show AddingContact     = "AddingContact"
   show CloseNodePopover  = "CloseNodePopover"
 
@@ -133,6 +129,7 @@ settingsBox Team =
                                 -- , NodeFrameNotebook
                                 , Team
                                 , FolderShared
+                                , NodeFrameVisio
                                 ]
                           , Share
                           , Delete
@@ -185,6 +182,7 @@ settingsBox Corpus =
                                 , Dashboard
                                 , NodeFrameWrite
                                 , NodeFrameCalc
+                                , Phylo
                                 ]
                           , Link (linkParams Annuaire)
                           , Move moveParameters
@@ -214,6 +212,16 @@ settingsBox Graph =
                           , Delete
                           ]
               }
+
+settingsBox Phylo =
+  SettingsBox { show : true
+              , edit : true
+              , doc  : Documentation Phylo
+              , buttons : [ Delete
+                          ]
+              }
+
+
 
 settingsBox (NodePublic Graph) =
   SettingsBox { show : true
@@ -315,7 +323,8 @@ settingsBox NodeFrameCalc =
   SettingsBox { show : true
               , edit : true
               , doc  : Documentation NodeFrameCalc
-              , buttons : [ Add [ NodeFrameCalc
+              , buttons : [ Upload
+                          , Add [ NodeFrameCalc
                                 , NodeFrameWrite
                                 ]
                           , Move moveFrameParameters
@@ -332,6 +341,19 @@ settingsBox NodeFrameNotebook =
                                 , NodeFrameNotebook
                                 ]
                           , Move moveFrameParameters
+                          , Delete
+                          ]
+              }
+
+
+settingsBox NodeFrameVisio =
+  SettingsBox { show : true
+              , edit : true
+              , doc  : Documentation NodeFrameVisio
+              , buttons : [ Add [ NodeFrameVisio
+                                , NodeFrameWrite
+                                , NodeFrameCalc
+                                ]
                           , Delete
                           ]
               }

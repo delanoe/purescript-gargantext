@@ -1,16 +1,14 @@
 module Gargantext.Components.CodeEditor where
 
-import DOM.Simple.Types (Element)
 import Data.Argonaut.Parser (jsonParser)
 import Data.Either (either, Either(..))
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Eq.Generic (genericEq)
+import Data.Show.Generic (genericShow)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, null, toMaybe)
 import Data.String.Utils (endsWith)
-import Data.Tuple (fst, snd)
-import Data.Tuple.Nested ((/\))
+import DOM.Simple.Types (Element)
 import Effect (Effect)
 import FFI.Simple ((.=))
 import Reactix as R
@@ -24,7 +22,6 @@ import Toestand as T
 import Gargantext.Prelude
 import Gargantext.Utils.HighlightJS as HLJS
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.CodeEditor"
@@ -36,17 +33,17 @@ type ElRef = R.Ref (Nullable Element)
 
 data CodeType = Haskell | JSON | Markdown | Python
 
-derive instance genericCodeType :: Generic CodeType _
-instance eqCodeType :: Eq CodeType where
+derive instance Generic CodeType _
+instance Eq CodeType where
   eq = genericEq
-instance showCodeType :: Show CodeType where
+instance Show CodeType where
   show = genericShow
 
 data ViewType = Code | Preview | Both
-derive instance genericViewType :: Generic ViewType _
-instance eqViewType :: Eq ViewType where
+derive instance Generic ViewType _
+instance Eq ViewType where
   eq = genericEq
-instance showViewType :: Show ViewType where
+instance Show ViewType where
   show = genericShow
 
 type Props =
@@ -126,9 +123,9 @@ codeEditorCpt = here.component "codeEditor" cpt
 
       pure $ H.div { className: "code-editor" }
         [ toolbar { controls, onChange }
-        , H.div { className: "row error" }
+        , H.div { className: "row no-gutters error" }
           [ errorComponent {error: controls.error} ]
-        , H.div { className: "row editor" }
+        , H.div { className: "row no-gutters editor" }
           [ H.div { className: "code-area " <> (codeHidden viewType') }
             [ H.div { className: "code-container" }
               [ H.textarea { defaultValue: codeS'
@@ -214,21 +211,21 @@ toolbar p = R.createElement toolbarCpt p []
 toolbarCpt :: R.Component ToolbarProps
 toolbarCpt = here.component "toolbar" cpt
   where
-    cpt props@{ controls: { codeS, codeType, error, viewType }
-              , onChange } _ = do
+    cpt { controls: { codeS, codeType, viewType }
+        , onChange } _ = do
       codeS' <- T.useLive T.unequal codeS
       codeType' <- T.useLive T.unequal codeType
 
       pure $
-        H.div { className: "row toolbar" }
-          [ H.div { className: "col-2" }
+        H.div { className: "row no-gutters align-items-center mb-3 code-editor__toolbar" }
+          [ H.div { className: "code-editor__toolbar__type" }
                [ codeTypeSelector {
                    codeType
                   -- Handle rerendering of preview when viewType changed
                  , onChange: \ct -> onChange ct codeS'
                  }
                ]
-          , H.div { className: "col-1" }
+          , H.div {}
              [ viewTypeSelector {state: viewType} [] ]
           ]
 
@@ -249,7 +246,7 @@ errorComponentCpt = here.component "errorComponent" cpt
 
       pure $ case error' of
         Nothing -> H.div {} []
-        Just err -> H.div { className: "text-danger" } [ H.text err ]
+        Just err -> H.div { className: "text-danger mb-3" } [ H.text err ]
 
 
 type CodeTypeSelectorProps =
@@ -358,7 +355,7 @@ initControls code defaultCodeType = do
     }
 
 reinitControls :: Record Controls -> Code -> CodeType -> Effect Unit
-reinitControls c@{ codeType, codeS, error } code defaultCodeType = do
+reinitControls { codeType, codeS, error } code defaultCodeType = do
   T.write_ defaultCodeType codeType
   T.write_ code codeS
   T.write_ Nothing error

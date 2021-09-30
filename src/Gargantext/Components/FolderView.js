@@ -5,3 +5,9 @@ exports.back = function() {
     history.back();
   }
 }
+
+exports.link = function (url) {
+  return function() {
+    window.location.href = url
+  }
+}

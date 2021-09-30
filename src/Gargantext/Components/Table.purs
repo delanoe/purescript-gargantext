@@ -64,7 +64,7 @@ tableHeaderLayoutCpt = here.component "tableHeaderLayout" cpt
       cacheState' <- T.useLive T.unequal cacheState
 
       pure $ R.fragment
-        [ R2.row [FV.backButton, FV.homeButton]
+        [ R2.row [FV.backButton]
         ,
           R2.row
           [ H.div {className: "col-md-3"} [ H.h3 {} [H.text title] ]
@@ -111,8 +111,8 @@ tableHeaderLayoutCpt = here.component "tableHeaderLayout" cpt
 
     cacheStateToggle NT.CacheOn = NT.CacheOff
     cacheStateToggle NT.CacheOff = NT.CacheOn
-  
-table :: Record Props -> R.Element
+
+table :: R2.Leaf Props
 table props = R.createElement tableCpt props []
 tableCpt :: R.Component Props
 tableCpt = here.component "table" cpt
@@ -160,12 +160,12 @@ type FilterRowsParams =
   )
 
 filterRows :: forall a. Record FilterRowsParams -> Seq.Seq a -> Seq.Seq a
-filterRows { params: { limit, offset, orderBy } } rs = newRs
+filterRows { params: { limit, offset } } rs = newRs
   where
     newRs = Seq.take limit $ Seq.drop offset $ rs
 
-defaultContainer :: {title :: String} -> Record TableContainerProps -> R.Element
-defaultContainer {title} props = R.fragment $ props.syncResetButton <> controls
+defaultContainer :: Record TableContainerProps -> R.Element
+defaultContainer props = R.fragment $ props.syncResetButton <> controls
   where
     controls = [ R2.row
                  [ H.div {className: "col-md-4"} [ props.pageSizeDescription ]
@@ -181,8 +181,8 @@ defaultContainer {title} props = R.fragment $ props.syncResetButton <> controls
                ]
 
 -- TODO: this needs to be in Gargantext.Pages.Corpus.Graph.Tabs
-graphContainer :: {title :: String} -> Record TableContainerProps -> R.Element
-graphContainer {title} props =
+graphContainer :: Record TableContainerProps -> R.Element
+graphContainer props =
   -- TODO title in tabs name (above)
   H.table {className: "table"}
   [ H.thead {className: ""} [ props.tableHead ]
@@ -200,7 +200,6 @@ type SizeDDProps =
 
 sizeDD :: Record SizeDDProps -> R.Element
 sizeDD p = R.createElement sizeDDCpt p []
-
 sizeDDCpt :: R.Component SizeDDProps
 sizeDDCpt = here.component "sizeDD" cpt
   where
@@ -239,7 +238,6 @@ type PaginationProps =
 
 pagination :: R2.Leaf PaginationProps
 pagination props = R.createElement paginationCpt props []
-
 paginationCpt :: R.Component PaginationProps
 paginationCpt = here.component "pagination" cpt
   where
@@ -298,9 +296,9 @@ paginationCpt = here.component "pagination" cpt
 
 data PageSizes = PS10 | PS20 | PS50 | PS100 | PS200
 
-derive instance eqPageSizes :: Eq PageSizes
+derive instance Eq PageSizes
 
-instance showPageSize :: Show PageSizes where
+instance Show PageSizes where
   show PS10  = "10"
   show PS20  = "20"
   show PS50  = "50"
@@ -327,11 +325,3 @@ string2PageSize "50" = PS50
 string2PageSize "100" = PS100
 string2PageSize "200" = PS200
 string2PageSize _    = PS10
-
-
-
-
-
-
-
-
