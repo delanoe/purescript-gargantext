@@ -117,6 +117,7 @@ queryProgress { asyncTask: GT.AsyncTaskWithType { task: GT.AsyncTask {id}
               } = get session (p typ)
   where
     -- TODO refactor path
+    p GT.ListCSVUpload      = NodeAPI GT.NodeList (Just nodeId) $ GT.asyncTaskTypePath GT.ListCSVUpload <> id <> "/poll?limit=1"
     p GT.UpdateNgramsCharts = NodeAPI GT.Node   (Just nodeId) $ path <> id <> "/poll?limit=1"
     p GT.UpdateNode         = NodeAPI GT.Node   (Just nodeId) $ path <> id <> "/poll?limit=1"
     p _                     = NodeAPI GT.Corpus (Just nodeId) $ path <> id <> "/poll?limit=1"
