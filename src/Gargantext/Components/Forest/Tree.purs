@@ -23,6 +23,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Update (updateRequest)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile, uploadArbitraryFile, uploadFrameCalc)
+import Gargantext.Components.Forest.Tree.Node.Action.WriteNodesDocuments (documentsFromWriteNodesReq)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
 import Gargantext.Config.REST (RESTError)
@@ -308,6 +309,11 @@ linkNode nodeType params p@{ boxes: { errors }, session } = traverse_ f params w
     handleRESTError errors eTask $ \_task -> pure unit
     refreshTree p
 
+documentsFromWriteNodes id p@{ boxes: { errors }, session } = do
+  eTask <- documentsFromWriteNodesReq session id
+  handleRESTError errors eTask $ \_task -> pure unit
+  refreshTree p
+
 -- | This thing is basically a hangover from when garg was a thermite
 -- | application. we should slowly get rid of it.
 performAction :: Action -> Record PerformActionProps -> Aff Unit
@@ -329,5 +335,6 @@ performAction (MoveNode {params}) p                           = moveNode params 
 performAction (MergeNode {params}) p                          = mergeNode params p
 performAction (LinkNode { nodeType, params }) p               = linkNode nodeType params p
 performAction RefreshTree p                                   = refreshTree p
-performAction NoAction _                                      = liftEffect $ here.log "[performAction] NoAction"
 performAction ClosePopover p                                  = closePopover p
+performAction (DocumentsFromWriteNodes { id }) p              = documentsFromWriteNodes id p
+performAction NoAction _                                      = liftEffect $ here.log "[performAction] NoAction"

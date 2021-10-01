@@ -51,6 +51,7 @@ icon  DownloadNode                = glyphiconNodeAction Download
 icon (MoveNode _ )                = glyphiconNodeAction (Move  { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
 icon (MergeNode _ )               = glyphiconNodeAction (Merge { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
 icon (LinkNode _  )               = glyphiconNodeAction (Link  { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
+icon (DocumentsFromWriteNodes _)  = glyphiconNodeAction (WriteNodesDocuments)
 
 icon NoAction                     = "hand-o-right"
 
@@ -74,6 +75,7 @@ text DownloadNode                 = "Download !"
 text (MoveNode  _ )               = "Move !"
 text (MergeNode _ )               = "Merge !"
 text (LinkNode  _ )               = "Link !"
+text (DocumentsFromWriteNodes _ ) = "Documents from Write Nodes !"
 text NoAction                     = "No Action"
 -----------------------------------------------------------------------
 

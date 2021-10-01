@@ -30,6 +30,8 @@ data Action = AddNode     String GT.NodeType
             | MergeNode   {params :: Maybe SubTreeOut}
             | LinkNode    {nodeType :: Maybe GT.NodeType, params :: Maybe SubTreeOut}
 
+            | DocumentsFromWriteNodes { id :: GT.ID }
+
             | NoAction
 
 derive instance Generic Action _
@@ -53,6 +55,7 @@ instance Eq Action where
   eq (MoveNode p1) (MoveNode p2) = eq p1 p2
   eq (MergeNode p1) (MergeNode p2) = eq p1 p2
   eq (LinkNode l1) (LinkNode l2) = eq l1 l2
+  eq (DocumentsFromWriteNodes { id: id1 }) (DocumentsFromWriteNodes { id: id2 }) = eq id1 id2
   eq NoAction NoAction = true
   eq _ _ = false
 
@@ -74,4 +77,5 @@ instance Show Action where
   show (MoveNode  _ )               = "MoveNode"
   show (MergeNode _ )               = "MergeNode"
   show (LinkNode  _ )               = "LinkNode"
+  show (DocumentsFromWriteNodes _ ) = "DocumentsFromWriteNodes"
   show NoAction                     = "NoAction"

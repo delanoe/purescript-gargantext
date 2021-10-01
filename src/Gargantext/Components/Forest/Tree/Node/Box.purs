@@ -24,6 +24,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
 import Gargantext.Components.Forest.Tree.Node.Action.Update (update)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (actionUpload)
+import Gargantext.Components.Forest.Tree.Node.Action.WriteNodesDocuments (actionWriteNodesDocuments)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (NodePopupProps, NodePopupS)
 import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Status (Status(..), hasStatus)
@@ -203,4 +204,6 @@ panelActionCpt = here.component "panelAction" cpt
       pure $ Share.publishNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
     cpt { action: SearchBox, boxes, dispatch, id, session } _ =
       pure $ actionSearch { boxes, dispatch, id: Just id, session } []
+    cpt { action: WriteNodesDocuments, boxes, dispatch, id, session } _ =
+      pure $ actionWriteNodesDocuments { boxes, dispatch, id, session } []
     cpt _ _ = pure $ H.div {} []
