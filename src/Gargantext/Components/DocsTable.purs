@@ -43,6 +43,7 @@ import Gargantext.Utils (sortWith)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParam, mQueryParamS, queryParam, queryParamS)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as GUT
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
@@ -407,17 +408,14 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
           (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentDocId = val })) sidePanel
     mCurrentDocId' <- T.useLive T.unequal mCurrentDocId
 
-<<<<<<< HEAD
-    reload <- GUR.new
-=======
+    reload <- T.useBox GUT.newReload
     localCategories' <- T.useLive T.unequal localCategories
->>>>>>> dev
 
     pure $ TT.table
       { colNames
       , container: TT.defaultContainer
       , params
-      , rows: rows localCategories' mCurrentDocId'
+      , rows: rows reload localCategories' mCurrentDocId'
       , syncResetButton : [ H.div {} [] ]
       , totalRecords
       , wrapColElts
@@ -432,19 +430,10 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
           | otherwise = Routes.Document sid listId
         colNames = TT.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source", "Score" ]
         wrapColElts = const identity
-        rows localCategories' mCurrentDocId' = row <$> A.toUnfoldable documents
+        rows reload localCategories' mCurrentDocId' = row reload <$> A.toUnfoldable documents
           where
-            row dv@(DocumentsView r@{ _id, category }) =
+            row reload dv@(DocumentsView r@{ _id, category }) =
               { row:
-<<<<<<< HEAD
-                T.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
-                  H.div { className: "" }
-                  [ docChooser { listId, mCorpusId, nodeId: r._id, selected, sidePanelTriggers, tableReload: reload } []
-                  ]
-                --, H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
-                , H.div { className: "column-tag flex" }
-                  [ rating { score: cat, nodeId, row: dv, session, setLocalCategories } [] ]
-=======
                 TT.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
                             H.div { className: "" }
                                   [ docChooser { boxes
@@ -460,7 +449,6 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
                                            , score: cat
                                            , setLocalCategories: \lc -> T.modify_ lc localCategories
                                            , session } [] ]
->>>>>>> dev
                 --, H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only
                 , H.div { className: tClassName } [ R2.showText r.date ]

@@ -2,21 +2,24 @@ module Gargantext.Components.Score where
 
 import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>), encodeJson)
 import Data.Int (fromString)
+import Data.Either (Either)
 import Data.Maybe (Maybe(..), maybe)
 import DOM.Simple.Console (log2)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
 
 import Gargantext.Prelude
 
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, sessionId, get, delete, put)
 import Gargantext.Types as GT
 import Gargantext.Utils.Array as GUA
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
+import Gargantext.Utils.Toestand as GUT
 
 type Score = Int
 type DocID = Int
@@ -30,7 +33,7 @@ type Props = (
   , nodeId      :: GT.NodeID
   , score       :: Maybe Score
   , session     :: Session
-  , tableReload :: GUR.ReloadS
+  , tableReload :: GUT.ReloadS
   )
 
 type Choice = Maybe Score
@@ -53,7 +56,7 @@ scoreElCpt = R.hooksComponentWithModule thisModule "scoreEl" cpt
                              , score: readChoice $ R.unsafeEventValue e }
       launchAff_ $ do
         _ <- putScore session nodeId query
-        liftEffect $ GUR.bump reloadS
+        liftEffect $ GUT.reload reloadS
 
     option :: Choice -> R.Element
     option c = H.option { value: showChoice c } [ H.text $ showChoice c ]
@@ -72,13 +75,11 @@ newtype ScoreQuery =
              , score   :: Choice
              }
 
-instance encodeJsonScoreQuery :: EncodeJson ScoreQuery where
-  encodeJson (ScoreQuery post) =
-      "nts_nodesId" := post.nodeIds
-    ~> "nts_score" := encodeJson post.score
-    ~> jsonEmptyObject
+instance JSON.WriteForeign ScoreQuery where
+  writeImpl (ScoreQuery post) = JSON.writeImpl { nts_nodesId: post.nodeIds
+                                               , nts_score: post.score }
 
-putScore :: Session -> GT.NodeID -> ScoreQuery -> Aff (Array Int)
+putScore :: Session -> GT.NodeID -> ScoreQuery -> Aff (Either RESTError (Array Int))
 putScore session nodeId = put session $ scoreRoute nodeId
   where
     scoreRoute :: GT.NodeID -> SessionRoute
