@@ -1,23 +1,27 @@
 module Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar where
 
+import Gargantext.Prelude
+
+import Data.Either (Either)
 import Data.Int (fromNumber)
 import Data.Maybe (Maybe(..))
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Timer (clearInterval, setInterval)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
-import Gargantext.Prelude
+import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
+import Gargantext.Types (FrontendError)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
-thisModule :: String
-thisModule = "Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar"
 
 
 data BarType = Bar | Pie
@@ -25,33 +29,34 @@ data BarType = Bar | Pie
 type Props = (
     asyncTask :: GT.AsyncTaskWithType
   , barType   :: BarType
+  , errors    :: T.Box (Array FrontendError)
   , nodeId    :: GT.ID
   , onFinish  :: Unit -> Effect Unit
   , session   :: Session
   )
 
 
-asyncProgressBar :: Record Props -> R.Element
-asyncProgressBar p = R.createElement asyncProgressBarCpt p []
-
+asyncProgressBar :: R2.Component Props
+asyncProgressBar = R.createElement asyncProgressBarCpt
 asyncProgressBarCpt :: R.Component Props
-asyncProgressBarCpt = R.hooksComponentWithModule thisModule "asyncProgressBar" cpt
+asyncProgressBarCpt = here.component "asyncProgressBar" cpt
   where
     cpt props@{ asyncTask: (GT.AsyncTaskWithType {task: GT.AsyncTask {id}})
               , barType
-              , nodeId
+              , errors
               , onFinish
               } _ = do
-      (progress /\ setProgress) <- R.useState' 0.0
+      progress <- T.useBox 0.0
       intervalIdRef <- R.useRef Nothing
 
       R.useEffectOnce' $ do
         intervalId <- setInterval 1000 $ do
           launchAff_ $ do
-            asyncProgress@(GT.AsyncProgress {status}) <- queryProgress props
-            liftEffect do
-              setProgress \p -> min 100.0 $ GT.progressPercent asyncProgress
-              if (status == GT.Finished) || (status == GT.Killed) || (status == GT.Failed) then do
+            eAsyncProgress <- queryProgress props
+            handleRESTError errors eAsyncProgress $ \asyncProgress -> liftEffect $ do
+              let GT.AsyncProgress { status } = asyncProgress
+              T.write_ (min 100.0 $ GT.progressPercent asyncProgress) progress
+              if (status == GT.IsFinished) || (status == GT.IsKilled) || (status == GT.IsFailure) then do
                 _ <- case R.readRef intervalIdRef of
                   Nothing -> pure unit
                   Just iid -> clearInterval iid
@@ -64,44 +69,46 @@ asyncProgressBarCpt = R.hooksComponentWithModule thisModule "asyncProgressBar" c
         pure unit
 
 
-      pure $ progressIndicator { barType, label: id, progress: toInt progress }
-
-    toInt :: Number -> Int
-    toInt n = case fromNumber n of
-        Nothing -> 0
-        Just x  -> x
+      pure $ progressIndicator { barType, label: id, progress }
 
 type ProgressIndicatorProps =
   ( barType  :: BarType
   , label    :: String
-  , progress :: Int
+  , progress :: T.Box Number
   )
 
 progressIndicator :: Record ProgressIndicatorProps -> R.Element
 progressIndicator p = R.createElement progressIndicatorCpt p []
 
 progressIndicatorCpt :: R.Component ProgressIndicatorProps
-progressIndicatorCpt = R.hooksComponentWithModule thisModule "progressIndicator" cpt
+progressIndicatorCpt = here.component "progressIndicator" cpt
   where
-    cpt { barType: Bar, label, progress } _ = do
-      pure $
-        H.div { className: "progress" } [
-          H.div { className: "progress-bar"
-                , role: "progressbar"
-                , style: { width: (show $ progress) <> "%" }
-                } [ H.text label ]
-        ]
+    cpt { barType, label, progress } _ = do
+      progress' <- T.useLive T.unequal progress
+      let progressInt = toInt progress'
 
-    cpt { barType: Pie, label, progress } _ = do
-      pure $
-        H.div { className: "progress-pie" } [
-          H.div { className: "progress-pie-segment"
-                , style: { "--over50": if progress < 50 then "0" else "1"
-                         , "--value": show $ progress } } [
-          ]
-        ]
+      case barType of
+        Bar -> pure $
+                H.div { className: "progress" }
+                  [ H.div { className: "progress-bar"
+                        , role: "progressbar"
+                        , style: { width: (show $ progressInt) <> "%" }
+                        } [ H.text label ]
+                  ]
+        Pie -> pure $
+                H.div { className: "progress-pie" }
+                  [ H.div { className: "progress-pie-segment"
+                          , style: { "--over50": if progressInt < 50 then "0" else "1"
+                                   , "--value": show $ progressInt } } [
+                    ]
+                  ]
 
-queryProgress :: Record Props -> Aff GT.AsyncProgress
+    toInt :: Number -> Int
+    toInt n = case fromNumber n of
+        Nothing -> 0
+        Just x  -> x
+
+queryProgress :: Record Props -> Aff (Either RESTError GT.AsyncProgress)
 queryProgress { asyncTask: GT.AsyncTaskWithType { task: GT.AsyncTask {id}
                                                 , typ
                                                 }
@@ -110,8 +117,9 @@ queryProgress { asyncTask: GT.AsyncTaskWithType { task: GT.AsyncTask {id}
               } = get session (p typ)
   where
     -- TODO refactor path
-    p GT.UpdateNode         = NodeAPI GT.Node   (Just nodeId) $ path <> id <> "/poll?limit=1"
+    p GT.ListCSVUpload      = NodeAPI GT.NodeList (Just nodeId) $ GT.asyncTaskTypePath GT.ListCSVUpload <> id <> "/poll?limit=1"
     p GT.UpdateNgramsCharts = NodeAPI GT.Node   (Just nodeId) $ path <> id <> "/poll?limit=1"
+    p GT.UpdateNode         = NodeAPI GT.Node   (Just nodeId) $ path <> id <> "/poll?limit=1"
     p _                     = NodeAPI GT.Corpus (Just nodeId) $ path <> id <> "/poll?limit=1"
     path = GT.asyncTaskTypePath typ
 

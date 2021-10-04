@@ -1,11 +1,7 @@
 module Gargantext.Components.Forest.Tree.Node.Settings where
 
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
-import Data.Generic.Rep.Eq   (genericEq)
 import Gargantext.Prelude (class Eq, class Show, show, (&&), (<>), (==))
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..))
-import Data.Array (foldl)
 import Gargantext.Types
 
 ------------------------------------------------------------------------
@@ -28,62 +24,66 @@ data NodeAction = Documentation NodeType
                 | Clone
                 | AddingContact
                 | CloseNodePopover
+                | WriteNodesDocuments  -- https://gitlab.iscpif.fr/gargantext/purescript-gargantext/issues/331  
 
 ------------------------------------------------------------------------
-instance eqNodeAction :: Eq NodeAction where
-  eq (Documentation x) (Documentation y) = true && (x == y)
-  eq SearchBox SearchBox                 = true
-  eq Download Download                   = true
-  eq Upload Upload                       = true
-  eq Refresh Refresh                     = true
-  eq (Move x) (Move y)                   = x == y
-  eq Clone Clone                         = true
-  eq Delete Delete                       = true
-  eq Share Share                         = true
-  eq (Link x) (Link y)                   = x == y
-  eq (Add  x) (Add  y)                   = x == y
-  eq (Merge x) (Merge y)                 = x == y
-  eq Config Config                       = true
-  eq (Publish x) (Publish y)             = x == y
-  eq AddingContact AddingContact         = true
-  eq CloseNodePopover CloseNodePopover   = true
-  eq _ _                                 = false
+instance Eq NodeAction where
+  eq (Documentation x) (Documentation y)     = true && (x == y)
+  eq SearchBox SearchBox                     = true
+  eq Download Download                       = true
+  eq Upload Upload                           = true
+  eq Refresh Refresh                         = true
+  eq (Move x) (Move y)                       = x == y
+  eq Clone Clone                             = true
+  eq Delete Delete                           = true
+  eq Share Share                             = true
+  eq (Link x) (Link y)                       = x == y
+  eq (Add  x) (Add  y)                       = x == y
+  eq (Merge x) (Merge y)                     = x == y
+  eq Config Config                           = true
+  eq (Publish x) (Publish y)                 = x == y
+  eq AddingContact AddingContact             = true
+  eq CloseNodePopover CloseNodePopover       = true
+  eq WriteNodesDocuments WriteNodesDocuments = true
+  eq _ _                                     = false
 
-instance showNodeAction :: Show NodeAction where
-  show (Documentation x) = "Documentation of " <> show x
-  show SearchBox         = "SearchBox"
-  show Download          = "Download"
-  show Upload            = "Upload"
-  show Refresh           = "Refresh"
-  show (Move t)          = "Move with subtree params" -- <> show t
-  show Clone             = "Clone"
-  show Delete            = "Delete"
-  show Share             = "Share"
-  show Config            = "Config"
-  show (Link x)          = "Link to " -- <> show x
-  show (Add xs)          = "Add Child" -- foldl (\a b -> a <> show b) "Add " xs
-  show (Merge t)         = "Merge with subtree" -- <> show t
-  show (Publish x)       = "Publish" -- <> show x
-  show AddingContact     = "AddingContact"
-  show CloseNodePopover  = "CloseNodePopover"
+instance Show NodeAction where
+  show (Documentation x)   = "Documentation of " <> show x
+  show SearchBox           = "SearchBox"
+  show Download            = "Download"
+  show Upload              = "Upload"
+  show Refresh             = "Refresh"
+  show (Move _)            = "Move with subtree params" -- <> show t
+  show Clone               = "Clone"
+  show Delete              = "Delete"
+  show Share               = "Share"
+  show Config              = "Config"
+  show (Link _)            = "Link to " -- <> show x
+  show (Add _)             = "Add Child" -- foldl (\a b -> a <> show b) "Add " xs
+  show (Merge _)           = "Merge with subtree" -- <> show t
+  show (Publish _)         = "Publish" -- <> show x
+  show AddingContact       = "AddingContact"
+  show CloseNodePopover    = "CloseNodePopover"
+  show WriteNodesDocuments = "WriteNodesDocuments"
 
 glyphiconNodeAction :: NodeAction -> String
-glyphiconNodeAction (Documentation _) = "question-circle"
-glyphiconNodeAction Delete            = "trash"
-glyphiconNodeAction (Add _)           = "plus"
-glyphiconNodeAction SearchBox         = "search"
-glyphiconNodeAction Upload            = "upload"
-glyphiconNodeAction (Link _)          = "arrows-h"
-glyphiconNodeAction Download          = "download"
-glyphiconNodeAction (Merge _)         = "random"
-glyphiconNodeAction Refresh           = "refresh"
-glyphiconNodeAction Config            = "wrench"
-glyphiconNodeAction Share             = "user-plus"
-glyphiconNodeAction AddingContact     = "user-plus"
-glyphiconNodeAction (Move _)          = "share-square-o"
-glyphiconNodeAction (Publish _)       = fldr FolderPublic true
-glyphiconNodeAction CloseNodePopover  = "close"
-glyphiconNodeAction _                 = ""
+glyphiconNodeAction (Documentation _)   = "question-circle"
+glyphiconNodeAction Delete              = "trash"
+glyphiconNodeAction (Add _)             = "plus"
+glyphiconNodeAction SearchBox           = "search"
+glyphiconNodeAction Upload              = "upload"
+glyphiconNodeAction (Link _)            = "arrows-h"
+glyphiconNodeAction Download            = "download"
+glyphiconNodeAction (Merge _)           = "random"
+glyphiconNodeAction Refresh             = "refresh"
+glyphiconNodeAction Config              = "wrench"
+glyphiconNodeAction Share               = "user-plus"
+glyphiconNodeAction AddingContact       = "user-plus"
+glyphiconNodeAction (Move _)            = "share-square-o"
+glyphiconNodeAction (Publish _)         = fldr FolderPublic true
+glyphiconNodeAction CloseNodePopover    = "close"
+glyphiconNodeAction WriteNodesDocuments = "bars"
+glyphiconNodeAction _                   = ""
 
 ------------------------------------------------------------------------
 data SettingsBox =
@@ -133,6 +133,7 @@ settingsBox Team =
                                 -- , NodeFrameNotebook
                                 , Team
                                 , FolderShared
+                                , NodeFrameVisio
                                 ]
                           , Share
                           , Delete
@@ -185,9 +186,11 @@ settingsBox Corpus =
                                 , Dashboard
                                 , NodeFrameWrite
                                 , NodeFrameCalc
+                                , Phylo
                                 ]
                           , Link (linkParams Annuaire)
                           , Move moveParameters
+                          , WriteNodesDocuments
                           , Delete
                           ]
               }
@@ -214,6 +217,16 @@ settingsBox Graph =
                           , Delete
                           ]
               }
+
+settingsBox Phylo =
+  SettingsBox { show : true
+              , edit : true
+              , doc  : Documentation Phylo
+              , buttons : [ Delete
+                          ]
+              }
+
+
 
 settingsBox (NodePublic Graph) =
   SettingsBox { show : true
@@ -315,7 +328,8 @@ settingsBox NodeFrameCalc =
   SettingsBox { show : true
               , edit : true
               , doc  : Documentation NodeFrameCalc
-              , buttons : [ Add [ NodeFrameCalc
+              , buttons : [ Upload
+                          , Add [ NodeFrameCalc
                                 , NodeFrameWrite
                                 ]
                           , Move moveFrameParameters
@@ -337,7 +351,17 @@ settingsBox NodeFrameNotebook =
               }
 
 
-
+settingsBox NodeFrameVisio =
+  SettingsBox { show : true
+              , edit : true
+              , doc  : Documentation NodeFrameVisio
+              , buttons : [ Add [ NodeFrameVisio
+                                , NodeFrameWrite
+                                , NodeFrameCalc
+                                ]
+                          , Delete
+                          ]
+              }
 
 
 settingsBox NodeFile =

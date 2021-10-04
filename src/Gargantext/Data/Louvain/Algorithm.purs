@@ -10,8 +10,8 @@ import Prelude ((&&), (==), ($), (<$>), class Eq, class Ord)
 
 newtype Cluster = Cluster String
 newtype Node = Node String
-derive instance eqNode :: Eq Node
-derive instance ordNode :: Ord Node
+derive instance Eq Node
+derive instance Ord Node
 newtype Edge = Edge {
     source :: Node
   , target :: Node

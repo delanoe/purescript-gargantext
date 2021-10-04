@@ -1,223 +1,188 @@
 module Gargantext.Components.Nodes.Corpus where
 
-import Data.Argonaut (class DecodeJson, decodeJson, encodeJson)
-import Data.Argonaut.Parser (jsonParser)
 import Data.Array as A
 import Data.Either (Either(..))
+import Data.Eq.Generic (genericEq)
+import Data.Generic.Rep (class Generic)
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple (Tuple(..), fst, snd)
-import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
+import Data.Show.Generic (genericShow)
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_, throwError)
-import Effect.Class (liftEffect)
+import Effect.Aff (Aff, throwError)
 import Effect.Exception (error)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
-import Gargantext.Prelude
-
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.CodeEditor as CE
+import Gargantext.Components.FolderView as FV
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Node (NodePoly(..), HyperdataList)
-import Gargantext.Components.Nodes.Types
-import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..))
+import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata)
+import Gargantext.Components.Nodes.Types (FTField, FTFieldWithIndex, FTFieldsWithIndex(..), Field(..), FieldType(..), Hash, Index, defaultHaskell', defaultJSON', defaultMarkdown', defaultPython')
+import Gargantext.Components.TileMenu (tileMenu)
+import Gargantext.Config.REST (RESTError(..))
 import Gargantext.Data.Array as GDA
-import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Routes (SessionRoute(NodeAPI, Children))
+import Gargantext.Prelude (class Eq, class Show, Unit, bind, discard, pure, show, unit, ($), (<>), const, (<<<), (+), (==), (-), (<), (>), (<$>))
+import Gargantext.Routes (SessionRoute(Children, NodeAPI))
+import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, get, put, sessionId)
-import Gargantext.Types (NodeType(..), AffTableResult)
+import Gargantext.Types (AffETableResult, NodeType(..), ID)
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
+import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
+import Toestand as T
 
-thisModule :: String
-thisModule = "Gargantext.Components.Nodes.Corpus"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Corpus"
 
 type Props =
-  ( nodeId  :: Int
+  ( boxes   :: Boxes
+  , nodeId  :: ID
+  , session :: Session )
+
+corpusLayout :: R2.Leaf Props
+corpusLayout props = R.createElement corpusLayoutCpt props []
+corpusLayoutCpt :: R.Component Props
+corpusLayoutCpt = here.component "corpusLayout" cpt where
+  cpt { boxes, nodeId, session } _ = do
+    pure $ corpusLayoutMain { boxes, key, nodeId, session }
+      where
+        key = show (sessionId session) <> "-" <> show nodeId
+
+type KeyProps =
+  ( boxes   :: Boxes
+  , key     :: String
+  , nodeId  :: ID
   , session :: Session
   )
 
-type KeyProps =
-  ( key :: String
-  | Props
-  )
-
-corpusLayout :: Record Props -> R.Element
-corpusLayout props = R.createElement corpusLayoutCpt props []
-
-corpusLayoutCpt :: R.Component Props
-corpusLayoutCpt = R.hooksComponentWithModule thisModule "corpusLayout" cpt
+corpusLayoutMain :: R2.Leaf KeyProps
+corpusLayoutMain props = R.createElement corpusLayoutMainCpt props []
+corpusLayoutMainCpt :: R.Component KeyProps
+corpusLayoutMainCpt = here.component "corpusLayoutMain" cpt
   where
-    cpt { nodeId, session } _ = do
-      let sid = sessionId session
+    cpt { boxes, nodeId, session } _ = do
+      -- Computed
+      corpusCodeRoute <- pure $ const do
+        pure $ GR.CorpusCode (sessionId session) nodeId
+      -- Render
+      pure $
 
-      pure $ corpusLayoutWithKey { key: show sid <> "-" <> show nodeId, nodeId, session }
-
-
-corpusLayoutWithKey :: Record KeyProps -> R.Element
-corpusLayoutWithKey props = R.createElement corpusLayoutWithKeyCpt props []
-corpusLayoutWithKeyCpt :: R.Component KeyProps
-corpusLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "corpusLayoutWithKey" cpt
-  where
-    cpt { nodeId, session } _ = do
-      reload <- GUR.new
-
-      useLoader {nodeId, reload: GUR.value reload, session} loadCorpusWithReload $
-        \corpus -> corpusLayoutView {corpus, nodeId, reload, session}
-
-type ViewProps =
-  ( corpus  :: NodePoly Hyperdata
-  , reload  :: GUR.ReloadS
-  | Props
-  )
-
-corpusLayoutView :: Record ViewProps -> R.Element
-corpusLayoutView props = R.createElement corpusLayoutViewCpt props []
-
-corpusLayoutViewCpt :: R.Component ViewProps
-corpusLayoutViewCpt = R.hooksComponentWithModule thisModule "corpusLayoutView" cpt
-  where
-    cpt {corpus: (NodePoly {hyperdata: Hyperdata {fields}}), nodeId, reload, session} _ = do
-      let fieldsWithIndex = List.mapWithIndex (\idx -> \t -> Tuple idx t) fields
-      fieldsS <- R.useState' fieldsWithIndex
-      fieldsRef <- R.useRef fields
-
-      -- handle props change of fields
-      R.useEffect1' fields $ do
-        if R.readRef fieldsRef == fields then
-          pure unit
-        else do
-          R.setRef fieldsRef fields
-          snd fieldsS $ const fieldsWithIndex
-
-      pure $ H.div {}
-        [ H.div { className: "row" }
-          [ H.div { className: "btn btn-primary " <> (saveEnabled fieldsWithIndex fieldsS)
-                  , on: { click: onClickSave {fields: fieldsS, nodeId, reload, session} }
-                  }
-            [ H.span { className: "fa fa-floppy-o" } [  ]
+        H.div {}
+        [
+          tileMenu
+          { boxes
+          , currentTile: Just corpusCodeRoute
+          , xTile: Just corpusCodeRoute
+          , yTile: Just corpusCodeRoute
+          }
+          [
+            H.button
+            { className: "btn btn-primary" }
+            [
+              H.i { className: "fa fa-code" } []
             ]
           ]
-        , H.div {}
-          [ fieldsCodeEditor { fields: fieldsS
-                             , nodeId
-                             , session } [] ]
-        , H.div { className: "row" }
-          [ H.div { className: "btn btn-primary"
-                  , on: { click: onClickAdd fieldsS }
-                  }
-            [ H.span { className: "fa fa-plus" } [  ]
-            ]
-          ]
+        ,
+          H.hr {}
+        ,
+          FV.folderView
+            { backFolder: true
+            , boxes
+            , nodeId
+            , session
+            }
         ]
 
-    saveEnabled :: FTFieldsWithIndex -> R.State FTFieldsWithIndex -> String
-    saveEnabled fs (fsS /\ _) = if fs == fsS then "disabled" else "enabled"
+-----------------------------------
 
-    onClickSave :: forall e. { fields :: R.State FTFieldsWithIndex
-                       , nodeId :: Int
-                       , reload :: GUR.ReloadS
-                       , session :: Session } -> e -> Effect Unit
-    onClickSave {fields: (fieldsS /\ _), nodeId, reload, session} _ = do
-      launchAff_ do
-        saveCorpus $ { hyperdata: Hyperdata {fields: (\(Tuple _ f) -> f) <$> fieldsS}
-                     , nodeId
-                     , session }
-        liftEffect $ GUR.bump reload
-
-    onClickAdd :: forall e. R.State FTFieldsWithIndex -> e -> Effect Unit
-    onClickAdd (_ /\ setFieldsS) _ = do
-      setFieldsS $ \fieldsS -> List.snoc fieldsS $ Tuple (List.length fieldsS) defaultField
 
 type FieldsCodeEditorProps =
   (
-    fields :: R.State FTFieldsWithIndex
+    fields :: T.Box FTFieldsWithIndex
     | LoadProps
   )
 
 fieldsCodeEditor :: R2.Component FieldsCodeEditorProps
 fieldsCodeEditor = R.createElement fieldsCodeEditorCpt
-
 fieldsCodeEditorCpt :: R.Component FieldsCodeEditorProps
-fieldsCodeEditorCpt = R.hooksComponentWithModule thisModule "fieldsCodeEditorCpt" cpt
+fieldsCodeEditorCpt = here.component "fieldsCodeEditorCpt" cpt
   where
-    cpt {nodeId, fields: fS@(fields /\ _), session} _ = do
-      masterKey <- GUR.new
+    cpt { fields } _ = do
+      (FTFieldsWithIndex fields') <- T.useLive T.unequal fields
+      masterKey <- T.useBox T2.newReload
+      masterKey' <- T.useLive T.unequal masterKey
 
-      pure $ H.div {} $ List.toUnfoldable (editors masterKey)
-      where
-        editors masterKey =
-          (\(Tuple idx field) ->
-            fieldCodeEditorWrapper { canMoveDown: idx < (List.length fields - 1)
+      let editorsMap { idx, ftField } =
+            fieldCodeEditorWrapper { canMoveDown: idx < (List.length fields' - 1)
                                    , canMoveUp: idx > 0
-                                   , field
-                                   , key: (show $ fst masterKey) <> "-" <> (show idx)
-                                   , onChange: onChange fS idx
-                                   , onMoveDown: onMoveDown masterKey fS idx
-                                   , onMoveUp: onMoveUp masterKey fS idx
-                                   , onRemove: onRemove fS idx
-                                   , onRename: onRename fS idx
-                                   }) <$> fields
+                                   , field: ftField
+                                   , key: (show masterKey') <> "-" <> (show idx)
+                                   , onChange: onChange idx
+                                   , onMoveDown: onMoveDown masterKey idx
+                                   , onMoveUp: onMoveUp masterKey idx
+                                   , onRemove: onRemove idx
+                                   , onRename: onRename idx
+                                   }
 
-    onChange :: R.State FTFieldsWithIndex -> Index -> FieldType -> Effect Unit
-    onChange (_ /\ setFields) idx typ = do
-      setFields $ \fields ->
-        fromMaybe fields $
-          List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { typ = typ })) fields
+      pure $ H.div {} $ List.toUnfoldable (editorsMap <$> fields')
+      where
+        onChange :: Index -> FieldType -> Effect Unit
+        onChange idx typ = do
+          T.modify_ (\(FTFieldsWithIndex fs) ->
+            FTFieldsWithIndex $ fromMaybe fs $
+              List.modifyAt idx (\{ ftField: Field f} -> { idx, ftField: Field $ f { typ = typ } }) fs) fields
 
-    onMoveDown :: GUR.ReloadS -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
-    onMoveDown masterKey (_ /\ setFields) idx _ = do
-      GUR.bump masterKey
-      setFields $ recomputeIndices <<< (GDA.swapList idx (idx + 1))
+        onMoveDown :: T2.ReloadS -> Index -> Unit -> Effect Unit
+        onMoveDown masterKey idx _ = do
+          T2.reload masterKey
+          T.modify_ (\(FTFieldsWithIndex fs) -> recomputeIndices $ FTFieldsWithIndex $ GDA.swapList idx (idx + 1) fs) fields
 
-    onMoveUp :: GUR.ReloadS -> R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
-    onMoveUp masterKey (_ /\ setFields) idx _ = do
-      GUR.bump masterKey
-      setFields $ recomputeIndices <<< (GDA.swapList idx (idx - 1))
+        onMoveUp :: T2.ReloadS -> Index -> Unit -> Effect Unit
+        onMoveUp masterKey idx _ = do
+          T2.reload masterKey
+          T.modify_ (\(FTFieldsWithIndex fs) -> recomputeIndices $ FTFieldsWithIndex $ GDA.swapList idx (idx - 1) fs) fields
 
-    onRemove :: R.State FTFieldsWithIndex -> Index -> Unit -> Effect Unit
-    onRemove (_ /\ setFields) idx _ = do
-      setFields $ \fields ->
-        fromMaybe fields $ List.deleteAt idx fields
+        onRemove :: Index -> Unit -> Effect Unit
+        onRemove idx _ = do
+          T.modify_ (\(FTFieldsWithIndex fs) -> FTFieldsWithIndex $ fromMaybe fs $ List.deleteAt idx fs) fields
 
-    onRename :: R.State FTFieldsWithIndex -> Index -> String -> Effect Unit
-    onRename (_ /\ setFields) idx newName = do
-      setFields $ \fields ->
-        fromMaybe fields $ List.modifyAt idx (\(Tuple _ (Field f)) -> Tuple idx (Field $ f { name = newName })) fields
+        onRename :: Index -> String -> Effect Unit
+        onRename idx newName = do
+          T.modify_ (\(FTFieldsWithIndex fs) ->
+            FTFieldsWithIndex $ fromMaybe fs $
+              List.modifyAt idx (\{ ftField: Field f } -> { idx, ftField: Field $ f { name = newName } }) fs) fields
 
     recomputeIndices :: FTFieldsWithIndex -> FTFieldsWithIndex
-    recomputeIndices = List.mapWithIndex $ \idx -> \(Tuple _ t) -> Tuple idx t
+    recomputeIndices (FTFieldsWithIndex lst) = FTFieldsWithIndex $ List.mapWithIndex (\idx -> \{ ftField } -> { idx, ftField }) lst
 
 hash :: FTFieldWithIndex -> Hash
-hash (Tuple idx f) = Crypto.hash $ "--idx--" <> (show idx) <> "--field--" <> (show f)
+hash { idx, ftField } = Crypto.hash $ "--idx--" <> (show idx) <> "--field--" <> (show ftField)
 
 type FieldCodeEditorProps =
   (
     canMoveDown :: Boolean
-  , canMoveUp :: Boolean
-  , field :: FTField
-  , key :: String
-  , onChange :: FieldType -> Effect Unit
-  , onMoveDown :: Unit -> Effect Unit
-  , onMoveUp :: Unit -> Effect Unit
-  , onRemove :: Unit -> Effect Unit
-  , onRename :: String -> Effect Unit
+  , canMoveUp   :: Boolean
+  , field       :: FTField
+  , key         :: String
+  , onChange    :: FieldType -> Effect Unit
+  , onMoveDown  :: Unit -> Effect Unit
+  , onMoveUp    :: Unit -> Effect Unit
+  , onRemove    :: Unit -> Effect Unit
+  , onRename    :: String -> Effect Unit
   )
 
 fieldCodeEditorWrapper :: Record FieldCodeEditorProps -> R.Element
 fieldCodeEditorWrapper props = R.createElement fieldCodeEditorWrapperCpt props []
-
 fieldCodeEditorWrapperCpt :: R.Component FieldCodeEditorProps
-fieldCodeEditorWrapperCpt = R.hooksComponentWithModule thisModule "fieldCodeEditorWrapperCpt" cpt
+fieldCodeEditorWrapperCpt = here.component "fieldCodeEditorWrapperCpt" cpt
   where
-    cpt props@{canMoveDown, canMoveUp, field: Field {name, typ}, onMoveDown, onMoveUp, onRemove, onRename} _ = do
-      pure $ H.div { className: "row card" } [
+    cpt props@{canMoveDown, canMoveUp, field: Field { name }, onMoveDown, onMoveUp, onRemove, onRename} _ = do
+      pure $ H.div { className: "card mb-3" } [
         H.div { className: "card-header" } [
-          H.div { className: "code-editor-heading row" } [
-              H.div { className: "col-4" } [
+          H.div { className: "code-editor-heading row no-gutters justify-content-between" } [
+              H.div { className: "col-5" } [
                  inputWithEnter { onBlur: onRename
                                 , onEnter: \_ -> pure unit
                                 , onValueChanged: onRename
@@ -227,9 +192,8 @@ fieldCodeEditorWrapperCpt = R.hooksComponentWithModule thisModule "fieldCodeEdit
                                 , placeholder: "Enter file name"
                                 , type: "text" }
               ]
-            , H.div { className: "col-7" } []
-            , H.div { className: "buttons-right col-1" } ([
-                H.div { className: "btn btn-danger"
+            , H.div { className: "d-flex flex-column" } ([
+                H.div { className: "btn btn-danger mb-1"
                       , on: { click: \_ -> onRemove unit }
                       } [
                   H.span { className: "fa fa-trash" } [  ]
@@ -257,11 +221,87 @@ fieldCodeEditorWrapperCpt = R.hooksComponentWithModule thisModule "fieldCodeEdit
             H.span { className: "fa fa-arrow-up" } [  ]
             ]
 
+type RenameableProps =
+  (
+    onRename :: String -> Effect Unit
+  , text :: String
+  )
+
+renameable :: Record RenameableProps -> R.Element
+renameable props = R.createElement renameableCpt props []
+renameableCpt :: R.Component RenameableProps
+renameableCpt = here.component "renameableCpt" cpt
+  where
+    cpt {onRename, text} _ = do
+      isEditing <- T.useBox false
+      state <- T.useBox text
+      textRef <- R.useRef text
+
+      -- handle props change of text
+      R.useEffect1' text $ do
+        if R.readRef textRef == text then
+          pure unit
+        else do
+          R.setRef textRef text
+          T.write_ text state
+
+      pure $ H.div { className: "renameable" } [
+        renameableText { isEditing, onRename, state }
+      ]
+
+type RenameableTextProps =
+  (
+    isEditing :: T.Box Boolean
+  , onRename  :: String -> Effect Unit
+  , state     :: T.Box String
+  )
+
+renameableText :: Record RenameableTextProps -> R.Element
+renameableText props = R.createElement renameableTextCpt props []
+renameableTextCpt :: R.Component RenameableTextProps
+renameableTextCpt = here.component "renameableTextCpt" cpt
+  where
+    cpt { isEditing, onRename, state } _ = do
+      isEditing' <- T.useLive T.unequal isEditing
+      state' <- T.useLive T.unequal state
+
+      pure $ if isEditing' then
+              H.div { className: "input-group" }
+                [ inputWithEnter {
+                    autoFocus: false
+                  , className: "form-control text"
+                  , defaultValue: state'
+                  , onBlur: \st -> T.write_ st state
+                  , onEnter: submit state'
+                  , onValueChanged: \st -> T.write_ st state
+                  , placeholder: ""
+                  , type: "text"
+                  }
+                , H.div { className: "btn input-group-append"
+                        , on: { click: submit state' } }
+                  [ H.span { className: "fa fa-floppy-o" } []
+                  ]
+                ]
+             else
+               H.div { className: "input-group" }
+               [ H.input { className: "form-control"
+                         , defaultValue: state'
+                         , disabled: 1
+                         , type: "text" }
+               , H.div { className: "btn input-group-append"
+                       , on: { click: \_ -> T.write_ true isEditing } }
+                 [ H.span { className: "fa fa-pencil" } []
+                 ]
+               ]
+      where
+        submit text _ = do
+          T.write_ false isEditing
+          onRename text
+
 fieldCodeEditor :: Record FieldCodeEditorProps -> R.Element
 fieldCodeEditor props = R.createElement fieldCodeEditorCpt props []
-
 fieldCodeEditorCpt :: R.Component FieldCodeEditorProps
-fieldCodeEditorCpt = R.hooksComponentWithModule thisModule "fieldCodeEditorCpt" cpt
+fieldCodeEditorCpt = here.component "fieldCodeEditorCpt" cpt
   where
     cpt {field: Field {typ: typ@(Haskell {haskell})}, onChange} _ = do
       pure $ CE.codeEditor {code: haskell, defaultCodeType: CE.Haskell, onChange: changeCode onChange typ}
@@ -272,7 +312,7 @@ fieldCodeEditorCpt = R.hooksComponentWithModule thisModule "fieldCodeEditorCpt" 
     cpt {field: Field {typ: typ@(JSON j)}, onChange} _ = do
       pure $ CE.codeEditor {code, defaultCodeType: CE.JSON, onChange: changeCode onChange typ}
       where
-        code = R2.stringify (encodeJson j) 2
+        code = R2.stringify (JSON.writeImpl j) 2
 
     cpt {field: Field {typ: typ@(Markdown {text})}, onChange} _ = do
       pure $ CE.codeEditor {code: text, defaultCodeType: CE.Markdown, onChange: changeCode onChange typ}
@@ -284,37 +324,38 @@ fieldCodeEditorCpt = R.hooksComponentWithModule thisModule "fieldCodeEditorCpt" 
 -- CE.Code is the editor code (might have been the cause of the trigger)
 changeCode :: (FieldType -> Effect Unit) -> FieldType -> CE.CodeType -> CE.Code -> Effect Unit
 changeCode onc (Haskell hs)        CE.Haskell  c = onc $ Haskell $ hs { haskell = c }
-changeCode onc (Haskell hs)        CE.Python   c = onc $ Python   $ defaultPython'   { python  = c }
-changeCode onc (Haskell {haskell}) CE.JSON     c = onc $ JSON     $ defaultJSON'     { desc = haskell }
-changeCode onc (Haskell {haskell}) CE.Markdown c = onc $ Markdown $ defaultMarkdown' { text = haskell }
+changeCode onc (Haskell _)         CE.Python   c = onc $ Python   $ defaultPython'   { python  = c }
+changeCode onc (Haskell {haskell}) CE.JSON     _ = onc $ JSON     $ defaultJSON'     { desc = haskell }
+changeCode onc (Haskell {haskell}) CE.Markdown _ = onc $ Markdown $ defaultMarkdown' { text = haskell }
 
 changeCode onc (Python hs)       CE.Python   c = onc $ Python  $ hs { python  = c }
-changeCode onc (Python hs)       CE.Haskell  c = onc $ Haskell $ defaultHaskell' { haskell = c }
-changeCode onc (Python {python}) CE.JSON     c = onc $ JSON     $ defaultJSON' { desc = python }
-changeCode onc (Python {python}) CE.Markdown c = onc $ Markdown $ defaultMarkdown' { text = python }
+changeCode onc (Python _)        CE.Haskell  c = onc $ Haskell $ defaultHaskell' { haskell = c }
+changeCode onc (Python {python}) CE.JSON     _ = onc $ JSON     $ defaultJSON' { desc = python }
+changeCode onc (Python {python}) CE.Markdown _ = onc $ Markdown $ defaultMarkdown' { text = python }
 
-changeCode onc (Markdown md) CE.Haskell  c = onc $ Haskell  $ defaultHaskell'  { haskell = c }
-changeCode onc (Markdown md) CE.Python   c = onc $ Python   $ defaultPython'   { python  = c }
-changeCode onc (Markdown md) CE.JSON     c = onc $ Markdown $ defaultMarkdown' { text    = c }
+changeCode onc (Markdown _)  CE.Haskell  c = onc $ Haskell  $ defaultHaskell'  { haskell = c }
+changeCode onc (Markdown _)  CE.Python   c = onc $ Python   $ defaultPython'   { python  = c }
+changeCode onc (Markdown _)  CE.JSON     c = onc $ Markdown $ defaultMarkdown' { text    = c }
 changeCode onc (Markdown md) CE.Markdown c = onc $ Markdown $ md               { text    = c }
 
-changeCode onc (JSON j@{desc}) CE.Haskell c = onc $ Haskell $ defaultHaskell' { haskell = haskell }
+changeCode onc (JSON j) CE.Haskell _ = onc $ Haskell $ defaultHaskell' { haskell = haskell }
   where
-    haskell = R2.stringify (encodeJson j) 2
-changeCode onc (JSON j@{desc}) CE.Python c = onc $ Python $ defaultPython' { python = toCode }
+    haskell = R2.stringify (JSON.writeImpl j) 2
+changeCode onc (JSON j) CE.Python _ = onc $ Python $ defaultPython' { python = toCode }
   where
-    toCode = R2.stringify (encodeJson j) 2
-changeCode onc (JSON j) CE.JSON c = do
-  case jsonParser c of
-    Left err -> log2 "[fieldCodeEditor'] cannot parse json" c
-    Right j' -> case decodeJson j' of
-      Left err -> log2 "[fieldCodeEditor'] cannot decode json" j'
-      Right j'' -> onc $ JSON j''
-changeCode onc (JSON j) CE.Markdown c = onc $ Markdown $ defaultMarkdown' { text = text }
+    toCode = R2.stringify (JSON.writeImpl j) 2
+changeCode onc _ CE.JSON c = do
+  case JSON.readJSON c of
+    Left err -> here.log2 "[fieldCodeEditor'] cannot parse json" c  -- TODO Refactor?
+    Right j' -> onc $ JSON j'
+  -- case jsonParser c of
+  --   Left err -> here.log2 "[fieldCodeEditor'] cannot parse json" c
+  --   Right j' -> case decodeJson j' of
+  --     Left err -> here.log2 "[fieldCodeEditor'] cannot decode json" j'
+  --     Right j'' -> onc $ JSON j''
+changeCode onc (JSON j) CE.Markdown _ = onc $ Markdown $ defaultMarkdown' { text = text }
   where
-    text = R2.stringify (encodeJson j) 2
-
-
+    text = R2.stringify (JSON.writeImpl j) 2
 
 
 type LoadProps =
@@ -322,11 +363,11 @@ type LoadProps =
   , session :: Session
   )
 
-loadCorpus' :: Record LoadProps -> Aff (NodePoly Hyperdata)
+loadCorpus' :: Record LoadProps -> Aff (Either RESTError (NodePoly Hyperdata))
 loadCorpus' {nodeId, session} = get session $ NodeAPI Corpus (Just nodeId) ""
 
 -- Just to make reloading effective
-loadCorpusWithReload :: {reload :: GUR.Reload  | LoadProps} -> Aff (NodePoly Hyperdata)
+loadCorpusWithReload :: { reload :: T2.Reload  | LoadProps } -> Aff (Either RESTError (NodePoly Hyperdata))
 loadCorpusWithReload {nodeId, session} = loadCorpus' {nodeId, session}
 
 type SaveProps = (
@@ -334,41 +375,69 @@ type SaveProps = (
   | LoadProps
   )
 
-saveCorpus :: Record SaveProps -> Aff Unit
+saveCorpus :: Record SaveProps -> Aff (Either RESTError Int)
 saveCorpus {hyperdata, nodeId, session} = do
-  id_ <- (put session (NodeAPI Corpus (Just nodeId) "") hyperdata) :: Aff Int
-  pure unit
+  put session (NodeAPI Corpus (Just nodeId) "") hyperdata
 
-loadCorpus :: Record LoadProps -> Aff CorpusData
+loadCorpus :: Record LoadProps -> Aff (Either RESTError CorpusData)
 loadCorpus {nodeId, session} = do
   -- fetch corpus via lists parentId
-  (NodePoly {parentId: corpusId} :: NodePoly {}) <- get session nodePolyRoute
-  corpusNode     <-  get session $ corpusNodeRoute     corpusId ""
-  defaultListIds <- (get session $ defaultListIdsRoute corpusId)
-                    :: forall a. DecodeJson a => AffTableResult (NodePoly a)
-  case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
-    Just (NodePoly { id: defaultListId }) ->
-      pure {corpusId, corpusNode, defaultListId}
-    Nothing ->
-      throwError $ error "Missing default list"
+  res <- get session nodePolyRoute
+  case res of
+    Left err -> pure $ Left err
+    Right (NodePoly {parentId: corpusId} :: NodePoly {}) -> do
+      eCorpusNode     <-  get session $ corpusNodeRoute     corpusId ""
+      eDefaultListIds <- (get session $ defaultListIdsRoute corpusId)
+                      :: forall a. JSON.ReadForeign a => AffETableResult (NodePoly a)
+      case eCorpusNode of
+        Left err -> pure $ Left err
+        Right corpusNode -> do
+          case eDefaultListIds of
+            Left err -> pure $ Left err
+            Right defaultListIds -> do
+              case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
+                Just (NodePoly { id: defaultListId }) ->
+                  pure $ Right { corpusId, corpusNode, defaultListId }
+                Nothing ->
+                  pure $ Left $ CustomError "Missing default list"
+
+--  (NodePoly {parentId: corpusId} :: NodePoly {}) <- get session nodePolyRoute
+--  corpusNode     <-  get session $ corpusNodeRoute     corpusId ""
+--  defaultListIds <- (get session $ defaultListIdsRoute corpusId)
+--                    :: forall a. JSON.ReadForeign a => AffTableResult (NodePoly a)
+--  case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
+--    Just (NodePoly { id: defaultListId }) ->
+--      pure {corpusId, corpusNode, defaultListId}
+--    Nothing ->
+--      throwError $ error "Missing default list"
   where
     nodePolyRoute       = NodeAPI Corpus (Just nodeId) ""
     corpusNodeRoute     = NodeAPI Corpus <<< Just
     defaultListIdsRoute = Children NodeList 0 1 Nothing <<< Just
 
 
-loadCorpusWithChild :: Record LoadProps -> Aff CorpusData
+loadCorpusWithChild :: Record LoadProps -> Aff (Either RESTError CorpusData)
 loadCorpusWithChild { nodeId: childId, session } = do
   -- fetch corpus via lists parentId
-  (NodePoly {parentId: corpusId} :: NodePoly {}) <- get session $ listNodeRoute childId ""
-  corpusNode     <-  get session $ corpusNodeRoute     corpusId ""
-  defaultListIds <- (get session $ defaultListIdsRoute corpusId)
-                    :: forall a. DecodeJson a => AffTableResult (NodePoly a)
-  case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
-    Just (NodePoly { id: defaultListId }) ->
-      pure { corpusId, corpusNode, defaultListId }
-    Nothing ->
-      throwError $ error "Missing default list"
+  eListNode <- get session $ listNodeRoute childId ""
+  case eListNode of
+    Left err -> pure $ Left err
+    Right listNode -> do
+      let (NodePoly {parentId: corpusId} :: NodePoly {}) = listNode
+      eCorpusNode     <-  get session $ corpusNodeRoute     corpusId ""
+      case eCorpusNode of
+        Left err -> pure $ Left err
+        Right corpusNode -> do
+          eDefaultListIds <- (get session $ defaultListIdsRoute corpusId)
+                             :: forall a. JSON.ReadForeign a => AffETableResult (NodePoly a)
+          case eDefaultListIds of
+            Left err -> pure $ Left err
+            Right defaultListIds -> do
+              case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
+                Just (NodePoly { id: defaultListId }) ->
+                  pure $ Right { corpusId, corpusNode, defaultListId }
+                Nothing ->
+                  throwError $ error "Missing default list"
   where
     corpusNodeRoute     = NodeAPI Corpus <<< Just
     listNodeRoute       = NodeAPI Node <<< Just
@@ -377,11 +446,50 @@ loadCorpusWithChild { nodeId: childId, session } = do
 
 type LoadWithReloadProps =
   (
-    reload :: GUR.Reload
+    reload :: T2.Reload
   | LoadProps
   )
 
 
 -- Just to make reloading effective
-loadCorpusWithChildAndReload :: Record LoadWithReloadProps -> Aff CorpusData
-loadCorpusWithChildAndReload {nodeId, reload, session} = loadCorpusWithChild {nodeId, session}
+loadCorpusWithChildAndReload :: Record LoadWithReloadProps -> Aff (Either RESTError CorpusData)
+loadCorpusWithChildAndReload {nodeId, session} = loadCorpusWithChild {nodeId, session}
+
+data ViewType = Code | Folders
+derive instance Generic ViewType _
+instance Eq ViewType where
+  eq = genericEq
+instance Show ViewType where
+  show = genericShow
+
+type ViewTypeSelectorProps =
+  (
+    state :: T.Box ViewType
+  )
+
+viewTypeSelector :: Record ViewTypeSelectorProps -> R.Element
+viewTypeSelector p = R.createElement viewTypeSelectorCpt p []
+viewTypeSelectorCpt :: R.Component ViewTypeSelectorProps
+viewTypeSelectorCpt = here.component "viewTypeSelector" cpt
+  where
+    cpt {state} _ = do
+      state' <- T.useLive T.unequal state
+
+      pure $ H.div { className: "btn-group"
+                   , role: "group" } [
+          viewTypeButton Folders state' state
+        , viewTypeButton Code state' state
+        ]
+
+    viewTypeButton viewType state' state =
+      H.button { className: "btn btn-primary" <> active
+               , on: { click: \_ -> T.write viewType state }
+               , type: "button"
+               } [
+        H.i { className: "fa " <> (icon viewType) } []
+      ]
+      where
+        active = if viewType == state' then " active" else ""
+
+    icon Folders = "fa-folder"
+    icon Code = "fa-code"

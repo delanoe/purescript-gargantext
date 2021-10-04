@@ -1,196 +1,202 @@
 module Gargantext.Components.Nodes.Texts where
 
-import Prelude
+import Gargantext.Prelude
+
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe(..))
-import Data.Tuple (fst, snd)
+import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log, log2)
-import Effect (Effect)
 import Effect.Aff (launchAff_)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Record as Record
---------------------------------------------------------
-import Gargantext.AsyncTasks as GAT
+import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.Charts.Options.ECharts (dispatchAction)
+import Gargantext.Components.Charts.Options.Type (EChartsInstance, EChartActionData)
 import Gargantext.Components.DocsTable as DT
-import Gargantext.Components.Forest as Forest
-import Gargantext.Components.Loader (loader)
+import Gargantext.Components.DocsTable.Types (Year)
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
 import Gargantext.Components.Nodes.Corpus.Document as D
-import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata(..), getCorpusInfo, CorpusInfo(..))
-import Gargantext.Components.Nodes.Lists.Types as NT
-import Gargantext.Components.Nodes.Texts.SidePanelToggleButton (sidePanelToggleButton)
-import Gargantext.Components.Nodes.Texts.Types
+import Gargantext.Components.Nodes.Corpus.Types (CorpusData, CorpusInfo(..), Hyperdata(..), getCorpusInfo)
+import Gargantext.Components.Nodes.Lists.Types as LT
+import Gargantext.Components.Nodes.Texts.Types as TT
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table
 import Gargantext.Ends (Frontends)
-import Gargantext.Sessions (Session, Sessions, sessionId, getCacheState, setCacheState)
-import Gargantext.Types (CTabNgramType(..), Handed(..), ListId, NodeID, TabSubType(..), TabType(..))
+import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Sessions (WithSession, Session, getCacheState)
+import Gargantext.Types (CTabNgramType(..), ListId, NodeID, SidePanelState(..), TabSubType(..), TabType(..))
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
-thisModule :: String
-thisModule = "Gargantext.Components.Nodes.Texts"
-
---------------------------------------------------------
-type TextsWithForest = (
-    forestProps :: Record Forest.ForestLayoutProps
-  , textsProps  :: Record CommonProps
-  )
-
-textsWithForest :: R2.Component TextsWithForest
-textsWithForest = R.createElement textsWithForestCpt
-
-textsWithForestCpt :: R.Component TextsWithForest
-textsWithForestCpt = R.hooksComponentWithModule thisModule "textsWithForest" cpt
-  where
-    cpt { forestProps
-        , textsProps: textProps@{ session } } _ = do
-      controls <- initialControls
-
-      pure $ Forest.forestLayoutWithTopBar forestProps
-           [ topBar { controls } []
-           , textsLayout (Record.merge textProps { controls }) []
-           -- TODO remove className "side-panel" is preview is not triggered
-           -- , H.div { className: "" }
-           , H.div { className: "side-panel" }
-                   [ sidePanel { controls, session } []
-                   ]
-           ]
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Texts"
 
 --------------------------------------------------------
 
-type TopBarProps = (
-  controls :: Record TextsLayoutControls
+
+type CommonPropsNoSession =
+  ( boxes     :: Boxes
+  , frontends :: Frontends
+  , nodeId    :: NodeID
   )
 
-topBar :: R2.Component TopBarProps
-topBar = R.createElement topBarCpt
+type Props = WithSession CommonPropsNoSession
 
-topBarCpt :: R.Component TopBarProps
-topBarCpt = R.hooksComponentWithModule thisModule "topBar" cpt
-  where
-    cpt { controls } _ = do
-      -- empty for now because the button is moved to the side panel
-      pure $ H.div {} []
-        -- H.ul { className: "nav navbar-nav" } [
-        --   H.li {} [
-        --      sidePanelToggleButton { state: controls.showSidePanel } []
-        --      ]
-        --   ]  -- head (goes to top bar)
-
-------------------------------------------------------------------------
-type CommonProps = (
-    frontends     :: Frontends
-  , nodeId        :: Int
-  , session       :: Session
-  , sessionUpdate :: Session -> Effect Unit
-  )
-
-type Props = (
-    controls       :: Record TextsLayoutControls
-  | CommonProps
-  )
 
 textsLayout :: R2.Component Props
 textsLayout = R.createElement textsLayoutCpt
-
 textsLayoutCpt :: R.Component Props
-textsLayoutCpt = R.hooksComponentWithModule thisModule "textsLayout" cpt
-  where
-    cpt { controls, frontends, nodeId, session, sessionUpdate } children = do
-      let sid = sessionId session
-
-      pure $ textsLayoutWithKey { controls
-                                , frontends
-                                , key: show sid <> "-" <> show nodeId
-                                , nodeId
-                                , session
-                                , sessionUpdate } children
+textsLayoutCpt = here.component "textsLayout" cpt where
+  cpt { boxes, frontends, nodeId, session } children = do
+    pure $ textsLayoutWithKey { key
+                              , boxes
+                              , frontends
+                              , nodeId
+                              , session } children
+      where
+        key = show nodeId
+        -- key = show sid <> "-" <> show nodeId
+        --   where
+        --     sid = sessionId session
 
 type KeyProps = (
-  key :: String
-  | Props
+    key       :: String
+  , boxes     :: Boxes
+  , frontends :: Frontends
+  , nodeId    :: NodeID
+  , session   :: Session
   )
 
 textsLayoutWithKey :: R2.Component KeyProps
 textsLayoutWithKey = R.createElement textsLayoutWithKeyCpt
-
 textsLayoutWithKeyCpt :: R.Component KeyProps
-textsLayoutWithKeyCpt = R.hooksComponentWithModule thisModule "textsLayoutWithKey" cpt
+textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
   where
-    cpt { controls, frontends, nodeId, session, sessionUpdate } _children = do
-      cacheState <- R.useState' $ getCacheState NT.CacheOff session nodeId
+    cpt { boxes: boxes@{ sidePanelTexts }
+        , frontends
+        , nodeId
+        , session } _children = do
+      cacheState <- T.useBox $ getCacheState LT.CacheOff session nodeId
+      cacheState' <- T.useLive T.unequal cacheState
 
-      pure $ loader { nodeId, session } loadCorpusWithChild $
-        \corpusData@{ corpusId, corpusNode, defaultListId } -> do
-          let NodePoly { date, hyperdata: Hyperdata h, name } = corpusNode
-              CorpusInfo { authors, desc, query } = getCorpusInfo h.fields
-              title = "Corpus " <> name
+      yearFilter <- T.useBox (Nothing :: Maybe Year)
 
-          R.fragment [
-              Table.tableHeaderLayout { afterCacheStateChange
-                                      , cacheState
-                                      , date
-                                      , desc
-                                      , key: "textsLayoutWithKey-" <> (show $ fst cacheState)
-                                      , query
-                                      , title
-                                      , user: authors }
-            , tabs { cacheState
-                   , corpusData
-                   , corpusId
-                   , frontends
-                   , session
-                   , sidePanelTriggers: controls.triggers }
-          ]
+      eChartsInstance <- T.useBox (Nothing :: Maybe EChartsInstance)
+
+      R.useEffectOnce' $ do
+        T.listen (\{ new } -> afterCacheStateChange new) cacheState
+
+      useLoader { errorHandler
+                , loader: loadCorpusWithChild
+                , path: { nodeId, session }
+                , render: \corpusData@{ corpusId, corpusNode } -> do
+                    let NodePoly { date, hyperdata: Hyperdata h, name } = corpusNode
+                        CorpusInfo { authors, desc, query } = getCorpusInfo h.fields
+                        title = "Corpus " <> name
+
+                    R.fragment
+                      [ Table.tableHeaderLayout { cacheState
+                                                , date
+                                                , desc
+                                                , query
+                                                , title
+                                                , user: authors
+                                                , key: "textsLayoutWithKey-" <> (show cacheState') } []
+                      , tabs { boxes
+                             , cacheState
+                             , corpusData
+                             , corpusId
+                             , eChartsInstance
+                             , frontends
+                             , session
+                             , sidePanel: sidePanelTexts
+                             , yearFilter
+                             }
+                      ] }
       where
+        errorHandler err = here.log2 "[textsLayoutWithKey] RESTError" err
         afterCacheStateChange cacheState = do
           launchAff_ $ clearCache unit
-          sessionUpdate $ setCacheState session nodeId cacheState
+          -- TODO
+          --sessionUpdate $ setCacheState session nodeId cacheState
+          --_ <- setCacheState session nodeId cacheState
 
 data Mode = MoreLikeFav | MoreLikeTrash
 
-derive instance genericMode :: Generic Mode _
+derive instance Generic Mode _
 
-instance showMode :: Show Mode where
+instance Show Mode where
   show = genericShow
 
-derive instance eqMode :: Eq Mode
+derive instance Eq Mode
 
 modeTabType :: Mode -> CTabNgramType
 modeTabType MoreLikeFav    = CTabAuthors  -- TODO
 modeTabType MoreLikeTrash  = CTabSources  -- TODO
 
-type TabsProps = (
-    cacheState      :: R.State NT.CacheState
+type TabsProps =
+  ( boxes           :: Boxes
+  , cacheState      :: T.Box LT.CacheState
   , corpusData      :: CorpusData
-  , corpusId        :: Int
+  , corpusId        :: NodeID
+  , eChartsInstance :: T.Box (Maybe EChartsInstance)
   , frontends       :: Frontends
   , session         :: Session
-  , sidePanelTriggers :: Record SidePanelTriggers
+  , sidePanel       :: T.Box (Maybe (Record TT.SidePanel))
+  , yearFilter      :: T.Box (Maybe Year)
   )
 
 tabs :: Record TabsProps -> R.Element
 tabs props = R.createElement tabsCpt props []
-
 tabsCpt :: R.Component TabsProps
-tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
+tabsCpt = here.component "tabs" cpt
   where
-    cpt { cacheState, corpusId, corpusData, frontends, session, sidePanelTriggers } _ = do
-      (selected /\ setSelected) <- R.useState' 0
+    cpt { boxes
+        , cacheState
+        , corpusId
+        , corpusData
+        , eChartsInstance
+        , frontends
+        , session
+        , sidePanel
+        , yearFilter } _ = do
 
-      let path = initialPath
+      let
+        path = initialPath
+
+        onInit = Just \i -> T.write_ (Just i) eChartsInstance
+
+        onClick = Just \opts@{ name } -> do
+          T.write_ (Just name) yearFilter
+          T.read eChartsInstance >>= case _ of
+            Nothing -> pure unit
+            Just i  -> do
+              -- @XXX due to lack of support for "echart.select" action,
+              --      have to manually rely on a set/unset selection
+              --      targeting the "echart.emphasis" action
+              let
+                opts' :: Record EChartActionData
+                opts' =
+                  { dataIndex   : opts.dataIndex
+                  , name        : opts.name
+                  , seriesId    : opts.seriesId
+                  , seriesIndex : opts.seriesIndex
+                  , seriesName  : opts.seriesName
+                  , type        : "highlight"
+                  }
+              dispatchAction i { type: "downplay" }
+              dispatchAction i opts'
+
+      activeTab <- T.useBox 0
 
       pure $ Tab.tabs {
-          selected
+          activeTab
         , tabs: [
             "Documents"       /\ R.fragment [
-                histo { path, session }
+                histo { boxes, path, session, onClick, onInit }
               , docView' path TabDocs
               ]
           , "Trash"           /\ docView' path TabTrash
@@ -204,7 +210,8 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
                       , listId: corpusData.defaultListId
                       , limit: Nothing
                       , tabType: TabCorpus TabDocs }
-        docView' path tabType = docView { cacheState
+        docView' path tabType = docView { boxes
+                                        , cacheState
                                         , corpusData
                                         , corpusId
                                         , frontends
@@ -212,38 +219,45 @@ tabsCpt = R.hooksComponentWithModule thisModule "tabs" cpt
                                         -- , path
                                         , session
                                         , tabType
-                                        , sidePanelTriggers } []
+                                        , sidePanel
+                                        , yearFilter
+                                        } []
 
-type DocViewProps a = (
-    cacheState        :: R.State NT.CacheState
-  , corpusData        :: CorpusData
-  , corpusId          :: NodeID
-  , frontends         :: Frontends
-  , listId            :: ListId
-  -- , path           :: Record DT.Path
-  , session           :: Session
-  , tabType           :: TabSubType a
-  , sidePanelTriggers :: Record SidePanelTriggers
+type DocViewProps a =
+  ( boxes      :: Boxes
+  , cacheState :: T.Box LT.CacheState
+  , corpusData :: CorpusData
+  , corpusId   :: NodeID
+  , frontends  :: Frontends
+  , listId     :: ListId
+  -- , path    :: Record DT.Path
+  , session    :: Session
+  , tabType    :: TabSubType a
+  , sidePanel  :: T.Box (Maybe (Record TT.SidePanel))
+  , yearFilter :: T.Box (Maybe Year)
   )
 
 docView :: forall a. R2.Component (DocViewProps a)
 docView = R.createElement docViewCpt
-
 docViewCpt :: forall a. R.Component (DocViewProps a)
-docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt
+docViewCpt = here.component "docView" cpt
   where
     cpt props _children = do
       pure $ DT.docViewLayout $ docViewLayoutRec props
 
 -- docViewLayoutRec :: forall a. DocViewProps a -> Record DT.LayoutProps
-docViewLayoutRec { cacheState
+docViewLayoutRec { boxes
+                 , cacheState
                  , corpusId
                  , frontends
                  , listId
                  , session
                  , tabType: TabDocs
-                 , sidePanelTriggers } =
-  { cacheState
+                 , sidePanel
+                 , yearFilter
+                 } =
+  { boxes
+  , cacheState
   , chart  : H.div {} []
   , frontends
   , listId
@@ -252,18 +266,23 @@ docViewLayoutRec { cacheState
     -- ^ TODO merge nodeId and corpusId in DT
   , session
   , showSearch: true
-  , sidePanelTriggers
+  , sidePanel
   , tabType: TabCorpus TabDocs
   , totalRecords: 4737
+  , yearFilter
   }
-docViewLayoutRec { cacheState
+docViewLayoutRec { boxes
+                 , cacheState
                  , corpusId
                  , frontends
                  , listId
                  , session
                  , tabType: TabMoreLikeFav
-                 , sidePanelTriggers } =
-  { cacheState
+                 , sidePanel
+                 , yearFilter
+                 } =
+  { boxes
+  , cacheState
   , chart  : H.div {} []
   , frontends
   , listId
@@ -272,18 +291,23 @@ docViewLayoutRec { cacheState
     -- ^ TODO merge nodeId and corpusId in DT
   , session
   , showSearch: false
-  , sidePanelTriggers
+  , sidePanel
   , tabType: TabCorpus TabMoreLikeFav
   , totalRecords: 4737
+  , yearFilter
   }
-docViewLayoutRec { cacheState
+docViewLayoutRec { boxes
+                 , cacheState
                  , corpusId
                  , frontends
                  , listId
                  , session
                  , tabType: TabMoreLikeTrash
-                 , sidePanelTriggers } =
-  { cacheState
+                 , sidePanel
+                 , yearFilter
+                 } =
+  { boxes
+  , cacheState
   , chart  : H.div {} []
   , frontends
   , listId
@@ -292,18 +316,23 @@ docViewLayoutRec { cacheState
   -- ^ TODO merge nodeId and corpusId in DT
   , session
   , showSearch: false
-  , sidePanelTriggers
+  , sidePanel
   , tabType: TabCorpus TabMoreLikeTrash
   , totalRecords: 4737
+  , yearFilter
   }
-docViewLayoutRec { cacheState
+docViewLayoutRec { boxes
+                 , cacheState
                  , corpusId
                  , frontends
                  , listId
                  , session
                  , tabType: TabTrash
-                 , sidePanelTriggers } =
-  { cacheState
+                 , sidePanel
+                 , yearFilter
+                 } =
+  { boxes
+  , cacheState
   , chart  : H.div {} []
   , frontends
   , listId
@@ -312,19 +341,24 @@ docViewLayoutRec { cacheState
   -- ^ TODO merge nodeId and corpusId in DT
   , session
   , showSearch: true
-  , sidePanelTriggers
+  , sidePanel
   , tabType: TabCorpus TabTrash
   , totalRecords: 4737
+  , yearFilter
   }
 -- DUMMY
-docViewLayoutRec { cacheState
+docViewLayoutRec { boxes
+                 , cacheState
                  , corpusId
                  , frontends
                  , listId
                  , session
+                 , sidePanel
                  , tabType
-                 , sidePanelTriggers } =
-  { cacheState
+                 , yearFilter
+                 } =
+  { boxes
+  , cacheState
   , chart  : H.div {} []
   , frontends
   , listId
@@ -333,72 +367,86 @@ docViewLayoutRec { cacheState
   -- ^ TODO merge nodeId and corpusId in DT
   , session
   , showSearch: true
-  , sidePanelTriggers
+  , sidePanel
   , tabType: TabCorpus TabTrash
   , totalRecords: 4737
+  , yearFilter
   }
 
 
 --------------------------------------------------------
 type SidePanelProps = (
-    controls :: Record TextsLayoutControls
-  , session  :: Session
+    boxes     :: Boxes
+  , session   :: Session
+  , sidePanel :: T.Box (Maybe (Record TT.SidePanel))
   )
 
-sidePanel :: R2.Component SidePanelProps
-sidePanel = R.createElement sidePanelCpt
-
-sidePanelCpt :: R.Component SidePanelProps
-sidePanelCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
+textsSidePanel :: R2.Component SidePanelProps
+textsSidePanel = R.createElement textsSidePanelCpt
+textsSidePanelCpt :: R.Component SidePanelProps
+textsSidePanelCpt = here.component "sidePanel" cpt
   where
-    cpt { controls: { triggers: { currentDocIdRef
-                                , toggleSidePanel
-                                , triggerAnnotatedDocIdChange
-                                , triggerSidePanel
-                                } }
-        , session } _ = do
+    cpt { boxes: { sidePanelState }
+        , session
+        , sidePanel } _ = do
 
-      showSidePanel <- R.useState' InitialClosed
+      sidePanelState' <- T.useLive T.unequal sidePanelState
+      sidePanel' <- T.useLive T.unequal sidePanel
 
-      R.useEffect' $ do
-        let toggleSidePanel' _  = snd showSidePanel toggleSidePanelState
-            triggerSidePanel' _ = snd showSidePanel $ const Opened
-        R2.setTrigger toggleSidePanel  toggleSidePanel'
-        R2.setTrigger triggerSidePanel triggerSidePanel'
+      -- R.useEffect' $ do
+      --   let toggleSidePanel' _  = snd sidePanelState toggleSidePanelState
+      --       triggerSidePanel' _ = snd sidePanelState $ const Opened
+      --   R2.setTrigger toggleSidePanel  toggleSidePanel'
+      --   R2.setTrigger triggerSidePanel triggerSidePanel'
 
-      (mCorpusId /\ setMCorpusId) <- R.useState' Nothing
-      (mListId /\ setMListId) <- R.useState' Nothing
-      (mNodeId /\ setMNodeId) <- R.useState' Nothing
+      -- (mCorpusId /\ setMCorpusId) <- R.useState' Nothing
+      -- (mListId /\ setMListId) <- R.useState' Nothing
+      -- (mNodeId /\ setMNodeId) <- R.useState' Nothing
 
-      R.useEffect3 mCorpusId mListId mNodeId $ do
-        let trigger :: Record TriggerAnnotatedDocIdChangeParams -> Effect Unit
-            trigger { corpusId, listId, nodeId } = do
+      -- R.useEffect3 mCorpusId mListId mNodeId $ do
+      --   if mCorpusId == Just corpusId && mListId == Just listId && mNodeId == Just nodeId && mCurrentDocId == Just nodeId then do
+      --     T.modify_ (\sp -> sp { mCurrentDocId = Nothing }) sidePanel
+      --   else do
+      --     T.modify_ (\sp -> sp { mCorpusId = Just corpusId
+      --                         , mCurrentDocId = Just nodeId
+      --                         , mListId = Just listId
+      --                         , mNodeId = Just nodeId }) sidePanel
+        -- let trigger :: Record TriggerAnnotatedDocIdChangeParams -> Effect Unit
+        --     trigger { corpusId, listId, nodeId } = do
               -- log2 "[sidePanel trigger] trigger corpusId change" corpusId
               -- log2 "[sidePanel trigger] trigger listId change" listId
               -- log2 "[sidePanel trigger] trigger nodeId change" nodeId
-              if mCorpusId == Just corpusId && mListId == Just listId && mNodeId == Just nodeId && R.readRef currentDocIdRef == Just nodeId then do
-                R.setRef currentDocIdRef Nothing
-                R2.callTrigger toggleSidePanel unit
-              else do
-                setMCorpusId $ const $ Just corpusId
-                setMListId $ const $ Just listId
-                setMNodeId $ const $ Just nodeId
-                R.setRef currentDocIdRef $ Just nodeId
-                R2.callTrigger triggerSidePanel unit
+              -- if mCorpusId == Just corpusId && mListId == Just listId && mNodeId == Just nodeId && mCurrentDocId == Just nodeId then do
+                -- R.setRef currentDocIdRef Nothing
+                -- T.modify_ (\sp -> sp { mCurrentDocId = Nothing }) sidePanel
+                -- R2.callTrigger toggleSidePanel unit
+              -- else do
+                -- setMCorpusId $ const $ Just corpusId
+                -- setMListId $ const $ Just listId
+                -- setMNodeId $ const $ Just nodeId
+                -- R.setRef currentDocIdRef $ Just nodeId
+                -- R2.callTrigger triggerSidePanel unit
+                -- T.modify_ (\sp -> sp { mCorpusId = Just corpusId
+                --                     , mCurrentDocId = Just nodeId
+                --                     , mListId = Just listId
+                --                     , mNodeId = Just nodeId }) sidePanel
         -- log2 "[sidePanel] trigger" trigger
-        R2.setTrigger triggerAnnotatedDocIdChange trigger
+        -- R2.setTrigger triggerAnnotatedDocIdChange trigger
+        -- pure unit
 
-        pure $ do
-          -- log "[sidePanel] clearing triggerAnnotatedDocIdChange"
-          R2.clearTrigger triggerAnnotatedDocIdChange
+        -- pure $ do
+        --   -- log "[sidePanel] clearing triggerAnnotatedDocIdChange"
+        --   R2.clearTrigger triggerAnnotatedDocIdChange
 
-      let mainStyle = case fst showSidePanel of
+      let mainStyle = case sidePanelState' of
             Opened -> { display: "block" }
             _      -> { display: "none" }
 
       let closeSidePanel _ = do
-            R.setRef currentDocIdRef Nothing
-            snd showSidePanel $ const Closed
+            -- T.modify_ (\sp -> sp { mCurrentDocId = Nothing
+            --                     , state = Closed }) sidePanel
+            T.write_ Closed sidePanelState
+            T.write_ Nothing sidePanel
 
       pure $ H.div { style: mainStyle } [
         H.div { className: "header" } [
@@ -407,31 +455,24 @@ sidePanelCpt = R.hooksComponentWithModule thisModule "sidePanel" cpt
             H.span { className: "fa fa-times" } []
           ]
         ]
-      , sidePanelDocView { mCorpusId, mListId, mNodeId, session } []
+      , sidePanelDocView { mSidePanel: sidePanel', session } []
       ]
 
 type SidePanelDocView = (
-    mCorpusId :: Maybe NodeID
-  , mListId   :: Maybe ListId
-  , mNodeId   :: Maybe NodeID
-  , session   :: Session
+    mSidePanel :: Maybe (Record TT.SidePanel)
+  , session    :: Session
   )
 
 sidePanelDocView :: R2.Component SidePanelDocView
 sidePanelDocView = R.createElement sidePanelDocViewCpt
-
 sidePanelDocViewCpt :: R.Component SidePanelDocView
-sidePanelDocViewCpt = R.hooksComponentWithModule thisModule "sidePanelDocView" cpt
+sidePanelDocViewCpt = here.component "sidePanelDocView" cpt
   where
-    cpt { mListId: Nothing } _ = do
+    cpt { mSidePanel: Nothing } _ = do
       pure $ H.div {} []
-    cpt { mNodeId: Nothing } _ = do
-      pure $ H.div {} []
-    cpt { mCorpusId
-        , mListId: Just listId
-        , mNodeId: Just nodeId
+    cpt { mSidePanel: Just { corpusId, listId, nodeId }
         , session } _ = do
       pure $ D.documentLayout { listId
-                              , mCorpusId
+                              , mCorpusId: Just corpusId
                               , nodeId
                               , session } []

@@ -2,6 +2,8 @@ module Gargantext.Components.Charts.Options.Type where
 
 import Prelude
 
+import Data.Nullable (Nullable)
+import Effect (Effect)
 import Gargantext.Components.Charts.Options.Color (Color)
 import Gargantext.Components.Charts.Options.Data (DataLegend)
 import Gargantext.Components.Charts.Options.Font (TextStyle, Tooltip, ToolBox)
@@ -11,6 +13,9 @@ import Gargantext.Components.Charts.Options.Series (Series)
 import Gargantext.Types (class Optional)
 import React as R
 import Unsafe.Coerce (unsafeCoerce)
+
+-- | https://echarts.apache.org/en/api.html#echartsInstance
+foreign import data EChartsInstance :: Type
 
 newtype ChartAlign = ChartAlign String
 
@@ -29,7 +34,8 @@ type Echarts =
 --, optsLoading :: Maybe OptsLoading --  PropTypes.object,
 --, onReady     :: Maybe String   --  PropTypes.func,
 --, resizable   :: Maybe Boolean  -- PropTypes.bool,
---, onEvents    :: Maybe String   -- PropTypes.object
+  , onEvents    :: OnEvents   -- PropTypes.object
+  , ref         :: Effect Unit
   }
 
 type Option =
@@ -160,3 +166,69 @@ type AxisLabel =
   }
 
 type Rich = {}
+
+---
+
+-- | @XXX "echarts-for-react" third party library does not have an event
+-- |      dictionary
+-- |      these values had been picked from what we gather in the dist file
+-- |      "echarts/dist/echarts.common.js" and
+-- |      https://echarts.apache.org/en/api.html#events
+type OnEvents =
+  { click     :: Effect Unit
+  -- ...
+  }
+
+-- | @XXX "echarts-for-react" third party library bases on "apache-echarts"
+-- |      does not have strongly typed signature, nor determined arity
+-- |      (actual runtime event contains more key than what their docs describe)
+-- |
+-- | https://echarts.apache.org/en/api.html#events.Mouse%20events
+type MouseEvent =
+  { borderColor       :: Nullable String
+  , color             :: String
+  , componentIndex    :: Int
+  , componentSubType  :: String
+  , componentTyp      :: String
+  -- , data           ::  -- Object
+  , dataIndex         :: Int
+  , dataType          :: Nullable String
+  -- , dimensionNames :: -- Array
+  -- , encore         :: -- Object
+  -- , event          :: -- instanceof Event
+  -- , marker         :: -- String
+  , name              :: String
+  , seriesId          :: Nullable String
+  , seriesIndex       :: Int
+  , seriesName        :: String
+  , seriesType        :: String
+  , type              :: String
+  , value             :: String -- or Array ??
+  }
+
+----
+
+-- | @XXX partial definition given by the third library author
+-- |      POJO containing a mix of ReactElement field and custom method attached
+-- |
+-- | https://github.com/hustcc/echarts-for-react#component-api--echarts-api
+type EChartRef =
+  ( getEchartsInstance :: Effect EChartsInstance
+  -- ...
+  )
+
+----
+
+-- | As "dispatchAction" call has a variadic arity, we can dissociate a type
+-- | where the cliked item (bar, pie section, etc.) need this dispatchAction
+-- | To do so, we have to trimmed its given properties to match this example [1]
+-- |
+-- | [1] https://echarts.apache.org/en/api.html#action.highlight
+type EChartActionData =
+  ( dataIndex   :: Int
+  , name        :: String
+  , seriesId    :: Nullable String
+  , seriesIndex :: Int
+  , seriesName  :: String
+  , type        :: String
+  )

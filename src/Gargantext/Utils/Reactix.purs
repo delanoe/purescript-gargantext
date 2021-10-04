@@ -2,22 +2,19 @@ module Gargantext.Utils.Reactix where
 
 import Prelude
 
+import Data.Array as A
+import Data.Either (hush)
+import Data.Function.Uncurried (Fn1, runFn1, Fn2, runFn2)
+import Data.Maybe (Maybe(..), fromJust, fromMaybe, isJust)
+import Data.Nullable (Nullable, null, toMaybe)
+import Data.Tuple (Tuple(..))
+import Data.Tuple.Nested ((/\))
 import DOM.Simple as DOM
 import DOM.Simple.Console (log2)
 import DOM.Simple.Document (document)
 import DOM.Simple.Element as Element
 import DOM.Simple.Event as DE
-import DOM.Simple.Types (class IsNode)
-import Data.Argonaut as Argonaut
-import Data.Argonaut as Json
-import Data.Argonaut.Core (Json)
-import Data.Either (hush)
-import Data.Function.Uncurried (Fn2, runFn2)
-import Data.Maybe (Maybe(..), fromJust, fromMaybe, isJust)
-import Data.Nullable (Nullable, null, toMaybe)
-import Data.Tuple (Tuple(..))
-import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
+import DOM.Simple.Types (class IsNode, class IsElement, DOMRect)
 import Effect (Effect)
 import Effect.Console (logShow)
 import Effect.Aff (Aff, launchAff, launchAff_, killFiber)
@@ -35,6 +32,8 @@ import Reactix.DOM.HTML as H
 import Reactix.React (react)
 import Reactix.SyntheticEvent as RE
 import Reactix.Utils (currySecond, hook, tuple)
+import Simple.JSON as JSON
+import Toestand as T
 import Unsafe.Coerce (unsafeCoerce)
 import Web.File.Blob (Blob)
 import Web.File.File as WF
@@ -43,7 +42,24 @@ import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (Storage, getItem, setItem)
 
+type Module = String
+
 type Component p = Record p -> Array R.Element -> R.Element
+
+type Leaf p = Record p -> R.Element
+
+type Here =
+  { component   :: forall p. String -> R.HooksComponent p -> R.Component p
+  , log         :: forall l. l -> Effect Unit
+  , log2        :: forall l. String -> l -> Effect Unit
+  , ntComponent :: forall p. String -> NTHooksComponent p -> NTComponent p }
+
+here :: Module -> Here
+here mod =
+  { component:   R.hooksComponentWithModule mod
+  , log:         log2 ("[" <> mod <> "]")
+  , log2:        \msg -> log2 ("[" <> mod <> "] " <> msg)
+  , ntComponent: ntHooksComponentWithModule mod }
 
 -- newtypes
 type NTHooksComponent props = props -> Array R.Element -> R.Hooks R.Element
@@ -53,8 +69,9 @@ class NTIsComponent component (props :: Type) children
   | component -> props, component -> children where
   ntCreateElement :: component -> props -> children -> R.Element
 
-instance componentIsNTComponent :: NTIsComponent (NTComponent props) props (Array R.Element) where
-  ntCreateElement = R.rawCreateElement
+instance componentIsNTComponent
+  :: NTIsComponent (NTComponent props) props (Array R.Element) where
+    ntCreateElement = R.rawCreateElement
 
 -- | Turns a `HooksComponent` function into a Component
 ntHooksComponent :: forall props. String -> NTHooksComponent props -> NTComponent props
@@ -63,15 +80,16 @@ ntHooksComponent name c = NTComponent $ named name $ mkEffectFn1 c'
     c' :: props -> Effect R.Element
     c' props = R.runHooks $ c props (children props)
 
-ntHooksComponentWithModule :: forall props. Module -> String -> NTHooksComponent props -> NTComponent props
-ntHooksComponentWithModule module' name c = ntHooksComponent (module' <> "." <> name) c
+ntHooksComponentWithModule
+ :: forall props. Module -> String -> NTHooksComponent props -> NTComponent props
+ntHooksComponentWithModule module' name c =
+  ntHooksComponent (module' <> "." <> name) c
 
 ---------------------------
 -- TODO Copied from reactix, export these:
 children :: forall a. a -> Array R.Element
 children a = react .. "Children" ... "toArray" $ [ (a .. "children") ]
 
-type Module = String
 ---------------------------
 
 newtype Point = Point { x :: Number, y :: Number }
@@ -92,13 +110,13 @@ scuff = unsafeCoerce
 -- class ToElement a where
 --   toElement :: a -> R.Element
 
--- instance toElementElement :: ToElement R.Element where
+-- instance ToElement R.Element where
 --   toElement = identity
 
--- instance toElementReactElement :: ToElement ReactElement where
+-- instance ToElement ReactElement where
 --   toElement = buff
 
--- instance toElementArray :: ToElement a => ToElement (Array a) where
+-- instance ToElement a => ToElement (Array a) where
 --   toElement = R.fragment <<< map toElement
 
 createElement' :: forall required given
@@ -125,6 +143,13 @@ affEffect errmsg aff = do
 
 mousePosition :: RE.SyntheticEvent DE.MouseEvent -> Point
 mousePosition e = Point { x: RE.clientX e, y: RE.clientY e }
+
+mouseClickInElement :: DE.MouseEvent -> DOM.Element -> Boolean
+mouseClickInElement e el = x <= cx && cx <= x + width && y <= cy && cy <= y + height
+  where
+    { x, y, width, height } = Element.boundingRect el
+    cx = DE.clientX e
+    cy = DE.clientY e
 
 domMousePosition :: DE.MouseEvent -> Point
 domMousePosition = mousePosition <<< unsafeCoerce
@@ -299,10 +324,10 @@ getSelection = runEffectFn1 _getSelection
 
 foreign import _getSelection :: EffectFn1 Unit Selection
 
-stringify :: Json -> Int -> String
+stringify :: forall a. a -> Int -> String
 stringify j indent = runFn2 _stringify j indent
 
-foreign import _stringify :: Fn2 Json Int String
+foreign import _stringify :: forall a. Fn2 a Int String
 
 getls :: Effect Storage
 getls = window >>= localStorage
@@ -312,24 +337,23 @@ openNodesKey = "garg-open-nodes"
 
 type LocalStorageKey = String
 
-useLocalStorageState :: forall s. Argonaut.DecodeJson s => Argonaut.EncodeJson s => LocalStorageKey -> s -> R.Hooks (R.State s)
-useLocalStorageState key s = do
-  -- we need to synchronously get the initial state from local storage
-  Tuple state setState' <- R.useState \_ -> unsafePerformEffect do
-    item :: Maybe String <- getItem key =<< getls
-    let json = hush <<< Argonaut.jsonParser =<< item
-    let parsed = hush <<< Argonaut.decodeJson =<< json
-    pure $ fromMaybe s parsed
+loadLocalStorageState :: forall s. JSON.ReadForeign s => LocalStorageKey -> T.Box s -> Effect Unit
+loadLocalStorageState key cell = do
+  storage <- getls
+  item :: Maybe String <- getItem key storage
+  -- let json = hush <<< Argonaut.jsonParser =<< item
+  -- let parsed = hush <<< Argonaut.decodeJson =<< json
+  let parsed = hush <<< JSON.readJSON $ fromMaybe "" item
+  case parsed of
+    Nothing -> pure unit
+    Just p  -> void $ T.write p cell
 
-  let
-    setState update = do
-      let new = update state
-      setState' (\_ -> new)
-      let json = Json.stringify $ Argonaut.encodeJson new
-      storage <- getls
-      setItem key json storage
-
-  pure (Tuple state setState)
+listenLocalStorageState :: forall s. JSON.WriteForeign s => LocalStorageKey -> T.Change s -> Effect Unit
+listenLocalStorageState key { old, new } = do
+  --let json = Json.stringify $ Argonaut.encodeJson new
+  let json = JSON.writeJSON new
+  storage <- getls
+  setItem key json storage
 
 getMessageDataStr :: DE.MessageEvent -> String
 getMessageDataStr = getMessageData
@@ -381,3 +405,57 @@ setTrigger tRef fun = R.setRef tRef $ Just fun
 
 clearTrigger :: forall a. Trigger a -> Effect Unit
 clearTrigger tRef = R.setRef tRef Nothing
+
+type Rect =
+  ( x :: Number
+  , y :: Number
+  , width :: Number
+  , height :: Number )
+
+foreign import _domRectFromRect :: Fn1 (Record Rect) DOMRect
+
+domRectFromRect :: Record Rect -> DOMRect
+domRectFromRect = runFn1 _domRectFromRect
+
+boundingRect :: forall e. IsElement e => Array e -> DOMRect
+boundingRect els =
+  case A.uncons els of
+    Nothing -> domRectFromRect { x: 0.0, y: 0.0, width: 0.0, height: 0.0 }
+    Just { head, tail } ->
+      let br = Element.boundingRect head
+      in
+      case tail of
+        [] -> br
+        _  ->
+          let brs = boundingRect tail
+              minx = min br.left brs.left
+              maxx = max br.right brs.right
+              miny = min br.top brs.top
+              maxy = max br.bottom brs.bottom
+          in
+           domRectFromRect { x: minx
+                           , y: miny
+                           , width: maxx - minx
+                           , height: maxy - miny }
+
+-- | One-liner `if` simplifying render writing
+-- | (best for one child)
+if' :: Boolean -> R.Element -> R.Element
+if' = if _ then _ else mempty
+
+-- | One-liner `if` simplifying render writing
+-- | (best for multiple children)
+if_ :: Boolean -> Array (R.Element) -> R.Element
+if_ pred arr = if pred then (R.fragment arr) else mempty
+
+-- | Toestand `useLive` automatically sets to "unchanged" behavior
+useLive' :: forall box b. T.Read box b => Eq b => box -> R.Hooks b
+useLive' = T.useLive T.unequal
+
+-- | Toestand `useBox` + `useLive'` shorthand following same patterns as
+-- | React StateHooks API
+useBox' :: forall b. Eq b => b -> R.Hooks (Tuple b (T.Box b))
+useBox' default = do
+  box <- T.useBox default
+  b <- useLive' box
+  pure $ b /\ box

@@ -1,17 +1,21 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Metrics where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (~>), (:=))
-import Data.Argonaut.Core (jsonEmptyObject)
+import Data.Generic.Rep (class Generic)
+import Data.Either (Either)
+import Data.Eq.Generic (genericEq)
 import Data.Map as Map
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
+import Data.Newtype (class Newtype)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (Aff)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
+import Toestand as T
 
-import Gargantext.Prelude
+import Gargantext.Prelude (class Eq, bind, negate, pure, ($), (<$>), (<>))
 
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, yAxis')
 import Gargantext.Components.Charts.Options.Type (xAxis)
@@ -19,17 +23,20 @@ import Gargantext.Components.Charts.Options.Series (Series, seriesScatterD2)
 import Gargantext.Components.Charts.Options.Color (green, grey, red)
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
-import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsLoadView, metricsWithCacheLoadView)
+import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types
-import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
+  (MetricsProps, Path, Props, ReloadPath)
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Hooks.Loader (HashedResponse(..))
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
-import Gargantext.Types (ChartType(..), TabType, TermList(..))
+import Gargantext.Types (TermList(..))
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 
-thisModule = "Gargantext.Components.Nodes.Corpus.Chart.Metrics"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Metrics"
 
 newtype Metric = Metric
   { label :: String
@@ -37,38 +44,23 @@ newtype Metric = Metric
   , y     :: Number
   , cat   :: TermList
   }
-
-instance decodeMetric :: DecodeJson Metric where
-  decodeJson json = do
-    obj   <- decodeJson json
-    label <- obj .: "label"
-    x     <- obj .: "x"
-    y     <- obj .: "y"
-    cat   <- obj .: "cat"
-    pure $ Metric { label, x, y, cat }
-
-instance encodeMetric :: EncodeJson Metric where
-  encodeJson (Metric { label, x, y, cat }) =
-       "label"  := encodeJson label
-    ~> "x"      := encodeJson x
-    ~> "y"      := encodeJson y
-    ~> "cat"    := encodeJson cat
-    ~> jsonEmptyObject
+derive instance Generic Metric _
+derive instance Newtype Metric _
+instance Eq Metric where eq = genericEq
+derive newtype instance JSON.ReadForeign Metric
+derive newtype instance JSON.WriteForeign Metric
 
 newtype Metrics = Metrics {
      "data" :: Array Metric
   }
-
-instance decodeMetrics :: DecodeJson Metrics where
-  decodeJson json = do
-    obj <- decodeJson json
-    d   <- obj .: "data"
-    pure $ Metrics { "data": d }
+derive instance Generic Metrics _
+derive instance Newtype Metrics _
+derive newtype instance JSON.ReadForeign Metrics
 
 type Loaded  = Array Metric
 
-scatterOptions :: Array Metric -> Options
-scatterOptions metrics' = Options
+scatterOptions :: Record MetricsProps -> Array Metric -> Options
+scatterOptions { onClick, onInit } metrics' = Options
   { mainTitle : "Ngrams Selection Metrics"
   , subTitle  : "Local metrics (Inc/Exc, Spe/Gen), Global metrics (TFICF maillage)"
   , xAxis     : xAxis { min: -1 }
@@ -76,6 +68,8 @@ scatterOptions metrics' = Options
   , series    : map2series $ metric2map metrics'
   , addZoom   : false
   , tooltip   : mkTooltip { formatter: templateFormatter "{b0}" }
+  , onClick
+  , onInit
   }
   where
     metric2map :: Array Metric -> Map TermList (Array Metric)
@@ -101,7 +95,7 @@ scatterOptions metrics' = Options
                         }
     --}
 
-getMetricsHash :: Session -> ReloadPath -> Aff String
+getMetricsHash :: Session -> ReloadPath -> Aff (Either RESTError String)
 getMetricsHash session (_ /\ { corpusId, listId, tabType }) =
   get session $ CorpusMetricsHash { listId, tabType } (Just corpusId)
 
@@ -112,31 +106,34 @@ handleResponse :: HashedResponse Metrics -> Loaded
 handleResponse (HashedResponse { value: Metrics ms }) = ms."data"
 
 mkRequest :: Session -> ReloadPath -> GUC.Request
-mkRequest session (_ /\ path@{ corpusId, limit, listId, tabType }) = GUC.makeGetRequest session $ chartUrl path
+mkRequest session (_ /\ path) = GUC.makeGetRequest session $ chartUrl path
 
 metrics :: Record Props -> R.Element
 metrics props = R.createElement metricsCpt props []
-
 metricsCpt :: R.Component Props
-metricsCpt = R.hooksComponentWithModule thisModule "etrics" cpt
+metricsCpt = here.component "etrics" cpt
   where
-    cpt {path, session} _ = do
-      reload <- R.useState' 0
+    cpt { boxes, onClick, onInit, path, session } _ = do
+      reload <- T.useBox T2.newReload
+
       pure $ metricsWithCacheLoadView {
-          getMetricsHash
+          boxes
+        , getMetricsHash
         , handleResponse
         , loaded
         , mkRequest: mkRequest session
         , path
         , reload
         , session
+        , onClick
+        , onInit
         }
 
 
 loaded :: Record MetricsProps -> Loaded -> R.Element
-loaded { path, reload, session } loaded =
+loaded p loaded' =
   H.div {} [
   {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: Scatter, path, reload, session }
-  , -} chart $ scatterOptions loaded
+  , -} chart $ scatterOptions p loaded'
   ]

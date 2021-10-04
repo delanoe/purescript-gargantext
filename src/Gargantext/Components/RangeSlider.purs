@@ -6,12 +6,12 @@
 -- | epsilon (smallest difference)
 module Gargantext.Components.RangeSlider where
 
-import Prelude
+import Data.Generic.Rep (class Generic)
+import Data.Eq.Generic (genericEq)
 import Data.Int (fromNumber)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Nullable (Nullable, null)
 import Data.Traversable (traverse_)
-import Data.Tuple.Nested ((/\))
 import DOM.Simple as DOM
 import DOM.Simple.Document (document)
 import DOM.Simple.Event as Event
@@ -19,16 +19,19 @@ import DOM.Simple.EventListener as EL
 import DOM.Simple (DOMRect)
 import Global (toFixed)
 import Effect (Effect)
-import Effect.Uncurried (mkEffectFn1)
 import Math as M
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
+
+import Gargantext.Prelude
 
 import Gargantext.Utils.Math (roundToMultiple)
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.RangeSlider"
+here :: R2.Here
+here = R2.here "Gargantext.Components.RangeSlider"
 -- data Axis = X | Y
 
 type Bounds = Range.NumberRange
@@ -51,11 +54,14 @@ rangeSlider :: Record Props -> R.Element
 rangeSlider props = R.createElement rangeSliderCpt props []
 
 data Knob = MinKnob | MaxKnob
+derive instance Generic Knob _
+instance Eq Knob where
+  eq = genericEq
 
 data RangeUpdate = SetMin Number | SetMax Number
 
 rangeSliderCpt :: R.Component Props
-rangeSliderCpt = R.hooksComponentWithModule thisModule "rangeSlider" cpt
+rangeSliderCpt = here.component "rangeSlider" cpt
   where
     cpt props _ = do
       -- rounding precision (i.e. how many decimal digits are in epsilon)
@@ -70,10 +76,12 @@ rangeSliderCpt = R.hooksComponentWithModule thisModule "rangeSlider" cpt
       -- high knob
       highElem <- (R.useRef null) :: R.Hooks (R.Ref (Nullable DOM.Element)) -- a dom ref to the high knob
       -- The value of the user's selection
-      value /\ setValue <- R.useState' $ initialValue props
+      value <- T.useBox $ initialValue props
+      value' <- T.useLive T.unequal value
 
       -- the knob we are currently in a drag for. set by mousedown on a knob
-      dragKnob /\ setDragKnob <- R.useState' $ (Nothing :: Maybe Knob)
+      dragKnob <- T.useBox (Nothing :: Maybe Knob)
+      dragKnob' <- T.useLive T.unequal dragKnob
 
       -- the handler functions for trapping mouse events, so they can be removed
       mouseMoveHandler <- (R.useRef $ Nothing) :: R.Hooks (R.Ref (Maybe (EL.Callback Event.MouseEvent)))
@@ -84,24 +92,24 @@ rangeSliderCpt = R.hooksComponentWithModule thisModule "rangeSlider" cpt
             R.setRef mouseMoveHandler $ Nothing
             R.setRef mouseUpHandler $ Nothing
 
-      R2.useLayoutEffect1' dragKnob $ \_ -> do
+      R2.useLayoutEffect1' dragKnob' $ \_ -> do
         let scalePos = R2.readPositionRef scaleElem
         let lowPos = R2.readPositionRef lowElem
         let highPos = R2.readPositionRef highElem
 
-        case dragKnob of
+        case dragKnob' of
           Just knob -> do
             let drag = (getDragScale knob scalePos lowPos highPos) :: Maybe Range.NumberRange
 
             let onMouseMove = EL.callback $ \(event :: Event.MouseEvent) -> do
                   case reproject drag scalePos props.bounds props.epsilon (R2.domMousePosition event) of
                     Just val -> do
-                      setKnob knob setValue value val
-                      props.onChange $ knobSetter knob value val
+                      setKnob knob value value' val
+                      props.onChange $ knobSetter knob value' val
                     Nothing -> destroy unit
             let onMouseUp = EL.callback $ \(_event :: Event.MouseEvent) -> do
                   --props.onChange $ knobSetter knob value val
-                  setDragKnob $ const Nothing
+                  T.write_ Nothing dragKnob
                   destroy unit
             EL.addEventListener document "mousemove" onMouseMove
             EL.addEventListener document "mouseup" onMouseUp
@@ -109,10 +117,10 @@ rangeSliderCpt = R.hooksComponentWithModule thisModule "rangeSlider" cpt
             R.setRef mouseUpHandler $ Just onMouseUp
           Nothing -> destroy unit
       pure $ H.div { className, aria }
-        [ renderScale scaleElem props value
-        , renderScaleSel scaleSelElem props value
-        , renderKnob MinKnob lowElem  value props.bounds setDragKnob precision
-        , renderKnob MaxKnob highElem value props.bounds setDragKnob precision
+        [ renderScale scaleElem props value'
+        , renderScaleSel scaleSelElem props value'
+        , renderKnob MinKnob lowElem  value' props.bounds dragKnob precision
+        , renderKnob MaxKnob highElem value' props.bounds dragKnob precision
         ]
     className = "range-slider"
     aria = { label: "Range Slider Control. Expresses filtering data by a minimum and maximum value range through two slider knobs. Knobs can be adjusted with the arrow keys." }
@@ -127,8 +135,8 @@ destroyEventHandler name ref = traverse_ destroy $ R.readRef ref
       EL.removeEventListener document name handler
       R.setRef ref Nothing
 
-setKnob :: Knob -> R.Setter Range.NumberRange -> Range.NumberRange -> Number -> Effect Unit
-setKnob knob setValue r val = setValue $ const $ knobSetter knob r val
+setKnob :: Knob -> T.Box Range.NumberRange -> Range.NumberRange -> Number -> Effect Unit
+setKnob knob value r val = T.write_ (knobSetter knob r val) value
 
 knobSetter :: Knob -> Range.NumberRange -> Number -> Range.NumberRange
 knobSetter MinKnob = Range.withMin
@@ -165,7 +173,7 @@ renderScaleSel ref props (Range.Closed {min, max}) =
     computeWidth = (show $ 100.0 * (percOffsetMax - percOffsetMin)) <> "%"
 
 
-renderKnob :: Knob -> R.Ref (Nullable DOM.Element) -> Range.NumberRange -> Bounds -> R.Setter (Maybe Knob) -> Int -> R.Element
+renderKnob :: Knob -> R.Ref (Nullable DOM.Element) -> Range.NumberRange -> Bounds -> T.Box (Maybe Knob) -> Int -> R.Element
 renderKnob knob ref (Range.Closed value) bounds set precision =
   H.div { ref, tabIndex, className, aria, on: { mouseDown: onMouseDown }, style } [
       H.div { className: "button" }
@@ -181,7 +189,7 @@ renderKnob knob ref (Range.Closed value) bounds set precision =
     aria = { label: labelPrefix knob <> "value: " <> show val }
     labelPrefix MinKnob = "Minimum "
     labelPrefix MaxKnob = "Maximum "
-    onMouseDown _ = set $ const $ Just knob
+    onMouseDown _ = T.write_ (Just knob) set
     percOffset = Range.normalise bounds val
     style = { left: (show $ 100.0 * percOffset) <> "%" }
     val = case knob of

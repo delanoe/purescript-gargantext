@@ -1,48 +1,29 @@
 -- TODO: this module should be replaced by FacetsTable
 module Gargantext.Components.Category where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>), encodeJson)
-import Data.Array as A
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Show (genericShow)
-import Data.Lens ((^.))
-import Data.Lens.At (at)
-import Data.Lens.Record (prop)
-import Data.Map (Map)
-import Data.Map as Map
-import Data.Maybe (Maybe(..), fromMaybe, isJust)
-import Data.Ord.Down (Down(..))
-import Data.Set (Set)
-import Data.Set as Set
-import Data.String as Str
-import Data.Symbol (SProxy(..))
-import Data.Tuple (Tuple(..), fst)
-import Data.Tuple.Nested ((/\))
-import DOM.Simple.Event as DE
-import Effect (Effect)
-import Effect.Aff (Aff, launchAff)
-import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
 import Gargantext.Prelude
 
-import Gargantext.Components.Category.Types
+import Data.Array as A
+import Data.Either (Either)
+import Data.Generic.Rep (class Generic)
+import Data.Map as Map
+import Data.Maybe (Maybe(..))
+import Effect.Aff (Aff, launchAff)
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
+
+import Gargantext.Components.Category.Types (Category(..), Star(..), cat2score, categories, clickAgain, star2score, stars)
 import Gargantext.Components.DocsTable.Types (DocumentsView(..), LocalCategories, LocalUserScore)
-import Gargantext.Ends (Frontends, url)
-import Gargantext.Hooks.Loader (useLoaderWithCacheAPI, HashedResponse(..))
-import Gargantext.Utils.Reactix as R2
-import Gargantext.Routes as Routes
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Routes (SessionRoute(NodeAPI))
-import Gargantext.Sessions (Session, sessionId, get, delete, put)
-import Gargantext.Types (NodeID, NodeType(..), OrderBy(..), TableResult, TabType, showTabType')
-import Gargantext.Utils.CacheAPI as GUC
+import Gargantext.Sessions (Session, put)
+import Gargantext.Types (NodeID, NodeType(..))
+import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.Category"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Category"
 
-------------------------------------------------------------------------
 type RatingProps =
   ( score              :: Star
   , nodeId             :: NodeID
@@ -55,51 +36,37 @@ rating :: R2.Component RatingProps
 rating = R.createElement ratingCpt
 
 ratingCpt :: R.Component RatingProps
-ratingCpt = R.hooksComponentWithModule thisModule "rating" cpt
-  where
-    cpt { score, nodeId, row: DocumentsView r, session, setLocalCategories } _ = do
-      pure $ H.div {className:"flex"} divs
-        where
-          divs = map (\s -> H.div { className : icon score s
-                                  , on: {click: onClick score s}
-                                  } []) stars
+ratingCpt = here.component "rating" cpt where
+  cpt { nodeId, row: DocumentsView r, score, session, setLocalCategories } _ =
+    pure $ H.div { className:"flex" } divs where
+      divs = map (\s -> H.div { className : icon' score s
+                              , on: { click: onClick s } } []) stars
+      icon' Star_0 Star_0  = "fa fa-times-circle"
+      icon' _ Star_0       = "fa fa-times"
+      icon' c s = if star2score c < star2score s then "fa fa-star-o" else "fa fa-star"
+      onClick c _ = do
+        let c' = if score == c
+                  then clickAgain c
+                  else c
 
-          icon Star_0 Star_0  = "fa fa-times-circle"
-          icon _ Star_0       = "fa fa-times"
-          icon c s            = if star2score c < star2score s
-                                  then "fa fa-star-o"
-                                  else "fa fa-star"
-
-          onClick score c = \_-> do
-            let c' = if score == c
-                      then clickAgain c
-                      else c
-
-            setLocalCategories $ Map.insert r._id c'
-            void $ launchAff
-                 $ putRating session nodeId
-                 $ RatingQuery {nodeIds: [r._id], rating: c'}
+        setLocalCategories $ Map.insert r._id c'
+        void $ launchAff
+             $ putRating session nodeId
+             $ RatingQuery { nodeIds: [r._id], rating: c' }
 
 newtype RatingQuery =
   RatingQuery { nodeIds :: Array Int
               , rating  :: Star
               }
+derive instance Generic RatingQuery _
+instance JSON.WriteForeign RatingQuery where
+  writeImpl (RatingQuery post) = JSON.writeImpl { ntc_nodesId: post.nodeIds
+                                                , ntc_category: post.rating }
 
-instance encodeJsonRatingQuery :: EncodeJson RatingQuery where
-  encodeJson (RatingQuery post) =
-    "ntc_nodesId" := post.nodeIds
-    ~> "ntc_category" := encodeJson post.rating
-    ~> jsonEmptyObject
+putRating :: Session -> Int -> RatingQuery -> Aff (Either RESTError (Array Int))
+putRating session nodeId = put session $ ratingRoute where
+  ratingRoute = NodeAPI Node (Just nodeId) "category"
 
-putRating :: Session -> Int -> RatingQuery -> Aff (Array Int)
-putRating session nodeId = put session $ ratingRoute nodeId
-  where
-    ratingRoute :: Int -> SessionRoute
-    ratingRoute nodeId = NodeAPI Node (Just nodeId) "category"
-
-
-
-------------------------------------------------------------------------
 type CarousselProps =
   ( category           :: Category
   , nodeId             :: NodeID
@@ -108,12 +75,11 @@ type CarousselProps =
   , setLocalCategories :: R.Setter LocalCategories
   )
 
-
 caroussel :: R2.Component CarousselProps
 caroussel = R.createElement carousselCpt
 
 carousselCpt :: R.Component CarousselProps
-carousselCpt = R.hooksComponentWithModule thisModule "caroussel" cpt
+carousselCpt = here.component "caroussel" cpt
   where
     cpt { category, nodeId, row: DocumentsView r, session, setLocalCategories } _ = do
       pure $ H.div {className:"flex"} divs
@@ -173,15 +139,13 @@ newtype CategoryQuery = CategoryQuery {
     nodeIds :: Array Int
   , category :: Category
   }
-
-instance encodeJsonCategoryQuery :: EncodeJson CategoryQuery where
-  encodeJson (CategoryQuery post) =
-    "ntc_nodesId" := post.nodeIds
-    ~> "ntc_category" := encodeJson post.category
-    ~> jsonEmptyObject
+derive instance Generic CategoryQuery _
+instance JSON.WriteForeign CategoryQuery where
+  writeImpl (CategoryQuery post) = JSON.writeImpl { ntc_nodesId: post.nodeIds
+                                                  , ntc_category: post.category }
 
 categoryRoute :: Int -> SessionRoute
 categoryRoute nodeId = NodeAPI Node (Just nodeId) "category"
 
-putCategories :: Session -> Int -> CategoryQuery -> Aff (Array Int)
+putCategories :: Session -> Int -> CategoryQuery -> Aff (Either RESTError (Array Int))
 putCategories session nodeId = put session $ categoryRoute nodeId

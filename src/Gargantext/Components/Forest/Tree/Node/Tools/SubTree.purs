@@ -1,77 +1,88 @@
 module Gargantext.Components.Forest.Tree.Node.Tools.SubTree where
 
+import Gargantext.Prelude
+
+import Data.Array (length)
 import Data.Array as A
+import Data.Either (Either)
+import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import React.SyntheticEvent     as E
-import Reactix as R
-import Reactix.DOM.HTML as H
-
-import Gargantext.Prelude
-
-import Gargantext.Components.Forest.Tree.Node.Action (Props, Action, subTreeOut, setTreeOut)
-import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..), SubTreeOut(..))
-import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
+import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.Forest.Tree.Node.Action (Props, subTreeOut, setTreeOut)
+import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
 import Gargantext.Components.Forest.Tree.Node.Tools (nodeText)
+import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..), SubTreeOut(..))
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
 import Gargantext.Types as GT
+import Gargantext.Utils ((?))
+import Gargantext.Utils.Reactix (if', useBox', useLive')
+import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Toestand as T
 
-thisModule :: String
-thisModule = "Gargantext.Components.Forest.Tree.Node.Tools.SubTree"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools.SubTree"
 
 type SubTreeParamsIn =
-  ( subTreeParams :: SubTreeParams
-  , handed    :: GT.Handed
+  ( boxes         :: Boxes
+  , subTreeParams :: SubTreeParams
   | Props
   )
 
 ------------------------------------------------------------------------
 type SubTreeParamsProps =
-  ( action    :: R.State Action
+  ( action    :: T.Box Action
   | SubTreeParamsIn
   )
 
-subTreeView :: Record SubTreeParamsProps -> R.Element
-subTreeView props = R.createElement subTreeViewCpt props []
-
+subTreeView :: R2.Component SubTreeParamsProps
+subTreeView = R.createElement $ R.memo' subTreeViewCpt
 subTreeViewCpt :: R.Component SubTreeParamsProps
-subTreeViewCpt = R.hooksComponentWithModule thisModule "subTreeView" cpt
+subTreeViewCpt = here.component "subTreeView" cpt
   where
-    cpt params@{ action
-               , dispatch
-               , handed
-               , id
-               , nodeType
-               , session
-               , subTreeParams
-               } _ =
-      do
-        let
-          SubTreeParams {showtypes} = subTreeParams
-        --  (valAction /\ setAction)  = action
-        -- _ <- pure $ setAction (const $ setTreeOut valAction Nothing)
+    cpt { action
+        , boxes
+        , dispatch
+        , id
+        , nodeType
+        , session
+        , subTreeParams
+        } _ = do
+      let
+        SubTreeParams {showtypes} = subTreeParams
+      --  (valAction /\ setAction)  = action
+      -- _ <- pure $ setAction (const $ setTreeOut valAction Nothing)
 
-        useLoader session (loadSubTree showtypes) $
-          \tree ->
-            subTreeViewLoaded { action
-                              , dispatch
-                              , handed
-                              , id
-                              , nodeType
-                              , session
-                              , subTreeParams
-                              , tree
-                              }
+      useLoader { errorHandler
+                , loader: loadSubTree showtypes
+                , path: session
+                , render: \tree ->
+                    subTreeViewLoaded { action
+                                      , boxes
+                                      , dispatch
+                                      , id
+                                      , nodeType
+                                      , session
+                                      , subTreeParams
+                                      , tree
+                                      } []  }
+      where
+        errorHandler err = here.log2 "RESTError" err
 
-loadSubTree :: Array GT.NodeType -> Session -> Aff FTree
+loadSubTree :: Array GT.NodeType -> Session -> Aff (Either RESTError FTree)
 loadSubTree nodetypes session = getSubTree session treeId nodetypes
   where
     Session { treeId } = session
 
-getSubTree :: Session -> Int -> Array GT.NodeType -> Aff FTree
+getSubTree :: Session -> Int -> Array GT.NodeType -> Aff (Either RESTError FTree)
 getSubTree session treeId showtypes = get session $ GR.NodeAPI GT.Tree (Just treeId) nodeTypes
   where
     nodeTypes     = A.foldl (\a b -> a <> "type=" <> show b <> "&") "?" showtypes
@@ -82,85 +93,97 @@ type CorpusTreeProps =
   | SubTreeParamsProps
   )
 
-subTreeViewLoaded :: Record CorpusTreeProps -> R.Element
-subTreeViewLoaded props = R.createElement subTreeViewLoadedCpt props []
-
+subTreeViewLoaded :: R2.Component CorpusTreeProps
+subTreeViewLoaded = R.createElement subTreeViewLoadedCpt
 subTreeViewLoadedCpt :: R.Component CorpusTreeProps
-subTreeViewLoadedCpt = R.hooksComponentWithModule thisModule "subTreeViewLoadedCpt" cpt
-  where
-    cpt p@{dispatch, id, nodeType, session, tree, handed} _ = do
-      pure $ H.div {className:"tree"}
-                   [H.div { className: if handed == GT.RightHanded
-                                         then "righthanded"
-                                         else "lefthanded"
-                          }
-                          [ subTreeTreeView p ]
-                   ]
+subTreeViewLoadedCpt = here.component "subTreeViewLoaded" cpt where
+  cpt props _ = do
 
-subTreeTreeView :: Record CorpusTreeProps -> R.Element
-subTreeTreeView props = R.createElement subTreeTreeViewCpt props []
+    let pRender = Record.merge { render: subTreeTreeView } props
 
-subTreeTreeViewCpt :: R.Component CorpusTreeProps
-subTreeTreeViewCpt = R.hooksComponentWithModule thisModule "subTreeTreeViewCpt" cpt
-  where
-    cpt p@{ id
-          , tree: NTree (LNode { id: targetId
-                               , name
-                               , nodeType
-                               }
-                        ) ary
-          , subTreeParams
-          , dispatch
-          , action
-          , handed
-          } _ = do
-            let ordering =
-                  case handed of
-                    GT.LeftHanded  -> A.reverse
-                    GT.RightHanded -> identity
+    pure $
 
-            pure $ H.div {} $ ordering [
-              H.div { className: nodeClass validNodeType } [
-                H.span { className: "text"
-                       , on: { click: onClick }
-                       } [
-                  nodeText { isSelected: isSelected targetId valAction
-                           , name: " " <> name
-                           , handed
-                           }
-                , H.span { className: "children" } children
-                ]
-              ]
+      H.div { className: "subtree" }
+      [ subTreeTreeView (CorpusTreeRenderProps pRender) [] ]
+
+newtype CorpusTreeRenderProps = CorpusTreeRenderProps
+  { render :: CorpusTreeRenderProps -> Array R.Element -> R.Element
+  | CorpusTreeProps
+  }
+
+subTreeTreeView :: CorpusTreeRenderProps -> Array R.Element -> R.Element
+subTreeTreeView = R2.ntCreateElement subTreeTreeViewCpt
+subTreeTreeViewCpt :: R2.NTComponent CorpusTreeRenderProps
+subTreeTreeViewCpt = here.ntComponent "subTreeTreeView" cpt where
+  cpt (CorpusTreeRenderProps p@{ id
+                               , render
+                               , subTreeParams
+                               , tree: NTree (LNode { id: targetId, name, nodeType }) ary }) _ = do
+    -- Hooks
+    action <- useLive' p.action
+    isExpanded /\ isExpandedBox <- useBox' false
+    -- Computed
+    let
+        expandCbk _ = T.modify_ not isExpandedBox
+
+        selectCbk _ = do
+          params <- pure $
+            if validNodeType
+            then Just $ SubTreeOut { in: id, out: targetId }
+            else Nothing
+          T.modify_ (\a -> setTreeOut a params) p.action
+
+        children = (map (\ctree -> render (CorpusTreeRenderProps (p { tree = ctree })) []) sortedAry) :: Array R.Element
+
+        hasChild = length children > 0
+
+    -- Render
+    pure $
+
+      H.div
+      { className: intercalate " "
+          [ "subtree__node"
+          , validNodeType ? "subtree__node--can-be-selected" $ ""
+          ]
+      }
+      [
+          H.div
+          { className: "subtree__node__text" }
+          [
+            H.div
+            { className: "subtree__node__icons"
+            , on: { click: expandCbk }
+            }
+            [
+              H.span { className: GT.fldr nodeType true } []
+            ,
+              if' hasChild $
+
+                if isExpanded then
+                  H.span { className: "fa fa-chevron-down" } []
+                else
+                  H.span { className: "fa fa-chevron-right" } []
             ]
-      where
-
-        nodeClass vnt = "node " <> GT.fldr nodeType true <> " " <> validNodeTypeClass
-          where
-            validNodeTypeClass = if vnt then "node-type-valid" else ""
-
-        SubTreeParams { valitypes } = subTreeParams
-
-        sortedAry = A.sortWith (\(NTree (LNode {id:id'}) _) -> id')
-                  $ A.filter (\(NTree (LNode {id:id'}) _) -> id'/= id) ary
-
-        children = map (\ctree -> subTreeTreeView (p { tree = ctree })) sortedAry
-
-        validNodeType = (A.elem nodeType valitypes) && (id /= targetId)
-
-        clickable    = if validNodeType then "clickable" else ""
-
-        (valAction /\ setAction) = action
-
-        isSelected n action' = case (subTreeOut action') of
-            Nothing                   -> false
-            (Just (SubTreeOut {out})) -> n == out
-
-        onClick e = do
-          let action = if not validNodeType then Nothing else Just $ SubTreeOut { in: id, out: targetId }
-          E.preventDefault  e
-          E.stopPropagation e
-          setAction $ const $ setTreeOut valAction action
-
-
---------------------------------------------------------------------------------------------
-
+          ,
+            H.div
+            { on: { click: selectCbk } }
+            [
+              nodeText
+              { isSelected: isSelected targetId action
+              , name
+              }
+            ]
+          ]
+      ,
+        if' (hasChild && isExpanded) $
+          H.div { className: "subtree__node__children" }
+          children
+      ]
+    where
+      SubTreeParams { valitypes } = subTreeParams
+      sortedAry = A.sortWith (\(NTree (LNode {id:id'}) _) -> id')
+        $ A.filter (\(NTree (LNode {id:id'}) _) -> id'/= id) ary
+      validNodeType = (A.elem nodeType valitypes) && (id /= targetId)
+      isSelected n action = case (subTreeOut action) of
+        Nothing                   -> false
+        (Just (SubTreeOut {out})) -> n == out

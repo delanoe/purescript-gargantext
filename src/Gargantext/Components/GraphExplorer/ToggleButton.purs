@@ -8,72 +8,88 @@ module Gargantext.Components.GraphExplorer.ToggleButton
   , multiSelectEnabledButton
   , sidebarToggleButton
   , pauseForceAtlasButton
+  , resetForceAtlasButton
   , treeToggleButton
   ) where
 
 import Prelude
 
-import Data.Tuple (snd)
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Components.Graph as Graph
+import Gargantext.Hooks.Sigmax as Sigmax
+import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
+import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
-thisModule = "Gargantext.Components.GraphExplorer.ToggleButton"
+here :: R2.Here
+here = R2.here "Gargantext.Components.GraphExplorer.ToggleButton"
 
 type Props = (
-    state :: R.State Boolean
-  , onMessage :: String
+    state      :: T.Box Boolean
+  , onMessage  :: String
   , offMessage :: String
   , style      :: String
-  , onClick :: forall e. e -> Effect Unit
+  , onClick    :: forall e. e -> Effect Unit
   )
 
-toggleButton :: Record Props -> R.Element
-toggleButton props = R.createElement toggleButtonCpt props []
-
+toggleButton :: R2.Component Props
+toggleButton = R.createElement toggleButtonCpt
 toggleButtonCpt :: R.Component Props
-toggleButtonCpt = R.hooksComponentWithModule thisModule "toggleButton" cpt
+toggleButtonCpt = here.component "toggleButton" cpt
   where
-    cpt {state, onMessage, offMessage, onClick, style} _ = do
-      let (toggled /\ _) = state
+    cpt { state
+        , onMessage
+        , offMessage
+        , onClick
+        , style } _ = do
+      state' <- T.useLive T.unequal state
 
-      pure $ H.button { className: "btn btn-outline-" <> style <> " " <> cls toggled
-                      , on: {click: onClick}
-                      } [ R2.small {} [ H.text (text onMessage offMessage toggled) ] ]
+      pure $ H.div { className: "btn btn-outline-" <> style <> " " <> cls state' <> " mx-2"
+                   , on: { click: onClick }
+                   } [ R2.small {} [ H.text (text onMessage offMessage state') ] ]
 
     cls true = "active"
     cls false = ""
     text on _off true = on
     text _on off false = off
 
-controlsToggleButton :: R.State Boolean -> R.Element
-controlsToggleButton state =
-  toggleButton {
-      state: state
-    , onMessage: "Hide Controls"
-    , offMessage: "Show Controls"
-    , onClick: \_ -> snd state not
-    , style: "light"
-    }
+type ControlsToggleButtonProps = (
+  state :: T.Box Boolean
+  )
+
+controlsToggleButton :: R2.Component ControlsToggleButtonProps
+controlsToggleButton = R.createElement controlsToggleButtonCpt
+controlsToggleButtonCpt :: R.Component ControlsToggleButtonProps
+controlsToggleButtonCpt = here.component "controlsToggleButton" cpt
+  where
+    cpt { state } _ = do
+      pure $ toggleButton {
+          state: state
+        , onMessage: "Hide Controls"
+        , offMessage: "Show Controls"
+        , onClick: \_ -> T.modify_ not state
+        , style: "light"
+        } []
 
 type EdgesButtonProps = (
-  state :: R.State SigmaxTypes.ShowEdgesState
+  state :: T.Box SigmaxTypes.ShowEdgesState
 )
 
-edgesToggleButton :: Record EdgesButtonProps -> R.Element
-edgesToggleButton props = R.createElement edgesToggleButtonCpt props []
-
+edgesToggleButton :: R2.Component EdgesButtonProps
+edgesToggleButton = R.createElement edgesToggleButtonCpt
 edgesToggleButtonCpt :: R.Component EdgesButtonProps
-edgesToggleButtonCpt = R.hooksComponentWithModule thisModule "edgesToggleButton" cpt
+edgesToggleButtonCpt = here.component "edgesToggleButton" cpt
   where
-    cpt {state: (state /\ setState)} _ = do
-      pure $ H.button { className: "btn btn-outline-primary " <> cls state
-                      , on: { click: onClick setState }
-                      } [ R2.small {} [ H.text (text state) ] ]
+    cpt { state } _ = do
+      state' <- T.useLive T.unequal state
+
+      pure $ H.button { className: "btn btn-outline-primary " <> cls state'
+                      , on: { click: onClick state }
+                      } [ R2.small {} [ H.text (text state') ] ]
 
     text s = if SigmaxTypes.edgeStateHidden s then "Show edges" else "Hide edges"
 
@@ -81,42 +97,59 @@ edgesToggleButtonCpt = R.hooksComponentWithModule thisModule "edgesToggleButton"
     cls _ = "active"
 
     -- TODO: Move this to Graph.purs to the R.useEffect handler which renders nodes/edges
-    onClick setState _ = setState SigmaxTypes.toggleShowEdgesState
+    onClick state _ = T.modify_ SigmaxTypes.toggleShowEdgesState state
 
-louvainToggleButton :: R.State Boolean -> R.Element
-louvainToggleButton state =
-  toggleButton {
-      state: state
-    , onMessage: "Louvain off"
-    , offMessage: "Louvain on"
-    , onClick: \_ -> snd state not
-    , style: "primary"
-    }
-
-multiSelectEnabledButton :: R.State Boolean -> R.Element
-multiSelectEnabledButton state =
-  toggleButton {
-      state: state
-    , onMessage: "Single-node"
-    , offMessage: "Multi-node"
-    , onClick: \_ -> snd state not
-    , style : "primary"
-    }
-
-type ForceAtlasProps = (
-  state :: R.State SigmaxTypes.ForceAtlasState
+type LouvainToggleButtonProps = (
+  state :: T.Box Boolean
 )
 
-pauseForceAtlasButton :: Record ForceAtlasProps -> R.Element
-pauseForceAtlasButton props = R.createElement pauseForceAtlasButtonCpt props []
-
-pauseForceAtlasButtonCpt :: R.Component ForceAtlasProps
-pauseForceAtlasButtonCpt = R.hooksComponentWithModule thisModule "forceAtlasToggleButton" cpt
+louvainToggleButton :: R2.Component LouvainToggleButtonProps
+louvainToggleButton = R.createElement louvainToggleButtonCpt
+louvainToggleButtonCpt :: R.Component LouvainToggleButtonProps
+louvainToggleButtonCpt = here.component "louvainToggleButton" cpt
   where
-    cpt {state: (state /\ setState)} _ = do
-      pure $ H.button { className: "btn btn-outline-primary " <> cls state
-                      , on: { click: onClick setState }
-                      } [ R2.small {} [ H.text (text state) ] ]
+    cpt { state } _ = do
+      pure $ toggleButton {
+          state: state
+        , onMessage: "Louvain off"
+        , offMessage: "Louvain on"
+        , onClick: \_ -> T.modify_ not state
+        , style: "primary"
+        } []
+
+type MultiSelectEnabledButtonProps = (
+  state :: T.Box Boolean
+)
+
+multiSelectEnabledButton :: R2.Component MultiSelectEnabledButtonProps
+multiSelectEnabledButton = R.createElement multiSelectEnabledButtonCpt
+multiSelectEnabledButtonCpt :: R.Component MultiSelectEnabledButtonProps
+multiSelectEnabledButtonCpt = here.component "lmultiSelectEnabledButton" cpt
+  where
+    cpt { state } _ = do
+      pure $ toggleButton {
+          state: state
+        , onMessage: "Single-node"
+        , offMessage: "Multi-node"
+        , onClick: \_ -> T.modify_ not state
+        , style : "primary"
+        } []
+
+type ForceAtlasProps = (
+  state :: T.Box SigmaxTypes.ForceAtlasState
+)
+
+pauseForceAtlasButton :: R2.Component ForceAtlasProps
+pauseForceAtlasButton = R.createElement pauseForceAtlasButtonCpt
+pauseForceAtlasButtonCpt :: R.Component ForceAtlasProps
+pauseForceAtlasButtonCpt = here.component "forceAtlasToggleButton" cpt
+  where
+    cpt { state } _ = do
+      state' <- T.useLive T.unequal state
+
+      pure $ H.button { className: "btn btn-outline-primary " <> cls state'
+                      , on: { click: onClick state }
+                      } [ R2.small {} [ H.text (text state') ] ]
 
     cls SigmaxTypes.InitialRunning = "active"
     cls SigmaxTypes.Running = "active"
@@ -126,39 +159,79 @@ pauseForceAtlasButtonCpt = R.hooksComponentWithModule thisModule "forceAtlasTogg
     text SigmaxTypes.InitialStopped = "Start Force Atlas"
     text SigmaxTypes.Running = "Pause Force Atlas"
     text SigmaxTypes.Paused = "Start Force Atlas"
+    text SigmaxTypes.Killed = "Start Force Atlas"
 
-    onClick setState _ = setState SigmaxTypes.toggleForceAtlasState
+    onClick state _ = T.modify_ SigmaxTypes.toggleForceAtlasState state
 
-treeToggleButton :: R.State Boolean -> R.Element
-treeToggleButton state =
-  toggleButton {
-      state: state
-    , onMessage: "Hide Tree"
-    , offMessage: "Show Tree"
-    , onClick: \_ -> snd state not
-    , style: "light"
-    }
+type ResetForceAtlasProps = (
+    forceAtlasState :: T.Box SigmaxTypes.ForceAtlasState
+  , sigmaRef        :: R.Ref Sigmax.Sigma
+)
 
-sidebarToggleButton :: R.State GET.SidePanelState -> R.Element
-sidebarToggleButton (state /\ setState) = R.createElement el {} []
+resetForceAtlasButton :: R2.Component ResetForceAtlasProps
+resetForceAtlasButton = R.createElement resetForceAtlasButtonCpt
+resetForceAtlasButtonCpt :: R.Component ResetForceAtlasProps
+resetForceAtlasButtonCpt = here.component "resetForceAtlasToggleButton" cpt
   where
-    el = R.hooksComponentWithModule thisModule "sidebarToggleButton" cpt
-    cpt {} _ = do
-      pure $ H.button { className: "btn btn-outline-light " <> cls state
-                      , on: { click: onClick}
-                      } [ R2.small {} [ H.text (text onMessage offMessage state) ] ]
+    cpt { forceAtlasState, sigmaRef } _ = do
+      pure $ H.button { className: "btn btn-outline-primary"
+                      , on: { click: onClick forceAtlasState sigmaRef }
+                      } [ R2.small {} [ H.text "Reset Force Atlas" ] ]
 
-    cls (GET.Opened _) = "active"
-    cls _ = ""
+    onClick forceAtlasState sigmaRef _ = do
+      -- TODO Sigma.killForceAtlas2 sigma
+      -- startForceAtlas2 sigma
+      Sigmax.dependOnSigma (R.readRef sigmaRef) "[resetForceAtlasButton] no sigma" $ \sigma -> do
+        Sigma.killForceAtlas2 sigma
+        Sigma.refreshForceAtlas sigma Graph.forceAtlas2Settings
+        T.write_ SigmaxTypes.Killed forceAtlasState
+
+type TreeToggleButtonProps = (
+  state :: T.Box Boolean
+)
+
+treeToggleButton :: R2.Component TreeToggleButtonProps
+treeToggleButton = R.createElement treeToggleButtonCpt
+treeToggleButtonCpt :: R.Component TreeToggleButtonProps
+treeToggleButtonCpt = here.component "treeToggleButton" cpt
+  where
+    cpt { state } _ = do
+      pure $ toggleButton {
+          state: state
+        , onMessage: "Hide Tree"
+        , offMessage: "Show Tree"
+        , onClick: \_ -> T.modify_ not state
+        , style: "light"
+        } []
+
+type SidebarToggleButtonProps = (
+  state :: T.Box GT.SidePanelState
+)
+
+sidebarToggleButton :: R2.Component SidebarToggleButtonProps
+sidebarToggleButton = R.createElement sidebarToggleButtonCpt
+sidebarToggleButtonCpt :: R.Component SidebarToggleButtonProps
+sidebarToggleButtonCpt = here.component "sidebarToggleButton" cpt
+  where
+    cpt { state } _ = do
+      state' <- T.useLive T.unequal state
+
+      pure $ H.div { className: "btn btn-outline-light " <> cls state'
+                   , on: { click: onClick state }
+                   } [ R2.small {} [ H.text (text onMessage offMessage state') ] ]
+
+    cls GT.Opened = "active"
+    cls _         = ""
 
     onMessage = "Hide Sidebar"
     offMessage = "Show Sidebar"
-    text on _off (GET.Opened _)    = on
-    text _on off GET.InitialClosed = off
-    text _on off GET.Closed        = off
+    text on _off GT.Opened        = on
+    text _on off GT.InitialClosed = off
+    text _on off GT.Closed        = off
 
-    onClick = \_ -> do
-      setState $ \s -> case s of
-        GET.InitialClosed -> GET.Opened GET.SideTabLegend
-        GET.Closed        -> GET.Opened GET.SideTabLegend
-        (GET.Opened _)    -> GET.Closed
+    onClick state = \_ ->
+      T.modify_ GT.toggleSidePanelState state
+                  -- case s of
+        -- GET.InitialClosed -> GET.Opened GET.SideTabLegend
+        -- GET.Closed        -> GET.Opened GET.SideTabLegend
+        -- (GET.Opened _)    -> GET.Closed) state

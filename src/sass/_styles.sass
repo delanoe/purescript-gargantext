@@ -1,24 +1,37 @@
-#page-wrapper
-  .cache-toggle
-    cursor: pointer
-  .side-panel
-    background-color: white
+@use "./abstract/_members" as *
+
+.cache-toggle
+  cursor: pointer
+
+.side-panel
+  background-color: #fff
+  padding: 0.3em
+  width: 28%
+  top: 3.7em
+  position: fixed
+
+  .corpus-doc-view
+    .annotated-field-wrapper
+      .annotated-field-runs
+        max-height: 200px
+        overflow-y: scroll
+  .list-group
+    .list-group-item-heading
+      display: inline-block
+      width: 60px
+
+  @include right-handed
     left: 70%
-    padding: 5px
-    position: fixed
-    top: 60px
-    width: 28%
+
     .header
       float: right
-    .corpus-doc-view
-      .annotated-field-wrapper
-        .annotated-field-runs
-          max-height: 200px
-          overflow-y: scroll
-      .list-group
-        .list-group-item-heading
-          display: inline-block
-          width: 60px
+
+  @include left-handed
+    left: 2%
+
+    .header
+      float: left
+
 
 .simple-layout
   height: 100%
@@ -73,9 +86,86 @@ ul
     color: #005a9aff
 
 .frame
+  height: 100vh
   iframe
     border: 0
 
 .join-button
   padding-bottom: 100px
   padding-top: 100px
+
+// Add pointer to Bootstrap Select
+select.form-control
+  cursor: pointer
+
+
+#app
+  width: 100%
+
+.router-inner
+  display: flex
+
+  &.left-handed
+    flex-direction: row
+
+  &.right-handed
+    flex-direction: row
+
+
+.main-page
+  $self: &
+  $page-padding: space-x(3) space-x(4)
+  $topbar-height: 56px // ~ unworthy empirical value (@TODO topbar height calculation)
+
+  flex-grow: 1 // quick workaround, stretching block when subjected to flex API
+
+  &__main-row
+    display: flex
+
+    &--with-y-tiles
+
+      #{ $self }__main-route
+        width: 60%
+      #{ $self }__vertical-tiles
+        width: 40%
+
+    &--only-y-tiles
+      // ensure minimum height, so that the border delimiting "main route" and
+      // its "vertical tiles" will not end abruptly
+      min-height: calc( 100vh - #{ $topbar-height })
+
+  // main route ~ main tile
+  &__main-route
+    padding: $page-padding
+    width: 100%
+
+  // optional vertical tiles ~ y axis column
+  &__vertical-tiles
+    display: flex
+    flex-direction: column
+
+  // optional horizontal tiles ~ x axis row
+  &__horizontal-tiles
+    display: flex
+    flex-direction: row
+
+    // dynamic width according to number of tiles
+    @for $i from 1 through 10
+
+      &--#{ $i } .tile-block
+        width: calc( 100% / #{ $i })
+
+.tile-block
+  $tile-padding: space-x(0.5) space-x(2) space-x(1.5)
+
+  &__header
+    display: flex
+
+    @include right-handed
+      justify-content: flex-end
+
+    @include left-handed
+      justify-content: flex-start
+
+  &__body
+    padding: $tile-padding

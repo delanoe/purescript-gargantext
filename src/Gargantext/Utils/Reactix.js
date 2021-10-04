@@ -23,11 +23,16 @@ function setCookie(c) {
   document.cookie = c;
 }
 
+function domRectFromRect(obj) {
+  return DOMRectReadOnly.fromRect(obj)
+}
+
 exports._addRootElement = addRootElement;
 exports._getSelection = getSelection;
 exports._stringify = stringify;
 exports._postMessage = postMessage;
 exports._setCookie = setCookie;
+exports._domRectFromRect = domRectFromRect;
 
 exports._keyCode = function(e) {
   // https://www.w3schools.com/jsref/event_key_keycode.asp

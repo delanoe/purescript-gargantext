@@ -3,8 +3,8 @@ module Gargantext.Hooks.Sigmax.Types where
 import DOM.Simple.Types (Element)
 import Data.Array as A
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Eq (genericEq)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Eq.Generic (genericEq)
+import Data.Show.Generic (genericShow)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Sequence as Seq
@@ -19,9 +19,12 @@ import Gargantext.Types as GT
 
 newtype Graph n e = Graph { edges :: Seq.Seq {|e}, nodes :: Seq.Seq {|n} }
 
---derive instance eqGraph :: Eq Graph
+derive instance Generic (Graph n e) _
 
---instance eqGraph :: Eq Graph where
+instance (Eq (Record n), Eq (Record e)) => Eq (Graph n e) where
+  eq = genericEq
+
+--instance Eq Graph where
 --  eq (Graph {nodes: n1, edges: e1}) (Graph {nodes: n2, edges: e2}) = n1 == n2 && e1 == e2
 
 
@@ -154,10 +157,10 @@ eqGraph (Graph {nodes: n1, edges: e1}) (Graph {nodes: n2, edges: e2}) = (n1 == n
 -- however when graph is loaded initially, forceAtlas is running for a couple of
 -- seconds and then stops (unless the user alters this by clicking the toggle
 -- button).
-data ForceAtlasState = InitialRunning | InitialStopped | Running | Paused
+data ForceAtlasState = InitialRunning | InitialStopped | Running | Paused | Killed
 
-derive instance genericForceAtlasState :: Generic ForceAtlasState _
-instance eqForceAtlasState :: Eq ForceAtlasState where
+derive instance Generic ForceAtlasState _
+instance Eq ForceAtlasState where
   eq = genericEq
 
 toggleForceAtlasState :: ForceAtlasState -> ForceAtlasState
@@ -165,16 +168,19 @@ toggleForceAtlasState InitialRunning = Paused
 toggleForceAtlasState InitialStopped = InitialRunning
 toggleForceAtlasState Running = Paused
 toggleForceAtlasState Paused = Running
+toggleForceAtlasState Killed = InitialRunning
 
 -- | Custom state for show edges. Normally it is EShow or EHide (show/hide
 -- | edges). However, edges are temporarily turned off when forceAtlas is
 -- | running.
+-- | NOTE ETempHiddenThenShow state is a hack for force atlas
+-- | flickering. Ideally it should be removed from here.
 data ShowEdgesState = EShow | EHide | ETempHiddenThenShow
 
-derive instance genericShowEdgesState :: Generic ShowEdgesState _
-instance eqShowEdgesState :: Eq ShowEdgesState where
+derive instance Generic ShowEdgesState _
+instance Eq ShowEdgesState where
   eq = genericEq
-instance showShowEdgesState :: Show ShowEdgesState where
+instance Show ShowEdgesState where
   show = genericShow
 
 -- | Whether the edges are hidden now (temp or "stable").
@@ -215,6 +221,8 @@ forceAtlasEdgeState Running EShow = ETempHiddenThenShow
 forceAtlasEdgeState Running es = es
 forceAtlasEdgeState Paused ETempHiddenThenShow = EShow
 forceAtlasEdgeState Paused es = es
+forceAtlasEdgeState Killed ETempHiddenThenShow = EShow
+forceAtlasEdgeState Killed es = es
 
 
 louvainEdges :: SGraph -> Array (Record Louvain.Edge)

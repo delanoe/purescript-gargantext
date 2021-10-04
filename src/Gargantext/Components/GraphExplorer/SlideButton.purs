@@ -7,46 +7,43 @@ module Gargantext.Components.GraphExplorer.SlideButton
 
 import Global (readFloat)
 import Prelude
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Utils.Reactix as R2
 
-thisModule = "Gargantext.Components.GraphExplorer.SlideButton"
+here :: R2.Here
+here = R2.here "Gargantext.Components.GraphExplorer.SlideButton"
 
-type Props = (
-    state :: R.State Number
-  , caption :: String
-  , min :: Number
-  , max :: Number
+type Props =
+  ( caption  :: String
+  , min      :: Number
+  , max      :: Number
   , onChange :: forall e. e -> Effect Unit
+  , state    :: T.Box Number
   )
 
 sizeButton :: Record Props -> R.Element
 sizeButton props = R.createElement sizeButtonCpt props []
 
 sizeButtonCpt :: R.Component Props
-sizeButtonCpt = R.hooksComponentWithModule thisModule "sizeButton" cpt
-  where
-    cpt {state, caption, min, max, onChange} _ = do
-      let (value /\ setValue) = state
-      pure $
-        H.span { class: "range-simple" }
-          [ H.label {} [ R2.small {} [ H.text caption ] ]
-          , H.input { type: "range"
-                    , className: "form-control"
-                    , min: show min
-                    , max: show max
-                    , defaultValue: value
-                    , on: {input: onChange}
-                    }
-          ]
+sizeButtonCpt = here.component "sizeButton" cpt where
+  cpt { state, caption, min, max, onChange } _ = do
+    defaultValue <- T.useLive T.unequal state
+    pure $ H.span { className: "range-simple" }
+      [ H.label {} [ R2.small {} [ H.text caption ] ]
+      , H.input { type: "range"
+                , className: "form-control"
+                , min: show min
+                , max: show max
+                , defaultValue
+                , on: { input: onChange } }]
 
-labelSizeButton :: R.Ref Sigmax.Sigma -> R.State Number -> R.Element
+labelSizeButton :: R.Ref Sigmax.Sigma -> T.Box Number -> R.Element
 labelSizeButton sigmaRef state =
   sizeButton {
       state
@@ -56,7 +53,6 @@ labelSizeButton sigmaRef state =
     , onChange: \e -> do
       let sigma = R.readRef sigmaRef
       let newValue = readFloat $ R.unsafeEventValue e
-      let (_ /\ setValue) = state
       Sigmax.dependOnSigma sigma "[labelSizeButton] sigma: Nothing" $ \s -> do
         Sigma.setSettings s {
           defaultLabelSize: newValue
@@ -64,10 +60,10 @@ labelSizeButton sigmaRef state =
         , maxNodeSize: newValue / 2.5
         --, labelSizeRatio: newValue / 2.5
         }
-      setValue $ const newValue
+      T.write_ newValue state
     }
 
-mouseSelectorSizeButton :: R.Ref Sigmax.Sigma -> R.State Number -> R.Element
+mouseSelectorSizeButton :: R.Ref Sigmax.Sigma -> T.Box Number -> R.Element
 mouseSelectorSizeButton sigmaRef state =
   sizeButton {
       state
@@ -76,11 +72,10 @@ mouseSelectorSizeButton sigmaRef state =
     , max: 50.0
     , onChange: \e -> do
       let sigma = R.readRef sigmaRef
-      let (_ /\ setValue) = state
       let newValue = readFloat $ R.unsafeEventValue e
       Sigmax.dependOnSigma sigma "[mouseSelectorSizeButton] sigma: Nothing" $ \s -> do
         Sigma.setSettings s {
           mouseSelectorSize: newValue
         }
-      setValue $ const newValue
+      T.write_ newValue state
   }

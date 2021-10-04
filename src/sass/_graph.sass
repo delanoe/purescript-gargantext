@@ -56,7 +56,8 @@
   #controls-container
     // position: fixed
     position: absolute
-    z-index: 999 // needs to appear above graph elements
+    // needs to appear above graph elements
+    z-index: 900
     backdrop-filter: blur(4px)
     background: rgba(255,255,255,75%)
     // overflow: auto
@@ -68,10 +69,10 @@
       padding-left: 0.8rem
 
   .graph-row
-    height: 100%
+    height: 100vh
 
     #graph-view
-      height: 95%
+      height: 95vh
 
   #tree
     position: absolute

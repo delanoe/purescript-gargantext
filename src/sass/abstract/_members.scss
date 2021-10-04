@@ -1,0 +1,43 @@
+@use "./_variables" as *;
+
+/// Functions
+///--------------------------
+
+/// Add alpha channel to a color
+/// @access public
+/// @param {Color} $color - color to work with
+/// @param {Number} $percentage - percentage of `$color` opacity
+/// @return {Color} $color
+@function mixAlpha($color, $percentage) {
+  @return rgba($color, $percentage);
+}
+
+/// Add spacing length according to given unit
+/// @access public
+/// @param {Number} $num
+/// @return {Size} $em
+@function space-x($num) {
+  @return $num * $space-unit;
+}
+
+
+/// Mixins
+///--------------------------
+
+/// Place contextualised element (&) at the root,
+/// prefixed with left handed class
+/// @access public
+@mixin left-handed() {
+  @at-root .left-handed & {
+    @content;
+  }
+}
+
+/// Place contextualised element (&) at the root,
+/// prefixed with right handed class
+/// @access public
+@mixin right-handed() {
+  @at-root .right-handed & {
+    @content;
+  }
+}

@@ -2,11 +2,13 @@ module Gargantext.Components.Nodes.Corpus.Chart.Types where
 
 import Data.Maybe (Maybe)
 import Data.Tuple (Tuple)
-import Reactix as R
-
+import Effect (Effect)
+import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.Charts.Options.Type (EChartsInstance, MouseEvent)
+import Gargantext.Prelude (Unit)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (TabType)
-import Gargantext.Utils.Reload as GUR
+import Gargantext.Utils.Toestand as T2
 
 type Path = (
     corpusId :: Int
@@ -16,13 +18,16 @@ type Path = (
   )
 
 type Props = (
-    path :: Record Path
+    boxes   :: Boxes
+  , path    :: Record Path
   , session :: Session
+  , onClick :: Maybe (MouseEvent -> Effect Unit)
+  , onInit  :: Maybe (EChartsInstance -> Effect Unit)
   )
 
 type MetricsProps = (
-    reload  :: GUR.ReloadS
+    reload  :: T2.ReloadS
   | Props
 )
 
-type ReloadPath = Tuple GUR.Reload (Record Path)
+type ReloadPath = Tuple T2.Reload (Record Path)

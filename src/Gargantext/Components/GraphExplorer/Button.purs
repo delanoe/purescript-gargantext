@@ -1,12 +1,9 @@
 module Gargantext.Components.GraphExplorer.Button
-  ( centerButton
-  , Props
-  , simpleButton
-  , cameraButton
-  ) where
+  ( Props, centerButton, simpleButton, cameraButton ) where
 
 import Prelude
 
+import Data.Either (Either(..))
 import Data.Enum (fromEnum)
 import Data.Maybe (Maybe(..))
 import Data.DateTime as DDT
@@ -28,8 +25,10 @@ import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Sessions (Session)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 
-thisModule = "Gargantext.Components.GraphExplorer.Button"
+here :: R2.Here
+here = R2.here "Gargantext.Components.GraphExplorer.Button"
 
 type Props = (
     onClick :: forall e. e -> Effect Unit
@@ -40,7 +39,7 @@ simpleButton :: Record Props -> R.Element
 simpleButton props = R.createElement simpleButtonCpt props []
 
 simpleButtonCpt :: R.Component Props
-simpleButtonCpt = R.hooksComponentWithModule thisModule "simpleButton" cpt
+simpleButtonCpt = here.component "simpleButton" cpt
   where
     cpt {onClick, text} _ = do
       pure $ H.button { className: "btn btn-outline-primary"
@@ -57,12 +56,12 @@ centerButton sigmaRef = simpleButton {
   }
 
 
-type CameraButtonProps = (
-    id :: Int
+type CameraButtonProps =
+  ( id             :: Int
   , hyperdataGraph :: GET.HyperdataGraph
-  , session :: Session
-  , sigmaRef :: R.Ref Sigmax.Sigma
-  , treeReload :: Unit -> Effect Unit
+  , session        :: Session
+  , sigmaRef       :: R.Ref Sigmax.Sigma
+  , reloadForest   :: T2.ReloadS
   )
 
 
@@ -71,7 +70,7 @@ cameraButton { id
              , hyperdataGraph: GET.HyperdataGraph { graph: GET.GraphData hyperdataGraph }
              , session
              , sigmaRef
-             , treeReload } = simpleButton {
+             , reloadForest } = simpleButton {
     onClick: \_ -> do
       let sigma = R.readRef sigmaRef
       Sigmax.dependOnSigma sigma "[cameraButton] sigma: Nothing" $ \s -> do
@@ -92,18 +91,18 @@ cameraButton { id
                                                        , nodes = GEU.normalizeNodes $ map GEU.stNodeToGET nodes }
         let cameras = map Sigma.toCamera $ Sigma.cameras s
         let camera = case cameras of
-              [c] -> GET.Camera { ratio: c.ratio
-                                , x: c.x
-                                , y: c.y }
-              _   -> GET.Camera { ratio: 1.0
-                               , x: 0.0
-                               , y: 0.0 }
-        let hyperdataGraph = GET.HyperdataGraph { graph: graphData
-                                                , mCamera: Just camera }
+              [c] -> GET.Camera { ratio: c.ratio, x: c.x, y: c.y }
+              _   -> GET.Camera { ratio: 1.0, x: 0.0, y: 0.0 }
+        let hyperdataGraph' = GET.HyperdataGraph { graph: graphData, mCamera: Just camera }
         launchAff_ $ do
-          clonedGraphId <- cloneGraph { id, hyperdataGraph, session }
-          ret <- uploadArbitraryDataURL session clonedGraphId (Just $ nowStr <> "-" <> "screenshot.png") screen
-          liftEffect $ treeReload unit
-          pure ret
+          eClonedGraphId <- cloneGraph { id, hyperdataGraph: hyperdataGraph', session }
+          case eClonedGraphId of
+            Left err -> liftEffect $ log2 "[cameraButton] RESTError" err
+            Right clonedGraphId -> do
+              eRet <- uploadArbitraryDataURL session clonedGraphId (Just $ nowStr <> "-" <> "screenshot.png") screen
+              case eRet of
+                Left err -> liftEffect $ log2 "[cameraButton] RESTError" err
+                Right _ret -> do
+                  liftEffect $ T2.reload reloadForest
   , text: "Screenshot"
   }

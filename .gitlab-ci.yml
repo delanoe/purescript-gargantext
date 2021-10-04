@@ -1,0 +1,33 @@
+# Thanks to:
+# https://vadosware.io/post/zero-to-continuous-integrated-testing-a-haskell-project-with-gitlab/
+#
+#
+image: nixos/nix:latest
+
+variables:
+  STACK_ROOT: "${CI_PROJECT_DIR}/.stack-root"
+  STACK_OPTS: "--system-ghc"
+
+#before_script:
+  #- apt-get update
+  #- apt-get install make xz-utils
+
+stages:
+  - test
+
+test:
+  cache:
+    # cache per branch name
+    # key: ${CI_COMMIT_REF_SLUG}
+    # paths:
+    #   - .stack-root/
+    #   - .stack-work/
+  script:
+    # find 0.14.2 purescript version here:
+    # https://lazamar.co.uk/nix-versions/
+    - nix-env -i purescript-0.14.2 -f https://github.com/NixOS/nixpkgs/archive/bed08131cd29a85f19716d9351940bdc34834492.tar.gz
+    - nix-env -i git
+    - nix-env -i nodejs
+    - nix-env -i yarn
+    - yarn --skip-builds
+    - nix-shell shell.nix --run test-ps

@@ -4,83 +4,110 @@ module Gargantext.Components.Graph
   -- , forceAtlas2Settings, ForceAtlas2Settings, ForceAtlas2OptionalSettings
   -- )
   where
-import Prelude (bind, const, discard, not, pure, unit, ($))
 
+import Gargantext.Prelude
+
+import DOM.Simple (window)
+import DOM.Simple.Types (Element)
 import Data.Either (Either(..))
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
-import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log, log2)
-import DOM.Simple.Types (Element)
-import FFI.Simple (delay)
+import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Components.Themes (darksterTheme)
+import Gargantext.Components.Themes as Themes
+import Gargantext.Hooks.Sigmax as Sigmax
+import Gargantext.Hooks.Sigmax.Sigma as Sigma
+import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
+import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as RH
+import Record (merge)
+import Record as Record
+import Toestand as T
 
-import Gargantext.Components.GraphExplorer.Types as GET
-import Gargantext.Hooks.Sigmax as Sigmax
-import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
-import Gargantext.Hooks.Sigmax.Sigma as Sigma
-import Gargantext.Utils.Reactix as R2
-
-thisModule = "Gargantext.Components.Graph"
+here :: R2.Here
+here = R2.here "Gargantext.Components.Graph"
 
 type OnProps  = ()
 
 data Stage = Init | Ready | Cleanup
+derive instance Generic Stage _
+derive instance Eq Stage
 
-type Props sigma forceatlas2 = (
-    elRef :: R.Ref (Nullable Element)
-  , forceAtlas2Settings :: forceatlas2
-  , graph :: SigmaxTypes.SGraph
-  , mCamera :: Maybe GET.Camera
+
+type Props sigma forceatlas2 =
+  ( boxes                 :: Boxes
+  , elRef                 :: R.Ref (Nullable Element)
+  , forceAtlas2Settings   :: forceatlas2
+  , graph                 :: SigmaxTypes.SGraph
+  , mCamera               :: Maybe GET.Camera
   , multiSelectEnabledRef :: R.Ref Boolean
-  , selectedNodeIds :: R.State SigmaxTypes.NodeIds
-  , showEdges :: R.State SigmaxTypes.ShowEdgesState
-  , sigmaRef :: R.Ref Sigmax.Sigma
-  , sigmaSettings :: sigma
-  , stage :: R.State Stage
-  , startForceAtlas :: Boolean
-  , transformedGraph :: SigmaxTypes.SGraph
+  , selectedNodeIds       :: T.Box SigmaxTypes.NodeIds
+  , showEdges             :: T.Box SigmaxTypes.ShowEdgesState
+  , sigmaRef              :: R.Ref Sigmax.Sigma
+  , sigmaSettings         :: sigma
+  , stage                 :: T.Box Stage
+  , startForceAtlas       :: Boolean
+  , transformedGraph      :: SigmaxTypes.SGraph
   )
 
-graph :: forall s fa2. Record (Props s fa2) -> R.Element
-graph props = R.createElement graphCpt props []
+graph :: forall s fa2. R2.Component (Props s fa2)
+graph = R.createElement graphCpt
 
 graphCpt :: forall s fa2. R.Component (Props s fa2)
-graphCpt = R.hooksComponentWithModule thisModule "graph" cpt
-  where
-    cpt props _ = do
-      stageHooks props
+graphCpt = here.component "graph" cpt where
+    cpt props@{ elRef
+              , showEdges
+              , sigmaRef
+              , stage } _ = do
+      showEdges' <- T.useLive T.unequal showEdges
+      stage' <- T.useLive T.unequal stage
+
+      stageHooks (Record.merge { showEdges', stage' } props)
 
       R.useEffectOnce $ do
         pure $ do
-          log "[graphCpt (Cleanup)]"
-          Sigmax.dependOnSigma (R.readRef props.sigmaRef) "[graphCpt (Cleanup)] no sigma" $ \sigma -> do
+          here.log "[graphCpt (Cleanup)]"
+          Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Cleanup)] no sigma" $ \sigma -> do
             Sigma.stopForceAtlas2 sigma
-            log2 "[graphCpt (Cleanup)] forceAtlas stopped for" sigma
+            here.log2 "[graphCpt (Cleanup)] forceAtlas stopped for" sigma
             Sigma.kill sigma
-            log "[graphCpt (Cleanup)] sigma killed"
+            here.log "[graphCpt (Cleanup)] sigma killed"
 
       -- NOTE: This div is not empty after sigma initializes.
       -- When we change state, we make it empty though.
-      --pure $ RH.div { ref: props.elRef, style: {height: "95%"} } []
-      pure $ case R.readNullableRef props.elRef of
+      --pure $ RH.div { ref: elRef, style: {height: "95%"} } []
+      pure $ case R.readNullableRef elRef of
         Nothing -> RH.div {} []
         Just el -> R.createPortal [] el
 
-    stageHooks props@{multiSelectEnabledRef, selectedNodeIds, sigmaRef, stage: (Init /\ setStage)} = do
+    stageHooks { elRef
+               , mCamera
+               , multiSelectEnabledRef
+               , selectedNodeIds
+               , forceAtlas2Settings: fa2
+               , graph: graph'
+               , sigmaRef
+               , stage
+               , stage': Init
+               , startForceAtlas
+               , boxes
+               } = do
       R.useEffectOnce' $ do
-        let rSigma = R.readRef props.sigmaRef
+        let rSigma = R.readRef sigmaRef
 
         case Sigmax.readSigma rSigma of
           Nothing -> do
-            eSigma <- Sigma.sigma {settings: props.sigmaSettings}
+            theme <- T.read boxes.theme
+            eSigma <- Sigma.sigma {settings: sigmaSettings theme}
             case eSigma of
-              Left err -> log2 "[graphCpt] error creating sigma" err
+              Left err -> here.log2 "[graphCpt] error creating sigma" err
               Right sig -> do
                 Sigmax.writeSigma rSigma $ Just sig
 
-                Sigmax.dependOnContainer props.elRef "[graphCpt (Ready)] container not found" $ \c -> do
+                Sigmax.dependOnContainer elRef "[graphCpt (Ready)] container not found" $ \c -> do
                   _ <- Sigma.addRenderer sig {
                       "type": "canvas"
                     , container: c
@@ -88,7 +115,7 @@ graphCpt = R.hooksComponentWithModule thisModule "graph" cpt
                     }
                   pure unit
 
-                Sigmax.refreshData sig $ Sigmax.sigmafy props.graph
+                Sigmax.refreshData sig $ Sigmax.sigmafy graph'
 
                 Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Ready)] no sigma" $ \sigma -> do
                   -- bind the click event only initially, when ref was empty
@@ -98,24 +125,34 @@ graphCpt = R.hooksComponentWithModule thisModule "graph" cpt
 
                 Sigmax.setEdges sig false
 
-                -- log2 "[graph] startForceAtlas" props.startForceAtlas
-                if props.startForceAtlas then
-                  Sigma.startForceAtlas2 sig props.forceAtlas2Settings
+                -- here.log2 "[graph] startForceAtlas" startForceAtlas
+                if startForceAtlas then
+                  Sigma.startForceAtlas2 sig fa2
                 else
                   Sigma.stopForceAtlas2 sig
 
-                case props.mCamera of
+                case mCamera of
                   Nothing -> pure unit
                   Just (GET.Camera { ratio, x, y }) -> do
                     Sigma.updateCamera sig { ratio, x, y }
 
+                -- Reload Sigma on Theme changes
+                _ <- flip T.listen boxes.theme \{ old, new } ->
+                  if (eq old new) then pure unit
+                  else Sigma.proxySetSettings window sig $ sigmaSettings new
+
                 pure unit
-          Just sig -> do
+          Just _sig -> do
             pure unit
 
-        setStage $ const Ready
+        T.write Ready stage
 
-    stageHooks props@{ showEdges: (showEdges /\ _), sigmaRef, stage: (Ready /\ setStage), transformedGraph } = do
+
+    stageHooks { showEdges'
+               , sigmaRef
+               , stage': Ready
+               , transformedGraph
+               } = do
       let tEdgesMap = SigmaxTypes.edgesGraphMap transformedGraph
       let tNodesMap = SigmaxTypes.nodesGraphMap transformedGraph
 
@@ -125,7 +162,10 @@ graphCpt = R.hooksComponentWithModule thisModule "graph" cpt
           Sigmax.performDiff sigma transformedGraph
           Sigmax.updateEdges sigma tEdgesMap
           Sigmax.updateNodes sigma tNodesMap
-          Sigmax.setEdges sigma (not $ SigmaxTypes.edgeStateHidden showEdges)
+          let edgesState = not $ SigmaxTypes.edgeStateHidden showEdges'
+          here.log2 "[graphCpt] edgesState" edgesState
+          Sigmax.setEdges sigma edgesState
+
 
     stageHooks _ = pure unit
 
@@ -223,8 +263,8 @@ type SigmaSettings =
 
   -- not selected <=> (1-greyness)
   -- selected nodes <=> special label
-sigmaSettings :: {|SigmaSettings}
-sigmaSettings =
+sigmaSettings :: Themes.Theme -> {|SigmaSettings}
+sigmaSettings theme =
   { animationsTime : 30000.0
   , autoRescale : true
   , autoResize : true
@@ -232,9 +272,9 @@ sigmaSettings =
   , borderSize : 1.0                   -- for ex, bigger border when hover
   , defaultEdgeHoverColor : "#f00"
   , defaultEdgeType : "curve"          -- 'curve' or 'line' (curve iff ourRendering)
-  , defaultHoverLabelBGColor : "#fff"
-  , defaultHoverLabelColor : "#000"
-  , defaultLabelColor : "#000"         -- labels text color
+  -- , defaultHoverLabelBGColor : "#fff"
+  -- , defaultHoverLabelColor : "#000"
+  -- , defaultLabelColor : "#000"         -- labels text color
   , defaultLabelSize : 15.0                -- (old tina: showLabelsIfZoom)
   , defaultNodeBorderColor  : "#000"   -- <- if nodeBorderColor = 'default'
   , defaultNodeColor : "#FFF"
@@ -279,40 +319,60 @@ sigmaSettings =
   , zoomMax : 1.7
   , zoomMin : 0.0
   , zoomingRatio : 1.4
-  }
-  
+  } `merge` themeSettings theme
+  where
+    themeSettings t
+      | eq t darksterTheme =
+          { defaultHoverLabelBGColor: "#FFF"
+          , defaultHoverLabelColor : "#000"
+          , defaultLabelColor: "#FFF"
+          }
+      | otherwise =
+          { defaultHoverLabelBGColor: "#FFF"
+          , defaultHoverLabelColor : "#000"
+          , defaultLabelColor: "#000"
+          }
+
 type ForceAtlas2Settings =
-  ( adjustSizes :: Boolean
-  , barnesHutOptimize :: Boolean
-  -- , barnesHutTheta :: Number
-  , edgeWeightInfluence :: Number
-  -- , fixedY  :: Boolean
-  , gravity :: Number
-  , iterationsPerRender :: Number
-  , linLogMode :: Boolean
+  ( adjustSizes                    :: Boolean
+  , barnesHutOptimize              :: Boolean
+  -- , barnesHutTheta              :: Number
+  , batchEdgesDrawing              :: Boolean
+  , edgeWeightInfluence            :: Number
+  -- , fixedY                      :: Boolean
+  , hideEdgesOnMove                :: Boolean
+  , gravity                        :: Number
+  , includeHiddenEdges             :: Boolean
+  , includeHiddenNodes             :: Boolean
+  , iterationsPerRender            :: Number
+  , linLogMode                     :: Boolean
   , outboundAttractionDistribution :: Boolean
-  , scalingRatio :: Number
-  , skipHidden :: Boolean
-  , slowDown :: Number
-  , startingIterations :: Number
-  , strongGravityMode :: Boolean
-  -- , timeout :: Number
-  -- , worker :: Boolean
+  , scalingRatio                   :: Number
+  , skipHidden                     :: Boolean
+  , slowDown                       :: Number
+  , startingIterations             :: Number
+  , strongGravityMode              :: Boolean
+  -- , timeout                     :: Number
+  -- , worker                      :: Boolean
   )
 
 forceAtlas2Settings :: {|ForceAtlas2Settings}
 forceAtlas2Settings =
-  { adjustSizes : true
-  , barnesHutOptimize   : true
-  , edgeWeightInfluence : 1.0
-    -- fixedY : false
-  , gravity : 0.01
-  , iterationsPerRender : 50.0 -- 10.0
-  , linLogMode : false  -- false
-  , outboundAttractionDistribution: false
-  , scalingRatio : 1000.0
-  , skipHidden: false
-  , slowDown : 1.0
-  , startingIterations : 10.0
-  , strongGravityMode : false
+  { adjustSizes                    : true
+  , barnesHutOptimize              : true
+  , batchEdgesDrawing              : true
+  , edgeWeightInfluence            : 1.0
+    -- fixedY                      : false
+  , gravity                        : 0.01
+  , hideEdgesOnMove                : true
+  , includeHiddenEdges             : false
+  , includeHiddenNodes             : true
+  , iterationsPerRender            : 50.0 -- 10.0
+  , linLogMode                     : false  -- false
+  , outboundAttractionDistribution : false
+  , scalingRatio                   : 1000.0
+  , skipHidden                     : false
+  , slowDown                       : 1.0
+  , startingIterations             : 10.0
+  , strongGravityMode              : false
   }

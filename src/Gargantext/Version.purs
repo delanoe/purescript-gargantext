@@ -1,26 +1,30 @@
 module Gargantext.Version where
 
+import Prelude
+
+import DOM.Simple.Console (log2)
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
-import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Config.REST as REST
 import Gargantext.Ends (toUrl)
 import Gargantext.Sessions (Session(..))
 import Gargantext.Sessions as Sessions
+import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Version"
+here :: R2.Here
+here = R2.here "Gargantext.Version"
 
 type Version = String
 
 foreign import version :: Version
 
-getBackendVersion :: Session -> Aff Version
+getBackendVersion :: Session -> Aff (Either REST.RESTError Version)
 getBackendVersion (Session { backend }) = REST.get Nothing (toUrl backend "version")
 
 
@@ -29,27 +33,29 @@ type VersionProps =
     session :: Sessions.Session
   )
 
-versionView :: Record VersionProps -> R.Element
-versionView props = R.createElement versionCpt props []
-
+versionView :: R2.Component VersionProps
+versionView = R.createElement versionCpt
 versionCpt :: R.Component VersionProps
-versionCpt = R.hooksComponentWithModule thisModule "version" cpt
+versionCpt = here.component "version" cpt
   where
     cpt { session } _ = do
-      (versionBack /\ setVer) <- R.useState' "No Backend Version"
+      versionBack <- T.useBox "No Backend Version"
+      versionBack' <- T.useLive T.unequal versionBack
 
       R.useEffect' $ do
         launchAff_ $ do
           v <- getBackendVersion session
-          liftEffect $ setVer $ const v
+          case v of
+            Right v' -> liftEffect $ T.write_ v' versionBack
+            Left err -> liftEffect $ log2 "[version] error" err
 
-      pure $ case version == versionBack of
+      pure $ case version == versionBack' of
         true  -> H.a { className: "fa fa-check-circle-o"
                      , textDecoration: "none"
                      , title: "Versions match: frontend ("
                             <> version
                             <> "), backend ("
-                            <> versionBack
+                            <> versionBack'
                             <> ")"
                       } []
         false -> H.a { className: "fa fa-exclamation-triangle"
@@ -57,7 +63,7 @@ versionCpt = R.hooksComponentWithModule thisModule "version" cpt
                      , title: "Versions mismatch: frontend ("
                             <> version
                             <> "), backend ("
-                            <> versionBack
+                            <> versionBack'
                             <> ")"
                      } []
 

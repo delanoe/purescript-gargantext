@@ -1,12 +1,12 @@
 module Gargantext.Router where
 
 import Prelude
+
 import Data.Foldable (oneOf)
 import Data.Int (floor)
-import Routing.Match (Match, lit, num, str)
-
 import Gargantext.Routes (AppRoute(..))
 import Gargantext.Types (SessionId(..))
+import Routing.Match (Match, lit, num, str)
 
 router :: Match AppRoute
 router = oneOf
@@ -20,10 +20,12 @@ router = oneOf
                         <*> (lit "list" *> int)
                         <*> (lit "document" *> int)
   , Corpus            <$> (route "corpus"     *> sid) <*> int
-     , Document       <$> (route "list"      *> sid) <*> int 
+     , CorpusCode     <$> (route "corpusCode" *> sid) <*> int
+     , Document       <$> (route "list"      *> sid) <*> int
                         <*> (lit "document" *> int)
      , Dashboard      <$> (route "dashboard" *> sid) <*> int
      , PGraphExplorer <$> (route "graph"     *> sid) <*> int
+     , PhyloExplorer  <$> (route "phylo"     *> sid) <*> int
      , Texts          <$> (route "texts"     *> sid) <*> int
      , Lists          <$> (route "lists"     *> sid) <*> int
     , ContactPage     <$> (route "annuaire"  *> sid) <*> int
@@ -31,10 +33,11 @@ router = oneOf
   , Annuaire          <$> (route "annuaire"  *> sid) <*> int
     , UserPage        <$> (route "user"      *> sid) <*> int
 
-  , RouteFrameWrite    <$> (route "write"     *> sid) <*> int
+  , RouteFrameWrite    <$> (route "write"    *> sid) <*> int
   , RouteFrameCalc     <$> (route "calc"     *> sid) <*> int
   , RouteFrameCode     <$> (route "code"     *> sid) <*> int
-  , RouteFile          <$> (route "file"   *> sid) <*> int
+  , RouteFrameVisio    <$> (route "visio"    *> sid) <*> int
+  , RouteFile          <$> (route "file"     *> sid) <*> int
   , Home              <$   lit ""
   ]
  where
@@ -45,4 +48,3 @@ router = oneOf
 
     sid :: Match SessionId
     sid = SessionId <$> str
-

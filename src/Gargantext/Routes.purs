@@ -3,16 +3,15 @@ module Gargantext.Routes where
 import Prelude
 
 import Data.Maybe (Maybe(..))
-
-import Gargantext.Types (ChartOpts, ChartType, CorpusMetricOpts, CTabNgramType, Id, Limit,
-                         ListId, DocId, ContactId, NgramsGetOpts, NgramsGetTableAllOpts, NodeType,
-                         Offset, OrderBy, SearchOpts, SessionId, TabSubType, TabType, TermList)
+import Data.UUID (UUID)
+import Gargantext.Types (ChartOpts, ChartType, CorpusMetricOpts, CTabNgramType, Id, Limit, ListId, DocId, NgramsGetOpts, NgramsGetTableAllOpts, NodeType, Offset, OrderBy, SearchOpts, SessionId, TabSubType, TabType, TermList)
 import Gargantext.Types as GT
 
 data AppRoute
   = Annuaire       SessionId Int
   | ContactPage    SessionId Int Int
   | Corpus         SessionId Int
+  | CorpusCode     SessionId Int
   | CorpusDocument SessionId Int Int Int
   | Dashboard      SessionId Int
   | Document       SessionId Int Int
@@ -24,16 +23,18 @@ data AppRoute
   | Lists          SessionId Int
   | Login
   | PGraphExplorer  SessionId Int
+  | PhyloExplorer   SessionId Int
   | RouteFile       SessionId Int
   | RouteFrameCalc  SessionId Int
   | RouteFrameCode  SessionId Int
   | RouteFrameWrite SessionId Int
+  | RouteFrameVisio SessionId Int
   | Team            SessionId Int
   | Texts           SessionId Int
   | UserPage        SessionId Int
 
 
-derive instance eqAppRoute :: Eq AppRoute
+derive instance Eq AppRoute
 
 data SessionRoute
   = Tab TabType (Maybe Id)
@@ -58,7 +59,7 @@ data SessionRoute
   | ChartHash { chartType :: ChartType, listId :: Maybe ListId, tabType :: TabType } (Maybe Id)
   -- | AnnuaireContact AnnuaireId DocId
 
-instance showAppRoute :: Show AppRoute where
+instance Show AppRoute where
   show Home                     = "Home"
   show Login                    = "Login"
   show (Folder        s i)      = "Folder"         <> show i <> " (" <> show s <> ")"
@@ -67,9 +68,11 @@ instance showAppRoute :: Show AppRoute where
   show (FolderShared  s i)      = "FolderShared"   <> show i <> " (" <> show s <> ")"
   show (Team          s i)      = "Team"           <> show i <> " (" <> show s <> ")"
   show (Corpus        s i)      = "Corpus"         <> show i <> " (" <> show s <> ")"
+  show (CorpusCode    s i)      = "CorpusCode"     <> show i <> " (" <> show s <> ")"
   show (Document    _ s i)      = "Document"       <> show i <> " (" <> show s <> ")"
   show (CorpusDocument s _ _ i) = "CorpusDocument" <> show i <> " (" <> show s <> ")"
   show (PGraphExplorer s i)     = "graphExplorer"  <> show i <> " (" <> show s <> ")"
+  show (PhyloExplorer  s i)     = "phyloExplorer"  <> show i <> " (" <> show s <> ")"
   show (Dashboard      s i)     = "Dashboard"      <> show i <> " (" <> show s <> ")"
   show (Texts          s i)     = "texts"          <> show i <> " (" <> show s <> ")"
   show (Lists          s i)     = "lists"          <> show i <> " (" <> show s <> ")"
@@ -79,45 +82,61 @@ instance showAppRoute :: Show AppRoute where
   show (RouteFrameWrite s i)    = "write"          <> show i <> " (" <> show s <> ")"
   show (RouteFrameCalc  s i)    = "calc"           <> show i <> " (" <> show s <> ")"
   show (RouteFrameCode  s i)    = "code"           <> show i <> " (" <> show s <> ")"
+  show (RouteFrameVisio s i)    = "visio"          <> show i <> " (" <> show s <> ")"
   show (RouteFile       s i)    = "file"           <> show i <> " (" <> show s <> ")"
 
 
 appPath :: AppRoute -> String
-appPath Home                 = ""
-appPath Login                = "login"
-appPath (Folder s i)         = "folder/"        <> show s <> "/" <> show i
-appPath (FolderPrivate s i)  = "folderPrivate/" <> show s <> "/" <> show i
-appPath (FolderPublic s i)   = "folderPublic/"  <> show s <> "/" <> show i
-appPath (FolderShared s i)   = "folderShared/"  <> show s <> "/" <> show i
-appPath (Team s i)           = "team/"          <> show s <> "/" <> show i
+appPath Home                     = ""
+appPath Login                    = "login"
+appPath (Folder s i)             = "folder/"        <> show s <> "/" <> show i
+appPath (FolderPrivate s i)      = "folderPrivate/" <> show s <> "/" <> show i
+appPath (FolderPublic s i)       = "folderPublic/"  <> show s <> "/" <> show i
+appPath (FolderShared s i)       = "folderShared/"  <> show s <> "/" <> show i
+appPath (Team s i)               = "team/"          <> show s <> "/" <> show i
 appPath (CorpusDocument s c l i) = "corpus/" <> show s <> "/" <> show c <> "/list/" <> show l <> "/document/" <> show i
-appPath (Corpus s i)         = "corpus/"     <> show s <> "/" <> show i
-appPath (Document s l i)     = "list/"       <> show s <> "/" <> show l <> "/document/" <> show i
-appPath (Dashboard s i)      = "dashboard/"  <> show s <> "/" <> show i
-appPath (PGraphExplorer s i) = "graph/"      <> show s <> "/" <> show i
-appPath (Texts s i)          = "texts/"      <> show s <> "/" <> show i
-appPath (Lists s i)          = "lists/"      <> show s <> "/" <> show i
-appPath (Annuaire s i)       = "annuaire/"   <> show s <> "/" <> show i
-appPath (UserPage s i)       = "user/"       <> show s <> "/" <> show i
-appPath (ContactPage s a i)  = "annuaire/"   <> show s <> "/" <> show a <> "/contact/" <> show i
-appPath (RouteFrameWrite s i) = "write/"     <> show s <> "/" <> show i
-appPath (RouteFrameCalc s i)  = "calc/"      <> show s <> "/" <> show i
-appPath (RouteFrameCode s i)  = "code/"      <> show s <> "/" <> show i
-appPath (RouteFile s i)       = "file/"      <> show s <> "/" <> show i
+appPath (Corpus s i)             = "corpus/"     <> show s <> "/" <> show i
+appPath (CorpusCode s i)         = "corpusCode/" <> show s <> "/" <> show i
+appPath (Document s l i)         = "list/"       <> show s <> "/" <> show l <> "/document/" <> show i
+appPath (Dashboard s i)          = "dashboard/"  <> show s <> "/" <> show i
+appPath (PGraphExplorer s i)     = "graph/"      <> show s <> "/" <> show i
+appPath (PhyloExplorer  s i)     = "phylo/"      <> show s <> "/" <> show i
+appPath (Texts s i)              = "texts/"      <> show s <> "/" <> show i
+appPath (Lists s i)              = "lists/"      <> show s <> "/" <> show i
+appPath (Annuaire s i)           = "annuaire/"   <> show s <> "/" <> show i
+appPath (UserPage s i)           = "user/"       <> show s <> "/" <> show i
+appPath (ContactPage s a i)      = "annuaire/"   <> show s <> "/" <> show a <> "/contact/" <> show i
+appPath (RouteFrameWrite s i)    = "write/"     <> show s <> "/" <> show i
+appPath (RouteFrameCalc  s i)     = "calc/"      <> show s <> "/" <> show i
+appPath (RouteFrameCode  s i)     = "code/"      <> show s <> "/" <> show i
+appPath (RouteFrameVisio s i)     = "visio/"      <> show s <> "/" <> show i
+appPath (RouteFile s i)          = "file/"      <> show s <> "/" <> show i
 
 nodeTypeAppRoute :: NodeType -> SessionId -> Int -> Maybe AppRoute
-nodeTypeAppRoute GT.Annuaire s i      = Just $ Annuaire s i
-nodeTypeAppRoute GT.Corpus s i        = Just $ Corpus s i
-nodeTypeAppRoute GT.Dashboard s i     = Just $ Dashboard s i
-nodeTypeAppRoute GT.Folder s i        = Just $ Folder s i
-nodeTypeAppRoute GT.FolderPrivate s i = Just $ FolderPrivate s i
-nodeTypeAppRoute GT.FolderPublic s i  = Just $ FolderPublic s i
-nodeTypeAppRoute GT.FolderShared s i  = Just $ FolderShared s i
-nodeTypeAppRoute GT.Graph s i         = Just $ PGraphExplorer s i
-nodeTypeAppRoute GT.NodeContact s i   = Just $ Annuaire s i
-nodeTypeAppRoute GT.NodeFile s i      = Just $ RouteFile s i
-nodeTypeAppRoute GT.NodeList s i      = Just $ Lists s i
-nodeTypeAppRoute GT.NodeUser s i      = Just $ UserPage s i
-nodeTypeAppRoute GT.Team s i          = Just $ Team s i
-nodeTypeAppRoute GT.Texts s i         = Just $ Texts s i
-nodeTypeAppRoute _ _ _                = Nothing
+nodeTypeAppRoute GT.Annuaire s i       = Just $ Annuaire s i
+nodeTypeAppRoute GT.Corpus s i         = Just $ Corpus s i
+nodeTypeAppRoute GT.Dashboard s i      = Just $ Dashboard s i
+nodeTypeAppRoute GT.Folder s i         = Just $ Folder s i
+nodeTypeAppRoute GT.FolderPrivate s i  = Just $ FolderPrivate s i
+nodeTypeAppRoute GT.FolderPublic s i   = Just $ FolderPublic s i
+nodeTypeAppRoute GT.FolderShared s i   = Just $ FolderShared s i
+nodeTypeAppRoute GT.Graph s i          = Just $ PGraphExplorer s i
+nodeTypeAppRoute GT.Phylo s i          = Just $ PhyloExplorer  s i
+nodeTypeAppRoute GT.NodeContact s i    = Just $ Annuaire s i
+nodeTypeAppRoute GT.NodeFile s i       = Just $ RouteFile s i
+nodeTypeAppRoute GT.NodeList s i       = Just $ Lists s i
+nodeTypeAppRoute GT.NodeUser s i       = Just $ UserPage s i
+nodeTypeAppRoute GT.Team s i           = Just $ Team s i
+nodeTypeAppRoute GT.Texts s i          = Just $ Texts s i
+nodeTypeAppRoute GT.NodeFrameWrite s i = Just $ RouteFrameWrite s i
+nodeTypeAppRoute GT.NodeFrameCalc  s i = Just $ RouteFrameCalc  s i
+nodeTypeAppRoute GT.NodeFrameVisio s i = Just $ RouteFrameVisio s i
+nodeTypeAppRoute _ _ _                 = Nothing
+
+
+------------------------------------------------------
+
+type Tile =
+  ( id    :: UUID
+  , route :: AppRoute
+  )

@@ -34,13 +34,13 @@ relativePosition (Relative r) = unsafeCoerce $ show r
 data Align p = Auto | Relative p
 
 data TopRelativePosition = Top | Middle | Bottom
-instance showTopRelativePosition :: Show TopRelativePosition
+instance Show TopRelativePosition
   where show (Top) = "top"
         show (Middle) = "middle"
         show (Bottom) = "bottom"
 
 data LeftRelativePosition = LeftPos | Center | RightPos
-instance showLeftRelativePosition :: Show LeftRelativePosition
+instance Show LeftRelativePosition
   where show (LeftPos) = "left"
         show (Center) = "center"
         show (RightPos) = "right"

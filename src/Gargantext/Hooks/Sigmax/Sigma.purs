@@ -2,11 +2,10 @@ module Gargantext.Hooks.Sigmax.Sigma where
 
 import Prelude
 
-import DOM.Simple.Types (Element)
+import DOM.Simple.Types (Element, Window)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Maybe (Maybe)
-import Data.Nullable (null)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Traversable (traverse_)
@@ -16,9 +15,8 @@ import Effect.Timer (setTimeout)
 import Effect.Uncurried (EffectFn1, EffectFn3, EffectFn4, mkEffectFn1, runEffectFn1, runEffectFn3, runEffectFn4)
 import FFI.Simple ((..), (...), (.=))
 import Foreign.Object as Object
-import Type.Row (class Union)
-
 import Gargantext.Hooks.Sigmax.Types as Types
+import Type.Row (class Union)
 
 -- | Type representing a sigmajs instance
 foreign import data Sigma :: Type
@@ -28,8 +26,8 @@ foreign import data SigmaGraph :: Type
 type NodeRequiredProps = ( id :: Types.NodeId )
 type EdgeRequiredProps = ( id :: Types.EdgeId, source :: Types.NodeId, target :: Types.NodeId )
 
-class NodeProps (all :: #Type) (extra :: #Type) | all -> extra
-class EdgeProps (all :: #Type) (extra :: #Type) | all -> extra
+class NodeProps (all :: Row Type) (extra :: Row Type) | all -> extra
+class EdgeProps (all :: Row Type) (extra :: Row Type) | all -> extra
 
 instance nodeProps
   :: Union NodeRequiredProps extra all
@@ -48,7 +46,7 @@ sigma = runEffectFn3 _sigma Left Right
 
 -- | Kill a sigmajs instance.
 kill :: Sigma -> Effect Unit
-kill sigma = pure $ sigma ... "kill" $ []
+kill s = pure $ s ... "kill" $ []
 
 -- | Call the `refresh()` method on a sigmajs instance.
 refresh :: Sigma -> Effect Unit
@@ -217,13 +215,18 @@ setSettings s settings = do
   _ <- pure $ s ... "settings" $ [ settings ]
   refresh s
 
+-- | Call `settins(s)` on the the main proxy `window.sigma`
+proxySetSettings :: forall settings.
+  Window -> Sigma -> settings -> Effect Unit
+proxySetSettings = runEffectFn3 _proxySetSettings
+
 -- | Start forceAtlas2 on a sigmajs instance.
 startForceAtlas2 :: forall settings. Sigma -> settings -> Effect Unit
 startForceAtlas2 s settings = pure $ s ... "startForceAtlas2" $ [ settings ]
 
 -- | Restart forceAtlas2 on a sigmajs instance.
-restartForceAtlas2 :: Sigma -> Effect Unit
-restartForceAtlas2 s = startForceAtlas2 s null
+restartForceAtlas2 :: forall settings. Sigma -> settings -> Effect Unit
+restartForceAtlas2 s settings = startForceAtlas2 s settings
 
 -- | Stop forceAtlas2 on a sigmajs instance.
 stopForceAtlas2 :: Sigma -> Effect Unit
@@ -239,14 +242,14 @@ isForceAtlas2Running s = s ... "isForceAtlas2Running" $ [] :: Boolean
 
 -- | Refresh forceAtlas2 (with a `setTimeout` hack as it seems it doesn't work
 -- | otherwise).
-refreshForceAtlas :: Sigma -> Effect Unit
-refreshForceAtlas s = do
+refreshForceAtlas :: forall settings. Sigma -> settings -> Effect Unit
+refreshForceAtlas s settings = do
   let isRunning = isForceAtlas2Running s
   if isRunning then
     pure unit
   else do
     _ <- setTimeout 100 $ do
-      restartForceAtlas2 s
+      restartForceAtlas2 s settings
       _ <- setTimeout 100 $
         stopForceAtlas2 s
       pure unit
@@ -280,7 +283,7 @@ type CameraProps =
   , angle :: Number
   )
 
-foreign import data CameraInstance' :: # Type
+foreign import data CameraInstance' :: Row Type
 type CameraInstance = { | CameraInstance' }
 
 -- | Get an array of a sigma instance's `cameras`.
@@ -313,7 +316,7 @@ goToAllCameras :: Sigma -> Record CameraProps -> Effect Unit
 goToAllCameras s props = traverse_ (goTo props) $ cameras s
 
 takeScreenshot :: Sigma -> Effect String
-takeScreenshot = runEffectFn1 _takeScreenshot
+takeScreenshot =  runEffectFn1 _takeScreenshot
 
 getEdges :: Sigma -> Effect (Array (Record Types.Edge))
 getEdges = runEffectFn1 _getEdges
@@ -345,3 +348,9 @@ foreign import _bind :: forall e. EffectFn3 Sigma String (EffectFn1 e Unit) Unit
 foreign import _takeScreenshot :: EffectFn1 Sigma String
 foreign import _getEdges :: EffectFn1 Sigma (Array (Record Types.Edge))
 foreign import _getNodes :: EffectFn1 Sigma (Array (Record Types.Node))
+foreign import _proxySetSettings
+  :: forall settings.
+  EffectFn3 Window
+            Sigma
+            settings
+            Unit

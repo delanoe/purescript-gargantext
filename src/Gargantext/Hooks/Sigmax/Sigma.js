@@ -212,6 +212,13 @@ function getNodes(sigma) {
   return sigma.graph.nodes();
 }
 
+function proxySetSettings(window, sigma, settings) {
+  var id = sigma.id;
+
+  window.sigma.instances(id).settings(settings);
+  window.sigma.instances(id).refresh();
+}
+
 exports._sigma = _sigma;
 exports._addRenderer = addRenderer;
 exports._bindMouseSelectorPlugin = bindMouseSelectorPlugin;
@@ -219,3 +226,4 @@ exports._bind = bind;
 exports._takeScreenshot = takeScreenshot;
 exports._getEdges = getEdges;
 exports._getNodes = getNodes;
+exports._proxySetSettings = proxySetSettings;

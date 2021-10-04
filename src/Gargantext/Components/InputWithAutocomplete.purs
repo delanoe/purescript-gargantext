@@ -10,49 +10,55 @@ import Effect (Effect)
 import Effect.Timer (setTimeout)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 import Gargantext.Utils.Reactix as R2
 
-thisModule :: String
-thisModule = "Gargantext.Components.InputWithAutocomplete"
+here :: R2.Here
+here = R2.here "Gargantext.Components.InputWithAutocomplete"
 
 
 type Completions = Array String
 
 type Props =
   (
-    autocompleteSearch :: String -> Completions
+    autocompleteSearch  :: String -> Completions
+  , classes             :: String
   , onAutocompleteClick :: String -> Effect Unit
-  , onEnterPress :: String -> Effect Unit
-  , state :: R.State String
+  , onEnterPress        :: String -> Effect Unit
+  , state               :: T.Box String
   )
 
 inputWithAutocomplete :: R2.Component Props
 inputWithAutocomplete = R.createElement inputWithAutocompleteCpt
 
 inputWithAutocompleteCpt :: R.Component Props
-inputWithAutocompleteCpt = R.hooksComponentWithModule thisModule "inputWithAutocomplete" cpt
+inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
   where
     cpt props@{ autocompleteSearch
+              , classes
               , onAutocompleteClick
               , onEnterPress
-              , state: state@(state' /\ setState) } _ = do
+              , state } _ = do
+      state' <- T.useLive T.unequal state
       inputRef <- R.useRef null
-      completionsS <- R.useState' $ autocompleteSearch state'
+      completions <- T.useBox $ autocompleteSearch state'
+
+      let onFocus completions e = T.write_ (autocompleteSearch state') completions
 
       pure $
-        H.span { className: "input-with-autocomplete" }
+        H.span { className: "input-with-autocomplete " <> classes }
         [
-          completions { completionsS, onAutocompleteClick, state } []
+          completionsCpt { completions, onAutocompleteClick, state } []
         , H.input { type: "text"
                   , ref: inputRef
                   , className: "form-control"
                   , value: state'
-                  , on: { blur: onBlur completionsS
-                        , focus: onFocus completionsS
-                        , input: onInput completionsS
-                        , change: onInput completionsS
-                        , keyUp: onInputKeyUp inputRef completionsS } }
+                  , on: { blur: onBlur completions
+                        , focus: onFocus completions
+                        , input: onInput completions
+                        , change: onInput completions
+                        , keyUp: onInputKeyUp inputRef } }
         ]
 
       where
@@ -63,22 +69,20 @@ inputWithAutocompleteCpt = R.hooksComponentWithModule thisModule "inputWithAutoc
         -- handles automatic autocomplete search, otherwise I'd have to hide it
         -- in various different places (i.e. carefully handle all possible
         -- events where blur happens and autocomplete should hide).
-        onBlur (_ /\ setCompletions) e = setTimeout 100 $ do
-          setCompletions $ const []
+        onBlur completions e = setTimeout 100 $ do
+          T.write_ [] completions
 
-        onFocus (_ /\ setCompletions) e = setCompletions $ const $ autocompleteSearch state'
-
-        onInput (_ /\ setCompletions) e = do
+        onInput completions e = do
           let val = R.unsafeEventValue e
-          setState $ const val
-          setCompletions $ const $ autocompleteSearch val
+          T.write_ val state
+          T.write_ (autocompleteSearch val) completions
 
-        onInputKeyUp :: R.Ref (Nullable DOM.Element) -> R.State Completions -> DE.KeyboardEvent -> Effect Unit
-        onInputKeyUp inputRef (_ /\ setCompletions) e = do
+        onInputKeyUp :: R.Ref (Nullable DOM.Element) -> DE.KeyboardEvent -> Effect Unit
+        onInputKeyUp inputRef e = do
           if DE.key e == "Enter" then do
             let val = R.unsafeEventValue e
             let mInput = toMaybe $ R.readRef inputRef
-            setState $ const val
+            T.write_ val state
             onEnterPress val
             case mInput of
               Nothing -> pure unit
@@ -86,32 +90,32 @@ inputWithAutocompleteCpt = R.hooksComponentWithModule thisModule "inputWithAutoc
           else
             pure $ unit
 
-type CompletionsProps = (
-    completionsS :: R.State Completions
+type CompletionsProps =
+  ( completions :: T.Box Completions
   , onAutocompleteClick :: String -> Effect Unit
-  , state :: R.State String
-)
+  , state :: T.Box String
+  )
 
-completions :: R2.Component CompletionsProps
-completions = R.createElement completionsCpt
+completionsCpt :: R2.Component CompletionsProps
+completionsCpt = R.createElement completionsCptCpt
 
-completionsCpt :: R.Component CompletionsProps
-completionsCpt = R.hooksComponentWithModule thisModule "completions" cpt
+completionsCptCpt :: R.Component CompletionsProps
+completionsCptCpt = here.component "completionsCpt" cpt
   where
-    cpt { completionsS: cmpls /\ setCompletions
-        , onAutocompleteClick
-        , state: _ /\ setState } _ =
-      pure $ H.div { className }
-                   [
-                     H.div { className: "list-group" } (cCpt <$> cmpls)
-                   ]
-      where
-        className = "completions " <> (if cmpls == [] then "d-none" else "")
+    cpt { completions, onAutocompleteClick, state } _ = do
+      completions' <- T.useLive T.unequal completions
 
+      let className = "completions " <> (if completions' == [] then "d-none" else "")
+
+      pure $ H.div { className }
+        [
+          H.div { className: "list-group" } (cCpt <$> completions')
+        ]
+      where
         cCpt c =
           H.button { type: "button"
                     , className: "list-group-item"
                     , on: { click: onClick c } } [ H.text c ]
         onClick c _ = do
-          setState $ const c
+          T.write_ c state
           onAutocompleteClick c

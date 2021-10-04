@@ -1,13 +1,18 @@
 module Gargantext.Components.Nodes.Annuaire.User.Contacts.Types where
 
-import Prelude (bind, pure, ($))
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, (.:), (.:!), (.:?), (:=), (~>), jsonEmptyObject)
 import Data.Array as A
-import Data.Lens
+import Data.Generic.Rep (class Generic)
+import Data.Eq.Generic (genericEq)
+import Data.Lens (Lens', lens)
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.String as S
-import Gargantext.Utils.DecodeMaybe ((.?|))
 import Data.Newtype (class Newtype)
+import Data.String as S
+import Data.Symbol (SProxy(..))
+import Record as Record
+import Simple.JSON as JSON
+
+import Gargantext.Prelude (class Eq, bind, pure, ($))
+
 
 -- TODO: should it be a NodePoly HyperdataContact ?
 newtype NodeContact =
@@ -20,29 +25,14 @@ newtype NodeContact =
   , typename  :: Maybe Int
   , userId    :: Maybe Int
   }
-
-instance decodeNodeContact :: DecodeJson NodeContact where
-  decodeJson json = do
-    obj       <- decodeJson json
-    date      <- obj .?| "date"
-    hyperdata <- obj .: "hyperdata"
-    id        <- obj .: "id"
-    name      <- obj .:! "name"
-    parentId  <- obj .?| "parentId"
-    typename  <- obj .?| "typename"
-    userId    <- obj .:! "userId"
-
-    pure $ NodeContact { id
-                   , date
-                   , hyperdata
-                   , name
-                   , parentId
-                   , typename
-                   , userId
-                   }
-
-derive instance newtypeNodeContact :: Newtype NodeContact _
-
+derive instance Generic NodeContact _
+derive instance Newtype NodeContact _
+instance Eq NodeContact where eq = genericEq
+instance JSON.ReadForeign NodeContact where
+  readImpl f = do
+    inst <- JSON.readImpl f
+    pure $ NodeContact $ Record.rename parent_idP parentIdP $ Record.rename user_idP userIdP inst
+      
 ----------------------------------------------------------------------------
 
 newtype Contact' =
@@ -55,27 +45,13 @@ newtype Contact' =
   , typename :: Maybe Int
   , userId :: Maybe Int
   }
-
-
-instance decodeContact' :: DecodeJson Contact' where
-  decodeJson json = do
-    obj       <- decodeJson json
-    date      <- obj .?| "date"
-    hyperdata <- obj .: "hyperdata"
-    id        <- obj .: "id"
-    name      <- obj .:! "name"
-    parentId  <- obj .?| "parentId"
-    typename  <- obj .?| "typename"
-    userId    <- obj .:! "userId"
-
-    pure $ Contact' { id
-                   , date
-                   , hyperdata
-                   , name
-                   , parentId
-                   , typename
-                   , userId
-                   }
+derive instance Generic Contact' _
+derive instance Newtype Contact' _
+instance Eq Contact' where eq = genericEq
+instance JSON.ReadForeign Contact' where
+  readImpl f = do
+    inst <- JSON.readImpl f
+    pure $ Contact' $ Record.rename parent_idP parentIdP $ Record.rename user_idP userIdP inst
 
 
 -- | TODO rename Contact with User
@@ -90,27 +66,13 @@ newtype Contact =
   , typename :: Maybe Int
   , userId :: Maybe Int
   }
-
-
-instance decodeContact :: DecodeJson Contact where
-  decodeJson json = do
-    obj       <- decodeJson json
-    date      <- obj .?| "date"
-    hyperdata <- obj .: "hyperdata"
-    id        <- obj .: "id"
-    name      <- obj .:! "name"
-    parentId  <- obj .?| "parentId"
-    typename  <- obj .?| "typename"
-    userId    <- obj .:! "userId"
-
-    pure $ Contact { id
-                   , date
-                   , hyperdata
-                   , name
-                   , parentId
-                   , typename
-                   , userId
-                   }
+derive instance Generic Contact _
+derive instance Newtype Contact _
+instance Eq Contact where eq = genericEq
+instance JSON.ReadForeign Contact where
+  readImpl f = do
+    inst <- JSON.readImpl f
+    pure $ Contact $ Record.rename parent_idP parentIdP $ Record.rename user_idP userIdP inst
 
 ----------------------------------------------------------------------------
 newtype User =
@@ -124,27 +86,12 @@ newtype User =
   , userId :: Maybe Int
   }
 
-
-instance decodeUser :: DecodeJson User where
-  decodeJson json = do
-    obj       <- decodeJson json
-    date      <- obj .?| "date"
-    hyperdata <- obj .: "hyperdata"
-    id        <- obj .: "id"
-    name      <- obj .:! "name"
-    parentId  <- obj .?| "parentId"
-    typename  <- obj .?| "typename"
-    userId    <- obj .:! "userId"
-
-    pure $ User { id
-                , date
-                , hyperdata
-                , name
-                , parentId
-                , typename
-                , userId
-                }
-
+derive instance Generic User _
+derive instance Newtype User _
+instance JSON.ReadForeign User where
+  readImpl f = do
+    inst <- JSON.readImpl f
+    pure $ User $ Record.rename parent_idP parentIdP $ Record.rename user_idP userIdP inst
 
 newtype ContactWho =
   ContactWho
@@ -155,32 +102,16 @@ newtype ContactWho =
   , freetags  :: (Array String)
   }
 
-derive instance newtypeContactWho :: Newtype ContactWho _
+derive instance Newtype ContactWho _
+derive instance Generic ContactWho _
+instance Eq ContactWho where eq = genericEq
+instance JSON.ReadForeign ContactWho where
+  readImpl f = do
+    inst <- JSON.readImpl f
 
-instance decodeContactWho :: DecodeJson ContactWho
-  where
-    decodeJson json = do
-      obj <- decodeJson json
-      idWho     <- obj .:? "id"
-      firstName <- obj .:? "firstName"
-      lastName  <- obj .:? "lastName"
-      keywords  <- obj .:! "keywords"
-      freetags  <- obj .:! "freetags"
-
-      let k = fromMaybe [] keywords
-      let f = fromMaybe [] freetags
-
-      pure $ ContactWho {idWho, firstName, lastName, keywords:k, freetags:f}
-
-instance encodeContactWho :: EncodeJson ContactWho
-  where
-    encodeJson (ContactWho cw) =
-         "id"        := cw.idWho
-      ~> "firstName" := cw.firstName
-      ~> "lastName"  := cw.lastName
-      ~> "keywords"  := cw.keywords
-      ~> "freetags"  := cw.freetags
-      ~> jsonEmptyObject
+    pure $ ContactWho $ inst { keywords = fromMaybe [] inst.keywords
+                             , freetags = fromMaybe [] inst.freetags }
+derive newtype instance JSON.WriteForeign ContactWho
 
 defaultContactWho :: ContactWho
 defaultContactWho =
@@ -208,40 +139,15 @@ newtype ContactWhere =
   , entry        :: Maybe String
   , exit         :: Maybe String }
 
-derive instance newtypeContactWhere :: Newtype ContactWhere _
-
-instance decodeContactWhere :: DecodeJson ContactWhere
-  where
-    decodeJson json = do
-      obj <- decodeJson json
-      organization  <- obj .:! "organization"
-      labTeamDepts  <- obj .:! "labTeamDepts"
-      role          <- obj .:? "role"
-      office        <- obj .:? "office"
-      country       <- obj .:? "country"
-      city          <- obj .:? "city"
-      touch         <- obj .:? "touch"
-      entry         <- obj .:? "entry"
-      exit          <- obj .:? "exit"
-
-      let o = fromMaybe [] organization
-      let l = fromMaybe [] labTeamDepts
-
-      pure $ ContactWhere {organization:o, labTeamDepts:l, role, office, country, city, touch, entry, exit}
-
-instance encodeContactWhere :: EncodeJson ContactWhere
-  where
-    encodeJson (ContactWhere cw) =
-         "city"         := cw.city
-      ~> "country"      := cw.country
-      ~> "entry"        := cw.entry
-      ~> "exit"         := cw.exit
-      ~> "labTeamDepts" := cw.labTeamDepts
-      ~> "office"       := cw.office
-      ~> "organization" := cw.organization
-      ~> "role"         := cw.role
-      ~> "touch"        := cw.touch
-      ~> jsonEmptyObject
+derive instance Newtype ContactWhere _
+derive instance Generic ContactWhere _
+instance Eq ContactWhere where eq = genericEq
+instance JSON.ReadForeign ContactWhere where
+  readImpl f = do
+    inst <- JSON.readImpl f
+    pure $ ContactWhere $ inst { organization = fromMaybe [] inst.organization
+                               , labTeamDepts = fromMaybe [] inst.labTeamDepts }
+derive newtype instance JSON.WriteForeign ContactWhere
 
 defaultContactWhere :: ContactWhere
 defaultContactWhere =
@@ -263,24 +169,11 @@ newtype ContactTouch =
   , phone :: Maybe String
   , url   :: Maybe String }
 
-derive instance newtypeContactTouch :: Newtype ContactTouch _
-
-instance decodeContactTouch :: DecodeJson ContactTouch
-  where
-    decodeJson json = do
-      obj <- decodeJson json
-      mail  <- obj .:? "mail"
-      phone <- obj .:? "phone"
-      url   <- obj .:? "url"
-      pure $ ContactTouch {mail, phone, url}
-
-instance encodeContactTouch :: EncodeJson ContactTouch
-  where
-    encodeJson (ContactTouch ct) =
-         "mail"  := ct.mail
-      ~> "phone" := ct.phone
-      ~> "url"   := ct.url
-      ~> jsonEmptyObject
+derive instance Newtype ContactTouch _
+derive instance Generic ContactTouch _
+instance Eq ContactTouch where eq = genericEq
+derive newtype instance JSON.ReadForeign ContactTouch
+derive newtype instance JSON.WriteForeign ContactTouch
 
 defaultContactTouch :: ContactTouch
 defaultContactTouch =
@@ -291,47 +184,44 @@ defaultContactTouch =
   }
 
 
+type HyperdataContactT =
+  ( bdd            :: Maybe String
+  , lastValidation :: Maybe String
+  , source         :: Maybe String
+  , title          :: Maybe String
+  , uniqId         :: Maybe String
+  , uniqIdBdd      :: Maybe String
+  , who            :: Maybe ContactWho
+  )
 newtype HyperdataContact =
-     HyperdataContact { bdd            :: Maybe String
-                      , lastValidation :: Maybe String
-                      , ou             :: (Array ContactWhere)
-                      , source         :: Maybe String
-                      , title          :: Maybe String
-                      , uniqId         :: Maybe String
-                      , uniqIdBdd      :: Maybe String
-                      , who            :: Maybe ContactWho
-                      }
-derive instance newtypeHyperdataContact :: Newtype HyperdataContact _
+  HyperdataContact { ou             :: Array ContactWhere
+                   | HyperdataContactT
+                   }
+derive instance Newtype HyperdataContact _
+derive instance Generic HyperdataContact _
+instance Eq HyperdataContact where eq = genericEq
+instance JSON.ReadForeign HyperdataContact where
+  readImpl f = do
+    inst :: { where :: Maybe (Array ContactWhere) | HyperdataContactT } <- JSON.readImpl f
 
-instance decodeHyperdataContact :: DecodeJson HyperdataContact
+    pure $ HyperdataContact { bdd: inst.bdd
+                            , lastValidation: inst.lastValidation
+                            , ou: fromMaybe [] inst.where
+                            , source: inst.source
+                            , title: inst.title
+                            , uniqId: inst.uniqId
+                            , uniqIdBdd: inst.uniqIdBdd
+                            , who: inst.who }
+instance JSON.WriteForeign HyperdataContact
   where
-    decodeJson json = do
-      obj <- decodeJson json
-      bdd            <- obj .:? "bdd"
-      lastValidation <- obj .:? "lastValidation"
-      ou             <- obj .:! "where"
-      source         <- obj .:? "source"
-      title          <- obj .:? "title"
-      uniqId         <- obj .:? "uniqId"
-      uniqIdBdd      <- obj .:? "uniqIdBdd"
-      who            <- obj .:! "who"
-      
-      let ou' = fromMaybe [] ou
-
-      pure $ HyperdataContact {bdd, who, ou:ou', title, source, lastValidation, uniqId, uniqIdBdd}
-
-instance encodeHyperdataContact :: EncodeJson HyperdataContact
-  where
-    encodeJson (HyperdataContact {bdd, lastValidation, ou, source, title, uniqId, uniqIdBdd, who}) =
-         "bdd" := bdd
-      ~> "lastValidation" := lastValidation
-      ~> "where" := ou
-      ~> "source" := source
-      ~> "title" := title
-      ~> "uniqId" := uniqId
-      ~> "uniqIdBdd" := uniqIdBdd
-      ~> "who" := who
-      ~> jsonEmptyObject
+    writeImpl (HyperdataContact hc) = JSON.writeImpl { bdd: hc.bdd
+                                                     , lastValidation: hc.lastValidation
+                                                     , where: hc.ou
+                                                     , source: hc.source
+                                                     , title: hc.title
+                                                     , uniqId: hc.uniqId
+                                                     , uniqIdBdd: hc.uniqIdBdd
+                                                     , who: hc.who }
 
 defaultHyperdataContact :: HyperdataContact
 defaultHyperdataContact =
@@ -349,20 +239,11 @@ newtype HyperdataUser =
   HyperdataUser {
     shared :: Maybe HyperdataContact
   }
-derive instance newtypeHyperdataUser :: Newtype HyperdataUser _
-
-instance decodeHyperdataUser :: DecodeJson HyperdataUser
-  where
-    decodeJson json = do
-      obj    <- decodeJson json
-      shared <- obj .:? "shared"
-      pure $ HyperdataUser { shared }
-
-instance encodeHyperdataUser :: EncodeJson HyperdataUser
-  where
-    encodeJson (HyperdataUser {shared}) =
-         "shared" := shared
-      ~> jsonEmptyObject
+derive instance Newtype HyperdataUser _
+derive instance Generic HyperdataUser _
+instance Eq HyperdataUser where eq = genericEq
+derive newtype instance JSON.ReadForeign HyperdataUser
+derive newtype instance JSON.WriteForeign HyperdataUser
 
 defaultHyperdataUser :: HyperdataUser
 defaultHyperdataUser =
@@ -378,7 +259,7 @@ defaultHyperdataUser =
 --   , specific :: Map String String
 --   }
 
--- instance decodeUserHyperData :: (DecodeJson c, DecodeJson s) =>
+-- instance (DecodeJson c, DecodeJson s) =>
 --                                 DecodeJson (HyperData c s) where
 --   decodeJson json = do
 --     common <- decodeJson json
@@ -466,3 +347,8 @@ _phone = lens getter setter
   where
     getter (ContactTouch {phone}) = fromMaybe "" phone
     setter (ContactTouch ct) val = ContactTouch $ ct { phone = Just val }
+    
+user_idP = SProxy :: SProxy "user_id"
+userIdP = SProxy :: SProxy "userId"
+parent_idP = SProxy :: SProxy "parent_id"
+parentIdP = SProxy :: SProxy "parentId"

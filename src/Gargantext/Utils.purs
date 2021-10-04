@@ -1,19 +1,23 @@
 module Gargantext.Utils where
 
-import DOM.Simple.Window (window)
+import Data.Char (fromCharCode)
 import Data.Either (Either(..))
 import Data.Foldable (class Foldable, foldr)
 import Data.Lens (Lens', lens)
+import Data.Maybe (fromJust)
 import Data.Newtype (class Newtype, unwrap, wrap)
+import Data.Sequence.Ordered as OSeq
 import Data.Set (Set)
 import Data.Set as Set
-import Data.Sequence.Ordered as OSeq
 import Data.String as S
+import Data.String.CodeUnits (singleton)
 import Data.Unfoldable (class Unfoldable)
 import Effect (Effect)
-import FFI.Simple ((..))
-import FFI.Simple.Functions (delay)
 import Prelude
+import Partial.Unsafe (unsafePartial)
+import Web.HTML as WHTML
+import Web.HTML.Location as WHL
+import Web.HTML.Window (location)
 
 -- | TODO (hard coded)
 csrfMiddlewareToken :: String
@@ -57,12 +61,6 @@ invertOrdering EQ = EQ
 _unit :: forall s. Lens' s Unit
 _unit = lens (\_ -> unit) (\s _ -> s)
 
-glyphicon :: String -> String
-glyphicon t = "btn glyphitem fa fa-" <> t
-
-glyphiconActive :: String -> Boolean -> String
-glyphiconActive icon b = glyphicon icon <> if b then " active" else ""
-
 -- | Format a number with specified amount of zero-padding
 zeroPad :: Int -> Int -> String
 zeroPad pad num = zeros <> (show num)
@@ -82,16 +80,12 @@ mapLeft :: forall l m r. (l -> m) -> Either l r -> Either m r
 mapLeft f (Left  l) = Left (f l)
 mapLeft _ (Right r) = Right r
 
--- | Get current Window Location
-location :: Effect String
-location = delay unit $ \_ -> pure $ window .. "location"
-
 data On a b = On a b
 
-instance eqOn :: Eq a => Eq (On a b) where
+instance Eq a => Eq (On a b) where
   eq (On x _) (On y _) = eq x y
 
-instance ordOn :: Ord a => Ord (On a b) where
+instance Ord a => Ord (On a b) where
   compare (On x _) (On y _) = compare x y
 
 -- same as
@@ -102,3 +96,24 @@ sortWith :: forall a b f. Functor f =>
                           Ord b =>
                           (a -> b) -> f a -> f a
 sortWith f = map (\(On _ y) -> y) <<< OSeq.toUnfoldable <<< foldr (\x -> OSeq.insert (On (f x) x)) OSeq.empty
+
+
+href :: Effect String
+href = do
+  w <- WHTML.window
+  loc <- location w
+  WHL.href loc
+
+
+nbsp :: Int -> String
+nbsp = nbsp' ""
+  where
+    char = singleton $ unsafePartial $ fromJust $ fromCharCode 160
+    nbsp' acc n
+      | n <= 0 = acc
+      | otherwise = nbsp' (acc <> char) (n - 1)
+
+ifElse :: forall a. Boolean -> a -> a -> a
+ifElse predicate a b = if predicate then a else b
+
+infixl 1 ifElse as ?

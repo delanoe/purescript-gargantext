@@ -1,91 +1,102 @@
 module Gargantext.AsyncTasks where
 
-import Data.Argonaut (decodeJson)
-import Data.Argonaut.Parser (jsonParser)
+import Gargantext.Prelude
+
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
-import Data.Tuple (snd)
 import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Reactix as R
+import Simple.JSON as JSON
+import Toestand as T
 import Web.Storage.Storage as WSS
 
-import Gargantext.Prelude
 import Gargantext.Types as GT
 import Gargantext.Utils as GU
+import Gargantext.Utils.JSON as GUJ
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
-
+import Gargantext.Utils.Toestand as T2
 
 localStorageKey :: String
 localStorageKey = "garg-async-tasks"
 
 
-type Storage = Map.Map GT.NodeID (Array GT.AsyncTaskWithType)
+type TaskList = Array GT.AsyncTaskWithType
+newtype Storage = Storage (Map.Map GT.NodeID TaskList)
+
+instance JSON.ReadForeign Storage where
+  readImpl f = do
+    m <- GUJ.readMapInt f
+    pure $ Storage m
 
 empty :: Storage
-empty = Map.empty
+empty = Storage $ Map.empty
 
 getAsyncTasks :: Effect Storage
 getAsyncTasks = R2.getls >>= WSS.getItem localStorageKey >>= handleMaybe
   where
-    handleMaybe (Just val) = handleEither (parse val >>= decode)
+    handleMaybe (Just val) = handleEither (parse val)
     handleMaybe Nothing    = pure empty
 
     -- either parsing or decoding could fail, hence two errors
     handleEither (Left err) = err *> pure empty
     handleEither (Right ss) = pure ss
 
-    parse  s = GU.mapLeft (log2 "Error parsing serialised sessions:") (jsonParser s)
-    decode j = GU.mapLeft (log2 "Error decoding serialised sessions:") (decodeJson j)
+    parse  s = GU.mapLeft (log2 "Error parsing serialised sessions:") (JSON.readJSON s)
 
-getTasks :: Record ReductorProps -> GT.NodeID -> Array GT.AsyncTaskWithType
-getTasks { storage } nodeId = fromMaybe [] $ Map.lookup nodeId storage
+getTasks :: GT.NodeID -> Storage -> TaskList
+getTasks nodeId (Storage storage) = fromMaybe [] $ Map.lookup nodeId storage
 
-removeTaskFromList :: Array GT.AsyncTaskWithType -> GT.AsyncTaskWithType -> Array GT.AsyncTaskWithType
+setTasks :: GT.NodeID -> TaskList -> Storage -> Storage
+setTasks id tasks (Storage s) = Storage $ Map.insert id tasks s
+
+focus :: GT.NodeID -> T.Box Storage -> R.Hooks (T.Box TaskList)
+focus id tasks = T.useFocused (getTasks id) (setTasks id) tasks
+
+removeTaskFromList :: TaskList -> GT.AsyncTaskWithType -> TaskList
 removeTaskFromList ts (GT.AsyncTaskWithType { task: GT.AsyncTask { id: id' } }) =
   A.filter (\(GT.AsyncTaskWithType { task: GT.AsyncTask { id: id'' } }) -> id' /= id'') ts
 
 type ReductorProps = (
-    appReload  :: GUR.ReloadS
-  , treeReload :: GUR.ReloadS
-  , storage    :: Storage
+    reloadForest :: T2.ReloadS
+  , reloadRoot   :: T2.ReloadS
+  , storage      :: Storage
   )
 
-type Reductor = R2.Reductor (Record ReductorProps) Action
-type ReductorAction = Action -> Effect Unit
-
-useTasks :: GUR.ReloadS -> GUR.ReloadS -> R.Hooks Reductor
-useTasks appReload treeReload = R2.useReductor act initializer unit
+insert :: GT.NodeID -> GT.AsyncTaskWithType -> T.Box Storage -> Effect Unit
+insert id task storage = T.modify_ newStorage storage
   where
-    act :: R2.Actor (Record ReductorProps) Action
-    act a s = action s a
-    initializer _ = do
-      storage <- getAsyncTasks
-      pure { appReload, treeReload, storage }
+    newStorage (Storage s) = Storage $ Map.alter (maybe (Just [task]) (\ts -> Just $ A.cons task ts)) id s
 
-data Action =
-    Insert GT.NodeID GT.AsyncTaskWithType
-  | Finish GT.NodeID GT.AsyncTaskWithType
-  | Remove GT.NodeID GT.AsyncTaskWithType
+finish :: GT.NodeID -> GT.AsyncTaskWithType -> T.Box Storage -> Effect Unit
+finish id task storage = remove id task storage
 
-action :: Record ReductorProps -> Action -> Effect (Record ReductorProps)
-action p@{ treeReload, storage } (Insert nodeId t) = do
-  _ <- GUR.bump treeReload
-  let newStorage = Map.alter (maybe (Just [t]) (\ts -> Just $ A.cons t ts)) nodeId storage
-  pure $ p { storage = newStorage }
-action p (Finish nodeId t) = do
-  action p (Remove nodeId t)
-action p@{ appReload, treeReload, storage } (Remove nodeId t@(GT.AsyncTaskWithType { typ })) = do
-  _ <- if GT.asyncTaskTriggersAppReload typ then
-    GUR.bump appReload
-  else
-    pure unit
-  _ <- if GT.asyncTaskTriggersTreeReload typ then
-    GUR.bump treeReload
-  else
-    pure unit
-  let newStorage = Map.alter (maybe Nothing $ (\ts -> Just $ removeTaskFromList ts t)) nodeId storage
-  pure $ p { storage = newStorage }
+remove :: GT.NodeID -> GT.AsyncTaskWithType -> T.Box Storage -> Effect Unit
+remove id task storage = T.modify_ newStorage storage
+  where
+    newStorage (Storage s) = Storage $ Map.alter (maybe Nothing $ (\ts -> Just $ removeTaskFromList ts task)) id s
+
+
+-- When a task is finished: which tasks cause forest or app reload
+asyncTaskTriggersAppReload :: GT.AsyncTaskType -> Boolean
+asyncTaskTriggersAppReload _                     = false
+
+asyncTaskTTriggersAppReload :: GT.AsyncTaskWithType -> Boolean
+asyncTaskTTriggersAppReload (GT.AsyncTaskWithType { typ }) = asyncTaskTriggersAppReload typ
+
+asyncTaskTriggersMainPageReload :: GT.AsyncTaskType -> Boolean
+asyncTaskTriggersMainPageReload GT.UpdateNgramsCharts = true
+asyncTaskTriggersMainPageReload _                     = false
+
+asyncTaskTTriggersMainPageReload :: GT.AsyncTaskWithType -> Boolean
+asyncTaskTTriggersMainPageReload (GT.AsyncTaskWithType { typ }) = asyncTaskTriggersMainPageReload typ
+
+asyncTaskTriggersTreeReload :: GT.AsyncTaskType -> Boolean
+asyncTaskTriggersTreeReload GT.CorpusFormUpload = true
+asyncTaskTriggersTreeReload GT.UploadFile       = true
+asyncTaskTriggersTreeReload _                   = false
+
+asyncTaskTTriggersTreeReload :: GT.AsyncTaskWithType -> Boolean
+asyncTaskTTriggersTreeReload (GT.AsyncTaskWithType { typ }) = asyncTaskTriggersTreeReload typ

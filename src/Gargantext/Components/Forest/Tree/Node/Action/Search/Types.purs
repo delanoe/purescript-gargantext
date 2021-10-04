@@ -1,23 +1,30 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Search.Types where
 
-import Data.Argonaut (class EncodeJson, encodeJson, jsonEmptyObject, (:=), (~>))
 import Data.Array (concat)
+import Data.Either (Either)
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (class Newtype)
 import Data.Set (Set)
 import Data.Set as Set
+import Data.String as String
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Gargantext.Components.Lang
-import Gargantext.Ends (class ToUrl, backendUrl)
-import Gargantext.Prelude (id, class Eq, class Ord, class Show, bind, map, pure, show, ($), (<>), class Read)
-import Gargantext.Routes as GR
-import Gargantext.Sessions (Session(..), post)
-import Gargantext.Types as GT
+import Simple.JSON as JSON
 import URI.Extra.QueryPairs as QP
 import URI.Query as Q
 
+
+import Gargantext.Prelude
+
+import Gargantext.Components.Lang (Lang)
+import Gargantext.Components.ListSelection.Types as ListSelection
+import Gargantext.Config.REST (RESTError)
+import Gargantext.Ends (class ToUrl, backendUrl)
+import Gargantext.Routes as GR
+import Gargantext.Sessions (Session(..), post)
+import Gargantext.Types as GT
 
 type Search = { databases :: Database
               , datafield :: Maybe DataField
@@ -56,44 +63,38 @@ data DataField = Gargantext
                | Web
                | Files
 
-
-instance showDataField :: Show DataField where
+derive instance Generic DataField _
+instance Show DataField where
   show Gargantext   = "Gargantext"
   show (External _) = "Databases (APIs)" -- <> show x
   show Web          = "Soon: web"
   show Files        = "Files"
-
-instance docDataField :: Doc DataField where
+instance Doc DataField where
   doc Gargantext   = "All Gargantext Database"
   doc (External _) = "External (scientific) databases"
   doc Web          = "All the web crawled with meta-search-engine SearX"
   doc Files        = "Zip files with formats.."
-
-derive instance eqDataField :: Eq DataField
-
-instance encodeJsonDataField :: EncodeJson DataField where
-  encodeJson Gargantext           = encodeJson "Internal PubMed" -- later Internal Maybe Database
-  encodeJson (External (Just db)) = encodeJson $ "External " <> show db
-  encodeJson a                    = encodeJson (show a)
+derive instance Eq DataField
+instance JSON.WriteForeign DataField where
+  writeImpl (External (Just db)) = JSON.writeImpl $ "External " <> show db
+  writeImpl Web = JSON.writeImpl $ "Web"
+  writeImpl f = JSON.writeImpl $ show f
 
 ----------------------------------------
-instance showDataOriginApi :: Show DataOriginApi where
-  show (InternalOrigin io) = "InternalOrigin " <> show io.api
-  show (ExternalOrigin io) = "ExternalOrigin " <> show io.api
-
-derive instance eqDataOriginApi :: Eq DataOriginApi
- 
 data DataOriginApi = InternalOrigin { api :: Database }
                    | ExternalOrigin { api :: Database }
-
-
-instance encodeJsonDataOriginApi :: EncodeJson DataOriginApi where
-  encodeJson (InternalOrigin dta) = "api" := dta.api ~> jsonEmptyObject
-  encodeJson (ExternalOrigin dta) = "api" := dta.api ~> jsonEmptyObject
+derive instance Generic DataOriginApi _
+instance Show DataOriginApi where
+  show (InternalOrigin io) = "InternalOrigin " <> show io.api
+  show (ExternalOrigin io) = "ExternalOrigin " <> show io.api
+derive instance Eq DataOriginApi
+instance JSON.WriteForeign DataOriginApi where
+  writeImpl (InternalOrigin { api }) = JSON.writeImpl { api }
+  writeImpl (ExternalOrigin { api }) = JSON.writeImpl { api }
 
 datafield2dataOriginApi :: DataField -> DataOriginApi
 datafield2dataOriginApi (External (Just a)) = ExternalOrigin { api : a }
-datafield2dataOriginApi _                   = InternalOrigin { api : IsTex } -- TOD fixme 
+datafield2dataOriginApi _                   = InternalOrigin { api : IsTex } -- TODO fixme 
 
 ------------------------------------------------------------------------
 -- | Database search specifications
@@ -123,8 +124,8 @@ data Database = All_Databases
               | Isidore
 --              | News
 --              | SocialNetworks
-
-instance showDatabase :: Show Database where
+derive instance Generic Database _
+instance Show Database where
   show All_Databases= "All Databases"
   show PubMed = "PubMed"
   show (HAL _)= "HAL"
@@ -135,7 +136,7 @@ instance showDatabase :: Show Database where
 --  show News   = "News"
 --  show SocialNetworks = "Social Networks"
 
-instance docDatabase :: Doc Database where
+instance Doc Database where
   doc All_Databases = "All databases"
   doc PubMed      = "All Medical publications"
   doc (HAL _)     = "All open science (archives ouvertes)"
@@ -146,7 +147,7 @@ instance docDatabase :: Doc Database where
 --  doc News        = "Web filtered by News"
 --  doc SocialNetworks = "Web filtered by MicroBlogs"
 
-instance readDatabase :: Read Database where
+instance Read Database where
   read :: String -> Maybe Database
   read "All Databases" = Just All_Databases
   read "PubMed" = Just PubMed
@@ -159,10 +160,8 @@ instance readDatabase :: Read Database where
   -- read "Social Networks" = Just SocialNetworks
   read _        = Nothing
 
-derive instance eqDatabase :: Eq Database
-
-instance encodeJsonDatabase :: EncodeJson Database where
-  encodeJson a = encodeJson (show a)
+derive instance Eq Database
+instance JSON.WriteForeign Database where writeImpl = JSON.writeImpl <<< show
 
 ------------------------------------------------------------------------
 -- | Organization specifications
@@ -179,24 +178,21 @@ data Org = All_Orgs
          | IMT    (Set IMT_org)
 
 type StructId = Int
-
-instance showOrg :: Show Org where
+derive instance Generic Org _
+instance Show Org where
   show All_Orgs   = "All_Orgs"
   show (CNRS _)   = "CNRS"
   show (IMT  _)   = "IMT"
   show (Others _) = "Others"
 
-instance readOrg :: Read Org where
+instance Read Org where
   read "All_Orgs" = Just $ All_Orgs
   read "CNRS"     = Just $ CNRS   $ Set.fromFoldable []
   read "IMT"      = Just $ IMT    $ Set.fromFoldable []
   read "Others"   = Just $ Others $ Set.fromFoldable []
   read _          = Nothing
-
-derive instance eqOrg :: Eq Org
-
-instance encodeJsonOrg :: EncodeJson Org where
-  encodeJson a = encodeJson (show a)
+derive instance Eq Org
+instance JSON.WriteForeign Org where writeImpl = JSON.writeImpl <<< show
 
 ------------------------------------------------------------------------
 
@@ -242,10 +238,10 @@ data IMT_org = All_IMT
              | Telecom_ParisTech
              | Telecom_SudParis
 
-derive instance ordIMT_org :: Ord IMT_org
-derive instance eqIMT_org  :: Eq IMT_org
+derive instance Ord IMT_org
+derive instance Eq IMT_org
 
-instance showIMT_org :: Show IMT_org where
+instance Show IMT_org where
   show All_IMT             = "All_IMT"
   show ARMINES             = "ARMINES"
   show Eurecom             = "Eurecom"
@@ -265,7 +261,7 @@ instance showIMT_org :: Show IMT_org where
   show Telecom_ParisTech   = "Telecom_ParisTech"
   show Telecom_SudParis    = "Telecom_SudParis"
 
-instance readIMT_org :: Read IMT_org where
+instance Read IMT_org where
   read "All_IMT"             = Just All_IMT
   read "ARMINES"             = Just ARMINES
   read "Eurecom"             = Just Eurecom
@@ -315,7 +311,7 @@ data SearchOrder
   | ScoreAsc
   | ScoreDesc
 
-instance showSearchOrder :: Show SearchOrder where
+instance Show SearchOrder where
   show DateAsc = "DateAsc"
   show DateDesc = "DateDesc"
   show TitleAsc = "TitleAsc"
@@ -335,28 +331,14 @@ newtype SearchQuery = SearchQuery
   , node_id   :: Maybe Int
   , offset    :: Maybe Int
   , order     :: Maybe SearchOrder
+  , selection :: ListSelection.Selection
   }
-
-derive instance newtypeSearchQuery :: Newtype SearchQuery _
-
-defaultSearchQuery :: SearchQuery
-defaultSearchQuery = SearchQuery
-  { query: ""
-  , databases: Empty
-  , datafield: Nothing
-  , files_id : []
-  , lang     : Nothing
-  , limit    : Nothing
-  , node_id  : Nothing
-  , offset   : Nothing
-  , order    : Nothing
-  }
-
-instance toUrlSessionSearchQuery :: ToUrl Session SearchQuery where
+derive instance Generic SearchQuery _
+derive instance Newtype SearchQuery _
+instance ToUrl Session SearchQuery where
   toUrl (Session {backend}) q = backendUrl backend q2
     where q2 = "new" <> Q.print (GT.toQuery q)
-  
-instance searchQueryToQuery :: GT.ToQuery SearchQuery where
+instance GT.ToQuery SearchQuery where
   toQuery (SearchQuery {offset, limit, order}) =
     QP.print id id $ QP.QueryPairs
                    $ pair "offset" offset
@@ -365,20 +347,33 @@ instance searchQueryToQuery :: GT.ToQuery SearchQuery where
     where pair :: forall a. Show a => String -> Maybe a -> Array (Tuple QP.Key (Maybe QP.Value))
           pair k = maybe [] $ \v ->
             [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
+instance JSON.WriteForeign SearchQuery where
+  writeImpl (SearchQuery { databases, datafield, lang, node_id, query, selection }) =
+    JSON.writeImpl { query: String.replace (String.Pattern "\"") (String.Replacement "\\\"") query
+                   , databases
+                   , datafield
+                   , lang: maybe "EN" show lang
+                   , node_id: fromMaybe 0 node_id
+                   , flowListWith: selection
+                   }
 
-instance encodeJsonSearchQuery :: EncodeJson SearchQuery where
-  encodeJson (SearchQuery {query, databases, datafield, node_id, lang})
-    =  "query"      := query
-    -- ~> "datafield"  := "" -- fromMaybe "" datafield
-    ~> "databases"  := databases
-    ~> "lang"       := maybe "EN" show lang
-    ~> "node_id"    := fromMaybe 0 node_id
-    -- ~> "files_id"   := files_id
-    ~> jsonEmptyObject
+defaultSearchQuery :: SearchQuery
+defaultSearchQuery = SearchQuery
+  { query     : ""
+  , databases : Empty
+  , datafield : Nothing
+  , files_id  : []
+  , lang      : Nothing
+  , limit     : Nothing
+  , node_id   : Nothing
+  , offset    : Nothing
+  , order     : Nothing
+  , selection : ListSelection.MyListsFirst
+  }
 
-performSearch :: Session -> Int -> SearchQuery -> Aff GT.AsyncTaskWithType
+performSearch :: Session -> Int -> SearchQuery -> Aff (Either RESTError GT.AsyncTaskWithType)
 performSearch session nodeId q = do
-  task <- post session p q
-  pure $ GT.AsyncTaskWithType {task, typ: GT.Query}
+  eTask :: Either RESTError GT.AsyncTask <- post session p q
+  pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.Query }) <$> eTask
   where
     p = GR.NodeAPI GT.Corpus (Just nodeId) $ GT.asyncTaskTypePath GT.Query

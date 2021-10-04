@@ -1,93 +1,94 @@
 -- TODO: this module should be replaced by FacetsTable
 module Gargantext.Components.DocsTable where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>))
+import Gargantext.Prelude
+
+import DOM.Simple.Event as DE
 import Data.Array as A
+import Data.Either (Either)
+import Data.Generic.Rep (class Generic)
 import Data.Lens ((^.))
 import Data.Lens.At (at)
 import Data.Lens.Record (prop)
-import Data.Map (Map)
+import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
+import Data.Newtype (class Newtype)
 import Data.Ord.Down (Down(..))
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as Str
 import Data.Symbol (SProxy(..))
-import Data.Tuple (Tuple(..), fst)
-import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log, log2)
-import DOM.Simple.Event as DE
+import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-------------------------------------------------------------------------
-import Gargantext.Prelude
-import Gargantext.Components.Category (caroussel, rating)
-import Gargantext.Components.Category.Types (Category(..), decodeCategory, Star(..), decodeStar)
-import Gargantext.Components.DocsTable.Types
-import Gargantext.Components.Table.Types as T
+import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.Category (rating)
+import Gargantext.Components.Category.Types (Star(..))
+import Gargantext.Components.DocsTable.Types (DocumentsView(..), Hyperdata(..), LocalUserScore, Query, Response(..), Year, sampleData)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Nodes.Texts.Types (SidePanelTriggers)
 import Gargantext.Components.Score as GCS
-import Gargantext.Components.Table as T
+import Gargantext.Components.Nodes.Texts.Types as TextsT
+import Gargantext.Components.Table as TT
+import Gargantext.Components.Table.Types as TT
+import Gargantext.Config.REST (RESTError)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
-import Gargantext.Routes as Routes
 import Gargantext.Routes (SessionRoute(NodeAPI))
+import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, get, delete)
-import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), TableResult, TabSubType, TabType, showTabType')
+import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), SidePanelState(..), TabSubType, TabType, TableResult, showTabType')
 import Gargantext.Utils (sortWith)
 import Gargantext.Utils.CacheAPI as GUC
-import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParamS, queryParam, queryParamS)
+import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParam, mQueryParamS, queryParam, queryParamS)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reload as GUR
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
+import Toestand as T
 
-thisModule :: String
-thisModule = "Gargantext.Components.DocsTable"
-------------------------------------------------------------------------
+here :: R2.Here
+here = R2.here "Gargantext.Components.DocsTable"
 
 type TotalRecords = Int
 
-type Path a = (
-    corpusId :: Int
-  , listId :: Int
+type Path a =
+  ( corpusId  :: Int
+  , listId    :: Int
   , frontends :: Frontends
-  , session :: Session
-  , tabType :: TabSubType a
+  , session   :: Session
+  , tabType   :: TabSubType a
   )
 
-type LayoutProps = (
-    cacheState      :: R.State NT.CacheState
-  , frontends       :: Frontends
-  , chart           :: R.Element
-  , listId          :: Int
-  , mCorpusId       :: Maybe Int
-  , nodeId          :: Int
-  -- , path         :: Record (Path a)
-  , session         :: Session
-  , showSearch      :: Boolean
-  , sidePanelTriggers :: Record SidePanelTriggers
-  , tabType         :: TabType
+type CommonProps =
+  ( boxes          :: Boxes
+  , cacheState     :: T.Box NT.CacheState
+  , frontends      :: Frontends
+  , listId         :: Int
+  , mCorpusId      :: Maybe Int
+  , nodeId         :: Int
+  , session        :: Session
+  , sidePanel      :: T.Box (Maybe (Record TextsT.SidePanel))
+  , tabType        :: TabType
   -- ^ tabType is not ideal here since it is too much entangled with tabs and
   -- ngramtable. Let's see how this evolves.  )
-  , totalRecords    :: Int
+  , totalRecords   :: Int
+  , yearFilter     :: T.Box (Maybe Year)
   )
 
-type PageLayoutProps = (
-    cacheState        :: R.State NT.CacheState
-  , frontends         :: Frontends
-  , key               :: String  -- NOTE Necessary to clear the component when cache state changes
-  , listId            :: Int
-  , mCorpusId         :: Maybe Int
-  , nodeId            :: Int
-  , params            :: T.Params
-  , query             :: Query
-  , session           :: Session
-  , sidePanelTriggers :: Record SidePanelTriggers
-  , tabType           :: TabType
-  , totalRecords      :: Int
+type LayoutProps =
+  ( chart      :: R.Element
+  , showSearch :: Boolean
+  | CommonProps
+  -- , path      :: Record (Path a)
+  )
+
+type PageLayoutProps =
+  ( key    :: String  -- NOTE Necessary to clear the component when cache state changes
+  , params :: TT.Params
+  , query  :: Query
+  | CommonProps
   )
 
 _documentIdsDeleted  = prop (SProxy :: SProxy "documentIdsDeleted")
@@ -95,27 +96,26 @@ _localCategories     = prop (SProxy :: SProxy "localCategories")
 
 docViewLayout :: Record LayoutProps -> R.Element
 docViewLayout props = R.createElement docViewLayoutCpt props []
-
 docViewLayoutCpt :: R.Component LayoutProps
-docViewLayoutCpt = R.hooksComponentWithModule thisModule "docViewLayout" cpt
+docViewLayoutCpt = here.component "docViewLayout" cpt
   where
     cpt layout _children = do
-      query <- R.useState' ""
-      let params = T.initialParams
+      query <- T.useBox ""
+      let params = TT.initialParams
       pure $ docView { layout, params, query } []
 
 type Props = (
     layout :: Record LayoutProps
-  , params :: T.Params
-  , query :: R.State Query
+  , params :: TT.Params
+  , query  :: T.Box Query
   )
 
 docView :: R2.Component Props
 docView = R.createElement docViewCpt
-
 docViewCpt :: R.Component Props
-docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt where
-  cpt { layout: { cacheState
+docViewCpt = here.component "docView" cpt where
+  cpt { layout: { boxes
+                , cacheState
                 , chart
                 , frontends
                 , listId
@@ -123,97 +123,111 @@ docViewCpt = R.hooksComponentWithModule thisModule "docView" cpt where
                 , nodeId
                 , session
                 , showSearch
-                , sidePanelTriggers
+                , sidePanel
                 , tabType
                 , totalRecords
+                , yearFilter
                 }
       , params
       , query
       } _ = do
+    cacheState' <- T.useLive T.unequal cacheState
+    query' <- T.useLive T.unequal query
+
     pure $ H.div { className: "doc-table-doc-view container1" }
       [ R2.row
         [ chart
-        , if showSearch then searchBar query else H.div {} []
+        , if showSearch then searchBar { query } [] else H.div {} []
         , H.div {className: "col-md-12"}
-          [ pageLayout { cacheState
+          [ pageLayout { boxes
+                       , cacheState
                        , frontends
-                       , key: "docView-" <> (show $ fst cacheState)
+                       , key: "docView-" <> (show cacheState')
                        , listId
                        , mCorpusId
                        , nodeId
                        , params
-                       , query: fst query
+                       , query: query'
                        , session
-                       , sidePanelTriggers
+                       , sidePanel
                        , tabType
                        , totalRecords
-                       } ] ] ]
+                       , yearFilter
+                       } [] ] ] ]
 
-searchBar :: R.State Query -> R.Element
-searchBar (query /\ setQuery) = R.createElement el {} []
+type SearchBarProps =
+  ( query :: T.Box Query )
+
+searchBar :: R2.Component SearchBarProps
+searchBar = R.createElement searchBarCpt
+searchBarCpt :: R.Component SearchBarProps
+searchBarCpt = here.component "searchBar" cpt
   where
-    el = R.hooksComponentWithModule thisModule "SearchBar" cpt
-    cpt {} _children = do
-      queryText <- R.useState' query
+    cpt { query } _children = do
+      query' <- T.useLive T.unequal query
+      queryText <- T.useBox query'
+      queryText' <- T.useLive T.unequal queryText
 
       pure $ H.div {className: "col-md-12 row"}
         [ H.div {className: "col-md-3"} []
-        , H.div {className: "col-md-1"} [if query /= "" then clearButton else H.div {} []]
+        , H.div {className: "col-md-1"} [if query' /= "" then (clearButton query) else H.div {} []]
         , H.div {className: "col-md-3 form-group"}
-          [ H.input { type: "text"
-                    , className: "form-control"
-                    , on: {change: onSearchChange queryText, keyUp: onSearchKeyup queryText}
-                    , placeholder: query
-                    , defaultValue: query}
+          [ H.input { className: "form-control"
+                    , defaultValue: query'
+                    , on: { change: onSearchChange queryText
+                          , keyUp: onSearchKeyup query queryText' }
+                    , placeholder: query'
+                    , type: "text" }
           ]
-        , H.div {className: "col-md-1"} [searchButton queryText]
+        , H.div {className: "col-md-1"} [ searchButton query queryText' ]
         ]
 
-    onSearchChange :: forall e. R.State Query -> e -> Effect Unit
-    onSearchChange (_ /\ setQueryText) = \e ->
-      setQueryText $ const $ R.unsafeEventValue e
+    onSearchChange :: forall e. T.Box Query -> e -> Effect Unit
+    onSearchChange queryText e =
+      T.write_ (R.unsafeEventValue e) queryText
 
-    onSearchKeyup :: R.State Query -> DE.KeyboardEvent -> Effect Unit
-    onSearchKeyup (queryText /\ _) = \e ->
+    onSearchKeyup :: T.Box Query -> Query -> DE.KeyboardEvent -> Effect Unit
+    onSearchKeyup query queryText e =
       if DE.key e == "Enter" then
-        setQuery $ const queryText
+        T.write_ queryText query
       else
-        pure $ unit
+        pure unit
 
-    searchButton (queryText /\ _) =
-      H.button { type: "submit"
-               , className: "btn btn-primary"
-               , on: {click: \e -> setQuery $ const queryText}}
-      [ H.span {className: "fa fa-search"} [] ]
+    searchButton query queryText' =
+      H.button { className: "btn btn-primary"
+               , on: { click: \_ -> T.write_ queryText' query }
+               , type: "submit" }
+        [ H.span {className: "fa fa-search"} [] ]
 
-    clearButton =
+    clearButton query =
       H.button { className: "btn btn-danger"
-               , on: {click: \e -> setQuery $ const ""}}
-      [ H.span {className: "fa fa-times"} [] ]
+               , on: { click: \_ -> T.write_ "" query } }
+        [ H.span {className: "fa fa-times"} [] ]
 
 mock :: Boolean
 mock = false
 
 type PageParams = {
-    listId    :: Int
-  , mCorpusId :: Maybe Int
-  , nodeId    :: Int
-  , tabType   :: TabType
-  , query     :: Query
-  , params    :: T.Params
+    listId      :: Int
+  , mCorpusId   :: Maybe Int
+  , nodeId      :: Int
+  , tabType     :: TabType
+  , query       :: Query
+  , params      :: TT.Params
+  , yearFilter  :: Maybe Year
   }
 
-getPageHash :: Session -> PageParams -> Aff String
-getPageHash session { nodeId, tabType } = do
-  (get session $ tableHashRoute nodeId tabType) :: Aff String
+getPageHash :: Session -> PageParams -> Aff (Either RESTError String)
+getPageHash session { nodeId, tabType } =
+  get session $ tableHashRoute nodeId tabType
 
-convOrderBy :: Maybe (T.OrderByDirection T.ColumnName) -> Maybe OrderBy
-convOrderBy (Just (T.ASC  (T.ColumnName "Date")))  = Just DateAsc
-convOrderBy (Just (T.DESC (T.ColumnName "Date")))  = Just DateDesc
-convOrderBy (Just (T.ASC  (T.ColumnName "Title"))) = Just TitleAsc
-convOrderBy (Just (T.DESC (T.ColumnName "Title"))) = Just TitleDesc
-convOrderBy (Just (T.ASC  (T.ColumnName "Source"))) = Just SourceAsc
-convOrderBy (Just (T.DESC (T.ColumnName "Source"))) = Just SourceDesc
+convOrderBy :: Maybe (TT.OrderByDirection TT.ColumnName) -> Maybe OrderBy
+convOrderBy (Just (TT.ASC  (TT.ColumnName "Date")))  = Just DateAsc
+convOrderBy (Just (TT.DESC (TT.ColumnName "Date")))  = Just DateDesc
+convOrderBy (Just (TT.ASC  (TT.ColumnName "Title"))) = Just TitleAsc
+convOrderBy (Just (TT.DESC (TT.ColumnName "Title"))) = Just TitleDesc
+convOrderBy (Just (TT.ASC  (TT.ColumnName "Source"))) = Just SourceAsc
+convOrderBy (Just (TT.DESC (TT.ColumnName "Source"))) = Just SourceDesc
 convOrderBy _ = Nothing
 
 res2corpus :: Response -> DocumentsView
@@ -235,99 +249,127 @@ filterDocs query docs = A.filter filterFunc docs
     filterFunc (Response { hyperdata: Hyperdata { title } }) =
       isJust $ Str.indexOf (Str.Pattern $ Str.toLower query) $ Str.toLower title
 
-pageLayout :: Record PageLayoutProps -> R.Element
-pageLayout props = R.createElement pageLayoutCpt props []
+filterDocsByYear :: Year -> Array Response -> Array Response
+filterDocsByYear year docs = A.filter filterFunc docs
+  where
+    filterFunc :: Response -> Boolean
+    filterFunc (Response { hyperdata: Hyperdata { pub_year } }) = eq year $ show pub_year
 
+pageLayout :: R2.Component PageLayoutProps
+pageLayout = R.createElement pageLayoutCpt
 pageLayoutCpt :: R.Component PageLayoutProps
-pageLayoutCpt = R.hooksComponentWithModule thisModule "pageLayout" cpt where
-  cpt props@{ cacheState
-            , frontends
+pageLayoutCpt = here.component "pageLayout" cpt where
+  cpt props@{ boxes
+            , cacheState
             , listId
             , mCorpusId
             , nodeId
             , params
             , query
             , session
-            , sidePanelTriggers
-            , tabType } _ = do
-    let path = { listId, mCorpusId, nodeId, params, query, tabType }
+            , tabType
+            , yearFilter
+            } _ = do
+    cacheState' <- T.useLive T.unequal cacheState
+    yearFilter' <- T.useLive T.unequal yearFilter
+
+    let path = { listId, mCorpusId, nodeId, params, query, tabType, yearFilter: yearFilter' }
         handleResponse :: HashedResponse (TableResult Response) -> Tuple Int (Array DocumentsView)
-        handleResponse (HashedResponse { hash, value: res }) = ret
+        handleResponse (HashedResponse { value: res }) = ret
           where
-            docs = res2corpus <$> filterDocs query res.docs
+            filterDocs' q ds = case cacheState' of
+              NT.CacheOff -> ds
+              NT.CacheOn -> filterDocs q ds
+            filters = filterDocs' query
+                    >>> \res' -> case yearFilter' of
+                      Nothing -> res'
+                      Just year -> filterDocsByYear year res'
+
+            docs = res2corpus <$> filters res.docs
+
             ret = if mock then
                       --Tuple 0 (take limit $ drop offset sampleData)
                       Tuple 0 sampleData
                     else
                       Tuple res.count docs
-    case cacheState of
-      (NT.CacheOn  /\ _) -> do
-        let paint (Tuple count docs) = page { documents: docs
+
+    case cacheState' of
+      NT.CacheOn -> do
+        let paint (Tuple count docs) = page { boxes
+                                            , documents: docs
                                             , layout: props { totalRecords = count }
                                             , params } []
             mkRequest :: PageParams -> GUC.Request
             mkRequest p = GUC.makeGetRequest session $ tableRoute p
 
-        useLoaderWithCacheAPI {
-            cacheEndpoint: getPageHash session
+        useLoaderWithCacheAPI
+          { boxes
+          , cacheEndpoint: getPageHash session
           , handleResponse
           , mkRequest
           , path
           , renderer: paint
           }
-      (NT.CacheOff /\ _) -> do
-        localCategories <- R.useState' (mempty :: LocalUserScore)
-        paramsS <- R.useState' params
+      NT.CacheOff -> do
+        localCategories <- T.useBox (Map.empty :: LocalUserScore)
+        paramsS <- T.useBox params
+        paramsS' <- T.useLive T.unequal paramsS
         let loader p = do
-              let route = tableRouteWithPage (p { params = fst paramsS, query = query })
-              res <- get session $ route
+              let route = tableRouteWithPage (p { params = paramsS', query = query })
+              eRes <- get session $ route
               liftEffect $ do
-                log2 "[pageLayout] table route" route
-                log2 "[pageLayout] table res" res
-              pure $ handleResponse res
-            render (Tuple count documents) = pagePaintRaw { documents
-                                                          , layout: props { params = fst paramsS
+                here.log2 "table route" route
+                here.log2 "table res" eRes
+              pure $ handleResponse <$> eRes
+        let render (Tuple count documents) = pagePaintRaw { documents
+                                                          , layout: props { params = paramsS'
                                                                           , totalRecords = count }
                                                           , localCategories
                                                           , params: paramsS } []
-        useLoader (path { params = fst paramsS }) loader render
+        let errorHandler err = here.log2 "[pageLayout] RESTError" err
+        useLoader { errorHandler
+                  , path: path { params = paramsS' }
+                  , loader
+                  , render }
 
-type PageProps = (
-    documents :: Array DocumentsView
-  , layout :: Record PageLayoutProps
-  , params :: T.Params
+type PageProps =
+  ( boxes     :: Boxes
+  , documents :: Array DocumentsView
+  , layout    :: Record PageLayoutProps
+  , params    :: TT.Params
   )
 
 page :: R2.Component PageProps
 page = R.createElement pageCpt
-
 pageCpt :: R.Component PageProps
-pageCpt = R.hooksComponentWithModule thisModule "pageCpt" cpt where
+pageCpt = here.component "pageCpt" cpt where
   cpt { documents, layout, params } _ = do
-    paramsS <- R.useState' params
+    paramsS <- T.useBox params
+
     pure $ pagePaint { documents, layout, params: paramsS } []
 
 type PagePaintProps = (
     documents :: Array DocumentsView
   , layout :: Record PageLayoutProps
-  , params :: R.State T.Params
+  , params :: T.Box TT.Params
 )
 
 pagePaint :: R2.Component PagePaintProps
 pagePaint = R.createElement pagePaintCpt
-
 pagePaintCpt :: R.Component PagePaintProps
-pagePaintCpt = R.hooksComponentWithModule thisModule "pagePaintCpt" cpt
+pagePaintCpt = here.component "pagePaintCpt" cpt
   where
     cpt { documents, layout, params } _ = do
-      localCategories <- R.useState' (mempty :: LocalUserScore)
-      pure $ pagePaintRaw { documents: A.fromFoldable filteredRows
+      params' <- T.useLive T.unequal params
+
+      localCategories <- T.useBox (Map.empty :: LocalUserScore)
+      pure $ pagePaintRaw { documents: A.fromFoldable (filteredRows params')
                           , layout
                           , localCategories
                           , params } []
         where
-          orderWith =
-            case convOrderBy (fst params).orderBy of
+          orderWith { orderBy } =
+            case convOrderBy orderBy of
               Just DateAsc    -> sortWith \(DocumentsView { date })   -> date
               Just DateDesc   -> sortWith \(DocumentsView { date })   -> Down date
               Just SourceAsc  -> sortWith \(DocumentsView { source }) -> Str.toLower source
@@ -335,60 +377,66 @@ pagePaintCpt = R.hooksComponentWithModule thisModule "pagePaintCpt" cpt
               Just TitleAsc   -> sortWith \(DocumentsView { title })  -> Str.toLower title
               Just TitleDesc  -> sortWith \(DocumentsView { title })  -> Down $ Str.toLower title
               _               -> identity -- the server ordering is enough here
-          filteredRows = T.filterRows { params: fst params } $ orderWith $ A.toUnfoldable documents
+          filteredRows params' = TT.filterRows { params: params' } $ (orderWith params') $ A.toUnfoldable documents
 
 
-type PagePaintRawProps = (
-    documents :: Array DocumentsView
-  , layout :: Record PageLayoutProps
-  , localCategories :: R.State LocalUserScore
-  , params :: R.State T.Params
+type PagePaintRawProps =
+  ( documents       :: Array DocumentsView
+  , layout          :: Record PageLayoutProps
+  , localCategories :: T.Box LocalUserScore
+  , params          :: T.Box TT.Params
   )
 
 pagePaintRaw :: R2.Component PagePaintRawProps
 pagePaintRaw = R.createElement pagePaintRawCpt
-
 pagePaintRawCpt :: R.Component PagePaintRawProps
-pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt where
+pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
   cpt { documents
-      , layout: { frontends
+      , layout: { boxes
+                , frontends
                 , listId
                 , mCorpusId
                 , nodeId
                 , session
-                , sidePanelTriggers: sidePanelTriggers@{ currentDocIdRef }
+                , sidePanel
                 , totalRecords }
       , localCategories
       , params } _ = do
+    mCurrentDocId <- T.useFocused
+          (maybe Nothing _.mCurrentDocId)
+          (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentDocId = val })) sidePanel
+    mCurrentDocId' <- T.useLive T.unequal mCurrentDocId
 
+<<<<<<< HEAD
     reload <- GUR.new
+=======
+    localCategories' <- T.useLive T.unequal localCategories
+>>>>>>> dev
 
-    pure $ T.table
-      { syncResetButton : [ H.div {} [] ]
-      , colNames
-      , container: T.defaultContainer { title: "Documents" }
+    pure $ TT.table
+      { colNames
+      , container: TT.defaultContainer
       , params
-      , rows: rows reload localCategories
+      , rows: rows localCategories' mCurrentDocId'
+      , syncResetButton : [ H.div {} [] ]
       , totalRecords
       , wrapColElts
       }
       where
         sid = sessionId session
-        gi Star_1  = "fa fa-star"
-        gi _       = "fa fa-star-empty"
         trashClassName Star_0 _ = "trash"
         trashClassName _ true = "active"
         trashClassName _ false = ""
         corpusDocument
           | Just cid <- mCorpusId = Routes.CorpusDocument sid cid listId
           | otherwise = Routes.Document sid listId
-        colNames = T.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source", "Score" ]
+        colNames = TT.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source", "Score" ]
         wrapColElts = const identity
-        getCategory (lc /\ _) {_id, category} = fromMaybe category (lc ^. at _id)
-        rows reload lc@(_ /\ setLocalCategories) = row <$> A.toUnfoldable documents
+        rows localCategories' mCurrentDocId' = row <$> A.toUnfoldable documents
           where
-            row dv@(DocumentsView r) =
+            row dv@(DocumentsView r@{ _id, category }) =
               { row:
+<<<<<<< HEAD
                 T.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
                   H.div { className: "" }
                   [ docChooser { listId, mCorpusId, nodeId: r._id, selected, sidePanelTriggers, tableReload: reload } []
@@ -396,6 +444,23 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
                 --, H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
                 , H.div { className: "column-tag flex" }
                   [ rating { score: cat, nodeId, row: dv, session, setLocalCategories } [] ]
+=======
+                TT.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
+                            H.div { className: "" }
+                                  [ docChooser { boxes
+                                               , listId
+                                               , mCorpusId
+                                               , nodeId: r._id
+                                               , sidePanel } []
+                                  ]
+                          --, H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
+                          , H.div { className: "column-tag flex" }
+                                  [ rating { nodeId
+                                           , row: dv
+                                           , score: cat
+                                           , setLocalCategories: \lc -> T.modify_ lc localCategories
+                                           , session } [] ]
+>>>>>>> dev
                 --, H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only
                 , H.div { className: tClassName } [ R2.showText r.date ]
@@ -414,63 +479,70 @@ pagePaintRawCpt = R.hooksComponentWithModule thisModule "pagePaintRawCpt" cpt wh
                 ]
               , delete: true }
               where
-                cat         = getCategory lc r
+                cat         = fromMaybe category (localCategories' ^. at _id)
                 -- checked    = Star_1 == cat
+                selected   = mCurrentDocId' == Just r._id
                 tClassName = trashClassName cat selected
-                className  = gi cat
-                selected   = R.readRef currentDocIdRef == Just r._id
 
 type DocChooser = (
-    listId            :: ListId
-  , mCorpusId         :: Maybe NodeID
-  , nodeId            :: NodeID
-  , selected          :: Boolean
-  , sidePanelTriggers :: Record SidePanelTriggers
-  , tableReload       :: GUR.ReloadS
+    boxes :: Boxes
+  , listId         :: ListId
+  , mCorpusId      :: Maybe NodeID
+  , nodeId         :: NodeID
+  , sidePanel      :: T.Box (Maybe (Record TextsT.SidePanel))
   )
 
 docChooser :: R2.Component DocChooser
 docChooser = R.createElement docChooserCpt
-
 docChooserCpt :: R.Component DocChooser
-docChooserCpt = R.hooksComponentWithModule thisModule "docChooser" cpt
+docChooserCpt = here.component "docChooser" cpt
   where
     cpt { mCorpusId: Nothing } _ = do
       pure $ H.div {} []
 
-    cpt { listId
+    cpt { boxes: { sidePanelState }
+        , listId
         , mCorpusId: Just corpusId
         , nodeId
-        , selected
-        , sidePanelTriggers: { triggerAnnotatedDocIdChange }
-        , tableReload } _ = do
+        , sidePanel } _ = do
+      mCurrentDocId <- T.useFocused
+            (maybe Nothing _.mCurrentDocId)
+            (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentDocId = val })) sidePanel
+      mCurrentDocId' <- T.useLive T.unequal mCurrentDocId
 
-      let eyeClass = if selected then "fa-eye" else "fa-eye-slash"
+      let selected = mCurrentDocId' == Just nodeId
+          eyeClass = if selected then "fa-eye" else "fa-eye-slash"
 
       pure $ H.div { className: "btn" } [
         H.span { className: "fa " <> eyeClass
-               , on: { click: onClick } } []
+               , on: { click: onClick selected } } []
       ]
       where
-        onClick _ = do
-          -- log2 "[docChooser] onClick, listId" listId
-          -- log2 "[docChooser] onClick, corpusId" corpusId
-          -- log2 "[docChooser] onClick, nodeId" nodeId
-          R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
-          GUR.bump tableReload
+        onClick selected _ = do
+          -- here.log2 "[docChooser] onClick, listId" listId
+          -- here.log2 "[docChooser] onClick, corpusId" corpusId
+          -- here.log2 "[docChooser] onClick, nodeId" nodeId
+          -- R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
+          -- T2.reload tableReload
+          if selected then do
+            T.write_ Nothing sidePanel
+            T.write_ Closed sidePanelState
+          else do
+            T.write_ (Just { corpusId: corpusId
+                          , listId: listId
+                          , mCurrentDocId: Just nodeId
+                          , nodeId: nodeId }) sidePanel
+            T.write_ Opened sidePanelState
+          here.log2 "[docChooser] sidePanel opened" sidePanelState
 
 
 newtype SearchQuery = SearchQuery {
     parent_id :: Int
   , query :: Array String
   }
-
-
-instance encodeJsonSQuery :: EncodeJson SearchQuery where
-  encodeJson (SearchQuery {query, parent_id})
-    = "query" := query
-    ~> "parent_id" := parent_id
-    ~> jsonEmptyObject
+derive instance Generic SearchQuery _
+derive instance Newtype SearchQuery _
+derive newtype instance JSON.ReadForeign SearchQuery
 
 
 documentsRoute :: Int -> SessionRoute
@@ -485,22 +557,24 @@ tableHashRoute nodeId tabType = NodeAPI Node (Just nodeId) $ "table/hash" <> "?t
 tableRouteWithPage :: forall row.
                       { listId :: Int
                       , nodeId :: Int
-                      , params :: T.Params
+                      , params :: TT.Params
                       , query ::  Query
                       , tabType :: TabType
+                      , yearFilter :: Maybe Year
                       | row } -> SessionRoute
-tableRouteWithPage { listId, nodeId, params: { limit, offset, orderBy, searchType }, query, tabType } =
-  NodeAPI Node (Just nodeId) $ "table" <> joinQueryStrings [tt, lst, lmt, odb, ofs, st, q]
+tableRouteWithPage { listId, nodeId, params: { limit, offset, orderBy, searchType }, query, tabType, yearFilter } =
+  NodeAPI Node (Just nodeId) $ "table" <> joinQueryStrings [tt, lst, lmt, odb, ofs, st, q, y]
   where
     lmt = queryParam "limit" limit
     lst = queryParam "list" listId
     ofs = queryParam "offset" offset
-    odb = mQueryParamS "orderBy" T.orderByToForm orderBy
+    odb = mQueryParamS "orderBy" TT.orderByToForm orderBy
     st  = queryParam "searchType" searchType
     tt  = queryParamS "tabType" (showTabType' tabType)
     q   = queryParamS "query" query
+    y   = mQueryParam "year" yearFilter
 
-deleteAllDocuments :: Session -> Int -> Aff (Array Int)
+deleteAllDocuments :: Session -> Int -> Aff (Either RESTError (Array Int))
 deleteAllDocuments session = delete session <<< documentsRoute
 
 -- TODO: not optimal but Data.Set lacks some function (Set.alter)

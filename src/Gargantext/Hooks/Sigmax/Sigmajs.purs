@@ -2,10 +2,8 @@ module Gargantext.Hooks.Sigmax.Sigmajs where
 
 import Prelude
 
-import Data.Nullable (Nullable)
 import Effect (Effect)
 import Effect.Uncurried (EffectFn1, runEffectFn1)
-import React (SyntheticEventHandler)
 import React.Ref as RR
 import Record.Unsafe (unsafeGet)
 import Unsafe.Coerce (unsafeCoerce)
@@ -87,8 +85,8 @@ type CameraProps =
   , angle :: Number
   )
 
-foreign import data SigmaInstance' :: # Type
-foreign import data CameraInstance' :: # Type
+foreign import data SigmaInstance' :: Row Type
+foreign import data CameraInstance' :: Row Type
 type SigmaInstance = { | SigmaInstance' }
 type CameraInstance = { | CameraInstance' }
 
@@ -102,8 +100,6 @@ foreign import goToImpl :: forall o. CameraInstance -> EffectFn1 { | o } CameraI
 
 goTo :: forall o. Optional o CameraProps => CameraInstance -> { | o } -> Effect CameraInstance
 goTo cam = runEffectFn1 (goToImpl cam)
-
-foreign import pauseForceAtlas2 :: Effect Unit
 
 type SigmaProps =
   ( renderer :: String

@@ -1,27 +1,30 @@
 module Gargantext.Hooks.Loader where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, encodeJson, (.:), (:=), (~>), jsonEmptyObject)
-import Data.Argonaut.Core (stringify)
-import Data.Argonaut.Parser (jsonParser)
+import Gargantext.Prelude
+
+import Data.Array as A
 import Data.Either (Either(..))
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), isJust, maybe)
-import Data.Tuple (fst)
-import Data.Tuple.Nested ((/\))
-import DOM.Simple.Console (log2)
+import Data.Newtype (class Newtype)
+import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Milkis as M
-import Reactix as R
-import Web.Storage.Storage as WSS
-
+import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
-import Gargantext.Ends (class ToUrl, toUrl)
-import Gargantext.Prelude
-import Gargantext.Utils.Crypto (Hash)
-import Gargantext.Utils as GU
+import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.Utils (handleRESTError)
+import Gargantext.Types (FrontendError(..))
 import Gargantext.Utils.CacheAPI as GUC
+import Gargantext.Utils.Crypto (Hash)
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Simple.JSON as JSON
+import Toestand as T
+
+here :: R2.Here
+here = R2.here "Gargantext.Hooks.Loader"
 
 cacheName :: String
 cacheName = "cache-api-loader"
@@ -29,94 +32,159 @@ cacheName = "cache-api-loader"
 clearCache :: Unit -> Aff Unit
 clearCache _ = GUC.delete $ GUC.CacheName cacheName
 
+type UseLoader path state =
+  ( errorHandler :: RESTError -> Effect Unit
+  , loader       :: path -> Aff (Either RESTError state)
+  , path         :: path
+  , render       :: state -> R.Element
+  )
 
-useLoader :: forall path st. Eq path
-          => path
-          -> (path -> Aff st)
-          -> (st -> R.Element)
+useLoader :: forall path st. Eq path => Eq st
+          => Record (UseLoader path st)
           -> R.Hooks R.Element
-useLoader path loader render = do
-  state <- R.useState' Nothing
-  useLoaderEffect path state loader
-  pure $ maybe (loadingSpinner {}) render (fst state)
+useLoader { errorHandler, loader: loader', path, render } = do
+  state <- T.useBox Nothing
 
-useLoaderEffect :: forall st path. Eq path =>
-                      path
-                   -> R.State (Maybe st)
-                   -> (path -> Aff st)
+  useLoaderEffect { errorHandler, loader: loader', path, state: state }
+
+  pure $ loader { render, state } []
+
+
+type LoaderProps st =
+  ( render :: st -> R.Element
+  , state  :: T.Box (Maybe st) )
+
+loader :: forall st. Eq st => R2.Component (LoaderProps st)
+loader = R.createElement loaderCpt
+loaderCpt :: forall st. Eq st => R.Component (LoaderProps st)
+loaderCpt = here.component "loader" cpt
+  where
+    cpt { render, state } _ = do
+      state' <- T.useLive T.unequal state
+
+      pure $ maybe (loadingSpinner {}) render state'
+
+type UseLoaderEffect path state =
+  ( errorHandler :: RESTError -> Effect Unit
+  , loader       :: path -> Aff (Either RESTError state)
+  , path         :: path
+  , state        :: T.Box (Maybe state)
+  )
+
+useLoaderEffect :: forall st path. Eq path => Eq st
+                   => Record (UseLoaderEffect path st)
                    -> R.Hooks Unit
-useLoaderEffect path state@(state' /\ setState) loader = do
+useLoaderEffect { errorHandler, loader: loader', path, state } = do
+  state' <- T.useLive T.unequal state
   oPath <- R.useRef path
 
   R.useEffect' $ do
-    if (R.readRef oPath == path) && (isJust state') then
-      pure $ pure unit
+    path' <- R.readRefM oPath
+    if (path' == path) && (isJust state')
+    then pure $ R.nothing
     else do
       R.setRef oPath path
-
       R2.affEffect "G.H.Loader.useLoaderEffect" $ do
-        l <- loader path
-        liftEffect $ setState $ const $ Just l
+        l <- loader' path
+        case l of
+          Left err -> liftEffect $ errorHandler err
+          Right l' -> liftEffect $ T.write_ (Just l') state
 
 
-newtype HashedResponse a =
-  HashedResponse { hash  :: Hash
-                 , value :: a
-                 }
-
-instance decodeHashedResponse :: DecodeJson a => DecodeJson (HashedResponse a) where
-  decodeJson json = do
-    obj   <- decodeJson json
-    hash  <- obj .: "hash"
-    value <- obj .: "value"
-    pure $ HashedResponse { hash, value }
-
-instance encodeHashedResponse :: EncodeJson a => EncodeJson (HashedResponse a) where
-  encodeJson (HashedResponse { hash, value }) = do
-       "hash" := encodeJson hash
-    ~> "value" := encodeJson value
-    ~> jsonEmptyObject
-
-
-type LoaderWithCacheAPIProps path res ret = (
-    cacheEndpoint :: path -> Aff Hash
-  , handleResponse :: HashedResponse res -> ret
-  , mkRequest :: path -> GUC.Request
-  , path :: path
-  , renderer :: ret -> R.Element
+type UseLoaderBox path state =
+  ( errorHandler :: RESTError -> Effect Unit
+  , loader       :: path -> Aff (Either RESTError state)
+  , path         :: T.Box path
+  , render       :: state -> R.Element
   )
 
+useLoaderBox :: forall path st. Eq path => Eq st
+          => Record (UseLoaderBox path st)
+          -> R.Hooks R.Element
+useLoaderBox { errorHandler, loader: loader', path, render } = do
+  state <- T.useBox Nothing
+
+  useLoaderBoxEffect { errorHandler, loader: loader', path, state: state }
+
+  pure $ loader { render, state } []
+
+type UseLoaderBoxEffect path state =
+  ( errorHandler :: RESTError -> Effect Unit
+  , loader       :: path -> Aff (Either RESTError state)
+  , path         :: T.Box path
+  , state        :: T.Box (Maybe state)
+  )
+
+useLoaderBoxEffect :: forall st path. Eq path => Eq st
+                   => Record (UseLoaderBoxEffect path st)
+                   -> R.Hooks Unit
+useLoaderBoxEffect { errorHandler, loader: loader', path, state } = do
+  path' <- T.useLive T.unequal path
+
+  R.useEffect' $ do
+    R2.affEffect "G.H.Loader.useLoaderBoxEffect" $ do
+      l <- loader' path'
+      case l of
+        Left err -> liftEffect $ errorHandler err
+        Right l' -> liftEffect $ T.write_ (Just l') state
+
+
+newtype HashedResponse a = HashedResponse { hash  :: Hash, value :: a }
+derive instance Generic (HashedResponse a) _
+derive instance Newtype (HashedResponse a) _
+derive newtype instance JSON.ReadForeign a => JSON.ReadForeign (HashedResponse a)
+derive newtype instance JSON.WriteForeign a => JSON.WriteForeign (HashedResponse a)
+
+type LoaderWithCacheAPIProps path res ret =
+  ( boxes          :: Boxes
+  , cacheEndpoint  :: path -> Aff (Either RESTError Hash)
+  , handleResponse :: HashedResponse res -> ret
+  , mkRequest      :: path -> GUC.Request
+  , path           :: path
+  , renderer       :: ret -> R.Element
+  )
 
 useLoaderWithCacheAPI :: forall path res ret.
-                         Eq path => DecodeJson res =>
+                         Eq ret => Eq path => JSON.ReadForeign res =>
                          Record (LoaderWithCacheAPIProps path res ret)
                       -> R.Hooks R.Element
-useLoaderWithCacheAPI { cacheEndpoint, handleResponse, mkRequest, path, renderer } = do
-  state <- R.useState' Nothing
-  useCachedAPILoaderEffect { cacheEndpoint
+useLoaderWithCacheAPI { boxes
+                      , cacheEndpoint
+                      , handleResponse
+                      , mkRequest
+                      , path
+                      , renderer } = do
+  state <- T.useBox Nothing
+  state' <- T.useLive T.unequal state
+
+  useCachedAPILoaderEffect { boxes
+                           , cacheEndpoint
                            , handleResponse
                            , mkRequest
                            , path
                            , state }
-  pure $ maybe (loadingSpinner {}) renderer (fst state)
+  pure $ maybe (loadingSpinner {}) renderer state'
 
 type LoaderWithCacheAPIEffectProps path res ret = (
-    cacheEndpoint :: path -> Aff Hash
+    boxes          :: Boxes
+  , cacheEndpoint  :: path -> Aff (Either RESTError Hash)
   , handleResponse :: HashedResponse res -> ret
-  , mkRequest :: path -> GUC.Request
-  , path :: path
-  , state :: R.State (Maybe ret)
+  , mkRequest      :: path -> GUC.Request
+  , path           :: path
+  , state          :: T.Box (Maybe ret)
   )
 
 useCachedAPILoaderEffect :: forall path res ret.
-                            Eq path => DecodeJson res =>
+                            Eq ret => Eq path => JSON.ReadForeign res =>
                             Record (LoaderWithCacheAPIEffectProps path res ret)
                          -> R.Hooks Unit
-useCachedAPILoaderEffect { cacheEndpoint
+useCachedAPILoaderEffect { boxes: { errors }
+                         , cacheEndpoint
                          , handleResponse
                          , mkRequest
                          , path
-                         , state: state@(state' /\ setState) } = do
+                         , state } = do
+  state' <- T.useLive T.unequal state
   oPath <- R.useRef path
 
   R.useEffect' $ do
@@ -130,16 +198,19 @@ useCachedAPILoaderEffect { cacheEndpoint
       launchAff_ $ do
         cache <- GUC.openCache $ GUC.CacheName cacheName
         -- TODO Parallelize?
-        hr@(HashedResponse { hash, value }) <- GUC.cachedJson cache req
-        cacheReal <- cacheEndpoint path
-        val <- if hash == cacheReal then
-          pure hr
-        else do
-          _ <- GUC.deleteReq cache req
-          hr@(HashedResponse { hash, value }) <- GUC.cachedJson cache req
-          if hash == cacheReal then
+        hr@(HashedResponse { hash }) <- GUC.cachedJson cache req
+        eCacheReal <- cacheEndpoint path
+        handleRESTError errors eCacheReal $ \cacheReal -> do
+          val <- if hash == cacheReal then
             pure hr
-          else
-            throwError $ error $ "Fetched clean cache but hashes don't match"
-        liftEffect $ do
-          setState $ const $ Just $ handleResponse val
+          else do
+            _ <- GUC.deleteReq cache req
+            hr'@(HashedResponse { hash: h }) <- GUC.cachedJson cache req
+            if h == cacheReal then
+              pure hr'
+            else do
+              let err = "[Hooks.Loader] Fetched clean cache but hashes don't match: " <> h <> " != " <> cacheReal
+              liftEffect $ T.modify_ (A.cons $ FStringError { error: err }) errors
+              throwError $ error err
+          liftEffect $ do
+            T.write_ (Just $ handleResponse val) state

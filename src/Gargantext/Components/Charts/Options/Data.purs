@@ -1,9 +1,10 @@
 module Gargantext.Components.Charts.Options.Data where
 
+import Gargantext.Components.Charts.Options.Font (TextStyle, Icon, ItemStyle)
+import Gargantext.Components.Charts.Options.Legend (SelectedMode)
+import Gargantext.Types (class Optional)
 import Record.Unsafe (unsafeSet)
 import Unsafe.Coerce (unsafeCoerce)
-import Gargantext.Types (class Optional)
-import Gargantext.Components.Charts.Options.Font (TextStyle, Icon, ItemStyle)
 
 type DataLegend =
   { name :: String
@@ -22,11 +23,15 @@ type RequiredData v o =
   }
 
 type OptionalData =
-  ( name       :: String
-  , symbolSize :: Number
-  , itemStyle  :: ItemStyle
-    -- ^ the style setting about single data point(bubble).
-  , label      :: { show :: Boolean }
+  ( name          :: String
+  , symbolSize    :: Number
+  , itemStyle     :: ItemStyle
+  -- ^ the style setting about single data point(bubble).
+  , label         :: { show :: Boolean }
+  , emphasis      :: { itemStyle :: ItemStyle }
+  , selectedMode  :: SelectedMode
+  , select        :: { itemStyle :: ItemStyle }
+  -- ^ need "selectedMode" to be defined
   )
 
 type DataSerie v = RequiredData v OptionalData

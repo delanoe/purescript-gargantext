@@ -6,7 +6,7 @@ import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
 import Gargantext.Components.Nodes.Corpus.Chart.Pie  (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
-import Gargantext.Components.Nodes.Corpus.Chart.Types (Path, Props)
+import Gargantext.Components.Nodes.Corpus.Chart.Types (Props)
 import Gargantext.Types (ChartType(..))
 
 getChartFunction :: ChartType -> (Record Props -> R.Element)

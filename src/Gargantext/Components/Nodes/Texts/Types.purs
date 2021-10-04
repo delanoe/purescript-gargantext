@@ -1,7 +1,6 @@
 module Gargantext.Components.Nodes.Texts.Types where
 
 import Data.Maybe (Maybe(..))
-import Effect (Effect)
 import Reactix as R
 
 import Gargantext.Prelude
@@ -10,7 +9,7 @@ import Gargantext.Types (ListId, NodeID)
 import Gargantext.Utils.Reactix as R2
 
 data SidePanelState = InitialClosed | Opened | Closed
-derive instance eqSidePanelState :: Eq SidePanelState
+derive instance Eq SidePanelState
 
 toggleSidePanelState :: SidePanelState -> SidePanelState
 toggleSidePanelState InitialClosed = Opened
@@ -56,3 +55,15 @@ initialControls = do
   pure $ {
       triggers
   }
+
+
+type SidePanel =
+  (
+    corpusId      :: NodeID
+  , listId        :: ListId
+  , mCurrentDocId :: Maybe Int
+  , nodeId        :: NodeID
+  )
+
+initialSidePanel :: Maybe (Record SidePanel)
+initialSidePanel = Nothing
