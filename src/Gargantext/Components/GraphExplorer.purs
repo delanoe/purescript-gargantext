@@ -2,6 +2,7 @@ module Gargantext.Components.GraphExplorer where
 
 import Gargantext.Prelude hiding (max, min)
 
+import DOM.Simple.Types (Element)
 import Data.Array as A
 import Data.Either (Either)
 import Data.FoldableWithIndex (foldMapWithIndex)
@@ -12,22 +13,13 @@ import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (Tuple(..))
-import DOM.Simple.Types (Element)
 import Effect.Aff (Aff)
-import Math as Math
-import Partial.Unsafe (unsafePartial)
-import Reactix as R
-import Reactix.DOM.HTML as RH
-import Record as Record
-import Record.Extra as RX
-import Toestand as T
-
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Controls as Controls
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
 import Gargantext.Components.GraphExplorer.Types as GET
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (RESTError, logRESTError)
 import Gargantext.Data.Louvain as Louvain
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
@@ -37,6 +29,13 @@ import Gargantext.Types as Types
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Math as Math
+import Partial.Unsafe (unsafePartial)
+import Reactix as R
+import Reactix.DOM.HTML as RH
+import Record as Record
+import Record.Extra as RX
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer"
@@ -74,7 +73,7 @@ explorerLayoutCpt = here.component "explorerLayout" cpt where
               , path: graphId
               , render: handler }
     where
-      errorHandler err = here.log2 "[explorerLayout] RESTError" err
+      errorHandler = logRESTError here "[explorerLayout]"
       handler loaded@(GET.HyperdataGraph { graph: hyperdataGraph }) =
         explorerWriteGraph (Record.merge props { graph, hyperdataGraph: loaded, mMetaData' }) []
         where

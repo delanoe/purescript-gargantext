@@ -25,12 +25,12 @@ import Effect.Class (liftEffect)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Category (rating)
 import Gargantext.Components.Category.Types (Star(..))
-import Gargantext.Components.DocsTable.Types (DocumentsView(..), Hyperdata(..), LocalUserScore, Query, Response(..), Year, sampleData)
+import Gargantext.Components.DocsTable.Types (DocumentsView(..), Hyperdata(..), LocalUserScore, Query, Response(..), Year, sampleData, showSource)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Table as TT
 import Gargantext.Components.Table.Types as TT
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (RESTError, logRESTError)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
 import Gargantext.Routes (SessionRoute(NodeAPI))
@@ -324,7 +324,7 @@ pageLayoutCpt = here.component "pageLayout" cpt where
                                                                           , totalRecords = count }
                                                           , localCategories
                                                           , params: paramsS } []
-        let errorHandler err = here.log2 "[pageLayout] RESTError" err
+        let errorHandler = logRESTError here "[pageLayout]"
         useLoader { errorHandler
                   , path: path { params = paramsS' }
                   , loader
@@ -370,8 +370,8 @@ pagePaintCpt = here.component "pagePaintCpt" cpt
             case convOrderBy orderBy of
               Just DateAsc    -> sortWith \(DocumentsView { date })   -> date
               Just DateDesc   -> sortWith \(DocumentsView { date })   -> Down date
-              Just SourceAsc  -> sortWith \(DocumentsView { source }) -> Str.toLower source
-              Just SourceDesc -> sortWith \(DocumentsView { source }) -> Down $ Str.toLower source
+              Just SourceAsc  -> sortWith \(DocumentsView { source }) -> Str.toLower $ fromMaybe "" source
+              Just SourceDesc -> sortWith \(DocumentsView { source }) -> Down $ Str.toLower $ fromMaybe "" source
               Just TitleAsc   -> sortWith \(DocumentsView { title })  -> Str.toLower title
               Just TitleDesc  -> sortWith \(DocumentsView { title })  -> Down $ Str.toLower title
               _               -> identity -- the server ordering is enough here
@@ -452,7 +452,7 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
                         [ H.a { href: url frontends $ corpusDocument r._id, target: "_blank"}
                               [ H.text r.title ]
                         ]
-                , H.div { className: tClassName } [ H.text $ if r.source == "" then "Source" else r.source ]
+                , H.div { className: tClassName } [ H.text $ showSource r.source ]
                 , H.div {} [ H.text $ maybe "-" show r.ngramCount ]
                 ]
               , delete: true }

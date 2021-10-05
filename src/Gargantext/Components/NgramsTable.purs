@@ -34,7 +34,7 @@ import Gargantext.Components.NgramsTable.Loader (useLoaderWithCacheAPI)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as TT
 import Gargantext.Components.Table.Types as TT
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (RESTError, logRESTError)
 import Gargantext.Hooks.Loader (useLoaderBox)
 import Gargantext.Routes (SessionRoute(..)) as R
 import Gargantext.Sessions (Session, get)
@@ -582,7 +582,7 @@ mainNgramsTableCacheOnCpt = here.component "mainNgramsTableCacheOn" cpt where
       , renderer: render
       }
   versionEndpoint { defaultListId, path: { nodeId, tabType, session } } _ = get session $ R.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
-  errorHandler err = here.log2 "[mainNgramsTable] RESTError" err
+  errorHandler = logRESTError here "[mainNgramsTable]"
   mkRequest :: PageParams -> GUC.Request
   mkRequest path@{ session } = GUC.makeGetRequest session $ url path
     where
@@ -616,7 +616,7 @@ mainNgramsTableCacheOffCpt = here.component "mainNgramsTableCacheOff" cpt where
                  , path
                  , render }
 
-  errorHandler err = here.log2 "[mainNgramsTable] RESTError" err
+  errorHandler = logRESTError here "[mainNgramsTable]"
 
   -- NOTE With cache off
   loader :: PageParams -> Aff (Either RESTError VersionedWithCountNgramsTable)

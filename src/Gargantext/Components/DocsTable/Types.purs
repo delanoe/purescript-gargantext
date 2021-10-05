@@ -1,16 +1,14 @@
 module Gargantext.Components.DocsTable.Types where
 
-import Data.Generic.Rep (class Generic)
-import Data.Eq.Generic (genericEq)
-import Data.Map (Map)
-import Data.Map as Map
-import Data.Maybe (Maybe(..))
-import Data.Tuple (Tuple(..))
-import Simple.JSON as JSON
-
 import Gargantext.Prelude
 
-import Gargantext.Components.Category.Types (Category(..), decodeCategory, Star(..), decodeStar)
+import Data.Eq.Generic (genericEq)
+import Data.Generic.Rep (class Generic)
+import Data.Map (Map)
+import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Tuple (Tuple(..))
+import Gargantext.Components.Category.Types (Category, Star(..), decodeStar)
+import Simple.JSON as JSON
 
 data Action
   = MarkCategory Int Category
@@ -20,7 +18,7 @@ type DocumentsViewT =
   , date       :: Int
   , ngramCount :: Maybe Int
   , score      :: Maybe Int
-  , source     :: String
+  , source     :: Maybe String
   , title      :: String
   , url        :: String
   )
@@ -33,15 +31,21 @@ derive instance Generic DocumentsView _
 instance Eq DocumentsView where
   eq = genericEq
 
+showSource :: Maybe String -> String
+showSource s = fromMaybe "NOT FOUND" s
+
 instance JSON.ReadForeign DocumentsView where
   readImpl f = do
     { id, category, date, ngramCount, score, source, title, url } :: { id :: Int | DocumentsViewT } <- JSON.readImpl f
+    let source' = case source of
+                    Just "NOT FOUND" -> Nothing
+                    s                -> s
     pure $ DocumentsView { _id: id
                          , category
                          , date
                          , ngramCount
                          , score
-                         , source
+                         , source: source'
                          , title
                          , url }
 instance JSON.WriteForeign DocumentsView where
@@ -80,7 +84,7 @@ instance JSON.ReadForeign Response where
 
 type HyperdataT =
   ( title :: String
-  , source :: String )
+  , source :: Maybe String )
 newtype Hyperdata = Hyperdata
   { pub_year :: Int
   | HyperdataT
@@ -105,7 +109,7 @@ sampleData' = DocumentsView { _id : 1
                             , url : ""
                             , date : 2010
                             , title : "title"
-                            , source : "source"
+                            , source : Just "source"
                             , category : Star_1
                             , ngramCount : Just 1
                             , score: Just 1 }
@@ -116,7 +120,7 @@ sampleData = map (\(Tuple t s) -> DocumentsView { _id : 1
                                                 , url : ""
                                                 , date : 2017
                                                 , title: t
-                                                , source: s
+                                                , source: Just s
                                                 , category : Star_1
                                                 , ngramCount : Just 10
                                                 , score: Just 1 }) sampleDocuments

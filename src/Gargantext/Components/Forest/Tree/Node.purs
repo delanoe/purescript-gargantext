@@ -21,6 +21,7 @@ import Gargantext.Components.Forest.Tree.Node.Tools.Sync (nodeActionsGraph, node
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (Lang(EN))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
+import Gargantext.Config.REST (logRESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
@@ -315,7 +316,7 @@ graphNodeActionsCpt = here.component "graphNodeActions" cpt where
               , path: id
               , render: \gv -> nodeActionsGraph { graphVersions: gv, session, id, refresh } [] }
   graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
-  errorHandler err = here.log2 "[graphNodeActions] RESTError" err
+  errorHandler = logRESTError here "[graphNodeActions]"
 
 listNodeActions :: R2.Leaf NodeActionsCommon
 listNodeActions props = R.createElement listNodeActionsCpt props []
@@ -329,5 +330,5 @@ listNodeActionsCpt = here.component "listNodeActions" cpt where
                  { listId: id, nodeId: corpusId, session, refresh: refresh
                  , nodeType: GT.TabNgramType GT.CTabTerms } }
     where
-      errorHandler err = here.log2 "[listNodeActions] RESTError" err
+      errorHandler = logRESTError here "[listNodeActions]"
 

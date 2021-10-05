@@ -12,6 +12,7 @@ import Gargantext.Components.Nodes.Corpus (fieldsCodeEditor, loadCorpusWithReloa
 import Gargantext.Components.Nodes.Corpus.Types (Hyperdata(..))
 import Gargantext.Components.Nodes.Types (FTFieldList(..), FTFieldsWithIndex(..), defaultField)
 import Gargantext.Components.TileMenu (tileMenu)
+import Gargantext.Config.REST (logRESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, discard, pure, unit, ($), (<$>), (<>), (==), const)
 import Gargantext.Routes as GR
@@ -51,7 +52,7 @@ corpusCodeLayoutCpt = here.component "corpusCodeLayout" cpt where
               , path: { nodeId, reload: reload', session }
               , render: \corpus -> corpusCodeView { corpus, nodeId, reload, session, boxes } }
     where
-      errorHandler err = here.log2 "[corpusLayoutWithKey] RESTError" err
+      errorHandler = logRESTError here "[corpusLayoutWithKey]"
 
 corpusCodeView :: Record ViewProps -> R.Element
 corpusCodeView props = R.createElement corpusCodeViewCpt props []

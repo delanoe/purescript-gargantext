@@ -11,15 +11,9 @@ import Data.Newtype (class Newtype)
 import Data.Nullable (Nullable, null, toMaybe)
 import Data.Show.Generic (genericShow)
 import Effect.Aff (Aff)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Simple.JSON as JSON
-import Toestand as T
-import Web.URL as WURL
-
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (RESTError, logRESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, get, sessionId)
@@ -27,6 +21,11 @@ import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.JitsiMeet as JM
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
+import Toestand as T
+import Web.URL as WURL
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Frame"
@@ -71,7 +70,7 @@ frameLayoutWithKeyCpt = here.component "frameLayoutWithKey" cpt where
               , path: {nodeId, reload: reload', session}
               , render: \frame -> frameLayoutView {frame, nodeId, reload, session, nodeType} }
     where
-      errorHandler err = here.log2 "[frameLayoutWithKey] RESTError" err
+      errorHandler = logRESTError here "[frameLayoutWithKey]"
 
 type ViewProps =
   ( frame    :: NodePoly Hyperdata
