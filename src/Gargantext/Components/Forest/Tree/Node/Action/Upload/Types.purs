@@ -11,13 +11,11 @@ import Web.File.FileReader.Aff (readAsText)
 import Gargantext.Prelude
 
 
-data FileType = CSV | CSV_HAL | WOS | PresseRIS | Arbitrary | JSON
+data FileType = CSV | CSV_HAL | WOS | PresseRIS | Arbitrary | JSON | ZIP
 
 derive instance Generic FileType _
-instance Eq FileType where
-  eq = genericEq
-instance Show FileType where
-  show = genericShow
+instance Eq FileType where eq = genericEq
+instance Show FileType where show = genericShow
 instance Read FileType where
   read :: String -> Maybe FileType
   read "Arbitrary" = Just Arbitrary
@@ -26,6 +24,7 @@ instance Read FileType where
   read "PresseRIS" = Just PresseRIS
   read "WOS"       = Just WOS
   read "JSON"      = Just JSON
+  read "ZIP"       = Just ZIP
   read _           = Nothing
 
 
