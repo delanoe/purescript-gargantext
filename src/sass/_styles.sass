@@ -169,3 +169,17 @@ select.form-control
 
   &__body
     padding: $tile-padding
+
+.action-upload-button
+  $spinner-size: 23px // @TODO use futur bootstrap button deferred status here
+  $spinner-left-offset: -32px
+  $spinner-top-offset: 6px
+
+  position: relative
+
+  &__spinner
+    position: absolute
+    width: $spinner-size
+    height: $spinner-size
+    left: $spinner-left-offset
+    top: $spinner-top-offset

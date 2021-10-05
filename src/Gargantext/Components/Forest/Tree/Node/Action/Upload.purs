@@ -4,8 +4,9 @@ import Gargantext.Prelude
 
 import Data.Either (Either, fromRight')
 import Data.Eq.Generic (genericEq)
+import Data.Foldable (intercalate)
 import Data.Generic.Rep (class Generic)
-import Data.Maybe (Maybe(..), fromJust, fromMaybe)
+import Data.Maybe (Maybe(..), fromJust, fromMaybe, isNothing)
 import Data.Newtype (class Newtype)
 import Data.String.Regex as DSR
 import Data.String.Regex.Flags as DSRF
@@ -24,8 +25,8 @@ import Gargantext.Components.ListSelection.Types (Selection(..))
 import Gargantext.Components.ListSelection.Types as ListSelection
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Routes as GR
-import Gargantext.Types (ID, NodeType(..))
 import Gargantext.Sessions (Session, postWwwUrlencoded, post)
+import Gargantext.Types (ID, NodeType(..))
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import Partial.Unsafe (unsafePartial, unsafeCrashWith)
@@ -87,7 +88,7 @@ type UploadFile =
   { blob :: UploadFileBlob
   , name :: String
   }
-  
+
 
 uploadFileView :: R2.Leaf Props
 uploadFileView props = R.createElement uploadFileViewCpt props []
@@ -186,20 +187,45 @@ uploadButtonCpt = here.component "uploadButton" cpt
       fileType' <- T.useLive T.unequal fileType
       mFile' <- T.useLive T.unequal mFile
       selection' <- T.useLive T.unequal selection
+      onPending /\ onPendingBox <- R2.useBox' false
 
-      let disabled = case mFile' of
-            Nothing -> "1"
-            Just _  -> ""
+      let disabled = isNothing mFile' || onPending
 
-      pure $ H.button { className: "btn btn-primary"
-                      , "type" : "button"
-                      , disabled
-                      , style    : { width: "100%" }
-                      , on: { click: onClick fileType' mFile' selection' }
-                      } [ H.text "Upload" ]
+      pure $
+
+        H.div
+        { className: "action-upload-button" }
+        [
+          if onPending
+          then H.div
+               { className: intercalate " "
+                 [ "spinner-grow"
+                 , "action-upload-button__spinner"
+                 ]
+               }
+               []
+          else mempty
+        ,
+          H.button
+          { className: "btn btn-primary"
+          , "type" : "button"
+          , disabled
+          , style    : { width: "100%" }
+          , on: { click: onClick
+                          fileType'
+                          mFile'
+                          selection'
+                          onPendingBox
+                }
+          }
+          [ H.text "Upload" ]
+        ]
+
+
       where
-        onClick fileType' mFile' selection' e = do
+        onClick fileType' mFile' selection' onPendingBox e = do
           let { blob, name } = unsafePartial $ fromJust mFile'
+          T.write_ true onPendingBox
           here.log2 "[uploadButton] fileType" fileType'
           void $ launchAff do
             case fileType' of
@@ -212,6 +238,7 @@ uploadButtonCpt = here.component "uploadButton" cpt
               T.write_ Nothing mFile
               T.write_ CSV fileType
               T.write_ EN lang
+              T.write_ false onPendingBox
             dispatch ClosePopover
 
 -- START File Type View
@@ -406,7 +433,7 @@ uploadTermListViewCpt = here.component "uploadTermListView" cpt
                           }
 
       let opt fileType = H.option { value: show fileType } [ H.text $ show fileType ]
-      
+
       let uploadTypeHtml = R2.select { className: "form-control"
                                      , defaultValue: show defaultUploadType
                                      , on: { change: onUploadTypeChange uploadType } } (opt <$> [ CSV, JSON ])
@@ -505,7 +532,7 @@ uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt
                               , on: { click: onClick } }
                      [ H.text "Upload!" ]
                    ]
-      
+
       pure $ panel bodies footer
 
       where
