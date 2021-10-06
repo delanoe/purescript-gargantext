@@ -1,5 +1,7 @@
 module Gargantext.Components.Nodes.Lists.Tabs where
 
+import Gargantext.Components.Nodes.Lists.Types hiding (here)
+
 import Data.Array as A
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
@@ -12,15 +14,14 @@ import Gargantext.Components.Nodes.Corpus.Chart.Pie (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils (mNgramsTypeFromTabType)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
-import Gargantext.Components.Nodes.Lists.Types hiding (here)
 import Gargantext.Components.Tab as Tab
-import Gargantext.Prelude (bind, pure, unit, ($), (<>))
+import Gargantext.Components.Table.Types (Params)
+import Gargantext.Prelude (bind, pure, unit, ($))
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType(..), Mode(..), TabSubType(..), TabType(..), modeTabType)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
-import Reactix.DOM.HTML as H
 import Record as Record
 import Record.Extra as RX
 import Toestand as T
@@ -70,33 +71,32 @@ ngramsViewCpt = here.component "ngramsView" cpt where
 
       path <- T.useBox $ NTC.initialPageParams props.session initialPath.corpusId [initialPath.listId] initialPath.tabType
       { listIds, nodeId, params } <- T.useLive T.unequal path
-      let path' = {
-          corpusId: nodeId
-        , limit: params.limit
-        , listId: fromMaybe defaultListId $ A.head listIds
-        , tabType: tabType
-        }
-      let chartParams = {
-          corpusId: path'.corpusId
-        , limit: Just path'.limit
-        , listId: path'.listId
-        , tabType: path'.tabType
-        }
 
-      pure $ R.fragment
-        ( charts chartParams tabNgramType
-        <> [ NT.mainNgramsTable { afterSync: afterSync chartsReload
-                                , boxes
-                                , cacheState
-                                , defaultListId
-                                , path
-                                , session
-                                , tabNgramType
-                                , tabType
-                                , withAutoUpdate: false
-                                } []
-           ]
-        )
+      pure $
+        R.fragment
+        [
+          ngramsView'
+          { mode
+          , boxes
+          , session
+          , params
+          , listIds
+          , nodeId
+          , corpusData: props.corpusData
+          } []
+        ,
+          NT.mainNgramsTable
+          { afterSync: afterSync chartsReload
+          , boxes
+          , cacheState
+          , defaultListId
+          , path
+          , session
+          , tabNgramType
+          , tabType
+          , withAutoUpdate: false
+          } []
+        ]
       where
         afterSync chartsReload _ = do
           case mNgramsType of
@@ -118,7 +118,56 @@ ngramsViewCpt = here.component "ngramsView" cpt where
                        , tabType
                        }
 
-        charts _params CTabTerms = [
+
+
+----------------
+
+
+-- @XXX re-render issue -> clone component
+type NgramsViewProps' =
+  ( mode          :: Mode
+  , boxes         :: Boxes
+  , session       :: Session
+  , listIds       :: Array Int
+  , params        :: Params
+  , nodeId        :: Int
+  , corpusData    :: CorpusData
+  )
+
+ngramsView' :: R2.Component NgramsViewProps'
+ngramsView' = R.createElement ngramsViewCpt'
+ngramsViewCpt' :: R.Memo NgramsViewProps'
+ngramsViewCpt' = R.memo' $ here.component "ngramsView_clone" cpt where
+  cpt { mode
+      , boxes
+      , session
+      , listIds
+      , params
+      , nodeId
+      , corpusData: { defaultListId }
+      } _ = do
+
+    let path' = {
+      corpusId: nodeId
+    , limit: params.limit
+    , listId: fromMaybe defaultListId $ A.head listIds
+    , tabType: tabType
+    }
+
+    let chartParams = {
+      corpusId: path'.corpusId
+    , limit: Just path'.limit
+    , listId: path'.listId
+    , tabType: path'.tabType
+    }
+
+    pure $
+
+      R.fragment $
+      charts chartParams tabNgramType
+
+    where
+      charts _params CTabTerms = [
           {-
           H.div {className: "row"}
                 [ H.div {className: "col-12 d-flex justify-content-center"}
@@ -147,10 +196,14 @@ ngramsViewCpt = here.component "ngramsView" cpt where
           ]
         , getChartFunction chartType $ { path: params, session }
         -}
-        ]
-        charts params _        = [ chart params mode ]
+      ]
+      charts params' _        = [ chart params' mode ]
 
-        chart path Authors    = pie     { boxes, path, session, onClick: Nothing, onInit: Nothing }
-        chart path Institutes = tree    { boxes, path, session, onClick: Nothing, onInit: Nothing }
-        chart path Sources    = bar     { boxes, path, session, onClick: Nothing, onInit: Nothing }
-        chart path Terms      = metrics { boxes, path, session, onClick: Nothing, onInit: Nothing }
+      chart path Authors    = pie     { boxes, path, session, onClick: Nothing, onInit: Nothing }
+      chart path Institutes = tree    { boxes, path, session, onClick: Nothing, onInit: Nothing }
+      chart path Sources    = bar     { boxes, path, session, onClick: Nothing, onInit: Nothing }
+      chart path Terms      = metrics { boxes, path, session, onClick: Nothing, onInit: Nothing }
+
+      tabType      = TabCorpus (TabNgramType tabNgramType)
+
+      tabNgramType = modeTabType mode
