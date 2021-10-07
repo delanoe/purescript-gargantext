@@ -124,6 +124,7 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
                                  , WOS
                                  , PresseRIS
                                  , Arbitrary
+                                 , ZIP
                                  ] CSV setFileType' show
                 ]
               ]
@@ -361,31 +362,28 @@ uploadFile session NodeList id JSON { mName, contents } = do
   task <- post session url body
   pure $ GT.AsyncTaskWithType { task, typ: GT.Form }
   -}
-uploadFile { contents, fileType: CSV, id, nodeType: NodeList, mName, session } = do
-  let url = GR.NodeAPI NodeList (Just id) $ GT.asyncTaskTypePath GT.ListCSVUpload
-  let body = [ Tuple "_wtf_data" (Just contents)
-             , Tuple "_wtf_filetype" (Just $ show NodeList)
-             , Tuple "_wtf_name" mName ]
-  eTask <- postWwwUrlencoded session url body
-  pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.ListCSVUpload }) <$> eTask
 uploadFile { contents, fileType, id, nodeType, mName, session } = do
   -- contents <- readAsText blob
-  eTask :: Either RESTError GT.AsyncTask <- postWwwUrlencoded session p bodyParams
+  eTask :: Either RESTError GT.AsyncTask <- postWwwUrlencoded session p body
   pure $ (\task -> GT.AsyncTaskWithType { task, typ }) <$> eTask
     --postMultipartFormData session p fileContents
   where
-    Tuple typ p = case nodeType of
-      Corpus   -> Tuple GT.CorpusFormUpload (GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.CorpusFormUpload)
-      Annuaire -> Tuple GT.UploadFile (GR.NodeAPI nodeType (Just id) "annuaire")
-      NodeList -> case fileType of
-        JSON -> Tuple GT.ListUpload (GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.ListUpload)
-        _    -> Tuple GT.UploadFile (GR.NodeAPI nodeType (Just id) "")
-      _        -> Tuple GT.UploadFile (GR.NodeAPI nodeType (Just id) "")
-
     bodyParams = [ Tuple "_wf_data"     (Just contents)
                  , Tuple "_wf_filetype" (Just $ show fileType)
                  , Tuple "_wf_name"      mName
                  ]
+    csvBodyParams = [ Tuple "_wtf_data" (Just contents)
+                    , Tuple "_wtf_filetype" (Just $ show NodeList)
+                    , Tuple "_wtf_name" mName ]
+
+    (typ /\ p /\ body) = case nodeType of
+      Corpus   -> GT.CorpusFormUpload /\ (GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.CorpusFormUpload) /\ bodyParams
+      Annuaire -> GT.UploadFile /\ (GR.NodeAPI nodeType (Just id) "annuaire") /\ bodyParams
+      NodeList -> case fileType of
+        JSON -> GT.ListUpload /\ (GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.ListUpload) /\ bodyParams
+        CSV  -> GT.ListCSVUpload /\ (GR.NodeAPI NodeList (Just id) $ GT.asyncTaskTypePath GT.ListCSVUpload) /\ csvBodyParams
+        _    -> GT.UploadFile /\ (GR.NodeAPI nodeType (Just id) "") /\ bodyParams
+      _        -> GT.UploadFile /\ (GR.NodeAPI nodeType (Just id) "") /\ bodyParams
 
 
 uploadArbitraryFile :: Session
