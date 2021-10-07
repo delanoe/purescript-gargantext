@@ -8,6 +8,7 @@ import Effect (Effect)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
 import Gargantext.Components.FolderView as FV
+import Gargantext.Components.GraphQL (graphQLTest)
 import Gargantext.Components.Lang (LandingLang(..))
 import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
@@ -81,6 +82,8 @@ homeLayoutCpt = here.component "homeLayout" cpt
           , H.div { className: "home-landing-data container1" }
             [ blocksRandomText' landingData ]
           , license
+
+          , graphQLTest {} []
           ]
         ] where
         click mBackend _ =
