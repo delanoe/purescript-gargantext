@@ -21,6 +21,7 @@ import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Category (CategoryQuery(..), putCategories)
 import Gargantext.Components.Category.Types (Category(..), decodeCategory, favCategory)
+import Gargantext.Components.DocsTable.Types (showSource)
 import Gargantext.Components.Search (Contact(..), Document(..), HyperdataRowContact(..), HyperdataRowDocument(..), SearchQuery, SearchResult(..), SearchResultTypes(..))
 import Gargantext.Components.Table as T
 import Gargantext.Components.Table.Types as T
@@ -245,7 +246,7 @@ doc2view ( Document { id
         ) = DocumentsView { id
                           , date
                           , title: title
-                          , source: fromMaybe "Source" source
+                          , source: showSource source
                           , score
                           , authors: fromMaybe "Authors" authors
                           , category: decodeCategory category

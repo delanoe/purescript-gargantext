@@ -15,7 +15,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
 import Gargantext.Components.Forest.Tree.Node.Tools (nodeText)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..), SubTreeOut(..))
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (RESTError, logRESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
@@ -74,7 +74,7 @@ subTreeViewCpt = here.component "subTreeView" cpt
                                       , tree
                                       } []  }
       where
-        errorHandler err = here.log2 "RESTError" err
+        errorHandler = logRESTError here "[subTreeView]"
 
 loadSubTree :: Array GT.NodeType -> Session -> Aff (Either RESTError FTree)
 loadSubTree nodetypes session = getSubTree session treeId nodetypes

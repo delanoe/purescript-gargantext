@@ -14,7 +14,7 @@ import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact'(..), ContactData', ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
 import Gargantext.Components.Nodes.Lists.Types as LT
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (RESTError, logRESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude
@@ -191,7 +191,7 @@ contactLayoutWithKeyCpt = here.component "contactLayoutWithKey" cpt where
                              , sidePanel: sidePanelTexts
                              } ] }
       where
-        errorHandler err = here.log2 "[contactLayoutWithKey] RESTError" err
+        errorHandler = logRESTError here "[contactLayoutWithKey]"
         onUpdateHyperdata :: T2.ReloadS -> HyperdataContact -> Effect Unit
         onUpdateHyperdata reload hd =
           launchAff_ $

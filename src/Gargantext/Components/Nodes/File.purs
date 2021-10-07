@@ -1,24 +1,23 @@
 module Gargantext.Components.Nodes.File where
 
-import Data.Generic.Rep (class Generic)
+import Gargantext.Prelude
+
 import Data.Either (Either)
 import Data.Eq.Generic (genericEq)
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Effect.Aff (Aff)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Simple.JSON as JSON
-
-import Gargantext.Prelude
-
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (RESTError, logRESTError)
 import Gargantext.Ends (toUrl)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (NodeType(..), NodeID)
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.File"
@@ -60,7 +59,7 @@ fileLayoutCpt = here.component "fileLayout" cpt where
               , path: nodeId
               , render: onLoad }
       where
-        errorHandler err = here.log2 "RESTError" err
+        errorHandler = logRESTError here "[fileLayout]"
         onLoad loaded = fileLayoutLoaded { loaded, nodeId, session }
 
 loadFile :: Session -> NodeID -> Aff (Either RESTError File)
