@@ -31,6 +31,8 @@ import Gargantext.Components.Category.Types (Star(..))
 import Gargantext.Components.DocsTable.DocumentFormCreation (documentFormCreation)
 import Gargantext.Components.DocsTable.Types (DocumentsView(..), Hyperdata(..), LocalUserScore, Query, Response(..), Year, sampleData)
 import Gargantext.Components.Nodes.Lists.Types as NT
+import Gargantext.Components.Nodes.Texts.Types (SidePanelTriggers)
+import Gargantext.Components.Score as GCS
 import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Table as TT
 import Gargantext.Components.Table.Types as TT
@@ -45,6 +47,7 @@ import Gargantext.Utils (sortWith, (?))
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParam, mQueryParamS, queryParam, queryParamS)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as GUT
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
@@ -462,13 +465,14 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
           (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentDocId = val })) sidePanel
     mCurrentDocId' <- T.useLive T.unequal mCurrentDocId
 
+    reload <- T.useBox GUT.newReload
     localCategories' <- T.useLive T.unequal localCategories
 
     pure $ TT.table
       { colNames
       , container: TT.defaultContainer
       , params
-      , rows: rows localCategories' mCurrentDocId'
+      , rows: rows reload localCategories' mCurrentDocId'
       , syncResetButton : [ H.div {} [] ]
       , totalRecords
       , wrapColElts
@@ -483,9 +487,9 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
           | otherwise = Routes.Document sid listId
         colNames = TT.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source", "Score" ]
         wrapColElts = const identity
-        rows localCategories' mCurrentDocId' = row <$> A.toUnfoldable documents
+        rows reload localCategories' mCurrentDocId' = row reload <$> A.toUnfoldable documents
           where
-            row dv@(DocumentsView r@{ _id, category }) =
+            row reload dv@(DocumentsView r@{ _id, category }) =
               { row:
                 TT.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
                             H.div { className: "" }
@@ -506,11 +510,17 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
                 -- TODO show date: Year-Month-Day only
                 , H.div { className: tClassName } [ R2.showText r.date ]
                 , H.div { className: tClassName }
-                        [ H.a { href: url frontends $ corpusDocument r._id, target: "_blank"}
+                        [ H.a { href: url frontends $ corpusDocument r._id, target: "_blank" }
                               [ H.text r.title ]
                         ]
                 , H.div { className: tClassName } [ H.text $ if r.source == "" then "Source" else r.source ]
-                , H.div {} [ H.text $ maybe "-" show r.ngramCount ]
+                -- , H.div {} [ H.text $ maybe "-" show r.score ]
+                , H.div { className: tClassName } [ GCS.scoreEl { docId: r._id
+                                                                , key: show nodeId <> "-" <> show r._id
+                                                                , nodeId
+                                                                , score: r.score
+                                                                , session
+                                                                , tableReload: reload } [] ]
                 ]
               , delete: true }
               where

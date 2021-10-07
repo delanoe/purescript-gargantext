@@ -12,6 +12,7 @@ import Gargantext.Prelude
 
 import Gargantext.Utils as GU
 import Gargantext.Utils.Argonaut (genericEnumDecodeJson, genericEnumEncodeJson, genericSumDecodeJson, genericSumEncodeJson)
+import Gargantext.Utils.Array as GUA
 import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Math as GUM
 
@@ -133,6 +134,11 @@ spec =
       let hash2 = Crypto.hash ["b","a"]
       hash1 `shouldEqual` hash2
 
-
-
-
+------------------------------------------------------------------------
+-- | Gargantext.Utils.Array tests
+    it "G.U.Array.range works correctly (include endpoint)" do
+      GUA.range 0 10 2 `shouldEqual` [0, 2, 4, 6, 8, 10]
+      GUA.range 0 10 5 `shouldEqual` [0, 5, 10]
+    it "G.U.Array.range works correctly (no endpoint)" do
+      GUA.range 0 11 2 `shouldEqual` [0, 2, 4, 6, 8, 10]
+      GUA.range 0 11 5 `shouldEqual` [0, 5, 10]
