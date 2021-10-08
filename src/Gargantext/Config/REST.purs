@@ -14,6 +14,7 @@ import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.MediaType.Common (applicationFormURLEncoded, applicationJSON, multipartFormData)
 import Data.Tuple (Tuple)
+import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Foreign as Foreign
@@ -42,6 +43,11 @@ instance Show RESTError where
 instance Eq RESTError where
   -- this is crude but we need it only because of useLoader
   eq _ _ = false
+
+logRESTError :: R2.Here -> String -> RESTError -> Effect Unit
+logRESTError here prefix (SendResponseError e) = here.log2 (prefix <> " SendResponseError ") e  -- TODO: No show
+logRESTError here prefix (ReadJSONError e) = here.log2 (prefix <> " ReadJSONError ") $ show e
+logRESTError here prefix (CustomError e) = here.log2 (prefix <> " CustomError ") $ e
 
 type AffRESTError a = Aff (Either RESTError a)
 

@@ -34,7 +34,7 @@ import Gargantext.Components.NgramsTable.Loader (useLoaderWithCacheAPI)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as TT
 import Gargantext.Components.Table.Types as TT
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (RESTError, logRESTError)
 import Gargantext.Hooks.Loader (useLoaderBox)
 import Gargantext.Routes (SessionRoute(..)) as R
 import Gargantext.Sessions (Session, get)
@@ -264,7 +264,7 @@ type PropsNoReload =
   | CommonProps
   )
 
-type Props = 
+type Props =
   ( reloadForest   :: T2.ReloadS
   , reloadRoot     :: T2.ReloadS
   | PropsNoReload )
@@ -275,13 +275,13 @@ loadedNgramsTableCpt :: R.Component PropsNoReload
 loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
   cpt props@{ path } _ = do
     searchQuery <- T.useFocused (_.searchQuery) (\a b -> b { searchQuery = a }) path
-    
+
     pure $ R.fragment $
       [ loadedNgramsTableHeader { searchQuery } []
       , loadedNgramsTableBody props [] ]
 
 type LoadedNgramsTableHeaderProps =
-  ( searchQuery :: T.Box SearchQuery ) 
+  ( searchQuery :: T.Box SearchQuery )
 
 loadedNgramsTableHeader :: R2.Component LoadedNgramsTableHeaderProps
 loadedNgramsTableHeader = R.createElement loadedNgramsTableHeaderCpt
@@ -500,9 +500,10 @@ displayRow { ngramsElement: NgramsElement {ngrams, root, list}
            , termListFilter
            , termSizeFilter } =
   (
-      isNothing root
+    -- isNothing root
     -- ^ Display only nodes without parents
-    && maybe true (_ == list) termListFilter
+    -- ^^ (?) allow child nodes to be searched (see #340)
+       maybe true (_ == list) termListFilter
     -- ^ and which matches the ListType filter.
     && ngramsChildren ^. at ngrams /= Just true
     -- ^ and which are not scheduled to be added already
@@ -562,7 +563,7 @@ mainNgramsTableCacheOnCpt = here.component "mainNgramsTableCacheOn" cpt where
       , path
       , tabNgramType
       , withAutoUpdate } _ = do
-    
+
     -- let path = initialPageParams session nodeId [defaultListId] tabType
 
     path' <- T.useLive T.unequal path
@@ -582,7 +583,7 @@ mainNgramsTableCacheOnCpt = here.component "mainNgramsTableCacheOn" cpt where
       , renderer: render
       }
   versionEndpoint { defaultListId, path: { nodeId, tabType, session } } _ = get session $ R.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
-  errorHandler err = here.log2 "[mainNgramsTable] RESTError" err
+  errorHandler = logRESTError here "[mainNgramsTable]"
   mkRequest :: PageParams -> GUC.Request
   mkRequest path@{ session } = GUC.makeGetRequest session $ url path
     where
@@ -616,7 +617,7 @@ mainNgramsTableCacheOffCpt = here.component "mainNgramsTableCacheOff" cpt where
                  , path
                  , render }
 
-  errorHandler err = here.log2 "[mainNgramsTable] RESTError" err
+  errorHandler = logRESTError here "[mainNgramsTable]"
 
   -- NOTE With cache off
   loader :: PageParams -> Aff (Either RESTError VersionedWithCountNgramsTable)
@@ -731,6 +732,3 @@ sumOccurrences nt = sumOccChildren mempty
 optps1 :: forall a. Show a => { desc :: String, mval :: Maybe a } -> R.Element
 optps1 { desc, mval } = H.option { value: value } [H.text desc]
   where value = maybe "" show mval
-
-
-

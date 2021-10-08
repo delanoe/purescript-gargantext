@@ -1,11 +1,17 @@
-module Gargantext.Utils.Array (max, min, push) where
+module Gargantext.Utils.Array (
+    max
+  , min
+  , push
+  , range) where
 
 import Data.Array as A
 import Data.Foldable (foldr)
+import Data.Int as DI
 import Data.Maybe (Maybe(..))
 import Data.Ord as Ord
 import Effect (Effect)
 import Effect.Uncurried (EffectFn2, runEffectFn2)
+import Math as Math
 
 import Gargantext.Prelude
 
@@ -26,3 +32,9 @@ min xs = foldr reducer (A.head xs) xs
   where
     reducer _ Nothing = Nothing
     reducer v (Just acc) = Just $ Ord.min acc v
+
+-- | Create an array containing a range of integers, with given step
+range :: Int -> Int -> Int -> Array Int
+range start end step = map (\i -> start + i*step) $ A.range 0 end'
+  where
+    end' = DI.round $ Math.floor $ (DI.toNumber $ end - start) / (DI.toNumber step)

@@ -26,7 +26,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile, uploadA
 import Gargantext.Components.Forest.Tree.Node.Action.WriteNodesDocuments (documentsFromWriteNodesReq)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (RESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
@@ -122,7 +122,7 @@ treeLoaderCpt = here.component "treeLoader" cpt where
           props = Record.merge common extra where
             common = RecordE.pick p :: Record Common
             extra = { reloadTree: p.reload, root, session, tree: tree' }
-        errorHandler err = here.log2 "[treeLoader] RESTError" err
+        errorHandler = logRESTError here "[treeLoader]"
 
 getNodeTree :: Session -> ID -> Aff (Either RESTError FTree)
 getNodeTree session nodeId = get session $ GR.NodeAPI GT.Tree (Just nodeId) ""
@@ -216,7 +216,7 @@ childLoaderCpt = here.component "childLoader" cpt where
               , path: cache
               , render: paint reload }
     where
-      errorHandler err = here.log2 "[childLoader] RESTError" err
+      errorHandler = logRESTError here "[childLoader]"
       fetch _ = getNodeTreeFirstLevel p.session p.id
       paint reload tree' = render (Record.merge base extra) where
         base = nodeProps { reload = reload }

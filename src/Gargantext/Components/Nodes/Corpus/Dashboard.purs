@@ -12,6 +12,7 @@ import Gargantext.Components.Nodes.Corpus (fieldsCodeEditor)
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
 import Gargantext.Components.Nodes.Dashboard.Types as DT
 import Gargantext.Components.Nodes.Types (FTFieldList(..), FTFieldsWithIndex(..), defaultField)
+import Gargantext.Config.REST (logRESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, discard, pure, read, show, unit, ($), (<$>), (<>), (==))
 import Gargantext.Sessions (Session, sessionId)
@@ -68,7 +69,7 @@ dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
                                             , onChange: onChange nodeId reload (DT.Hyperdata h)
                                             , session } [] }
       where
-        errorHandler err = here.log2 "[dashboardLayoutWithKey] RESTError" err
+        errorHandler = logRESTError here "[dashboardLayoutWithKey]"
         onChange :: NodeID -> T2.ReloadS -> DT.Hyperdata -> { charts :: Array P.PredefinedChart
                                                             , fields :: FTFieldList } -> Effect Unit
         onChange nodeId' reload (DT.Hyperdata h) { charts, fields } = do

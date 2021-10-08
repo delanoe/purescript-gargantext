@@ -659,6 +659,7 @@ data AsyncTaskType = AddNode
                    | GraphRecompute
                    | ListUpload
                    | ListCSVUpload  -- legacy v3 CSV upload for lists
+                   | ListZIPUpload
                    | Query
                    | UpdateNgramsCharts
                    | UpdateNode
@@ -679,6 +680,7 @@ asyncTaskTypePath CorpusFormUpload   = "add/form/async/"
 asyncTaskTypePath GraphRecompute     = "async/recompute/"
 asyncTaskTypePath ListUpload         = "add/form/async/"
 asyncTaskTypePath ListCSVUpload      = "csv/add/form/async/"
+asyncTaskTypePath ListZIPUpload      = "zip/add/form/async/"
 asyncTaskTypePath Query              = "query/"
 asyncTaskTypePath UpdateNgramsCharts = "ngrams/async/charts/update/"
 asyncTaskTypePath UpdateNode         = "update/"

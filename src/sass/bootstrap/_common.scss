@@ -1,7 +1,34 @@
 @use '../abstract/_members' as main;
+@use "sass:math" as math;
+
+///
+/// @TODO: create "base", "module", "component" SASS business folders
+///
+/// @TODO: More SASS structure (eg. exporting theme variables into component
+///        SASS files)
+///
+
+
+/// ############################################################################
+/// MODULES
+/// ############################################################################
+
+@mixin inputError() {
+  border-color: $danger;
+
+  &:focus, &:active {
+    border-color: $danger;
+    box-shadow: 0 0 0 1px $danger;
+  }
+}
+
+/// ############################################################################
+/// BASE
+/// ############################################################################
+
 
 /// Misc
-///--------------------------
+///-----------------------------------------------------------------------------
 
 .with-icon-font {
   font-family: ForkAwesome, $font-family-base;
@@ -9,10 +36,8 @@
 
 
 /// Tree
-///--------------------------
+///-----------------------------------------------------------------------------
 
-/// (?) @TODO: More SASS structure (eg. exporting theme variables into component
-///            SASS files)
 .forest-layout {
 
   @include main.right-handed {
@@ -59,4 +84,191 @@
 .tile-menu__popover {
   border-radius: $border-radius;
   background-color: $body-bg;
+}
+
+/// Form
+///-----------------------------------------------------------------------------
+
+/// We made the choice to let the "form-group" element purely declarative, as
+/// reality projected use cases are far too numerous. Making structural rules
+/// (ie. making specific UI Component sets) wouldn't be a best practice.
+.form-group {
+  $self: &;
+
+  position: relative;
+  margin-bottom: space-x(3);
+
+  &__label {
+    padding-bottom: space-x(0.5);
+
+    label {
+      font-weight: 600;
+      margin-bottom: initial; // reset Bootstrap "_reboot.scss"
+    }
+
+    &--sub {
+      color: $gray-800;
+      font-size: 14px;
+    }
+  }
+
+  &__field {
+    // (?) In most cases, we found that error directive integrated within
+    //     the "form-group__field" reach actually breaks the design when it
+    //     pops out
+    //     Hence the `position: absolute` rule, mostly avoiding this UI break
+    #{ $self }__error,
+    #{ $self }__success {
+      position: absolute;
+      overflow: hidden;
+      //   (below is the reversing process rule)
+      &--obtrusive {
+        position: static;
+        overflow: initial;
+      }
+    }
+  }
+}
+
+/// Managing error presence while using <form-group> component
+/// This design is based on Bootstrap 2 form management
+/// @link https://getbootstrap.com/2.3.2/base-css.html#Validation%20states
+.form-group--error {
+  label { color: $danger; }
+
+  .b-form-input { @include inputError; }
+
+}
+
+.form-group {
+
+  &__error,
+  &__success,
+  &__warning {
+    padding-top: 2px;
+    font-size: 12px;
+    padding-left: 0.75rem;
+  }
+
+  &__error   { color: $danger; }
+  &__success { color: $success; }
+  &__warning { color: $warning; }
+}
+
+.form-input {
+  // Based on "vue-bootstrap" implementation of SVG icon within the input
+  &--address {
+    padding-right: calc(1.5em + 0.75rem);
+    background-repeat: no-repeat;
+    background-size: calc(0.5em + 0.375rem) calc(0.5em + 0.375rem);
+    background-position: right calc(0.375em + 0.1875rem) center;
+    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M12 0c-4.198 0-8 3.403-8 7.602 0 4.198 3.469 9.21 8 16.398 4.531-7.188 8-12.2 8-16.398 0-4.199-3.801-7.602-8-7.602zm0 11c-1.657 0-3-1.343-3-3s1.343-3 3-3 3 1.343 3 3-1.343 3-3 3z"/></svg>');
+  }
+}
+
+/// ############################################################################
+/// COMPONENTS
+/// ############################################################################
+
+/// FormInput
+///-----------------------------------------------------------------------------
+
+.b-form-input {
+
+  &[type=password] {
+    letter-spacing: space-x(1);
+    font-weight: 700;
+  }
+}
+
+/// Modal
+///-----------------------------------------------------------------------------
+
+.b-modal {
+  $self: &;
+  $wrapper-margin: 1.75rem; // from "_modal.scss"
+
+  &--visible {
+    display: block;
+  }
+
+  &__content {
+    background-color: $modal-content-bg;
+    max-height: calc(100% - #{ $wrapper-margin * 2 } );
+    overflow: auto;
+  }
+
+  &__header {
+    background-color: $card-cap-bg;
+
+    &__content {
+      color: $primary;
+      font-size: 21px;
+    }
+  }
+
+  &__overlay {
+    width: 100%;
+    height: 100%;
+    background-color: mixAlpha($black, 50%);
+    position: absolute;
+
+    &--collapsible {
+      cursor: pointer;
+    }
+  }
+
+  // @at-root body.modal-open {
+    // overflow: hidden;
+  // }
+}
+
+/// Spinner
+///-----------------------------------------------------------------------------
+
+.b-spinner {
+  // regarding sizing, Bootstrap set a default `2rem ^ 2rem`
+  // (cf. "_spinners.scss")
+  font-size: inherit;
+}
+
+
+/// Button
+///-----------------------------------------------------------------------------
+
+
+.b-button {
+  $spinner-size: 20px;
+  $self: &;
+
+  @include clickable();
+
+  position: relative;
+
+  // (!) `translate` CSS modifiers won't work with bootstrap spinner
+  &__spinner {
+    position: absolute;
+    left: calc(50% - #{ math.div($spinner-size, 2) });
+    top: calc(50% - #{ math.div($spinner-size, 2) });
+    width: $spinner-size;
+    height: $spinner-size;
+  }
+
+  &--disabled,
+  &--deferred,
+  &--idled {
+    @include unclickable();
+  }
+
+  &--deferred {
+
+    #{ $self }__inner {
+      visibility: hidden;
+    }
+  }
+
+  // icon alignement
+  .b-icon {
+    vertical-align: text-top;
+  }
 }

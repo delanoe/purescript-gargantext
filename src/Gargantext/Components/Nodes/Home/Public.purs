@@ -1,22 +1,22 @@
 module Gargantext.Components.Nodes.Home.Public where
 
+import Gargantext.Prelude
+
 import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.String (take)
 import Effect.Aff (Aff)
+import Gargantext.Config (publicBackend)
+import Gargantext.Config.REST (RESTError, get, logRESTError)
+import Gargantext.Ends (backendUrl)
+import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.SimpleJSON as GUSJ
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
-
-import Gargantext.Config (publicBackend)
-import Gargantext.Config.REST (get, RESTError)
-import Gargantext.Ends (backendUrl)
-import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude
-import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.SimpleJSON as GUSJ
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Home.Public"
@@ -78,7 +78,7 @@ renderPublicCpt = here.component "renderPublic" cpt where
               , render:  loaded }
       where
         loaded publicData = publicLayout { publicData }
-        errorHandler err = here.log2 "RESTError" err
+        errorHandler = logRESTError here "[renderPublic]"
 
 publicLayout :: Record PublicDataProps -> R.Element
 publicLayout props = R.createElement publicLayoutCpt props []

@@ -19,28 +19,35 @@ import Data.Set as Set
 import Data.String as Str
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, Milliseconds(..), delay, launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (ComponentStatus(..))
 import Gargantext.Components.Category (rating)
 import Gargantext.Components.Category.Types (Star(..))
-import Gargantext.Components.DocsTable.Types (DocumentsView(..), Hyperdata(..), LocalUserScore, Query, Response(..), Year, sampleData)
+import Gargantext.Components.DocsTable.DocumentFormCreation (documentFormCreation)
+import Gargantext.Components.DocsTable.Types (DocumentsView(..), Hyperdata(..), LocalUserScore, Query, Response(..), Year, sampleData, showSource)
 import Gargantext.Components.Nodes.Lists.Types as NT
+import Gargantext.Components.Nodes.Texts.Types (SidePanelTriggers)
+import Gargantext.Components.Score as GCS
 import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Table as TT
 import Gargantext.Components.Table.Types as TT
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (RESTError, logRESTError)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, get, delete)
 import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), SidePanelState(..), TabSubType, TabType, TableResult, showTabType')
-import Gargantext.Utils (sortWith)
+import Gargantext.Utils (sortWith, (?))
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParam, mQueryParamS, queryParam, queryParamS)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as GUT
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
@@ -129,29 +136,82 @@ docViewCpt = here.component "docView" cpt where
       , params
       , query
       } _ = do
+    -- State
     cacheState' <- T.useLive T.unequal cacheState
     query' <- T.useLive T.unequal query
+    isDocumentModalVisibleBox <- T.useBox false
+    onDocumentCreationPending /\ onDocumentCreationPendingBox <-
+      R2.useBox' false
 
-    pure $ H.div { className: "doc-table-doc-view container1" }
-      [ R2.row
-        [ chart
-        , if showSearch then searchBar { query } [] else H.div {} []
-        , H.div {className: "col-md-12"}
-          [ pageLayout { boxes
-                       , cacheState
-                       , frontends
-                       , key: "docView-" <> (show cacheState')
-                       , listId
-                       , mCorpusId
-                       , nodeId
-                       , params
-                       , query: query'
-                       , session
-                       , sidePanel
-                       , tabType
-                       , totalRecords
-                       , yearFilter
-                       } [] ] ] ]
+    -- @toggleModalCallback
+    toggleModal <- pure $ const $
+      T.modify_ not isDocumentModalVisibleBox
+
+    -- @createDocumentCallback
+    -- @WIP: remote business for document creation
+    createDocumentCallback <- pure $ \fdata -> launchAff_ do
+
+      liftEffect $ T.write_ true onDocumentCreationPendingBox
+
+      delay $ Milliseconds 2000.0
+
+      liftEffect $ T.write_ false onDocumentCreationPendingBox
+
+    -- Render
+    pure $
+
+      R.fragment
+      [
+        H.div { className: "doc-table-doc-view container1" }
+        [ R2.row
+          [ chart
+          , if showSearch then searchBar { query } [] else H.div {} []
+          , H.div
+            { className: "col-md-12 row mb-3" }
+            [
+              H.div { className: "col-md-4" } []
+            ,
+              H.button
+              { className: "btn btn-light col-md-3"
+              , on: { click: toggleModal }
+              }
+              [
+                H.text "Add a document"
+              ]
+            ]
+          , H.div {className: "col-md-12"}
+            [ pageLayout { boxes
+                        , cacheState
+                        , frontends
+                        , key: "docView-" <> (show cacheState')
+                        , listId
+                        , mCorpusId
+                        , nodeId
+                        , params
+                        , query: query'
+                        , session
+                        , sidePanel
+                        , tabType
+                        , totalRecords
+                        , yearFilter
+                        } []
+            ]
+          ]
+        ]
+      ,
+        -- Document Creation Modal
+        B.baseModal
+        { isVisibleBox: isDocumentModalVisibleBox
+        , title: "Add a new document"
+        , hasCollapsibleBackground: false
+        }
+        [
+          documentFormCreation
+          { callback: createDocumentCallback
+          , status: onDocumentCreationPending ? Deferred $ Enabled
+          }
+        ]
+      ]
 
 type SearchBarProps =
   ( query :: T.Box Query )
@@ -324,7 +384,7 @@ pageLayoutCpt = here.component "pageLayout" cpt where
                                                                           , totalRecords = count }
                                                           , localCategories
                                                           , params: paramsS } []
-        let errorHandler err = here.log2 "[pageLayout] RESTError" err
+        let errorHandler = logRESTError here "[pageLayout]"
         useLoader { errorHandler
                   , path: path { params = paramsS' }
                   , loader
@@ -370,8 +430,8 @@ pagePaintCpt = here.component "pagePaintCpt" cpt
             case convOrderBy orderBy of
               Just DateAsc    -> sortWith \(DocumentsView { date })   -> date
               Just DateDesc   -> sortWith \(DocumentsView { date })   -> Down date
-              Just SourceAsc  -> sortWith \(DocumentsView { source }) -> Str.toLower source
-              Just SourceDesc -> sortWith \(DocumentsView { source }) -> Down $ Str.toLower source
+              Just SourceAsc  -> sortWith \(DocumentsView { source }) -> Str.toLower $ fromMaybe "" source
+              Just SourceDesc -> sortWith \(DocumentsView { source }) -> Down $ Str.toLower $ fromMaybe "" source
               Just TitleAsc   -> sortWith \(DocumentsView { title })  -> Str.toLower title
               Just TitleDesc  -> sortWith \(DocumentsView { title })  -> Down $ Str.toLower title
               _               -> identity -- the server ordering is enough here
@@ -405,13 +465,14 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
           (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentDocId = val })) sidePanel
     mCurrentDocId' <- T.useLive T.unequal mCurrentDocId
 
+    reload <- T.useBox GUT.newReload
     localCategories' <- T.useLive T.unequal localCategories
 
     pure $ TT.table
       { colNames
       , container: TT.defaultContainer
       , params
-      , rows: rows localCategories' mCurrentDocId'
+      , rows: rows reload localCategories' mCurrentDocId'
       , syncResetButton : [ H.div {} [] ]
       , totalRecords
       , wrapColElts
@@ -426,9 +487,9 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
           | otherwise = Routes.Document sid listId
         colNames = TT.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source", "Score" ]
         wrapColElts = const identity
-        rows localCategories' mCurrentDocId' = row <$> A.toUnfoldable documents
+        rows reload localCategories' mCurrentDocId' = row reload <$> A.toUnfoldable documents
           where
-            row dv@(DocumentsView r@{ _id, category }) =
+            row reload dv@(DocumentsView r@{ _id, category }) =
               { row:
                 TT.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
                             H.div { className: "" }
@@ -449,10 +510,10 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
                 -- TODO show date: Year-Month-Day only
                 , H.div { className: tClassName } [ R2.showText r.date ]
                 , H.div { className: tClassName }
-                        [ H.a { href: url frontends $ corpusDocument r._id, target: "_blank"}
+                        [ H.a { href: url frontends $ corpusDocument r._id, target: "_blank" }
                               [ H.text r.title ]
                         ]
-                , H.div { className: tClassName } [ H.text $ if r.source == "" then "Source" else r.source ]
+                , H.div { className: tClassName } [ H.text $ showSource r.source ]
                 , H.div {} [ H.text $ maybe "-" show r.ngramCount ]
                 ]
               , delete: true }

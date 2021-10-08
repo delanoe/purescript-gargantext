@@ -22,6 +22,7 @@ import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Components.Nodes.Texts.Types as TT
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table
+import Gargantext.Config.REST (logRESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (WithSession, Session, getCacheState)
@@ -117,7 +118,7 @@ textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
                              }
                       ] }
       where
-        errorHandler err = here.log2 "[textsLayoutWithKey] RESTError" err
+        errorHandler = logRESTError here "[textsLayoutWithKey]"
         afterCacheStateChange cacheState = do
           launchAff_ $ clearCache unit
           -- TODO

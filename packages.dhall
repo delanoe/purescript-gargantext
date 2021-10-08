@@ -201,6 +201,11 @@ let additions =
         , repo = "https://github.com/mjepronk/purescript-web-url"
         , version = "v1.0.2"
         }
+      , convertable-options =
+        { dependencies = [ "console", "effect", "maybe", "record" ]
+        , repo = "https://github.com/natefaubion/purescript-convertable-options"
+        , version = "v1.0.0"
+        }
       }
 
 in  upstream // overrides // additions

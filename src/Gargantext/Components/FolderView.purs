@@ -8,11 +8,6 @@ import Data.Traversable (traverse_)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Record as Record
-import Toestand as T
-
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
@@ -30,7 +25,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.WriteNodesDocuments (docume
 import Gargantext.Components.Forest.Tree.Node.Box (nodePopupView)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), ID, fTreeID)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (RESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Ordering, Unit, bind, compare, discard, pure, unit, void, ($), (<$>), (<>))
@@ -41,6 +36,10 @@ import Gargantext.Types as GT
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Toestand as T
 
 foreign import back :: Effect Unit
 foreign import link :: String -> Effect Unit
@@ -76,7 +75,7 @@ folderViewCpt = here.component "folderViewCpt" cpt where
                                                    , session
                                                    , setPopoverRef } [] }
     where
-      errorHandler err = here.log2 "[folderView] RESTError" err
+      errorHandler = logRESTError here "[folderView]"
 
 type FolderViewProps =
   ( backFolder    :: Boolean

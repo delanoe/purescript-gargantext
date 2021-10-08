@@ -2,29 +2,23 @@ module Gargantext.Components.Nodes.Annuaire
  -- ( annuaire )
  where
 
+import Gargantext.Prelude
+
 import Data.Array as A
 import Data.Either (Either)
-import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.Sequence as Seq
 import Data.Symbol (SProxy(..))
 import Effect.Aff (Aff, launchAff_)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Record as Record
-import Simple.JSON as JSON
-import Toestand as T
-
-import Gargantext.Prelude
-
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types as CT
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table (defaultContainer, initialParams, makeRow, table, tableHeaderLayout) as TT
 import Gargantext.Components.Table.Types (ColumnName(..), Params) as TT
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (RESTError, logRESTError)
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
@@ -32,6 +26,11 @@ import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId, get)
 import Gargantext.Types (NodeType(..), AffETableResult, TableResult)
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Simple.JSON as JSON
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Annuaire"
@@ -84,7 +83,7 @@ annuaireLayoutWithKeyCpt = here.component "annuaireLayoutWithKey" cpt where
               , path: path'
               , render: \info -> annuaire { frontends, info, path, session } }
     where
-      errorHandler err = here.log2 "[annuaireLayoutWithKey] RESTError" err
+      errorHandler = logRESTError here "[annuaireLayoutWithKey]"
 
 type AnnuaireProps =
   ( session   :: Session
@@ -151,7 +150,7 @@ pageLayoutCpt = here.component "pageLayout" cpt
                 , path: pagePath'
                 , render: \table -> page { session, table, frontends, pagePath } }
       where
-        errorHandler err = here.log2 "[pageLayout] RESTError" err
+        errorHandler = logRESTError here "[pageLayout]"
 
 type PageProps = 
   ( session   :: Session

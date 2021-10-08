@@ -3,28 +3,24 @@ module Gargantext.Components.Nodes.Corpus.Document where
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect.Aff (Aff)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Record as Record
-import Toestand as T
-
-import Gargantext.Prelude (bind, pure, show, unit, ($), (<>), (<$>), (<<<))
-
+import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
 import Gargantext.Components.AutoUpdate (autoUpdate)
-import Gargantext.Components.Search (SearchType(..))
+import Gargantext.Components.NgramsTable.Core (CoreAction(..), Versioned(..), addNewNgramA, applyNgramsPatches, coreDispatch, loadNgramsTable, replace, setTermListA, syncResetButtons, findNgramRoot)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus.Document.Types (DocPath, Document(..), LoadedData, NodeDocument, Props, State, initialState)
-import Gargantext.Components.NgramsTable.Core
-  ( CoreAction(..), Versioned(..), addNewNgramA, applyNgramsPatches, coreDispatch, loadNgramsTable
-  , replace, setTermListA, syncResetButtons, findNgramRoot )
-import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Components.Search (SearchType(..))
+import Gargantext.Config.REST (RESTError, logRESTError)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude (bind, pure, show, unit, ($), (<>), (<$>), (<<<))
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, sessionId)
 import Gargantext.Types (CTabNgramType(..), ListId, NodeID, NodeType(..), TabSubType(..), TabType(..), ScoreType(..))
 import Gargantext.Utils as U
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Record as Record
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Document"
@@ -155,7 +151,7 @@ documentLayoutWithKeyCpt = here.component "documentLayoutWithKey" cpt
       where
         tabType = TabDocument (TabNgramType CTabTerms)
         path = { listIds: [listId], mCorpusId, nodeId, session, tabType }
-        errorHandler err = here.log2 "[documentLayoutWithKey] RESTError" err
+        errorHandler = logRESTError here "[documentLayoutWithKey]"
 
 ------------------------------------------------------------------------
 
