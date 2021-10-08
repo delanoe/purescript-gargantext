@@ -2,6 +2,7 @@ module Gargantext.Components.GraphQL where
 
 import Gargantext.Prelude
 
+import Affjax.RequestBody (RequestBody(..))
 import Data.Argonaut.Decode (class DecodeJson)
 import Data.Maybe (Maybe(..), maybe)
 import Effect (Effect)
@@ -33,13 +34,27 @@ graphQLTestCpt = here.component "graphQLTest" cpt where
       launchAff_ $ do
         { user } <-
           queryGql "get user"
-            { user: { name: "x" } =>> { name, user_id } }
+            { user: { user_id: 1 } =>> { userLight_id
+                                       , userLight_username
+                                       , userLight_password
+                                       , userLight_email } }
         liftEffect $ here.log2 "[graphQLTest] user" user
         liftEffect $ T.write_ (Just user) userBox
     
-    pure $ H.div { className: "col-12 d-flex justify-content-center" }
-      [ H.h1 {} [ H.text "graph ql test" ]
-      , H.p {} [ H.text $ showMUser user' ]
+    pure $ R2.row
+      --[ H.div { className: "col-12 d-flex justify-content-center" }
+      [ R2.col 12
+        [ R2.row
+          [ R2.col 12
+            [ H.h1 {} [ H.text "graph ql test" ]
+            ]
+          ]
+        , R2.row
+          [ R2.col 12
+            [ H.p {} [ H.text $ showMUser user' ]
+            ]
+          ]
+        ]
       ]
 
 queryGql ::
@@ -51,19 +66,27 @@ queryGql = query_ "http://localhost:8008/gql" (Proxy :: Proxy Schema)
 
 -- Schema
 type Schema
-  = { user :: { name :: String } ==> User
+  = { user :: { user_id :: Int } ==> User
     }
 
 type User
-  = { name    :: String
-    , user_id :: Int
+  = { userLight_id :: Int
+    , userLight_username :: String
+    , userLight_password :: String
+    , userLight_email :: String
     }
-showUser { name, user_id } = name <> " :: " <> show user_id
+showUser { userLight_id
+         , userLight_username
+         , userLight_password
+         , userLight_email } = "[" <> show userLight_id <> "] " <> userLight_username <> " :: " <> userLight_email
 showMUser u = maybe "" showUser u
 
 -- Symbols 
-name :: Proxy "name"
-name = Proxy
-
-user_id :: Proxy "user_id"
-user_id = Proxy
+userLight_id :: Proxy "userLight_id"
+userLight_id = Proxy
+userLight_username :: Proxy "userLight_username"
+userLight_username = Proxy
+userLight_password :: Proxy "userLight_password"
+userLight_password = Proxy
+userLight_email :: Proxy "userLight_email"
+userLight_email = Proxy
