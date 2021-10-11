@@ -1,5 +1,5 @@
 module Gargantext.Hooks.LinkHandler
-  ( useLinkHandler
+  ( Methods, useLinkHandler
   , goToRoute, goToURL, goToPreviousPage
   ) where
 
