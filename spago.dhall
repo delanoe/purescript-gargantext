@@ -19,6 +19,7 @@ to generate this file without the comments in this block.
   , "argonaut-codecs"
   , "argonaut-core"
   , "arrays"
+  , "b64"
   , "bifunctors"
   , "colors"
   , "console"

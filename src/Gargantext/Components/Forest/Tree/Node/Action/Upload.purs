@@ -2,12 +2,13 @@ module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
 import Gargantext.Prelude
 
-import Data.Either (Either, fromRight')
+import Data.Either (Either(..), fromRight')
 import Data.Eq.Generic (genericEq)
 import Data.Foldable (intercalate)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe, isNothing)
 import Data.Newtype (class Newtype)
+import Data.String.Base64 as B64
 import Data.String.Regex as DSR
 import Data.String.Regex.Flags as DSRF
 import Data.Tuple (Tuple(..))
@@ -193,7 +194,6 @@ uploadButtonCpt = here.component "uploadButton" cpt
       let disabled = isNothing mFile' || onPending
 
       pure $
-
         H.div
         { className: "action-upload-button" }
         [
@@ -368,7 +368,12 @@ uploadFile { contents, fileType, id, nodeType, mName, session } = do
   pure $ (\task -> GT.AsyncTaskWithType { task, typ }) <$> eTask
     --postMultipartFormData session p fileContents
   where
-    bodyParams = [ Tuple "_wf_data"     (Just contents)
+    data' = case fileType of
+      ZIP -> case B64.btoa contents of
+                  Left _err -> Nothing
+                  Right dd -> Just dd
+      _   -> Just contents
+    bodyParams = [ Tuple "_wf_data"     data'
                  , Tuple "_wf_filetype" (Just $ show fileType)
                  , Tuple "_wf_name"      mName
                  ]
