@@ -36,9 +36,9 @@ searchInputCpt :: R.Component SearchInputProps
 searchInputCpt = here.component "searchInput" cpt
   where
     cpt { searchQuery } _ = do
-      pure $ R2.row [
-        H.div { className: "col-12" } [
-          H.div { className: "input-group" }
+      pure $ R2.row
+        [ H.div { className: "col-12" }
+          [ H.div { className: "input-group" }
             [ searchButton { searchQuery } []
             , searchFieldInput { searchQuery } []
             ]
