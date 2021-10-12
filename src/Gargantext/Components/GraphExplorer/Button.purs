@@ -17,7 +17,7 @@ import Effect.Now as EN
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadArbitraryDataURL)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadArbitraryData)
 import Gargantext.Components.GraphExplorer.API (cloneGraph)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.GraphExplorer.Utils as GEU
@@ -99,7 +99,7 @@ cameraButton { id
           case eClonedGraphId of
             Left err -> liftEffect $ log2 "[cameraButton] RESTError" err
             Right clonedGraphId -> do
-              eRet <- uploadArbitraryDataURL session clonedGraphId (Just $ nowStr <> "-" <> "screenshot.png") screen
+              eRet <- uploadArbitraryData session clonedGraphId (Just $ nowStr <> "-" <> "screenshot.png") screen
               case eRet of
                 Left err -> liftEffect $ log2 "[cameraButton] RESTError" err
                 Right _ret -> do

@@ -2,13 +2,12 @@ module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
 import Gargantext.Prelude
 
-import Data.Either (Either(..), fromRight')
+import Data.Either (Either, fromRight')
 import Data.Eq.Generic (genericEq)
 import Data.Foldable (intercalate)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), fromJust, fromMaybe, isNothing)
 import Data.Newtype (class Newtype)
-import Data.String.Base64 as B64
 import Data.String.Regex as DSR
 import Data.String.Regex.Flags as DSRF
 import Data.Tuple (Tuple(..))
@@ -18,7 +17,7 @@ import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Forest.Tree.Node.Action (Props)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..), readUFBAsText)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..), readUFBAsBase64, readUFBAsText)
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe, panel)
 import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Components.ListSelection as ListSelection
@@ -232,6 +231,11 @@ uploadButtonCpt = here.component "uploadButton" cpt
             case fileType' of
               Arbitrary ->
                 dispatch $ UploadArbitraryFile (Just name) blob selection'
+              ZIP -> do
+                liftEffect $ here.log "[uploadButton] reading base64"
+                contents <- readUFBAsBase64 blob
+                liftEffect $ here.log "[uploadButton] base64 read"
+                dispatch $ UploadFile nodeType fileType' (Just name) contents selection'
               _ -> do
                 contents <- readUFBAsText blob
                 dispatch $ UploadFile nodeType fileType' (Just name) contents selection'
@@ -368,12 +372,7 @@ uploadFile { contents, fileType, id, nodeType, mName, session } = do
   pure $ (\task -> GT.AsyncTaskWithType { task, typ }) <$> eTask
     --postMultipartFormData session p fileContents
   where
-    data' = case fileType of
-      ZIP -> case B64.btoa contents of
-                  Left _err -> Nothing
-                  Right dd -> Just dd
-      _   -> Just contents
-    bodyParams = [ Tuple "_wf_data"     data'
+    bodyParams = [ Tuple "_wf_data"     (Just contents)
                  , Tuple "_wf_filetype" (Just $ show fileType)
                  , Tuple "_wf_name"      mName
                  ]
@@ -398,14 +397,14 @@ uploadArbitraryFile :: Session
                     -> Aff (Either RESTError GT.AsyncTaskWithType)
 uploadArbitraryFile session id {mName, blob: UploadFileBlob blob} selection = do
     contents <- readAsDataURL blob
-    uploadArbitraryDataURL session id mName contents
+    uploadArbitraryData session id mName contents
 
-uploadArbitraryDataURL :: Session
-                       -> ID
-                       -> Maybe String
-                       -> String
-                       -> Aff (Either RESTError GT.AsyncTaskWithType)
-uploadArbitraryDataURL session id mName contents' = do
+uploadArbitraryData :: Session
+                    -> ID
+                    -> Maybe String
+                    -> String
+                    -> Aff (Either RESTError GT.AsyncTaskWithType)
+uploadArbitraryData session id mName contents' = do
     let re = fromRight' (\_ -> unsafeCrashWith "Unexpected Left") $ DSR.regex "data:.*;base64," DSRF.noFlags
         contents = DSR.replace re "" contents'
     eTask :: Either RESTError GT.AsyncTask <- postWwwUrlencoded session p (bodyParams contents)
