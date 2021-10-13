@@ -28,11 +28,15 @@ handleRESTError _ (Right task) handler = handler task
 handleErrorInAsyncProgress :: T.Box (Array FrontendError)
                            -> AsyncProgress
                            -> Effect Unit
-handleErrorInAsyncProgress errors (AsyncProgress { status: IsFinished, log }) = do
-  T.modify_ (A.cons $ FStringError { error }) errors
+handleErrorInAsyncProgress errors ap@(AsyncProgress { status: IsFailure }) = do
+  T.modify_ (A.cons $ FStringError { error: concatErrors ap }) errors
+handleErrorInAsyncProgress errors ap@(AsyncProgress { status: IsFinished }) = do
+  T.modify_ (A.cons $ FStringError { error: concatErrors ap }) errors
+handleErrorInAsyncProgress _ _ = pure unit
+
+concatErrors :: AsyncProgress -> String
+concatErrors (AsyncProgress { log }) = foldl eventsErrorMessage "" log
   where
-    error = foldl eventsErrorMessage "" log
     eventsErrorMessage acc (AsyncTaskLog { events }) = (foldl eventErrorMessage "" events) <> "\n" <> acc
     eventErrorMessage acc (AsyncEvent { level: "ERROR", message }) = message <> "\n" <> acc
     eventErrorMessage acc _ = acc
-handleErrorInAsyncProgress _ _ = pure unit
