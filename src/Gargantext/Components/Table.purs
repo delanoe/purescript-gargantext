@@ -64,7 +64,7 @@ tableHeaderLayoutCpt = here.component "tableHeaderLayout" cpt
       cacheState' <- T.useLive T.unequal cacheState
 
       pure $ R.fragment
-        [ R2.row [FV.backButton]
+        [ R2.row [FV.backButton {} []]
         ,
           R2.row
           [ H.div {className: "col-md-3"} [ H.h3 {} [H.text title] ]
