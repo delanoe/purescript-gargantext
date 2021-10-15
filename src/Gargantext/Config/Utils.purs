@@ -30,8 +30,13 @@ handleErrorInAsyncProgress :: T.Box (Array FrontendError)
                            -> Effect Unit
 handleErrorInAsyncProgress errors ap@(AsyncProgress { status: IsFailure }) = do
   T.modify_ (A.cons $ FStringError { error: concatErrors ap }) errors
-handleErrorInAsyncProgress errors ap@(AsyncProgress { status: IsFinished }) = do
-  T.modify_ (A.cons $ FStringError { error: concatErrors ap }) errors
+handleErrorInAsyncProgress errors ap@(AsyncProgress { log, status: IsFinished }) = do
+  if countFailed > 0 then
+    T.modify_ (A.cons $ FStringError { error: concatErrors ap }) errors
+  else
+    pure unit
+  where
+    countFailed = foldl (+) 0 $ (\(AsyncTaskLog { failed }) -> failed) <$> log
 handleErrorInAsyncProgress _ _ = pure unit
 
 concatErrors :: AsyncProgress -> String
