@@ -133,7 +133,7 @@ divDropdownLeftCpt = here.component "divDropdownLeft" cpt
               , text  : "Source Code Documentation"
               }
       , LiNav { title : "API documentation"
-              , href  : "https://v4.gargantext.org/swagger-ui"
+              , href  : "https://cnrs.gargantext.org/swagger-ui"
               , icon  : "fa fa-code-fork"
               , text  : "API documentation"
               }
