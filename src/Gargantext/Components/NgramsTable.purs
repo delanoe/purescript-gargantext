@@ -83,7 +83,7 @@ setTermListSetA ngramsTable ns new_list =
     f n _unit = NgramsPatch { patch_list, patch_children: mempty }
       where
         cur_list = ngramsTable ^? at n <<< _Just <<< _NgramsRepoElement <<< _list
-        patch_list = maybe mempty (\c -> replace c new_list) cur_list
+        patch_list = maybe mempty (replace new_list) cur_list
     toMap :: forall a. Set a -> Map a Unit
     toMap = unsafeCoerce
     -- TODO https://github.com/purescript/purescript-ordered-collections/pull/21
@@ -213,7 +213,8 @@ tableContainerCpt { dispatch
                                           , ngramsEdit
                                           }
                    , H.button { className: "btn btn-primary"
-                              , on: {click: (const $ dispatch AddTermChildren)}
+                              , on: {click: (const $ do
+                                               dispatch AddTermChildren)}
                               } [H.text "Save"]
                    , H.button { className: "btn btn-primary"
                               , on: {click: (const $ dispatch $ SetParentResetChildren Nothing)}
@@ -471,17 +472,27 @@ mkDispatch { filteredRows
             s { ngramsSelection = Set.empty :: Set NgramsTerm }
           else
             s { ngramsSelection = selectNgramsOnFirstPage filteredRows }
-    performAction AddTermChildren =
+    performAction AddTermChildren = do
       case ngramsParent of
         Nothing ->
           -- impossible but harmless
           pure unit
         Just parent -> do
+          here.log2 "[performAction] AddTermChildren, parent" parent
           let pc = patchSetFromMap ngramsChildren
               pe = NgramsPatch { patch_list: mempty, patch_children: pc }
               pt = singletonNgramsTablePatch parent pe
           T.modify_ (setParentResetChildren Nothing) state
-          commitPatch pt state
+          here.log2 "[performAction] pt" pt
+          let ppt = case (A.head $ Set.toUnfoldable $ Map.keys ngramsChildren) of
+                Nothing -> mempty
+                Just h  ->
+                  let pp = NgramsPatch { patch_list: mempty
+                                       , patch_children: patchSetFromMap $ Map.mapMaybe (\v -> Just $ not v) ngramsChildren }
+                  in
+                  singletonNgramsTablePatch h pp
+          here.log2 "[performAction] pt with patchSetFromMap" $ pt <> ppt
+          commitPatch (pt <> ppt) state
     performAction (CoreAction a) = coreDispatch path state a
 
 
