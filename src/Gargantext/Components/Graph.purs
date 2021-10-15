@@ -367,7 +367,7 @@ forceAtlas2Settings =
   , hideEdgesOnMove                : true
   , includeHiddenEdges             : false
   , includeHiddenNodes             : true
-  , iterationsPerRender            : 50.0 -- 10.0
+  , iterationsPerRender            : 100.0 -- 10.0
   , linLogMode                     : false  -- false
   , outboundAttractionDistribution : false
   , scalingRatio                   : 1000.0
