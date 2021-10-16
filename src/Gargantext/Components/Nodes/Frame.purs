@@ -105,7 +105,7 @@ frameLayoutViewCpt = here.component "frameLayoutView" cpt
             Just url -> pure $ nodeFrameVisio { frame_id, reload, url }
         _              ->
           pure $ H.div{} [
-            FV.backButton
+            FV.backButton {} []
             , H.div { className : "frame"
                     , rows: "100%,*" }
               [ -- H.script { src: "https://visio.gargantext.org/external_api.js"} [],

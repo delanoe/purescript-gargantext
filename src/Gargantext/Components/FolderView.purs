@@ -21,15 +21,15 @@ import Gargantext.Components.Forest.Tree.Node.Action.Share as Share
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Update (updateRequest)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadArbitraryFile, uploadFile)
-import Gargantext.Components.Forest.Tree.Node.Action.WriteNodesDocuments (documentsFromWriteNodesReq)
 import Gargantext.Components.Forest.Tree.Node.Box (nodePopupView)
-import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), ID, fTreeID)
+import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
 import Gargantext.Config.REST (RESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
+import Gargantext.Hooks.LinkHandler (Methods, useLinkHandler)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Ordering, Unit, bind, compare, discard, pure, unit, void, ($), (<$>), (<>))
-import Gargantext.Routes (AppRoute(Home), SessionRoute(..), appPath, nodeTypeAppRoute)
+import Gargantext.Routes (AppRoute(Home), SessionRoute(..), nodeTypeAppRoute)
 import Gargantext.Sessions (Session, get, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Types as GT
@@ -40,9 +40,6 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
 import Toestand as T
-
-foreign import back :: Effect Unit
-foreign import link :: String -> Effect Unit
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.FolderView"
@@ -98,9 +95,10 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
       , reload
       , session
       , setPopoverRef } _ = do
+    linkHandlers <- useLinkHandler
     let foldersS = A.sortBy sortFolders folders
     let backHome = isBackHome nodeType
-    let parent = makeParentFolder parentId session backFolder backHome
+    let parent = makeParentFolder linkHandlers parentId session backFolder backHome
     let children = makeFolderElements foldersS { boxes, nodeId, reload, session, setPopoverRef }
 
     pure $ H.div {className: "fv folders"} $ parent <> children
@@ -117,18 +115,18 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
                                                           , style: FolderChild
                                                           , text: node.name } []
 
-  makeParentFolder :: Maybe Int -> Session -> Boolean -> Boolean -> Array R.Element
-  makeParentFolder (Just parentId) session _ _ =
+  makeParentFolder :: Record Methods -> Maybe Int -> Session -> Boolean -> Boolean -> Array R.Element
+  makeParentFolder _ (Just parentId) session _ _ =
     -- FIXME: The NodeType here should not be hardcoded to FolderPrivate but we currently can't get the actual NodeType
     -- without performing another API call. Also parentId is never being returned by this API even when it clearly exists
     [ folderSimple {style: FolderUp, text: "..", nodeId: parentId, nodeType: GT.FolderPrivate, session: session} [] ]
-  makeParentFolder Nothing _ _ true = [ H.a {className: "btn btn-primary", href: appPath Home} [ H.i { className: "fa fa-folder-open" } []
+  makeParentFolder linkHandlers Nothing _ _ true = [ H.button {className: "btn btn-primary", on: { click: \_ -> linkHandlers.goToRoute Home}} [ H.i { className: "fa fa-folder-open" } []
                                                                    , H.br {}
                                                                    , H.text ".."] ]
-  makeParentFolder Nothing _ true _ = [ H.button {className: "btn btn-primary", on: { click: back } }  [ H.i { className: "fa fa-folder-open" } []
+  makeParentFolder linkHandlers Nothing _ true _ = [ H.button {className: "btn btn-primary", on: { click: \_ -> linkHandlers.goToPreviousPage } }  [ H.i { className: "fa fa-folder-open" } []
                                                                    , H.br {}
                                                                    , H.text ".."] ]
-  makeParentFolder Nothing _ _ _ = []
+  makeParentFolder _ Nothing _ _ _ = []
 
 
   sortFolders :: FTree -> FTree -> Ordering
@@ -156,9 +154,10 @@ folderSimple = R.createElement folderSimpleCpt
 folderSimpleCpt :: R.Component FolderSimpleProps
 folderSimpleCpt = here.component "folderSimpleCpt" cpt where
   cpt {style, text, nodeId, session, nodeType} _ = do
+    { goToRoute } <- useLinkHandler
     let sid = sessionId session
-    pure $ H.a { className: "btn btn-primary"
-               , href: "/#/" <> getFolderPath nodeType sid nodeId }
+    pure $ H.button { className: "btn btn-primary"
+               , on: {click: \_ -> goToRoute $ getFolderPath nodeType sid nodeId} }
       [ H.i { className: icon style nodeType } []
       , H.br {}
       , H.text text ]
@@ -167,8 +166,8 @@ folderSimpleCpt = here.component "folderSimpleCpt" cpt where
   icon FolderUp _ = "fa fa-folder-open"
   icon _ nodeType = GT.fldr nodeType false
 
-  getFolderPath :: GT.NodeType -> GT.SessionId -> Int -> String
-  getFolderPath nodeType sid nodeId = appPath $ fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
+  getFolderPath :: GT.NodeType -> GT.SessionId -> Int -> AppRoute
+  getFolderPath nodeType sid nodeId = fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
 
 type FolderProps =
   ( boxes         :: Boxes
@@ -194,6 +193,7 @@ folderCpt = here.component "folderCpt" cpt where
     let sid = sessionId session
     let dispatch a = performAction a { boxes, nodeId, parentId, reload, session, setPopoverRef }
     popoverRef <- R.useRef null
+    { goToRoute } <- useLinkHandler
 
     R.useEffect' $ do
         R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
@@ -210,7 +210,7 @@ folderCpt = here.component "folderCpt" cpt where
               popOverIcon
               , mNodePopupView (Record.merge props { dispatch }) (onPopoverClose popoverRef)
               ]]
-      , H.button {on: {click: link ("/#/" <> getFolderPath nodeType sid nodeId) }, className: "btn btn-primary fv btn" } [
+      , H.button {on: {click: \_ -> goToRoute $ getFolderPath nodeType sid nodeId }, className: "btn btn-primary fv btn" } [
           H.i {className: icon style nodeType} []
         , H.br {}
         , H.text text]]
@@ -220,8 +220,8 @@ folderCpt = here.component "folderCpt" cpt where
   icon FolderUp _ = "fa fa-folder-open"
   icon _ nodeType = GT.fldr nodeType false
 
-  getFolderPath :: GT.NodeType -> GT.SessionId -> Int -> String
-  getFolderPath nodeType sid nodeId = appPath $ fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
+  getFolderPath :: GT.NodeType -> GT.SessionId -> Int -> AppRoute
+  getFolderPath nodeType sid nodeId = fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
 
   onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
 
@@ -240,14 +240,20 @@ folderCpt = here.component "folderCpt" cpt where
                                            , session: props.session
                                            }
 
-backButton :: R.Element
-backButton =
-  H.button {
-    className: "btn btn-primary"
-  , on: {click: back}
-  } [
-    H.i { className: "fa fa-arrow-left", title: "Previous view"} []
-  ]
+backButton :: R2.Component ()
+backButton = R.createElement backButtonCpt
+backButtonCpt :: R.Component ()
+backButtonCpt = R.hooksComponent "backButton" cpt where
+  cpt _ _ = do
+    { goToPreviousPage } <- useLinkHandler
+
+    pure $ 
+      H.button {
+        className: "btn btn-primary"
+      , on: { click: \_ -> goToPreviousPage }
+      } [
+        H.i { className: "fa fa-arrow-left", title: "Previous view"} []
+      ]
 
 type LoadProps =
   (

@@ -14,15 +14,14 @@ import Data.Show.Generic (genericShow)
 import Data.String as S
 import Effect.Aff (Aff)
 import Foreign as F
+import Gargantext.Components.Lang (class Translate, Lang(..))
+import Gargantext.Config.REST (RESTError)
+import Gargantext.Utils.Glyphicon (classNamePrefix, glyphiconToCharCode)
 import Prim.Row (class Union)
 import Reactix as R
 import Simple.JSON as JSON
 import Simple.JSON.Generics as JSONG
 import URI.Query (Query)
-
-import Gargantext.Components.Lang (class Translate, Lang(..))
-import Gargantext.Config.REST (RESTError)
-import Gargantext.Utils.Glyphicon (classNamePrefix, glyphiconToCharCode)
 
 data Handed = LeftHanded | RightHanded
 
@@ -659,7 +658,6 @@ data AsyncTaskType = AddNode
                    | GraphRecompute
                    | ListUpload
                    | ListCSVUpload  -- legacy v3 CSV upload for lists
-                   | ListZIPUpload
                    | Query
                    | UpdateNgramsCharts
                    | UpdateNode
@@ -680,7 +678,6 @@ asyncTaskTypePath CorpusFormUpload   = "add/form/async/"
 asyncTaskTypePath GraphRecompute     = "async/recompute/"
 asyncTaskTypePath ListUpload         = "add/form/async/"
 asyncTaskTypePath ListCSVUpload      = "csv/add/form/async/"
-asyncTaskTypePath ListZIPUpload      = "zip/add/form/async/"
 asyncTaskTypePath Query              = "query/"
 asyncTaskTypePath UpdateNgramsCharts = "ngrams/async/charts/update/"
 asyncTaskTypePath UpdateNode         = "update/"
@@ -723,18 +720,17 @@ derive instance Newtype AsyncTask _
 derive newtype instance JSON.ReadForeign AsyncTask
 instance Eq AsyncTask where eq = genericEq
 
-newtype AsyncTaskWithType = AsyncTaskWithType {
-    task :: AsyncTask
+newtype AsyncTaskWithType = AsyncTaskWithType
+  { task :: AsyncTask
   , typ  :: AsyncTaskType
   }
 derive instance Generic AsyncTaskWithType _
 derive instance Newtype AsyncTaskWithType _
 derive newtype instance JSON.ReadForeign AsyncTaskWithType
-instance Eq AsyncTaskWithType where
-  eq = genericEq
+instance Eq AsyncTaskWithType where eq = genericEq
 
-newtype AsyncProgress = AsyncProgress {
-    id :: AsyncTaskID
+newtype AsyncProgress = AsyncProgress
+  { id :: AsyncTaskID
   , log :: Array AsyncTaskLog
   , status :: AsyncTaskStatus
   }
@@ -742,8 +738,16 @@ derive instance Generic AsyncProgress _
 derive instance Newtype AsyncProgress _
 derive newtype instance JSON.ReadForeign AsyncProgress
 
-newtype AsyncTaskLog = AsyncTaskLog {
-    events :: Array String
+newtype AsyncEvent = AsyncEvent
+  { level :: String
+  , message :: String
+  }
+derive instance Generic AsyncEvent _
+derive instance Newtype AsyncEvent _
+derive newtype instance JSON.ReadForeign AsyncEvent
+
+newtype AsyncTaskLog = AsyncTaskLog
+  { events :: Array AsyncEvent
   , failed :: Int
   , remaining :: Int
   , succeeded :: Int
@@ -753,7 +757,7 @@ derive instance Newtype AsyncTaskLog _
 derive newtype instance JSON.ReadForeign AsyncTaskLog
 
 progressPercent :: AsyncProgress -> Number
-progressPercent (AsyncProgress {log}) = perc
+progressPercent (AsyncProgress { log }) = perc
   where
     perc = case A.head log of
       Nothing -> 0.0
@@ -783,10 +787,9 @@ toggleSidePanelState Opened        = Closed
 
 ---------------------------------------------------------------------------
 
-data FrontendError = FStringError
-  { error :: String
-  } | FRESTError
-  { error :: RESTError }
+data FrontendError =
+    FStringError { error :: String }
+  | FRESTError { error :: RESTError }
 
 derive instance Generic FrontendError _
 instance Eq FrontendError where eq = genericEq

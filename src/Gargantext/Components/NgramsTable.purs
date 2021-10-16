@@ -289,8 +289,8 @@ loadedNgramsTableHeaderCpt :: R.Component LoadedNgramsTableHeaderProps
 loadedNgramsTableHeaderCpt = here.component "loadedNgramsTableHeader" cpt where
   cpt { searchQuery } _ = do
     pure $ R.fragment
-      [ H.h4 {style: {textAlign : "center"}}
-        [ H.span {className: "fa fa-hand-o-down"} []
+      [ H.h4 { style: { textAlign : "center" } }
+        [ H.span { className: "fa fa-hand-o-down" } []
         , H.text "Extracted Terms" ]
       , NTC.searchInput { key: "search-input"
                         , searchQuery }

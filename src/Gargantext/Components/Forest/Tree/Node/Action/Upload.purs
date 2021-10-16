@@ -17,7 +17,7 @@ import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Forest.Tree.Node.Action (Props)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..), readUFBAsText)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..), readUFBAsBase64, readUFBAsText)
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe, panel)
 import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Components.ListSelection as ListSelection
@@ -193,7 +193,6 @@ uploadButtonCpt = here.component "uploadButton" cpt
       let disabled = isNothing mFile' || onPending
 
       pure $
-
         H.div
         { className: "action-upload-button" }
         [
@@ -232,6 +231,11 @@ uploadButtonCpt = here.component "uploadButton" cpt
             case fileType' of
               Arbitrary ->
                 dispatch $ UploadArbitraryFile (Just name) blob selection'
+              ZIP -> do
+                liftEffect $ here.log "[uploadButton] reading base64"
+                contents <- readUFBAsBase64 blob
+                liftEffect $ here.log "[uploadButton] base64 read"
+                dispatch $ UploadFile nodeType fileType' (Just name) contents selection'
               _ -> do
                 contents <- readUFBAsText blob
                 dispatch $ UploadFile nodeType fileType' (Just name) contents selection'
@@ -393,14 +397,14 @@ uploadArbitraryFile :: Session
                     -> Aff (Either RESTError GT.AsyncTaskWithType)
 uploadArbitraryFile session id {mName, blob: UploadFileBlob blob} selection = do
     contents <- readAsDataURL blob
-    uploadArbitraryDataURL session id mName contents
+    uploadArbitraryData session id mName contents
 
-uploadArbitraryDataURL :: Session
-                       -> ID
-                       -> Maybe String
-                       -> String
-                       -> Aff (Either RESTError GT.AsyncTaskWithType)
-uploadArbitraryDataURL session id mName contents' = do
+uploadArbitraryData :: Session
+                    -> ID
+                    -> Maybe String
+                    -> String
+                    -> Aff (Either RESTError GT.AsyncTaskWithType)
+uploadArbitraryData session id mName contents' = do
     let re = fromRight' (\_ -> unsafeCrashWith "Unexpected Left") $ DSR.regex "data:.*;base64," DSRF.noFlags
         contents = DSR.replace re "" contents'
     eTask :: Either RESTError GT.AsyncTask <- postWwwUrlencoded session p (bodyParams contents)

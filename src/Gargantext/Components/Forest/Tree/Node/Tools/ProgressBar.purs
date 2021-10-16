@@ -10,7 +10,7 @@ import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Timer (clearInterval, setInterval)
 import Gargantext.Config.REST (RESTError)
-import Gargantext.Config.Utils (handleRESTError)
+import Gargantext.Config.Utils (handleErrorInAsyncProgress, handleRESTError)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (FrontendError)
@@ -60,6 +60,7 @@ asyncProgressBarCpt = here.component "asyncProgressBar" cpt
                 _ <- case R.readRef intervalIdRef of
                   Nothing -> pure unit
                   Just iid -> clearInterval iid
+                handleErrorInAsyncProgress errors asyncProgress
                 onFinish unit
               else
                 pure unit

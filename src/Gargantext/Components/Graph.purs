@@ -363,11 +363,11 @@ forceAtlas2Settings =
   , batchEdgesDrawing              : true
   , edgeWeightInfluence            : 1.0
     -- fixedY                      : false
-  , gravity                        : 0.01
+  , gravity                        : 1.0
   , hideEdgesOnMove                : true
   , includeHiddenEdges             : false
   , includeHiddenNodes             : true
-  , iterationsPerRender            : 50.0 -- 10.0
+  , iterationsPerRender            : 100.0 -- 10.0
   , linLogMode                     : false  -- false
   , outboundAttractionDistribution : false
   , scalingRatio                   : 1000.0
