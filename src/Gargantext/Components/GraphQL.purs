@@ -1,17 +1,17 @@
 module Gargantext.Components.GraphQL where
 
-import Gargantext.Prelude
-
-import Affjax.RequestBody (RequestBody(..))
 import Data.Argonaut.Decode (class DecodeJson)
-import Data.Maybe (Maybe(..), maybe)
-import Effect (Effect)
+import Data.Array as A
+import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
+import Gargantext.Components.GraphQL.User
+import Gargantext.Prelude
 import Gargantext.Utils.Reactix as R2
 import GraphQL.Client.Args (type (==>), (=>>))
-import GraphQL.Client.Query (query_)
-import GraphQL.Client.Types (class GqlQuery)
+import GraphQL.Client.BaseClients.Urql
+import GraphQL.Client.Query (query, query_)
+import GraphQL.Client.Types (class GqlQuery, Client)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
@@ -32,14 +32,17 @@ graphQLTestCpt = here.component "graphQLTest" cpt where
     user' <- T.useLive T.unequal userBox
     R.useEffect' do
       launchAff_ $ do
-        { user } <-
+        { users } <-
           queryGql "get user"
-            { user: { user_id: 1 } =>> { userLight_id
-                                       , userLight_username
-                                       , userLight_password
-                                       , userLight_email } }
-        liftEffect $ here.log2 "[graphQLTest] user" user
-        liftEffect $ T.write_ (Just user) userBox
+            { users: { user_id: 1 } =>> { userLight_id
+                                        , userLight_username
+                                        , userLight_password
+                                        , userLight_email } }
+        liftEffect $ do
+          here.log2 "[graphQLTest] users" users
+          case A.head users of
+            Nothing -> here.log2 "[graphQLTest] user not found with id" 1
+            Just u  -> T.write_ (Just u) userBox
     
     pure $ R2.row
       --[ H.div { className: "col-12 d-flex justify-content-center" }
@@ -62,31 +65,12 @@ queryGql ::
   GqlQuery Schema query returns =>
   DecodeJson returns =>
   String -> query -> Aff returns
-queryGql = query_ "http://localhost:8008/gql" (Proxy :: Proxy Schema) 
+queryGql name q = do
+  client <- liftEffect $ createClient { headers: [], url: "http://localhost:8008/gql" }
+  query (client :: Client UrqlClient Schema _ _) name q
+  --query_ "http://localhost:8008/gql" (Proxy :: Proxy Schema) 
 
 -- Schema
 type Schema
-  = { user :: { user_id :: Int } ==> User
+  = { users :: { user_id :: Int } ==> Array User
     }
-
-type User
-  = { userLight_id :: Int
-    , userLight_username :: String
-    , userLight_password :: String
-    , userLight_email :: String
-    }
-showUser { userLight_id
-         , userLight_username
-         , userLight_password
-         , userLight_email } = "[" <> show userLight_id <> "] " <> userLight_username <> " :: " <> userLight_email
-showMUser u = maybe "" showUser u
-
--- Symbols 
-userLight_id :: Proxy "userLight_id"
-userLight_id = Proxy
-userLight_username :: Proxy "userLight_username"
-userLight_username = Proxy
-userLight_password :: Proxy "userLight_password"
-userLight_password = Proxy
-userLight_email :: Proxy "userLight_email"
-userLight_email = Proxy

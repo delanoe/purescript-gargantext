@@ -6,18 +6,21 @@ module Gargantext.Components.Nodes.Annuaire.User
 
 import Gargantext.Prelude
 
-import Data.Either (Either)
+import Data.Array as A
+import Data.Either (Either(..))
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.GraphQL (queryGql)
+import Gargantext.Components.GraphQL.User
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
 import Gargantext.Components.Nodes.Lists.Types as LT
-import Gargantext.Config.REST (RESTError, logRESTError)
+import Gargantext.Config.REST (RESTError(..), logRESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
@@ -25,6 +28,9 @@ import Gargantext.Sessions (WithSession, WithSessionContext, Session, get, put, 
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import GraphQL.Client.Args (type (==>), (=>>))
+import GraphQL.Client.Query (query_)
+import GraphQL.Client.Types (class GqlQuery)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
@@ -102,16 +108,16 @@ contactInfoItemCpt = here.component "contactInfoItem" cpt
       let value = (L.view cLens hyperdata) :: String
       valueRef <- R.useRef value
 
-      pure $ H.div { className: "form-group row" } [
-        H.span { className: "col-sm-2 col-form-label" } [ H.text label ]
-      , item isEditing' isEditing valueRef
-      ]
+      pure $ H.div { className: "form-group row" }
+        [ H.span { className: "col-sm-2 col-form-label" } [ H.text label ]
+        , item isEditing' isEditing valueRef
+        ]
 
       where
         cLens = L.cloneLens lens
         item false isEditing valueRef =
-          H.div { className: "input-group col-sm-6" } [
-            H.input { className: "form-control"
+          H.div { className: "input-group col-sm-6" }
+          [ H.input { className: "form-control"
                     , defaultValue: placeholder'
                     , disabled: 1
                     , type: "text" }
@@ -124,8 +130,8 @@ contactInfoItemCpt = here.component "contactInfoItem" cpt
             placeholder' = R.readRef valueRef
             onClick _ = T.write_ true isEditing
         item true isEditing valueRef =
-          H.div { className: "input-group col-sm-6" } [
-            inputWithEnter {
+          H.div { className: "input-group col-sm-6" }
+          [ inputWithEnter {
                 autoFocus: true
               , className: "form-control"
               , defaultValue: R.readRef valueRef
@@ -136,8 +142,8 @@ contactInfoItemCpt = here.component "contactInfoItem" cpt
               , type: "text"
               }
           , H.div { className: "btn input-group-append"
-                  , on: { click: onClick } } [
-              H.div { className: "input-group-text fa fa-floppy-o" } []
+                  , on: { click: onClick } }
+            [ H.div { className: "input-group-text fa fa-floppy-o" } []
             ]
           ]
           where
@@ -232,7 +238,27 @@ getContact session id = do
 getUserWithReload :: { nodeId :: Int
                      , reload :: T2.Reload
                      , session :: Session} -> Aff (Either RESTError ContactData)
-getUserWithReload {nodeId, session} = getContact session nodeId
+getUserWithReload {nodeId, session} = getUser session nodeId -- getContact session nodeId
+
+getUser :: Session -> Int -> Aff (Either RESTError ContactData)
+getUser session id = do
+  { users } <- queryGql "get user"
+               { users: { user_id: id } =>> { userLight_id
+                                            , userLight_username
+                                            , userLight_password
+                                            , userLight_email } }
+  liftEffect $ here.log2 "[getUser] users" users
+  pure $ case A.head users of
+    Nothing -> Left (CustomError $ "user with id " <> show id <> " not found")
+    Just u  -> Right $ { contactNode: Contact
+                           { id: u.userLight_id
+                           , date: Nothing
+                           , hyperdata: HyperdataUser { shared: Nothing }
+                           , name: Just u.userLight_username
+                           , parentId: Nothing
+                           , typename: Nothing
+                           , userId: Just u.userLight_id }
+                       , defaultListId: 424242 }
 
 saveContactHyperdata :: Session -> Int -> HyperdataUser -> Aff (Either RESTError Int)
 saveContactHyperdata session id h = do
