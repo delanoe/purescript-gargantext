@@ -8,6 +8,7 @@ import Control.Parallel (parTraverse)
 import Data.Array (head, last, concat)
 import Data.Array as A
 import Data.Either (Either(..))
+import Data.Foldable as F
 import Data.Int (fromString)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
@@ -184,6 +185,8 @@ selectedNodesCpt = here.component "selectedNodes" cpt
       selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
 
       let badges' = neighbourBadges graph selectedNodeIds'
+          minSize = F.foldl Math.min 0.0 (Seq.map _.size badges')
+          maxSize = F.foldl Math.max 0.0 (Seq.map _.size badges')
 
       pure $ R2.row
         [ R2.col 12
@@ -194,7 +197,7 @@ selectedNodesCpt = here.component "selectedNodes" cpt
               [ RH.div { className: "d-flex flex-wrap justify-content-center"
                        , role: "tabpanel" }
                 ( Seq.toUnfoldable
-                  $ ( Seq.map (\node -> badge { node, selectedNodeIds }) badges')
+                  $ ( Seq.map (\node -> badge { maxSize, minSize, node, selectedNodeIds }) badges')
                 )
               , H.br {}
               ]
@@ -227,6 +230,8 @@ neighborhoodCpt = here.component "neighborhood" cpt
       selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
 
       let badges' = neighbourBadges graph selectedNodeIds'
+          minSize = F.foldl Math.min 0.0 (Seq.map _.size badges')
+          maxSize = F.foldl Math.max 0.0 (Seq.map _.size badges')
 
       pure $ RH.div { className: "tab-content", id: "myTabContent" }
         [ RH.div { -- className: "flex-space-around d-flex justify-content-center"
@@ -234,7 +239,7 @@ neighborhoodCpt = here.component "neighborhood" cpt
              , id: "home"
              , role: "tabpanel"
              }
-          (Seq.toUnfoldable $ Seq.map (\node -> badge { node, selectedNodeIds }) badges')
+          (Seq.toUnfoldable $ Seq.map (\node -> badge { maxSize, minSize, node, selectedNodeIds }) badges')
         ]
 
 
@@ -286,15 +291,21 @@ updateTermButtonCpt = here.component "updateTermButton" cpt
 
 
 type BadgeProps =
-  ( node :: Record SigmaxT.Node
+  ( maxSize         :: Number
+  , minSize         :: Number
+  , node            :: Record SigmaxT.Node
   , selectedNodeIds :: T.Box SigmaxT.NodeIds )
 
 badge :: R2.Leaf BadgeProps
 badge props = R.createElement badgeCpt props []
 badgeCpt :: R.Component BadgeProps
 badgeCpt = here.component "badge" cpt where
-  cpt { node: { id, label, size }, selectedNodeIds } _ = do
-    let scale = Math.max 1.0 (Math.log size)
+  cpt { maxSize, minSize, node: { id, label, size }, selectedNodeIds } _ = do
+    let minFontSize = 1.0  -- "em"
+    let maxFontSize = 3.0  -- "em"
+    let sizeScaled = (size - minSize) / (maxSize - minSize)  -- in [0; 1] range
+    let scale' = Math.log (sizeScaled + 1.0) / (Math.log 2.0)  -- in [0; 1] range
+    let scale = minFontSize + scale' * (maxFontSize - minFontSize)
     let style = {
           fontSize: show scale <> "em"
           }
