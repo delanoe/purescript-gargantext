@@ -185,8 +185,8 @@ selectedNodesCpt = here.component "selectedNodes" cpt
       selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
 
       let badges' = neighbourBadges graph selectedNodeIds'
-          minSize = F.foldl Math.min 0.0 (Seq.map _.size badges')
-          maxSize = F.foldl Math.max 0.0 (Seq.map _.size badges')
+          minSize = F.foldl Math.min 0.0 (Seq.map _.size (SigmaxT.graphNodes graph))
+          maxSize = F.foldl Math.max 0.0 (Seq.map _.size (SigmaxT.graphNodes graph))
 
       pure $ R2.row
         [ R2.col 12
@@ -230,8 +230,8 @@ neighborhoodCpt = here.component "neighborhood" cpt
       selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
 
       let badges' = neighbourBadges graph selectedNodeIds'
-          minSize = F.foldl Math.min 0.0 (Seq.map _.size badges')
-          maxSize = F.foldl Math.max 0.0 (Seq.map _.size badges')
+          minSize = F.foldl Math.min 0.0 (Seq.map _.size (SigmaxT.graphNodes graph))
+          maxSize = F.foldl Math.max 0.0 (Seq.map _.size (SigmaxT.graphNodes graph))
 
       pure $ RH.div { className: "tab-content", id: "myTabContent" }
         [ RH.div { -- className: "flex-space-around d-flex justify-content-center"
