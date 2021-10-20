@@ -1,28 +1,28 @@
 module Gargantext.Components.GraphQL.User where
 
 import Data.Maybe (Maybe(..), maybe)
+import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (HyperdataUser)
 import Gargantext.Prelude
 import Type.Proxy (Proxy(..))
 
 
 type User
-  = { userLight_id :: Int
-    , userLight_username :: String
-    , userLight_password :: String
-    , userLight_email :: String
+  = { u_id        :: Int
+    , u_hyperdata :: HyperdataUser
+    , u_username  :: String
+    , u_email     :: String
     }
-showUser { userLight_id
-         , userLight_username
-         , userLight_password
-         , userLight_email } = "[" <> show userLight_id <> "] " <> userLight_username <> " :: " <> userLight_email
+showUser { u_id
+         , u_username
+         , u_email } = "[" <> show u_id <> "] " <> u_username <> " :: " <> u_email
 showMUser u = maybe "" showUser u
 
 -- Symbols 
-userLight_id :: Proxy "userLight_id"
-userLight_id = Proxy
-userLight_username :: Proxy "userLight_username"
-userLight_username = Proxy
-userLight_password :: Proxy "userLight_password"
-userLight_password = Proxy
-userLight_email :: Proxy "userLight_email"
-userLight_email = Proxy
+u_id :: Proxy "u_id"
+u_id = Proxy
+u_hyperdata :: Proxy "u_hyperdata"
+u_hyperdata = Proxy
+u_username :: Proxy "u_username"
+u_username = Proxy
+u_email :: Proxy "u_email"
+u_email = Proxy

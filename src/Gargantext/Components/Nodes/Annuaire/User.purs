@@ -243,21 +243,22 @@ getUserWithReload {nodeId, session} = getUser session nodeId -- getContact sessi
 getUser :: Session -> Int -> Aff (Either RESTError ContactData)
 getUser session id = do
   { users } <- queryGql "get user"
-               { users: { user_id: id } =>> { userLight_id
-                                            , userLight_username
-                                            , userLight_password
-                                            , userLight_email } }
+               { users: { user_id: id } =>>
+                 { u_id
+                 , u_hyperdata
+                 , u_username
+                 , u_email } }
   liftEffect $ here.log2 "[getUser] users" users
   pure $ case A.head users of
     Nothing -> Left (CustomError $ "user with id " <> show id <> " not found")
     Just u  -> Right $ { contactNode: Contact
-                           { id: u.userLight_id
+                           { id: u.u_id
                            , date: Nothing
-                           , hyperdata: HyperdataUser { shared: Nothing }
-                           , name: Just u.userLight_username
+                           , hyperdata: u.u_hyperdata
+                           , name: Just u.u_username
                            , parentId: Nothing
                            , typename: Nothing
-                           , userId: Just u.userLight_id }
+                           , userId: Just u.u_id }
                        , defaultListId: 424242 }
 
 saveContactHyperdata :: Session -> Int -> HyperdataUser -> Aff (Either RESTError Int)
