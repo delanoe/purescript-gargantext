@@ -4,6 +4,7 @@ module Gargantext.Components.Nodes.Annuaire.User
   )
   where
 
+import Gargantext.Components.GraphQL.User
 import Gargantext.Prelude
 
 import Data.Array as A
@@ -15,7 +16,6 @@ import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.GraphQL (queryGql)
-import Gargantext.Components.GraphQL.User
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
@@ -245,16 +245,53 @@ getUser session id = do
   { users } <- queryGql "get user"
                { users: { user_id: id } =>>
                  { u_id
-                 , u_hyperdata
+                 , u_hyperdata:
+                   { _hu_shared:
+                     { _hc_title
+                     , _hc_source
+                     , _hc_who:
+                       { _cw_firstName
+                       , _cw_lastName }
+                     , _hc_where:
+                       { _cw_organization }
+                     }
+                   }
                  , u_username
                  , u_email } }
   liftEffect $ here.log2 "[getUser] users" users
   pure $ case A.head users of
     Nothing -> Left (CustomError $ "user with id " <> show id <> " not found")
+    -- NOTE Contact is at G.C.N.A.U.C.Types
     Just u  -> Right $ { contactNode: Contact
                            { id: u.u_id
                            , date: Nothing
-                           , hyperdata: u.u_hyperdata
+                           , hyperdata: HyperdataUser
+                             { shared: (\shared -> HyperdataContact
+                               { bdd: Nothing
+                               , who: (\who -> ContactWho
+                                  { idWho: Nothing
+                                  , firstName: who._cw_firstName
+                                  , lastName: who._cw_lastName
+                                  , keywords: []
+                                  , freetags: []
+                                  }) <$> shared._hc_who
+                               , ou: (\ou -> ContactWhere
+                                   { organization: ou._cw_organization
+                                   , labTeamDepts: []
+                                   , role: Nothing
+                                   , office: Nothing
+                                   , country: Nothing
+                                   , city: Nothing
+                                   , touch: Nothing
+                                   , entry: Nothing
+                                   , exit: Nothing }) <$> shared._hc_where
+                               , source: shared._hc_source
+                               , title: shared._hc_title
+                               , lastValidation: Nothing
+                               , uniqId: Nothing
+                               , uniqIdBdd: Nothing
+                               }) <$> u.u_hyperdata._hu_shared
+                             }
                            , name: Just u.u_username
                            , parentId: Nothing
                            , typename: Nothing
