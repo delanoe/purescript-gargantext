@@ -314,8 +314,8 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
     path'@{ scoreType, termListFilter, termSizeFilter } <- T.useLive T.unequal path
     params <- T.useFocused (_.params) (\a b -> b { params = a }) path
     params'@{ orderBy } <- T.useLive T.unequal params
-    searchQuery <- T.useFocused (_.searchQuery) (\a b -> b { searchQuery = a }) path
-    searchQuery' <- T.useLive T.unequal searchQuery
+    searchQueryFocused <- T.useFocused (_.searchQuery) (\a b -> b { searchQuery = a }) path
+    searchQuery <- T.useLive T.unequal searchQueryFocused
 
     let ngramsTable = applyNgramsPatches state' initTable
         rowMap (Tuple ng nre) =
@@ -328,15 +328,18 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
           in
           addOcc <$> rowsFilter (ngramsRepoElementToNgramsElement ng s nre)
         rows :: PreConversionRows
-        rows = ngramsTableOrderWith orderBy (
-                 Seq.mapMaybe rowMap $
-                   Map.toUnfoldable (ngramsTable ^. _NgramsTable <<< _ngrams_repo_elements)
-               )
+        rows = ngramsTableOrderWith orderBy (Seq.mapMaybe rowMap nres)
+        nres = Map.toUnfoldable (ngramsTable ^. _NgramsTable <<< _ngrams_repo_elements)
+        rootOfMatch (Tuple ng nre) =
+          if queryMatchesLabel searchQuery (ngramsTermText ng)
+          then Just (fromMaybe ng (nre ^. _NgramsRepoElement <<< _root))
+          else Nothing
+        rootsWithMatches = Set.fromFoldable (Seq.mapMaybe rootOfMatch nres)
         rowsFilter :: NgramsElement -> Maybe NgramsElement
         rowsFilter ngramsElement =
           if displayRow { ngramsElement
                         , ngramsParentRoot
-                        , searchQuery: searchQuery'
+                        , rootsWithMatches
                         , state: state'
                         , termListFilter
                         , termSizeFilter } then
@@ -487,7 +490,7 @@ mkDispatch { filteredRows
 
 displayRow :: { ngramsElement    :: NgramsElement
               , ngramsParentRoot :: Maybe NgramsTerm
-              , searchQuery      :: SearchQuery
+              , rootsWithMatches :: Set NgramsTerm
               , state            :: State
               , termListFilter   :: Maybe TermList
               , termSizeFilter   :: Maybe TermSize } -> Boolean
@@ -496,14 +499,17 @@ displayRow { ngramsElement: NgramsElement {ngrams, root, list}
            , state: { ngramsChildren
                     , ngramsLocalPatch
                     , ngramsParent }
-           , searchQuery
+           , rootsWithMatches
            , termListFilter
            , termSizeFilter } =
-  (
-    -- isNothing root
-    -- ^ Display only nodes without parents
-    -- ^^ (?) allow child nodes to be searched (see #340)
-       maybe true (_ == list) termListFilter
+    -- See these issues about the evolution of this filtering.
+    -- * https://gitlab.iscpif.fr/gargantext/purescript-gargantext/issues/340
+    -- * https://gitlab.iscpif.fr/gargantext/haskell-gargantext/issues/87
+       isNothing root
+    -- ^ Display only nodes without parents.
+    && Set.member ngrams rootsWithMatches
+    -- ^ and which matches the search query.
+    && maybe true (_ == list) termListFilter
     -- ^ and which matches the ListType filter.
     && ngramsChildren ^. at ngrams /= Just true
     -- ^ and which are not scheduled to be added already
@@ -517,10 +523,6 @@ displayRow { ngramsElement: NgramsElement {ngrams, root, list}
     -- ^ unless they are scheduled to be removed.
     || NTC.tablePatchHasNgrams ngramsLocalPatch ngrams
     -- ^ unless they are being processed at the moment.
-  )
-    && queryMatchesLabel searchQuery (ngramsTermText ngrams)
-    -- ^ and which matches the search query.
-
 
 allNgramsSelectedOnFirstPage :: Set NgramsTerm -> PreConversionRows -> Boolean
 allNgramsSelectedOnFirstPage selected rows = selected == (selectNgramsOnFirstPage rows)
