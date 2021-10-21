@@ -1,24 +1,86 @@
-module Gargantext.Components.Nodes.Corpus.Phylo where
+module Gargantext.Components.Nodes.Corpus.Phylo
+  ( phyloLayout
+  ) where
 
 import Gargantext.Prelude
-  ( pure, ($) )
 
--- import Gargantext.Utils.Toestand as T2
--- import Toestand as T
+import Affjax (Error)
+import Affjax as AX
+import Affjax.ResponseFormat as ResponseFormat
+import DOM.Simple.Console (log2)
+import Data.Either (Either(..))
+import Data.HTTP.Method (Method(..))
+import Data.List.Types (NonEmptyList)
+import Data.Maybe (Maybe(..))
+import Effect.Aff (Aff, launchAff_, throwError)
+import Effect.Class (liftEffect)
+import Foreign (ForeignError)
+import Gargantext.Components.PhyloExplorer.Types (PhyloDataSet)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeID)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Simple.JSON (class ReadForeign)
+import Simple.JSON as JSON
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Phylo"
 
-type Props = ( nodeId :: NodeID, session :: Session )
+type Props =
+  ( nodeId :: NodeID
+  , session :: Session
+  )
 
 phyloLayout :: R2.Component Props
 phyloLayout = R.createElement phyloLayoutCpt
 phyloLayoutCpt :: R.Component Props
 phyloLayoutCpt = here.component "phyloLayout" cpt where
-  cpt { nodeId, session } content = do
-    pure $  H.h1 {} [ H.text "Hello Phylo" ]
+  cpt _ _ = do
+
+    isFetchedBox <- T.useBox false
+
+    isFetched <- T.useLive T.unequal isFetchedBox
+
+    R.useEffect' $ launchAff_ $ fetchPhyloJSON
+
+
+    pure $
+
+      H.div
+      { className: "page-phylo" }
+      [
+        H.h1 {} [ H.text "hello" ]
+      -- ,
+      --   infoCorpusR
+      -- ,
+      --   infoPhyloR
+      -- ,
+      --   timelineR
+      -- ,
+      --   isolineR
+      -- ,
+      --   wordcloudR
+      -- ,
+      --   phyloR
+      ]
+
+
+-- fetchPhyloJSON :: forall res. Aff (Either Error res)
+fetchPhyloJSON :: ReadForeign PhyloDataSet => Aff Unit
+fetchPhyloJSON =
+  let
+    request = AX.defaultRequest
+      -- @WIP remove dumb data
+      { url = "http://localhost:5000/js/knowledge-phylomemy.json"
+      , method = Left GET
+      , responseFormat = ResponseFormat.string
+      }
+  in do
+    result <- request # AX.request
+    liftEffect $ case result of
+      Left err -> log2 "error" $ AX.printError err
+      Right response -> case JSON.readJSON response.body of
+        Left err -> log2 "error" $ show err
+        Right (res :: PhyloDataSet) -> log2 "success" $ show res
