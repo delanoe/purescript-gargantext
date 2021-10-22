@@ -1,147 +1,173 @@
 module Gargantext.Components.PhyloExplorer.Types where
 
 import Gargantext.Prelude
-import Prelude
 
-import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
-import Data.Maybe (Maybe(..))
-import Data.Newtype (class Newtype)
-import Data.Nullable (Nullable)
+import Data.Generic.Rep as GR
 import Data.Show.Generic (genericShow)
+import Gargantext.Utils.SimpleJSON (untaggedSumRep)
 import Simple.JSON as JSON
-import Simple.JSON.Generics (enumSumRep)
-import Simple.JSON.Generics as JSONG
 
--- // Generics
 
+type GraphData =
+  ( bb                :: String
+  , color             :: String
+  , fontsize          :: String
+  , label             :: String
+  , labelloc          :: String
+  , lheight           :: String
+  , lp                :: String
+  , lwidth            :: String
+  , name              :: String
+  , nodesep           :: String
+  , overlap           :: String
+  , phyloBranches     :: String
+  , phyloDocs         :: String
+  , phyloFoundations  :: String
+  , phyloGroups       :: String
+  , phyloPeriods      :: String
+  , phyloSources      :: String
+  , phyloTerms        :: String
+  , phyloTimeScale    :: String
+  , rank              :: String
+  , ranksep           :: String
+  , ratio             :: String
+  , splines           :: String
+  , style             :: String
+  )
 
 --------------------------------------------------
 
--- type PhyloJSON =
---   { name              :: String
---   , phyloDocs         :: String
---   , phyloFoundations  :: String
---   , phyloPeriods      :: String
---   , phyloTerms        :: String
---   , phyloGroups       :: String
---   , phyloBranches     :: String
---   , objects           :: Array PhyloObject
---   , edges             :: Array PhyloEdge
---   }
-
-newtype PhyloDataSet = PhyloDataSet
-  { name :: String
-  , edges :: Array PhyloEdge
+newtype PhyloDataset = PhyloDataset
+  { _subgraph_cnt     :: Int
+  , directed          :: Boolean
+  , edges             :: Array Edge
+  , objects           :: Array Object
+  , strict            :: Boolean
+  | GraphData
   }
 
-
-derive instance Generic PhyloDataSet _
-derive instance Newtype PhyloDataSet _
-instance Show PhyloDataSet where show = genericShow
-derive newtype instance JSON.ReadForeign PhyloDataSet
---------------------------------------------------
-
--- data PhyloObject =
---     PhyloBranch
---     { _gvid       :: Int
---     , bId         :: String
---     , branch_x    :: String
---     , branch_y    :: String
---     , label       :: String
---     , nodeType    :: String
---     , pos         :: String
---     }
---   | PhyloGroup
---     { _gvid       :: Int
---     , bId         :: String
---     , foundation  :: String
---     , from        :: String
---     , lbl         :: String
---     , nodeType    :: String
---     , pos         :: String
---     , role        :: String
---     , support     :: String
---     , to          :: String
---     , weight      :: String
---     }
---   | PhyloPeriod
---     { _gvid       :: Int
---     , nodeType    :: String
---     }
---   | DefaultObject
---     { _gvid       :: Int
---     }
-
--- derive instance Generic PhyloObject _
--- instance Eq PhyloObject where eq = genericEq
-
--- instance showPhyloObject :: Show PhyloObject where
---   show (PhyloBranch         { nodeType }) = nodeType
---   show (PhyloGroup          { nodeType }) = nodeType
---   show (PhyloPeriod         { nodeType }) = nodeType
---   show (DefaultObject       { _gvid })    = "DefaultNode"
+derive instance Generic PhyloDataset _
+derive instance Eq PhyloDataset
+instance Show PhyloDataset where show = genericShow
+derive newtype instance JSON.ReadForeign PhyloDataset
 
 --------------------------------------------------
 
-data EdgeType = Link | BranchLink | AncestorLink | DefaultEdge
+type NodeData =
+  ( height            :: String
+  , label             :: String
+  , name              :: String
+  , nodeType          :: String
+  , pos               :: String
+  , shape             :: String
+  , width             :: String
+  )
 
-derive instance Generic EdgeType _
-instance Eq EdgeType where eq = genericEq
-instance Show EdgeType where show = genericShow
--- @TODO use `enumSumRep` -> input value with lowercased first char
-instance JSON.ReadForeign EdgeType where
-  readImpl v = JSON.readImpl v >>= pure <<< case _ of
-      Just "link"         -> Link
-      Just "branchLink"   -> BranchLink
-      Just "ancestorLink" -> AncestorLink
-      _                   -> DefaultEdge
+data Object
+  = Layer
+    { _gvid           :: Int
+    , nodes           :: Array Int
+    | GraphData
+    }
+  | BranchToNode
+    { _gvid           :: Int
+    , age             :: String
+    , bId             :: String
+    , birth           :: String
+    , branchId        :: String
+    , branch_x        :: String
+    , branch_y        :: String
+    , fillcolor       :: String
+    , fontname        :: String
+    , fontsize        :: String
+    , size            :: String
+    , style           :: String
+    | NodeData
+    }
+  | GroupToNode
+    { _gvid           :: Int
+    , bId             :: String
+    , branchId        :: String
+    , fontname        :: String
+    , foundation      :: String
+    , frequence       :: String
+    , from            :: String
+    , lbl             :: String
+    , penwidth        :: String
+    , role            :: String
+    , seaLvl          :: String
+    , source          :: String
+    , strFrom         :: String
+    , strTo           :: String
+    , support         :: String
+    , to              :: String
+    , weight          :: String
+    | NodeData
+    }
+  | PeriodToNode
+    { _gvid           :: Int
+    , fontsize        :: String
+    , from            :: String
+    , strFrom         :: String
+    , strTo           :: String
+    , to              :: String
+    | NodeData
+    }
 
-newtype PhyloEdge = PhyloEdge
-  { _gvid    :: Int
-  , color :: String
-  , edgeType :: EdgeType
-  , head :: Int
-  , pos :: String
-  , tail :: Int
-  , width :: String
-
-  , arrowhead :: Maybe String
-  , constraint :: Maybe String
-  , lbl :: Maybe String
-  , penwidth :: Maybe String
-  }
-
-derive instance Generic PhyloEdge _
-derive instance Newtype PhyloEdge _
-instance Show PhyloEdge where show = genericShow
-derive newtype instance JSON.ReadForeign PhyloEdge
+derive instance Generic Object _
+derive instance Eq Object
+instance Show Object where show = genericShow
+instance JSON.ReadForeign Object where
+  readImpl f = GR.to <$> untaggedSumRep f
 
 
+--------------------------------------------------
 
--- arrowhead: "rdot"
--- color: "black"
--- edgeType: "branchLink"
--- head: 309
--- pos: "e,63066,5862.7 62942,34687 62953,34667 62967,34640 62975,34615 63059,34351 63066,34275 63066,33998 63066,33998 63066,33998 63066,7485.5 63066,6917.8 63066,6256.7 63066,5870.9"
--- tail: 86
--- width: "3"
--- _gvid: 49
+type EdgeData =
+  ( color           :: String
+  , head            :: Int
+  , pos             :: String
+  , tail            :: Int
+  , width           :: String
+  )
 
--- color: "black"
--- head: 90
--- pos: "e,64286,35436 64286,35508 64286,35489 64286,35466 64286,35446"
--- tail: 87
--- width: "5"
--- _gvid: 50
+data Edge
+  = GroupToGroup
+    { _gvid         :: Int
+    , constraint    :: String
+    , edgeType      :: String
+    , lbl           :: String
+    , penwidth      :: String
+    | EdgeData
+    }
+  | BranchToGroup
+    { _gvid         :: Int
+    , arrowhead     :: String
+    , edgeType      :: String
+    | EdgeData
+    }
+  | BranchToBranch
+    { _gvid         :: Int
+    , arrowhead     :: String
+    , style         :: String
+    | EdgeData
+    }
+  | GroupToAncestor
+    { _gvid         :: Int
+    , arrowhead     :: String
+    , lbl           :: String
+    , penwidth      :: String
+    , style         :: String
+    | EdgeData
+    }
+  | PeriodToPeriod
+    { _gvid         :: Int
+    | EdgeData
+    }
 
--- color: "black"
--- constraint: "true"
--- edgeType: "link"
--- head: 101
--- lbl: "1.0"
--- penwidth: "4"
--- pos: "e,22565,33307 22565,33379 22565,33358 22565,33338 22565,33317"
--- tail: 89
--- width: "3"
--- _gvid: 52
+derive instance Generic Edge _
+derive instance Eq Edge
+instance Show Edge where show = genericShow
+instance JSON.ReadForeign Edge where
+  readImpl f = GR.to <$> untaggedSumRep f

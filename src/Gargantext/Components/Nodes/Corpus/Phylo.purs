@@ -4,24 +4,20 @@ module Gargantext.Components.Nodes.Corpus.Phylo
 
 import Gargantext.Prelude
 
-import Affjax (Error)
 import Affjax as AX
 import Affjax.ResponseFormat as ResponseFormat
 import DOM.Simple.Console (log2)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
-import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
-import Effect.Aff (Aff, launchAff_, throwError)
+import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
-import Foreign (ForeignError)
-import Gargantext.Components.PhyloExplorer.Types (PhyloDataSet)
+import Gargantext.Components.PhyloExplorer.Types (PhyloDataset)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeID)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Simple.JSON (class ReadForeign)
 import Simple.JSON as JSON
 import Toestand as T
 
@@ -39,36 +35,39 @@ phyloLayoutCpt :: R.Component Props
 phyloLayoutCpt = here.component "phyloLayout" cpt where
   cpt _ _ = do
 
-    isFetchedBox <- T.useBox false
+    fetchedDataBox <- T.useBox (Nothing :: Maybe PhyloDataset)
+    fetchedData <- T.useLive T.unequal fetchedDataBox
 
-    isFetched <- T.useLive T.unequal isFetchedBox
+    R.useEffectOnce' $ launchAff_ do
+      result <- fetchPhyloJSON
+      liftEffect $ case result of
+        Left err -> log2 "error" err
+        Right res -> T.write_ (Just res) fetchedDataBox
 
-    R.useEffect' $ launchAff_ $ fetchPhyloJSON
+    pure $ case fetchedData of
+      Nothing -> mempty
+      Just fdata ->
+
+        H.div
+        { className:"phyloCorpus" }
+        [ H.text $ show fdata ]
+
+          -- ,
+          --   infoCorpusR
+          -- ,
+          --   infoPhyloR
+          -- ,
+          --   timelineR
+          -- ,
+          --   isolineR
+          -- ,
+          --   wordcloudR
+          -- ,
+          --   phyloR
 
 
-    pure $
-
-      H.div
-      { className: "page-phylo" }
-      [
-        H.h1 {} [ H.text "hello" ]
-      -- ,
-      --   infoCorpusR
-      -- ,
-      --   infoPhyloR
-      -- ,
-      --   timelineR
-      -- ,
-      --   isolineR
-      -- ,
-      --   wordcloudR
-      -- ,
-      --   phyloR
-      ]
-
-
--- fetchPhyloJSON :: forall res. Aff (Either Error res)
-fetchPhyloJSON :: ReadForeign PhyloDataSet => Aff Unit
+fetchPhyloJSON :: Aff (Either String PhyloDataset)
+-- fetchPhyloJSON :: ReadForeign PhyloDataset => Aff Unit
 fetchPhyloJSON =
   let
     request = AX.defaultRequest
@@ -80,7 +79,7 @@ fetchPhyloJSON =
   in do
     result <- request # AX.request
     liftEffect $ case result of
-      Left err -> log2 "error" $ AX.printError err
+      Left err -> pure $ Left $ AX.printError err
       Right response -> case JSON.readJSON response.body of
-        Left err -> log2 "error" $ show err
-        Right (res :: PhyloDataSet) -> log2 "success" $ show res
+        Left err -> pure $ Left $ show err
+        Right (res :: PhyloDataset) -> pure $ Right res
