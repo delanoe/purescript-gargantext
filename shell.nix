@@ -35,6 +35,14 @@ let
 
   '';
 
+  serve = pkgs.writeShellScriptBin "serve" ''
+    #!/usr/bin/env bash
+    set -e
+
+    yarn server
+
+  '';
+
   build-watch = pkgs.writeShellScriptBin "build-watch" ''
     #!/usr/bin/env bash
     set -e
@@ -110,6 +118,7 @@ pkgs.mkShell {
     pkgs.minify
     pkgs.nodejs
     repl
+    serve
     pkgs.pulp
     pkgs.spago
     pkgs.yarn
