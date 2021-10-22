@@ -163,7 +163,7 @@ controlsCpt = here.component "controls" cpt
                  [ RH.ul { className: "navbar-nav mx-auto" }
                    [ -- change type button (?)
                      navItem [ centerButton sigmaRef ]
-                   , navItem [ resetForceAtlasButton { forceAtlasState, sigmaRef } [] ]
+                   -- , navItem [ resetForceAtlasButton { forceAtlasState, sigmaRef } [] ]
                    , navItem [ pauseForceAtlasButton { state: forceAtlasState } [] ]
                    , navItem [ edgesToggleButton { state: showEdges } [] ]
                    , navItem [ louvainToggleButton { state: showLouvain } [] ]
