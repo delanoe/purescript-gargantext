@@ -8,6 +8,7 @@ import Control.Parallel (parTraverse)
 import Data.Array (head, last, concat)
 import Data.Array as A
 import Data.Either (Either(..))
+import Data.Foldable as F
 import Data.Int (fromString)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
@@ -33,6 +34,7 @@ import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, FrontendError(..), NodeID, TabSubType(..), TabType(..), TermList(..), modeTabType)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Math as Math
 import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -182,6 +184,10 @@ selectedNodesCpt = here.component "selectedNodes" cpt
       { selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
       selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
 
+      let badges' = neighbourBadges graph selectedNodeIds'
+          minSize = F.foldl Math.min 0.0 (Seq.map _.size (SigmaxT.graphNodes graph))
+          maxSize = F.foldl Math.max 0.0 (Seq.map _.size (SigmaxT.graphNodes graph))
+
       pure $ R2.row
         [ R2.col 12
           [ RH.ul { className: "nav nav-tabs d-flex justify-content-center"
@@ -191,9 +197,7 @@ selectedNodesCpt = here.component "selectedNodes" cpt
               [ RH.div { className: "d-flex flex-wrap justify-content-center"
                        , role: "tabpanel" }
                 ( Seq.toUnfoldable
-                  $ ( Seq.map (badge selectedNodeIds)
-                      (badges graph selectedNodeIds')
-                    )
+                  $ ( Seq.map (\node -> badge { maxSize, minSize, node, selectedNodeIds }) badges')
                 )
               , H.br {}
               ]
@@ -225,15 +229,17 @@ neighborhoodCpt = here.component "neighborhood" cpt
       { selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
       selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
 
+      let badges' = neighbourBadges graph selectedNodeIds'
+          minSize = F.foldl Math.min 0.0 (Seq.map _.size (SigmaxT.graphNodes graph))
+          maxSize = F.foldl Math.max 0.0 (Seq.map _.size (SigmaxT.graphNodes graph))
+
       pure $ RH.div { className: "tab-content", id: "myTabContent" }
         [ RH.div { -- className: "flex-space-around d-flex justify-content-center"
              className: "d-flex flex-wrap flex-space-around"
              , id: "home"
              , role: "tabpanel"
              }
-          (Seq.toUnfoldable $ Seq.map (badge selectedNodeIds)
-           $ neighbourBadges graph selectedNodeIds'
-          )
+          (Seq.toUnfoldable $ Seq.map (\node -> badge { maxSize, minSize, node, selectedNodeIds }) badges')
         ]
 
 
@@ -284,15 +290,32 @@ updateTermButtonCpt = here.component "updateTermButton" cpt
           T.write_ SigmaxT.emptyNodeIds selectedNodeIds
 
 
+type BadgeProps =
+  ( maxSize         :: Number
+  , minSize         :: Number
+  , node            :: Record SigmaxT.Node
+  , selectedNodeIds :: T.Box SigmaxT.NodeIds )
 
-badge :: T.Box SigmaxT.NodeIds -> Record SigmaxT.Node -> R.Element
-badge selectedNodeIds {id, label} =
-  RH.a { className: "badge badge-pill badge-light"
-       , on: { click: onClick }
-       } [ RH.h6 {} [ RH.text label ] ]
-  where
-    onClick _ = do
-      T.write_ (Set.singleton id) selectedNodeIds
+badge :: R2.Leaf BadgeProps
+badge props = R.createElement badgeCpt props []
+badgeCpt :: R.Component BadgeProps
+badgeCpt = here.component "badge" cpt where
+  cpt { maxSize, minSize, node: { id, label, size }, selectedNodeIds } _ = do
+    let minFontSize = 1.0  -- "em"
+    let maxFontSize = 3.0  -- "em"
+    let sizeScaled = (size - minSize) / (maxSize - minSize)  -- in [0; 1] range
+    let scale' = Math.log (sizeScaled + 1.0) / (Math.log 2.0)  -- in [0; 1] range
+    let scale = minFontSize + scale' * (maxFontSize - minFontSize)
+    let style = {
+          fontSize: show scale <> "em"
+          }
+    
+    pure $ RH.a { className: "badge badge-pill badge-light"
+                , on: { click: onClick }
+                } [ RH.h6 { style } [ RH.text label ] ]
+    where
+      onClick _ = do
+        T.write_ (Set.singleton id) selectedNodeIds
 
 badges :: SigmaxT.SGraph -> SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
 badges graph selectedNodeIds = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
