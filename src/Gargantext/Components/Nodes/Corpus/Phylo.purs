@@ -12,6 +12,7 @@ import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
+import Gargantext.Components.PhyloExplorer.Layout (layout)
 import Gargantext.Components.PhyloExplorer.Types (PhyloDataset)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeID)
@@ -36,38 +37,20 @@ phyloLayoutCpt = here.component "phyloLayout" cpt where
   cpt _ _ = do
 
     fetchedDataBox <- T.useBox (Nothing :: Maybe PhyloDataset)
-    fetchedData <- T.useLive T.unequal fetchedDataBox
+    fetchedData    <- T.useLive T.unequal fetchedDataBox
 
     R.useEffectOnce' $ launchAff_ do
       result <- fetchPhyloJSON
       liftEffect $ case result of
-        Left err -> log2 "error" err
+        Left err  -> log2 "error" err
         Right res -> T.write_ (Just res) fetchedDataBox
 
-    pure $ case fetchedData of
-      Nothing -> mempty
-      Just fdata ->
-
-        H.div
-        { className:"phyloCorpus" }
-        [ H.text $ show fdata ]
-
-          -- ,
-          --   infoCorpusR
-          -- ,
-          --   infoPhyloR
-          -- ,
-          --   timelineR
-          -- ,
-          --   isolineR
-          -- ,
-          --   wordcloudR
-          -- ,
-          --   phyloR
+    pure case fetchedData of
+      Nothing           -> mempty
+      Just phyloDataset -> layout { phyloDataset } []
 
 
 fetchPhyloJSON :: Aff (Either String PhyloDataset)
--- fetchPhyloJSON :: ReadForeign PhyloDataset => Aff Unit
 fetchPhyloJSON =
   let
     request = AX.defaultRequest
