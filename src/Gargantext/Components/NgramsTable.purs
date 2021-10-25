@@ -83,7 +83,7 @@ setTermListSetA ngramsTable ns new_list =
     f n _unit = NgramsPatch { patch_list, patch_children: mempty }
       where
         cur_list = ngramsTable ^? at n <<< _Just <<< _NgramsRepoElement <<< _list
-        patch_list = maybe mempty (\c -> replace c new_list) cur_list
+        patch_list = maybe mempty (replace new_list) cur_list
     toMap :: forall a. Set a -> Map a Unit
     toMap = unsafeCoerce
     -- TODO https://github.com/purescript/purescript-ordered-collections/pull/21
@@ -213,7 +213,8 @@ tableContainerCpt { dispatch
                                           , ngramsEdit
                                           }
                    , H.button { className: "btn btn-primary"
-                              , on: {click: (const $ dispatch AddTermChildren)}
+                              , on: {click: (const $ do
+                                               dispatch AddTermChildren)}
                               } [H.text "Save"]
                    , H.button { className: "btn btn-primary"
                               , on: {click: (const $ dispatch $ SetParentResetChildren Nothing)}
@@ -314,8 +315,8 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
     path'@{ scoreType, termListFilter, termSizeFilter } <- T.useLive T.unequal path
     params <- T.useFocused (_.params) (\a b -> b { params = a }) path
     params'@{ orderBy } <- T.useLive T.unequal params
-    searchQuery <- T.useFocused (_.searchQuery) (\a b -> b { searchQuery = a }) path
-    searchQuery' <- T.useLive T.unequal searchQuery
+    searchQueryFocused <- T.useFocused (_.searchQuery) (\a b -> b { searchQuery = a }) path
+    searchQuery <- T.useLive T.unequal searchQueryFocused
 
     let ngramsTable = applyNgramsPatches state' initTable
         rowMap (Tuple ng nre) =
@@ -328,15 +329,18 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
           in
           addOcc <$> rowsFilter (ngramsRepoElementToNgramsElement ng s nre)
         rows :: PreConversionRows
-        rows = ngramsTableOrderWith orderBy (
-                 Seq.mapMaybe rowMap $
-                   Map.toUnfoldable (ngramsTable ^. _NgramsTable <<< _ngrams_repo_elements)
-               )
+        rows = ngramsTableOrderWith orderBy (Seq.mapMaybe rowMap nres)
+        nres = Map.toUnfoldable (ngramsTable ^. _NgramsTable <<< _ngrams_repo_elements)
+        rootOfMatch (Tuple ng nre) =
+          if queryMatchesLabel searchQuery (ngramsTermText ng)
+          then Just (fromMaybe ng (nre ^. _NgramsRepoElement <<< _root))
+          else Nothing
+        rootsWithMatches = Set.fromFoldable (Seq.mapMaybe rootOfMatch nres)
         rowsFilter :: NgramsElement -> Maybe NgramsElement
         rowsFilter ngramsElement =
           if displayRow { ngramsElement
                         , ngramsParentRoot
-                        , searchQuery: searchQuery'
+                        , rootsWithMatches
                         , state: state'
                         , termListFilter
                         , termSizeFilter } then
@@ -471,23 +475,33 @@ mkDispatch { filteredRows
             s { ngramsSelection = Set.empty :: Set NgramsTerm }
           else
             s { ngramsSelection = selectNgramsOnFirstPage filteredRows }
-    performAction AddTermChildren =
+    performAction AddTermChildren = do
       case ngramsParent of
         Nothing ->
           -- impossible but harmless
           pure unit
         Just parent -> do
+          here.log2 "[performAction] AddTermChildren, parent" parent
           let pc = patchSetFromMap ngramsChildren
               pe = NgramsPatch { patch_list: mempty, patch_children: pc }
               pt = singletonNgramsTablePatch parent pe
           T.modify_ (setParentResetChildren Nothing) state
-          commitPatch pt state
+          here.log2 "[performAction] pt" pt
+          let ppt = case (A.head $ Set.toUnfoldable $ Map.keys ngramsChildren) of
+                Nothing -> mempty
+                Just h  ->
+                  let pp = NgramsPatch { patch_list: mempty
+                                       , patch_children: patchSetFromMap $ Map.mapMaybe (\v -> Just $ not v) ngramsChildren }
+                  in
+                  singletonNgramsTablePatch h pp
+          here.log2 "[performAction] pt with patchSetFromMap" $ pt <> ppt
+          commitPatch (pt <> ppt) state
     performAction (CoreAction a) = coreDispatch path state a
 
 
 displayRow :: { ngramsElement    :: NgramsElement
               , ngramsParentRoot :: Maybe NgramsTerm
-              , searchQuery      :: SearchQuery
+              , rootsWithMatches :: Set NgramsTerm
               , state            :: State
               , termListFilter   :: Maybe TermList
               , termSizeFilter   :: Maybe TermSize } -> Boolean
@@ -496,14 +510,17 @@ displayRow { ngramsElement: NgramsElement {ngrams, root, list}
            , state: { ngramsChildren
                     , ngramsLocalPatch
                     , ngramsParent }
-           , searchQuery
+           , rootsWithMatches
            , termListFilter
            , termSizeFilter } =
-  (
-    -- isNothing root
-    -- ^ Display only nodes without parents
-    -- ^^ (?) allow child nodes to be searched (see #340)
-       maybe true (_ == list) termListFilter
+    -- See these issues about the evolution of this filtering.
+    -- * https://gitlab.iscpif.fr/gargantext/purescript-gargantext/issues/340
+    -- * https://gitlab.iscpif.fr/gargantext/haskell-gargantext/issues/87
+       isNothing root
+    -- ^ Display only nodes without parents.
+    && Set.member ngrams rootsWithMatches
+    -- ^ and which matches the search query.
+    && maybe true (_ == list) termListFilter
     -- ^ and which matches the ListType filter.
     && ngramsChildren ^. at ngrams /= Just true
     -- ^ and which are not scheduled to be added already
@@ -517,10 +534,6 @@ displayRow { ngramsElement: NgramsElement {ngrams, root, list}
     -- ^ unless they are scheduled to be removed.
     || NTC.tablePatchHasNgrams ngramsLocalPatch ngrams
     -- ^ unless they are being processed at the moment.
-  )
-    && queryMatchesLabel searchQuery (ngramsTermText ngrams)
-    -- ^ and which matches the search query.
-
 
 allNgramsSelectedOnFirstPage :: Set NgramsTerm -> PreConversionRows -> Boolean
 allNgramsSelectedOnFirstPage selected rows = selected == (selectNgramsOnFirstPage rows)
