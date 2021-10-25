@@ -124,36 +124,36 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
                    , nodeType
                    , session } []
 
-                , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType } []
-                , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
-                                                        , barType: Pie
-                                                        , errors
-                                                        , nodeId: id
-                                                        , onFinish: onTaskFinish id t
-                                                        , session } []
-                                ) currentTasks'
-                           )
-                , if nodeType == GT.NodeUser
-                        then GV.versionView { session } []
-                        else H.div {} []
+        , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType } []
+        , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
+                                                , barType: Pie
+                                                , errors
+                                                , nodeId: id
+                                                , onFinish: onTaskFinish id t
+                                                , session } []
+                        ) currentTasks'
+                   )
+        , if nodeType == GT.NodeUser
+          then GV.versionView { session } []
+          else H.div {} []
+               
+        , if showBox then
+            Popover.popover { arrow: false
+                            , open: false
+                            , onClose: \_ -> pure unit
+                            , onOpen:  \_ -> pure unit
+                            , ref: popoverRef } [
+              popOverIcon
+              , mNodePopupView props (onPopoverClose popoverRef)
+              ]
+          else H.div {} []
 
-                , if showBox then
-                        Popover.popover { arrow: false
-                                        , open: false
-                                        , onClose: \_ -> pure unit
-                                        , onOpen:  \_ -> pure unit
-                                        , ref: popoverRef } [
-                        popOverIcon
-                        , mNodePopupView props (onPopoverClose popoverRef)
-                        ]
-                else H.div {} []
-
-                , nodeActions { id
-                              , nodeType
-                              , refresh: const $ dispatch RefreshTree
-                              , session
-                              } []
-                ]
+        , nodeActions { id
+                      , nodeType
+                      , refresh: const $ dispatch RefreshTree
+                      , session
+                      } []
+        ]
         where
           onTaskFinish id' t _ = do
             GAT.finish id' t tasks
@@ -296,7 +296,6 @@ type NodeActionsProps = ( nodeType :: GT.NodeType | NodeActionsCommon )
 
 nodeActions :: R2.Component NodeActionsProps
 nodeActions = R.createElement nodeActionsCpt
-
 nodeActionsCpt :: R.Component NodeActionsProps
 nodeActionsCpt = here.component "nodeActions" cpt where
   cpt props _ = pure (child props.nodeType) where
