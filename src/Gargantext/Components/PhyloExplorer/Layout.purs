@@ -4,12 +4,20 @@ module Gargantext.Components.PhyloExplorer.Layout
 
 import Gargantext.Prelude
 
-import DOM.Simple.Console (log2)
+import DOM.Simple (Window, window)
 import Data.Array as Array
-import Data.Int (fromString)
-import Data.Maybe (maybe)
+import Data.Date as Date
+import Data.FoldableWithIndex (forWithIndex_)
+import Data.Int as Int
+import Data.Maybe (Maybe(..), maybe)
+import Data.Number as Number
 import Data.String as String
-import Gargantext.Components.PhyloExplorer.Types (PhyloDataset(..))
+import Data.Traversable (for)
+import Data.Tuple as Tuple
+import Data.Tuple.Nested ((/\))
+import Effect (Effect)
+import FFI.Simple (maybeGetProperty, (..), (...))
+import Gargantext.Components.PhyloExplorer.Types (Group, PhyloDataSet(..))
 import Gargantext.Utils (nbsp)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -20,40 +28,20 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.PhyloExplorer"
 
 type Props =
-  ( phyloDataset :: PhyloDataset
+  ( phyloDataSet :: PhyloDataSet
   )
 
 layout :: R2.Component Props
 layout = R.createElement layoutCpt
 layoutCpt :: R.Component Props
 layoutCpt = here.component "layout" cpt where
-  cpt { phyloDataset: (PhyloDataset phyloDataset)
+  cpt { phyloDataSet: (PhyloDataSet o)
       } _ = do
     -- States
-    let
-      { phyloDocs
-      , phyloBranches
-      , phyloGroups
-      , phyloTerms
-      , phyloPeriods
-      , phyloFoundations
-      , phyloSources
-      } = phyloDataset
 
-      nbDocs        = parseInt phyloDocs
-      nbBranches    = parseInt phyloBranches
-      nbGroups      = parseInt phyloGroups
-      nbTerms       = parseInt phyloTerms
-      nbPeriods     = parseInt phyloPeriods
-      nbFoundations = parseInt phyloFoundations
 
-    sourcesBox <- T.useBox (mempty :: Array String)
-    sources    <- T.useLive T.unequal sourcesBox
-
-    -- Hooks
     R.useEffectOnce' $ do
-      sources' <- pure $ stringArrToArr phyloSources
-      T.write_ sources' sourcesBox
+      pure unit
 
     -- @hightlightSource
     let
@@ -126,7 +114,7 @@ layoutCpt = here.component "layout" cpt where
             [ H.text "unselect source ✕" ]
           ]
           <>
-            flip Array.mapWithIndex sources
+            flip Array.mapWithIndex o.sources
             ( \idx val ->
                 H.option
                 { value: idx }
@@ -162,7 +150,10 @@ layoutCpt = here.component "layout" cpt where
         phyloCorpus {} []
       ,
         phyloCorpusInfo
-        { nbDocs, nbFoundations, nbPeriods }
+        { nbDocs        : o.nbDocs
+        , nbFoundations : o.nbFoundations
+        , nbPeriods     : o.nbPeriods
+        }
         []
       ,
         -- H.div
@@ -176,7 +167,10 @@ layoutCpt = here.component "layout" cpt where
 
 
         phyloPhyloInfo
-        { nbTerms, nbGroups, nbBranches }
+        { nbTerms     : o.nbTerms
+        , nbGroups    : o.nbGroups
+        , nbBranches  : o.nbBranches
+        }
         []
       ,
 
@@ -261,15 +255,33 @@ layoutCpt = here.component "layout" cpt where
 
       ]
 
-parseInt :: String -> Int
-parseInt s = maybe 0 identity $ fromString s
 
-stringArrToArr :: String -> Array String
-stringArrToArr
-  =   String.replace (String.Pattern "[") (String.Replacement "")
-  >>> String.replace (String.Pattern "]") (String.Replacement "")
-  >>> String.split (String.Pattern ",")
-  >>> Array.filter (\s -> not eq 0 $ String.length s)
+
+setGlobalDependencies :: Window -> PhyloDataSet -> Effect Unit
+setGlobalDependencies w (PhyloDataSet o)
+  = do
+    -- _ <- w ... "freq" $ {}
+    -- _ <- w ... "nbBranches" $ o.nbBranches
+    -- _ <- w ... "nbDocs" $ o.nbDocs
+    -- _ <- w ... "nbFoundations" $ o.nbFoundations
+    -- _ <- w ... "nbGroups" $ o.nbGroups
+    -- _ <- w ... "nbPeriods" $ o.nbPeriods
+    -- _ <- w ... "nbTerms" $ o.nbTerms
+    -- _ <- w ... "sources" $ o.sources
+    -- _ <- w ... "terms" $ {}
+    -- _ <- w ... "timeScale" $ o.timeScale
+    -- _ <- w ... "weighted" $ o.weighted
+
+    (freq :: Array Int) <- pure $ w .. "freq"
+    pure unit
+    -- forWithIndex_ o.foundations $ \i _ -> case maybeGetProperty (show i) freq of
+    --   Nothing -> freq ... (show i) $ 0
+    --   Just v  -> freq ... (show i) $ (v + 1)
+
+    -- pure $ for o.groups \(g :: Group)-> pure unit
+
+
+
 
 --------------------------------------------------------
 

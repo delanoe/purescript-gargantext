@@ -1,173 +1,221 @@
-module Gargantext.Components.PhyloExplorer.Types where
+module Gargantext.Components.PhyloExplorer.Types
+  ( PhyloDataSet(..)
+  , Branch, Period, Group
+  , parsePhyloJSONSet
+  ) where
 
 import Gargantext.Prelude
 
+import Data.Array as Array
+import Data.Date as Date
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep as GR
-import Data.Show.Generic (genericShow)
-import Gargantext.Utils.SimpleJSON (untaggedSumRep)
-import Simple.JSON as JSON
+import Data.Int as Int
+import Data.Maybe (Maybe(..), maybe)
+import Data.Number as Number
+import Data.String as String
+import Data.Tuple as Tuple
+import Data.Tuple.Nested ((/\))
+import Gargantext.Components.PhyloExplorer.JSON (PhyloJSONSet(..), PhyloObject(..))
 
 
-type GraphData =
-  ( bb                :: String
-  , color             :: String
-  , fontsize          :: String
-  , label             :: String
-  , labelloc          :: String
-  , lheight           :: String
-  , lp                :: String
-  , lwidth            :: String
-  , name              :: String
-  , nodesep           :: String
-  , overlap           :: String
-  , phyloBranches     :: String
-  , phyloDocs         :: String
-  , phyloFoundations  :: String
-  , phyloGroups       :: String
-  , phyloPeriods      :: String
-  , phyloSources      :: String
-  , phyloTerms        :: String
-  , phyloTimeScale    :: String
-  , rank              :: String
-  , ranksep           :: String
-  , ratio             :: String
-  , splines           :: String
-  , style             :: String
-  )
+-- @WIP Date or foreign?
+foreign import yearToDate       :: String -> Date.Date
+foreign import stringToDate     :: String -> Date.Date
+foreign import utcStringToDate  :: String -> Date.Date
 
---------------------------------------------------
 
-newtype PhyloDataset = PhyloDataset
-  { _subgraph_cnt     :: Int
-  , directed          :: Boolean
-  , edges             :: Array Edge
-  , objects           :: Array Object
-  , strict            :: Boolean
-  | GraphData
+newtype PhyloDataSet = PhyloDataSet
+  { bb            :: Array Number
+  , branches      :: Array Branch
+  , groups        :: Array Group
+  , nbBranches    :: Int
+  , nbDocs        :: Int
+  , nbFoundations :: Int
+  , nbGroups      :: Int
+  , nbPeriods     :: Int
+  , nbTerms       :: Int
+  , periods       :: Array Period
+  , sources       :: Array String
+  , timeScale     :: String
+  , weighted      :: Boolean
   }
 
-derive instance Generic PhyloDataset _
-derive instance Eq PhyloDataset
-instance Show PhyloDataset where show = genericShow
-derive newtype instance JSON.ReadForeign PhyloDataset
+derive instance Generic PhyloDataSet _
 
---------------------------------------------------
+parsePhyloJSONSet :: PhyloJSONSet -> PhyloDataSet
+parsePhyloJSONSet (PhyloJSONSet o) = PhyloDataSet
+  { bb            : parseBB o.bb
+  , branches
+  , groups
+  , nbBranches    : parseInt o.phyloBranches
+  , nbDocs        : parseInt o.phyloDocs
+  , nbFoundations : parseInt o.phyloFoundations
+  , nbGroups      : parseInt o.phyloGroups
+  , nbPeriods     : parseInt o.phyloPeriods
+  , nbTerms       : parseInt o.phyloTerms
+  , periods
+  , sources       : parseSources o.phyloSources
+  , timeScale     : o.phyloTimeScale
+  , weighted      : getGlobalWeightedValue groups
+  }
 
-type NodeData =
-  ( height            :: String
-  , label             :: String
-  , name              :: String
-  , nodeType          :: String
-  , pos               :: String
-  , shape             :: String
-  , width             :: String
-  )
+  where
+    epochTS   = o.phyloTimeScale == "epoch"
+    branches  = parseBranches o.objects
+    groups    = parseGroups epochTS o.objects
+    periods   = parsePeriods epochTS o.objects
 
-data Object
-  = Layer
-    { _gvid           :: Int
-    , nodes           :: Array Int
-    | GraphData
-    }
-  | BranchToNode
-    { _gvid           :: Int
-    , age             :: String
-    , bId             :: String
-    , birth           :: String
-    , branchId        :: String
-    , branch_x        :: String
-    , branch_y        :: String
-    , fillcolor       :: String
-    , fontname        :: String
-    , fontsize        :: String
-    , size            :: String
-    , style           :: String
-    | NodeData
-    }
-  | GroupToNode
-    { _gvid           :: Int
-    , bId             :: String
-    , branchId        :: String
-    , fontname        :: String
-    , foundation      :: String
-    , frequence       :: String
-    , from            :: String
-    , lbl             :: String
-    , penwidth        :: String
-    , role            :: String
-    , seaLvl          :: String
-    , source          :: String
-    , strFrom         :: String
-    , strTo           :: String
-    , support         :: String
-    , to              :: String
-    , weight          :: String
-    | NodeData
-    }
-  | PeriodToNode
-    { _gvid           :: Int
-    , fontsize        :: String
-    , from            :: String
-    , strFrom         :: String
-    , strTo           :: String
-    , to              :: String
-    | NodeData
-    }
+-----------------------------------------------------------
 
-derive instance Generic Object _
-derive instance Eq Object
-instance Show Object where show = genericShow
-instance JSON.ReadForeign Object where
-  readImpl f = GR.to <$> untaggedSumRep f
+data Branch = Branch
+  { bId     :: Int
+  , gvid    :: Int
+  , label   :: String
+  , x1      :: String
+  , x2      :: Number
+  , y       :: String
+  }
+
+parseBranches :: Array PhyloObject -> Array Branch
+parseBranches
+  =   map parse
+  >>> Array.catMaybes
+
+  where
+    parse :: PhyloObject -> Maybe Branch
+    parse (BranchToNode o) = Just $ Branch
+      { bId   : parseInt o.bId
+      , gvid  : o._gvid
+      , label : o.label
+      , x1    : o.branch_x
+      , x2    : Tuple.fst $ parsePos o.pos
+      , y     : o.branch_y
+      }
+    parse _                = Nothing
+
+-----------------------------------------------------------
+
+data Period = Period
+  { from    :: Date.Date
+  , to      :: Date.Date
+  , y       :: Number
+  }
+
+parsePeriods :: Boolean -> Array PhyloObject -> Array Period
+parsePeriods epoch
+  =   map parse
+  >>> Array.catMaybes
+
+  where
+    parse :: PhyloObject -> Maybe Period
+    parse (PeriodToNode o) = Just $ Period
+      { from  : parseNodeDate o.strFrom o.from epoch
+      , to    : parseNodeDate o.strTo   o.to   epoch
+      , y     : Tuple.snd $ parsePos o.pos
+      }
+    parse _                = Nothing
+
+-----------------------------------------------------------
+
+data Group = Group
+  { bId           :: Int
+  , foundation    :: Array Int -- @WIP: Array String ???
+  , from          :: Date.Date
+  , gId           :: Int
+  , label         :: Array String
+  , role          :: Array Int
+  , size          :: Int
+  , source        :: Array String
+  , to            :: Date.Date
+  , weight        :: Number
+  , x             :: Number
+  , y             :: Number
+  }
+
+parseGroups :: Boolean -> Array PhyloObject -> Array Group
+parseGroups epoch
+  =   map parse
+  >>> Array.catMaybes
+
+  where
+    parse :: PhyloObject -> Maybe Group
+    parse (GroupToNode o) = Just $ Group
+      { from  : parseNodeDate o.strFrom o.from epoch
+      , to    : parseNodeDate o.strTo   o.to   epoch
+      , x     : Tuple.fst $ parsePos o.pos
+      , y     : Tuple.snd $ parsePos o.pos
+      , bId   : parseInt o.bId
+      , gId   : o._gvid
+      , size  : parseInt o.support
+      , source: parseSources o.source
+      , weight: stringedMaybeToNumber o.weight
+      , label : stringedArrayToArray o.lbl
+      , role  : stringedArrayToArray' o.role
+      , foundation: stringedArrayToArray' o.foundation
+      }
+    parse _               = Nothing
+
+-----------------------------------------------------------
+
+parseInt :: String -> Int
+parseInt s = maybe 0 identity $ Int.fromString s
+
+parseFloat :: String -> Number
+parseFloat s = maybe 0.0 identity $ Number.fromString s
+
+parseSources :: String -> Array String
+parseSources
+  =   String.replace (String.Pattern "[") (String.Replacement "")
+  >>> String.replace (String.Pattern "]") (String.Replacement "")
+  >>> String.split (String.Pattern ",")
+  >>> Array.filter (\s -> not eq 0 $ String.length s)
+  >>> Array.sort
+
+parseBB :: String -> Array Number
+parseBB
+  =   String.split (String.Pattern ",")
+  >>> map parseFloat
+
+parseNodeDate :: Maybe String -> String -> Boolean -> Date.Date
+parseNodeDate Nothing    year _     = yearToDate(year)
+parseNodeDate (Just str) _    true  = utcStringToDate(str)
+parseNodeDate (Just str) _    false = stringToDate(str)
+
+parsePos :: String -> Tuple.Tuple Number Number
+parsePos
+  =   String.split (String.Pattern ",")
+  >>> \a -> (p $ Array.index a 0) /\
+            (p $ Array.index a 1)
+
+  where
+    p = case _ of
+      Nothing -> 0.0
+      Just s  -> parseFloat s
 
 
---------------------------------------------------
+-- @WIP: why taking last value? use `any`?
+getGlobalWeightedValue :: Array Group -> Boolean
+getGlobalWeightedValue
+  =   Array.last
+  >>> case _ of
+        Nothing         -> false
+        Just (Group o)  -> o.weight > 0.0
 
-type EdgeData =
-  ( color           :: String
-  , head            :: Int
-  , pos             :: String
-  , tail            :: Int
-  , width           :: String
-  )
+stringedMaybeToNumber :: String -> Number
+stringedMaybeToNumber "Nothing" = 0.0
+stringedMaybeToNumber s         =
+      s # String.replace (String.Pattern "Just ") (String.Replacement "")
+  >>> parseFloat
 
-data Edge
-  = GroupToGroup
-    { _gvid         :: Int
-    , constraint    :: String
-    , edgeType      :: String
-    , lbl           :: String
-    , penwidth      :: String
-    | EdgeData
-    }
-  | BranchToGroup
-    { _gvid         :: Int
-    , arrowhead     :: String
-    , edgeType      :: String
-    | EdgeData
-    }
-  | BranchToBranch
-    { _gvid         :: Int
-    , arrowhead     :: String
-    , style         :: String
-    | EdgeData
-    }
-  | GroupToAncestor
-    { _gvid         :: Int
-    , arrowhead     :: String
-    , lbl           :: String
-    , penwidth      :: String
-    , style         :: String
-    | EdgeData
-    }
-  | PeriodToPeriod
-    { _gvid         :: Int
-    | EdgeData
-    }
+stringedArrayToArray :: String -> Array String
+stringedArrayToArray str
+  =   str # String.length
+  >>> (\length    -> String.splitAt (length - 1) str)
+  >>> (\{ after } -> String.splitAt 1 after)
+  >>> (\{ after } -> String.split (String.Pattern "|") after)
+  >>> map String.trim
 
-derive instance Generic Edge _
-derive instance Eq Edge
-instance Show Edge where show = genericShow
-instance JSON.ReadForeign Edge where
-  readImpl f = GR.to <$> untaggedSumRep f
+stringedArrayToArray' :: String -> Array Int
+stringedArrayToArray'
+  =   stringedArrayToArray
+  >>> map parseInt

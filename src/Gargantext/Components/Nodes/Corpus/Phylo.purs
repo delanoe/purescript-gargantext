@@ -12,8 +12,9 @@ import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
+import Gargantext.Components.PhyloExplorer.JSON (PhyloJSONSet)
 import Gargantext.Components.PhyloExplorer.Layout (layout)
-import Gargantext.Components.PhyloExplorer.Types (PhyloDataset)
+import Gargantext.Components.PhyloExplorer.Types (PhyloDataSet)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeID)
 import Gargantext.Utils.Reactix as R2
@@ -36,7 +37,7 @@ phyloLayoutCpt :: R.Component Props
 phyloLayoutCpt = here.component "phyloLayout" cpt where
   cpt _ _ = do
 
-    fetchedDataBox <- T.useBox (Nothing :: Maybe PhyloDataset)
+    fetchedDataBox <- T.useBox (Nothing :: Maybe PhyloJSONSet)
     fetchedData    <- T.useLive T.unequal fetchedDataBox
 
     R.useEffectOnce' $ launchAff_ do
@@ -47,10 +48,10 @@ phyloLayoutCpt = here.component "phyloLayout" cpt where
 
     pure case fetchedData of
       Nothing           -> mempty
-      Just phyloDataset -> layout { phyloDataset } []
+      Just phyloDataSet -> layout { phyloDataSet } []
 
 
-fetchPhyloJSON :: Aff (Either String PhyloDataset)
+fetchPhyloJSON :: Aff (Either String PhyloDataSet)
 fetchPhyloJSON =
   let
     request = AX.defaultRequest
@@ -65,4 +66,4 @@ fetchPhyloJSON =
       Left err -> pure $ Left $ AX.printError err
       Right response -> case JSON.readJSON response.body of
         Left err -> pure $ Left $ show err
-        Right (res :: PhyloDataset) -> pure $ Right res
+        Right (res :: PhyloJSONSet) -> pure $ Right $ parsePhyloJSONSet res
