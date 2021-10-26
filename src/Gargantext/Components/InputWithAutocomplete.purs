@@ -3,13 +3,13 @@ module Gargantext.Components.InputWithAutocomplete where
 import Prelude
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable, null, toMaybe)
-import Data.Tuple.Nested ((/\))
 import DOM.Simple as DOM
 import DOM.Simple.Event as DE
 import Effect (Effect)
 import Effect.Timer (setTimeout)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import React.SyntheticEvent as E
 import Toestand as T
 
 import Gargantext.Utils.Reactix as R2
@@ -31,7 +31,6 @@ type Props =
 
 inputWithAutocomplete :: R2.Component Props
 inputWithAutocomplete = R.createElement inputWithAutocompleteCpt
-
 inputWithAutocompleteCpt :: R.Component Props
 inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
   where
@@ -44,7 +43,7 @@ inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
       inputRef <- R.useRef null
       completions <- T.useBox $ autocompleteSearch state'
 
-      let onFocus completions e = T.write_ (autocompleteSearch state') completions
+      let onFocus completions' _ = T.write_ (autocompleteSearch state') completions'
 
       pure $
         H.span { className: "input-with-autocomplete " <> classes }
@@ -69,7 +68,7 @@ inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
         -- handles automatic autocomplete search, otherwise I'd have to hide it
         -- in various different places (i.e. carefully handle all possible
         -- events where blur happens and autocomplete should hide).
-        onBlur completions e = setTimeout 100 $ do
+        onBlur completions _ = setTimeout 100 $ do
           T.write_ [] completions
 
         onInput completions e = do
@@ -77,7 +76,7 @@ inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
           T.write_ val state
           T.write_ (autocompleteSearch val) completions
 
-        onInputKeyUp :: R.Ref (Nullable DOM.Element) -> DE.KeyboardEvent -> Effect Unit
+        onInputKeyUp :: R.Ref (Nullable DOM.Element) -> DE.KeyboardEvent -> Effect Boolean
         onInputKeyUp inputRef e = do
           if DE.key e == "Enter" then do
             let val = R.unsafeEventValue e
@@ -85,10 +84,12 @@ inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
             T.write_ val state
             onEnterPress val
             case mInput of
-              Nothing -> pure unit
-              Just input -> R2.blur input
+              Nothing -> pure false
+              Just input -> do
+                R2.blur input
+                pure false
           else
-            pure $ unit
+            pure $ false
 
 type CompletionsProps =
   ( completions :: T.Box Completions
