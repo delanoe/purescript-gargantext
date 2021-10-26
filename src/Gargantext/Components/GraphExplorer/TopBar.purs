@@ -8,7 +8,7 @@ import Toestand as T
 import Gargantext.Prelude hiding (max,min)
 
 import Gargantext.Components.App.Data (Boxes)
-import Gargantext.Components.GraphExplorer.Search (nodeSearch)
+import Gargantext.Components.GraphExplorer.Search (nodeSearchControl)
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
 import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
 import Gargantext.Utils.Reactix as R2
@@ -32,9 +32,9 @@ topBarCpt = here.component "topBar" cpt where
     mGraph' <- T.useLive T.unequal mGraph
 
     let search = case mGraph' of
-          Just graph -> nodeSearch { graph
-                                   , multiSelectEnabled
-                                   , selectedNodeIds } []
+          Just graph -> nodeSearchControl { graph
+                                         , multiSelectEnabled
+                                         , selectedNodeIds } []
           Nothing -> RH.div {} []
 
     pure $ RH.form { className: "d-flex" }

@@ -209,9 +209,9 @@ controlsCpt = here.component "controls" cpt
           --     -- zoom: 0 -100 - calculate ratio
           --   , RH.li {} [ multiSelectEnabledButton multiSelectEnabled ]  -- toggle multi node selection
           --     -- save button
-          --   , RH.li {} [ nodeSearch { graph: graph
-          --                           , multiSelectEnabled: multiSelectEnabled
-          --                           , selectedNodeIds: selectedNodeIds } ]
+          --   , RH.li {} [ nodeSearchControl { graph: graph
+          --                                  , multiSelectEnabled: multiSelectEnabled
+          --                                  , selectedNodeIds: selectedNodeIds } ]
           --   , RH.li {} [ mouseSelectorSizeButton sigmaRef localControls.mouseSelectorSize ]
           --   , RH.li {} [ cameraButton { id: graphId
           --                             , hyperdataGraph: hyperdataGraph

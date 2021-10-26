@@ -1,9 +1,11 @@
 module Gargantext.Components.GraphExplorer.Search
-  ( Props, nodeSearch ) where
+  ( Props, nodeSearchControl ) where
 
 import Prelude
 import Data.Sequence as Seq
 import Data.Set as Set
+import Data.Tuple.Nested ((/\))
+import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -31,10 +33,11 @@ searchNodes :: String -> Seq.Seq (Record SigmaxT.Node) -> Seq.Seq (Record Sigmax
 searchNodes "" _ = Seq.empty
 searchNodes s nodes = Seq.filter (nodeMatchesSearch s) nodes
 
-nodeSearch :: R2.Component Props
-nodeSearch = R.createElement nodeSearchCpt
-nodeSearchCpt :: R.Component Props
-nodeSearchCpt = here.component "nodeSearch" cpt
+nodeSearchControl :: R2.Component Props
+nodeSearchControl = R.createElement sizeButtonCpt
+
+sizeButtonCpt :: R.Component Props
+sizeButtonCpt = here.component "nodeSearchControl" cpt
   where
     cpt { graph, multiSelectEnabled, selectedNodeIds } _ = do
       search <- T.useBox ""
@@ -67,8 +70,7 @@ triggerSearch graph search multiSelectEnabled selectedNodeIds = do
   let graphNodes = SigmaxT.graphNodes graph
   let matching = Set.fromFoldable $ (_.id) <$> searchNodes search graphNodes
 
-  here.log2 "[triggerSearch] search" search
-  here.log2 "[triggerSearch] graphNodes" graphNodes
+  log2 "[triggerSearch] search" search
 
   T.modify_ (\nodes ->
     Set.union matching $ if multiSelectEnabled then nodes else SigmaxT.emptyNodeIds) selectedNodeIds

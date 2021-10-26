@@ -5,6 +5,7 @@ import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
+import Data.Ord
 import Data.Ord.Generic (genericCompare)
 import Data.Symbol (SProxy(..))
 import Partial.Unsafe (unsafePartial)
@@ -17,13 +18,12 @@ type GraphId = Int
 
 newtype Node = Node {
     attributes :: Cluster
-  , children   :: Array String
-  , id_        :: String
-  , label      :: String
-  , size       :: Int
-  , type_      :: String
-  , x          :: Number
-  , y          :: Number
+  , id_ :: String
+  , label :: String
+  , size :: Int
+  , type_ :: String
+  , x :: Number
+  , y :: Number
   }
 
 x_coordP = SProxy :: SProxy "x_coord"
