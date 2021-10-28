@@ -279,14 +279,13 @@ setGlobalDependencies w (PhyloDataSet o)
     (freq :: Array Int)         <- pure $ w .. "freq"
     (terms :: Array GlobalTerm) <- pure $ w .. "terms"
 
-    void $ for o.groups \(Group g) -> do
+    for_ o.groups \(Group g) -> do
 
       let
         f = g.foundation
         l = g.label
 
-      log2 "FOUNDATION" f
-      log2 "LABEL" l
+      log2 "group" g
 
       -- For each entries in group.foundation array,
       -- increment consequently the global window.keys array

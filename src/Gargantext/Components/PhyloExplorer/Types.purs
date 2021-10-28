@@ -161,7 +161,7 @@ parseGroups epoch
       , from        : parseNodeDate o.strFrom o.from epoch
       , gId         : o._gvid
       , label       : stringedArrayToArray o.lbl
-      , role        : stringedArrayToArray' o.role
+      , role        : stringedArrayToArray_ o.role
       , size        : parseInt o.support
       , source      : parseSources o.source
       , to          : parseNodeDate o.strTo   o.to   epoch
@@ -187,8 +187,12 @@ instance Show GlobalTerm where show = genericShow
 parseInt :: String -> Int
 parseInt s = maybe 0 identity $ Int.fromString s
 
+parseInt' :: Number -> Int
+parseInt' n = maybe 0 identity $ Int.fromNumber n
+
 parseFloat :: String -> Number
 parseFloat s = maybe 0.0 identity $ Number.fromString s
+
 
 parseSources :: String -> Array String
 parseSources
@@ -234,15 +238,30 @@ stringedMaybeToNumber s         =
       s # String.replace (String.Pattern "Just ") (String.Replacement "")
   >>> parseFloat
 
+-- | From "\"user | sentiment analysis\"" :: String
+-- |
+-- | To   ["user", "sentiment analysis"] :: Array String
 stringedArrayToArray :: String -> Array String
 stringedArrayToArray str
   =   str # String.length
-  >>> (\length    -> String.splitAt (length - 1) str)
-  >>> (\{ after } -> String.splitAt 1 after)
-  >>> (\{ after } -> String.split (String.Pattern "|") after)
+  >>> (\length     -> String.splitAt (length - 1) str)
+  >>> (\{ before } -> String.splitAt 1 before)
+  >>> (\{ after }  -> String.split (String.Pattern "|") after)
   >>> map String.trim
 
+-- | From "\"97 | 257 | 542 | 574 | 577 | 597 | 785\"" :: String
+-- |
+-- | To   [97, 257, 542, 574, 577, 597, 785] :: Array Int
 stringedArrayToArray' :: String -> Array Int
 stringedArrayToArray'
   =   stringedArrayToArray
   >>> map parseInt
+
+-- | From "\"3.0 | 3.0 | 3.0 | 3.0 | 1.0 | 3.0 | 3.0\"" :: String
+-- |
+-- | To   [3, 3, 3, 3, 1, 3, 3] :: Array Int
+stringedArrayToArray_ :: String -> Array Int
+stringedArrayToArray_
+  =   stringedArrayToArray
+  >>> map parseFloat
+  >>> map parseInt'
