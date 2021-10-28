@@ -5,6 +5,7 @@ module Gargantext.Components.PhyloExplorer.Layout
 import Gargantext.Prelude
 
 import DOM.Simple (Window, window)
+import DOM.Simple.Console (log2)
 import Data.Array as Array
 import Data.Date as Date
 import Data.FoldableWithIndex (forWithIndex_)
@@ -12,17 +13,20 @@ import Data.Int as Int
 import Data.Maybe (Maybe(..), maybe)
 import Data.Number as Number
 import Data.String as String
-import Data.Traversable (for)
+import Data.Symbol (SProxy(..))
+import Data.Traversable (for, for_)
 import Data.Tuple as Tuple
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import FFI.Simple (maybeGetProperty, (..), (...))
-import Gargantext.Components.PhyloExplorer.Types (Group, PhyloDataSet(..))
+import FFI.Simple (maybeGetProperty, (..), (...), (.=), (.?))
+import Gargantext.Components.PhyloExplorer.Types (GlobalTerm(..), Group(..), PhyloDataSet(..))
 import Gargantext.Utils (nbsp)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record (get)
 import Toestand as T
+import Type.Proxy (Proxy(..))
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.PhyloExplorer"
@@ -41,7 +45,7 @@ layoutCpt = here.component "layout" cpt where
 
 
     R.useEffectOnce' $ do
-      pure unit
+      setGlobalDependencies window (PhyloDataSet o)
 
     -- @hightlightSource
     let
@@ -260,29 +264,55 @@ layoutCpt = here.component "layout" cpt where
 setGlobalDependencies :: Window -> PhyloDataSet -> Effect Unit
 setGlobalDependencies w (PhyloDataSet o)
   = do
-    -- _ <- w ... "freq" $ {}
-    -- _ <- w ... "nbBranches" $ o.nbBranches
-    -- _ <- w ... "nbDocs" $ o.nbDocs
-    -- _ <- w ... "nbFoundations" $ o.nbFoundations
-    -- _ <- w ... "nbGroups" $ o.nbGroups
-    -- _ <- w ... "nbPeriods" $ o.nbPeriods
-    -- _ <- w ... "nbTerms" $ o.nbTerms
-    -- _ <- w ... "sources" $ o.sources
-    -- _ <- w ... "terms" $ {}
-    -- _ <- w ... "timeScale" $ o.timeScale
-    -- _ <- w ... "weighted" $ o.weighted
+    _ <- pure $ (w .= "freq") {}
+    _ <- pure $ (w .= "nbBranches") o.nbBranches
+    _ <- pure $ (w .= "nbDocs") o.nbDocs
+    _ <- pure $ (w .= "nbFoundations") o.nbFoundations
+    _ <- pure $ (w .= "nbGroups") o.nbGroups
+    _ <- pure $ (w .= "nbPeriods") o.nbPeriods
+    _ <- pure $ (w .= "nbTerms") o.nbTerms
+    _ <- pure $ (w .= "sources") o.sources
+    _ <- pure $ (w .= "terms") []
+    _ <- pure $ (w .= "timeScale") o.timeScale
+    _ <- pure $ (w .= "weighted") o.weighted
 
-    (freq :: Array Int) <- pure $ w .. "freq"
-    pure unit
-    -- forWithIndex_ o.foundations $ \i _ -> case maybeGetProperty (show i) freq of
-    --   Nothing -> freq ... (show i) $ 0
-    --   Just v  -> freq ... (show i) $ (v + 1)
+    (freq :: Array Int)         <- pure $ w .. "freq"
+    (terms :: Array GlobalTerm) <- pure $ w .. "terms"
 
-    -- pure $ for o.groups \(g :: Group)-> pure unit
+    void $ for o.groups \(Group g) -> do
+
+      let
+        f = g.foundation
+        l = g.label
+
+      log2 "FOUNDATION" f
+      log2 "LABEL" l
+
+      -- For each entries in group.foundation array,
+      -- increment consequently the global window.keys array
+      -- forWithIndex_ f \i _ ->
+      --   let i' = show i
+      --   in case (freq .? i') of
+      --     Nothing -> pure $ (freq .= i') 0
+      --     Just v  -> pure $ (freq .= i') (v +1)
+      for_ f \i ->
+        let i' = show i
+        in case (freq .? i') of
+          Nothing -> pure $ (freq .= i') 0
+          Just v  -> pure $ (freq .= i') (v +1)
 
 
-
-
+      -- For each entries in group.foundation array,
+      -- if the global window.terms does not have it in property,
+      -- append an item to the global window.terms
+      for_ f \i ->
+        let i' = show i
+        in case (terms .? i') of
+          Nothing -> pure unit
+          Just _  -> void <<< pure $ (terms .= i') $ GlobalTerm
+            { label: l .. i'
+            , fdt  : f .. i'
+            }
 --------------------------------------------------------
 
 type PhyloCorpusProps = ()

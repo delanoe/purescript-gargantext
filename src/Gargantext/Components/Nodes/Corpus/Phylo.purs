@@ -14,7 +14,7 @@ import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.PhyloExplorer.JSON (PhyloJSONSet)
 import Gargantext.Components.PhyloExplorer.Layout (layout)
-import Gargantext.Components.PhyloExplorer.Types (PhyloDataSet)
+import Gargantext.Components.PhyloExplorer.Types (PhyloDataSet, parsePhyloJSONSet)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeID)
 import Gargantext.Utils.Reactix as R2
@@ -37,7 +37,7 @@ phyloLayoutCpt :: R.Component Props
 phyloLayoutCpt = here.component "phyloLayout" cpt where
   cpt _ _ = do
 
-    fetchedDataBox <- T.useBox (Nothing :: Maybe PhyloJSONSet)
+    fetchedDataBox <- T.useBox (Nothing :: Maybe PhyloDataSet)
     fetchedData    <- T.useLive T.unequal fetchedDataBox
 
     R.useEffectOnce' $ launchAff_ do

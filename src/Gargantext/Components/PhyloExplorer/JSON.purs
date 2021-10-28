@@ -42,8 +42,8 @@ type GraphData =
 newtype PhyloJSONSet = PhyloJSONSet
   { _subgraph_cnt     :: Int
   , directed          :: Boolean
-  , edges             :: Array Edge
-  , objects           :: Array PhyloObject
+  , edges             :: Array RawEdge
+  , objects           :: Array RawObject
   , strict            :: Boolean
   | GraphData
   }
@@ -65,7 +65,7 @@ type NodeData =
   , width             :: String
   )
 
-data PhyloObject
+data RawObject
   = Layer
     { _gvid           :: Int
     , nodes           :: Array Int
@@ -116,10 +116,10 @@ data PhyloObject
     | NodeData
     }
 
-derive instance Generic PhyloObject _
-derive instance Eq PhyloObject
-instance Show PhyloObject where show = genericShow
-instance JSON.ReadForeign PhyloObject where
+derive instance Generic RawObject _
+derive instance Eq RawObject
+instance Show RawObject where show = genericShow
+instance JSON.ReadForeign RawObject where
   readImpl f = GR.to <$> untaggedSumRep f
 
 
@@ -133,7 +133,7 @@ type EdgeData =
   , width           :: String
   )
 
-data Edge
+data RawEdge
   = GroupToGroup
     { _gvid         :: Int
     , constraint    :: String
@@ -167,8 +167,8 @@ data Edge
     | EdgeData
     }
 
-derive instance Generic Edge _
-derive instance Eq Edge
-instance Show Edge where show = genericShow
-instance JSON.ReadForeign Edge where
+derive instance Generic RawEdge _
+derive instance Eq RawEdge
+instance Show RawEdge where show = genericShow
+instance JSON.ReadForeign RawEdge where
   readImpl f = GR.to <$> untaggedSumRep f

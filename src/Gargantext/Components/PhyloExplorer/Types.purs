@@ -1,6 +1,7 @@
 module Gargantext.Components.PhyloExplorer.Types
   ( PhyloDataSet(..)
-  , Branch, Period, Group
+  , Branch(..), Period(..), Group(..)
+  , GlobalTerm(..)
   , parsePhyloJSONSet
   ) where
 
@@ -12,10 +13,11 @@ import Data.Generic.Rep (class Generic)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), maybe)
 import Data.Number as Number
+import Data.Show.Generic (genericShow)
 import Data.String as String
 import Data.Tuple as Tuple
 import Data.Tuple.Nested ((/\))
-import Gargantext.Components.PhyloExplorer.JSON (PhyloJSONSet(..), PhyloObject(..))
+import Gargantext.Components.PhyloExplorer.JSON (PhyloJSONSet(..), RawObject(..))
 
 
 -- @WIP Date or foreign?
@@ -41,6 +43,8 @@ newtype PhyloDataSet = PhyloDataSet
   }
 
 derive instance Generic PhyloDataSet _
+derive instance Eq PhyloDataSet
+instance Show PhyloDataSet where show = genericShow
 
 parsePhyloJSONSet :: PhyloJSONSet -> PhyloDataSet
 parsePhyloJSONSet (PhyloJSONSet o) = PhyloDataSet
@@ -76,13 +80,17 @@ data Branch = Branch
   , y       :: String
   }
 
-parseBranches :: Array PhyloObject -> Array Branch
+derive instance Generic Branch _
+derive instance Eq Branch
+instance Show Branch where show = genericShow
+
+parseBranches :: Array RawObject -> Array Branch
 parseBranches
   =   map parse
   >>> Array.catMaybes
 
   where
-    parse :: PhyloObject -> Maybe Branch
+    parse :: RawObject -> Maybe Branch
     parse (BranchToNode o) = Just $ Branch
       { bId   : parseInt o.bId
       , gvid  : o._gvid
@@ -101,13 +109,17 @@ data Period = Period
   , y       :: Number
   }
 
-parsePeriods :: Boolean -> Array PhyloObject -> Array Period
+derive instance Generic Period _
+derive instance Eq Period
+instance Show Period where show = genericShow
+
+parsePeriods :: Boolean -> Array RawObject -> Array Period
 parsePeriods epoch
   =   map parse
   >>> Array.catMaybes
 
   where
-    parse :: PhyloObject -> Maybe Period
+    parse :: RawObject -> Maybe Period
     parse (PeriodToNode o) = Just $ Period
       { from  : parseNodeDate o.strFrom o.from epoch
       , to    : parseNodeDate o.strTo   o.to   epoch
@@ -132,28 +144,43 @@ data Group = Group
   , y             :: Number
   }
 
-parseGroups :: Boolean -> Array PhyloObject -> Array Group
+derive instance Generic Group _
+derive instance Eq Group
+instance Show Group where show = genericShow
+
+parseGroups :: Boolean -> Array RawObject -> Array Group
 parseGroups epoch
   =   map parse
   >>> Array.catMaybes
 
   where
-    parse :: PhyloObject -> Maybe Group
+    parse :: RawObject -> Maybe Group
     parse (GroupToNode o) = Just $ Group
-      { from  : parseNodeDate o.strFrom o.from epoch
-      , to    : parseNodeDate o.strTo   o.to   epoch
-      , x     : Tuple.fst $ parsePos o.pos
-      , y     : Tuple.snd $ parsePos o.pos
-      , bId   : parseInt o.bId
-      , gId   : o._gvid
-      , size  : parseInt o.support
-      , source: parseSources o.source
-      , weight: stringedMaybeToNumber o.weight
-      , label : stringedArrayToArray o.lbl
-      , role  : stringedArrayToArray' o.role
-      , foundation: stringedArrayToArray' o.foundation
+      { bId         : parseInt o.bId
+      , foundation  : stringedArrayToArray' o.foundation
+      , from        : parseNodeDate o.strFrom o.from epoch
+      , gId         : o._gvid
+      , label       : stringedArrayToArray o.lbl
+      , role        : stringedArrayToArray' o.role
+      , size        : parseInt o.support
+      , source      : parseSources o.source
+      , to          : parseNodeDate o.strTo   o.to   epoch
+      , weight      : stringedMaybeToNumber o.weight
+      , x           : Tuple.fst $ parsePos o.pos
+      , y           : Tuple.snd $ parsePos o.pos
       }
     parse _               = Nothing
+
+-----------------------------------------------------------
+
+data GlobalTerm = GlobalTerm
+  { label :: String
+  , fdt   :: String
+  }
+
+derive instance Generic GlobalTerm _
+derive instance Eq GlobalTerm
+instance Show GlobalTerm where show = genericShow
 
 -----------------------------------------------------------
 
