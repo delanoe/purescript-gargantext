@@ -184,10 +184,6 @@ selectedNodesCpt = here.component "selectedNodes" cpt
       { selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
       selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
 
-      let badges' = neighbourBadges graph selectedNodeIds'
-          minSize = F.foldl Math.min 0.0 (Seq.map _.size (SigmaxT.graphNodes graph))
-          maxSize = F.foldl Math.max 0.0 (Seq.map _.size (SigmaxT.graphNodes graph))
-
       pure $ R2.row
         [ R2.col 12
           [ RH.ul { className: "nav nav-tabs d-flex justify-content-center"
@@ -197,7 +193,13 @@ selectedNodesCpt = here.component "selectedNodes" cpt
               [ RH.div { className: "d-flex flex-wrap justify-content-center"
                        , role: "tabpanel" }
                 ( Seq.toUnfoldable
-                  $ ( Seq.map (\node -> badge { maxSize, minSize, node, selectedNodeIds }) badges')
+                  $ ( Seq.map (\node -> badge { minSize: node.size  -- same size for all badges
+                                              , maxSize: node.size
+                                              , node
+                                              , selectedNodeIds })
+                      (badges graph selectedNodeIds')
+                    )
+--                  $ ( Seq.map (\node -> badge { maxSize, minSize, node, selectedNodeIds }) badges')
                 )
               , H.br {}
               ]
