@@ -47,14 +47,14 @@ modeTabType' Patents = CTabAuthors
 modeTabType' Books = CTabAuthors
 modeTabType' Communication = CTabAuthors
 
-type TabsProps = (
-    boxes       :: Boxes
-  , cacheState  :: T.Box LTypes.CacheState
-  , contactData :: ContactData'
-  , frontends   :: Frontends
-  , nodeId      :: Int
-  , session     :: Session
-  , sidePanel   :: T.Box (Maybe (Record TTypes.SidePanel))
+type TabsProps =
+  ( boxes         :: Boxes
+  , cacheState    :: T.Box LTypes.CacheState
+  , defaultListId :: Int
+  , frontends     :: Frontends
+  , nodeId        :: Int
+  , session       :: Session
+  , sidePanel     :: T.Box (Maybe (Record TTypes.SidePanel))
   )
 
 tabs :: R2.Leaf TabsProps
@@ -64,7 +64,7 @@ tabsCpt = here.component "tabs" cpt
   where
     cpt { boxes
         , cacheState
-        , contactData: {defaultListId}
+        , defaultListId
         , frontends
         , nodeId
         , session
@@ -134,7 +134,6 @@ type NgramsViewTabsProps = (
 
 ngramsView :: R2.Component NgramsViewTabsProps
 ngramsView = R.createElement ngramsViewCpt
-
 ngramsViewCpt :: R.Component NgramsViewTabsProps
 ngramsViewCpt = here.component "ngramsView" cpt
   where

@@ -6,7 +6,7 @@ import Data.List.Types (NonEmptyList)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Foreign (unsafeToForeign, ForeignError)
-import Gargantext.Components.GraphQL.User (User)
+import Gargantext.Components.GraphQL.User (User, UserInfo)
 import Gargantext.Prelude
 import Gargantext.Utils.Reactix as R2
 import GraphQL.Client.Args (type (==>))
@@ -53,5 +53,6 @@ queryGql name q = do
 
 -- Schema
 type Schema
-  = { users :: { user_id :: Int } ==> Array User
+  = { user_infos :: { user_id :: Int } ==> Array UserInfo
+    , users :: { user_id :: Int } ==> Array User
     }
