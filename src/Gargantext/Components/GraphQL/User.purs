@@ -1,9 +1,10 @@
 module Gargantext.Components.GraphQL.User where
 
+import Gargantext.Prelude
+
 import Data.Array as A
 import Data.Lens (Lens', lens)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
-import Gargantext.Prelude
 import Type.Proxy (Proxy(..))
 
 
@@ -23,7 +24,40 @@ type UserInfo
     , ui_cwRole         :: Maybe String
     , ui_cwTouchPhone   :: Maybe String
     , ui_cwTouchMail    :: Maybe String }
-
+type UserInfoM
+  = { ui_id             :: Int
+    , ui_username       :: Maybe String
+    , ui_email          :: Maybe String
+    , ui_title          :: Maybe String
+    , ui_source         :: Maybe String
+    , ui_cwFirstName    :: Maybe String
+    , ui_cwLastName     :: Maybe String
+    , ui_cwOrganization :: Maybe (Array String)
+    , ui_cwLabTeamDepts :: Maybe (Array String)
+    , ui_cwOffice       :: Maybe String
+    , ui_cwCity         :: Maybe String
+    , ui_cwCountry      :: Maybe String
+    , ui_cwRole         :: Maybe String
+    , ui_cwTouchPhone   :: Maybe String
+    , ui_cwTouchMail    :: Maybe String }
+defaultUserInfoM :: UserInfoM
+defaultUserInfoM =
+  { ui_id: 0
+  , ui_username: Nothing
+  , ui_email: Nothing
+  , ui_title: Nothing
+  , ui_source: Nothing
+  , ui_cwFirstName: Nothing
+  , ui_cwLastName: Nothing
+  , ui_cwOrganization: Nothing
+  , ui_cwLabTeamDepts: Nothing
+  , ui_cwOffice: Nothing
+  , ui_cwCity: Nothing
+  , ui_cwCountry: Nothing
+  , ui_cwRole: Nothing
+  , ui_cwTouchPhone: Nothing
+  , ui_cwTouchMail: Nothing }
+  
 _ui_cwFirstName :: Lens' UserInfo String
 _ui_cwFirstName = lens getter setter
   where
@@ -106,35 +140,3 @@ showUser { u_id
          , u_username
          , u_email } = "[" <> show u_id <> "] " <> u_username <> " :: " <> u_email
 showMUser u = maybe "" showUser u
-
--- Symbols 
-ui_id :: Proxy "ui_id"
-ui_id = Proxy
-ui_username :: Proxy "ui_username"
-ui_username = Proxy
-ui_email :: Proxy "ui_email"
-ui_email = Proxy
-ui_title :: Proxy "ui_title"
-ui_title = Proxy
-ui_source :: Proxy "ui_source"
-ui_source = Proxy
-ui_cwFirstName :: Proxy "ui_cwFirstName"
-ui_cwFirstName = Proxy
-ui_cwLastName :: Proxy "ui_cwLastName"
-ui_cwLastName = Proxy
-ui_cwCity :: Proxy "ui_cwCity"
-ui_cwCity = Proxy
-ui_cwCountry :: Proxy "ui_cwCountry"
-ui_cwCountry = Proxy
-ui_cwLabTeamDepts :: Proxy "ui_cwLabTeamDepts"
-ui_cwLabTeamDepts = Proxy
-ui_cwOrganization :: Proxy "ui_cwOrganization"
-ui_cwOrganization = Proxy
-ui_cwOffice :: Proxy "ui_cwOffice"
-ui_cwOffice = Proxy
-ui_cwRole :: Proxy "ui_cwRole"
-ui_cwRole = Proxy
-ui_cwTouchMail :: Proxy "ui_cwTouchMail"
-ui_cwTouchMail = Proxy
-ui_cwTouchPhone :: Proxy "ui_cwTouchPhone"
-ui_cwTouchPhone = Proxy

@@ -21,6 +21,7 @@ import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.GraphQL (getClient, queryGql)
+import Gargantext.Components.GraphQL.User (defaultUserInfoM)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact'(..), ContactData', ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
@@ -34,7 +35,7 @@ import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import GraphQL.Client.Args (type (==>), (=>>), onlyArgs)
-import GraphQL.Client.Query (mutationOpts)
+import GraphQL.Client.Query (mutationOpts, mutation)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
@@ -224,13 +225,15 @@ saveContactHyperdata session id = put session (Routes.NodeAPI Node (Just id) "")
 saveUserInfo :: Session -> Int -> UserInfo -> Aff (Either RESTError Int)
 saveUserInfo session id ui = do
   -- TODO GraphQL
-  --pure $ Left $ CustomError "TODO implement graphql for saveUserInfo"
-  client <- liftEffect $ getClient
-  mutationOpts
-    (\m -> m)
-    client
-    "update user_info"
-    { update_user_info: onlyArgs { ui_id: id } }
+  pure $ Left $ CustomError "TODO implement graphql for saveUserInfo"
+--  client <- liftEffect $ getClient
+--  res <- mutation
+--    client
+--    "update user_info"
+--    { update_user_info: userInfo =>> { ui_id: unit } }
+--  pure $ Right 0
+--  where
+--    userInfo = defaultUserInfoM { ui_id = id }
 
 type AnnuaireLayoutProps = ( annuaireId :: Int, session :: Session | ReloadProps )
 
@@ -307,21 +310,21 @@ getUserInfo :: Session -> Int -> Aff (Either RESTError UserInfo)
 getUserInfo session id = do
   { user_infos } <- queryGql "get user infos"
                     { user_infos: { user_id: id } =>>
-                      { ui_id
-                      , ui_username
-                      , ui_email
-                      , ui_title
-                      , ui_source
-                      , ui_cwFirstName
-                      , ui_cwLastName
-                      , ui_cwCity
-                      , ui_cwCountry
-                      , ui_cwLabTeamDepts
-                      , ui_cwOrganization
-                      , ui_cwOffice
-                      , ui_cwRole
-                      , ui_cwTouchMail
-                      , ui_cwTouchPhone }
+                      { ui_id: unit
+                      , ui_username: unit
+                      , ui_email: unit
+                      , ui_title: unit
+                      , ui_source: unit
+                      , ui_cwFirstName: unit
+                      , ui_cwLastName: unit
+                      , ui_cwCity: unit
+                      , ui_cwCountry: unit
+                      , ui_cwLabTeamDepts: unit
+                      , ui_cwOrganization: unit
+                      , ui_cwOffice: unit
+                      , ui_cwRole: unit
+                      , ui_cwTouchMail: unit
+                      , ui_cwTouchPhone: unit }
                     }
   liftEffect $ here.log2 "[getUserInfo] user infos" user_infos
   pure $ case A.head user_infos of

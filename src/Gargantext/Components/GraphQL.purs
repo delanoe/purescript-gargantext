@@ -7,7 +7,7 @@ import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Foreign (unsafeToForeign, ForeignError)
-import Gargantext.Components.GraphQL.User (User, UserInfo)
+import Gargantext.Components.GraphQL.User (User, UserInfo, UserInfoM)
 import Gargantext.Prelude
 import Gargantext.Utils.Reactix as R2
 import GraphQL.Client.Args (type (==>))
@@ -40,7 +40,7 @@ gqlQuery = queryWithDecoder  (unsafeToForeign >>> JSON.read >>> lmap toJsonError
 toJsonError :: NonEmptyList ForeignError -> JsonDecodeError
 toJsonError = unsafeCoerce  -- map ForeignErrors to JsonDecodeError as you wish
 
-getClient :: Effect (Client UrqlClient Schema Void Void)
+getClient :: Effect (Client UrqlClient Schema Mutation Void)
 getClient = createClient { headers: [], url: "http://localhost:8008/gql" }
 
 queryGql ::
@@ -51,7 +51,7 @@ queryGql ::
 queryGql name q = do
   --query client name q
   client <- liftEffect getClient
-  gqlQuery (client :: Client UrqlClient Schema Void Void) name q
+  gqlQuery (client :: Client UrqlClient Schema Mutation Void) name q
   
   --query_ "http://localhost:8008/gql" (Proxy :: Proxy Schema) 
 
@@ -60,3 +60,6 @@ type Schema
   = { user_infos :: { user_id :: Int } ==> Array UserInfo
     , users :: { user_id :: Int } ==> Array User
     }
+
+type Mutation
+  = { update_user_info :: UserInfoM } ==> UserInfo
