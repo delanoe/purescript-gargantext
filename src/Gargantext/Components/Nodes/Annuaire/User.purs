@@ -5,7 +5,6 @@ module Gargantext.Components.Nodes.Annuaire.User
   where
 
 
-import Gargantext.Components.GraphQL.User
 import Gargantext.Prelude
 
 import Data.Either (Either)
@@ -14,6 +13,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.GraphQL.User (UserInfo)
 import Gargantext.Components.Nodes.Annuaire.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contact (getUserInfoWithReload, saveUserInfo, contactInfos)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
@@ -131,18 +131,19 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
           handleRESTError errors res $ \_ ->
             liftEffect $ T2.reload reload
 
-saveContactHyperdata :: Session -> Int -> HyperdataUser -> Aff (Either RESTError Int)
-saveContactHyperdata session id = put session (Routes.NodeAPI Node (Just id) "")
+--saveContactHyperdata :: Session -> Int -> HyperdataUser -> Aff (Either RESTError Int)
+--saveContactHyperdata session id = put session (Routes.NodeAPI Node (Just id) "")
 
 -- | toUrl to get data XXX
-getContact :: Session -> Int -> Aff (Either RESTError ContactData)
-getContact session id = do
-  eContactNode <- get session $ Routes.NodeAPI Node (Just id) ""
-  -- TODO: we need a default list for the pairings
-  --defaultListIds <- get $ toUrl endConfigStateful Back (Children NodeList 0 1 Nothing) $ Just id
-  --case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
-  --  Just (NodePoly { id: defaultListId }) ->
-  --    pure {contactNode, defaultListId}
-  --  Nothing ->
-  --    throwError $ error "Missing default list"
-  pure $ (\contactNode -> { contactNode, defaultListId: 424242 }) <$> eContactNode
+--getContact :: Session -> Int -> Aff (Either RESTError ContactData)
+--getContact session id = do
+--  eContactNode <- get session $ Routes.NodeAPI Node (Just id) ""
+--  -- TODO: we need a default list for the pairings
+--  --defaultListIds <- get $ toUrl endConfigStateful Back (Children NodeList 0 1 Nothing) $ Just id
+--  --case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
+--  --  Just (NodePoly { id: defaultListId }) ->
+--  --    pure {contactNode, defaultListId}
+--  --  Nothing ->
+--  --    throwError $ error "Missing default list"
+--  pure $ (\contactNode -> { contactNode, defaultListId: 424242 }) <$> eContactNode
+--

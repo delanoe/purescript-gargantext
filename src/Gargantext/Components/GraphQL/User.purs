@@ -5,6 +5,7 @@ import Gargantext.Prelude
 import Data.Array as A
 import Data.Lens (Lens', lens)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import GraphQL.Client.Args (NotNull(..))
 import Type.Proxy (Proxy(..))
 
 
@@ -25,38 +26,38 @@ type UserInfo
     , ui_cwTouchPhone   :: Maybe String
     , ui_cwTouchMail    :: Maybe String }
 type UserInfoM
-  = { ui_id             :: Int
-    , ui_username       :: Maybe String
-    , ui_email          :: Maybe String
-    , ui_title          :: Maybe String
-    , ui_source         :: Maybe String
-    , ui_cwFirstName    :: Maybe String
-    , ui_cwLastName     :: Maybe String
-    , ui_cwOrganization :: Maybe (Array String)
-    , ui_cwLabTeamDepts :: Maybe (Array String)
-    , ui_cwOffice       :: Maybe String
-    , ui_cwCity         :: Maybe String
-    , ui_cwCountry      :: Maybe String
-    , ui_cwRole         :: Maybe String
-    , ui_cwTouchPhone   :: Maybe String
-    , ui_cwTouchMail    :: Maybe String }
-defaultUserInfoM :: UserInfoM
-defaultUserInfoM =
-  { ui_id: 0
-  , ui_username: Nothing
-  , ui_email: Nothing
-  , ui_title: Nothing
-  , ui_source: Nothing
-  , ui_cwFirstName: Nothing
-  , ui_cwLastName: Nothing
-  , ui_cwOrganization: Nothing
-  , ui_cwLabTeamDepts: Nothing
-  , ui_cwOffice: Nothing
-  , ui_cwCity: Nothing
-  , ui_cwCountry: Nothing
-  , ui_cwRole: Nothing
-  , ui_cwTouchPhone: Nothing
-  , ui_cwTouchMail: Nothing }
+  = { ui_id             :: NotNull Int
+    , ui_username       :: String
+    , ui_email          :: String
+    , ui_title          :: String
+    , ui_source         :: String
+    , ui_cwFirstName    :: String
+    , ui_cwLastName     :: String
+    , ui_cwOrganization :: (Array String)
+    , ui_cwLabTeamDepts :: (Array String)
+    , ui_cwOffice       :: String
+    , ui_cwCity         :: String
+    , ui_cwCountry      :: String
+    , ui_cwRole         :: String
+    , ui_cwTouchPhone   :: String
+    , ui_cwTouchMail    :: String }
+--defaultUserInfoM :: UserInfoM
+--defaultUserInfoM =
+--  { ui_id: NotNull 0
+--  , ui_username: Nothing
+--  , ui_email: Nothing
+--  , ui_title: Nothing
+--  , ui_source: Nothing
+--  , ui_cwFirstName: Nothing
+--  , ui_cwLastName: Nothing
+--  , ui_cwOrganization: Nothing
+--  , ui_cwLabTeamDepts: Nothing
+--  , ui_cwOffice: Nothing
+--  , ui_cwCity: Nothing
+--  , ui_cwCountry: Nothing
+--  , ui_cwRole: Nothing
+--  , ui_cwTouchPhone: Nothing
+--  , ui_cwTouchMail: Nothing }
   
 _ui_cwFirstName :: Lens' UserInfo String
 _ui_cwFirstName = lens getter setter

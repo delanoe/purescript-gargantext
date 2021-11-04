@@ -62,4 +62,4 @@ type Schema
     }
 
 type Mutation
-  = { update_user_info :: UserInfoM } ==> UserInfo
+  = { update_user_info :: UserInfoM ==> Int }

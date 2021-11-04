@@ -21,7 +21,6 @@ import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.GraphQL (getClient, queryGql)
-import Gargantext.Components.GraphQL.User (defaultUserInfoM)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact'(..), ContactData', ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
@@ -34,7 +33,7 @@ import Gargantext.Sessions (Session, get, put, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
-import GraphQL.Client.Args (type (==>), (=>>), onlyArgs)
+import GraphQL.Client.Args (type (==>), IgnoreArg(..), OrArg(..), onlyArgs, (=>>))
 import GraphQL.Client.Query (mutationOpts, mutation)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -225,15 +224,28 @@ saveContactHyperdata session id = put session (Routes.NodeAPI Node (Just id) "")
 saveUserInfo :: Session -> Int -> UserInfo -> Aff (Either RESTError Int)
 saveUserInfo session id ui = do
   -- TODO GraphQL
-  pure $ Left $ CustomError "TODO implement graphql for saveUserInfo"
---  client <- liftEffect $ getClient
---  res <- mutation
---    client
---    "update user_info"
---    { update_user_info: userInfo =>> { ui_id: unit } }
---  pure $ Right 0
---  where
---    userInfo = defaultUserInfoM { ui_id = id }
+--  pure $ Left $ CustomError "TODO implement graphql for saveUserInfo"
+  client <- liftEffect $ getClient
+  res <- mutationOpts
+    (\m -> m)
+    client
+    "update user_info"
+    { update_user_info: onlyArgs { ui_id: id
+                                 , ui_cwFirstName: ga ui.ui_cwFirstName
+                                 , ui_cwLastName: ga ui.ui_cwLastName
+                                 , ui_cwOrganization: ui.ui_cwOrganization
+                                 , ui_cwLabTeamDepts: ui.ui_cwLabTeamDepts
+                                 , ui_cwOffice: ga ui.ui_cwOffice
+                                 , ui_cwCity: ga ui.ui_cwCity
+                                 , ui_cwCountry: ga ui.ui_cwCountry
+                                 , ui_cwRole: ga ui.ui_cwRole
+                                 , ui_cwTouchPhone: ga ui.ui_cwTouchPhone
+                                 , ui_cwTouchMail: ga ui.ui_cwTouchMail } }
+  liftEffect $ here.log2 "[saveUserInfo] res" res
+  pure $ Right 0
+  where
+    ga Nothing = ArgL IgnoreArg
+    ga (Just val) = ArgR val
 
 type AnnuaireLayoutProps = ( annuaireId :: Int, session :: Session | ReloadProps )
 
