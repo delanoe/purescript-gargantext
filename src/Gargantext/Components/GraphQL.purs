@@ -3,6 +3,7 @@ module Gargantext.Components.GraphQL where
 import Data.Argonaut.Decode (JsonDecodeError)
 import Data.Bifunctor (lmap)
 import Data.List.Types (NonEmptyList)
+import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Foreign (unsafeToForeign, ForeignError)
@@ -39,6 +40,9 @@ gqlQuery = queryWithDecoder  (unsafeToForeign >>> JSON.read >>> lmap toJsonError
 toJsonError :: NonEmptyList ForeignError -> JsonDecodeError
 toJsonError = unsafeCoerce  -- map ForeignErrors to JsonDecodeError as you wish
 
+getClient :: Effect (Client UrqlClient Schema Void Void)
+getClient = createClient { headers: [], url: "http://localhost:8008/gql" }
+
 queryGql ::
   forall query returns.
   GqlQuery Schema query returns =>
@@ -46,7 +50,7 @@ queryGql ::
   String -> query -> Aff returns
 queryGql name q = do
   --query client name q
-  client <- liftEffect $ createClient { headers: [], url: "http://localhost:8008/gql" }
+  client <- liftEffect getClient
   gqlQuery (client :: Client UrqlClient Schema Void Void) name q
   
   --query_ "http://localhost:8008/gql" (Proxy :: Proxy Schema) 

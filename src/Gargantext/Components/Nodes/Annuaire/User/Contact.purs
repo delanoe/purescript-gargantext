@@ -20,7 +20,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.App.Data (Boxes)
-import Gargantext.Components.GraphQL (queryGql)
+import Gargantext.Components.GraphQL (getClient, queryGql)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact'(..), ContactData', ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
@@ -33,7 +33,8 @@ import Gargantext.Sessions (Session, get, put, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
-import GraphQL.Client.Args (type (==>), (=>>))
+import GraphQL.Client.Args (type (==>), (=>>), onlyArgs)
+import GraphQL.Client.Query (mutationOpts)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
@@ -223,7 +224,13 @@ saveContactHyperdata session id = put session (Routes.NodeAPI Node (Just id) "")
 saveUserInfo :: Session -> Int -> UserInfo -> Aff (Either RESTError Int)
 saveUserInfo session id ui = do
   -- TODO GraphQL
-  pure $ Left $ CustomError "TODO implement graphql for saveUserInfo"
+  --pure $ Left $ CustomError "TODO implement graphql for saveUserInfo"
+  client <- liftEffect $ getClient
+  mutationOpts
+    (\m -> m)
+    client
+    "update user_info"
+    { update_user_info: onlyArgs { ui_id: id } }
 
 type AnnuaireLayoutProps = ( annuaireId :: Int, session :: Session | ReloadProps )
 
