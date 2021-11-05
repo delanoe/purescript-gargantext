@@ -6,22 +6,26 @@ import Gargantext.Prelude
 
 import Affjax as AX
 import Affjax.ResponseFormat as ResponseFormat
+import DOM.Simple (window)
 import DOM.Simple.Console (log2)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
+import FFI.Simple ((.=))
 import Gargantext.Components.PhyloExplorer.JSON (PhyloJSONSet(..))
 import Gargantext.Components.PhyloExplorer.Layout (layout)
 import Gargantext.Components.PhyloExplorer.Types (PhyloDataSet, parsePhyloJSONSet)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeID)
 import Gargantext.Utils.Reactix as R2
+import Graphics.D3.Base (d3)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Phylo"
@@ -39,6 +43,9 @@ phyloLayoutCpt = here.component "phyloLayout" cpt where
 
     fetchedDataBox <- T.useBox (Nothing :: Maybe PhyloDataSet)
     fetchedData    <- T.useLive T.unequal fetchedDataBox
+
+    R.useEffectOnce' $
+      pure $ (window .= "d3") d3
 
     R.useEffectOnce' $ launchAff_ do
       result <- fetchPhyloJSON

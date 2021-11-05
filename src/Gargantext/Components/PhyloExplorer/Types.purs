@@ -35,7 +35,7 @@ foreign import stringToDate     :: String -> Date.Date
 foreign import utcStringToDate  :: String -> Date.Date
 
 
-newtype PhyloDataSet = PhyloDataSet
+data PhyloDataSet = PhyloDataSet
   { ancestorLinks :: Array AncestorLink
   , bb            :: Array Number
   , branchLinks   :: Array BranchLink
@@ -90,7 +90,7 @@ parsePhyloJSONSet (PhyloJSONSet o) = PhyloDataSet
 
 -----------------------------------------------------------
 
-data Branch = Branch
+newtype Branch = Branch
   { bId     :: Int
   , gvid    :: Int
   , label   :: String
@@ -122,7 +122,7 @@ parseBranches
 
 -----------------------------------------------------------
 
-data Period = Period
+newtype Period = Period
   { from    :: Date.Date
   , to      :: Date.Date
   , y       :: Number
@@ -148,7 +148,7 @@ parsePeriods epoch
 
 -----------------------------------------------------------
 
-data Group = Group
+newtype Group = Group
   { bId           :: Int
   , foundation    :: Array Int -- @WIP: Array String ???
   , from          :: Date.Date
@@ -192,7 +192,7 @@ parseGroups epoch
 
 -----------------------------------------------------------
 
-data Link = Link
+newtype Link = Link
   { from    :: Int
   , lId     :: Int
   , label   :: String -- @WIP: undefined in Mèmiescape v2, still needed?
@@ -227,7 +227,7 @@ parseLinks
 
 -----------------------------------------------------------
 
-data AncestorLink = AncestorLink
+newtype AncestorLink = AncestorLink
   { from    :: Int
   , lId     :: Int
   , label   :: String -- @WIP: undefined in Mèmiescape v2, still needed?
@@ -262,7 +262,7 @@ parseAncestorLinks
 
 -----------------------------------------------------------
 
-data BranchLink = BranchLink
+newtype BranchLink = BranchLink
   { from    :: Int
   , to      :: Int
   }
@@ -293,7 +293,7 @@ parseBranchLinks
 
 -----------------------------------------------------------
 
-data GlobalTerm = GlobalTerm
+newtype GlobalTerm = GlobalTerm
   { label :: String
   , fdt   :: String
   }

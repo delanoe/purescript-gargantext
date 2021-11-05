@@ -2,11 +2,11 @@ module Gargantext.Components.PhyloExplorer.Draw where
 
 import Gargantext.Prelude
 
-import Data.Function.Uncurried (Fn7, runFn7)
 import Effect (Effect)
+import Effect.Uncurried (EffectFn7, runEffectFn7)
 import Gargantext.Components.PhyloExplorer.Types (AncestorLink, Branch, BranchLink, Group, Link, Period)
 
-foreign import _drawPhylo :: Fn7
+foreign import _drawPhylo :: EffectFn7
   (Array Branch)
   (Array Period)
   (Array Group)
@@ -14,7 +14,7 @@ foreign import _drawPhylo :: Fn7
   (Array AncestorLink)
   (Array BranchLink)
   (Array Number)
-  (Effect Unit)
+  (Unit)
 
 drawPhylo ::
      Array Branch
@@ -25,4 +25,4 @@ drawPhylo ::
   -> Array BranchLink
   -> Array Number
   -> Effect Unit
-drawPhylo = runFn7 _drawPhylo
+drawPhylo = runEffectFn7 _drawPhylo
