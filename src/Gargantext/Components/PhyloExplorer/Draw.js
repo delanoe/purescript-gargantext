@@ -1,5 +1,7 @@
 'use strict';
 
+exports._drawPhylo = drawPhylo;
+
 // set javascript date from a string year
 function yearToDate(year) {
   var d = new Date()
@@ -10,39 +12,39 @@ function yearToDate(year) {
 }
 
 function stringToDate(str) {
-var arr = (str.replace('"','')).split('-');
-var d = new Date();
-d.setYear(parseInt(arr[0]));
-d.setMonth(parseInt(arr[1]));
-d.setMonth(d.getMonth() - 1);
-d.setDate(parseInt(arr[2]));
-return d;
+  var arr = (str.replace('"','')).split('-');
+  var d = new Date();
+  d.setYear(parseInt(arr[0]));
+  d.setMonth(parseInt(arr[1]));
+  d.setMonth(d.getMonth() - 1);
+  d.setDate(parseInt(arr[2]));
+  return d;
 }
 
 function utcStringToDate(str) {
-var arr = ((str.replace('"','')).replace(' UTC','')).split(/[\s-:]+/);
-var d = new Date();
-d.setYear(parseInt(arr[0]));
-d.setMonth(parseInt(arr[1]));
-d.setDate(parseInt(arr[2]));
-d.setHours(parseInt(arr[3]),parseInt(arr[4]),parseInt(arr[5]))
-return d;
+  var arr = ((str.replace('"','')).replace(' UTC','')).split(/[\s-:]+/);
+  var d = new Date();
+  d.setYear(parseInt(arr[0]));
+  d.setMonth(parseInt(arr[1]));
+  d.setDate(parseInt(arr[2]));
+  d.setHours(parseInt(arr[3]),parseInt(arr[4]),parseInt(arr[5]))
+  return d;
 }
 
 function stringArrToArr(str) {
-var arr = ((str.replace('["','')).replace('"]','')).split('","');
-return arr;
+  var arr = ((str.replace('["','')).replace('"]','')).split('","');
+  return arr;
 }
 
 function intArrToArr(int) {
-var arr = ((int.replace('[','')).replace(']','')).split(',');
-return arr;
+  var arr = ((int.replace('[','')).replace(']','')).split(',');
+  return arr;
 }
 
 function yearToDateHacked(w) {
-var d = new Date(2020,0,0);
-d.setDate(d.getDate() + (w * 7));
-return d
+  var d = new Date(2020,0,0);
+  d.setDate(d.getDate() + (w * 7));
+  return d
 }
 
 function toCoord(id) {
@@ -54,40 +56,40 @@ function toCoord(id) {
 function toXLabels(branches, groups, xMax) {
 
   var xLabels = branches.map(function(b) {
-      var bId = b.bId,
-           xs = groups.filter(g => g.bId == bId).map(g => g.x),
-          inf = Math.min(...xs),
-          sup = Math.max(...xs);
+    var bId = b.bId,
+          xs = groups.filter(g => g.bId == bId).map(g => g.x),
+        inf = Math.min(...xs),
+        sup = Math.max(...xs);
 
-      return { x : b.x2,
-           label : b.label.replace(/\"/g, '').replace(/\|/g, ''),
-             inf : inf,
-             sup : sup,
-             bId : bId};
+    return { x : b.x2,
+          label : b.label.replace(/\"/g, '').replace(/\|/g, ''),
+            inf : inf,
+            sup : sup,
+            bId : bId};
   })
 
   return xLabels.map(function(b,i){
-      var prec = 0,
-          succ = xMax;
+    var prec = 0,
+        succ = xMax;
 
-      if (i != 0)
-          prec = xLabels[i -1].sup
+    if (i != 0)
+        prec = xLabels[i -1].sup
 
-      if (i != (xLabels.length - 1))
-          succ = xLabels[i + 1].inf
+    if (i != (xLabels.length - 1))
+        succ = xLabels[i + 1].inf
 
-      var w = Math.min(...[(b.x - prec) / 2,(succ - b.x) / 2]),
-        inf = b.x - w,
-        sup = b.x + w;
+    var w = Math.min(...[(b.x - prec) / 2,(succ - b.x) / 2]),
+      inf = b.x - w,
+      sup = b.x + w;
 
-      inf = (b.inf < inf) ? b.inf : inf + (w / 10);
-      sup = (b.sup > sup) ? b.sup : sup - (w / 10);
+    inf = (b.inf < inf) ? b.inf : inf + (w / 10);
+    sup = (b.sup > sup) ? b.sup : sup - (w / 10);
 
-      return { x : (sup + inf) / 2,
-           label : b.label,
-             inf : inf,
-             sup : sup,
-             bId : b.bId};
+    return { x : (sup + inf) / 2,
+          label : b.label,
+            inf : inf,
+            sup : sup,
+            bId : b.bId};
   })
 }
 
@@ -116,6 +118,7 @@ function xOverFlow(ticks,arr) {
 
 var branchFocus = [];
 
+
 function addMarkX(ticks,ws,ids) {
   ticks.each(function(t,i){
       d3.select(this)
@@ -138,6 +141,7 @@ function setMarkYLabel(labels) {
       d3.select(this).attr("dx","-5").attr("class","y-label").attr("id","y-label-" +  d3.timeYear(l).getFullYear());
   })
 }
+
 
 function addMarkY(ticks) {
   ticks.each(function(d,i){
@@ -167,6 +171,7 @@ function removeDays(date, days) {
   result.setDate(result.getDate() - days);
   return result;
 }
+
 
 function setYDomain(labels) {
 
@@ -207,20 +212,21 @@ function setYDomain(labels) {
   return [inf,sup];
 }
 
+
 function groupTermsBy(elements, attr) {
-let grouped = {},
-    curr = "";
-for (var i = 0; i < elements.length; i++) {
-  let from = elements[i].getAttribute(attr)
-  if (curr != from) {
-    grouped[from] = [[(elements[i]).getAttribute("gx"),(elements[i]).getAttribute("gy"),(elements[i]).getAttribute("bid")]];
-    curr = from
-  } else {
-    grouped[from].push([(elements[i]).getAttribute("gx"),(elements[i]).getAttribute("gy"),(elements[i]).getAttribute("bid")]);
+  let grouped = {},
+      curr = "";
+  for (var i = 0; i < elements.length; i++) {
+    let from = elements[i].getAttribute(attr)
+    if (curr != from) {
+      grouped[from] = [[(elements[i]).getAttribute("gx"),(elements[i]).getAttribute("gy"),(elements[i]).getAttribute("bid")]];
+      curr = from
+    } else {
+      grouped[from].push([(elements[i]).getAttribute("gx"),(elements[i]).getAttribute("gy"),(elements[i]).getAttribute("bid")]);
+    }
   }
-}
-return Object.values(grouped);
-};
+  return Object.values(grouped);
+  };
 
 
 function findValueByPrefix(prefix) {
@@ -234,6 +240,7 @@ function findValueByPrefix(prefix) {
   }
   return null;
 }
+
 
 function highlightSource() {
   let checkSource = document.getElementById("checkSource");
@@ -266,47 +273,47 @@ function highlightSource() {
         .classed("peak-focus-source", true);
     })
   }
- }
+}
 
- function drawWordCloud (groups) {
+function drawWordCloud (groups) {
 
-    let labels = {},
-        count  = 0;
+  let labels = {},
+      count  = 0;
 
-    d3.selectAll(".word-cloud").remove();
+  d3.selectAll(".word-cloud").remove();
 
-    groups.forEach(function(g){
-      let gid = (g.getAttribute("id")).replace("group","");
-      let terms = d3.selectAll(".term").filter(".g-" + gid).nodes();
-      terms.forEach(function(t){
-        count ++;
-        if (labels[t.getAttribute("fdt")] == undefined) {
-          labels[t.getAttribute("fdt")] = {"freq" : 1, "label" : t.getAttribute("label")}
-        } else {
-          labels[t.getAttribute("fdt")].freq = labels[t.getAttribute("fdt")].freq + 1
-        }
-      })
-    });
-
-    labels = (Object.values(labels)).map(function(l){
-      return {"freq":(l.freq / count),"label":l.label};
-    }).sort(function(l1,l2){
-      return l2.freq - l1.freq;
+  groups.forEach(function(g){
+    let gid = (g.getAttribute("id")).replace("group","");
+    let terms = d3.selectAll(".term").filter(".g-" + gid).nodes();
+    terms.forEach(function(t){
+      count ++;
+      if (labels[t.getAttribute("fdt")] == undefined) {
+        labels[t.getAttribute("fdt")] = {"freq" : 1, "label" : t.getAttribute("label")}
+      } else {
+        labels[t.getAttribute("fdt")].freq = labels[t.getAttribute("fdt")].freq + 1
+      }
     })
+  });
 
-    let y = 20
-    let opacity = d3.scaleLinear().domain([Math.log((labels[labels.length - 1]).freq),Math.log((labels[0]).freq)]).range([0.5,1]);
+  labels = (Object.values(labels)).map(function(l){
+    return {"freq":(l.freq / count),"label":l.label};
+  }).sort(function(l1,l2){
+    return l2.freq - l1.freq;
+  })
 
-    labels.forEach(function(l){
-      y = y + 12;
-      window.svg3.append("text")
-          .attr("class","word-cloud")
-          .attr("x", 10)
-          .attr("y", y)
-          .style("opacity", opacity(Math.log(l.freq)))
-          .text(l.label);
-    })
-  }
+  let y = 20
+  let opacity = d3.scaleLinear().domain([Math.log((labels[labels.length - 1]).freq),Math.log((labels[0]).freq)]).range([0.5,1]);
+
+  labels.forEach(function(l){
+    y = y + 12;
+    window.svg3.append("text")
+        .attr("class","word-cloud")
+        .attr("x", 10)
+        .attr("y", y)
+        .style("opacity", opacity(Math.log(l.freq)))
+        .text(l.label);
+  })
+}
 
 
 function drawPhylo(branches, periods, groups, links, aLinks, bLinks, frame) {
@@ -430,7 +437,6 @@ function drawPhylo(branches, periods, groups, links, aLinks, bLinks, frame) {
           .attr("height",div3.height)
         .append("g");
 
-
   /* labels */
 
   var firstDate = Math.min(...groups.map(g => (g.from).getFullYear()))
@@ -492,10 +498,10 @@ function drawPhylo(branches, periods, groups, links, aLinks, bLinks, frame) {
   /* links */
 
   function findGroup (id, xsc, ysc) {
-      var group = groups.find(g => g.gId == id),
-          x = xsc(group.x);
-          y = ysc(group.to);
-      return [x,y]
+    var group = groups.find(g => g.gId == id),
+        x = xsc(group.x);
+        y = ysc(group.to);
+    return [x,y]
   }
 
   var linkGen = d3.linkVertical();
@@ -716,6 +722,7 @@ function drawPhylo(branches, periods, groups, links, aLinks, bLinks, frame) {
          });
   });
 
+
   function landingView() {
     window.ldView = true;
     doubleClick()
@@ -756,8 +763,8 @@ function drawPhylo(branches, periods, groups, links, aLinks, bLinks, frame) {
   /* groups */
 
   function textWidth(text) {
-      const context = document.createElement("canvas").getContext("2d");
-      return context.measureText(text).width;
+    const context = document.createElement("canvas").getContext("2d");
+    return context.measureText(text).width;
   }
 
   function toLines(words,fdt,role,targetWidth) {
@@ -789,7 +796,9 @@ function drawPhylo(branches, periods, groups, links, aLinks, bLinks, frame) {
     for (let i = 0, n = lines.length; i < n; ++i) {
       const dy = (Math.abs(i - n / 2 + 0.5) + 2) * lineHeight;
       const dx = lines[i].width / 2;
-      radius = Math.max(radius, Math.sqrt(dx ** 2 + dy ** 2));
+      const sdy = Math.pow(dy, 2);
+      const sdx = Math.pow(dx, 2);
+      radius = Math.max(radius, Math.sqrt(sdx + sdy));
     }
     return radius;
   }
@@ -901,7 +910,6 @@ function drawPhylo(branches, periods, groups, links, aLinks, bLinks, frame) {
   }
 
   d3.selectAll(".header").raise();
-
 
   function findRole(r) {
     if (r == 0) {
@@ -1048,81 +1056,79 @@ function drawPhylo(branches, periods, groups, links, aLinks, bLinks, frame) {
       }
     }
 
-  }
+    function termClick (txt,idx,nodeId,typeNode) {
 
-  function termClick (txt,idx,nodeId,typeNode) {
+      // remove old focus
+      initPath()
 
-    // remove old focus
-    initPath()
+      // catch the last transformations
+      if (typeNode == "group") {
+        var transform = d3.select("#group" + nodeId).node().getAttribute("transform");
+      } else if (typeNode == "head") {
+        var transform = d3.select("#head" + nodeId).node().getAttribute("transform");
+      } else {
+        var transform = (d3.selectAll(".header").nodes())[0].getAttribute("transform");
+      }
 
-    // catch the last transformations
-    if (typeNode == "group") {
-      var transform = d3.select("#group" + nodeId).node().getAttribute("transform");
-    } else if (typeNode == "head") {
-      var transform = d3.select("#head" + nodeId).node().getAttribute("transform");
-    } else {
-      var transform = (d3.selectAll(".header").nodes())[0].getAttribute("transform");
-    }
+      // focus
 
-    // focus
+      document.querySelector("#phyloPhylo").innerHTML = txt;
+      document.querySelector("#phyloPhylo").classList.add("phylo-focus");
+      document.querySelector("#phyloSearch").setAttribute("href",'https://en.wikipedia.org/w/index.php?search="' + txt + '"')
 
-    document.querySelector("#phyloPhylo").innerHTML = txt;
-    document.querySelector("#phyloPhylo").classList.add("phylo-focus");
-    document.querySelector("#phyloSearch").setAttribute("href",'https://en.wikipedia.org/w/index.php?search="' + txt + '"')
+      // highlight the groups
 
-    // highlight the groups
+      var terms = document.getElementsByClassName("fdt-" + idx),
+          periods = groupTermsBy(terms,"from");
 
-    var terms = document.getElementsByClassName("fdt-" + idx),
-        periods = groupTermsBy(terms,"from");
+      var groups  = [];
 
-    var groups  = [];
+      for (var i = 0; i < terms.length; i++) {
+        groups.push(d3.select("#group" + (terms[i]).getAttribute("gid")));
+        branchFocus.push((terms[i]).getAttribute("bid"));
+      }
 
-    for (var i = 0; i < terms.length; i++) {
-      groups.push(d3.select("#group" + (terms[i]).getAttribute("gid")));
-      branchFocus.push((terms[i]).getAttribute("bid"));
-    }
+      highlightGroups(groups.map(g => g.node()));
+      drawWordCloud(groups.map(g => g.node()));
 
-    highlightGroups(groups.map(g => g.node()));
-    drawWordCloud(groups.map(g => g.node()));
+      // highlight the cross branches links
 
-    // highlight the cross branches links
+      var bids  = [];
 
-    var bids  = [];
-
-    for (var i = 0; i < periods.length; i++) {
-      if (i != periods.length - 1) {
-        for (var j = 0; j < periods[i].length; j++) {
-          bids.push(periods[i][j][2])
-          var x1 = periods[i][j][0],
-              y1 = periods[i][j][1];
-          for (var k = 0; k < periods[i + 1].length; k++) {
-            var x2 = periods[i + 1][k][0],
-                y2 = periods[i + 1][k][1];
-            if ((periods[i][j][2] != periods[i + 1][k][2]) && (!bids.includes(periods[i + 1][k][2]))) {
-              // draw the links between branches
-              panel
-                .append("path")
-                .attr("class","term-path")
-                .attr("d", function(d) {
-                  return "M" + x1 + "," + y1
-                    + "C" + x2 + "," + y1
-                    + " " + x2 + "," + y2
-                    + " " + x2 + "," + y2;
-                })
-                .attr("transform",transform)
-                .style("stroke-opacity", 0.4)
-                .lower();
+      for (var i = 0; i < periods.length; i++) {
+        if (i != periods.length - 1) {
+          for (var j = 0; j < periods[i].length; j++) {
+            bids.push(periods[i][j][2])
+            var x1 = periods[i][j][0],
+                y1 = periods[i][j][1];
+            for (var k = 0; k < periods[i + 1].length; k++) {
+              var x2 = periods[i + 1][k][0],
+                  y2 = periods[i + 1][k][1];
+              if ((periods[i][j][2] != periods[i + 1][k][2]) && (!bids.includes(periods[i + 1][k][2]))) {
+                // draw the links between branches
+                panel
+                  .append("path")
+                  .attr("class","term-path")
+                  .attr("d", function(d) {
+                    return "M" + x1 + "," + y1
+                      + "C" + x2 + "," + y1
+                      + " " + x2 + "," + y2
+                      + " " + x2 + "," + y2;
+                  })
+                  .attr("transform",transform)
+                  .style("stroke-opacity", 0.4)
+                  .lower();
+              }
+              bids.push(periods[i + 1][k][2])
             }
-            bids.push(periods[i + 1][k][2])
           }
         }
       }
+
+      d3.selectAll(".path-unfocus").lower();
     }
 
-    d3.selectAll(".path-unfocus").lower();
-  }
-
-  function peakOver (b,i) {
+    function peakOver (b,i) {
       d3.select("#peak-" + i).classed("peak-focus",false);
       d3.select("#peak-" + i).classed("peak-over",true);
       label.text(b.label.replace(/"/g,''))
@@ -1291,101 +1297,102 @@ function drawPhylo(branches, periods, groups, links, aLinks, bLinks, frame) {
 
   function exportViz() {
 
+    const xmlns = "http://www.w3.org/2000/xmlns/";
+    const xlinkns = "http://www.w3.org/1999/xlink";
+    const svgns = "http://www.w3.org/2000/svg";
 
-const xmlns = "http://www.w3.org/2000/xmlns/";
-const xlinkns = "http://www.w3.org/1999/xlink";
-const svgns = "http://www.w3.org/2000/svg";
+    var time = new Date();
 
-var time = new Date();
+    serialize(svg.node(),"phylomemy-" + Date.parse(time.toString())  + ".svg")
 
-serialize(svg.node(),"phylomemy-" + Date.parse(time.toString())  + ".svg")
-function serialize(graph,name) {
-  graph = graph.cloneNode(true);
-  const fragment = window.location.href + "#";
-  const walker = document.createTreeWalker(graph, NodeFilter.SHOW_ELEMENT, null, false);
-  while (walker.nextNode()) {
-    for (const attr of walker.currentNode.attributes) {
-      if (attr.value.includes(fragment)) {
-        attr.value = attr.value.replace(fragment, "#");
-      }
-    }
-  }
-  graph.setAttributeNS(xmlns, "xmlns", svgns);
-  graph.setAttributeNS(xmlns, "xmlns:xlink", xlinkns);
-
-  var cssStyleText = getCSSStyles( graph );
-  appendCSS( cssStyleText, graph );
-
-  const serializer = new window.XMLSerializer;
-  const string = serializer.serializeToString(graph);
-  var svgBlob = new Blob([string], {type: "image/svg+xml"});
-  var svgUrl = URL.createObjectURL(svgBlob);
-  var downloadLink = document.createElement("a");
-  downloadLink.href = svgUrl;
-  downloadLink.download = name;
-  document.body.appendChild(downloadLink);
-  downloadLink.click();
-  document.body.removeChild(downloadLink);
-};
-
-
-function getCSSStyles( parentElement ) {
-  var selectorTextArr = [];
-
-  // Add Parent element Id and Classes to the list
-  selectorTextArr.push( '#'+parentElement.id );
-  for (var c = 0; c < parentElement.classList.length; c++)
-      if ( !contains('.'+parentElement.classList[c], selectorTextArr) )
-        selectorTextArr.push( '.'+parentElement.classList[c] );
-
-  // Add Children element Ids and Classes to the list
-  var nodes = parentElement.getElementsByTagName("*");
-  for (var i = 0; i < nodes.length; i++) {
-    var id = nodes[i].id;
-    if ( !contains('#'+id, selectorTextArr) )
-      selectorTextArr.push( '#'+id );
-
-    var classes = nodes[i].classList;
-    for (var c = 0; c < classes.length; c++)
-      if ( !contains('.'+classes[c], selectorTextArr) )
-        selectorTextArr.push( '.'+classes[c] );
-  }
-
-  // Extract CSS Rules
-  var extractedCSSText = "";
-  for (var i = 0; i < document.styleSheets.length; i++) {
-    var s = document.styleSheets[i];
-
-    try {
-        if(!s.cssRules) continue;
-    } catch( e ) {
-          if(e.name !== 'SecurityError') throw e; // for Firefox
-          continue;
+    function serialize(graph,name) {
+      graph = graph.cloneNode(true);
+      const fragment = window.location.href + "#";
+      const walker = document.createTreeWalker(graph, NodeFilter.SHOW_ELEMENT, null, false);
+      while (walker.nextNode()) {
+        for (const attr of walker.currentNode.attributes) {
+          if (attr.value.includes(fragment)) {
+            attr.value = attr.value.replace(fragment, "#");
+          }
         }
+      }
+      graph.setAttributeNS(xmlns, "xmlns", svgns);
+      graph.setAttributeNS(xmlns, "xmlns:xlink", xlinkns);
 
-    var cssRules = s.cssRules;
-    for (var r = 0; r < cssRules.length; r++) {
-      if ( contains( cssRules[r].selectorText, selectorTextArr ) )
-        extractedCSSText += cssRules[r].cssText;
+      var cssStyleText = getCSSStyles( graph );
+      appendCSS( cssStyleText, graph );
+
+      const serializer = new window.XMLSerializer;
+      const string = serializer.serializeToString(graph);
+      var svgBlob = new Blob([string], {type: "image/svg+xml"});
+      var svgUrl = URL.createObjectURL(svgBlob);
+      var downloadLink = document.createElement("a");
+      downloadLink.href = svgUrl;
+      downloadLink.download = name;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+    };
+
+
+    function getCSSStyles( parentElement ) {
+      var selectorTextArr = [];
+
+      // Add Parent element Id and Classes to the list
+      selectorTextArr.push( '#'+parentElement.id );
+      for (var c = 0; c < parentElement.classList.length; c++)
+          if ( !contains('.'+parentElement.classList[c], selectorTextArr) )
+            selectorTextArr.push( '.'+parentElement.classList[c] );
+
+      // Add Children element Ids and Classes to the list
+      var nodes = parentElement.getElementsByTagName("*");
+      for (var i = 0; i < nodes.length; i++) {
+        var id = nodes[i].id;
+        if ( !contains('#'+id, selectorTextArr) )
+          selectorTextArr.push( '#'+id );
+
+        var classes = nodes[i].classList;
+        for (var c = 0; c < classes.length; c++)
+          if ( !contains('.'+classes[c], selectorTextArr) )
+            selectorTextArr.push( '.'+classes[c] );
+      }
+
+      // Extract CSS Rules
+      var extractedCSSText = "";
+      for (var i = 0; i < document.styleSheets.length; i++) {
+        var s = document.styleSheets[i];
+
+        try {
+            if(!s.cssRules) continue;
+        } catch( e ) {
+              if(e.name !== 'SecurityError') throw e; // for Firefox
+              continue;
+            }
+
+        var cssRules = s.cssRules;
+        for (var r = 0; r < cssRules.length; r++) {
+          if ( contains( cssRules[r].selectorText, selectorTextArr ) )
+            extractedCSSText += cssRules[r].cssText;
+        }
+      }
+
+
+      return extractedCSSText;
+
+      function contains(str,arr) {
+        return arr.indexOf( str ) === -1 ? false : true;
+      }
+
+    }
+
+    function appendCSS( cssText, element ) {
+      var styleElement = document.createElement("style");
+      styleElement.setAttribute("type","text/css");
+      styleElement.innerHTML = cssText;
+      var refNode = element.hasChildNodes() ? element.children[0] : null;
+      element.insertBefore( styleElement, refNode );
     }
   }
-
-
-  return extractedCSSText;
-
-  function contains(str,arr) {
-    return arr.indexOf( str ) === -1 ? false : true;
   }
-
-}
-
-function appendCSS( cssText, element ) {
-  var styleElement = document.createElement("style");
-  styleElement.setAttribute("type","text/css");
-  styleElement.innerHTML = cssText;
-  var refNode = element.hasChildNodes() ? element.children[0] : null;
-  element.insertBefore( styleElement, refNode );
-}
-}
 
 }

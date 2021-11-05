@@ -134,7 +134,16 @@ type EdgeData =
   )
 
 data RawEdge
-  = GroupToGroup
+  = GroupToAncestor
+    { _gvid         :: Int
+    , arrowhead     :: String
+    , edgeType      :: String
+    , lbl           :: String
+    , penwidth      :: String
+    , style         :: String
+    | EdgeData
+    }
+  | GroupToGroup
     { _gvid         :: Int
     , constraint    :: String
     , edgeType      :: String
@@ -151,14 +160,6 @@ data RawEdge
   | BranchToBranch
     { _gvid         :: Int
     , arrowhead     :: String
-    , style         :: String
-    | EdgeData
-    }
-  | GroupToAncestor
-    { _gvid         :: Int
-    , arrowhead     :: String
-    , lbl           :: String
-    , penwidth      :: String
     , style         :: String
     | EdgeData
     }

@@ -49,32 +49,3 @@ function utcStringToDate(str) {
 exports.yearToDate      = yearToDate;
 exports.stringToDate    = stringToDate;
 exports.utcStringToDate = utcStringToDate;
-
-function draw(json) {
-
-
-  var links = json.edges.filter(edges => edges.edgeType == "link").map(function(l){
-    return {  lId : parseInt(l._gvid),
-              from : parseInt(l.tail) ,
-                to : parseInt(l.head) ,
-            label : l.label}
-  });
-
-  var aLinks = json.edges.filter(edges => edges.edgeType == "ancestorLink").map(function(l){
-    return {  lId : parseInt(l._gvid),
-              from : parseInt(l.tail) ,
-                to : parseInt(l.head) ,
-            label : l.label }
-  });
-
-  var bLinks = json.edges.filter(edges => edges.edgeType == "branchLink").map(function(l){
-    return { from : parseInt(l.tail) ,
-                to : parseInt(l.head) }
-  });
-
-  window.terms = Object.values(window.terms)
-
-  // draw the phylo
-
-  drawPhylo(branches,periods,groups,links,aLinks,bLinks,bb);
-}

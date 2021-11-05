@@ -1,14 +1,20 @@
 module Gargantext.Components.PhyloExplorer.Types
   ( PhyloDataSet(..)
   , Branch(..), Period(..), Group(..)
+  , Link(..), AncestorLink(..), BranchLink(..)
   , GlobalTerm(..)
   , parsePhyloJSONSet
+  , setGlobalDependencies
   ) where
 
 import Gargantext.Prelude
 
+import DOM.Simple (Window)
+import DOM.Simple.Console (log2)
 import Data.Array as Array
 import Data.Date as Date
+import Data.Foldable (for_)
+import Data.FoldableWithIndex (forWithIndex_)
 import Data.Generic.Rep (class Generic)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), maybe)
@@ -17,19 +23,25 @@ import Data.Show.Generic (genericShow)
 import Data.String as String
 import Data.Tuple as Tuple
 import Data.Tuple.Nested ((/\))
-import Gargantext.Components.PhyloExplorer.JSON (PhyloJSONSet(..), RawObject(..))
+import Effect (Effect)
+import FFI.Simple (applyTo, (..), (.=), (.?))
+import Gargantext.Components.PhyloExplorer.JSON (PhyloJSONSet(..), RawEdge(..), RawObject(..))
+import Unsafe.Coerce (unsafeCoerce)
 
 
--- @WIP Date or foreign?
+-- @WIP PureScript Date or stick to JavaScript foreign?
 foreign import yearToDate       :: String -> Date.Date
 foreign import stringToDate     :: String -> Date.Date
 foreign import utcStringToDate  :: String -> Date.Date
 
 
 newtype PhyloDataSet = PhyloDataSet
-  { bb            :: Array Number
+  { ancestorLinks :: Array AncestorLink
+  , bb            :: Array Number
+  , branchLinks   :: Array BranchLink
   , branches      :: Array Branch
   , groups        :: Array Group
+  , links         :: Array Link
   , nbBranches    :: Int
   , nbDocs        :: Int
   , nbFoundations :: Int
@@ -48,9 +60,12 @@ instance Show PhyloDataSet where show = genericShow
 
 parsePhyloJSONSet :: PhyloJSONSet -> PhyloDataSet
 parsePhyloJSONSet (PhyloJSONSet o) = PhyloDataSet
-  { bb            : parseBB o.bb
+  { ancestorLinks
+  , bb            : parseBB o.bb
+  , branchLinks
   , branches
   , groups
+  , links
   , nbBranches    : parseInt o.phyloBranches
   , nbDocs        : parseInt o.phyloDocs
   , nbFoundations : parseInt o.phyloFoundations
@@ -64,10 +79,14 @@ parsePhyloJSONSet (PhyloJSONSet o) = PhyloDataSet
   }
 
   where
-    epochTS   = o.phyloTimeScale == "epoch"
-    branches  = parseBranches o.objects
-    groups    = parseGroups epochTS o.objects
-    periods   = parsePeriods epochTS o.objects
+    epochTS       = o.phyloTimeScale == "epoch"
+
+    ancestorLinks = parseAncestorLinks o.edges
+    branchLinks   = parseBranchLinks o.edges
+    branches      = parseBranches o.objects
+    groups        = parseGroups epochTS o.objects
+    links         = parseLinks o.edges
+    periods       = parsePeriods epochTS o.objects
 
 -----------------------------------------------------------
 
@@ -173,6 +192,107 @@ parseGroups epoch
 
 -----------------------------------------------------------
 
+data Link = Link
+  { from    :: Int
+  , lId     :: Int
+  , label   :: String -- @WIP: undefined in Mèmiescape v2, still needed?
+  , to      :: Int
+  }
+
+derive instance Generic Link _
+derive instance Eq Link
+instance Show Link where show = genericShow
+
+parseLinks :: Array RawEdge -> Array Link
+parseLinks
+  =   Array.filter filter
+  >>> map parse
+  >>> Array.catMaybes
+
+  where
+    -- @WIP: necessary?
+    --       bc. GroupToGroup as 1-1 relation with "edgeType=link"
+    filter :: RawEdge -> Boolean
+    filter (GroupToGroup o) = o.edgeType == "link"
+    filter _                = false
+
+    parse :: RawEdge -> Maybe Link
+    parse (GroupToGroup o) = Just $ Link
+      { from  : o.tail
+      , lId   : o._gvid
+      , label : ""
+      , to    : o.head
+      }
+    parse _               = Nothing
+
+-----------------------------------------------------------
+
+data AncestorLink = AncestorLink
+  { from    :: Int
+  , lId     :: Int
+  , label   :: String -- @WIP: undefined in Mèmiescape v2, still needed?
+  , to      :: Int
+  }
+
+derive instance Generic AncestorLink _
+derive instance Eq AncestorLink
+instance Show AncestorLink where show = genericShow
+
+parseAncestorLinks :: Array RawEdge -> Array AncestorLink
+parseAncestorLinks
+  =   Array.filter filter
+  >>> map parse
+  >>> Array.catMaybes
+
+  where
+    -- @WIP: necessary?
+    --       bc. GroupToAncestor as 1-1 relation with "edgeType=ancestorLink"
+    filter :: RawEdge -> Boolean
+    filter (GroupToAncestor o) = o.edgeType == "ancestorLink"
+    filter _                   = false
+
+    parse :: RawEdge -> Maybe AncestorLink
+    parse (GroupToAncestor o) = Just $ AncestorLink
+      { from  : o.tail
+      , lId   : o._gvid
+      , label : ""
+      , to    : o.head
+      }
+    parse _               = Nothing
+
+-----------------------------------------------------------
+
+data BranchLink = BranchLink
+  { from    :: Int
+  , to      :: Int
+  }
+
+derive instance Generic BranchLink _
+derive instance Eq BranchLink
+instance Show BranchLink where show = genericShow
+
+parseBranchLinks :: Array RawEdge -> Array BranchLink
+parseBranchLinks
+  =   Array.filter filter
+  >>> map parse
+  >>> Array.catMaybes
+
+  where
+    -- @WIP: necessary?
+    --       bc. BranchToGroup as 1-1 relation with "edgeType=branchLink"
+    filter :: RawEdge -> Boolean
+    filter (BranchToGroup o) = o.edgeType == "branchLink"
+    filter _                   = false
+
+    parse :: RawEdge -> Maybe BranchLink
+    parse (BranchToGroup o) = Just $ BranchLink
+      { from  : o.tail
+      , to    : o.head
+      }
+    parse _               = Nothing
+
+-----------------------------------------------------------
+
 data GlobalTerm = GlobalTerm
   { label :: String
   , fdt   :: String
@@ -181,6 +301,55 @@ data GlobalTerm = GlobalTerm
 derive instance Generic GlobalTerm _
 derive instance Eq GlobalTerm
 instance Show GlobalTerm where show = genericShow
+
+setGlobalDependencies :: Window -> PhyloDataSet -> Effect Unit
+setGlobalDependencies w (PhyloDataSet o)
+  = do
+    _ <- pure $ (w .= "freq") {}
+    _ <- pure $ (w .= "nbBranches") o.nbBranches
+    _ <- pure $ (w .= "nbDocs") o.nbDocs
+    _ <- pure $ (w .= "nbFoundations") o.nbFoundations
+    _ <- pure $ (w .= "nbGroups") o.nbGroups
+    _ <- pure $ (w .= "nbPeriods") o.nbPeriods
+    _ <- pure $ (w .= "nbTerms") o.nbTerms
+    _ <- pure $ (w .= "sources") o.sources
+    _ <- pure $ (w .= "terms") []
+    _ <- pure $ (w .= "timeScale") o.timeScale
+    _ <- pure $ (w .= "weighted") o.weighted
+
+    (freq :: Array Int)         <- pure $ w .. "freq"
+    (terms :: Array GlobalTerm) <- pure $ w .. "terms"
+
+    for_ o.groups \(Group g) -> do
+
+      let
+        f = g.foundation
+        l = g.label
+
+      forWithIndex_ f \idx val ->
+        let
+          idx' = show idx
+          val' = show val
+        -- For each entries in group.foundation array,
+        -- increment consequently the global window.keys array
+        in case (freq .? val') of
+          Nothing -> pure $ (freq .= val') 0
+          Just v  -> pure $ (freq .= val') (v +1)
+        -- For each entries in group.foundation array,
+        -- if the global window.terms does not have it in property,
+        -- append an item to the global window.terms
+        *> case (terms .? val') of
+          Just _  -> pure unit
+          Nothing -> void <<< pure $ (terms .= val') $ GlobalTerm
+            { label: l .. idx'
+            , fdt  : val'
+            }
+
+    -- @XXX: FFI.Simple `(...)` throws error (JavaScript issue)
+    --       need to decompose computation
+    void do
+      new <- pure $ applyTo (terms .. "flat") terms []
+      pure $ (w .= "terms") new
 
 -----------------------------------------------------------
 
