@@ -225,7 +225,7 @@ saveUserInfo :: Session -> Int -> UserInfo -> Aff (Either RESTError Int)
 saveUserInfo session id ui = do
   -- TODO GraphQL
 --  pure $ Left $ CustomError "TODO implement graphql for saveUserInfo"
-  client <- liftEffect $ getClient
+  client <- liftEffect $ getClient session
   res <- mutationOpts
     (\m -> m)
     client
@@ -320,7 +320,7 @@ getUserInfoWithReload {nodeId, session} = getUserInfo session nodeId -- getConta
 
 getUserInfo :: Session -> Int -> Aff (Either RESTError UserInfo)
 getUserInfo session id = do
-  { user_infos } <- queryGql "get user infos"
+  { user_infos } <- queryGql session "get user infos"
                     { user_infos: { user_id: id } =>>
                       { ui_id: unit
                       , ui_username: unit
@@ -383,7 +383,7 @@ getUserInfo session id = do
 --
 --getUser' :: Session -> Int -> Aff (Either RESTError ContactData)
 --getUser' session id = do
---  { users } <- queryGql "get user"
+--  { users } <- queryGql session "get user"
 --               { users: { user_id: id } =>>
 --                 { u_id
 --                 , u_hyperdata:

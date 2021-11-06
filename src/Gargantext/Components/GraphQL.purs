@@ -1,5 +1,8 @@
 module Gargantext.Components.GraphQL where
 
+import Gargantext.Prelude
+
+import Affjax.RequestHeader as ARH
 import Data.Argonaut.Decode (JsonDecodeError)
 import Data.Bifunctor (lmap)
 import Data.List.Types (NonEmptyList)
@@ -8,7 +11,7 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Foreign (unsafeToForeign, ForeignError)
 import Gargantext.Components.GraphQL.User (User, UserInfo, UserInfoM)
-import Gargantext.Prelude
+import Gargantext.Sessions (Session(..))
 import Gargantext.Utils.Reactix as R2
 import GraphQL.Client.Args (type (==>))
 import GraphQL.Client.BaseClients.Urql (UrqlClient, createClient)
@@ -40,17 +43,22 @@ gqlQuery = queryWithDecoder  (unsafeToForeign >>> JSON.read >>> lmap toJsonError
 toJsonError :: NonEmptyList ForeignError -> JsonDecodeError
 toJsonError = unsafeCoerce  -- map ForeignErrors to JsonDecodeError as you wish
 
-getClient :: Effect (Client UrqlClient Schema Mutation Void)
-getClient = createClient { headers: [], url: "http://localhost:8008/gql" }
+getClient :: Session -> Effect (Client UrqlClient Schema Mutation Void)
+getClient (Session { token }) = createClient { headers, url: "http://localhost:8008/gql" }
+  where
+    headers = [ ARH.RequestHeader "Authorization" $ "Bearer " <> token ]
 
 queryGql ::
   forall query returns.
   GqlQuery Schema query returns =>
   JSON.ReadForeign returns =>
-  String -> query -> Aff returns
-queryGql name q = do
+     Session
+  -> String
+  -> query
+  -> Aff returns
+queryGql session name q = do
   --query client name q
-  client <- liftEffect getClient
+  client <- liftEffect $ getClient session
   gqlQuery (client :: Client UrqlClient Schema Mutation Void) name q
   
   --query_ "http://localhost:8008/gql" (Proxy :: Proxy Schema) 
