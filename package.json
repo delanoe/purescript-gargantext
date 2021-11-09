@@ -18,6 +18,7 @@
         "clean-js": "rm -Rf node_modules",
         "clean-ps": "rm -Rf output",
         "server": "serve dist",
+        "build": "spago build && pulp browserify --skip-compile -t dist/bundle.js --src-path output",
         "prod": "yarn prod:compile && yarn prod:dce && yarn prod:bundle && yarn prod:pack",
         "prod:compile": "pulp build -- -g corefn",
         "prod:dce": "zephyr -f Main.main",
