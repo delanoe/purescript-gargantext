@@ -5,7 +5,9 @@ import Gargantext.Prelude
 import Data.Array as A
 import Data.Lens (Lens', lens)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
-import GraphQL.Client.Args (NotNull(..))
+import GraphQL.Client.Args (NotNull(..), (=>>))
+import GraphQL.Client.Variable (Var)
+import GraphQL.Client.Variables (withVars)
 import Type.Proxy (Proxy(..))
 
 
@@ -58,7 +60,25 @@ type UserInfoM
 --  , ui_cwRole: Nothing
 --  , ui_cwTouchPhone: Nothing
 --  , ui_cwTouchMail: Nothing }
-  
+
+userInfoQuery = { user_infos: { user_id: Var _ "id" Int } =>>
+                  { ui_id: unit
+                  , ui_username: unit
+                  , ui_email: unit
+                  , ui_title: unit
+                  , ui_source: unit
+                  , ui_cwFirstName: unit
+                  , ui_cwLastName: unit
+                  , ui_cwCity: unit
+                  , ui_cwCountry: unit
+                  , ui_cwLabTeamDepts: unit
+                  , ui_cwOrganization: unit
+                  , ui_cwOffice: unit
+                  , ui_cwRole: unit
+                  , ui_cwTouchMail: unit
+                  , ui_cwTouchPhone: unit }
+                }
+
 _ui_cwFirstName :: Lens' UserInfo String
 _ui_cwFirstName = lens getter setter
   where

@@ -35,6 +35,7 @@ import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import GraphQL.Client.Args (type (==>), IgnoreArg(..), OrArg(..), onlyArgs, (=>>))
 import GraphQL.Client.Query (mutationOpts, mutation)
+import GraphQL.Client.Variables (withVars)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
@@ -320,24 +321,25 @@ getUserInfoWithReload {nodeId, session} = getUserInfo session nodeId -- getConta
 
 getUserInfo :: Session -> Int -> Aff (Either RESTError UserInfo)
 getUserInfo session id = do
-  { user_infos } <- queryGql session "get user infos"
-                    { user_infos: { user_id: id } =>>
-                      { ui_id: unit
-                      , ui_username: unit
-                      , ui_email: unit
-                      , ui_title: unit
-                      , ui_source: unit
-                      , ui_cwFirstName: unit
-                      , ui_cwLastName: unit
-                      , ui_cwCity: unit
-                      , ui_cwCountry: unit
-                      , ui_cwLabTeamDepts: unit
-                      , ui_cwOrganization: unit
-                      , ui_cwOffice: unit
-                      , ui_cwRole: unit
-                      , ui_cwTouchMail: unit
-                      , ui_cwTouchPhone: unit }
-                    }
+--  { user_infos } <- queryGql session "get user infos"
+--                    { user_infos: { user_id: id } =>>
+--                      { ui_id: unit
+--                      , ui_username: unit
+--                      , ui_email: unit
+--                      , ui_title: unit
+--                      , ui_source: unit
+--                      , ui_cwFirstName: unit
+--                      , ui_cwLastName: unit
+--                      , ui_cwCity: unit
+--                      , ui_cwCountry: unit
+--                      , ui_cwLabTeamDepts: unit
+--                      , ui_cwOrganization: unit
+--                      , ui_cwOffice: unit
+--                      , ui_cwRole: unit
+--                      , ui_cwTouchMail: unit
+--                      , ui_cwTouchPhone: unit }
+--                    }
+  { user_infos } <- queryGql session "get user infos" $ userInfoQuery `withVars` { id }
   liftEffect $ here.log2 "[getUserInfo] user infos" user_infos
   pure $ case A.head user_infos of
     Nothing -> Left (CustomError $ "user with id " <> show id <> " not found")
