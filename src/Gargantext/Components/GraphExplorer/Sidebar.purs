@@ -259,7 +259,8 @@ neighborhoodCpt = here.component "neighborhood" cpt
              , role: "tabpanel"
              }
           ((\node -> badge { maxSize, minSize, node, selectedNodeIds }) <$> displayBadges) <>
-          RH.a { on: { click: toggleUnfold state} } [ RH.text stateText ]
+          RH.a { className: ""  -- with empty class name, bootstrap renders this blue
+               , on: { click: toggleUnfold state} } [ RH.text stateText ]
         ]
         where
           toggleUnfold state = T.modify_ flipFold state
