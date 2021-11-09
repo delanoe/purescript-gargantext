@@ -5,13 +5,12 @@ module Gargantext.Components.PhyloExplorer.Layout
 import Gargantext.Prelude
 
 import DOM.Simple (window)
-import DOM.Simple.Console (log2)
 import Data.Array as Array
-import Gargantext.Components.PhyloExplorer.Draw (drawPhylo)
-import Gargantext.Components.PhyloExplorer.JSON (RawEdge(..))
-import Gargantext.Components.PhyloExplorer.Types (PhyloDataSet(..), setGlobalDependencies)
+import Gargantext.Components.PhyloExplorer.Draw (drawPhylo, highlightSource, setGlobalD3Reference, setGlobalDependencies, unhide)
+import Gargantext.Components.PhyloExplorer.Types (PhyloDataSet(..))
 import Gargantext.Utils (nbsp)
 import Gargantext.Utils.Reactix as R2
+import Graphics.D3.Base (d3)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -29,9 +28,9 @@ layoutCpt = here.component "layout" cpt where
   cpt { phyloDataSet: (PhyloDataSet o)
       } _ = do
     -- States
-
-
     R.useEffectOnce' $ do
+      unhide o.name
+      setGlobalD3Reference window d3
       setGlobalDependencies window (PhyloDataSet o)
       drawPhylo
         o.branches
@@ -41,12 +40,6 @@ layoutCpt = here.component "layout" cpt where
         o.ancestorLinks
         o.branchLinks
         o.bb
-
-
-
-    -- @hightlightSource
-    let
-      highlightSource = \_ -> unit
 
     -- Render
     pure $
@@ -101,7 +94,7 @@ layoutCpt = here.component "layout" cpt where
           { id: "checkSource"
           , className: "select-source"
           , defaultValue: ""
-          , on: { change: \_ -> unit }
+          , on: { change: \_ -> highlightSource }
           } $
           [
             H.option
@@ -157,12 +150,8 @@ layoutCpt = here.component "layout" cpt where
         }
         []
       ,
-        -- H.div
-        -- { id: "phyloHow"
-        -- , className: "phylo-how"
-        -- }
-        -- []
-      -- ,
+        phyloHow {} []
+      ,
         phyloPhylo {} []
       ,
 
@@ -174,10 +163,14 @@ layoutCpt = here.component "layout" cpt where
         }
         []
       ,
-
-
         H.div
         { id: "phyloIsoLine"
+        , className: "phylo-isoline"
+        }
+        []
+      ,
+        H.div
+        { id: "phyloIsolineInfo"
         , className: "phylo-isoline-info"
         }
         [
@@ -190,7 +183,7 @@ layoutCpt = here.component "layout" cpt where
             }
             [
               H.i
-              { className: "fas fa-expand-arrows-alt" }
+              { className: "fa fa-arrows-alt" }
               []
             ]
           ,
@@ -200,7 +193,7 @@ layoutCpt = here.component "layout" cpt where
             }
             [
               H.i
-              { className: "fas fa-dot-circle" }
+              { className: "fa fa-dot-circle-o" }
               []
             ]
           ,
@@ -210,7 +203,7 @@ layoutCpt = here.component "layout" cpt where
             }
             [
               H.i
-              { className: "fas fa-sort-alpha-down" }
+              { className: "fa fa-sort-alpha-asc" }
               []
             ]
           ,
@@ -245,24 +238,14 @@ layoutCpt = here.component "layout" cpt where
         , className: "phylo-graph"
         }
         []
-      ,
-
-      -- <!-- row 5 -->
-        H.div
-        { className: "phylo-footer font-bold font-small"
-        }
-        [ H.text "iscpif // cnrs // 2021" ]
-
 
       ]
 
 --------------------------------------------------------
 
-type PhyloCorpusProps = ()
-
-phyloCorpus :: R2.Component PhyloCorpusProps
+phyloCorpus :: R2.Component ()
 phyloCorpus = R.createElement phyloCorpusCpt
-phyloCorpusCpt :: R.Component PhyloCorpusProps
+phyloCorpusCpt :: R.Component ()
 phyloCorpusCpt = here.component "phyloCorpus" cpt where
   cpt _ _ = do
     -- Render
@@ -277,11 +260,48 @@ phyloCorpusCpt = here.component "phyloCorpus" cpt where
 
 ---------------------------------------------------------
 
-type PhyloPhyloProps = ()
+phyloHow :: R2.Component ()
+phyloHow = R.createElement phyloHowCpt
+phyloHowCpt :: R.Component ()
+phyloHowCpt = here.component "phyloHow" cpt where
+  cpt _ _ = do
+    -- Render
+    pure $
 
-phyloPhylo :: R2.Component PhyloPhyloProps
+      H.div
+      { id: "phyloHow"
+      , className: "phylo-how"
+      }
+      [
+        H.a
+        { id: "phyloSearch"
+        , href: "http://maps.gargantext.org/phylo/knowledge_visualization/memiescape/documentation.html"
+        , target: "_blank"
+        }
+        [
+          H.div
+          { className: "switch" }
+          [
+            H.i
+            { className: "far fa-question-circle how" }
+            []
+          ,
+            H.i
+            { className: "fa fa-question-circle how" }
+            [
+              H.span
+              { className: "tooltip" }
+              [ H.text "click to see how the phylomemy was built" ]
+            ]
+          ]
+        ]
+      ]
+
+---------------------------------------------------------
+
+phyloPhylo :: R2.Component ()
 phyloPhylo = R.createElement phyloPhyloCpt
-phyloPhyloCpt :: R.Component PhyloPhyloProps
+phyloPhyloCpt :: R.Component ()
 phyloPhyloCpt = here.component "phyloPhylo" cpt where
   cpt _ _ = do
     -- Render
@@ -297,9 +317,9 @@ phyloPhyloCpt = here.component "phyloPhylo" cpt where
 ---------------------------------------------------------
 
 type PhyloCorpusInfoProps =
-  ( nbDocs :: Int
+  ( nbDocs        :: Int
   , nbFoundations :: Int
-  , nbPeriods :: Int
+  , nbPeriods     :: Int
   )
 
 phyloCorpusInfo :: R2.Component PhyloCorpusInfoProps
@@ -341,9 +361,9 @@ phyloCorpusInfoCpt = here.component "phyloCorpusInfo" cpt where
 ---------------------------------------------------------
 
 type PhyloPhyloInfoProps =
-  ( nbTerms :: Int
-  , nbGroups :: Int
-  , nbBranches :: Int
+  ( nbTerms     :: Int
+  , nbGroups    :: Int
+  , nbBranches  :: Int
   )
 
 phyloPhyloInfo :: R2.Component PhyloPhyloInfoProps

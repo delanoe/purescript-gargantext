@@ -4,17 +4,12 @@ module Gargantext.Components.PhyloExplorer.Types
   , Link(..), AncestorLink(..), BranchLink(..)
   , GlobalTerm(..)
   , parsePhyloJSONSet
-  , setGlobalDependencies
   ) where
 
 import Gargantext.Prelude
 
-import DOM.Simple (Window)
-import DOM.Simple.Console (log2)
 import Data.Array as Array
 import Data.Date as Date
-import Data.Foldable (for_)
-import Data.FoldableWithIndex (forWithIndex_)
 import Data.Generic.Rep (class Generic)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), maybe)
@@ -23,10 +18,7 @@ import Data.Show.Generic (genericShow)
 import Data.String as String
 import Data.Tuple as Tuple
 import Data.Tuple.Nested ((/\))
-import Effect (Effect)
-import FFI.Simple (applyTo, (..), (.=), (.?))
 import Gargantext.Components.PhyloExplorer.JSON (PhyloJSONSet(..), RawEdge(..), RawObject(..))
-import Unsafe.Coerce (unsafeCoerce)
 
 
 -- @WIP PureScript Date or stick to JavaScript foreign?
@@ -42,6 +34,7 @@ data PhyloDataSet = PhyloDataSet
   , branches      :: Array Branch
   , groups        :: Array Group
   , links         :: Array Link
+  , name          :: String
   , nbBranches    :: Int
   , nbDocs        :: Int
   , nbFoundations :: Int
@@ -66,6 +59,7 @@ parsePhyloJSONSet (PhyloJSONSet o) = PhyloDataSet
   , branches
   , groups
   , links
+  , name          : o.name
   , nbBranches    : parseInt o.phyloBranches
   , nbDocs        : parseInt o.phyloDocs
   , nbFoundations : parseInt o.phyloFoundations
@@ -302,54 +296,6 @@ derive instance Generic GlobalTerm _
 derive instance Eq GlobalTerm
 instance Show GlobalTerm where show = genericShow
 
-setGlobalDependencies :: Window -> PhyloDataSet -> Effect Unit
-setGlobalDependencies w (PhyloDataSet o)
-  = do
-    _ <- pure $ (w .= "freq") {}
-    _ <- pure $ (w .= "nbBranches") o.nbBranches
-    _ <- pure $ (w .= "nbDocs") o.nbDocs
-    _ <- pure $ (w .= "nbFoundations") o.nbFoundations
-    _ <- pure $ (w .= "nbGroups") o.nbGroups
-    _ <- pure $ (w .= "nbPeriods") o.nbPeriods
-    _ <- pure $ (w .= "nbTerms") o.nbTerms
-    _ <- pure $ (w .= "sources") o.sources
-    _ <- pure $ (w .= "terms") []
-    _ <- pure $ (w .= "timeScale") o.timeScale
-    _ <- pure $ (w .= "weighted") o.weighted
-
-    (freq :: Array Int)         <- pure $ w .. "freq"
-    (terms :: Array GlobalTerm) <- pure $ w .. "terms"
-
-    for_ o.groups \(Group g) -> do
-
-      let
-        f = g.foundation
-        l = g.label
-
-      forWithIndex_ f \idx val ->
-        let
-          idx' = show idx
-          val' = show val
-        -- For each entries in group.foundation array,
-        -- increment consequently the global window.keys array
-        in case (freq .? val') of
-          Nothing -> pure $ (freq .= val') 0
-          Just v  -> pure $ (freq .= val') (v +1)
-        -- For each entries in group.foundation array,
-        -- if the global window.terms does not have it in property,
-        -- append an item to the global window.terms
-        *> case (terms .? val') of
-          Just _  -> pure unit
-          Nothing -> void <<< pure $ (terms .= val') $ GlobalTerm
-            { label: l .. idx'
-            , fdt  : val'
-            }
-
-    -- @XXX: FFI.Simple `(...)` throws error (JavaScript issue)
-    --       need to decompose computation
-    void do
-      new <- pure $ applyTo (terms .. "flat") terms []
-      pure $ (w .= "terms") new
 
 -----------------------------------------------------------
 

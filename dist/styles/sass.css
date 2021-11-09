@@ -1138,8 +1138,6 @@ select.form-control {
   width: 100%;
 }
 
-/* memiescape v2.0
-   contact : quentin.lobbe@iscpif.fr */
 /* fonts */
 @font-face {
   font-family: "Inter-Regular";
@@ -1161,7 +1159,7 @@ select.form-control {
   grid-template-columns: repeat(15, 1fr);
   grid-template-rows: 2% 7% 7% auto 1%;
   grid-gap: 10px;
-  height: calc(100vh - 20px);
+  height: calc(100vh - 137px);
   color: #0d1824;
 }
 
@@ -1240,6 +1238,9 @@ select.form-control {
   padding-bottom: 20%;
   padding-left: 15px;
 }
+.phylo-isoline-info .btn-group {
+  display: initial;
+}
 
 /* -------------------- */
 .phylo-scape {
@@ -1257,12 +1258,6 @@ select.form-control {
   grid-row: 4;
   grid-column: 15/16;
   /*background: #FFCC73;*/
-}
-
-/* -------------------- */
-.phylo-footer {
-  grid-row: 5;
-  grid-column: 2/16;
 }
 
 /* classes */

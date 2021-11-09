@@ -1,5 +1,4 @@
-/* memiescape v2.0
-   contact : quentin.lobbe@iscpif.fr */
+$height-screen-minus: 137px; // totally unworthy empirical value calculating the screen height taken by the topbar height and other main container element height (@TODO topbar height calculation, @TODO enhance "container" class element height management, @TODO provide route view content with no inner padding -> see "main-page__main-route" paddings")
 
 /* fonts */
 
@@ -28,7 +27,11 @@
   grid-template-columns: repeat(15, 1fr);
   grid-template-rows: 2% 7% 7% auto 1%;
   grid-gap: 10px;
-  height: calc(100vh - 20px);
+  // will stick the phylomemy height to the window screen height, as if it
+  // was a fullpage / unscrollable content
+  // main purpose is to avoid any browser scroll, this will ease D3 zoom event
+  // management
+  height: calc(100vh - #{ $height-screen-minus });
   color: #0d1824;
 }
 
@@ -108,6 +111,10 @@
   padding-top: 20%;
   padding-bottom: 20%;
   padding-left: 15px;
+
+  .btn-group {
+    display: initial;
+  }
 }
 
 /* -------------------- */
@@ -127,13 +134,6 @@
   grid-row: 4;
   grid-column: 15 / 16;
   /*background: #FFCC73;*/
-}
-
-/* -------------------- */
-
-.phylo-footer {
-  grid-row: 5;
-  grid-column: 2 / 16;
 }
 
 

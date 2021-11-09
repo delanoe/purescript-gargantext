@@ -1,4 +1,18 @@
 exports._drawPhylo = drawPhylo;
+exports._highlightSource = highlightSource;
+exports._unhide = unhide;
+
+
+// (from "index.html" scripts)
+function unhide(name) {
+  document.getElementById("phyloName").innerHTML        = name;
+  document.getElementById("phyloName").style.visibility = "visible";
+  document.getElementById("reset").style.visibility     = "visible";
+  document.getElementById("label").style.visibility     = "visible";
+  document.getElementById("heading").style.visibility   = "visible";
+  document.getElementById("export").style.visibility    = "visible";
+
+}
 
 // set javascript date from a string year
 function yearToDate(year) {
@@ -536,7 +550,9 @@ function drawPhylo(branches, periods, groups, links, aLinks, bLinks, frame) {
   var zoom = d3.zoom()
       .scaleExtent([1,50])
       .extent([[xo,yo],[wo,ho]])
-      .on("zoom",onZoom)
+      .on("zoom", function(e) {
+        debouncedOnZoom(e);
+      });
 
   svg.call(zoom).on("dblclick.zoom",null).on("dblclick",doubleClick);
 
@@ -548,10 +564,36 @@ function drawPhylo(branches, periods, groups, links, aLinks, bLinks, frame) {
         .call(zoom.transform, d3.zoomIdentity);
   }
 
-  function onZoom() {
+  function debounce(fn, wait, immediate) {
+    var timeout;
+    return function() {
+      var context = this
+      , args = arguments
+      , later = function() {
+        timeout = null;
+        if (immediate !== true) {
+          fn.apply(context, args);
+        }
+      }
+      , now = immediate === true && timeout === null;
 
-      var zoomX = d3.event.transform.rescaleX(xScale),
-          zoomY = d3.event.transform.rescaleY(yScale),
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+
+      if (now === true) {
+        fn.apply(context, args);
+      }
+    };
+  };
+
+  var debouncedOnZoom = debounce(
+    onZoom
+    , 50
+  );
+
+  function onZoom(event) {
+      var zoomX = event.transform.rescaleX(xScale),
+          zoomY = event.transform.rescaleY(yScale),
           zoomXLabels = xLabels
               .filter(b => (zoomX(b.x) >= xo) && (zoomX(b.x) <= (wo + xo))),
           zoomYLabels = yLabels
@@ -561,15 +603,15 @@ function drawPhylo(branches, periods, groups, links, aLinks, bLinks, frame) {
 
       setAxisY(zoomY,zoomYLabels);
 
-      panel.selectAll("circle").attr("transform", d3.event.transform);
-      panel.selectAll("text").attr("transform", d3.event.transform);
-      panel.selectAll("path").attr("transform", d3.event.transform);
-      panel.selectAll(".branch-hover").attr("transform", d3.event.transform);
-      panel.selectAll(".y-highlight").attr("transform", d3.event.transform);
-      panel.selectAll(".ngrams").attr("transform", d3.event.transform);
-      panel.selectAll(".term-path").attr("transform", d3.event.transform);
-      panel.selectAll(".emergence").attr("transform", d3.event.transform);
-      panel.selectAll(".header").attr("transform", d3.event.transform);
+      panel.selectAll("circle").attr("transform", event.transform);
+      panel.selectAll("text").attr("transform", event.transform);
+      panel.selectAll("path").attr("transform", event.transform);
+      panel.selectAll(".branch-hover").attr("transform", event.transform);
+      panel.selectAll(".y-highlight").attr("transform", event.transform);
+      panel.selectAll(".ngrams").attr("transform", event.transform);
+      panel.selectAll(".term-path").attr("transform", event.transform);
+      panel.selectAll(".emergence").attr("transform", event.transform);
+      panel.selectAll(".header").attr("transform", event.transform);
 
       showPeak()
   }
