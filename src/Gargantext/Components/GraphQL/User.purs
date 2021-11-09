@@ -6,7 +6,7 @@ import Data.Array as A
 import Data.Lens (Lens', lens)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import GraphQL.Client.Args (NotNull(..), (=>>))
-import GraphQL.Client.Variable (Var)
+import GraphQL.Client.Variable (Var(..))
 import GraphQL.Client.Variables (withVars)
 import Type.Proxy (Proxy(..))
 
@@ -43,25 +43,8 @@ type UserInfoM
     , ui_cwRole         :: String
     , ui_cwTouchPhone   :: String
     , ui_cwTouchMail    :: String }
---defaultUserInfoM :: UserInfoM
---defaultUserInfoM =
---  { ui_id: NotNull 0
---  , ui_username: Nothing
---  , ui_email: Nothing
---  , ui_title: Nothing
---  , ui_source: Nothing
---  , ui_cwFirstName: Nothing
---  , ui_cwLastName: Nothing
---  , ui_cwOrganization: Nothing
---  , ui_cwLabTeamDepts: Nothing
---  , ui_cwOffice: Nothing
---  , ui_cwCity: Nothing
---  , ui_cwCountry: Nothing
---  , ui_cwRole: Nothing
---  , ui_cwTouchPhone: Nothing
---  , ui_cwTouchMail: Nothing }
 
-userInfoQuery = { user_infos: { user_id: Var _ "id" Int } =>>
+userInfoQuery = { user_infos: { user_id: Var :: _ "id" Int } =>>
                   { ui_id: unit
                   , ui_username: unit
                   , ui_email: unit

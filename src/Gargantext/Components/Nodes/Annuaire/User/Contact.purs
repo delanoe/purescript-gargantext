@@ -23,7 +23,7 @@ import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.GraphQL (getClient, queryGql)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
-import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact'(..), ContactData', ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
+import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (ContactData', HyperdataContact(..))
 import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Config.REST (RESTError(..), logRESTError)
 import Gargantext.Ends (Frontends)
@@ -90,27 +90,6 @@ contactInfoItems =
   ]
 
 type UserInfoLens = L.ALens' UserInfo String
---   
--- contactInfos' :: HyperdataContact -> (HyperdataContact -> Effect Unit) -> Array R.Element
--- contactInfos' h onUpdateHyperdata = item <$> contactInfoItems where
---   item { label, lens, defaultVal: placeholder } =
---     contactInfoItem { label, lens, onUpdateHyperdata, placeholder, hyperdata: h }
--- 
--- contactInfoItems' :: Array {label:: String, defaultVal:: String, lens:: HyperdataContactLens}
--- contactInfoItems' =
---   [ {label: "Last Name"    , defaultVal: "Empty Last Name"    , lens: _who     <<< _lastName             }
---   , {label: "First Name"   , defaultVal: "Empty First Name"   , lens: _who     <<< _firstName            }
---   , {label: "Organisation" , defaultVal: "Empty Organisation" , lens: _ouFirst <<< _organizationJoinComma}
---   , {label: "Lab/Team/Dept", defaultVal: "Empty Lab/Team/Dept", lens: _ouFirst <<< _labTeamDeptsJoinComma}
---   , {label: "Office"       , defaultVal: "Empty Office"       , lens: _ouFirst <<< _office               }
---   , {label: "City"         , defaultVal: "Empty City"         , lens: _ouFirst <<< _city                 }
---   , {label: "Country"      , defaultVal: "Empty Country"      , lens: _ouFirst <<< _country              }
---   , {label: "Role"         , defaultVal: "Empty Role"         , lens: _ouFirst <<< _role                 }
---   , {label: "Phone"        , defaultVal: "Empty Phone"        , lens: _ouFirst <<< _touch <<< _phone     }
---   , {label: "Mail"         , defaultVal: "Empty Mail"         , lens: _ouFirst <<< _touch <<< _mail      }
---   ]
--- 
--- type HyperdataContactLens = L.ALens' HyperdataContact String
 
 type ContactInfoItemProps =
   ( defaultVal       :: String
@@ -321,122 +300,9 @@ getUserInfoWithReload {nodeId, session} = getUserInfo session nodeId -- getConta
 
 getUserInfo :: Session -> Int -> Aff (Either RESTError UserInfo)
 getUserInfo session id = do
---  { user_infos } <- queryGql session "get user infos"
---                    { user_infos: { user_id: id } =>>
---                      { ui_id: unit
---                      , ui_username: unit
---                      , ui_email: unit
---                      , ui_title: unit
---                      , ui_source: unit
---                      , ui_cwFirstName: unit
---                      , ui_cwLastName: unit
---                      , ui_cwCity: unit
---                      , ui_cwCountry: unit
---                      , ui_cwLabTeamDepts: unit
---                      , ui_cwOrganization: unit
---                      , ui_cwOffice: unit
---                      , ui_cwRole: unit
---                      , ui_cwTouchMail: unit
---                      , ui_cwTouchPhone: unit }
---                    }
   { user_infos } <- queryGql session "get user infos" $ userInfoQuery `withVars` { id }
   liftEffect $ here.log2 "[getUserInfo] user infos" user_infos
   pure $ case A.head user_infos of
     Nothing -> Left (CustomError $ "user with id " <> show id <> " not found")
     -- NOTE Contact is at G.C.N.A.U.C.Types
     Just ui -> Right ui
---     Just ui -> Right $ { contactNode: Contact
---                            { id: ui.ui_id
---                            , date: Nothing
---                            , hyperdata: HyperdataUser
---                              { shared: Just $ HyperdataContact
---                                { bdd: Nothing
---                                , who: Just $ ContactWho
---                                   { idWho: Nothing
---                                   , firstName: ui.ui_cwFirstName
---                                   , lastName: ui.ui_cwLastName
---                                   , keywords: []
---                                   , freetags: []
---                                   }
---                                , ou:
---                                  [ ContactWhere
---                                    { organization: ui.ui_cwOrganization
---                                    , labTeamDepts: ui.ui_cwLabTeamDepts
---                                    , role: ui.ui_cwRole
---                                    , office: ui.ui_cwOffice
---                                    , country: ui.ui_cwCountry
---                                    , city: ui.ui_cwCity
---                                    , touch: Nothing  -- TODO
---                                    , entry: Nothing
---                                    , exit: Nothing }
---                                  ]
---                                , source: ui.ui_source
---                                , title: ui.ui_title
---                                , lastValidation: Nothing
---                                , uniqId: Nothing
---                                , uniqIdBdd: Nothing
---                                }
---                              }
---                            , name: Just ui.ui_username
---                            , parentId: Nothing
---                            , typename: Nothing
---                            , userId: Just ui.ui_id }
---                        , defaultListId: 424242 }
---
---getUser' :: Session -> Int -> Aff (Either RESTError ContactData)
---getUser' session id = do
---  { users } <- queryGql session "get user"
---               { users: { user_id: id } =>>
---                 { u_id
---                 , u_hyperdata:
---                   { shared:
---                     { title
---                     , source
---                     , who:
---                       { firstName
---                       , lastName }
---                     , "where":
---                       { organization }
---                     }
---                   }
---                 , u_username
---                 , u_email } }
---  liftEffect $ here.log2 "[getUser] users" users
---  pure $ case A.head users of
---    Nothing -> Left (CustomError $ "user with id " <> show id <> " not found")
---    -- NOTE Contact is at G.C.N.A.U.C.Types
---    Just u  -> Right $ { contactNode: Contact
---                           { id: u.u_id
---                           , date: Nothing
---                           , hyperdata: HyperdataUser
---                             { shared: (\shared -> HyperdataContact
---                               { bdd: Nothing
---                               , who: (\who -> ContactWho
---                                  { idWho: Nothing
---                                  , firstName: who.firstName
---                                  , lastName: who.lastName
---                                  , keywords: []
---                                  , freetags: []
---                                  }) <$> shared.who
---                               , ou: (\ou -> ContactWhere
---                                   { organization: ou.organization
---                                   , labTeamDepts: []
---                                   , role: Nothing
---                                   , office: Nothing
---                                   , country: Nothing
---                                   , city: Nothing
---                                   , touch: Nothing
---                                   , entry: Nothing
---                                   , exit: Nothing }) <$> shared.where
---                               , source: shared.source
---                               , title: shared.title
---                               , lastValidation: Nothing
---                               , uniqId: Nothing
---                               , uniqIdBdd: Nothing
---                               }) <$> u.u_hyperdata.shared
---                             }
---                           , name: Just u.u_username
---                           , parentId: Nothing
---                           , typename: Nothing
---                           , userId: Just u.u_id }
---                       , defaultListId: 424242 }
