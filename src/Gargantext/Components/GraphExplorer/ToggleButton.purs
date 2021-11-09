@@ -155,11 +155,11 @@ pauseForceAtlasButtonCpt = here.component "forceAtlasToggleButton" cpt
     cls SigmaxTypes.Running = "active"
     cls _ = ""
 
-    text SigmaxTypes.InitialRunning = "Pause Force Atlas"
-    text SigmaxTypes.InitialStopped = "Start Force Atlas"
-    text SigmaxTypes.Running = "Pause Force Atlas"
-    text SigmaxTypes.Paused = "Start Force Atlas"
-    text SigmaxTypes.Killed = "Start Force Atlas"
+    text SigmaxTypes.InitialRunning = "Pause"
+    text SigmaxTypes.InitialStopped = "Start"
+    text SigmaxTypes.Running = "Pause"
+    text SigmaxTypes.Paused = "Start"
+    text SigmaxTypes.Killed = "Start"
 
     onClick state _ = T.modify_ SigmaxTypes.toggleForceAtlasState state
 
