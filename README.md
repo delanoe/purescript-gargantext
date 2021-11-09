@@ -144,11 +144,10 @@ the docker container.
 ### Basic tasks
 
 Now we must install our javascript and purescript dependencies:  
-*Note: if you're installing manually you might also need to manually install [psc-package](https://github.com/purescript/psc-package)*
 
 ```shell
-darn install -D && darn install-ps # for docker setup
-yarn install -D && yarn install-ps # for manual setup
+darn install -D # for docker setup
+yarn install -D # for manual setup
 ```
 
 You will likely want to check your work in a browser. We provide a
@@ -164,13 +163,6 @@ To generate a new browser bundle to test:
 ```shell
 darn build # for docker setup
 yarn build # for manual setup
-```
-
-If you are rapidly iterating and just want to type check your code:
-
-```shell
-darn compile # for docker setup
-yarn compile # for manual setup
 ```
 
 You may access a purescript repl if you want to explore:

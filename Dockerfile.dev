@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y yarn
 RUN curl -L https://github.com/coot/zephyr/releases/download/v0.3.2/Linux.tar.gz | tar zx -C /usr/bin --strip-components=1 zephyr/zephyr
 
 RUN curl -L https://github.com/dhall-lang/dhall-haskell/releases/download/1.38.1/dhall-json-1.7.6-x86_64-linux.tar.bz2 | tar jx -C /usr/bin --strip-components=2 ./bin/dhall-to-json
+RUN yarn global add purescript spago pulp
 
 WORKDIR /opt/app
 EXPOSE 5000/tcp
