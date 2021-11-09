@@ -148,7 +148,7 @@ data NodeType = Annuaire
               | Nodes
               | Phylo
               | Team
-              | Texts
+              | NodeTexts
               | Tree
               | Url_Document
               -- TODO Optional Nodes
@@ -190,7 +190,7 @@ instance Show NodeType where
   show Tree            = "NodeTree"
   show Team            = "NodeTeam"
   show NodeList        = "NodeList"
-  show Texts           = "NodeDocs"
+  show NodeTexts       = "NodeTexts"
   show NodeFrameWrite  = "NodeFrameWrite"
   show NodeFrameCalc   = "NodeFrameCalc"
   show NodeFrameNotebook = "NodeFrameNotebook"
@@ -218,7 +218,7 @@ instance Read NodeType where
   read "Tree"              = Just Tree
   read "NodeTeam"          = Just Team
   read "NodeList"          = Just NodeList
-  read "NodeTexts"         = Just Texts
+  read "NodeTexts"         = Just NodeTexts
   read "Annuaire"          = Just Annuaire
   read "NodeFrameWrite"    = Just NodeFrameWrite
   read "NodeFrameCalc"     = Just NodeFrameCalc
@@ -254,7 +254,7 @@ translateFR = case _ of
   Nodes               -> "Nœuds"
   Phylo               -> "Phylo"
   Team                -> "Équipe"
-  Texts               -> "Textes"
+  NodeTexts           -> "Textes"
   Tree                -> "Arbre"
   Url_Document        -> "Document URL"
   --
@@ -284,7 +284,7 @@ translateEN = case _ of
   Nodes               -> "Nodes"
   Phylo               -> "Phylo"
   Team                -> "Team"
-  Texts               -> "Texts"
+  NodeTexts           -> "Texts"
   Tree                -> "Tree"
   Url_Document        -> "URL document"
   --
@@ -322,7 +322,7 @@ getIcon Corpus false = "book-circle"
 getIcon Phylo _ = "code-fork"
 
 getIcon Graph _ = "hubzilla"
-getIcon Texts _ = "newspaper-o"
+getIcon NodeTexts _ = "newspaper-o"
 getIcon Dashboard _ = "signal"
 getIcon NodeList _ = "list"
 getIcon NodeFile _ = "file"  -- TODO depending on mime type we can use fa-file-image etc
@@ -397,7 +397,7 @@ nodeTypePath NodeUser        = "user"
 nodeTypePath NodeContact     = "contact"
 nodeTypePath Tree            = "tree"
 nodeTypePath NodeList        = "lists"
-nodeTypePath Texts           = "texts"
+nodeTypePath NodeTexts       = "texts"
 nodeTypePath Team            = "team"
 nodeTypePath NodeFrameWrite  = "write"
 nodeTypePath NodeFrameCalc   = "calc"

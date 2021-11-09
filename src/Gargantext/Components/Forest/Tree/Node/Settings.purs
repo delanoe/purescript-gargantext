@@ -181,7 +181,8 @@ settingsBox Corpus =
                           , SearchBox
                           , Download
                             --, Clone
-                          , Add [ NodeList
+                          , Add [ NodeTexts
+                                , NodeList
                                 , Graph
                                 , Dashboard
                                 , NodeFrameWrite
@@ -195,10 +196,10 @@ settingsBox Corpus =
                           ]
               }
 
-settingsBox Texts =
+settingsBox NodeTexts =
   SettingsBox { show : true
               , edit : false
-              , doc  : Documentation Texts
+              , doc  : Documentation NodeTexts
               , buttons : [ Refresh
                           , Upload
                           , Download

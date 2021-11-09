@@ -41,10 +41,10 @@ update = R.createElement updateCpt
 updateCpt :: R.Component UpdateProps
 updateCpt = here.component "update" cpt where
   cpt props@{ nodeType: Dashboard } _ = pure $ updateDashboard props []
-  cpt props@{ nodeType: Graph } _     = pure $ updateGraph props []
-  cpt props@{ nodeType: NodeList } _  = pure $ updateNodeList props []
-  cpt props@{ nodeType: Texts } _     = pure $ updateTexts props []
-  cpt props@{ nodeType: _ } _         = pure $ updateOther props []
+  cpt props@{ nodeType: Graph     } _ = pure $ updateGraph props []
+  cpt props@{ nodeType: NodeList  } _ = pure $ updateNodeList props []
+  cpt props@{ nodeType: NodeTexts } _ = pure $ updateTexts props []
+  cpt props@{ nodeType: _         } _ = pure $ updateOther props []
 
 updateDashboard :: R2.Component UpdateProps
 updateDashboard = R.createElement updateDashboardCpt
