@@ -220,6 +220,12 @@ selectedNodesCpt = here.component "selectedNodes" cpt
       where
         commonProps = RX.pick props :: Record Common
 
+data TagCloudState = Folded | Unfolded
+derive instance Eq TagCloudState
+flipFold :: TagCloudState -> TagCloudState
+flipFold Folded = Unfolded
+flipFold Unfolded = Folded
+
 neighborhood :: R2.Component Props
 neighborhood = R.createElement neighborhoodCpt
 neighborhoodCpt :: R.Component Props
@@ -230,10 +236,21 @@ neighborhoodCpt = here.component "neighborhood" cpt
          } _ = do
       { selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
       selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
+      state <- T.useBox Folded
+      state' <- T.useLive T.unequal state
 
-      let badges' = neighbourBadges graph selectedNodeIds'
+      let numberOfBadgesToShowWhenFolded = 5
+          badges' = neighbourBadges graph selectedNodeIds'
           minSize = F.foldl Math.min 0.0 (Seq.map _.size (SigmaxT.graphNodes graph))
           maxSize = F.foldl Math.max 0.0 (Seq.map _.size (SigmaxT.graphNodes graph))
+          orderedBadges = A.sortWith (\n -> -n.size) $ Seq.toUnfoldable badges'  -- reverse sort (largest size first)
+          displayBadges = case state' of
+            Folded -> A.take numberOfBadgesToShowWhenFolded orderedBadges
+            Unfolded -> orderedBadges
+          stateText = case state' of
+            Folded -> "Show more"
+            Unfolded -> "Show less"
+          showFoldedTooltip = A.length orderedBadges > numberOfBadgesToShowWhenFolded
 
       pure $ RH.div { className: "tab-content", id: "myTabContent" }
         [ RH.div { -- className: "flex-space-around d-flex justify-content-center"
@@ -241,8 +258,12 @@ neighborhoodCpt = here.component "neighborhood" cpt
              , id: "home"
              , role: "tabpanel"
              }
-          (Seq.toUnfoldable $ Seq.map (\node -> badge { maxSize, minSize, node, selectedNodeIds }) badges')
+          ((\node -> badge { maxSize, minSize, node, selectedNodeIds }) <$> displayBadges) <>
+          RH.a { className: ""  -- with empty class name, bootstrap renders this blue
+               , on: { click: toggleUnfold state} } [ RH.text stateText ]
         ]
+        where
+          toggleUnfold state = T.modify_ flipFold state
 
 
 type UpdateTermButtonProps = (
