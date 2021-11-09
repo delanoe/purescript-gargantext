@@ -254,7 +254,7 @@ translateFR = case _ of
   Nodes               -> "Nœuds"
   Phylo               -> "Phylo"
   Team                -> "Équipe"
-  NodeTexts           -> "Textes"
+  NodeTexts           -> "Docs"
   Tree                -> "Arbre"
   Url_Document        -> "Document URL"
   --
@@ -284,7 +284,7 @@ translateEN = case _ of
   Nodes               -> "Nodes"
   Phylo               -> "Phylo"
   Team                -> "Team"
-  NodeTexts           -> "Texts"
+  NodeTexts           -> "Docs"
   Tree                -> "Tree"
   Url_Document        -> "URL document"
   --
