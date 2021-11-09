@@ -154,20 +154,17 @@ itemEditingCpt :: R.Component ItemProps
 itemEditingCpt = here.component "itemNotEditing" cpt where
   cpt { defaultVal, isEditing, lens, onUpdateUserInfo, userInfo, valueBox } _ = do
     valueBox' <- T.useLive T.unequal valueBox
-    
+
     pure $ H.div { className: "input-group col-sm-6" }
              [ inputWithEnter
                { autoFocus: true
                , className: "form-control"
                , defaultValue: valueBox'
-               --, defaultValue: R.readRef valueRef
                , onBlur: \v -> T.write_ v valueBox
-               --, onBlur: R.setRef valueRef
                , onEnter: click
                , onValueChanged: \v -> do
                    here.log2 "[itemEditingCpt] value Changed: " v
                    T.write_ v valueBox
-               --, onValueChanged: R.setRef valueRef
                , placeholder: defaultVal
                , type: "text" }
              , H.div { className: "btn input-group-append", on: { click } }
@@ -177,7 +174,6 @@ itemEditingCpt = here.component "itemNotEditing" cpt where
         cLens = L.cloneLens lens
         click _ = do
           T.write_ false isEditing
-          --let newUserInfo = (L.over cLens (\_ -> R.readRef valueRef) userInfo) :: UserInfo
           value <- T.read valueBox
           here.log2 "[itemEditing] value" value
           let newUserInfo = (L.set cLens value userInfo) :: UserInfo
@@ -203,8 +199,6 @@ saveContactHyperdata session id = put session (Routes.NodeAPI Node (Just id) "")
 
 saveUserInfo :: Session -> Int -> UserInfo -> Aff (Either RESTError Int)
 saveUserInfo session id ui = do
-  -- TODO GraphQL
---  pure $ Left $ CustomError "TODO implement graphql for saveUserInfo"
   client <- liftEffect $ getClient session
   res <- mutationOpts
     (\m -> m)
@@ -221,8 +215,7 @@ saveUserInfo session id ui = do
                                  , ui_cwRole: ga ui.ui_cwRole
                                  , ui_cwTouchPhone: ga ui.ui_cwTouchPhone
                                  , ui_cwTouchMail: ga ui.ui_cwTouchMail } }
-  liftEffect $ here.log2 "[saveUserInfo] res" res
-  pure $ Right 0
+  pure $ Right res.update_user_info
   where
     ga Nothing = ArgL IgnoreArg
     ga (Just val) = ArgR val
