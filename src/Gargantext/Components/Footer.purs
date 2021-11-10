@@ -18,4 +18,6 @@ footer = R.createElement footerCpt
 footerCpt :: R.Component FooterProps
 footerCpt = here.component "footer" cpt where
   cpt { } _ = do
-    pure $ H.div { className: "container" } [ H.hr {}, H.footer {} [] ]
+    -- (?) as the footer is empty for now, just output nothing
+    -- pure $ H.div { className: "container" } [ H.hr {}, H.footer {} [] ]
+    pure mempty

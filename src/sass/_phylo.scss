@@ -1,5 +1,3 @@
-$height-screen-minus: 137px; // totally unworthy empirical value calculating the screen height taken by the topbar height and other main container element height (@TODO topbar height calculation, @TODO enhance "container" class element height management, @TODO provide route view content with no inner padding -> see "main-page__main-route" paddings")
-
 /* fonts */
 
 @font-face {
@@ -27,11 +25,7 @@ $height-screen-minus: 137px; // totally unworthy empirical value calculating the
   grid-template-columns: repeat(15, 1fr);
   grid-template-rows: 2% 7% 7% auto 1%;
   grid-gap: 10px;
-  // will stick the phylomemy height to the window screen height, as if it
-  // was a fullpage / unscrollable content
-  // main purpose is to avoid any browser scroll, this will ease D3 zoom event
-  // management
-  height: calc(100vh - #{ $height-screen-minus });
+  height: 100vh;
   color: #0d1824;
 }
 

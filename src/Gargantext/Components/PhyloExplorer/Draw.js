@@ -341,7 +341,7 @@ function drawPhylo(branches, periods, groups, links, aLinks, bLinks, frame) {
 
   d3.select('#phyloIsoLine').style("background","#EBE4DD");
 
-  var div0 = d3.select('#phyloIsoLine').node().getBoundingClientRect(),
+  var div0 = getIsolineDOMElement(),
         m0 = {t:5,r:5,b:5,l:5},
         w0 = div0.width,
         h0 = div0.height;
@@ -363,6 +363,10 @@ function drawPhylo(branches, periods, groups, links, aLinks, bLinks, frame) {
           .size([w0, h0])
           .thresholds(Math.round(branches.length / 2))
           (branches)
+
+  function getIsolineDOMElement() {
+    return d3.select('#phyloIsoLine').node().getBoundingClientRect();
+  }
 
   /* shadows and lights */
 
@@ -1166,12 +1170,13 @@ function drawPhylo(branches, periods, groups, links, aLinks, bLinks, frame) {
   }
 
   function peakOver (b,i) {
+      var el = getIsolineDOMElement();
       d3.select("#peak-" + i).classed("peak-focus",false);
       d3.select("#peak-" + i).classed("peak-over",true);
       label.text(b.label.replace(/"/g,''))
            .style("visibility", "visible")
-           .style("top", (yScale0(b.y) + div0.top  - 18) + "px")
-           .style("left",(xScale0(b.x1) + div0.left + 12) + "px");
+           .style("top", (yScale0(b.y) + el.top  - 18) + "px")
+           .style("left",(xScale0(b.x1) + el.left + 12) + "px");
       branchOver(b.bId);
   }
 
