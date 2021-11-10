@@ -12,9 +12,10 @@ import Data.Foldable (for_)
 import Data.FoldableWithIndex (forWithIndex_)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
-import Effect.Uncurried (EffectFn1, EffectFn7, runEffectFn1, runEffectFn7)
+import Effect.Uncurried (EffectFn7, runEffectFn7)
 import FFI.Simple (applyTo, (..), (.=), (.?))
 import Gargantext.Components.PhyloExplorer.Types (AncestorLink, Branch, BranchLink, GlobalTerm(..), Group(..), Link, Period, PhyloDataSet(..))
+import Gargantext.Utils.Reactix (getElementById)
 import Graphics.D3.Base (D3)
 
 foreign import _drawPhylo :: EffectFn7
@@ -44,14 +45,6 @@ foreign import _highlightSource :: Effect Unit
 
 highlightSource :: Effect Unit
 highlightSource = _highlightSource
-
------------------------------------------------------------
-
--- @WIP: still necessary? as we certainly would have only one mode?
-foreign import _unhide :: EffectFn1 String Unit
-
-unhide :: String -> Effect Unit
-unhide = runEffectFn1 _unhide
 
 -----------------------------------------------------------
 
@@ -107,3 +100,18 @@ setGlobalDependencies w (PhyloDataSet o)
 
 setGlobalD3Reference :: Window -> D3 -> Effect Unit
 setGlobalD3Reference window d3 = void $ pure $ (window .= "d3") d3
+
+-----------------------------------------------------------
+
+unhide :: String -> Effect Unit
+unhide name = pure unit
+  <* setText "phyloName" name
+  <* turnVisible "phyloName"
+  <* turnVisible "reset"
+  <* turnVisible "label"
+  <* turnVisible "heading"
+
+  where
+    setText id n   = getElementById id >>= \el -> pure $ (el .= "innerHTML") n
+    turnVisible id = getElementById id >>= \el -> pure $ (el .= "visibility")
+      "visible"

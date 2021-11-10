@@ -1,18 +1,5 @@
 exports._drawPhylo = drawPhylo;
 exports._highlightSource = highlightSource;
-exports._unhide = unhide;
-
-
-// (from "index.html" scripts)
-function unhide(name) {
-  document.getElementById("phyloName").innerHTML        = name;
-  document.getElementById("phyloName").style.visibility = "visible";
-  document.getElementById("reset").style.visibility     = "visible";
-  document.getElementById("label").style.visibility     = "visible";
-  document.getElementById("heading").style.visibility   = "visible";
-  document.getElementById("export").style.visibility    = "visible";
-
-}
 
 // set javascript date from a string year
 function yearToDate(year) {
