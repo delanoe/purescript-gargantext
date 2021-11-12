@@ -26,7 +26,7 @@ router = oneOf
      , Dashboard      <$> (route "dashboard" *> sid) <*> int
      , PGraphExplorer <$> (route "graph"     *> sid) <*> int
      , PhyloExplorer  <$> (route "phylo"     *> sid) <*> int
-     , Texts          <$> (route "texts"     *> sid) <*> int
+     , NodeTexts      <$> (route "texts"     *> sid) <*> int
      , Lists          <$> (route "lists"     *> sid) <*> int
     , ContactPage     <$> (route "annuaire"  *> sid) <*> int
                           <*> (lit "contact" *> int)

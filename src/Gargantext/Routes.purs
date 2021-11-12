@@ -30,7 +30,7 @@ data AppRoute
   | RouteFrameWrite SessionId Int
   | RouteFrameVisio SessionId Int
   | Team            SessionId Int
-  | Texts           SessionId Int
+  | NodeTexts       SessionId Int
   | UserPage        SessionId Int
 
 
@@ -74,7 +74,7 @@ instance Show AppRoute where
   show (PGraphExplorer s i)     = "graphExplorer"  <> show i <> " (" <> show s <> ")"
   show (PhyloExplorer  s i)     = "phyloExplorer"  <> show i <> " (" <> show s <> ")"
   show (Dashboard      s i)     = "Dashboard"      <> show i <> " (" <> show s <> ")"
-  show (Texts          s i)     = "texts"          <> show i <> " (" <> show s <> ")"
+  show (NodeTexts      s i)     = "texts"          <> show i <> " (" <> show s <> ")"
   show (Lists          s i)     = "lists"          <> show i <> " (" <> show s <> ")"
   show (Annuaire       s i)     = "Annuaire"       <> show i <> " (" <> show s <> ")"
   show (UserPage       s i)     = "User"           <> show i <> " (" <> show s <> ")"
@@ -101,7 +101,7 @@ appPath (Document s l i)         = "list/"       <> show s <> "/" <> show l <> "
 appPath (Dashboard s i)          = "dashboard/"  <> show s <> "/" <> show i
 appPath (PGraphExplorer s i)     = "graph/"      <> show s <> "/" <> show i
 appPath (PhyloExplorer  s i)     = "phylo/"      <> show s <> "/" <> show i
-appPath (Texts s i)              = "texts/"      <> show s <> "/" <> show i
+appPath (NodeTexts s i)          = "texts/"      <> show s <> "/" <> show i
 appPath (Lists s i)              = "lists/"      <> show s <> "/" <> show i
 appPath (Annuaire s i)           = "annuaire/"   <> show s <> "/" <> show i
 appPath (UserPage s i)           = "user/"       <> show s <> "/" <> show i
@@ -127,7 +127,7 @@ nodeTypeAppRoute GT.NodeFile s i       = Just $ RouteFile s i
 nodeTypeAppRoute GT.NodeList s i       = Just $ Lists s i
 nodeTypeAppRoute GT.NodeUser s i       = Just $ UserPage s i
 nodeTypeAppRoute GT.Team s i           = Just $ Team s i
-nodeTypeAppRoute GT.Texts s i          = Just $ Texts s i
+nodeTypeAppRoute GT.NodeTexts s i      = Just $ NodeTexts s i
 nodeTypeAppRoute GT.NodeFrameWrite s i = Just $ RouteFrameWrite s i
 nodeTypeAppRoute GT.NodeFrameCalc  s i = Just $ RouteFrameCalc  s i
 nodeTypeAppRoute GT.NodeFrameVisio s i = Just $ RouteFrameVisio s i

@@ -267,7 +267,7 @@ renderRouteCpt = here.component "renderRoute" cpt where
         GR.RouteFrameCode  s n    -> routeFrame (Record.merge { nodeType: NodeFrameNotebook } $ sessionNodeProps s n) []
         GR.RouteFrameVisio s n    -> routeFrame (Record.merge { nodeType: NodeFrameVisio    } $ sessionNodeProps s n) []
         GR.Team s n               -> team (sessionNodeProps s n) []
-        GR.Texts s n              -> texts (sessionNodeProps s n) []
+        GR.NodeTexts s n          -> texts (sessionNodeProps s n) []
         GR.UserPage s n           -> user (sessionNodeProps s n) []
       ]
 
@@ -328,7 +328,7 @@ openedSidePanelCpt = here.component "openedSidePanel" cpt where
                             , metaData
                             , session
                             } [] ]
-      GR.Texts _s _n -> do
+      GR.NodeTexts _s _n -> do
         pure $ wrapper
           [ Texts.textsSidePanel { boxes
                                  , session
