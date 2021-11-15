@@ -16,8 +16,11 @@ import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Config.REST (RESTError, logRESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI))
+import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, get, sessionId)
 import Gargantext.Types (NodeType(..))
+import Gargantext.Types as GT
+import Gargantext.Utils.EtherCalc as EC
 import Gargantext.Utils.JitsiMeet as JM
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
@@ -95,7 +98,8 @@ frameLayoutView props  = R.createElement frameLayoutViewCpt props []
 frameLayoutViewCpt :: R.Component ViewProps
 frameLayoutViewCpt = here.component "frameLayoutView" cpt
   where
-    cpt { frame: NodePoly { hyperdata: Hyperdata { base, frame_id }}
+    cpt { frame: NodePoly { hyperdata: h@(Hyperdata { base, frame_id }) }
+        , nodeId
         , nodeType
         , reload } _ = do
       case nodeType of
@@ -104,8 +108,9 @@ frameLayoutViewCpt = here.component "frameLayoutView" cpt
             Nothing  -> pure $ H.div {} [ H.text $ "Wrong base url: " <> base ]
             Just url -> pure $ nodeFrameVisio { frame_id, reload, url }
         _              ->
-          pure $ H.div{} [
-            FV.backButton {} []
+          pure $ H.div{}
+            [ FV.backButton {} []
+            , importIntoListButton { hyperdata: h, nodeId } []
             , H.div { className : "frame"
                     , rows: "100%,*" }
               [ -- H.script { src: "https://visio.gargantext.org/external_api.js"} [],
@@ -115,6 +120,29 @@ frameLayoutViewCpt = here.component "frameLayoutView" cpt
                          } []
               ]
             ]
+
+type ImportIntoListButtonProps =
+  ( hyperdata :: Hyperdata
+  , nodeId    :: Int )
+
+importIntoListButton :: R2.Component ImportIntoListButtonProps
+importIntoListButton = R.createElement importIntoListButtonCpt
+importIntoListButtonCpt :: R.Component ImportIntoListButtonProps
+importIntoListButtonCpt = here.component "importIntoListButton" cpt where
+  cpt { hyperdata: Hyperdata { base, frame_id }
+      , nodeId } _ = do
+    pure $ H.div { className: "btn btn-default"
+                 , on: { click: onClick } }
+      [ H.text $ "Import into list" ]
+      where
+        onClick _ = do
+          let url = base <> "/" <> frame_id
+              --task = GT.AsyncTaskWithType { task, typ: GT.ListCSVUpload }
+              uploadPath = GR.NodeAPI NodeList (Just id) $ GT.asyncTaskTypePath GT.ListCSVUpload
+          csv <- EC.downloadCSV base frame_id
+          here.log2 "[importIntoListButton] CSV: " csv
+          --eTask <- postWwwUrlencoded session uploadPath body
+          pure unit
 
 type NodeFrameVisioProps =
   ( frame_id  :: String
