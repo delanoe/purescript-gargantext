@@ -6,7 +6,7 @@ import Gargantext.Prelude
 
 import DOM.Simple (window)
 import Data.Array as Array
-import Gargantext.Components.PhyloExplorer.Draw (drawPhylo, highlightSource, setGlobalD3Reference, setGlobalDependencies, unhide)
+import Gargantext.Components.PhyloExplorer.Draw (drawPhylo, highlightSource, highlightSource', setGlobalD3Reference, setGlobalDependencies, unhide)
 import Gargantext.Components.PhyloExplorer.Types (PhyloDataSet(..))
 import Gargantext.Utils (nbsp)
 import Gargantext.Utils.Reactix as R2
@@ -94,7 +94,7 @@ layoutCpt = here.component "layout" cpt where
           { id: "checkSource"
           , className: "select-source"
           , defaultValue: ""
-          , on: { change: \_ -> highlightSource }
+          , on: { change: \_ -> highlightSource' window }
           } $
           [
             H.option
