@@ -10,7 +10,8 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.Nullable (Nullable, null, toMaybe)
 import Data.Show.Generic (genericShow)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, launchAff_)
+import Effect.Class (liftEffect)
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Config.REST (RESTError, logRESTError)
@@ -139,9 +140,11 @@ importIntoListButtonCpt = here.component "importIntoListButton" cpt where
           let url = base <> "/" <> frame_id
               --task = GT.AsyncTaskWithType { task, typ: GT.ListCSVUpload }
               uploadPath = GR.NodeAPI NodeList (Just id) $ GT.asyncTaskTypePath GT.ListCSVUpload
-          csv <- EC.downloadCSV base frame_id
-          here.log2 "[importIntoListButton] CSV: " csv
-          --eTask <- postWwwUrlencoded session uploadPath body
+          launchAff_ $ do
+            -- TODO Get corpus_id
+            csv <- EC.downloadCSV base frame_id
+            liftEffect $ here.log2 "[importIntoListButton] CSV: " csv
+            --eTask <- postWwwUrlencoded session uploadPath body
           pure unit
 
 type NodeFrameVisioProps =
