@@ -1,31 +1,26 @@
 module Gargantext.Components.PhyloExplorer.Draw
   ( drawPhylo
   , highlightSource
-  , highlightSource'
   , unhide
   , setGlobalDependencies, setGlobalD3Reference
   ) where
 
 import Gargantext.Prelude
 
-import Control.Monad.Except (runExcept)
 import DOM.Simple (Window)
-import DOM.Simple.Console (log, log2)
 import Data.Either (Either(..))
 import Data.Foldable (for_)
 import Data.FoldableWithIndex (forWithIndex_)
 import Data.Maybe (Maybe(..), maybe)
 import Effect (Effect)
 import Effect.Class (liftEffect)
-import Effect.Ref as Ref
-import Effect.Uncurried (EffectFn7, runEffectFn7)
-import FFI.Simple (applyTo, getProperty, getProperty', setProperty, setProperty', (..), (...), (.=), (.?))
+import Effect.Uncurried (EffectFn1, EffectFn7, runEffectFn1, runEffectFn7)
+import FFI.Simple (applyTo, getProperty, (..), (.=), (.?))
 import Gargantext.Components.PhyloExplorer.Types (AncestorLink, Branch, BranchLink, GlobalTerm(..), Group(..), Link, Period, PhyloDataSet(..))
 import Gargantext.Utils.Reactix (getElementById)
 import Graphics.D3.Base (D3, D3Eff)
 import Graphics.D3.Selection as D3S
 import Graphics.D3.Util (ffi)
-import Unsafe.Coerce (unsafeCoerce)
 
 foreign import _drawPhylo :: EffectFn7
   (Array Branch)
@@ -48,7 +43,16 @@ drawPhylo ::
   -> Effect Unit
 drawPhylo = runEffectFn7 _drawPhylo
 
+foreign import _drawWordCloud :: forall a. EffectFn1 (Array a) Unit
+
+drawWordCloud :: forall a. Array a -> Effect Unit
+drawWordCloud = runEffectFn1 _drawWordCloud
+
 -----------------------------------------------------------
+
+orDie :: forall err a. Maybe a -> err -> Either err a
+orDie (Just a) _   = Right a
+orDie Nothing  err = Left err
 
 -- @XXX: FFI.Simple `(...)` throws error (JavaScript issue)
 --       need to decompose computation
@@ -59,20 +63,22 @@ applyTo_ src name args =
   let fn = getProperty name src
   in applyTo fn src args
 
+infixl 4 applyTo_ as ~~
 
 -- @WIP: DOM.Simple lack of "ClassList" module
 addClass :: forall el. el -> Array String -> Effect Unit
-addClass el args = pure $ applyTo_ (el .. "classList") "add" args
+addClass el args = pure $ (el .. "classList") ~~ "add" $ args
 
 removeClass :: forall el. el -> Array String -> Effect Unit
-removeClass el args = pure $ applyTo_ (el .. "classList") "remove" args
+removeClass el args = pure $ (el .. "classList") ~~ "remove" $ args
 
------------------------------------------------------------
+-- @WIP: "Graphics.D3.Selection" lack of "filter" function
+-- @WIP: "Graphics.D3.Selection" lack of "nodes" function
+selectionFilter :: forall d. String -> D3S.Selection d -> D3Eff (D3S.Selection D3S.Void)
+selectionFilter = ffi ["query", "selection", ""] "selection.filter(query)"
 
-foreign import _highlightSource :: Effect Unit
-
-highlightSource :: Effect Unit
-highlightSource = _highlightSource
+selectionNodes :: forall d el. D3S.Selection d -> D3Eff (Array el)
+selectionNodes = ffi ["selection", ""] "selection.nodes()"
 
 -----------------------------------------------------------
 
@@ -104,26 +110,24 @@ setGlobalDependencies w (PhyloDataSet o)
         let
           idx' = show idx
           val' = show val
-        -- For each entries in group.foundation array,
-        -- increment consequently the global window.keys array
-        in case (freq .? val') of
-          Nothing -> pure $ (freq .= val') 0
-          Just v  -> pure $ (freq .= val') (v +1)
-        -- For each entries in group.foundation array,
-        -- if the global window.terms does not have it in property,
-        -- append an item to the global window.terms
-        *> case (terms .? val') of
-          Just _  -> pure unit
-          Nothing -> void <<< pure $ (terms .= val') $ GlobalTerm
-            { label: l .. idx'
-            , fdt  : val'
-            }
+        in
+          -- For each entries in group.foundation array,
+          -- increment consequently the global window.keys array
+          case (freq .? val') of
+            Nothing -> pure $ (freq .= val') 0
+            Just v  -> pure $ (freq .= val') (v +1)
+        *>
+          -- For each entries in group.foundation array,
+          -- if the global window.terms does not have it in property,
+          -- append an item to the global window.terms
+          case (terms .? val') of
+            Just _  -> pure unit
+            Nothing -> void <<< pure $ (terms .= val') $ GlobalTerm
+              { label: l .. idx'
+              , fdt  : val'
+              }
 
-    -- @XXX: FFI.Simple `(...)` throws error (JavaScript issue)
-    --       need to decompose computation
-    void do
-      new <- pure $ applyTo (terms .. "flat") terms []
-      pure $ (w .= "terms") new
+    pure $ terms ~~ "flat" $ []
 
 -- @XXX: prevent PureScript from not injecting D3
 setGlobalD3Reference :: Window -> D3 -> Effect Unit
@@ -146,34 +150,14 @@ unhide name = pure unit
 
 -----------------------------------------------------------
 
-
-
-
-orDie :: forall err a. Maybe a -> err -> Either err a
-orDie (Just a) _   = Right a
-orDie Nothing  err = Left err
-
--- @WIP: "Graphics.D3.Selection" lack of "filter" function
--- @WIP: "Graphics.D3.Selection" lack of "nodes" function
-selectionFilter :: forall d. String -> D3S.Selection d -> D3Eff (D3S.Selection D3S.Void)
-selectionFilter = ffi ["query", "selection", ""] "selection.filter(query)"
-
-selectionNodes :: forall d el. D3S.Selection d -> D3Eff (Array el)
-selectionNodes = ffi ["selection", ""] "selection.nodes()"
-
-
-highlightSource' :: Window -> Effect Unit
-highlightSource' window =
+highlightSource :: Window -> String -> Effect Unit
+highlightSource window value =
   let
     hasHighlight = maybe false identity (window .? "highlighted")
     hasLdView    = maybe false identity (window .? "ldView")
-    -- @WIP
-    value = "string"
 
   in do
-
     groups <- D3S.rootSelectAll ".group-inner"
-
 
     if hasHighlight
     then
@@ -204,16 +188,12 @@ highlightSource' window =
     if (value == "unselect")
     then
       pure unit
-    else
-          selectionFilter (".source-" <> value) groups
-      >>= selectionNodes
-      >>= flip for_ (selectNodeGroup)
-      -- @WIP drawWordCloud
+    else do
+      arr <- selectionFilter (".source-" <> value) groups
+        >>= selectionNodes
 
-    pure unit
-
-
-
+      drawWordCloud arr
+      for_ arr selectNodeGroup
 
   where
 
@@ -223,7 +203,7 @@ highlightSource' window =
       pure $ (style .= "fill") hex
 
 
-    selectNodeGroup :: forall el. el -> D3Eff Unit
+    selectNodeGroup :: forall el. el -> Effect Unit
     selectNodeGroup el = do
       removeClass el [ "group-unfocus" ]
       addClass el [ "source-focus" ]
@@ -234,7 +214,3 @@ highlightSource' window =
       void $
             D3S.rootSelect ("#peak-" <> bid)
         >>= D3S.classed "peak-focus-source" true
-
-
-drawWordCloud groups = do
-  labels <- Ref.new ()

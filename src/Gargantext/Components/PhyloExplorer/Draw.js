@@ -1,5 +1,5 @@
 exports._drawPhylo = drawPhylo;
-exports._highlightSource = highlightSource;
+exports._drawWordCloud = drawWordCloud;
 
 // set javascript date from a string year
 function yearToDate(year) {
@@ -235,39 +235,6 @@ function findValueByPrefix(prefix) {
   }
   return null;
 }
-
-function highlightSource() {
-  let checkSource = document.getElementById("checkSource");
-  let value = checkSource.options[checkSource.selectedIndex].value;
-  let groups = d3.selectAll(".group-inner");
-
-  if (window.highlighted == true) {
-    (groups.filter(".source-focus").nodes()).map(g => g.classList.add("group-unfocus"))
-  }
-
-  // unselected all the groups
-  (groups.nodes()).map(g => g.classList.remove("source-focus"));
-  if (window.ldView == true) {
-    (groups.nodes()).map(function(g){return g.style.fill = "#f5eee6";});
-  } else {
-    (groups.nodes()).map(function(g){return g.style.fill = "#fff";});
-  }
-  d3.selectAll(".peak").classed("peak-focus-source", false);
-
-  // select the relevant ones
-  if (value != "unselect") {
-    let selected = groups.filter(".source-" + value).nodes();
-    drawWordCloud(selected)
-    selected.map(function(g){
-      g.classList.remove("group-unfocus");
-      g.classList.add("source-focus");
-      g.style.fill = "#a6bddb";
-      let bid = g.getAttribute("bId")
-      d3.select("#peak-" + bid)
-        .classed("peak-focus-source", true);
-    })
-  }
- }
 
  function drawWordCloud (groups) {
 
