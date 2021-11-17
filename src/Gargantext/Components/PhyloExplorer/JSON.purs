@@ -66,27 +66,7 @@ type NodeData =
   )
 
 data RawObject
-  = Layer
-    { _gvid           :: Int
-    , nodes           :: Array Int
-    | GraphData
-    }
-  | BranchToNode
-    { _gvid           :: Int
-    , age             :: String
-    , bId             :: String
-    , birth           :: String
-    , branchId        :: String
-    , branch_x        :: String
-    , branch_y        :: String
-    , fillcolor       :: String
-    , fontname        :: String
-    , fontsize        :: String
-    , size            :: String
-    , style           :: String
-    | NodeData
-    }
-  | GroupToNode
+  = GroupToNode
     { _gvid           :: Int
     , bId             :: String
     , branchId        :: String
@@ -106,6 +86,21 @@ data RawObject
     , weight          :: String
     | NodeData
     }
+  | BranchToNode
+    { _gvid           :: Int
+    , age             :: String
+    , bId             :: String
+    , birth           :: String
+    , branchId        :: String
+    , branch_x        :: String
+    , branch_y        :: String
+    , fillcolor       :: String
+    , fontname        :: String
+    , fontsize        :: String
+    , size            :: String
+    , style           :: String
+    | NodeData
+    }
   | PeriodToNode
     { _gvid           :: Int
     , fontsize        :: String
@@ -115,6 +110,12 @@ data RawObject
     , to              :: String
     | NodeData
     }
+  | Layer
+    { _gvid           :: Int
+    , nodes           :: Array Int
+    | GraphData
+    }
+
 
 derive instance Generic RawObject _
 derive instance Eq RawObject

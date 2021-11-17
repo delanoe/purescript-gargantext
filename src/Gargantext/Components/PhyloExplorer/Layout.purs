@@ -4,7 +4,7 @@ module Gargantext.Components.PhyloExplorer.Layout
 
 import Gargantext.Prelude
 
-import DOM.Simple (window)
+import DOM.Simple (document, window)
 import Data.Array as Array
 import Gargantext.Components.PhyloExplorer.Draw (drawPhylo, highlightSource, setGlobalD3Reference, setGlobalDependencies, unhide)
 import Gargantext.Components.PhyloExplorer.Types (PhyloDataSet(..))
@@ -29,7 +29,7 @@ layoutCpt = here.component "layout" cpt where
       } _ = do
     -- States
     R.useEffectOnce' $ do
-      unhide o.name
+      unhide document o.name
       setGlobalD3Reference window d3
       setGlobalDependencies window (PhyloDataSet o)
       drawPhylo

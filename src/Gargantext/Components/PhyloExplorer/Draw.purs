@@ -7,7 +7,7 @@ module Gargantext.Components.PhyloExplorer.Draw
 
 import Gargantext.Prelude
 
-import DOM.Simple (Window)
+import DOM.Simple (Document, Window, querySelectorAll)
 import Data.Either (Either(..))
 import Data.Foldable (for_)
 import Data.FoldableWithIndex (forWithIndex_)
@@ -17,7 +17,6 @@ import Effect.Class (liftEffect)
 import Effect.Uncurried (EffectFn1, EffectFn7, runEffectFn1, runEffectFn7)
 import FFI.Simple (applyTo, getProperty, (..), (.=), (.?))
 import Gargantext.Components.PhyloExplorer.Types (AncestorLink, Branch, BranchLink, GlobalTerm(..), Group(..), Link, Period, PhyloDataSet(..))
-import Gargantext.Utils.Reactix (getElementById)
 import Graphics.D3.Base (D3, D3Eff)
 import Graphics.D3.Selection as D3S
 import Graphics.D3.Util (ffi)
@@ -135,18 +134,23 @@ setGlobalD3Reference window d3 = void $ pure $ (window .= "d3") d3
 
 -----------------------------------------------------------
 
-unhide :: String -> Effect Unit
-unhide name = pure unit
-  <* setText "phyloName" name
-  <* turnVisible "phyloName"
-  <* turnVisible "reset"
-  <* turnVisible "label"
-  <* turnVisible "heading"
+unhide :: Document -> String -> Effect Unit
+unhide d s = do
+  setText s   `toElements` "#phyloName"
+  turnVisible `toElements` "#phyloName"
+  turnVisible `toElements` ".reset"
+  turnVisible `toElements` ".label"
+  turnVisible `toElements` ".heading"
+  turnVisible `toElements` ".export"
 
   where
-    setText id n   = getElementById id >>= \el -> pure $ (el .= "innerHTML") n
-    turnVisible id = getElementById id >>= \el -> pure $ (el .= "visibility")
-      "visible"
+    toElements fn query = querySelectorAll d query >>= flip for_ fn
+
+    turnVisible el = do
+      style <- pure $ (el .. "style")
+      pure $ (style .= "visibility") "visible"
+
+    setText name el = pure $ (el .= "innerHTML") name
 
 -----------------------------------------------------------
 
