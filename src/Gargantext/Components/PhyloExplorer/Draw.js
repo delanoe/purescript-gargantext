@@ -364,9 +364,15 @@ function drawPhylo(branches, periods, groups, links, aLinks, bLinks, frame) {
        .style("fill","#0d1824")
        .attr("visibility","visible")
        .text("▲")
-       .on("mouseover", peakOver)
-       .on("mouseout",  peakOut)
-       .on("click", peakClick);
+       .on("mouseover", function(e, b) {
+        peakOver(b, b.bId);
+       })
+       .on("mouseout", function(e, b) {
+         peakOut(b, b.bId);
+       })
+       .on("click", function(e, b) {
+         peakClick(b, b.bId);
+       });
 
   /* *** draw the phylo *** */
 
@@ -578,7 +584,9 @@ function drawPhylo(branches, periods, groups, links, aLinks, bLinks, frame) {
 
   // https://observablehq.com/@d3/parallel-coordinates
 
-  d3.select("#label").on("click",showLabel);
+  d3.select("#label").on("click", function(e, l) {
+    showLabel(l);
+  });
 
   function autocomplete(e) {
       var txt = e.target.value;
