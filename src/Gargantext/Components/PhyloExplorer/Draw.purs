@@ -13,7 +13,6 @@ import Data.Foldable (for_)
 import Data.FoldableWithIndex (forWithIndex_)
 import Data.Maybe (Maybe(..), maybe)
 import Effect (Effect)
-import Effect.Class (liftEffect)
 import Effect.Uncurried (EffectFn1, EffectFn7, runEffectFn1, runEffectFn7)
 import FFI.Simple (applyTo, getProperty, (..), (.=), (.?))
 import Gargantext.Components.PhyloExplorer.Types (AncestorLink, Branch, BranchLink, GlobalTerm(..), Group(..), Link, Period, PhyloDataSet(..))
@@ -126,7 +125,11 @@ setGlobalDependencies w (PhyloDataSet o)
               , fdt  : val'
               }
 
-    pure $ terms ~~ "flat" $ []
+    -- Use FFI native `Array.flat` method (not mutating its caller in this
+    -- context)
+    void do
+      new <- pure $ (terms ~~ "flat") []
+      pure $ (w .= "terms") new
 
 -- @XXX: prevent PureScript from not injecting D3
 setGlobalD3Reference :: Window -> D3 -> Effect Unit
@@ -213,7 +216,7 @@ highlightSource window value =
       addClass el [ "source-focus" ]
       fill "#a6bddb" el
 
-      bid <- liftEffect $ applyTo_ el "getAttribute" [ "bId" ]
+      bid <- pure $ (el ~~ "getAttribute") [ "bId" ]
 
       void $
             D3S.rootSelect ("#peak-" <> bid)
