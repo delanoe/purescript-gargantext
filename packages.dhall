@@ -206,6 +206,26 @@ let additions =
         , repo = "https://github.com/natefaubion/purescript-convertable-options"
         , version = "v1.0.0"
         }
+      , d3 =
+        { dependencies =
+          [ "aff"
+          , "aff-promise"
+          , "dom-simple"
+          , "easy-ffi"
+          , "effect"
+          , "exceptions"
+          , "foreign"
+          , "functions"
+          , "js-date"
+          , "maybe"
+          , "prelude"
+          , "psci-support"
+          , "tuples"
+          , "web-dom"
+          ]
+        , repo = "https://github.com/cgenie/purescript-d3"
+        , version = "v0.9.1"
+        }
       }
 
 in  upstream // overrides // additions
