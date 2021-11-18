@@ -126,6 +126,20 @@ brew install yarn
 
 For other platforms, please refer to [the yarn website](https://www.yarnpkg.com/).
 
+#### Purescript build tools
+
+Once you have yarn installed you can install the necessary purescript build tools:
+
+```shell
+yarn global add purescript spago pulp
+```
+
+In order to use those tools you might need to add the yarn global package install location to your path. On linux this can be done by adding the following line at the end of your `.bashrc` file:
+
+```shell
+export PATH="$(yarn global bin):$PATH"
+```
+
 ## Development
 
 ### Docker environment
