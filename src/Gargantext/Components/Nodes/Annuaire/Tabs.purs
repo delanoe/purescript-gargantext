@@ -11,6 +11,7 @@ import Effect.Aff (Aff)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.DocsTable.Types (Year)
+import Gargantext.Components.GraphQL.User (UserInfo)
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (ContactData)
@@ -50,13 +51,13 @@ modeTabType' Books = CTabAuthors
 modeTabType' Communication = CTabAuthors
 
 type TabsProps =
-  ( boxes       :: Boxes
-  , cacheState  :: T.Box LTypes.CacheState
-  , contactData :: ContactData
-  , frontends   :: Frontends
-  , nodeId      :: Int
-  , session     :: Session
-  , sidePanel   :: T.Box (Maybe (Record TextsT.SidePanel))
+  ( boxes         :: Boxes
+  , cacheState    :: T.Box LTypes.CacheState
+  , defaultListId :: Int
+  , frontends     :: Frontends
+  , nodeId        :: Int
+  , session       :: Session
+  , sidePanel     :: T.Box (Maybe (Record TextsT.SidePanel))
   )
 
 tabs :: R2.Leaf TabsProps
@@ -68,21 +69,21 @@ tabsCpt = here.component "tabs" cpt where
     yearFilter <- T.useBox (Nothing :: Maybe Year)
 
     pure $ Tab.tabs { activeTab, tabs: tabs' yearFilter props }
-  tabs' yearFilter props@{ boxes, sidePanel } =
+  tabs' yearFilter props@{ boxes, defaultListId, sidePanel } =
     [ "Documents"     /\ docs
     , "Patents"       /\ ngramsView (viewProps Patents)
     , "Books"         /\ ngramsView (viewProps Books)
     , "Communication" /\ ngramsView (viewProps Communication)
     , "Trash"         /\ docs -- TODO pass-in trash mode
     ] where
-      viewProps mode = Record.merge props { defaultListId: props.contactData.defaultListId
-                                          , mode }
-      totalRecords = 4736 -- TODO lol
+      viewProps mode = Record.merge props { mode }
+      totalRecords = 4736  -- TODO lol
       docs = DT.docViewLayout (Record.merge { boxes, sidePanel } $ Record.merge dtCommon dtExtra)
       dtCommon = RX.pick props :: Record DTCommon
       dtExtra =
         { chart: mempty
-        , listId: props.contactData.defaultListId
+        --, listId: props.contactData.defaultListId
+        , listId: defaultListId
         , mCorpusId: Nothing
         , showSearch: true
         , tabType: TabPairing TabDocs
@@ -100,8 +101,7 @@ type DTCommon =
   )
 
 type NgramsViewTabsProps =
-  ( defaultListId :: Int
-  , mode          :: Mode
+  ( mode          :: Mode
   | TabsProps )
 
 ngramsView :: R2.Leaf NgramsViewTabsProps

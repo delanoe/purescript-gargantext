@@ -152,7 +152,7 @@ postMultipartFormData mtoken url body = do
                          , ARH.Accept applicationJSON
                          ] <>
                          foldMap (\token ->
-                           [ ARH.RequestHeader "Authorization" $ "Bearer " <> token ]
+                           [ ARH.RequestHeader "Authorization" $ " " <> token ]
                          ) mtoken
              , content = Just $ formData fd
              }

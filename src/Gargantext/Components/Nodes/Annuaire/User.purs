@@ -4,25 +4,27 @@ module Gargantext.Components.Nodes.Annuaire.User
   )
   where
 
+
 import Gargantext.Prelude
 
 import Data.Either (Either)
-import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.App.Data (Boxes)
-import Gargantext.Components.InputWithEnter (inputWithEnter)
+import Gargantext.Components.GraphQL.User (UserInfo)
 import Gargantext.Components.Nodes.Annuaire.Tabs as Tabs
+import Gargantext.Components.Nodes.Annuaire.User.Contact (getUserInfoWithReload, saveUserInfo, contactInfos)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
 import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Config.REST (RESTError, logRESTError)
+import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (WithSession, WithSessionContext, Session, get, put, sessionId)
-import Gargantext.Types (NodeType(..))
+import Gargantext.Types (FrontendError, NodeType(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
@@ -53,98 +55,10 @@ displayCpt = here.component "display" cpt
               [ H.div { className: "col-md-2" } [ H.img { src: "/images/Gargantextuel-212x300.jpg"} ]
               , H.div { className: "col-md-1"} []
               , H.div { className: "col-md-8"} children
-              ]]]]
-
--- | TODO format data in better design (UI) shape
-contactInfos :: HyperdataUser -> (HyperdataUser -> Effect Unit) -> Array R.Element
-contactInfos h onUpdateHyperdata = item <$> contactInfoItems
-  where
-    item {label, defaultVal, lens} =
-      contactInfoItem { hyperdata: h
-                      , label
-                      , lens
-                      , onUpdateHyperdata
-                      , placeholder: defaultVal }
-
-contactInfoItems :: Array {label:: String, defaultVal:: String, lens:: HyperdataUserLens}
-contactInfoItems =
-  [ {label: "Last Name"    , defaultVal: "Empty Last Name"    , lens: _shared <<< _who     <<< _lastName             }
-  , {label: "First Name"   , defaultVal: "Empty First Name"   , lens: _shared <<< _who     <<< _firstName            }
-  , {label: "Organisation" , defaultVal: "Empty Organisation" , lens: _shared <<< _ouFirst <<< _organizationJoinComma}
-  , {label: "Lab/Team/Dept", defaultVal: "Empty Lab/Team/Dept", lens: _shared <<< _ouFirst <<< _labTeamDeptsJoinComma}
-  , {label: "Office"       , defaultVal: "Empty Office"       , lens: _shared <<< _ouFirst <<< _office               }
-  , {label: "City"         , defaultVal: "Empty City"         , lens: _shared <<< _ouFirst <<< _city                 }
-  , {label: "Country"      , defaultVal: "Empty Country"      , lens: _shared <<< _ouFirst <<< _country              }
-  , {label: "Role"         , defaultVal: "Empty Role"         , lens: _shared <<< _ouFirst <<< _role                 }
-  , {label: "Phone"        , defaultVal: "Empty Phone"        , lens: _shared <<< _ouFirst <<< _touch <<< _phone     }
-  , {label: "Mail"         , defaultVal: "Empty Mail"         , lens: _shared <<< _ouFirst <<< _touch <<< _mail      }
-  ]
-
-type HyperdataUserLens = L.ALens' HyperdataUser String
-
-type ContactInfoItemProps =
-  ( hyperdata :: HyperdataUser
-  , label :: String
-  , lens :: HyperdataUserLens
-  , onUpdateHyperdata :: HyperdataUser -> Effect Unit
-  , placeholder :: String
-  )
-
-contactInfoItem :: Record ContactInfoItemProps -> R.Element
-contactInfoItem props = R.createElement contactInfoItemCpt props []
-contactInfoItemCpt :: R.Component ContactInfoItemProps
-contactInfoItemCpt = here.component "contactInfoItem" cpt
-  where
-    cpt {hyperdata, label, lens, onUpdateHyperdata, placeholder} _ = do
-      isEditing <- T.useBox false
-      isEditing' <- T.useLive T.unequal isEditing
-
-      let value = (L.view cLens hyperdata) :: String
-      valueRef <- R.useRef value
-
-      pure $ H.div { className: "form-group row" } [
-        H.span { className: "col-sm-2 col-form-label" } [ H.text label ]
-      , item isEditing' isEditing valueRef
-      ]
-
-      where
-        cLens = L.cloneLens lens
-        item false isEditing valueRef =
-          H.div { className: "input-group col-sm-6" } [
-            H.input { className: "form-control"
-                    , defaultValue: placeholder'
-                    , disabled: 1
-                    , type: "text" }
-          , H.div { className: "btn input-group-append"
-                  , on: { click: onClick } } [
-              H.div { className: "input-group-text fa fa-pencil" } []
+              ]
             ]
           ]
-          where
-            placeholder' = R.readRef valueRef
-            onClick _ = T.write_ true isEditing
-        item true isEditing valueRef =
-          H.div { className: "input-group col-sm-6" } [
-            inputWithEnter {
-                autoFocus: true
-              , className: "form-control"
-              , defaultValue: R.readRef valueRef
-              , onBlur: R.setRef valueRef
-              , onEnter: onClick
-              , onValueChanged: R.setRef valueRef
-              , placeholder
-              , type: "text"
-              }
-          , H.div { className: "btn input-group-append"
-                  , on: { click: onClick } } [
-              H.div { className: "input-group-text fa fa-floppy-o" } []
-            ]
-          ]
-          where
-            onClick _ = do
-              T.write_ true isEditing
-              let newHyperdata = (L.over cLens (\_ -> R.readRef valueRef) hyperdata) :: HyperdataUser
-              onUpdateHyperdata newHyperdata
+        ]
 
 {-
 listElement :: Array R.Element -> R.Element
@@ -191,16 +105,16 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
     cacheState <- T.useBox LT.CacheOn
 
     useLoader { errorHandler
-              , loader: getUserWithReload
+              , loader: getUserInfoWithReload
               , path: { nodeId, reload: reload', session }
-              , render: \contactData@{contactNode: Contact {name, hyperdata}} ->
+              , render: \userInfo@{ ui_username } ->
                   H.ul { className: "col-md-12 list-group" } [
-                    display { title: fromMaybe "no name" name }
-                    (contactInfos hyperdata (onUpdateHyperdata reload))
+                    display { title: fromMaybe "no name" (Just ui_username) }
+                    (contactInfos userInfo (onUpdateUserInfo boxes.errors reload))
                     , Tabs.tabs {
                          boxes
                        , cacheState
-                       , contactData
+                       , defaultListId: 424242
                        , frontends
                        , nodeId
                        , session
@@ -210,31 +124,26 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
               }
     where
       errorHandler = logRESTError here "[userLayoutWithKey]"
-      onUpdateHyperdata :: T2.ReloadS -> HyperdataUser -> Effect Unit
-      onUpdateHyperdata reload hd = do
+      onUpdateUserInfo :: T.Box (Array FrontendError) -> T2.ReloadS -> UserInfo -> Effect Unit
+      onUpdateUserInfo errors reload ui = do
         launchAff_ $ do
-          _ <- saveContactHyperdata session nodeId hd
-          liftEffect $ T2.reload reload
+          res <- saveUserInfo session nodeId ui
+          handleRESTError errors res $ \_ ->
+            liftEffect $ T2.reload reload
+
+--saveContactHyperdata :: Session -> Int -> HyperdataUser -> Aff (Either RESTError Int)
+--saveContactHyperdata session id = put session (Routes.NodeAPI Node (Just id) "")
 
 -- | toUrl to get data XXX
-getContact :: Session -> Int -> Aff (Either RESTError ContactData)
-getContact session id = do
-  eContactNode <- get session $ Routes.NodeAPI Node (Just id) ""
-  -- TODO: we need a default list for the pairings
-  --defaultListIds <- get $ toUrl endConfigStateful Back (Children NodeList 0 1 Nothing) $ Just id
-  --case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
-  --  Just (NodePoly { id: defaultListId }) ->
-  --    pure {contactNode, defaultListId}
-  --  Nothing ->
-  --    throwError $ error "Missing default list"
-  pure $ (\contactNode -> { contactNode, defaultListId: 424242 }) <$> eContactNode
-
-getUserWithReload :: { nodeId :: Int
-                     , reload :: T2.Reload
-                     , session :: Session} -> Aff (Either RESTError ContactData)
-getUserWithReload {nodeId, session} = getContact session nodeId
-
-saveContactHyperdata :: Session -> Int -> HyperdataUser -> Aff (Either RESTError Int)
-saveContactHyperdata session id h = do
-  put session (Routes.NodeAPI Node (Just id) "") h
-
+--getContact :: Session -> Int -> Aff (Either RESTError ContactData)
+--getContact session id = do
+--  eContactNode <- get session $ Routes.NodeAPI Node (Just id) ""
+--  -- TODO: we need a default list for the pairings
+--  --defaultListIds <- get $ toUrl endConfigStateful Back (Children NodeList 0 1 Nothing) $ Just id
+--  --case (head defaultListIds :: Maybe (NodePoly HyperdataList)) of
+--  --  Just (NodePoly { id: defaultListId }) ->
+--  --    pure {contactNode, defaultListId}
+--  --  Nothing ->
+--  --    throwError $ error "Missing default list"
+--  pure $ (\contactNode -> { contactNode, defaultListId: 424242 }) <$> eContactNode
+--
