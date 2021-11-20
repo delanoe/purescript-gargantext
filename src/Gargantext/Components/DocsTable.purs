@@ -50,6 +50,7 @@ import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParam, mQueryParamS, queryParam, queryParamS)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as GUT
+import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
@@ -149,6 +150,13 @@ docViewCpt = here.component "docView" cpt where
     toggleModal <- pure $ const $
       T.modify_ not isDocumentModalVisibleBox
 
+    -- @onCreateDocumentEnd <AsyncProgress>
+    onCreateDocumentEnd <- pure $ \asyncProgress -> do
+      here.log2 "[DocsTables] NodeDocument task:" asyncProgress
+      T.write_ false onDocumentCreationPendingBox
+      toggleModal unit
+      T2.reload boxes.reloadMainPage
+
     -- @createDocumentCallback
     createDocumentCallback <- pure $ \fdata -> launchAff_ do
 
@@ -158,7 +166,12 @@ docViewCpt = here.component "docView" cpt where
       eTask <- DFC.create session nodeId fdata
 
       handleRESTError boxes.errors eTask
-        \t -> liftEffect $ launchDocumentCreationProgress boxes session nodeId t
+        \t -> liftEffect $ launchDocumentCreationProgress
+                              boxes
+                              session
+                              nodeId
+                              t
+                              onCreateDocumentEnd
 
     -- Render
     pure $
@@ -221,18 +234,20 @@ launchDocumentCreationProgress ::
   -> Session
   -> GT.ID
   -> GT.AsyncTaskWithType
+  -> (GT.AsyncProgress -> Effect Unit)
   -> Effect Unit
-launchDocumentCreationProgress boxes session nodeId currentTask
-  = void $ setTimeout 1000 $
-      launchAff_ $ scanDocumentCreationProgress boxes session nodeId currentTask
+launchDocumentCreationProgress boxes session nodeId currentTask cbk
+  = void $ setTimeout 1000 $ launchAff_ $
+      scanDocumentCreationProgress boxes session nodeId currentTask cbk
 
 scanDocumentCreationProgress ::
      Boxes
   -> Session
   -> GT.ID
   -> GT.AsyncTaskWithType
+  -> (GT.AsyncProgress -> Effect Unit)
   -> Aff Unit
-scanDocumentCreationProgress boxes session nodeId currentTask = do
+scanDocumentCreationProgress boxes session nodeId currentTask cbk = do
 
   eTask <- DFC.createProgress session nodeId currentTask
 
@@ -249,10 +264,9 @@ scanDocumentCreationProgress boxes session nodeId currentTask = do
 
       if (hasEndingStatus status)
       then
-        here.log2 "[DocsTables] NodeDocument task:" asyncProgress
-        -- @WIP: close modal, reload docs table
+        cbk asyncProgress
       else
-        launchDocumentCreationProgress boxes session nodeId currentTask
+        launchDocumentCreationProgress boxes session nodeId currentTask cbk
 
 ---------------------------------------------------
 

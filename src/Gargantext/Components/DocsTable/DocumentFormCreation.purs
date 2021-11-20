@@ -284,4 +284,4 @@ createProgress
     request = GR.NodeAPI GT.Node (Just nodeId)
       (GT.asyncTaskTypePath GT.NodeDocument <> pollParams)
 
-    pollParams = id <> "/poll?limit1"
+    pollParams = "/" <> id <> "/poll?limit1"
