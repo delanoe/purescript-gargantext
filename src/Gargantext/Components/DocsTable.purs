@@ -34,6 +34,7 @@ import Gargantext.Components.DocsTable.DocumentFormCreation as DFC
 import Gargantext.Components.DocsTable.Types (DocumentsView(..), Hyperdata(..), LocalUserScore, Query, Response(..), Year, sampleData, showSource)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Nodes.Texts.Types as TextsT
+import Gargantext.Components.Reload (reloadContext, textsReloadContext)
 import Gargantext.Components.Table as TT
 import Gargantext.Components.Table.Types as TT
 import Gargantext.Config.REST (RESTError, logRESTError)
@@ -146,6 +147,9 @@ docViewCpt = here.component "docView" cpt where
     onDocumentCreationPending /\ onDocumentCreationPendingBox <-
       R2.useBox' false
 
+    -- Context
+    mReloadContext <- R.useContext textsReloadContext
+
     -- @toggleModalCallback
     toggleModal <- pure $ const $
       T.modify_ not isDocumentModalVisibleBox
@@ -155,7 +159,10 @@ docViewCpt = here.component "docView" cpt where
       here.log2 "[DocsTables] NodeDocument task:" asyncProgress
       T.write_ false onDocumentCreationPendingBox
       toggleModal unit
-      T2.reload boxes.reloadMainPage
+
+      case mReloadContext of
+        Nothing -> pure unit
+        Just b  -> T2.reload b
 
     -- @createDocumentCallback
     createDocumentCallback <- pure $ \fdata -> launchAff_ do

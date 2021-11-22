@@ -1159,7 +1159,7 @@ select.form-control {
   grid-template-columns: repeat(15, 1fr);
   grid-template-rows: 2% 7% 7% auto 1%;
   grid-gap: 10px;
-  height: calc(100vh - 0px);
+  height: 100vh;
   color: #0d1824;
 }
 
@@ -1538,14 +1538,6 @@ i.how:hover span {
 .term:hover {
   font-weight: bold;
   fill: #f8381f;
-}
-
-.term-unfocus {
-  /*fill: #A9A9A9;*/
-}
-
-.term-focus {
-  /*fill: black;*/
 }
 
 .term-path {
