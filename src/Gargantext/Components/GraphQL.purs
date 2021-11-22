@@ -10,8 +10,10 @@ import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Foreign (unsafeToForeign, ForeignError)
+import Gargantext.Components.GraphQL.Node (Node)
 import Gargantext.Components.GraphQL.User (User, UserInfo, UserInfoM)
 import Gargantext.Sessions (Session(..))
+import Gargantext.Types (NodeType)
 import Gargantext.Utils.Reactix as R2
 import GraphQL.Client.Args (type (==>))
 import GraphQL.Client.BaseClients.Urql (UrqlClient, createClient)
@@ -65,7 +67,8 @@ queryGql session name q = do
 
 -- Schema
 type Schema
-  = { user_infos :: { user_id :: Int } ==> Array UserInfo
+  = { node_parent :: { node_id :: Int, parent_type :: String } ==> Array Node  -- TODO: parent_type :: NodeType
+    , user_infos :: { user_id :: Int } ==> Array UserInfo
     , users :: { user_id :: Int } ==> Array User
     }
 

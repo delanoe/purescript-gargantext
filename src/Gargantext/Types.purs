@@ -17,6 +17,8 @@ import Foreign as F
 import Gargantext.Components.Lang (class Translate, Lang(..))
 import Gargantext.Config.REST (RESTError)
 import Gargantext.Utils.Glyphicon (classNamePrefix, glyphiconToCharCode)
+import GraphQL.Client.Args (class ArgGql)
+import GraphQL.Client.Variables.TypeName (class VarTypeName)
 import Prim.Row (class Union)
 import Reactix as R
 import Simple.JSON as JSON
@@ -167,6 +169,9 @@ instance JSON.ReadForeign NodeType where
       Nothing -> F.fail $ F.ErrorAtProperty s $ F.ForeignError "unknown property"
       Just nt -> pure nt
 instance JSON.WriteForeign NodeType where writeImpl = JSON.writeImpl <<< show
+instance ArgGql NodeType NodeType
+instance VarTypeName NodeType where
+  varTypeName _ = "NodeType!"
 
 instance Show NodeType where
   show NodeUser        = "NodeUser"

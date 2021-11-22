@@ -2,8 +2,9 @@ module Gargantext.Components.Nodes.Frame where
 
 import Gargantext.Prelude
 
+import Data.Array as A
 import DOM.Simple as DOM
-import Data.Either (Either)
+import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
@@ -13,12 +14,13 @@ import Data.Show.Generic (genericShow)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.FolderView as FV
+import Gargantext.Components.GraphQL.Endpoints (getNodeParent)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Config.REST (RESTError, logRESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Routes as GR
-import Gargantext.Sessions (Session, get, sessionId)
+import Gargantext.Sessions (Session, get, postWwwUrlencoded, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Types as GT
 import Gargantext.Utils.EtherCalc as EC
@@ -80,8 +82,8 @@ type ViewProps =
   ( frame    :: NodePoly Hyperdata
   , reload   :: T2.ReloadS
   , nodeId   :: Int
-  , session  :: Session
   , nodeType :: NodeType
+  , session  :: Session
   )
 
 type Base = String
@@ -102,7 +104,8 @@ frameLayoutViewCpt = here.component "frameLayoutView" cpt
     cpt { frame: NodePoly { hyperdata: h@(Hyperdata { base, frame_id }) }
         , nodeId
         , nodeType
-        , reload } _ = do
+        , reload
+        , session } _ = do
       case nodeType of
         NodeFrameVisio ->
           case WURL.fromAbsolute base of
@@ -111,7 +114,7 @@ frameLayoutViewCpt = here.component "frameLayoutView" cpt
         _              ->
           pure $ H.div{}
             [ FV.backButton {} []
-            , importIntoListButton { hyperdata: h, nodeId } []
+            , importIntoListButton { hyperdata: h, nodeId, session } []
             , H.div { className : "frame"
                     , rows: "100%,*" }
               [ -- H.script { src: "https://visio.gargantext.org/external_api.js"} [],
@@ -124,14 +127,16 @@ frameLayoutViewCpt = here.component "frameLayoutView" cpt
 
 type ImportIntoListButtonProps =
   ( hyperdata :: Hyperdata
-  , nodeId    :: Int )
+  , nodeId    :: Int
+  , session   :: Session )
 
 importIntoListButton :: R2.Component ImportIntoListButtonProps
 importIntoListButton = R.createElement importIntoListButtonCpt
 importIntoListButtonCpt :: R.Component ImportIntoListButtonProps
 importIntoListButtonCpt = here.component "importIntoListButton" cpt where
   cpt { hyperdata: Hyperdata { base, frame_id }
-      , nodeId } _ = do
+      , nodeId
+      , session } _ = do
     pure $ H.div { className: "btn btn-default"
                  , on: { click: onClick } }
       [ H.text $ "Import into list" ]
@@ -139,13 +144,21 @@ importIntoListButtonCpt = here.component "importIntoListButton" cpt where
         onClick _ = do
           let url = base <> "/" <> frame_id
               --task = GT.AsyncTaskWithType { task, typ: GT.ListCSVUpload }
-              uploadPath = GR.NodeAPI NodeList (Just id) $ GT.asyncTaskTypePath GT.ListCSVUpload
           launchAff_ $ do
-            -- TODO Get corpus_id
-            csv <- EC.downloadCSV base frame_id
-            liftEffect $ here.log2 "[importIntoListButton] CSV: " csv
-            --eTask <- postWwwUrlencoded session uploadPath body
-          pure unit
+            -- Get corpus_id
+            eCorpusNodes <- getNodeParent session nodeId Corpus
+            case eCorpusNodes of
+              Left err -> liftEffect $ here.log2 "[importIntoListButton] error parsing corpus" err
+              Right corpusNodes -> do
+                case A.uncons corpusNodes of
+                  Nothing -> liftEffect $ here.log2 "[importIntoListButton] corpusNodes empty" corpusNodes
+                  Just { head: corpusNode } -> do
+                    -- Use that corpus id 
+                    csv <- EC.downloadCSV base frame_id
+                    liftEffect $ here.log2 "[importIntoListButton] CSV: " csv
+                    let uploadPath = GR.NodeAPI NodeList (Just corpusNode.id) $ GT.asyncTaskTypePath GT.ListCSVUpload
+                    eTask <- postWwwUrlencoded session uploadPath csv
+                    pure unit
 
 type NodeFrameVisioProps =
   ( frame_id  :: String
