@@ -18,12 +18,13 @@ type GraphId = Int
 
 newtype Node = Node {
     attributes :: Cluster
-  , id_ :: String
-  , label :: String
-  , size :: Int
-  , type_ :: String
-  , x :: Number
-  , y :: Number
+  , children   :: Array String
+  , id_        :: String
+  , label      :: String
+  , size       :: Int
+  , type_      :: String
+  , x          :: Number
+  , y          :: Number
   }
 
 x_coordP = SProxy :: SProxy "x_coord"

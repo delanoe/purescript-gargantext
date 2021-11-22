@@ -15,6 +15,7 @@ stEdgeToGET { _original } = _original
 stNodeToGET :: Record ST.Node -> GET.Node
 stNodeToGET { id, label, x, y, _original: GET.Node { attributes, size, type_ } } = GET.Node {
     attributes
+  , children: []
   , id_: id
   , label
   , size
