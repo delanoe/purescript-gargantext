@@ -2,14 +2,13 @@ module Gargantext.Components.Nodes.Corpus.Document where
 
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), fromMaybe)
-import Effect.Aff (Aff)
 import Gargantext.Components.Annotation.AnnotatedField as AnnotatedField
 import Gargantext.Components.AutoUpdate (autoUpdate)
 import Gargantext.Components.NgramsTable.Core (CoreAction(..), Versioned(..), addNewNgramA, applyNgramsPatches, coreDispatch, loadNgramsTable, replace, setTermListA, syncResetButtons, findNgramRoot)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus.Document.Types (DocPath, Document(..), LoadedData, NodeDocument, Props, State, initialState)
 import Gargantext.Components.Search (SearchType(..))
-import Gargantext.Config.REST (RESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (bind, pure, show, unit, ($), (<>), (<$>), (<<<))
 import Gargantext.Routes (SessionRoute(..))
@@ -155,10 +154,10 @@ documentLayoutWithKeyCpt = here.component "documentLayoutWithKey" cpt
 
 ------------------------------------------------------------------------
 
-loadDocument :: Session -> Int -> Aff (Either RESTError NodeDocument)
+loadDocument :: Session -> Int -> AffRESTError NodeDocument
 loadDocument session nodeId = get session $ NodeAPI Node (Just nodeId) ""
 
-loadData :: DocPath -> Aff (Either RESTError LoadedData)
+loadData :: DocPath -> AffRESTError LoadedData
 loadData { listIds, nodeId, session, tabType } = do
   eDocument <- loadDocument session nodeId
   case eDocument of

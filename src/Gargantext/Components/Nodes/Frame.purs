@@ -2,8 +2,8 @@ module Gargantext.Components.Nodes.Frame where
 
 import Gargantext.Prelude
 
-import Data.Array as A
 import DOM.Simple as DOM
+import Data.Array as A
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
@@ -12,13 +12,13 @@ import Data.Newtype (class Newtype)
 import Data.Nullable (Nullable, null, toMaybe)
 import Data.Show.Generic (genericShow)
 import Data.Tuple (Tuple(..))
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..))
 import Gargantext.Components.GraphQL.Endpoints (getNodeParent)
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Config.REST (RESTError, logRESTError)
+import Gargantext.Config.REST (RESTError, AffRESTError, logRESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Routes as GR
@@ -199,9 +199,9 @@ type ReloadProps = ( nodeId  :: Int
                    , reload :: T2.Reload
                    , session :: Session )
 
-loadframe' :: Record LoadProps -> Aff (Either RESTError (NodePoly Hyperdata))
+loadframe' :: Record LoadProps -> AffRESTError (NodePoly Hyperdata)
 loadframe' { nodeId, session } = get session $ NodeAPI Node (Just nodeId) ""
 
 -- Just to make reloading effective
-loadframeWithReload :: Record ReloadProps -> Aff (Either RESTError (NodePoly Hyperdata))
+loadframeWithReload :: Record ReloadProps -> AffRESTError (NodePoly Hyperdata)
 loadframeWithReload { nodeId, session } = loadframe' { nodeId, session }

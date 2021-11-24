@@ -3,7 +3,6 @@ module Gargantext.Components.Forest.Tree where
 import Gargantext.Prelude
 
 import Data.Array as A
-import Data.Either (Either)
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse_, traverse)
 import Effect (Effect)
@@ -26,7 +25,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadFile, uploadA
 import Gargantext.Components.Forest.Tree.Node.Action.WriteNodesDocuments (documentsFromWriteNodesReq)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
-import Gargantext.Config.REST (RESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
@@ -124,10 +123,10 @@ treeLoaderCpt = here.component "treeLoader" cpt where
             extra = { reloadTree: p.reload, root, session, tree: tree' }
         errorHandler = logRESTError here "[treeLoader]"
 
-getNodeTree :: Session -> ID -> Aff (Either RESTError FTree)
+getNodeTree :: Session -> ID -> AffRESTError FTree
 getNodeTree session nodeId = get session $ GR.NodeAPI GT.Tree (Just nodeId) ""
 
-getNodeTreeFirstLevel :: Session -> ID -> Aff (Either RESTError FTree)
+getNodeTreeFirstLevel :: Session -> ID -> AffRESTError FTree
 getNodeTreeFirstLevel session nodeId = get session $ GR.TreeFirstLevel (Just nodeId) ""
 
 tree :: R2.Leaf TreeProps

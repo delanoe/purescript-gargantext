@@ -2,7 +2,6 @@ module Gargantext.Components.Forest.Tree.Node.Action.Contact where
 
 import Prelude
 
-import Data.Either (Either)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff, launchAff)
 import Formula as F
@@ -12,7 +11,7 @@ import Toestand as T
 
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Contact.Types (AddContactParams(..))
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types (ID)
@@ -22,7 +21,7 @@ import Gargantext.Utils.Reactix as R2
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Contact"
 
-contactReq :: Session -> ID -> AddContactParams -> Aff (Either RESTError ID)
+contactReq :: Session -> ID -> AddContactParams -> AffRESTError ID
 contactReq session nodeId =
   post session $ GR.NodeAPI GT.Annuaire (Just nodeId) "contact"
 

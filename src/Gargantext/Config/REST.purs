@@ -73,7 +73,7 @@ readJSON affResp =
 
 -- TODO too much duplicate code in `postWwwUrlencoded`
 send :: forall body res. JSON.WriteForeign body => JSON.ReadForeign res =>
-        Method -> Maybe Token -> String -> Maybe body -> Aff (Either RESTError res)
+        Method -> Maybe Token -> String -> Maybe body -> AffRESTError res
 send m mtoken url reqbody = do
   let req = defaultRequest
          { url = url
@@ -99,30 +99,30 @@ noReqBody :: Maybe String
 noReqBody = Just ""
 --noReqBody = Nothing
 
-get :: forall a. JSON.ReadForeign a => Maybe Token -> String -> Aff (Either RESTError a)
+get :: forall a. JSON.ReadForeign a => Maybe Token -> String -> AffRESTError a
 get mtoken url = send GET mtoken url noReqBody
 
-put :: forall a b. JSON.WriteForeign a => JSON.ReadForeign b => Maybe Token -> String -> a -> Aff (Either RESTError b)
+put :: forall a b. JSON.WriteForeign a => JSON.ReadForeign b => Maybe Token -> String -> a -> AffRESTError b
 put mtoken url = send PUT mtoken url <<< Just
 
-put_ :: forall a. JSON.ReadForeign a => Maybe Token -> String -> Aff (Either RESTError a)
+put_ :: forall a. JSON.ReadForeign a => Maybe Token -> String -> AffRESTError a
 put_ mtoken url = send PUT mtoken url noReqBody
 
-delete :: forall a. JSON.ReadForeign a => Maybe Token -> String -> Aff (Either RESTError a)
+delete :: forall a. JSON.ReadForeign a => Maybe Token -> String -> AffRESTError a
 delete mtoken url = send DELETE mtoken url noReqBody
 
 -- This might not be a good idea:
 -- https://stackoverflow.com/questions/14323716/restful-alternatives-to-delete-request-body
-deleteWithBody :: forall a b. JSON.WriteForeign a => JSON.ReadForeign b => Maybe Token -> String -> a -> Aff (Either RESTError b)
+deleteWithBody :: forall a b. JSON.WriteForeign a => JSON.ReadForeign b => Maybe Token -> String -> a -> AffRESTError b
 deleteWithBody mtoken url = send DELETE mtoken url <<< Just
 
-post :: forall a b. JSON.WriteForeign a => JSON.ReadForeign b => Maybe Token -> String -> a -> Aff (Either RESTError b)
+post :: forall a b. JSON.WriteForeign a => JSON.ReadForeign b => Maybe Token -> String -> a -> AffRESTError b
 post mtoken url = send POST mtoken url <<< Just
 
 type FormDataParams = Array (Tuple String (Maybe String))
 
 -- TODO too much duplicate code with `send`
-postWwwUrlencoded :: forall b. JSON.ReadForeign b => Maybe Token -> String -> FormDataParams -> Aff (Either RESTError b)
+postWwwUrlencoded :: forall b. JSON.ReadForeign b => Maybe Token -> String -> FormDataParams -> AffRESTError b
 postWwwUrlencoded mtoken url bodyParams = do
   affResp <- request $ defaultRequest
              { url = url
@@ -140,7 +140,7 @@ postWwwUrlencoded mtoken url bodyParams = do
   where
     urlEncodedBody = FormURLEncoded.fromArray bodyParams
 
-postMultipartFormData :: forall b. JSON.ReadForeign b => Maybe Token -> String -> String -> Aff (Either RESTError b)
+postMultipartFormData :: forall b. JSON.ReadForeign b => Maybe Token -> String -> String -> AffRESTError b
 postMultipartFormData mtoken url body = do
   fd <- liftEffect $ XHRFormData.new
   _ <- liftEffect $ XHRFormData.append (XHRFormData.EntryName "body") body fd

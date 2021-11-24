@@ -7,10 +7,9 @@ module Gargantext.Components.Nodes.Annuaire.User
 
 import Gargantext.Prelude
 
-import Data.Either (Either)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.GraphQL.User (UserInfo)
@@ -18,13 +17,13 @@ import Gargantext.Components.Nodes.Annuaire.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contact (getUserInfoWithReload, saveUserInfo, contactInfos)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
 import Gargantext.Components.Nodes.Lists.Types as LT
-import Gargantext.Config.REST (RESTError, logRESTError)
+import Gargantext.Config.REST (logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as Routes
-import Gargantext.Sessions (WithSession, WithSessionContext, Session, get, put, sessionId)
-import Gargantext.Types (FrontendError, NodeType(..))
+import Gargantext.Sessions (WithSession, WithSessionContext, sessionId)
+import Gargantext.Types (FrontendError)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
@@ -131,11 +130,11 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
           handleRESTError errors res $ \_ ->
             liftEffect $ T2.reload reload
 
---saveContactHyperdata :: Session -> Int -> HyperdataUser -> Aff (Either RESTError Int)
+--saveContactHyperdata :: Session -> Int -> HyperdataUser -> AffRESTError Int
 --saveContactHyperdata session id = put session (Routes.NodeAPI Node (Just id) "")
 
 -- | toUrl to get data XXX
---getContact :: Session -> Int -> Aff (Either RESTError ContactData)
+--getContact :: Session -> Int -> AffRESTError ContactData
 --getContact session id = do
 --  eContactNode <- get session $ Routes.NodeAPI Node (Just id) ""
 --  -- TODO: we need a default list for the pairings

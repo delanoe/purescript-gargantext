@@ -1,39 +1,34 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Metrics where
 
-import Data.Generic.Rep (class Generic)
-import Data.Either (Either)
 import Data.Eq.Generic (genericEq)
-import Data.Map as Map
+import Data.Generic.Rep (class Generic)
 import Data.Map (Map)
+import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Simple.JSON as JSON
-import Toestand as T
-
-import Gargantext.Prelude (class Eq, bind, negate, pure, ($), (<$>), (<>))
-
-import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, yAxis')
-import Gargantext.Components.Charts.Options.Type (xAxis)
-import Gargantext.Components.Charts.Options.Series (Series, seriesScatterD2)
 import Gargantext.Components.Charts.Options.Color (green, grey, red)
-import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
+import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, yAxis')
+import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
+import Gargantext.Components.Charts.Options.Series (Series, seriesScatterD2)
+import Gargantext.Components.Charts.Options.Type (xAxis)
 import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsWithCacheLoadView)
-import Gargantext.Components.Nodes.Corpus.Chart.Types
-  (MetricsProps, Path, Props, ReloadPath)
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Components.Nodes.Corpus.Chart.Types (MetricsProps, Path, Props, ReloadPath)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Hooks.Loader (HashedResponse(..))
+import Gargantext.Prelude (class Eq, bind, negate, pure, ($), (<$>), (<>))
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (TermList(..))
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Metrics"
@@ -95,7 +90,7 @@ scatterOptions { onClick, onInit } metrics' = Options
                         }
     --}
 
-getMetricsHash :: Session -> ReloadPath -> Aff (Either RESTError String)
+getMetricsHash :: Session -> ReloadPath -> AffRESTError String
 getMetricsHash session (_ /\ { corpusId, listId, tabType }) =
   get session $ CorpusMetricsHash { listId, tabType } (Just corpusId)
 

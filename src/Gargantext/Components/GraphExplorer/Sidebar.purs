@@ -15,7 +15,7 @@ import Data.Maybe (Maybe(..), fromJust)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.GraphExplorer.Legend as Legend
@@ -26,7 +26,7 @@ import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Components.Nodes.Corpus.Graph.Tabs (tabs) as CGT
 import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Search (SearchType(..), SearchQuery(..))
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Data.Array (mapMaybe)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
@@ -375,7 +375,7 @@ sendPatch :: TermList
           -> Session
           -> GET.MetaData
           -> Record SigmaxT.Node
-          -> Aff (Either RESTError NTC.VersionedNgramsPatches)
+          -> AffRESTError NTC.VersionedNgramsPatches
 sendPatch termList session (GET.MetaData metaData) node = do
     eRet  <- NTC.putNgramsPatches coreParams versioned
     case eRet of

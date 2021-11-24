@@ -17,7 +17,7 @@ import Data.Set as Set
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Category (CategoryQuery(..), putCategories)
 import Gargantext.Components.Category.Types (Category(..), decodeCategory, favCategory)
@@ -25,7 +25,7 @@ import Gargantext.Components.DocsTable.Types (showSource)
 import Gargantext.Components.Search (Contact(..), Document(..), HyperdataRowContact(..), HyperdataRowDocument(..), SearchQuery, SearchResult(..), SearchResultTypes(..))
 import Gargantext.Components.Table as T
 import Gargantext.Components.Table.Types as T
-import Gargantext.Config.REST (RESTError(..))
+import Gargantext.Config.REST (RESTError(..), AffRESTError)
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(Search, NodeAPI))
@@ -205,7 +205,7 @@ type PagePath = { nodeId :: Int
 initialPagePath :: {session :: Session, nodeId :: Int, listId :: Int, query :: SearchQuery} -> PagePath
 initialPagePath {session, nodeId, listId, query} = {session, nodeId, listId, query, params: T.initialParams}
 
-loadPage :: PagePath -> Aff (Either RESTError Rows)
+loadPage :: PagePath -> AffRESTError Rows
 loadPage { session, nodeId, listId, query, params: {limit, offset, orderBy } } = do
   let
     convOrderBy (T.ASC  (T.ColumnName "Date")) = DateAsc
@@ -404,7 +404,7 @@ derive instance Generic DeleteDocumentQuery _
 derive instance Newtype DeleteDocumentQuery _
 derive newtype instance JSON.WriteForeign DeleteDocumentQuery
 
-deleteDocuments :: Session -> Int -> DeleteDocumentQuery -> Aff (Either RESTError (Array Int))
+deleteDocuments :: Session -> Int -> DeleteDocumentQuery -> AffRESTError (Array Int)
 deleteDocuments session nodeId =
   deleteWithBody session $ NodeAPI Node (Just nodeId) "documents"
 

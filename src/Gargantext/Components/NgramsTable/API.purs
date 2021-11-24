@@ -1,9 +1,6 @@
 module Gargantext.Components.NgramsTable.API where
 
-import Data.Either (Either)
-import Effect.Aff (Aff)
-
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types as GT
@@ -16,6 +13,6 @@ type UpdateNodeListParams =
   , session :: Session
   )
 
-updateNodeList :: Record UpdateNodeListParams -> Aff (Either RESTError Int)
+updateNodeList :: Record UpdateNodeListParams -> AffRESTError Int
 updateNodeList { listId, nodeId, nodeType, session } =
   post session (GR.RecomputeNgrams nodeType nodeId listId) {}

@@ -2,12 +2,10 @@ module Gargantext.Components.GraphExplorer.API where
 
 import Gargantext.Prelude
 
-import Data.Either (Either)
 import Data.Maybe (Maybe)
-import Effect.Aff (Aff)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.NgramsTable.Core as NTC
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, get, post)
@@ -22,7 +20,7 @@ type GraphAsyncUpdateParams =
   , version :: NTC.Version
   )
 
-graphAsyncUpdate :: Record GraphAsyncUpdateParams -> Aff (Either RESTError GT.AsyncTaskWithType)
+graphAsyncUpdate :: Record GraphAsyncUpdateParams -> AffRESTError GT.AsyncTaskWithType
 graphAsyncUpdate { graphId, listId, nodes, session, termList, version } = do
   eTask <- post session p q
   pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.GraphRecompute }) <$> eTask
@@ -39,7 +37,7 @@ type GraphAsyncRecomputeParams =
   , session :: Session
   )
 
-graphAsyncRecompute :: Record GraphAsyncRecomputeParams -> Aff (Either RESTError GT.AsyncTaskWithType)
+graphAsyncRecompute :: Record GraphAsyncRecomputeParams -> AffRESTError GT.AsyncTaskWithType
 graphAsyncRecompute { graphId, session } = do
   eTask <- post session p q
   pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.GraphRecompute }) <$> eTask
@@ -53,7 +51,7 @@ type QueryProgressParams =
   , taskId  :: String
   )
 
-queryProgress :: Record QueryProgressParams -> Aff (Either RESTError GT.AsyncProgress)
+queryProgress :: Record QueryProgressParams -> AffRESTError GT.AsyncProgress
 queryProgress { graphId, session, taskId } = do
   get session $ GR.GraphAPI graphId $ "async/" <> taskId <> "/poll"
 
@@ -67,7 +65,7 @@ type GraphVersionsParams =
   , session :: Session
   )
 
-graphVersions :: Record GraphVersionsParams -> Aff (Either RESTError (Record GraphVersions))
+graphVersions :: Record GraphVersionsParams -> AffRESTError (Record GraphVersions)
 graphVersions { graphId, session }  = get session $ GR.GraphAPI graphId $ "versions"
 
 type UpdateGraphVersionsParams =
@@ -75,7 +73,7 @@ type UpdateGraphVersionsParams =
   , session :: Session
   )
 
-updateGraphVersions :: Record UpdateGraphVersionsParams -> Aff (Either RESTError GET.GraphData)
+updateGraphVersions :: Record UpdateGraphVersionsParams -> AffRESTError GET.GraphData
 updateGraphVersions { graphId, session } = post session (GR.GraphAPI graphId $ "versions") {}
 
 type CloneGraphParams =
@@ -84,5 +82,5 @@ type CloneGraphParams =
   , session :: Session
   )
 
-cloneGraph :: Record CloneGraphParams -> Aff (Either RESTError Int)
+cloneGraph :: Record CloneGraphParams -> AffRESTError Int
 cloneGraph { hyperdataGraph, id, session } = post session (GR.GraphAPI id $ "clone") hyperdataGraph

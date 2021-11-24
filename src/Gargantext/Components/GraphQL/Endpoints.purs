@@ -8,10 +8,10 @@ import Effect.Class (liftEffect)
 import Gargantext.Components.GraphQL (queryGql)
 import Gargantext.Components.GraphQL.Node
 import Gargantext.Components.GraphQL.User
-import Gargantext.Config.REST (RESTError(..))
+import Gargantext.Config.REST (AffRESTError, RESTError(..))
 import Gargantext.Prelude
 import Gargantext.Sessions (Session)
-import Gargantext.Types (NodeType(..))
+import Gargantext.Types (NodeType)
 import Gargantext.Utils.Reactix as R2
 import GraphQL.Client.Variables (withVars)
 
@@ -26,7 +26,7 @@ getNodeParent session nodeId parentType = do
   liftEffect $ here.log2 "[getNodeParent] node_parent" node_parent
   pure $ node_parent
 
-getUserInfo :: Session -> Int -> Aff (Either RESTError UserInfo)
+getUserInfo :: Session -> Int -> AffRESTError UserInfo
 getUserInfo session id = do
   { user_infos } <- queryGql session "get user infos" $ userInfoQuery `withVars` { id }
   liftEffect $ here.log2 "[getUserInfo] user infos" user_infos

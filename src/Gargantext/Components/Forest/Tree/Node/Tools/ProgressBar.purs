@@ -2,14 +2,13 @@ module Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar where
 
 import Gargantext.Prelude
 
-import Data.Either (Either)
 import Data.Int (fromNumber)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Timer (clearInterval, setInterval)
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Config.Utils (handleErrorInAsyncProgress, handleRESTError)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
@@ -109,7 +108,7 @@ progressIndicatorCpt = here.component "progressIndicator" cpt
         Nothing -> 0
         Just x  -> x
 
-queryProgress :: Record Props -> Aff (Either RESTError GT.AsyncProgress)
+queryProgress :: Record Props -> AffRESTError GT.AsyncProgress
 queryProgress { asyncTask: GT.AsyncTaskWithType { task: GT.AsyncTask {id}
                                                 , typ
                                                 }

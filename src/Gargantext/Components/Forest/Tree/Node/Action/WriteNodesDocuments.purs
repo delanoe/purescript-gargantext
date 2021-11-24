@@ -8,7 +8,7 @@ import Effect.Aff (Aff)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (panel, submitButton)
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (AffRESTError, RESTError)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types as GT
@@ -43,7 +43,7 @@ actionWriteNodesDocumentsCpt = here.component "actionWriteNodesDocuments" cpt wh
     pure $ panel bodies (submitButton (DocumentsFromWriteNodes { id }) dispatch)
 
 
-documentsFromWriteNodesReq :: Session -> GT.ID -> Aff (Either RESTError GT.AsyncTaskWithType)
+documentsFromWriteNodesReq :: Session -> GT.ID -> AffRESTError GT.AsyncTaskWithType
 documentsFromWriteNodesReq session id = do
   eTask :: Either RESTError GT.AsyncTask <-
     post session (NodeAPI GT.Node (Just id) "documents-from-write-nodes") { id }

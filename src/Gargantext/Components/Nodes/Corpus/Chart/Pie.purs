@@ -2,38 +2,33 @@ module Gargantext.Components.Nodes.Corpus.Chart.Pie where
 
 import Data.Array (zip, filter)
 import Data.Array as A
-import Data.Generic.Rep (class Generic)
-import Data.Either (Either)
 import Data.Eq.Generic (genericEq)
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.String (take, joinWith, Pattern(..), split, length)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Simple.JSON as JSON
-import Toestand as T
-
-import Gargantext.Prelude (class Eq, bind, map, pure, ($), (==), (>))
-
 import Gargantext.Components.Charts.Options.Color (blue)
 import Gargantext.Components.Charts.Options.Data (dataSerie)
 import Gargantext.Components.Charts.Options.ECharts (Options(..), chart, xAxis', yAxis')
 import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, templateFormatter)
 import Gargantext.Components.Charts.Options.Series (seriesBarD1, seriesPieD1)
-import Gargantext.Config.REST (RESTError)
 import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsWithCacheLoadView)
-import Gargantext.Components.Nodes.Corpus.Chart.Types
-  (MetricsProps, Path, Props, ReloadPath)
+import Gargantext.Components.Nodes.Corpus.Chart.Types (MetricsProps, Path, Props, ReloadPath)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Hooks.Loader (HashedResponse(..))
+import Gargantext.Prelude (class Eq, bind, map, pure, ($), (==), (>))
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (ChartType(..))
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Pie"
@@ -84,7 +79,7 @@ chartOptionsPie { onClick, onInit } (HistoMetrics { dates: dates', count: count'
   , onInit
   }
 
-getMetricsHash :: Session -> ReloadPath -> Aff (Either RESTError String)
+getMetricsHash :: Session -> ReloadPath -> AffRESTError String
 getMetricsHash session (_ /\ { corpusId, listId, tabType }) = do
   get session $ ChartHash { chartType: ChartPie, listId: mListId, tabType } (Just corpusId)
   where

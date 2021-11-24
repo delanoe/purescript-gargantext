@@ -3,27 +3,25 @@ module Gargantext.Components.Forest.Tree.Node.Action.Delete
 
 import Gargantext.Prelude
 
-import Data.Either (Either)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-import Reactix as R
-import Reactix.DOM.HTML as H
-
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, delete, put_)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Delete"
 
 -- TODO Delete with asyncTaskWithType
 
-deleteNode :: Session -> GT.ID -> Aff (Either RESTError GT.ID)
+deleteNode :: Session -> GT.ID -> AffRESTError GT.ID
 deleteNode session nodeId = delete session $ NodeAPI GT.Node (Just nodeId) ""
 
 {-
@@ -34,7 +32,7 @@ deleteNode session nodeId = delete session $ NodeAPI GT.Node (Just nodeId) ""
     -}
 
 type ParentID = GT.ID
-unpublishNode :: Session -> Maybe ParentID -> GT.ID -> Aff (Either RESTError GT.ID)
+unpublishNode :: Session -> Maybe ParentID -> GT.ID -> AffRESTError GT.ID
 unpublishNode s p n = put_ s $ NodeAPI GT.Node p ("unpublish/" <> show n)
 
 

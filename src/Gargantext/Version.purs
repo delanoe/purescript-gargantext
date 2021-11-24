@@ -5,7 +5,7 @@ import Prelude
 import DOM.Simple.Console (log2)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -24,7 +24,7 @@ type Version = String
 
 foreign import version :: Version
 
-getBackendVersion :: Session -> Aff (Either REST.RESTError Version)
+getBackendVersion :: Session -> REST.AffRESTError Version
 getBackendVersion (Session { backend }) = REST.get Nothing (toUrl backend "version")
 
 

@@ -3,7 +3,6 @@ module Gargantext.Types where
 import Gargantext.Prelude
 
 import Data.Array as A
-import Data.Either (Either)
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.Int (toNumber)
@@ -15,7 +14,7 @@ import Data.String as S
 import Effect.Aff (Aff)
 import Foreign as F
 import Gargantext.Components.Lang (class Translate, Lang(..))
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (RESTError, AffRESTError)
 import Gargantext.Utils.Glyphicon (classNamePrefix, glyphiconToCharCode)
 import GraphQL.Client.Args (class ArgGql)
 import GraphQL.Client.Variables.TypeName (class VarTypeName)
@@ -629,7 +628,7 @@ instance DecodeJson TabType where
 
 type TableResult a = {count :: Int, docs :: Array a}
 type AffTableResult a = Aff (TableResult a)
-type AffETableResult a = Aff (Either RESTError (TableResult a))
+type AffETableResult a = AffRESTError (TableResult a)
 
 data Mode = Authors
           | Sources

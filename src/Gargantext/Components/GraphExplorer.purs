@@ -4,7 +4,6 @@ import Gargantext.Prelude hiding (max, min)
 
 import DOM.Simple.Types (Element)
 import Data.Array as A
-import Data.Either (Either)
 import Data.FoldableWithIndex (foldMapWithIndex)
 import Data.Int (toNumber)
 import Data.Map as Map
@@ -13,13 +12,12 @@ import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (Tuple(..))
-import Effect.Aff (Aff)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Controls as Controls
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
 import Gargantext.Components.GraphExplorer.Types as GET
-import Gargantext.Config.REST (RESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Data.Louvain as Louvain
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
@@ -294,7 +292,7 @@ modeGraphType Types.Sources = "star"
 modeGraphType Types.Terms = "def"
 
 
-getNodes :: Session -> T2.Reload -> GET.GraphId -> Aff (Either RESTError GET.HyperdataGraph)
+getNodes :: Session -> T2.Reload -> GET.GraphId -> AffRESTError GET.HyperdataGraph
 getNodes session graphVersion graphId =
   get session $ NodeAPI Types.Graph
                         (Just graphId)

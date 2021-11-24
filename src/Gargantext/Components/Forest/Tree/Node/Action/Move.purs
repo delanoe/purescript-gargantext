@@ -3,26 +3,25 @@ module Gargantext.Components.Forest.Tree.Node.Action.Move
   , moveNode
   ) where
 
-import Data.Either (Either)
+import Gargantext.Prelude
+
 import Data.Maybe (Maybe(..))
-import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (SubTreeParamsIn, subTreeView)
-import Gargantext.Config.REST (RESTError)
-import Gargantext.Prelude
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, put_)
-import Gargantext.Types         as GT
+import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
-import Reactix                  as R
-import Reactix.DOM.HTML         as H
-import Toestand                 as T
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Move"
 
-moveNodeReq :: Session -> GT.ID -> GT.ID -> Aff (Either RESTError (Array GT.ID))
+moveNodeReq :: Session -> GT.ID -> GT.ID -> AffRESTError (Array GT.ID)
 moveNodeReq session fromId toId =
   put_ session $ NodeAPI GT.Node (Just fromId) ("move/" <> show toId)
 

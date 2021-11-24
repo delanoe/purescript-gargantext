@@ -7,34 +7,33 @@ module Gargantext.Components.Nodes.Annuaire.User.Contact
   , saveUserInfo
   ) where
 
-import Affjax.RequestBody (RequestBody(..))
+import Gargantext.Components.GraphQL.User
+import Gargantext.Prelude
+
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.App.Data (Boxes)
-import Gargantext.Components.GraphQL (getClient, queryGql)
+import Gargantext.Components.GraphQL (getClient)
 import Gargantext.Components.GraphQL.Endpoints (getUserInfo)
-import Gargantext.Components.GraphQL.User
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (ContactData', HyperdataContact(..))
 import Gargantext.Components.Nodes.Lists.Types as LT
-import Gargantext.Config.REST (RESTError(..), logRESTError)
+import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, get, put, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import GraphQL.Client.Args (IgnoreArg(..), OrArg(..), onlyArgs)
-import GraphQL.Client.Query (mutationOpts, mutation)
-import GraphQL.Client.Variables (withVars)
+import GraphQL.Client.Query (mutationOpts)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
@@ -193,10 +192,10 @@ type KeyLayoutProps =
  , session :: Session
  | ReloadProps )
 
-saveContactHyperdata :: Session -> Int -> HyperdataContact -> Aff (Either RESTError Int)
+saveContactHyperdata :: Session -> Int -> HyperdataContact -> AffRESTError Int
 saveContactHyperdata session id = put session (Routes.NodeAPI Node (Just id) "")
 
-saveUserInfo :: Session -> Int -> UserInfo -> Aff (Either RESTError Int)
+saveUserInfo :: Session -> Int -> UserInfo ->  AffRESTError Int
 saveUserInfo session id ui = do
   client <- liftEffect $ getClient session
   res <- mutationOpts
@@ -272,7 +271,7 @@ contactLayoutWithKeyCpt = here.component "contactLayoutWithKey" cpt where
             _ <- saveUserInfo session nodeId ui
             liftEffect (T2.reload reload)
 
-getAnnuaireContact :: Session -> Int -> Int -> Aff (Either RESTError ContactData')
+getAnnuaireContact :: Session -> Int -> Int -> AffRESTError ContactData'
 getAnnuaireContact session annuaireId id = do
   eContactNode <- get session $ Routes.NodeAPI Annuaire (Just annuaireId) $ show id
   -- TODO: we need a default list for the pairings
@@ -287,5 +286,5 @@ getAnnuaireContact session annuaireId id = do
 
 getUserInfoWithReload :: { nodeId :: Int
                          , reload :: T2.Reload
-                         , session :: Session} -> Aff (Either RESTError UserInfo)
+                         , session :: Session} -> AffRESTError UserInfo
 getUserInfoWithReload {nodeId, session} = getUserInfo session nodeId -- getContact session nodeId

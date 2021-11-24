@@ -2,13 +2,11 @@ module Gargantext.Components.Nodes.File where
 
 import Gargantext.Prelude
 
-import Data.Either (Either)
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
-import Effect.Aff (Aff)
-import Gargantext.Config.REST (RESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Ends (toUrl)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
@@ -62,7 +60,7 @@ fileLayoutCpt = here.component "fileLayout" cpt where
         errorHandler = logRESTError here "[fileLayout]"
         onLoad loaded = fileLayoutLoaded { loaded, nodeId, session }
 
-loadFile :: Session -> NodeID -> Aff (Either RESTError File)
+loadFile :: Session -> NodeID -> AffRESTError File
 loadFile session nodeId = get session $ NodeAPI Node (Just nodeId) ""
 
 type FileLayoutLoadedProps =
