@@ -77,7 +77,9 @@ data RawObject
     , lbl             :: String
     , penwidth        :: String
     , role            :: String
-    , seaLvl          :: String
+    -- @WIP: not in API; but present in certain data (eg. "Knowledge
+    --       visualisation")
+    , seaLvl          :: Maybe String
     , source          :: String
     , strFrom         :: Maybe String
     , strTo           :: Maybe String
