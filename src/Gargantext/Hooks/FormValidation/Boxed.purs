@@ -3,7 +3,7 @@ module Gargantext.Hooks.FormValidation.Boxed
   , class NonEmpty, nonEmpty
   , class Minimum, minimum
   , class Maximum, maximum
-  , lowercase, uppercase, email
+  , lowercase, uppercase, email, date
   ) where
 
 import Gargantext.Prelude
@@ -14,7 +14,7 @@ import Data.String.Regex (test)
 import Data.Tuple.Nested ((/\))
 import Data.Validation.Semigroup (invalid)
 import Effect (Effect)
-import Gargantext.Hooks.FormValidation.Types (Field, VForm, emailPattern)
+import Gargantext.Hooks.FormValidation.Types (Field, VForm, emailPattern, datePattern)
 import Toestand as T
 
 class Eq a <= Equals a where
@@ -75,3 +75,9 @@ email field = T.read >=> case _ of
   input
     | (not $ test emailPattern input) -> pure $ invalid [ field /\ "email" ]
     | otherwise                       -> pure $ pure unit
+
+date :: Field -> T.Box String -> Effect VForm
+date field = T.read >=> case _ of
+  input
+    | (not $ test datePattern input) -> pure $ invalid [ field /\ "date" ]
+    | otherwise                      -> pure $ pure unit

@@ -39,7 +39,7 @@ instance ( GenericTaggedSumRep a
          ) => GenericTaggedSumRep (GR.Constructor name a) where
   genericTaggedSumRep f = do
     -- r :: { "type" :: String } <- JSON.read' f
-    -- if r."type" == name 
+    -- if r."type" == name
     --   then withExcept (map $ ErrorAtProperty name) $ GR.Constructor <$> genericTaggedSumRep r
     --   else fail $ ForeignError $ "Wrong type tag " <> r."type" <> " where " <> name <> " was expected."
     r :: FO.Object Foreign <- JSON.read' f
@@ -60,5 +60,28 @@ instance ( JSON.ReadForeign a
 
 
 
+-----------------------------------------------------------
 
+-- | Applying Generics-Rep to decoding untagged JSON values
+-- |
+-- | https://purescript-simple-json.readthedocs.io/en/latest/generics-rep.html
+class UntaggedSumRep rep where
+  untaggedSumRep :: Foreign -> Foreign.F rep
 
+instance untaggedSumRepSum ::
+  ( UntaggedSumRep a
+  , UntaggedSumRep b
+  ) => UntaggedSumRep (GR.Sum a b) where
+  untaggedSumRep f
+      = GR.Inl <$> untaggedSumRep f
+    <|> GR.Inr <$> untaggedSumRep f
+
+instance untaggedSumRepConstructor ::
+  ( UntaggedSumRep a
+  ) => UntaggedSumRep (GR.Constructor name a) where
+  untaggedSumRep f = GR.Constructor <$> untaggedSumRep f
+
+instance untaggedSumRepArgument ::
+  ( JSON.ReadForeign a
+  ) => UntaggedSumRep (GR.Argument a) where
+  untaggedSumRep f = GR.Argument <$> JSON.readImpl f

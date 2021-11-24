@@ -26,6 +26,7 @@ to generate this file without the comments in this block.
   , "control"
   , "convertable-options"
   , "css"
+  , "d3"
   , "datetime"
   , "dom-filereader"
   , "dom-simple"
