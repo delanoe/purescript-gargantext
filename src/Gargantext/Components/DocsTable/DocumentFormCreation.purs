@@ -11,10 +11,9 @@ import Data.Either (Either(..))
 import Data.Foldable (foldl, intercalate)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
-import Effect.Aff (Aff)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..))
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Hooks.FormValidation (VForm, useFormValidation)
 import Gargantext.Hooks.FormValidation.Unboxed as FV
 import Gargantext.Hooks.StateRecord (useStateRecord)
@@ -247,7 +246,7 @@ create ::
      Session
   -> GT.ID
   -> Record FormData
-  -> Aff (Either RESTError GT.AsyncTaskWithType)
+  -> AffRESTError GT.AsyncTaskWithType
 create session nodeId =
       rename
   >>> post session request
@@ -271,7 +270,7 @@ createProgress ::
     Session
   -> GT.ID
   -> GT.AsyncTaskWithType
-  -> Aff (Either RESTError GT.AsyncProgress)
+  -> AffRESTError GT.AsyncProgress
 createProgress
   session
   nodeId

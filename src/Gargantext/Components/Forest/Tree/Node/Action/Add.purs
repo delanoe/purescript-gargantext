@@ -16,7 +16,7 @@ import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), setting
 import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, panel, submitButton)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Lang (Lang(..), translate)
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (RESTError, AffRESTError)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types (NodeType(..), charCodeIcon)
@@ -34,13 +34,13 @@ import Web.HTML.Window (navigator)
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Add"
 
-addNode :: Session -> GT.ID -> AddNodeValue -> Aff (Either RESTError (Array GT.ID))
+addNode :: Session -> GT.ID -> AddNodeValue -> AffRESTError (Array GT.ID)
 addNode session parentId = post session $ GR.NodeAPI GT.Node (Just parentId) ""
 
 addNodeAsync :: Session
              -> GT.ID
              -> AddNodeValue
-             -> Aff (Either RESTError GT.AsyncTaskWithType)
+             -> AffRESTError GT.AsyncTaskWithType
 addNodeAsync session parentId q = do
   eTask :: Either RESTError GT.AsyncTask <- post session p q
   case eTask of

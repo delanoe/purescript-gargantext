@@ -34,10 +34,10 @@ import Gargantext.Components.DocsTable.DocumentFormCreation as DFC
 import Gargantext.Components.DocsTable.Types (DocumentsView(..), Hyperdata(..), LocalUserScore, Query, Response(..), Year, sampleData, showSource)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Nodes.Texts.Types as TextsT
-import Gargantext.Components.Reload (reloadContext, textsReloadContext)
+import Gargantext.Components.Reload (textsReloadContext)
 import Gargantext.Components.Table as TT
 import Gargantext.Components.Table.Types as TT
-import Gargantext.Config.REST (RESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
@@ -339,7 +339,7 @@ type PageParams = {
   , yearFilter  :: Maybe Year
   }
 
-getPageHash :: Session -> PageParams -> Aff (Either RESTError String)
+getPageHash :: Session -> PageParams -> AffRESTError String
 getPageHash session { nodeId, tabType } =
   get session $ tableHashRoute nodeId tabType
 
@@ -677,7 +677,7 @@ tableRouteWithPage { listId, nodeId, params: { limit, offset, orderBy, searchTyp
     q   = queryParamS "query" query
     y   = mQueryParam "year" yearFilter
 
-deleteAllDocuments :: Session -> Int -> Aff (Either RESTError (Array Int))
+deleteAllDocuments :: Session -> Int -> AffRESTError (Array Int)
 deleteAllDocuments session = delete session <<< documentsRoute
 
 -- TODO: not optimal but Data.Set lacks some function (Set.alter)

@@ -11,7 +11,7 @@ import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
 import Gargantext.Components.NgramsTable.Core (Version, Versioned(..))
-import Gargantext.Config.REST (RESTError(..))
+import Gargantext.Config.REST (RESTError(..), AffRESTError)
 import Gargantext.Utils.CacheAPI as GUC
 import Reactix as R
 import Simple.JSON as JSON
@@ -26,7 +26,7 @@ clearCache _ = GUC.delete $ GUC.CacheName cacheName
 
 
 type LoaderWithCacheAPIProps path res ret = (
-    cacheEndpoint  :: path -> Aff (Either RESTError Version)
+    cacheEndpoint  :: path -> AffRESTError Version
   , errorHandler   :: RESTError -> Effect Unit
   , handleResponse :: Versioned res -> ret
   , mkRequest      :: path -> GUC.Request
@@ -51,7 +51,7 @@ useLoaderWithCacheAPI { cacheEndpoint, errorHandler, handleResponse, mkRequest, 
   pure $ maybe (loadingSpinner {}) renderer state'
 
 type LoaderWithCacheAPIEffectProps path res ret = (
-    cacheEndpoint  :: path -> Aff (Either RESTError Version)
+    cacheEndpoint  :: path -> AffRESTError Version
   , errorHandler   :: RESTError -> Effect Unit
   , handleResponse :: Versioned res -> ret
   , mkRequest      :: path -> GUC.Request

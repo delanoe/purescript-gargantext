@@ -4,18 +4,16 @@ import Gargantext.Prelude
 
 import Data.Array (length)
 import Data.Array as A
-import Data.Either (Either)
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Action (Props, subTreeOut, setTreeOut)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
 import Gargantext.Components.Forest.Tree.Node.Tools (nodeText)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..), SubTreeOut(..))
-import Gargantext.Config.REST (RESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
@@ -76,12 +74,12 @@ subTreeViewCpt = here.component "subTreeView" cpt
       where
         errorHandler = logRESTError here "[subTreeView]"
 
-loadSubTree :: Array GT.NodeType -> Session -> Aff (Either RESTError FTree)
+loadSubTree :: Array GT.NodeType -> Session -> AffRESTError FTree
 loadSubTree nodetypes session = getSubTree session treeId nodetypes
   where
     Session { treeId } = session
 
-getSubTree :: Session -> Int -> Array GT.NodeType -> Aff (Either RESTError FTree)
+getSubTree :: Session -> Int -> Array GT.NodeType -> AffRESTError FTree
 getSubTree session treeId showtypes = get session $ GR.NodeAPI GT.Tree (Just treeId) nodeTypes
   where
     nodeTypes     = A.foldl (\a b -> a <> "type=" <> show b <> "&") "?" showtypes

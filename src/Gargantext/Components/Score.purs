@@ -1,25 +1,21 @@
 module Gargantext.Components.Score where
 
-import Data.Argonaut (class DecodeJson, class EncodeJson, decodeJson, jsonEmptyObject, (.:), (:=), (~>), encodeJson)
-import Data.Int (fromString)
-import Data.Either (Either)
-import Data.Maybe (Maybe(..), maybe)
-import DOM.Simple.Console (log2)
-import Effect.Aff (Aff, launchAff_)
-import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Simple.JSON as JSON
-
 import Gargantext.Prelude
 
-import Gargantext.Config.REST (RESTError)
+import Data.Int (fromString)
+import Data.Maybe (Maybe(..))
+import Effect.Aff (launchAff_)
+import Effect.Class (liftEffect)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Routes (SessionRoute(NodeAPI))
-import Gargantext.Sessions (Session, sessionId, get, delete, put)
+import Gargantext.Sessions (Session, put)
 import Gargantext.Types as GT
 import Gargantext.Utils.Array as GUA
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as GUT
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
 
 type Score = Int
 type DocID = Int
@@ -79,7 +75,7 @@ instance JSON.WriteForeign ScoreQuery where
   writeImpl (ScoreQuery post) = JSON.writeImpl { nts_nodesId: post.nodeIds
                                                , nts_score: post.score }
 
-putScore :: Session -> GT.NodeID -> ScoreQuery -> Aff (Either RESTError (Array Int))
+putScore :: Session -> GT.NodeID -> ScoreQuery -> AffRESTError (Array Int)
 putScore session nodeId = put session $ scoreRoute nodeId
   where
     scoreRoute :: GT.NodeID -> SessionRoute

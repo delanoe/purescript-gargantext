@@ -3,11 +3,9 @@ module Gargantext.Components.Nodes.Corpus.Chart.Common where
 import Gargantext.Prelude
 
 import Data.Array as A
-import Data.Either (Either)
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff)
 import Gargantext.Components.Nodes.Corpus.Chart.Types (MetricsProps, ReloadPath)
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Hooks.Loader (HashedResponse, useLoader, useLoaderWithCacheAPI)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (FrontendError(..))
@@ -22,7 +20,7 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Common"
 
 type MetricsLoadViewProps a = (
-    getMetrics :: Session -> ReloadPath -> Aff (Either RESTError a)
+    getMetrics :: Session -> ReloadPath -> AffRESTError a
   , loaded :: Record MetricsProps -> a -> R.Element
   | MetricsProps
   )
@@ -55,7 +53,7 @@ metricsLoadViewCpt = here.component "metricsLoadView" cpt
           here.log2 "RESTError" error
 
 type MetricsWithCacheLoadViewProps res ret =
-  ( getMetricsHash :: Session -> ReloadPath -> Aff (Either RESTError Hash)
+  ( getMetricsHash :: Session -> ReloadPath -> AffRESTError Hash
   , handleResponse :: HashedResponse res -> ret
   , loaded         :: Record MetricsProps -> ret -> R.Element
   , mkRequest      :: ReloadPath -> GUC.Request

@@ -1,7 +1,6 @@
 module Gargantext.Components.FolderView where
 
 import Data.Array as A
-import Data.Either (Either)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Nullable (null)
 import Data.Traversable (traverse_)
@@ -24,7 +23,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadArbitraryFile
 import Gargantext.Components.Forest.Tree.Node.Box (nodePopupView)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
-import Gargantext.Config.REST (RESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Hooks.LinkHandler (Methods, useLinkHandler)
 import Gargantext.Hooks.Loader (useLoader)
@@ -262,7 +261,7 @@ type LoadProps =
     reload :: T2.Reload
   )
 
-loadFolders :: Record LoadProps -> Aff (Either RESTError FTree)
+loadFolders :: Record LoadProps -> AffRESTError FTree
 loadFolders {nodeId, session} = get session $ TreeFirstLevel (Just nodeId) ""
 
 type PerformActionProps =

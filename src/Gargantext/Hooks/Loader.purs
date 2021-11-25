@@ -13,7 +13,7 @@ import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (RESTError, AffRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Types (FrontendError(..))
 import Gargantext.Utils.CacheAPI as GUC
@@ -34,7 +34,7 @@ clearCache _ = GUC.delete $ GUC.CacheName cacheName
 
 type UseLoader path state =
   ( errorHandler :: RESTError -> Effect Unit
-  , loader       :: path -> Aff (Either RESTError state)
+  , loader       :: path -> AffRESTError state
   , path         :: path
   , render       :: state -> R.Element
   )
@@ -66,7 +66,7 @@ loaderCpt = here.component "loader" cpt
 
 type UseLoaderEffect path state =
   ( errorHandler :: RESTError -> Effect Unit
-  , loader       :: path -> Aff (Either RESTError state)
+  , loader       :: path -> AffRESTError state
   , path         :: path
   , state        :: T.Box (Maybe state)
   )
@@ -93,7 +93,7 @@ useLoaderEffect { errorHandler, loader: loader', path, state } = do
 
 type UseLoaderBox path state =
   ( errorHandler :: RESTError -> Effect Unit
-  , loader       :: path -> Aff (Either RESTError state)
+  , loader       :: path -> AffRESTError state
   , path         :: T.Box path
   , render       :: state -> R.Element
   )
@@ -110,7 +110,7 @@ useLoaderBox { errorHandler, loader: loader', path, render } = do
 
 type UseLoaderBoxEffect path state =
   ( errorHandler :: RESTError -> Effect Unit
-  , loader       :: path -> Aff (Either RESTError state)
+  , loader       :: path -> AffRESTError state
   , path         :: T.Box path
   , state        :: T.Box (Maybe state)
   )
@@ -137,7 +137,7 @@ derive newtype instance JSON.WriteForeign a => JSON.WriteForeign (HashedResponse
 
 type LoaderWithCacheAPIProps path res ret =
   ( boxes          :: Boxes
-  , cacheEndpoint  :: path -> Aff (Either RESTError Hash)
+  , cacheEndpoint  :: path -> AffRESTError Hash
   , handleResponse :: HashedResponse res -> ret
   , mkRequest      :: path -> GUC.Request
   , path           :: path
@@ -167,7 +167,7 @@ useLoaderWithCacheAPI { boxes
 
 type LoaderWithCacheAPIEffectProps path res ret = (
     boxes          :: Boxes
-  , cacheEndpoint  :: path -> Aff (Either RESTError Hash)
+  , cacheEndpoint  :: path -> AffRESTError Hash
   , handleResponse :: HashedResponse res -> ret
   , mkRequest      :: path -> GUC.Request
   , path           :: path

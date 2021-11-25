@@ -1,35 +1,33 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Share where
 
-import Data.Either (Either)
+import Gargantext.Prelude
+
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Effect.Aff (Aff)
+import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
+import Gargantext.Components.Forest.Tree.Node.Action.Types as Action
+import Gargantext.Components.Forest.Tree.Node.Tools as Tools
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
+import Gargantext.Config.REST (AffRESTError)
+import Gargantext.Routes as GR
+import Gargantext.Sessions (Session, post)
+import Gargantext.Types (ID)
+import Gargantext.Types as GT
+import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.SimpleJSON as GUSJ
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
 import Simple.JSON.Generics as JSONG
 import Toestand as T
 
-import Gargantext.Prelude
-
-import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
-import Gargantext.Components.Forest.Tree.Node.Action.Types as Action
-import Gargantext.Components.Forest.Tree.Node.Tools as Tools
-import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
-import Gargantext.Config.REST (RESTError)
-import Gargantext.Routes as GR
-import Gargantext.Sessions (Session, post)
-import Gargantext.Types (ID)
-import Gargantext.Types as GT
-import Gargantext.Utils.SimpleJSON as GUSJ
-import Gargantext.Utils.Reactix as R2
-
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Share"
 
 ------------------------------------------------------------------------
-shareReq :: Session -> ID -> ShareNodeParams -> Aff (Either RESTError ID)
+shareReq :: Session -> ID -> ShareNodeParams -> AffRESTError ID
 shareReq session nodeId =
   post session $ GR.NodeAPI GT.Node (Just nodeId) "share"
 

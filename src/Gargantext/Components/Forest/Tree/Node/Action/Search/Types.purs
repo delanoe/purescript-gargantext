@@ -1,5 +1,7 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Search.Types where
 
+import Gargantext.Prelude
+
 import Data.Array (concat)
 import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
@@ -10,21 +12,16 @@ import Data.Set as Set
 import Data.String as String
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff)
-import Simple.JSON as JSON
-import URI.Extra.QueryPairs as QP
-import URI.Query as Q
-
-
-import Gargantext.Prelude
-
 import Gargantext.Components.Lang (Lang)
 import Gargantext.Components.ListSelection.Types as ListSelection
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (AffRESTError, RESTError)
 import Gargantext.Ends (class ToUrl, backendUrl)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), post)
 import Gargantext.Types as GT
+import Simple.JSON as JSON
+import URI.Extra.QueryPairs as QP
+import URI.Query as Q
 
 type Search = { databases :: Database
               , datafield :: Maybe DataField
@@ -371,7 +368,7 @@ defaultSearchQuery = SearchQuery
   , selection : ListSelection.MyListsFirst
   }
 
-performSearch :: Session -> Int -> SearchQuery -> Aff (Either RESTError GT.AsyncTaskWithType)
+performSearch :: Session -> Int -> SearchQuery -> AffRESTError GT.AsyncTaskWithType
 performSearch session nodeId q = do
   eTask :: Either RESTError GT.AsyncTask <- post session p q
   pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.Query }) <$> eTask

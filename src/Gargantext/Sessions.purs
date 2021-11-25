@@ -122,30 +122,30 @@ postAuthRequest backend ar@(AuthRequest {username}) =
       | otherwise = Left "Invalid response from server"
 
 get :: forall a p. JSON.ReadForeign a => ToUrl Session p =>
-       Session -> p -> Aff (Either REST.RESTError a)
+       Session -> p -> REST.AffRESTError a
 get session@(Session {token}) p = REST.get (Just token) (toUrl session p)
 
 put :: forall a b p. JSON.WriteForeign a => JSON.ReadForeign b => ToUrl Session p =>
-       Session -> p -> a -> Aff (Either REST.RESTError b)
+       Session -> p -> a -> REST.AffRESTError b
 put session@(Session {token}) p = REST.put (Just token) (toUrl session p)
 
-put_ :: forall b p. JSON.ReadForeign b => ToUrl Session p => Session -> p -> Aff (Either REST.RESTError b)
+put_ :: forall b p. JSON.ReadForeign b => ToUrl Session p => Session -> p -> REST.AffRESTError b
 put_ session@(Session {token}) p = REST.put_ (Just token) (toUrl session p)
 
 delete :: forall a p. JSON.ReadForeign a => ToUrl Session p =>
-          Session -> p -> Aff (Either REST.RESTError a)
+          Session -> p -> REST.AffRESTError a
 delete session@(Session {token}) p = REST.delete (Just token) (toUrl session p)
 
 -- This might not be a good idea:
 -- https://stackoverflow.com/questions/14323716/restful-alternatives-to-delete-request-body
 deleteWithBody :: forall a b p. JSON.WriteForeign a => JSON.ReadForeign b => ToUrl Session p =>
-                  Session -> p -> a -> Aff (Either REST.RESTError b)
+                  Session -> p -> a -> REST.AffRESTError b
 deleteWithBody session@(Session {token}) p = REST.deleteWithBody (Just token) (toUrl session p)
 
 post :: forall a b p. JSON.WriteForeign a => JSON.ReadForeign b => ToUrl Session p =>
-        Session -> p -> a -> Aff (Either REST.RESTError b)
+        Session -> p -> a -> REST.AffRESTError b
 post session@(Session {token}) p = REST.post (Just token) (toUrl session p)
 
 postWwwUrlencoded :: forall b p. JSON.ReadForeign b => ToUrl Session p =>
-                     Session -> p -> REST.FormDataParams -> Aff (Either REST.RESTError b)
+                     Session -> p -> REST.FormDataParams -> REST.AffRESTError b
 postWwwUrlencoded session@(Session {token}) p = REST.postWwwUrlencoded (Just token) (toUrl session p)

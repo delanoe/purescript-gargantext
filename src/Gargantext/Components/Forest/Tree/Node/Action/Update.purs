@@ -1,28 +1,27 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Update where
 
+import Gargantext.Components.Forest.Tree.Node.Action.Update.Types
+import Gargantext.Prelude
+
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
-import Gargantext.Prelude
-
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Action.Update.Types
 import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, submitButton, panel)
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (RESTError, AffRESTError)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types (NodeType(..), ID)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Update"
 
-updateRequest :: UpdateNodeParams -> Session -> ID -> Aff (Either RESTError GT.AsyncTaskWithType)
+updateRequest :: UpdateNodeParams -> Session -> ID -> AffRESTError GT.AsyncTaskWithType
 updateRequest updateNodeParams session nodeId = do
   eTask :: Either RESTError GT.AsyncTask <- post session p updateNodeParams
   case eTask of

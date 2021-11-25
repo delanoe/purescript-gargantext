@@ -23,7 +23,7 @@ import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Components.ListSelection as ListSelection
 import Gargantext.Components.ListSelection.Types (Selection(..))
 import Gargantext.Components.ListSelection.Types as ListSelection
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (AffRESTError, RESTError)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, postWwwUrlencoded, post)
 import Gargantext.Types (ID, NodeType(..))
@@ -355,7 +355,7 @@ uploadFile :: { contents  :: String
               , mName     :: Maybe String
               , selection :: ListSelection.Selection
               , session   :: Session }
-           -> Aff (Either RESTError GT.AsyncTaskWithType)
+           -> AffRESTError GT.AsyncTaskWithType
 {-
 uploadFile session NodeList id JSON { mName, contents } = do
   let url = GR.NodeAPI NodeList (Just id) $ GT.asyncTaskTypePath GT.ListUpload
@@ -394,7 +394,7 @@ uploadArbitraryFile :: Session
                     -> ID
                     -> {blob :: UploadFileBlob, mName :: Maybe String}
                     -> ListSelection.Selection
-                    -> Aff (Either RESTError GT.AsyncTaskWithType)
+                    -> AffRESTError GT.AsyncTaskWithType
 uploadArbitraryFile session id {mName, blob: UploadFileBlob blob} selection = do
     contents <- readAsDataURL blob
     uploadArbitraryData session id mName contents
@@ -403,7 +403,7 @@ uploadArbitraryData :: Session
                     -> ID
                     -> Maybe String
                     -> String
-                    -> Aff (Either RESTError GT.AsyncTaskWithType)
+                    -> AffRESTError GT.AsyncTaskWithType
 uploadArbitraryData session id mName contents' = do
     let re = fromRight' (\_ -> unsafeCrashWith "Unexpected Left") $ DSR.regex "data:.*;base64," DSRF.noFlags
         contents = DSR.replace re "" contents'
@@ -544,7 +544,7 @@ uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt
 
 uploadFrameCalc :: Session
                     -> ID
-                    -> Aff (Either RESTError GT.AsyncTaskWithType)
+                    -> AffRESTError GT.AsyncTaskWithType
 uploadFrameCalc session id = do
   let p = GR.NodeAPI GT.Node (Just id) $ GT.asyncTaskTypePath GT.UploadFrameCalc
 

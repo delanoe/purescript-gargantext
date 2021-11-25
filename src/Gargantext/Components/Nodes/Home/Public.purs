@@ -2,14 +2,12 @@ module Gargantext.Components.Nodes.Home.Public where
 
 import Gargantext.Prelude
 
-import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.String (take)
-import Effect.Aff (Aff)
 import Gargantext.Config (publicBackend)
-import Gargantext.Config.REST (RESTError, get, logRESTError)
+import Gargantext.Config.REST (AffRESTError, get, logRESTError)
 import Gargantext.Ends (backendUrl)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Utils.Reactix as R2
@@ -45,7 +43,7 @@ type LoadData  = ()
 type LoadProps = (reload :: Int)
 
 -- | WIP still finding the right way to chose the default public backend
-loadPublicData :: Record LoadProps -> Aff (Either RESTError (Array PublicData))
+loadPublicData :: Record LoadProps -> AffRESTError (Array PublicData)
 loadPublicData _l = do
   -- This solution is error prone (url needs to be cleaned)
   --backend <- liftEffect public

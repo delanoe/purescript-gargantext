@@ -8,7 +8,7 @@ import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Show.Generic (genericShow)
 import Effect (Effect)
-import Effect.Aff (Aff, throwError)
+import Effect.Aff (throwError)
 import Effect.Exception (error)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.CodeEditor as CE
@@ -18,7 +18,7 @@ import Gargantext.Components.Node (NodePoly(..), HyperdataList)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata)
 import Gargantext.Components.Nodes.Types (FTField, FTFieldWithIndex, FTFieldsWithIndex(..), Field(..), FieldType(..), Hash, Index, defaultHaskell', defaultJSON', defaultMarkdown', defaultPython')
 import Gargantext.Components.TileMenu (tileMenu)
-import Gargantext.Config.REST (RESTError(..))
+import Gargantext.Config.REST (RESTError(..), AffRESTError)
 import Gargantext.Data.Array as GDA
 import Gargantext.Prelude (class Eq, class Show, Unit, bind, discard, pure, show, unit, ($), (<>), const, (<<<), (+), (==), (-), (<), (>), (<$>))
 import Gargantext.Routes (SessionRoute(Children, NodeAPI))
@@ -363,11 +363,11 @@ type LoadProps =
   , session :: Session
   )
 
-loadCorpus' :: Record LoadProps -> Aff (Either RESTError (NodePoly Hyperdata))
+loadCorpus' :: Record LoadProps -> AffRESTError (NodePoly Hyperdata)
 loadCorpus' {nodeId, session} = get session $ NodeAPI Corpus (Just nodeId) ""
 
 -- Just to make reloading effective
-loadCorpusWithReload :: { reload :: T2.Reload  | LoadProps } -> Aff (Either RESTError (NodePoly Hyperdata))
+loadCorpusWithReload :: { reload :: T2.Reload  | LoadProps } -> AffRESTError (NodePoly Hyperdata)
 loadCorpusWithReload {nodeId, session} = loadCorpus' {nodeId, session}
 
 type SaveProps = (
@@ -375,11 +375,11 @@ type SaveProps = (
   | LoadProps
   )
 
-saveCorpus :: Record SaveProps -> Aff (Either RESTError Int)
+saveCorpus :: Record SaveProps -> AffRESTError Int
 saveCorpus {hyperdata, nodeId, session} = do
   put session (NodeAPI Corpus (Just nodeId) "") hyperdata
 
-loadCorpus :: Record LoadProps -> Aff (Either RESTError CorpusData)
+loadCorpus :: Record LoadProps -> AffRESTError CorpusData
 loadCorpus {nodeId, session} = do
   -- fetch corpus via lists parentId
   res <- get session nodePolyRoute
@@ -416,7 +416,7 @@ loadCorpus {nodeId, session} = do
     defaultListIdsRoute = Children NodeList 0 1 Nothing <<< Just
 
 
-loadCorpusWithChild :: Record LoadProps -> Aff (Either RESTError CorpusData)
+loadCorpusWithChild :: Record LoadProps -> AffRESTError CorpusData
 loadCorpusWithChild { nodeId: childId, session } = do
   -- fetch corpus via lists parentId
   eListNode <- get session $ listNodeRoute childId ""
@@ -452,7 +452,7 @@ type LoadWithReloadProps =
 
 
 -- Just to make reloading effective
-loadCorpusWithChildAndReload :: Record LoadWithReloadProps -> Aff (Either RESTError CorpusData)
+loadCorpusWithChildAndReload :: Record LoadWithReloadProps -> AffRESTError CorpusData
 loadCorpusWithChildAndReload {nodeId, session} = loadCorpusWithChild {nodeId, session}
 
 data ViewType = Code | Folders

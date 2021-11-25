@@ -5,10 +5,8 @@ import Gargantext.Prelude
 import Data.Array as A
 import Data.Lens (Lens', lens)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
-import GraphQL.Client.Args (NotNull(..), (=>>))
+import GraphQL.Client.Args (NotNull, (=>>))
 import GraphQL.Client.Variable (Var(..))
-import GraphQL.Client.Variables (withVars)
-import Type.Proxy (Proxy(..))
 
 
 type UserInfo
@@ -144,3 +142,4 @@ showUser { u_id
          , u_username
          , u_email } = "[" <> show u_id <> "] " <> u_username <> " :: " <> u_email
 showMUser u = maybe "" showUser u
+

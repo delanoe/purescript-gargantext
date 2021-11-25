@@ -3,21 +3,26 @@ module Gargantext.Components.Nodes.Frame where
 import Gargantext.Prelude
 
 import DOM.Simple as DOM
-import Data.Either (Either)
+import Data.Array as A
+import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.Nullable (Nullable, null, toMaybe)
 import Data.Show.Generic (genericShow)
-import Effect.Aff (Aff)
+import Data.Tuple (Tuple(..))
+import Effect.Aff (launchAff_)
+import Effect.Class (liftEffect)
 import Gargantext.Components.FolderView as FV
+import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..))
+import Gargantext.Components.GraphQL.Endpoints (getNodeParent)
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Config.REST (RESTError, logRESTError)
+import Gargantext.Config.REST (RESTError, AffRESTError, logRESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Routes as GR
-import Gargantext.Sessions (Session, get, sessionId)
+import Gargantext.Sessions (Session, get, postWwwUrlencoded, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Types as GT
 import Gargantext.Utils.EtherCalc as EC
@@ -79,8 +84,8 @@ type ViewProps =
   ( frame    :: NodePoly Hyperdata
   , reload   :: T2.ReloadS
   , nodeId   :: Int
-  , session  :: Session
   , nodeType :: NodeType
+  , session  :: Session
   )
 
 type Base = String
@@ -101,7 +106,8 @@ frameLayoutViewCpt = here.component "frameLayoutView" cpt
     cpt { frame: NodePoly { hyperdata: h@(Hyperdata { base, frame_id }) }
         , nodeId
         , nodeType
-        , reload } _ = do
+        , reload
+        , session } _ = do
       case nodeType of
         NodeFrameVisio ->
           case WURL.fromAbsolute base of
@@ -110,7 +116,7 @@ frameLayoutViewCpt = here.component "frameLayoutView" cpt
         _              ->
           pure $ H.div{}
             [ FV.backButton {} []
-            , importIntoListButton { hyperdata: h, nodeId } []
+            , importIntoListButton { hyperdata: h, nodeId, session } []
             , H.div { className : "frame"
                     , rows: "100%,*" }
               [ -- H.script { src: "https://visio.gargantext.org/external_api.js"} [],
@@ -123,14 +129,16 @@ frameLayoutViewCpt = here.component "frameLayoutView" cpt
 
 type ImportIntoListButtonProps =
   ( hyperdata :: Hyperdata
-  , nodeId    :: Int )
+  , nodeId    :: Int
+  , session   :: Session )
 
 importIntoListButton :: R2.Component ImportIntoListButtonProps
 importIntoListButton = R.createElement importIntoListButtonCpt
 importIntoListButtonCpt :: R.Component ImportIntoListButtonProps
 importIntoListButtonCpt = here.component "importIntoListButton" cpt where
   cpt { hyperdata: Hyperdata { base, frame_id }
-      , nodeId } _ = do
+      , nodeId
+      , session } _ = do
     pure $ H.div { className: "btn btn-default"
                  , on: { click: onClick } }
       [ H.text $ "Import into list" ]
@@ -138,11 +146,25 @@ importIntoListButtonCpt = here.component "importIntoListButton" cpt where
         onClick _ = do
           let url = base <> "/" <> frame_id
               --task = GT.AsyncTaskWithType { task, typ: GT.ListCSVUpload }
-              uploadPath = GR.NodeAPI NodeList (Just id) $ GT.asyncTaskTypePath GT.ListCSVUpload
-          csv <- EC.downloadCSV base frame_id
-          here.log2 "[importIntoListButton] CSV: " csv
-          --eTask <- postWwwUrlencoded session uploadPath body
-          pure unit
+          launchAff_ $ do
+            -- Get corpus_id
+            corpusNodes <- getNodeParent session nodeId Corpus
+            case A.uncons corpusNodes of
+              Nothing -> liftEffect $ here.log2 "[importIntoListButton] corpusNodes empty" corpusNodes
+              Just { head: corpusNode } -> do
+                -- Use that corpus id 
+                eCsv <- EC.downloadCSV base frame_id
+                case eCsv of
+                  Left err -> liftEffect $ here.log2 "[importIntoListButton] error with csv" err
+                  Right csv -> do
+                    let uploadPath = GR.NodeAPI NodeList (Just corpusNode.id) $ GT.asyncTaskTypePath GT.ListCSVUpload
+                    eTask :: Either RESTError GT.AsyncTaskWithType <- postWwwUrlencoded
+                                                                      session
+                                                                      uploadPath
+                                                                      [ Tuple "_wf_data" (Just csv.body)
+                                                                      , Tuple "_wf_filetype" (Just $ show CSV)
+                                                                      , Tuple "_wf_name" (Just frame_id) ]
+                    pure unit
 
 type NodeFrameVisioProps =
   ( frame_id  :: String
@@ -177,9 +199,9 @@ type ReloadProps = ( nodeId  :: Int
                    , reload :: T2.Reload
                    , session :: Session )
 
-loadframe' :: Record LoadProps -> Aff (Either RESTError (NodePoly Hyperdata))
+loadframe' :: Record LoadProps -> AffRESTError (NodePoly Hyperdata)
 loadframe' { nodeId, session } = get session $ NodeAPI Node (Just nodeId) ""
 
 -- Just to make reloading effective
-loadframeWithReload :: Record ReloadProps -> Aff (Either RESTError (NodePoly Hyperdata))
+loadframeWithReload :: Record ReloadProps -> AffRESTError (NodePoly Hyperdata)
 loadframeWithReload { nodeId, session } = loadframe' { nodeId, session }

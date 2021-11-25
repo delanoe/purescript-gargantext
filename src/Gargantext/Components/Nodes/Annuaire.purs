@@ -5,20 +5,19 @@ module Gargantext.Components.Nodes.Annuaire
 import Gargantext.Prelude
 
 import Data.Array as A
-import Data.Either (Either)
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.Sequence as Seq
 import Data.Symbol (SProxy(..))
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (launchAff_)
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types as CT
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table (defaultContainer, initialParams, makeRow, table, tableHeaderLayout) as TT
 import Gargantext.Components.Table.Types (ColumnName(..), Params) as TT
-import Gargantext.Config.REST (RESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
@@ -293,6 +292,6 @@ loadPage session {nodeId, params: { offset, limit }} =
   where
     children = Children NodeContact offset limit Nothing {-(convOrderBy <$> orderBy)-} (Just nodeId)
 
-getAnnuaireInfo :: Session -> Int -> Aff (Either RESTError AnnuaireInfo)
+getAnnuaireInfo :: Session -> Int -> AffRESTError AnnuaireInfo
 getAnnuaireInfo session id = get session (NodeAPI Node (Just id) "")
 
