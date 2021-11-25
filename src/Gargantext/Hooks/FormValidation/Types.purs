@@ -1,6 +1,6 @@
 module Gargantext.Hooks.FormValidation.Types
   ( VForm, EForm, Field
-  , emailPattern
+  , emailPattern, datePattern
   ) where
 
 import Gargantext.Prelude
@@ -11,6 +11,7 @@ import Data.Tuple (Tuple)
 import Data.Validation.Semigroup (V)
 
 foreign import emailPattern :: Regex
+foreign import datePattern :: Regex
 
 -- @TODO: types for errors (`Tuple Field String`)?
 

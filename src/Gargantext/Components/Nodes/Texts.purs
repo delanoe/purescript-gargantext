@@ -20,6 +20,7 @@ import Gargantext.Components.Nodes.Corpus.Document as D
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData, CorpusInfo(..), Hyperdata(..), getCorpusInfo)
 import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Components.Nodes.Texts.Types as TT
+import Gargantext.Components.Reload (textsReloadContext)
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table
 import Gargantext.Config.REST (logRESTError)
@@ -28,6 +29,7 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (WithSession, Session, getCacheState)
 import Gargantext.Types (CTabNgramType(..), ListId, NodeID, SidePanelState(..), TabSubType(..), TabType(..))
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
@@ -52,11 +54,20 @@ textsLayout = R.createElement textsLayoutCpt
 textsLayoutCpt :: R.Component Props
 textsLayoutCpt = here.component "textsLayout" cpt where
   cpt { boxes, frontends, nodeId, session } children = do
-    pure $ textsLayoutWithKey { key
-                              , boxes
-                              , frontends
-                              , nodeId
-                              , session } children
+
+    _ /\ reloadBox <- R2.useBox' T2.newReload
+
+    pure $
+      R.provideContext textsReloadContext (Just reloadBox)
+      [
+        textsLayoutWithKey
+          { key
+          , boxes
+          , frontends
+          , nodeId
+          , session } children
+      ]
+
       where
         key = show nodeId
         -- key = show sid <> "-" <> show nodeId

@@ -22,7 +22,7 @@ defaultBackends =   backend' "Demo"            "Public Show room"          "http
                   , backend' "Organization"    "Hello Word Company"        "https://helloword.gargantext.org"
                   , backend' "Networking"      "Complex Systems Community" "https://complexsystems.gargantext.org"
                   , backend' "Networking"      "Digeing European Project"  "https://europa.gargantext.org"
-                  , backend' "Development"     "Main SandBox"              "https://dev.gargantext.org"
+                  , backend' "Development"     "Main SandBox"              "https://dev.sub.gargantext.org"
                   , backend' "Private"         "Offline Bunker"            "http://localhost:8008"
                   ]
  
@@ -58,7 +58,7 @@ defaultApps = relative :| [prod, dev, demo, haskell, python, caddy]
   where
     relative = frontend "/#/" ""                            "Relative"
     prod     = frontend "/#/" "https://v4.gargantext.org"   "v4.gargantext.org"
-    dev      = frontend "/#/" "https://dev.gargantext.org"  "gargantext.org (dev)"
+    dev      = frontend "/#/" "https://dev.sub.gargantext.org"  "gargantext.org (dev)"
     demo     = frontend "/#/" "https://demo.gargantext.org" "gargantext.org (demo)"
     haskell  = frontend "/#/" "http://localhost:8008"       "localhost.gargantext"
     python   = frontend "/#/" "http://localhost:8000"       "localhost.python"

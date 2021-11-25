@@ -1,5 +1,5 @@
 let upstream =
-      https://github.com/purescript/package-sets/releases/download/psc-0.14.4-20210826/packages.dhall sha256:eee0765aa98e0da8fc414768870ad588e7cada060f9f7c23c37385c169f74d9f
+      https://github.com/purescript/package-sets/releases/download/psc-0.14.4-20211030/packages.dhall sha256:5cd7c5696feea3d3f84505d311348b9e90a76c4ce3684930a0ff29606d2d816c
 
 let overrides =
       { globals =
@@ -205,6 +205,26 @@ let additions =
         { dependencies = [ "console", "effect", "maybe", "record" ]
         , repo = "https://github.com/natefaubion/purescript-convertable-options"
         , version = "v1.0.0"
+        }
+      , d3 =
+        { dependencies =
+          [ "aff"
+          , "aff-promise"
+          , "dom-simple"
+          , "easy-ffi"
+          , "effect"
+          , "exceptions"
+          , "foreign"
+          , "functions"
+          , "js-date"
+          , "maybe"
+          , "prelude"
+          , "psci-support"
+          , "tuples"
+          , "web-dom"
+          ]
+        , repo = "https://github.com/cgenie/purescript-d3"
+        , version = "v0.9.1"
         }
       }
 

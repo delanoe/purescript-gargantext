@@ -1,12 +1,13 @@
 module Gargantext.Components.Nodes.Texts.Types where
 
-import Data.Maybe (Maybe(..))
-import Reactix as R
-
 import Gargantext.Prelude
 
+import Data.Maybe (Maybe(..))
 import Gargantext.Types (ListId, NodeID)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
+import Reactix as R
+import Toestand as T
 
 data SidePanelState = InitialClosed | Opened | Closed
 derive instance Eq SidePanelState
@@ -67,3 +68,13 @@ type SidePanel =
 
 initialSidePanel :: Maybe (Record SidePanel)
 initialSidePanel = Nothing
+
+
+-----------------------------------------------------------------
+
+-- @XXX: This custom context solves a wrong monolithic front design where
+--       "DocsTable" component is used for many different use cases
+--       Normally we would have use the classic "Gargantext.Components.Reload",
+--       but we limit side-effects by using another context reference
+textsReloadContext :: R.Context (Maybe (T.Box T2.Reload))
+textsReloadContext = R.createContext Nothing
