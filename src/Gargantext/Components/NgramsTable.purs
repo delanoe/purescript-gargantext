@@ -203,9 +203,9 @@ tableContainerCpt { dispatch
     setTermSizeFilter x = T.modify (_ { termSizeFilter = x }) path
     setSelection = dispatch <<< setTermListSetA ngramsTableCache ngramsSelection
 
-    editor = H.div {} $ maybe [] f ngramsParent
+    editor = H.div {} $ maybe [] edit ngramsParent
       where
-        f ngrams = [ H.p {} [H.text $ "Editing " <> ngramsTermText ngrams]
+        edit ngrams = [ H.p {} [H.text $ "Editing " <> ngramsTermText ngrams]
                    , NTC.renderNgramsTree { ngramsTable
                                           , ngrams
                                           , ngramsStyle: []
@@ -482,6 +482,7 @@ mkDispatch { filteredRows
           pure unit
         Just parent -> do
           here.log2 "[performAction] AddTermChildren, parent" parent
+          here.log2 "[performAction] AddTermChildren, ngramsChildren" ngramsChildren
           let pc = patchSetFromMap ngramsChildren
               pe = NgramsPatch { patch_list: mempty, patch_children: pc }
               pt = singletonNgramsTablePatch parent pe
