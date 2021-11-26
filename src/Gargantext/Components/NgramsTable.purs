@@ -496,7 +496,7 @@ mkDispatch { filteredRows
                   in
                   singletonNgramsTablePatch h pp
           here.log2 "[performAction] pt with patchSetFromMap" $ pt <> ppt
-          commitPatch (pt <> ppt) state
+          commitPatch (pt {-<> ppt-}) state
     performAction (CoreAction a) = coreDispatch path state a
 
 
