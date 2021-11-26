@@ -16,7 +16,7 @@ import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..))
-import Gargantext.Components.GraphQL.Endpoints (getNodeParent)
+import Gargantext.Components.GraphQL.Endpoints (getNodeParent, triggerEthercalcCSVDownload)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Config.REST (RESTError, AffRESTError, logRESTError)
 import Gargantext.Hooks.Loader (useLoader)
@@ -152,18 +152,19 @@ importIntoListButtonCpt = here.component "importIntoListButton" cpt where
             case A.uncons corpusNodes of
               Nothing -> liftEffect $ here.log2 "[importIntoListButton] corpusNodes empty" corpusNodes
               Just { head: corpusNode } -> do
-                -- Use that corpus id 
-                eCsv <- EC.downloadCSV base frame_id
-                case eCsv of
-                  Left err -> liftEffect $ here.log2 "[importIntoListButton] error with csv" err
-                  Right csv -> do
-                    let uploadPath = GR.NodeAPI NodeList (Just corpusNode.id) $ GT.asyncTaskTypePath GT.ListCSVUpload
-                    eTask :: Either RESTError GT.AsyncTaskWithType <- postWwwUrlencoded
-                                                                      session
-                                                                      uploadPath
-                                                                      [ Tuple "_wf_data" (Just csv.body)
-                                                                      , Tuple "_wf_filetype" (Just $ show CSV)
-                                                                      , Tuple "_wf_name" (Just frame_id) ]
+                -- Use that corpus id
+                triggerEthercalcCSVDownload session corpusNode.id nodeId
+                -- eCsv <- EC.downloadCSV base frame_id
+                -- case eCsv of
+                --   Left err -> liftEffect $ here.log2 "[importIntoListButton] error with csv" err
+                --   Right csv -> do
+                --     let uploadPath = GR.NodeAPI NodeList (Just corpusNode.id) $ GT.asyncTaskTypePath GT.ListCSVUpload
+                --     eTask :: Either RESTError GT.AsyncTaskWithType <- postWwwUrlencoded
+                --                                                       session
+                --                                                       uploadPath
+                --                                                       [ Tuple "_wf_data" (Just csv.body)
+                --                                                       , Tuple "_wf_filetype" (Just $ show CSV)
+                --                                                       , Tuple "_wf_name" (Just frame_id) ]
                     pure unit
 
 type NodeFrameVisioProps =

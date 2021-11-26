@@ -33,7 +33,7 @@ import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import GraphQL.Client.Args (IgnoreArg(..), OrArg(..), onlyArgs)
-import GraphQL.Client.Query (mutationOpts)
+import GraphQL.Client.Query (mutation)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
@@ -198,8 +198,7 @@ saveContactHyperdata session id = put session (Routes.NodeAPI Node (Just id) "")
 saveUserInfo :: Session -> Int -> UserInfo ->  AffRESTError Int
 saveUserInfo session id ui = do
   client <- liftEffect $ getClient session
-  res <- mutationOpts
-    (\m -> m)
+  res <- mutation
     client
     "update user_info"
     { update_user_info: onlyArgs { ui_id: id
