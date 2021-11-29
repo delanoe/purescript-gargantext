@@ -4,7 +4,6 @@ import Gargantext.Prelude
 
 import GraphQL.Client.Args ((=>>))
 import GraphQL.Client.Variable (Var(..))
-import Gargantext.Types (NodeType)
 
 
 type Node

@@ -1,15 +1,17 @@
 module Gargantext.Components.GraphQL.Endpoints where
 
+import Gargantext.Components.GraphQL.Node
+import Gargantext.Components.GraphQL.User
+import Gargantext.Prelude
+
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
+import Data.Unit (unit)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.Components.GraphQL (getClient, queryGql)
-import Gargantext.Components.GraphQL.Node
-import Gargantext.Components.GraphQL.User
 import Gargantext.Config.REST (AffRESTError, RESTError(..))
-import Gargantext.Prelude
 import Gargantext.Sessions (Session)
 import Gargantext.Types (AsyncTaskWithType(..), AsyncTask(..), AsyncTaskType(..), NodeType)
 import Gargantext.Utils.Reactix as R2
@@ -45,15 +47,17 @@ triggerEthercalcCSVDownload session corpusId nodeId = do
     client
     "trigger ethercalc CSV download"
     { ethercalc_csv_download: onlyArgs { corpusId
-                                       , nodeId } }
-  pure $ case res.ethercalc_csv_download of
-    Nothing -> Nothing
-    Just { task: { id, status }, typ } ->
-      case JSON.readJSON typ of
-        Left _ -> Nothing
-        Right typ_ ->
-          case JSON.readJSON status of
-            Left _ -> Nothing
-            Right status_ ->
-              Just $ AsyncTaskWithType { task: AsyncTask { id, status: status_ }
-                                       , typ: typ_ }
+                                       , nodeId }
+  pure Nothing
+--  pure $ case res.ethercalc_csv_download of
+--    Nothing -> Nothing
+--    Just { task: { id, status }, typ } ->
+--      case JSON.readJSON typ of
+--        Left _ -> Nothing
+--        Right typ_ ->
+--          case JSON.readJSON status of
+--            Left _ -> Nothing
+--            Right status_ ->
+--              Just $ AsyncTaskWithType { task: AsyncTask { id, status: status_ }
+--                                       , typ: typ_ }
+--

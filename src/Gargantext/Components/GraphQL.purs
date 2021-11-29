@@ -11,7 +11,7 @@ import Effect.Class (liftEffect)
 import Foreign (unsafeToForeign, ForeignError)
 import Gargantext.Components.GraphQL.Node (EthercalcCSVDownloadM, Node)
 import Gargantext.Components.GraphQL.User (User, UserInfo, UserInfoM)
-import Gargantext.Components.GraphQL.Task (AsyncTaskWithType)
+import Gargantext.Components.GraphQL.Task as GQT
 import Gargantext.Prelude
 import Gargantext.Sessions (Session(..))
 import Gargantext.Utils.Reactix as R2
@@ -73,5 +73,5 @@ type Schema
     }
 
 type Mutation
-  = { ethercalc_csv_download :: EthercalcCSVDownloadM ==> Maybe AsyncTaskWithType
+  = { ethercalc_csv_download :: EthercalcCSVDownloadM ==> Maybe GQT.AsyncTaskWithType
     , update_user_info :: UserInfoM ==> Int }
