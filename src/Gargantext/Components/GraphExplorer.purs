@@ -2,6 +2,7 @@ module Gargantext.Components.GraphExplorer where
 
 import Gargantext.Prelude hiding (max, min)
 
+import Control.Bind ((=<<))
 import DOM.Simple.Types (Element)
 import Data.Array as A
 import Data.FoldableWithIndex (foldMapWithIndex)
@@ -20,6 +21,7 @@ import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Data.Louvain as Louvain
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Hooks.Sigmax.Sigma (startForceAtlas2)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, get)
@@ -58,7 +60,19 @@ type GraphWriteProps =
   | Props
   )
 
+type LayoutWithKeyProps =
+  ( key :: String
+  | LayoutProps )
+
 --------------------------------------------------------------
+explorerLayoutWithKey :: R2.Component LayoutWithKeyProps
+explorerLayoutWithKey = R.createElement explorerLayoutWithKeyCpt
+explorerLayoutWithKeyCpt :: R.Component LayoutWithKeyProps
+explorerLayoutWithKeyCpt = here.component "explorerLayoutWithKey" cpt where
+  cpt { boxes, graphId, session } _ = do
+    pure $ explorerLayout { boxes, graphId, session } []
+
+
 explorerLayout :: R2.Component LayoutProps
 explorerLayout = R.createElement explorerLayoutCpt
 explorerLayoutCpt :: R.Component LayoutProps

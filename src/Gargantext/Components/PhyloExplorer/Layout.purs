@@ -5,14 +5,15 @@ module Gargantext.Components.PhyloExplorer.Layout
 import Gargantext.Prelude
 
 import DOM.Simple (document, window)
-import Data.Array as Array
+import Data.Tuple.Nested ((/\))
 import Gargantext.Components.PhyloExplorer.Draw (drawPhylo, highlightSource, setGlobalD3Reference, setGlobalDependencies, unhide)
-import Gargantext.Components.PhyloExplorer.Types (PhyloDataSet(..))
+import Gargantext.Components.PhyloExplorer.Types (PhyloDataSet(..), Source(..), sortSources)
 import Gargantext.Utils (nbsp)
 import Gargantext.Utils.Reactix as R2
 import Graphics.D3.Base (d3)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.PhyloExplorer"
@@ -28,7 +29,10 @@ layoutCpt = here.component "layout" cpt where
   cpt { phyloDataSet: (PhyloDataSet o)
       } _ = do
     -- States
+    sources /\ sourcesBox <- R2.useBox' (mempty :: Array Source)
+
     R.useEffectOnce' $ do
+      (sortSources >>> flip T.write_ sourcesBox) o.sources
       unhide document o.name
       setGlobalD3Reference window d3
       setGlobalDependencies window (PhyloDataSet o)
@@ -108,11 +112,11 @@ layoutCpt = here.component "layout" cpt where
             [ H.text "unselect source ✕" ]
           ]
           <>
-            flip Array.mapWithIndex o.sources
-            ( \idx val ->
+            flip map sources
+            ( \(Source { id, label }) ->
                 H.option
-                { value: idx }
-                [ H.text val ]
+                { value: id }
+                [ H.text label ]
             )
 
         ,
