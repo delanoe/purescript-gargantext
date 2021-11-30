@@ -427,9 +427,13 @@ graphExplorerCpt = here.component "graphExplorer" cpt where
             , nodeId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
-                                   GraphExplorer.explorerLayout { boxes
-                                                                , graphId: nodeId
-                                                                , session } [] } sessionProps) []
+                                   GraphExplorer.explorerLayoutWithKey { boxes
+                                                                       , graphId: nodeId
+                                                                       , key: "graphId-" <> show nodeId
+                                                                       , session } [] } sessionProps) []
+--                                   GraphExplorer.explorerLayout { boxes
+--                                                                , graphId: nodeId
+--                                                                , session } [] } sessionProps) []
 phyloExplorer :: R2.Component SessionNodeProps
 phyloExplorer = R.createElement phyloExplorerCpt
 phyloExplorerCpt :: R.Component SessionNodeProps
