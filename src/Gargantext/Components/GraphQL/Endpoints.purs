@@ -47,7 +47,7 @@ triggerEthercalcCSVDownload session corpusId nodeId = do
     client
     "trigger ethercalc CSV download"
     { ethercalc_csv_download: onlyArgs { corpusId
-                                       , nodeId }
+                                       , nodeId } }
   pure Nothing
 --  pure $ case res.ethercalc_csv_download of
 --    Nothing -> Nothing
