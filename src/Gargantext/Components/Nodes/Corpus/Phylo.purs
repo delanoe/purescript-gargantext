@@ -55,8 +55,8 @@ fetchPhyloJSON :: Aff (Either String PhyloDataSet)
 fetchPhyloJSON =
   let
     -- @WIP remove dumb data
-    url = "http://localhost:5000/js/knowledge-phylomemy.json"
-    -- url = "http://localhost:5000/js/vaccines_countries_06_2021.json"
+    -- url = "http://localhost:5000/js/knowledge-phylomemy.json"
+    url = "http://localhost:5000/js/vaccines_countries_06_2021.json"
     request = AX.defaultRequest
       { url = url
       , method = Left GET

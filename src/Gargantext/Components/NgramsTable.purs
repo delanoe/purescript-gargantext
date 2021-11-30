@@ -126,6 +126,7 @@ tableContainerCpt { dispatch
               R2.row [ H.div {className: "col-md-2", style: {marginTop: "6px"}}
                        [ H.div {} syncResetButton
                        , if A.null props.tableBody && searchQuery /= "" then
+                       -- , if (not $ Set.member (normNgram tabNgramType searchQuery) ngramsSelection) && searchQuery /= "" then
                            H.li { className: "list-group-item" } [
                              H.button { className: "btn btn-primary"
                                       , on: { click: const $ dispatch
@@ -202,9 +203,9 @@ tableContainerCpt { dispatch
     setTermSizeFilter x = T.modify (_ { termSizeFilter = x }) path
     setSelection = dispatch <<< setTermListSetA ngramsTableCache ngramsSelection
 
-    editor = H.div {} $ maybe [] f ngramsParent
+    editor = H.div {} $ maybe [] edit ngramsParent
       where
-        f ngrams = [ H.p {} [H.text $ "Editing " <> ngramsTermText ngrams]
+        edit ngrams = [ H.p {} [H.text $ "Editing " <> ngramsTermText ngrams]
                    , NTC.renderNgramsTree { ngramsTable
                                           , ngrams
                                           , ngramsStyle: []
@@ -481,6 +482,7 @@ mkDispatch { filteredRows
           pure unit
         Just parent -> do
           here.log2 "[performAction] AddTermChildren, parent" parent
+          here.log2 "[performAction] AddTermChildren, ngramsChildren" ngramsChildren
           let pc = patchSetFromMap ngramsChildren
               pe = NgramsPatch { patch_list: mempty, patch_children: pc }
               pt = singletonNgramsTablePatch parent pe
@@ -494,7 +496,7 @@ mkDispatch { filteredRows
                   in
                   singletonNgramsTablePatch h pp
           here.log2 "[performAction] pt with patchSetFromMap" $ pt <> ppt
-          commitPatch (pt <> ppt) state
+          commitPatch (pt {-<> ppt-}) state
     performAction (CoreAction a) = coreDispatch path state a
 
 

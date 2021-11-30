@@ -122,7 +122,7 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
   makeParentFolder linkHandlers Nothing _ _ true = [ H.button {className: "btn btn-primary", on: { click: \_ -> linkHandlers.goToRoute Home}} [ H.i { className: "fa fa-folder-open" } []
                                                                    , H.br {}
                                                                    , H.text ".."] ]
-  makeParentFolder linkHandlers Nothing _ true _ = [ H.button {className: "btn btn-primary", on: { click: \_ -> linkHandlers.goToPreviousPage } }  [ H.i { className: "fa fa-folder-open" } []
+  makeParentFolder linkHandlers Nothing _ true _ = [ H.button {className: "btn btn-primary", on: { click: \_ -> linkHandlers.goToPreviousPage unit } }  [ H.i { className: "fa fa-folder-open" } []
                                                                    , H.br {}
                                                                    , H.text ".."] ]
   makeParentFolder _ Nothing _ _ _ = []
@@ -249,7 +249,7 @@ backButtonCpt = R.hooksComponent "backButton" cpt where
     pure $ 
       H.button {
         className: "btn btn-primary"
-      , on: { click: \_ -> goToPreviousPage }
+      , on: { click: \_ -> goToPreviousPage unit }
       } [
         H.i { className: "fa fa-arrow-left", title: "Previous view"} []
       ]

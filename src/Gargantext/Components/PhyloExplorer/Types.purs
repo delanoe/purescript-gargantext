@@ -1,9 +1,11 @@
 module Gargantext.Components.PhyloExplorer.Types
   ( PhyloDataSet(..)
+  , parsePhyloJSONSet
   , Branch(..), Period(..), Group(..)
   , Link(..), AncestorLink(..), BranchLink(..)
   , GlobalTerm(..)
-  , parsePhyloJSONSet
+  , Source(..)
+  , sortSources
   ) where
 
 import Gargantext.Prelude
@@ -61,7 +63,8 @@ parsePhyloJSONSet (PhyloJSONSet o) = PhyloDataSet
   , links
   , name          : o.name
   , nbBranches    : parseInt o.phyloBranches
-  , nbDocs        : parseInt o.phyloDocs
+  -- @WIP remotely stringify as a Double instead of an Int (?)
+  , nbDocs        : (parseFloat >>> parseInt') o.phyloDocs
   , nbFoundations : parseInt o.phyloFoundations
   , nbGroups      : parseInt o.phyloGroups
   , nbPeriods     : parseInt o.phyloPeriods
@@ -217,7 +220,7 @@ parseLinks
       , label : ""
       , to    : o.head
       }
-    parse _               = Nothing
+    parse _                = Nothing
 
 -----------------------------------------------------------
 
@@ -252,7 +255,7 @@ parseAncestorLinks
       , label : ""
       , to    : o.head
       }
-    parse _               = Nothing
+    parse _                   = Nothing
 
 -----------------------------------------------------------
 
@@ -276,14 +279,14 @@ parseBranchLinks
     --       bc. BranchToGroup as 1-1 relation with "edgeType=branchLink"
     filter :: RawEdge -> Boolean
     filter (BranchToGroup o) = o.edgeType == "branchLink"
-    filter _                   = false
+    filter _                 = false
 
     parse :: RawEdge -> Maybe BranchLink
     parse (BranchToGroup o) = Just $ BranchLink
       { from  : o.tail
       , to    : o.head
       }
-    parse _               = Nothing
+    parse _                 = Nothing
 
 -----------------------------------------------------------
 
@@ -296,6 +299,40 @@ derive instance Generic GlobalTerm _
 derive instance Eq GlobalTerm
 instance Show GlobalTerm where show = genericShow
 
+-----------------------------------------------------------
+
+newtype Source = Source
+  { label :: String
+  , id    :: Int
+  }
+
+derive instance Generic Source _
+derive instance Eq Source
+instance Show Source where show = genericShow
+
+parseSources :: String -> Array String
+parseSources
+  =   String.replaceAll (String.Pattern "[") (String.Replacement "")
+  >>> String.replaceAll (String.Pattern "]") (String.Replacement "")
+  >>> String.replaceAll (String.Pattern "\"") (String.Replacement "")
+  >>> String.split (String.Pattern ",")
+  >>> Array.filter (\s -> not eq 0 $ String.length s)
+
+-- @WIP: as some "Draw.js" business's methods still use `source` as an unsorted
+--       `Array String`, we have to dissociate the parsing and sorting
+--       computation (hence this second method to use for sorting purposes)
+sortSources :: Array String -> Array Source
+sortSources
+  =   Array.mapWithIndex setSource
+  >>> Array.sortWith getLabel
+
+  where
+
+    setSource :: Int -> String -> Source
+    setSource id label = Source { id, label }
+
+    getLabel :: Source -> String
+    getLabel (Source { label }) = label
 
 -----------------------------------------------------------
 
@@ -307,15 +344,6 @@ parseInt' n = maybe 0 identity $ Int.fromNumber n
 
 parseFloat :: String -> Number
 parseFloat s = maybe 0.0 identity $ Number.fromString s
-
-
-parseSources :: String -> Array String
-parseSources
-  =   String.replace (String.Pattern "[") (String.Replacement "")
-  >>> String.replace (String.Pattern "]") (String.Replacement "")
-  >>> String.split (String.Pattern ",")
-  >>> Array.filter (\s -> not eq 0 $ String.length s)
-  >>> Array.sort
 
 parseBB :: String -> Array Number
 parseBB
