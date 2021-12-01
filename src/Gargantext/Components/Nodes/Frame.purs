@@ -153,7 +153,7 @@ importIntoListButtonCpt = here.component "importIntoListButton" cpt where
               Nothing -> liftEffect $ here.log2 "[importIntoListButton] corpusNodes empty" corpusNodes
               Just { head: corpusNode } -> do
                 -- Use that corpus id
-                triggerEthercalcCSVDownload session corpusNode.id nodeId
+                _ <- triggerEthercalcCSVDownload session corpusNode.id nodeId
                 -- eCsv <- EC.downloadCSV base frame_id
                 -- case eCsv of
                 --   Left err -> liftEffect $ here.log2 "[importIntoListButton] error with csv" err
@@ -165,7 +165,7 @@ importIntoListButtonCpt = here.component "importIntoListButton" cpt where
                 --                                                       [ Tuple "_wf_data" (Just csv.body)
                 --                                                       , Tuple "_wf_filetype" (Just $ show CSV)
                 --                                                       , Tuple "_wf_name" (Just frame_id) ]
-                    pure unit
+                pure unit
 
 type NodeFrameVisioProps =
   ( frame_id  :: String

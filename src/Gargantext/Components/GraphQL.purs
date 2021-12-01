@@ -1,5 +1,7 @@
 module Gargantext.Components.GraphQL where
 
+import Gargantext.Prelude
+
 import Affjax.RequestHeader as ARH
 import Data.Argonaut.Decode (JsonDecodeError)
 import Data.Bifunctor (lmap)
@@ -9,10 +11,9 @@ import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Foreign (unsafeToForeign, ForeignError)
-import Gargantext.Components.GraphQL.Node (EthercalcCSVDownloadM, Node)
-import Gargantext.Components.GraphQL.User (User, UserInfo, UserInfoM)
+import Gargantext.Components.GraphQL.Node (Node, EthercalcCSVDownloadM)
 import Gargantext.Components.GraphQL.Task as GQT
-import Gargantext.Prelude
+import Gargantext.Components.GraphQL.User (User, UserInfo, UserInfoM)
 import Gargantext.Sessions (Session(..))
 import Gargantext.Utils.Reactix as R2
 import GraphQL.Client.Args (type (==>))
@@ -73,5 +74,6 @@ type Schema
     }
 
 type Mutation
-  = { ethercalc_csv_download :: EthercalcCSVDownloadM ==> Maybe GQT.AsyncTaskWithType
+  = { ethercalc_csv_download :: EthercalcCSVDownloadM ==> { a :: Int } --Maybe GQT.AsyncTaskWithType
+    --  ethercalc_csv_download  :: EthercalcCSVDownloadM ==> Int
     , update_user_info :: UserInfoM ==> Int }

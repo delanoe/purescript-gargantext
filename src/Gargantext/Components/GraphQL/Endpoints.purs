@@ -11,6 +11,7 @@ import Data.Unit (unit)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.Components.GraphQL (getClient, queryGql)
+import Gargantext.Components.GraphQL.Task as GQLT
 import Gargantext.Config.REST (AffRESTError, RESTError(..))
 import Gargantext.Sessions (Session)
 import Gargantext.Types (AsyncTaskWithType(..), AsyncTask(..), AsyncTaskType(..), NodeType)
@@ -60,4 +61,4 @@ triggerEthercalcCSVDownload session corpusId nodeId = do
 --            Right status_ ->
 --              Just $ AsyncTaskWithType { task: AsyncTask { id, status: status_ }
 --                                       , typ: typ_ }
---
+

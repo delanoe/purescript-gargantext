@@ -7,10 +7,9 @@ module Gargantext.Components.Nodes.Annuaire.User.Contact
   , saveUserInfo
   ) where
 
-import Gargantext.Components.GraphQL.User
-import Gargantext.Prelude
+import Gargantext.Components.GraphQL.User (UserInfo, _ui_cwCity, _ui_cwCountry, _ui_cwFirstName, _ui_cwLabTeamDeptsFirst, _ui_cwLastName, _ui_cwOffice, _ui_cwOrganizationFirst, _ui_cwRole, _ui_cwTouchMail, _ui_cwTouchPhone)
+import Gargantext.Prelude (Unit, bind, discard, pure, show, ($), (<$>), (<>))
 
-import Data.Array as A
 import Data.Either (Either(..))
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe)
