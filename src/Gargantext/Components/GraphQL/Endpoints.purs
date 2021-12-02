@@ -16,7 +16,7 @@ import Gargantext.Config.REST (AffRESTError, RESTError(..))
 import Gargantext.Sessions (Session)
 import Gargantext.Types (AsyncTaskWithType(..), AsyncTask(..), AsyncTaskType(..), NodeType)
 import Gargantext.Utils.Reactix as R2
-import GraphQL.Client.Args (onlyArgs)
+import GraphQL.Client.Args (onlyArgs, (=>>))
 import GraphQL.Client.Query (mutation)
 import GraphQL.Client.Variables (withVars)
 import Simple.JSON as JSON
@@ -40,25 +40,4 @@ getUserInfo session id = do
     Nothing -> Left (CustomError $ "user with id " <> show id <> " not found")
     -- NOTE Contact is at G.C.N.A.U.C.Types
     Just ui -> Right ui
-
-triggerEthercalcCSVDownload :: Session -> Int -> Int -> Aff (Maybe AsyncTaskWithType)
-triggerEthercalcCSVDownload session corpusId nodeId = do
-  client <- liftEffect $ getClient session
-  res <- mutation
-    client
-    "trigger ethercalc CSV download"
-    { ethercalc_csv_download: onlyArgs { corpusId
-                                       , nodeId } }
-  pure Nothing
---  pure $ case res.ethercalc_csv_download of
---    Nothing -> Nothing
---    Just { task: { id, status }, typ } ->
---      case JSON.readJSON typ of
---        Left _ -> Nothing
---        Right typ_ ->
---          case JSON.readJSON status of
---            Left _ -> Nothing
---            Right status_ ->
---              Just $ AsyncTaskWithType { task: AsyncTask { id, status: status_ }
---                                       , typ: typ_ }
 

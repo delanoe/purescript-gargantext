@@ -6,13 +6,11 @@ import Affjax.RequestHeader as ARH
 import Data.Argonaut.Decode (JsonDecodeError)
 import Data.Bifunctor (lmap)
 import Data.List.Types (NonEmptyList)
-import Data.Maybe (Maybe)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Foreign (unsafeToForeign, ForeignError)
-import Gargantext.Components.GraphQL.Node (Node, EthercalcCSVDownloadM)
-import Gargantext.Components.GraphQL.Task as GQT
+import Gargantext.Components.GraphQL.Node (Node)
 import Gargantext.Components.GraphQL.User (User, UserInfo, UserInfoM)
 import Gargantext.Sessions (Session(..))
 import Gargantext.Utils.Reactix as R2
@@ -74,6 +72,4 @@ type Schema
     }
 
 type Mutation
-  = { ethercalc_csv_download :: EthercalcCSVDownloadM ==> { a :: Int } --Maybe GQT.AsyncTaskWithType
-    --  ethercalc_csv_download  :: EthercalcCSVDownloadM ==> Int
-    , update_user_info :: UserInfoM ==> Int }
+  = { update_user_info :: UserInfoM ==> Int }

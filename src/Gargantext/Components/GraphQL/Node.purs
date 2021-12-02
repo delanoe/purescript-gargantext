@@ -26,7 +26,3 @@ nodeParentQuery = { node_parent: { node_id: Var :: _ "id" Int
                     , parent_id: unit
                     , type_id: unit }
                   }
-
-type EthercalcCSVDownloadM
-  = { corpusId :: Int
-    , nodeId   :: Int }
