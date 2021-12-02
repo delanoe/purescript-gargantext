@@ -3,25 +3,24 @@ module Gargantext.Components.Bootstrap.Spinner(spinner) where
 import Gargantext.Prelude
 
 import Data.Foldable (intercalate)
+import Gargantext.Components.Bootstrap.Types (SpinnerTheme(..))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 
 type Props   = ( | Options)
 type Options =
-  ( theme :: String
+  ( theme     :: SpinnerTheme
   , className :: String
   )
 
 options :: Record Options
 options =
-  { theme: "border"
-  , className: ""
+  { theme     : BorderTheme
+  , className : ""
   }
 
 -- | Structural Component for the Bootstrap spinner
--- |
--- |    * theme: `"border" (default) | "grow"`
 -- |
 -- | https://getbootstrap.com/docs/4.4/components/spinners/
 spinner :: forall r. R2.OptLeaf Options Props r
@@ -43,7 +42,7 @@ component = R.hooksComponent componentName cpt where
       -- BEM classNames
       , componentName
       -- Bootstrap specific classNames
-      , bootstrapName <> "-" <> props.theme
+      , bootstrapName <> "-" <> show props.theme
       ]
     -- Render
     pure $

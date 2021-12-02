@@ -1,20 +1,51 @@
-@use "./abstract/_members" as *
-
-/* styles for menu.html template (navbar etc) */
-
-/* #dafixedtop .navbar-text, #graphsfixedtop .navbar-text
-/*     margin: 0
-/*     padding-top: 15px
-/*     padding-bottom: 15px
-/*     float: none
-
-#dafixedtop
+.main-topbar
   position: sticky
   top: 0
-  left: 0
-  right: 0
   // correction for the popover
   z-index: 910
+
+  // add hovering effect
+  &.navbar-dark .navbar-text:hover
+    color: $navbar-dark-hover-color
+
+  // remove Bootstrap native rules
+  &__hand-button .nav-link,
+  &__help-button .nav-link
+    padding-left: initial
+    padding-right: initial
+  &__logo
+    margin-right: initial
+
+  @include right-handed
+    flex-direction: row
+
+    &__logo
+      margin-left: 0
+      margin-right: space-x(2)
+
+    &__hand-button
+      margin-left: space-x(2)
+      margin-right: space-x(1)
+
+    &__help-button
+      margin-left: space-x(1)
+      margin-right: space-x(2)
+
+  @include left-handed
+    flex-direction: row-reverse
+
+    &__logo
+      margin-left: space-x(2)
+      margin-right: 0
+
+    &__hand-button
+      margin-left: space-x(1)
+      margin-right: space-x(2)
+
+    &__help-button
+      margin-left: space-x(2)
+      margin-right: space-x(1)
+
 
 #corporatop.nav-tabs > li
     padding-left: 1

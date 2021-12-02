@@ -1,5 +1,8 @@
 module Gargantext.Components.Bootstrap.Types
   ( ComponentStatus(..)
+  , Variant(..), ButtonVariant(..)
+  , Sizing(..)
+  , SpinnerTheme(..)
   ) where
 
 import Gargantext.Prelude
@@ -27,8 +30,8 @@ import Data.String.Extra (kebabCase)
 -- |      strong UI/UX (eg. a input in a "read-only" mode: UI can be alter to
 -- |      underline the lack of its main writing feature, but without telling
 -- |      to the user that the input is per-se inoperative)
-data ComponentStatus =
-    Enabled
+data ComponentStatus
+  = Enabled
   | Disabled
   | Deferred
   | Idled
@@ -37,4 +40,78 @@ data ComponentStatus =
 derive instance Generic ComponentStatus _
 derive instance Eq ComponentStatus
 instance Show ComponentStatus where
-  show a = kebabCase $ genericShow a
+  show = kebabCase <<< genericShow
+
+----------------------------------------------------------------------
+
+-- | Common variant style used by various Bootstrap components
+-- |
+-- |    * some component will combine different variant style
+data Variant
+  = Primary
+  | Secondary
+  | Success
+  | Danger
+  | Warning
+  | Info
+  | Light
+  | Dark
+
+derive instance Generic Variant _
+derive instance Eq Variant
+instance Show Variant where
+  show = kebabCase <<< genericShow
+
+-- Component declinations
+
+data ButtonVariant
+  = ButtonVariant Variant
+  | OutlinedButtonVariant Variant
+  | LinkButtonVariant
+
+derive instance Generic ButtonVariant _
+derive instance Eq ButtonVariant
+instance Show ButtonVariant where
+  show (ButtonVariant a)         = (kebabCase <<< genericShow) a
+  show (OutlinedButtonVariant a) = (append "outline-" <<< kebabCase <<< genericShow) a
+  show LinkButtonVariant         = "link"
+
+----------------------------------------------------------------------
+
+-- | Common sizing values used by various Bootstrap components
+-- |
+-- | Bootstrap components using sizing use:
+-- |    * only 3 possible values
+-- |    * `MediumSize` value by default
+-- |    * (not to be confused with Bootstrap className utilities also using
+-- |      a measuring scale)
+-- |
+-- | Examples:
+-- |    * https://getbootstrap.com/docs/4.1/components/input-group/#sizing
+-- |    * https://getbootstrap.com/docs/4.1/components/button-group/#sizing
+data Sizing
+  = SmallSize
+  | MediumSize
+  | LargeSize
+
+derive instance Generic Sizing _
+derive instance Eq Sizing
+instance Show Sizing where
+  show SmallSize  = "sm"
+  show MediumSize = "md"
+  show LargeSize  = "lg"
+
+----------------------------------------------------------------------
+
+-- | Theme values used by Bootstrap Spinner
+-- |
+-- | https://getbootstrap.com/docs/4.4/components/spinners/
+data SpinnerTheme
+  = BorderTheme
+  | GrowTheme
+
+derive instance Generic SpinnerTheme _
+derive instance Eq SpinnerTheme
+instance Show SpinnerTheme where
+  show BorderTheme = "border"
+  show GrowTheme   = "grow"

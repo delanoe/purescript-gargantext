@@ -1,0 +1,30 @@
+@mixin aside-topbar() {
+  $border-color: mix-alpha($navbar-dark-hover-color, 5%);
+
+  padding: 0 space-x(1);
+  height: 100%;
+
+  @include right-handed() {
+    border-left: 1px solid $border-color;
+  }
+
+  @include left-handed() {
+    border-right: 1px solid $border-color
+  }
+}
+
+@mixin top-teaser() {
+  background: linear-gradient(
+    to top,
+    mix-alpha($body-bg, 0%) 0%,
+    mix-alpha($body-bg, 100%) 45%
+  );
+}
+
+@mixin bottom-teaser() {
+  background: linear-gradient(
+    to bottom,
+    mix-alpha($body-bg, 0%) 0%,
+    mix-alpha($body-bg, 100%) 45%
+  );
+}

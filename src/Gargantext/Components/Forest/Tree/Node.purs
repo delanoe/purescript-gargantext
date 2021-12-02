@@ -198,7 +198,7 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
                           , session }
 
     popOverIcon =
-      H.a { className: "settings fa fa-cog" 
+      H.a { className: "settings fa fa-cog"
           , title : "Each node of the Tree can perform some actions.\n"
             <> "Click here to execute one of them." } []
     dropProps droppedFile droppedFile' isDragOver isDragOver' =
@@ -321,6 +321,7 @@ graphNodeActionsCpt = here.component "graphNodeActions" cpt where
   graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
   errorHandler = logRESTError here "[graphNodeActions]"
 
+
 listNodeActions :: R2.Leaf NodeActionsCommon
 listNodeActions = R2.leafComponent listNodeActionsCpt
 listNodeActionsCpt :: R.Component NodeActionsCommon
@@ -334,4 +335,3 @@ listNodeActionsCpt = here.component "listNodeActions" cpt where
                  , nodeType: GT.TabNgramType GT.CTabTerms } }
     where
       errorHandler = logRESTError here "[listNodeActions]"
-

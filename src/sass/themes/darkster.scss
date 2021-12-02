@@ -1,6 +1,19 @@
 /*! Themestr.app `Darkster` Bootstrap 4.3.1 theme */
+
+@import '../../../node_modules/bootstrap/scss/functions';
+@import '../../../node_modules/bootstrap/scss/variables';
+@import '../../../node_modules/bootstrap/scss/mixins';
+
+
+// Theme variable overrides
+//-------------------------
+
+// Fonts
+
 @import url(https://fonts.googleapis.com/css?family=Comfortaa:200,300,400,700);
 $headings-font-family:Comfortaa;
+
+// Colors
 
 /*$enable-grid-classes:false;*/
 $primary:#FF550B;
@@ -12,10 +25,22 @@ $warning:#0DE2EA;
 $light:#e8e8e8;
 $dark:#000000;
 
-/*! Import Bootstrap 4 variables */
-@import "../../../node_modules/bootstrap/scss/functions";
-@import "../../../node_modules/bootstrap/scss/variables";
+$theme-colors: (
+  'primary': $primary,
+  'secondary': $secondary,
+  'success': $success,
+  'danger': $danger,
+  'info': $info,
+  'warning': $warning,
+  'light': $light,
+  'dark': $dark
+);
 
+// Add more shades to gray
+$gray-150: #FAFAFA;
+$gray-175: #F0F0F0;
+
+// Misc...
 $enable-shadows:true;
 $gray-300:#000000;
 $gray-800:#555555;
@@ -71,11 +96,24 @@ $list-group-disabled-color:$gray-800;
 $list-group-disabled-bg:$black;
 $list-group-action-color:$white;
 $breadcrumb-active-color:$gray-500;
-@import "../../../node_modules/bootstrap/scss/bootstrap";
 
-// Add SASS theme customizations here..
-@import "../abstract/_members";
-@import "./common";
+
+// (importing Bootstrap)
+@import '../../../node_modules/bootstrap/scss/bootstrap';
+
+
+// Project variables
+//------------------
+
+@import '../_abstract';
+@import '../_modules';
+@import "../_components";
+@import "../_base";
+@import "../_legacy";
+
+
+// Custom rules specific to the theme
+//-----------------------------------
 
 .navbar-dark.bg-primary {background-color:#111111 !important;}
 .table.able {color:#ccccc5}

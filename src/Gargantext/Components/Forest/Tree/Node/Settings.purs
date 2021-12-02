@@ -24,7 +24,7 @@ data NodeAction = Documentation NodeType
                 | Clone
                 | AddingContact
                 | CloseNodePopover
-                | WriteNodesDocuments  -- https://gitlab.iscpif.fr/gargantext/purescript-gargantext/issues/331  
+                | WriteNodesDocuments  -- https://gitlab.iscpif.fr/gargantext/purescript-gargantext/issues/331
 
 ------------------------------------------------------------------------
 instance Eq NodeAction where
@@ -223,7 +223,8 @@ settingsBox Phylo =
   SettingsBox { show : true
               , edit : true
               , doc  : Documentation Phylo
-              , buttons : [ Delete
+              , buttons : [ Refresh
+                          , Delete
                           ]
               }
 
@@ -383,7 +384,7 @@ settingsBox _ =
 
 -- | SubTree Parameters
 
-moveParameters = { subTreeParams : SubTreeParams 
+moveParameters = { subTreeParams : SubTreeParams
                                  { showtypes: [ FolderPrivate
                                               , FolderShared
                                               , Team
@@ -399,7 +400,7 @@ moveParameters = { subTreeParams : SubTreeParams
                   }
 
 
-moveFrameParameters = { subTreeParams : SubTreeParams 
+moveFrameParameters = { subTreeParams : SubTreeParams
                                  { showtypes: [ FolderPrivate
                                               , FolderShared
                                               , Team
@@ -422,7 +423,7 @@ moveFrameParameters = { subTreeParams : SubTreeParams
 
 
 linkParams :: NodeType -> {subTreeParams :: SubTreeParams}
-linkParams nodeType =  { subTreeParams : SubTreeParams 
+linkParams nodeType =  { subTreeParams : SubTreeParams
                               { showtypes: [ FolderPrivate
                                            , FolderShared
                                            , Team
@@ -444,5 +445,3 @@ publishParams =  { subTreeParams : SubTreeParams
                                            ]
                               }
                }
-
-

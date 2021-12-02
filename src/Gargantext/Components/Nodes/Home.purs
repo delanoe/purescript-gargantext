@@ -102,7 +102,7 @@ joinButtonOrTutorial boxes sessions click =
   if Sessions.null sessions
   then joinButton click
   else tutorial { boxes, sessions: Sessions.unSessions sessions }
-     
+
 joinButton :: forall e. (e -> Effect Unit) -> R.Element
 joinButton click =
   -- TODO Add G.C.L.F.form -- which backend to use?
@@ -111,7 +111,7 @@ joinButton click =
         , style: { paddingTop: "100px", paddingBottom: "100px" } }
         [ H.button { className: buttonClass, title, on: { click } } [ H.text "Log in" ] ] where
     title = "Connect to the server"
-    divClass = "flex-space-around d-flex justify-content-center" 
+    divClass = "flex-space-around d-flex justify-content-center"
     buttonClass = "btn btn-primary btn-lg btn-block"
 
 incompatible :: String
@@ -144,7 +144,7 @@ summary =
       H.div { className: "alert " <> class' }
       [ H.li {}
         [ H.h4 {} [ H.text name ]
-        , H.ol {} (map toSummary tutos) ] ]          
+        , H.ol {} (map toSummary tutos) ] ]
     toSummary (Tuto x) = H.li {} [ H.a {href: "#" <> x.id} [ H.text x.title ]]
 
 type TutorialProps =
@@ -180,7 +180,7 @@ tutorialCpt = here.component "tutorial" cpt where
       makeFolders :: Array Session -> Array R.Element
       makeFolders s = sessionToFolder <$> s
         where
-          sessionToFolder session@(Session {treeId, username, backend}) = 
+          sessionToFolder session@(Session {treeId, username, backend}) =
             H.span { className: "folder" } [
               H.div { className: "d-flex justify-content-center" } [ H.text (username <> "@" <> (cleanBackendUrl backend)) ]
             , H.div {} [ FV.folderView { backFolder: false
@@ -236,7 +236,7 @@ playTutos = []
   -- , Tuto { title : "Delete your corpus"
   --        , id    : "video_tutorial_1.mp4#t=179,182"
   --        , text  : "Each node can be deleted with its children." }
-  -- ]    
+  -- ]
 
 expertTutos :: Array Tuto
 expertTutos = []
@@ -297,7 +297,7 @@ docButton (Button b) =
   H.a { className, href: b.href, target: "blank", title: b.title }
   [ H.span { aria: { hidden: true }, className: "fa fa-hand-right" } []
   , H.text b.text ] where
-    className = "btn btn-outline-primary btn-sm spacing-class"
+    className = "btn btn-outline-secondary btn-sm spacing-class"
 
 -- | TODO
 -- <img src='logo.png' onmouseover="this.src='gargantextuel.png';" onmouseout="this.src='logo.png';" />
@@ -315,4 +315,3 @@ imageEnter (LandingData hd) action =
   [ H.div {className: "col-md-offset-5 col-md-6 content"}
     [ H.img { src, action, id: "funnyimg", title: hd.imageTitle } ] ] where
       src = "images/Gargantextuel-212x300.jpg"
-  

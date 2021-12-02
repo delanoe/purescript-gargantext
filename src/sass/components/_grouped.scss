@@ -1,0 +1,177 @@
+/** @TODO: use JS Toolkit to create individual SASS files for
+***        existing PS components
+**/
+@use "sass:math" as math;
+
+
+/// FormInput
+///-----------------------------------------------------------------------------
+
+.b-form-input {
+
+  &[type=password] {
+    letter-spacing: space-x(1);
+    font-weight: 700;
+  }
+}
+
+/// Modal
+///-----------------------------------------------------------------------------
+
+.b-modal {
+  $self: &;
+  $wrapper-margin: 1.75rem; // from "_modal.scss"
+
+  &--visible {
+    display: block;
+  }
+
+  &__content {
+    background-color: $modal-content-bg;
+    max-height: calc(100% - #{ $wrapper-margin * 2 } );
+    overflow: auto;
+  }
+
+  &__header {
+    background-color: $card-cap-bg;
+
+    &__content {
+      color: $primary;
+      font-size: 21px;
+    }
+  }
+
+  &__overlay {
+    width: 100%;
+    height: 100%;
+    background-color: mix-alpha($black, 50%);
+    position: absolute;
+
+    &--collapsible {
+      cursor: pointer;
+    }
+  }
+
+  // @at-root body.modal-open {
+    // overflow: hidden;
+  // }
+}
+
+/// Spinner
+///-----------------------------------------------------------------------------
+
+.b-spinner {
+  // regarding sizing, Bootstrap set a default `2rem ^ 2rem`
+  // (cf. "_spinners.scss")
+  font-size: inherit;
+}
+
+
+/// Button
+///-----------------------------------------------------------------------------
+
+
+.b-button {
+  $spinner-size: 20px;
+  $self: &;
+
+  @include clickable();
+
+  position: relative;
+
+  // (!) `translate` CSS modifiers won't work with bootstrap spinner
+  &__spinner {
+    position: absolute;
+    left: calc(50% - #{ math.div($spinner-size, 2) });
+    top: calc(50% - #{ math.div($spinner-size, 2) });
+    width: $spinner-size;
+    height: $spinner-size;
+  }
+
+  &--disabled,
+  &--deferred,
+  &--idled {
+    @include unclickable();
+  }
+
+  &--deferred {
+
+    #{ $self }__inner {
+      visibility: hidden;
+    }
+  }
+
+  // icon alignement
+  .b-icon::before {
+    line-height: $btn-line-height;
+  }
+}
+
+
+/// Fieldset
+///-----------------------------------------------------------------------------
+
+.b-fieldset {
+  $margin: space-x(2);
+
+  position: relative;
+  border: $card-border-width solid $card-border-color;
+  border-radius: $card-border-radius;
+  padding-left: $margin;
+  padding-right: $margin;
+  padding-bottom: $margin;
+  padding-top: calc( #{ $margin } + #{ $headings-margin-bottom } );
+  background-color: inherit;
+
+  &__legend {
+    position: absolute;
+    top: 0;
+    font-size: $headings-font-family;
+    font-weight: $headings-font-weight;
+    color: $gray-600;
+    line-height: $headings-line-height;
+    margin: #{ - $headings-margin-bottom } 0 0;
+    padding-left: $margin / 2;
+    padding-right: $margin / 2;
+    background-color: inherit;
+  }
+}
+
+/// PhyloExplorer.ConfigForm
+///-----------------------------------------------------------------------------
+
+.phylo-config-form {
+
+
+  &__row {
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  &__group {
+    // @TODO: generic "form-group" margin-bottom constant
+    margin-bottom: space-x(3);
+  }
+
+  .b-fieldset {
+    margin-left: $card-spacer-x;
+    margin-right: $card-spacer-x;
+  }
+
+  &__col {
+    width: 50%;
+
+    &:first-child {
+      padding-right: space-x(1);
+    }
+
+    &:last-child {
+      padding-left: space-x(1);
+    }
+  }
+
+  &__submit {
+    text-align: center;
+  }
+}

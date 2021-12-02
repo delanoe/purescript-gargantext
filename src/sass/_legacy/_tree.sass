@@ -1,5 +1,3 @@
-@use "./abstract/_members" as *
-
 $forest-layout-top-teaser-height: 24px
 $forest-layout-bottom-teaser-height: 24px // ~line-height to 1.5 (covering tree)
 $node-popop-radius: 6px
@@ -23,6 +21,13 @@ body > .tree ul > li:first-child::before
   top: 12px
 
 li
+  a
+    // color: map_get($theme-colors, 'primary')
+    color: $primary
+  a:hover
+    // color: darken( map_get($theme-colors, 'primary'), 15% )
+    color: darken($primary, 15%)
+
   .leaf
     display: flex
     flex-direction: row
@@ -48,8 +53,6 @@ li
     &:hover
       a.settings
         visibility: visible
-
-.tree
 
   ul
     li
@@ -80,6 +83,8 @@ li
           background-color: #000
         &::before
           background-color: #000
+
+
 
   .lefthanded
     .leaf
@@ -355,7 +360,11 @@ li
   &::-webkit-scrollbar
     display: none
 
-  transition: border 150ms
+  @include right-handed
+    border-right: 2px solid $border-color
+
+  @include left-handed
+    border-left: 2px solid $border-color
 
 
 .forest-layout-action
@@ -375,47 +384,28 @@ li
     &__button
       margin-left: space-x(2)
 
-// UX addition: visually delimiting the sidebar on hover
-// -- for now in "_common.scss" file (see @TODO: More SASS structure)
 
-// UX best pratice: when a lengthy column is overflowy hidden (with a scroll), a teaser
-// UI element shows to the user that a scroll is possible
+// UX best pratice: when a lengthy column is overflowy hidden (with a scroll),
+// a teaser UI element shows to the user that a scroll is possible
 .forest-layout-bottom-teaser
-  $width: 16.6666666667%    // simulate "col-2" sidebar attributes
-  $minus-parent-border: 1px // border size of the sidebar on hover
+  @include bottom-teaser
 
-  z-index: 1 // @TODO z-index stacking context management
-
+  z-index: z-index('forest-layout', 'teaser')
   pointer-events: none
-  position: fixed
+  position: sticky
   bottom: 0
   height: $forest-layout-bottom-teaser-height
-  width: calc(#{ $width } - #{ $minus-parent-border})
-  // background -- for now in "_common.scss" file (@TODO: More SASS structure)
-
-  @include right-handed
-    left: 0
-
-  @include left-handed
-    right: 0
+  width: 100%
 
 .forest-layout-top-teaser
-  $minus-parent-border: 1px // border size of the sidebar on hover
+  @include top-teaser
 
-  z-index: 1 // @TODO z-index stacking context management
-
+  z-index: z-index('forest-layout', 'teaser')
   pointer-events: none
   position: sticky
   top: 0
   height: $forest-layout-top-teaser-height
-  width: calc(100% - #{ $minus-parent-border})
-  // background -- for now in "_common.scss" file (@TODO: More SASS structure)
-
-  @include right-handed
-    left: 0
-
-  @include left-handed
-    right: 0
+  width: 100%
 
 
 .forest-layout-content
@@ -430,6 +420,11 @@ li
     &:last-child
       margin-bottom: $forest-layout-bottom-teaser-height
 
+
+  .fa.fa-spinner,
+  .tree .fa.fa-spinner
+    color: $primary
+
 /////////////////////////////////////////
 
 .ids-selector
@@ -439,3 +434,45 @@ li
       .leaf
         input
           margin: 0.1em
+
+/////////////////////////////////////////
+
+.main-page__horizontal-tiles
+  border-top: 2px solid $border-color
+
+  .tile-block:not(:first-child)
+    border-left: 2px solid $border-color
+
+
+.main-page__vertical-tiles
+  border-left: 2px solid $border-color
+
+  .tile-block:not(:first-child)
+    border-top: 2px solid $border-color
+
+
+.tile-menu__popover
+  border-radius: $border-radius
+  background-color: $body-bg
+
+/////////////////////////////////////////
+
+.phylo-config-form
+
+  // @TODO: manage background color for all node Box popup
+  background-color: $card-bg
+
+  // @TODO: manage the blue color set on all node Box popup
+  color: $body-color
+
+  &__group
+    padding-left: $card-spacer-x
+    padding-right: $card-spacer-x
+
+  // Apply Bootstrap "cart-footer" rules (see "_card.scss")
+  &__submit
+
+    padding: $card-spacer-y $card-spacer-x
+    color: $card-cap-color
+    background-color: $card-cap-bg
+    border-top: $card-border-width solid $card-border-color

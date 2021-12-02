@@ -46,3 +46,5 @@ bundle.js
 /dist/js/**/*.map
 /dist/styles/**/*.map
 
+# IDE specific
+.vscode

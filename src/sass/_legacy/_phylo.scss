@@ -1,0 +1,678 @@
+///  (!) Heads up: custom web font & SVG text BBox
+///
+///  There is a lot of inconvenience to use a non-safe web font with Chromium
+///  engine and SVG (for example: [1], [2], [3], [4])
+///
+///  Main issues are:
+///    - browser engine late loading: creating a race condition where the
+///      SVG text is rendered via another default fallback webfont than
+///      the one we have set
+///    - browser engine non compliancy with certain font file type: creating
+///      potential unanticipated issue
+///
+///  Empirically, we have found that even with a safe lazy loading (ie.
+///  using `<Promise> document.fonts.ready`), results were not satisfying
+///  with the original font used in the default Memiescape ("Inter-regular")
+///
+///  Our workaround here has been to KISS via removing every CSS rules
+///  created with the "Inter-regular" font. Instead it will fallback of the
+///  application set font ; which with our default theme worked very well
+///  to our need AND mimicking almost perfectly the "Inter-regular" one
+///
+///  [1] https://stackoverflow.com/questions/16426223/why-svg-bbox-method-on-text-element-gives-different-result-in-different-browser
+///  [2] https://stackoverflow.com/questions/38270865/why-does-svg-viewed-in-chrome-51-not-position-correctly-with-added-gap-after-tex
+///  [3] https://stackoverflow.com/questions/14789059/pixel-perfect-consistent-text-width-in-svg-or-html
+///  [4] https://stackoverflow.com/questions/41059999/text-tag-in-svg-not-rendering-correctly-in-chrome
+
+/* Grid constants */
+
+$topbar-height: 56px; // ~ unworthy empirical value (@TODO topbar height calculation)
+$graph-margin: 16px;
+
+$layout-height: calc(100vh - #{ $topbar-height} );
+$graph-height: calc(100vh - #{ $topbar-height } - #{ $graph-margin * 2 });
+
+$isoline-height: 174px;
+
+$left-column-width: 10%;
+$center-column-width: 85%;
+$right-column-width: 5%;
+
+/* Topbar constants */
+
+$topbar-input-width: 304px;
+
+/* Sidebar constant */
+
+$sidebar-width: 480px;
+$sidebar-height: calc(100vh - #{ $topbar-height });
+$tab-margin-x: space-x(2.5);
+
+/* Colors */
+
+$graph-background-color: $body-bg;
+$graph-layout-line-color: #EBE4DD;
+$graph-text-color: #0D1824;
+$graph-heading-color: #B5B5B5;
+
+$visible-peak: #0D1824;
+$hidden-peak: #A9A9A9;
+
+$mark-default: #4A5C70;
+$mark-hover: #F3BE54;
+$mark-focus: #F24C3D;
+$mark-unfocus: #FFECEC;
+
+$group-unfocus: #A9A9A9;
+
+$source-focus: #A6BDDB;
+
+$isoline-background-color: $gray-150;
+$isoline-stroke-color: #74B5FF;
+
+$fill-default-color: #61A3A9;
+$fill-idle-color: #F5EEE6;
+
+$emergence-color: #012840;
+$decreasing-color: #11638F;
+
+////////////////////////////////////////////////////////////////
+
+/// (?) SVG related classes (isoline, scape)
+
+.phylo {
+
+  /* ---------- axis ---------- */
+
+  .x-axis path {
+    stroke: $graph-layout-line-color;
+    stroke-width: 1.5px;
+  }
+
+  .y-axis path {
+    stroke:$graph-layout-line-color;
+    stroke-width: 1.5px;
+  }
+
+  .y-highlight {
+    stroke: $mark-hover;
+    stroke-width: 1.5px;
+  }
+
+  .x-mark {
+    fill: $mark-default;
+    stroke-width: 1px;
+    stroke: $graph-background-color;
+  }
+  // (!) unused class
+  .x-mark-over {
+    fill: $mark-hover;
+  }
+  // (!) unused class
+  .x-mark-focus {
+    fill: $mark-focus;
+  }
+
+  .tick text:hover {
+    cursor: pointer;
+  }
+
+  .y-label {
+    font-size: 10px;
+    font-weight: normal;
+  }
+  // (!) unused class (see `Resources.js:groupOver`)
+  .y-label-bold {
+    font-size: 12px;
+    font-weight: bold;
+  }
+
+  .y-mark-year-inner {
+    fill: $mark-default;
+  }
+  // (!) unused class (see `Resources.js:groupOver`)
+  .y-mark-year-inner-highlight {
+    fill: $mark-hover;
+  }
+
+  .y-mark-year-outer {
+    fill: $graph-background-color;
+    stroke: $mark-default;
+    stroke-width: 1px;
+  }
+  // (!) unused class (see `Resources.js:groupOver`)
+  .y-mark-year-outer-highlight {
+    fill: $graph-background-color;
+    stroke: $mark-hover;
+    stroke-width: 3px;
+  }
+
+  .y-mark-month {
+    fill: $mark-default;
+  }
+
+  /* ---------- header ---------- */
+
+  .header {
+    fill: $emergence-color;
+    cursor: pointer;
+  }
+
+  .header-wrapper {
+    display: none;
+    fill: $graph-background-color;
+    filter: drop-shadow(0px 3px 3px rgba(0, 0, 0, 0.1));
+
+    &--hover {
+      display: initial;
+    }
+  }
+
+
+  /* ---------- group ---------- */
+
+  .group-outer {
+    stroke-width: 0.8px;
+    stroke: $graph-background-color;
+    fill: $graph-background-color;
+  }
+
+  .group-inner {
+    stroke-width: 0.8px;
+    stroke: $graph-text-color;
+    fill: $graph-text-color;
+    /*cursor: pointer;*/
+    z-index: 10;
+  }
+
+  .group-heading {
+    fill: $graph-background-color;
+    stroke: $graph-heading-color;
+  }
+
+  .group-focus {
+    stroke: $mark-focus;
+  }
+
+  .source-focus {
+    stroke: $isoline-stroke-color;
+    // @NOTE #219: single source of truth for color management (HTML attribute
+    //             style takes precedence over CSS ones)
+    fill: $source-focus !important;
+  }
+
+  .group-unfocus {
+    stroke: $group-unfocus;
+  }
+
+  .group-path {
+    cursor: pointer;
+  }
+
+  /* ---------- labels ---------- */
+
+  .ngrams {
+    visibility:  hidden;
+  }
+
+  .term {
+    cursor: pointer;
+  }
+
+  .term:hover {
+    font-weight: bold;
+  }
+
+  // .term-unfocus {
+  //   fill: #A9A9A9;
+  // }
+
+  // .term-focus {
+  //   fill: black;
+  // }
+
+  .term-path {
+    fill: none;
+    stroke: $mark-focus;
+    stroke-width: 1.5px;
+  }
+
+  .emerging {
+    /*text-decoration: underline #F0684D;*/
+    /*fill:#5AA350;*/
+    /*fill: #5AA350;*/
+    fill: $mark-focus;
+  }
+
+  .decreasing {
+    /*text-decoration: underline #74B5FF;*/
+    fill: $decreasing-color;
+  }
+
+  .path-focus {
+    fill: none;
+    stroke: $mark-focus;
+    stroke-width: 1.5px;
+  }
+
+  .path-unfocus {
+    stroke: $group-unfocus;
+  }
+
+  .path-heading {
+    stroke: $graph-heading-color;
+  }
+
+  /* ---------- phylo ---------- */
+
+  .branch-hover {
+    fill: $mark-hover;
+    opacity: 0.5;
+  }
+
+  /* isoline */
+
+  .peak {
+    stroke: $graph-background-color;
+    stroke-width: 1px;
+    font-size: 18px;
+    text-anchor: middle;
+    visibility: visible;
+  }
+
+  .peak-over {
+    font-size: 18px;
+    stroke-width: 2px;
+    cursor: pointer;
+    stroke: $mark-hover;
+    z-index: 100;
+  }
+
+  .peak-focus {
+    font-size: 18px;
+    stroke-width: 2px;
+    stroke: $mark-focus;
+  }
+
+  .peak-focus-source {
+    font-size: 18px;
+    stroke-width: 2px;
+    stroke: $isoline-stroke-color;
+  }
+
+  .peak-label {
+    text-align: center;
+    font-size: 14px;
+    font-style: normal;
+    font-weight: 400;
+    color: $graph-background-color;
+    border-radius: 3px;
+    border-style: solid;
+    border-width: 2px;
+    border-color: $graph-background-color;
+    background: $visible-peak;
+    padding: 5px;
+    z-index: 10;
+    position: absolute;
+    visibility: hidden;
+  }
+
+}
+
+////////////////////////////////////////////////////////////////
+
+.phylo {
+  position: relative;
+  width: 100%;
+  height: $layout-height;
+
+  &--preloading {
+    // (!) As the drawing process need must have all its elements displayed,
+    //     the browser scrollbar will flicker during the process
+    //     So during this time (in addition to the preloader spinner), we
+    //     ensure the height of the layout does not exceed the browser height
+    //     limit, hence avoiding a flickering effect
+    overflow: hidden;
+  }
+
+  &__spinner-wrapper {
+    @include fit-positions;
+
+    position: absolute;
+    z-index: z-index("phylo-layout", "spinner");
+    background: $body-bg;
+  }
+
+  &__spinner {
+    $size: 100px;
+    $weight: 6px;
+
+    position: absolute;
+    font-size: $weight;
+    height: $size;
+    width: $size;
+    // (?) `centered` mixin will not work here, due to Bootstrap process
+    //     interfering with the transform rule
+    top: calc( 50% - #{ $size / 2 } );
+    left: calc( 50% - #{ $size / 2 } );
+  }
+
+  &__sidebar {
+    position: fixed;
+    width: $sidebar-width;
+    height: $sidebar-height;
+    z-index: z-index('phylo-layout', 'sidebar');
+
+    @include right-handed {
+      right: 0;
+      border-left: 1px solid $border-color;
+    }
+
+    @include left-handed {
+      left: 0;
+      border-right: 1px solid $border-color;
+    }
+
+  }
+}
+
+
+////////////////////////////////////////////////////////////////
+
+.phylo-isoline {
+  display: flex;
+  position: relative;
+  height: $isoline-height;
+  background-color:$isoline-background-color;
+  border-bottom: 1px solid $border-color;
+  user-select: none;
+
+  // @XXX: Annoying UI artefact where the SVG breaks its provided size
+  //       This might be due to the underlying ratio of the matrix placement
+  //       (ie. for a given "height", it forces a "width")
+  //
+  //          ↳ Workaround here is to limit the size of the SVG (its only
+  //            a patch surgery, as the `Element.width` property will still
+  //            be at its wrong value)
+  svg {
+    max-width: 100%;
+  }
+}
+
+////////////////////////////////////////////////////////////////
+
+.phylo-margin {
+  height: $graph-margin;
+}
+
+.phylo-grid {
+  position: relative;
+  user-select: none;
+
+  &__content {
+    display: flex;
+    height: $graph-height;
+    position: relative;
+  }
+
+  &__blueprint {
+    @include fit-positions();
+
+    display: flex;
+    height: $graph-height;
+    position: absolute;
+    visibility: hidden;
+
+    &__left {
+      width: $left-column-width;
+      height: inherit;
+    }
+    &__center {
+      width: $center-column-width;
+      height: inherit;
+    }
+    &__right {
+      width: $right-column-width;
+      height: inherit;
+    }
+  }
+
+  &__content {
+
+    &__scape {
+      width: calc( #{ $left-column-width } + #{ $center-column-width });
+    }
+  }
+}
+
+////////////////////////////////////////////////////////////////
+
+.phylo-topbar {
+  $margin: space-x(0.5);
+  $fixed-button-width: 136px;
+
+  @include aside-topbar();
+
+  padding-left: $margin;
+  padding-right: $margin;
+  display: flex;
+
+  &__toolbar,
+  &__sidebar {
+    width: $fixed-button-width;
+    margin-left: $margin;
+    margin-right: $margin;
+  }
+
+  &__source {
+    width: $topbar-input-width;
+    margin-left: $margin;
+    margin-right: $margin;
+  }
+
+  &__autocomplete {
+    display: flex;
+    width: $topbar-input-width;
+    position: relative;
+    margin-left: $margin;
+    margin-right: $margin;
+  }
+
+  &__suggestion {
+    // as the input is above the "search" one, and is used only as an
+    // autocompletion term, we remove every interaction on it...
+    pointer-events: none;
+    // ...overriding Bootstrap native rules to just display its text node to
+    // the user
+    &.form-control {
+      border-color: transparent;
+    }
+  }
+
+  &__search {
+    z-index: 1;
+    position: absolute;
+    // (see above comment about "suggestion")
+    &.form-control {
+      background-color: transparent;
+    }
+  }
+
+  &__submit {
+    display: none;
+  }
+}
+
+////////////////////////////////////////////////////////////////
+
+.phylo-sidebar {
+  $teaser-height: 16px;
+
+  background-color: $body-bg;
+  height: 100%;
+
+  // avoiding ugly scrollbar
+  scrollbar-width: none;
+  overflow-y: scroll;
+  overflow-x: visible;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  // adjust nav menu gutter (@TODO: generic?)
+  &__menu .nav-item {
+
+    &:first-child {
+      margin-left: space-x(2);
+    }
+
+    &:last-child {
+      margin-right: space-x(2);
+    }
+  }
+
+  // UX best pratice: when a lengthy column is overflowy hidden
+  // (with a scroll), a teaser UI element shows to the user that a scroll
+  // is possible
+  &__top-teaser {
+    @include top-teaser;
+
+    z-index: z-index('phylo-sidebar', 'teaser');
+    pointer-events: none;
+    position: sticky;
+    top: 0;
+    height: $teaser-height;
+    width: 100%;
+  }
+
+  &__bottom-teaser {
+    @include bottom-teaser;
+
+    z-index: z-index('phylo-sidebar', 'teaser');
+    pointer-events: none;
+    position: sticky;
+    bottom: 0;
+    height: $teaser-height;
+    width: 100%;
+  }
+}
+
+.phylo-details-tab {
+  $margin-x: $tab-margin-x;
+  $margin-y: space-x(2);
+
+  &__counter {
+    margin: $margin-y $margin-x;
+
+    &__item {
+      margin-left: space-x(2);
+      list-style: initial;
+    }
+
+    &__value {
+      font-weight: bold;
+    }
+  }
+
+  &__delimiter {
+    margin: $margin-y $margin-x;
+  }
+
+  &__link {
+    margin: $margin-y $margin-x;
+  }
+}
+
+.phylo-selection-tab {
+  $margin-x: $tab-margin-x;
+  $margin-y: space-x(2);
+
+  &__highlight {
+    margin: $margin-y $margin-x;
+
+    &__badge {
+      font-size: $font-size-base;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    &__type {
+      padding: $badge-padding-y $badge-padding-x;
+      font-weight: bold;
+    }
+  }
+
+  &__selection {
+    margin: $margin-y $margin-x 0;
+
+    &__item {
+      white-space: normal;
+      word-break: break-word;
+      // remove "_reboot.scss" line height
+      line-height: initial;
+
+      &:not(:last-child) {
+        margin-bottom: space-x(0.75);
+      }
+    }
+
+    &__show-more {
+      margin-top: $margin-y;
+    }
+  }
+
+  &__counter {
+
+    &__item {
+      margin-left: space-x(2);
+      list-style: initial;
+    }
+
+    &__value {
+      color: $info;
+    }
+  }
+
+  &__nil {
+    margin: $margin-y $margin-x
+  }
+
+  &__separator {
+    color: $gray-500;
+    text-align: center;
+  }
+}
+
+////////////////////////////////////////////////////////////////
+
+.phylo-toolbar {
+  $section-margin: space-x(2.5);
+  $button-margin: space-x(2);
+
+  display: flex;
+  border-bottom: 1px solid $border-color;
+  padding: $section-margin;
+  background-color: $body-bg;
+
+  &__gap {
+    width: $button-margin;
+    display: inline-block;
+  }
+
+  @include right-handed {
+    flex-direction: row;
+
+    &__section {
+      margin-right: $section-margin;
+    }
+  }
+
+  @include left-handed {
+    flex-direction: row-reverse;
+
+    &__section {
+      margin-left: $section-margin;
+    }
+  }
+}

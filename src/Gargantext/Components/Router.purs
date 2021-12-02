@@ -17,7 +17,6 @@ import Gargantext.Components.Forest as Forest
 import Gargantext.Components.GraphExplorer as GraphExplorer
 import Gargantext.Components.GraphExplorer.Sidebar as GES
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
-import Gargantext.Components.GraphExplorer.TopBar as GETB
 import Gargantext.Components.Lang (LandingLang(LL_EN))
 import Gargantext.Components.Login (login)
 import Gargantext.Components.Nodes.Annuaire (annuaireLayout)
@@ -28,6 +27,7 @@ import Gargantext.Components.Nodes.Corpus.Code (corpusCodeLayout)
 import Gargantext.Components.Nodes.Corpus.Dashboard (dashboardLayout)
 import Gargantext.Components.Nodes.Corpus.Document (documentMainLayout)
 import Gargantext.Components.Nodes.Corpus.Phylo (phyloLayout)
+import Gargantext.Components.Nodes.Corpus.Phylo as PhyloExplorer
 import Gargantext.Components.Nodes.File (fileLayout)
 import Gargantext.Components.Nodes.Frame (frameLayout)
 import Gargantext.Components.Nodes.Home (homeLayout)
@@ -41,7 +41,8 @@ import Gargantext.Routes (AppRoute, Tile)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, WithSession)
 import Gargantext.Sessions as Sessions
-import Gargantext.Types (CorpusId, Handed(..), ListId, NodeID, NodeType(..), SessionId, SidePanelState(..), reverseHanded)
+import Gargantext.Types (CorpusId, Handed(..), ListId, NodeID, NodeType(..), SessionId, SidePanelState(..))
+import Gargantext.Utils.Reactix (getElementById)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -66,22 +67,36 @@ router = R2.leafComponent routerCpt
 routerCpt :: R.Component Props
 routerCpt = here.component "router" cpt where
   cpt { boxes: boxes@{ handed } } _ = do
+    -- States
     handed'       <- T.useLive T.unequal handed
 
-    let handedClassName = case handed' of
-          LeftHanded  -> "left-handed"
-          RightHanded -> "right-handed"
+    -- Effects
+    let
+      handedClassName = case _ of
+        LeftHanded  -> "left-handed"
+        RightHanded -> "right-handed"
 
+    R.useEffect1' handed' $
+      getElementById "app" >>= case _ of
+        Nothing  -> pure unit
+        Just app -> do
+          R2.removeClass app
+            [ handedClassName LeftHanded
+            , handedClassName RightHanded
+            ]
+          R2.addClass app [ handedClassName handed' ]
+
+    -- Render
     pure $ R.fragment
-      ([ loginModal { boxes }
-       , topBar { boxes }
+      [ loginModal { boxes }
+       , TopBar.topBar { boxes }
        , errorsView { errors: boxes.errors } []
-       , H.div { className: handedClassName <> " router-inner" } $ reverseHanded handed' $
+       , H.div { className: "router-inner" }
          [ forest { boxes }
          , mainPage { boxes }
          , sidePanel { boxes }
          ]
-       ])
+       ]
 
 
 loginModal :: R2.Leaf Props
@@ -94,18 +109,6 @@ loginModalCpt = here.component "loginModal" cpt
 
         pure $ if showLogin' then login' boxes else H.div {} []
 
-topBar :: R2.Leaf Props
-topBar = R2.leafComponent topBarCpt
-topBarCpt :: R.Component Props
-topBarCpt = here.component "topBar" cpt where
-  cpt { boxes: boxes@{ route } } _ = do
-    route' <- T.useLive T.unequal route
-
-    let children = case route' of
-          GR.PGraphExplorer _s _g -> [ GETB.topBar { boxes } ]
-          _                       -> []
-
-    pure $ TopBar.topBar { boxes } children
 
 mainPage :: R2.Leaf Props
 mainPage = R2.leafComponent mainPageCpt
@@ -425,25 +428,45 @@ graphExplorerCpt :: R.Component SessionNodeProps
 graphExplorerCpt = here.component "graphExplorer" cpt where
   cpt props@{ boxes
             , nodeId } _ = do
-    let sessionProps = RE.pick props :: Record SessionProps
-    pure $ authed (Record.merge { content: \session ->
-                                   GraphExplorer.explorerLayoutWithKey { boxes
-                                                                       , graphId: nodeId
-                                                                       , key: "graphId-" <> show nodeId
-                                                                       , session } [] } sessionProps) []
---                                   GraphExplorer.explorerLayout { boxes
---                                                                , graphId: nodeId
---                                                                , session } [] } sessionProps) []
+    let
+      sessionProps = RE.pick props :: Record SessionProps
+
+      authedProps =
+        Record.merge
+        { content:
+            \session -> GraphExplorer.explorerLayoutWithKey
+                        { boxes
+                        , graphId: nodeId
+                        , key: "graphId-" <> show nodeId
+                        , session }
+                        []
+        }
+        sessionProps
+
+    pure $ authed authedProps []
+
+
 phyloExplorer :: R2.Component SessionNodeProps
 phyloExplorer = R.createElement phyloExplorerCpt
 phyloExplorerCpt :: R.Component SessionNodeProps
-phyloExplorerCpt = here.component "phylo" cpt
-  where
-    cpt props@{ nodeId } _ = do
-      let sessionProps = RE.pick props :: Record SessionProps
-      pure $ authed (Record.merge { content: \session ->
-                                     phyloLayout { nodeId, session } [] } sessionProps) []
+phyloExplorerCpt = here.component "phylo" cpt where
+  cpt props@{ boxes
+            , nodeId } _ = do
+    let
+      sessionProps = (RE.pick props :: Record SessionProps)
 
+      authedProps =
+        Record.merge
+        { content:
+            \session -> PhyloExplorer.phyloLayout
+                        { boxes
+                        , nodeId
+                        , session
+                        }
+        }
+        sessionProps
+
+    pure $ authed authedProps []
 
 
 home :: R2.Component Props

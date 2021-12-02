@@ -3,9 +3,13 @@ module Gargantext.Components.PhyloExplorer.Types
   , parsePhyloJSONSet
   , Branch(..), Period(..), Group(..)
   , Link(..), AncestorLink(..), BranchLink(..)
-  , GlobalTerm(..)
+  , Term(..)
   , Source(..)
   , sortSources
+  , DisplayView(..)
+  , TabView(..)
+  , ExtractedTerm(..)
+  , ExtractedCount(..)
   ) where
 
 import Gargantext.Prelude
@@ -15,15 +19,18 @@ import Data.Date as Date
 import Data.Generic.Rep (class Generic)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), maybe)
+import Data.Newtype (class Newtype)
 import Data.Number as Number
 import Data.Show.Generic (genericShow)
 import Data.String as String
+import Data.String.Extra (camelCase)
 import Data.Tuple as Tuple
 import Data.Tuple.Nested ((/\))
 import Gargantext.Components.PhyloExplorer.JSON (PhyloJSONSet(..), RawEdge(..), RawObject(..))
+import Simple.JSON as JSON
 
 
--- @WIP PureScript Date or stick to JavaScript foreign?
+-- @NOTE #219: PureScript Date or stick to JavaScript foreign?
 foreign import yearToDate       :: String -> Date.Date
 foreign import stringToDate     :: String -> Date.Date
 foreign import utcStringToDate  :: String -> Date.Date
@@ -63,7 +70,7 @@ parsePhyloJSONSet (PhyloJSONSet o) = PhyloDataSet
   , links
   , name          : o.name
   , nbBranches    : parseInt o.phyloBranches
-  -- @WIP remotely stringify as a Double instead of an Int (?)
+  -- @NOTE #219: remotely stringify as a Double instead of an Int (reason?)
   , nbDocs        : (parseFloat >>> parseInt') o.phyloDocs
   , nbFoundations : parseInt o.phyloFoundations
   , nbGroups      : parseInt o.phyloGroups
@@ -110,12 +117,16 @@ parseBranches
     parse (BranchToNode o) = Just $ Branch
       { bId   : parseInt o.bId
       , gvid  : o._gvid
-      , label : o.label
+      , label : parseLabel o.label
       , x1    : o.branch_x
       , x2    : Tuple.fst $ parsePos o.pos
       , y     : o.branch_y
       }
     parse _                = Nothing
+
+    parseLabel :: String -> String
+    parseLabel =
+      String.replaceAll (String.Pattern "\"") (String.Replacement "")
 
 -----------------------------------------------------------
 
@@ -147,7 +158,7 @@ parsePeriods epoch
 
 newtype Group = Group
   { bId           :: Int
-  , foundation    :: Array Int -- @WIP: Array String ???
+  , foundation    :: Array Int -- @NOTE #219: Array String ???
   , from          :: Date.Date
   , gId           :: Int
   , label         :: Array String
@@ -192,7 +203,7 @@ parseGroups epoch
 newtype Link = Link
   { from    :: Int
   , lId     :: Int
-  , label   :: String -- @WIP: undefined in Mèmiescape v2, still needed?
+  , label   :: String -- @NOTE #219: undefined in Mèmiescape v2, still needed?
   , to      :: Int
   }
 
@@ -207,8 +218,8 @@ parseLinks
   >>> Array.catMaybes
 
   where
-    -- @WIP: necessary?
-    --       bc. GroupToGroup as 1-1 relation with "edgeType=link"
+    -- @NOTE #219: necessary?
+    --             bc. GroupToGroup as 1-1 relation with "edgeType=link"
     filter :: RawEdge -> Boolean
     filter (GroupToGroup o) = o.edgeType == "link"
     filter _                = false
@@ -227,7 +238,7 @@ parseLinks
 newtype AncestorLink = AncestorLink
   { from    :: Int
   , lId     :: Int
-  , label   :: String -- @WIP: undefined in Mèmiescape v2, still needed?
+  , label   :: String -- @NOTE #219: undefined in Mèmiescape v2, still needed?
   , to      :: Int
   }
 
@@ -242,8 +253,9 @@ parseAncestorLinks
   >>> Array.catMaybes
 
   where
-    -- @WIP: necessary?
-    --       bc. GroupToAncestor as 1-1 relation with "edgeType=ancestorLink"
+    -- @NOTE #219: necessary?
+    --             bc. GroupToAncestor as 1-1 relation
+    --             with "edgeType=ancestorLink"
     filter :: RawEdge -> Boolean
     filter (GroupToAncestor o) = o.edgeType == "ancestorLink"
     filter _                   = false
@@ -275,8 +287,9 @@ parseBranchLinks
   >>> Array.catMaybes
 
   where
-    -- @WIP: necessary?
-    --       bc. BranchToGroup as 1-1 relation with "edgeType=branchLink"
+    -- @NOTE #219: necessary?
+    --             bc. BranchToGroup as 1-1 relation
+    --             with "edgeType=branchLink"
     filter :: RawEdge -> Boolean
     filter (BranchToGroup o) = o.edgeType == "branchLink"
     filter _                 = false
@@ -290,14 +303,27 @@ parseBranchLinks
 
 -----------------------------------------------------------
 
-newtype GlobalTerm = GlobalTerm
+newtype Term = Term
   { label :: String
   , fdt   :: String
   }
 
-derive instance Generic GlobalTerm _
-derive instance Eq GlobalTerm
-instance Show GlobalTerm where show = genericShow
+derive instance Newtype Term _
+derive instance Generic Term _
+derive instance Eq Term
+instance Show Term where show = genericShow
+
+-----------------------------------------------------------
+
+newtype ExtractedTerm = ExtractedTerm
+ { label :: String
+ , freq  :: Number
+ , ratio :: Number
+ }
+
+derive instance Generic ExtractedTerm _
+derive instance Eq ExtractedTerm
+instance Show ExtractedTerm where show = genericShow
 
 -----------------------------------------------------------
 
@@ -306,6 +332,7 @@ newtype Source = Source
   , id    :: Int
   }
 
+derive instance Newtype Source _
 derive instance Generic Source _
 derive instance Eq Source
 instance Show Source where show = genericShow
@@ -318,9 +345,12 @@ parseSources
   >>> String.split (String.Pattern ",")
   >>> Array.filter (\s -> not eq 0 $ String.length s)
 
--- @WIP: as some "Draw.js" business's methods still use `source` as an unsorted
---       `Array String`, we have to dissociate the parsing and sorting
---       computation (hence this second method to use for sorting purposes)
+-- @NOTE #219: `Resources.js` business's methods still use `source` as
+--             an unsorted `Array String`, we have to dissociate the parsing
+--             and sorting computation
+--
+--                ↳ Hence the below additionnal method to use for
+--                  sorting purpose only
 sortSources :: Array String -> Array Source
 sortSources
   =   Array.mapWithIndex setSource
@@ -351,9 +381,12 @@ parseBB
   >>> map parseFloat
 
 parseNodeDate :: Maybe String -> String -> Boolean -> Date.Date
-parseNodeDate Nothing    year _     = yearToDate(year)
-parseNodeDate (Just str) _    true  = utcStringToDate(str)
-parseNodeDate (Just str) _    false = stringToDate(str)
+-- parseNodeDate Nothing    year _     = yearToDate(year)
+-- parseNodeDate (Just str) _    true  = utcStringToDate(str)
+-- parseNodeDate (Just str) _    false = stringToDate(str)
+-- @NOTE #219 ^ as soon as the issue regarding `Date` (< 1970) is resolved
+--              please uncomment above lines + delete below one
+parseNodeDate _ y _ = yearToDate(y)
 
 parsePos :: String -> Tuple.Tuple Number Number
 parsePos
@@ -367,7 +400,7 @@ parsePos
       Just s  -> parseFloat s
 
 
--- @WIP: why taking last value? use `any`?
+-- @NOTE #219: why taking last value? use `any`?
 getGlobalWeightedValue :: Array Group -> Boolean
 getGlobalWeightedValue
   =   Array.last
@@ -408,3 +441,43 @@ stringedArrayToArray_
   =   stringedArrayToArray
   >>> map parseFloat
   >>> map parseInt'
+
+-----------------------------------------------------------
+
+data DisplayView
+  = LabelMode
+  | HeadingMode
+  | LandingMode
+
+derive instance Generic DisplayView _
+derive instance Eq DisplayView
+instance Show DisplayView where
+  show = camelCase <<< genericShow
+
+instance Read DisplayView where
+  read :: String -> Maybe DisplayView
+  read "labelMode"   = Just LabelMode
+  read "headingMode" = Just HeadingMode
+  read "landingMode" = Just LandingMode
+  read _             = Nothing
+
+-----------------------------------------------------------
+
+data TabView
+  = DetailsTab
+  | SelectionTab
+
+derive instance Generic TabView _
+derive instance Eq TabView
+
+-----------------------------------------------------------
+
+newtype ExtractedCount = ExtractedCount
+ { groupCount   :: Int
+ , branchCount  :: Int
+ , termCount    :: Int
+ }
+
+derive instance Generic ExtractedCount _
+derive instance Eq ExtractedCount
+derive newtype instance JSON.ReadForeign ExtractedCount

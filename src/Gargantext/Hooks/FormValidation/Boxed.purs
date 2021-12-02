@@ -3,11 +3,14 @@ module Gargantext.Hooks.FormValidation.Boxed
   , class NonEmpty, nonEmpty
   , class Minimum, minimum
   , class Maximum, maximum
-  , lowercase, uppercase, email, date
+  , lowercase, uppercase, email, date, number, int
   ) where
 
 import Gargantext.Prelude
 
+import Data.Int as Int
+import Data.Maybe (isNothing)
+import Data.Number as Number
 import Data.String (toLower, toUpper)
 import Data.String.CodeUnits (length)
 import Data.String.Regex (test)
@@ -81,3 +84,15 @@ date field = T.read >=> case _ of
   input
     | (not $ test datePattern input) -> pure $ invalid [ field /\ "date" ]
     | otherwise                      -> pure $ pure unit
+
+number :: Field -> T.Box String -> Effect VForm
+number field = T.read >=> case _ of
+  input
+    | (isNothing $ Number.fromString input) -> pure $ invalid [ field /\ "number "]
+    | otherwise                             -> pure $ pure unit
+
+int :: Field -> T.Box String -> Effect VForm
+int field = T.read >=> case _ of
+  input
+    | (isNothing $ Int.fromString input) -> pure $ invalid [ field /\ "int" ]
+    | otherwise                          -> pure $ pure unit

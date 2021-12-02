@@ -4,7 +4,7 @@ import Gargantext.Prelude
 
 import Data.Foldable (elem, intercalate)
 import Effect (Effect)
-import Gargantext.Components.Bootstrap.Types (ComponentStatus(..))
+import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Sizing(..))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -21,7 +21,7 @@ type Options =
   , className   :: String
   , type        :: String
   , placeholder :: String
-  , size        :: String
+  , size        :: Sizing
   )
 
 options :: Record Options
@@ -30,12 +30,10 @@ options =
   , className   : ""
   , type        : "text"
   , placeholder : ""
-  , size        : "md"
+  , size        : MediumSize
   }
 
 -- | Structural Component for the Bootstrap input
--- |
--- |    * size: `"md" (default) | "sm" | "lg"`
 -- |
 -- | https://getbootstrap.com/docs/4.1/components/forms/
 formInput :: forall r. R2.OptLeaf Options Props r
@@ -61,7 +59,7 @@ component = R.hooksComponent componentName cpt where
       , componentName <> "--" <> show status
       -- Bootstrap specific classNames
       , bootstrapName
-      , bootstrapName <> "-" <> props.size
+      , bootstrapName <> "-" <> show props.size
       ]
 
     change <- pure $ onChange status callback
@@ -76,6 +74,7 @@ component = R.hooksComponent componentName cpt where
       , placeholder: props.placeholder
       , type: props.type
       , autoComplete: "off"
+      , value: props.value
       }
 
 -- | * Change event will effectively be triggered according to the
