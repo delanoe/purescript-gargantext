@@ -740,8 +740,15 @@ derive instance Generic AsyncProgress _
 derive instance Newtype AsyncProgress _
 derive newtype instance JSON.ReadForeign AsyncProgress
 
+newtype AsyncTaskEvent = AsyncTaskEvent
+  { message :: String
+  , level   :: String }
+derive instance Generic AsyncTaskEvent _
+derive instance Newtype AsyncTaskEvent _
+derive newtype instance JSON.ReadForeign AsyncTaskEvent
+
 newtype AsyncTaskLog = AsyncTaskLog {
-    events :: Array String
+    events :: Array AsyncTaskEvent
   , failed :: Int
   , remaining :: Int
   , succeeded :: Int
@@ -781,10 +788,10 @@ toggleSidePanelState Opened        = Closed
 
 ---------------------------------------------------------------------------
 
-data FrontendError = FStringError
-  { error :: String
-  } | FRESTError
-  { error :: RESTError }
+data FrontendError =
+    FStringError { error :: String }
+  | FRESTError { error :: RESTError }
+  | FOtherError { error :: String }
 
 derive instance Generic FrontendError _
 instance Eq FrontendError where eq = genericEq
