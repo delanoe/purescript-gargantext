@@ -16,7 +16,8 @@ import Toestand as T
 here :: R2.Here
 here = R2.here "Gargantext.Config.Utils"
 
-handleRESTError :: forall a. T.Box (Array FrontendError)
+handleRESTError :: forall a.
+                   T.Box (Array FrontendError)
                 -> Either RESTError a
                 -> (a -> Aff Unit)
                 -> Aff Unit

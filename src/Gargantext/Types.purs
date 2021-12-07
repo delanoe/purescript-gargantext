@@ -796,6 +796,7 @@ toggleSidePanelState Opened        = Closed
 data FrontendError =
     FStringError { error :: String }
   | FRESTError { error :: RESTError }
+  | FOtherError { error :: String }
 
 derive instance Generic FrontendError _
 instance Eq FrontendError where eq = genericEq
