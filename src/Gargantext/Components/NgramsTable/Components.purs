@@ -31,7 +31,7 @@ type SearchInputProps =
   )
 
 searchInput :: R2.Leaf SearchInputProps
-searchInput props = R.createElement searchInputCpt props []
+searchInput = R2.leafComponent searchInputCpt
 searchInputCpt :: R.Component SearchInputProps
 searchInputCpt = here.component "searchInput" cpt
   where

@@ -54,8 +54,7 @@ type LayoutProps =
   )
 
 annuaireLayout :: R2.Leaf LayoutProps
-annuaireLayout props = R.createElement annuaireLayoutCpt props []
-
+annuaireLayout = R2.leafComponent annuaireLayoutCpt
 annuaireLayoutCpt :: R.Component LayoutProps
 annuaireLayoutCpt = here.component "annuaireLayout" cpt where
   cpt { frontends, nodeId, session } _ = do
@@ -69,7 +68,7 @@ type KeyLayoutProps =
   )
 
 annuaireLayoutWithKey :: R2.Leaf KeyLayoutProps
-annuaireLayoutWithKey props = R.createElement annuaireLayoutWithKeyCpt props []
+annuaireLayoutWithKey = R2.leafComponent annuaireLayoutWithKeyCpt
 
 annuaireLayoutWithKeyCpt :: R.Component KeyLayoutProps
 annuaireLayoutWithKeyCpt = here.component "annuaireLayoutWithKey" cpt where
@@ -93,7 +92,7 @@ type AnnuaireProps =
 
 -- | Renders a basic table and the page loader
 annuaire :: R2.Leaf AnnuaireProps
-annuaire props = R.createElement annuaireCpt props []
+annuaire = R2.leafComponent annuaireCpt
 
 -- Abuses closure to work around the Loader
 annuaireCpt :: R.Component AnnuaireProps

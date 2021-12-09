@@ -22,7 +22,7 @@ type TopBar =
   )
 
 topBar :: R2.Leaf TopBar
-topBar p = R.createElement topBarCpt p []
+topBar = R2.leafComponent topBarCpt
 topBarCpt :: R.Component TopBar
 topBarCpt = here.component "topBar" cpt where
   cpt { boxes: { sidePanelGraph

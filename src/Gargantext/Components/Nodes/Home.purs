@@ -57,7 +57,7 @@ type HomeProps =
   )
 
 homeLayout :: R2.Leaf HomeProps
-homeLayout props = R.createElement homeLayoutCpt props []
+homeLayout = R2.leafComponent homeLayoutCpt
 homeLayoutCpt :: R.Component HomeProps
 homeLayoutCpt = here.component "homeLayout" cpt
   where
@@ -152,7 +152,7 @@ type TutorialProps =
   , sessions :: Array Session )
 
 tutorial :: R2.Leaf TutorialProps
-tutorial props = R.createElement tutorialCpt props []
+tutorial = R2.leafComponent tutorialCpt
 tutorialCpt :: R.Component TutorialProps
 tutorialCpt = here.component "tutorial" cpt where
   cpt { boxes

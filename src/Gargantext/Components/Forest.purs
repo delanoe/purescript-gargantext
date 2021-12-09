@@ -63,7 +63,7 @@ forestCpt = here.component "forest" cpt where
 type Plus = ( boxes :: Boxes )
 
 plus :: R2.Leaf Plus
-plus p = R.createElement plusCpt p []
+plus = R2.leafComponent plusCpt
 plusCpt :: R.Component Plus
 plusCpt = here.component "plus" cpt where
   cpt { boxes: { backend, showLogin } } _ = pure $

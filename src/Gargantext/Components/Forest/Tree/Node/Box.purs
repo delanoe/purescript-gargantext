@@ -43,7 +43,7 @@ type CommonProps =
   , session :: Session )
 
 nodePopupView :: R2.Leaf NodePopupProps
-nodePopupView p = R.createElement nodePopupCpt p []
+nodePopupView = R2.leafComponent nodePopupCpt
 nodePopupCpt :: R.Component NodePopupProps
 nodePopupCpt = here.component "nodePopupView" cpt where
   cpt p@{ id, name, nodeType }  _ = do
@@ -178,7 +178,7 @@ type PanelActionProps =
   )
 
 panelAction :: R2.Leaf PanelActionProps
-panelAction p = R.createElement panelActionCpt p []
+panelAction = R2.leafComponent panelActionCpt
 panelActionCpt :: R.Component PanelActionProps
 panelActionCpt = here.component "panelAction" cpt
   where

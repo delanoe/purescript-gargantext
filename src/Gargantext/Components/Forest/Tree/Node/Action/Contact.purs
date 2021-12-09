@@ -54,7 +54,7 @@ type TextInputBoxProps =
 type AddContactProps = ( firstname :: String, lastname :: String )
 
 textInputBox :: R2.Leaf TextInputBoxProps
-textInputBox props = R.createElement textInputBoxCpt props []
+textInputBox = R2.leafComponent textInputBoxCpt
 textInputBoxCpt :: R.Component TextInputBoxProps
 textInputBoxCpt = here.component "textInputBox" cpt where
   cpt { boxName, boxAction, dispatch, isOpen

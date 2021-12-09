@@ -42,7 +42,7 @@ type Props =
   , session :: Session )
 
 corpusLayout :: R2.Leaf Props
-corpusLayout props = R.createElement corpusLayoutCpt props []
+corpusLayout = R2.leafComponent corpusLayoutCpt
 corpusLayoutCpt :: R.Component Props
 corpusLayoutCpt = here.component "corpusLayout" cpt where
   cpt { boxes, nodeId, session } _ = do
@@ -58,7 +58,7 @@ type KeyProps =
   )
 
 corpusLayoutMain :: R2.Leaf KeyProps
-corpusLayoutMain props = R.createElement corpusLayoutMainCpt props []
+corpusLayoutMain = R2.leafComponent corpusLayoutMainCpt
 corpusLayoutMainCpt :: R.Component KeyProps
 corpusLayoutMainCpt = here.component "corpusLayoutMain" cpt
   where
