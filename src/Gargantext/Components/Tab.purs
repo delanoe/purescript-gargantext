@@ -20,7 +20,7 @@ type TabsProps = (
   )
 
 tabs :: R2.Leaf TabsProps
-tabs props = R.createElement tabsCpt props []
+tabs = R2.leafComponent tabsCpt
 -- this is actually just the list of tabs, not the tab contents itself
 tabsCpt :: R.Component TabsProps
 tabsCpt = here.component "tabs" cpt where

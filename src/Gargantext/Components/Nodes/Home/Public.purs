@@ -66,7 +66,7 @@ loadPublicData _l = do
 -}
 
 renderPublic :: R2.Leaf ()
-renderPublic props = R.createElement renderPublicCpt props []
+renderPublic = R2.leafComponent renderPublicCpt
 renderPublicCpt :: R.Component ()
 renderPublicCpt = here.component "renderPublic" cpt where
   cpt _ _ = do

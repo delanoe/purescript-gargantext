@@ -13,8 +13,8 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
-import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, panel, submitButton)
-import Gargantext.Components.InputWithEnter (inputWithEnter)
+import Gargantext.Components.Forest.Tree.Node.Tools (formChoice, panel, submitButton)
+import Gargantext.Components.InputWithEnter (inputWithEnterWithKey)
 import Gargantext.Components.Lang (Lang(..), translate)
 import Gargantext.Config.REST (RESTError, AffRESTError)
 import Gargantext.Routes as GR
@@ -78,21 +78,24 @@ addNodeViewCpt :: R.Component CreateNodeProps
 addNodeViewCpt = here.component "addNodeView" cpt where
   cpt { dispatch
       , nodeTypes } _ = do
-    nodeName <- T.useBox "Name"
+    let defaultNodeType = fromMaybe Folder $ head nodeTypes
+    nodeName <- T.useBox $ GT.prettyNodeType defaultNodeType
     nodeName' <- T.useLive T.unequal nodeName
-    nodeType <- T.useBox $ fromMaybe Folder $ head nodeTypes
+    nodeType <- T.useBox defaultNodeType
     nodeType' <- T.useLive T.unequal nodeType
 
     hasChromeAgent' <- R.unsafeHooksEffect hasChromeAgent
 
     let
-
         SettingsBox {edit} = settingsBox nodeType'
         setNodeType' nt = do
           T.write_ (GT.prettyNodeType nt) nodeName
           T.write_ nt nodeType
         (maybeChoose /\ nt') = if length nodeTypes > 1
-                         then ([ formChoiceSafe nodeTypes Error setNodeType' (print hasChromeAgent') ] /\ nodeType')
+                         then ([ formChoice { items: nodeTypes
+                                            , default: Error
+                                            , callback: setNodeType'
+                                            , print: print hasChromeAgent' } [] ] /\ nodeType')
                          else ([H.div {} [H.text $ "Creating a node of type "
                                                 <> show defaultNt
                                                 <> " with name:"
@@ -102,7 +105,7 @@ addNodeViewCpt = here.component "addNodeView" cpt where
                             where
                               defaultNt = (fromMaybe Error $ head nodeTypes)
         maybeEdit   = [ if edit
-                        then inputWithEnter {
+                        then inputWithEnterWithKey {
                             onBlur: \val -> T.write_ val nodeName
                           , onEnter: \_ -> launchAff_ $ dispatch (AddNode nodeName' nt')
                           , onValueChanged: \val -> T.write_ val nodeName
@@ -111,6 +114,7 @@ addNodeViewCpt = here.component "addNodeView" cpt where
                           , defaultValue: nodeName' -- (prettyNodeType nt')
                           , placeholder: nodeName'  -- (prettyNodeType nt')
                           , type: "text"
+                          , key: show nodeType'
                           }
                         else H.div {} []
                       ]

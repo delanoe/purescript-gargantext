@@ -91,7 +91,7 @@ type UploadFile =
 
 
 uploadFileView :: R2.Leaf Props
-uploadFileView props = R.createElement uploadFileViewCpt props []
+uploadFileView = R2.leafComponent uploadFileViewCpt
 uploadFileViewCpt :: R.Component Props
 uploadFileViewCpt = here.component "uploadFileView" cpt
   where
@@ -119,19 +119,24 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
               ]
             , R2.row
               [ H.div {className:"col-6 flex-space-around"}
-                [ formChoiceSafe [ CSV
-                                 , CSV_HAL
-                                 , WOS
-                                 , PresseRIS
-                                 , Arbitrary
-                                 , ZIP
-                                 ] CSV setFileType' show
+                [ formChoiceSafe { items: [ CSV
+                                          , CSV_HAL
+                                          , WOS
+                                          , PresseRIS
+                                          , Arbitrary
+                                          , ZIP
+                                          ]
+                                 , default: CSV
+                                 , callback: setFileType'
+                                 , print: show } []
                 ]
               ]
             , R2.row
               [ H.div {className:"col-6 flex-space-around"}
-                [ formChoiceSafe [EN, FR, No_extraction, Universal] EN setLang'
-                  show
+                [ formChoiceSafe { items: [EN, FR, No_extraction, Universal]
+                                 , default: EN
+                                 , callback: setLang'
+                                 , print: show } []
                 ]
               ]
             , R2.row
@@ -483,7 +488,7 @@ type UploadTermButtonProps =
   )
 
 uploadTermButton :: R2.Leaf UploadTermButtonProps
-uploadTermButton props = R.createElement uploadTermButtonCpt props []
+uploadTermButton = R2.leafComponent uploadTermButtonCpt
 uploadTermButtonCpt :: R.Component UploadTermButtonProps
 uploadTermButtonCpt = here.component "uploadTermButton" cpt
   where

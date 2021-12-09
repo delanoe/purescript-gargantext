@@ -307,7 +307,7 @@ nodeActionsCpt = here.component "nodeActions" cpt where
     child _ = H.div {} []
 
 graphNodeActions :: R2.Leaf NodeActionsCommon
-graphNodeActions props = R.createElement graphNodeActionsCpt props []
+graphNodeActions = R2.leafComponent graphNodeActionsCpt
 graphNodeActionsCpt :: R.Component NodeActionsCommon
 graphNodeActionsCpt = here.component "graphNodeActions" cpt where
   cpt { id, session, refresh } _ =
@@ -319,7 +319,7 @@ graphNodeActionsCpt = here.component "graphNodeActions" cpt where
   errorHandler = logRESTError here "[graphNodeActions]"
 
 listNodeActions :: R2.Leaf NodeActionsCommon
-listNodeActions props = R.createElement listNodeActionsCpt props []
+listNodeActions = R2.leafComponent listNodeActionsCpt
 listNodeActionsCpt :: R.Component NodeActionsCommon
 listNodeActionsCpt = here.component "listNodeActions" cpt where
   cpt { id, session, refresh } _ =

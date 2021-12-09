@@ -38,7 +38,7 @@ type Props =
   )
 
 login :: R2.Leaf Props
-login props = R.createElement loginCpt props []
+login = R2.leafComponent loginCpt
 
 loginCpt :: R.Component Props
 loginCpt = here.component "login" cpt where
@@ -49,7 +49,7 @@ loginCpt = here.component "login" cpt where
       inner (Just b) = form { backend: b, sessions, visible }
 
 chooser :: R2.Leaf Props
-chooser props = R.createElement chooserCpt props []
+chooser = R2.leafComponent chooserCpt
 
 chooserCpt :: R.Component Props
 chooserCpt = here.component "chooser" cpt where

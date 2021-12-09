@@ -113,7 +113,7 @@ tableHeaderLayoutCpt = here.component "tableHeaderLayout" cpt
     cacheStateToggle NT.CacheOff = NT.CacheOn
 
 table :: R2.Leaf Props
-table props = R.createElement tableCpt props []
+table = R2.leafComponent tableCpt
 tableCpt :: R.Component Props
 tableCpt = here.component "table" cpt
   where
@@ -237,7 +237,7 @@ type PaginationProps =
   , totalPages :: Int )
 
 pagination :: R2.Leaf PaginationProps
-pagination props = R.createElement paginationCpt props []
+pagination = R2.leafComponent paginationCpt
 paginationCpt :: R.Component PaginationProps
 paginationCpt = here.component "pagination" cpt
   where

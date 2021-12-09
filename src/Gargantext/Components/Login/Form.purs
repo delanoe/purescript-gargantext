@@ -86,7 +86,7 @@ type SubmitButtonProps s v = ( cell :: T.Box Form | Props s v )
 submitButton
   :: forall s v. T.ReadWrite s Sessions => T.Write v Boolean
   => R2.Leaf (SubmitButtonProps s v)
-submitButton props = R.createElement submitButtonCpt props []
+submitButton = R2.leafComponent submitButtonCpt
 
 submitButtonCpt
   :: forall s v. T.ReadWrite s Sessions => T.Write v Boolean

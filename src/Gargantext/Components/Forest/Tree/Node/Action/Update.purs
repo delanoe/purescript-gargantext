@@ -54,7 +54,10 @@ updateDashboardCpt = here.component "updateDashboard" cpt where
     methodBoard' <- T.useLive T.unequal methodBoard
 
     pure $ panel [ -- H.text "Update with"
-                  formChoiceSafe [All, Sources, Authors, Institutes, Ngrams] All (\val -> T.write_ val methodBoard) show
+                  formChoiceSafe { items: [All, Sources, Authors, Institutes, Ngrams]
+                                 , default: All
+                                 , callback: \val -> T.write_ val methodBoard
+                                 , print: show } []
                  ]
                  (submitButton (UpdateNode $ UpdateNodeParamsBoard { methodBoard: methodBoard' }) dispatch)
 
@@ -67,7 +70,10 @@ updateGraphCpt = here.component "updateGraph" cpt where
     methodGraph' <- T.useLive T.unequal methodGraph
 
     pure $ panel [ -- H.text "Update with"
-                  formChoiceSafe [Order1, Order2] Order1 (\val -> T.write_ val methodGraph) show
+                  formChoiceSafe { items: [Order1, Order2]
+                                 , default: Order1
+                                 , callback: \val -> T.write_ val methodGraph
+                                 , print: show } []
                  ]
                  (submitButton (UpdateNode $ UpdateNodeParamsGraph { methodGraph: methodGraph' }) dispatch)
 
@@ -80,7 +86,10 @@ updateNodeListCpt = here.component "updateNodeList" cpt where
     methodList' <- T.useLive T.unequal methodList
 
     pure $ panel [ -- H.text "Update with"
-                  formChoiceSafe [Basic, Advanced, WithModel] Basic (\val -> T.write_ val methodList) show
+                  formChoiceSafe { items: [Basic, Advanced, WithModel]
+                                 , default: Basic
+                                 , callback: \val -> T.write_ val methodList
+                                 , print: show } []
                  ]
                  (submitButton (UpdateNode $ UpdateNodeParamsList { methodList: methodList' }) dispatch)
 
@@ -93,7 +102,10 @@ updateTextsCpt = here.component "updateTexts" cpt where
     methodTexts' <- T.useLive T.unequal methodTexts
 
     pure $ panel [ -- H.text "Update with"
-                  formChoiceSafe [NewNgrams, NewTexts, Both] NewNgrams (\val -> T.write_ val methodTexts) show
+                  formChoiceSafe { items: [NewNgrams, NewTexts, Both]
+                                 , default: NewNgrams
+                                 , callback: \val -> T.write_ val methodTexts
+                                 , print: show } []
                  ]
                  (submitButton (UpdateNode $ UpdateNodeParamsTexts { methodTexts: methodTexts' }) dispatch)
 

@@ -320,7 +320,7 @@ type BadgeProps =
   , selectedNodeIds :: T.Box SigmaxT.NodeIds )
 
 badge :: R2.Leaf BadgeProps
-badge props = R.createElement badgeCpt props []
+badge = R2.leafComponent badgeCpt
 badgeCpt :: R.Component BadgeProps
 badgeCpt = here.component "badge" cpt where
   cpt { maxSize, minSize, node: { id, label, size }, selectedNodeIds } _ = do

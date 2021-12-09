@@ -198,7 +198,7 @@ settingsBox Corpus =
 
 settingsBox NodeTexts =
   SettingsBox { show : true
-              , edit : false
+              , edit : true
               , doc  : Documentation NodeTexts
               , buttons : [ Refresh
                           , Upload
@@ -268,7 +268,7 @@ settingsBox (NodePublic FolderPublic) =
 
 settingsBox NodeList =
   SettingsBox { show : true
-              , edit : false
+              , edit : true
               , doc  : Documentation NodeList
               , buttons : [ Refresh
                           , Config

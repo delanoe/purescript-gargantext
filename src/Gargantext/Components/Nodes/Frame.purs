@@ -48,7 +48,7 @@ type KeyProps =
   )
 
 frameLayout :: R2.Leaf Props
-frameLayout props = R.createElement frameLayoutCpt props []
+frameLayout = R2.leafComponent frameLayoutCpt
 frameLayoutCpt :: R.Component Props
 frameLayoutCpt = here.component "frameLayout" cpt where
   cpt { nodeId, nodeType, session } _ = do
@@ -57,7 +57,7 @@ frameLayoutCpt = here.component "frameLayout" cpt where
         key = show (sessionId session) <> "-" <> show nodeId
 
 frameLayoutWithKey :: R2.Leaf KeyProps
-frameLayoutWithKey props = R.createElement frameLayoutWithKeyCpt props []
+frameLayoutWithKey = R2.leafComponent frameLayoutWithKeyCpt
 frameLayoutWithKeyCpt :: R.Component KeyProps
 frameLayoutWithKeyCpt = here.component "frameLayoutWithKey" cpt where
   cpt { nodeId, session, nodeType} _ = do
@@ -89,7 +89,7 @@ hframeUrl NodeFrameVisio base frame_id = base <> "/" <> frame_id
 hframeUrl _ base frame_id = base <> "/" <> frame_id <> "?view" -- "?both"
 
 frameLayoutView :: R2.Leaf ViewProps
-frameLayoutView props  = R.createElement frameLayoutViewCpt props []
+frameLayoutView = R2.leafComponent frameLayoutViewCpt
 frameLayoutViewCpt :: R.Component ViewProps
 frameLayoutViewCpt = here.component "frameLayoutView" cpt
   where
@@ -123,7 +123,7 @@ type NodeFrameVisioProps =
   )
 
 nodeFrameVisio :: R2.Leaf NodeFrameVisioProps
-nodeFrameVisio props = R.createElement nodeFrameVisioCpt props []
+nodeFrameVisio = R2.leafComponent nodeFrameVisioCpt
 nodeFrameVisioCpt :: R.Component NodeFrameVisioProps
 nodeFrameVisioCpt = here.component "nodeFrameVisio" cpt
   where

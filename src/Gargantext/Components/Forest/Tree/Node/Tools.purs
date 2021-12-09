@@ -11,6 +11,7 @@ import Effect.Aff (Aff, launchAff, launchAff_)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Action (icon, text)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
+import Gargantext.Components.GraphExplorer.Types (mCameraP)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Prelude (class Ord, class Read, class Show, Unit, bind, const, discard, map, not, pure, read, show, when, mempty, ($), (<), (<<<), (<>), (<$>), (<*>))
@@ -23,6 +24,7 @@ import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
+import Web.HTML.ValidityState (valid)
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools"
@@ -104,73 +106,83 @@ formEdit defaultValue setter =
             , placeholder: defaultValue, className: "form-control" }
   ] where input = setter <<< const <<< R.unsafeEventValue
 
+type FormChoiceSafeProps item m =
+  ( items    :: Array item
+  , default  :: item
+  , callback :: item -> Effect m
+  , print    :: item -> String )
+
 -- | Form Choice input
 -- if the list of options is not big enough, a button is used instead
 formChoiceSafe :: forall item m
   .  Read item
   => Show item
-  => Array item
-  -> item
-  -> (item -> Effect m)
-  -> (item -> String)
-  -> R.Element
-formChoiceSafe []  _   _   _    = mempty
-formChoiceSafe [n] _   cbk prnt = formButton n cbk prnt
-formChoiceSafe arr def cbk prnt = formChoice arr def cbk prnt
+  => R2.Component (FormChoiceSafeProps item m)
+formChoiceSafe = R.createElement formChoiceSafeCpt
+formChoiceSafeCpt :: forall item m. Read item => Show item => R.Component (FormChoiceSafeProps item m)
+formChoiceSafeCpt = here.component "formChoiceSafe" cpt where
+  cpt { items, default, callback, print } _ = do
+    pure $ case items of
+      []  -> H.div {} []
+      [n] -> formButton { item: n, callback, print } []
+      _   -> formChoice { items, default, callback, print } []
+
+type FormChoiceProps item m =
+  ( items    :: Array item
+  , default  :: item
+  , callback :: item -> Effect m
+  , print    :: item -> String )
 
 -- | List Form
 formChoice :: forall item m
   .  Read item
   => Show item
-  => Array item
-  -> item
-  -> (item -> Effect m)
-  -> (item -> String)
-  -> R.Element
-formChoice items def cbk prnt =
+  => R2.Component (FormChoiceProps item m)
+formChoice = R.createElement formChoiceCpt
+formChoiceCpt :: forall item m. Read item => Show item => R.Component (FormChoiceProps item m)
+formChoiceCpt = here.component "formChoice" cpt where
+  cpt { items, callback, default, print } _ = do
+    pure $ H.div { className: "form-group"}
+      [
+        R2.select
+        { className: "form-control with-icon-font"
+        , on: { change }
+        } $ map option items
+      ]
 
-  H.div { className: "form-group"}
-  [
-    R2.select
-    { className: "form-control with-icon-font"
-    , on: { change }
-    } $
-    map option items
-  ]
+    where
+      change e = do
+        val <- callback $ fromMaybe default $ read $ R.unsafeEventValue e
+        here.log2 "[formChoice] val" val
+        pure val
 
-  where
-    change e = cbk $ fromMaybe def $ read $ R.unsafeEventValue e
+      option opt = H.option { value: show opt } [ H.text $ print opt ]
 
-    option opt =
-      H.option { value: show opt }
-      [ H.text $ prnt opt ]
+type FormButtonProps item m =
+  ( item     :: item
+  , callback :: item -> Effect m
+  , print    :: item -> String )
 
 -- | Button Form
 -- FIXME: currently needs a click from the user (by default, we could avoid such click)
-formButton :: forall item m
-  .  item
-  -> (item -> Effect m)
-  -> (item -> String)
-  -> R.Element
-formButton item cbk prnt =
+formButton :: forall item m. R2.Component (FormButtonProps item m)
+formButton = R.createElement formButtonCpt
+formButtonCpt :: forall item m. R.Component (FormButtonProps item m)
+formButtonCpt = here.component "formButton" cpt where
+  cpt { item, callback, print} _ = do
+    pure $ H.div {}
+      [ H.text $ "Confirm the selection of: " <> print item
+      , cta ]
 
-  H.div {}
-  [
-    H.text $ "Confirm the selection of: " <> prnt item
-  ,
-    cta
-  ]
-
-  where
-    cta =
-      H.button
-      { className : "cold-md-5 btn btn-primary center"
-      , type : "button"
-      , title: "Form Button"
-      , style : { width: "100%" }
-      , on: { click: \_ -> cbk item }
-      }
-      [ H.text "Confirmation" ]
+    where
+      cta =
+        H.button { className : "cold-md-5 btn btn-primary center"
+                 , type : "button"
+                 , title: "Form Button"
+                 , style : { width: "100%" }
+                 , on: { click: \_ -> callback item }
+                 }
+        [ H.text "Confirmation" ]
 
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
@@ -201,7 +213,7 @@ type CheckboxProps =
   ( value :: T.Box Boolean )
 
 checkbox :: R2.Leaf CheckboxProps
-checkbox props = R.createElement checkboxCpt props []
+checkbox = R2.leafComponent checkboxCpt
 checkboxCpt :: R.Component CheckboxProps
 checkboxCpt = here.component "checkbox" cpt
   where
