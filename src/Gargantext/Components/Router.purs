@@ -62,7 +62,7 @@ type SessionNodeProps = ( nodeId :: NodeID | SessionProps )
 type Props' = ( backend :: Backend, route' :: AppRoute | Props )
 
 router :: R2.Leaf Props
-router props = R.createElement routerCpt props []
+router = R2.leafComponent routerCpt
 routerCpt :: R.Component Props
 routerCpt = here.component "router" cpt where
   cpt { boxes: boxes@{ handed } } _ = do
@@ -85,7 +85,7 @@ routerCpt = here.component "router" cpt where
 
 
 loginModal :: R2.Leaf Props
-loginModal p = R.createElement loginModalCpt p []
+loginModal = R2.leafComponent loginModalCpt
 loginModalCpt :: R.Component Props
 loginModalCpt = here.component "loginModal" cpt
   where
@@ -95,7 +95,7 @@ loginModalCpt = here.component "loginModal" cpt
         pure $ if showLogin' then login' boxes else H.div {} []
 
 topBar :: R2.Leaf Props
-topBar p = R.createElement topBarCpt p []
+topBar = R2.leafComponent topBarCpt
 topBarCpt :: R.Component Props
 topBarCpt = here.component "topBar" cpt where
   cpt { boxes: boxes@{ route } } _ = do
@@ -108,7 +108,7 @@ topBarCpt = here.component "topBar" cpt where
     pure $ TopBar.topBar { boxes } children
 
 mainPage :: R2.Leaf Props
-mainPage p = R.createElement mainPageCpt p []
+mainPage = R2.leafComponent mainPageCpt
 mainPageCpt :: R.Component Props
 mainPageCpt = here.component "mainPage" cpt where
   cpt { boxes } _ = do
@@ -197,7 +197,7 @@ mainPageCpt = here.component "mainPage" cpt where
 
 
 forest :: R2.Leaf Props
-forest p = R.createElement forestCpt p []
+forest = R2.leafComponent forestCpt
 forestCpt :: R.Component Props
 forestCpt = here.component "forest" cpt where
   cpt { boxes: boxes@{ showTree } } _ = do
@@ -212,7 +212,7 @@ forestCpt = here.component "forest" cpt where
            , frontends: defaultFrontends } []
 
 sidePanel :: R2.Leaf Props
-sidePanel p = R.createElement sidePanelCpt p []
+sidePanel = R2.leafComponent sidePanelCpt
 sidePanelCpt :: R.Component Props
 sidePanelCpt = here.component "sidePanel" cpt where
   cpt props@{ boxes: { session
@@ -233,7 +233,7 @@ type RenderRouteProps =
   )
 
 renderRoute :: R2.Leaf RenderRouteProps
-renderRoute p = R.createElement renderRouteCpt p []
+renderRoute = R2.leafComponent renderRouteCpt
 renderRouteCpt :: R.Component RenderRouteProps
 renderRouteCpt = here.component "renderRoute" cpt where
   cpt { boxes, route } _ = do

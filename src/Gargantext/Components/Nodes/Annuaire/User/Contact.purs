@@ -97,7 +97,7 @@ type ContactInfoItemProps =
   )
 
 contactInfoItem :: R2.Leaf ContactInfoItemProps
-contactInfoItem props = R.createElement contactInfoItemCpt props []
+contactInfoItem = R2.leafComponent contactInfoItemCpt
 contactInfoItemCpt :: R.Component ContactInfoItemProps
 contactInfoItemCpt = here.component "contactInfoItem" cpt
   where
@@ -129,7 +129,7 @@ type ItemProps =
   )
 
 itemNotEditing :: R2.Leaf ItemProps
-itemNotEditing props = R.createElement itemNotEditingCpt props []
+itemNotEditing = R2.leafComponent itemNotEditingCpt
 itemNotEditingCpt :: R.Component ItemProps
 itemNotEditingCpt = here.component "itemEditing" cpt where
   cpt { isEditing, valueBox } _ = do
@@ -146,7 +146,7 @@ itemNotEditingCpt = here.component "itemEditing" cpt where
         click _ = T.write_ true isEditing
 
 itemEditing :: R2.Leaf ItemProps
-itemEditing props = R.createElement itemEditingCpt props []
+itemEditing = R2.leafComponent itemEditingCpt
 itemEditingCpt :: R.Component ItemProps
 itemEditingCpt = here.component "itemNotEditing" cpt where
   cpt { defaultVal, isEditing, lens, onUpdateUserInfo, userInfo, valueBox } _ = do
@@ -231,7 +231,7 @@ contactLayoutCpt = here.component "contactLayout" cpt where
       contactLayoutWithKey $ Record.merge props { key }
 
 contactLayoutWithKey :: R2.Leaf AnnuaireKeyLayoutProps
-contactLayoutWithKey props = R.createElement contactLayoutWithKeyCpt props []
+contactLayoutWithKey = R2.leafComponent contactLayoutWithKeyCpt
 contactLayoutWithKeyCpt :: R.Component AnnuaireKeyLayoutProps
 contactLayoutWithKeyCpt = here.component "contactLayoutWithKey" cpt where
     cpt { annuaireId

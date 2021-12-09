@@ -66,7 +66,7 @@ type InnerProps =
   )
 
 annotatedFieldInner :: R2.Leaf InnerProps
-annotatedFieldInner p = R.createElement annotatedFieldInnerCpt p []
+annotatedFieldInner = R2.leafComponent annotatedFieldInnerCpt
 annotatedFieldInnerCpt :: R.Component InnerProps
 annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
   cpt { menuRef, ngrams, redrawMenu, setTermList, text: fieldText } _ = do

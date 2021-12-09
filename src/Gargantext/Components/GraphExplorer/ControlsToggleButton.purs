@@ -16,7 +16,7 @@ here = R2.here "Gargantext.Components.GraphExplorer.ControlsToggleButton"
 type Props = ( state :: T.Box Boolean )
 
 controlsToggleButton :: R2.Leaf Props
-controlsToggleButton props = R.createElement controlsToggleButtonCpt props []
+controlsToggleButton = R2.leafComponent controlsToggleButtonCpt
 
 controlsToggleButtonCpt :: R.Component Props
 controlsToggleButtonCpt = here.component "controlsToggleButton" cpt

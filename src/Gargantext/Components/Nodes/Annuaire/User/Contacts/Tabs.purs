@@ -58,7 +58,7 @@ type TabsProps =
   )
 
 tabs :: R2.Leaf TabsProps
-tabs props = R.createElement tabsCpt props []
+tabs = R2.leafComponent tabsCpt
 tabsCpt :: R.Component TabsProps
 tabsCpt = here.component "tabs" cpt
   where

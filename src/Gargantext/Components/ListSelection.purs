@@ -31,9 +31,12 @@ selectionCpt :: R.Component Props
 selectionCpt = here.component "selection" cpt where
   cpt { selection, session } _ = do
     pure $ H.div { className: "list-selection" }
-      [ formChoiceSafe [ MyListsFirst
-                       , OtherListsFirst
-                       , SelectedLists [] ] MyListsFirst setSelection show
+      [ formChoiceSafe { items: [ MyListsFirst
+                                , OtherListsFirst
+                                , SelectedLists [] ]
+                       , default: MyListsFirst
+                       , callback: setSelection
+                       , print: show } []
       , selectedIds { selection, session } []
       ]
     where
@@ -159,7 +162,7 @@ type RenderListElementProps =
   , selection :: T.Box Selection )
 
 renderListElement :: R2.Leaf RenderListElementProps
-renderListElement props = R.createElement renderListElementCpt props []
+renderListElement = R2.leafComponent renderListElementCpt
 renderListElementCpt :: R.Component RenderListElementProps
 renderListElementCpt = here.component "renderListElement" cpt where
   cpt { id, name, selection } _ = do

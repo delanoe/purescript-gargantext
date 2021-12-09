@@ -23,7 +23,7 @@ type NodePopupProps =
   )
 
 nodePopupView :: R2.Leaf NodePopupProps
-nodePopupView props = R.createElement nodePopupViewCpt props []
+nodePopupView = R2.leafComponent nodePopupViewCpt
 nodePopupViewCpt :: R.Component NodePopupProps
 nodePopupViewCpt = here.component "nodePopupView" cpt where
   cpt props  _ = do

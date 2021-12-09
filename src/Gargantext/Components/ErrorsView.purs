@@ -51,3 +51,14 @@ errorsViewCpt = here.component "errorsView" cpt
                        Nothing  -> es
                        Just es' -> es'
           ) errors
+    showError errors i (FOtherError { error }) =
+      RB.alert { dismissible: true
+               , onClose
+               , variant: "danger" } [ H.text $ show error ]
+      where
+        onClose = do
+          here.log2 "click!" error
+          T.modify_ (\es -> case deleteAt i es of
+                       Nothing  -> es
+                       Just es' -> es'
+          ) errors

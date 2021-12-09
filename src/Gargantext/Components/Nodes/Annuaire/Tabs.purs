@@ -61,7 +61,7 @@ type TabsProps =
   )
 
 tabs :: R2.Leaf TabsProps
-tabs props = R.createElement tabsCpt props []
+tabs = R2.leafComponent tabsCpt
 tabsCpt :: R.Component TabsProps
 tabsCpt = here.component "tabs" cpt where
   cpt props _ = do
@@ -105,7 +105,7 @@ type NgramsViewTabsProps =
   | TabsProps )
 
 ngramsView :: R2.Leaf NgramsViewTabsProps
-ngramsView props = R.createElement ngramsViewCpt props []
+ngramsView = R2.leafComponent ngramsViewCpt
 ngramsViewCpt :: R.Component NgramsViewTabsProps
 ngramsViewCpt = here.component "ngramsView" cpt where
   cpt props@{ defaultListId, mode, nodeId, session } _ = do

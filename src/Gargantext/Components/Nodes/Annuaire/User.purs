@@ -91,7 +91,7 @@ userLayoutCpt = here.component "userLayout" cpt
       pure $ userLayoutWithKey $ Record.merge props { key: show sid <> "-" <> show nodeId }
 
 userLayoutWithKey :: R2.Leaf KeyLayoutProps
-userLayoutWithKey props = R.createElement userLayoutWithKeyCpt props []
+userLayoutWithKey = R2.leafComponent userLayoutWithKeyCpt
 userLayoutWithKeyCpt :: R.Component KeyLayoutProps
 userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
   cpt { boxes: boxes@{ sidePanelTexts }

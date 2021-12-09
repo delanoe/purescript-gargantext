@@ -60,7 +60,7 @@ eqAnnotationMenuWrapper { new: Just _, old: Nothing } = pure $ false
 eqAnnotationMenuWrapper { new: Just n, old: Just o } = pure $ eqAnnotationMenu n o
 
 annotationMenuWrapper :: R2.Leaf AnnotationMenuWrapper
-annotationMenuWrapper p = R.createElement annotationMenuWrapperCpt p []
+annotationMenuWrapper = R2.leafComponent annotationMenuWrapperCpt
 annotationMenuWrapperCpt :: R.Component AnnotationMenuWrapper
 annotationMenuWrapperCpt = here.component "annotationMenuWrapper" cpt where
   cpt { menuRef } _ = do
@@ -71,7 +71,7 @@ annotationMenuWrapperCpt = here.component "annotationMenuWrapper" cpt where
 -- | An Annotation Menu is parameterised by a Maybe Termlist of the
 -- | TermList the currently selected text belongs to
 annotationMenu :: R2.Leaf AnnotationMenu
-annotationMenu p = R.createElement annotationMenuCpt p []
+annotationMenu = R2.leafComponent annotationMenuCpt
 annotationMenuCpt :: R.Component AnnotationMenu
 annotationMenuCpt = here.component "annotationMenu" cpt where
   cpt { x, y, list, menuType, onClose, redrawMenu, setList } _ = do
@@ -82,7 +82,7 @@ annotationMenuCpt = here.component "annotationMenu" cpt where
       ]
 
 annotationMenuInner :: R2.Leaf Props
-annotationMenuInner p = R.createElement annotationMenuInnerCpt p []
+annotationMenuInner = R2.leafComponent annotationMenuInnerCpt
 annotationMenuInnerCpt :: R.Component Props
 annotationMenuInnerCpt = here.component "annotationMenuInner" cpt where
   cpt props _ = pure $ R.fragment $ A.mapMaybe (addToList props) [ MapTerm, CandidateTerm, StopTerm ]
