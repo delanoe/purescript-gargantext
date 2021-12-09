@@ -151,10 +151,7 @@ formChoiceCpt = here.component "formChoice" cpt where
       ]
 
     where
-      change e = do
-        val <- callback $ fromMaybe default $ read $ R.unsafeEventValue e
-        here.log2 "[formChoice] val" val
-        pure val
+      change e = callback $ fromMaybe default $ read $ R.unsafeEventValue e
 
       option opt = H.option { value: show opt } [ H.text $ print opt ]
 
