@@ -83,9 +83,9 @@ newtype DocumentsView =
   , pairs    :: Array Pair
   , delete   :: Boolean
   , category :: Category
-  , publication_year :: Int
-  , publication_month :: Int
-  , publication_day  :: Int
+  , publication_year :: Maybe Int
+  , publication_month :: Maybe Int
+  , publication_day  :: Maybe Int
   }
 
 derive instance Generic DocumentsView _
@@ -245,16 +245,16 @@ doc2view ( Document { id
                     }
         ) = DocumentsView { id
                           , date
-                          , title: title
+                          , title
                           , source: showSource source
                           , score
                           , authors: fromMaybe "Authors" authors
                           , category: decodeCategory category
                           , pairs: []
                           , delete: false
-                          , publication_year : fromMaybe 2020 publication_year
-                          , publication_month: fromMaybe    1 publication_month
-                          , publication_day  : fromMaybe    1 publication_day
+                          , publication_year
+                          , publication_month
+                          , publication_day
                           }
 
 contact2view :: Contact -> ContactsView
@@ -281,9 +281,9 @@ err2view _message =
                 , category: decodeCategory 1
                 , pairs: []
                 , delete: false
-                , publication_year: 2020
-                , publication_month: 10
-                , publication_day: 1
+                , publication_year: Just 2020
+                , publication_month: Just 10
+                , publication_day: Just 1
                 }
 
 type PageLayoutProps =
@@ -392,9 +392,10 @@ pageCpt = here.component "page" cpt
           | otherwise = H.div {}
 
 publicationDate :: DocumentsView -> String
-publicationDate (DocumentsView { publication_year, publication_month }) =
+publicationDate (DocumentsView { publication_year: Just publication_year, publication_month: Just publication_month }) =
   (zeroPad 2 publication_year) <> "-" <> (zeroPad 2 publication_month)
   -- <> "-" <> (zeroPad 2 publication_day)
+publicationDate _ = "-"
 
 
 ---------------------------------------------------------
