@@ -475,7 +475,6 @@ login' { backend, sessions, showLogin: visible } =
 
 routeFile :: R2.Component SessionNodeProps
 routeFile = R.createElement routeFileCpt
-
 routeFileCpt :: R.Component SessionNodeProps
 routeFileCpt = here.component "routeFile" cpt where
   cpt props@{ nodeId } _ = do

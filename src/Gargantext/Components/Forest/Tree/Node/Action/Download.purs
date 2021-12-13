@@ -15,7 +15,7 @@ import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
-here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Documentation"
+here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Download"
 
 -- | Action : Download
 type ActionDownload =
@@ -27,10 +27,11 @@ actionDownload :: R2.Component ActionDownload
 actionDownload = R.createElement actionDownloadCpt
 actionDownloadCpt :: R.Component ActionDownload
 actionDownloadCpt = here.component "actionDownload" cpt where
-  cpt props@{ nodeType: GT.Corpus } _   = pure $ actionDownloadCorpus props []
-  cpt props@{ nodeType: GT.Graph } _    = pure $ actionDownloadGraph props []
-  cpt props@{ nodeType: GT.NodeList } _ = pure $ actionDownloadNodeList props []
-  cpt props@{ nodeType: _ } _           = pure $ actionDownloadOther props []
+  cpt props@{ nodeType: GT.Corpus } _    = pure $ actionDownloadCorpus props []
+  cpt props@{ nodeType: GT.Graph } _     = pure $ actionDownloadGraph props []
+  cpt props@{ nodeType: GT.NodeList }  _ = pure $ actionDownloadNodeList props []
+  cpt props@{ nodeType: GT.NodeTexts } _ = pure $ actionDownloadNodeTexts props []
+  cpt props@{ nodeType: _ } _            = pure $ actionDownloadOther props []
 
 actionDownloadCorpus :: R2.Component ActionDownload
 actionDownloadCorpus = R.createElement actionDownloadCorpusCpt
@@ -64,6 +65,18 @@ actionDownloadNodeListCpt = here.component "actionDownloadNodeList" cpt where
     where
       href  = url session $ Routes.NodeAPI GT.NodeList (Just id) ""
       info  = "Info about the List as JSON format"
+
+actionDownloadNodeTexts :: R2.Component ActionDownload
+actionDownloadNodeTexts = R.createElement actionDownloadNodeTextsCpt
+actionDownloadNodeTextsCpt :: R.Component ActionDownload
+actionDownloadNodeTextsCpt = here.component "actionDownloadNodeTexts" cpt where
+  cpt { id, session } _ = do
+    pure $ panel [H.div {} [H.text info]]
+      (submitButtonHref DownloadNode href)
+    where
+      href  = url session $ Routes.NodeAPI GT.NodeTexts (Just id) "export"
+      info  = "Download as JSON"
+
 
 {-
 -- TODO fix the route
