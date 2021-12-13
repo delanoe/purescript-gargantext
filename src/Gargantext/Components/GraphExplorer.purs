@@ -260,6 +260,7 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
     nodeFn _i nn@(GET.Node n) =
       Seq.singleton {
           borderColor: color
+        , children: n.children
         , color : color
         , equilateral: { numPoints: 3 }
         , gargType
