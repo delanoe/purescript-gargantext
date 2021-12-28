@@ -79,6 +79,8 @@ inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
         onInputKeyUp :: R.Ref (Nullable DOM.Element) -> DE.KeyboardEvent -> Effect Boolean
         onInputKeyUp inputRef e = do
           if DE.key e == "Enter" then do
+            R2.preventDefault e
+            R2.stopPropagation e
             let val = R.unsafeEventValue e
             let mInput = toMaybe $ R.readRef inputRef
             T.write_ val state

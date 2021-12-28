@@ -4,7 +4,6 @@ module Gargantext.Components.GraphExplorer.Search
 import Prelude
 import Data.Sequence as Seq
 import Data.Set as Set
-import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Reactix as R

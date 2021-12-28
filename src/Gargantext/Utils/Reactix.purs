@@ -335,14 +335,23 @@ inputFileNameWithBlob n e = case ff of
   where
     ff = inputFile n e
 
+foreign import _preventDefault :: forall e. EffectFn1 e Unit
+preventDefault :: forall e. DE.IsEvent e => e -> Effect Unit
+preventDefault = runEffectFn1 _preventDefault
+
+foreign import _stopPropagation :: forall e. EffectFn1 e Unit
+stopPropagation :: forall e. DE.IsEvent e => e -> Effect Unit
+stopPropagation = runEffectFn1 _stopPropagation
+
 -- | Get blob from a drop event
 --dataTransferFileBlob :: forall e. DE.IsEvent e => RE.SyntheticEvent e -> Effect Blob
 dataTransferFileBlob e = unsafePartial $ do
     let ff = fromJust $ item 0 $ ((e .. "dataTransfer" .. "files") :: FileList)
     pure $ WF.toBlob ff
 
+foreign import _blur :: EffectFn1 DOM.Element Unit
 blur :: DOM.Element -> Effect Unit
-blur el = el ... "blur" $ []
+blur = runEffectFn1 _blur
 
 row :: Array R.Element -> R.Element
 row children = H.div { className: "row" } children
