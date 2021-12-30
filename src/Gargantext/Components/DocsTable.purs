@@ -439,9 +439,9 @@ pageLayoutCpt = here.component "pageLayout" cpt where
         let loader p = do
               let route = tableRouteWithPage (p { params = paramsS', query = query })
               eRes <- get session $ route
-              liftEffect $ do
-                here.log2 "table route" route
-                here.log2 "table res" eRes
+              --liftEffect $ do
+              --  here.log2 "table route" route
+              --  here.log2 "table res" eRes
               pure $ handleResponse <$> eRes
         let render (Tuple count documents) = pagePaintRaw { documents
                                                           , layout: props { params = paramsS'
