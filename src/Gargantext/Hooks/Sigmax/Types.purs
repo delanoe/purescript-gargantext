@@ -35,6 +35,7 @@ type EdgeId = String
 
 type Node = (
     borderColor :: String
+  , children    :: Array String
   , color       :: String
   , equilateral :: { numPoints :: Int }
   , gargType    :: GT.Mode

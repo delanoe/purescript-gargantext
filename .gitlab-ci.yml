@@ -25,7 +25,7 @@ test:
   script:
     # find 0.14.2 purescript version here:
     # https://lazamar.co.uk/nix-versions/
-    - nix-env -i purescript-0.14.2 -f https://github.com/NixOS/nixpkgs/archive/bed08131cd29a85f19716d9351940bdc34834492.tar.gz
+    - nix-env -i purescript-0.14.4 -f https://github.com/NixOS/nixpkgs/archive/bed08131cd29a85f19716d9351940bdc34834492.tar.gz
     - nix-env -i git
     - nix-env -i nodejs
     - nix-env -i yarn

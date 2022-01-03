@@ -1,18 +1,18 @@
 module Gargantext.Components.InputWithAutocomplete where
 
 import Prelude
-import Data.Maybe (Maybe(..))
-import Data.Nullable (Nullable, null, toMaybe)
+
 import DOM.Simple as DOM
 import DOM.Simple.Event as DE
+import Data.Maybe (Maybe(..))
+import Data.Nullable (Nullable, null, toMaybe)
 import Effect (Effect)
 import Effect.Timer (setTimeout)
+import Gargantext.Utils.Reactix as R2
+import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
-import React.SyntheticEvent as E
 import Toestand as T
-
-import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.InputWithAutocomplete"
