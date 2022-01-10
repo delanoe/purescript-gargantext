@@ -2,9 +2,9 @@ module Gargantext.Components.GraphExplorer.Search
   ( Props, nodeSearchControl ) where
 
 import Prelude
+import Data.Foldable (foldl)
 import Data.Sequence as Seq
 import Data.Set as Set
-import Data.Tuple.Nested ((/\))
 import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Reactix as R
@@ -26,32 +26,37 @@ type Props = (
   )
 
 -- | Whether a node matches a search string
+--   Searches given node and matches it's label or any of the children's labels.
 nodeMatchesSearch :: String -> Record SigmaxT.Node -> Boolean
-nodeMatchesSearch s n = queryMatchesLabel s n.label
+nodeMatchesSearch s n@{ children } =
+  foldl (\acc childLabel -> queryMatchesLabel s childLabel) initial children
+  where
+    initial = queryMatchesLabel s n.label
 
 searchNodes :: String -> Seq.Seq (Record SigmaxT.Node) -> Seq.Seq (Record SigmaxT.Node)
 searchNodes "" _ = Seq.empty
 searchNodes s nodes = Seq.filter (nodeMatchesSearch s) nodes
 
 nodeSearchControl :: R2.Component Props
-nodeSearchControl = R.createElement sizeButtonCpt
-
-sizeButtonCpt :: R.Component Props
-sizeButtonCpt = here.component "nodeSearchControl" cpt
+nodeSearchControl = R.createElement nodeSearchControlCpt
+nodeSearchControlCpt :: R.Component Props
+nodeSearchControlCpt = here.component "nodeSearchControl" cpt
   where
     cpt { graph, multiSelectEnabled, selectedNodeIds } _ = do
       search <- T.useBox ""
       search' <- T.useLive T.unequal search
       multiSelectEnabled' <- T.useLive T.unequal multiSelectEnabled
 
+      let doSearch s = triggerSearch graph s multiSelectEnabled' selectedNodeIds
+
       pure $ R.fragment
         [ inputWithAutocomplete { autocompleteSearch: autocompleteSearch graph
                                 , classes: "mx-2"
-                                , onAutocompleteClick: \s -> triggerSearch graph s multiSelectEnabled' selectedNodeIds
-                                , onEnterPress: \s -> triggerSearch graph s multiSelectEnabled' selectedNodeIds
+                                , onAutocompleteClick: doSearch
+                                , onEnterPress: doSearch
                                 , state: search } []
         , H.div { className: "btn input-group-addon"
-                , on: { click: \_ -> triggerSearch graph search' multiSelectEnabled' selectedNodeIds }
+                , on: { click: \_ -> doSearch search' }
                 }
           [ H.span { className: "fa fa-search" } [] ]
         ]
@@ -74,3 +79,4 @@ triggerSearch graph search multiSelectEnabled selectedNodeIds = do
 
   T.modify_ (\nodes ->
     Set.union matching $ if multiSelectEnabled then nodes else SigmaxT.emptyNodeIds) selectedNodeIds
+

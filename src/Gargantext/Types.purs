@@ -736,8 +736,9 @@ derive newtype instance JSON.ReadForeign AsyncTaskWithType
 instance Eq AsyncTaskWithType where eq = genericEq
 
 newtype AsyncProgress = AsyncProgress
-  { id :: AsyncTaskID
-  , log :: Array AsyncTaskLog
+  { id     :: AsyncTaskID
+  , error  :: Maybe String
+  , log    :: Array AsyncTaskLog
   , status :: AsyncTaskStatus
   }
 derive instance Generic AsyncProgress _

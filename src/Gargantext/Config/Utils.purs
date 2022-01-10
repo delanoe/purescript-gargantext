@@ -5,6 +5,7 @@ import Gargantext.Prelude
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
+import Data.Maybe (fromMaybe)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
@@ -41,7 +42,7 @@ handleErrorInAsyncProgress errors ap@(AsyncProgress { log, status: IsFinished })
 handleErrorInAsyncProgress _ _ = pure unit
 
 concatErrors :: AsyncProgress -> String
-concatErrors (AsyncProgress { log }) = foldl eventsErrorMessage "" log
+concatErrors (AsyncProgress { error, log }) = foldl eventsErrorMessage (fromMaybe "" error) log
   where
     eventsErrorMessage acc (AsyncTaskLog { events }) = (foldl eventErrorMessage "" events) <> "\n" <> acc
     eventErrorMessage acc (AsyncEvent { level: "ERROR", message }) = message <> "\n" <> acc
