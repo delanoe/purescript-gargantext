@@ -20,9 +20,9 @@ let
 
     echo "Compiling"
     #build-purs
+    spago build
     echo "Bundling"
     #pulp browserify --skip-compile -t dist/bundle.js --src-path output
-    spago build
     browserify
   '';
 
@@ -93,11 +93,14 @@ let
     set -e
 
     echo "Compiling"
-    build-purs
+    yarn
+    spago build
+    #build-purs
     echo "Testing"
+    spago test
     # pulp browserify --skip-compile -t dist/bundle.js --src-path output
     # pulp test --src-path output --test-path output
-    NODE_PATH=output node -e "require('Test.Main').main();"
+    #NODE_PATH=output node -e "require('Test.Main').main();"
   '';
 in
 pkgs.mkShell {
