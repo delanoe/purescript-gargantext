@@ -155,7 +155,7 @@ documentLayoutWithKeyCpt = here.component "documentLayoutWithKey" cpt
 ------------------------------------------------------------------------
 
 loadDocument :: Session -> Int -> AffRESTError NodeDocument
-loadDocument session nodeId = get session $ NodeAPI Node (Just nodeId) ""
+loadDocument session nodeId = get session $ NodeAPI Context (Just nodeId) ""
 
 loadData :: DocPath -> AffRESTError LoadedData
 loadData { listIds, nodeId, session, tabType } = do
