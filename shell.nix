@@ -117,7 +117,7 @@ pkgs.mkShell {
     pkgs.closurecompiler
     pkgs.minify
     pkgs.nodejs
-    python  # needed for msgpack etc
+    pkgs.python  # needed for msgpack etc
     repl
     serve
     pkgs.pulp
