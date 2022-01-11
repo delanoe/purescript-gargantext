@@ -51,7 +51,7 @@
         "react-dom": "^17.0.2",
         "react-tooltip": "^4.2.8",
         "secp256k1": "^4.0.2",
-        "sigma": "git://github.com/poorscript/sigma.js#garg"
+        "sigma": "https://github.com/poorscript/sigma.js#garg"
     },
     "devDependencies": {
         "@babel/core": "^7.15.0",
