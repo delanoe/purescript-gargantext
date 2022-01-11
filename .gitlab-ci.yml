@@ -19,6 +19,7 @@ stages:
 deps:
   cache:
     paths:
+      - /nix/store
       - node_modules/
   script:
     - nix-env -i git
@@ -29,6 +30,7 @@ test:
     # cache per branch name
     # key: ${CI_COMMIT_REF_SLUG}
     paths:
+      - /nix/store
       - node_modules/
   script:
     # find 0.14.5 purescript version here:
