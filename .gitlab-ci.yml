@@ -21,11 +21,8 @@ deps:
     paths:
       - node_modules/
   script:
-    - nix-env -i purescript-0.14.4 -f https://github.com/NixOS/nixpkgs/archive/bed08131cd29a85f19716d9351940bdc34834492.tar.gz
     - nix-env -i git
-    - nix-env -i nodejs
-    - nix-env -i yarn
-    - yarn --skip-builds
+    - nix-shell shell.nix --run 'yarn --skip-builds'
 
 test:
   cache:
@@ -34,11 +31,8 @@ test:
     paths:
       - node_modules/
   script:
-    # find 0.14.2 purescript version here:
+    # find 0.14.5 purescript version here:
     # https://lazamar.co.uk/nix-versions/
-    - nix-env -i purescript-0.14.4 -f https://github.com/NixOS/nixpkgs/archive/bed08131cd29a85f19716d9351940bdc34834492.tar.gz
     - nix-env -i git
-    - nix-env -i nodejs
-    - nix-env -i yarn
-    - yarn --skip-builds
+    - nix-shell shell.nix --run 'yarn --skip-builds'
     - nix-shell shell.nix --run test-ps
