@@ -1,18 +1,21 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Download where
 
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
-import Reactix as R
-import Reactix.DOM.HTML as H
-
+import Data.Show.Generic (genericShow)
+import Data.String.Common (toLower)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(DownloadNode))
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, panel, submitButtonHref)
 import Gargantext.Ends (url)
-import Gargantext.Prelude (pure, ($))
+import Gargantext.Prelude
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session)
 import Gargantext.Types (ID)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Documentation"
@@ -27,10 +30,11 @@ actionDownload :: R2.Component ActionDownload
 actionDownload = R.createElement actionDownloadCpt
 actionDownloadCpt :: R.Component ActionDownload
 actionDownloadCpt = here.component "actionDownload" cpt where
-  cpt props@{ nodeType: GT.Corpus } _   = pure $ actionDownloadCorpus props []
-  cpt props@{ nodeType: GT.Graph } _    = pure $ actionDownloadGraph props []
-  cpt props@{ nodeType: GT.NodeList } _ = pure $ actionDownloadNodeList props []
-  cpt props@{ nodeType: _ } _           = pure $ actionDownloadOther props []
+  cpt props@{ nodeType: GT.Corpus } _    = pure $ actionDownloadCorpus props []
+  cpt props@{ nodeType: GT.Graph } _     = pure $ actionDownloadGraph props []
+  cpt props@{ nodeType: GT.NodeList } _  = pure $ actionDownloadNodeList props []
+  cpt props@{ nodeType: GT.NodeTexts } _ = pure $ actionDownloadNodeTexts props []
+  cpt props@{ nodeType: _ } _            = pure $ actionDownloadOther props []
 
 actionDownloadCorpus :: R2.Component ActionDownload
 actionDownloadCorpus = R.createElement actionDownloadCorpusCpt
@@ -64,6 +68,34 @@ actionDownloadNodeListCpt = here.component "actionDownloadNodeList" cpt where
     where
       href  = url session $ Routes.NodeAPI GT.NodeList (Just id) ""
       info  = "Info about the List as JSON format"
+
+data NodeTextsDownloadFormat = CSV | JSON
+derive instance Eq NodeTextsDownloadFormat
+derive instance Generic NodeTextsDownloadFormat _
+instance Show NodeTextsDownloadFormat where show = genericShow
+
+actionDownloadNodeTexts :: R2.Component ActionDownload
+actionDownloadNodeTexts = R.createElement actionDownloadNodeTextsCpt
+actionDownloadNodeTextsCpt :: R.Component ActionDownload
+actionDownloadNodeTextsCpt = here.component "actionDownloadNodeTexts" cpt where
+  cpt { id, session } _ = do
+    downloadFormat <- T.useBox JSON
+    downloadFormat' <- T.useLive T.unequal downloadFormat
+    
+    pure $ panel
+      [ R2.select { className: "form-control" }
+        [ opt CSV downloadFormat downloadFormat'
+        , opt JSON downloadFormat downloadFormat' ]
+      , H.div {} [ H.text $ info downloadFormat' ]
+      ]
+      (submitButtonHref DownloadNode $ href downloadFormat')
+    where
+      opt t downloadFormat df = H.option { on: { click: onClick }
+                                         , selected: df == t } [ H.text $ show t ]
+        where
+          onClick _ = T.write_ t downloadFormat
+      href t  = url session $ Routes.NodeAPI GT.NodeTexts (Just id) ("export/" <> (toLower $ show t))
+      info t  = "Info about the Documents as " <> show t <> " format"
 
 {-
 -- TODO fix the route
