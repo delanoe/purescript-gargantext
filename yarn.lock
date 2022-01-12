@@ -8741,9 +8741,9 @@ side-channel@^1.0.4:
     get-intrinsic "^1.0.2"
     object-inspect "^1.9.0"
 
-"sigma@git://github.com/poorscript/sigma.js#garg":
+"sigma@https://github.com/poorscript/sigma.js#garg":
   version "1.2.1"
-  resolved "git://github.com/poorscript/sigma.js#624c611376dfb11cd34f1d01811d63dd5747ace7"
+  resolved "https://github.com/poorscript/sigma.js#624c611376dfb11cd34f1d01811d63dd5747ace7"
 
 signal-exit@^3.0.0, signal-exit@^3.0.2:
   version "3.0.3"

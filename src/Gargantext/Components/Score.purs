@@ -36,7 +36,6 @@ type Choice = Maybe Score
 
 scoreEl :: R2.Component Props
 scoreEl = R.createElement scoreElCpt
-
 scoreElCpt :: R.Component Props
 scoreElCpt = R.hooksComponentWithModule thisModule "scoreEl" cpt
   where

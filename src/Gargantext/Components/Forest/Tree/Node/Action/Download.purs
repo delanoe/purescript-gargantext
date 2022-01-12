@@ -18,7 +18,7 @@ import Reactix.DOM.HTML as H
 import Toestand as T
 
 here :: R2.Here
-here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Documentation"
+here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Download"
 
 -- | Action : Download
 type ActionDownload =
@@ -32,7 +32,7 @@ actionDownloadCpt :: R.Component ActionDownload
 actionDownloadCpt = here.component "actionDownload" cpt where
   cpt props@{ nodeType: GT.Corpus } _    = pure $ actionDownloadCorpus props []
   cpt props@{ nodeType: GT.Graph } _     = pure $ actionDownloadGraph props []
-  cpt props@{ nodeType: GT.NodeList } _  = pure $ actionDownloadNodeList props []
+  cpt props@{ nodeType: GT.NodeList }  _ = pure $ actionDownloadNodeList props []
   cpt props@{ nodeType: GT.NodeTexts } _ = pure $ actionDownloadNodeTexts props []
   cpt props@{ nodeType: _ } _            = pure $ actionDownloadOther props []
 
@@ -74,6 +74,11 @@ derive instance Eq NodeTextsDownloadFormat
 derive instance Generic NodeTextsDownloadFormat _
 instance Show NodeTextsDownloadFormat where show = genericShow
 
+readDownloadFormat :: String -> NodeTextsDownloadFormat
+readDownloadFormat "CSV" = CSV
+readDownloadFormat "JSON" = JSON
+readDownloadFormat _ = JSON
+
 actionDownloadNodeTexts :: R2.Component ActionDownload
 actionDownloadNodeTexts = R.createElement actionDownloadNodeTextsCpt
 actionDownloadNodeTextsCpt :: R.Component ActionDownload
@@ -83,17 +88,19 @@ actionDownloadNodeTextsCpt = here.component "actionDownloadNodeTexts" cpt where
     downloadFormat' <- T.useLive T.unequal downloadFormat
     
     pure $ panel
-      [ R2.select { className: "form-control" }
-        [ opt CSV downloadFormat downloadFormat'
-        , opt JSON downloadFormat downloadFormat' ]
+      [ R2.select { className: "form-control"
+                  , defaultValue: show downloadFormat'
+                  , on: { change: onChange downloadFormat } }
+        [ opt CSV downloadFormat
+        , opt JSON downloadFormat ]
       , H.div {} [ H.text $ info downloadFormat' ]
       ]
       (submitButtonHref DownloadNode $ href downloadFormat')
     where
-      opt t downloadFormat df = H.option { on: { click: onClick }
-                                         , selected: df == t } [ H.text $ show t ]
+      opt t downloadFormat = H.option { value: show t } [ H.text $ show t ]
         where
           onClick _ = T.write_ t downloadFormat
+      onChange downloadFormat e = T.write_ (readDownloadFormat $ R.unsafeEventValue e) downloadFormat
       href t  = url session $ Routes.NodeAPI GT.NodeTexts (Just id) ("export/" <> (toLower $ show t))
       info t  = "Info about the Documents as " <> show t <> " format"
 
