@@ -37,13 +37,13 @@ columnName :: ColumnName -> String
 columnName (ColumnName c) = c
 
 type Props =
-  ( syncResetButton  :: Array R.Element
-  , colNames     :: Array ColumnName
-  , container    :: Record TableContainerProps -> R.Element
-  , params       :: T.Box Params
-  , rows         :: Rows
-  , totalRecords :: Int
-  , wrapColElts  :: ColumnName -> Array R.Element -> Array R.Element
+  ( syncResetButton   :: Array R.Element
+  , colNames          :: Array ColumnName
+  , container         :: Record TableContainerProps -> R.Element
+  , params            :: T.Box Params
+  , rows              :: Rows
+  , totalRecords      :: Int
+  , wrapColElts       :: ColumnName -> Array R.Element -> Array R.Element
                  -- ^ Use `const identity` as a default behavior.
   )
 type TableContainerProps =
