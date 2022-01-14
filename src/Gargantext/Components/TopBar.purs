@@ -6,6 +6,7 @@ import Data.Foldable (intercalate)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
 import Gargantext.Components.Themes (themeSwitcher, allThemes)
+import Gargantext.Components.Lang (langSwitcher, allFeLangs)
 import Gargantext.Types (Handed(..), reverseHanded)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -23,7 +24,7 @@ topBar = R.createElement topBarCpt
 topBarCpt :: R.Component TopBarProps
 topBarCpt = here.component "topBar" cpt
   where
-    cpt { boxes: { handed, showTree, theme } } children = do
+    cpt { boxes: { handed, lang, showTree, theme } } children = do
       handed' <- T.useLive T.unequal handed
 
       pure $ H.div { className: "navbar navbar-expand-lg navbar-dark bg-dark"
@@ -43,6 +44,8 @@ topBarCpt = here.component "topBar" cpt
                , smiley
                , H.li { className: "nav-item" } [ themeSwitcher { theme
                                                                 , themes: allThemes } [] ]
+               , H.li { className: "nav-item" } [ langSwitcher { lang
+                                                               , langs: allFeLangs } [] ]
                , Toggle.treeToggleButton { state: showTree } []
                ] <> children)
             ]

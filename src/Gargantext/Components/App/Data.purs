@@ -7,6 +7,7 @@ import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
+import Gargantext.Components.Lang as Lang
 import Gargantext.Components.Nodes.Lists.Types as ListsT
 import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Themes as Themes
@@ -25,6 +26,7 @@ type App =
   , forestOpen          :: OpenNodes
   , graphVersion        :: T2.Reload
   , handed              :: Handed
+  , lang                :: Lang.LandingLang
   , reloadForest        :: T2.Reload
   , reloadMainPage      :: T2.Reload
   , reloadRoot          :: T2.Reload
@@ -51,6 +53,7 @@ emptyApp =
   , forestOpen          : OpenNodes $ Set.empty
   , graphVersion        : T2.newReload
   , handed              : RightHanded
+  , lang                : Lang.LL_EN
   , reloadForest        : T2.newReload
   , reloadMainPage      : T2.newReload
   , reloadRoot          : T2.newReload
@@ -76,6 +79,7 @@ type Boxes =
   , forestOpen          :: T.Box OpenNodes
   , graphVersion        :: T2.ReloadS
   , handed              :: T.Box Handed
+  , lang                :: T.Box Lang.LandingLang
   , reloadForest        :: T2.ReloadS
   , reloadMainPage      :: T2.ReloadS
   , reloadRoot          :: T2.ReloadS

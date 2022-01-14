@@ -451,7 +451,7 @@ home = R.createElement homeCpt
 homeCpt :: R.Component Props
 homeCpt = here.component "home" cpt where
   cpt { boxes } _ = do
-    pure $ homeLayout { boxes, lang: LL_EN }
+    pure $ homeLayout { boxes }
 
 lists :: R2.Component SessionNodeProps
 lists = R.createElement listsCpt

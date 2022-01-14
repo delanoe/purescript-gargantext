@@ -1,8 +1,17 @@
 module Gargantext.Components.Lang where
 
+import Gargantext.Prelude
+
 import Data.Argonaut (class EncodeJson, encodeJson)
+import Data.Array as A
 import Data.Maybe (Maybe(..))
-import Gargantext.Prelude (class Eq, class Show, show, class Read)
+import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
+
+here :: R2.Here
+here = R2.here "Gargantext.Components.Lang"
 
 -- Language used for search
 allLangs :: Array Lang
@@ -36,6 +45,44 @@ instance EncodeJson Lang where
 -- Language used for the landing page
 data LandingLang = LL_EN | LL_FR
 
+derive instance Eq LandingLang
+
+instance Show LandingLang where
+  show LL_EN = "EN"
+  show LL_FR = "FR"
+
 -- @TODO a possible method/class that a real i18n logic could later replace
 class Show t <= Translate t where
   translate :: Lang -> t -> String
+
+allFeLangs :: Array LandingLang
+allFeLangs = [ LL_EN, LL_FR ]
+
+type LangSwitcherProps = (
+    lang  :: T.Box LandingLang
+  , langs :: Array LandingLang
+)
+
+langSwitcher :: R2.Component LangSwitcherProps
+langSwitcher = R.createElement langSwitcherCpt
+
+langSwitcherCpt :: R.Component LangSwitcherProps
+langSwitcherCpt = here.component "langSwitcher" cpt
+  where
+    cpt { lang, langs} _ = do
+      currentLang <- T.useLive T.unequal lang
+      let option l = H.option { value: show l} [ H.text $ show l]
+      let options = map option langs
+
+      pure $ R2.select { className: "form-control"
+                       , defaultValue: show currentLang 
+                       , on: {change: onChange lang } } options
+      where
+        onChange box e = do
+          let value = R.unsafeEventValue e
+          let mLang = A.head $ A.filter (\l -> value == show l) langs
+
+          case mLang of
+            Nothing -> pure unit
+            Just l  -> do
+              T.write_ l box

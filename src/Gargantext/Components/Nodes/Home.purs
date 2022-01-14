@@ -52,9 +52,7 @@ langLandingData LL_EN = En.landingData
 ------------------------------------------------------------------------
 
 type HomeProps =
-  ( boxes     :: Boxes
-  , lang      :: LandingLang
-  )
+  ( boxes     :: Boxes )
 
 homeLayout :: R2.Leaf HomeProps
 homeLayout = R2.leafComponent homeLayoutCpt
@@ -62,12 +60,14 @@ homeLayoutCpt :: R.Component HomeProps
 homeLayoutCpt = here.component "homeLayout" cpt
   where
     cpt { boxes: boxes@{ backend
+                       , lang
                        , sessions
                        , showLogin }
-        , lang } _ = do
+        } _ = do
       backend'  <- T.useLive T.unequal backend
       sessions' <- T.useLive T.unequal sessions
-      let landingData = langLandingData lang
+      lang'     <- T.useLive T.unequal lang
+      let landingData = langLandingData lang'
       pure $
         H.span {}
         [ H.div { className: "home-title container1" }
