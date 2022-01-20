@@ -9,7 +9,9 @@ foreign import data JitsiMeet :: Type
 
 type Jitsi =
   { parentNode :: DOM.Element
-  , roomName :: String }
+  , roomName :: String
+  , width :: String
+  , height :: String }
 
 foreign import _api :: JitsiMeet
 foreign import _jitsiMeetAPI :: EffectFn2 String Jitsi JitsiMeet
