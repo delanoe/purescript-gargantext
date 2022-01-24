@@ -70,10 +70,14 @@ zeroPad pad num = zeros <> (show num)
     zeros' 0 = ""
     zeros' n = "0" <> (zeros' (n - 1))
 
+queryNormalize :: String -> String
+queryNormalize = S.toLower
+
 queryMatchesLabel :: String -> String -> Boolean
-queryMatchesLabel q l = S.contains (S.Pattern $ normalize q) (normalize l)
-  where
-    normalize = S.toLower
+queryMatchesLabel q l = S.contains (S.Pattern $ queryNormalize q) (queryNormalize l)
+
+queryExactMatchesLabel :: String -> String -> Boolean
+queryExactMatchesLabel q l = queryNormalize q == queryNormalize l
 
 
 mapLeft :: forall l m r. (l -> m) -> Either l r -> Either m r

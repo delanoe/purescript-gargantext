@@ -1029,6 +1029,10 @@ select.form-control {
   top: 6px;
 }
 
+.jitsi-iframe {
+  height: 40em;
+}
+
 .range {
   width: 400px;
   /* some space for the right knob */

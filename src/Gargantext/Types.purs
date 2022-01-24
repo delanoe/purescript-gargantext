@@ -143,6 +143,7 @@ data NodeType = Annuaire
               | Graph
               | Individu
               | Node
+              | Context
               | NodeContact
               | NodeList
               | NodeUser
@@ -191,6 +192,7 @@ instance Show NodeType where
   show Individu        = "NodeIndividu"
   show Node            = "Node"
   show Nodes           = "Nodes"
+  show Context         = "Context"
   show Tree            = "NodeTree"
   show Team            = "NodeTeam"
   show NodeList        = "NodeList"
@@ -217,6 +219,7 @@ instance Read NodeType where
   read "Individu"          = Just Individu
   read "Node"              = Just Node
   read "Nodes"             = Just Nodes
+  read "Context"           = Just Context
   read "NodeCorpus"        = Just Corpus
   read "NodeContact"       = Just NodeContact
   read "Tree"              = Just Tree
@@ -252,6 +255,7 @@ translateFR = case _ of
   Graph               -> "Graphe"
   Individu            -> "Individu"
   Node                -> "Nœud"
+  Context             -> "ConTexte"
   NodeContact         -> "Contact"
   NodeList            -> "Liste"
   NodeUser            -> "Utilisateur"
@@ -282,6 +286,7 @@ translateEN = case _ of
   Graph               -> "Graph"
   Individu            -> "Person"
   Node                -> "Node"
+  Context             -> "Context"
   NodeContact         -> "Contact"
   NodeList            -> "List"
   NodeUser            -> "User"
@@ -397,6 +402,7 @@ nodeTypePath Phylo           = "phylo"
 nodeTypePath Individu        = "individu"
 nodeTypePath Node            = "node"
 nodeTypePath Nodes           = "nodes"
+nodeTypePath Context         = "context"
 nodeTypePath NodeUser        = "user"
 nodeTypePath NodeContact     = "contact"
 nodeTypePath Tree            = "tree"

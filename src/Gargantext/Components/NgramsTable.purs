@@ -19,7 +19,7 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isNothing, maybe)
 import Data.Monoid.Additive (Additive(..))
 import Data.Ord.Down (Down(..))
-import Data.Sequence (Seq, length) as Seq
+import Data.Sequence as Seq
 import Data.Set (Set)
 import Data.Set as Set
 import Data.Tuple (Tuple(..))
@@ -38,7 +38,7 @@ import Gargantext.Hooks.Loader (useLoaderBox)
 import Gargantext.Routes (SessionRoute(..)) as R
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (CTabNgramType, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
-import Gargantext.Utils (queryMatchesLabel, toggleSet, sortWith)
+import Gargantext.Utils (queryExactMatchesLabel, queryMatchesLabel, toggleSet, sortWith)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Seq as Seq
@@ -92,14 +92,15 @@ setTermListSetA ngramsTable ns new_list =
 type PreConversionRows = Seq.Seq NgramsElement
 
 type TableContainerProps =
-  ( dispatch         :: Dispatch
-  , ngramsChildren   :: Map NgramsTerm Boolean
-  , ngramsParent     :: Maybe NgramsTerm
-  , ngramsSelection  :: Set NgramsTerm
-  , ngramsTable      :: NgramsTable
-  , path             :: T.Box PageParams
-  , tabNgramType     :: CTabNgramType
-  , syncResetButton  :: Array R.Element
+  ( dispatch          :: Dispatch
+  , ngramsChildren    :: Map NgramsTerm Boolean
+  , ngramsParent      :: Maybe NgramsTerm
+  , ngramsSelection   :: Set NgramsTerm
+  , ngramsTable       :: NgramsTable
+  , queryExactMatches :: Boolean
+  , path              :: T.Box PageParams
+  , tabNgramType      :: CTabNgramType
+  , syncResetButton   :: Array R.Element
   )
 
 tableContainer :: Record TableContainerProps -> Record TT.TableContainerProps -> R.Element
@@ -111,6 +112,7 @@ tableContainerCpt { dispatch
                   , ngramsSelection
                   , ngramsTable: ngramsTableCache
                   , path
+                  , queryExactMatches
                   , tabNgramType
                   , syncResetButton
                   } = here.component "tableContainer" cpt
@@ -125,7 +127,7 @@ tableContainerCpt { dispatch
             [
               R2.row [ H.div {className: "col-md-2", style: {marginTop: "6px"}}
                        [ H.div {} syncResetButton
-                       , if A.null props.tableBody && searchQuery /= "" then
+                       , if (not queryExactMatches || A.null props.tableBody) && searchQuery /= "" then
                        -- , if (not $ Set.member (normNgram tabNgramType searchQuery) ngramsSelection) && searchQuery /= "" then
                            H.li { className: "list-group-item" } [
                              H.button { className: "btn btn-primary"
@@ -336,6 +338,10 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
           then Just (fromMaybe ng (nre ^. _NgramsRepoElement <<< _root))
           else Nothing
         rootsWithMatches = Set.fromFoldable (Seq.mapMaybe rootOfMatch nres)
+        exactMatches :: Boolean
+        exactMatches = not $ Seq.null $ Seq.filter fltr nres
+          where
+            fltr (Tuple ng _) = queryExactMatchesLabel searchQuery (ngramsTermText ng)
         rowsFilter :: NgramsElement -> Maybe NgramsElement
         rowsFilter ngramsElement =
           if displayRow { ngramsElement
@@ -411,6 +417,7 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
           , ngramsSelection
           , ngramsTable
           , path
+          , queryExactMatches: exactMatches
           , syncResetButton: [ syncResetButton ]
           , tabNgramType }
         , params

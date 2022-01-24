@@ -137,10 +137,13 @@ nodeFrameVisioCpt = here.component "nodeFrameVisio" cpt
         case toMaybe (R.readRef ref) of
           Nothing -> pure unit
           Just r  -> do
-            api <- JM.jitsiMeetAPI (WURL.host url) { parentNode: r, roomName: frame_id }
+            api <- JM.jitsiMeetAPI (WURL.host url) { parentNode: r
+                                                   , roomName: frame_id
+                                                   , width: "100%"
+                                                   , height: "100%" }
             here.log2 "[nodeFrameVisio] api" api
 
-      pure $ H.div { ref } [ H.text $ WURL.host url ]
+      pure $ H.div { ref, className: "jitsi-iframe" } [ ]
 
 type LoadProps   = ( nodeId  :: Int
                    , session :: Session )
