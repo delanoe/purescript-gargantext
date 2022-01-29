@@ -58,9 +58,9 @@ renameableTextCpt = here.component "renameableText" cpt
       isEditing' <- T.useLive T.unequal isEditing
 
       pure $ if isEditing' then
-               notEditing props []
-             else
                editing props []
+             else
+               notEditing props []
 
 
 notEditing :: R2.Component RenameableTextProps
@@ -103,7 +103,7 @@ editingCpt = here.component "editing" cpt
           , type: "text"
           }
         , H.div { className: "btn input-group-append"
-                , on: { click: submit } }
+                , on: { click: submit state' } }
           [ H.span { className: "fa fa-floppy-o" } []
           ]
         ]

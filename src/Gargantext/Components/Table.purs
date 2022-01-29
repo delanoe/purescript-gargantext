@@ -1,21 +1,21 @@
 module Gargantext.Components.Table where
 
+import Gargantext.Prelude
+
 import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
 import Effect (Effect)
+import Gargantext.Components.FolderView as FV
+import Gargantext.Components.Nodes.Lists.Types as NT
+import Gargantext.Components.Renameable (renameable)
+import Gargantext.Components.Search (SearchType(..))
+import Gargantext.Components.Table.Types (ColumnName, OrderBy, OrderByDirection(..), Params, Props, TableContainerProps, columnName)
+import Gargantext.Utils.Reactix (effectLink)
+import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
-
-import Gargantext.Prelude
-
-import Gargantext.Components.FolderView as FV
-import Gargantext.Components.Table.Types (ColumnName, OrderBy, OrderByDirection(..), Params, Props, TableContainerProps, columnName)
-import Gargantext.Components.Nodes.Lists.Types as NT
-import Gargantext.Components.Search (SearchType(..))
-import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reactix (effectLink)
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Table"
@@ -55,6 +55,10 @@ initialParams :: Params
 initialParams = stateParams {page: 1, pageSize: PS10, orderBy: Nothing, searchType: SearchDoc}
 -- TODO: Not sure this is the right place for this
 
+onRenameDummy :: String -> Effect Unit
+onRenameDummy _ = do
+  pure unit
+
 tableHeaderLayout :: R2.Component TableHeaderLayoutProps
 tableHeaderLayout = R.createElement tableHeaderLayoutCpt
 tableHeaderLayoutCpt :: R.Component TableHeaderLayoutProps
@@ -67,7 +71,7 @@ tableHeaderLayoutCpt = here.component "tableHeaderLayout" cpt
         [ R2.row [FV.backButton {} []]
         ,
           R2.row
-          [ H.div {className: "col-md-3"} [ H.h3 {} [H.text title] ]
+          [ H.div {className: "col-md-3"} [ H.h3 {} [renameable {text: title, onRename: onRenameDummy} []] ]
           , H.div {className: "col-md-9"}
             [ H.hr {style: {height: "2px", backgroundColor: "black"}} ]
           ]
@@ -75,11 +79,11 @@ tableHeaderLayoutCpt = here.component "tableHeaderLayout" cpt
             [ H.div {className: "col-md-8 content"}
               [ H.p {}
                 [ H.span {className: "fa fa-globe"} []
-                , H.text $ " " <> desc
+                , renameable {text: " " <> desc, onRename: onRenameDummy} []
                 ]
               , H.p {}
                 [ H.span {className: "fa fa-search-plus"} []
-                , H.text $ " " <> query
+                , renameable {text: " " <> query, onRename: onRenameDummy} []
                 ]
               , H.p { className: "cache-toggle"
                     , on: { click: cacheClick cacheState } }
@@ -90,11 +94,11 @@ tableHeaderLayoutCpt = here.component "tableHeaderLayout" cpt
             , H.div {className: "col-md-4 content"}
               [ H.p {}
                 [ H.span {className: "fa fa-calendar"} []
-                , H.text $ " " <> date
+                , renameable {text: " " <> date, onRename: onRenameDummy} []
                 ]
               , H.p {}
                 [ H.span {className: "fa fa-user"} []
-                , H.text $ " " <> user
+                , renameable {text: " " <> user, onRename: onRenameDummy} []
                 ]
               ]
             ]
