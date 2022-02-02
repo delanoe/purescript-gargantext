@@ -8,7 +8,6 @@ import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
-import Gargantext.Components.Nodes.Corpus.Types (getCorpusInfo, CorpusInfo(..), Hyperdata(..))
 import Gargantext.Components.Nodes.Lists.Tabs as Tabs
 import Gargantext.Components.Nodes.Lists.Types (CacheState(..))
 import Gargantext.Components.Table as Table
@@ -73,18 +72,17 @@ listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
               , path
               , loader: loadCorpusWithChild
               , render: \corpusData@{ corpusId, corpusNode: NodePoly poly } ->
-                          let { date, hyperdata : Hyperdata h, name } = poly
-                              CorpusInfo { authors, desc, query } = getCorpusInfo h.fields
+                          let { date, hyperdata } = poly
                           in
                             R.fragment [
-                              Table.tableHeaderLayout {
+                              Table.tableHeaderWithRenameLayout {
                                 cacheState
                               , date
-                              , desc
+                              , hyperdata
+                              , nodeId: corpusId
+                              , session
                               , key: "listsLayoutWithKey-header-" <> (show cacheState')
-                              , query
-                              , title: "Corpus " <> name
-                              , user: authors } []
+                                } []
                             , Tabs.tabs {
                                 activeTab
                               , boxes

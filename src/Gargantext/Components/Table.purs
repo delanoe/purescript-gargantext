@@ -7,10 +7,13 @@ import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
 import Effect (Effect)
 import Gargantext.Components.FolderView as FV
+import Gargantext.Components.Nodes.Corpus.Types (CorpusInfo(..), Hyperdata(..), getCorpusInfo)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Renameable (renameable)
 import Gargantext.Components.Search (SearchType(..))
 import Gargantext.Components.Table.Types (ColumnName, OrderBy, OrderByDirection(..), Params, Props, TableContainerProps, columnName)
+import Gargantext.Sessions.Types (Session)
+import Gargantext.Types (NodeID)
 import Gargantext.Utils.Reactix (effectLink)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -51,21 +54,28 @@ type TableHeaderLayoutProps = (
   , user  :: String
   )
 
+type TableHeaderWithRenameLayoutProps = (
+    cacheState :: T.Box NT.CacheState
+  , session    :: Session
+  , hyperdata  :: Hyperdata
+  , nodeId     :: NodeID
+  , date       :: String
+  , key        :: String
+)
+
 initialParams :: Params
 initialParams = stateParams {page: 1, pageSize: PS10, orderBy: Nothing, searchType: SearchDoc}
 -- TODO: Not sure this is the right place for this
 
-onRenameDummy :: String -> Effect Unit
-onRenameDummy _ = do
-  pure unit
+tableHeaderWithRenameLayout :: R2.Component TableHeaderWithRenameLayoutProps
+tableHeaderWithRenameLayout = R.createElement tableHeaderWithRenameLayoutCpt
 
-tableHeaderLayout :: R2.Component TableHeaderLayoutProps
-tableHeaderLayout = R.createElement tableHeaderLayoutCpt
-tableHeaderLayoutCpt :: R.Component TableHeaderLayoutProps
-tableHeaderLayoutCpt = here.component "tableHeaderLayout" cpt
+tableHeaderWithRenameLayoutCpt :: R.Component TableHeaderWithRenameLayoutProps
+tableHeaderWithRenameLayoutCpt = here.component "tableHeaderWithRenameLayoutCpt" cpt
   where
-    cpt { cacheState, date, desc, query, title, user } _ = do
+    cpt { hyperdata: Hyperdata h, nodeId, session, cacheState, date } _ = do
       cacheState' <- T.useLive T.unequal cacheState
+      let CorpusInfo { authors, desc, query, title} = getCorpusInfo h.fields
 
       pure $ R.fragment
         [ R2.row [FV.backButton {} []]
@@ -98,7 +108,67 @@ tableHeaderLayoutCpt = here.component "tableHeaderLayout" cpt
                 ]
               , H.p {}
                 [ H.span {className: "fa fa-user"} []
-                , renameable {text: " " <> user, onRename: onRenameDummy} []
+                , renameable {text: " " <> authors, onRename: onRenameDummy} []
+                ]
+              ]
+            ]
+          ]
+
+    cacheToggle NT.CacheOn = "fa-toggle-on"
+    cacheToggle NT.CacheOff = "fa-toggle-off"
+
+    cacheText NT.CacheOn = "Cache On"
+    cacheText NT.CacheOff = "Cache Off"
+
+    cacheClick cacheState _ = do
+      T.modify cacheStateToggle cacheState
+
+    cacheStateToggle NT.CacheOn = NT.CacheOff
+    cacheStateToggle NT.CacheOff = NT.CacheOn
+
+    onRenameDummy _ = do
+      pure unit
+
+tableHeaderLayout :: R2.Component TableHeaderLayoutProps
+tableHeaderLayout = R.createElement tableHeaderLayoutCpt
+tableHeaderLayoutCpt :: R.Component TableHeaderLayoutProps
+tableHeaderLayoutCpt = here.component "tableHeaderLayout" cpt
+  where
+    cpt { cacheState, date, desc, query, title, user } _ = do
+      cacheState' <- T.useLive T.unequal cacheState
+
+      pure $ R.fragment
+        [ R2.row [FV.backButton {} []]
+        ,
+          R2.row
+          [ H.div {className: "col-md-3"} [ H.h3 {} [H.text title] ]
+          , H.div {className: "col-md-9"}
+            [ H.hr {style: {height: "2px", backgroundColor: "black"}} ]
+          ]
+          , R2.row
+            [ H.div {className: "col-md-8 content"}
+              [ H.p {}
+                [ H.span {className: "fa fa-globe"} []
+                , H.text $ " " <> desc
+                ]
+              , H.p {}
+                [ H.span {className: "fa fa-search-plus"} []
+                , H.text $ " " <> query
+                ]
+              , H.p { className: "cache-toggle"
+                    , on: { click: cacheClick cacheState } }
+                [ H.span { className: "fa " <> (cacheToggle cacheState') } []
+                , H.text $ cacheText cacheState'
+                ]
+              ]
+            , H.div {className: "col-md-4 content"}
+              [ H.p {}
+                [ H.span {className: "fa fa-calendar"} []
+                , H.text $ " " <> date
+                ]
+              , H.p {}
+                [ H.span {className: "fa fa-user"} []
+                , H.text $ " " <> user
                 ]
               ]
             ]
