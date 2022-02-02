@@ -102,7 +102,17 @@ frameLayoutViewCpt = here.component "frameLayoutView" cpt
         NodeFrameVisio ->
           case WURL.fromAbsolute base of
             Nothing  -> pure $ H.div {} [ H.text $ "Wrong base url: " <> base ]
-            Just url -> pure $ nodeFrameVisio { frame_id, reload, url }
+            Just url -> pure $ H.div {} [ H.h1 {} [ H.text "Visio Room"]
+                                        , H.a { className : "fa fa-video-camera fa-5x"
+                                              , href : hframeUrl nodeType base frame_id
+                                              , target: "_blank"
+                                              }
+                                             []
+                                        , H.p {} [H.text "Click on the Camera logo to access to your room"]
+                                        , H.p {} [H.text "This a unique room dedicated to your team"]
+                                        , H.p {} [H.text "Works with Chromium/Chrome only for now."]
+                                        ]
+                       -- pure $ nodeFrameVisio' { frame_id, reload, url }
         _              ->
           pure $ H.div{}
             [ FV.backButton {} []
@@ -144,6 +154,8 @@ nodeFrameVisioCpt = here.component "nodeFrameVisio" cpt
             here.log2 "[nodeFrameVisio] api" api
 
       pure $ H.div { ref, className: "jitsi-iframe" } [ ]
+
+
 
 type LoadProps   = ( nodeId  :: Int
                    , session :: Session )
