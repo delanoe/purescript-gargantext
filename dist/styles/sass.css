@@ -1265,25 +1265,33 @@ select.form-control {
 }
 
 /* classes */
-/* ---------- icons ---------- */
-a {
+.phylo {
+  /* ---------- icons ---------- */
+  /* ---------- fonts ---------- */
+  /* ---------- input ---------- */
+  /* ---------- axis ---------- */
+  /* ---------- group ---------- */
+  /* ---------- labels ---------- */
+  /* ---------- phylo ---------- */
+  /* elements */
+  /* axis */
+  /* isoline */
+}
+.phylo a {
   color: inherit;
   cursor: pointer;
 }
-
-.how {
+.phylo .how {
   cursor: pointer;
   position: relative;
 }
-
-.tooltip {
+.phylo .tooltip {
   font-family: "Inter-Regular";
   font-size: 14px;
   font-style: normal;
   font-weight: 400;
 }
-
-i.how span {
+.phylo i.how span {
   position: absolute;
   width: 300px;
   color: #FFFFFF;
@@ -1294,8 +1302,7 @@ i.how span {
   visibility: hidden;
   border-radius: 6px;
 }
-
-i.how span:after {
+.phylo i.how span:after {
   content: "";
   position: absolute;
   top: 50%;
@@ -1307,8 +1314,7 @@ i.how span:after {
   border-top: 8px solid transparent;
   border-bottom: 8px solid transparent;
 }
-
-i.how:hover span {
+.phylo i.how:hover span {
   visibility: visible;
   left: 100%;
   top: 50%;
@@ -1316,285 +1322,221 @@ i.how:hover span {
   margin-left: 15px;
   z-index: 999;
 }
-
-.switch > .far + .fa,
-.switch:hover > .far {
+.phylo .switch > .far + .fa,
+.phylo .switch:hover > .far {
   display: none;
 }
-
-.switch:hover > .far + .fa {
+.phylo .switch:hover > .far + .fa {
   display: inherit;
   color: #0d1824;
 }
-
-/* ---------- fonts ---------- */
-.font-bold {
+.phylo .font-bold {
   font-family: "Inter-Bold";
   text-transform: uppercase;
 }
-
-.font-small {
+.phylo .font-small {
   color: #0d1824;
   font-size: 12px;
 }
-
-.header {
+.phylo .header {
   /*font-weight: bold;*/
   /*text-transform: uppercase;*/
   font-weight: 500;
   cursor: pointer;
 }
-
-.header:hover {
+.phylo .header:hover {
   font-weight: bold;
 }
-
-/* ---------- input ---------- */
-.button {
+.phylo .button {
   background-color: white;
   border: 1.5px solid #0d1824;
   cursor: pointer;
 }
-
-.button:hover {
+.phylo .button:hover {
   background-color: #0d1824;
   color: white;
 }
-
-.btn-group button {
+.phylo .btn-group button {
   margin-top: 1px;
   margin-bottom: 1px;
   display: block;
   width: 40px;
 }
-
-.draw {
+.phylo .draw {
   display: none;
 }
-
-.phylo-focus {
+.phylo .phylo-focus {
   fill: #f8381f;
   color: #f8381f;
 }
-
-.reset {
+.phylo .reset {
   visibility: hidden;
 }
-
-.label {
+.phylo .label {
   visibility: hidden;
 }
-
-.heading {
+.phylo .heading {
   visibility: hidden;
 }
-
-.export {
+.phylo .export {
   visibility: hidden;
 }
-
-.headed {
+.phylo .headed {
   background-color: #0d1824;
   color: white;
 }
-
-.labeled {
+.phylo .labeled {
   background-color: #0d1824;
   color: white;
 }
-
-.input-file {
+.phylo .input-file {
   display: inline-block;
   cursor: pointer;
 }
-
-.input-file:hover {
+.phylo .input-file:hover {
   border-bottom: 1.5px solid #0d1824;
 }
-
-.input-name {
+.phylo .input-name {
   font-style: italic;
   opacity: 0.7;
   font-size: 14px;
   padding-left: 6px;
   padding-right: 6px;
 }
-
-/* ---------- axis ---------- */
-.x-axis path {
+.phylo .x-axis path {
   stroke: #EBE4DD;
   stroke-width: 1.5px;
 }
-
-.y-axis path {
+.phylo .y-axis path {
   stroke: #EBE4DD;
   stroke-width: 1.5px;
 }
-
-.y-highlight {
+.phylo .y-highlight {
   stroke: #f3be54;
   stroke-width: 1.5px;
 }
-
-.x-mark {
+.phylo .x-mark {
   fill: #4A5C70;
   stroke-width: 1px;
   stroke: #fff;
 }
-
-.x-mark-over {
+.phylo .x-mark-over {
   fill: #f3be54;
 }
-
-.x-mark-focus {
+.phylo .x-mark-focus {
   fill: #f8381f;
 }
-
-.tick text {
+.phylo .tick text {
   font-family: "Inter-Regular";
 }
-
-.tick text:hover {
+.phylo .tick text:hover {
   cursor: pointer;
 }
-
-.y-label {
+.phylo .y-label {
   font-size: 10px;
   font-family: "Inter-Regular";
   font-weight: normal;
 }
-
-.y-label-bold {
+.phylo .y-label-bold {
   font-size: 12px;
   font-family: "Inter-Bold";
   font-weight: bold;
 }
-
-.y-mark-year-inner {
+.phylo .y-mark-year-inner {
   fill: #4A5C70;
 }
-
-.y-mark-year-inner-highlight {
+.phylo .y-mark-year-inner-highlight {
   fill: #f3be54;
 }
-
-.y-mark-year-outer {
+.phylo .y-mark-year-outer {
   fill: #fff;
   stroke: #4A5C70;
   stroke-width: 1px;
 }
-
-.y-mark-year-outer-highlight {
+.phylo .y-mark-year-outer-highlight {
   fill: #fff;
   stroke: #f3be54;
   stroke-width: 3px;
 }
-
-.y-mark-month {
+.phylo .y-mark-month {
   fill: #4A5C70;
 }
-
-/* ---------- group ---------- */
-.group-outer {
+.phylo .group-outer {
   stroke-width: 0.8px;
   stroke: #fff;
   fill: #fff;
 }
-
-.group-inner {
+.phylo .group-inner {
   stroke-width: 0.8px;
   stroke: #0d1824;
   fill: #0d1824;
   /*cursor: pointer;*/
   z-index: 10;
 }
-
-.group-heading {
+.phylo .group-heading {
   fill: #fff;
   stroke: #B5B5B5;
 }
-
-.group-focus {
+.phylo .group-focus {
   stroke: #f8381f;
 }
-
-.source-focus {
+.phylo .source-focus {
   stroke: #67a9cf;
 }
-
-.group-unfocus {
+.phylo .group-unfocus {
   stroke: #A9A9A9;
 }
-
-.group-path {
+.phylo .group-path {
   cursor: pointer;
 }
-
-/* ---------- labels ---------- */
-.ngrams {
+.phylo .ngrams {
   visibility: hidden;
 }
-
-.term {
+.phylo .term {
   cursor: pointer;
 }
-
-.term:hover {
+.phylo .term:hover {
   font-weight: bold;
   fill: #f8381f;
 }
-
-.term-path {
+.phylo .term-path {
   fill: none;
   stroke: #F0684D;
   stroke-width: 1.5px;
 }
-
-.emerging {
+.phylo .emerging {
   /*text-decoration: underline #F0684D;*/
   /*fill:#5AA350;*/
   /*fill: #5AA350;*/
   fill: #F8381F;
 }
-
-.decreasing {
+.phylo .decreasing {
   /*text-decoration: underline #74B5FF;*/
   fill: #11638F;
 }
-
-.path-focus {
+.phylo .path-focus {
   fill: none;
   stroke: #F0684D;
   stroke-width: 1.5px;
 }
-
-.path-unfocus {
+.phylo .path-unfocus {
   stroke: #A9A9A9;
 }
-
-.path-heading {
+.phylo .path-heading {
   stroke: #B5B5B5;
 }
-
-/* ---------- phylo ---------- */
-.branch-hover {
+.phylo .branch-hover {
   fill: #f3be54;
   opacity: 0.5;
 }
-
-/* elements */
-#file-path {
+.phylo #file-path {
   display: none;
 }
-
-/* axis */
-.axisRight {
+.phylo .axisRight {
   font-family: "Inter-Regular";
   font-size: 10px;
 }
-
-/* isoline */
-.peak {
+.phylo .peak {
   stroke: white;
   stroke-width: 1px;
   font-family: "Inter-Regular";
@@ -1602,28 +1544,24 @@ i.how:hover span {
   text-anchor: middle;
   visibility: visible;
 }
-
-.peak-over {
+.phylo .peak-over {
   font-size: 18px;
   stroke-width: 2px;
   cursor: pointer;
   stroke: #f3be54;
   z-index: 100;
 }
-
-.peak-focus {
+.phylo .peak-focus {
   font-size: 18px;
   stroke-width: 2px;
   stroke: #F0684D;
 }
-
-.peak-focus-source {
+.phylo .peak-focus-source {
   font-size: 18px;
   stroke-width: 2px;
   stroke: #67a9cf;
 }
-
-.peak-label {
+.phylo .peak-label {
   text-align: center;
   font-family: "Inter-Regular";
   font-size: 14px;
@@ -1640,13 +1578,11 @@ i.how:hover span {
   position: absolute;
   visibility: hidden;
 }
-
-.word-cloud {
+.phylo .word-cloud {
   font-family: "Inter-Regular";
   font-size: 12px;
 }
-
-.search {
+.phylo .search {
   margin-left: 10px;
   visibility: hidden;
   position: absolute;
@@ -1657,17 +1593,14 @@ i.how:hover span {
   border-width: 0 0 2px;
   border-color: #0d1824;
 }
-
-.search-label {
+.phylo .search-label {
   visibility: hidden;
   margin-left: 5px;
 }
-
-.search:focus {
+.phylo .search:focus {
   border-color: #F0684D;
 }
-
-.autocomplete {
+.phylo .autocomplete {
   margin-left: 10px;
   visibility: hidden;
   position: absolute;
@@ -1678,18 +1611,15 @@ i.how:hover span {
   z-index: 1;
   border: none;
 }
-
-.loading {
+.phylo .loading {
   visibility: hidden;
 }
-
-.phylo-name {
+.phylo .phylo-name {
   visibility: hidden;
   text-transform: capitalize;
   font-weight: bold;
 }
-
-.select-source {
+.phylo .select-source {
   margin-left: 10px;
   display: none;
   border: 1.5px solid #0d1824;
@@ -1702,8 +1632,7 @@ i.how:hover span {
   box-shadow: none;
   -webkit-appearance: none;
 }
-
-option {
+.phylo option {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
