@@ -12,6 +12,7 @@ import Effect.Class (liftEffect)
 import Foreign (unsafeToForeign, ForeignError)
 import Gargantext.Components.GraphQL.Node (Node)
 import Gargantext.Components.GraphQL.User (User, UserInfo, UserInfoM)
+import Gargantext.Ends (Backend(..))
 import Gargantext.Sessions (Session(..))
 import Gargantext.Utils.Reactix as R2
 import GraphQL.Client.Args (type (==>))
@@ -45,7 +46,7 @@ toJsonError :: NonEmptyList ForeignError -> JsonDecodeError
 toJsonError = unsafeCoerce  -- map ForeignErrors to JsonDecodeError as you wish
 
 getClient :: Session -> Effect (Client UrqlClient Schema Mutation Void)
-getClient (Session { token }) = createClient { headers, url: "http://localhost:8008/gql" }
+getClient (Session { token, backend: Backend b }) = createClient { headers, url: b.baseUrl <> "/gql" }
   where
     headers = [ ARH.RequestHeader "Authorization" $ "Bearer " <> token ]
 
