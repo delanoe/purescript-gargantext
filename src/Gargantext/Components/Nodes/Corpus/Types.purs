@@ -56,3 +56,23 @@ getCorpusInfo (FTFieldList as) = case List.head (List.filter isJSON as) of
                                                  , authors:""
                                                  , totalRecords: 0
                                                  }
+
+saveCorpusInfo :: CorpusInfo -> FTFieldList -> FTFieldList
+saveCorpusInfo (CorpusInfo i) (FTFieldList fields) = 
+  FTFieldList $ List.snoc (List.filter (not isJSON) fields) (Field {name: oName, typ: JSON { authors: i.authors
+                                                                                           , desc: i.desc
+                                                                                           , query: i.query
+                                                                                           , title: i.title
+                                                                                           , tag: oTag
+                                                                                           }})
+
+  where
+    oName = case o of 
+      Just (Field {name}) -> name
+      _ -> ""
+
+    oTag = case o of
+      Just (Field {typ: JSON {tag}}) -> tag
+      _ -> ""
+
+    o = List.head (List.filter isJSON fields)
