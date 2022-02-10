@@ -2,19 +2,19 @@ module Gargantext.Components.GraphExplorer.Search
   ( Props, nodeSearchControl ) where
 
 import Prelude
+
+import DOM.Simple.Console (log2)
 import Data.Foldable (foldl)
 import Data.Sequence as Seq
 import Data.Set as Set
-import DOM.Simple.Console (log2)
 import Effect (Effect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
 import Gargantext.Components.InputWithAutocomplete (inputWithAutocomplete)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Utils (queryMatchesLabel)
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.Search"
@@ -29,7 +29,7 @@ type Props = (
 --   Searches given node and matches it's label or any of the children's labels.
 nodeMatchesSearch :: String -> Record SigmaxT.Node -> Boolean
 nodeMatchesSearch s n@{ children } =
-  foldl (\acc childLabel -> queryMatchesLabel s childLabel) initial children
+  foldl (\_ childLabel -> queryMatchesLabel s childLabel) initial children
   where
     initial = queryMatchesLabel s n.label
 
@@ -79,4 +79,3 @@ triggerSearch graph search multiSelectEnabled selectedNodeIds = do
 
   T.modify_ (\nodes ->
     Set.union matching $ if multiSelectEnabled then nodes else SigmaxT.emptyNodeIds) selectedNodeIds
-
