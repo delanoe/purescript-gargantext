@@ -146,6 +146,7 @@ formChoiceCpt = here.component "formChoice" cpt where
       [
         R2.select
         { className: "form-control with-icon-font"
+        , defaultValue: show default
         , on: { change }
         } $ map option items
       ]

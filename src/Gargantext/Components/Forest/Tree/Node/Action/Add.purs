@@ -93,7 +93,7 @@ addNodeViewCpt = here.component "addNodeView" cpt where
           T.write_ nt nodeType
         (maybeChoose /\ nt') = if length nodeTypes > 1
                          then ([ formChoice { items: nodeTypes
-                                            , default: Error
+                                            , default: nodeType'
                                             , callback: setNodeType'
                                             , print: print hasChromeAgent' } [] ] /\ nodeType')
                          else ([H.div {} [H.text $ "Creating a node of type "
