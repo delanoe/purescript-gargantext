@@ -55,7 +55,7 @@ updateDashboardCpt = here.component "updateDashboard" cpt where
 
     pure $ panel [ -- H.text "Update with"
                   formChoiceSafe { items: [All, Sources, Authors, Institutes, Ngrams]
-                                 , default: All
+                                 , default: methodBoard'
                                  , callback: \val -> T.write_ val methodBoard
                                  , print: show } []
                  ]
@@ -71,7 +71,7 @@ updateGraphCpt = here.component "updateGraph" cpt where
 
     pure $ panel [ -- H.text "Update with"
                   formChoiceSafe { items: [Order1, Order2]
-                                 , default: Order1
+                                 , default: methodGraph'
                                  , callback: \val -> T.write_ val methodGraph
                                  , print: show } []
                  ]
@@ -87,7 +87,7 @@ updateNodeListCpt = here.component "updateNodeList" cpt where
 
     pure $ panel [ -- H.text "Update with"
                   formChoiceSafe { items: [Basic, Advanced, WithModel]
-                                 , default: Basic
+                                 , default: methodList'
                                  , callback: \val -> T.write_ val methodList
                                  , print: show } []
                  ]
@@ -103,7 +103,7 @@ updateTextsCpt = here.component "updateTexts" cpt where
 
     pure $ panel [ -- H.text "Update with"
                   formChoiceSafe { items: [NewNgrams, NewTexts, Both]
-                                 , default: NewNgrams
+                                 , default: methodTexts'
                                  , callback: \val -> T.write_ val methodTexts
                                  , print: show } []
                  ]
