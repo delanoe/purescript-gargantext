@@ -2,14 +2,14 @@ module Gargantext.Components.InputWithAutocomplete where
 
 import Prelude
 
+import DOM.Simple (contains)
 import DOM.Simple as DOM
 import DOM.Simple.Event as DE
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Nullable (Nullable, null, toMaybe)
 import Effect (Effect)
-import Effect.Timer (setTimeout)
+import FFI.Simple ((..))
 import Gargantext.Utils.Reactix as R2
-import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
@@ -34,43 +34,72 @@ inputWithAutocomplete = R.createElement inputWithAutocompleteCpt
 inputWithAutocompleteCpt :: R.Component Props
 inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
   where
-    cpt props@{ autocompleteSearch
-              , classes
-              , onAutocompleteClick
-              , onEnterPress
-              , state } _ = do
-      state' <- T.useLive T.unequal state
-      inputRef <- R.useRef null
-      completions <- T.useBox $ autocompleteSearch state'
+    cpt { autocompleteSearch
+        , classes
+        , onAutocompleteClick
+        , onEnterPress
+        , state } _ = do
+      -- States
+      state'        <- T.useLive T.unequal state
+      containerRef  <- R.useRef null
+      inputRef      <- R.useRef null
+      completions   <- T.useBox $ autocompleteSearch state'
 
-      let onFocus completions' _ = T.write_ (autocompleteSearch state') completions'
-
+      -- Render
       pure $
-        H.span { className: "input-with-autocomplete " <> classes }
+
+        H.div
+        { className: "input-with-autocomplete " <> classes
+        , ref: containerRef
+        }
         [
           completionsCpt { completions, onAutocompleteClick, state } []
         , H.input { type: "text"
                   , ref: inputRef
                   , className: "form-control"
                   , value: state'
-                  , on: { blur: onBlur completions
-                        , focus: onFocus completions
+                  , on: { focus: onFocus completions state'
                         , input: onInput completions
                         , change: onInput completions
-                        , keyUp: onInputKeyUp inputRef } }
+                        , keyUp: onInputKeyUp inputRef
+                        , blur: onBlur completions containerRef
+                        }
+                  }
         ]
 
+      -- Helpers
       where
+        -- (!) `onBlur` DOM.Event is triggered before any `onClick` DOM.Event
+        --     So when a completion is being clicked, the UX will be broken
+        --
+        --        ↳ As a solution we chose to check if the click is made from
+        --          the autocompletion list
+        onBlur :: forall event.
+             T.Box Completions
+          -> R.Ref (Nullable DOM.Element)
+          -> event
+          -> Effect Unit
+        onBlur completions containerRef event =
 
-        -- setTimeout is a bit of a hack here -- clicking on autocomplete
-        -- element will clear out the blur first, so the autocomplete click
-        -- won't fire without a timeout here.  However, blur is very handy and
-        -- handles automatic autocomplete search, otherwise I'd have to hide it
-        -- in various different places (i.e. carefully handle all possible
-        -- events where blur happens and autocomplete should hide).
-        onBlur completions _ = setTimeout 100 $ do
-          T.write_ [] completions
+          if isInnerEvent
+          then
+            pure $ (event .. "preventDefault")
+          else
+            T.write_ [] completions
 
+          where
+            mContains = do
+              a <- toMaybe $ R.readRef containerRef
+              b <- toMaybe (event .. "relatedTarget")
+              Just (contains a b)
+
+            isInnerEvent = maybe false identity mContains
+
+
+        onFocus :: forall event. T.Box Completions -> String -> event -> Effect Unit
+        onFocus completions st _ = T.write_ (autocompleteSearch st) completions
+
+        onInput :: forall event. T.Box Completions -> event -> Effect Unit
         onInput completions e = do
           let val = R.unsafeEventValue e
           T.write_ val state
@@ -93,10 +122,14 @@ inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
           else
             pure $ false
 
+
+
+---------------------------------------------------------
+
 type CompletionsProps =
-  ( completions :: T.Box Completions
+  ( completions         :: T.Box Completions
   , onAutocompleteClick :: String -> Effect Unit
-  , state :: T.Box String
+  , state               :: T.Box String
   )
 
 completionsCpt :: R2.Component CompletionsProps
@@ -106,19 +139,29 @@ completionsCptCpt :: R.Component CompletionsProps
 completionsCptCpt = here.component "completionsCpt" cpt
   where
     cpt { completions, onAutocompleteClick, state } _ = do
+      -- State
       completions' <- T.useLive T.unequal completions
 
       let className = "completions " <> (if completions' == [] then "d-none" else "")
 
-      pure $ H.div { className }
+      -- Render
+      pure $
+
+        H.div
+        { className }
         [
           H.div { className: "list-group" } (cCpt <$> completions')
         ]
+
+      -- Helpers
       where
+
         cCpt c =
           H.button { type: "button"
                     , className: "list-group-item"
                     , on: { click: onClick c } } [ H.text c ]
+
         onClick c _ = do
           T.write_ c state
+          T.write_ [] completions
           onAutocompleteClick c
