@@ -7,7 +7,6 @@ module Gargantext.Components.NgramsTable
 import Gargantext.Prelude
 
 import Data.Array as A
-import Data.Either (Either)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Lens (to, view, (%~), (.~), (^.), (^?))
 import Data.Lens.At (at)
@@ -255,7 +254,7 @@ type CommonProps =
   ( afterSync      :: Unit -> Aff Unit
   , boxes          :: Boxes
   , tabNgramType   :: CTabNgramType
-  , withAutoUpdate :: Boolean
+  , withAutoUpdate :: Boolean -- (?) not used
   )
 
 type PropsNoReload =
@@ -271,17 +270,6 @@ type Props =
   ( reloadForest   :: T2.ReloadS
   , reloadRoot     :: T2.ReloadS
   | PropsNoReload )
-
-loadedNgramsTable :: R2.Component PropsNoReload
-loadedNgramsTable = R.createElement loadedNgramsTableCpt
-loadedNgramsTableCpt :: R.Component PropsNoReload
-loadedNgramsTableCpt = here.component "loadedNgramsTable" cpt where
-  cpt props@{ path } _ = do
-    searchQuery <- T.useFocused (_.searchQuery) (\a b -> b { searchQuery = a }) path
-
-    pure $ R.fragment $
-      [ loadedNgramsTableHeader { searchQuery } []
-      , loadedNgramsTableBody props [] ]
 
 type LoadedNgramsTableHeaderProps =
   ( searchQuery :: T.Box SearchQuery )
@@ -312,7 +300,7 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
       , state
       , tabNgramType
       , versioned: Versioned { data: initTable }
-      , withAutoUpdate } _ = do
+      } _ = do
     state'@{ ngramsChildren, ngramsLocalPatch, ngramsParent, ngramsSelection } <- T.useLive T.unequal state
     path'@{ scoreType, termListFilter, termSizeFilter } <- T.useLive T.unequal path
     params <- T.useFocused (_.params) (\a b -> b { params = a }) path
@@ -565,14 +553,26 @@ mainNgramsTable = R.createElement mainNgramsTableCpt
 mainNgramsTableCpt :: R.Component MainNgramsTableProps
 mainNgramsTableCpt = here.component "mainNgramsTable" cpt
   where
-    cpt props@{ cacheState } _ = do
+    cpt props@{ cacheState, path } _ = do
+      searchQuery <- T.useFocused (_.searchQuery) (\a b -> b { searchQuery = a }) path
       cacheState' <- T.useLive T.unequal cacheState
 
       -- let path = initialPageParams session nodeId [defaultListId] tabType
 
       case cacheState' of
-        NT.CacheOn -> pure $ mainNgramsTableCacheOn props []
-        NT.CacheOff -> pure $ mainNgramsTableCacheOff props []
+        NT.CacheOn  -> pure $ R.fragment
+          [
+            loadedNgramsTableHeader { searchQuery } []
+          ,
+            mainNgramsTableCacheOn props []
+          ]
+        NT.CacheOff -> pure $ R.fragment
+          [
+            loadedNgramsTableHeader { searchQuery } []
+          ,
+            mainNgramsTableCacheOff props []
+          ]
+
 
 mainNgramsTableCacheOn :: R2.Component MainNgramsTableProps
 mainNgramsTableCacheOn = R.createElement mainNgramsTableCacheOnCpt
@@ -622,7 +622,6 @@ mainNgramsTableCacheOffCpt :: R.Component MainNgramsTableProps
 mainNgramsTableCacheOffCpt = here.component "mainNgramsTableCacheOff" cpt where
   cpt { afterSync
       , boxes
-      , defaultListId
       , path
       , tabNgramType
       , withAutoUpdate } _ = do
@@ -685,16 +684,19 @@ mainNgramsTablePaintCpt = here.component "mainNgramsTablePaint" cpt
         , withAutoUpdate } _ = do
       state <- T.useBox $ initialState versioned
 
-      pure $ loadedNgramsTable { afterSync
-                               , boxes
-                               , cacheState
-                               , mTotalRows: Nothing
-                               , path
-                               , state
-                               , tabNgramType
-                               , versioned
-                               , withAutoUpdate
-                               } []
+      pure $
+
+        loadedNgramsTableBody
+        { afterSync
+        , boxes
+        , cacheState
+        , mTotalRows: Nothing
+        , path
+        , state
+        , tabNgramType
+        , versioned
+        , withAutoUpdate
+        } []
 
 type MainNgramsTablePaintNoCacheProps = (
     cacheState         :: NT.CacheState
@@ -720,15 +722,18 @@ mainNgramsTablePaintNoCacheCpt = here.component "mainNgramsTablePaintNoCache" cp
 
       state <- T.useBox $ initialState versioned
 
-      pure $ loadedNgramsTable { afterSync
-                               , boxes
-                               , cacheState
-                               , mTotalRows: Just count
-                               , path
-                               , state
-                               , tabNgramType
-                               , versioned
-                               , withAutoUpdate } []
+      pure $
+
+        loadedNgramsTableBody
+        { afterSync
+        , boxes
+        , cacheState
+        , mTotalRows: Just count
+        , path
+        , state
+        , tabNgramType
+        , versioned
+        , withAutoUpdate } []
 
 type NgramsOcc = { occurrences :: Additive Int, children :: Set NgramsTerm }
 
