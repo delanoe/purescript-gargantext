@@ -72,11 +72,12 @@ listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
               , path
               , loader: loadCorpusWithChild
               , render: \corpusData@{ corpusId, corpusNode: NodePoly poly } ->
-                          let { date, hyperdata } = poly
+                          let { name, date, hyperdata } = poly
                           in
                             R.fragment [
                               Table.tableHeaderWithRenameLayout {
                                 cacheState
+                              , name
                               , date
                               , hyperdata
                               , nodeId: corpusId

@@ -64,6 +64,7 @@ type TableHeaderWithRenameLayoutProps = (
   , session     :: Session
   , hyperdata   :: Hyperdata
   , nodeId      :: NodeID
+  , name        :: String
   , date        :: String
   , key         :: String
 )
@@ -73,6 +74,7 @@ type TableHeaderWithRenameBoxedLayoutProps = (
   , session     :: Session
   , hyperdata   :: Hyperdata
   , nodeId      :: NodeID
+  , name        :: String
   , date        :: String
   , key         :: String
   , corpusInfoS :: T.Box CorpusInfo
@@ -88,11 +90,11 @@ tableHeaderWithRenameLayout = R.createElement tableHeaderWithRenameLayoutCpt
 tableHeaderWithRenameLayoutCpt :: R.Component TableHeaderWithRenameLayoutProps
 tableHeaderWithRenameLayoutCpt = here.component "tableHeaderWithRenameLayoutCpt" cpt
   where
-    cpt { hyperdata: Hyperdata h, nodeId, session, cacheState, date, key } _ = do
+    cpt { hyperdata: Hyperdata h, nodeId, session, cacheState, name, date, key } _ = do
       let corpusInfo = getCorpusInfo h.fields
       corpusInfoS <- T.useBox corpusInfo
 
-      pure $ tableHeaderWithRenameBoxedLayout {hyperdata: Hyperdata h, nodeId, session, cacheState, date, corpusInfoS, key} []
+      pure $ tableHeaderWithRenameBoxedLayout {hyperdata: Hyperdata h, nodeId, session, cacheState, name, date, corpusInfoS, key} []
 
 tableHeaderWithRenameBoxedLayout :: R2.Component TableHeaderWithRenameBoxedLayoutProps
 tableHeaderWithRenameBoxedLayout = R.createElement tableHeaderWithRenameBoxedLayoutCpt
@@ -100,7 +102,7 @@ tableHeaderWithRenameBoxedLayout = R.createElement tableHeaderWithRenameBoxedLay
 tableHeaderWithRenameBoxedLayoutCpt :: R.Component TableHeaderWithRenameBoxedLayoutProps
 tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxedLayoutCpt" cpt
   where
-    cpt { hyperdata: Hyperdata h, nodeId, session, cacheState, date, corpusInfoS} _ = do
+    cpt { hyperdata: Hyperdata h, nodeId, session, cacheState, name, date, corpusInfoS} _ = do
       cacheState' <- T.useLive T.unequal cacheState
       CorpusInfo {title, desc, query, authors} <- T.read corpusInfoS
 
@@ -108,19 +110,23 @@ tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxed
         [ R2.row [FV.backButton {} []]
         ,
           R2.row
-          [ H.div {className: "col-md-3"} [ H.h3 {} [renameable {text: title, onRename: onRenameTitle} []] ]
+          [ H.div {className: "col-md-3"} [ H.h3 {} [H.text name] ]
           , H.div {className: "col-md-9"}
             [ H.hr {style: {height: "2px", backgroundColor: "black"}} ]
           ]
           , R2.row
             [ H.div {className: "col-md-8 content"}
               [ H.p {}
-                [ H.span {className: "fa fa-globe"} []
-                , renameable {text: " " <> desc, onRename: onRenameDesc} []
+                [
+                  renameable {icon: "fa fa-info", text: title, onRename: onRenameTitle} []
                 ]
               , H.p {}
-                [ H.span {className: "fa fa-search-plus"} []
-                , renameable {text: " " <> query, onRename: onRenameQuery} []
+                [
+                  renameable {icon: "fa fa-globe", text: desc, onRename: onRenameDesc} []
+                ]
+              , H.p {}
+                [ 
+                  renameable {icon: "fa fa-search-plus", text: query, onRename: onRenameQuery} []
                 ]
               , H.p { className: "cache-toggle"
                     , on: { click: cacheClick cacheState } }
@@ -130,8 +136,8 @@ tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxed
               ]
             , H.div {className: "col-md-4 content"}
               [ H.p {}
-                [ H.span {className: "fa fa-user"} []
-                , renameable {text: " " <> authors, onRename: onRenameAuthors} []
+                [ 
+                  renameable {icon: "fa fa-user", text: authors, onRename: onRenameAuthors} []
                 ]
               , H.p {}
                 [ H.span {className: "fa fa-calendar"} []

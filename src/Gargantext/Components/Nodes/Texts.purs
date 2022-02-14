@@ -105,11 +105,12 @@ textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
                 , loader: loadCorpusWithChild
                 , path: { nodeId, session }
                 , render: \corpusData@{ corpusId, corpusNode } -> do
-                    let NodePoly { date, hyperdata } = corpusNode
+                    let NodePoly { name, date, hyperdata } = corpusNode
 
                     R.fragment
                       [ Table.tableHeaderWithRenameLayout { 
                           cacheState
+                        , name
                         , date
                         , hyperdata
                         , nodeId: corpusId
