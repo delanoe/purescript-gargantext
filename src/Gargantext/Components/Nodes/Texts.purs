@@ -17,7 +17,7 @@ import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
 import Gargantext.Components.Nodes.Corpus.Document as D
-import Gargantext.Components.Nodes.Corpus.Types (CorpusData, CorpusInfo(..), Hyperdata(..), getCorpusInfo)
+import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
 import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Components.Nodes.Texts.Types as TT
 import Gargantext.Components.Reload (textsReloadContext)
@@ -105,18 +105,17 @@ textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
                 , loader: loadCorpusWithChild
                 , path: { nodeId, session }
                 , render: \corpusData@{ corpusId, corpusNode } -> do
-                    let NodePoly { date, hyperdata: Hyperdata h, name } = corpusNode
-                        CorpusInfo { authors, desc, query } = getCorpusInfo h.fields
-                        title = "Corpus " <> name
+                    let NodePoly { name, date, hyperdata } = corpusNode
 
                     R.fragment
-                      [ Table.tableHeaderLayout { cacheState
-                                                , date
-                                                , desc
-                                                , query
-                                                , title
-                                                , user: authors
-                                                , key: "textsLayoutWithKey-" <> (show cacheState') } []
+                      [ Table.tableHeaderWithRenameLayout { 
+                          cacheState
+                        , name
+                        , date
+                        , hyperdata
+                        , nodeId: corpusId
+                        , session
+                        , key: "textsLayoutWithKey-" <> (show cacheState') } []
                       , tabs { boxes
                              , cacheState
                              , corpusData

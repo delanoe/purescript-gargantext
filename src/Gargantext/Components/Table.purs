@@ -1,21 +1,30 @@
 module Gargantext.Components.Table where
 
+import Gargantext.Prelude
+
 import Data.Array as A
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
 import Effect (Effect)
+import Effect.Aff (launchAff_)
+import Effect.Class (liftEffect)
+import Gargantext.Components.FolderView as FV
+import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
+import Gargantext.Components.Nodes.Corpus (saveCorpus)
+import Gargantext.Components.Nodes.Corpus.Types (CorpusInfo(..), Hyperdata(..), getCorpusInfo, saveCorpusInfo)
+import Gargantext.Components.Nodes.Lists.Types as NT
+import Gargantext.Components.Nodes.Types (FTFieldList)
+import Gargantext.Components.Renameable (renameable)
+import Gargantext.Components.Search (SearchType(..))
+import Gargantext.Components.Table.Types (ColumnName, OrderBy, OrderByDirection(..), Params, Props, TableContainerProps, columnName)
+import Gargantext.Sessions.Types (Session)
+import Gargantext.Types (NodeID)
+import Gargantext.Utils.Reactix (effectLink)
+import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
-
-import Gargantext.Prelude
-
-import Gargantext.Components.FolderView as FV
-import Gargantext.Components.Table.Types (ColumnName, OrderBy, OrderByDirection(..), Params, Props, TableContainerProps, columnName)
-import Gargantext.Components.Nodes.Lists.Types as NT
-import Gargantext.Components.Search (SearchType(..))
-import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Reactix (effectLink)
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Table"
@@ -51,9 +60,154 @@ type TableHeaderLayoutProps = (
   , user  :: String
   )
 
+type TableHeaderWithRenameLayoutProps = (
+    cacheState  :: T.Box NT.CacheState
+  , session     :: Session
+  , hyperdata   :: Hyperdata
+  , nodeId      :: NodeID
+  , name        :: String
+  , date        :: String
+  , key         :: String
+)
+
+type TableHeaderWithRenameBoxedLayoutProps = (
+    cacheState  :: T.Box NT.CacheState
+  , session     :: Session
+  , hyperdata   :: Hyperdata
+  , nodeId      :: NodeID
+  , name        :: String
+  , date        :: String
+  , key         :: String
+  , corpusInfoS :: T.Box CorpusInfo
+)
+
 initialParams :: Params
 initialParams = stateParams {page: 1, pageSize: PS10, orderBy: Nothing, searchType: SearchDoc}
 -- TODO: Not sure this is the right place for this
+
+tableHeaderWithRenameLayout :: R2.Component TableHeaderWithRenameLayoutProps
+tableHeaderWithRenameLayout = R.createElement tableHeaderWithRenameLayoutCpt
+
+tableHeaderWithRenameLayoutCpt :: R.Component TableHeaderWithRenameLayoutProps
+tableHeaderWithRenameLayoutCpt = here.component "tableHeaderWithRenameLayoutCpt" cpt
+  where
+    cpt { hyperdata: Hyperdata h, nodeId, session, cacheState, name, date, key } _ = do
+      let corpusInfo = getCorpusInfo h.fields
+      corpusInfoS <- T.useBox corpusInfo
+
+      pure $ tableHeaderWithRenameBoxedLayout {hyperdata: Hyperdata h, nodeId, session, cacheState, name, date, corpusInfoS, key} []
+
+tableHeaderWithRenameBoxedLayout :: R2.Component TableHeaderWithRenameBoxedLayoutProps
+tableHeaderWithRenameBoxedLayout = R.createElement tableHeaderWithRenameBoxedLayoutCpt
+
+tableHeaderWithRenameBoxedLayoutCpt :: R.Component TableHeaderWithRenameBoxedLayoutProps
+tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxedLayoutCpt" cpt
+  where
+    cpt { hyperdata: Hyperdata h, nodeId, session, cacheState, name, date, corpusInfoS} _ = do
+      cacheState' <- T.useLive T.unequal cacheState
+      CorpusInfo {title, desc, query, authors} <- T.read corpusInfoS
+
+      pure $ R.fragment
+        [ R2.row [FV.backButton {} []]
+        ,
+          R2.row
+          [ H.div {className: "col-md-3"} [ H.h3 {} [renameable {icon: "", text: name, onRename: onRenameCorpus} []] ]
+          , H.div {className: "col-md-9"}
+            [ H.hr {style: {height: "2px", backgroundColor: "black"}} ]
+          ]
+          , R2.row
+            [ H.div {className: "col-md-8 content"}
+              [ H.p {}
+                [
+                  renameable {icon: "fa fa-info", text: title, onRename: onRenameTitle} []
+                ]
+              , H.p {}
+                [
+                  renameable {icon: "fa fa-globe", text: desc, onRename: onRenameDesc} []
+                ]
+              , H.p {}
+                [ 
+                  renameable {icon: "fa fa-search-plus", text: query, onRename: onRenameQuery} []
+                ]
+              , H.p { className: "cache-toggle"
+                    , on: { click: cacheClick cacheState } }
+                [ H.span { className: "fa " <> (cacheToggle cacheState') } []
+                , H.text $ cacheText cacheState'
+                ]
+              ]
+            , H.div {className: "col-md-4 content"}
+              [ H.p {}
+                [ 
+                  renameable {icon: "fa fa-user", text: authors, onRename: onRenameAuthors} []
+                ]
+              , H.p {}
+                [ H.span {className: "fa fa-calendar"} []
+                , H.text $ " " <> date
+                ]
+              ]
+            ]
+          ]
+      where
+        onRenameCorpus newName = do
+          saveCorpusName {name: newName, session, nodeId}
+
+        onRenameTitle newTitle = do
+          _ <- T.modify (\(CorpusInfo c) -> CorpusInfo $ c {title = newTitle}) corpusInfoS
+          corpusInfo <- T.read corpusInfoS
+          let newFields = saveCorpusInfo corpusInfo h.fields
+          save {fields: newFields, session, nodeId}
+
+        onRenameDesc newDesc = do
+          _ <- T.modify (\(CorpusInfo c) -> CorpusInfo $ c {desc = newDesc}) corpusInfoS
+          corpusInfo <- T.read corpusInfoS
+          let newFields = saveCorpusInfo corpusInfo h.fields
+          save {fields: newFields, session, nodeId}
+
+        onRenameQuery newQuery = do
+          _ <- T.modify (\(CorpusInfo c) -> CorpusInfo $ c {query = newQuery}) corpusInfoS
+          corpusInfo <- T.read corpusInfoS
+          let newFields = saveCorpusInfo corpusInfo h.fields
+          save {fields: newFields, session, nodeId}
+
+        onRenameAuthors newAuthors = do
+          _ <- T.modify (\(CorpusInfo c) -> CorpusInfo $ c {authors = newAuthors}) corpusInfoS
+          corpusInfo <- T.read corpusInfoS
+          let newFields = saveCorpusInfo corpusInfo h.fields
+          save {fields: newFields, session, nodeId}
+
+
+    cacheToggle NT.CacheOn = "fa-toggle-on"
+    cacheToggle NT.CacheOff = "fa-toggle-off"
+
+    cacheText NT.CacheOn = "Cache On"
+    cacheText NT.CacheOff = "Cache Off"
+
+    cacheClick cacheState _ = do
+      T.modify cacheStateToggle cacheState
+
+    cacheStateToggle NT.CacheOn = NT.CacheOff
+    cacheStateToggle NT.CacheOff = NT.CacheOn
+
+    
+save :: {fields :: FTFieldList, session :: Session, nodeId :: Int} -> Effect Unit
+save {fields, session, nodeId} = do
+  launchAff_ do
+    res <- saveCorpus $ {hyperdata: Hyperdata {fields}, session, nodeId}
+    liftEffect $ do
+          _ <- case res of
+                Left err -> here.log2 "[corpusLayoutView] onClickSave RESTError" err
+                _ -> pure unit
+          pure unit
+
+saveCorpusName :: {name :: String, session :: Session, nodeId :: Int} -> Effect Unit
+saveCorpusName {name, session, nodeId} = do
+  launchAff_ do
+    res <- rename session nodeId $ RenameValue {text: name}
+    liftEffect $ do
+          _ <- case res of
+                Left err -> here.log2 "[corpusLayoutView] onClickSave RESTError" err
+                _ -> pure unit
+          pure unit
 
 tableHeaderLayout :: R2.Component TableHeaderLayoutProps
 tableHeaderLayout = R.createElement tableHeaderLayoutCpt
@@ -89,12 +243,12 @@ tableHeaderLayoutCpt = here.component "tableHeaderLayout" cpt
               ]
             , H.div {className: "col-md-4 content"}
               [ H.p {}
-                [ H.span {className: "fa fa-calendar"} []
-                , H.text $ " " <> date
-                ]
-              , H.p {}
                 [ H.span {className: "fa fa-user"} []
                 , H.text $ " " <> user
+                ]
+              , H.p {}
+                [ H.span {className: "fa fa-calendar"} []
+                , H.text $ " " <> date
                 ]
               ]
             ]

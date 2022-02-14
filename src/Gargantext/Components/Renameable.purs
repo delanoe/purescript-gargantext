@@ -1,14 +1,13 @@
 module Gargantext.Components.Renameable where
 
+import Gargantext.Prelude
+
 import Effect (Effect)
+import Gargantext.Components.InputWithEnter (inputWithEnter)
+import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
-
-import Gargantext.Prelude
-
-import Gargantext.Components.InputWithEnter (inputWithEnter)
-import Gargantext.Utils.Reactix as R2
 
 
 here :: R2.Here
@@ -18,6 +17,7 @@ type RenameableProps =
   (
     onRename :: String -> Effect Unit
   , text     :: String
+  , icon     :: String
   )
 
 renameable :: R2.Component RenameableProps
@@ -25,7 +25,7 @@ renameable = R.createElement renameableCpt
 renameableCpt :: R.Component RenameableProps
 renameableCpt = here.component "renameableCpt" cpt
   where
-    cpt { onRename, text } _ = do
+    cpt { onRename, text, icon } _ = do
       isEditing <- T.useBox false
       state <- T.useBox text
       textRef <- R.useRef text
@@ -39,7 +39,7 @@ renameableCpt = here.component "renameableCpt" cpt
           T.write_ text state
 
       pure $ H.div { className: "renameable" } [
-        renameableText { isEditing, onRename, state } []
+        renameableText { isEditing, onRename, state, icon } []
       ]
 
 type RenameableTextProps =
@@ -47,6 +47,7 @@ type RenameableTextProps =
     isEditing :: T.Box Boolean
   , onRename  :: String -> Effect Unit
   , state     :: T.Box String
+  , icon      :: String
   )
 
 renameableText :: R2.Component RenameableTextProps
@@ -58,9 +59,9 @@ renameableTextCpt = here.component "renameableText" cpt
       isEditing' <- T.useLive T.unequal isEditing
 
       pure $ if isEditing' then
-               notEditing props []
-             else
                editing props []
+             else
+               notEditing props []
 
 
 notEditing :: R2.Component RenameableTextProps
@@ -68,15 +69,13 @@ notEditing = R.createElement notEditingCpt
 notEditingCpt :: R.Component RenameableTextProps
 notEditingCpt = here.component "notEditing" cpt
   where
-    cpt { isEditing, state } _ = do
+    cpt { isEditing, state, icon} _ = do
       state' <- T.useLive T.unequal state
 
       pure $ H.div { className: "input-group" }
-        [ H.input { className: "form-control"
-                  , defaultValue: state'
-                  , disabled: 1
-                  , type: "text" }
-        , H.div { className: "btn input-group-append"
+        [ H.span {className: icon} []
+        , H.text state'
+        , H.button { className: "btn input-group-append"
                 , on: { click: \_ -> T.write_ true isEditing } }
           [ H.span { className: "fa fa-pencil" } []
           ]
@@ -88,11 +87,12 @@ editing = R.createElement editingCpt
 editingCpt :: R.Component RenameableTextProps
 editingCpt = here.component "editing" cpt
   where
-    cpt { isEditing, onRename, state } _ = do
+    cpt { isEditing, onRename, state, icon } _ = do
       state' <- T.useLive T.unequal state
 
       pure $ H.div { className: "input-group" }
-        [ inputWithEnter {
+        [ H.span {className: icon} []
+        , inputWithEnter {
             autoFocus: false
           , className: "form-control text"
           , defaultValue: state'
@@ -102,8 +102,8 @@ editingCpt = here.component "editing" cpt
           , placeholder: ""
           , type: "text"
           }
-        , H.div { className: "btn input-group-append"
-                , on: { click: submit } }
+        , H.button { className: "btn input-group-append"
+                , on: { click: submit state' } }
           [ H.span { className: "fa fa-floppy-o" } []
           ]
         ]
