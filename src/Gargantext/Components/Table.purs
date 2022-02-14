@@ -10,6 +10,7 @@ import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.FolderView as FV
+import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
 import Gargantext.Components.Nodes.Corpus (saveCorpus)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusInfo(..), Hyperdata(..), getCorpusInfo, saveCorpusInfo)
 import Gargantext.Components.Nodes.Lists.Types as NT
@@ -110,7 +111,7 @@ tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxed
         [ R2.row [FV.backButton {} []]
         ,
           R2.row
-          [ H.div {className: "col-md-3"} [ H.h3 {} [H.text name] ]
+          [ H.div {className: "col-md-3"} [ H.h3 {} [renameable {icon: "", text: name, onRename: onRenameCorpus} []] ]
           , H.div {className: "col-md-9"}
             [ H.hr {style: {height: "2px", backgroundColor: "black"}} ]
           ]
@@ -147,6 +148,9 @@ tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxed
             ]
           ]
       where
+        onRenameCorpus newName = do
+          saveCorpusName {name: newName, session, nodeId}
+
         onRenameTitle newTitle = do
           _ <- T.modify (\(CorpusInfo c) -> CorpusInfo $ c {title = newTitle}) corpusInfoS
           corpusInfo <- T.read corpusInfoS
@@ -189,6 +193,16 @@ save :: {fields :: FTFieldList, session :: Session, nodeId :: Int} -> Effect Uni
 save {fields, session, nodeId} = do
   launchAff_ do
     res <- saveCorpus $ {hyperdata: Hyperdata {fields}, session, nodeId}
+    liftEffect $ do
+          _ <- case res of
+                Left err -> here.log2 "[corpusLayoutView] onClickSave RESTError" err
+                _ -> pure unit
+          pure unit
+
+saveCorpusName :: {name :: String, session :: Session, nodeId :: Int} -> Effect Unit
+saveCorpusName {name, session, nodeId} = do
+  launchAff_ do
+    res <- rename session nodeId $ RenameValue {text: name}
     liftEffect $ do
           _ <- case res of
                 Left err -> here.log2 "[corpusLayoutView] onClickSave RESTError" err
