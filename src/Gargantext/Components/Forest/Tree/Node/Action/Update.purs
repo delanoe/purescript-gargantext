@@ -66,16 +66,30 @@ updateGraph = R.createElement updateGraphCpt
 updateGraphCpt :: R.Component UpdateProps
 updateGraphCpt = here.component "updateGraph" cpt where
   cpt { dispatch } _ = do
-    methodGraph <- T.useBox Order1
-    methodGraph' <- T.useLive T.unequal methodGraph
+    methodGraphMetric <- T.useBox Order1
+    methodGraphMetric' <- T.useLive T.unequal methodGraphMetric
+
+    methodGraphClustering <- T.useBox Spinglass
+    methodGraphClustering' <- T.useLive T.unequal methodGraphClustering
 
     pure $ panel [ -- H.text "Update with"
                   formChoiceSafe { items: [Order1, Order2]
-                                 , default: methodGraph'
-                                 , callback: \val -> T.write_ val methodGraph
+                                 , default: methodGraphMetric'
+                                 , callback: \val -> T.write_ val methodGraphMetric
                                  , print: show } []
+                 , formChoiceSafe { items: [Spinglass, Confluence]
+                                 , default: methodGraphClustering'
+                                 , callback: \val -> T.write_ val methodGraphClustering
+                                 , print: show } []
+
                  ]
-                 (submitButton (UpdateNode $ UpdateNodeParamsGraph { methodGraph: methodGraph' }) dispatch)
+                 (submitButton (UpdateNode $ UpdateNodeParamsGraph { methodGraphMetric: methodGraphMetric'
+                                                                   , methodGraphClustering: methodGraphClustering'
+                                                                   }
+                               ) dispatch
+                  )
+
+
 
 updateNodeList :: R2.Component UpdateProps
 updateNodeList = R.createElement updateNodeListCpt

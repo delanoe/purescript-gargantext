@@ -10,7 +10,9 @@ import Gargantext.Prelude
 
 
 data UpdateNodeParams = UpdateNodeParamsList  { methodList  :: Method      }
-                      | UpdateNodeParamsGraph { methodGraph :: GraphMetric }
+                      | UpdateNodeParamsGraph { methodGraphMetric :: GraphMetric
+                                              , methodGraphClustering :: PartitionMethod
+                                              }
                       | UpdateNodeParamsTexts { methodTexts :: Granularity }
                       | UpdateNodeParamsBoard { methodBoard :: Charts      }
 derive instance Eq UpdateNodeParams
@@ -21,9 +23,9 @@ instance JSON.WriteForeign UpdateNodeParams where
   writeImpl (UpdateNodeParamsList { methodList }) =
     JSON.writeImpl { type: "UpdateNodeParamsList"
                    , methodList }
-  writeImpl (UpdateNodeParamsGraph { methodGraph }) =
+  writeImpl (UpdateNodeParamsGraph { methodGraphMetric, methodGraphClustering }) =
     JSON.writeImpl { type: "UpdateNodeParamsGraph"
-                   , methodGraph }
+                   , methodGraphMetric, methodGraphClustering }
   writeImpl (UpdateNodeParamsTexts { methodTexts }) =
     JSON.writeImpl { type: "UpdateNodeParamsTexts"
                    , methodTexts }
@@ -55,6 +57,17 @@ instance Read GraphMetric where
   read _           = Nothing
 instance JSON.ReadForeign GraphMetric where readImpl = JSONG.enumSumRep
 instance JSON.WriteForeign GraphMetric where writeImpl = JSON.writeImpl <<< show
+
+data PartitionMethod = Spinglass | Confluence
+derive instance Generic PartitionMethod _
+derive instance Eq PartitionMethod
+instance Show PartitionMethod where show = genericShow
+instance Read PartitionMethod where
+  read "Spinglass"  = Just Spinglass
+  read "Confluence" = Just Confluence
+  read _           = Nothing
+instance JSON.ReadForeign PartitionMethod where readImpl = JSONG.enumSumRep
+instance JSON.WriteForeign PartitionMethod where writeImpl = JSON.writeImpl <<< show
                                         
 ----------------------------------------------------------------------
 
