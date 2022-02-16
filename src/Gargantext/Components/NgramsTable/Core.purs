@@ -1067,7 +1067,6 @@ type SyncResetButtonsProps =
 
 syncResetButtons :: Record SyncResetButtonsProps -> R.Element
 syncResetButtons p = R.createElement syncResetButtonsCpt p []
-
 syncResetButtonsCpt :: R.Component SyncResetButtonsProps
 syncResetButtonsCpt = here.component "syncResetButtons" cpt
   where

@@ -27,7 +27,7 @@ import Effect (Effect)
 import Effect.Aff (Aff)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.NgramsTable.Components as NTC
-import Gargantext.Components.NgramsTable.Core (Action(..), CoreAction(..), CoreState, Dispatch, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTerm, PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, VersionedWithCountNgramsTable, _NgramsElement, _NgramsRepoElement, _NgramsTable, _children, _list, _ngrams, _ngrams_repo_elements, _ngrams_scores, _occurrences, _root, addNewNgramA, applyNgramsPatches, applyPatchSet, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, fromNgramsPatches, ngramsRepoElementToNgramsElement, ngramsTermText, normNgram, patchSetFromMap, replace, singletonNgramsTablePatch, syncResetButtons, toVersioned)
+import Gargantext.Components.NgramsTable.Core (Action(..), CoreAction(..), CoreState, Dispatch, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTerm, PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, VersionedWithCountNgramsTable, _NgramsElement, _NgramsRepoElement, _NgramsTable, _children, _list, _ngrams, _ngrams_repo_elements, _ngrams_scores, _occurrences, _root, addNewNgramA, applyNgramsPatches, applyPatchSet, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, fromNgramsPatches, ngramsRepoElementToNgramsElement, ngramsTermText, normNgram, patchSetFromMap, replace, setTermListA, singletonNgramsTablePatch, syncResetButtons, toVersioned)
 import Gargantext.Components.NgramsTable.Loader (useLoaderWithCacheAPI)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as TT
@@ -81,7 +81,10 @@ setTermListSetA ngramsTable ns new_list =
     f n _unit = NgramsPatch { patch_list, patch_children: mempty }
       where
         cur_list = ngramsTable ^? at n <<< _Just <<< _NgramsRepoElement <<< _list
-        patch_list = maybe mempty (replace new_list) cur_list
+        --patch_list = maybe mempty (replace new_list) cur_list
+        patch_list = case cur_list of
+          Nothing -> mempty
+          Just cl -> replace cl new_list
     toMap :: forall a. Set a -> Map a Unit
     toMap = unsafeCoerce
     -- TODO https://github.com/purescript/purescript-ordered-collections/pull/21
@@ -119,63 +122,63 @@ tableContainerCpt { dispatch
     cpt props _ = do
       { searchQuery, termListFilter, termSizeFilter } <- T.useLive T.unequal path
 
-      pure $ H.div {className: "container-fluid"} [
-        R2.row
-        [ H.div {className: "card col-12"}
-          [ H.div {className: "card-header"}
-            [
-              R2.row [ H.div {className: "col-md-2", style: {marginTop: "6px"}}
-                       [ H.div {} syncResetButton
-                       , if (not queryExactMatches || A.null props.tableBody) && searchQuery /= "" then
-                       -- , if (not $ Set.member (normNgram tabNgramType searchQuery) ngramsSelection) && searchQuery /= "" then
-                           H.li { className: "list-group-item" } [
-                             H.button { className: "btn btn-primary"
-                                      , on: { click: const $ dispatch
-                                              $ CoreAction
-                                              $ addNewNgramA
-                                              (normNgram tabNgramType searchQuery)
-                                              MapTerm
-                                            }
-                                      }
-                             [ H.text ("Add " <> searchQuery) ]
-                             ] else H.div {} []
-                       ]
-                     , H.div {className: "col-md-2", style: {marginTop : "6px"}}
-                       [ H.li {className: "list-group-item"}
-                         [ R2.select { id: "picklistmenu"
-                                     , className: "form-control custom-select"
-                                     , defaultValue: (maybe "" show termListFilter)
-                                     , on: {change: setTermListFilter <<< read <<< R.unsafeEventValue}}
-                           (map optps1 termLists)]
-                       ]
-                     , H.div {className: "col-md-2", style: {marginTop : "6px"}}
-                       [ H.li {className: "list-group-item"}
-                         [ R2.select {id: "picktermtype"
-                                     , className: "form-control custom-select"
-                                     , defaultValue: (maybe "" show termSizeFilter)
-                                     , on: {change: setTermSizeFilter <<< read <<< R.unsafeEventValue}}
-                           (map optps1 termSizes)]
-                       ]
-                     , H.div { className: "col-md-2", style: { marginTop: "6px" } }
-                       [ H.li {className: "list-group-item"}
-                         [ H.div { className: "form-inline" }
-                           [ H.div { className: "form-group" }
-                             [ props.pageSizeControl
-                             , H.label {} [ H.text " items" ]
-                               --   H.div { className: "col-md-6" } [ props.pageSizeControl ]
-                               -- , H.div { className: "col-md-6" } [
-                               --    ]
-                             ]
-                           ]
-                         ]
-                       ]
-                     , H.div {className: "col-md-4", style: {marginTop : "6px", marginBottom : "1px"}}
-                       [ H.li {className: "list-group-item"}
-                         [ props.pageSizeDescription
-                         , props.paginationLinks
-                         ]
-                       ]
-                     ]
+      pure $ H.div {className: "container-fluid"}
+        [ R2.row
+          [ H.div {className: "card col-12"}
+            [ H.div {className: "card-header"}
+              [ R2.row
+                [ H.div { className: "col-md-2", style: {marginTop: "6px" } }
+                  [ H.div {} syncResetButton
+                  , if (not queryExactMatches || A.null props.tableBody) && searchQuery /= "" then
+                  -- , if (not $ Set.member (normNgram tabNgramType searchQuery) ngramsSelection) && searchQuery /= "" then
+                      H.li { className: "list-group-item" }
+                        [ H.button { className: "btn btn-primary"
+                                   , on: { click: const $ dispatch
+                                           $ CoreAction
+                                           $ addNewNgramA
+                                           (normNgram tabNgramType searchQuery)
+                                           MapTerm
+                                         }
+                                   }
+                          [ H.text ("Add " <> searchQuery) ]
+                        ] else H.div {} []
+                ]
+                , H.div {className: "col-md-2", style: {marginTop : "6px"}}
+                  [ H.li {className: "list-group-item"}
+                    [ R2.select { id: "picklistmenu"
+                                , className: "form-control custom-select"
+                                , defaultValue: (maybe "" show termListFilter)
+                                , on: {change: setTermListFilter <<< read <<< R.unsafeEventValue}}
+                      (map optps1 termLists)]
+                  ]
+                , H.div {className: "col-md-2", style: {marginTop : "6px"}}
+                  [ H.li {className: "list-group-item"}
+                    [ R2.select {id: "picktermtype"
+                                , className: "form-control custom-select"
+                                , defaultValue: (maybe "" show termSizeFilter)
+                                , on: {change: setTermSizeFilter <<< read <<< R.unsafeEventValue}}
+                      (map optps1 termSizes)]
+                  ]
+                , H.div { className: "col-md-2", style: { marginTop: "6px" } }
+                  [ H.li {className: "list-group-item"}
+                    [ H.div { className: "form-inline" }
+                      [ H.div { className: "form-group" }
+                        [ props.pageSizeControl
+                        , H.label {} [ H.text " items" ]
+                          --   H.div { className: "col-md-6" } [ props.pageSizeControl ]
+                          -- , H.div { className: "col-md-6" } [
+                          --    ]
+                        ]
+                      ]
+                    ]
+                  ]
+                , H.div {className: "col-md-4", style: {marginTop : "6px", marginBottom : "1px"}}
+                  [ H.li {className: "list-group-item"}
+                    [ props.pageSizeDescription
+                    , props.paginationLinks
+                    ]
+                  ]
+                ]
             ]
           , editor
           , if (selectionsExist ngramsSelection)
@@ -202,7 +205,7 @@ tableContainerCpt { dispatch
     -- WHY setPath     f = origSetPageParams (const $ f path)
     setTermListFilter x = T.modify (_ { termListFilter = x }) path
     setTermSizeFilter x = T.modify (_ { termSizeFilter = x }) path
-    setSelection = dispatch <<< setTermListSetA ngramsTableCache ngramsSelection
+    setSelection term = dispatch $ setTermListSetA ngramsTableCache ngramsSelection term
 
     editor = H.div {} $ maybe [] edit ngramsParent
       where

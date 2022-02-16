@@ -222,7 +222,6 @@ type RenderNgramsItem = (
 
 renderNgramsItem :: R2.Component RenderNgramsItem
 renderNgramsItem = R.createElement renderNgramsItemCpt
-
 renderNgramsItemCpt :: R.Component RenderNgramsItem
 renderNgramsItemCpt = here.component "renderNgramsItem" cpt
   where
@@ -265,8 +264,8 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         termList    = ngramsElement ^. _NgramsElement <<< _list
         ngramsStyle = [termStyle termList ngramsOpacity]
         ngramsEdit  = Just <<< dispatch <<< SetParentResetChildren <<< Just <<< view _ngrams
-        ngramsClick
-          = Just <<< dispatch <<< CoreAction <<< cycleTermListItem <<< view _ngrams
+        ngramsClick =
+          Just <<< dispatch <<< CoreAction <<< cycleTermListItem <<< view _ngrams
           -- ^ This is the old behavior it is nicer to use since one can
           --   rapidly change the ngram list without waiting for confirmation.
           --   However this might expose bugs. One of them can be reproduced
