@@ -117,8 +117,8 @@ postAuthRequest backend ar@(AuthRequest {username}) =
     decode (Left _err) = Left "Error when sending REST.post"
     decode (Right (AuthResponse ar2))
       | {inval: Just (AuthInvalid {message})}     <- ar2 = Left message
-      | {valid: Just (AuthData {token, tree_id})} <- ar2 =
-          Right $ Session { backend, caches: Map.empty, token, treeId: tree_id, username }
+      | {valid: Just (AuthData {token, tree_id, user_id})} <- ar2 =
+          Right $ Session { backend, caches: Map.empty, token, treeId: tree_id, username, userId: user_id }
       | otherwise = Left "Invalid response from server"
 
 get :: forall a p. JSON.ReadForeign a => ToUrl Session p =>
