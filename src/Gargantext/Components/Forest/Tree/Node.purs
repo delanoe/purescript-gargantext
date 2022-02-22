@@ -125,17 +125,6 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
                    , session } []
 
                 , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType } []
-                , H.div {} (map (\t -> asyncProgressBar { asyncTask: t
-                                                        , barType: Pie
-                                                        , errors
-                                                        , nodeId: id
-                                                        , onFinish: onTaskFinish id t
-                                                        , session } []
-                                ) currentTasks'
-                           )
-                , if nodeType == GT.NodeUser
-                        then GV.versionView { session } []
-                        else H.div {} []
 
                 , if showBox then
                         Popover.popover { arrow: false
@@ -146,7 +135,21 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
                         popOverIcon
                         , mNodePopupView props (onPopoverClose popoverRef)
                         ]
-                else H.div {} []
+                  else H.div {} []
+                       
+                , H.div { style: { width: "8em" } }
+                  (map (\t -> asyncProgressBar { asyncTask: t
+                                                 --, barType: Pie
+                                               , barType: Bar
+                                               , errors
+                                               , nodeId: id
+                                               , onFinish: onTaskFinish id t
+                                               , session } []
+                       ) currentTasks'
+                  )
+                , if nodeType == GT.NodeUser
+                        then GV.versionView { session } []
+                        else H.div {} []
 
                 , nodeActions { id
                               , nodeType

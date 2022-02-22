@@ -2,7 +2,7 @@ module Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar where
 
 import Gargantext.Prelude
 
-import Data.Int (fromNumber)
+import Data.Int (floor)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
@@ -79,13 +79,12 @@ type ProgressIndicatorProps =
 
 progressIndicator :: Record ProgressIndicatorProps -> R.Element
 progressIndicator p = R.createElement progressIndicatorCpt p []
-
 progressIndicatorCpt :: R.Component ProgressIndicatorProps
 progressIndicatorCpt = here.component "progressIndicator" cpt
   where
     cpt { barType, label, progress } _ = do
       progress' <- T.useLive T.unequal progress
-      let progressInt = toInt progress'
+      let progressInt = floor progress'
 
       case barType of
         Bar -> pure $
@@ -93,7 +92,7 @@ progressIndicatorCpt = here.component "progressIndicator" cpt
                   [ H.div { className: "progress-bar"
                         , role: "progressbar"
                         , style: { width: (show $ progressInt) <> "%" }
-                        } [ H.text label ]
+                        } [ ]
                   ]
         Pie -> pure $
                 H.div { className: "progress-pie" }
@@ -102,11 +101,6 @@ progressIndicatorCpt = here.component "progressIndicator" cpt
                                    , "--value": show $ progressInt } } [
                     ]
                   ]
-
-    toInt :: Number -> Int
-    toInt n = case fromNumber n of
-        Nothing -> 0
-        Just x  -> x
 
 queryProgress :: Record Props -> AffRESTError GT.AsyncProgress
 queryProgress { asyncTask: GT.AsyncTaskWithType { task: GT.AsyncTask {id}
