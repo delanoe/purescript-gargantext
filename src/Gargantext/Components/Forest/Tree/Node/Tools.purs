@@ -290,9 +290,9 @@ nodeLinkCpt = here.component "nodeLink" cpt
       pure $
         H.div { className: "node-link"
               , on: { click } }
-          [ H.a { href, data: { for: tooltipId id, tip: true } }
+          [ H.a { href, data: { for: name <> "-" <> (tooltipId id), tip: true } }
             [ nodeText { isSelected, name }
-            , ReactTooltip.reactTooltip { effect: "float", id: tooltipId id, type: "dark" }
+            , ReactTooltip.reactTooltip { effect: "float", id: name <> "-" <> (tooltipId id), type: "dark" }
                 [ R2.row
                     [ H.h4 {className: GT.fldr nodeType true}
                         [ H.text $ GT.prettyNodeType nodeType ]
