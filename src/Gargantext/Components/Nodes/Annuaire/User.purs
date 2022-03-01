@@ -127,7 +127,8 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
       onUpdateUserInfo :: T.Box (Array FrontendError) -> T2.ReloadS -> UserInfo -> Effect Unit
       onUpdateUserInfo errors reload ui = do
         launchAff_ $ do
-          res <- saveUserInfo session nodeId ui
+          let Session {userId} = session
+          res <- saveUserInfo session userId ui
           handleRESTError errors res $ \_ ->
             liftEffect $ T2.reload reload
 
