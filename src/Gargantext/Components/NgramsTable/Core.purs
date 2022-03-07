@@ -286,7 +286,7 @@ initialPageParams session nodeId listIds tabType =
   , session
   }
   where
-    params = T.initialParams { orderBy = Just (T.DESC $ T.ColumnName "Score") }
+    params = T.initialParams { orderBy = Nothing }
 
 
 
