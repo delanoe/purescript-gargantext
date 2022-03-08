@@ -75,7 +75,7 @@ langSwitcherCpt = here.component "langSwitcher" cpt
       let options = map option langs
 
       pure $ R2.select { className: "form-control"
-                       , defaultValue: show currentLang 
+                       , defaultValue: show currentLang
                        , on: {change: onChange lang } } options
       where
         onChange box e = do

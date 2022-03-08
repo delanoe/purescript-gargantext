@@ -3,19 +3,26 @@ module Gargantext.Components.Forest.Tree.Node.Action.Update where
 import Gargantext.Components.Forest.Tree.Node.Action.Update.Types
 import Gargantext.Prelude
 
+import DOM.Simple.Console (log3)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Effect.Aff (Aff)
+import Effect (Effect)
+import Effect.Aff (Aff, launchAff_)
+import Gargantext.Components.Bootstrap.Types (ComponentStatus(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, submitButton, panel)
+import Gargantext.Components.PhyloExplorer.API as Phylo
+import Gargantext.Components.PhyloExplorer.ConfigForm as PhyloForm
+import Gargantext.Components.PhyloExplorer.ConfigFormParser as PhyloHook
 import Gargantext.Config.REST (RESTError, AffRESTError)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
-import Gargantext.Types (NodeType(..), ID)
+import Gargantext.Types (ID, NodeType(..))
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record (merge)
 import Toestand as T
 
 here :: R2.Here
@@ -43,6 +50,7 @@ updateCpt = here.component "update" cpt where
   cpt props@{ nodeType: Graph     } _ = pure $ updateGraph props []
   cpt props@{ nodeType: NodeList  } _ = pure $ updateNodeList props []
   cpt props@{ nodeType: NodeTexts } _ = pure $ updateTexts props []
+  cpt props@{ nodeType: Phylo     } _ = pure $ updatePhylo props
   cpt props@{ nodeType: _         } _ = pure $ updateOther props []
 
 updateDashboard :: R2.Component UpdateProps
@@ -90,6 +98,58 @@ updateGraphCpt = here.component "updateGraph" cpt where
                   )
 
 
+
+updatePhylo :: R2.Leaf UpdateProps
+updatePhylo = R2.leaf updatePhyloCpt
+updatePhyloCpt :: R.Component UpdateProps
+updatePhyloCpt = here.component "updatePhylo" cpt where
+  cpt { dispatch } _ = do
+  -- Hooks
+    parser <- PhyloHook.useConfigFormParser
+
+  -- Helpers
+    let
+      -- @NOTE #219: use a config property returned by GET phylo route
+      defaultData :: Phylo.UpdateData
+      defaultData = Phylo.UpdateData
+        { proximity: 0.5
+        , synchrony: 0.5
+        , quality: 0.5
+        , exportFilter: 0.5
+        , timeUnit: Phylo.Year $ Phylo.TimeUnitCriteria
+          { period: 3
+          , step: 1
+          , matchingFrame: 5
+          }
+        , clique: Phylo.MaxClique
+            { size: 5
+            , threshold: 0.0001
+            , filter: Phylo.ByThreshold
+            }
+        }
+
+  -- Behaviors
+
+      onSubmit :: Record PhyloForm.FormData -> Effect Unit
+      onSubmit r = case parser.fromFormData r of
+        Left error -> log3 "[handleFormError]" error r
+        Right r'   -> do
+          opts <- pure $ options r'
+          launchAff_ $ dispatch opts
+
+        where
+          options :: Phylo.UpdateData -> Action
+          options params
+            = UpdateNode $ UpdateNodeParamsPhylo
+              { methodPhylo: params
+              }
+
+  -- Render
+    pure $
+      PhyloForm.configForm $
+      { callback: onSubmit
+      , status: Enabled
+      } `merge` parser.toFormData defaultData
 
 updateNodeList :: R2.Component UpdateProps
 updateNodeList = R.createElement updateNodeListCpt

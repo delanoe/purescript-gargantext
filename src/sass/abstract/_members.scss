@@ -1,5 +1,3 @@
-@use "./_variables" as *;
-
 /// Functions
 ///--------------------------
 
@@ -8,7 +6,7 @@
 /// @param {Color} $color - color to work with
 /// @param {Number} $percentage - percentage of `$color` opacity
 /// @return {Color} $color
-@function mixAlpha($color, $percentage) {
+@function mix-alpha($color, $percentage) {
   @return rgba($color, $percentage);
 }
 
@@ -19,6 +17,26 @@
 @function space-x($num) {
   @return $num * $space-unit;
 }
+
+/// Calculate z-index value
+/// @access public
+/// @use {List} $z-indexes
+/// @param {String} $key1 - key to retrieve for z-index matching
+/// @param {String} $key2 - optiona, second key for deeper matching
+/// @return {Number} z-index value
+@function z-index($key1, $key2: null) {
+  $map: $z-indexes;
+  $found-index: null;
+  @if (map-has-key($map, $key1)) {
+    $found-index: index(map-keys($map), $key1);
+    @if ($key2) {
+      $map: map-get($map, $key1);
+      $found-index: index($map, $key2);
+    }
+  }
+  @return $found-index;
+}
+
 
 
 /// Mixins

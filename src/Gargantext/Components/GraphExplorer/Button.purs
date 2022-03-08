@@ -42,7 +42,7 @@ simpleButtonCpt :: R.Component Props
 simpleButtonCpt = here.component "simpleButton" cpt
   where
     cpt {onClick, text} _ = do
-      pure $ H.button { className: "btn btn-outline-primary"
+      pure $ H.button { className: "btn btn-outline-secondary"
                       , on: {click: onClick}
                       } [ R2.small {} [ H.text text ] ]
 

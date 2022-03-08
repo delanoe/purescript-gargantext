@@ -9,6 +9,7 @@ import DOM.Simple.Document (document)
 import DOM.Simple.Element as Element
 import DOM.Simple.Event as DE
 import DOM.Simple.Types (class IsNode, class IsElement, DOMRect)
+import Data.Array (singleton)
 import Data.Array as A
 import Data.Either (hush)
 import Data.Function.Uncurried (Fn1, runFn1, Fn2, runFn2)
@@ -16,12 +17,13 @@ import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Nullable (Nullable, null, toMaybe)
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
+import Data.UUID as UUID
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_, killFiber)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Effect.Uncurried (EffectFn1, EffectFn3, mkEffectFn1, mkEffectFn2, runEffectFn1, runEffectFn3)
-import FFI.Simple ((..), (...), (.=), defineProperty, delay, args2, args3)
+import FFI.Simple (applyTo, args2, args3, defineProperty, delay, getProperty, (..), (...), (.=))
 import Partial.Unsafe (unsafePartial)
 import React (class ReactPropFields, Children, ReactClass, ReactElement)
 import React as React
@@ -485,7 +487,6 @@ boundingRect els =
 
 --------------------------------------
 
-
 -- | One-liner `if` simplifying render writing
 -- | (best for one child)
 if' :: Boolean -> R.Element -> R.Element
@@ -507,3 +508,35 @@ useBox' default = do
   box <- T.useBox default
   b <- useLive' box
   pure $ b /\ box
+
+-- | Reactix `fragment` with key support
+-- |
+-- | (!) provided key won't be displayed within Chromium ReactJS widget's
+-- |     Components section
+fragmentWithKey :: String -> Array R.Element -> R.Element
+fragmentWithKey key es = R.rawCreateElement (R.react .. "Fragment") { key } es
+
+-- | Create portal via a `Maybe DOM.Element
+createPortal' :: Maybe DOM.Element -> Array R.Element -> R.Element
+createPortal' Nothing     _        = mempty
+createPortal' (Just host) children = R.createPortal children host
+
+--------------------------------------
+
+-- @XXX: FFI.Simple `(...)` throws error (JavaScript issue)
+--       need to decompose computation
+--
+--       (?) chained prototype property issue?
+applyTo_ :: forall src arg res. src -> String -> Array arg -> res
+applyTo_ src name args =
+  let fn = getProperty name src
+  in applyTo fn src args
+
+infixl 4 applyTo_ as ~~
+
+-- @XXX: DOM.Simple lack of "ClassList" module
+addClass :: forall el. el -> Array String -> Effect Unit
+addClass el args = pure $ (el .. "classList") ~~ "add" $ args
+
+removeClass :: forall el. el -> Array String -> Effect Unit
+removeClass el args = pure $ (el .. "classList") ~~ "remove" $ args

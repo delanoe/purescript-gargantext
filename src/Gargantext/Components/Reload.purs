@@ -7,6 +7,8 @@ import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Toestand as T
 
+-- @TODO: use typing
+
 -- | Reload Context
 -- |
 -- | Use with `R.provideContext` as a (nested) context

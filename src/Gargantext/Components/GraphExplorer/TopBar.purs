@@ -37,7 +37,7 @@ topBarCpt = here.component "topBar" cpt where
                                          , selectedNodeIds } []
           Nothing -> RH.div {} []
 
-    pure $ RH.form { className: "d-flex" }
+    pure $ RH.form { className: "graph-topbar d-flex" }
       [ Toggle.controlsToggleButton { state: showControls } []
       , Toggle.sidebarToggleButton { state: sidePanelState } []
       , search

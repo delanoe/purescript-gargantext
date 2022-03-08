@@ -91,7 +91,6 @@ staticUrl (Frontends {static}) = frontendUrl static
 sessionPath :: R.SessionRoute -> String
 sessionPath (R.Tab t i)             = sessionPath (R.NodeAPI Node i (showTabType' t))
 sessionPath (R.Children n o l s i)  = sessionPath (R.NodeAPI Node i ("children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s))
-sessionPath (R.NodeAPI Phylo pId p) = "phyloscape?nodeId=" <> (show $ fromMaybe 0 pId) <> p
 sessionPath (R.RecomputeNgrams nt nId lId)      = "node/" <> (show nId) <> "/ngrams/recompute?" <> (defaultList lId) <> "&ngramsType=" <> (show nt)
 sessionPath (R.RecomputeListChart ChartBar nt nId lId)   = "node/" <> (show nId) <> "/pie?" <> (defaultList lId) <> "&ngramsType=" <> (show nt)
 sessionPath (R.RecomputeListChart ChartPie nt nId lId)   = "node/" <> (show nId) <> "/pie?" <> (defaultList lId) <> "&ngramsType=" <> (show nt)
@@ -195,7 +194,7 @@ sessionPath (R.ChartHash { chartType, listId, tabType } i) =
     <> "&listType=" <> show MapTerm -- listId
     <> defaultListAddMaybe listId
 -- sessionPath (R.NodeAPI (NodeContact s a i) i) = sessionPath $ "annuaire/" <> show a <> "/contact/" <> show i
-sessionPath (R.NodeAPI Phylo pId p) = "phyloscape?nodeId=" <> (show $ fromMaybe 0 pId) <> p
+sessionPath (R.PhyloAPI nId) = "node/" <> show nId <> "/phylo"
 
 ------- misc routing stuff
 

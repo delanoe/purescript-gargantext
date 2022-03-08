@@ -1,0 +1,16 @@
+.nav.nav-tabs {
+
+
+  .nav-tabs .nav-link.active, .nav-tabs .nav-item.show .nav-link, li a {
+    color: $gray-700
+  }
+
+  li a.nav-link.active:hover {
+    color: $gray-700;
+    cursor: default;
+  }
+
+  li a:hover {
+    color: darken($gray-700, 15%);
+  }
+}

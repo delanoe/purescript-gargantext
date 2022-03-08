@@ -17,6 +17,7 @@ import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Graph as Graph
 import Gargantext.Components.GraphExplorer.Controls as Controls
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
+import Gargantext.Components.GraphExplorer.TopBar as GETB
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Data.Louvain as Louvain
@@ -98,6 +99,8 @@ explorerWriteGraphCpt = here.component "explorerWriteGraph" cpt where
   cpt props@{ boxes: { sidePanelGraph }
             , graph
             , mMetaData' } _ = do
+      mTopBarHost <- R.unsafeHooksEffect $ R2.getElementById "portal-topbar"
+
       R.useEffectOnce' $ do
         T.write_ (Just { mGraph: Just graph
                        , mMetaData: mMetaData'
@@ -107,7 +110,15 @@ explorerWriteGraphCpt = here.component "explorerWriteGraph" cpt where
                        , showControls: false
                        , sideTab: GET.SideTabLegend }) sidePanelGraph
 
-      pure $ explorer (RX.pick props :: Record Props) []
+      pure $ R.fragment
+        [
+          explorer (RX.pick props :: Record Props) []
+        ,
+          R2.createPortal' mTopBarHost
+          [
+            GETB.topBar { boxes: props.boxes }
+          ]
+        ]
 
 --------------------------------------------------------------
 explorer :: R2.Component Props

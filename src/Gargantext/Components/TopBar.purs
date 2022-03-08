@@ -7,7 +7,7 @@ import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
 import Gargantext.Components.Themes (themeSwitcher, allThemes)
 import Gargantext.Components.Lang (langSwitcher, allFeLangs)
-import Gargantext.Types (Handed(..), reverseHanded)
+import Gargantext.Types (Handed(..))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -19,61 +19,75 @@ here = R2.here "Gargantext.Components.TopBar"
 type TopBarProps =
   ( boxes :: Boxes )
 
-topBar :: R2.Component TopBarProps
-topBar = R.createElement topBarCpt
+topBar :: R2.Leaf TopBarProps
+topBar = R2.leaf topBarCpt
 topBarCpt :: R.Component TopBarProps
 topBarCpt = here.component "topBar" cpt
   where
-    cpt { boxes: { handed, lang, showTree, theme } } children = do
-      handed' <- T.useLive T.unequal handed
+    cpt { boxes: { handed, lang, showTree, theme } } children = pure $
 
-      pure $ H.div { className: "navbar navbar-expand-lg navbar-dark bg-dark"
-                   , id: "dafixedtop"
-                   , role: "navigation"
-                   }
-        [ H.div { className: "container-fluid" } $ reverseHanded handed'
-          [
-            -- NOTE: first (and only) entry in the sorted array should have the "ml-auto class"
-            -- https://stackoverflow.com/questions/19733447/bootstrap-navbar-with-left-center-or-right-aligned-items
-            -- In practice: only apply "ml-auto" to the last element of this list, if handed == LeftHanded
-            logo
-          , H.div { className: "collapse navbar-collapse" }
-            [ H.ul { className: "navbar-nav " <> if handed' == LeftHanded then "ml-auto" else "" } $ reverseHanded handed'
-              ([ divDropdownLeft {} []
-               , handButton
-               , smiley
-               , H.li { className: "nav-item" } [ themeSwitcher { theme
-                                                                , themes: allThemes } [] ]
-               , H.li { className: "nav-item" } [ langSwitcher { lang
-                                                               , langs: allFeLangs } [] ]
-               , Toggle.treeToggleButton { state: showTree } []
-               ] <> children)
-            ]
-          ]
+      H.div
+      { className: "main-topbar navbar navbar-expand-lg navbar-dark bg-dark"
+      , id: "dafixedtop"
+      , role: "navigation"
+      } $
+      [
+        logo
+      ,
+        divDropdownLeft {} []
+      ,
+        handButton
+      ,
+        smiley
+      ,
+        H.li
+        { className: "nav-item" }
+        [
+          themeSwitcher
+          { theme
+          , themes: allThemes
+          } []
         ]
-          where
-            handButton = H.li { title: "If you are Left Handed you can change\n"
-                                <> "the interface by clicking on me. Click\n"
-                                <> "again to come back to previous state."
-                              , className: "nav-item"
-                              } [handedChooser { handed } []]
+      ,
+        H.li
+        { className: "nav-item" }
+        [
+          langSwitcher
+          { lang
+          , langs: allFeLangs
+          } []
+        ]
+      ,
+        Toggle.treeToggleButton { state: showTree } []
+      ,
+        H.div
+        { id: "portal-topbar" } []
+      ]
+        <> children
 
-            smiley = H.li { title: "Hello! Looking for the tree ?\n"
-                                <> "Just watch on the other side!\n"
-                                <> "Click on the hand again to see it back."
-                          , className : "nav-item"
-                          }
-                          [ H.a { className: "nav-link" } [H.span {className: "fa fa-question-circle-o"} [] ]]
+      where
+        handButton = H.li { title: "If you are Left Handed you can change\n"
+                            <> "the interface by clicking on me. Click\n"
+                            <> "again to come back to previous state."
+                          , className: "nav-item main-topbar__hand-button"
+                          } [handedChooser { handed } []]
 
-                        {-, H.ul { title: "Dark Mode soon here"
-                                , className : "nav navbar-nav"
-                                } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
-                                                          ]
-                                                ]
-                                      ]
-                              -}
+        smiley = H.li { title: "Hello! Looking for the tree ?\n"
+                            <> "Just watch on the other side!\n"
+                            <> "Click on the hand again to see it back."
+                      , className : "nav-item main-topbar__help-button"
+                      }
+                      [ H.a { className: "nav-link navbar-text" } [H.span {className: "fa fa-question-circle-o"} [] ]]
 
-            -- SB.searchBar {session, databases: allDatabases}
+                    {-, H.ul { title: "Dark Mode soon here"
+                            , className : "nav navbar-nav"
+                            } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
+                                                      ]
+                                            ]
+                                  ]
+                          -}
+
+        -- SB.searchBar {session, databases: allDatabases}
 
 logo :: R.Element
 logo =
@@ -81,7 +95,7 @@ logo =
     H.img { src, title, width: "30", height: "28" }
   ]
   where
-    className = "navbar-brand logoSmall"
+    className = "main-topbar__logo navbar-brand logoSmall"
     src       = "images/logoSmall.png"
     title     = "Back home."
 
@@ -243,7 +257,7 @@ handedChooserCpt = here.component "handedChooser" cpt
     cpt { handed } _ = do
       handed' <- T.useLive T.unequal handed
 
-      pure $ H.a { className: "nav-link" } [
+      pure $ H.a { className: "nav-link navbar-text" } [
         H.span { className: handedClass handed'
                , on: { click: onClick handed } } []
         ]

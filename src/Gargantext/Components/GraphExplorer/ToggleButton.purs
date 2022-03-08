@@ -87,7 +87,7 @@ edgesToggleButtonCpt = here.component "edgesToggleButton" cpt
     cpt { state } _ = do
       state' <- T.useLive T.unequal state
 
-      pure $ H.button { className: "btn btn-outline-primary " <> cls state'
+      pure $ H.button { className: "btn btn-outline-secondary " <> cls state'
                       , on: { click: onClick state }
                       } [ R2.small {} [ H.text (text state') ] ]
 
@@ -114,7 +114,7 @@ louvainToggleButtonCpt = here.component "louvainToggleButton" cpt
         , onMessage: "Louvain off"
         , offMessage: "Louvain on"
         , onClick: \_ -> T.modify_ not state
-        , style: "primary"
+        , style: "secondary"
         } []
 
 type MultiSelectEnabledButtonProps = (
@@ -147,7 +147,7 @@ pauseForceAtlasButtonCpt = here.component "forceAtlasToggleButton" cpt
     cpt { state } _ = do
       state' <- T.useLive T.unequal state
 
-      pure $ H.button { className: "btn btn-outline-primary " <> cls state'
+      pure $ H.button { className: "btn btn-outline-secondary " <> cls state'
                       , on: { click: onClick state }
                       } [ R2.small {} [ H.text (text state') ] ]
 
@@ -174,7 +174,7 @@ resetForceAtlasButtonCpt :: R.Component ResetForceAtlasProps
 resetForceAtlasButtonCpt = here.component "resetForceAtlasToggleButton" cpt
   where
     cpt { forceAtlasState, sigmaRef } _ = do
-      pure $ H.button { className: "btn btn-outline-primary"
+      pure $ H.button { className: "btn btn-outline-secondary"
                       , on: { click: onClick forceAtlasState sigmaRef }
                       } [ R2.small {} [ H.text "Reset Force Atlas" ] ]
 

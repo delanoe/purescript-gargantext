@@ -58,6 +58,7 @@ data SessionRoute
   | Chart ChartOpts (Maybe Id)
   | ChartHash { chartType :: ChartType, listId :: Maybe ListId, tabType :: TabType } (Maybe Id)
   -- | AnnuaireContact AnnuaireId DocId
+  | PhyloAPI Id
 
 instance Show AppRoute where
   show Home                     = "Home"

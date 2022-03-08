@@ -1,17 +1,16 @@
 module Gargantext.Components.Forest.Tree.Node.Tools.Sync where
 
-import Gargantext.Prelude (Unit, bind, discard, pure, unit, ($), (<>), (==))
-import Effect.Aff (Aff, launchAff_)
 import Data.Maybe (Maybe(..))
+import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
-import Reactix.DOM.HTML as H
-import Reactix as R
-import Toestand as T
-
 import Gargantext.Components.GraphExplorer.API as GraphAPI
-import Gargantext.Types as GT
+import Gargantext.Prelude (Unit, bind, discard, pure, unit, ($), (<>), (==))
 import Gargantext.Sessions (Session)
+import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools.Sync"
@@ -71,6 +70,7 @@ graphUpdateButtonCpt = here.component "graphUpdateButton" cpt
             refresh unit
           pure unit
 
+
 -- | Sync Node (List)
 type NodeActionsNodeListProps =
   (
@@ -107,7 +107,7 @@ nodeListUpdateButtonCpt = here.component "nodeListUpdateButton" cpt
     cpt _ _ = do
       -- enabled <- T.useBox true
 
-      pure $ H.div {} [] {- { className: "update-button " 
+      pure $ H.div {} [] {- { className: "update-button "
                      <> if (fst enabled) then "enabled" else "disabled text-muted"
                    } [ H.span { className: "fa fa-refresh"
                      , on: { click: onClick enabled } } []
