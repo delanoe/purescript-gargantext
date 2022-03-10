@@ -202,7 +202,7 @@ component = R.hooksComponent "configForm" cpt where
                 H.div
                 { className: "form-group__label" }
                 [
-                  H.label {} [ H.text "Export filter" ]
+                  H.label {} [ H.text "Minimum branch size" ]
                 ]
               ,
                 H.div
@@ -216,7 +216,7 @@ component = R.hooksComponent "configForm" cpt where
                     H.div
                     { className: "form-group__error" }
                     [
-                      H.text "Please enter a `Double` value (eg. 0.5)"
+                      H.text "Please enter a `Double` value (eg. 3.0)"
                     ]
                 ]
               ]
@@ -653,7 +653,7 @@ defaultData =
   { proximity     : "1.0"
   , synchrony     : "1.0"
   , quality       : "1.0"
-  , exportFilter  : "1.0"
+  , exportFilter  : "3.0"
   , granularity   : show Year_
   , period        : "1"
   , step          : "1"
