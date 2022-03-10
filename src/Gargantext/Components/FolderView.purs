@@ -283,10 +283,10 @@ performAction = performAction' where
   performAction' (SharePublic { params }) p = sharePublic params p
   performAction' (AddContact params) p = addContact params p
   performAction' (AddNode name nodeType) p = addNode' name nodeType p
-  performAction' (UploadFile nodeType fileType mName contents selection) p =
-    uploadFile' nodeType fileType mName contents p selection
-  performAction' (UploadArbitraryFile mName blob selection) p =
-    uploadArbitraryFile' mName blob p selection
+  performAction' (UploadFile nodeType fileType fileFormat mName contents selection) p =
+    uploadFile' nodeType fileType fileFormat mName contents p selection
+  performAction' (UploadArbitraryFile fileFormat mName blob selection) p =
+    uploadArbitraryFile' fileFormat mName blob p selection
   performAction' DownloadNode _ = liftEffect $ here.log "[performAction] DownloadNode"
   performAction' (MoveNode {params}) p = moveNode params p
   performAction' (MergeNode {params}) p = mergeNode params p
@@ -333,14 +333,14 @@ performAction = performAction' where
   addContact params { nodeId: id, session } =
     void $ Contact.contactReq session id params
 
-  uploadFile' nodeType fileType mName contents { boxes: { errors, tasks }, nodeId: id, session } selection = do
-    eTask <- uploadFile { contents, fileType, id, nodeType, mName, selection, session }
+  uploadFile' nodeType fileType fileFormat mName contents { boxes: { errors, tasks }, nodeId: id, session } selection = do
+    eTask <- uploadFile { contents, fileType, fileFormat, id, nodeType, mName, selection, session }
     handleRESTError errors eTask $ \task -> liftEffect $ do
       GAT.insert id task tasks
       here.log2 "[performAction] UploadFile, uploaded, task:" task
 
-  uploadArbitraryFile' mName blob { boxes: { errors, tasks }, nodeId: id, session } selection = do
-    eTask <- uploadArbitraryFile session id { blob, mName } selection
+  uploadArbitraryFile' fileFormat mName blob { boxes: { errors, tasks }, nodeId: id, session } selection = do
+    eTask <- uploadArbitraryFile session id { blob, fileFormat, mName } selection
     handleRESTError errors eTask $ \task -> liftEffect $ do
       GAT.insert id task tasks
       here.log2 "[performAction] UploadArbitraryFile, uploaded, task:" task
