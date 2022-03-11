@@ -21,8 +21,7 @@ import Gargantext.Config.REST (logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Routes as Routes
-import Gargantext.Sessions (WithSession, WithSessionContext, sessionId)
+import Gargantext.Sessions (Session(..), WithSession, WithSessionContext, sessionId)
 import Gargantext.Types (FrontendError)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
@@ -101,11 +100,13 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
 
+    let Session {userId} = session
+
     cacheState <- T.useBox LT.CacheOn
 
     useLoader { errorHandler
               , loader: getUserInfoWithReload
-              , path: { nodeId, reload: reload', session }
+              , path: { nodeId: userId, reload: reload', session }
               , render: \userInfo@{ ui_username } ->
                   H.ul { className: "col-md-12 list-group" } [
                     display { title: fromMaybe "no name" (Just ui_username) }
@@ -126,7 +127,8 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
       onUpdateUserInfo :: T.Box (Array FrontendError) -> T2.ReloadS -> UserInfo -> Effect Unit
       onUpdateUserInfo errors reload ui = do
         launchAff_ $ do
-          res <- saveUserInfo session nodeId ui
+          let Session {userId} = session
+          res <- saveUserInfo session userId ui
           handleRESTError errors res $ \_ ->
             liftEffect $ T2.reload reload
 

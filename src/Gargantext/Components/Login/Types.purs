@@ -13,6 +13,7 @@ type Username = String
 type Password = String
 type Token    = String
 type TreeId   = Int
+type UserId   = Int
 
 newtype AuthRequest = AuthRequest
   { username :: Username
@@ -41,6 +42,7 @@ derive newtype instance JSON.WriteForeign AuthInvalid
 newtype AuthData = AuthData
   { token   :: Token
   , tree_id :: TreeId
+  , user_id :: UserId
   }
 derive instance Generic AuthData _
 derive instance Newtype AuthData _
@@ -50,5 +52,5 @@ derive newtype instance JSON.WriteForeign AuthData
 instance Eq AuthData where
   eq = genericEq
 
-_AuthData :: Iso' AuthData { token :: Token, tree_id :: TreeId }
+_AuthData :: Iso' AuthData { token :: Token, tree_id :: TreeId, user_id :: UserId }
 _AuthData = iso (\(AuthData v) -> v) AuthData

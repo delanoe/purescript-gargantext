@@ -6,6 +6,8 @@ module Gargantext.Sessions.Types
   , cleanBackendUrl
   ) where
 
+import Gargantext.Prelude
+
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
@@ -23,10 +25,9 @@ import Data.Show.Generic (genericShow)
 import Data.String as DST
 import Data.Tuple (Tuple)
 import Foreign.Object as Object
-import Gargantext.Components.Login.Types (TreeId)
+import Gargantext.Components.Login.Types (TreeId, UserId)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Ends (class ToUrl, Backend(..), backendUrl, sessionPath)
-import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute)
 import Gargantext.Types (NodePath, SessionId(..), nodePath)
 import Gargantext.Utils.JSON as GJSON
@@ -43,6 +44,7 @@ newtype Session = Session
   , token    :: String
   , treeId   :: TreeId
   , username :: String
+  , userId   :: UserId
   }
 
 ------------------------------------------------------------------------
@@ -57,8 +59,8 @@ instance JSON.ReadForeign Session where
     let rUp = r { caches = Map.fromFoldable (GUT.mapFst (fromMaybe 0 <<< Int.fromString) <$> objTuple) }
     pure $ Session rUp
 instance JSON.WriteForeign Session where
-  writeImpl (Session { backend, caches, token, treeId, username }) =
-      JSON.writeImpl { backend, caches: caches', token, treeId, username }
+  writeImpl (Session { backend, caches, token, treeId, username, userId}) =
+      JSON.writeImpl { backend, caches: caches', token, treeId, username, userId }
     where
       caches' = JSON.writeImpl $ Object.fromFoldable (GUT.mapFst show <$> Map.toUnfoldable caches :: Array (Tuple String NT.CacheState))
 
