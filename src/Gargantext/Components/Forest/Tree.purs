@@ -271,14 +271,14 @@ addNode' name nodeType p@{ boxes: { errors, forestOpen }, session, tree: (NTree 
     liftEffect $ T.modify_ (openNodesInsert (mkNodeId session id)) forestOpen
     refreshTree p
 
-uploadFile' nodeType fileType mName contents p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
-  eTask <- uploadFile { contents, fileType, id, mName, nodeType, selection, session }
+uploadFile' nodeType fileType fileFormat mName contents p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
+  eTask <- uploadFile { contents, fileFormat, fileType, id, mName, nodeType, selection, session }
   handleRESTError errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
     here.log2 "[uploadFile'] UploadFile, uploaded, task:" task
 
-uploadArbitraryFile' mName blob p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
-  eTask <- uploadArbitraryFile session id { blob, mName } selection
+uploadArbitraryFile' fileFormat mName blob p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
+  eTask <- uploadArbitraryFile session id { blob, fileFormat, mName } selection
   handleRESTError errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
     here.log2 "[uploadArbitraryFile'] UploadArbitraryFile, uploaded, task:" task
@@ -325,10 +325,10 @@ performAction (SharePublic { params }) p                      = sharePublic para
 performAction (AddContact params) p                           = addContact params p
 performAction (AddNode name nodeType) p                       = addNode' name nodeType p
 performAction UploadFrameCalc p                               = uploadFrameCalc' p
-performAction (UploadFile nodeType fileType mName contents selection) p =
-  uploadFile' nodeType fileType mName contents p selection
-performAction (UploadArbitraryFile mName blob selection) p              =
-  uploadArbitraryFile' mName blob p selection
+performAction (UploadFile nodeType fileType fileFormat mName contents selection) p =
+  uploadFile' nodeType fileType fileFormat mName contents p selection
+performAction (UploadArbitraryFile fileFormat mName blob selection) p              =
+  uploadArbitraryFile' fileFormat mName blob p selection
 performAction DownloadNode _                                  = liftEffect $ here.log "[performAction] DownloadNode"
 performAction (MoveNode {params}) p                           = moveNode params p
 performAction (MergeNode {params}) p                          = mergeNode params p

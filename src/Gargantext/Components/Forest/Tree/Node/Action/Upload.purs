@@ -2,6 +2,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
 import Gargantext.Prelude
 
+import Affjax.RequestBody (blob)
 import Data.Either (Either, fromRight')
 import Data.Eq.Generic (genericEq)
 import Data.Foldable (intercalate)
@@ -17,7 +18,7 @@ import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Forest.Tree.Node.Action (Props)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..), readUFBAsBase64, readUFBAsText)
+import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileFormat(..), FileType(..), UploadFileBlob(..), readUFBAsBase64, readUFBAsText)
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe, panel)
 import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Components.ListSelection as ListSelection
@@ -99,10 +100,12 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
       -- mFile    :: R.State (Maybe UploadFile) <- R.useState' Nothing
       mFile <- T.useBox (Nothing :: Maybe UploadFile)
       fileType <- T.useBox CSV
+      fileFormat <- T.useBox Plain
       lang <- T.useBox EN
       selection <- T.useBox ListSelection.MyListsFirst
 
       let setFileType' val = T.write_ val fileType
+      let setFileFormat' val = T.write_ val fileFormat
       let setLang' val = T.write_ val lang
 
       let bodies =
@@ -124,10 +127,14 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
                                           , WOS
                                           , PresseRIS
                                           , Arbitrary
-                                          , ZIP
                                           ]
                                  , default: CSV
                                  , callback: setFileType'
+                                 , print: show } []
+                , formChoiceSafe { items: [ Plain
+                                          , ZIP ]
+                                 , default: Plain
+                                 , callback: setFileFormat'
                                  , print: show } []
                 ]
               ]
@@ -146,6 +153,7 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
             ]
 
       let footer = H.div {} [ uploadButton { dispatch
+                                           , fileFormat
                                            , fileType
                                            , lang
                                            , mFile
@@ -170,12 +178,13 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
 
 
 type UploadButtonProps =
-  ( dispatch  :: Action -> Aff Unit
-  , fileType  :: T.Box FileType
-  , lang      :: T.Box Lang
-  , mFile     :: T.Box (Maybe UploadFile)
-  , nodeType  :: GT.NodeType
-  , selection :: T.Box ListSelection.Selection
+  ( dispatch   :: Action -> Aff Unit
+  , fileFormat :: T.Box FileFormat
+  , fileType   :: T.Box FileType
+  , lang       :: T.Box Lang
+  , mFile      :: T.Box (Maybe UploadFile)
+  , nodeType   :: GT.NodeType
+  , selection  :: T.Box ListSelection.Selection
   )
 
 uploadButton :: R2.Component UploadButtonProps
@@ -184,6 +193,7 @@ uploadButtonCpt :: R.Component UploadButtonProps
 uploadButtonCpt = here.component "uploadButton" cpt
   where
     cpt { dispatch
+        , fileFormat
         , fileType
         , lang
         , mFile
@@ -191,6 +201,7 @@ uploadButtonCpt = here.component "uploadButton" cpt
         , selection
         } _ = do
       fileType' <- T.useLive T.unequal fileType
+      fileFormat' <- T.useLive T.unequal fileFormat
       mFile' <- T.useLive T.unequal mFile
       selection' <- T.useLive T.unequal selection
       onPending /\ onPendingBox <- R2.useBox' false
@@ -217,6 +228,7 @@ uploadButtonCpt = here.component "uploadButton" cpt
           , disabled
           , style    : { width: "100%" }
           , on: { click: onClick
+                          fileFormat'
                           fileType'
                           mFile'
                           selection'
@@ -228,25 +240,23 @@ uploadButtonCpt = here.component "uploadButton" cpt
 
 
       where
-        onClick fileType' mFile' selection' onPendingBox e = do
+        onClick fileFormat' fileType' mFile' selection' onPendingBox e = do
           let { blob, name } = unsafePartial $ fromJust mFile'
           T.write_ true onPendingBox
           here.log2 "[uploadButton] fileType" fileType'
           void $ launchAff do
             case fileType' of
               Arbitrary ->
-                dispatch $ UploadArbitraryFile (Just name) blob selection'
-              ZIP -> do
-                liftEffect $ here.log "[uploadButton] reading base64"
-                contents <- readUFBAsBase64 blob
-                liftEffect $ here.log "[uploadButton] base64 read"
-                dispatch $ UploadFile nodeType fileType' (Just name) contents selection'
+                dispatch $ UploadArbitraryFile fileFormat' (Just name) blob selection'
               _ -> do
-                contents <- readUFBAsText blob
-                dispatch $ UploadFile nodeType fileType' (Just name) contents selection'
+                contents <- case fileFormat' of
+                  Plain -> readUFBAsText blob
+                  ZIP -> readUFBAsBase64 blob
+                dispatch $ UploadFile nodeType fileType' fileFormat' (Just name) contents selection'
             liftEffect $ do
               T.write_ Nothing mFile
               T.write_ CSV fileType
+              T.write_ Plain fileFormat
               T.write_ EN lang
               T.write_ false onPendingBox
             dispatch ClosePopover
@@ -331,7 +341,7 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
                                    T.write_ Nothing droppedFile
                                    launchAff $ do
                                      contents <- readUFBAsText blob
-                                     dispatch $ UploadFile nodeType ft Nothing contents (SelectedLists [])
+                                     dispatch $ UploadFile nodeType ft Plain Nothing contents (SelectedLists [])
                                }
                          } [H.text "Upload"]
               Nothing ->
@@ -354,6 +364,7 @@ instance GT.ToQuery FileUploadQuery where
           pair k v = [ QP.keyFromString k /\ (Just $ QP.valueFromString $ show v) ]
 
 uploadFile :: { contents  :: String
+              , fileFormat :: FileFormat
               , fileType  :: FileType
               , id        :: ID
               , nodeType  :: GT.NodeType
@@ -371,7 +382,7 @@ uploadFile session NodeList id JSON { mName, contents } = do
   task <- post session url body
   pure $ GT.AsyncTaskWithType { task, typ: GT.Form }
   -}
-uploadFile { contents, fileType, id, nodeType, mName, session } = do
+uploadFile { contents, fileFormat, fileType, id, nodeType, mName, session } = do
   -- contents <- readAsText blob
   eTask :: Either RESTError GT.AsyncTask <- postWwwUrlencoded session p body
   pure $ (\task -> GT.AsyncTaskWithType { task, typ }) <$> eTask
@@ -379,10 +390,12 @@ uploadFile { contents, fileType, id, nodeType, mName, session } = do
   where
     bodyParams = [ Tuple "_wf_data"     (Just contents)
                  , Tuple "_wf_filetype" (Just $ show fileType)
+                 , Tuple "_wf_fileformat" (Just $ show fileFormat)
                  , Tuple "_wf_name"      mName
                  ]
     csvBodyParams = [ Tuple "_wtf_data" (Just contents)
                     , Tuple "_wtf_filetype" (Just $ show NodeList)
+                    , Tuple "_wtf_fileformat" (Just $ show fileFormat)
                     , Tuple "_wtf_name" mName ]
 
     (typ /\ p /\ body) = case nodeType of
@@ -397,19 +410,20 @@ uploadFile { contents, fileType, id, nodeType, mName, session } = do
 
 uploadArbitraryFile :: Session
                     -> ID
-                    -> {blob :: UploadFileBlob, mName :: Maybe String}
+                    -> {blob :: UploadFileBlob, fileFormat :: FileFormat, mName :: Maybe String}
                     -> ListSelection.Selection
                     -> AffRESTError GT.AsyncTaskWithType
-uploadArbitraryFile session id {mName, blob: UploadFileBlob blob} selection = do
+uploadArbitraryFile session id { fileFormat, mName, blob: UploadFileBlob blob } selection = do
     contents <- readAsDataURL blob
-    uploadArbitraryData session id mName contents
+    uploadArbitraryData session id fileFormat mName contents
 
 uploadArbitraryData :: Session
                     -> ID
+                    -> FileFormat
                     -> Maybe String
                     -> String
                     -> AffRESTError GT.AsyncTaskWithType
-uploadArbitraryData session id mName contents' = do
+uploadArbitraryData session id fileFormat mName contents' = do
     let re = fromRight' (\_ -> unsafeCrashWith "Unexpected Left") $ DSR.regex "data:.*;base64," DSRF.noFlags
         contents = DSR.replace re "" contents'
     eTask :: Either RESTError GT.AsyncTask <- postWwwUrlencoded session p (bodyParams contents)
@@ -418,6 +432,7 @@ uploadArbitraryData session id mName contents' = do
     p = GR.NodeAPI GT.Node (Just id) $ GT.asyncTaskTypePath GT.UploadFile
 
     bodyParams c = [ Tuple "_wfi_b64_data"  (Just c)
+                   , Tuple "_wfi_fileformat" (Just $ show fileFormat)
                    , Tuple "_wfi_name"      mName
                    ]
 
@@ -515,7 +530,7 @@ uploadTermButtonCpt = here.component "uploadTermButton" cpt
           let {name, blob} = unsafePartial $ fromJust mFile'
           void $ launchAff do
             contents <- readUFBAsText blob
-            _ <- dispatch $ UploadFile nodeType uploadType' (Just name) contents (SelectedLists [])
+            _ <- dispatch $ UploadFile nodeType uploadType' Plain (Just name) contents (SelectedLists [])
             liftEffect $ do
               T.write_ Nothing mFile
 ------------------------------------------------------------------------
