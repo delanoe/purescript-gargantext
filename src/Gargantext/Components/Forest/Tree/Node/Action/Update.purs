@@ -115,7 +115,7 @@ updatePhyloCpt = here.component "updatePhylo" cpt where
         { proximity: 0.5
         , synchrony: 0.5
         , quality: 0.5
-        , exportFilter: 0.5
+        , exportFilter: 3.0
         , timeUnit: Phylo.Year $ Phylo.TimeUnitCriteria
           { period: 3
           , step: 1
