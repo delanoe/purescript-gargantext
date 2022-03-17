@@ -59,6 +59,8 @@ actionUploadCpt = here.component "actionUpload" cpt where
   cpt { nodeType: NodeList, dispatch, id, session } _ =
     pure $ uploadTermListView { dispatch, id, nodeType: GT.NodeList, session } []
   cpt props@{ nodeType: NodeFrameCalc } _ = pure $ uploadFrameCalcView props []
+  cpt props@{ nodeType: Annuaire, dispatch, id, session } _ = do
+    pure $ uploadFileView { dispatch, id, nodeType: GT.Annuaire, session }
   cpt props@{ nodeType: _ } _ = pure $ actionUploadOther props []
 
 {-
