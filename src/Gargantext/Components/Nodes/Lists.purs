@@ -62,7 +62,7 @@ listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
 
     let path = { nodeId, session }
 
-    cacheState <- T.useBox $ getCacheState CacheOn session nodeId
+    cacheState <- T.useBox $ getCacheState CacheOff session nodeId
     cacheState' <- T.useLive T.unequal cacheState
 
     R.useEffectOnce' $ do
