@@ -49,6 +49,31 @@ linkNodeCpt = here.component "linkNode" cpt
   where
     cpt { boxes, dispatch, id, nodeType, session, subTreeParams } _ = do
       action <- T.useBox (LinkNode { nodeType: Nothing, params: Nothing})
+
+      pure $
+
+          linkNode' { action
+                      , boxes
+                      , dispatch
+                      , id
+                      , nodeType
+                      , session
+                      , subTreeParams
+                      } []
+
+type Props =
+  ( action :: T.Box Action
+  | SubTreeParamsIn
+  )
+
+-- @XXX re-render issue -> clone component
+linkNode' :: R2.Component Props
+linkNode' = R.createElement linkNodeCpt'
+linkNodeCpt' :: R.Component Props
+linkNodeCpt' = here.component "__clone__" cpt
+  where
+    cpt { boxes, dispatch, id, nodeType, session, subTreeParams, action } _ = do
+
       action' <- T.useLive T.unequal action
 
       let button = case action' of

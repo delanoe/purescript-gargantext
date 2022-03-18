@@ -53,7 +53,7 @@ type Props =
 moveNode' :: R2.Component Props
 moveNode' = R.createElement moveNodeCpt'
 moveNodeCpt' :: R.Component Props
-moveNodeCpt' = here.component "foo" cpt where
+moveNodeCpt' = here.component "__clone__" cpt where
   cpt { boxes, dispatch, id, nodeType, session, subTreeParams, action } _ = do
 
     action' <- T.useLive T.unequal action
