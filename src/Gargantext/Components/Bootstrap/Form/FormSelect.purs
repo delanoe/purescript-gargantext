@@ -1,12 +1,17 @@
-module Gargantext.Components.Bootstrap.FormSelect (formSelect) where
+module Gargantext.Components.Bootstrap.FormSelect
+  ( formSelect
+  , formSelect'
+  ) where
 
 import Gargantext.Prelude
 
 import Data.Foldable (elem, intercalate)
+import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Sizing(..))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
+import Reactix.DOM.HTML as H
 import Unsafe.Coerce (unsafeCoerce)
 
 type Props =
@@ -49,7 +54,7 @@ options =
 -- |
 -- |
 -- | (?) note that it handled `value` as a String, as it is the KISS solution
--- |     here
+-- |     here. Please use `formSelect'` for any other type
 -- |
 -- | https://getbootstrap.com/docs/4.1/components/forms/
 formSelect :: forall r. R2.OptComponent Options Props r
@@ -67,18 +72,22 @@ component = R.hooksComponent componentName cpt where
             , status
             } children = do
     -- Computed
-    className <- pure $ intercalate " "
-      -- provided custom className
-      [ props.className
-      -- BEM classNames
-      , componentName
-      , componentName <> "--" <> show status
-      -- Bootstrap specific classNames
-      , bootstrapName
-      , bootstrapName <> "-" <> show props.size
-      ]
+    let
+      className = intercalate " "
+        -- provided custom className
+        [ props.className
+        -- BEM classNames
+        , componentName
+        , componentName <> "--" <> show status
+        -- Bootstrap specific classNames
+        , bootstrapName
+        , bootstrapName <> "-" <> show props.size
+        ]
 
-    change <- pure $ onChange status callback
+    -- Behaviors
+    let
+      change = onChange status callback
+
     -- Render
     pure $
       R2.select
@@ -103,4 +112,99 @@ onChange :: forall event.
 onChange status callback event = do
   if   status == Enabled
   then callback $ (unsafeCoerce event).target.value
-  else pure unit
+  else R.nothing
+
+
+-----------------------------------------------------------------------
+
+type AnyTypeProps a =
+  ( callback :: a -> Effect Unit
+  , value :: a
+  , list :: Array a
+  | Options
+  )
+
+-- | Derived component for `formSelect` with any value type (with `Read`
+-- | and `Show` constraint)
+-- |
+-- |
+-- |  ```purescript
+-- |  formSelect'
+-- |  { callback: flip T.write_ box
+-- |  , value: anyType
+-- |  , list: [ anyType, anyType, ... ]
+-- |  }
+-- |  ```
+-- |
+-- |  (?) Note that HTML option tags will be automatically added thanks to
+-- |      to the provided `list` prop. You can add additional HTML option within
+-- |      the `children` prop
+formSelect' :: forall r a.
+     Read a
+  => Show a
+  => R2.OptComponent Options (AnyTypeProps a) r
+formSelect' = R2.optComponent component' options
+
+component' :: forall a.
+     Read a
+  => Show a
+  => R.Component (AnyTypeProps a)
+component' = R.hooksComponent (componentName <> "__helper") cpt where
+  cpt props@{ callback
+            , list
+            , status
+            , value
+            } children = do
+    -- Computed
+    let
+      className = intercalate " "
+      -- provided custom className
+        [ props.className
+        -- BEM classNames
+        , componentName
+        , componentName <> "--" <> show status
+        -- Bootstrap specific classNames
+        , bootstrapName
+        , bootstrapName <> "-" <> show props.size
+        ]
+
+    -- Behaviors
+    let
+      change = onChange' status callback
+
+    -- Render
+    pure $
+      R2.select
+      { className
+      , on: { change }
+      , disabled: elem status [ Disabled ]
+      , readOnly: elem status [ Idled ]
+      , type: props.type
+      , value: show value
+      }
+      (
+        children
+      <>
+        flip map list \raw ->
+          H.option
+          { value: show raw }
+          [ H.text $ show raw ]
+      )
+
+-- | * Change event will effectively be triggered according to the
+-- | component status props
+-- | * Also directly returns the newly input value
+-- | (usage not so different from `targetValue` of ReactBasic)
+onChange' :: forall event a.
+     Read a
+  => Show a
+  => ComponentStatus
+  -> (a -> Effect Unit)
+  -> event
+  -> Effect Unit
+onChange' status callback event = do
+  if   status == Enabled
+  then event # unsafeCoerce >>> _.target.value >>> read >>> case _ of
+    Nothing -> R.nothing
+    Just v  -> callback v
+  else R.nothing

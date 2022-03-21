@@ -1,6 +1,29 @@
+/*! Bootstrap `Default` https://getbootstrap.com/docs/4.6 */
+
+
+// Bootstrap pre-requiring
+//------------------------
+
 @import '../../../node_modules/bootstrap/scss/functions';
 @import '../../../node_modules/bootstrap/scss/variables';
 @import '../../../node_modules/bootstrap/scss/mixins';
+
+
+// Project pre-requiring
+//----------------------
+
+// (?) Normally "abstract" and "modules" have to be MANUALLY IMPORTED each
+//     times their content is being used
+//
+//     However, with Bootstrap non "@use" API-ready, and multiple themes
+//     management, we have to stick the old "@import"
+//
+//     It also implies that, if tomorrow, transition to "@import" to "@use" API
+//     has to be made, every manual import must be included (eg. by checking
+//     the `modules/form` file, and check where its mixin `inputError` has been
+//     being used
+@import '../_abstract';
+@import '../_modules';
 
 
 // Theme variable overrides
@@ -19,26 +42,17 @@ $theme-colors: (
 $gray-150: #FAFAFA;
 $gray-175: #F0F0F0;
 
+// Layout
+$form-group-margin-bottom: space-x(3);
+
 
 // (importing Bootstrap)
 @import '../../../node_modules/bootstrap/scss/bootstrap';
 
 
-// Project variables
-//------------------
+// Project sheets
+//---------------
 
-// (?) Normally "abstract" and "modules" have to be MANUALLY IMPORTED each
-//     times their content is being used
-//
-//     However, with Bootstrap non "@use" API-ready, and multiple themes
-//     management, we have to stick the old "@import"
-//
-//     It also implies that, if tomorrow, transition to "@import" to "@use" API
-//     has to be made, every manual import must be included (eg. by checking
-//     the `modules/form` file, and check where its mixin `inputError` has been
-//     being used
-@import '../_abstract';
-@import '../_modules';
 @import '../_components';
 @import '../_base';
 @import '../_legacy';

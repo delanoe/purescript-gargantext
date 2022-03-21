@@ -150,8 +150,7 @@
   }
 
   &__group {
-    // @TODO: generic "form-group" margin-bottom constant
-    margin-bottom: space-x(3);
+    margin-bottom: $form-group-margin-bottom;
   }
 
   .b-fieldset {

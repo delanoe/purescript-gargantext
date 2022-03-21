@@ -1,9 +1,20 @@
 /*! Themestr.app `Monotony` Bootstrap 4.3.1 theme */
 /* https://github.com/ThemesGuide/bootstrap-themes/blob/master/monotony/ */
 
+
+// Bootstrap pre-requiring
+//------------------------
+
 @import '../../../node_modules/bootstrap/scss/functions';
 @import '../../../node_modules/bootstrap/scss/variables';
 @import '../../../node_modules/bootstrap/scss/mixins';
+
+
+// Project pre-requiring
+//----------------------
+
+@import '../_abstract';
+@import '../_modules';
 
 
 // Theme variable overrides
@@ -43,13 +54,16 @@ $theme-colors: (
 $gray-150: #FAFAFA;
 $gray-175: #F0F0F0;
 
+// Layout
+$form-group-margin-bottom: space-x(3);
+
 
 // (importing Bootstrap)
 @import '../../../node_modules/bootstrap/scss/bootstrap';
 
 
-// Project variables
-//------------------
+// Project sheets
+//---------------
 
 @import '../_abstract';
 @import '../_modules';
