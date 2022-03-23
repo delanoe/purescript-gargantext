@@ -6,6 +6,7 @@ import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Gargantext.Components.PhyloExplorer.API as Phylo
+import Gargantext.Types as GT
 import Simple.JSON as JSON
 import Simple.JSON.Generics as JSONG
 
@@ -18,6 +19,7 @@ data UpdateNodeParams
   | UpdateNodeParamsTexts { methodTexts :: Granularity }
   | UpdateNodeParamsBoard { methodBoard :: Charts      }
   | UpdateNodeParamsPhylo { methodPhylo :: Phylo.UpdateData }
+  | UpdateNodeParamsLink  { methodLink  :: LinkNodeReq }
 derive instance Eq UpdateNodeParams
 derive instance Generic UpdateNodeParams _
 instance Show UpdateNodeParams where show = genericShow
@@ -38,6 +40,11 @@ instance JSON.WriteForeign UpdateNodeParams where
   writeImpl (UpdateNodeParamsPhylo { methodPhylo }) =
     JSON.writeImpl { type: "UpdateNodePhylo"
                    , config: methodPhylo }
+  writeImpl (UpdateNodeParamsLink { methodLink: LinkNodeReq { id, nodeType }}) =
+    JSON.writeImpl { type: "LinkNodeReq"
+                   , id
+                   , nodeType
+                   }
 
 ----------------------------------------------------------------------
 data Method = Basic | Advanced | WithModel
@@ -105,3 +112,12 @@ instance JSON.ReadForeign Charts where readImpl = JSONG.enumSumRep
 instance JSON.WriteForeign Charts where
   writeImpl All = JSON.writeImpl $ "AllCharts"
   writeImpl f = JSON.writeImpl $ show f
+
+----------------------------------------------------------------------
+
+newtype LinkNodeReq = LinkNodeReq { nodeType :: GT.NodeType, id :: GT.ID }
+derive instance Eq LinkNodeReq
+derive instance Generic LinkNodeReq _
+instance Show LinkNodeReq where show = genericShow
+derive newtype instance JSON.ReadForeign LinkNodeReq
+derive newtype instance JSON.WriteForeign LinkNodeReq

@@ -5,6 +5,7 @@ import Gargantext.Prelude
 import Data.Array as A
 import Data.Either (Either)
 import Data.Maybe (Maybe(..))
+import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe)
 import Gargantext.Components.ListSelection.Types (NodeSimple(..), Selection(..), selectedListIds)
 import Gargantext.Config.REST (RESTError(..), AffRESTError)
@@ -30,17 +31,21 @@ selection = R.createElement selectionCpt
 selectionCpt :: R.Component Props
 selectionCpt = here.component "selection" cpt where
   cpt { selection, session } _ = do
+    selection' <- R2.useLive' selection
     pure $ H.div { className: "list-selection" }
-      [ formChoiceSafe { items: [ MyListsFirst
-                                , OtherListsFirst
-                                , SelectedLists [] ]
-                       , default: MyListsFirst
-                       , callback: setSelection
-                       , print: show } []
-      , selectedIds { selection, session } []
+      [
+        B.formSelect'
+        { callback: flip T.write_ selection
+        , value: selection'
+        , list: [ MyListsFirst
+                , OtherListsFirst
+                , SelectedLists []
+                ]
+        }
+        []
+      ,
+        selectedIds { selection, session } []
       ]
-    where
-      setSelection val = T.write_ val selection
 
 selectedIds :: R2.Component Props
 selectedIds = R.createElement selectedIdsCpt
@@ -185,4 +190,3 @@ renderListElementCpt = here.component "renderListElement" cpt where
                 else SelectedLists (A.cons id lst)
               f x = x
           T.modify_ f selection
-

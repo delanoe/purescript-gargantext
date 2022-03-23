@@ -3,6 +3,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 import Gargantext.Prelude
 
 import Affjax.RequestBody (blob)
+import Data.Array (singleton)
 import Data.Either (Either, fromRight')
 import Data.Eq.Generic (genericEq)
 import Data.Foldable (intercalate)
@@ -16,6 +17,8 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (ComponentStatus(..))
 import Gargantext.Components.Forest.Tree.Node.Action (Props)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileFormat(..), FileType(..), UploadFileBlob(..), readUFBAsBase64, readUFBAsText)
@@ -60,7 +63,7 @@ actionUploadCpt = here.component "actionUpload" cpt where
     pure $ uploadTermListView { dispatch, id, nodeType: GT.NodeList, session } []
   cpt props@{ nodeType: NodeFrameCalc } _ = pure $ uploadFrameCalcView props []
   cpt props@{ nodeType: Annuaire, dispatch, id, session } _ = do
-    pure $ uploadFileView { dispatch, id, nodeType: GT.Annuaire, session }
+    pure $ uploadListView { dispatch, id, nodeType: GT.Annuaire, session }
   cpt props@{ nodeType: _ } _ = pure $ actionUploadOther props []
 
 {-
@@ -165,18 +168,19 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
                             ]
       pure $ panel bodies footer
 
-    onChangeContents :: forall e. T.Box (Maybe UploadFile) -> E.SyntheticEvent_ e -> Effect Unit
-    onChangeContents mFile e = do
-      let mF = R2.inputFileNameWithBlob 0 e
-      E.preventDefault e
-      E.stopPropagation e
-      case mF of
-        Nothing -> pure unit
-        Just {blob, name} -> void $ launchAff do
-          --contents <- readAsText blob
-          --contents <- readAsDataURL blob
-          liftEffect $ do
-            T.write_ (Just $ {blob: UploadFileBlob blob, name}) mFile
+
+onChangeContents :: forall e. T.Box (Maybe UploadFile) -> E.SyntheticEvent_ e -> Effect Unit
+onChangeContents mFile e = do
+  let mF = R2.inputFileNameWithBlob 0 e
+  E.preventDefault e
+  E.stopPropagation e
+  case mF of
+    Nothing -> pure unit
+    Just {blob, name} -> void $ launchAff do
+      --contents <- readAsText blob
+      --contents <- readAsDataURL blob
+      liftEffect $ do
+        T.write_ (Just $ {blob: UploadFileBlob blob, name}) mFile
 
 
 type UploadButtonProps =
@@ -262,6 +266,149 @@ uploadButtonCpt = here.component "uploadButton" cpt
               T.write_ EN lang
               T.write_ false onPendingBox
             dispatch ClosePopover
+
+uploadListView :: R2.Leaf Props
+uploadListView = R2.leafComponent uploadListViewCpt
+uploadListViewCpt :: R.Component Props
+uploadListViewCpt = here.component "uploadListView" cpt where
+  cpt { dispatch, session } _ = do
+  -- States
+    mFile
+      <- T.useBox (Nothing :: Maybe UploadFile)
+    fileType
+      <- T.useBox CSV
+    fileFormat /\ fileFormatBox
+      <- R2.useBox' Plain
+    lang /\ langBox
+      <- R2.useBox' EN
+    selection
+      <- T.useBox ListSelection.MyListsFirst
+
+  -- Render
+    pure $
+
+      panel
+      -- Body
+      [
+        -- Upload
+        H.div
+        { className: "form-group" }
+        [
+          H.div
+          { className: "form-group__label" }
+          [
+            B.label_ $
+              "Upload file"
+          ]
+        ,
+          H.div
+          { className: "form-group__field" }
+          [
+            H.input
+            { type: "file"
+            , className: "form-control"
+            , placeholder: "Choose file"
+            , on: { change: onChangeContents mFile }
+            }
+          ]
+        ]
+      ,
+        -- Format
+        H.div
+        { className: "form-group" }
+        [
+          H.div
+          { className: "form-group__label" }
+          [
+            B.label_ $
+              "File format"
+          ]
+        ,
+          H.div
+          { className: "form-group__field d-flex justify-content-between" }
+          [
+            B.formSelect
+            { callback: \_ -> pure unit
+            , value: show CSV
+            , status: Disabled
+            , className: "col-5"
+            }
+            [
+              H.option
+              { value: show CSV }
+              [ H.text $ show CSV ]
+            ]
+          ,
+            B.formSelect'
+            { callback: flip T.write_ fileFormatBox
+            , value: fileFormat
+            , list: [ Plain, ZIP ]
+            , className: "col-5"
+            }
+            []
+          ]
+        ]
+      ,
+        -- Lang
+        H.div
+        { className: "form-group" }
+        [
+          H.div
+          { className: "form-group__label" }
+          [
+            B.label_ $
+              "File lang"
+          ]
+        ,
+          H.div
+          { className: "form-group__field" }
+          [
+            B.formSelect'
+            { callback: flip T.write_ langBox
+            , value: lang
+            , list: [ EN, FR, No_extraction, Universal ]
+            }
+            []
+          ]
+        ]
+      ,
+        -- List selection
+        H.div
+        { className: "form-group" }
+        [
+          H.div
+          { className: "form-group__label" }
+          [
+            B.label_ $
+              "List selection"
+          ]
+        ,
+          H.div
+          { className: "form-group__field" }
+          [
+            ListSelection.selection
+            { selection
+            , session
+            } []
+          ]
+        ]
+      ]
+      -- Footer
+      (
+        H.div
+        {}
+        [
+          uploadButton
+          { dispatch
+          , fileFormat: fileFormatBox
+          , fileType
+          , lang: langBox
+          , mFile
+          , selection
+          , nodeType: GT.Annuaire
+          } []
+        ]
+      )
 
 -- START File Type View
 type FileTypeProps =

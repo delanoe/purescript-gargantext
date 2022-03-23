@@ -1,8 +1,19 @@
 /*! Themestr.app `Darkster` Bootstrap 4.3.1 theme */
 
+
+// Bootstrap pre-requiring
+//------------------------
+
 @import '../../../node_modules/bootstrap/scss/functions';
 @import '../../../node_modules/bootstrap/scss/variables';
 @import '../../../node_modules/bootstrap/scss/mixins';
+
+
+// Project pre-requiring
+//----------------------
+
+@import '../_abstract';
+@import '../_modules';
 
 
 // Theme variable overrides
@@ -39,6 +50,9 @@ $theme-colors: (
 // Add more shades to gray
 $gray-150: #FAFAFA;
 $gray-175: #F0F0F0;
+
+// Layout
+$form-group-margin-bottom: space-x(3);
 
 // Misc...
 $enable-shadows:true;
@@ -102,11 +116,9 @@ $breadcrumb-active-color:$gray-500;
 @import '../../../node_modules/bootstrap/scss/bootstrap';
 
 
-// Project variables
-//------------------
+// Project sheets
+//---------------
 
-@import '../_abstract';
-@import '../_modules';
 @import "../_components";
 @import "../_base";
 @import "../_legacy";

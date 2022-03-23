@@ -3,32 +3,22 @@ module Gargantext.Components.Forest.Tree.Node.Action.Link where
 import Gargantext.Prelude
 
 import Data.Either (Either)
-import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
-import Data.Show.Generic (genericShow)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (LinkNodeReq(..), UpdateNodeParams(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
+import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
 import Gargantext.Config.REST (AffRESTError, RESTError)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
-import Reactix.DOM.HTML as H
-import Simple.JSON as JSON
 import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Link"
-
-newtype LinkNodeReq = LinkNodeReq { nodeType :: GT.NodeType, id :: GT.ID }
-derive instance Eq LinkNodeReq
-derive instance Generic LinkNodeReq _
-instance Show LinkNodeReq where show = genericShow
-derive newtype instance JSON.ReadForeign LinkNodeReq
-derive newtype instance JSON.WriteForeign LinkNodeReq
-
 
 linkNodeReq :: Session -> Maybe GT.NodeType -> GT.ID -> GT.ID -> AffRESTError GT.AsyncTaskWithType
 linkNodeReq session nt fromId toId = do
@@ -76,11 +66,15 @@ linkNodeCpt' = here.component "__clone__" cpt
 
       action' <- T.useLive T.unequal action
 
-      let button = case action' of
-              LinkNode { params } -> case params of
-                Just val -> submitButton (LinkNode {nodeType: Just nodeType, params: Just val}) dispatch
-                Nothing -> H.div {} []
-              _                   -> H.div {} []
+      let
+
+        button = case action' of
+          LinkNode { params } -> case params of
+            Just (SubTreeOut { in: inId }) -> submitButton
+              (toParams nodeType inId)
+              dispatch
+            Nothing -> mempty
+          _         -> mempty
 
       pure $ panel [
           subTreeView { action
@@ -92,3 +86,9 @@ linkNodeCpt' = here.component "__clone__" cpt
                       , subTreeParams
                       } []
               ] button
+
+toParams :: GT.NodeType -> GT.ID -> Action
+toParams nodeType id
+  = UpdateNode
+    $ UpdateNodeParamsLink
+      $ { methodLink: LinkNodeReq { nodeType, id } }

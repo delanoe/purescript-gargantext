@@ -5,7 +5,7 @@
   $self: &;
 
   position: relative;
-  margin-bottom: space-x(3);
+  margin-bottom: $form-group-margin-bottom;
 
   &__label {
     padding-bottom: space-x(0.5);
