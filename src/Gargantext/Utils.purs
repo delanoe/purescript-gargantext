@@ -1,19 +1,20 @@
 module Gargantext.Utils where
 
+import Prelude
+
 import Data.Char (fromCharCode)
 import Data.Either (Either(..))
 import Data.Foldable (class Foldable, foldr)
 import Data.Lens (Lens', lens)
-import Data.Maybe (fromJust)
+import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype, unwrap, wrap)
 import Data.Sequence.Ordered as OSeq
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as S
-import Data.String.CodeUnits (singleton)
+import Data.String.CodeUnits (singleton, slice)
 import Data.Unfoldable (class Unfoldable)
 import Effect (Effect)
-import Prelude
 import Partial.Unsafe (unsafePartial)
 import Web.HTML as WHTML
 import Web.HTML.Location as WHL
@@ -121,3 +122,11 @@ ifElse :: forall a. Boolean -> a -> a -> a
 ifElse predicate a b = if predicate then a else b
 
 infixl 1 ifElse as ?
+
+
+textEllipsisBreak :: Int -> String -> String
+textEllipsisBreak len n =
+  if S.length n < len then n
+  else case (slice 0 len n) of
+    Nothing -> "???"
+    Just s  -> s <> "…"

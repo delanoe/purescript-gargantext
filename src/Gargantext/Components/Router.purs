@@ -17,7 +17,6 @@ import Gargantext.Components.Forest as Forest
 import Gargantext.Components.GraphExplorer as GraphExplorer
 import Gargantext.Components.GraphExplorer.Sidebar as GES
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
-import Gargantext.Components.Lang (LandingLang(LL_EN))
 import Gargantext.Components.Login (login)
 import Gargantext.Components.Nodes.Annuaire (annuaireLayout)
 import Gargantext.Components.Nodes.Annuaire.User (userLayout)
@@ -26,7 +25,6 @@ import Gargantext.Components.Nodes.Corpus (corpusLayout)
 import Gargantext.Components.Nodes.Corpus.Code (corpusCodeLayout)
 import Gargantext.Components.Nodes.Corpus.Dashboard (dashboardLayout)
 import Gargantext.Components.Nodes.Corpus.Document (documentMainLayout)
-import Gargantext.Components.Nodes.Corpus.Phylo (phyloLayout)
 import Gargantext.Components.Nodes.Corpus.Phylo as PhyloExplorer
 import Gargantext.Components.Nodes.File (fileLayout)
 import Gargantext.Components.Nodes.Frame (frameLayout)
@@ -37,11 +35,14 @@ import Gargantext.Components.Tile (tileBlock)
 import Gargantext.Components.TopBar as TopBar
 import Gargantext.Config (defaultFrontends, defaultBackends)
 import Gargantext.Ends (Backend)
+import Gargantext.Hooks.FirstEffect (useFirstEffect)
+import Gargantext.Hooks.Resize (ResizeType(..), useResizeHandler)
 import Gargantext.Routes (AppRoute, Tile)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, WithSession)
 import Gargantext.Sessions as Sessions
 import Gargantext.Types (CorpusId, Handed(..), ListId, NodeID, NodeType(..), SessionId, SidePanelState(..))
+import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix (getElementById)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -66,9 +67,10 @@ router :: R2.Leaf Props
 router = R2.leafComponent routerCpt
 routerCpt :: R.Component Props
 routerCpt = here.component "router" cpt where
-  cpt { boxes: boxes@{ handed } } _ = do
+  cpt { boxes: boxes@{ handed, showLogin } } _ = do
     -- States
     handed'       <- T.useLive T.unequal handed
+    showLogin' <- R2.useLive' showLogin
 
     -- Effects
     let
@@ -87,27 +89,85 @@ routerCpt = here.component "router" cpt where
           R2.addClass app [ handedClassName handed' ]
 
     -- Render
-    pure $ R.fragment
-      [ loginModal { boxes }
+    pure $
+
+      H.div
+      { className: "router" }
+      [
+        -- loginModal { boxes }
+         R2.if' showLogin' $
+            login' boxes
        , TopBar.topBar { boxes }
        , errorsView { errors: boxes.errors } []
-       , H.div { className: "router-inner" }
+       , H.div { className: "router__inner" }
          [ forest { boxes }
          , mainPage { boxes }
          , sidePanel { boxes }
          ]
        ]
 
+-- router :: R2.Leaf Props
+-- router = R2.leaf routerCpt
+-- routerCpt :: R.Memo Props
+-- routerCpt = R.memo' $ here.component "router" cpt where
+--   cpt { boxes: boxes@{ handed, showLogin } } _ = do
+--     -- States
+--     handed'       <- T.useLive T.unequal handed
+--     showLogin' <- R2.useLive' showLogin
+--     -- Render
+--     pure $
 
-loginModal :: R2.Leaf Props
-loginModal = R2.leafComponent loginModalCpt
-loginModalCpt :: R.Component Props
-loginModalCpt = here.component "loginModal" cpt
-  where
-    cpt { boxes: boxes@{ showLogin } } _ = do
-        showLogin' <- T.useLive T.unequal showLogin
+--       router'
+--       { handed: handed'
+--       , showLogin: showLogin'
+--       , boxes
+--       , key: "lol"
+--       }
 
-        pure $ if showLogin' then login' boxes else H.div {} []
+-- type CloneProps =
+--   ( showLogin :: Boolean
+--   , handed :: Handed
+--   , key :: String
+--   | Props
+--   )
+
+-- router' :: R2.Leaf CloneProps
+-- router' = R2.leaf routerCpt'
+-- routerCpt' :: R.Memo CloneProps
+-- routerCpt' = R.memo' $ here.component "__clone__" cpt where
+--   cpt { boxes, handed, showLogin } _ = do
+--     -- Effects
+--     let
+--       handedClassName = case _ of
+--         LeftHanded  -> "left-handed"
+--         RightHanded -> "right-handed"
+
+--     R.useEffect1' handed $
+--       getElementById "app" >>= case _ of
+--         Nothing  -> pure unit
+--         Just app -> do
+--           R2.removeClass app
+--             [ handedClassName LeftHanded
+--             , handedClassName RightHanded
+--             ]
+--           R2.addClass app [ handedClassName handed ]
+
+--     -- Render
+--     -- pure $ R2.fragmentWithKey "lol"
+--     pure $ H.div {}
+--       [
+--         -- loginModal { boxes }
+--          R2.if' showLogin $
+--             login' boxes
+--        , TopBar.topBar { boxes }
+--        , errorsView { errors: boxes.errors } []
+--        , H.div { className: "router-inner" }
+--          [ forest { boxes }
+--          , mainPage { boxes }
+--          , sidePanel { boxes }
+--          ]
+--        ]
+
 
 
 mainPage :: R2.Leaf Props
@@ -135,7 +195,7 @@ mainPageCpt = here.component "mainPage" cpt where
     -- Render
     pure $
 
-      H.div { className: "main-page" }
+      H.div { className: "router__body main-page" }
       [
         H.div
         { className: intercalate " "
@@ -200,19 +260,45 @@ mainPageCpt = here.component "mainPage" cpt where
 
 
 forest :: R2.Leaf Props
-forest = R2.leafComponent forestCpt
-forestCpt :: R.Component Props
-forestCpt = here.component "forest" cpt where
+forest = R2.leaf forestCpt
+forestCpt :: R.Memo Props
+forestCpt = R.memo' $ here.component "forest" cpt where
   cpt { boxes: boxes@{ showTree } } _ = do
+    -- States
     showTree' <- T.useLive T.unequal showTree
 
+    -- Hooks
+    resizeHandler <- useResizeHandler
+
+    -- Effects
+    useFirstEffect do
+      resizeHandler.add ".router__handle__action" ".router__aside" Vertical
+      pure $ resizeHandler.remove ".router__handle__action"
+
+    -- Render
     pure $
 
-      if not showTree'
-      then mempty
-      else Forest.forestLayout
-           { boxes
-           , frontends: defaultFrontends } []
+      H.div
+      { className: intercalate " "
+          [ "router__aside"
+          , showTree' ? "" $ "d-none"
+          ]
+      }
+      [
+        Forest.forestLayout
+        { boxes
+        , frontends: defaultFrontends
+        }
+      ,
+        H.div
+        { className: "router__handle"
+        }
+        [
+          H.div
+          { className: "router__handle__action" }
+          []
+        ]
+      ]
 
 sidePanel :: R2.Leaf Props
 sidePanel = R2.leafComponent sidePanelCpt

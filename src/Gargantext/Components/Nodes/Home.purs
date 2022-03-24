@@ -70,15 +70,15 @@ homeLayoutCpt = here.component "homeLayout" cpt
       let landingData = langLandingData lang'
       pure $
         H.span {}
-        [ H.div { className: "home-title container1" }
+        [ H.div { className: "home-title" }
           [ jumboTitle landingData ]
-        , H.div { className: "home-research-form container1" } [] -- TODO
+        , H.div { className: "home-research-form" } [] -- TODO
         , joinButtonOrTutorial boxes sessions' (click backend')
-        , H.div { className: "home-public container1" }
+        , H.div { className: "home-public" }
           [ renderPublic { }
           , H.div { className:"col-12 d-flex justify-content-center" }
             [ H.h1 {} [ H.text "" ]] -- H.span {className: "fa fa-star-o"} []
-          , H.div { className: "home-landing-data container1" }
+          , H.div { className: "home-landing-data" }
             [ blocksRandomText' landingData ]
           , license
           ]
@@ -159,7 +159,7 @@ tutorialCpt = here.component "tutorial" cpt where
       , sessions } _ = do
     let folders = makeFolders sessions
 
-    pure $ H.div { className: "mx-auto container" }
+    pure $ H.div { className: "mx-auto" }
       [ H.div {className: "d-flex justify-content-center"} [ H.div { className: "folders" } folders ]
       -- , H.h1 {} [H.text "Tutorials"]
       -- , summary

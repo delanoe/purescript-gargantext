@@ -4,9 +4,10 @@ import Gargantext.Prelude
 
 import Data.Foldable (intercalate)
 import Gargantext.Components.App.Data (Boxes)
-import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
-import Gargantext.Components.Themes (themeSwitcher, allThemes)
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
 import Gargantext.Components.Lang (langSwitcher, allFeLangs)
+import Gargantext.Components.Themes (themeSwitcher, allThemes)
 import Gargantext.Types (Handed(..))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -24,70 +25,83 @@ topBar = R2.leaf topBarCpt
 topBarCpt :: R.Component TopBarProps
 topBarCpt = here.component "topBar" cpt
   where
-    cpt { boxes: { handed, lang, showTree, theme } } children = pure $
+    cpt { boxes: { handed, lang, showTree, theme } } children = do
 
-      H.div
-      { className: "main-topbar navbar navbar-expand-lg navbar-dark bg-dark"
-      , id: "dafixedtop"
-      , role: "navigation"
-      } $
-      [
-        logo
-      ,
-        divDropdownLeft {} []
-      ,
-        handButton
-      ,
-        smiley
-      ,
-        H.li
-        { className: "nav-item" }
-        [
-          themeSwitcher
-          { theme
-          , themes: allThemes
-          } []
-        ]
-      ,
-        H.li
-        { className: "nav-item" }
-        [
-          langSwitcher
-          { lang
-          , langs: allFeLangs
-          } []
-        ]
-      ,
-        Toggle.treeToggleButton { state: showTree } []
-      ,
+      showTree' <- R2.useLive' showTree
+
+      pure $
+
         H.div
-        { id: "portal-topbar" } []
-      ]
-        <> children
+        { className: "main-topbar navbar navbar-expand-lg navbar-dark bg-dark"
+        , id: "dafixedtop"
+        , role: "navigation"
+        } $
+        [
+          logo
+        ,
+          divDropdownLeft {} []
+        ,
+          handButton
+        ,
+          smiley
+        ,
+          H.li
+          { className: "nav-item main-topbar__theme-switcher" }
+          [
+            themeSwitcher
+            { theme
+            , themes: allThemes
+            } []
+          ]
+        ,
+          H.li
+          { className: "nav-item main-topbar__lang-switcher" }
+          [
+            langSwitcher
+            { lang
+            , langs: allFeLangs
+            } []
+          ]
+        ,
+          B.button
+          { variant: ButtonVariant Light
+          , callback: const $ T.modify_ (not) showTree
+          , className: "main-topbar__tree-switcher"
+          }
+          [
+            if showTree'
+            then H.text "Hide Tree"
+            else H.text "Show Tree"
+          ]
+        ,
+          H.div
+          { id: "portal-topbar" } []
+        ]
+          <> children
 
-      where
-        handButton = H.li { title: "If you are Left Handed you can change\n"
-                            <> "the interface by clicking on me. Click\n"
-                            <> "again to come back to previous state."
-                          , className: "nav-item main-topbar__hand-button"
-                          } [handedChooser { handed } []]
+        where
+          handButton = H.li { title: "If you are Left Handed you can change\n"
+                              <> "the interface by clicking on me. Click\n"
+                              <> "again to come back to previous state."
+                            , className: "nav-item main-topbar__hand-button"
+                            } [handedChooser { handed } []]
 
-        smiley = H.li { title: "Hello! Looking for the tree ?\n"
-                            <> "Just watch on the other side!\n"
-                            <> "Click on the hand again to see it back."
-                      , className : "nav-item main-topbar__help-button"
-                      }
-                      [ H.a { className: "nav-link navbar-text" } [H.span {className: "fa fa-question-circle-o"} [] ]]
+          smiley = H.li { title: "Hello! Looking for the tree ?\n"
+                              <> "Just watch on the other side!\n"
+                              <> "Click on the hand again to see it back."
+                        , className : "nav-item main-topbar__help-button"
+                        }
+                        [ H.a { className: "nav-link navbar-text" } [H.span {className: "fa fa-question-circle-o"} [] ]]
 
-                    {-, H.ul { title: "Dark Mode soon here"
-                            , className : "nav navbar-nav"
-                            } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
-                                                      ]
-                                            ]
-                                  ]
-                          -}
+                      {-, H.ul { title: "Dark Mode soon here"
+                              , className : "nav navbar-nav"
+                              } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
+                                                        ]
+                                              ]
+                                    ]
+                            -}
 
-        -- SB.searchBar {session, databases: allDatabases}
+          -- SB.searchBar {session, databases: allDatabases}
 
 logo :: R.Element
 logo =

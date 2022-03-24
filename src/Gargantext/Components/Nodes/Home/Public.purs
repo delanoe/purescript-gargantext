@@ -87,7 +87,7 @@ publicLayoutCpt = here.component "publicLayout" cpt
       pure $
         H.span {}
         [ H.div { className: "text-center" }
-          [ H.div { className:"container1", style: { marginBottom: "15px" }}
+          [ H.div { style: { marginBottom: "15px" }}
             [ H.h2 {}
               [ H.text "Discover knowledge"
               , H.p { className: "lead text-muted center"}

@@ -1,30 +1,23 @@
 module Gargantext.Components.Forest.Tree.Node.Tools where
 
-import Data.Foldable (intercalate)
-import Data.Maybe (fromMaybe, Maybe(..))
+import Gargantext.Prelude
+
+import Data.Maybe (fromMaybe)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as S
-import Data.String.CodeUnits as DSCU
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
-import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Action (icon, text)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
-import Gargantext.Components.GraphExplorer.Types (mCameraP)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
-import Gargantext.Ends (Frontends, url)
-import Gargantext.Prelude (class Ord, class Read, class Show, Unit, bind, const, discard, map, not, pure, read, show, when, mempty, ($), (<), (<<<), (<>), (<$>), (<*>))
-import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types as GT
-import Gargantext.Utils (toggleSet, (?))
+import Gargantext.Utils (toggleSet)
 import Gargantext.Utils.Glyphicon (glyphicon)
-import Gargantext.Utils.ReactTooltip as ReactTooltip
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
-import Web.HTML.ValidityState (valid)
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools"
@@ -60,7 +53,7 @@ textInputBox :: R2.Component TextInputBoxProps
 textInputBox = R.createElement textInputBoxCpt
 textInputBoxCpt :: R.Component TextInputBoxProps
 textInputBoxCpt = here.component "textInputBox" cpt where
-  cpt { boxAction, boxName, dispatch, id, isOpen, text } _ =
+  cpt { boxAction, boxName, dispatch, isOpen, text } _ =
     content <$> T.useLive T.unequal isOpen <*> R.useRef text
     where
       content false _ = (R.fragment [])
@@ -256,101 +249,3 @@ prettyNodeType
   =   S.replace (S.Pattern "Node")   (S.Replacement " ")
   <<< S.replace (S.Pattern "Folder") (S.Replacement " ")
   <<< show
-
-tooltipId :: GT.NodeID -> String
-tooltipId id = "node-link-" <> show id
-
--- START node link
-
-type NodeLinkProps = (
-    boxes      :: Boxes
-  , folderOpen :: T.Box Boolean
-  , frontends  :: Frontends
-  , id         :: Int
-  , isSelected :: Boolean
-  , name       :: GT.Name
-  , nodeType   :: GT.NodeType
-  , session    :: Session
-  )
-
-nodeLink :: R2.Component NodeLinkProps
-nodeLink = R.createElement nodeLinkCpt
-nodeLinkCpt :: R.Component NodeLinkProps
-nodeLinkCpt = here.component "nodeLink" cpt
-  where
-    cpt { boxes
-        , folderOpen
-        , frontends
-        , id
-        , isSelected
-        , name
-        , nodeType
-        , session
-        } _ = do
-      pure $
-        H.div { className: "node-link"
-              , on: { click } }
-          [ H.a { href, data: { for: name <> "-" <> (tooltipId id), tip: true } }
-            [ nodeText { isSelected, name }
-            , ReactTooltip.reactTooltip { effect: "float", id: name <> "-" <> (tooltipId id), type: "dark" }
-                [ R2.row
-                    [ H.h4 {className: GT.fldr nodeType true}
-                        [ H.text $ GT.prettyNodeType nodeType ]
-                    ]
-                , R2.row [ H.span {} [ H.text $ name ]]
-                ]
-              ]
-            ]
-
-      where
-        -- NOTE Don't toggle tree if it is not selected
-        -- click on closed -> open
-        -- click on open   -> ?
-        click _ = when (not isSelected) (T.write_ true folderOpen)
-        href = url frontends $ GT.NodePath (sessionId session) nodeType (Just id)
--- END node link
-
-type NodeTextProps =
-  ( isSelected :: Boolean
-  , name       :: GT.Name
-  )
-
-nodeText :: R2.Leaf NodeTextProps
-nodeText p = R.createElement nodeTextCpt p []
-nodeTextCpt :: R.Memo NodeTextProps
-nodeTextCpt = R.memo' $ here.component "nodeText" cpt where
-  cpt props@{ isSelected } _ = do
-    -- Computed
-    let
-
-      className = intercalate " "
-        [ "node-text"
-        , isSelected ? "node-text--selected" $ ""
-        ]
-
-      prefix = isSelected ?
-        "" $
-        "..."
-
-      name = isSelected ?
-        "| " <> (textEllipsisBreak 15 props.name) <> " |    " $
-        textEllipsisBreak 15 props.name
-
-    -- Render
-    pure $
-
-      H.span { className }
-      [
-        H.span {}
-        [ H.text prefix ]
-      ,
-        H.span {}
-        [ H.text name ]
-      ]
-
-textEllipsisBreak :: Int -> String -> String
-textEllipsisBreak len n =
-  if S.length n < len then n
-  else case (DSCU.slice 0 len n) of
-    Nothing -> "???"
-    Just s  -> s <> "..."

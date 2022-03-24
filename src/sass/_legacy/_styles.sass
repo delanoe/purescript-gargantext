@@ -1,3 +1,7 @@
+// cf. "Resize" hook
+.no-user-select
+  user-select: none
+
 .cache-toggle
   cursor: pointer
 
@@ -88,14 +92,56 @@ select.form-control
 #app
   width: 100%
 
-.router-inner
-  display: flex
+.router
 
-  @include left-handed
-    flex-direction: row-reverse
+  &__inner
+    display: flex
+    position: relative
 
-  @include right-handed
-    flex-direction: row
+    @include left-handed
+      flex-direction: row-reverse
+
+    @include right-handed
+      flex-direction: row
+
+  &__aside
+    // @TODO: topbar width
+    $offset-y: 56px
+    $min-width: 280px
+
+    position: relative
+    flex-grow: 0
+    flex-shrink: 0
+    width: $min-width
+    min-width: $min-width
+    height: calc(100vh - #{ $offset-y })
+
+
+  &__handle
+    min-width: inherit
+    width: inherit
+    height: inherit
+    position: fixed
+    // @TODO: z-index management
+    z-index: 99999999999
+    pointer-events: none
+
+    &__action
+      $handle-width: 8px
+
+      width: $handle-width
+      height: inherit
+      background: transparent
+      cursor: col-resize
+      position: absolute
+      right: - #{ $handle-width / 2 }
+      pointer-events: all
+
+
+  &__body
+    position: relative
+    flex-grow: 1
+    flex-shrink: 1
 
 
 .main-page
@@ -103,7 +149,7 @@ select.form-control
   $page-padding: space-x(3) space-x(4)
   $topbar-height: 56px // ~ unworthy empirical value (@TODO topbar height calculation)
 
-  flex-grow: 1 // quick workaround, stretching block when subjected to flex API
+  position: relative
 
   &__main-row
     display: flex
@@ -172,4 +218,42 @@ select.form-control
 
 .jitsi-iframe
   height: 70em
-  
+
+
+// based on https://codeburst.io/how-to-pure-css-pie-charts-w-css-variables-38287aea161e
+.progress-pie
+  background: rgba(51, 122, 183, 0.1)
+  border-radius: 100%
+  height: calc(var(--size, 14) * 1px)
+  overflow: hidden
+  position: relative
+  width: calc(var(--size, 14) * 1px)
+
+  .progress-pie-segment
+    --a: calc(var(--over50, 0) * -100%)
+    --b: calc((1 + var(--over50, 0)) * 100%)
+    --degrees: calc((var(--offset, 0) / 100) * 360)
+    -webkit-clip-path: polygon(var(--a) var(--a), var(--b) var(--a), var(--b) var(--b), var(--a) var(--b))
+    clip-path: polygon(var(--a) var(--a), var(--b) var(--a), var(--b) var(--b), var(--a) var(--b))
+    height: 100%
+    position: absolute
+    transform: translate(0, -50%) rotate(90deg) rotate(calc(var(--degrees) * 1deg))
+    transform-origin: 50% 100%
+    width: 100%
+    z-index: calc(1 + var(--over50))
+
+    &:after,
+    &:before
+      background: var(--bg, rgb(51, 122, 183))
+      content: ''
+      height: 100%
+      position: absolute
+      width: 100%
+
+    &:before
+      --degrees: calc((var(--value, 45) / 100) * 360)
+      transform: translate(0, 100%) rotate(calc(var(--degrees) * 1deg))
+      transform-origin: 50% 0%
+
+    &:after
+      opacity: var(--over50, 0)
