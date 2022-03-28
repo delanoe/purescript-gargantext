@@ -11,6 +11,7 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Foreign (unsafeToForeign, ForeignError)
 import Gargantext.Components.GraphQL.Node (Node)
+import Gargantext.Components.GraphQL.Tree (TreeFirstLevel)
 import Gargantext.Components.GraphQL.User (User, UserInfo, UserInfoM)
 import Gargantext.Ends (Backend(..))
 import Gargantext.Sessions (Session(..))
@@ -70,6 +71,7 @@ type Schema
   = { node_parent :: { node_id :: Int, parent_type :: String } ==> Array Node  -- TODO: parent_type :: NodeType
     , user_infos :: { user_id :: Int } ==> Array UserInfo
     , users :: { user_id :: Int } ==> Array User
+    , tree :: { root_id :: Int } ==> TreeFirstLevel
     }
 
 type Mutation

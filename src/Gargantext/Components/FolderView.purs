@@ -21,15 +21,16 @@ import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Update (updateRequest)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadArbitraryFile, uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Box (nodePopupView)
-import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..), fTreeID)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
+import Gargantext.Components.GraphQL.Endpoints (getTreeFirstLevel)
+import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, TreeNode)
 import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Hooks.LinkHandler (Methods, useLinkHandler)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Ordering, Unit, bind, compare, discard, pure, unit, void, ($), (<$>), (<>))
-import Gargantext.Routes (AppRoute(Home), SessionRoute(..), nodeTypeAppRoute)
-import Gargantext.Sessions (Session, get, sessionId)
+import Gargantext.Routes (AppRoute(Home), nodeTypeAppRoute)
+import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Types as GT
 import Gargantext.Utils.Popover as Popover
@@ -76,7 +77,7 @@ folderViewCpt = here.component "folderViewCpt" cpt where
 type FolderViewProps =
   ( backFolder    :: Boolean
   , boxes         :: Boxes
-  , folders       :: FTree
+  , folders       :: TreeFirstLevel
   , nodeId        :: Int
   , reload        :: T.Box T2.Reload
   , session       :: Session
@@ -89,24 +90,24 @@ folderViewMainCpt :: R.Component FolderViewProps
 folderViewMainCpt = here.component "folderViewMainCpt" cpt where
   cpt { backFolder
       , boxes
-      , folders: NTree (LNode {parent_id: parentId, nodeType}) (folders)
+      , folders: {parent: parentNode, root: {node_type: nodeType}, children}
       , nodeId
       , reload
       , session
       , setPopoverRef } _ = do
     linkHandlers <- useLinkHandler
-    let foldersS = A.sortBy sortFolders folders
+    let foldersS = A.sortBy sortFolders children
     let backHome = isBackHome nodeType
-    let parent = makeParentFolder linkHandlers parentId session backFolder backHome
-    let children = makeFolderElements foldersS { boxes, nodeId, reload, session, setPopoverRef }
+    let parent = makeParentFolder linkHandlers parentNode session backFolder backHome
+    let childrenEl = makeFolderElements foldersS { boxes, nodeId, reload, session, setPopoverRef }
 
-    pure $ H.div {className: "fv folders"} $ parent <> children
+    pure $ H.div {className: "fv folders"} $ parent <> childrenEl
 
   makeFolderElements foldersS props = makeFolderElementsMap <$> foldersS where
-    makeFolderElementsMap :: NTree LNode -> R.Element
-    makeFolderElementsMap (NTree (LNode node) _) = folder { boxes: props.boxes
+    makeFolderElementsMap :: TreeNode -> R.Element
+    makeFolderElementsMap node = folder { boxes: props.boxes
                                                           , nodeId: node.id
-                                                          , nodeType: node.nodeType
+                                                          , nodeType: node.node_type
                                                           , parentId: props.nodeId
                                                           , reload: props.reload
                                                           , session: props.session
@@ -114,11 +115,11 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
                                                           , style: FolderChild
                                                           , text: node.name } []
 
-  makeParentFolder :: Record Methods -> Maybe Int -> Session -> Boolean -> Boolean -> Array R.Element
-  makeParentFolder _ (Just parentId) session _ _ =
+  makeParentFolder :: Record Methods -> Maybe TreeNode -> Session -> Boolean -> Boolean -> Array R.Element
+  makeParentFolder _ (Just parent) session _ _ =
     -- FIXME: The NodeType here should not be hardcoded to FolderPrivate but we currently can't get the actual NodeType
     -- without performing another API call. Also parentId is never being returned by this API even when it clearly exists
-    [ folderSimple {style: FolderUp, text: "..", nodeId: parentId, nodeType: GT.FolderPrivate, session: session} [] ]
+    [ folderSimple {style: FolderUp, text: "..", nodeId: parent.id, nodeType: GT.FolderPrivate, session: session} [] ]
   makeParentFolder linkHandlers Nothing _ _ true = [ H.button {className: "btn btn-primary", on: { click: \_ -> linkHandlers.goToRoute Home}} [ H.i { className: "fa fa-folder-open" } []
                                                                    , H.br {}
                                                                    , H.text ".."] ]
@@ -128,8 +129,8 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
   makeParentFolder _ Nothing _ _ _ = []
 
 
-  sortFolders :: FTree -> FTree -> Ordering
-  sortFolders a b = compare (fTreeID a) (fTreeID b)
+  sortFolders :: TreeNode-> TreeNode -> Ordering
+  sortFolders a b = compare a.id b.id
 
   isBackHome :: GT.NodeType -> Boolean
   isBackHome GT.FolderPrivate = true
@@ -261,8 +262,8 @@ type LoadProps =
     reload :: T2.Reload
   )
 
-loadFolders :: Record LoadProps -> AffRESTError FTree
-loadFolders {nodeId, session} = get session $ TreeFirstLevel (Just nodeId) ""
+loadFolders :: Record LoadProps -> AffRESTError TreeFirstLevel
+loadFolders {nodeId, session} = getTreeFirstLevel session nodeId
 
 type PerformActionProps =
   ( boxes         :: Boxes

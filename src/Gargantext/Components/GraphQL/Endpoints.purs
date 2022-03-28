@@ -2,6 +2,7 @@ module Gargantext.Components.GraphQL.Endpoints where
 
 import Gargantext.Components.GraphQL.Node
 import Gargantext.Components.GraphQL.User
+import Gargantext.Components.GraphQL.Tree
 import Gargantext.Prelude
 
 import Data.Array as A
@@ -40,4 +41,10 @@ getUserInfo session id = do
     Nothing -> Left (CustomError $ "user with id " <> show id <> " not found")
     -- NOTE Contact is at G.C.N.A.U.C.Types
     Just ui -> Right ui
+
+getTreeFirstLevel :: Session -> Int -> AffRESTError TreeFirstLevel
+getTreeFirstLevel session id = do
+  { tree } <- queryGql session "get tree first level" $ treeFirstLevelQuery `withVars` { id }
+  liftEffect $ here.log2 "[getTreeFirstLevel] tree first level" tree
+  pure $ Right tree -- TODO: error handling
 
