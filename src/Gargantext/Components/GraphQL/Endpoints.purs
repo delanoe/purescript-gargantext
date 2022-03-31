@@ -12,6 +12,7 @@ import Data.Unit (unit)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.Components.GraphQL (getClient, queryGql)
+import Gargantext.Components.GraphQL.IMT as GQLIMT
 import Gargantext.Components.GraphQL.Task as GQLT
 import Gargantext.Config.REST (AffRESTError, RESTError(..))
 import Gargantext.Sessions (Session)
@@ -25,13 +26,20 @@ import Simple.JSON as JSON
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphQL.Endpoints"
 
+getIMTSchools :: Session -> AffRESTError (Array GQLIMT.School)
+getIMTSchools session = do
+  { imt_schools } <- queryGql session "get imt schools" $
+                         GQLIMT.schoolsQuery
+  liftEffect $ here.log2 "[getIMTSchools] imt_schools" imt_schools
+  pure $ Right imt_schools
+
 getNodeParent :: Session -> Int -> NodeType -> Aff (Array Node)
 getNodeParent session nodeId parentType = do
   { node_parent } <- queryGql session "get node parent" $
                      nodeParentQuery `withVars` { id: nodeId
                                                 , parent_type: show parentType }  -- TODO: remove "show"
   liftEffect $ here.log2 "[getNodeParent] node_parent" node_parent
-  pure $ node_parent
+  pure node_parent
 
 getUserInfo :: Session -> Int -> AffRESTError UserInfo
 getUserInfo session id = do

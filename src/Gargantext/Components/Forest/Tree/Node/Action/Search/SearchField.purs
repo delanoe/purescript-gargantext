@@ -2,21 +2,26 @@ module Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField where
 
 import Gargantext.Prelude
 
-import DOM.Simple.Console (log, log2)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Newtype (over)
 import Data.Nullable (null)
 import Data.Set as Set
+import Data.String.Common (joinWith)
+import DOM.Simple.Console (log, log2)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Frame (searchIframes)
-import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allIMTorgs, allOrgs, dataFields, defaultSearchQuery, doc, performSearch, datafield2database, Search)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allOrgs, dataFields, defaultSearchQuery, doc, performSearch, datafield2database, Search)
+import Gargantext.Components.GraphQL.Endpoints (getIMTSchools)
+import Gargantext.Components.GraphQL.IMT as GQLIMT
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Lang (Lang)
 import Gargantext.Components.ListSelection as ListSelection
 import Gargantext.Components.ListSelection.Types as ListSelection
+import Gargantext.Config.REST (logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (FrontendError)
 import Gargantext.Types as GT
@@ -63,7 +68,7 @@ searchFieldCpt = here.component "searchField" cpt
           --   then
           --     H.div {}[]
           --   else
-        , datafieldInput { databases, langs, search } []
+        , datafieldInput { databases, langs, search, session } []
         , ListSelection.selection { selection, session } []
         , submitButton { errors, onSearch, search, selection, session } []
         ]
@@ -72,30 +77,50 @@ searchFieldCpt = here.component "searchField" cpt
 type ComponentProps =
   ( search :: T.Box Search )
 
-componentIMT :: R2.Component ComponentProps
+type ComponentIMTProps =
+  ( session :: Session
+  | ComponentProps )
+
+componentIMT :: R2.Component ComponentIMTProps
 componentIMT = R.createElement componentIMTCpt
-componentIMTCpt :: R.Component ComponentProps
-componentIMTCpt = here.component "componentIMT" cpt
-  where
-    cpt { search } _ = do
-      search' <- T.useLive T.unequal search
+componentIMTCpt :: R.Component ComponentIMTProps
+componentIMTCpt = here.component "componentIMT" cpt where
+  cpt { search, session } _  = do
+    useLoader { errorHandler
+              , loader: \_ -> getIMTSchools session
+              , path: unit
+              , render: \schools -> componentWithIMTOrgs { schools, search } [] }
+    where
+      errorHandler = logRESTError here "[componentIMT]"
 
-      let liCpt org =
-            H.li {}
-            [ H.input { type: "checkbox"
-                      , checked: isIn org search'.datafield
-                      , on: { change: \_ -> ( T.modify_ (_ { datafield = updateFilter org search'.datafield }) search)
-                            }
-                      }
-            , if org == All_IMT
-              then H.i {} [H.text  $ " " <> show org]
-              else H.text $ " " <> show org
-            ]
+type ComponentWithIMTOrgsProps =
+  ( schools :: Array GQLIMT.School
+  , search :: T.Box Search)
 
-      pure $ R.fragment
-        [ H.ul {} $ map liCpt allIMTorgs
+componentWithIMTOrgs :: R2.Component ComponentWithIMTOrgsProps
+componentWithIMTOrgs = R.createElement componentWithIMTOrgsCpt
+componentWithIMTOrgsCpt :: R.Component ComponentWithIMTOrgsProps
+componentWithIMTOrgsCpt = here.component "componentWithIMTOrgs" cpt where
+  cpt { schools, search } _ = do
+    search' <- T.useLive T.unequal search
+  
+    let allIMTOrgs = [All_IMT] <> (IMT_org <$> schools)
+        liCpt org =
+          H.li {}
+          [ H.input { type: "checkbox"
+                    , checked: isIn org search'.datafield
+                    , on: { change: \_ -> ( T.modify_ (_ { datafield = updateFilter org allIMTOrgs search'.datafield }) search)
+                          }
+                    }
+          , case org of
+               All_IMT -> H.i {} [H.text  $ " " <> show org]
+               (IMT_org { school_shortName }) -> H.text $ " " <> school_shortName
+          ]
+    
+    pure $ R.fragment
+      [ H.ul {} $ map liCpt $ allIMTOrgs
         --, filterInput fi
-        ]
+      ]
 
 componentCNRS :: R2.Component ComponentProps
 componentCNRS = R.createElement componentCNRSCpt
@@ -184,8 +209,8 @@ isIn org ( Just
          ) = Set.member org imtOrgs
 isIn _ _ = false
 
-updateFilter :: IMT_org -> Maybe DataField -> Maybe DataField
-updateFilter org (Just (External (Just (HAL (Just (IMT imtOrgs)))))) =
+updateFilter :: IMT_org -> Array IMT_org -> Maybe DataField -> Maybe DataField
+updateFilter org allIMTorgs (Just (External (Just (HAL (Just (IMT imtOrgs)))))) =
  (Just (External (Just (HAL (Just $ IMT imtOrgs')))))
   where
     imtOrgs' = if Set.member org imtOrgs
@@ -198,7 +223,7 @@ updateFilter org (Just (External (Just (HAL (Just (IMT imtOrgs)))))) =
                        then Set.fromFoldable allIMTorgs
                        else Set.insert org imtOrgs
 
-updateFilter org _ = (Just (External (Just (HAL (Just (IMT imtOrgs'))))))
+updateFilter org allIMTorgs _ = (Just (External (Just (HAL (Just (IMT imtOrgs'))))))
   where
     imtOrgs' = if org == All_IMT
                   then Set.fromFoldable allIMTorgs
@@ -354,13 +379,14 @@ filterInput (term /\ setTerm) =
 type DatafieldInputProps =
   ( databases :: Array Database
   , langs :: Array Lang
-  , search :: T.Box Search )
+  , search :: T.Box Search
+  , session :: Session )
 
 datafieldInput :: R2.Component DatafieldInputProps
 datafieldInput = R.createElement datafieldInputCpt
 datafieldInputCpt :: R.Component DatafieldInputProps
 datafieldInputCpt = here.component "datafieldInput" cpt where
-  cpt { databases, langs, search } _ = do
+  cpt { databases, langs, search, session} _ = do
     search' <- T.useLive T.unequal search
     iframeRef <- R.useRef null
     
@@ -376,7 +402,7 @@ datafieldInputCpt = here.component "datafieldInput" cpt where
         else H.div {} []
              
       , if isIMT search'.datafield
-        then componentIMT { search } []
+        then componentIMT { search, session } []
         else H.div {} []
              
       , if isCNRS search'.datafield
@@ -505,6 +531,21 @@ searchQuery :: ListSelection.Selection -> Search -> SearchQuery
 searchQuery selection { datafield: Nothing, term } =
   over SearchQuery (_ { query = term
                       , selection = selection }) defaultSearchQuery
+searchQuery selection { databases, datafield: datafield@(Just (External (Just (HAL (Just (IMT imtOrgs)))))), lang, term, node_id } =
+  over SearchQuery (_ { databases = databases
+                      , datafield = datafield
+                      , lang      = lang
+                      , node_id   = node_id
+                      , query     = term'
+                      , selection = selection
+                      }) defaultSearchQuery
+  where
+    term' = term <> " AND (" <> structIds <> ")"
+    joinFunc :: IMT_org -> String
+    joinFunc All_IMT = ""
+    joinFunc (IMT_org { school_id }) = "structId_i:" <> school_id
+    structIds :: String
+    structIds = joinWith " OR " $ joinFunc <$> Set.toUnfoldable imtOrgs
 searchQuery selection { databases, datafield, lang, term, node_id } =
   over SearchQuery (_ { databases = databases
                       , datafield = datafield

@@ -10,6 +10,7 @@ import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Foreign (unsafeToForeign, ForeignError)
+import Gargantext.Components.GraphQL.IMT as GQLIMT
 import Gargantext.Components.GraphQL.Node (Node)
 import Gargantext.Components.GraphQL.Tree (TreeFirstLevel)
 import Gargantext.Components.GraphQL.User (User, UserInfo, UserInfoM)
@@ -68,7 +69,8 @@ queryGql session name q = do
 
 -- Schema
 type Schema
-  = { node_parent :: { node_id :: Int, parent_type :: String } ==> Array Node  -- TODO: parent_type :: NodeType
+  = { imt_schools :: {} ==> Array GQLIMT.School
+    , node_parent :: { node_id :: Int, parent_type :: String } ==> Array Node  -- TODO: parent_type :: NodeType
     , user_infos :: { user_id :: Int } ==> Array UserInfo
     , users :: { user_id :: Int } ==> Array User
     , tree :: { root_id :: Int } ==> TreeFirstLevel
