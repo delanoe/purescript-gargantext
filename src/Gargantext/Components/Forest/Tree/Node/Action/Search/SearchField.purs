@@ -40,6 +40,7 @@ defaultSearch = { databases: Empty
                 , lang     : Nothing
                 , term     : ""
                 , url      : ""
+                , year     : ""
                 }
 
 type Props =
@@ -76,6 +77,18 @@ searchFieldCpt = here.component "searchField" cpt
 
 type ComponentProps =
   ( search :: T.Box Search )
+
+componentYear :: R2.Component ComponentProps
+componentYear = R.createElement componentYearCpt
+componentYearCpt :: R.Component ComponentProps
+componentYearCpt = here.component "componentYear" cpt where
+  cpt { search } _  = do
+    pure $ H.div {}
+      [ H.input { on: { blur: modify
+                      , change: modify
+                      , input: modify } } ]
+      where
+        modify e = T.modify_ (_ { year = R.unsafeEventValue e }) search
 
 type ComponentIMTProps =
   ( session :: Session
@@ -404,6 +417,10 @@ datafieldInputCpt = here.component "datafieldInput" cpt where
       , if isIMT search'.datafield
         then componentIMT { search, session } []
         else H.div {} []
+
+      , if isHAL search'.datafield
+        then componentYear { search } []
+        else H.div {} []
              
       , if isCNRS search'.datafield
         then componentCNRS { search } []
@@ -510,17 +527,18 @@ triggerSearch { onSearch, errors, session, selection, search } =
   launchAff_ $ do
     liftEffect $ do
       let here' = "[triggerSearch] Searching "
-      log2 (here' <> "databases: ") (show search.databases)
-      log2 (here' <> "datafield: ") (show search.datafield)
-      log2 (here' <> "term: ")            search.term
-      log2 (here' <> "lang: ")      (show search.lang)
+      here.log2 (here' <> "databases: ") (show search.databases)
+      here.log2 (here' <> "datafield: ") (show search.datafield)
+      here.log2 (here' <> "term: ")            search.term
+      here.log2 (here' <> "lang: ")      (show search.lang)
 
     case search.node_id of
-      Nothing -> liftEffect $ log "[triggerSearch] node_id is Nothing, don't know what to do"
+      Nothing -> liftEffect $ here.log "[triggerSearch] node_id is Nothing, don't know what to do"
       Just id -> do
+        liftEffect $ here.log2 "[triggerSearch] search" search
         eTask <- performSearch session id $ searchQuery selection search
         handleRESTError errors eTask $ \task -> liftEffect $ do
-          log2 "[triggerSearch] task" task
+          here.log2 "[triggerSearch] task" task
           onSearch task
 
     --liftEffect $ do
@@ -531,22 +549,53 @@ searchQuery :: ListSelection.Selection -> Search -> SearchQuery
 searchQuery selection { datafield: Nothing, term } =
   over SearchQuery (_ { query = term
                       , selection = selection }) defaultSearchQuery
-searchQuery selection { databases, datafield: datafield@(Just (External (Just (HAL (Just (IMT imtOrgs)))))), lang, term, node_id } =
+-- TODO Simplify both HAL Nothing and HAL (Just IMT) cases
+searchQuery selection { databases
+                      , datafield: datafield@(Just (External (Just (HAL Nothing))))
+                      , lang
+                      , term
+                      , node_id
+                      , year } =
   over SearchQuery (_ { databases = databases
                       , datafield = datafield
                       , lang      = lang
                       , node_id   = node_id
-                      , query     = term'
+                      , query     = query
                       , selection = selection
                       }) defaultSearchQuery
   where
-    term' = "(en_title_t:\"" <> termEscaped <> "\" OR en_abstract_t:\"" <> termEscaped <> "\")" <> structQuery
+    query = "(en_title_t:\"" <> termEscaped <> "\" OR en_abstract_t:\"" <> termEscaped <> "\")" <> yearQuery
+    -- TODO: Escape double quotes
+    termEscaped = term
+    yearQuery = if year == "" then
+                  ""
+                else
+                  " AND producedDateY_i:" <> year
+searchQuery selection { databases
+                      , datafield: datafield@(Just (External (Just (HAL (Just (IMT imtOrgs))))))
+                      , lang
+                      , term
+                      , node_id
+                      , year } =
+  over SearchQuery (_ { databases = databases
+                      , datafield = datafield
+                      , lang      = lang
+                      , node_id   = node_id
+                      , query     = query
+                      , selection = selection
+                      }) defaultSearchQuery
+  where
+    query = "(en_title_t:\"" <> termEscaped <> "\" OR en_abstract_t:\"" <> termEscaped <> "\")" <> structQuery <> yearQuery
     -- TODO: Escape double quotes
     termEscaped = term
     structQuery = if Set.isEmpty imtOrgs then
         ""
       else
         " AND (" <> structIds <> ")"
+    yearQuery = if year == "" then
+                  ""
+                else
+                  " AND producedDateY_i:" <> year
     joinFunc :: IMT_org -> String
     joinFunc All_IMT = ""
     joinFunc (IMT_org { school_id }) = "structId_i:" <> school_id
