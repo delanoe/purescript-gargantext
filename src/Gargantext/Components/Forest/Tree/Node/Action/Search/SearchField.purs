@@ -560,17 +560,9 @@ searchQuery selection { databases
                       , datafield = datafield
                       , lang      = lang
                       , node_id   = node_id
-                      , query     = query
+                      , query     = queryHAL term Nothing year
                       , selection = selection
                       }) defaultSearchQuery
-  where
-    query = "(en_title_t:\"" <> termEscaped <> "\" OR en_abstract_t:\"" <> termEscaped <> "\")" <> yearQuery
-    -- TODO: Escape double quotes
-    termEscaped = term
-    yearQuery = if year == "" then
-                  ""
-                else
-                  " AND producedDateY_i:" <> year
 searchQuery selection { databases
                       , datafield: datafield@(Just (External (Just (HAL (Just (IMT imtOrgs))))))
                       , lang
@@ -581,26 +573,9 @@ searchQuery selection { databases
                       , datafield = datafield
                       , lang      = lang
                       , node_id   = node_id
-                      , query     = query
+                      , query     = queryHAL term (Just imtOrgs) year
                       , selection = selection
                       }) defaultSearchQuery
-  where
-    query = "(en_title_t:\"" <> termEscaped <> "\" OR en_abstract_t:\"" <> termEscaped <> "\")" <> structQuery <> yearQuery
-    -- TODO: Escape double quotes
-    termEscaped = term
-    structQuery = if Set.isEmpty imtOrgs then
-        ""
-      else
-        " AND (" <> structIds <> ")"
-    yearQuery = if year == "" then
-                  ""
-                else
-                  " AND producedDateY_i:" <> year
-    joinFunc :: IMT_org -> String
-    joinFunc All_IMT = ""
-    joinFunc (IMT_org { school_id }) = "structId_i:" <> school_id
-    structIds :: String
-    structIds = joinWith " OR " $ joinFunc <$> Set.toUnfoldable imtOrgs
 searchQuery selection { databases, datafield, lang, term, node_id } =
   over SearchQuery (_ { databases = databases
                       , datafield = datafield
@@ -609,4 +584,25 @@ searchQuery selection { databases, datafield, lang, term, node_id } =
                       , query     = term
                       , selection = selection
                       }) defaultSearchQuery
- 
+
+queryHAL :: String -> Maybe (Set.Set IMT_org) -> String -> String
+queryHAL term mIMTOrgs year =
+  "(en_title_t:\"" <> termEscaped <> "\" OR en_abstract_t:\"" <> termEscaped <> "\")" <> structQuery <> yearQuery
+  where
+    -- TODO: Escape double quotes
+    termEscaped = term
+    structQuery = case mIMTOrgs of
+      Nothing -> ""
+      Just imtOrgs -> if Set.isEmpty imtOrgs then
+        ""
+      else
+        " AND (" <> (structIds imtOrgs) <> ")"
+    yearQuery = if year == "" then
+                  ""
+                else
+                  " AND producedDateY_i:" <> year
+    joinFunc :: IMT_org -> String
+    joinFunc All_IMT = ""
+    joinFunc (IMT_org { school_id }) = "structId_i:" <> school_id
+    structIds :: Set.Set IMT_org -> String
+    structIds imtOrgs = joinWith " OR " $ joinFunc <$> Set.toUnfoldable imtOrgs
