@@ -540,7 +540,13 @@ searchQuery selection { databases, datafield: datafield@(Just (External (Just (H
                       , selection = selection
                       }) defaultSearchQuery
   where
-    term' = term <> " AND (" <> structIds <> ")"
+    term' = "(en_title_t:\"" <> termEscaped <> "\" OR en_abstract_t:\"" <> termEscaped <> "\")" <> structQuery
+    -- TODO: Escape double quotes
+    termEscaped = term
+    structQuery = if Set.isEmpty imtOrgs then
+        ""
+      else
+        " AND (" <> structIds <> ")"
     joinFunc :: IMT_org -> String
     joinFunc All_IMT = ""
     joinFunc (IMT_org { school_id }) = "structId_i:" <> school_id
