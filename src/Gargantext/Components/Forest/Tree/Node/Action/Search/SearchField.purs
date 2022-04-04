@@ -16,7 +16,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..)
 import Gargantext.Components.GraphQL.Endpoints (getIMTSchools)
 import Gargantext.Components.GraphQL.IMT as GQLIMT
 import Gargantext.Components.InputWithEnter (inputWithEnter)
-import Gargantext.Components.Lang (Lang)
+import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Components.ListSelection as ListSelection
 import Gargantext.Components.ListSelection.Types as ListSelection
 import Gargantext.Config.REST (logRESTError)
@@ -560,7 +560,7 @@ searchQuery selection { databases
                       , datafield = datafield
                       , lang      = lang
                       , node_id   = node_id
-                      , query     = queryHAL term Nothing year
+                      , query     = queryHAL term Nothing lang year
                       , selection = selection
                       }) defaultSearchQuery
 searchQuery selection { databases
@@ -573,7 +573,7 @@ searchQuery selection { databases
                       , datafield = datafield
                       , lang      = lang
                       , node_id   = node_id
-                      , query     = queryHAL term (Just imtOrgs) year
+                      , query     = queryHAL term (Just imtOrgs) lang year
                       , selection = selection
                       }) defaultSearchQuery
 searchQuery selection { databases, datafield, lang, term, node_id } =
@@ -585,10 +585,15 @@ searchQuery selection { databases, datafield, lang, term, node_id } =
                       , selection = selection
                       }) defaultSearchQuery
 
-queryHAL :: String -> Maybe (Set.Set IMT_org) -> String -> String
-queryHAL term mIMTOrgs year =
-  "(en_title_t:\"" <> termEscaped <> "\" OR en_abstract_t:\"" <> termEscaped <> "\")" <> structQuery <> yearQuery
+queryHAL :: String -> Maybe (Set.Set IMT_org) -> Maybe Lang -> String -> String
+queryHAL term mIMTOrgs lang year =
+  "(" <> langPrefix <> "_title_t:\"" <> termEscaped <>
+  "\" OR " <> langPrefix <> "_abstract_t:\"" <> termEscaped <> "\")" <>
+  structQuery <> yearQuery
   where
+    langPrefix = case lang of
+      Just FR -> "fr"
+      _       -> "en"
     -- TODO: Escape double quotes
     termEscaped = term
     structQuery = case mIMTOrgs of
