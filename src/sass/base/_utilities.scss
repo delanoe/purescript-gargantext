@@ -1,0 +1,37 @@
+// @XXX: Bootstrap "_spacing.scss" `!important` precedence...
+//       (simple workaround is to add an extra `_` suffix)
+// @TODO: NOT importing Bootstrap "_spacing.scss")
+._m-0 { margin:0; }
+._m-1 { margin:space-x(1); }
+._m-2 { margin:space-x(2); }
+._m-3 { margin:space-x(3); }
+._m-4 { margin:space-x(4); }
+._m-5 { margin:space-x(5); }
+
+._mt-0 { margin-top:0; }
+._mr-0 { margin-right:0; }
+._mb-0 { margin-bottom:0; }
+._ml-0 { margin-left:0; }
+._mx-0 { margin-left:0 ;margin-right:0 ; }
+._my-0 { margin-top:0;margin-bottom:0; }
+
+._mt-1 { margin-top:space-x(1); }
+._mr-1 { margin-right:space-x(1); }
+._mb-1 { margin-bottom:space-x(1); }
+._ml-1 { margin-left:space-x(1); }
+._mx-1 { margin-left:space-x(1);margin-right:space-x(1); }
+._my-1 { margin-top:space-x(1);margin-bottom:space-x(1); }
+
+._mt-2 { margin-top:space-x(2); }
+._mr-2 { margin-right:space-x(2); }
+._mb-2 { margin-bottom:space-x(2); }
+._ml-2 { margin-left:space-x(2); }
+._mx-2 { margin-right:space-x(2);margin-left:space-x(2); }
+._my-2 { margin-top:space-x(2);margin-bottom:space-x(2); }
+
+._mt-3 { margin-top:space-x(3); }
+._mr-3 { margin-right:space-x(3); }
+._mb-3 { margin-bottom:space-x(3); }
+._ml-3 { margin-left:space-x(3); }
+._mx-3 { margin-right:space-x(3);margin-left:space-x(3); }
+._my-3 { margin-bottom:space-x(3);margin-top:space-x(3); }

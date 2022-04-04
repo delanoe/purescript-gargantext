@@ -38,7 +38,6 @@
 }
 
 
-
 /// Mixins
 ///--------------------------
 
@@ -121,4 +120,14 @@
   right: $value;
   bottom: $value;
   left: $value;
+}
+
+/// Hidden vertical scrollbar
+@mixin hidden-scrollbar() {
+  scrollbar-width: none;
+  overflow-y: scroll;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }

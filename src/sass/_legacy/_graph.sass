@@ -1,90 +1,254 @@
-@mixin sidePanelCommon
-  position: absolute
-  max-height: 600px
-  //overflow-y: scroll
-  top: 170px
-  //z-index: 1
+/* Grid constants */
 
-#graph-explorer
-  margin-left: 20rem
-  margin-right: 20rem
-  padding-top: 0px
+$layout-height: calc(100vh - #{ $topbar-height} )
 
-.graph-container
-  #sp-container
-    @include sidePanelCommon
-    border: 1px white solid
-    background-color: white
-    width: 28%
-    z-index: 15
+/////////////////////////////////////////////
 
-    #myTab
-      marginBottom: 18px
-      marginTop: 18px
+// @WIP
+.graph-loader
+  width: 100%
+  height: 100%
 
-    #myTabContent
-      borderBottom: 1px solid black
-      paddingBottom : 19px
+  &__spinner
+    $size: 100px
+    $weight: 6px
 
-    #horizontal-checkbox
-      ul
-        display: inline
-        float : left
-  .lefthanded #sp-container
-    left: 0%
-  .righthanded #sp-container
-    left: 70%
-
-  .graph-tree
-    @include sidePanelCommon
-    background-color: #fff
-    z-index: 1
-  .lefthanded .graph-tree
-    left: 80%
-  .righthanded .graph-tree
-    left: 0%
-
-  /* #toggle-container
-  /*   position: fixed
-  /*   z-index: 999 // needs to appear above solid menu bar
-  /*   right: 25%
-  /*   top: 10px
-  /*   width: 50%
-  /*   .container-fluid
-  /*     padding-top: 90px
-
-  #controls-container
-    // position: fixed
     position: absolute
-    // needs to appear above graph elements
-    z-index: 900
-    backdrop-filter: blur(4px)
-    background: rgba(255,255,255,75%)
-    // overflow: auto
-    left: 0
-    right: 0
-    top: 60px
+    font-size: $weight
+    height: $size
+    width: $size
+    // (?) `centered` mixin will not work here, due to Bootstrap process
+    //     interfering with the transform rule
+    top: calc( 50% - #{ $size / 2 } )
+    left: calc( 50% + #{ $size / 2 } )
 
-    .nav-item
-      padding-left: 0.8rem
 
-  .graph-row
-    height: 100vh
+/////////////////////////////////////////////
 
-    #graph-view
-      height: 95vh
+.graph-layout
+  position: relative
+  width: 100%
+  height: $layout-height
 
-  #tree
-    position: absolute
-    z-index: 1
-
-.input-with-autocomplete
-  .completions
+  &__sidebar
     position: fixed
-    max-height: 300px
-    overflow-y: scroll
-    width: 300px
-    top: 50px
+    width: $sidebar-width
+    height: $sidebar-height
+    z-index: z-index('graph-layout', 'sidebar')
+
+    @include right-handed
+      right: 0
+      border-left: 1px solid $border-color
+
+    @include left-handed
+      left: 0
+      border-right: 1px solid $border-color
+
+  &__toolbar
+    position: absolute
+    z-index: z-index('graph-layout', 'toolbar')
+    background-color: $body-bg
+    width: 100%
+    border-bottom: 1px solid $border-color
+
+    .b-fieldset
+      background-color: $body-bg
+
+  &__content
+    width: 100%
+    height: 100%
+
+
+/////////////////////////////////////////////
 
 .graph-topbar
   @include aside-topbar
+
+  display: flex
+  padding-left: $topbar-item-margin
+  padding-right: $topbar-item-margin
+
+  &__toolbar,
+  &__sidebar
+    width: $topbar-fixed-button-width
+    margin-left: $topbar-item-margin
+    margin-right: $topbar-item-margin
+
+  &__search
+    width: $topbar-input-width
+    margin-left: $topbar-item-margin
+    margin-right: $topbar-item-margin
+
+    [type="submit"]
+      display: none
+
+
+/////////////////////////////////////////////
+
+.graph-sidebar
+  @extend %sidebar
+
+  $margin-x: $sidebar-tab-margin-x
+  $margin-y: space-x(2)
+
+  &__legend-tab
+    padding: $margin-y $margin-x
+
+  &__data-tab
+    padding: $margin-y $margin-x
+
+  &__community-tab
+    padding: $margin-y $margin-x
+
+  &__separator
+    margin-top: $margin-y
+    margin-bottom: $margin-y
+    color: $gray-500
+    text-align: center
+
+
+.graph-legend
+  $legend-code-width: 24px
+  $legend-code-height: 12px
+
+  &__item
+    list-style: none
+    margin-bottom: space-x(0.75)
+
+  &__code
+    width: $legend-code-width
+    height: $legend-code-height
+    display: inline-block
+    margin-right: space-x(2.5)
+    border: 1px solid $gray-500
+
+  &__caption
+    vertical-align: top
+
+
+.graph-documentation
+
+  &__text-section
+    margin-bottom: space-x(3)
+    font-size: 15px
+    line-height: 1.5
+
+    // @WIP: remove "_reboot.scss"
+    p
+      margin-bottom: space-x(1)
+
+    ul
+      margin-bottom: revert
+
+    li
+      list-style-type: circle
+      padding-left: space-x(0.5)
+      margin-left: space-x(3)
+      line-height: 1.4
+
+      &:not(:last-child)
+        margin-bottom: space-x(1.5)
+
+
+.graph-selected-nodes
+
+  &__item
+
+    &:not(:last-child)
+      margin-bottom: space-x(0.5)
+
+  &__badge
+    font-size: $font-size-base
+    white-space: normal
+    word-break: break-word
+
+  &__actions
+    $gutter: space-x(2)
+
+    display: flex
+    justify-content: space-around
+
+    .b-button
+      width: calc(50% - #{ space-x(2) / 2 } )
+
+
+.graph-neighborhood
+
+  &__counter
+    font-weight: bold
+
+  &__badge
+    white-space: normal
+    word-break: break-word
+    // remove "_reboot.scss" line height
+    line-height: initial
+
+    &:not(:last-child)
+      margin-bottom: space-x(0.75)
+
+  &__show-more
+    margin-top: space-x(2)
+
+
+/////////////////////////////////////////////
+
+.graph-toolbar
+  $self: &
+  $section-margin: space-x(2)
+  $item-margin: space-x(1)
+
+  display: flex
+  padding: #{ $section-margin / 2 }
+
+  &__gap
+    width: $item-margin
+    display: inline-block
+
+  &__section
+    margin: #{ $section-margin / 2 }
+
+    // Selection settings
+    &--selection
+
+      .b-fieldset__content
+        display: flex
+
+      #{ $self }__gap
+        width: #{ $item-margin * 2 }
+
+      .range-simple
+        flex-grow: 1
+
+    // Controls
+    &--controls
+
+      .b-fieldset__content
+        position: relative
+
+      #{ $self }__gap
+        width: #{ $item-margin * 2 }
+
+      .range-control,
+      .range-simple
+        flex-basis: calc(50% - #{ $item-margin * 2 })
+
+
+
+/////////////////////////////////////////////////////
+
+// Atlas button animation
+// @WIP: better management ("_animation.scss", etc)
+.on-running-animation .b-icon
+  animation-name: pulse
+  animation-duration: 0.5s
+  animation-timing-function: ease
+  animation-direction: alternate
+  animation-iteration-count: infinite
+  animation-play-state: running
+
+@keyframes pulse
+  from
+    transform: scale(1)
+
+  to
+    transform: scale(1.1)

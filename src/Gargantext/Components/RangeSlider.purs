@@ -158,14 +158,14 @@ renderScale :: R.Ref (Nullable DOM.Element) -> Record Props -> Range.NumberRange
 renderScale ref {width,height} (Range.Closed {min, max}) =
    H.div { ref, className, width, height, aria } []
   where
-    className = "scale"
+    className = "range-slider__scale"
     aria = { label: "Scale running from " <> show min <> " to " <> show max }
 
 renderScaleSel :: R.Ref (Nullable DOM.Element) -> Record Props -> Range.NumberRange -> R.Element
 renderScaleSel ref props (Range.Closed {min, max}) =
     H.div { ref, className, style} []
   where
-    className = "scale-sel"
+    className = "range-slider__scale-sel"
     style = {left: computeLeft, width: computeWidth}
     percOffsetMin = Range.normalise props.bounds min
     percOffsetMax = Range.normalise props.bounds max
@@ -176,7 +176,7 @@ renderScaleSel ref props (Range.Closed {min, max}) =
 renderKnob :: Knob -> R.Ref (Nullable DOM.Element) -> Range.NumberRange -> Bounds -> T.Box (Maybe Knob) -> Int -> R.Element
 renderKnob knob ref (Range.Closed value) bounds set precision =
   H.div { ref, tabIndex, className, aria, on: { mouseDown: onMouseDown }, style } [
-      H.div { className: "button" }
+      H.div { className: "range-slider__placeholder" }
         [
           H.text $ text $ toFixed precision val
         ]
@@ -185,7 +185,7 @@ renderKnob knob ref (Range.Closed value) bounds set precision =
     text (Just num) = num
     text Nothing = "error"
     tabIndex = 0
-    className = "knob"
+    className = "range-slider__knob"
     aria = { label: labelPrefix knob <> "value: " <> show val }
     labelPrefix MinKnob = "Minimum "
     labelPrefix MaxKnob = "Maximum "
@@ -220,4 +220,3 @@ roundRange :: Epsilon -> Bounds -> Range.NumberRange -> Range.NumberRange
 roundRange epsilon bounds (Range.Closed initial) = Range.Closed { min, max }
   where min = round epsilon bounds initial.min
         max = round epsilon bounds initial.max
-  

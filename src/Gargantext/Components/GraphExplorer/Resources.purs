@@ -1,4 +1,4 @@
-module Gargantext.Components.Graph
+module Gargantext.Components.GraphExplorer.Resources
   -- ( graph, graphCpt
   -- , sigmaSettings, SigmaSettings, SigmaOptionalSettings
   -- , forceAtlas2Settings, ForceAtlas2Settings, ForceAtlas2OptionalSettings
@@ -30,7 +30,6 @@ import Toestand as T
 here :: R2.Here
 here = R2.here "Gargantext.Components.Graph"
 
-type OnProps  = ()
 
 data Stage = Init | Ready | Cleanup
 derive instance Generic Stage _
@@ -56,8 +55,8 @@ type Props sigma forceatlas2 =
 graph :: forall s fa2. R2.Component (Props s fa2)
 graph = R.createElement graphCpt
 
-graphCpt :: forall s fa2. R.Component (Props s fa2)
-graphCpt = here.component "graph" cpt where
+graphCpt :: forall s fa2. R.Memo (Props s fa2)
+graphCpt = R.memo' $ here.component "graph" cpt where
     cpt props@{ elRef
               , showEdges
               , sigmaRef

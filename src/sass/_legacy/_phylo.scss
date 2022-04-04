@@ -26,7 +26,6 @@
 
 /* Grid constants */
 
-$topbar-height: 56px; // ~ unworthy empirical value (@TODO topbar height calculation)
 $graph-margin: 16px;
 
 $layout-height: calc(100vh - #{ $topbar-height} );
@@ -37,16 +36,6 @@ $isoline-height: 174px;
 $left-column-width: 10%;
 $center-column-width: 85%;
 $right-column-width: 5%;
-
-/* Topbar constants */
-
-$topbar-input-width: 304px;
-
-/* Sidebar constant */
-
-$sidebar-width: 480px;
-$sidebar-height: calc(100vh - #{ $topbar-height });
-$tab-margin-x: space-x(2.5);
 
 /* Colors */
 
@@ -448,34 +437,33 @@ $decreasing-color: #11638F;
 ////////////////////////////////////////////////////////////////
 
 .phylo-topbar {
-  $margin: space-x(0.5);
   $fixed-button-width: 136px;
 
   @include aside-topbar();
 
-  padding-left: $margin;
-  padding-right: $margin;
+  padding-left: $topbar-item-margin;
+  padding-right: $topbar-item-margin;
   display: flex;
 
   &__toolbar,
   &__sidebar {
-    width: $fixed-button-width;
-    margin-left: $margin;
-    margin-right: $margin;
+    width: $topbar-fixed-button-width;
+    margin-left: $topbar-item-margin;
+    margin-right: $topbar-item-margin;
   }
 
   &__source {
     width: $topbar-input-width;
-    margin-left: $margin;
-    margin-right: $margin;
+    margin-left: $topbar-item-margin;
+    margin-right: $topbar-item-margin;
   }
 
   &__autocomplete {
     display: flex;
     width: $topbar-input-width;
     position: relative;
-    margin-left: $margin;
-    margin-right: $margin;
+    margin-left: $topbar-item-margin;
+    margin-right: $topbar-item-margin;
   }
 
   &__suggestion {
@@ -506,60 +494,11 @@ $decreasing-color: #11638F;
 ////////////////////////////////////////////////////////////////
 
 .phylo-sidebar {
-  $teaser-height: 16px;
-
-  background-color: $body-bg;
-  height: 100%;
-
-  // avoiding ugly scrollbar
-  scrollbar-width: none;
-  overflow-y: scroll;
-  overflow-x: visible;
-
-  &::-webkit-scrollbar {
-    display: none;
-  }
-
-  // adjust nav menu gutter (@TODO: generic?)
-  &__menu .nav-item {
-
-    &:first-child {
-      margin-left: space-x(2);
-    }
-
-    &:last-child {
-      margin-right: space-x(2);
-    }
-  }
-
-  // UX best pratice: when a lengthy column is overflowy hidden
-  // (with a scroll), a teaser UI element shows to the user that a scroll
-  // is possible
-  &__top-teaser {
-    @include top-teaser;
-
-    z-index: z-index('phylo-sidebar', 'teaser');
-    pointer-events: none;
-    position: sticky;
-    top: 0;
-    height: $teaser-height;
-    width: 100%;
-  }
-
-  &__bottom-teaser {
-    @include bottom-teaser;
-
-    z-index: z-index('phylo-sidebar', 'teaser');
-    pointer-events: none;
-    position: sticky;
-    bottom: 0;
-    height: $teaser-height;
-    width: 100%;
-  }
+  @extend %sidebar;
 }
 
 .phylo-details-tab {
-  $margin-x: $tab-margin-x;
+  $margin-x: $sidebar-tab-margin-x;
   $margin-y: space-x(2);
 
   &__counter {
@@ -585,7 +524,7 @@ $decreasing-color: #11638F;
 }
 
 .phylo-selection-tab {
-  $margin-x: $tab-margin-x;
+  $margin-x: $sidebar-tab-margin-x;
   $margin-y: space-x(2);
 
   &__highlight {

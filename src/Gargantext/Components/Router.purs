@@ -6,17 +6,13 @@ import Data.Array (filter, length)
 import Data.Array as A
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
-import Data.Tuple.Nested ((/\))
 import Data.UUID (UUID)
 import Data.UUID as UUID
 import Effect (Effect)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.ErrorsView (errorsView)
 import Gargantext.Components.Footer (footer)
-import Gargantext.Components.Forest as Forest
-import Gargantext.Components.GraphExplorer as GraphExplorer
-import Gargantext.Components.GraphExplorer.Sidebar as GES
-import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
+import Gargantext.Components.Forest (forestLayout)
 import Gargantext.Components.Login (login)
 import Gargantext.Components.Nodes.Annuaire (annuaireLayout)
 import Gargantext.Components.Nodes.Annuaire.User (userLayout)
@@ -25,7 +21,8 @@ import Gargantext.Components.Nodes.Corpus (corpusLayout)
 import Gargantext.Components.Nodes.Corpus.Code (corpusCodeLayout)
 import Gargantext.Components.Nodes.Corpus.Dashboard (dashboardLayout)
 import Gargantext.Components.Nodes.Corpus.Document (documentMainLayout)
-import Gargantext.Components.Nodes.Corpus.Phylo as PhyloExplorer
+import Gargantext.Components.Nodes.Corpus.Graph (graphLayout)
+import Gargantext.Components.Nodes.Corpus.Phylo (phyloLayout)
 import Gargantext.Components.Nodes.File (fileLayout)
 import Gargantext.Components.Nodes.Frame (frameLayout)
 import Gargantext.Components.Nodes.Home (homeLayout)
@@ -42,7 +39,6 @@ import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, WithSession)
 import Gargantext.Sessions as Sessions
 import Gargantext.Types (CorpusId, Handed(..), ListId, NodeID, NodeType(..), SessionId, SidePanelState(..))
-import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix (getElementById)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -67,10 +63,11 @@ router :: R2.Leaf Props
 router = R2.leafComponent routerCpt
 routerCpt :: R.Component Props
 routerCpt = here.component "router" cpt where
-  cpt { boxes: boxes@{ handed, showLogin } } _ = do
+  cpt { boxes: boxes@{ handed, showLogin, showTree } } _ = do
     -- States
-    handed'       <- T.useLive T.unequal handed
-    showLogin' <- R2.useLive' showLogin
+    handed'     <- R2.useLive' handed
+    showLogin'  <- R2.useLive' showLogin
+    showTree'   <- R2.useLive' showTree
 
     -- Effects
     let
@@ -100,7 +97,7 @@ routerCpt = here.component "router" cpt where
        , TopBar.topBar { boxes }
        , errorsView { errors: boxes.errors } []
        , H.div { className: "router__inner" }
-         [ forest { boxes }
+         [ R2.if' (showTree') $ forest { boxes }
          , mainPage { boxes }
          , sidePanel { boxes }
          ]
@@ -263,10 +260,7 @@ forest :: R2.Leaf Props
 forest = R2.leaf forestCpt
 forestCpt :: R.Memo Props
 forestCpt = R.memo' $ here.component "forest" cpt where
-  cpt { boxes: boxes@{ showTree } } _ = do
-    -- States
-    showTree' <- T.useLive T.unequal showTree
-
+  cpt { boxes } _ = do
     -- Hooks
     resizeHandler <- useResizeHandler
 
@@ -279,13 +273,9 @@ forestCpt = R.memo' $ here.component "forest" cpt where
     pure $
 
       H.div
-      { className: intercalate " "
-          [ "router__aside"
-          , showTree' ? "" $ "d-none"
-          ]
-      }
+      { className: "router__aside" }
       [
-        Forest.forestLayout
+        forestLayout
         { boxes
         , frontends: defaultFrontends
         }
@@ -388,13 +378,10 @@ openedSidePanel = R.createElement openedSidePanelCpt
 openedSidePanelCpt :: R.Component (WithSession Props)
 openedSidePanelCpt = here.component "openedSidePanel" cpt where
   cpt { boxes: boxes@{ route
-                     , sidePanelGraph
                      , sidePanelState
                      , sidePanelTexts }
       , session } _ = do
-    { mGraph, mMetaData } <- GEST.focusedSidePanel sidePanelGraph
-    mGraph' <- T.useLive T.unequal mGraph
-    mGraphMetaData' <- T.useLive T.unequal mMetaData
+
     route' <- T.useLive T.unequal route
 
     let wrapper = H.div { className: "side-panel" }
@@ -404,19 +391,6 @@ openedSidePanelCpt = here.component "openedSidePanel" cpt where
         pure $ wrapper
           [ Lists.sidePanel { session
                             , sidePanelState } [] ]
-      GR.PGraphExplorer _s g -> do
-        case (mGraph' /\ mGraphMetaData') of
-          (Nothing /\ _) -> pure $ wrapper []
-          (_ /\ Nothing) -> pure $ wrapper []
-          (Just graph /\ Just metaData) -> do
-            pure $ wrapper
-              [ GES.sidebar { boxes
-                            , frontends: defaultFrontends
-                            , graph
-                            , graphId: g
-                            , metaData
-                            , session
-                            } [] ]
       GR.NodeTexts _s _n -> do
         pure $ wrapper
           [ Texts.textsSidePanel { boxes
@@ -520,12 +494,13 @@ graphExplorerCpt = here.component "graphExplorer" cpt where
       authedProps =
         Record.merge
         { content:
-            \session -> GraphExplorer.explorerLayoutWithKey
+            \session -> graphLayout
                         { boxes
                         , graphId: nodeId
                         , key: "graphId-" <> show nodeId
-                        , session }
-                        []
+                        , session
+                        }
+
         }
         sessionProps
 
@@ -544,7 +519,7 @@ phyloExplorerCpt = here.component "phylo" cpt where
       authedProps =
         Record.merge
         { content:
-            \session -> PhyloExplorer.phyloLayout
+            \session -> phyloLayout
                         { boxes
                         , nodeId
                         , session

@@ -86,7 +86,7 @@ component = R.hooksComponent componentName cpt where
           B.caveat
           { className: "phylo-selection-tab__nil" }
           [
-            H.text "No selection has been made"
+            H.text "Select term, branch or source to get their informations"
           ]
       ,
         -- Selected source
@@ -212,8 +212,7 @@ component = R.hooksComponent componentName cpt where
           { className: "phylo-selection-tab__separator" }
           [
             B.icon
-            { name: "angle-down"
-            }
+            { name: "angle-down" }
           ]
       ,
         -- No extracted result
@@ -291,6 +290,7 @@ component = R.hooksComponent componentName cpt where
                       ]
               ,
                 R2.if' (truncateResults) $
+
                   B.button
                   { variant: ButtonVariant Light
                   , callback: \_ -> T.modify_ not showMoreBox

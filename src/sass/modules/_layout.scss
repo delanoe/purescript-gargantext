@@ -1,3 +1,15 @@
+/// Topbar
+$topbar-height: 56px; // ~ unworthy empirical value (@TODO topbar height calculation)
+$topbar-input-width: 304px;
+$topbar-item-margin: space-x(0.5);
+$topbar-fixed-button-width: 136px;
+
+/// Sidebar
+$sidebar-width: 480px;
+$sidebar-height: calc(100vh - #{ $topbar-height });
+$sidebar-tab-margin-x: space-x(2.5);
+
+
 @mixin aside-topbar() {
   $border-color: mix-alpha($navbar-dark-hover-color, 5%);
 
@@ -27,4 +39,41 @@
     mix-alpha($body-bg, 0%) 0%,
     mix-alpha($body-bg, 100%) 45%
   );
+}
+
+
+%sidebar {
+  @include hidden-scrollbar;
+
+  $teaser-height: 16px;
+
+  background-color: $body-bg;
+  height: 100%;
+  position: relative;
+
+  &::before {
+    @include top-teaser;
+
+    content: "";
+    z-index: 1;
+    pointer-events: none;
+    position: sticky;
+    top: 0;
+    height: $teaser-height;
+    width: 100%;
+    display: block;
+  }
+
+  &::after {
+    @include bottom-teaser;
+
+    content: "";
+    z-index: 1;
+    pointer-events: none;
+    position: sticky;
+    bottom: 0;
+    height: $teaser-height;
+    width: 100%;
+    display: block;
+  }
 }

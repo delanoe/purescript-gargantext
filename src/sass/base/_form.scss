@@ -83,3 +83,14 @@
   color: $input-placeholder-color;
   border-style: dashed;
 }
+
+// Custom autocomplete (need UI/UX rework)
+.input-with-autocomplete {
+  .completions {
+    position: fixed;
+    max-height: 300px;
+    overflow-y: scroll;
+    width: 300px;
+    top: 50px;
+  }
+}

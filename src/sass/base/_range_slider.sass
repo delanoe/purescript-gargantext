@@ -1,0 +1,173 @@
+// Colors based on Chromium engine
+// (every browser renders its input range on its own, here we are trying
+// to add some consistency)
+$range-bg-color: #EFEFEF
+$range-border-color: #B2B2B2
+$range-bg-progress-color: #0075FF
+$range-height: 8px
+$range-radius: 3px
+$knob-size: 14px
+
+.range-control
+  display: inline-flex
+  flex-direction: column
+  vertical-align: top
+
+  &__label
+    font-size: 14px
+    color: $gray-700
+    margin-bottom: space-x(0.5)
+
+  // enhance hover area of ".range-slider" placeholder
+  // (cf ".range-slider")
+  &:hover .range-slider .range-slider__placeholder
+    display: block
+
+///////////////////////////////////////////////
+
+.range-slider
+  $self: &
+  $placeholder-offset-y: -32px
+
+  position: relative
+  width: 100%
+  height: $range-height
+
+  &__scale
+    position: absolute
+    width: inherit
+    height: inherit
+    background-color: $range-bg-color
+    border: 1px solid $range-border-color
+    border-radius: $range-radius
+
+  &__scale-sel
+    position: absolute
+    background-color: $range-bg-progress-color
+    width: inherit
+    height: inherit
+    border-radius: $range-radius
+
+  &__knob
+    @include unselectable
+    @include clickable
+
+    z-index: 1
+    background-color: $range-bg-progress-color
+    width: $knob-size
+    height: $knob-size
+    border-radius: 50%
+    position: absolute
+    box-shadow: 0 0 1px 0 $range-bg-progress-color
+
+    // alignement with the bar
+    transform: translateX(-5px) translateY(-3px)
+
+    &:hover
+      background-color: darken($range-bg-progress-color, 15%)
+
+
+  &__placeholder
+    display: none
+    background-color: $black
+    color: $white
+    position: absolute
+    padding: space-x(0.5) space-x(1)
+    text-align: center
+    font-size: 14px
+    font-weight: bold
+    border-radius: 5px
+    box-shadow: 0 0 1px 0 $black
+    opacity: 0.8
+    transform: translateX(-25%) translateY($placeholder-offset-y)
+
+  &:hover &
+
+    &__placeholder
+      display: block
+
+////////////////////////////////////////////
+
+.range-simple
+  display: inline-flex
+  flex-direction: column
+  vertical-align: top
+  position: relative
+
+  &__label
+    font-size: 14px
+    color: $gray-700
+
+    // @TODO: override "_reboot.scss"
+    margin-bottom: revert
+
+  &__field
+    position: relative
+
+////////////////////////////////////////////
+
+// Cross browser rules
+//
+// (?) Range consistency issue between browsers UI engine: mostly rely on
+//     Chromium UI and adapt it to other engine
+//
+// Some examples:
+// @link https://brennaobrien.com/blog/2014/05/style-input-type-range-in-every-browser.html
+input[type=range]
+  @include clickable
+
+  width: 100%
+
+// Styling FireFox input range, mimicking Chromium one
+//
+// (?) * unable to differenciate selector betwenn background range and progress
+//       one → set only background range
+//     * unable to position the input ideally → have to rely on
+//       absolute + position
+input[type=range]::-webkit-slider-runnable-track
+  $chromium-offset-y: 4px
+
+  height: $range-height
+  border-radius: $range-radius
+  border: 1px solid $range-border-color
+  background: $range-bg-color
+  width: 100%
+  position: absolute
+  top: $chromium-offset-y
+
+input[type=range]::-webkit-slider-thumb
+  $chromium-offset-y: -5px
+
+  transform: translateY(-5px)
+
+// Styling FireFox input range, mimicking Chromium one
+//
+// (?) * unable to differenciate selector betwenn background range and progress
+//       one → set only background range
+//     * unable to position the input ideally → have to rely on
+//       translation
+input[type=range]::-moz-range-track
+  $firefox-height: #{ $range-height - 2px }
+  $firefox-offset-y: -2px
+
+  height: $firefox-height
+  border-radius: $range-radius
+  border: 1px solid $range-border-color
+  background: $range-bg-color
+  transform: translateY($firefox-offset-y)
+
+input[type=range]::-moz-range-thumb
+  $firefox-offset-y: -2px
+
+  border: none
+  height: $knob-size
+  width: $knob-size
+  border-radius: 50%
+  background-color: $range-bg-progress-color
+  box-shadow: 0 0 2px 0 $range-bg-progress-color
+  transform: translateY($firefox-offset-y)
+
+// hide the outline behind the border
+input[type=range]:-moz-focusring
+  outline: 1px solid white
+  outline-offset: -1px
