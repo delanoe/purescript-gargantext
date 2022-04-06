@@ -432,7 +432,7 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
       droppedFile' <- T.useLive T.unequal droppedFile
 
       case droppedFile' of
-        Nothing -> pure $ H.div {} []
+        Nothing -> pure $ mempty
         Just df ->
           pure $ H.div tooltipProps [ H.div { className: "card"}
                                       [ panelHeading

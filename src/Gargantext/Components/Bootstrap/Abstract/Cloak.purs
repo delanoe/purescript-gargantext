@@ -5,9 +5,11 @@ module Gargantext.Components.Bootstrap.Cloak
 import Gargantext.Prelude
 
 import Data.Foldable (elem)
-import Data.Maybe (Maybe, fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
+import Effect (Effect)
 import Effect.Timer (setTimeout)
+import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Toestand as T
@@ -17,9 +19,19 @@ type Props =
   ( defaultSlot             :: R.Element
   , cloakSlot               :: R.Element
   , isDisplayed             :: Boolean
-  , idlingPhaseDuration     :: Maybe Int -- Milliseconds
+  | Options
+  )
+
+type Options =
+  ( idlingPhaseDuration     :: Maybe Int -- Milliseconds
   , sustainingPhaseDuration :: Maybe Int -- Milliseconds
   )
+
+options :: Record Options
+options =
+  { idlingPhaseDuration     : Nothing
+  , sustainingPhaseDuration : Nothing
+  }
 
 -- |  Abstract component type easing the transition display between a content
 -- |  component and transitional (or cloak) component
@@ -94,8 +106,8 @@ type Props =
 -- |      , sustainingPhaseDuration  : Just 400
 -- |      }
 -- |    ```
-cloak :: R2.Leaf Props
-cloak = R2.leaf component
+cloak :: forall r. R2.OptLeaf Options Props r
+cloak = R2.optLeaf component options
 
 cname :: String
 cname = "b-cloak"
@@ -107,47 +119,50 @@ component = R.hooksComponent cname cpt where
     phase /\ phaseBox <- R2.useBox' (Idle :: Phase)
 
     -- Computed
-    canCloakBeDisplayed   <- pure $ elem phase [ Sustain, Wait ]
-    canContentBeDisplayed <- pure $ elem phase [ Display ]
+    let
+      canCloakBeDisplayed   = elem phase [ Sustain, Wait ]
+      canContentBeDisplayed = elem phase [ Display ]
 
-    -- @executeDisplayingPhase
-    execDisplayingPhase <- pure $ const $
-      T.write_ Display phaseBox
+    -- Behaviors
+    let
 
-    -- Helpers
-    execDisplayingPhaseOr <- pure $ \fn ->
+      execDisplayingPhaseOr :: (Unit -> Effect Unit) -> Effect Unit
+      execDisplayingPhaseOr thunk =
 
-      if props.isDisplayed
-      then execDisplayingPhase unit
-      else fn
+        if props.isDisplayed
+        then T.write_ Display phaseBox
+        else thunk unit
 
-    -- @executeWaitingPhase
-    execWaitingPhase <- pure $ const $ execDisplayingPhaseOr $
-          T.write_ Wait phaseBox
+      execWaitingPhase :: Unit -> Effect Unit
+      execWaitingPhase _ = execDisplayingPhaseOr $ const $
 
-    -- @executeSustainingPhase
-    execSustainingPhase <- pure $ const $ execDisplayingPhaseOr $
-          T.write_ Sustain phaseBox
+            T.write_ Wait phaseBox
 
-      <*  setTimeout
-            (fromMaybe 0 props.sustainingPhaseDuration)
-            (execWaitingPhase unit)
+      execSustainingPhase :: Unit -> Effect Unit
+      execSustainingPhase _ = execDisplayingPhaseOr $ const $
 
-    -- @executeIdlingPhase
-    execIdlingPhase <- pure $ const $ execDisplayingPhaseOr $
-          T.write_ Idle phaseBox
+            T.write_ Sustain phaseBox
 
-      <*  setTimeout
-            (fromMaybe 0 props.idlingPhaseDuration)
-            (execSustainingPhase unit)
+        <*  setTimeout
+              (fromMaybe 0 props.sustainingPhaseDuration)
+              (execWaitingPhase unit)
+
+      execIdlingPhase :: Unit -> Effect Unit
+      execIdlingPhase _ = execDisplayingPhaseOr $ const $
+
+            T.write_ Idle phaseBox
+
+        <*  setTimeout
+              (fromMaybe 0 props.idlingPhaseDuration)
+              (execSustainingPhase unit)
 
     -- Effects
-    R.useEffectOnce' $ execIdlingPhase unit
+    useFirstEffect' $ execIdlingPhase unit
 
-    R.useEffect1' props.isDisplayed $
+    R.useEffect2' props.isDisplayed phase $
 
       if (props.isDisplayed && phase == Wait)
-      then execDisplayingPhase unit
+      then T.write_ Display phaseBox
       else pure unit
 
     -- Render

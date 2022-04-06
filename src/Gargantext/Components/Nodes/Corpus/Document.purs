@@ -80,7 +80,7 @@ docViewCpt = here.component "docView" cpt
         --[ H.pre { rows: 30 } [
         --    H.text (stringifyWithIndent 2 (encodeJson (fst state)))
         --  ] ] <>
-        [ H.div { className: "corpus-doc-view container1" }
+        [ H.div { className: "corpus-doc-view" }
           [ R2.row
             [ R2.col 12
               [ H.h4 {} [ H.span {} [ badge "title", annotate doc.title [] ] ]

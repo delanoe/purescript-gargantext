@@ -185,7 +185,7 @@ docViewCpt = here.component "docView" cpt where
 
       R.fragment
       [
-        H.div { className: "doc-table-doc-view container1" }
+        H.div { className: "doc-table-doc-view" }
         [ R2.row
           [ chart
           , if showSearch then searchBar { query } [] else H.div {} []

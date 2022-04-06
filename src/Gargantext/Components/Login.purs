@@ -3,17 +3,14 @@
 -- * Select a backend and log into it
 module Gargantext.Components.Login where
 
+import Gargantext.Prelude
+
 import Data.Array (head)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String as DST
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
-import Gargantext.Prelude
-import Gargantext.Components.Login.Modal (modal)
+import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Login.Form (form)
 import Gargantext.Components.NgramsTable.Loader as NTL
 import Gargantext.Ends (Backend(..))
@@ -21,6 +18,9 @@ import Gargantext.Hooks.Loader as GHL
 import Gargantext.Sessions (Session(..), Sessions, Action(Logout), unSessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Login"
@@ -38,15 +38,25 @@ type Props =
   )
 
 login :: R2.Leaf Props
-login = R2.leafComponent loginCpt
+login = R2.leaf loginCpt
 
 loginCpt :: R.Component Props
 loginCpt = here.component "login" cpt where
-  cpt props@{ backend, sessions, visible } _ = do
-    b <- T.useLive T.unequal backend
-    pure $ modal { visible } (inner b) where
-      inner Nothing = chooser props
-      inner (Just b) = form { backend: b, sessions, visible }
+  cpt props@{ sessions, visible } _ = do
+    -- States
+    mBackend <- R2.useLive' props.backend
+    -- Render
+    pure $
+
+      B.baseModal
+      { isVisibleBox: visible
+      , title: "GarganText ecosystem explorer"
+      }
+      [
+        case mBackend of
+          Nothing      -> chooser props
+          Just backend -> form { backend, sessions, visible }
+      ]
 
 chooser :: R2.Leaf Props
 chooser = R2.leafComponent chooserCpt
@@ -93,7 +103,7 @@ renderSessions sessions sessions' =
     where
       renderSession session@(Session {backend}) =
         H.tr {}
-        [ H.td {} [H.text ""] 
+        [ H.td {} [H.text ""]
         , H.td {} [H.text $ show session]
         , H.td {} [H.text backendType]
         , H.td {} [signOutButton sessions session, clearCacheButton]

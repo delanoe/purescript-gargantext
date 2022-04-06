@@ -4,139 +4,316 @@ $node-popop-radius: 6px
 $node-popup-width: 544px
 
 
-@mixin forest-layout-gutter
-
-  @include right-handed
-    padding-left: space-x(2)
-    padding-right: space-x(1)
-
-  @include left-handed
-    padding-left: space-x(1)
-    padding-right: space-x(2)
-
-
 /////////////////////////////////////////
 
-body > .tree ul > li:first-child::before
-  top: 12px
+.maintree
+  $self: &
+  // empirical vertical alignments for folder carets
+  $caret-y-offset: 2px
 
-li
-  a
-    // color: map_get($theme-colors, 'primary')
-    color: $primary
-  a:hover
-    // color: darken( map_get($theme-colors, 'primary'), 15% )
-    color: darken($primary, 15%)
+  position: relative
 
-  .leaf
-    display: flex
+  &__node
+    margin-bottom: space-x(0.25)
+
+  @include right-handed
+    &__node
+      margin-left: space-x(2)
+    & > &__node
+      margin-right: space-x(2)
+
+  @include left-handed
+    &__node
+      margin-right: space-x(2)
+    & > &__node
+      margin-left: space-x(2)
+
+
+  &--with-child > &__node > &::before
+    color: $gray-400
+    position: absolute
+    font-size: 11px
+    top: $caret-y-offset
+
+    @include right-handed
+      content: "└"
+    @include left-handed
+      content: "┘"
+
+  // for <Cloak> use cases
+  animation: 15ms fade-in
+
+  &--blank
+    @extend %placeholder
+
+    // adding an phase on top of <Cloak> ones
+    // (aim is to only display the cloack fallback when
+    // 1s has passed, in parallel of maintaining the Element
+    // dimension)
+    animation-name: fade-in
+    animation-delay: 100ms
+    animation-duration: 50ms
+    animation-timing-function: ease-in-out
+    animation-fill-mode: forwards
+    opacity: 0
+
+
+////////////////////////////////////
+
+$leaf-margin-bottom: 3px
+
+.mainleaf
+  $self: &
+
+  display: flex
+  align-items: center
+  margin-bottom: $leaf-margin-bottom
+  // forcing inline width to overflow its container width
+  // this is mainly due to the multi-level of nested folders that keeps
+  // increasing the mainleaf width
+  width: max-content
+
+  @include right-handed
     flex-direction: row
-    color: #005a9aff
+    padding-right: space-x(2)
 
-    .folder-icon
-      padding: 0 2 0 2
-      cursor: pointer
+  @include left-handed
+    flex-direction: row-reverse
+    padding-left: space-x(2)
 
-    .node-link
-      a
-        cursor: pointer
-      & > .node-text
-        color: #000000
+  //----------------------------
 
-    a.settings
-      cursor: pointer
-      display: block
-      padding: 0 2 0 2
-      text-decoration: none
-      visibility: hidden
-      z-index: 1
-    &:hover
-      a.settings
-        visibility: visible
+  &__folder-icon
+    font-size: 14px
+    // @XXX Glyphicon icons lack of homogeneous width
+    width: 16px
 
-  ul
+    &--leaf
+      color: $gray-400
+
+    // padding instead of margin will ensure to add a gap for the icon call
+    // to action area
+    @include right-handed
+      padding-right: space-x(1)
+    @include left-handed
+      padding-left: space-x(1)
+
+  //----------------------------
+
+  &__node-icon
+    position: relative
+    font-size: 16px
+    // @XXX Glyphicon icons lack of homogeneous width
+    //      (this also means that we can not align harmoniously the leaf
+    //      content)
+    width: 14px
+    //      Micromanaging icons width as an attempt of alignment harmony
+    .fa-address-card-o,
+    .fa-newspaper-o
+      font-size: 14px
+    .fa-share-alt,
+    .fa-globe-circle,
+    .fa-folder-open-o,
+    .fa-file-code-o,
+    .fa-list,
+    .fa-signal
+      font-size: 15px
+    .fa-user
+      font-size: 17px
+    .fa-lock,
+    .fa-fork
+      font-size: 18px
+    .fa-circle
+      font-size: 20px
+
+    @include right-handed
+      margin-right: space-x(1)
+    @include left-handed
+      margin-left: space-x(1)
+
+  //----------------------------
+
+  &__version-badge
+    // pin the icon on bottom-right of the "&__node-icon"
+    $offset-y: -8px
+    $offset-x: -4px
+
+    position: absolute
+    font-size: 12px
+    background-color: $white
+    border: 1px solid $white
+    border-radius: 50%
+    bottom: $offset-y
+    right: $offset-x
+
+    // (remove hover effect to maintain continuity with folder + node icon
+    // lack of hover effect)
+    &--matched
+      &.b-icon-button,
+      &.b-icon-button:hover
+        color: $success
+    &--mismatched
+      &.b-icon-button,
+      &.b-icon-button:hover
+        color: $warning
+
+  //----------------------------
+
+  &__node-link
+    position: relative
+    font-size: 15px
+
+    @include right-handed
+      margin-right: space-x(1)
+    @include left-handed
+      margin-left: space-x(1)
+
+    // @TODO: handle default <a> color (override "_reboot.scss" rules or
+    //        whole file?)
+    a
+      color: $body-color
+
+    // preparing "before" content (see "&--selected", "&--file-dropped")
+    &::before
+      // margin for the before background
+      $overlay-offset: -2px
+      // left extra offset: used to include besides icons, caret, ...
+      $extra-left-overlay-offset: -56px
+      // right extra offset: adding extra margin
+      $extra-right-overlay-offset: - 12px
+
+      position: absolute
+      z-index: -1
+      top: $overlay-offset
+      bottom: $overlay-offset
+      border-radius: $overlay-radius
+
+      @include right-handed
+        left: calc( #{ $overlay-offset } + #{ $extra-left-overlay-offset })
+        right: calc( #{ $overlay-offset } + #{ $extra-right-overlay-offset })
+      @include left-handed
+        right: calc( #{ $overlay-offset } + #{ $extra-left-overlay-offset })
+        left: calc( #{ $overlay-offset } + #{ $extra-right-overlay-offset })
+
+  //----------------------------
+
+  &__settings-icon
+    visibility: hidden
+
+  &:hover &__settings-icon
+    visibility: visible
+
+    @include right-handed
+      margin-left: space-x(2)
+    @include left-handed
+      margin-right: space-x(2)
+
+  &__update-icon
+
+    @include right-handed
+      margin-left: space-x(2)
+    @include left-handed
+      margin-right: space-x(2)
+
+  //----------------------------
+
+    &__update-icon,
+    &__settings-icon
+      // altering component overlay offset to fit it with the ".mainleaf" overlay
+      // dimension
+      $aside-icon-offset-y: -5px
+
+      &.b-icon-button--overlay::before
+        top: $aside-icon-offset-y
+        bottom: $aside-icon-offset-y
+
+  //----------------------------
+
+  &__progress-bar
+    $progress-bar-width: 64px
+    $progress-bar-height: 8px
+
+    width: $progress-bar-width
+    position: relative
+
+    &::before
+      @include fit-positions(-3px)
+
+      content: ""
+      position: absolute
+      z-index: -1
+      border: 1px solid $info
+      border-radius: $overlay-radius
+
+    .b-progress-bar
+      height: $progress-bar-height
+      background-color: $white
+
+    @include right-handed
+      margin-left: space-x(2)
+    @include left-handed
+      margin-right: space-x(2)
+
+  //----------------------------
+
+  &__version-comparator
+    margin-top: space-x(1)
+
     li
-      position: relative
+      margin-left: space-x(3)
+      list-style-type: disc
+      line-height: 1.4
+
+  //----------------------------
+
+  &--selected
+
+    #{ $self }__node-link::before
+      content: ""
+      background-color: $gray-100
+
+    #{ $self }__node-icon
+      color: $primary
+
+    #{ $self }__node-link a
+      color: $primary
+      font-weight: bold
+
+  //----------------------------
+
+  &--file-dropped
+
+    #{ $self }__node-link::before
+      content: ""
+      border: 1px dotted $secondary
+
+  //----------------------------
+
+  &--blank // for <Cloak> use cases
+    $blank-color: $gray-100
+    $blank-link-width: 144px
+    $blank-link-height: 12px
+    $blank-link-offset-y: 5px
+
+    color: $blank-color
+
+    #{ $self }__folder-icon
+      visibility: hidden
+
+    // making a text placeholder block
+    #{ $self }__node-link
+
       &::after
-        content: " "
-        height: 1px
+        content: ""
+        background-color: $blank-color
+        height: $blank-link-height
+        width: $blank-link-width
         position: absolute
-        top: 12px
-      &::before
-        bottom: -12px
-        content: " "
-        height: 7px
-        position: absolute
-        top: 5px
-      &:not(:first-child):last-child::before
-        display: none
-      &:only-child::before
-        bottom: 7px
-        content: " "
-        display: list-item
-        //height: 7px
-        position: absolute
-        width: 1px
-        top: 5px
-      &.with-children
-        &::after
-          background-color: #000
-        &::before
-          background-color: #000
+        top: $blank-link-offset-y
 
 
 
-  .lefthanded
-    .leaf
-      justify-content : flex-end
-    ul
-      margin-right : 5px
-      li
-        margin-right: 10px
-        padding-right: 5px
-        &.with-children
-          &::after
-            right: -10px
-            width: 5px
-          &::before
-            right: -10px
-            width: 1px
-          &:only-child::before
-            //right: 1px
-  .righthanded
-    .leaf
-      justify-content : flex-start
-    ul
-      margin-left : 5px
-      li
-        margin-left: 10px
-        padding-left: 5px
-        &.with-children
-          &::after
-            left: -10px
-            width: 5px
-          &::before
-            left: -10px
-            width: 1px
-          &:only::before
-            background-color: #000
-            right: 10px
-
-  .file-dropped
-    background-color: #d8dfe5
-  .node-actions
-    padding-left: 5px
-    .update-button
-      &.enabled
-        cursor: pointer
-      &.disabled
-        cursor: wait
-  .node
-    margin-top: 1px
-    &.node-type-valid
-      .text
-        text-decoration: underline
-
+////////////////////////////////////////
 
 .subtree
   $self: &
@@ -144,7 +321,7 @@ li
   &__node
     margin-top: space-x(0.25)
 
-    &__text
+    &__inner
       display: flex
       align-items: center // align icon with text
       cursor: pointer
@@ -157,13 +334,20 @@ li
         margin-left: space-x(0.25)
         margin-right: space-x(0.25)
 
+    &__text
+      margin-left: space-x(0.5)
+
     &--can-be-selected
       text-decoration: underline
       text-underline-offset: 2px // easing node reading (empirical)
 
+    &--is-selected
+      text-decoration: underline
+      font-weight: bold
+
     @include right-handed
 
-      &__text
+      &__inner
         flex-direction: row
         text-align: left
 
@@ -175,7 +359,7 @@ li
 
     @include left-handed
 
-      &__text
+      &__inner
         flex-direction: row-reverse
         text-align: right
 
@@ -185,59 +369,7 @@ li
       &__children > #{ $self }__node
         padding-right: space-x(2.5)
 
-
-.node-text
-  display: inline-flex
-
-  &--selected
-    font-weight: bold
-    text-decoration: underline
-
-  @include right-handed
-    flex-direction: row
-
-  @include left-handed
-    flex-direction: row-reverse
-
-
-
-// based on https://codeburst.io/how-to-pure-css-pie-charts-w-css-variables-38287aea161e
-.progress-pie
-  background: rgba(51, 122, 183, 0.1)
-  border-radius: 100%
-  height: calc(var(--size, 14) * 1px)
-  overflow: hidden
-  position: relative
-  width: calc(var(--size, 14) * 1px)
-
-  .progress-pie-segment
-    --a: calc(var(--over50, 0) * -100%)
-    --b: calc((1 + var(--over50, 0)) * 100%)
-    --degrees: calc((var(--offset, 0) / 100) * 360)
-    -webkit-clip-path: polygon(var(--a) var(--a), var(--b) var(--a), var(--b) var(--b), var(--a) var(--b))
-    clip-path: polygon(var(--a) var(--a), var(--b) var(--a), var(--b) var(--b), var(--a) var(--b))
-    height: 100%
-    position: absolute
-    transform: translate(0, -50%) rotate(90deg) rotate(calc(var(--degrees) * 1deg))
-    transform-origin: 50% 100%
-    width: 100%
-    z-index: calc(1 + var(--over50))
-
-    &:after,
-    &:before
-      background: var(--bg, rgb(51, 122, 183))
-      content: ''
-      height: 100%
-      position: absolute
-      width: 100%
-
-    &:before
-      --degrees: calc((var(--value, 45) / 100) * 360)
-      transform: translate(0, 100%) rotate(calc(var(--degrees) * 1deg))
-      transform-origin: 50% 0%
-
-    &:after
-      opacity: var(--over50, 0)
+/////////////////////////////////////////
 
 #node-popup-tooltip
   // @XXX "react-awesome-popover" lack of parent host parameter
@@ -260,7 +392,6 @@ li
     border: none
     text-decoration: none
 
-
   // @XXX "react-awesome-popover" lack of parent host parameter
   //
   //       as the container where the popover will be appended is actually a
@@ -268,18 +399,8 @@ li
   //       the library tends to add the tooltip position in the middle of the
   //       sidebar height: which can be off screen
   //
-  //       this workaround appends the tooltip in a static position
-  @include right-handed
-    $offset-x: 16.6666666667% // simulate "col-2" sidebar attributes
-    top: 50%
-    left: $offset-x
-    transform: translateY(-50%)
-
-  @include left-handed
-    $offset-x: 16.6666666667% // simulate "col-2" sidebar attributes
-    top: 50%
-    right: $offset-x
-    transform: translateY(-50%)
+  //       this workaround appends the tooltip centered in a static position
+  @include centered
 
   .tree
     .node
@@ -334,28 +455,22 @@ li
     max-height: 70vh
     overflow-y: auto
 
-.forest-layout-wrapper
-  // removing Bootstrap "col" padding
-  padding-left: 0
-  padding-right: 0
+/////////////////////////////////////////
 
 .forest-layout
-  $offset-y: 56px
-
+  // @TODO: z-index management
   z-index: 909
 
   // make the sidebar a scrollable component
-  // `max-width` rule is an addition due to Bootstrap "col-2" applied on its
-  // parent
+  height: inherit
+  width: inherit
+  min-width: inherit
   position: fixed
-  height: calc(100vh - #{ $offset-y })
-  width: 100%
-  max-width: inherit
 
   // avoiding ugly scrollbar
   scrollbar-width: none
   overflow-y: scroll
-  overflow-x: visible
+  overflow-x: clip
 
   &::-webkit-scrollbar
     display: none
@@ -366,64 +481,69 @@ li
   @include left-handed
     border-left: 2px solid $border-color
 
+  // UX best pratice: when a lengthy column is overflowy hidden (with a scroll),
+  // a teaser UI element shows to the user that a scroll is possible
+  &__bottom-teaser
+    @include bottom-teaser
+
+    z-index: z-index('forest-layout', 'teaser')
+    pointer-events: none
+    position: sticky
+    bottom: 0
+    height: $forest-layout-bottom-teaser-height
+    width: 100%
+
+  &__top-teaser
+    @include top-teaser
+
+    z-index: z-index('forest-layout', 'teaser')
+    pointer-events: none
+    position: sticky
+    top: 0
+    height: $forest-layout-top-teaser-height
+    width: 100%
+
 
 .forest-layout-action
-  @include forest-layout-gutter
-
   display: flex
 
   @include right-handed
     flex-direction: row
+    padding-left: space-x(2)
+    padding-right: space-x(1)
 
     &__button
       margin-right: space-x(2)
 
   @include left-handed
     flex-direction: row-reverse
+    padding-left: space-x(1)
+    padding-right: space-x(2)
 
     &__button
       margin-left: space-x(2)
 
 
-// UX best pratice: when a lengthy column is overflowy hidden (with a scroll),
-// a teaser UI element shows to the user that a scroll is possible
-.forest-layout-bottom-teaser
-  @include bottom-teaser
+.forest-layout-tree
+  margin-top: space-x(3)
 
-  z-index: z-index('forest-layout', 'teaser')
-  pointer-events: none
-  position: sticky
-  bottom: 0
-  height: $forest-layout-bottom-teaser-height
-  width: 100%
+  &:last-child
+    margin-bottom: $forest-layout-bottom-teaser-height
 
-.forest-layout-top-teaser
-  @include top-teaser
+  // remove leaf nested caret for first entry only
+  & > .maintree--with-children > .maintree__node
 
-  z-index: z-index('forest-layout', 'teaser')
-  pointer-events: none
-  position: sticky
-  top: 0
-  height: $forest-layout-top-teaser-height
-  width: 100%
+    &::before,
+    &::after
+        content: none
 
+  // remove horizontal offset for first entry only (see ".maintree")
+  & > .maintree > .maintree__node
+    @include right-handed
+      margin-left: space-x(2)
+    @include left-handed
+      margin-right: space-x(2)
 
-.forest-layout-content
-
-  & > ul.tree // `ul` prefixed to override bootstrap "_reboot.scss" rules
-
-    @include forest-layout-gutter
-
-    margin-top: space-x(3)
-    margin-bottom: 0
-
-    &:last-child
-      margin-bottom: $forest-layout-bottom-teaser-height
-
-
-  .fa.fa-spinner,
-  .tree .fa.fa-spinner
-    color: $primary
 
 /////////////////////////////////////////
 

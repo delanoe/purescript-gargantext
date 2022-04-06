@@ -107,6 +107,80 @@
   }
 }
 
+/// Icon Button
+///-----------------------------------------------------------------------------
+
+.b-icon-button {
+  $self: &;
+  $overlay-offset: -6px;
+
+  transition: color 0.2s;
+  position: relative;
+  transition: color 150ms ease-in-out;
+
+  &--overlay {
+
+    &#{ $self }::before {
+      @include fit-positions($overlay-offset);
+
+      content: "";
+      background-color: $gray-100;
+      border-radius: $overlay-radius;
+      z-index: -1;
+      position: absolute;
+      transition: background-color 150ms ease-in-out
+    }
+
+    &:hover {
+
+      &#{ $self }::before {
+        background-color: darken($gray-100, 10%);
+      }
+    }
+  }
+
+  &--enabled,
+  &--muted,
+  &--idled {
+    @include clickable;
+
+    &#{ $self }--warning    { color: $warning; }
+    &#{ $self }--success    { color: $success; }
+    &#{ $self }--danger     { color: $danger; }
+    &#{ $self }--info       { color: $info; }
+    &#{ $self }--primary    { color: $primary; }
+    &#{ $self }--secondary  { color: $secondary; }
+    &#{ $self }--dark       { color: $body-color; }
+  }
+
+  &--enabled,
+  &--muted {
+    &#{ $self }--warning:hover    { color: darken($warning, 10%); }
+    &#{ $self }--success:hover    { color: darken($success, 10%); }
+    &#{ $self }--danger:hover     { color: darken($danger, 10%); }
+    &#{ $self }--info:hover       { color: darken($info, 10%); }
+    &#{ $self }--primary:hover    { color: darken($primary, 10%); }
+    &#{ $self }--secondary:hover  { color: darken($secondary, 10%); }
+    &#{ $self }--dark:hover       { color: darken($body-color, 10%); }
+  }
+
+  &--idled:hover {
+    @include unclickable();
+  }
+
+  &--disabled,
+  &--deferred {
+    @include unclickable();
+
+    &#{ $self }--warning    { color: lighten($warning, 15%); }
+    &#{ $self }--success    { color: lighten($success, 15%); }
+    &#{ $self }--danger     { color: lighten($danger, 15%); }
+    &#{ $self }--info       { color: lighten($info, 15%); }
+    &#{ $self }--primary    { color: lighten($primary, 15%); }
+    &#{ $self }--secondary  { color: lighten($secondary, 15%); }
+    &#{ $self }--dark       { color: lighten($body-color, 15%); }
+  }
+}
 
 /// Fieldset
 ///-----------------------------------------------------------------------------

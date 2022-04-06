@@ -17,6 +17,7 @@ import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record.Extra as RX
 import Toestand as T
 
 here :: R2.Here
@@ -51,7 +52,8 @@ asyncProgressBarCpt = here.component "asyncProgressBar" cpt
       R.useEffectOnce' $ do
         intervalId <- setInterval 1000 $ do
           launchAff_ $ do
-            eAsyncProgress <- queryProgress props
+            let rdata = (RX.pick props :: Record QueryProgressData)
+            eAsyncProgress <- queryProgress rdata
             handleRESTError errors eAsyncProgress $ \asyncProgress -> liftEffect $ do
               let GT.AsyncProgress { status } = asyncProgress
               T.write_ (min 100.0 $ GT.progressPercent asyncProgress) progress
@@ -70,6 +72,9 @@ asyncProgressBarCpt = here.component "asyncProgressBar" cpt
 
 
       pure $ progressIndicator { barType, label: id, progress }
+
+--------------------------------------------------------------
+
 
 type ProgressIndicatorProps =
   ( barType  :: BarType
@@ -102,7 +107,16 @@ progressIndicatorCpt = here.component "progressIndicator" cpt
                     ]
                   ]
 
-queryProgress :: Record Props -> AffRESTError GT.AsyncProgress
+
+--------------------------------------------------------------
+
+type QueryProgressData =
+  ( asyncTask :: GT.AsyncTaskWithType
+  , nodeId    :: GT.ID
+  , session   :: Session
+  )
+
+queryProgress :: Record QueryProgressData -> AffRESTError GT.AsyncProgress
 queryProgress { asyncTask: GT.AsyncTaskWithType { task: GT.AsyncTask {id}
                                                 , typ
                                                 }

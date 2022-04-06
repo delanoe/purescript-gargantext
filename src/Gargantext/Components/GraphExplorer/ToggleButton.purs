@@ -9,7 +9,6 @@ module Gargantext.Components.GraphExplorer.ToggleButton
   , sidebarToggleButton
   , pauseForceAtlasButton
   , resetForceAtlasButton
-  , treeToggleButton
   ) where
 
 import Prelude
@@ -186,23 +185,6 @@ resetForceAtlasButtonCpt = here.component "resetForceAtlasToggleButton" cpt
         Sigma.refreshForceAtlas sigma Graph.forceAtlas2Settings
         T.write_ SigmaxTypes.Killed forceAtlasState
 
-type TreeToggleButtonProps = (
-  state :: T.Box Boolean
-)
-
-treeToggleButton :: R2.Component TreeToggleButtonProps
-treeToggleButton = R.createElement treeToggleButtonCpt
-treeToggleButtonCpt :: R.Component TreeToggleButtonProps
-treeToggleButtonCpt = here.component "treeToggleButton" cpt
-  where
-    cpt { state } _ = do
-      pure $ toggleButton {
-          state: state
-        , onMessage: "Hide Tree"
-        , offMessage: "Show Tree"
-        , onClick: \_ -> T.modify_ not state
-        , style: "light"
-        } []
 
 type SidebarToggleButtonProps = (
   state :: T.Box GT.SidePanelState

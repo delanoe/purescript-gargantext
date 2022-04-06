@@ -1,0 +1,33 @@
+%placeholder {
+  $width: 800px;
+  $bg-color: $white;
+
+  &::after {
+    @include fit-positions;
+
+    content: "";
+    animation-duration: 1.25s;
+    animation-fill-mode: forwards;
+    animation-iteration-count: infinite;
+    animation-name: __placeholder;
+    animation-timing-function: linear;
+    background:
+      linear-gradient(
+        to right,
+        transparent 10%,
+        mix-alpha($bg-color, 60%) 18%,
+        transparent 33%
+      );
+    background-size: $width 100%;
+    position: absolute;
+  }
+
+  @keyframes __placeholder {
+    from {
+      background-position: #{ - $width / 2 } 0;
+    }
+    to {
+      background-position: #{ $width / 2 } 0;
+    }
+  }
+}
