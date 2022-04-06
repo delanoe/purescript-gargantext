@@ -7,7 +7,8 @@ import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Newtype (over)
 import Data.Nullable (null)
 import Data.Set as Set
-import Data.String.Common (joinWith)
+import Data.String.Common (joinWith, replaceAll)
+import Data.String.Pattern (Pattern(..), Replacement(..))
 import Data.Tuple (Tuple(..))
 import DOM.Simple.Console (log, log2)
 import Effect (Effect)
@@ -613,15 +614,15 @@ searchQuery selection { databases, datafield, lang, term, node_id } =
 
 queryHAL :: String -> Maybe (Set.Set IMT_org) -> Maybe Lang -> Array String -> String
 queryHAL term mIMTOrgs lang years =
-  "(" <> langPrefix <> "_title_t:\"" <> termEscaped <>
-  "\" OR " <> langPrefix <> "_abstract_t:\"" <> termEscaped <> "\")" <>
+  "(" <> langPrefix <> "_title_t:" <> termEscaped <>
+  " OR " <> langPrefix <> "_abstract_t:\"" <> termEscaped <> "\")" <>
   structQuery <> yearQuery
   where
     langPrefix = case lang of
       Just FR -> "fr"
       _       -> "en"
     -- TODO: Escape double quotes
-    termEscaped = term
+    termEscaped = "\"" <> (replaceAll (Pattern "\"") (Replacement "\\\"") term) <> "\""
     structQuery = case mIMTOrgs of
       Nothing -> ""
       Just imtOrgs -> if Set.isEmpty imtOrgs then
