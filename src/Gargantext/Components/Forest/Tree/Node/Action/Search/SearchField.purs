@@ -151,6 +151,15 @@ isExternal :: Maybe DataField -> Boolean
 isExternal (Just (External _)) = true
 isExternal _ = false
 
+isArxiv :: Maybe DataField -> Boolean
+isArxiv (Just
+        ( External
+          ( Just Arxiv
+          )
+        )
+      )   = true
+isArxiv _ = false
+
 isHAL :: Maybe DataField -> Boolean
 isHAL (Just
         ( External
