@@ -29,7 +29,7 @@ type Search = { databases :: Database
               , lang      :: Maybe Lang
               , node_id   :: Maybe Int
               , term      :: String
-              , year      :: String  -- TODO Array Int
+              , years     :: Array String
               }
 
 isIsTex_Advanced :: Maybe DataField -> Boolean

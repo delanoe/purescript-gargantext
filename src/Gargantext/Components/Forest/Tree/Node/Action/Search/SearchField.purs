@@ -2,11 +2,13 @@ module Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField where
 
 import Gargantext.Prelude
 
+import Data.Array as A
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Newtype (over)
 import Data.Nullable (null)
 import Data.Set as Set
 import Data.String.Common (joinWith)
+import Data.Tuple (Tuple(..))
 import DOM.Simple.Console (log, log2)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
@@ -40,7 +42,7 @@ defaultSearch = { databases: Empty
                 , lang     : Nothing
                 , term     : ""
                 , url      : ""
-                , year     : ""
+                , years    : []
                 }
 
 type Props =
@@ -78,17 +80,41 @@ searchFieldCpt = here.component "searchField" cpt
 type ComponentProps =
   ( search :: T.Box Search )
 
-componentYear :: R2.Component ComponentProps
-componentYear = R.createElement componentYearCpt
-componentYearCpt :: R.Component ComponentProps
-componentYearCpt = here.component "componentYear" cpt where
+componentYears :: R2.Component ComponentProps
+componentYears = R.createElement componentYearsCpt
+componentYearsCpt :: R.Component ComponentProps
+componentYearsCpt = here.component "componentYears" cpt where
   cpt { search } _  = do
+    { years } <- T.useLive T.unequal search
+    let yearsZ = A.zip (A.range 0 (A.length years)) years
+    newYear <- T.useBox ""
     pure $ H.div {}
-      [ H.input { on: { blur: modify
-                      , change: modify
-                      , input: modify } } ]
+      ((yearCpt search <$> yearsZ) <>
+      [ H.div {}
+        [ H.input { on: { blur: modify newYear
+                      , change: modify newYear
+                      , input: modify newYear } }
+        , H.span { className: "btn btn-primary fa fa-check"
+                 , on: { click: clickAdd newYear search }} []
+        ]
+      ])
       where
-        modify e = T.modify_ (_ { year = R.unsafeEventValue e }) search
+        clickAdd newYear search _ = do
+          newYear' <- T.read newYear
+          T.modify_ (\s@{ years } -> s { years = A.snoc years newYear' }) search
+        clickRemove idx search _ =
+          T.modify_ (\s@{ years } -> s { years = left idx years <> right (A.length years - idx) years }) search
+          where
+            left 0 years = []
+            left idx years = A.take idx years
+            right 0 years = []
+            right len years = A.takeEnd (len - 1) years
+        modify newYear e = T.write_ (R.unsafeEventValue e) newYear
+        yearCpt search (Tuple idx year) =
+          H.div {}
+            [ H.span {} [ H.text year ]
+            , H.span { className: "btn btn-danger fa fa-times"
+                     , on: { click: clickRemove idx search } } [] ]
 
 type ComponentIMTProps =
   ( session :: Session
@@ -419,7 +445,7 @@ datafieldInputCpt = here.component "datafieldInput" cpt where
         else H.div {} []
 
       , if isHAL search'.datafield
-        then componentYear { search } []
+        then componentYears { search } []
         else H.div {} []
              
       , if isCNRS search'.datafield
@@ -555,12 +581,12 @@ searchQuery selection { databases
                       , lang
                       , term
                       , node_id
-                      , year } =
+                      , years } =
   over SearchQuery (_ { databases = databases
                       , datafield = datafield
                       , lang      = lang
                       , node_id   = node_id
-                      , query     = queryHAL term Nothing lang year
+                      , query     = queryHAL term Nothing lang years
                       , selection = selection
                       }) defaultSearchQuery
 searchQuery selection { databases
@@ -568,12 +594,12 @@ searchQuery selection { databases
                       , lang
                       , term
                       , node_id
-                      , year } =
+                      , years } =
   over SearchQuery (_ { databases = databases
                       , datafield = datafield
                       , lang      = lang
                       , node_id   = node_id
-                      , query     = queryHAL term (Just imtOrgs) lang year
+                      , query     = queryHAL term (Just imtOrgs) lang years
                       , selection = selection
                       }) defaultSearchQuery
 searchQuery selection { databases, datafield, lang, term, node_id } =
@@ -585,8 +611,8 @@ searchQuery selection { databases, datafield, lang, term, node_id } =
                       , selection = selection
                       }) defaultSearchQuery
 
-queryHAL :: String -> Maybe (Set.Set IMT_org) -> Maybe Lang -> String -> String
-queryHAL term mIMTOrgs lang year =
+queryHAL :: String -> Maybe (Set.Set IMT_org) -> Maybe Lang -> Array String -> String
+queryHAL term mIMTOrgs lang years =
   "(" <> langPrefix <> "_title_t:\"" <> termEscaped <>
   "\" OR " <> langPrefix <> "_abstract_t:\"" <> termEscaped <> "\")" <>
   structQuery <> yearQuery
@@ -602,10 +628,8 @@ queryHAL term mIMTOrgs lang year =
         ""
       else
         " AND (" <> (structIds imtOrgs) <> ")"
-    yearQuery = if year == "" then
-                  ""
-                else
-                  " AND producedDateY_i:" <> year
+    yearQuery' = joinWith " AND " $ (\year -> "producedDateY_i:" <> year) <$> years
+    yearQuery = if yearQuery' == "" then "" else " AND " <> yearQuery'
     joinFunc :: IMT_org -> String
     joinFunc All_IMT = ""
     joinFunc (IMT_org { school_id }) = "structId_i:" <> school_id
