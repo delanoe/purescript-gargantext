@@ -122,7 +122,7 @@
     name = "colors";
     version = "v6.0.0";
     src = pkgs.fetchgit {
-      url = "https://github.com/sharkdp/purescript-colors.git";
+      url = "https://github.com/purescript-contrib/purescript-colors.git";
       rev = "v6.0.0";
       sha256 = "05gdjx8xhv7xxm1prrrc2brxjn1gi19qf1004syk8qx37slrjf87";
     };
@@ -336,11 +336,11 @@
   };
   "free" = {
     name = "free";
-    version = "v6.0.1";
+    version = "v6.2.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript/purescript-free.git";
-      rev = "v6.0.1";
-      sha256 = "0kpq83qjfjzf1l2f1cnnx36kjwnm5czgjyh2imwp3bna8js6sk39";
+      rev = "v6.2.0";
+      sha256 = "10zsw49wzlzz78882b3grl19gpca5llpdk3ph608075h0ygk3q3k";
     };
   };
   "functions" = {
@@ -516,11 +516,11 @@
   };
   "milkis" = {
     name = "milkis";
-    version = "v7.4.0";
+    version = "v7.5.0";
     src = pkgs.fetchgit {
       url = "https://github.com/justinwoo/purescript-milkis.git";
-      rev = "v7.4.0";
-      sha256 = "10ahz4idcb3qwys7x15k3za5gkw9zbk15cdmcqsi8lfh6fg2w2db";
+      rev = "v7.5.0";
+      sha256 = "01kaqzndxq2agi6xr1k5gsn1pzvd3xxn8v1s1gl87kmiic94w6vc";
     };
   };
   "mmorph" = {
@@ -552,11 +552,11 @@
   };
   "node-fs" = {
     name = "node-fs";
-    version = "v6.1.0";
+    version = "v6.2.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-node/purescript-node-fs.git";
-      rev = "v6.1.0";
-      sha256 = "1w97m2afn7yn757niknkbk7w6nyg4n5dabxr7gzfz368z1nkf45s";
+      rev = "v6.2.0";
+      sha256 = "1b89sxr6asxvgx59myhfbahiiz1z6sg2qfrm9bqd46h93ai8bhn1";
     };
   };
   "node-path" = {
@@ -579,11 +579,11 @@
   };
   "nonempty" = {
     name = "nonempty";
-    version = "v6.0.0";
+    version = "v6.1.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript/purescript-nonempty.git";
-      rev = "v6.0.0";
-      sha256 = "0azk1jrpqnjf2i97lcp63wcm31c4hddklp1mfmdan27zap3zqyjm";
+      rev = "v6.1.0";
+      sha256 = "0hhhw5x5xvs2bd9373gklja1545glnzi1xc2sj16kkznnayrmvsn";
     };
   };
   "now" = {
@@ -615,11 +615,11 @@
   };
   "ordered-collections" = {
     name = "ordered-collections";
-    version = "v2.0.1";
+    version = "v2.0.2";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript/purescript-ordered-collections.git";
-      rev = "v2.0.1";
-      sha256 = "1p592g0s07c56639y71782af0zz5cndpjxd5w9n41hdszsz1b86h";
+      rev = "v2.0.2";
+      sha256 = "0g57043ylj3kldkm5vn233yd6hiamryhdfh72cxx9h3mn0ra8ghd";
     };
   };
   "orders" = {
@@ -642,11 +642,11 @@
   };
   "parsing" = {
     name = "parsing";
-    version = "v6.0.2";
+    version = "v8.4.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-contrib/purescript-parsing.git";
-      rev = "v6.0.2";
-      sha256 = "0lhri5bfk4j6dgzi4d5gvmd628hjs9jgyky910ylj6qzalw9fj56";
+      rev = "v8.4.0";
+      sha256 = "1rq57cwfx7rx3h3hdc4m8lv90724i5gf2pak9ljj0fcnw96gsaa1";
     };
   };
   "partial" = {
@@ -912,11 +912,11 @@
   };
   "string-parsers" = {
     name = "string-parsers";
-    version = "v6.0.1";
+    version = "v7.0.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-contrib/purescript-string-parsers.git";
-      rev = "v6.0.1";
-      sha256 = "143a2s56kbx3i0xi5wfqp28znr0hdydy902jla236i7kal5y098m";
+      rev = "v7.0.0";
+      sha256 = "0kjqx6f8jgcbaf0v401hrdqw61zzvp8my9ik8cn55njn6i3mx74w";
     };
   };
   "strings" = {
@@ -1056,11 +1056,11 @@
   };
   "unicode" = {
     name = "unicode";
-    version = "v5.0.0";
+    version = "v5.0.1";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-contrib/purescript-unicode.git";
-      rev = "v5.0.0";
-      sha256 = "0sqvgl3il2rl3zxkbzsqb19wib108zvyw73jxiavpfdm6hdmnxvc";
+      rev = "v5.0.1";
+      sha256 = "0xh9wwyrl9nsw3h3wzalc1gaph39drj0i6k648cf9bnbb96nxa4z";
     };
   };
   "unsafe-coerce" = {
@@ -1092,11 +1092,11 @@
   };
   "variant" = {
     name = "variant";
-    version = "v7.0.3";
+    version = "v7.1.0";
     src = pkgs.fetchgit {
       url = "https://github.com/natefaubion/purescript-variant.git";
-      rev = "v7.0.3";
-      sha256 = "1q2pky3gf177ihy2zjzqvp1cj18ycaki9vm4ghw18p7hf256lqmc";
+      rev = "v7.1.0";
+      sha256 = "064aijlcphyg5mjhxx4acwjlnh7ha3v033zzan31rhkqi6m4r3da";
     };
   };
   "versions" = {
@@ -1137,11 +1137,11 @@
   };
   "web-html" = {
     name = "web-html";
-    version = "v3.1.0";
+    version = "v3.2.0";
     src = pkgs.fetchgit {
       url = "https://github.com/purescript-web/purescript-web-html.git";
-      rev = "v3.1.0";
-      sha256 = "007anmqqifrjnpfa4xf7qa8xnpbhvcxqdraj9lnhizwq65vx53sn";
+      rev = "v3.2.0";
+      sha256 = "1ds26vwyba0chhpa09m938brw9q8pxjk6z1n3d4nc30hvdkrjnbh";
     };
   };
   "web-storage" = {

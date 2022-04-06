@@ -1,5 +1,5 @@
 let upstream =
-      https://github.com/purescript/package-sets/releases/download/psc-0.14.5-20220110/packages.dhall sha256:8dbf71bfc6c7a11043619eebe90ff85f7d884541048aa8cc48eef1ee781cbc0e
+      https://github.com/purescript/package-sets/releases/download/psc-0.14.7-20220404/packages.dhall sha256:75d0f0719f32456e6bdc3efd41cfc64785655d2b751e3d080bd849033ed053f2
 
 let overrides =
       { globals =
@@ -7,6 +7,63 @@ let overrides =
         , repo = "https://github.com/purescript/purescript-globals"
         , version = "v4.1.0"
         }
+      -- TODO Remove graphql-client when
+      -- https://github.com/OxfordAbstracts/purescript-graphql-client/issues/73
+      -- is merged
+      , graphql-client =
+      { dependencies =
+      	[ "aff"
+    	, "aff-promise"
+    	, "affjax"
+    	, "argonaut-codecs"
+    	, "argonaut-core"
+    	, "arrays"
+    	, "bifunctors"
+    	, "control"
+        , "datetime"
+        , "effect"
+        , "either"
+        , "enums"
+        , "exceptions"
+        , "foldable-traversable"
+        , "foreign"
+        , "foreign-generic"
+        , "foreign-object"
+        , "functions"
+        , "halogen-subscriptions"
+        , "heterogeneous"
+        , "http-methods"
+        , "integers"
+        , "lists"
+        , "maybe"
+        , "media-types"
+        , "newtype"
+        , "node-buffer"
+        , "node-fs"
+        , "nullable"
+        , "numbers"
+        , "ordered-collections"
+        , "parsing"
+        , "prelude"
+        , "profunctor"
+        , "profunctor-lenses"
+        , "psci-support"
+        , "quickcheck"
+        , "record"
+        , "spec"
+        , "spec-discovery"
+        , "string-parsers"
+        , "strings"
+        , "strings-extra"
+        , "transformers"
+        , "tuples"
+        , "typelevel-prelude"
+        , "unicode"
+        ]
+      , repo = "https://github.com/OxfordAbstracts/purescript-graphql-client.git"
+      , version = "update-package-set-#73"
+      --, version = "v7.0.0"
+      }
       , smolder =
         { dependencies =
           [ "bifunctors"
