@@ -1,37 +1,109 @@
-// @XXX: Bootstrap "_spacing.scss" `!important` precedence...
-//       (simple workaround is to add an extra `_` suffix)
-// @TODO: NOT importing Bootstrap "_spacing.scss")
-._m-0 { margin:0; }
-._m-1 { margin:space-x(1); }
-._m-2 { margin:space-x(2); }
-._m-3 { margin:space-x(3); }
-._m-4 { margin:space-x(4); }
-._m-5 { margin:space-x(5); }
+// Width
+.w-0 { width: 0; }
+.w-1 { width: space-x(1); }
+.w-2 { width: space-x(2); }
+.w-3 { width:space-x(3); }
+.w-4 { width:space-x(4); }
+.w-5 { width:space-x(5); }
 
-._mt-0 { margin-top:0; }
-._mr-0 { margin-right:0; }
-._mb-0 { margin-bottom:0; }
-._ml-0 { margin-left:0; }
-._mx-0 { margin-left:0 ;margin-right:0 ; }
-._my-0 { margin-top:0;margin-bottom:0; }
+.w-auto     { width: auto; }
+.w-fluid    { width: 100%; }
+.w-inherit  { width: inherit; }
 
-._mt-1 { margin-top:space-x(1); }
-._mr-1 { margin-right:space-x(1); }
-._mb-1 { margin-bottom:space-x(1); }
-._ml-1 { margin-left:space-x(1); }
-._mx-1 { margin-left:space-x(1);margin-right:space-x(1); }
-._my-1 { margin-top:space-x(1);margin-bottom:space-x(1); }
+// Height
+.h-0 { height: 0; }
+.h-1 { height: space-x(1); }
+.h-2 { height: space-x(2); }
+.h-3 { height:space-x(3); }
+.h-4 { height:space-x(4); }
+.h-5 { height:space-x(5); }
 
-._mt-2 { margin-top:space-x(2); }
-._mr-2 { margin-right:space-x(2); }
-._mb-2 { margin-bottom:space-x(2); }
-._ml-2 { margin-left:space-x(2); }
-._mx-2 { margin-right:space-x(2);margin-left:space-x(2); }
-._my-2 { margin-top:space-x(2);margin-bottom:space-x(2); }
+.h-auto     { height: auto; }
+.h-fluid    { height: 100%; }
+.h-inherit  { height: inherit; }
 
-._mt-3 { margin-top:space-x(3); }
-._mr-3 { margin-right:space-x(3); }
-._mb-3 { margin-bottom:space-x(3); }
-._ml-3 { margin-left:space-x(3); }
-._mx-3 { margin-right:space-x(3);margin-left:space-x(3); }
-._my-3 { margin-bottom:space-x(3);margin-top:space-x(3); }
+// Margin
+.m-0 { margin:0; }
+.m-1 { margin:space-x(1); }
+.m-2 { margin:space-x(2); }
+.m-3 { margin:space-x(3); }
+.m-4 { margin:space-x(4); }
+.m-5 { margin:space-x(5); }
+
+.mt-0 { margin-top:0; }
+.mr-0 { margin-right:0; }
+.mb-0 { margin-bottom:0; }
+.ml-0 { margin-left:0; }
+.mx-0 { margin-left:0 ;margin-right:0 ; }
+.my-0 { margin-top:0;margin-bottom:0; }
+
+.mt-1 { margin-top:space-x(1); }
+.mr-1 { margin-right:space-x(1); }
+.mb-1 { margin-bottom:space-x(1); }
+.ml-1 { margin-left:space-x(1); }
+.mx-1 { margin-left:space-x(1);margin-right:space-x(1); }
+.my-1 { margin-top:space-x(1);margin-bottom:space-x(1); }
+
+.mt-2 { margin-top:space-x(2); }
+.mr-2 { margin-right:space-x(2); }
+.mb-2 { margin-bottom:space-x(2); }
+.ml-2 { margin-left:space-x(2); }
+.mx-2 { margin-right:space-x(2);margin-left:space-x(2); }
+.my-2 { margin-top:space-x(2);margin-bottom:space-x(2); }
+
+.mt-3 { margin-top:space-x(3); }
+.mr-3 { margin-right:space-x(3); }
+.mb-3 { margin-bottom:space-x(3); }
+.ml-3 { margin-left:space-x(3); }
+.mx-3 { margin-right:space-x(3);margin-left:space-x(3); }
+.my-3 { margin-bottom:space-x(3);margin-top:space-x(3); }
+
+// Padding
+.p-0 { padding:0; &--i { padding: 0 !important; } }
+.p-1 { padding:space-x(1); }
+.p-2 { padding:space-x(2); }
+.p-3 { padding:space-x(3); }
+.p-4 { padding:space-x(4); }
+.p-5 { padding:space-x(5); }
+
+.pt-0 { padding-top:0; }
+.pr-0 { padding-right:0; }
+.pb-0 { padding-bottom:0; }
+.pl-0 { padding-left:0; }
+.px-0 { padding-left:0 ;padding-right:0 ; }
+.py-0 { padding-top:0;padding-bottom:0; }
+
+.pt-1 { padding-top:space-x(1); }
+.pr-1 { padding-right:space-x(1); }
+.pb-1 { padding-bottom:space-x(1); }
+.pl-1 { padding-left:space-x(1); }
+.px-1 { padding-left:space-x(1);padding-right:space-x(1); }
+.py-1 { padding-top:space-x(1);padding-bottom:space-x(1); }
+
+.pt-2 { padding-top:space-x(2); }
+.pr-2 { padding-right:space-x(2); }
+.pb-2 { padding-bottom:space-x(2); }
+.pl-2 { padding-left:space-x(2); }
+.px-2 { padding-right:space-x(2);padding-left:space-x(2); }
+.py-2 { padding-top:space-x(2);padding-bottom:space-x(2); }
+
+.pt-3 { padding-top:space-x(3); }
+.pr-3 { padding-right:space-x(3); }
+.pb-3 { padding-bottom:space-x(3); }
+.pl-3 { padding-left:space-x(3); }
+.px-3 { padding-right:space-x(3);padding-left:space-x(3); }
+.py-3 { padding-bottom:space-x(3);padding-top:space-x(3); }
+
+// Typography
+.text-primary     { color: $primary; }
+.text-secondary   { color: $secondary; }
+.text-info        { color: $info; }
+.text-success     { color: $success; }
+.text-warning     { color: $warning; }
+.text-danger      { color: $danger; }
+.text-dark        { color: $dark; }
+.text-light       { color: $light; }
+
+.text-bold      { font-weight: bold; }
+.text-italic    { font-style: italic; }
+.text-underline { text-decoration: underline; }

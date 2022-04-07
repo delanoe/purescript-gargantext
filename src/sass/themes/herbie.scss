@@ -1,73 +1,49 @@
 /*! Themestr.app `Herbie` Bootstrap 4.3.1 theme */
 
-
-// Bootstrap pre-requiring
-//------------------------
-
-@import '../../../node_modules/bootstrap/scss/functions';
-@import '../../../node_modules/bootstrap/scss/variables';
-@import '../../../node_modules/bootstrap/scss/mixins';
+@use 'sass:map';
 
 
-// Project pre-requiring
-//----------------------
+///==========================================
+///   Theme variable overrides
+///==========================================
 
-@import '../_abstract';
-@import '../_modules';
+@import "./abstract";
 
-
-// Theme variable overrides
-//-------------------------
 
 // Fonts
-
 @import url(https://fonts.googleapis.com/css?family=Nunito:200,300,400,700);
-$font-family-base:Nunito;
+$font-family-base: "Nunito";
+
 @import url(https://fonts.googleapis.com/css?family=Crete+Round:200,300,400,700);
-$headings-font-family:Crete Round;
+$headings-font-family: "Crete Round";
 
 // Colors
+$primary    :#083358;
+$secondary  :#F67280;
+$success    :#0074E4;
+$danger     :#FF4057;
+$info       :#74DBEF;
+$warning    :#FC3C3C;
+$light      :#F2F2F0;
+$dark       :#072247;
 
-/*$enable-grid-classes:false;*/
-$primary:#083358;
-$secondary:#F67280;
-$success:#0074E4;
-$danger:#FF4057;
-$info:#74DBEF;
-$warning:#FC3C3C;
-$light:#F2F2F0;
-$dark:#072247;
-
-$theme-colors: (
-  'primary': $primary,
-  'secondary': $secondary,
-  'success': $success,
-  'danger': $danger,
-  'info': $info,
-  'warning': $warning,
-  'light': $light,
-  'dark': $dark
+$theme-colors: map.merge(
+  $theme-colors,
+  (
+    'primary': $primary,
+    'secondary': $secondary,
+    'success': $success,
+    'danger': $danger,
+    'info': $info,
+    'warning': $warning,
+    'light': $light,
+    'dark': $dark,
+  )
 );
 
-// Add more shades to gray
-$gray-150: #FAFAFA;
-$gray-175: #F0F0F0;
 
-// Layout
-$form-group-margin-bottom: space-x(3);
+///==========================================
+///   Custom styles specific to the theme
+///==========================================
 
-
-// (importing Bootstrap)
-@import '../../../node_modules/bootstrap/scss/bootstrap';
-
-
-// Project sheets
-//---------------
-
-@import "../_components";
-@import "../_base";
-@import "../_legacy";
-
-
-// Custom rules specific to the theme
-//-----------------------------------
+@import './_base';

@@ -5,17 +5,15 @@ module Gargantext.Components.Nodes.Corpus.Graph
 import Gargantext.Prelude
 
 import DOM.Simple (document, querySelector)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isJust)
 import Data.Set as Set
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
-import FFI.Simple ((..), (.=))
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.GraphExplorer.Layout (convert, layout)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Config.REST (AffRESTError, logRESTError)
-import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Routes (SessionRoute(NodeAPI))
@@ -62,45 +60,61 @@ graphLayoutCpt = here.component "explorerLayout" cpt where
       , state
       }
 
-    useFirstEffect' do
-      -- @XXX: inopinent <div> (see Gargantext.Components.Router) (@TODO?)
-      mEl <- querySelector document ".main-page__main-route .container"
-      case mEl of
-        Nothing -> pure unit
-        Just el -> do
-          style <- pure $ (el .. "style")
-          pure $ (style .= "display") "none"
-      -- @XXX: reset "main-page__main-route" wrapper margin
-      --       see Gargantext.Components.Router) (@TODO?)
-      mEl' <- querySelector document ".main-page__main-route"
-      case mEl' of
-        Nothing -> pure unit
-        Just el -> do
-          style <- pure $ (el .. "style")
-          pure $ (style .= "padding") "initial"
+    -- @XXX: Runtime odd behavior
+    --       cannot use the `useEffect` + its cleanup function within the
+    --       same `Effect`, otherwise the below cleanup example will be
+    --       execute at mount
 
+    -- @XXX: inopinent <div> (see Gargantext.Components.Router) (@TODO?)
+    R.useEffectOnce' do
+      mEl <- querySelector document ".main-page__main-route .container"
+
+      case mEl of
+        Nothing -> R.nothing
+        Just el -> R2.addClass el [ "d-none" ]
+
+    R.useEffectOnce do
+      pure do
+        mEl <- querySelector document ".main-page__main-route .container"
+
+        case mEl of
+          Nothing -> R.nothing
+          Just el -> R2.removeClass el [ "d-none" ]
+
+    -- @XXX: reset "main-page__main-route" wrapper margin
+    --       see Gargantext.Components.Router) (@TODO?)
+    R.useEffectOnce' do
+      mEl <- querySelector document ".main-page__main-route"
+
+      case mEl of
+        Nothing -> R.nothing
+        Just el -> R2.addClass el [ "p-0--i" ]
+
+    R.useEffectOnce do
+      pure do
+        mEl <- querySelector document ".main-page__main-route"
+
+        case mEl of
+          Nothing -> R.nothing
+          Just el -> R2.removeClass el [ "p-0--i" ]
 
     -- | Render
     -- |
-
-    -- @WIP: cloak & R2.fromMaybe_
     pure $
 
-      R.fragment
-      [
-        case state' of
-
-          Nothing ->
-            H.div
-            { className: "graph-loader" }
-            [
-              B.spinner
-              { className: "graph-loader__spinner" }
-            ]
-
-          Just s ->
-            handler s
-      ]
+      B.cloak
+      { isDisplayed: isJust state'
+      , idlingPhaseDuration: Just 150
+      , cloakSlot:
+          H.div
+          { className: "graph-loader" }
+          [
+            B.spinner
+            { className: "graph-loader__spinner" }
+          ]
+      , defaultSlot:
+          R2.fromMaybe_ state' handler
+      }
 
     where
       errorHandler = logRESTError here "[explorerLayout]"

@@ -494,7 +494,7 @@ $decreasing-color: #11638F;
 ////////////////////////////////////////////////////////////////
 
 .phylo-sidebar {
-  @extend %sidebar;
+  @include sidebar;
 }
 
 .phylo-details-tab {
@@ -548,7 +548,6 @@ $decreasing-color: #11638F;
     &__item {
       white-space: normal;
       word-break: break-word;
-      // remove "_reboot.scss" line height
       line-height: initial;
 
       &:not(:last-child) {

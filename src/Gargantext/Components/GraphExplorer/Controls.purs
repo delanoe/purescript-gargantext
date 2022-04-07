@@ -256,7 +256,7 @@ controlsCpt = here.component "controls" cpt
           }
           [
             H.div
-            { className: "d-flex justify-content-between _mb-3" }
+            { className: "d-flex justify-content-between mb-3" }
             [
               edgeConfluenceControl
               { range: edgeConfluenceRange

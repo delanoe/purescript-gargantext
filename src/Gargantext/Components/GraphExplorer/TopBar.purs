@@ -2,7 +2,7 @@ module Gargantext.Components.GraphExplorer.TopBar (topBar) where
 
 import Gargantext.Prelude hiding (max, min)
 
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
 import Gargantext.Components.GraphExplorer.Search (nodeSearchControl)
@@ -74,14 +74,12 @@ component = here.component "topBar" cpt where
         ]
       ,
         -- Search
-        -- @WIP: R2.fromMaybe_
-        case mGraph' of
-          Nothing    -> mempty
-          Just graph ->
-            nodeSearchControl
-            { graph
-            , multiSelectEnabled
-            , selectedNodeIds
-            , className: "graph-topbar__search"
-            }
+        R2.fromMaybe_ mGraph' \graph ->
+
+          nodeSearchControl
+          { graph
+          , multiSelectEnabled
+          , selectedNodeIds
+          , className: "graph-topbar__search"
+          }
       ]

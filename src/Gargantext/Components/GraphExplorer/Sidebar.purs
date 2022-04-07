@@ -402,12 +402,9 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
           H.div
           { className: "graph-neighborhood__counter" }
           [
-            -- @WIP utility classes component
-            H.span
-            { className: "text-info" }
-            [
-              H.text $ show termCount
-            ]
+            B.fluff'
+            [ "text-info" ] $
+            show termCount
           ,
             H.text $ nbsp 1 <> "terms"
           ]
@@ -670,14 +667,13 @@ documentation _ =
     H.div
     { className: "graph-documentation" }
     [
-      -- @WIP: shortcuts
       H.div
       { className: "graph-documentation__text-section" }
       [
         H.p
         {}
         [
-          H.b {} [ H.text "What is a graph? "]
+          B.b_ "What is a graph? "
         ,
           H.text "Graph is a conveniant tool to explore your documents."
         ]

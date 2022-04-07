@@ -4,7 +4,6 @@ $layout-height: calc(100vh - #{ $topbar-height} )
 
 /////////////////////////////////////////////
 
-// @WIP
 .graph-loader
   width: 100%
   height: 100%
@@ -20,7 +19,7 @@ $layout-height: calc(100vh - #{ $topbar-height} )
     // (?) `centered` mixin will not work here, due to Bootstrap process
     //     interfering with the transform rule
     top: calc( 50% - #{ $size / 2 } )
-    left: calc( 50% + #{ $size / 2 } )
+    left: calc( 50% - #{ $size / 2 } )
 
 
 /////////////////////////////////////////////
@@ -86,7 +85,7 @@ $layout-height: calc(100vh - #{ $topbar-height} )
 /////////////////////////////////////////////
 
 .graph-sidebar
-  @extend %sidebar
+  @include sidebar
 
   $margin-x: $sidebar-tab-margin-x
   $margin-y: space-x(2)
@@ -133,12 +132,8 @@ $layout-height: calc(100vh - #{ $topbar-height} )
     font-size: 15px
     line-height: 1.5
 
-    // @WIP: remove "_reboot.scss"
     p
       margin-bottom: space-x(1)
-
-    ul
-      margin-bottom: revert
 
     li
       list-style-type: circle
@@ -180,8 +175,6 @@ $layout-height: calc(100vh - #{ $topbar-height} )
   &__badge
     white-space: normal
     word-break: break-word
-    // remove "_reboot.scss" line height
-    line-height: initial
 
     &:not(:last-child)
       margin-bottom: space-x(0.75)
@@ -233,11 +226,7 @@ $layout-height: calc(100vh - #{ $topbar-height} )
         flex-basis: calc(50% - #{ $item-margin * 2 })
 
 
-
-/////////////////////////////////////////////////////
-
 // Atlas button animation
-// @WIP: better management ("_animation.scss", etc)
 .on-running-animation .b-icon
   animation-name: pulse
   animation-duration: 0.5s
@@ -245,10 +234,3 @@ $layout-height: calc(100vh - #{ $topbar-height} )
   animation-direction: alternate
   animation-iteration-count: infinite
   animation-play-state: running
-
-@keyframes pulse
-  from
-    transform: scale(1)
-
-  to
-    transform: scale(1.1)

@@ -1,9 +1,9 @@
 // Colors based on Chromium engine
 // (every browser renders its input range on its own, here we are trying
 // to add some consistency)
-$range-bg-color: #EFEFEF
-$range-border-color: #B2B2B2
-$range-bg-progress-color: #0075FF
+$range-bg-color: $gray-175
+$range-border-color: $gray-400
+$range-bg-progress-color: $secondary
 $range-height: 8px
 $range-radius: 3px
 $knob-size: 14px
@@ -98,9 +98,6 @@ $knob-size: 14px
     font-size: 14px
     color: $gray-700
 
-    // @TODO: override "_reboot.scss"
-    margin-bottom: revert
-
   &__field
     position: relative
 
@@ -124,6 +121,9 @@ input[type=range]
 //       one → set only background range
 //     * unable to position the input ideally → have to rely on
 //       absolute + position
+input[type=range]
+  -webkit-appearance: none
+
 input[type=range]::-webkit-slider-runnable-track
   $chromium-offset-y: 4px
 
@@ -136,9 +136,16 @@ input[type=range]::-webkit-slider-runnable-track
   top: $chromium-offset-y
 
 input[type=range]::-webkit-slider-thumb
-  $chromium-offset-y: -5px
+  $chromium-offset-y: -4px
 
-  transform: translateY(-5px)
+  -webkit-appearance: none
+  transform: translateY($chromium-offset-y)
+  border: none
+  height: $knob-size
+  width: $knob-size
+  border-radius: 50%
+  background-color: $range-bg-progress-color
+  box-shadow: 0 0 1px 0 $range-bg-progress-color
 
 // Styling FireFox input range, mimicking Chromium one
 //

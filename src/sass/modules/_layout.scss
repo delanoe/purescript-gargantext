@@ -1,3 +1,6 @@
+// Form
+$form-group-margin-bottom: space-x(3);
+
 /// Topbar
 $topbar-height: 56px; // ~ unworthy empirical value (@TODO topbar height calculation)
 $topbar-input-width: 304px;
@@ -8,6 +11,9 @@ $topbar-fixed-button-width: 136px;
 $sidebar-width: 480px;
 $sidebar-height: calc(100vh - #{ $topbar-height });
 $sidebar-tab-margin-x: space-x(2.5);
+
+/// Misc
+$overlay-radius: 5px;
 
 
 @mixin aside-topbar() {
@@ -42,7 +48,7 @@ $sidebar-tab-margin-x: space-x(2.5);
 }
 
 
-%sidebar {
+@mixin sidebar() {
   @include hidden-scrollbar;
 
   $teaser-height: 16px;

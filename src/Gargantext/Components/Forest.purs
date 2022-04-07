@@ -16,7 +16,6 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.LinkHandler (useLinkHandler)
 import Gargantext.Routes (AppRoute(..))
 import Gargantext.Sessions (Session(..), unSessions)
-import Gargantext.Utils (nbsp)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -132,9 +131,10 @@ plusCpt = here.component "plus" cpt where
             , variant: ButtonVariant Light
             }
             [
-              B.icon { name: "universal-access" }
+              B.icon
+              { name: "universal-access" }
             ,
-              H.text $ nbsp 1
+              B.fluff_ [ "d-inline-block", "w-1" ]
             ,
               H.text $ "Log in/out"
             ]
@@ -150,7 +150,7 @@ forestLayout :: R2.Leaf Props
 forestLayout = R2.leaf forestLayoutCpt
 forestLayoutCpt :: R.Memo Props
 forestLayoutCpt = R.memo' $ here.component "forestLayout" cpt where
-  cpt p children = pure $
+  cpt p _ = pure $
 
     H.div
     { className: "forest-layout" }
