@@ -11366,9 +11366,6 @@ a:focus, a:hover {
   content: "";
   background-color: #f8f9fa;
 }
-.mainleaf--selected .mainleaf__node-icon {
-  color: #083358;
-}
 .mainleaf--selected .mainleaf__node-link a {
   color: #083358;
   font-weight: bold;
@@ -11387,7 +11384,7 @@ a:focus, a:hover {
   content: "";
   background-color: #f8f9fa;
   height: 12px;
-  width: 144px;
+  width: 120px;
   position: absolute;
   top: 5px;
 }

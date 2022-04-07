@@ -2,11 +2,9 @@ module Gargantext.Components.Forest.Tree.Node where
 
 import Gargantext.Prelude
 
-import DOM.Simple as DOM
-import DOM.Simple.Event as DE
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
-import Data.Nullable (Nullable, null)
+import Data.Nullable (null)
 import Data.Symbol (SProxy(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
@@ -15,24 +13,21 @@ import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Tooltip (tooltipBind)
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), TooltipEffect(..), Variant(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (DroppedFile(..), fileTypeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..))
 import Gargantext.Components.Forest.Tree.Node.Box (nodePopupView)
 import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
-import Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar (BarType(..), asyncProgressBar)
-import Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar as PB
 import Gargantext.Components.Forest.Tree.Node.Tools.Sync (nodeActionsGraph, nodeActionsNodeList)
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (Lang(EN))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Config.REST (logRESTError)
-import Gargantext.Context.Progress (AsyncProps, asyncContext, asyncProgress)
+import Gargantext.Context.Progress (asyncContext, asyncProgress)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
-import Gargantext.Hooks.Loader (useLoader, useLoaderEffect)
+import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Hooks.Version (Version, useVersion)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId)
@@ -42,8 +37,6 @@ import Gargantext.Utils (nbsp, textEllipsisBreak, (?))
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
-import React.SyntheticEvent (SyntheticEvent_)
-import React.SyntheticEvent as E
 import React.SyntheticEvent as SE
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -78,7 +71,6 @@ nodeSpanCpt :: R.Component NodeSpanProps
 nodeSpanCpt = here.component "nodeSpan" cpt
   where
     cpt props@{ boxes: boxes@{ errors
-                             , handed
                              , reloadMainPage
                              , reloadRoot
                              , route
@@ -119,14 +111,16 @@ nodeSpanCpt = here.component "nodeSpan" cpt
         dropClass Nothing  _    = ""
 
         name' :: String -> GT.NodeType -> Session -> String
-        name' _ GT.NodeUser session = show session
-        name' n _           _       = n
+        name' _ GT.NodeUser s = show s
+        name' n _           _ = n
 
         isSelected = Just route' == Routes.nodeTypeAppRoute nodeType (sessionId session) id
 
         SettingsBox {show: showBox} = settingsBox nodeType
 
         href = url frontends $ GT.NodePath (sessionId session) nodeType (Just id)
+
+        name = name' props.name nodeType session
 
     -- Methods
 
@@ -151,18 +145,18 @@ nodeSpanCpt = here.component "nodeSpan" cpt
              T.Box Boolean
           -> SE.SyntheticEvent_ event
           -> Effect Unit
-        onDragOverHandler isDragOver e = do
+        onDragOverHandler box e = do
           -- prevent redirection when file is dropped
           -- https://stackoverflow.com/a/6756680/941471
           SE.preventDefault e
           SE.stopPropagation e
-          T.write_ true isDragOver
+          T.write_ true box
 
         onDragLeave :: forall event.
              T.Box Boolean
           -> SE.SyntheticEvent_ event
           -> Effect Unit
-        onDragLeave isDragOver _ = T.write_ false isDragOver
+        onDragLeave box _ = T.write_ false box
 
         onTaskFinish ::
              GT.NodeID
@@ -231,6 +225,27 @@ nodeSpanCpt = here.component "nodeSpan" cpt
         }
         [
 
+      -- // Abstract informations //
+
+          nodeTooltip
+          { id
+          , nodeType
+          , name
+          }
+          [
+            case mVersion of
+              Nothing -> mempty
+              Just v  -> versionComparator v
+          ]
+        ,
+          R.createPortal
+          [
+            fileTypeView
+            { dispatch, droppedFile, id, isDragOver, nodeType } []
+          ]
+          host
+        ,
+
       -- // Leaf informations data //
 
           folderIcon
@@ -240,15 +255,18 @@ nodeSpanCpt = here.component "nodeSpan" cpt
           }
         ,
           nodeIcon
-          { nodeType
-          , isLeaf
-          , callback: const $ T.modify_ (not) folderOpen
-          }
+          (
+            { nodeType
+            , isLeaf
+            , callback: const $ T.modify_ (not) folderOpen
+            , isSelected
+            }
+          )
           [
             case mVersion of
               Nothing                              -> mempty
               Just { clientVersion, remoteVersion} ->
-                B.iconButton
+                B.iconButton $
                 { className: intercalate " "
                     [ "mainleaf__version-badge"
                     , clientVersion == remoteVersion ?
@@ -305,7 +323,7 @@ nodeSpanCpt = here.component "nodeSpan" cpt
               { boxes
               , dispatch
               , id
-              , name: name' props.name nodeType session
+              , name
               , nodeType
               , onPopoverClose: const $ onPopoverClose popoverRef
               , session
@@ -325,35 +343,16 @@ nodeSpanCpt = here.component "nodeSpan" cpt
               taskProgress
               {}
             ]
-        ,
-      -- // Abstract informations //
-
-          nodeTooltip
-          { id
-          , nodeType
-          , name: name' props.name nodeType session
-          }
-          [
-            case mVersion of
-              Nothing -> mempty
-              Just v  -> versionComparator v
-          ]
-        ,
-          R.createPortal
-          [
-            fileTypeView
-            { dispatch, droppedFile, id, isDragOver, nodeType } []
-          ]
-          host
         ]
 
 
 ---------------------------------------------------------
 
 type NodeIconProps =
-  ( nodeType ::  GT.NodeType
-  , callback :: Unit -> Effect Unit
-  , isLeaf   :: Boolean
+  ( nodeType      ::  GT.NodeType
+  , callback      :: Unit -> Effect Unit
+  , isLeaf        :: Boolean
+  , isSelected    :: Boolean
   )
 
 nodeIcon :: R2.Component NodeIconProps
@@ -363,18 +362,22 @@ nodeIconCpt = here.component "nodeIcon" cpt where
   cpt { nodeType
       , callback
       , isLeaf
-      } children = pure $
+      , isSelected
+      } children = do
+    -- Render
+    pure $
 
-    H.span
-    { className: "mainleaf__node-icon" } $
-    [
-      B.iconButton
-      { name: GT.getIcon nodeType true
-      , callback
-      , status: isLeaf ? Idled $ Enabled
-      }
-    ]
-      <> children
+      H.span
+      { className: "mainleaf__node-icon" } $
+      [
+        B.iconButton
+        { name: GT.getIcon nodeType true
+        , callback
+        , status: isLeaf ? Idled $ Enabled
+        , variant: isSelected ? Primary $ Dark
+        }
+      ]
+        <> children
 
 -----------------------------------------------
 

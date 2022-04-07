@@ -97,75 +97,22 @@ routerCpt = here.component "router" cpt where
        , TopBar.topBar { boxes }
        , errorsView { errors: boxes.errors } []
        , H.div { className: "router__inner" }
-         [ R2.if' (showTree') $ forest { boxes }
-         , mainPage { boxes }
-         , sidePanel { boxes }
+         [
+          -- @XXX: ReactJS lack of "keep-alive" feature workaround solution
+          -- @link https://github.com/facebook/react/issues/12039
+          --   ↓
+          -- @XXX: ReactJS "display: none" don't exec effect cleaning function
+          --       (therefore cannot use the simple "display: none" workaround
+          --       to keep below component alive)
+          R2.if' (showTree') $ forest { boxes }
+         ,
+          mainPage { boxes }
+         ,
+          sidePanel { boxes }
          ]
        ]
 
--- router :: R2.Leaf Props
--- router = R2.leaf routerCpt
--- routerCpt :: R.Memo Props
--- routerCpt = R.memo' $ here.component "router" cpt where
---   cpt { boxes: boxes@{ handed, showLogin } } _ = do
---     -- States
---     handed'       <- T.useLive T.unequal handed
---     showLogin' <- R2.useLive' showLogin
---     -- Render
---     pure $
-
---       router'
---       { handed: handed'
---       , showLogin: showLogin'
---       , boxes
---       , key: "lol"
---       }
-
--- type CloneProps =
---   ( showLogin :: Boolean
---   , handed :: Handed
---   , key :: String
---   | Props
---   )
-
--- router' :: R2.Leaf CloneProps
--- router' = R2.leaf routerCpt'
--- routerCpt' :: R.Memo CloneProps
--- routerCpt' = R.memo' $ here.component "__clone__" cpt where
---   cpt { boxes, handed, showLogin } _ = do
---     -- Effects
---     let
---       handedClassName = case _ of
---         LeftHanded  -> "left-handed"
---         RightHanded -> "right-handed"
-
---     R.useEffect1' handed $
---       getElementById "app" >>= case _ of
---         Nothing  -> pure unit
---         Just app -> do
---           R2.removeClass app
---             [ handedClassName LeftHanded
---             , handedClassName RightHanded
---             ]
---           R2.addClass app [ handedClassName handed ]
-
---     -- Render
---     -- pure $ R2.fragmentWithKey "lol"
---     pure $ H.div {}
---       [
---         -- loginModal { boxes }
---          R2.if' showLogin $
---             login' boxes
---        , TopBar.topBar { boxes }
---        , errorsView { errors: boxes.errors } []
---        , H.div { className: "router-inner" }
---          [ forest { boxes }
---          , mainPage { boxes }
---          , sidePanel { boxes }
---          ]
---        ]
-
-
+--------------------------------------------------------------
 
 mainPage :: R2.Leaf Props
 mainPage = R2.leafComponent mainPageCpt
@@ -181,7 +128,10 @@ mainPageCpt = here.component "mainPage" cpt where
       findTile :: UUID -> Record Tile -> Boolean
       findTile id tile = eq id $ get (Proxy :: Proxy "id") tile
 
-      deleteTile :: Record Tile -> T.Box (Array (Record Tile)) -> (Unit -> Effect Unit)
+      deleteTile ::
+           Record Tile
+        -> T.Box (Array (Record Tile))
+        -> (Unit -> Effect Unit)
       deleteTile tile listBox = const do
         list <- T.read listBox
         newList <- pure $ filter (_ # tile.id # findTile # not) list
@@ -255,6 +205,7 @@ mainPageCpt = here.component "mainPage" cpt where
               ]
       ]
 
+--------------------------------------------------------------
 
 forest :: R2.Leaf Props
 forest = R2.leaf forestCpt
@@ -290,6 +241,8 @@ forestCpt = R.memo' $ here.component "forest" cpt where
         ]
       ]
 
+--------------------------------------------------------------
+
 sidePanel :: R2.Leaf Props
 sidePanel = R2.leafComponent sidePanelCpt
 sidePanelCpt :: R.Component Props
@@ -305,6 +258,8 @@ sidePanelCpt = here.component "sidePanel" cpt where
         case sidePanelState' of
           Opened -> pure $ openedSidePanel (Record.merge { session: s } props) []
           _      -> pure $ H.div {} []
+
+--------------------------------------------------------------
 
 type RenderRouteProps =
   ( route :: AppRoute
@@ -350,6 +305,8 @@ renderRouteCpt = here.component "renderRoute" cpt where
         GR.UserPage s n           -> user (sessionNodeProps s n) []
       ]
 
+--------------------------------------------------------------
+
 type AuthedProps =
   ( content :: Session -> R.Element
   | SessionProps )
@@ -372,6 +329,8 @@ authedCpt = here.component "authed" cpt where
       Just s  -> pure $ R.fragment [ content s, footer {} [] ]
     where
       homeProps = RE.pick props :: Record Props
+
+--------------------------------------------------------------
 
 openedSidePanel :: R2.Component (WithSession Props)
 openedSidePanel = R.createElement openedSidePanelCpt
@@ -398,6 +357,8 @@ openedSidePanelCpt = here.component "openedSidePanel" cpt where
                                  , sidePanel: sidePanelTexts } [] ]
       _ -> pure $ wrapper []
 
+--------------------------------------------------------------
+
 annuaire :: R2.Component SessionNodeProps
 annuaire = R.createElement annuaireCpt
 annuaireCpt :: R.Component SessionNodeProps
@@ -409,6 +370,8 @@ annuaireCpt = here.component "annuaire" cpt where
                                                   , nodeId
                                                   , session } } sessionProps) []
 
+--------------------------------------------------------------
+
 corpus :: R2.Component SessionNodeProps
 corpus = R.createElement corpusCpt
 corpusCpt :: R.Component SessionNodeProps
@@ -419,6 +382,8 @@ corpusCpt = here.component "corpus" cpt where
                                    corpusLayout { boxes
                                                 , nodeId
                                                 , session } } sessionProps) []
+
+--------------------------------------------------------------
 
 corpusCode :: R2.Component SessionNodeProps
 corpusCode = R.createElement corpusCodeCpt
@@ -439,6 +404,8 @@ corpusCodeCpt = here.component "corpusCode" cpt where
 
     pure $ authed authedProps []
 
+--------------------------------------------------------------
+
 type CorpusDocumentProps =
   ( corpusId :: CorpusId
   , listId :: ListId
@@ -458,6 +425,8 @@ corpusDocumentCpt = here.component "corpusDocument" cpt
                                                         , nodeId
                                                         , session } [] } sessionProps )[]
 
+--------------------------------------------------------------
+
 dashboard :: R2.Component SessionNodeProps
 dashboard = R.createElement dashboardCpt
 dashboardCpt :: R.Component SessionNodeProps
@@ -467,6 +436,8 @@ dashboardCpt = here.component "dashboard" cpt
       let sessionProps = RE.pick props :: Record SessionProps
       pure $ authed (Record.merge { content: \session ->
                                      dashboardLayout { boxes, nodeId, session } [] } sessionProps) []
+
+--------------------------------------------------------------
 
 type DocumentProps = ( listId :: ListId | SessionNodeProps )
 
@@ -481,6 +452,8 @@ documentCpt = here.component "document" cpt where
                                                       , nodeId
                                                       , mCorpusId: Nothing
                                                       , session } [] } sessionProps) []
+
+--------------------------------------------------------------
 
 graphExplorer :: R2.Component SessionNodeProps
 graphExplorer = R.createElement graphExplorerCpt
@@ -506,6 +479,7 @@ graphExplorerCpt = here.component "graphExplorer" cpt where
 
     pure $ authed authedProps []
 
+--------------------------------------------------------------
 
 phyloExplorer :: R2.Component SessionNodeProps
 phyloExplorer = R.createElement phyloExplorerCpt
@@ -529,6 +503,7 @@ phyloExplorerCpt = here.component "phylo" cpt where
 
     pure $ authed authedProps []
 
+--------------------------------------------------------------
 
 home :: R2.Component Props
 home = R.createElement homeCpt
@@ -536,6 +511,8 @@ homeCpt :: R.Component Props
 homeCpt = here.component "home" cpt where
   cpt { boxes } _ = do
     pure $ homeLayout { boxes }
+
+--------------------------------------------------------------
 
 lists :: R2.Component SessionNodeProps
 lists = R.createElement listsCpt
@@ -550,12 +527,16 @@ listsCpt = here.component "lists" cpt where
                                                      , session
                                                      , sessionUpdate: \_ -> pure unit } [] } sessionProps) []
 
+--------------------------------------------------------------
+
 login' :: Boxes -> R.Element
 login' { backend, sessions, showLogin: visible } =
   login { backend
         , backends: A.fromFoldable defaultBackends
         , sessions
         , visible }
+
+--------------------------------------------------------------
 
 routeFile :: R2.Component SessionNodeProps
 routeFile = R.createElement routeFileCpt
@@ -565,6 +546,8 @@ routeFileCpt = here.component "routeFile" cpt where
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
                                    fileLayout { nodeId, session } } sessionProps) []
+
+--------------------------------------------------------------
 
 type RouteFrameProps = (
   nodeType :: NodeType
@@ -580,6 +563,8 @@ routeFrameCpt = here.component "routeFrame" cpt where
     pure $ authed (Record.merge { content: \session ->
                                    frameLayout { nodeId, nodeType, session } } sessionProps) []
 
+--------------------------------------------------------------
+
 team :: R2.Component SessionNodeProps
 team = R.createElement teamCpt
 teamCpt :: R.Component SessionNodeProps
@@ -590,6 +575,8 @@ teamCpt = here.component "team" cpt where
                                    corpusLayout { boxes
                                                 , nodeId
                                                 , session } } sessionProps) []
+
+--------------------------------------------------------------
 
 texts :: R2.Component SessionNodeProps
 texts = R.createElement textsCpt
@@ -605,6 +592,8 @@ textsCpt = here.component "texts" cpt
                                                        , nodeId
                                                        , session } [] } sessionProps) []
 
+--------------------------------------------------------------
+
 user :: R2.Component SessionNodeProps
 user = R.createElement userCpt
 userCpt :: R.Component SessionNodeProps
@@ -617,6 +606,8 @@ userCpt = here.component "user" cpt where
                                               , frontends: defaultFrontends
                                               , nodeId
                                               , session } [] } sessionProps) []
+
+--------------------------------------------------------------
 
 type ContactProps = ( annuaireId :: NodeID | SessionNodeProps )
 

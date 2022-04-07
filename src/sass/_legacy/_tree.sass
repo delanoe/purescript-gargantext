@@ -266,16 +266,13 @@ $leaf-margin-bottom: 3px
 
   //----------------------------
 
-  &--selected
+  &--selected &
 
-    #{ $self }__node-link::before
+    &__node-link::before
       content: ""
       background-color: $gray-100
 
-    #{ $self }__node-icon
-      color: $primary
-
-    #{ $self }__node-link a
+    &__node-link a
       color: $primary
       font-weight: bold
 
@@ -291,7 +288,7 @@ $leaf-margin-bottom: 3px
 
   &--blank // for <Cloak> use cases
     $blank-color: $gray-100
-    $blank-link-width: 144px
+    $blank-link-width: 120px // roughly max size of a truncated node link text
     $blank-link-height: 12px
     $blank-link-offset-y: 5px
 

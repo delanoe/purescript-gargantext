@@ -284,7 +284,7 @@ multiSelectEnabledButtonCpt = here.component "multiSelectEnabledButton" cpt
               ButtonVariant Secondary
           , callback: \_ -> T.write_ false state
           }
-          [ H.text "Single-node" ]
+          [ H.text "Single" ]
         ,
           B.button
           { variant: state' ?
@@ -292,5 +292,5 @@ multiSelectEnabledButtonCpt = here.component "multiSelectEnabledButton" cpt
               OutlinedButtonVariant Secondary
           , callback: \_ -> T.write_ true state
           }
-          [ H.text "Multi-node" ]
+          [ H.text "Multiple" ]
         ]
