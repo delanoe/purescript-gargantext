@@ -165,16 +165,12 @@ sideTabDataCpt = here.component "sideTabData" cpt
                 { nodesMap: SigmaxT.nodesGraphMap props.graph
                 } `Record.merge` props
               ,
-                -- (separator)
-                H.div
-                { className: "graph-sidebar__separator" }
-                [
-                  B.icon
-                  { name: "angle-down" }
-                ]
+                sideBarTabSeparator
               ,
                 neighborhood
                 props
+              ,
+                sideBarTabSeparator
               ,
                 query
                 { frontends: props.frontends
@@ -230,8 +226,12 @@ sideTabCommunityCpt = here.component "sideTabCommunity" cpt
                 { nodesMap: SigmaxT.nodesGraphMap props.graph
                 } `Record.merge` props
               ,
+                sideBarTabSeparator
+              ,
                 neighborhood
                 props
+              ,
+                sideBarTabSeparator
               ,
                 query
                 { frontends
@@ -244,6 +244,16 @@ sideTabCommunityCpt = here.component "sideTabCommunity" cpt
               ]
         ]
 
+-------------------------------------------
+
+sideBarTabSeparator :: R.Element
+sideBarTabSeparator =
+  H.div
+  { className: "graph-sidebar__separator" }
+  [
+    B.icon
+    { name: "angle-down" }
+  ]
 
 -------------------------------------------
 -- TODO
@@ -347,42 +357,44 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
       , graph
       } _ = do
     -- States
-    { selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
-    selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
+    { selectedNodeIds } <-
+      GEST.focusedSidePanel sidePanelGraph
 
-    showMore /\ showMoreBox <- R2.useBox' false
+    selectedNodeIds' <-
+      T.useLive T.unequal selectedNodeIds
 
-    truncateResults /\ truncateResultsBox <- R2.useBox' false
+    showMore /\ showMoreBox <-
+      R2.useBox' false
+
+    termList /\ termListBox <-
+      R2.useBox' []
+
+    termCount /\ termCountBox <-
+      R2.useBox' 0
 
     -- Computed
     let
-      badges' = neighbourBadges graph selectedNodeIds'
-
       minSize = F.foldl Math.min 0.0 (Seq.map _.size (SigmaxT.graphNodes graph))
 
       maxSize = F.foldl Math.max 0.0 (Seq.map _.size (SigmaxT.graphNodes graph))
 
-      orderedBadges = A.sortWith (\n -> -n.size) $ Seq.toUnfoldable badges'
-
       maxTruncateResult = 5
 
-      termCount = Seq.length badges'
+      withTruncateResults = (termCount > maxTruncateResult) && (not showMore)
 
-      -- truncateResults
-      --    = termCount > maxTruncateResult
-      --   && not showMore
 
     -- Behaviors
     let
       onBadgeClick id _ = T.write_ (Set.singleton id) selectedNodeIds
 
     -- Effects
-    R.useEffect1' selectedNodeIds' $
+    R.useEffect1' selectedNodeIds' do
+      let refreshed = neighbourBadges graph selectedNodeIds'
+      let count     = Seq.length refreshed
+      let ordered   = A.sortWith (\n -> -n.size) $ Seq.toUnfoldable refreshed
+      T.write_ count   termCountBox
+      T.write_ ordered termListBox
       T.write_ false showMoreBox
-
-    R.useEffect1' showMore $
-      flip T.write_ truncateResultsBox $
-        (termCount > maxTruncateResult) && (not showMore)
 
     -- Render
     pure $
@@ -416,11 +428,11 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
         [
           H.ul
           {} $
-          flip mapWithIndex orderedBadges \index node ->
+          flip mapWithIndex termList \index node ->
 
             R2.if'
             (
-               truncateResults == false
+               withTruncateResults == false
             || index < maxTruncateResult
             ) $
               H.li
@@ -444,7 +456,7 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
                 [ H.text node.label ]
               ]
         ,
-          R2.if' (truncateResults) $
+          R2.if' (withTruncateResults) $
 
             B.button
             { variant: ButtonVariant Light
