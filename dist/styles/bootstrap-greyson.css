@@ -7499,10 +7499,6 @@ h4, h5, h6 {
   font-weight: bold;
 }
 
-a:hover {
-  color: inherit;
-}
-
 body {
   margin: 0;
   font-family: "Muli";
@@ -7631,6 +7627,11 @@ a:focus {
     transform: scale(1.1);
   }
 }
+/* Bootstrap 4.x Generic Custom Styles */
+.table {
+  border-collapse: collapse;
+}
+
 .maintree--blank::after {
   top: 0;
   right: 0;
