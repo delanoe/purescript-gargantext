@@ -7,7 +7,6 @@ import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
 import Gargantext.Components.GraphExplorer.Search (nodeSearchControl)
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
-import Gargantext.Types (SidePanelState)
 import Gargantext.Types as GT
 import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
@@ -17,7 +16,6 @@ import Toestand as T
 
 type Props =
   ( sidePanelGraph :: T.Box (Maybe (Record GEST.SidePanel))
-  , sidePanelState :: T.Box (SidePanelState)
   )
 
 here :: R2.Here
@@ -28,17 +26,18 @@ topBar = R2.leaf component
 
 component :: R.Component Props
 component = here.component "topBar" cpt where
-  cpt { sidePanelGraph, sidePanelState } _ = do
+  cpt { sidePanelGraph } _ = do
     -- States
     { mGraph
     , multiSelectEnabled
     , selectedNodeIds
     , showControls
+    , showSidebar
     } <- GEST.focusedSidePanel sidePanelGraph
 
     mGraph'         <- R2.useLive' mGraph
     showControls'   <- R2.useLive' showControls
-    sidePanelState' <- R2.useLive' sidePanelState
+    showSidebar' <- R2.useLive' showSidebar
 
     -- Render
     pure $
@@ -61,14 +60,14 @@ component = here.component "topBar" cpt where
         -- Sidebar toggle
         B.button
         { className: "graph-topbar__sidebar"
-        , callback: \_ -> T.modify_ GT.toggleSidePanelState sidePanelState
+        , callback: \_ -> T.modify_ GT.toggleSidePanelState showSidebar
 
-        , variant: sidePanelState' == GT.Opened ?
+        , variant: showSidebar' == GT.Opened ?
             ButtonVariant Light $
             OutlinedButtonVariant Light
         }
         [
-          H.text $ sidePanelState' == GT.Opened ?
+          H.text $ showSidebar' == GT.Opened ?
             "Hide sidebar" $
             "Show sidebar"
         ]
