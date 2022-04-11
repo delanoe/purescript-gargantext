@@ -414,8 +414,8 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
           H.div
           { className: "graph-neighborhood__counter" }
           [
-            B.fluff'
-            [ "text-info" ] $
+            B.wad'
+            [ "text-info", "d-inline" ] $
             show termCount
           ,
             H.text $ nbsp 1 <> "terms"

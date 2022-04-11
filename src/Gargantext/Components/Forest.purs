@@ -134,7 +134,7 @@ plusCpt = here.component "plus" cpt where
               B.icon
               { name: "universal-access" }
             ,
-              B.fluff_ [ "d-inline-block", "w-1" ]
+              B.wad_ [ "d-inline-block", "w-1" ]
             ,
               H.text $ "Log in/out"
             ]

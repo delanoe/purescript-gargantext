@@ -15,9 +15,9 @@ import Data.Sequence as Seq
 import Data.Set as Set
 import Effect.Timer (setTimeout)
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.GraphExplorer.Resources as Graph
 import Gargantext.Components.GraphExplorer.Buttons (centerButton, cameraButton, edgesToggleButton, louvainToggleButton, pauseForceAtlasButton, multiSelectEnabledButton)
 import Gargantext.Components.GraphExplorer.RangeControl (edgeConfluenceControl, edgeWeightControl, nodeSizeControl)
+import Gargantext.Components.GraphExplorer.Resources as Graph
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
 import Gargantext.Components.GraphExplorer.SlideButton (labelSizeButton, mouseSelectorSizeButton)
 import Gargantext.Components.GraphExplorer.Types as GET
@@ -52,7 +52,7 @@ type Controls =
   , showControls       :: T.Box Boolean
   , showEdges          :: T.Box SigmaxT.ShowEdgesState
   , showLouvain        :: T.Box Boolean
-  , sidePanelState     :: T.Box GT.SidePanelState
+  , showSidebar        :: T.Box GT.SidePanelState
   , sideTab            :: T.Box GET.SideTab
   , sigmaRef           :: R.Ref Sigmax.Sigma
   )
@@ -84,7 +84,7 @@ controlsCpt = here.component "controls" cpt
         , session
         , showEdges
         , showLouvain
-        , sidePanelState
+        , showSidebar
         , sideTab
         , sigmaRef } _ = do
 
@@ -94,7 +94,7 @@ controlsCpt = here.component "controls" cpt
       forceAtlasState' <- T.useLive T.unequal forceAtlasState
       graphStage' <- T.useLive T.unequal graphStage
       selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
-      sidePanelState' <- T.useLive T.unequal sidePanelState
+      showSidebar' <- T.useLive T.unequal showSidebar
 
       localControls <- initialLocalControls
       -- ref to track automatic FA pausing
@@ -123,8 +123,8 @@ controlsCpt = here.component "controls" cpt
 
       -- Automatic opening of sidebar when a node is selected (but only first time).
       R.useEffect' $ do
-        if sidePanelState' == GT.InitialClosed && (not Set.isEmpty selectedNodeIds') then do
-          T.write_ GT.Opened sidePanelState
+        if showSidebar' == GT.InitialClosed && (not Set.isEmpty selectedNodeIds') then do
+          T.write_ GT.Opened showSidebar
           T.write_ GET.SideTabData sideTab
         else
           pure unit
@@ -322,7 +322,7 @@ useGraphControls :: { forceAtlasS :: SigmaxT.ForceAtlasState
                     , reloadForest   :: T2.ReloadS
                     , session        :: Session
                     , sidePanel      :: T.Box (Maybe (Record GEST.SidePanel))
-                    , sidePanelState :: T.Box GT.SidePanelState }
+                    }
                  -> R.Hooks (Record Controls)
 useGraphControls { forceAtlasS
                  , graph
@@ -331,7 +331,7 @@ useGraphControls { forceAtlasS
                  , reloadForest
                  , session
                  , sidePanel
-                 , sidePanelState } = do
+                 } = do
   edgeConfluence <- T.useBox $ Range.Closed { min: 0.0, max: 1.0 }
   edgeWeight <- T.useBox $ Range.Closed {
       min: 0.0
@@ -345,7 +345,13 @@ useGraphControls { forceAtlasS
   sigma <- Sigmax.initSigma
   sigmaRef <- R.useRef sigma
 
-  { multiSelectEnabled, removedNodeIds, selectedNodeIds, showControls, sideTab } <- GEST.focusedSidePanel sidePanel
+  { multiSelectEnabled
+  , removedNodeIds
+  , selectedNodeIds
+  , showControls
+  , sideTab
+  , showSidebar
+  } <- GEST.focusedSidePanel sidePanel
 
   pure { edgeConfluence
        , edgeWeight
@@ -362,7 +368,7 @@ useGraphControls { forceAtlasS
        , showControls
        , showEdges
        , showLouvain
-       , sidePanelState
+       , showSidebar
        , sideTab
        , sigmaRef
        , reloadForest

@@ -12,7 +12,6 @@ import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (Tuple(..))
-import Data.Tuple.Nested ((/\))
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.GraphExplorer.Resources as Graph
@@ -25,7 +24,6 @@ import Gargantext.Config (defaultFrontends)
 import Gargantext.Data.Louvain as Louvain
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
-import Gargantext.Types (SidePanelState(..))
 import Gargantext.Types as GT
 import Gargantext.Types as Types
 import Gargantext.Utils ((?))
@@ -62,6 +60,7 @@ layoutCpt = here.component "explorerWriteGraph" cpt where
             , session
             , hyperdataGraph
             } _ = do
+
   -- Computed
   -----------------
 
@@ -78,13 +77,12 @@ layoutCpt = here.component "explorerWriteGraph" cpt where
   -- States
   -----------------
 
-    sideBarDisplayed /\ sideBarDisplayedBox <-
-      R2.useBox' (InitialClosed :: SidePanelState)
-
     { mMetaData: mMetaDataBox
+    , showSidebar
     } <- GEST.focusedSidePanel boxes.sidePanelGraph
     _graphVersion' <- T.useLive T.unequal boxes.graphVersion
 
+    showSidebar' <- R2.useLive' showSidebar
 
     -- _dataRef <- R.useRef graph
     graphRef <- R.useRef null
@@ -100,12 +98,12 @@ layoutCpt = here.component "explorerWriteGraph" cpt where
       , reloadForest: boxes.reloadForest
       , session
       , sidePanel: boxes.sidePanelGraph
-      , sidePanelState: sideBarDisplayedBox
       }
 
     mTopBarHost <- R.unsafeHooksEffect $ R2.getElementById "portal-topbar"
 
     showControls' <- R2.useLive' controls.showControls
+
 
     -- graphVersionRef <- R.useRef graphVersion'
     -- R.useEffect' $ do
@@ -141,9 +139,7 @@ layoutCpt = here.component "explorerWriteGraph" cpt where
           R2.fragmentWithKey topBarPortalKey
           [
             GETB.topBar
-            { sidePanelState: sideBarDisplayedBox
-            , sidePanelGraph: props.boxes.sidePanelGraph
-            }
+            { sidePanelGraph: props.boxes.sidePanelGraph }
           ]
         ]
       ,
@@ -152,7 +148,7 @@ layoutCpt = here.component "explorerWriteGraph" cpt where
         { className: "graph-layout__sidebar"
         -- @XXX: ReactJS lack of "keep-alive" feature workaround solution
         -- @link https://github.com/facebook/react/issues/12039
-        , style: { display: sideBarDisplayed == GT.Opened ? "block" $ "none" }
+        , style: { display: showSidebar' == GT.Opened ? "block" $ "none" }
         }
         [
           case mMetaData' of

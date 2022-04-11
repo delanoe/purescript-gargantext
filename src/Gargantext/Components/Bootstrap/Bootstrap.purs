@@ -7,7 +7,6 @@ import Gargantext.Components.Bootstrap.Button(button) as Exports
 import Gargantext.Components.Bootstrap.Caveat(caveat) as Exports
 import Gargantext.Components.Bootstrap.Cloak (cloak) as Exports
 import Gargantext.Components.Bootstrap.Fieldset(fieldset) as Exports
-import Gargantext.Components.Bootstrap.Fluff(fluff, fluff', fluff_) as Exports
 import Gargantext.Components.Bootstrap.FormInput(formInput) as Exports
 import Gargantext.Components.Bootstrap.FormSelect(formSelect, formSelect') as Exports
 import Gargantext.Components.Bootstrap.FormTextarea(formTextarea) as Exports
@@ -17,6 +16,7 @@ import Gargantext.Components.Bootstrap.ProgressBar(progressBar) as Exports
 import Gargantext.Components.Bootstrap.Spinner(spinner) as Exports
 import Gargantext.Components.Bootstrap.Tabs(tabs) as Exports
 import Gargantext.Components.Bootstrap.Tooltip(tooltip, TooltipBindingProps, tooltipBind, tooltipBind', tooltipContainer) as Exports
+import Gargantext.Components.Bootstrap.Wad(wad, wad', wad_) as Exports
 
 import Gargantext.Components.Bootstrap.Shortcut(
     div', div_
