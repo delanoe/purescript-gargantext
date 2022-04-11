@@ -7,9 +7,6 @@ module Gargantext.Components.Nodes.Annuaire.User.Contact
   , saveUserInfo
   ) where
 
-import Gargantext.Components.GraphQL.User (UserInfo, _ui_cwCity, _ui_cwCountry, _ui_cwFirstName, _ui_cwLabTeamDeptsFirst, _ui_cwLastName, _ui_cwOffice, _ui_cwOrganizationFirst, _ui_cwRole, _ui_cwTouchMail, _ui_cwTouchPhone)
-import Gargantext.Prelude (Unit, bind, discard, pure, show, ($), (<$>), (<>))
-
 import Data.Either (Either(..))
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -19,6 +16,7 @@ import Effect.Class (liftEffect)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.GraphQL (getClient)
 import Gargantext.Components.GraphQL.Endpoints (getUserInfo)
+import Gargantext.Components.GraphQL.User (UserInfo, _ui_cwCity, _ui_cwCountry, _ui_cwFirstName, _ui_cwLabTeamDeptsFirst, _ui_cwLastName, _ui_cwOffice, _ui_cwOrganizationFirst, _ui_cwRole, _ui_cwTouchMail, _ui_cwTouchPhone)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (ContactData', HyperdataContact(..))
@@ -26,8 +24,9 @@ import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude (Unit, bind, discard, pure, show, ($), (<$>), (<>))
 import Gargantext.Routes as Routes
-import Gargantext.Sessions (Session, get, put, sessionId)
+import Gargantext.Sessions (Session(..), get, put, sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
@@ -196,11 +195,13 @@ saveContactHyperdata session id = put session (Routes.NodeAPI Node (Just id) "")
 
 saveUserInfo :: Session -> Int -> UserInfo ->  AffRESTError Int
 saveUserInfo session id ui = do
+  let token = getToken session
   client <- liftEffect $ getClient session
   res <- mutation
     client
     "update user_info"
-    { update_user_info: onlyArgs { ui_id: id
+    { update_user_info: onlyArgs { token: token
+                                 , ui_id: id
                                  , ui_cwFirstName: ga ui.ui_cwFirstName
                                  , ui_cwLastName: ga ui.ui_cwLastName
                                  , ui_cwOrganization: ui.ui_cwOrganization
@@ -215,6 +216,7 @@ saveUserInfo session id ui = do
   where
     ga Nothing = ArgL IgnoreArg
     ga (Just val) = ArgR val
+    getToken (Session { token }) = token
 
 type AnnuaireLayoutProps = ( annuaireId :: Int, session :: Session | ReloadProps )
 
