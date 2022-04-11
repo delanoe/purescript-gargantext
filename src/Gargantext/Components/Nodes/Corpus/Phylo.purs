@@ -93,7 +93,7 @@ phyloLayoutCpt = here.component "main" cpt where
 
       case mEl of
         Nothing -> R.nothing
-        Just el -> R2.addClass el [ "p-0--i" ]
+        Just el -> R2.addClass el [ "p-0" ]
 
     R.useEffectOnce do
       pure do
@@ -101,7 +101,7 @@ phyloLayoutCpt = here.component "main" cpt where
 
         case mEl of
           Nothing -> R.nothing
-          Just el -> R2.removeClass el [ "p-0--i" ]
+          Just el -> R2.removeClass el [ "p-0" ]
 
 
     -- | Render

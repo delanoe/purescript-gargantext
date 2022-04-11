@@ -9,6 +9,7 @@ import Effect (Effect)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), ComponentStatus(..), Variant(..))
 import Gargantext.Components.PhyloExplorer.Types (Term(..), Source(..))
+import Gargantext.Types (SidePanelState(..), toggleSidePanelState)
 import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
 import Reactix (nothing)
@@ -27,7 +28,7 @@ type Props =
   , resultCallback      :: Maybe Term -> Effect Unit
 
   , toolBar             :: T.Box (Boolean)
-  , sideBar             :: T.Box (Boolean)
+  , sideBar             :: T.Box (SidePanelState)
   )
 
 here :: R2.Here
@@ -71,12 +72,12 @@ component = here.component "main" cpt where
         -- Sidebar toggle
         B.button
         { className: "phylo-topbar__sidebar"
-        , callback: \_ -> T.modify_ (not) sideBar
-        , variant: sideBar' ?
+        , callback: \_ -> T.modify_ (toggleSidePanelState) sideBar
+        , variant: sideBar' == Opened ?
             ButtonVariant Light $
             OutlinedButtonVariant Light
         }
-        [ H.text $ sideBar' ? "Hide sidebar" $ "Show sidebar" ]
+        [ H.text $ sideBar' == Opened ? "Hide sidebar" $ "Show sidebar" ]
       ,
         -- Source
         H.div

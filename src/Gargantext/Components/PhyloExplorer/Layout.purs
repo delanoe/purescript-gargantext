@@ -21,7 +21,7 @@ import Gargantext.Components.PhyloExplorer.TopBar (topBar)
 import Gargantext.Components.PhyloExplorer.Types (DisplayView(..), PhyloDataSet(..), ExtractedTerm, ExtractedCount, Source, Term, sortSources)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Hooks.UpdateEffect (useUpdateEffect1')
-import Gargantext.Types (NodeID)
+import Gargantext.Types (NodeID, SidePanelState(..))
 import Gargantext.Utils (getter, (?))
 import Gargantext.Utils.Reactix as R2
 import Graphics.D3.Base (d3)
@@ -46,6 +46,7 @@ layoutCpt = here.component "layout" cpt where
   cpt { phyloDataSet: (PhyloDataSet o)
       , nodeId
       } _ = do
+
   -- States
   ---------
 
@@ -82,7 +83,7 @@ layoutCpt = here.component "layout" cpt where
       R2.useBox' false
 
     sideBarDisplayed /\ sideBarDisplayedBox <-
-      R2.useBox' false
+      R2.useBox' InitialClosed
 
     extractedTerms /\ extractedTermsBox <-
       R2.useBox' (mempty :: Array ExtractedTerm)
@@ -256,7 +257,7 @@ layoutCpt = here.component "layout" cpt where
         { className: "phylo__sidebar"
         -- @XXX: ReactJS lack of "keep-alive" feature workaround solution
         -- @link https://github.com/facebook/react/issues/12039
-        , style: { display: sideBarDisplayed ? "block" $ "none" }
+        , style: { display: sideBarDisplayed == Opened? "block" $ "none" }
         }
         [
           sideBar
