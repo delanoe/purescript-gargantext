@@ -31,15 +31,15 @@ type NodeActionsGraphProps =
 nodeActionsGraph :: R2.Component NodeActionsGraphProps
 nodeActionsGraph = R.createElement nodeActionsGraphCpt
 nodeActionsGraphCpt :: R.Component NodeActionsGraphProps
-nodeActionsGraphCpt = here.component "nodeActionsGraph" cpt
-  where
-    cpt { id, graphVersions, session, refresh } _ = do
-      pure $ H.div { className: "node-actions" } [
-        if graphVersions.gv_graph == Just graphVersions.gv_repo then
-          H.div {} []
-        else
-          graphUpdateButton { id, session, refresh }
-      ]
+nodeActionsGraphCpt = here.component "nodeActionsGraph" cpt where
+  cpt { id, graphVersions, session, refresh } _ =
+    let sameVersions = (graphVersions.gv_graph == Just graphVersions.gv_repo)
+    in pure $
+
+      R2.if' (not sameVersions) $
+
+        graphUpdateButton { id, session, refresh }
+
 
 type GraphUpdateButtonProps =
   ( id :: GT.ID
@@ -99,12 +99,9 @@ type NodeActionsNodeListProps =
 nodeActionsNodeList :: Record NodeActionsNodeListProps -> R.Element
 nodeActionsNodeList p = R.createElement nodeActionsNodeListCpt p []
 nodeActionsNodeListCpt :: R.Component NodeActionsNodeListProps
-nodeActionsNodeListCpt = here.component "nodeActionsNodeList" cpt
-  where
-    cpt props _ = do
-      pure $ H.div { className: "node-actions" } [
-        nodeListUpdateButton props
-      ]
+nodeActionsNodeListCpt = here.component "nodeActionsNodeList" cpt where
+  cpt props _ = pure $ nodeListUpdateButton props
+
 
 type NodeListUpdateButtonProps =
   ( listId :: GT.ListId

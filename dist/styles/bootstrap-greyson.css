@@ -7536,6 +7536,9 @@ a:focus, a:hover {
   margin-right: 16px;
 }
 
+.mainleaf__update-icon.b-icon-button--overlay::before, .mainleaf__settings-icon.b-icon-button--overlay::before {
+  top: -5px;
+}
 .mainleaf__progress-bar {
   width: 64px;
   position: relative;
@@ -7598,6 +7601,19 @@ a:focus, a:hover {
   top: 5px;
 }
 
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+  .awesome-popover .b-icon-button--overlay::before {
+    bottom: -5px;
+  }
+}
+@-moz-document url-prefix() {
+  .awesome-popover {
+    max-height: 22.5px;
+  }
+  .awesome-popover .b-icon-button--overlay::before {
+    bottom: -3px;
+  }
+}
 .subtree__node {
   margin-top: 2px;
 }

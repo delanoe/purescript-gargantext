@@ -1,10 +1,15 @@
-module Gargantext.Components.Forest.Tree.Node where
+module Gargantext.Components.Forest.Tree.Node
+  ( nodeSpan
+  , blankNodeSpan
+  ) where
 
 import Gargantext.Prelude
 
+import Data.Array.NonEmpty as NArray
 import Data.Foldable (intercalate)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Nullable (null)
+import Data.String.Regex as Regex
 import Data.Symbol (SProxy(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
@@ -42,6 +47,9 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
 import Toestand as T
+
+-- (?) never been able to properly declare PureScript Regex...
+foreign import nodeUserRegexp :: Regex.Regex
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node"
@@ -285,6 +293,7 @@ nodeSpanCpt = here.component "nodeSpan" cpt
           , href
           , id
           , name: name' props.name nodeType session
+          , type: nodeType
           }
         ,
 
@@ -411,45 +420,54 @@ folderIconCpt = here.component "folderIcon" cpt where
 
 -----------------------------------------------
 
-
 type NodeLinkProps =
   ( callback   :: Unit -> Effect Unit
   , href       :: String
   , id         :: Int
   , name       :: GT.Name
+  , type       :: GT.NodeType
   )
 
 nodeLink :: R2.Leaf NodeLinkProps
 nodeLink = R2.leaf nodeLinkCpt
 nodeLinkCpt :: R.Component NodeLinkProps
-nodeLinkCpt = here.component "nodeLink" cpt
-  where
-    cpt { callback
-        , href
-        , id
-        , name
-        } _ = do
+nodeLinkCpt = here.component "nodeLink" cpt where
+  cpt { callback
+      , href
+      , id
+      , name
+      , type: nodeType
+      } _ = do
+    -- Computed
+    let
+      tid = tooltipId name id
 
-      let
-        tid = tooltipId name id
+      aProps =
+        { href
+        } `Record.merge` B.tooltipBind tid
 
-        aProps =
-          { href
-          } `Record.merge` B.tooltipBind tid
+    -- Render
+    pure $
 
-      pure $
-
-        H.div
-        { className: "mainleaf__node-link"
-        , on: { click: const $ callback unit }
-        }
+      H.div
+      { className: "mainleaf__node-link"
+      , on: { click: const $ callback unit }
+      }
+      [
+        H.a
+        aProps
         [
-          H.a
-          aProps
-          [
-            B.span_ $ textEllipsisBreak 15 name
-          ]
+          B.span_ $ nodeLinkText nodeType name
         ]
+      ]
+
+nodeLinkText :: GT.NodeType -> String -> String
+nodeLinkText GT.NodeUser s = s # (truncateNodeUser)
+                         >>> maybe s identity
+nodeLinkText _           s = textEllipsisBreak 15 s
+
+truncateNodeUser :: String -> Maybe String
+truncateNodeUser = Regex.match (nodeUserRegexp) >=> flip NArray.index 1 >>> join
 
 ---------------------------------------------------
 

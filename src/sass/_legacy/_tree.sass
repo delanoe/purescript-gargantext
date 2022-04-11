@@ -60,10 +60,9 @@ $node-popup-width: 544px
 
 ////////////////////////////////////
 
-$leaf-margin-bottom: 3px
-
 .mainleaf
   $self: &
+  $leaf-margin-bottom: 3px
 
   display: flex
   align-items: center
@@ -212,15 +211,14 @@ $leaf-margin-bottom: 3px
 
   //----------------------------
 
-    &__update-icon,
-    &__settings-icon
-      // altering component overlay offset to fit it with the ".mainleaf" overlay
-      // dimension
-      $aside-icon-offset-y: -5px
+  &__update-icon,
+  &__settings-icon
+    // altering component overlay offset to fit it with the ".mainleaf" overlay
+    // dimension
+    $aside-icon-offset-top: -5px
 
-      &.b-icon-button--overlay::before
-        top: $aside-icon-offset-y
-        bottom: $aside-icon-offset-y
+    &.b-icon-button--overlay::before
+      top: $aside-icon-offset-top
 
   //----------------------------
 
@@ -303,6 +301,30 @@ $leaf-margin-bottom: 3px
         position: absolute
         top: $blank-link-offset-y
 
+// (?) Chrome engine adds extra height to the overlay embedded settings icon
+//        → set an empirical icon overlay position
+@media screen and (-webkit-min-device-pixel-ratio:0)
+  $icon-overlay-bottom: -5px
+
+  .awesome-popover
+
+    .b-icon-button--overlay::before
+      bottom: $icon-overlay-bottom
+
+
+// (?) FireFox engine adds extra height to the embedded settings
+//        → set an empirical fixed height on its wrapper to avoid
+//          an height flickering alteration (on mainleaf hover) ;
+//          and modify the icon overlay position
+@-moz-document url-prefix()
+  $simulated-mainleaf-overlay-height: 22.5px
+  $icon-overlay-bottom: -3px
+
+  .awesome-popover
+    max-height: $simulated-mainleaf-overlay-height
+
+    .b-icon-button--overlay::before
+      bottom: $icon-overlay-bottom
 
 
 ////////////////////////////////////////
