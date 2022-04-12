@@ -14,7 +14,9 @@ import Gargantext.Components.Bootstrap.Icon(icon) as Exports
 import Gargantext.Components.Bootstrap.IconButton(iconButton) as Exports
 import Gargantext.Components.Bootstrap.ProgressBar(progressBar) as Exports
 import Gargantext.Components.Bootstrap.Spinner(spinner) as Exports
-import Gargantext.Components.Bootstrap.Tooltip(tooltip, tooltipBind, tooltipContainer) as Exports
+import Gargantext.Components.Bootstrap.Tabs(tabs) as Exports
+import Gargantext.Components.Bootstrap.Tooltip(tooltip, TooltipBindingProps, tooltipBind, tooltipBind', tooltipContainer) as Exports
+import Gargantext.Components.Bootstrap.Wad(wad, wad', wad_) as Exports
 
 import Gargantext.Components.Bootstrap.Shortcut(
     div', div_

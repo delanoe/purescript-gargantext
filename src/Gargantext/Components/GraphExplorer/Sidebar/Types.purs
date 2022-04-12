@@ -1,14 +1,14 @@
 module Gargantext.Components.GraphExplorer.Sidebar.Types where
 
-import Data.Maybe (Maybe(..), maybe)
-import Data.Set as Set
-import Reactix as R
-import Toestand as T
-
 import Gargantext.Prelude
 
+import Data.Maybe (Maybe(..), maybe)
+import Data.Set as Set
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
+import Gargantext.Types as GT
+import Reactix as R
+import Toestand as T
 
 type SidePanel =
   (
@@ -19,6 +19,7 @@ type SidePanel =
   , selectedNodeIds    :: SigmaxT.NodeIds
   , showControls       :: Boolean
   , sideTab            :: GET.SideTab
+  , showSidebar        :: GT.SidePanelState
   )
 
 initialSidePanel :: Maybe (Record SidePanel)
@@ -32,7 +33,9 @@ focusedSidePanel :: T.Box (Maybe (Record SidePanel))
                             , removedNodeIds     :: T.Box SigmaxT.NodeIds
                             , selectedNodeIds    :: T.Box SigmaxT.NodeIds
                             , showControls       :: T.Box Boolean
-                            , sideTab            :: T.Box GET.SideTab }
+                            , sideTab            :: T.Box GET.SideTab
+                            , showSidebar        :: T.Box GT.SidePanelState
+                            }
 focusedSidePanel sidePanel = do
   mGraph <- T.useFocused
             (maybe Nothing _.mGraph)
@@ -55,6 +58,9 @@ focusedSidePanel sidePanel = do
   sideTab <- T.useFocused
                   (maybe GET.SideTabLegend _.sideTab)
                   (\val -> maybe Nothing (\sp -> Just $ sp { sideTab = val })) sidePanel
+  showSidebar <- T.useFocused
+                  (maybe GT.InitialClosed _.showSidebar)
+                  (\val -> maybe Nothing (\sp -> Just $ sp { showSidebar = val })) sidePanel
 
   pure $ {
     mGraph
@@ -64,4 +70,5 @@ focusedSidePanel sidePanel = do
   , selectedNodeIds
   , showControls
   , sideTab
+  , showSidebar
   }

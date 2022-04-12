@@ -26,7 +26,8 @@ type UserInfo
     , ui_cwTouchPhone   :: Maybe String
     , ui_cwTouchMail    :: Maybe String }
 type UserInfoM
-  = { ui_id             :: NotNull Int
+  = { token             :: NotNull String
+    , ui_id             :: NotNull Int
     , ui_username       :: String
     , ui_email          :: String
     , ui_title          :: String

@@ -9,6 +9,7 @@ import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
 import Gargantext.Components.Lang (langSwitcher, allFeLangs)
 import Gargantext.Components.Themes (themeSwitcher, allThemes)
 import Gargantext.Types (Handed(..))
+import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -64,7 +65,9 @@ topBarCpt = here.component "topBar" cpt
           ]
         ,
           B.button
-          { variant: ButtonVariant Light
+          { variant: showTree' ?
+              ButtonVariant Light $
+              OutlinedButtonVariant Light
           , callback: const $ T.modify_ (not) showTree
           , className: "main-topbar__tree-switcher"
           }

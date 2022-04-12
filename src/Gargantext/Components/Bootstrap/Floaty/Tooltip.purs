@@ -1,6 +1,6 @@
 module Gargantext.Components.Bootstrap.Tooltip
   ( tooltip
-  , tooltipBind
+  , TooltipBindingProps, tooltipBind, tooltipBind'
   , tooltipContainer
   ) where
 
@@ -88,6 +88,13 @@ tooltipBind :: String -> Record TooltipBindingProps
 tooltipBind =
   { "data-for": _
   , "data-tip": true
+  }
+
+-- | Derived empty state
+tooltipBind' :: Record TooltipBindingProps
+tooltipBind' =
+  { "data-for": ""
+  , "data-tip": false
   }
 
 -------------------------------------------------------------

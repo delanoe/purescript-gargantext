@@ -4,10 +4,11 @@ module Gargantext.Components.GraphExplorer.Search
 import Prelude
 
 import DOM.Simple.Console (log2)
-import Data.Foldable (foldl)
+import Data.Foldable (foldl, intercalate)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Effect (Effect)
+import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.InputWithAutocomplete (inputWithAutocomplete)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Utils (queryMatchesLabel)
@@ -23,6 +24,7 @@ type Props = (
     graph              :: SigmaxT.SGraph
   , multiSelectEnabled :: T.Box Boolean
   , selectedNodeIds    :: T.Box SigmaxT.NodeIds
+  , className          :: String
   )
 
 -- | Whether a node matches a search string
@@ -37,28 +39,43 @@ searchNodes :: String -> Seq.Seq (Record SigmaxT.Node) -> Seq.Seq (Record Sigmax
 searchNodes "" _ = Seq.empty
 searchNodes s nodes = Seq.filter (nodeMatchesSearch s) nodes
 
-nodeSearchControl :: R2.Component Props
-nodeSearchControl = R.createElement nodeSearchControlCpt
+nodeSearchControl :: R2.Leaf Props
+nodeSearchControl = R2.leaf nodeSearchControlCpt
 nodeSearchControlCpt :: R.Component Props
 nodeSearchControlCpt = here.component "nodeSearchControl" cpt
   where
-    cpt { graph, multiSelectEnabled, selectedNodeIds } _ = do
+    cpt props@{ graph, multiSelectEnabled, selectedNodeIds } _ = do
       search <- T.useBox ""
       search' <- T.useLive T.unequal search
       multiSelectEnabled' <- T.useLive T.unequal multiSelectEnabled
 
       let doSearch s = triggerSearch graph s multiSelectEnabled' selectedNodeIds
 
-      pure $ R.fragment
-        [ inputWithAutocomplete { autocompleteSearch: autocompleteSearch graph
-                                , classes: "mx-2"
-                                , onAutocompleteClick: doSearch
-                                , onEnterPress: doSearch
-                                , state: search } []
-        , H.div { className: "btn input-group-addon"
-                , on: { click: \_ -> doSearch search' }
-                }
-          [ H.span { className: "fa fa-search" } [] ]
+      pure $
+
+        H.form
+        { className: intercalate " "
+            [ "graph-node-search"
+            , props.className
+            ]
+        }
+        [
+          inputWithAutocomplete
+          { autocompleteSearch: autocompleteSearch graph
+          , onAutocompleteClick: doSearch
+          , onEnterPress: doSearch
+          , classes: ""
+          , state: search
+          }
+        ,
+          B.button
+          { callback: \_ -> doSearch search'
+          , type: "submit"
+          , className: "graph-node-search__submit"
+          }
+          [
+            B.icon { name: "search"}
+          ]
         ]
 
 autocompleteSearch :: SigmaxT.SGraph -> String -> Array String

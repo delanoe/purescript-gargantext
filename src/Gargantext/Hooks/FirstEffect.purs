@@ -10,6 +10,8 @@ import Reactix (nothing, thenNothing)
 import Reactix as R
 
 -- | Hook triggered on first mount event only
+-- |
+-- | /!\ @TODO cleanup function not working
 useFirstMount :: R.Hooks (Boolean)
 useFirstMount = do
   firstMount <- R.useRef true

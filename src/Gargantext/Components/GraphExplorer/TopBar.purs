@@ -1,44 +1,84 @@
-module Gargantext.Components.GraphExplorer.TopBar where
+module Gargantext.Components.GraphExplorer.TopBar (topBar) where
 
-import Data.Maybe (Maybe(..))
-import Reactix as R
-import Reactix.DOM.HTML as RH
-import Toestand as T
+import Gargantext.Prelude hiding (max, min)
 
-import Gargantext.Prelude hiding (max,min)
-
-import Gargantext.Components.App.Data (Boxes)
+import Data.Maybe (Maybe)
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
 import Gargantext.Components.GraphExplorer.Search (nodeSearchControl)
 import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
-import Gargantext.Components.GraphExplorer.ToggleButton as Toggle
+import Gargantext.Types as GT
+import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
+
+type Props =
+  ( sidePanelGraph :: T.Box (Maybe (Record GEST.SidePanel))
+  )
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.TopBar"
 
-type TopBar =
-  (
-    boxes    :: Boxes
-  )
+topBar :: R2.Leaf Props
+topBar = R2.leaf component
 
-topBar :: R2.Leaf TopBar
-topBar = R2.leafComponent topBarCpt
-topBarCpt :: R.Component TopBar
-topBarCpt = here.component "topBar" cpt where
-  cpt { boxes: { sidePanelGraph
-               , sidePanelState } } _ = do
-    { mGraph, multiSelectEnabled, selectedNodeIds, showControls } <- GEST.focusedSidePanel sidePanelGraph
+component :: R.Component Props
+component = here.component "topBar" cpt where
+  cpt { sidePanelGraph } _ = do
+    -- States
+    { mGraph
+    , multiSelectEnabled
+    , selectedNodeIds
+    , showControls
+    , showSidebar
+    } <- GEST.focusedSidePanel sidePanelGraph
 
-    mGraph' <- T.useLive T.unequal mGraph
+    mGraph'         <- R2.useLive' mGraph
+    showControls'   <- R2.useLive' showControls
+    showSidebar' <- R2.useLive' showSidebar
 
-    let search = case mGraph' of
-          Just graph -> nodeSearchControl { graph
-                                         , multiSelectEnabled
-                                         , selectedNodeIds } []
-          Nothing -> RH.div {} []
+    -- Render
+    pure $
 
-    pure $ RH.form { className: "graph-topbar d-flex" }
-      [ Toggle.controlsToggleButton { state: showControls } []
-      , Toggle.sidebarToggleButton { state: sidePanelState } []
-      , search
+      H.div
+      { className: "graph-topbar" }
+      [
+        -- Toolbar toggle
+        B.button
+        { className: "graph-topbar__toolbar"
+        , callback: \_ -> T.modify_ (not) showControls
+        , variant: showControls' ?
+            ButtonVariant Light $
+            OutlinedButtonVariant Light
+        }
+        [
+          H.text $ showControls' ? "Hide toolbar" $ "Show toolbar"
+        ]
+      ,
+        -- Sidebar toggle
+        B.button
+        { className: "graph-topbar__sidebar"
+        , callback: \_ -> T.modify_ GT.toggleSidePanelState showSidebar
+
+        , variant: showSidebar' == GT.Opened ?
+            ButtonVariant Light $
+            OutlinedButtonVariant Light
+        }
+        [
+          H.text $ showSidebar' == GT.Opened ?
+            "Hide sidebar" $
+            "Show sidebar"
+        ]
+      ,
+        -- Search
+        R2.fromMaybe_ mGraph' \graph ->
+
+          nodeSearchControl
+          { graph
+          , multiSelectEnabled
+          , selectedNodeIds
+          , className: "graph-topbar__search"
+          }
       ]

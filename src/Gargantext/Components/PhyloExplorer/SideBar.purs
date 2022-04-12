@@ -4,15 +4,14 @@ module Gargantext.Components.PhyloExplorer.SideBar
 
 import Gargantext.Prelude
 
-import Data.Foldable (intercalate)
 import Data.Maybe (Maybe)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
+import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.PhyloExplorer.DetailsTab (detailsTab)
 import Gargantext.Components.PhyloExplorer.SelectionTab (selectionTab)
 import Gargantext.Components.PhyloExplorer.Types (ExtractedCount, ExtractedTerm, TabView(..))
 import Gargantext.Types (NodeID)
-import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -48,84 +47,45 @@ component = R.hooksComponent componentName cpt where
     -- States
     tabView /\ tabViewBox <- R2.useBox' DetailsTab
 
+    -- Computed
+    let
+      tabList = [ DetailsTab, SelectionTab ]
+
     -- Render
     pure $
 
       H.div
       { className: "phylo-sidebar" }
       [
-        -- Teasers
-        H.div
-        { className: "phylo-sidebar__top-teaser" }
-        []
-      ,
         -- Menu
-        H.ul
-        { className: intercalate " "
-            [ "nav nav-tabs"
-            , "phylo-sidebar__menu"
-            ]
+        B.tabs
+        { value: tabView
+        , list: tabList
+        , callback: flip T.write_ tabViewBox
         }
-        [
-          H.li
-          { className: "nav-item"
-          , on: { click: \_ -> T.write_ DetailsTab tabViewBox }
-          }
-          [
-            H.a
-            { className: intercalate " "
-                [ "nav-link"
-                , tabView == DetailsTab ? "active" $ ""
-                ]
+      ,
+        -- Content
+        case tabView of
+
+          DetailsTab ->
+            detailsTab
+            { key: (show props.nodeId) <> "-details"
+            , docCount: props.docCount
+            , foundationCount: props.foundationCount
+            , periodCount: props.periodCount
+            , termCount: props.termCount
+            , groupCount: props.groupCount
+            , branchCount: props.branchCount
             }
-            [
-              H.text "Details"
-            ]
-          ]
-        ,
-          H.li
-          { className: "nav-item"
-          , on: { click: \_ -> T.write_ SelectionTab tabViewBox }
-          }
-          [
-            H.a
-            { className: intercalate " "
-                [ "nav-link"
-                , tabView == SelectionTab ? "active" $ ""
-                ]
+
+          SelectionTab ->
+            selectionTab
+            { key: (show props.nodeId) <> "-selection"
+            , extractedTerms: props.extractedTerms
+            , extractedCount: props.extractedCount
+            , selectedTerm: props.selectedTerm
+            , selectedBranch: props.selectedBranch
+            , selectedSource: props.selectedSource
+            , selectTermCallback: props.selectTermCallback
             }
-            [
-              H.text "Selection"
-            ]
-          ]
-        ]
-      ,
-        -- Details tab
-        R2.if' (tabView == DetailsTab) $
-          detailsTab
-          { key: (show props.nodeId) <> "-details"
-          , docCount: props.docCount
-          , foundationCount: props.foundationCount
-          , periodCount: props.periodCount
-          , termCount: props.termCount
-          , groupCount: props.groupCount
-          , branchCount: props.branchCount
-          }
-      ,
-        -- Selection tab
-        R2.if' (tabView == SelectionTab) $
-          selectionTab
-          { key: (show props.nodeId) <> "-selection"
-          , extractedTerms: props.extractedTerms
-          , extractedCount: props.extractedCount
-          , selectedTerm: props.selectedTerm
-          , selectedBranch: props.selectedBranch
-          , selectedSource: props.selectedSource
-          , selectTermCallback: props.selectTermCallback
-          }
-      ,
-        -- Teaser
-        H.div
-        { className: "phylo-sidebar__bottom-teaser" }
-        []
       ]

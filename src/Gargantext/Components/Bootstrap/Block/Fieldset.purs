@@ -15,12 +15,14 @@ type Props =
   )
 
 type Options =
-  ( className :: String
+  ( className         :: String
+  , contentClassName  :: String
   )
 
 options :: Record Options
 options =
-  { className: ""
+  { className         : ""
+  , contentClassName  : ""
   }
 
 -- | Component simulating a native <fieldset>
@@ -36,12 +38,21 @@ component = R.hooksComponent componentName cpt where
   cpt props@{ titleSlot
             } children = do
     -- Computed
-    className <- pure $ intercalate " "
-      -- provided custom className
-      [ props.className
-      -- BEM classNames
-      , componentName
-      ]
+    let
+      className = intercalate " "
+        -- provided custom className
+        [ props.className
+        -- BEM classNames
+        , componentName
+        ]
+
+      contentClassName = intercalate " "
+        -- provided custom className
+        [ props.contentClassName
+        -- BEM classNames
+        , componentName <> "__content"
+        ]
+
     -- Render
     pure $
 
@@ -53,6 +64,6 @@ component = R.hooksComponent componentName cpt where
         [ titleSlot ]
       ,
         H.div
-        { className: componentName <> "__content" }
+        { className: contentClassName}
         children
       ]

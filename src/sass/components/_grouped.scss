@@ -248,3 +248,16 @@
     text-align: center;
   }
 }
+
+/// Tabs
+///-----------------------------------------------------------------------------
+
+.b-tabs {
+
+  .nav-item:first-child {
+    margin-left: space-x(2);
+  }
+  .nav-item:last-child {
+    margin-right: space-x(2);
+  }
+}
