@@ -571,7 +571,7 @@ triggerSearch { onSearch, errors, session, selection, search } =
     case search.node_id of
       Nothing -> liftEffect $ here.log "[triggerSearch] node_id is Nothing, don't know what to do"
       Just id -> do
-        liftEffect $ here.log2 "[triggerSearch] search" search
+        liftEffect $ here.log2 "[triggerSearch] searchQuery" $ searchQuery selection search
         eTask <- performSearch session id $ searchQuery selection search
         handleRESTError errors eTask $ \task -> liftEffect $ do
           here.log2 "[triggerSearch] task" task
@@ -623,25 +623,33 @@ searchQuery selection { databases, datafield, lang, term, node_id } =
 
 queryHAL :: String -> Maybe (Set.Set IMT_org) -> Maybe Lang -> Array String -> String
 queryHAL term mIMTOrgs lang years =
-  "(" <> langPrefix <> "_title_t:" <> termEscaped <>
-  " OR " <> langPrefix <> "_abstract_t:\"" <> termEscaped <> "\")" <>
-  structQuery <> yearQuery
+  joinWith " AND " $ filterOutEmptyString [ titleAbstract
+                                          , structQuery
+                                          , yearQuery ]
   where
+    -- this uses solr query syntax
+    -- https://yonik.com/solr/query-syntax/
+    titleAbstract = case term of
+      "" -> ""
+      _ -> "(" <> langPrefix <> "_title_t:" <> termMulti <>
+           " OR " <> langPrefix <> "_abstract_t:" <> termMulti <> ")"
     langPrefix = case lang of
       Just FR -> "fr"
       _       -> "en"
     -- TODO: Escape double quotes
-    termEscaped = "\"" <> (replaceAll (Pattern "\"") (Replacement "\\\"") term) <> "\""
+    --termEscaped = "\"" <> (replaceAll (Pattern "\"") (Replacement "\\\"") term) <> "\""
+    termEscaped = "\"" <> term <> "\""
+    termMulti = "(" <> term <> ")"
     structQuery = case mIMTOrgs of
       Nothing -> ""
       Just imtOrgs -> if Set.isEmpty imtOrgs then
         ""
       else
-        " AND (" <> (structIds imtOrgs) <> ")"
-    yearQuery' = joinWith " AND " $ (\year -> "producedDateY_i:" <> year) <$> years
-    yearQuery = if yearQuery' == "" then "" else " AND " <> yearQuery'
+        " (" <> (structIds imtOrgs) <> ")"
+    yearQuery = joinWith " AND " $ (\year -> "producedDateY_i:" <> year) <$> years
     joinFunc :: IMT_org -> String
     joinFunc All_IMT = ""
     joinFunc (IMT_org { school_id }) = "structId_i:" <> school_id
     structIds :: Set.Set IMT_org -> String
-    structIds imtOrgs = joinWith " OR " $ joinFunc <$> Set.toUnfoldable imtOrgs
+    structIds imtOrgs = joinWith " OR " $ filterOutEmptyString $ joinFunc <$> Set.toUnfoldable imtOrgs
+    filterOutEmptyString = A.filter (_ /= "")
