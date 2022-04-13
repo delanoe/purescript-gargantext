@@ -1,0 +1,21 @@
+/// Opinionated box-sizing
+/// @link https://www.paulirish.com/2012/box-sizing-border-box-ftw/
+html {
+  box-sizing: border-box;
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+/// Make images easier to work with
+/// @link https://hankchizljaw.com/wrote/a-modern-css-reset/
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/// Remove hyperlink very first interaction (not including in "_reset.scss"
+/// as this interaction came as an intricated-native feature)
+// a:focus,a:visited,a:active{
+  // outline: none;
+// }

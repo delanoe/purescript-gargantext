@@ -56,15 +56,11 @@ li#rename
       min-width: 200px
 
 #file-type-tooltip
-  position : absolute
-  left : 96px
-  top: -64px
+  @include centered
+
+  position: absolute
   background-color: white
   z-index: 1000
-
-  .card-body
-    select
-      min-width: 200px
 
 .glyphitem
   top: 0
@@ -96,9 +92,6 @@ li#rename
     overflow: visible
     height: auto
 
-#graph-tree
-  .tree
-    margin-top: 27px
 
 .nopadding
     padding: 0 !important

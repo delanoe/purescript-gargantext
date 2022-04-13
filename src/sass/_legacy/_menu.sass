@@ -4,6 +4,16 @@
   // correction for the popover
   z-index: 910
 
+  &__theme-switcher,
+  &__lang-switcher,
+  &__tree-switcher
+    margin-right: space-x(1)
+
+  &__tree-switcher
+    $fixed-width: 136px
+
+    width: $fixed-width
+
   // add hovering effect
   &.navbar-dark .navbar-text:hover
     color: $navbar-dark-hover-color

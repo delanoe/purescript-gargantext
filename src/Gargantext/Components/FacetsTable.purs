@@ -131,7 +131,7 @@ docViewCpt = here.component "docView" cpt
         else
           void $ T.write ipp path
 
-      pure $ H.div { className: "facets-doc-view container1" }
+      pure $ H.div { className: "facets-doc-view" }
         [ R2.row
           [ chart
           , H.div { className: "col-md-12" }
@@ -140,9 +140,9 @@ docViewCpt = here.component "docView" cpt
             [ H.button { style: buttonStyle, on: { click: trashClick deletions } }
               [ H.i { className: "glyphitem fa fa-trash"
                     , style: { marginRight : "9px" }} []
-            , H.text "Delete document!" ] 
-            ] 
-    -}      ] 
+            , H.text "Delete document!" ]
+            ]
+    -}      ]
         ]
 
 performDeletions :: Session -> Int -> T.Box Deletions -> Deletions -> Effect Unit
@@ -188,7 +188,7 @@ docViewGraphCpt = here.component "docViewGraph" cpt
               , H.button { style: buttonStyle, on: { click: performClick } }
                 [ H.i { className: "glyphitem fa fa-trash"
                       , style: { marginRight : "9px" } } []
-                , H.text "Delete document!" 
+                , H.text "Delete document!"
                 ]
               ]
             ]
@@ -408,4 +408,3 @@ derive newtype instance JSON.WriteForeign DeleteDocumentQuery
 deleteDocuments :: Session -> Int -> DeleteDocumentQuery -> AffRESTError (Array Int)
 deleteDocuments session nodeId =
   deleteWithBody session $ NodeAPI Node (Just nodeId) "documents"
-

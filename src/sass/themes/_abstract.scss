@@ -1,0 +1,23 @@
+/// Customising Bootstrap 4
+/// (part 1.1: importing Bootstrap abstracts)
+///
+/// @link https://uxplanet.org/how-to-customize-bootstrap-b8078a011203
+/// @link https://getbootstrap.com/docs/4.1/getting-started/theming/
+@import '../../../node_modules/bootstrap/scss/functions';
+@import '../../../node_modules/bootstrap/scss/variables';
+@import '../../../node_modules/bootstrap/scss/mixins';
+
+/// (part 1.2: overriding Bootstrap abstrackt + importing project abstracts)
+///
+// (?) Normally "abstract" and "modules" have to be MANUALLY IMPORTED each
+//     times their content is being used
+//
+//     However, with Bootstrap non "@use" API-ready, and multiple themes
+//     management, we have to stick the old "@import"
+//
+//     It also implies that, if tomorrow, transition to "@import" to "@use" API
+//     has to be made, every manual import must be included (eg. by checking
+//     the `modules/form` file, and check where its mixin `inputError` has been
+//     being used
+@import '../_abstract';
+@import '../_modules';

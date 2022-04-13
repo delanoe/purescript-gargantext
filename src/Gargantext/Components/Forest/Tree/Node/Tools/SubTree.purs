@@ -10,7 +10,6 @@ import Data.Tuple.Nested ((/\))
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Action (Props, subTreeOut, setTreeOut)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
-import Gargantext.Components.Forest.Tree.Node.Tools (nodeText)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..), SubTreeOut(..))
 import Gargantext.Config.REST (AffRESTError, logRESTError)
@@ -18,7 +17,7 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
 import Gargantext.Types as GT
-import Gargantext.Utils ((?))
+import Gargantext.Utils (textEllipsisBreak, (?))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -141,11 +140,12 @@ subTreeTreeViewCpt = here.ntComponent "subTreeTreeView" cpt where
       { className: intercalate " "
           [ "subtree__node"
           , validNodeType ? "subtree__node--can-be-selected" $ ""
+          , (isSelected targetId action) ? "subtree__node--is-selected" $ ""
           ]
       }
       [
           H.div
-          { className: "subtree__node__text" }
+          { className: "subtree__node__inner" }
           [
             H.div
             { className: "subtree__node__icons"
@@ -162,13 +162,12 @@ subTreeTreeViewCpt = here.ntComponent "subTreeTreeView" cpt where
                   H.span { className: "fa fa-chevron-right" } []
             ]
           ,
-            H.div
-            { on: { click: selectCbk } }
+            H.span
+            { on: { click: selectCbk }
+            , className: "subtree__node__text"
+            }
             [
-              nodeText
-              { isSelected: isSelected targetId action
-              , name
-              }
+              H.text $ textEllipsisBreak 15 name
             ]
           ]
       ,

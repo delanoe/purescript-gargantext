@@ -29,8 +29,8 @@ type Props =
   , state               :: T.Box String
   )
 
-inputWithAutocomplete :: R2.Component Props
-inputWithAutocomplete = R.createElement inputWithAutocompleteCpt
+inputWithAutocomplete :: R2.Leaf Props
+inputWithAutocomplete = R2.leaf inputWithAutocompleteCpt
 inputWithAutocompleteCpt :: R.Component Props
 inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
   where

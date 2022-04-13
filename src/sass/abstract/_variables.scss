@@ -1,5 +1,24 @@
+@use 'sass:map';
+
 /// Global spacing value
 $space-unit: 8px;
+
+// Bootstrap color system
+// * with added shades of gray
+$white:    #FFFFFF;
+$gray-100: #F8F9FA;
+$gray-150: #FAFAFA; // (+)
+$gray-175: #F0F0F0; // (+)
+$gray-200: #E9ECEF;
+$gray-300: #DEE2E6;
+$gray-400: #CED4DA;
+$gray-500: #ADB5BD;
+$gray-600: #6C757D;
+$gray-700: #495057;
+$gray-800: #343A40;
+$gray-900: #212529;
+$black:    #000000;
+
 
 /// Z-Index Management
 /// @link https://medium.com/alistapart/sassier-z-index-management-for-complex-layouts-4540717a9488
@@ -13,7 +32,8 @@ $z-indexes: (
     "sidebar",
     "spinner",
   ),
-  phylo-sidebar: (
-    "teaser",
+  graph-layout: (
+    "toolbar",
+    "sidebar",
   ),
 );

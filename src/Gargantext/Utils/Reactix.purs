@@ -521,6 +521,13 @@ createPortal' :: Maybe DOM.Element -> Array R.Element -> R.Element
 createPortal' Nothing     _        = mempty
 createPortal' (Just host) children = R.createPortal children host
 
+-- | Render a `mempty` Element if provided `Maybe` is `Nothing`
+fromMaybe_ :: forall a. Maybe a -> (a -> R.Element) -> R.Element
+fromMaybe_ m render = case m of
+  Nothing -> mempty
+  Just a  -> render a
+
+
 --------------------------------------
 
 -- @XXX: FFI.Simple `(...)` throws error (JavaScript issue)

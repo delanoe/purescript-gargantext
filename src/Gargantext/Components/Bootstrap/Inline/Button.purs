@@ -71,8 +71,9 @@ component = R.hooksComponent componentName cpt where
           bootstrapName <> "-block" $
           mempty
       ]
-    -- @click
-    click <- pure $ \event -> onClick status callback event
+    -- Behaviors
+    let
+      click = onClick status callback
     -- Render
     pure $
 

@@ -306,6 +306,7 @@ translateEN = case _ of
 
 ------------------------------------------------------
 
+-- @NOTE: #379 deprecate the idea of circle/non-circle icons
 getIcon :: NodeType -> Boolean -> String
 getIcon NodeUser false = "user-circle"
 getIcon NodeUser true  = "user"

@@ -3,14 +3,17 @@ module Gargantext.Components.Forest.Tree where
 import Gargantext.Prelude
 
 import Data.Array as A
-import Data.Maybe (Maybe(..))
-import Data.Traversable (traverse_, traverse)
+import Data.Array as Array
+import Data.Maybe (Maybe(..), isJust)
+import Data.Traversable (intercalate, traverse, traverse_)
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Data (Boxes)
-import Gargantext.Components.Forest.Tree.Node (nodeSpan)
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Forest.Tree.Node (blankNodeSpan, nodeSpan)
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (deleteNode, unpublishNode)
@@ -28,12 +31,13 @@ import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..
 import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Ends (Frontends)
-import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Hooks.Loader (useLoader, useLoaderEffect)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, get, mkNodeId)
 import Gargantext.Sessions.Types (useOpenNodesMemberBox, openNodesInsert, openNodesDelete)
 import Gargantext.Types (Handed, ID, isPublic, publicize, switchHanded)
 import Gargantext.Types as GT
+import Gargantext.Utils (nbsp, (?))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
@@ -110,12 +114,30 @@ treeLoaderCpt = here.component "treeLoader" cpt where
 -- treeLoaderCpt = R.memo (here.component "treeLoader" cpt) memoCmp where
 --   memoCmp ({ root: t1 }) ({ root: t2 }) = t1 == t2
   cpt p@{ root, session } _ = do
+    -- States
     -- app     <- T.useLive T.unequal p.reloadRoot
+    state /\ stateBox <- R2.useBox' Nothing
     let fetch { root: r } = getNodeTree session r
-    useLoader { errorHandler
-              , loader: fetch
-              , path: { root }
-              , render: loaded }
+
+    -- Hooks
+    useLoaderEffect
+      { errorHandler
+      , loader: fetch
+      , path: { root }
+      , state: stateBox
+      }
+
+    -- Render
+    pure $
+
+      B.cloak
+      { isDisplayed: isJust state
+      , sustainingPhaseDuration: Just 50
+      , cloakSlot:
+          blankTree {}
+      , defaultSlot:
+          R2.fromMaybe_ state $ loaded
+      }
       where
         loaded tree' = tree props where
           props = Record.merge common extra where
@@ -135,58 +157,88 @@ treeCpt :: R.Component TreeProps
 treeCpt = here.component "tree" cpt where
   cpt p@{ boxes: boxes@{ forestOpen }
         , frontends
-        , handed
         , reload
         , root
         , session
         , tree: NTree (LNode { id, name, nodeType }) children } _ = do
+
     setPopoverRef <- R.useRef Nothing
     folderOpen <- useOpenNodesMemberBox nodeId forestOpen
-    pure $ H.ul { className: ulClass }
-      [ H.li { className: childrenClass children' }
-        [ nodeSpan { boxes
-                   , dispatch: dispatch setPopoverRef
-                   , folderOpen
-                   , frontends
-                   , id
-                   , isLeaf
-                   , name
-                   , nodeType
-                   , reload
-                   , root
-                   , session
-                   , setPopoverRef }
-          [ renderChildren (Record.merge p { childProps: { children', folderOpen, render: tree } } ) [] ]
+    folderOpen' <- T.useLive T.unequal folderOpen
+
+    pure $
+
+      H.div
+      { className: intercalate " "
+          [ "maintree"
+          , Array.null children' ?
+              "maintree--no-child" $
+              "maintree--with-child"
+          ]
+      }
+      [
+        H.div
+        { className: "maintree__node" }
+        [
+          nodeSpan
+          { boxes
+          , dispatch: dispatch setPopoverRef
+          , folderOpen
+          , frontends
+          , id
+          , isLeaf
+          , name
+          , nodeType
+          , reload
+          , root
+          , session
+          , setPopoverRef
+          }
+        <>
+          R2.if' (folderOpen')
+          (
+            renderTreeChildren $
+            { childProps:
+                { children'
+                , folderOpen
+                , render: tree
+                }
+            } `Record.merge` p
+          )
         ]
       ]
     where
       isLeaf = A.null children
       nodeId = mkNodeId session id
-      ulClass  = switchHanded "ml left" "mr right" handed <> "-auto tree handed"
       children' = A.sortWith fTreeID pubChildren
       pubChildren = if isPublic nodeType then map (map pub) children else children
       dispatch setPopoverRef a = performAction a (Record.merge common' spr) where
         common' = RecordE.pick p :: Record PACommon
         spr = { setPopoverRef }
   pub (LNode n@{ nodeType: t }) = LNode (n { nodeType = publicize t })
-  childrenClass [] = "no-children"
-  childrenClass _  = "with-children"
 
 
-renderChildren :: R2.Component ChildrenTreeProps
-renderChildren = R.createElement renderChildrenCpt
-renderChildrenCpt :: R.Component ChildrenTreeProps
-renderChildrenCpt = here.component "renderChildren" cpt where
-  cpt p@{ childProps: { folderOpen } } _ = do
-    folderOpen' <- T.useLive T.unequal folderOpen
 
-    if folderOpen' then
-      pure $ renderTreeChildren p []
-    else
-      pure $ H.div {} []
+blankTree :: R2.Leaf ()
+blankTree = R2.leaf blankTreeCpt
+blankTreeCpt :: R.Component ()
+blankTreeCpt = here.component "__blank__" cpt where
+  cpt _ _ = pure $
 
-renderTreeChildren :: R2.Component ChildrenTreeProps
-renderTreeChildren = R.createElement renderTreeChildrenCpt
+    H.div
+    { className: "maintree maintree--blank" }
+    [
+      H.div
+      { className: "maintree__node" }
+      [
+        blankNodeSpan
+        {}
+      ]
+    ]
+
+
+renderTreeChildren :: R2.Leaf ChildrenTreeProps
+renderTreeChildren = R2.leaf renderTreeChildrenCpt
 renderTreeChildrenCpt :: R.Component ChildrenTreeProps
 renderTreeChildrenCpt = here.component "renderTreeChildren" cpt where
   cpt p@{ childProps: { children'
@@ -199,6 +251,7 @@ renderTreeChildrenCpt = here.component "renderTreeChildren" cpt where
       renderChild (NTree (LNode {id: cId}) _) = childLoader props [] where
         props = Record.merge nodeProps { id: cId, render, root }
 
+
 childLoader :: R2.Component ChildLoaderProps
 childLoader = R.createElement childLoaderCpt
 childLoaderCpt :: R.Component ChildLoaderProps
@@ -207,13 +260,32 @@ childLoaderCpt = here.component "childLoader" cpt where
         , reloadTree
         , render
         , root } _ = do
+    -- States
     reload <- T.useBox T2.newReload
+    state /\ stateBox <- R2.useBox' Nothing
     let reloads = [ reload, reloadRoot, reloadTree ]
     cache <- (A.cons p.id) <$> traverse (T.useLive T.unequal) reloads
-    useLoader { errorHandler
-              , loader: fetch
-              , path: cache
-              , render: paint reload }
+
+    -- Hooks
+    useLoaderEffect
+      { errorHandler
+      , loader: fetch
+      , path: cache
+      , state: stateBox
+      }
+
+    -- Render
+    pure $
+
+      B.cloak
+      { isDisplayed: isJust state
+      , sustainingPhaseDuration: Just 50
+      , cloakSlot:
+          blankTree {}
+      , defaultSlot:
+          R2.fromMaybe_ state $ paint reload
+      }
+
     where
       errorHandler = logRESTError here "[childLoader]"
       fetch _ = getNodeTreeFirstLevel p.session p.id

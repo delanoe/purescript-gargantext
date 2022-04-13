@@ -34,20 +34,35 @@ sizeButtonCpt :: R.Component Props
 sizeButtonCpt = here.component "sizeButton" cpt where
   cpt { state, caption, min, max, onChange } _ = do
     defaultValue <- T.useLive T.unequal state
-    pure $ H.span { className: "range-simple" }
-      [ H.label {} [ R2.small {} [ H.text caption ] ]
-      , H.input { type: "range"
-                , className: "form-control"
-                , min: show min
-                , max: show max
-                , defaultValue
-                , on: { input: onChange } }]
+
+    pure $
+
+      H.span
+      { className: "range-simple" }
+      [
+        H.label
+        { className: "range-simple__label" }
+        [ H.text caption ]
+      ,
+        H.span
+        { className: "range-simple__field" }
+        [
+          H.input
+          { type: "range"
+          , min: show min
+          , max: show max
+          , defaultValue
+          , on: { input: onChange }
+          , className: "range-simple__input"
+          }
+        ]
+      ]
 
 labelSizeButton :: R.Ref Sigmax.Sigma -> T.Box Number -> R.Element
 labelSizeButton sigmaRef state =
   sizeButton {
       state
-    , caption: "Label Size"
+    , caption: "Label size"
     , min: 1.0
     , max: 30.0
     , onChange: \e -> do
@@ -67,7 +82,7 @@ mouseSelectorSizeButton :: R.Ref Sigmax.Sigma -> T.Box Number -> R.Element
 mouseSelectorSizeButton sigmaRef state =
   sizeButton {
       state
-    , caption: "Selector Size"
+    , caption: "Selector size"
     , min: 1.0
     , max: 50.0
     , onChange: \e -> do

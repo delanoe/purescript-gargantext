@@ -132,9 +132,12 @@ graphCpt = here.component "graph" cpt where
                   Sigma.stopForceAtlas2 sig
 
                 case mCamera of
-                  Nothing -> pure unit
                   Just (GET.Camera { ratio, x, y }) -> do
                     Sigma.updateCamera sig { ratio, x, y }
+                  -- Default camera: slightly de-zoom the graph to avoid
+                  -- nodes sticking to the container borders
+                  Nothing                           ->
+                    Sigma.updateCamera sig { ratio: 1.1, x: 0.0, y: 0.0 }
 
                 -- Reload Sigma on Theme changes
                 _ <- flip T.listen boxes.theme \{ old, new } ->

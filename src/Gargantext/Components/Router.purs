@@ -6,18 +6,13 @@ import Data.Array (filter, length)
 import Data.Array as A
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
-import Data.Tuple.Nested ((/\))
 import Data.UUID (UUID)
 import Data.UUID as UUID
 import Effect (Effect)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.ErrorsView (errorsView)
 import Gargantext.Components.Footer (footer)
-import Gargantext.Components.Forest as Forest
-import Gargantext.Components.GraphExplorer as GraphExplorer
-import Gargantext.Components.GraphExplorer.Sidebar as GES
-import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
-import Gargantext.Components.Lang (LandingLang(LL_EN))
+import Gargantext.Components.Forest (forestLayout)
 import Gargantext.Components.Login (login)
 import Gargantext.Components.Nodes.Annuaire (annuaireLayout)
 import Gargantext.Components.Nodes.Annuaire.User (userLayout)
@@ -26,8 +21,8 @@ import Gargantext.Components.Nodes.Corpus (corpusLayout)
 import Gargantext.Components.Nodes.Corpus.Code (corpusCodeLayout)
 import Gargantext.Components.Nodes.Corpus.Dashboard (dashboardLayout)
 import Gargantext.Components.Nodes.Corpus.Document (documentMainLayout)
+import Gargantext.Components.Nodes.Corpus.Graph (graphLayout)
 import Gargantext.Components.Nodes.Corpus.Phylo (phyloLayout)
-import Gargantext.Components.Nodes.Corpus.Phylo as PhyloExplorer
 import Gargantext.Components.Nodes.File (fileLayout)
 import Gargantext.Components.Nodes.Frame (frameLayout)
 import Gargantext.Components.Nodes.Home (homeLayout)
@@ -37,6 +32,8 @@ import Gargantext.Components.Tile (tileBlock)
 import Gargantext.Components.TopBar as TopBar
 import Gargantext.Config (defaultFrontends, defaultBackends)
 import Gargantext.Ends (Backend)
+import Gargantext.Hooks.FirstEffect (useFirstEffect)
+import Gargantext.Hooks.Resize (ResizeType(..), useResizeHandler)
 import Gargantext.Routes (AppRoute, Tile)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, WithSession)
@@ -66,9 +63,11 @@ router :: R2.Leaf Props
 router = R2.leafComponent routerCpt
 routerCpt :: R.Component Props
 routerCpt = here.component "router" cpt where
-  cpt { boxes: boxes@{ handed } } _ = do
+  cpt { boxes: boxes@{ handed, showLogin, showTree } } _ = do
     -- States
-    handed'       <- T.useLive T.unequal handed
+    handed'     <- R2.useLive' handed
+    showLogin'  <- R2.useLive' showLogin
+    showTree'   <- R2.useLive' showTree
 
     -- Effects
     let
@@ -87,28 +86,33 @@ routerCpt = here.component "router" cpt where
           R2.addClass app [ handedClassName handed' ]
 
     -- Render
-    pure $ R.fragment
-      [ loginModal { boxes }
+    pure $
+
+      H.div
+      { className: "router" }
+      [
+        -- loginModal { boxes }
+         R2.if' showLogin' $
+            login' boxes
        , TopBar.topBar { boxes }
        , errorsView { errors: boxes.errors } []
-       , H.div { className: "router-inner" }
-         [ forest { boxes }
-         , mainPage { boxes }
-         , sidePanel { boxes }
+       , H.div { className: "router__inner" }
+         [
+          -- @XXX: ReactJS lack of "keep-alive" feature workaround solution
+          -- @link https://github.com/facebook/react/issues/12039
+          --   ↓
+          -- @XXX: ReactJS "display: none" don't exec effect cleaning function
+          --       (therefore cannot use the simple "display: none" workaround
+          --       to keep below component alive)
+          R2.if' (showTree') $ forest { boxes }
+         ,
+          mainPage { boxes }
+         ,
+          sidePanel { boxes }
          ]
        ]
 
-
-loginModal :: R2.Leaf Props
-loginModal = R2.leafComponent loginModalCpt
-loginModalCpt :: R.Component Props
-loginModalCpt = here.component "loginModal" cpt
-  where
-    cpt { boxes: boxes@{ showLogin } } _ = do
-        showLogin' <- T.useLive T.unequal showLogin
-
-        pure $ if showLogin' then login' boxes else H.div {} []
-
+--------------------------------------------------------------
 
 mainPage :: R2.Leaf Props
 mainPage = R2.leafComponent mainPageCpt
@@ -124,7 +128,10 @@ mainPageCpt = here.component "mainPage" cpt where
       findTile :: UUID -> Record Tile -> Boolean
       findTile id tile = eq id $ get (Proxy :: Proxy "id") tile
 
-      deleteTile :: Record Tile -> T.Box (Array (Record Tile)) -> (Unit -> Effect Unit)
+      deleteTile ::
+           Record Tile
+        -> T.Box (Array (Record Tile))
+        -> (Unit -> Effect Unit)
       deleteTile tile listBox = const do
         list <- T.read listBox
         newList <- pure $ filter (_ # tile.id # findTile # not) list
@@ -135,7 +142,7 @@ mainPageCpt = here.component "mainPage" cpt where
     -- Render
     pure $
 
-      H.div { className: "main-page" }
+      H.div { className: "router__body main-page" }
       [
         H.div
         { className: intercalate " "
@@ -198,21 +205,43 @@ mainPageCpt = here.component "mainPage" cpt where
               ]
       ]
 
+--------------------------------------------------------------
 
 forest :: R2.Leaf Props
-forest = R2.leafComponent forestCpt
-forestCpt :: R.Component Props
-forestCpt = here.component "forest" cpt where
-  cpt { boxes: boxes@{ showTree } } _ = do
-    showTree' <- T.useLive T.unequal showTree
+forest = R2.leaf forestCpt
+forestCpt :: R.Memo Props
+forestCpt = R.memo' $ here.component "forest" cpt where
+  cpt { boxes } _ = do
+    -- Hooks
+    resizeHandler <- useResizeHandler
 
+    -- Effects
+    useFirstEffect do
+      resizeHandler.add ".router__handle__action" ".router__aside" Vertical
+      pure $ resizeHandler.remove ".router__handle__action"
+
+    -- Render
     pure $
 
-      if not showTree'
-      then mempty
-      else Forest.forestLayout
-           { boxes
-           , frontends: defaultFrontends } []
+      H.div
+      { className: "router__aside" }
+      [
+        forestLayout
+        { boxes
+        , frontends: defaultFrontends
+        }
+      ,
+        H.div
+        { className: "router__handle"
+        }
+        [
+          H.div
+          { className: "router__handle__action" }
+          []
+        ]
+      ]
+
+--------------------------------------------------------------
 
 sidePanel :: R2.Leaf Props
 sidePanel = R2.leafComponent sidePanelCpt
@@ -229,6 +258,8 @@ sidePanelCpt = here.component "sidePanel" cpt where
         case sidePanelState' of
           Opened -> pure $ openedSidePanel (Record.merge { session: s } props) []
           _      -> pure $ H.div {} []
+
+--------------------------------------------------------------
 
 type RenderRouteProps =
   ( route :: AppRoute
@@ -274,6 +305,8 @@ renderRouteCpt = here.component "renderRoute" cpt where
         GR.UserPage s n           -> user (sessionNodeProps s n) []
       ]
 
+--------------------------------------------------------------
+
 type AuthedProps =
   ( content :: Session -> R.Element
   | SessionProps )
@@ -297,18 +330,17 @@ authedCpt = here.component "authed" cpt where
     where
       homeProps = RE.pick props :: Record Props
 
+--------------------------------------------------------------
+
 openedSidePanel :: R2.Component (WithSession Props)
 openedSidePanel = R.createElement openedSidePanelCpt
 openedSidePanelCpt :: R.Component (WithSession Props)
 openedSidePanelCpt = here.component "openedSidePanel" cpt where
   cpt { boxes: boxes@{ route
-                     , sidePanelGraph
                      , sidePanelState
                      , sidePanelTexts }
       , session } _ = do
-    { mGraph, mMetaData } <- GEST.focusedSidePanel sidePanelGraph
-    mGraph' <- T.useLive T.unequal mGraph
-    mGraphMetaData' <- T.useLive T.unequal mMetaData
+
     route' <- T.useLive T.unequal route
 
     let wrapper = H.div { className: "side-panel" }
@@ -318,25 +350,14 @@ openedSidePanelCpt = here.component "openedSidePanel" cpt where
         pure $ wrapper
           [ Lists.sidePanel { session
                             , sidePanelState } [] ]
-      GR.PGraphExplorer _s g -> do
-        case (mGraph' /\ mGraphMetaData') of
-          (Nothing /\ _) -> pure $ wrapper []
-          (_ /\ Nothing) -> pure $ wrapper []
-          (Just graph /\ Just metaData) -> do
-            pure $ wrapper
-              [ GES.sidebar { boxes
-                            , frontends: defaultFrontends
-                            , graph
-                            , graphId: g
-                            , metaData
-                            , session
-                            } [] ]
       GR.NodeTexts _s _n -> do
         pure $ wrapper
           [ Texts.textsSidePanel { boxes
                                  , session
                                  , sidePanel: sidePanelTexts } [] ]
       _ -> pure $ wrapper []
+
+--------------------------------------------------------------
 
 annuaire :: R2.Component SessionNodeProps
 annuaire = R.createElement annuaireCpt
@@ -349,6 +370,8 @@ annuaireCpt = here.component "annuaire" cpt where
                                                   , nodeId
                                                   , session } } sessionProps) []
 
+--------------------------------------------------------------
+
 corpus :: R2.Component SessionNodeProps
 corpus = R.createElement corpusCpt
 corpusCpt :: R.Component SessionNodeProps
@@ -359,6 +382,8 @@ corpusCpt = here.component "corpus" cpt where
                                    corpusLayout { boxes
                                                 , nodeId
                                                 , session } } sessionProps) []
+
+--------------------------------------------------------------
 
 corpusCode :: R2.Component SessionNodeProps
 corpusCode = R.createElement corpusCodeCpt
@@ -379,6 +404,8 @@ corpusCodeCpt = here.component "corpusCode" cpt where
 
     pure $ authed authedProps []
 
+--------------------------------------------------------------
+
 type CorpusDocumentProps =
   ( corpusId :: CorpusId
   , listId :: ListId
@@ -398,6 +425,8 @@ corpusDocumentCpt = here.component "corpusDocument" cpt
                                                         , nodeId
                                                         , session } [] } sessionProps )[]
 
+--------------------------------------------------------------
+
 dashboard :: R2.Component SessionNodeProps
 dashboard = R.createElement dashboardCpt
 dashboardCpt :: R.Component SessionNodeProps
@@ -407,6 +436,8 @@ dashboardCpt = here.component "dashboard" cpt
       let sessionProps = RE.pick props :: Record SessionProps
       pure $ authed (Record.merge { content: \session ->
                                      dashboardLayout { boxes, nodeId, session } [] } sessionProps) []
+
+--------------------------------------------------------------
 
 type DocumentProps = ( listId :: ListId | SessionNodeProps )
 
@@ -422,6 +453,8 @@ documentCpt = here.component "document" cpt where
                                                       , mCorpusId: Nothing
                                                       , session } [] } sessionProps) []
 
+--------------------------------------------------------------
+
 graphExplorer :: R2.Component SessionNodeProps
 graphExplorer = R.createElement graphExplorerCpt
 graphExplorerCpt :: R.Component SessionNodeProps
@@ -434,17 +467,19 @@ graphExplorerCpt = here.component "graphExplorer" cpt where
       authedProps =
         Record.merge
         { content:
-            \session -> GraphExplorer.explorerLayoutWithKey
+            \session -> graphLayout
                         { boxes
                         , graphId: nodeId
                         , key: "graphId-" <> show nodeId
-                        , session }
-                        []
+                        , session
+                        }
+
         }
         sessionProps
 
     pure $ authed authedProps []
 
+--------------------------------------------------------------
 
 phyloExplorer :: R2.Component SessionNodeProps
 phyloExplorer = R.createElement phyloExplorerCpt
@@ -458,7 +493,7 @@ phyloExplorerCpt = here.component "phylo" cpt where
       authedProps =
         Record.merge
         { content:
-            \session -> PhyloExplorer.phyloLayout
+            \session -> phyloLayout
                         { boxes
                         , nodeId
                         , session
@@ -468,6 +503,7 @@ phyloExplorerCpt = here.component "phylo" cpt where
 
     pure $ authed authedProps []
 
+--------------------------------------------------------------
 
 home :: R2.Component Props
 home = R.createElement homeCpt
@@ -475,6 +511,8 @@ homeCpt :: R.Component Props
 homeCpt = here.component "home" cpt where
   cpt { boxes } _ = do
     pure $ homeLayout { boxes }
+
+--------------------------------------------------------------
 
 lists :: R2.Component SessionNodeProps
 lists = R.createElement listsCpt
@@ -489,12 +527,16 @@ listsCpt = here.component "lists" cpt where
                                                      , session
                                                      , sessionUpdate: \_ -> pure unit } [] } sessionProps) []
 
+--------------------------------------------------------------
+
 login' :: Boxes -> R.Element
 login' { backend, sessions, showLogin: visible } =
   login { backend
         , backends: A.fromFoldable defaultBackends
         , sessions
         , visible }
+
+--------------------------------------------------------------
 
 routeFile :: R2.Component SessionNodeProps
 routeFile = R.createElement routeFileCpt
@@ -504,6 +546,8 @@ routeFileCpt = here.component "routeFile" cpt where
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
                                    fileLayout { nodeId, session } } sessionProps) []
+
+--------------------------------------------------------------
 
 type RouteFrameProps = (
   nodeType :: NodeType
@@ -519,6 +563,8 @@ routeFrameCpt = here.component "routeFrame" cpt where
     pure $ authed (Record.merge { content: \session ->
                                    frameLayout { nodeId, nodeType, session } } sessionProps) []
 
+--------------------------------------------------------------
+
 team :: R2.Component SessionNodeProps
 team = R.createElement teamCpt
 teamCpt :: R.Component SessionNodeProps
@@ -529,6 +575,8 @@ teamCpt = here.component "team" cpt where
                                    corpusLayout { boxes
                                                 , nodeId
                                                 , session } } sessionProps) []
+
+--------------------------------------------------------------
 
 texts :: R2.Component SessionNodeProps
 texts = R.createElement textsCpt
@@ -544,6 +592,8 @@ textsCpt = here.component "texts" cpt
                                                        , nodeId
                                                        , session } [] } sessionProps) []
 
+--------------------------------------------------------------
+
 user :: R2.Component SessionNodeProps
 user = R.createElement userCpt
 userCpt :: R.Component SessionNodeProps
@@ -556,6 +606,8 @@ userCpt = here.component "user" cpt where
                                               , frontends: defaultFrontends
                                               , nodeId
                                               , session } [] } sessionProps) []
+
+--------------------------------------------------------------
 
 type ContactProps = ( annuaireId :: NodeID | SessionNodeProps )
 

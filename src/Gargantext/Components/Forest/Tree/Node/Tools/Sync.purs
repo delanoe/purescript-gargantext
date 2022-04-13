@@ -1,12 +1,16 @@
 module Gargantext.Components.Forest.Tree.Node.Tools.Sync where
 
+import Gargantext.Prelude
+
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Variant(..))
 import Gargantext.Components.GraphExplorer.API as GraphAPI
-import Gargantext.Prelude (Unit, bind, discard, pure, unit, ($), (<>), (==))
 import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
+import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -27,15 +31,15 @@ type NodeActionsGraphProps =
 nodeActionsGraph :: R2.Component NodeActionsGraphProps
 nodeActionsGraph = R.createElement nodeActionsGraphCpt
 nodeActionsGraphCpt :: R.Component NodeActionsGraphProps
-nodeActionsGraphCpt = here.component "nodeActionsGraph" cpt
-  where
-    cpt { id, graphVersions, session, refresh } _ = do
-      pure $ H.div { className: "node-actions" } [
-        if graphVersions.gv_graph == Just graphVersions.gv_repo then
-          H.div {} []
-        else
-          graphUpdateButton { id, session, refresh }
-      ]
+nodeActionsGraphCpt = here.component "nodeActionsGraph" cpt where
+  cpt { id, graphVersions, session, refresh } _ =
+    let sameVersions = (graphVersions.gv_graph == Just graphVersions.gv_repo)
+    in pure $
+
+      R2.if' (not sameVersions) $
+
+        graphUpdateButton { id, session, refresh }
+
 
 type GraphUpdateButtonProps =
   ( id :: GT.ID
@@ -53,13 +57,24 @@ graphUpdateButtonCpt = here.component "graphUpdateButton" cpt
       enabled <- T.useBox true
       enabled' <- T.useLive T.unequal enabled
 
-      pure $ H.div { className: "update-button "
-                   <> if enabled'
-                         then "enabled"
-                         else "disabled text-muted"
-                   } [ H.span { className: "fa fa-refresh"
-                     , on: { click: onClick enabled' enabled } } []
-                     ]
+      pure $
+
+        B.iconButton
+        { className: "mainleaf__update-icon"
+        , variant: Secondary
+        , overlay: true
+        , status: enabled' ? Enabled $ Disabled
+        , callback: const $ onClick enabled' enabled
+        , name: "refresh"
+        }
+
+        -- H.div { className: "update-button "
+        --            <> if enabled'
+        --                  then "enabled"
+        --                  else "disabled text-muted"
+        --            } [ H.span { className: "fa fa-refresh"
+        --              , on: { click: onClick enabled' enabled } } []
+        --              ]
       where
         onClick false _ = pure unit
         onClick true enabled = do
@@ -84,12 +99,9 @@ type NodeActionsNodeListProps =
 nodeActionsNodeList :: Record NodeActionsNodeListProps -> R.Element
 nodeActionsNodeList p = R.createElement nodeActionsNodeListCpt p []
 nodeActionsNodeListCpt :: R.Component NodeActionsNodeListProps
-nodeActionsNodeListCpt = here.component "nodeActionsNodeList" cpt
-  where
-    cpt props _ = do
-      pure $ H.div { className: "node-actions" } [
-        nodeListUpdateButton props
-      ]
+nodeActionsNodeListCpt = here.component "nodeActionsNodeList" cpt where
+  cpt props _ = pure $ nodeListUpdateButton props
+
 
 type NodeListUpdateButtonProps =
   ( listId :: GT.ListId

@@ -1,48 +1,61 @@
-module Gargantext.Components.Forest.Tree.Node where
+module Gargantext.Components.Forest.Tree.Node
+  ( nodeSpan
+  , blankNodeSpan
+  ) where
 
 import Gargantext.Prelude
 
-import Data.Maybe (Maybe(..))
+import Data.Array.NonEmpty as NArray
+import Data.Foldable (intercalate)
+import Data.Maybe (Maybe(..), maybe)
 import Data.Nullable (null)
+import Data.String.Regex as Regex
 import Data.Symbol (SProxy(..))
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), TooltipEffect(..), Variant(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (DroppedFile(..), fileTypeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..))
 import Gargantext.Components.Forest.Tree.Node.Box (nodePopupView)
 import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
-import Gargantext.Components.Forest.Tree.Node.Tools (nodeLink)
-import Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar (asyncProgressBar, BarType(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.Sync (nodeActionsGraph, nodeActionsNodeList)
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (Lang(EN))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Config.REST (logRESTError)
-import Gargantext.Ends (Frontends)
-import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Context.Progress (asyncContext, asyncProgress)
+import Gargantext.Ends (Frontends, url)
+import Gargantext.Hooks.FirstEffect (useFirstEffect')
+import Gargantext.Hooks.Loader (useLoaderEffect)
+import Gargantext.Hooks.Version (Version, useVersion)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId)
-import Gargantext.Types (ID, Name, reverseHanded)
+import Gargantext.Types (ID, Name)
 import Gargantext.Types as GT
+import Gargantext.Utils (nbsp, textEllipsisBreak, (?))
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
-import Gargantext.Version as GV
-import React.SyntheticEvent as E
+import React.SyntheticEvent as SE
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
 import Toestand as T
 
+-- (?) never been able to properly declare PureScript Regex...
+foreign import nodeUserRegexp :: Regex.Regex
+
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node"
 
 -- Main Node
-type NodeMainSpanProps =
+type NodeSpanProps =
   ( boxes         :: Boxes
   , dispatch      :: Action -> Aff Unit
   , folderOpen    :: T.Box Boolean
@@ -59,26 +72,13 @@ type NodeMainSpanProps =
 
 type IsLeaf = Boolean
 
-nodeSpan :: R2.Component NodeMainSpanProps
-nodeSpan = R.createElement nodeSpanCpt
-nodeSpanCpt :: R.Component NodeMainSpanProps
+
+nodeSpan :: R2.Leaf NodeSpanProps
+nodeSpan = R2.leaf nodeSpanCpt
+nodeSpanCpt :: R.Component NodeSpanProps
 nodeSpanCpt = here.component "nodeSpan" cpt
   where
-    cpt props@{ boxes: { handed } } children = do
-      handed' <- T.useLive T.unequal handed
-      let className = case handed' of
-            GT.LeftHanded  -> "lefthanded"
-            GT.RightHanded -> "righthanded"
-
-      pure $ H.div { className } ([ nodeMainSpan props [] ] <> children)
-
-nodeMainSpan :: R2.Component NodeMainSpanProps
-nodeMainSpan = R.createElement nodeMainSpanCpt
-nodeMainSpanCpt :: R.Component NodeMainSpanProps
-nodeMainSpanCpt = here.component "nodeMainSpan" cpt
-  where
     cpt props@{ boxes: boxes@{ errors
-                             , handed
                              , reloadMainPage
                              , reloadRoot
                              , route
@@ -93,7 +93,8 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
               , session
               , setPopoverRef
               } _ = do
-      handed' <- T.useLive T.unequal handed
+    -- States
+
       route' <- T.useLive T.unequal route
       -- only 1 popup at a time is allowed to be opened
       droppedFile   <- T.useBox (Nothing :: Maybe DroppedFile)
@@ -105,187 +106,428 @@ nodeMainSpanCpt = here.component "nodeMainSpan" cpt
       currentTasks <- GAT.focus id tasks
       currentTasks' <- T.useLive T.unequal currentTasks
 
-      R.useEffect' $ do
-        R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
-      let isSelected = Just route' == Routes.nodeTypeAppRoute nodeType (sessionId session) id
+      folderOpen' <- R2.useLive' folderOpen
 
       -- tasks' <- T.read tasks
 
-      pure $ H.span (dropProps droppedFile droppedFile' isDragOver isDragOver')
-        $ reverseHanded handed'
-        [ folderIcon  { folderOpen, nodeType } []
-        , chevronIcon { folderOpen, handed, isLeaf } []
-        , nodeLink { boxes
-                   , folderOpen
-                   , frontends
-                   , id
-                   , isSelected
-                   , name: name' props
-                   , nodeType
-                   , session } []
+    -- Computed
+      let
 
-                , fileTypeView { dispatch, droppedFile, id, isDragOver, nodeType } []
-
-                , if showBox then
-                        Popover.popover { arrow: false
-                                        , open: false
-                                        , onClose: \_ -> pure unit
-                                        , onOpen:  \_ -> pure unit
-                                        , ref: popoverRef } [
-                        popOverIcon
-                        , mNodePopupView props (onPopoverClose popoverRef)
-                        ]
-                  else H.div {} []
-                       
-                , H.div { style: { width: "8em" } }
-                  (map (\t -> asyncProgressBar { asyncTask: t
-                                                 --, barType: Pie
-                                               , barType: Bar
-                                               , errors
-                                               , nodeId: id
-                                               , onFinish: onTaskFinish id t
-                                               , session } []
-                       ) currentTasks'
-                  )
-                , if nodeType == GT.NodeUser
-                        then GV.versionView { session } []
-                        else H.div {} []
-
-                , nodeActions { id
-                              , nodeType
-                              , refresh: const $ dispatch RefreshTree
-                              , session
-                              } []
-                ]
-        where
-          onTaskFinish id' t _ = do
-            GAT.finish id' t tasks
-            if GAT.asyncTaskTTriggersAppReload t then do
-              here.log2 "reloading root for task" t
-              T2.reload reloadRoot
-            else do
-              if GAT.asyncTaskTTriggersTreeReload t then do
-                here.log2 "reloading tree for task" t
-                T2.reload reload
-              else do
-                here.log2 "task doesn't trigger a tree reload" t
-                pure unit
-              if GAT.asyncTaskTTriggersMainPageReload t then do
-                here.log2 "reloading main page for task" t
-                T2.reload reloadMainPage
-              else do
-                here.log2 "task doesn't trigger a main page reload" t
-                pure unit
-            -- snd tasks $ GAT.Finish id' t
-            -- mT <- T.read tasks
-            -- case mT of
-            --   Just t' -> snd t' $ GAT.Finish id' t
-            --   Nothing -> pure unit
-            -- T2.reload reloadRoot
-
-          SettingsBox {show: showBox} = settingsBox nodeType
-          onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
-
-          name' {name: n, nodeType: nt} = if nt == GT.NodeUser then show session else n
-
-          mNodePopupView props'@{ boxes: b, id: i, nodeType: nt } opc =
-            nodePopupView { boxes: b
-                          , dispatch
-                          , id: i
-                          , name: name' props'
-                          , nodeType: nt
-                          , onPopoverClose: opc
-                          , session }
-
-    popOverIcon =
-      H.a { className: "settings fa fa-cog"
-          , title : "Each node of the Tree can perform some actions.\n"
-            <> "Click here to execute one of them." } []
-    dropProps droppedFile droppedFile' isDragOver isDragOver' =
-      { className: "leaf " <> (dropClass droppedFile' isDragOver')
-      , on: { dragLeave: onDragLeave isDragOver
-            , dragOver: onDragOverHandler isDragOver
-            , drop: dropHandler }
-      }
-      where
-        dropClass (Just _) _    = "file-dropped"
-        dropClass _        true = "file-dropped"
+        dropClass :: Maybe DroppedFile -> Boolean -> String
+        dropClass (Just _) _    = "mainleaf--file-dropped"
+        dropClass _        true = "mainleaf--file-dropped"
         dropClass Nothing  _    = ""
 
+        name' :: String -> GT.NodeType -> Session -> String
+        name' _ GT.NodeUser s = show s
+        name' n _           _ = n
+
+        isSelected = Just route' == Routes.nodeTypeAppRoute nodeType (sessionId session) id
+
+        SettingsBox {show: showBox} = settingsBox nodeType
+
+        href = url frontends $ GT.NodePath (sessionId session) nodeType (Just id)
+
+        name = name' props.name nodeType session
+
+    -- Methods
+
+        dropHandler :: forall event.
+             SE.SyntheticEvent_ event
+          -> Effect Unit
         dropHandler e = do
           -- prevent redirection when file is dropped
-          E.preventDefault e
-          E.stopPropagation e
+          SE.preventDefault e
+          SE.stopPropagation e
           blob <- R2.dataTransferFileBlob e
           void $ launchAff do
             --contents <- readAsText blob
             liftEffect $ do
               T.write_ (Just
-                       $ DroppedFile { blob: (UploadFileBlob blob)
-                                     , fileType: Just CSV
-                                     , lang    : EN
-                                     }) droppedFile
-    onDragOverHandler isDragOver e = do
-      -- prevent redirection when file is dropped
-      -- https://stackoverflow.com/a/6756680/941471
-      E.preventDefault e
-      E.stopPropagation e
-      T.write_ true isDragOver
-    onDragLeave isDragOver _ = T.write_ false isDragOver
+                      $ DroppedFile { blob: (UploadFileBlob blob)
+                                    , fileType: Just CSV
+                                    , lang    : EN
+                                    }) droppedFile
 
-type FolderIconProps = (
-    folderOpen :: T.Box Boolean
-  , nodeType   ::  GT.NodeType
-  )
+        onDragOverHandler :: forall event.
+             T.Box Boolean
+          -> SE.SyntheticEvent_ event
+          -> Effect Unit
+        onDragOverHandler box e = do
+          -- prevent redirection when file is dropped
+          -- https://stackoverflow.com/a/6756680/941471
+          SE.preventDefault e
+          SE.stopPropagation e
+          T.write_ true box
 
-folderIcon :: R2.Component FolderIconProps
-folderIcon = R.createElement folderIconCpt
-folderIconCpt :: R.Component FolderIconProps
-folderIconCpt = here.component "folderIcon" cpt
-  where
-    cpt { folderOpen, nodeType } _ = do
-      open <- T.useLive T.unequal folderOpen
-      pure $ H.a { className: "folder-icon", on: { click: \_ -> T.modify_ not folderOpen } }
-        [ H.i { className: GT.fldr nodeType open } [] ]
+        onDragLeave :: forall event.
+             T.Box Boolean
+          -> SE.SyntheticEvent_ event
+          -> Effect Unit
+        onDragLeave box _ = T.write_ false box
 
-type ChevronIconProps = (
-    folderOpen :: T.Box Boolean
-  , handed     :: T.Box GT.Handed
-  , isLeaf     :: Boolean
-  )
+        onTaskFinish ::
+             GT.NodeID
+          -> GT.AsyncTaskWithType
+          -> Unit
+          -> Effect Unit
+        onTaskFinish id' t _ = do
+          GAT.finish id' t tasks
+          if GAT.asyncTaskTTriggersAppReload t then do
+            here.log2 "reloading root for task" t
+            T2.reload reloadRoot
+          else do
+            if GAT.asyncTaskTTriggersTreeReload t then do
+              here.log2 "reloading tree for task" t
+              T2.reload reload
+            else do
+              here.log2 "task doesn't trigger a tree reload" t
+              pure unit
+            if GAT.asyncTaskTTriggersMainPageReload t then do
+              here.log2 "reloading main page for task" t
+              T2.reload reloadMainPage
+            else do
+              here.log2 "task doesn't trigger a main page reload" t
+              pure unit
+          -- snd tasks $ GAT.Finish id' t
+          -- mT <- T.read tasks
+          -- case mT of
+          --   Just t' -> snd t' $ GAT.Finish id' t
+          --   Nothing -> pure unit
+          -- T2.reload reloadRoot
 
-chevronIcon :: R2.Component ChevronIconProps
-chevronIcon = R.createElement chevronIconCpt
-chevronIconCpt :: R.Component ChevronIconProps
-chevronIconCpt = here.component "chevronIcon" cpt
-  where
-    cpt { isLeaf: true } _ = do
-      pure $ H.div {} []
-    cpt { folderOpen, handed, isLeaf: false } _ = do
-      handed' <- T.useLive T.unequal handed
-      open <- T.useLive T.unequal folderOpen
-      pure $ H.a { className: "chevron-icon"
-          , on: { click: \_ -> T.modify_ not folderOpen }
+        onPopoverClose ::
+             Popover.PopoverRef
+          -> Effect Unit
+        onPopoverClose ref = Popover.setOpen ref false
+
+        -- NOTE Don't toggle tree if it is not selected
+        onNodeLinkClick :: Unit -> Effect Unit
+        onNodeLinkClick _ = when (not isSelected) (T.write_ true folderOpen)
+
+    -- Hooks
+
+      useFirstEffect' $
+        R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
+
+      mVersion <- useVersion $ nodeType == GT.NodeUser ?
+        Just { session } $
+        Nothing
+
+      host <- R2.getPortalHost
+
+    -- Render
+
+      pure $
+
+        H.span
+        { className: intercalate " "
+            [ "mainleaf"
+            , dropClass droppedFile' isDragOver'
+            , isSelected ? "mainleaf--selected" $ ""
+            ]
+        , on: { dragLeave: onDragLeave isDragOver
+              , dragOver: onDragOverHandler isDragOver
+              , drop: dropHandler
+              }
+        }
+        [
+
+      -- // Abstract informations //
+
+          nodeTooltip
+          { id
+          , nodeType
+          , name
           }
-        [ H.i { className: if open
-                            then "fa fa-chevron-down"
-                            else if handed' == GT.RightHanded
-                                    then "fa fa-chevron-right"
-                                    else "fa fa-chevron-left"
-                } [] ]
+          [
+            case mVersion of
+              Nothing -> mempty
+              Just v  -> versionComparator v
+          ]
+        ,
+          R.createPortal
+          [
+            fileTypeView
+            { dispatch, droppedFile, id, isDragOver, nodeType } []
+          ]
+          host
+        ,
 
-{-
-fldr nt open = if open
-               then "fa fa-globe" -- <> color nt
-               else "fa fa-folder-globe" -- <> color nt
-               --else "fa fa-folder-close" <> color nt
-                 where
-                   color GT.NodeUser     = ""
-                   color FolderPublic = ""
-                   color FolderShared = " text-warning"
-                   color _            = " text-danger"
--}
+      -- // Leaf informations data //
 
+          folderIcon
+          { isLeaf
+          , isOpened: folderOpen'
+          , callback: const $ T.modify_ (not) folderOpen
+          }
+        ,
+          nodeIcon
+          (
+            { nodeType
+            , isLeaf
+            , callback: const $ T.modify_ (not) folderOpen
+            , isSelected
+            }
+          )
+          [
+            case mVersion of
+              Nothing                              -> mempty
+              Just { clientVersion, remoteVersion} ->
+                B.iconButton $
+                { className: intercalate " "
+                    [ "mainleaf__version-badge"
+                    , clientVersion == remoteVersion ?
+                        "mainleaf__version-badge--matched" $
+                        "mainleaf__version-badge--mismatched"
+                    ]
+                , name: clientVersion == remoteVersion ?
+                    "check-circle" $
+                    "exclamation-circle"
+                , callback: const $ T.modify_ (not) folderOpen
+                }
+          ]
+        ,
+          nodeLink
+          { callback: onNodeLinkClick
+          , href
+          , id
+          , name: name' props.name nodeType session
+          , type: nodeType
+          }
+        ,
+
+      -- // Leaf action features //
+
+          nodeActions
+          { id
+          , nodeType
+          , refresh: const $ dispatch RefreshTree
+          , session
+          } []
+        ,
+          R2.if' (showBox) $
+
+            Popover.popover
+            { arrow: false
+            , open: false
+            , onClose: \_ -> pure unit
+            , onOpen:  \_ -> pure unit
+            , ref: popoverRef
+            }
+            [
+              B.iconButton
+              { name: "cog"
+              , className: "mainleaf__settings-icon"
+              -- (cf. Popover callbacks)
+              , callback: const R.nothing
+              , title:
+                    "Each node of the Tree can perform some actions.\n"
+                  <> "Click here to execute one of them."
+              , variant: Secondary
+              , overlay: true
+              }
+            ,
+              nodePopupView
+              { boxes
+              , dispatch
+              , id
+              , name
+              , nodeType
+              , onPopoverClose: const $ onPopoverClose popoverRef
+              , session
+              }
+            ]
+        ,
+          R.fragment $ flip map currentTasks' \task ->
+
+            asyncProgress
+            { asyncTask: task
+            , errors
+            , nodeId: id
+            , onFinish: onTaskFinish id task
+            , session
+            }
+            [
+              taskProgress
+              {}
+            ]
+        ]
+
+
+---------------------------------------------------------
+
+type NodeIconProps =
+  ( nodeType      ::  GT.NodeType
+  , callback      :: Unit -> Effect Unit
+  , isLeaf        :: Boolean
+  , isSelected    :: Boolean
+  )
+
+nodeIcon :: R2.Component NodeIconProps
+nodeIcon = R2.component nodeIconCpt
+nodeIconCpt :: R.Component NodeIconProps
+nodeIconCpt = here.component "nodeIcon" cpt where
+  cpt { nodeType
+      , callback
+      , isLeaf
+      , isSelected
+      } children = do
+    -- Render
+    pure $
+
+      H.span
+      { className: "mainleaf__node-icon" } $
+      [
+        B.iconButton
+        { name: GT.getIcon nodeType true
+        , callback
+        , status: isLeaf ? Idled $ Enabled
+        , variant: isSelected ? Primary $ Dark
+        }
+      ]
+        <> children
+
+-----------------------------------------------
+
+type FolderIconProps =
+  ( isOpened :: Boolean
+  , callback :: Unit -> Effect Unit
+  , isLeaf   :: Boolean
+  )
+
+folderIcon :: R2.Leaf FolderIconProps
+folderIcon = R2.leaf folderIconCpt
+folderIconCpt :: R.Component FolderIconProps
+folderIconCpt = here.component "folderIcon" cpt where
+  cpt { isLeaf: true } _ = pure $
+
+    B.icon
+    { className: intercalate " "
+        ["mainleaf__folder-icon"
+        , "mainleaf__folder-icon--leaf"
+        ]
+    , name: "caret-right"
+    }
+
+  cpt { callback, isOpened } _ = pure $
+
+    B.iconButton
+    { className: "mainleaf__folder-icon"
+    , name: isOpened ? "caret-down" $ "caret-right"
+    , callback
+    }
+
+-----------------------------------------------
+
+type NodeLinkProps =
+  ( callback   :: Unit -> Effect Unit
+  , href       :: String
+  , id         :: Int
+  , name       :: GT.Name
+  , type       :: GT.NodeType
+  )
+
+nodeLink :: R2.Leaf NodeLinkProps
+nodeLink = R2.leaf nodeLinkCpt
+nodeLinkCpt :: R.Component NodeLinkProps
+nodeLinkCpt = here.component "nodeLink" cpt where
+  cpt { callback
+      , href
+      , id
+      , name
+      , type: nodeType
+      } _ = do
+    -- Computed
+    let
+      tid = tooltipId name id
+
+      aProps =
+        { href
+        } `Record.merge` B.tooltipBind tid
+
+    -- Render
+    pure $
+
+      H.div
+      { className: "mainleaf__node-link"
+      , on: { click: const $ callback unit }
+      }
+      [
+        H.a
+        aProps
+        [
+          B.span_ $ nodeLinkText nodeType name
+        ]
+      ]
+
+nodeLinkText :: GT.NodeType -> String -> String
+nodeLinkText GT.NodeUser s = s # (truncateNodeUser)
+                         >>> maybe s identity
+nodeLinkText _           s = textEllipsisBreak 15 s
+
+truncateNodeUser :: String -> Maybe String
+truncateNodeUser = Regex.match (nodeUserRegexp) >=> flip NArray.index 1 >>> join
+
+---------------------------------------------------
+
+type NodeTooltipProps =
+  ( name      :: String
+  , id        :: GT.NodeID
+  , nodeType  :: GT.NodeType
+  )
+
+nodeTooltip :: R2.Component NodeTooltipProps
+nodeTooltip = R2.component nodeTooltipCpt
+nodeTooltipCpt :: R.Component NodeTooltipProps
+nodeTooltipCpt = here.component "nodeTooltip" cpt where
+  cpt { name, id, nodeType } children = pure $
+
+    B.tooltip
+    { id: tooltipId name id
+    , effect: FloatEffect
+    , delayShow: 600
+    } $
+    [
+      H.b
+      {}
+      [
+        B.icon
+        { name: GT.getIcon nodeType true }
+      ,
+        B.span_ $
+          GT.prettyNodeType nodeType
+      ]
+    ,
+      B.div_ $
+        name
+    ]
+      <> children
+
+tooltipId :: String -> GT.NodeID -> String
+tooltipId name id = name <> "-node-link-" <> show id
+
+---------------------------------------------------------
+
+blankNodeSpan :: R2.Leaf ()
+blankNodeSpan = R2.leaf blankNodeSpanCpt
+blankNodeSpanCpt :: R.Component ()
+blankNodeSpanCpt = here.component "__blank__" cpt where
+  cpt _ _ = pure $
+
+    H.div { className: "mainleaf mainleaf--blank" }
+    [
+      B.icon { className: "mainleaf__folder-icon", name: "caret-right"}
+    ,
+      H.span { className: "mainleaf__node-icon" }
+      [
+        B.icon { name: "circle" }
+      ]
+    ,
+      H.div { className: "mainleaf__node-link"} [ H.text $ nbsp 1 ]
+    ]
+
+-----------------------------------------------
 
 -- START nodeActions
 
@@ -302,22 +544,39 @@ nodeActions = R.createElement nodeActionsCpt
 
 nodeActionsCpt :: R.Component NodeActionsProps
 nodeActionsCpt = here.component "nodeActions" cpt where
-  cpt props _ = pure (child props.nodeType) where
-    nodeActionsP = SProxy :: SProxy "nodeType"
-    childProps = Record.delete nodeActionsP props
-    child GT.NodeList = listNodeActions childProps
-    child GT.Graph = graphNodeActions childProps
-    child _ = H.div {} []
+  cpt props _ = pure (child props.nodeType)
+    where
+      nodeActionsP      = SProxy :: SProxy "nodeType"
+
+      childProps        = Record.delete nodeActionsP props
+
+      child GT.NodeList = listNodeActions childProps
+      child GT.Graph    = graphNodeActions childProps
+      child _           = mempty
 
 graphNodeActions :: R2.Leaf NodeActionsCommon
 graphNodeActions = R2.leafComponent graphNodeActionsCpt
 graphNodeActionsCpt :: R.Component NodeActionsCommon
 graphNodeActionsCpt = here.component "graphNodeActions" cpt where
-  cpt { id, session, refresh } _ =
-    useLoader { errorHandler
-              , loader: graphVersions session
-              , path: id
-              , render: \gv -> nodeActionsGraph { graphVersions: gv, session, id, refresh } [] }
+  cpt { id, session, refresh } _ = do
+    -- States
+    state /\ stateBox <- R2.useBox' Nothing
+
+    -- Hooks
+    useLoaderEffect
+      { errorHandler
+      , loader: graphVersions session
+      , path: id
+      , state: stateBox
+      }
+
+    -- Render
+    pure $ R2.fromMaybe_ state \gv ->
+
+      nodeActionsGraph
+      { graphVersions: gv, session, id, refresh }
+      []
+
   graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
   errorHandler = logRESTError here "[graphNodeActions]"
 
@@ -326,12 +585,108 @@ listNodeActions :: R2.Leaf NodeActionsCommon
 listNodeActions = R2.leafComponent listNodeActionsCpt
 listNodeActionsCpt :: R.Component NodeActionsCommon
 listNodeActionsCpt = here.component "listNodeActions" cpt where
-  cpt { id, session, refresh } _ =
-    useLoader { errorHandler
-              , path: { nodeId: id, session }
-              , loader: loadCorpusWithChild
-              , render: \{ corpusId } -> nodeActionsNodeList
-                 { listId: id, nodeId: corpusId, session, refresh: refresh
-                 , nodeType: GT.TabNgramType GT.CTabTerms } }
+  cpt { id, session, refresh } _ = do
+    -- States
+    state /\ stateBox <- R2.useBox' Nothing
+
+    -- Hooks
+    useLoaderEffect
+      { errorHandler
+      , loader: loadCorpusWithChild
+      , path: { nodeId: id, session }
+      , state: stateBox
+      }
+
+    -- Render
+    pure $ R2.fromMaybe_ state \{ corpusId } ->
+
+      nodeActionsNodeList
+      { listId: id
+      , nodeId: corpusId
+      , session
+      , refresh: refresh
+      , nodeType: GT.TabNgramType GT.CTabTerms
+      }
+
     where
       errorHandler = logRESTError here "[listNodeActions]"
+
+-----------------------------------------------
+
+type VersionComparatorProps =
+  ( clientVersion :: Version
+  , remoteVersion :: Version
+  )
+
+versionComparator :: R2.Leaf VersionComparatorProps
+versionComparator = R2.leaf versionComparatorCpt
+versionComparatorCpt :: R.Component VersionComparatorProps
+versionComparatorCpt = here.component "versionComparator" cpt where
+  cpt { clientVersion, remoteVersion } _
+    | clientVersion == remoteVersion = pure $
+        B.caveat
+        { variant: Success
+        , className: "mainleaf__version-comparator"
+        }
+        [
+          B.b_ "Versions match"
+        ,
+          content clientVersion remoteVersion
+        ]
+    | otherwise = pure $
+        B.caveat
+        { variant: Warning
+        , className: "mainleaf__version-comparator"
+        }
+        [
+          B.b_ "Versions mismatch"
+        ,
+          content clientVersion remoteVersion
+        ]
+
+  content :: Version -> Version -> R.Element
+  content clientVersion remoteVersion =
+    H.ul
+    {}
+    [
+      H.li
+      {}
+      [
+        B.span_ "frontend: "
+      ,
+        H.text $ nbsp 1
+      ,
+        B.code_ clientVersion
+      ]
+    ,
+      H.li
+      {}
+      [
+        B.span_ "backend: "
+      ,
+        H.text $ nbsp 1
+      ,
+        B.code_ remoteVersion
+      ]
+    ]
+
+-------------------------------------------------------
+
+taskProgress :: R2.Leaf ()
+taskProgress = R2.leaf taskProgressCpt
+taskProgressCpt :: R.Component ()
+taskProgressCpt = here.component "progress" cpt where
+  cpt _ _ = do
+    -- Context
+    asyncProgressContext <- R.useContext asyncContext
+    -- Render
+    pure $
+
+      H.span
+      { className: "mainleaf__progress-bar" }
+      [
+        B.progressBar
+        { value: asyncProgressContext
+        , variant: Info
+        }
+      ]

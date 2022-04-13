@@ -104,6 +104,7 @@ datafield2database _                   = Empty
 allDatabases :: Array Database
 allDatabases = [ Empty
                , PubMed
+               , Arxiv
                , HAL Nothing
                , IsTex
                , IsTex_Advanced
@@ -116,6 +117,7 @@ allDatabases = [ Empty
 data Database = All_Databases
               | Empty
               | PubMed
+              | Arxiv
               | HAL (Maybe Org)
               | IsTex
               | IsTex_Advanced
@@ -124,34 +126,37 @@ data Database = All_Databases
 --              | SocialNetworks
 derive instance Generic Database _
 instance Show Database where
-  show All_Databases= "All Databases"
-  show PubMed = "PubMed"
-  show (HAL _)= "HAL"
-  show IsTex  = "IsTex"
-  show IsTex_Advanced  = "IsTex_Advanced"
-  show Isidore= "Isidore"
-  show Empty  = "Empty"
+  show All_Databases  = "All Databases"
+  show PubMed         = "PubMed"
+  show Arxiv          = "Arxiv"
+  show (HAL _)        = "HAL"
+  show IsTex          = "IsTex"
+  show IsTex_Advanced = "IsTex_Advanced"
+  show Isidore        = "Isidore"
+  show Empty          = "Empty"
 --  show News   = "News"
 --  show SocialNetworks = "Social Networks"
 
 instance Doc Database where
-  doc All_Databases = "All databases"
-  doc PubMed      = "All Medical publications"
-  doc (HAL _)     = "All open science (archives ouvertes)"
-  doc IsTex       = "All Elsevier enriched by CNRS/INIST"
+  doc All_Databases  = "All databases"
+  doc PubMed         = "All Medical publications"
+  doc Arxiv          = "Arxiv"
+  doc (HAL _)        = "All open science (archives ouvertes)"
+  doc IsTex          = "All Elsevier enriched by CNRS/INIST"
   doc IsTex_Advanced = "IsTex advanced search"
-  doc Isidore     = "All (French) Social Sciences"
-  doc Empty       = "Empty"
+  doc Isidore        = "All (French) Social Sciences"
+  doc Empty          = "Empty"
 --  doc News        = "Web filtered by News"
 --  doc SocialNetworks = "Web filtered by MicroBlogs"
 
 instance Read Database where
   read :: String -> Maybe Database
-  read "All Databases" = Just All_Databases
-  read "PubMed" = Just PubMed
-  read "HAL"    = Just $ HAL Nothing
-  read "Isidore"= Just Isidore
-  read "IsTex"  = Just IsTex
+  read "All Databases"  = Just All_Databases
+  read "PubMed"         = Just PubMed
+  read "Arxiv"          = Just Arxiv
+  read "HAL"            = Just $ HAL Nothing
+  read "Isidore"        = Just Isidore
+  read "IsTex"          = Just IsTex
   read "IsTex_Advanced" = Just IsTex_Advanced
   -- read "Web"    = Just Web
   -- read "News"   = Just News
