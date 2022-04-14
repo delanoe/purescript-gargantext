@@ -73,6 +73,9 @@
   .mx-3 { margin-right:   space-x(3); margin-left:  space-x(3);   }
   .my-3 { margin-bottom:  space-x(3); margin-top:   space-x(3);   }
 
+  .ml-auto, .mx-auto { margin-left: auto;  }
+  .mr-auto, .mx-auto { margin-right: auto; }
+
   // Padding
   .p-0 { padding: 0;          }
   .p-1 { padding: space-x(1); }

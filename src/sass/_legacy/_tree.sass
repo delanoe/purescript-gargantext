@@ -355,7 +355,8 @@ $node-popup-width: 544px
       text-decoration: underline
       text-underline-offset: 2px // easing node reading (empirical)
 
-    &--is-selected
+    &--is-selected > &__inner
+      // (only current node, not its children)
       text-decoration: underline
       font-weight: bold
 

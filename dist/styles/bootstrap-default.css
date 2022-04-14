@@ -6558,6 +6558,12 @@ a:focus {
   margin-bottom: 24px;
   margin-top: 24px;
 }
+#app .ml-auto, #app .mx-auto {
+  margin-left: auto;
+}
+#app .mr-auto, #app .mx-auto {
+  margin-right: auto;
+}
 #app .p-0 {
   padding: 0;
 }
@@ -7881,7 +7887,7 @@ a:focus, a:hover {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
-.subtree__node--is-selected {
+.subtree__node--is-selected > .subtree__node__inner {
   text-decoration: underline;
   font-weight: bold;
 }
