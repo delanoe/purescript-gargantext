@@ -45,8 +45,7 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.FolderView"
 
 type Props =
-  ( backFolder :: Boolean
-  , boxes      :: Boxes
+  ( boxes      :: Boxes
   , nodeId     :: Int
   , session    :: Session
   )
@@ -57,15 +56,14 @@ folderView :: R2.Leaf Props
 folderView = R2.leafComponent folderViewCpt
 folderViewCpt :: R.Component Props
 folderViewCpt = here.component "folderViewCpt" cpt where
-  cpt { backFolder, boxes, nodeId, session } _ = do
+  cpt { boxes, nodeId, session } _ = do
     setPopoverRef <- R.useRef Nothing
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
     useLoader { errorHandler
               , loader: loadFolders
               , path: { nodeId, session, reload: reload'}
-              , render: \folders -> folderViewMain { backFolder
-                                                   , boxes
+              , render: \folders -> folderViewMain { boxes
                                                    , folders
                                                    , nodeId
                                                    , reload
@@ -75,8 +73,7 @@ folderViewCpt = here.component "folderViewCpt" cpt where
       errorHandler = logRESTError here "[folderView]"
 
 type FolderViewProps =
-  ( backFolder    :: Boolean
-  , boxes         :: Boxes
+  ( boxes         :: Boxes
   , folders       :: TreeFirstLevel
   , nodeId        :: Int
   , reload        :: T.Box T2.Reload
@@ -88,17 +85,15 @@ folderViewMain :: R2.Component FolderViewProps
 folderViewMain = R.createElement folderViewMainCpt
 folderViewMainCpt :: R.Component FolderViewProps
 folderViewMainCpt = here.component "folderViewMainCpt" cpt where
-  cpt { backFolder
-      , boxes
-      , folders: {parent: parentNode, root: {node_type: nodeType}, children}
+  cpt { boxes
+      , folders: {parent: parentNode, children}
       , nodeId
       , reload
       , session
       , setPopoverRef } _ = do
     linkHandlers <- useLinkHandler
     let foldersS = A.sortBy sortFolders children
-    let backHome = isBackHome nodeType
-    let parent = makeParentFolder linkHandlers parentNode session backFolder backHome
+    let parent = makeParentFolder linkHandlers parentNode session
     let childrenEl = makeFolderElements foldersS { boxes, nodeId, reload, session, setPopoverRef }
 
     pure $ H.div {className: "fv folders"} $ parent <> childrenEl
@@ -115,29 +110,14 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
                                                           , style: FolderChild
                                                           , text: node.name } []
 
-  makeParentFolder :: Record Methods -> Maybe TreeNode -> Session -> Boolean -> Boolean -> Array R.Element
-  makeParentFolder _ (Just parent) session _ _ =
-    -- FIXME: The NodeType here should not be hardcoded to FolderPrivate but we currently can't get the actual NodeType
-    -- without performing another API call. Also parentId is never being returned by this API even when it clearly exists
-    [ folderSimple {style: FolderUp, text: "..", nodeId: parent.id, nodeType: GT.FolderPrivate, session: session} [] ]
-  makeParentFolder linkHandlers Nothing _ _ true = [ H.button {className: "btn btn-primary", on: { click: \_ -> linkHandlers.goToRoute Home}} [ H.i { className: "fa fa-folder-open" } []
-                                                                   , H.br {}
-                                                                   , H.text ".."] ]
-  makeParentFolder linkHandlers Nothing _ true _ = [ H.button {className: "btn btn-primary", on: { click: \_ -> linkHandlers.goToPreviousPage unit } }  [ H.i { className: "fa fa-folder-open" } []
-                                                                   , H.br {}
-                                                                   , H.text ".."] ]
-  makeParentFolder _ Nothing _ _ _ = []
+  makeParentFolder :: Record Methods -> Maybe TreeNode -> Session -> Array R.Element
+  makeParentFolder _ (Just parent) session =
+    [ folderSimple {style: FolderUp, text: "..", nodeId: parent.id, nodeType: parent.node_type, session: session} [] ]
+  makeParentFolder _ Nothing _ = []
 
 
   sortFolders :: TreeNode-> TreeNode -> Ordering
   sortFolders a b = compare a.id b.id
-
-  isBackHome :: GT.NodeType -> Boolean
-  isBackHome GT.FolderPrivate = true
-  isBackHome GT.FolderPublic = true
-  isBackHome GT.FolderShared = true
-  isBackHome _ = false
-
 
 type FolderSimpleProps =
   (

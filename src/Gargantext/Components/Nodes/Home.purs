@@ -183,8 +183,7 @@ tutorialCpt = here.component "tutorial" cpt where
           sessionToFolder session@(Session {treeId, username, backend}) =
             H.span { className: "folder" } [
               H.div { className: "d-flex justify-content-center" } [ H.text (username <> "@" <> (cleanBackendUrl backend)) ]
-            , H.div {} [ FV.folderView { backFolder: false
-                                       , boxes
+            , H.div {} [ FV.folderView { boxes
                                        , nodeId: treeId
                                        , session } ] ]
 
