@@ -24,7 +24,7 @@ handleRESTError :: forall a.
                 -> Aff Unit
 handleRESTError errors (Left error) _ = liftEffect $ do
   T.modify_ (A.cons $ FRESTError { error }) errors
-  here.log2 "[handleTaskError] RESTError" error
+  here.warn2 "[handleTaskError] RESTError" error
 handleRESTError _ (Right task) handler = handler task
 
 handleErrorInAsyncProgress :: T.Box (Array FrontendError)

@@ -261,3 +261,50 @@
     margin-right: space-x(2);
   }
 }
+
+/// Ripple
+///-----------------------------------------------------------------------------
+
+.b-ripple {
+  @include fit-positions;
+
+  position: absolute;
+  overflow: hidden;
+
+  &:after {
+    @include fit-positions;
+
+    content: "";
+    position: absolute;
+    pointer-events: none;
+    background-image:
+      radial-gradient(
+        circle,
+        #000 10%,
+        transparent 10%
+      );
+    background-repeat: no-repeat;
+    background-position: 50%;
+    opacity: 0;
+    transition: transform 0.6s, opacity 0.6s;
+    transform: scale(10);
+  }
+
+  &:active:after {
+    transform: scale(0);
+    opacity: 0.2;
+    transition: transform 0s, opacity 0s;
+  }
+
+  @each $name, $value in $theme-colors {
+
+    &--#{ $name }:after {
+      background-image:
+        radial-gradient(
+          circle,
+          #{ $value } 10%,
+          transparent 10%
+        );
+    }
+  }
+}

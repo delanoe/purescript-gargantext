@@ -249,7 +249,13 @@ nodeSpanCpt = here.component "nodeSpan" cpt
           R.createPortal
           [
             fileTypeView
-            { dispatch, droppedFile, id, isDragOver, nodeType } []
+            { dispatch
+            , droppedFile
+            , id
+            , isDragOver
+            , nodeType
+            , key: "fileType-" <> show id
+            }
           ]
           host
         ,

@@ -73,11 +73,6 @@ type LayoutProps = WithSession LayoutNoSessionProps
 
 type LayoutSessionContextProps = WithSessionContext LayoutNoSessionProps
 
-type KeyLayoutProps = (
-    key :: String
-  | LayoutProps
-  )
-
 userLayout :: R2.Component LayoutProps
 userLayout = R.createElement userLayoutCpt
 userLayoutCpt :: R.Component LayoutProps
@@ -89,9 +84,9 @@ userLayoutCpt = here.component "userLayout" cpt
 
       pure $ userLayoutWithKey $ Record.merge props { key: show sid <> "-" <> show nodeId }
 
-userLayoutWithKey :: R2.Leaf KeyLayoutProps
+userLayoutWithKey :: R2.Leaf ( key :: String | LayoutProps )
 userLayoutWithKey = R2.leafComponent userLayoutWithKeyCpt
-userLayoutWithKeyCpt :: R.Component KeyLayoutProps
+userLayoutWithKeyCpt :: R.Component ( key :: String | LayoutProps )
 userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
   cpt { boxes: boxes@{ sidePanelTexts }
       , frontends

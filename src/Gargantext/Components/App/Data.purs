@@ -6,7 +6,6 @@ import Gargantext.Prelude
 import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Gargantext.AsyncTasks as GAT
-import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
 import Gargantext.Components.Lang as Lang
 import Gargantext.Components.Nodes.Lists.Types as ListsT
 import Gargantext.Components.Nodes.Texts.Types as TextsT
@@ -36,7 +35,6 @@ type App =
   , showCorpus          :: Boolean
   , showLogin           :: Boolean
   , showTree            :: Boolean
-  , sidePanelGraph      :: Maybe (Record GEST.SidePanel)
   , sidePanelLists      :: Maybe (Record ListsT.SidePanel)
   , sidePanelTexts      :: Maybe (Record TextsT.SidePanel)
   , sidePanelState      :: SidePanelState
@@ -63,7 +61,6 @@ emptyApp =
   , showCorpus          : false
   , showLogin           : false
   , showTree            : true
-  , sidePanelGraph      : GEST.initialSidePanel
   , sidePanelLists      : ListsT.initialSidePanel
   , sidePanelTexts      : TextsT.initialSidePanel
   , sidePanelState      : InitialClosed
@@ -89,7 +86,6 @@ type Boxes =
   , showCorpus          :: T.Box Boolean
   , showLogin           :: T.Box Boolean
   , showTree            :: T.Box Boolean
-  , sidePanelGraph      :: T.Box (Maybe (Record GEST.SidePanel))
   , sidePanelLists      :: T.Box (Maybe (Record ListsT.SidePanel))
   , sidePanelTexts      :: T.Box (Maybe (Record TextsT.SidePanel))
   , sidePanelState      :: T.Box SidePanelState

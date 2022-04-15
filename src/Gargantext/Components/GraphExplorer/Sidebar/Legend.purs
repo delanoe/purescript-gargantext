@@ -1,4 +1,4 @@
-module Gargantext.Components.GraphExplorer.Legend
+module Gargantext.Components.GraphExplorer.Sidebar.Legend
   ( Props, legend
   ) where
 
@@ -13,7 +13,7 @@ import Gargantext.Components.GraphExplorer.Types (Legend(..), intColor)
 import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
-here = R2.here "Gargantext.Components.GraphExplorer.Legend"
+here = R2.here "Gargantext.Components.GraphExplorer.Sidebar.Legend"
 
 type Props = ( items :: Seq Legend )
 

@@ -2,7 +2,7 @@ module Gargantext.Components.Bootstrap.BaseModal (baseModal) where
 
 import Gargantext.Prelude
 
-import DOM.Simple (Window)
+import DOM.Simple (Window, window)
 import Data.Foldable (intercalate)
 import Effect (Effect)
 import Effect.Uncurried (EffectFn2, runEffectFn2)
@@ -56,8 +56,8 @@ component = R.hooksComponent componentName cpt where
     isVisible <- R2.useLive' isVisibleBox
 
     -- Hooks
-    -- R.useEffect1' isVisible $
-      -- (isVisible ? addClassName $ removeClassName) window "modal-open"
+    R.useEffect1' isVisible $
+      (isVisible ? addClassName $ removeClassName) window "modal-open"
 
     -- Computed
     let
@@ -81,6 +81,7 @@ component = R.hooksComponent componentName cpt where
         , className
         , role: "dialog"
         , data: { show: true }
+        , key: id
         }
         [
           R2.if' (hasBackground) $

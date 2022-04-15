@@ -35,7 +35,7 @@ errorsViewCpt = here.component "errorsView" cpt
                , variant: "danger" } [ H.text error ]
       where
         onClose = do
-          here.log2 "click!" error
+          here.error2 "click!" error
           T.modify_ (\es -> case deleteAt i es of
                        Nothing  -> es
                        Just es' -> es'
@@ -46,7 +46,7 @@ errorsViewCpt = here.component "errorsView" cpt
                , variant: "danger" } [ H.text $ show error ]
       where
         onClose = do
-          here.log2 "click!" error
+          here.error2 "click!" error
           T.modify_ (\es -> case deleteAt i es of
                        Nothing  -> es
                        Just es' -> es'
@@ -57,7 +57,7 @@ errorsViewCpt = here.component "errorsView" cpt
                , variant: "danger" } [ H.text $ show error ]
       where
         onClose = do
-          here.log2 "click!" error
+          here.error2 "click!" error
           T.modify_ (\es -> case deleteAt i es of
                        Nothing  -> es
                        Just es' -> es'

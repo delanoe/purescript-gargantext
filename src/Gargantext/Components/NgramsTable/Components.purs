@@ -26,13 +26,13 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.NgramsTable.Components"
 
 type SearchInputProps =
-  ( key :: String  -- to prevent refreshing & losing input
-  , searchQuery :: T.Box String
+  ( searchQuery :: T.Box String
   )
 
-searchInput :: R2.Leaf SearchInputProps
+-- "key": to prevent refreshing & losing input
+searchInput :: R2.Leaf ( key :: String | SearchInputProps )
 searchInput = R2.leafComponent searchInputCpt
-searchInputCpt :: R.Component SearchInputProps
+searchInputCpt :: R.Component ( key :: String | SearchInputProps )
 searchInputCpt = here.component "searchInput" cpt
   where
     cpt { searchQuery } _ = do
@@ -55,7 +55,7 @@ searchButtonCpt :: R.Component SearchButtonProps
 searchButtonCpt = here.component "searchButton" cpt where
   cpt { searchQuery } _ = do
     searchQuery' <- T.useLive T.unequal searchQuery
-    
+
     pure $ H.div { className: "input-group-prepend" }
       [ if searchQuery' /= ""
         then
@@ -75,7 +75,7 @@ searchFieldInputCpt :: R.Component SearchFieldInputProps
 searchFieldInputCpt = here.component "searchFieldInput" cpt where
   cpt { searchQuery } _ = do
     -- searchQuery' <- T.useLive T.unequal searchQuery
-    
+
     pure $ H.input { className: "form-control"
                    -- , defaultValue: searchQuery'
                    , name: "search"
@@ -83,7 +83,7 @@ searchFieldInputCpt = here.component "searchFieldInput" cpt where
                    , placeholder: "Search"
                    , type: "value"
                    }
-    
+
 type SelectionCheckboxProps =
   ( allNgramsSelected :: Boolean
   , dispatch          :: Dispatch

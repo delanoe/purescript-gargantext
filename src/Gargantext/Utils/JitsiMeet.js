@@ -2,7 +2,7 @@
 
 var API = require('../../src/external-deps/JitsiMeetAPI.js');
 
-console.log('API', API);
+// console.log('API', API);
 
 exports._api = API;
 exports._jitsiMeetAPI = function(host, options) {

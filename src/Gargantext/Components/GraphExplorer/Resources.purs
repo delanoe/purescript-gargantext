@@ -1,8 +1,8 @@
 module Gargantext.Components.GraphExplorer.Resources
-  -- ( graph, graphCpt
-  -- , sigmaSettings, SigmaSettings, SigmaOptionalSettings
-  -- , forceAtlas2Settings, ForceAtlas2Settings, ForceAtlas2OptionalSettings
-  -- )
+  ( drawGraph
+  , sigmaSettings, SigmaSettings--, SigmaOptionalSettings
+  , forceAtlas2Settings, ForceAtlas2Settings--, ForceAtlas2OptionalSettings
+  )
   where
 
 import Gargantext.Prelude
@@ -10,91 +10,83 @@ import Gargantext.Prelude
 import DOM.Simple (window)
 import DOM.Simple.Types (Element)
 import Data.Either (Either(..))
-import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
 import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.Themes (darksterTheme)
 import Gargantext.Components.Themes as Themes
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
+import Gargantext.Utils (getter)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Stores as Stores
 import Reactix as R
-import Reactix.DOM.HTML as RH
 import Record (merge)
-import Record as Record
 import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Graph"
 
-
-data Stage = Init | Ready | Cleanup
-derive instance Generic Stage _
-derive instance Eq Stage
-
-
 type Props sigma forceatlas2 =
   ( boxes                 :: Boxes
   , elRef                 :: R.Ref (Nullable Element)
   , forceAtlas2Settings   :: forceatlas2
-  , graph                 :: SigmaxTypes.SGraph
-  , mCamera               :: Maybe GET.Camera
-  , multiSelectEnabledRef :: R.Ref Boolean
-  , selectedNodeIds       :: T.Box SigmaxTypes.NodeIds
-  , showEdges             :: T.Box SigmaxTypes.ShowEdgesState
   , sigmaRef              :: R.Ref Sigmax.Sigma
   , sigmaSettings         :: sigma
-  , stage                 :: T.Box Stage
-  , startForceAtlas       :: Boolean
   , transformedGraph      :: SigmaxTypes.SGraph
   )
 
-graph :: forall s fa2. R2.Component (Props s fa2)
-graph = R.createElement graphCpt
+drawGraph :: forall s fa2. R2.Leaf (Props s fa2)
+drawGraph = R2.leaf drawGraphCpt
 
-graphCpt :: forall s fa2. R.Memo (Props s fa2)
-graphCpt = R.memo' $ here.component "graph" cpt where
-    cpt props@{ elRef
-              , showEdges
-              , sigmaRef
-              , stage } _ = do
-      showEdges' <- T.useLive T.unequal showEdges
-      stage' <- T.useLive T.unequal stage
+drawGraphCpt :: forall s fa2. R.Memo (Props s fa2)
+drawGraphCpt = R.memo' $ here.component "graph" cpt where
+  -- | Component
+  -- |
+  cpt { elRef
+      , sigmaRef
+      , boxes
+      , forceAtlas2Settings: fa2
+      , transformedGraph
+      } _ = do
 
-      stageHooks (Record.merge { showEdges', stage' } props)
+    { showEdges
+    , graphStage
+    , graph
+    , startForceAtlas
+    , selectedNodeIds
+    , multiSelectEnabled
+    , hyperdataGraph
+    } <- Stores.useStore GraphStore.context
 
-      R.useEffectOnce $ do
-        pure $ do
-          here.log "[graphCpt (Cleanup)]"
-          Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Cleanup)] no sigma" $ \sigma -> do
-            Sigma.stopForceAtlas2 sigma
-            here.log2 "[graphCpt (Cleanup)] forceAtlas stopped for" sigma
-            Sigma.kill sigma
-            here.log "[graphCpt (Cleanup)] sigma killed"
+    showEdges'        <- R2.useLive' showEdges
+    graphStage'       <- R2.useLive' graphStage
+    graph'            <- R2.useLive' graph
+    startForceAtlas'  <- R2.useLive' startForceAtlas
+    hyperdataGraph'   <- R2.useLive' hyperdataGraph
+    selectedNodeIds'  <- R2.useLive' selectedNodeIds
 
-      -- NOTE: This div is not empty after sigma initializes.
-      -- When we change state, we make it empty though.
-      --pure $ RH.div { ref: elRef, style: {height: "95%"} } []
-      pure $ case R.readNullableRef elRef of
-        Nothing -> RH.div {} []
-        Just el -> R.createPortal [] el
+    -- | Hooks
+    -- |
 
-    stageHooks { elRef
-               , mCamera
-               , multiSelectEnabledRef
-               , selectedNodeIds
-               , forceAtlas2Settings: fa2
-               , graph: graph'
-               , sigmaRef
-               , stage
-               , stage': Init
-               , startForceAtlas
-               , boxes
-               } = do
-      R.useEffectOnce' $ do
+    -- Clean up
+    R.useEffectOnce $ do
+      pure $ do
+        here.log "[graphCpt (Cleanup)]"
+        Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Cleanup)] no sigma" $ \sigma -> do
+          Sigma.stopForceAtlas2 sigma
+          here.log2 "[graphCpt (Cleanup)] forceAtlas stopped for" sigma
+          Sigma.kill sigma
+          here.log "[graphCpt (Cleanup)] sigma killed"
+
+    -- Stage Init
+    R.useEffect1' graphStage' $ case graphStage' of
+
+      GET.Init -> do
+        let mCamera = getter _.mCamera hyperdataGraph'
         let rSigma = R.readRef sigmaRef
 
         case Sigmax.readSigma rSigma of
@@ -102,7 +94,7 @@ graphCpt = R.memo' $ here.component "graph" cpt where
             theme <- T.read boxes.theme
             eSigma <- Sigma.sigma {settings: sigmaSettings theme}
             case eSigma of
-              Left err -> here.log2 "[graphCpt] error creating sigma" err
+              Left err -> here.warn2 "[graphCpt] error creating sigma" err
               Right sig -> do
                 Sigmax.writeSigma rSigma $ Just sig
 
@@ -118,14 +110,14 @@ graphCpt = R.memo' $ here.component "graph" cpt where
 
                 Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Ready)] no sigma" $ \sigma -> do
                   -- bind the click event only initially, when ref was empty
-                  Sigmax.bindSelectedNodesClick sigma selectedNodeIds multiSelectEnabledRef
+                  Sigmax.bindSelectedNodesClick sigma selectedNodeIds multiSelectEnabled
                   _ <- Sigma.bindMouseSelectorPlugin sigma
                   pure unit
 
                 Sigmax.setEdges sig false
 
                 -- here.log2 "[graph] startForceAtlas" startForceAtlas
-                if startForceAtlas then
+                if startForceAtlas' then
                   Sigma.startForceAtlas2 sig fa2
                 else
                   Sigma.stopForceAtlas2 sig
@@ -147,19 +139,19 @@ graphCpt = R.memo' $ here.component "graph" cpt where
           Just _sig -> do
             pure unit
 
-        T.write Ready stage
+        T.write_ GET.Ready graphStage
 
+      _ -> pure unit
 
-    stageHooks { showEdges'
-               , sigmaRef
-               , stage': Ready
-               , transformedGraph
-               } = do
-      let tEdgesMap = SigmaxTypes.edgesGraphMap transformedGraph
-      let tNodesMap = SigmaxTypes.nodesGraphMap transformedGraph
+    -- Stage ready
+    -- (?) Probably this can be optimized to re-mark selected nodes only when
+    --     they changed → done on #375
+    R.useEffect1' selectedNodeIds' case graphStage' of
 
-      -- TODO Probably this can be optimized to re-mark selected nodes only when they changed
-      R.useEffect' $ do
+      GET.Ready -> do
+        let tEdgesMap = SigmaxTypes.edgesGraphMap transformedGraph
+        let tNodesMap = SigmaxTypes.nodesGraphMap transformedGraph
+
         Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Ready)] no sigma" $ \sigma -> do
           Sigmax.performDiff sigma transformedGraph
           Sigmax.updateEdges sigma tEdgesMap
@@ -168,8 +160,18 @@ graphCpt = R.memo' $ here.component "graph" cpt where
           here.log2 "[graphCpt] edgesState" edgesState
           Sigmax.setEdges sigma edgesState
 
+      _ -> pure unit
 
-    stageHooks _ = pure unit
+
+    -- | Render
+    -- |
+    pure $
+
+      R2.fromMaybe_ (R.readNullableRef elRef) (R.createPortal [])
+
+    -- NOTE: This div is not empty after sigma initializes.
+    -- When we change state, we make it empty though.
+    --pure $ RH.div { ref: elRef, style: {height: "95%"} } []
 
 
 type SigmaSettings =

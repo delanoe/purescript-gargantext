@@ -5,25 +5,27 @@ module Gargantext.Components.Nodes.Corpus.Graph
 import Gargantext.Prelude
 
 import DOM.Simple (document, querySelector)
-import Data.Maybe (Maybe(..), isJust)
-import Data.Set as Set
+import Data.Int as I
+import Data.Maybe (Maybe(..), isJust, maybe)
+import Data.Sequence as Seq
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.GraphExplorer.Layout (convert, layout)
+import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types as GET
-import Gargantext.Config.REST (AffRESTError, logRESTError)
+import Gargantext.Config.REST (logRESTError)
 import Gargantext.Hooks.Loader (useLoaderEffect)
+import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
-import Gargantext.Routes (SessionRoute(NodeAPI))
-import Gargantext.Sessions (Session, get)
-import Gargantext.Types as Types
+import Gargantext.Sessions (Session)
+import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Toestand as T
+import Record as Record
 
 
 type Props =
@@ -42,20 +44,17 @@ graphLayout = R2.leaf graphLayoutCpt
 graphLayoutCpt :: R.Component Props
 graphLayoutCpt = here.component "explorerLayout" cpt where
   cpt props@{ boxes: { graphVersion }, graphId, session } _ = do
-
     -- | States
     -- |
-
-    graphVersion' <- T.useLive T.unequal graphVersion
+    graphVersion'   <- R2.useLive' graphVersion
     state' /\ state <- R2.useBox' Nothing
 
 
     -- | Hooks
     -- |
-
     useLoaderEffect
       { errorHandler
-      , loader: getNodes session graphVersion'
+      , loader: GraphAPI.getNodes session graphVersion'
       , path: graphId
       , state
       }
@@ -119,20 +118,20 @@ graphLayoutCpt = here.component "explorerLayout" cpt where
     where
       errorHandler = logRESTError here "[explorerLayout]"
       handler loaded@(GET.HyperdataGraph { graph: hyperdataGraph }) =
-        content { graph
+        initGraph { graph
                 , hyperdataGraph: loaded
-                , mMetaData'
+                , mMetaData
                 , session
                 , boxes: props.boxes
                 , graphId
                 }
         where
-          Tuple mMetaData' graph = convert hyperdataGraph
+          Tuple mMetaData graph = convert hyperdataGraph
 
 --------------------------------------------------------
 
-type ContentProps =
-  ( mMetaData'      :: Maybe GET.MetaData
+type InitGraphProps =
+  ( mMetaData       :: Maybe GET.MetaData
   , graph           :: SigmaxT.SGraph
   , hyperdataGraph  :: GET.HyperdataGraph
   , session         :: Session
@@ -140,38 +139,62 @@ type ContentProps =
   , graphId         :: GET.GraphId
   )
 
-content :: R2.Leaf ContentProps
-content = R2.leaf contentCpt
+initGraph :: R2.Leaf InitGraphProps
+initGraph = R2.leaf initGraphCpt
 
-contentCpt :: R.Component ContentProps
-contentCpt = here.component "content" cpt where
-  cpt props@{ boxes, mMetaData', graph } _ = do
-  -- Hooks
+initGraphCpt :: R.Component InitGraphProps
+initGraphCpt = here.component "initGraph" cpt where
+  cpt { boxes
+      , mMetaData
+      , graph
+      , graphId
+      , session
+      , hyperdataGraph
+      } _ = do
+    -- | Computed
+    -- |
+    let
+      startForceAtlas = maybe true
+        (\(GET.MetaData { startForceAtlas: sfa }) -> sfa) mMetaData
 
-    R.useEffectOnce' $
-      -- Hydrate Boxes
-      flip T.write_ boxes.sidePanelGraph $ Just
-        { mGraph: Just graph
-        , mMetaData: mMetaData'
-        , multiSelectEnabled: false
-        , removedNodeIds: Set.empty
-        , selectedNodeIds: Set.empty
-        , showControls: false
-        , sideTab: GET.SideTabLegend
-        , showSidebar: Types.InitialClosed
-        }
+      forceAtlasState
+        = if startForceAtlas
+          then SigmaxT.InitialRunning
+          else SigmaxT.InitialStopped
 
-  -- Render
+    -- | Hooks
+    -- |
+
+    sigmaRef <- Sigmax.initSigma >>= R.useRef
+
+    -- Hydrate GraphStore
+    (state :: Record GraphStore.State) <- pure $
+      -- Data
+      { graph
+      , graphId
+      , mMetaData
+      , hyperdataGraph
+      -- Controls
+      , startForceAtlas
+      , forceAtlasState
+      , edgeWeight:  Range.Closed
+          { min: 0.0
+          , max: I.toNumber $ Seq.length $ SigmaxT.graphEdges graph
+          }
+      -- (default options)
+      } `Record.merge` GraphStore.options
+
+    -- | Render
+    -- |
 
     pure $
 
-      layout
-      props
-
---------------------------------------------------------------
-
-getNodes :: Session -> T2.Reload -> GET.GraphId -> AffRESTError GET.HyperdataGraph
-getNodes session graphVersion graphId =
-  get session $ NodeAPI Types.Graph
-                        (Just graphId)
-                        ("?version=" <> (show graphVersion))
+      GraphStore.provide
+      state
+      [
+        layout
+        { session
+        , boxes
+        , sigmaRef
+        }
+      ]

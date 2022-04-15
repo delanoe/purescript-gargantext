@@ -4,8 +4,9 @@
 $space-unit: 8px;
 
 // Bootstrap color system
-// * with added shades of gray
+// * with added shades of gray (+)
 $white:    #FFFFFF;
+$gray-50 : #FCFCFC; // (+)
 $gray-100: #F8F9FA;
 $gray-150: #FAFAFA; // (+)
 $gray-175: #F0F0F0; // (+)
@@ -34,6 +35,6 @@ $z-indexes: (
   ),
   graph-layout: (
     "toolbar",
-    "sidebar",
+    "frame",
   ),
 );

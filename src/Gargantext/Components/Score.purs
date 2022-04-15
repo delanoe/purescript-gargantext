@@ -23,9 +23,8 @@ type DocID = Int
 thisModule :: String
 thisModule = "Gargantext.Components.Score"
 
-type Props = (
-    docId       ::DocID
-  , key :: String
+type Props =
+  ( docId       ::DocID
   , nodeId      :: GT.NodeID
   , score       :: Maybe Score
   , session     :: Session
@@ -34,9 +33,9 @@ type Props = (
 
 type Choice = Maybe Score
 
-scoreEl :: R2.Component Props
+scoreEl :: R2.Component ( key :: String | Props )
 scoreEl = R.createElement scoreElCpt
-scoreElCpt :: R.Component Props
+scoreElCpt :: R.Component ( key :: String | Props )
 scoreElCpt = R.hooksComponentWithModule thisModule "scoreEl" cpt
   where
     cpt { docId, nodeId, score, session, tableReload } _ = do
