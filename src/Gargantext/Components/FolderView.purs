@@ -1,6 +1,7 @@
 module Gargantext.Components.FolderView where
 
 import Data.Array as A
+import Data.Eq ((==))
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Nullable (null)
 import Data.Traversable (traverse_)
@@ -26,11 +27,11 @@ import Gargantext.Components.GraphQL.Endpoints (getTreeFirstLevel)
 import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, TreeNode)
 import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
-import Gargantext.Hooks.LinkHandler (Methods, useLinkHandler)
+import Gargantext.Hooks.LinkHandler (useLinkHandler)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (Ordering, Unit, bind, compare, discard, pure, unit, void, ($), (<$>), (<>))
+import Gargantext.Prelude (Ordering, Unit, bind, compare, discard, otherwise, pure, unit, void, ($), (<$>), (<>))
 import Gargantext.Routes (AppRoute(Home), nodeTypeAppRoute)
-import Gargantext.Sessions (Session, sessionId)
+import Gargantext.Sessions (Session(..), sessionId)
 import Gargantext.Types (NodeType(..))
 import Gargantext.Types as GT
 import Gargantext.Utils.Popover as Popover
@@ -91,9 +92,8 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
       , reload
       , session
       , setPopoverRef } _ = do
-    linkHandlers <- useLinkHandler
     let foldersS = A.sortBy sortFolders children
-    let parent = makeParentFolder linkHandlers parentNode session
+    let parent = makeParentFolder parentNode session
     let childrenEl = makeFolderElements foldersS { boxes, nodeId, reload, session, setPopoverRef }
 
     pure $ H.div {className: "fv folders"} $ parent <> childrenEl
@@ -110,10 +110,10 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
                                                           , style: FolderChild
                                                           , text: node.name } []
 
-  makeParentFolder :: Record Methods -> Maybe TreeNode -> Session -> Array R.Element
-  makeParentFolder _ (Just parent) session =
+  makeParentFolder :: Maybe TreeNode -> Session -> Array R.Element
+  makeParentFolder (Just parent) session =
     [ folderSimple {style: FolderUp, text: "..", nodeId: parent.id, nodeType: parent.node_type, session: session} [] ]
-  makeParentFolder _ Nothing _ = []
+  makeParentFolder Nothing _ = []
 
 
   sortFolders :: TreeNode-> TreeNode -> Ordering
@@ -136,11 +136,18 @@ folderSimpleCpt = here.component "folderSimpleCpt" cpt where
   cpt {style, text, nodeId, session, nodeType} _ = do
     { goToRoute } <- useLinkHandler
     let sid = sessionId session
+    let rootId = treeId session
     pure $ H.button { className: "btn btn-primary"
-               , on: {click: \_ -> goToRoute $ getFolderPath nodeType sid nodeId} }
+               , on: {click: \_ -> goToRoute $ route nodeId rootId nodeType sid} }
       [ H.i { className: icon style nodeType } []
       , H.br {}
       , H.text text ]
+    where
+      treeId (Session {treeId: tId}) = tId
+      route nId rootId nType sid
+        | rootId == nodeId = Home
+        | otherwise        = getFolderPath nType sid nId
+      
 
   icon :: FolderStyle -> GT.NodeType -> String
   icon FolderUp _ = "fa fa-folder-open"
