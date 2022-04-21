@@ -88,8 +88,7 @@ corpusLayoutMainCpt = here.component "corpusLayoutMain" cpt
           H.hr {}
         ,
           FV.folderView
-            { backFolder: true
-            , boxes
+            { boxes
             , nodeId
             , session
             }
