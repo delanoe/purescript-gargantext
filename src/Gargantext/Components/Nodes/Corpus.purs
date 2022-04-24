@@ -68,20 +68,22 @@ corpusLayoutMainCpt = here.component "corpusLayoutMain" cpt
         pure $ GR.CorpusCode (sessionId session) nodeId
       -- Render
       pure $
-
         H.div {}
         [
-          tileMenu
-          { boxes
-          , currentTile: Just corpusCodeRoute
-          , xTile: Just corpusCodeRoute
-          , yTile: Just corpusCodeRoute
-          }
-          [
-            H.button
-            { className: "btn btn-primary" }
+          R2.row [
+            FV.backButton {} []
+          , tileMenu
+            { boxes
+            , currentTile: Just corpusCodeRoute
+            , xTile: Just corpusCodeRoute
+            , yTile: Just corpusCodeRoute
+            }
             [
-              H.i { className: "fa fa-code" } []
+              H.button
+              { className: "btn btn-primary" }
+              [
+                H.i { className: "fa fa-code" } []
+              ]
             ]
           ]
         ,
