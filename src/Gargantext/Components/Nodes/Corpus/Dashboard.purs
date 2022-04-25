@@ -79,7 +79,7 @@ dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
                                     , session }
             liftEffect $ do
               _ <- case res of
-                Left err -> here.log2 "[dashboardLayoutWithKey] onChange RESTError" err
+                Left err -> here.warn2 "[dashboardLayoutWithKey] onChange RESTError" err
                 _ -> pure unit
               T2.reload reload
 

@@ -311,9 +311,9 @@ pageLayoutCpt = here.component "pageLayout" cpt
                 , path: path'
                 , render: \rowsLoaded -> page { container, deletions, frontends, path, rowsLoaded, session, totalRecords } [] }
     errorHandler err = do
-      here.log2 "[pageLayout] RESTError" err
+      here.warn2 "[pageLayout] RESTError" err
       case err of
-        ReadJSONError err' -> here.log2 "[pageLayout] ReadJSONError" $ show err'
+        ReadJSONError err' -> here.warn2 "[pageLayout] ReadJSONError" $ show err'
         _ -> pure unit
 
 page :: R2.Component PageProps

@@ -54,6 +54,7 @@ import Gargantext.Utils.Toestand as GUT
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record.Extra as RX
 import Simple.JSON as JSON
 import Toestand as T
 
@@ -94,8 +95,7 @@ type LayoutProps =
   )
 
 type PageLayoutProps =
-  ( key    :: String  -- NOTE Necessary to clear the component when cache state changes
-  , params :: TT.Params
+  ( params :: TT.Params
   , query  :: Query
   | CommonProps
   )
@@ -377,9 +377,10 @@ filterDocsByYear year docs = A.filter filterFunc docs
     filterFunc :: Response -> Boolean
     filterFunc (Response { hyperdata: Hyperdata { pub_year } }) = eq year $ show pub_year
 
-pageLayout :: R2.Component PageLayoutProps
+-- NOTE "key": Necessary to clear the component when cache state changes
+pageLayout :: R2.Component ( key :: String | PageLayoutProps )
 pageLayout = R.createElement pageLayoutCpt
-pageLayoutCpt :: R.Component PageLayoutProps
+pageLayoutCpt :: R.Component ( key :: String | PageLayoutProps )
 pageLayoutCpt = here.component "pageLayout" cpt where
   cpt props@{ boxes
             , cacheState
@@ -394,6 +395,8 @@ pageLayoutCpt = here.component "pageLayout" cpt where
             } _ = do
     cacheState' <- T.useLive T.unequal cacheState
     yearFilter' <- T.useLive T.unequal yearFilter
+
+    let props' = (RX.pick props :: Record PageLayoutProps)
 
     let path = { listId, mCorpusId, nodeId, params, query, tabType, yearFilter: yearFilter' }
         handleResponse :: HashedResponse (TableResult Response) -> Tuple Int (Array DocumentsView)
@@ -419,7 +422,7 @@ pageLayoutCpt = here.component "pageLayout" cpt where
       NT.CacheOn -> do
         let paint (Tuple count docs) = page { boxes
                                             , documents: docs
-                                            , layout: props { totalRecords = count }
+                                            , layout: props' { totalRecords = count }
                                             , params } []
             mkRequest :: PageParams -> GUC.Request
             mkRequest p = GUC.makeGetRequest session $ tableRoute p
@@ -444,7 +447,7 @@ pageLayoutCpt = here.component "pageLayout" cpt where
               --  here.log2 "table res" eRes
               pure $ handleResponse <$> eRes
         let render (Tuple count documents) = pagePaintRaw { documents
-                                                          , layout: props { params = paramsS'
+                                                          , layout: props' { params = paramsS'
                                                                           , totalRecords = count }
                                                           , localCategories
                                                           , params: paramsS } []

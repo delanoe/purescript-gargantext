@@ -1,7 +1,5 @@
-module Gargantext.Components.GraphExplorer.Buttons
-  ( Props
-  , centerButton
-  , simpleButton
+module Gargantext.Components.GraphExplorer.Toolbar.Buttons
+  ( centerButton
   , cameraButton
   , edgesToggleButton
   , louvainToggleButton
@@ -19,7 +17,6 @@ import Data.Either (Either(..))
 import Data.Enum (fromEnum)
 import Data.Maybe (Maybe(..))
 import Data.String as DS
-import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Now as EN
@@ -43,26 +40,9 @@ import Reactix.DOM.HTML as H
 import Toestand as T
 
 here :: R2.Here
-here = R2.here "Gargantext.Components.GraphExplorer.Button"
-
-type Props = (
-    onClick :: forall e. e -> Effect Unit
-  , text :: String
-  )
-
--- @WIP
-simpleButton :: Record Props -> R.Element
-simpleButton props = R.createElement simpleButtonCpt props []
+here = R2.here "Gargantext.Components.GraphExplorer.Toolbar.Button"
 
 ------------------------------------------------------
-
-simpleButtonCpt :: R.Component Props
-simpleButtonCpt = here.component "simpleButton" cpt
-  where
-    cpt {onClick, text} _ = do
-      pure $ H.button { className: "btn btn-outline-secondary"
-                      , on: {click: onClick}
-                      } [ R2.small {} [ H.text text ] ]
 
 centerButton :: R.Ref Sigmax.Sigma -> R.Element
 centerButton sigmaRef = B.button

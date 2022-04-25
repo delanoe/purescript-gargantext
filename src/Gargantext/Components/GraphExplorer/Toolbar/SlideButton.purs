@@ -1,4 +1,4 @@
-module Gargantext.Components.GraphExplorer.SlideButton
+module Gargantext.Components.GraphExplorer.Toolbar.SlideButton
   ( Props
   , sizeButton
   , labelSizeButton
@@ -17,7 +17,7 @@ import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
-here = R2.here "Gargantext.Components.GraphExplorer.SlideButton"
+here = R2.here "Gargantext.Components.GraphExplorer.Toolbar.SlideButton"
 
 type Props =
   ( caption  :: String

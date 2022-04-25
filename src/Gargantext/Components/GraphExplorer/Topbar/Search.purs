@@ -1,4 +1,4 @@
-module Gargantext.Components.GraphExplorer.Search
+module Gargantext.Components.GraphExplorer.Topbar.Search
   ( Props, nodeSearchControl ) where
 
 import Prelude
@@ -18,10 +18,10 @@ import Reactix.DOM.HTML as H
 import Toestand as T
 
 here :: R2.Here
-here = R2.here "Gargantext.Components.GraphExplorer.Search"
+here = R2.here "Gargantext.Components.GraphExplorer.Topbar.Search"
 
-type Props = (
-    graph              :: SigmaxT.SGraph
+type Props =
+  ( graph              :: SigmaxT.SGraph
   , multiSelectEnabled :: T.Box Boolean
   , selectedNodeIds    :: T.Box SigmaxT.NodeIds
   , className          :: String

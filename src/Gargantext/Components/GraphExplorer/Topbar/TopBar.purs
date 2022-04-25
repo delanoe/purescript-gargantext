@@ -2,42 +2,38 @@ module Gargantext.Components.GraphExplorer.TopBar (topBar) where
 
 import Gargantext.Prelude hiding (max, min)
 
-import Data.Maybe (Maybe)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
-import Gargantext.Components.GraphExplorer.Search (nodeSearchControl)
-import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
+import Gargantext.Components.GraphExplorer.Store as GraphStore
+import Gargantext.Components.GraphExplorer.Topbar.Search (nodeSearchControl)
 import Gargantext.Types as GT
 import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Stores as Stores
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
-type Props =
-  ( sidePanelGraph :: T.Box (Maybe (Record GEST.SidePanel))
-  )
-
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.TopBar"
 
-topBar :: R2.Leaf Props
+topBar :: R2.Leaf ()
 topBar = R2.leaf component
 
-component :: R.Component Props
+component :: R.Component ()
 component = here.component "topBar" cpt where
-  cpt { sidePanelGraph } _ = do
+  cpt _ _ = do
     -- States
-    { mGraph
+    { graph
     , multiSelectEnabled
     , selectedNodeIds
     , showControls
     , showSidebar
-    } <- GEST.focusedSidePanel sidePanelGraph
+    } <- Stores.useStore GraphStore.context
 
-    mGraph'         <- R2.useLive' mGraph
-    showControls'   <- R2.useLive' showControls
-    showSidebar' <- R2.useLive' showSidebar
+    graph'              <- R2.useLive' graph
+    showControls'       <- R2.useLive' showControls
+    showSidebar'        <- R2.useLive' showSidebar
 
     -- Render
     pure $
@@ -73,12 +69,10 @@ component = here.component "topBar" cpt where
         ]
       ,
         -- Search
-        R2.fromMaybe_ mGraph' \graph ->
-
-          nodeSearchControl
-          { graph
-          , multiSelectEnabled
-          , selectedNodeIds
-          , className: "graph-topbar__search"
-          }
+        nodeSearchControl
+        { graph: graph'
+        , multiSelectEnabled
+        , selectedNodeIds
+        , className: "graph-topbar__search"
+        }
       ]

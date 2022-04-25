@@ -41,8 +41,8 @@ function add(window, document, sourceQuery, targetQuery, type) {
  * @param {Document} document
  * @param {String} sourceQuery
  */
-function remove(sourceQuery) {
+function remove(document, sourceQuery) {
   var source = document.querySelector(sourceQuery);
-
+  console.log(sourceQuery)
   source.removeEventListener('mousedown');
 }

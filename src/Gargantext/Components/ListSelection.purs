@@ -128,8 +128,8 @@ listTreeChildrenCpt = here.component "listTreeChildren" cpt where
                                          , session } [] }
     where
       errorHandler err = case err of
-        ReadJSONError err' -> here.log2 "[listTreeChildren] ReadJSONError" $ show err'
-        _                  -> here.log2 "[listTreeChildren] RESTError" err
+        ReadJSONError err' -> here.warn2 "[listTreeChildren] ReadJSONError" $ show err'
+        _                  -> here.warn2 "[listTreeChildren] RESTError" err
 
 type ListTreeChildrenLoadedProps =
   ( loaded    :: Array NodeSimple

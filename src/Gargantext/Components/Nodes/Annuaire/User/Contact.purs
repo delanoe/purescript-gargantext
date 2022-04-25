@@ -117,7 +117,7 @@ contactInfoItemCpt = here.component "contactInfoItem" cpt
           ]
       where
         cLens = L.cloneLens lens
-  
+
 type ItemProps =
   ( defaultVal       :: String
   , isEditing        :: T.Box Boolean
@@ -133,7 +133,7 @@ itemNotEditingCpt :: R.Component ItemProps
 itemNotEditingCpt = here.component "itemEditing" cpt where
   cpt { isEditing, valueBox } _ = do
     valueBox' <- T.useLive T.unequal valueBox
-    
+
     pure $ H.div { className: "input-group col-sm-6" }
              [ H.input
                { className: "form-control", type: "text"
@@ -183,12 +183,8 @@ type ReloadProps =
 
 type LayoutProps =
   ( session :: Session
-  | ReloadProps )
-
-type KeyLayoutProps =
- ( key :: String
- , session :: Session
- | ReloadProps )
+  | ReloadProps
+  )
 
 saveContactHyperdata :: Session -> Int -> HyperdataContact -> AffRESTError Int
 saveContactHyperdata session id = put session (Routes.NodeAPI Node (Just id) "")
@@ -218,9 +214,17 @@ saveUserInfo session id ui = do
     ga (Just val) = ArgR val
     getToken (Session { token }) = token
 
-type AnnuaireLayoutProps = ( annuaireId :: Int, session :: Session | ReloadProps )
+type AnnuaireLayoutProps =
+  ( annuaireId :: Int
+  , session :: Session
+  | ReloadProps
+  )
 
-type AnnuaireKeyLayoutProps = ( annuaireId :: Int | KeyLayoutProps )
+type AnnuaireKeyLayoutProps =
+  ( annuaireId :: Int
+  , key :: String
+  | LayoutProps
+  )
 
 contactLayout :: R2.Component AnnuaireLayoutProps
 contactLayout = R.createElement contactLayoutCpt

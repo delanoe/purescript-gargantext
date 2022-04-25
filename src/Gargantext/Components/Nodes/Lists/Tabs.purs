@@ -38,11 +38,9 @@ type Props = (
   , session    :: Session
   )
 
-type PropsWithKey = ( key :: String | Props )
-
-tabs :: Record PropsWithKey -> R.Element
+tabs :: Record ( key :: String | Props ) -> R.Element
 tabs props = R.createElement tabsCpt props []
-tabsCpt :: R.Component PropsWithKey
+tabsCpt :: R.Component ( key :: String | Props )
 tabsCpt = here.component "tabs" cpt where
   cpt props@{ activeTab } _ = do
     pure $ Tab.tabs { activeTab

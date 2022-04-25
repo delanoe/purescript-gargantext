@@ -78,7 +78,7 @@ let sigmaMouseSelector = (sigma, options) => {
     s.bind('kill', () => _self.unbindAll());
 
     this.unbindAll = () => {
-      console.log('[sigmaMouseSelector] unbinding');
+      // console.log('[sigmaMouseSelector] unbinding');
       _container.onclick = null;
       _context.canvas.onmousemove = null;
       _container.onmousedown = null;

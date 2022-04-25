@@ -77,7 +77,6 @@ type TableHeaderWithRenameBoxedLayoutProps = (
   , nodeId      :: NodeID
   , name        :: String
   , date        :: String
-  , key         :: String
   , corpusInfoS :: T.Box CorpusInfo
 )
 
@@ -91,11 +90,11 @@ tableHeaderWithRenameLayout = R.createElement tableHeaderWithRenameLayoutCpt
 tableHeaderWithRenameLayoutCpt :: R.Component TableHeaderWithRenameLayoutProps
 tableHeaderWithRenameLayoutCpt = here.component "tableHeaderWithRenameLayoutCpt" cpt
   where
-    cpt { hyperdata: Hyperdata h, nodeId, session, cacheState, name, date, key } _ = do
+    cpt { hyperdata: Hyperdata h, nodeId, session, cacheState, name, date } _ = do
       let corpusInfo = getCorpusInfo h.fields
       corpusInfoS <- T.useBox corpusInfo
 
-      pure $ tableHeaderWithRenameBoxedLayout {hyperdata: Hyperdata h, nodeId, session, cacheState, name, date, corpusInfoS, key} []
+      pure $ tableHeaderWithRenameBoxedLayout {hyperdata: Hyperdata h, nodeId, session, cacheState, name, date, corpusInfoS} []
 
 tableHeaderWithRenameBoxedLayout :: R2.Component TableHeaderWithRenameBoxedLayoutProps
 tableHeaderWithRenameBoxedLayout = R.createElement tableHeaderWithRenameBoxedLayoutCpt
@@ -117,30 +116,30 @@ tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxed
           ]
           , R2.row
             [ H.div {className: "col-md-8 content"}
-              [ H.p {}
+              [ H.div {}
                 [
                   renameable {icon: "fa fa-info", text: title, onRename: onRenameTitle} []
                 ]
-              , H.p {}
+              , H.div {}
                 [
                   renameable {icon: "fa fa-globe", text: desc, onRename: onRenameDesc} []
                 ]
-              , H.p {}
-                [ 
+              , H.div {}
+                [
                   renameable {icon: "fa fa-search-plus", text: query, onRename: onRenameQuery} []
                 ]
-              , H.p { className: "cache-toggle"
+              , H.div { className: "cache-toggle"
                     , on: { click: cacheClick cacheState } }
                 [ H.span { className: "fa " <> (cacheToggle cacheState') } []
                 , H.text $ cacheText cacheState'
                 ]
               ]
             , H.div {className: "col-md-4 content"}
-              [ H.p {}
-                [ 
+              [ H.div {}
+                [
                   renameable {icon: "fa fa-user", text: authors, onRename: onRenameAuthors} []
                 ]
-              , H.p {}
+              , H.div {}
                 [ H.span {className: "fa fa-calendar"} []
                 , H.text $ " " <> date
                 ]
@@ -188,14 +187,14 @@ tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxed
     cacheStateToggle NT.CacheOn = NT.CacheOff
     cacheStateToggle NT.CacheOff = NT.CacheOn
 
-    
+
 save :: {fields :: FTFieldList, session :: Session, nodeId :: Int} -> Effect Unit
 save {fields, session, nodeId} = do
   launchAff_ do
     res <- saveCorpus $ {hyperdata: Hyperdata {fields}, session, nodeId}
     liftEffect $ do
           _ <- case res of
-                Left err -> here.log2 "[corpusLayoutView] onClickSave RESTError" err
+                Left err -> here.warn2 "[corpusLayoutView] onClickSave RESTError" err
                 _ -> pure unit
           pure unit
 
@@ -205,7 +204,7 @@ saveCorpusName {name, session, nodeId} = do
     res <- rename session nodeId $ RenameValue {text: name}
     liftEffect $ do
           _ <- case res of
-                Left err -> here.log2 "[corpusLayoutView] onClickSave RESTError" err
+                Left err -> here.warn2 "[corpusLayoutView] onClickSave RESTError" err
                 _ -> pure unit
           pure unit
 

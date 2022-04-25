@@ -1,4 +1,4 @@
-module Gargantext.Components.GraphExplorer.RangeControl
+module Gargantext.Components.GraphExplorer.Toolbar.RangeControl
   ( Props
   , rangeControl
   , edgeConfluenceControl
@@ -16,7 +16,7 @@ import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
-here = R2.here "Gargantext.Components.GraphExplorer.RangeControl"
+here = R2.here "Gargantext.Components.GraphExplorer.Toolbar.RangeControl"
 
 type Props =
   ( caption     :: String

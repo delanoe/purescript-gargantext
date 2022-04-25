@@ -45,13 +45,9 @@ listsLayoutCpt = here.component "listsLayout" cpt where
     let sid = sessionId session
     pure $ listsLayoutWithKey (Record.merge props { key: show sid <> "-" <> show nodeId }) []
 
-type KeyProps =
-  ( key :: String
-  | Props )
-
-listsLayoutWithKey :: R2.Component KeyProps
+listsLayoutWithKey :: R2.Component ( key :: String | Props )
 listsLayoutWithKey = R.createElement listsLayoutWithKeyCpt
-listsLayoutWithKeyCpt :: R.Component KeyProps
+listsLayoutWithKeyCpt :: R.Component ( key :: String | Props )
 listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
   cpt { boxes: boxes@{ reloadMainPage }
       , nodeId

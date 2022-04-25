@@ -417,10 +417,11 @@ type FileTypeProps =
   , id          :: ID
   , isDragOver  :: T.Box Boolean
   , nodeType    :: GT.NodeType
+  , key         :: String
   )
 
-fileTypeView :: R2.Component FileTypeProps
-fileTypeView = R.createElement fileTypeViewCpt
+fileTypeView :: R2.Leaf FileTypeProps
+fileTypeView = R2.leaf fileTypeViewCpt
 fileTypeViewCpt :: R.Component FileTypeProps
 fileTypeViewCpt = here.component "fileTypeView" cpt
   where
@@ -431,15 +432,20 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
         } _ = do
       droppedFile' <- T.useLive T.unequal droppedFile
 
-      case droppedFile' of
-        Nothing -> pure $ mempty
-        Just df ->
-          pure $ H.div tooltipProps [ H.div { className: "card"}
-                                      [ panelHeading
-                                      , panelBody df
-                                      , panelFooter df
-                                      ]
-                                    ]
+      pure $
+
+        R2.fromMaybe_ droppedFile' \df ->
+
+          H.div
+          tooltipProps
+          [
+            H.div { className: "card"}
+            [ panelHeading
+            , panelBody df
+            , panelFooter df
+            ]
+          ]
+
       where
         tooltipProps = { className: ""
                        , id       : "file-type-tooltip"

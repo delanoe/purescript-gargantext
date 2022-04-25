@@ -1,9 +1,7 @@
 module Gargantext.Hooks.Sigmax
   where
 
-import Prelude
-  ( Unit, bind, discard, flip, map, not, pure, unit
-  , ($), (&&), (*>), (<<<), (<>), (>>=))
+import DOM.Simple.Types (Element)
 import Data.Array as A
 import Data.Either (either)
 import Data.Foldable (sequence_, foldl)
@@ -15,19 +13,18 @@ import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Traversable (traverse_)
 import Data.Tuple (Tuple(..))
-import Data.Tuple.Nested((/\))
-import DOM.Simple.Console (log, log2)
-import DOM.Simple.Types (Element)
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Class.Console (error)
 import Effect.Timer (TimeoutId, clearTimeout)
 import FFI.Simple ((.=))
-import Reactix as R
-import Toestand as T
-
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as ST
+import Gargantext.Utils.Console as C
 import Gargantext.Utils.Reactix as R2
+import Prelude (Unit, bind, discard, flip, map, not, pure, unit, ($), (&&), (*>), (<<<), (<>), (>>=))
+import Reactix as R
+import Toestand as T
 
 type Sigma =
   { sigma :: R.Ref (Maybe Sigma.Sigma)
@@ -36,6 +33,12 @@ type Sigma =
   }
 
 type Data n e = { graph :: R.Ref (ST.Graph n e) }
+
+moduleName :: R2.Module
+moduleName = "Gargantext.Hooks.Sigmax"
+
+console :: C.Console
+console = C.encloseContext C.Main moduleName
 
 initSigma :: R.Hooks Sigma
 initSigma = do
@@ -69,21 +72,21 @@ cleanupSigma sigma context = traverse_ kill (readSigma sigma)
         killSigma = Sigma.killSigma sig >>= report
     runCleanups = sequence_ (R.readRef sigma.cleanup)
     emptyOut = writeSigma sigma Nothing *> R.setRef sigma.cleanup Seq.empty
-    report = either (log2 errorMsg) (\_ -> log successMsg)
+    report = either (console.log2 errorMsg) (\_ -> console.log successMsg)
     prefix = "[" <> context <> "] "
     errorMsg = prefix <> "Error killing sigma:"
     successMsg = prefix <> "Killed sigma"
 
 refreshData :: forall n e. Sigma.Sigma -> Sigma.Graph n e -> Effect Unit
 refreshData sigma graph
-  =   log clearingMsg
+  =   console.log clearingMsg
   *>  Sigma.clear sigmaGraph
-  *>  log readingMsg
+  *>  console.log readingMsg
   *>  Sigma.graphRead sigmaGraph graph
-  >>= either (log2 errorMsg) refresh
+  >>= either (console.log2 errorMsg) refresh
   where
     sigmaGraph = Sigma.graph sigma
-    refresh _ = log refreshingMsg *> Sigma.refresh sigma
+    refresh _ = console.log refreshingMsg *> Sigma.refresh sigma
     clearingMsg = "[refreshData] Clearing existing graph data"
     readingMsg = "[refreshData] Reading graph data"
     refreshingMsg = "[refreshData] Refreshing graph"
@@ -98,13 +101,13 @@ sigmafy (ST.Graph g) = {nodes,edges}
 dependOnSigma :: Sigma -> String -> (Sigma.Sigma -> Effect Unit) -> Effect Unit
 dependOnSigma sigma notFoundMsg f = do
   case readSigma sigma of
-    Nothing -> log notFoundMsg
+    Nothing -> console.warn notFoundMsg
     Just sig -> f sig
 
 dependOnContainer :: R.Ref (Nullable Element) -> String -> (Element -> Effect Unit) -> Effect Unit
 dependOnContainer container notFoundMsg f = do
   case R.readNullableRef container of
-    Nothing -> log notFoundMsg
+    Nothing -> console.warn notFoundMsg
     Just c -> f c
 
 
@@ -185,12 +188,12 @@ multiSelectUpdate new selected = foldl fld selected new
         Set.insert item selectedAcc
 
 
-bindSelectedNodesClick :: Sigma.Sigma -> T.Box ST.NodeIds -> R.Ref Boolean -> Effect Unit
-bindSelectedNodesClick sigma selectedNodeIds multiSelectEnabledRef =
+bindSelectedNodesClick :: Sigma.Sigma -> T.Box ST.NodeIds -> T.Box Boolean -> Effect Unit
+bindSelectedNodesClick sigma selectedNodeIds multiSelectEnabled =
   Sigma.bindClickNodes sigma $ \nodes -> do
-    let multiSelectEnabled = R.readRef multiSelectEnabledRef
     let nodeIds = Set.fromFoldable $ map _.id nodes
-    if multiSelectEnabled then
+    multiSelectEnabled' <- T.read multiSelectEnabled
+    if multiSelectEnabled' then
       T.modify_ (multiSelectUpdate nodeIds) selectedNodeIds
     else
       T.write_ nodeIds selectedNodeIds
@@ -206,7 +209,7 @@ bindSelectedEdgesClick sigmaRef (_ /\ setEdgeIds) =
           Set.insert edge.id eids
 
 selectorWithSize :: Sigma.Sigma -> Int -> Effect Unit
-selectorWithSize sigma size = do
+selectorWithSize _ _ = do
   pure unit
 
 performDiff :: Sigma.Sigma -> ST.SGraph -> Effect Unit

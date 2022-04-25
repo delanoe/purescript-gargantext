@@ -125,7 +125,7 @@ clearCacheButton =
       launchAff_
         $  GHL.clearCache unit
         *> NTL.clearCache unit
-        *> liftEffect (here.log "cache cleared")
+        *> liftEffect (here.info "cache cleared")
 
 renderBackend :: forall b. T.Write b (Maybe Backend) => b -> Backend -> R.Element
 renderBackend cursor backend@(Backend {name, baseUrl, backendType}) =

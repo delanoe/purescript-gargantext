@@ -10,7 +10,7 @@ import Gargantext.Utils.Reactix as R2
 here :: R2.Here
 here = R2.here "Gargantext.Components.InputWithEnter"
 
-type Props a =
+type Props =
   ( onBlur         :: String -> Effect Unit
   , onEnter        :: Unit -> Effect Unit
   , onValueChanged :: String -> Effect Unit
@@ -22,12 +22,9 @@ type Props a =
   , type           :: String
   )
 
-type PropsKey a =
-  ( key :: String
-  | Props a )
-
-inputWithEnterWithKey :: forall a. R2.Leaf (PropsKey a)
+inputWithEnterWithKey :: R2.Leaf ( key :: String | Props )
 inputWithEnterWithKey = R2.leafComponent inputWithEnterWithKeyCpt
+inputWithEnterWithKeyCpt :: R.Component ( key :: String | Props )
 inputWithEnterWithKeyCpt = here.component "inputWithEnterWithKey" cpt where
   cpt { onBlur, onEnter, onValueChanged, autoFocus, className, defaultValue, placeholder, type: t } _ = do
     pure $ inputWithEnter { onBlur
@@ -39,9 +36,9 @@ inputWithEnterWithKeyCpt = here.component "inputWithEnterWithKey" cpt where
                           , placeholder
                           , type: t }
 
-inputWithEnter :: forall a. R2.Leaf (Props a)
+inputWithEnter :: R2.Leaf Props
 inputWithEnter = R2.leafComponent inputWithEnterCpt
-inputWithEnterCpt :: forall a. R.Component (Props a)
+inputWithEnterCpt :: R.Component Props
 inputWithEnterCpt = here.component "inputWithEnter" cpt
   where
     cpt props@{ onBlur, onEnter, onValueChanged
@@ -65,4 +62,3 @@ inputWithEnterCpt = here.component "inputWithEnter" cpt
             onEnter unit
           else
             pure unit
-

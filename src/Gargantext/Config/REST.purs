@@ -45,9 +45,9 @@ instance Eq RESTError where
   eq _ _ = false
 
 logRESTError :: R2.Here -> String -> RESTError -> Effect Unit
-logRESTError here prefix (SendResponseError e) = here.log2 (prefix <> " SendResponseError ") e  -- TODO: No show
-logRESTError here prefix (ReadJSONError e) = here.log2 (prefix <> " ReadJSONError ") $ show e
-logRESTError here prefix (CustomError e) = here.log2 (prefix <> " CustomError ") $ e
+logRESTError here prefix (SendResponseError e) = here.warn2 (prefix <> " SendResponseError ") e  -- TODO: No show
+logRESTError here prefix (ReadJSONError e) = here.warn2 (prefix <> " ReadJSONError ") $ show e
+logRESTError here prefix (CustomError e) = here.warn2 (prefix <> " CustomError ") $ e
 
 type AffRESTError a = Aff (Either RESTError a)
 

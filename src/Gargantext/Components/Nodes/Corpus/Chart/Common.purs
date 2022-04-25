@@ -50,7 +50,7 @@ metricsLoadViewCpt = here.component "metricsLoadView" cpt
       where
         errorHandler error = do
           T.modify_ (A.cons $ FRESTError { error }) errors
-          here.log2 "RESTError" error
+          here.warn2 "RESTError" error
 
 type MetricsWithCacheLoadViewProps res ret =
   ( getMetricsHash :: Session -> ReloadPath -> AffRESTError Hash

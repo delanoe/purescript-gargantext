@@ -347,12 +347,12 @@ changeCode onc (JSON j) CE.Python _ = onc $ Python $ defaultPython' { python = t
     toCode = R2.stringify (JSON.writeImpl j) 2
 changeCode onc _ CE.JSON c = do
   case JSON.readJSON c of
-    Left err -> here.log2 "[fieldCodeEditor'] cannot parse json" c  -- TODO Refactor?
+    Left err -> here.warn2 "[fieldCodeEditor'] cannot parse json" c  -- TODO Refactor?
     Right j' -> onc $ JSON j'
   -- case jsonParser c of
-  --   Left err -> here.log2 "[fieldCodeEditor'] cannot parse json" c
+  --   Left err -> here.warn2 "[fieldCodeEditor'] cannot parse json" c
   --   Right j' -> case decodeJson j' of
-  --     Left err -> here.log2 "[fieldCodeEditor'] cannot decode json" j'
+  --     Left err -> here.warn2 "[fieldCodeEditor'] cannot decode json" j'
   --     Right j'' -> onc $ JSON j''
 changeCode onc (JSON j) CE.Markdown _ = onc $ Markdown $ defaultMarkdown' { text = text }
   where

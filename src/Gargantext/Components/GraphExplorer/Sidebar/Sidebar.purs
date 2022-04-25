@@ -1,6 +1,5 @@
 module Gargantext.Components.GraphExplorer.Sidebar
-  ( Props, sidebar
-  , Common
+  ( sidebar
   ) where
 
 import Gargantext.Prelude
@@ -23,12 +22,12 @@ import Effect.Class (liftEffect)
 import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
-import Gargantext.Components.GraphExplorer.Legend as Legend
-import Gargantext.Components.GraphExplorer.Sidebar.Types as GEST
+import Gargantext.Components.GraphExplorer.Sidebar.DocList (docList)
+import Gargantext.Components.GraphExplorer.Sidebar.Legend as Legend
+import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Components.NgramsTable.Core as NTC
-import Gargantext.Components.Nodes.Corpus.Graph.Tabs (tabs) as CGT
 import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Search (SearchType(..), SearchQuery(..))
 import Gargantext.Config.REST (AffRESTError)
@@ -39,74 +38,69 @@ import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, FrontendError(..), NodeID, TabSubType(..), TabType(..), TermList(..), modeTabType)
 import Gargantext.Utils (nbsp)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Stores as Stores
 import Gargantext.Utils.Toestand as T2
 import Math as Math
 import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
-import Record.Extra as RX
 import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.Sidebar"
 
-type Common = (
-    boxes           :: Boxes
-  , graphId         :: NodeID
+type Props =
+  ( boxes           :: Boxes
   , metaData        :: GET.MetaData
   , session         :: Session
-  )
-
-type Props = (
-    frontends       :: Frontends
-  , graph           :: SigmaxT.SGraph
-  | Common
+  , frontends       :: Frontends
   )
 
 sidebar :: R2.Leaf Props
 sidebar = R2.leaf sidebarCpt
+
 sidebarCpt :: R.Component Props
-sidebarCpt = here.component "sidebar" cpt
-  where
-    cpt props@{ boxes: { sidePanelGraph } } _ = do
-      -- States
-      { sideTab } <- GEST.focusedSidePanel sidePanelGraph
-      sideTab' <- T.useLive T.unequal sideTab
+sidebarCpt = here.component "sidebar" cpt where
+  cpt props _ = do
+    -- States
+    { sideTab
+    } <- Stores.useStore GraphStore.context
 
-      -- Computed
-      let
-        sideTabs =
-          [ GET.SideTabLegend
-          , GET.SideTabData
-          , GET.SideTabCommunity
-          ]
+    sideTab'  <- R2.useLive' sideTab
 
-        sideTabProps = (RX.pick props :: Record Props)
-
-      -- Render
-      pure $
-
-        H.div
-        { className: "graph-sidebar" }
-        [
-          -- Menu
-          B.tabs
-          { value: sideTab'
-          , list: sideTabs
-          , callback: flip T.write_ sideTab
-          }
-        ,
-          case sideTab' of
-            GET.SideTabLegend     -> sideTabLegend sideTabProps
-            GET.SideTabData       -> sideTabData sideTabProps
-            GET.SideTabCommunity  -> sideTabCommunity sideTabProps
+    -- Computed
+    let
+      sideTabs =
+        [ GET.SideTabLegend
+        , GET.SideTabData
+        , GET.SideTabCommunity
         ]
+
+    -- Render
+    pure $
+
+      H.div
+      { className: "graph-sidebar" }
+      [
+        -- Menu
+        B.tabs
+        { value: sideTab'
+        , list: sideTabs
+        , callback: flip T.write_ sideTab
+        }
+      ,
+        case sideTab' of
+          GET.SideTabLegend     -> sideTabLegend props
+          GET.SideTabData       -> sideTabData props
+          GET.SideTabCommunity  -> sideTabCommunity props
+      ]
 
 ------------------------------------------------------------
 
 sideTabLegend :: R2.Leaf Props
 sideTabLegend = R2.leaf sideTabLegendCpt
+
 sideTabLegendCpt :: R.Component Props
 sideTabLegendCpt = here.component "sideTabLegend" cpt
   where
@@ -127,122 +121,129 @@ sideTabLegendCpt = here.component "sideTabLegend" cpt
 
 sideTabData :: R2.Leaf Props
 sideTabData = R2.leaf sideTabDataCpt
+
 sideTabDataCpt :: R.Component Props
-sideTabDataCpt = here.component "sideTabData" cpt
-  where
-    cpt props@{ boxes: { sidePanelGraph } } _ = do
-      -- States
-      { selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
-      selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
+sideTabDataCpt = here.component "sideTabData" cpt where
+  cpt props _ = do
+    -- States
+    { selectedNodeIds
+    , graph
+    } <- Stores.useStore GraphStore.context
 
-      -- Computed
-      let
-        hasSelection = not $ Set.isEmpty selectedNodeIds'
+    selectedNodeIds'  <- R2.useLive' selectedNodeIds
+    graph'            <- R2.useLive' graph
 
-      -- Render
-      pure $
+    -- Computed
+    let
+      hasSelection = not $ Set.isEmpty selectedNodeIds'
 
-        H.div
-        { className: "graph-sidebar__data-tab" }
-        [
-          case hasSelection of
+    -- Render
+    pure $
 
-            -- No result
-            false ->
+      H.div
+      { className: "graph-sidebar__data-tab" }
+      [
+        case hasSelection of
 
-              B.caveat
+          -- No result
+          false ->
+
+            B.caveat
+            {}
+            [
+              H.text "Select one or more nodes to get their informations"
+            ]
+
+          -- Nodes have been selected
+          true ->
+
+            R.fragment
+            [
+              selectedNodes $
+              { nodesMap: SigmaxT.nodesGraphMap graph'
+              } `Record.merge` props
+            ,
+              sideBarTabSeparator
+            ,
+              neighborhood
               {}
-              [
-                H.text "Select one or more nodes to get their informations"
-              ]
-
-            -- Nodes have been selected
-            true ->
-
-              R.fragment
-              [
-                selectedNodes $
-                { nodesMap: SigmaxT.nodesGraphMap props.graph
-                } `Record.merge` props
-              ,
-                sideBarTabSeparator
-              ,
-                neighborhood
-                props
-              ,
-                sideBarTabSeparator
-              ,
-                query
-                { frontends: props.frontends
-                , metaData: props.metaData
-                , nodesMap: SigmaxT.nodesGraphMap props.graph
-                , searchType: SearchDoc
-                , selectedNodeIds: selectedNodeIds'
-                , session: props.session
-                }
-              ]
-        ]
+            ,
+              sideBarTabSeparator
+            ,
+              docListWrapper
+              { frontends: props.frontends
+              , metaData: props.metaData
+              , nodesMap: SigmaxT.nodesGraphMap graph'
+              , searchType: SearchDoc
+              , selectedNodeIds: selectedNodeIds'
+              , session: props.session
+              }
+            ]
+      ]
 
 ------------------------------------------------------------
 
 sideTabCommunity :: R2.Leaf Props
 sideTabCommunity = R2.leaf sideTabCommunityCpt
+
 sideTabCommunityCpt :: R.Component Props
-sideTabCommunityCpt = here.component "sideTabCommunity" cpt
-  where
-    cpt props@{ boxes: { sidePanelGraph }
-              , frontends } _ = do
-      -- States
-      { selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
-      selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
+sideTabCommunityCpt = here.component "sideTabCommunity" cpt where
+  cpt props@{ frontends } _ = do
+    -- States
+    { selectedNodeIds
+    , graph
+    } <- Stores.useStore GraphStore.context
 
-      -- Computed
-      let
-        hasSelection = not $ Set.isEmpty selectedNodeIds'
+    selectedNodeIds'  <- R2.useLive' selectedNodeIds
+    graph'            <- R2.useLive' graph
 
-      -- Render
-      pure $
+    -- Computed
+    let
+      hasSelection = not $ Set.isEmpty selectedNodeIds'
 
-        H.div
-        { className: "graph-sidebar__community-tab" }
-        [
-          case hasSelection of
+    -- Render
+    pure $
 
-            -- No result
-            false ->
+      H.div
+      { className: "graph-sidebar__community-tab" }
+      [
+        case hasSelection of
 
-              B.caveat
+          -- No result
+          false ->
+
+            B.caveat
+            {}
+            [
+              H.text "Select one or more nodes to get their informations"
+            ]
+
+          -- Nodes have been selection
+          true ->
+
+            R.fragment
+            [
+              selectedNodes $
+              { nodesMap: SigmaxT.nodesGraphMap graph'
+              } `Record.merge` props
+            ,
+              sideBarTabSeparator
+            ,
+              neighborhood
               {}
-              [
-                H.text "Select one or more nodes to get their informations"
-              ]
-
-            -- Nodes have been selection
-            true ->
-
-              R.fragment
-              [
-                selectedNodes $
-                { nodesMap: SigmaxT.nodesGraphMap props.graph
-                } `Record.merge` props
-              ,
-                sideBarTabSeparator
-              ,
-                neighborhood
-                props
-              ,
-                sideBarTabSeparator
-              ,
-                query
-                { frontends
-                , metaData: props.metaData
-                , nodesMap: SigmaxT.nodesGraphMap props.graph
-                , searchType: SearchContact
-                , selectedNodeIds: selectedNodeIds'
-                , session: props.session
-                }
-              ]
-        ]
+            ,
+              sideBarTabSeparator
+            ,
+              docListWrapper
+              { frontends
+              , metaData: props.metaData
+              , nodesMap: SigmaxT.nodesGraphMap graph'
+              , searchType: SearchContact
+              , selectedNodeIds: selectedNodeIds'
+              , session: props.session
+              }
+            ]
+      ]
 
 -------------------------------------------
 
@@ -266,18 +267,17 @@ type SelectedNodesProps =
 
 selectedNodes :: R2.Leaf SelectedNodesProps
 selectedNodes = R2.leaf selectedNodesCpt
+
 selectedNodesCpt :: R.Component SelectedNodesProps
 selectedNodesCpt = here.component "selectedNodes" cpt where
-  cpt props@{ boxes: { sidePanelGraph }
-            , graph
-            , nodesMap } _ = do
+  cpt props _ = do
     -- States
-    { selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
-    selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
+    { selectedNodeIds
+    , graph
+    } <- Stores.useStore GraphStore.context
 
-    -- Computed
-    let
-      commonProps = RX.pick props :: Record Common
+    selectedNodeIds' <- R2.useLive' selectedNodeIds
+    graph'           <- R2.useLive' graph
 
     -- Behaviors
     let
@@ -300,7 +300,7 @@ selectedNodesCpt = here.component "selectedNodes" cpt where
           {} $
 
           Seq.toUnfoldable $
-            flip Seq.map (badges graph selectedNodeIds') \node ->
+            flip Seq.map (badges graph' selectedNodeIds') \node ->
 
               H.li
               { className: "graph-selected-nodes__item" }
@@ -325,18 +325,16 @@ selectedNodesCpt = here.component "selectedNodes" cpt where
         }
         [
           updateTermButton
-          ( commonProps `Record.merge`
-            { variant: ButtonVariant Success
+          ( props `Record.merge`
+            { variant: ButtonVariant Secondary
             , rType: CandidateTerm
-            , nodesMap
             }
           )
           [ H.text "Move as candidate" ]
         ,
           updateTermButton
-          ( commonProps `Record.merge`
+          ( props `Record.merge`
             { variant: ButtonVariant Danger
-            , nodesMap
             , rType: StopTerm
             }
           )
@@ -346,19 +344,22 @@ selectedNodesCpt = here.component "selectedNodes" cpt where
 
 ---------------------------------------------------------
 
-neighborhood :: R2.Leaf Props
+neighborhood :: R2.Leaf ()
 neighborhood = R2.leaf neighborhoodCpt
-neighborhoodCpt :: R.Memo Props
+
+neighborhoodCpt :: R.Memo ()
 neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
-  cpt { boxes: { sidePanelGraph }
-      , graph
-      } _ = do
+  cpt _ _ = do
     -- States
-    { selectedNodeIds } <-
-      GEST.focusedSidePanel sidePanelGraph
+    { selectedNodeIds
+    , graph
+    } <- Stores.useStore GraphStore.context
 
     selectedNodeIds' <-
-      T.useLive T.unequal selectedNodeIds
+      R2.useLive' selectedNodeIds
+
+    graph' <-
+      R2.useLive' graph
 
     showMore /\ showMoreBox <-
       R2.useBox' false
@@ -371,9 +372,9 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
 
     -- Computed
     let
-      minSize = F.foldl Math.min 0.0 (Seq.map _.size (SigmaxT.graphNodes graph))
+      minSize = F.foldl Math.min 0.0 (Seq.map _.size (SigmaxT.graphNodes graph'))
 
-      maxSize = F.foldl Math.max 0.0 (Seq.map _.size (SigmaxT.graphNodes graph))
+      maxSize = F.foldl Math.max 0.0 (Seq.map _.size (SigmaxT.graphNodes graph'))
 
       maxTruncateResult = 5
 
@@ -386,7 +387,7 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
 
     -- Effects
     R.useEffect1' selectedNodeIds' do
-      let refreshed = neighbourBadges graph selectedNodeIds'
+      let refreshed = neighbourBadges graph' selectedNodeIds'
       let count     = Seq.length refreshed
       let ordered   = A.sortWith (\n -> -n.size) $ Seq.toUnfoldable refreshed
       T.write_ count   termCountBox
@@ -473,26 +474,32 @@ type UpdateTermButtonProps =
   ( variant    :: ButtonVariant
   , nodesMap   :: SigmaxT.NodesMap
   , rType      :: TermList
-  | Common
+  | Props
   )
 
 updateTermButton :: R2.Component UpdateTermButtonProps
 updateTermButton = R2.component updateTermButtonCpt
+
 updateTermButtonCpt :: R.Component UpdateTermButtonProps
 updateTermButtonCpt = here.component "updateTermButton" cpt where
-  cpt { boxes: { errors
-                , reloadForest
-                , sidePanelGraph }
+  cpt { boxes:
+          { errors
+          , reloadForest
+          }
       , variant
-      , graphId
       , metaData
       , nodesMap
       , rType
       , session
       } children = do
     -- States
-    { removedNodeIds, selectedNodeIds } <- GEST.focusedSidePanel sidePanelGraph
-    selectedNodeIds' <- T.useLive T.unequal selectedNodeIds
+    { removedNodeIds
+    , selectedNodeIds
+    , graphId
+    } <- Stores.useStore GraphStore.context
+
+    selectedNodeIds' <- R2.useLive' selectedNodeIds
+    graphId'         <- R2.useLive' graphId
 
     -- Behaviors
     let
@@ -500,12 +507,13 @@ updateTermButtonCpt = here.component "updateTermButton" cpt where
         let nodes = mapMaybe (\id -> Map.lookup id nodesMap)
                             $ Set.toUnfoldable selectedNodeIds'
         sendPatches { errors
-                    , graphId: graphId
+                    , graphId: graphId'
                     , metaData: metaData
                     , nodes
                     , session: session
                     , termList: rType
-                    , reloadForest }
+                    , reloadForest
+                    }
         T.write_ selectedNodeIds' removedNodeIds
         T.write_ SigmaxT.emptyNodeIds selectedNodeIds
 
@@ -562,7 +570,7 @@ sendPatches { errors, metaData, nodes, reloadForest, session, termList } = do
       Nothing -> pure unit
       Just (Left err) -> liftEffect $ do
         T.modify_ (A.cons $ FRESTError { error: err }) errors
-        here.log2 "[sendPatches] RESTError" err
+        here.warn2 "[sendPatches] RESTError" err
       Just (Right (NTC.Versioned _patch)) -> do
         liftEffect $ T2.reload reloadForest
 
@@ -606,56 +614,79 @@ sendPatch termList session (GET.MetaData metaData) node = do
 
 ---------------------------------------------------------
 
-type Query =
+type DocListWrapper =
   ( frontends       :: Frontends
   , metaData        :: GET.MetaData
   , nodesMap        :: SigmaxT.NodesMap
   , searchType      :: SearchType
   , selectedNodeIds :: SigmaxT.NodeIds
-  , session         :: Session )
+  , session         :: Session
+  )
 
-query :: R2.Leaf Query
-query = R2.leaf queryCpt
+docListWrapper :: R2.Leaf DocListWrapper
+docListWrapper = R2.leaf docListWrapperCpt
 
-queryCpt :: R.Component Query
-queryCpt = here.component "query" cpt where
-  cpt props@{ selectedNodeIds } _ = do
-
-    pure $ if Set.isEmpty selectedNodeIds
-           then H.div {} []
-           else query' props []
-
-query' :: R2.Component Query
-query' = R.createElement queryCpt'
-
-queryCpt' :: R.Component Query
-queryCpt' = here.component "query'" cpt where
+docListWrapperCpt :: R.Component DocListWrapper
+docListWrapperCpt = here.component "docListWrapper" cpt where
   cpt { frontends
       , metaData: GET.MetaData metaData
       , nodesMap
       , searchType
       , selectedNodeIds
-      , session } _ = do
-    pure $ case (head metaData.corpusId) of
-      Nothing -> H.div {} []
-      Just corpusId ->
-        CGT.tabs { frontends
-                 , query: SearchQuery { expected: searchType
-                                      , query : concat $ toQuery <$> Set.toUnfoldable selectedNodeIds
-                                      }
-                 , session
-                 , sides: [side corpusId]
-                 }
+      , session
+      } _ = do
+    -- States
+    { showDoc
+    } <- Stores.useStore GraphStore.context
 
-    where
+    query /\ queryBox <- R2.useBox' Nothing
+
+    -- Helpers
+    let
+      toSearchQuery ids = SearchQuery
+        { expected: searchType
+        , query: concat $ toQuery <$> Set.toUnfoldable ids
+        }
+
       toQuery id = case Map.lookup id nodesMap of
         Nothing -> []
         Just n -> words n.label
 
-      side corpusId = GET.GraphSideCorpus { corpusId
-                                          , corpusLabel: metaData.title
-                                          , listId     : metaData.list.listId
-                                          }
+      toGraphSideCorpus corpusId = GET.GraphSideCorpus
+        { corpusId
+        , corpusLabel: metaData.title
+        , listId     : metaData.list.listId
+        }
+
+    -- Hooks
+    R.useEffect1' selectedNodeIds $
+      T.write_ (selectedNodeIds # toSearchQuery >>> Just) queryBox
+
+    -- Render
+    pure $
+
+      R.fragment
+      [
+        case (head metaData.corpusId) /\ query of
+
+          (Just corpusId) /\ (Just query') ->
+            docList
+            { frontends
+            , query: query'
+            , session
+            , graphSideCorpus: toGraphSideCorpus corpusId
+            , showDoc
+            }
+
+          _ /\ _ ->
+            B.caveat
+            {}
+            [
+              H.text "You can link a corpus to your Graph to retrieve relative documents when selecting nodes"
+            ]
+
+      ]
+
 
 ------------------------------------------------------------------------
 
