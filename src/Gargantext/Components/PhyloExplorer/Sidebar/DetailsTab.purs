@@ -4,33 +4,31 @@ module Gargantext.Components.PhyloExplorer.DetailsTab
 
 import Gargantext.Prelude
 
+import Gargantext.Components.PhyloExplorer.Store as PhyloStore
+import Gargantext.Components.PhyloExplorer.Types (PhyloDataSet(..))
 import Gargantext.Utils (nbsp)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-type Props =
-  ( key             :: String
+here :: R2.Here
+here = R2.here "Gargantext.Components.PhyloExplorer.SideBar.DetailsTab"
 
-  , docCount        :: Int
-  , foundationCount :: Int
-  , periodCount     :: Int
-  , termCount       :: Int
-  , groupCount      :: Int
-  , branchCount     :: Int
-  )
-
-detailsTab :: R2.Leaf Props
+detailsTab :: R2.Leaf ( key :: String )
 detailsTab = R2.leaf detailsTabCpt
 
-componentName :: String
-componentName = "Gargantext.Components.PhyloExplorer.SideBar.DetailsTab"
 
-detailsTabCpt :: R.Component Props
-detailsTabCpt = R.hooksComponent componentName cpt where
-  cpt props _ =
+detailsTabCpt :: R.Component ( key :: String )
+detailsTabCpt = here.component "" cpt where
+  cpt _ _ = do
+    -- | States
+    -- |
+    store <- PhyloStore.use
 
-    -- Render
+    (PhyloDataSet o) <- R2.useLive' store.phyloDataSet
+
+    -- | Render
+    -- |
     pure $
 
       H.div
@@ -40,21 +38,21 @@ detailsTabCpt = R.hooksComponent componentName cpt where
         H.ul
         { className: "phylo-details-tab__counter" }
         [
-          detailsCount props.docCount "docs"
+          detailsCount o.nbDocs "docs"
         ,
-          detailsCount props.foundationCount "foundations"
+          detailsCount o.nbFoundations "foundations"
         ,
-          detailsCount props.periodCount "periods"
+          detailsCount o.nbPeriods "periods"
         ]
       ,
         H.ul
         { className: "phylo-details-tab__counter" }
         [
-          detailsCount props.termCount "terms"
+          detailsCount o.nbTerms "terms"
         ,
-          detailsCount props.groupCount "groups"
+          detailsCount o.nbGroups "groups"
         ,
-          detailsCount props.branchCount "branches"
+          detailsCount o.nbBranches "branches"
         ]
       ,
         H.hr

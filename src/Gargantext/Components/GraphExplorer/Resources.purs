@@ -12,7 +12,7 @@ import DOM.Simple.Types (Element)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.Themes (darksterTheme)
@@ -22,7 +22,6 @@ import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Utils (getter)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Stores as Stores
 import Reactix as R
 import Record (merge)
 import Toestand as T
@@ -31,8 +30,7 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Graph"
 
 type Props sigma forceatlas2 =
-  ( boxes                 :: Boxes
-  , elRef                 :: R.Ref (Nullable Element)
+  ( elRef                 :: R.Ref (Nullable Element)
   , forceAtlas2Settings   :: forceatlas2
   , sigmaRef              :: R.Ref Sigmax.Sigma
   , sigmaSettings         :: sigma
@@ -48,10 +46,11 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
   -- |
   cpt { elRef
       , sigmaRef
-      , boxes
       , forceAtlas2Settings: fa2
       , transformedGraph
       } _ = do
+
+    boxes <- AppStore.use
 
     { showEdges
     , graphStage
@@ -60,7 +59,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
     , selectedNodeIds
     , multiSelectEnabled
     , hyperdataGraph
-    } <- Stores.useStore GraphStore.context
+    } <- GraphStore.use
 
     showEdges'        <- R2.useLive' showEdges
     graphStage'       <- R2.useLive' graphStage

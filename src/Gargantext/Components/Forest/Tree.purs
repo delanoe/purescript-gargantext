@@ -11,7 +11,7 @@ import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Forest.Tree.Node (blankNodeSpan, nodeSpan)
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)

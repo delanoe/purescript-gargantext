@@ -4,7 +4,7 @@ import Gargantext.Prelude
 
 import Effect (Effect)
 import Effect.Aff (launchAff_)
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)

@@ -112,33 +112,49 @@
 
 .b-icon-button {
   $self: &;
-  $overlay-offset: -6px;
+  $overlay-offset-y: -6px;
+  $overlay-offset-x: -10px;
 
   transition: color 0.2s;
   position: relative;
   transition: color 150ms ease-in-out;
 
-  &--overlay {
-
-    &#{ $self }::before {
-      @include fit-positions($overlay-offset);
-
-      content: "";
-      background-color: $gray-100;
-      border-radius: $overlay-radius;
-      z-index: -1;
-      position: absolute;
-      transition: background-color 150ms ease-in-out
-    }
-
-    &:hover {
-
-      &#{ $self }::before {
-        background-color: darken($gray-100, 10%);
-      }
-    }
+  &__inner {
+    // (due to overlay via pseudo element)
+    z-index: 1;
+    position: relative;
   }
 
+  // overlay preparation
+  &::before {
+    left: $overlay-offset-x;
+    right: $overlay-offset-x;
+    top: $overlay-offset-y;
+    bottom: $overlay-offset-y;
+    border-radius: $overlay-radius;
+    position: absolute;
+    transition:
+      background-color 150ms ease-in-out,
+      box-shadow 150ms ease-in-out;
+  }
+
+  &--overlay::before {
+    content: "";
+  }
+
+  // elevation levels
+  &--level-1:hover::before {
+    background-color: $gray-100;
+  }
+
+  &--level-2::before {
+    background-color: $gray-100;
+  }
+  &--level-2:hover::before {
+    background-color: darken($gray-100, 10%);
+  }
+
+  // component status UI changes
   &--enabled,
   &--muted,
   &--idled {
@@ -162,6 +178,15 @@
     &#{ $self }--primary:hover    { color: darken($primary, 10%); }
     &#{ $self }--secondary:hover  { color: darken($secondary, 10%); }
     &#{ $self }--dark:hover       { color: darken($body-color, 10%); }
+
+    // active effect
+    &#{ $self }:active,
+    &#{ $self }--active {
+
+      &::before {
+        box-shadow: 0 0 0 0.2rem mix-alpha($gray-200, 50%);
+      }
+    }
   }
 
   &--idled:hover {

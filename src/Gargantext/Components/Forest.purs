@@ -8,7 +8,7 @@ import Gargantext.Prelude
 
 import Data.Array as A
 import Data.Maybe (Maybe(..))
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Position(..), TooltipPosition(..), Variant(..))
 import Gargantext.Components.Forest.Tree (treeLoader)

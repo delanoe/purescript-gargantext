@@ -5,6 +5,9 @@ module Gargantext.Components.GraphExplorer.Frame.DocFocus
 import Gargantext.Prelude
 
 import Data.Maybe (Maybe(..))
+import Effect (Effect)
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (Elevation(..))
 import Gargantext.Components.GraphExplorer.Types (GraphSideDoc(..))
 import Gargantext.Components.Nodes.Corpus.Document (documentMainLayout)
 import Gargantext.Sessions (Session)
@@ -19,6 +22,7 @@ here = R2.here "Gargantext.Components.GraphExplorer.Frame.DocFocus"
 type Props =
   ( graphSideDoc  :: GraphSideDoc
   , session       :: Session
+  , closeCallback :: Unit -> Effect Unit
   )
 
 docFocus :: R2.Leaf Props
@@ -28,6 +32,7 @@ docFocusCpt :: R.Component Props
 docFocusCpt = here.component "main" cpt where
   cpt { graphSideDoc: GraphSideDoc { docId, listId, corpusId }
       , session
+      , closeCallback
       } _ = do
 
 
@@ -36,11 +41,22 @@ docFocusCpt = here.component "main" cpt where
     pure $
 
       H.div
-      { className: "graph-layout__focus" }
+      { className: "graph-doc-focus" }
       [
         H.div
-        { className: "graph-layout__focus__inner" }
+        { className: "graph-doc-focus__header" }
         [
+          B.iconButton
+          { name: "times"
+          , elevation: Level2
+          , callback: closeCallback
+          }
+        ]
+      ,
+        H.div
+        { className: "graph-doc-focus__body" }
+        [
+          -- print the document node
           documentMainLayout
           { listId
           , mCorpusId: Just corpusId

@@ -65,13 +65,16 @@ $layout-height: calc(100vh - #{ $topbar-height} )
     flex-grow: 1
     pointer-events: all
     position: relative
+    // (?) last resort solution to have a fixed scrollable child, with
+    //     its dimension relative to its parent
+    //     (flaw: no overflow)
+    content: layout
 
     &__inner
       @include fit-positions
 
       position: absolute
       background-color: $body-bg
-
 
   &__toolbar
     position: absolute
@@ -111,11 +114,29 @@ $layout-height: calc(100vh - #{ $topbar-height} )
     [type="submit"]
       display: none
 
+/////////////////////////////////////////////
+
+.graph-doc-focus
+  @include term-window
+
+  &__header
+    padding: $card-spacer-y $card-spacer-x
+    font-size: 20px
+
+    @include right-handed
+      float: right
+    @include left-handed
+      float: left
+
+  &__body
+    padding-left: $card-spacer-x
+    padding-right: $card-spacer-x
+
 
 /////////////////////////////////////////////
 
 .graph-sidebar
-  @include sidebar
+  @include term-window
 
   $margin-x: $sidebar-tab-margin-x
   $margin-y: space-x(2)
@@ -225,6 +246,22 @@ $layout-height: calc(100vh - #{ $topbar-height} )
     &:hover
       background-color: $gray-50
 
+    &--selected::before
+      content: ""
+      position: absolute
+      z-index: 1
+      width: 2px
+      background-color: $info
+      left: 0
+      top: 0
+      bottom: 0
+
+    // (following list group item border radius)
+    &--selected:first-child::before
+      border-top-left-radius: $list-group-border-radius
+    &--selected:last-child::before
+      border-bottom-left-radius: $list-group-border-radius
+
     &__main
       flex-grow: 1
       padding-right: $card-spacer-x
@@ -243,6 +280,19 @@ $layout-height: calc(100vh - #{ $topbar-height} )
       font-size: 14px
       color: $gray-600
 
+
+.graph-contact-list
+
+  &__item
+
+    &__title,
+    &__subtitle
+      line-height: 1.3
+      margin-bottom: space-x(0.25)
+
+    &__subtitle
+      font-size: 15px
+      color: $gray-700
 
 
 /////////////////////////////////////////////

@@ -5,7 +5,7 @@ import Gargantext.Prelude
 import Data.Maybe (Maybe)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar (searchBar)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (defaultSearch)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))

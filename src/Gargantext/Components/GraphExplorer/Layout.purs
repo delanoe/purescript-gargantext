@@ -12,7 +12,8 @@ import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (Tuple(..))
-import Gargantext.Components.App.Data (Boxes)
+import Effect (Effect)
+import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.GraphExplorer.Frame.DocFocus (docFocus)
 import Gargantext.Components.GraphExplorer.Resources as Graph
@@ -24,27 +25,25 @@ import Gargantext.Components.GraphExplorer.Types (GraphSideDoc)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Config (defaultFrontends)
 import Gargantext.Data.Louvain as Louvain
+import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
-import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
 import Gargantext.Types as Types
 import Gargantext.Utils ((?))
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Stores as Stores
 import Math as Math
 import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.Layout"
 
 type Props =
-  ( session         :: Session
-  , boxes           :: Boxes
-  , sigmaRef        :: R.Ref Sigmax.Sigma
+  ( sigmaRef        :: R.Ref Sigmax.Sigma
   )
 
 layout :: R2.Leaf Props
@@ -52,19 +51,21 @@ layout = R2.leaf layoutCpt
 
 layoutCpt :: R.Memo Props
 layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
-  cpt props@{ boxes
-            , session
-            , sigmaRef
-            } _ = do
+  cpt { sigmaRef
+      } _ = do
     -- | States
     -- |
+    { reloadForest
+    } <- AppStore.use
 
     { showSidebar
     , showDoc
     , mMetaData
     , showControls
     , graphId
-    } <- Stores.useStore GraphStore.context
+    } <- GraphStore.use
+
+    session <- useSession
 
     showSidebar'  <- R2.useLive' showSidebar
     showDoc'      <- R2.useLive' showDoc
@@ -103,6 +104,12 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
     --     T.write_ Graph.Init controls.graphStage
     --     T.write_ Types.InitialClosed controls.sidePanelState
 
+    -- | Computed
+    -- |
+    let
+      closeDoc :: Unit -> Effect Unit
+      closeDoc _ = T.write_ Nothing showDoc
+
     -- | Render
     -- |
 
@@ -128,12 +135,19 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
           -- Doc focus
           R2.fromMaybe_ showDoc' \(graphSideDoc :: GraphSideDoc) ->
 
-            docFocus
-            { session
-            , graphSideDoc
-            }
-
-
+            H.div
+            { className: "graph-layout__focus" }
+            [
+              H.div
+              { className: "graph-layout__focus__inner" }
+              [
+                docFocus
+                { session
+                , graphSideDoc
+                , closeCallback: closeDoc
+                }
+              ]
+            ]
         ,
           -- Sidebar
           H.div
@@ -155,8 +169,7 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
 
                 Just metaData ->
                   GES.sidebar
-                  { boxes
-                  , frontends: defaultFrontends
+                  { frontends: defaultFrontends
                   , metaData
                   , session
                   }
@@ -173,7 +186,7 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
         }
         [
           Controls.controls
-          { reloadForest: boxes.reloadForest
+          { reloadForest: reloadForest
           , session
           , sigmaRef
           }
@@ -186,8 +199,7 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
         }
         [
           graphView
-          { boxes: props.boxes
-          , elRef: graphRef
+          { elRef: graphRef
           , sigmaRef
           }
         ]
@@ -196,8 +208,7 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
 --------------------------------------------------------------
 
 type GraphProps =
-  ( boxes           :: Boxes
-  , elRef           :: R.Ref (Nullable Element)
+  ( elRef           :: R.Ref (Nullable Element)
   , sigmaRef        :: R.Ref Sigmax.Sigma
   )
 
@@ -205,8 +216,7 @@ graphView :: R2.Leaf GraphProps
 graphView = R2.leaf graphViewCpt
 graphViewCpt :: R.Memo GraphProps
 graphViewCpt = R.memo' $ here.component "graphView" cpt where
-  cpt { boxes
-      , elRef
+  cpt { elRef
       , sigmaRef
       } _ = do
     -- | States
@@ -219,7 +229,7 @@ graphViewCpt = R.memo' $ here.component "graphView" cpt where
     , showEdges
     , showLouvain
     , graph
-    } <- Stores.useStore GraphStore.context
+    } <- GraphStore.use
 
     edgeConfluence'     <- R2.useLive' edgeConfluence
     edgeWeight'         <- R2.useLive' edgeWeight
@@ -254,8 +264,7 @@ graphViewCpt = R.memo' $ here.component "graphView" cpt where
     pure $
 
       Graph.drawGraph
-      { boxes
-      , elRef
+      { elRef
       , forceAtlas2Settings: Graph.forceAtlas2Settings
       , sigmaRef
       , sigmaSettings: Graph.sigmaSettings
@@ -314,10 +323,10 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
 
 -- | See sigmajs/plugins/sigma.renderers.customShapes/shape-library.js
 modeGraphType :: Types.Mode -> String
-modeGraphType Types.Authors = "square"
-modeGraphType Types.Institutes = "equilateral"
-modeGraphType Types.Sources = "star"
-modeGraphType Types.Terms = "def"
+modeGraphType Types.Authors     = "square"
+modeGraphType Types.Institutes  = "equilateral"
+modeGraphType Types.Sources     = "star"
+modeGraphType Types.Terms       = "def"
 
 --------------------------------------------------------------
 

@@ -9,7 +9,6 @@ import Gargantext.Components.GraphExplorer.Topbar.Search (nodeSearchControl)
 import Gargantext.Types as GT
 import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Stores as Stores
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
@@ -29,7 +28,7 @@ component = here.component "topBar" cpt where
     , selectedNodeIds
     , showControls
     , showSidebar
-    } <- Stores.useStore GraphStore.context
+    } <- GraphStore.use
 
     graph'              <- R2.useLive' graph
     showControls'       <- R2.useLive' showControls

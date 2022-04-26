@@ -48,7 +48,7 @@ provideStore name state context
 -- |     unwanted computing at each import
 -- |
 -- |     It also implies that every call to the proxy reference (made thanks to
--- |     below <Store.Provider> are made AFTER first mount of this very,
+-- |     below `<Store.Provider>` are made AFTER first mount of this very,
 -- |     component, otherwise, every call will return the empty `unit`)
 useStore :: forall boxes.
      R.Context (Record boxes)

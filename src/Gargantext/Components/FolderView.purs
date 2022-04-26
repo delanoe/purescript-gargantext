@@ -9,7 +9,7 @@ import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (deleteNode, unpublishNode)
@@ -147,7 +147,7 @@ folderSimpleCpt = here.component "folderSimpleCpt" cpt where
       route nId rootId nType sid
         | rootId == nodeId = Home
         | otherwise        = getFolderPath nType sid nId
-      
+
 
   icon :: FolderStyle -> GT.NodeType -> String
   icon FolderUp _ = "fa fa-folder-open"
@@ -234,7 +234,7 @@ backButtonCpt = R.hooksComponent "backButton" cpt where
   cpt _ _ = do
     { goToPreviousPage } <- useLinkHandler
 
-    pure $ 
+    pure $
       H.button {
         className: "btn btn-primary"
       , on: { click: \_ -> goToPreviousPage unit }

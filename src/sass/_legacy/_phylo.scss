@@ -346,22 +346,43 @@ $decreasing-color: #11638F;
     left: calc( 50% - #{ $size / 2 } );
   }
 
-  &__sidebar {
-    position: fixed;
-    width: $sidebar-width;
+  &__frame {
+    @include fit-positions;
+
+    position: absolute;
+    display: flex;
+    z-index: z-index('phylo-layout', 'frame');
+    width: 100%;
     height: $sidebar-height;
-    z-index: z-index('phylo-layout', 'sidebar');
+    justify-content: flex-end;
+    pointer-events: none;
 
     @include right-handed {
-      right: 0;
-      border-left: 1px solid $border-color;
+      flex-direction: row;
     }
-
     @include left-handed {
-      left: 0;
-      border-right: 1px solid $border-color;
+      flex-direction: row-reverse;
     }
+  }
 
+  &__sidebar {
+    width: $sidebar-width;
+    height: inherit;
+    flex-grow: 0;
+    pointer-events: all;
+
+    &__inner {
+      position: fixed;
+      height: inherit;
+      width: inherit;
+
+      @include right-handed {
+        border-left: 1px solid $border-color;
+      }
+      @include left-handed {
+        border-right: 1px solid $border-color;
+      }
+    }
   }
 }
 
@@ -494,7 +515,7 @@ $decreasing-color: #11638F;
 ////////////////////////////////////////////////////////////////
 
 .phylo-sidebar {
-  @include sidebar;
+  @include term-window;
 }
 
 .phylo-details-tab {

@@ -7,7 +7,7 @@ import Data.Array as A
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Action (Props, subTreeOut, setTreeOut)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))

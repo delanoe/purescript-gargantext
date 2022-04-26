@@ -2,7 +2,6 @@ module Gargantext.Components.Search where
 
 import Gargantext.Prelude
 
-import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe)
@@ -26,7 +25,11 @@ instance JSON.ReadForeign SearchType where readImpl = JSONG.enumSumRep
 instance JSON.WriteForeign SearchType where writeImpl = JSON.writeImpl <<< show
 ------------------------------------------------------------------------
 
-newtype SearchQuery = SearchQuery { query :: Array String, expected :: SearchType }
+newtype SearchQuery = SearchQuery
+  { query     :: Array String
+  , expected  :: SearchType
+  }
+
 derive instance Generic SearchQuery _
 derive instance Newtype SearchQuery _
 instance Eq SearchQuery where eq = genericEq
@@ -165,7 +168,7 @@ derive newtype instance JSON.WriteForeign ContactWho
 newtype ContactWhere =
   ContactWhere { organization :: Array String
                , labTeamDepts :: Array String
-                 
+
                , role         :: Maybe String
 
                , office       :: Maybe String
@@ -194,4 +197,3 @@ instance Eq ContactTouch where eq = genericEq
 instance Show ContactTouch where show = genericShow
 derive newtype instance JSON.ReadForeign ContactTouch
 derive newtype instance JSON.WriteForeign ContactTouch
-

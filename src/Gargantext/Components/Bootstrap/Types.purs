@@ -5,6 +5,7 @@ module Gargantext.Components.Bootstrap.Types
   , SpinnerTheme(..)
   , TooltipEffect(..), TooltipPosition(..)
   , Position(..)
+  , Elevation(..)
   ) where
 
 import Gargantext.Prelude
@@ -150,7 +151,7 @@ instance Show Position where show = kebabCase <<< genericShow
 
 -- | Position used on React Tooltip
 -- |
--- | -- | https://github.com/wwayne/react-tooltip#options
+-- | https://github.com/wwayne/react-tooltip#options
 data TooltipPosition
   = TooltipPosition Position
   | AutomaticPosition
@@ -160,3 +161,18 @@ derive instance Eq TooltipPosition
 instance Show TooltipPosition where
   show (TooltipPosition a)       = (kebabCase <<< genericShow) a
   show AutomaticPosition         = ""
+
+----------------------------------------------------------------------
+
+-- | Elevarion measure scale values used on various custom components
+-- | and properties
+-- |
+-- | Example: https://material.io/design/environment/elevation.html
+data Elevation
+  = Level0
+  | Level1
+  | Level2
+
+derive instance Generic Elevation _
+derive instance Eq Elevation
+instance Show Elevation where show = kebabCase <<< genericShow
