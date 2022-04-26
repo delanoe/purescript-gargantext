@@ -92,13 +92,13 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
       , reload
       , session
       , setPopoverRef } _ = do
-    let foldersS = A.sortBy sortFolders children
+    let folders' = A.sortBy sortFolders children
     let parent = makeParentFolder parentNode session
-    let childrenEl = makeFolderElements foldersS { boxes, nodeId, reload, session, setPopoverRef }
+    let childrenEl = makeFolderElements folders' { boxes, nodeId, reload, session, setPopoverRef }
 
     pure $ H.div {className: "fv folders"} $ parent <> childrenEl
 
-  makeFolderElements foldersS props = makeFolderElementsMap <$> foldersS where
+  makeFolderElements folders' props = makeFolderElementsMap <$> folders' where
     makeFolderElementsMap :: TreeNode -> R.Element
     makeFolderElementsMap node = folder { boxes: props.boxes
                                                           , nodeId: node.id
@@ -115,7 +115,6 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
     [ folderSimple {style: FolderUp, text: "..", nodeId: parent.id, nodeType: parent.node_type, session: session} [] ]
   makeParentFolder Nothing _ = []
 
-
   sortFolders :: TreeNode-> TreeNode -> Ordering
   sortFolders a b = compare a.id b.id
 
@@ -127,6 +126,13 @@ type FolderSimpleProps =
   , nodeId :: Int
   , session :: Session
   )
+
+getFolderPath :: GT.NodeType -> GT.SessionId -> Int -> AppRoute
+getFolderPath nodeType sid nodeId = fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
+
+icon :: FolderStyle -> GT.NodeType -> String
+icon FolderUp _ = "fa fa-folder-open"
+icon _ nodeType = GT.fldr nodeType false
 
 folderSimple :: R2.Component FolderSimpleProps
 folderSimple = R.createElement folderSimpleCpt
@@ -147,14 +153,6 @@ folderSimpleCpt = here.component "folderSimpleCpt" cpt where
       route nId rootId nType sid
         | rootId == nodeId = Home
         | otherwise        = getFolderPath nType sid nId
-      
-
-  icon :: FolderStyle -> GT.NodeType -> String
-  icon FolderUp _ = "fa fa-folder-open"
-  icon _ nodeType = GT.fldr nodeType false
-
-  getFolderPath :: GT.NodeType -> GT.SessionId -> Int -> AppRoute
-  getFolderPath nodeType sid nodeId = fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
 
 type FolderProps =
   ( boxes         :: Boxes
@@ -201,14 +199,6 @@ folderCpt = here.component "folderCpt" cpt where
           H.i {className: icon style nodeType} []
         , H.br {}
         , H.text text]]
-
-
-  icon :: FolderStyle -> GT.NodeType -> String
-  icon FolderUp _ = "fa fa-folder-open"
-  icon _ nodeType = GT.fldr nodeType false
-
-  getFolderPath :: GT.NodeType -> GT.SessionId -> Int -> AppRoute
-  getFolderPath nodeType sid nodeId = fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
 
   onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
 
