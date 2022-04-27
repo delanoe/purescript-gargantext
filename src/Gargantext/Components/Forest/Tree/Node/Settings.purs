@@ -188,6 +188,7 @@ settingsBox Corpus =
                                 , NodeFrameWrite
                                 , NodeFrameCalc
                                 , Phylo
+                                , NodeFrameNotebook
                                 ]
                           , Link (linkParams Annuaire)
                           , Move moveParameters
