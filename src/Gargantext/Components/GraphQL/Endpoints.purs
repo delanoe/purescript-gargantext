@@ -33,6 +33,15 @@ getIMTSchools session = do
   liftEffect $ here.log2 "[getIMTSchools] imt_schools" imt_schools
   pure $ Right imt_schools
 
+getNode :: Session -> Int -> AffRESTError Node
+getNode session nodeId = do
+  { nodes } <- queryGql session "get nodes" $
+              nodesQuery `withVars` { id: nodeId }
+  liftEffect $ here.log2 "[getNode] node" nodes
+  pure $ case A.head nodes of
+    Nothing -> Left (CustomError $ "node with id" <> show nodeId <>" not found")
+    Just node -> Right node
+
 getNodeParent :: Session -> Int -> NodeType -> Aff (Array Node)
 getNodeParent session nodeId parentType = do
   { node_parent } <- queryGql session "get node parent" $

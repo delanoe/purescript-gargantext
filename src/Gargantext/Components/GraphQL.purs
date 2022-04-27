@@ -70,6 +70,7 @@ queryGql session name q = do
 -- Schema
 type Schema
   = { imt_schools :: {} ==> Array GQLIMT.School
+    , nodes :: { node_id :: Int } ==> Array Node
     , node_parent :: { node_id :: Int, parent_type :: String } ==> Array Node  -- TODO: parent_type :: NodeType
     , user_infos :: { user_id :: Int } ==> Array UserInfo
     , users :: { user_id :: Int } ==> Array User
