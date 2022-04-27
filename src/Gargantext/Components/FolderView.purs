@@ -23,7 +23,8 @@ import Gargantext.Components.Forest.Tree.Node.Action.Update (updateRequest)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadArbitraryFile, uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Box (nodePopupView)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
-import Gargantext.Components.GraphQL.Endpoints (getTreeFirstLevel)
+import Gargantext.Components.GraphQL.Endpoints (getNode, getTreeFirstLevel)
+import Gargantext.Components.GraphQL.Node (Node)
 import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, TreeNode)
 import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
@@ -134,6 +135,9 @@ icon :: FolderStyle -> GT.NodeType -> String
 icon FolderUp _ = "fa fa-folder-open"
 icon _ nodeType = GT.fldr nodeType false
 
+treeId :: Session -> Int
+treeId (Session {treeId: tId}) = tId
+
 folderSimple :: R2.Component FolderSimpleProps
 folderSimple = R.createElement folderSimpleCpt
 
@@ -149,7 +153,6 @@ folderSimpleCpt = here.component "folderSimpleCpt" cpt where
       , H.br {}
       , H.text text ]
     where
-      treeId (Session {treeId: tId}) = tId
       route nId rootId nType sid
         | rootId == nodeId = Home
         | otherwise        = getFolderPath nType sid nId
@@ -220,7 +223,7 @@ folderCpt = here.component "folderCpt" cpt where
 backButton :: R2.Component ()
 backButton = R.createElement backButtonCpt
 backButtonCpt :: R.Component ()
-backButtonCpt = R.hooksComponent "backButton" cpt where
+backButtonCpt = here.component "backButton" cpt where
   cpt _ _ = do
     { goToPreviousPage } <- useLinkHandler
 
@@ -232,6 +235,43 @@ backButtonCpt = R.hooksComponent "backButton" cpt where
         H.i { className: "fa fa-arrow-left", title: "Previous view"} []
       ]
 
+backButtonSmart :: R2.Component (nodeId :: Int, session :: Session)
+backButtonSmart = R.createElement backButtonSmartCpt
+
+backButtonSmartCpt :: R.Component (nodeId :: Int, session :: Session)
+backButtonSmartCpt = here.component "backButtonSmart" cpt where
+  cpt {nodeId, session} _ = do
+    reload <- T.useBox T2.newReload
+    reload' <- T.useLive T.unequal reload
+    useLoader { errorHandler
+              , loader: loadNode
+              , path: { nodeId, session, reload: reload' }
+              , render: \node -> backButtonSmartMain { node, session } []
+    }
+    where
+      errorHandler = logRESTError here "[folderView]"
+
+backButtonSmartMain :: R2.Component (node :: Node, session :: Session)
+backButtonSmartMain = R.createElement backButtonSmartMainCpt
+
+backButtonSmartMainCpt :: R.Component (node :: Node, session :: Session)
+backButtonSmartMainCpt = here.component "backButtonSmartMain" cpt where
+  cpt { node, session } _ = do
+    handlers <- useLinkHandler
+    let rootId = treeId session
+
+    pure $ 
+      H.button {
+        className: "btn btn-primary"
+      , on: { click: action rootId node.parent_id handlers }
+      } [
+        H.i { className: "fa fa-arrow-left", title: "Previous view"} []
+      ]
+    where
+      action rootId pId handlers
+        | rootId == pId = handlers.goToRoute Home
+        | otherwise = handlers.goToPreviousPage unit
+
 type LoadProps =
   (
     session :: Session,
@@ -241,6 +281,9 @@ type LoadProps =
 
 loadFolders :: Record LoadProps -> AffRESTError TreeFirstLevel
 loadFolders {nodeId, session} = getTreeFirstLevel session nodeId
+
+loadNode :: Record LoadProps -> AffRESTError Node
+loadNode {nodeId, session} = getNode session nodeId
 
 type PerformActionProps =
   ( boxes         :: Boxes

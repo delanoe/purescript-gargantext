@@ -71,7 +71,7 @@ corpusLayoutMainCpt = here.component "corpusLayoutMain" cpt
         H.div {}
         [
           R2.row [
-            FV.backButton {} []
+            FV.backButtonSmart { nodeId, session } []
           , tileMenu
             { boxes
             , currentTile: Just corpusCodeRoute
