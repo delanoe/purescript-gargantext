@@ -66,7 +66,6 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
     graph'            <- R2.useLive' graph
     startForceAtlas'  <- R2.useLive' startForceAtlas
     hyperdataGraph'   <- R2.useLive' hyperdataGraph
-    selectedNodeIds'  <- R2.useLive' selectedNodeIds
 
     -- | Hooks
     -- |
@@ -143,9 +142,12 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
       _ -> pure unit
 
     -- Stage ready
-    -- (?) Probably this can be optimized to re-mark selected nodes only when
-    --     they changed → done on #375
-    R.useEffect1' selectedNodeIds' case graphStage' of
+    --
+    -- @TODO Probably this can be optimized to re-mark selected nodes only when
+    --       they changed → one solution could be to list every effects subject
+    --       to a graph transformation (eg. "showLouvain", "edgeConfluence",
+    --       etc) // drawback: don't forget to modify the effect white-list
+    R.useEffect' case graphStage' of
 
       GET.Ready -> do
         let tEdgesMap = SigmaxTypes.edgesGraphMap transformedGraph
@@ -156,7 +158,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
           Sigmax.updateEdges sigma tEdgesMap
           Sigmax.updateNodes sigma tNodesMap
           let edgesState = not $ SigmaxTypes.edgeStateHidden showEdges'
-          here.log2 "[graphCpt] edgesState" edgesState
+          -- here.log2 "[graphCpt] edgesState" edgesState
           Sigmax.setEdges sigma edgesState
 
       _ -> pure unit
