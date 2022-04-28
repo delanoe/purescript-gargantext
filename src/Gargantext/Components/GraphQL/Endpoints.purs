@@ -1,27 +1,24 @@
 module Gargantext.Components.GraphQL.Endpoints where
 
-import Gargantext.Components.GraphQL.Node
-import Gargantext.Components.GraphQL.User
-import Gargantext.Components.GraphQL.Tree
 import Gargantext.Prelude
+
+import Gargantext.Components.GraphQL.Node (Node, nodeParentQuery)
+import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, treeFirstLevelQuery)
+import Gargantext.Components.GraphQL.User (UserInfo, userInfoQuery)
 
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Data.Unit (unit)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Gargantext.Components.GraphQL (getClient, queryGql)
+import Gargantext.Components.GraphQL (queryGql)
 import Gargantext.Components.GraphQL.IMT as GQLIMT
-import Gargantext.Components.GraphQL.Task as GQLT
-import Gargantext.Config.REST (AffRESTError, RESTError(..))
+import Gargantext.Config.REST (RESTError(..), AffRESTError)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (AsyncTaskWithType(..), AsyncTask(..), AsyncTaskType(..), NodeType)
+import Gargantext.Types (NodeType)
 import Gargantext.Utils.Reactix as R2
-import GraphQL.Client.Args (onlyArgs, (=>>))
-import GraphQL.Client.Query (mutation)
+import Gargnatext.Components.GraphQL.Contact (AnnuaireContact, annuaireContactQuery)
 import GraphQL.Client.Variables (withVars)
-import Simple.JSON as JSON
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphQL.Endpoints"
@@ -50,9 +47,17 @@ getUserInfo session id = do
     -- NOTE Contact is at G.C.N.A.U.C.Types
     Just ui -> Right ui
 
+getAnnuaireContact :: Session -> Int -> AffRESTError AnnuaireContact
+getAnnuaireContact session id = do
+  { annuaire_contacts } <- queryGql session "get annuaire contact" $
+    annuaireContactQuery `withVars` { id }
+  liftEffect $ here.log2 "[getAnnuaireContact] data" annuaire_contacts
+  pure $ case A.head annuaire_contacts of
+    Nothing -> Left (CustomError $ "contact id=" <> show id <> " not found")
+    Just r  -> Right r
+
 getTreeFirstLevel :: Session -> Int -> AffRESTError TreeFirstLevel
 getTreeFirstLevel session id = do
   { tree } <- queryGql session "get tree first level" $ treeFirstLevelQuery `withVars` { id }
   liftEffect $ here.log2 "[getTreeFirstLevel] tree first level" tree
   pure $ Right tree -- TODO: error handling
-

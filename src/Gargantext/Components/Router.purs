@@ -620,13 +620,18 @@ contact = R.createElement contactCpt
 contactCpt :: R.Component ContactProps
 contactCpt = here.component "contact" cpt where
   cpt props@{ annuaireId
-            , boxes
-            , nodeId } _ = do
-    let sessionProps = RE.pick props :: Record SessionProps
-    -- let forestedProps = RE.pick props :: Record Props
-    pure $ authed (Record.merge { content: \session ->
-                                   contactLayout { annuaireId
-                                                 , boxes
-                                                 , frontends: defaultFrontends
-                                                 , nodeId
-                                                 , session } [] } sessionProps) []
+            , nodeId
+            } _ = do
+    let
+      sessionProps = (RE.pick props :: Record SessionProps)
+
+      authedProps =
+        { content:
+            \_ -> contactLayout
+                  { nodeId
+                  , annuaireId
+                  , key: "annuaireId-" <> show annuaireId
+                  }
+        } `Record.merge` sessionProps
+
+    pure $ authed authedProps []
