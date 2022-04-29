@@ -10,18 +10,19 @@ import Data.Foldable (intercalate)
 import Data.Int as Int
 import Data.Maybe (Maybe(..))
 import Data.String (null)
-import Data.Tuple.Nested ((/\))
+import Effect (Effect)
 import FFI.Simple ((..), (.=))
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.PhyloExplorer.Resources (PubSubEvent(..))
 import Gargantext.Components.PhyloExplorer.Resources as RS
 import Gargantext.Components.PhyloExplorer.SideBar (sideBar)
+import Gargantext.Components.PhyloExplorer.Store as PhyloStore
 import Gargantext.Components.PhyloExplorer.ToolBar (toolBar)
 import Gargantext.Components.PhyloExplorer.TopBar (topBar)
-import Gargantext.Components.PhyloExplorer.Types (DisplayView(..), PhyloDataSet(..), ExtractedTerm, ExtractedCount, Source, Term, sortSources)
+import Gargantext.Components.PhyloExplorer.Types (DisplayView, ExtractedCount, FrameDoc, PhyloDataSet(..), TabView(..), Term, sortSources)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
-import Gargantext.Hooks.UpdateEffect (useUpdateEffect1')
-import Gargantext.Types (NodeID, SidePanelState(..))
+import Gargantext.Hooks.UpdateEffect (useUpdateEffect1', useUpdateEffect3')
+import Gargantext.Types (SidePanelState(..))
 import Gargantext.Utils (getter, (?))
 import Gargantext.Utils.Reactix as R2
 import Graphics.D3.Base (d3)
@@ -33,126 +34,121 @@ import Toestand as T
 here :: R2.Here
 here = R2.here "Gargantext.Components.PhyloExplorer"
 
-type Props =
-  ( phyloDataSet :: PhyloDataSet
-  , nodeId       :: NodeID
-  )
-
-layout :: R2.Leaf Props
+layout :: R2.Leaf ()
 layout = R2.leaf layoutCpt
 
-layoutCpt :: R.Component Props
+layoutCpt :: R.Component ()
 layoutCpt = here.component "layout" cpt where
-  cpt { phyloDataSet: (PhyloDataSet o)
-      , nodeId
-      } _ = do
+  cpt _ _ = do
+    -- | States
+    -- |
+    { isBuilt
+    , source
+    , sources
+    , terms
+    , toolBarDisplayed
+    , search
+    , result
+    , displayView
+    , isIsolineDisplayed
+    , sideBarDisplayed
+    , sideBarTabView
+    , extractedTerms
+    , selectedTerm
+    , selectedBranch
+    , selectedSource
+    , extractedCount
+    , phyloId
+    , phyloDataSet
+    , frameDoc
+    } <- PhyloStore.use
 
-  -- States
-  ---------
+    (PhyloDataSet o)    <- R2.useLive' phyloDataSet
+    phyloId'            <- R2.useLive' phyloId
+    sources'            <- R2.useLive' sources
+    terms'              <- R2.useLive' terms
+    displayView'        <- R2.useLive' displayView
+    isIsolineDisplayed' <- R2.useLive' isIsolineDisplayed
+    sideBarDisplayed'   <- R2.useLive' sideBarDisplayed
+    toolBarDisplayed'   <- R2.useLive' toolBarDisplayed
+    isBuilt'            <- R2.useLive' isBuilt
+    selectedTerm'       <- R2.useLive' selectedTerm
+    selectedBranch'     <- R2.useLive' selectedBranch
+    selectedSource'     <- R2.useLive' selectedSource
+    frameDoc'           <- R2.useLive' frameDoc
 
-    let defaultDisplayView = HeadingMode
-    let topBarPortalKey = "portal-topbar::" <> show nodeId
+    -- | Hooks
+    -- |
+    let topBarPortalKey = "portal-topbar::" <> show phyloId'
 
     mTopBarHost <- R.unsafeHooksEffect $ R2.getElementById "portal-topbar"
 
-    isDisplayed /\ isReadyBox <-
-      R2.useBox' false
-
-    source  /\ sourceBox  <-
-      R2.useBox' ""
-
-    sources /\ sourcesBox <-
-      R2.useBox' (mempty :: Array Source)
-
-    terms /\ termsBox <-
-      R2.useBox' (mempty :: Array Term)
-
-    toolBarDisplayed /\ toolBarDisplayedBox <-
-      R2.useBox' false
-
-    search /\ searchBox <-
-      R2.useBox' ""
-
-    result /\ resultBox <-
-      R2.useBox' (Nothing :: Maybe Term)
-
-    displayView /\ displayViewBox <-
-      R2.useBox' defaultDisplayView
-
-    isIsolineDisplayed /\ isIsolineDisplayedBox <-
-      R2.useBox' false
-
-    sideBarDisplayed /\ sideBarDisplayedBox <-
-      R2.useBox' InitialClosed
-
-    extractedTerms /\ extractedTermsBox <-
-      R2.useBox' (mempty :: Array ExtractedTerm)
-
-    selectedTerm /\ selectedTermBox <-
-      R2.useBox' (Nothing :: Maybe String)
-
-    selectedBranch /\ selectedBranchBox <-
-      R2.useBox' (Nothing :: Maybe String)
-
-    selectedSource /\ selectedSourceBox <-
-      R2.useBox' (Nothing :: Maybe String)
-
-    extractedCount /\ extractedCountBox <-
-      R2.useBox' (Nothing :: Maybe ExtractedCount)
-
-  -- Behaviors
-  ------------
+    -- | Behaviors
+    -- |
 
     -- (!) do not rely on the JavaScript `Resources.js:resetSelection`,
     --     as it will lead to potential circular computations
-    resetSelection <- pure $ const do
-      T.write_ Nothing selectedBranchBox
-      T.write_ Nothing selectedTermBox
-      T.write_ ""      sourceBox
-      T.write_ Nothing selectedSourceBox
-      T.write_ Nothing extractedCountBox
-      T.write_ mempty  extractedTermsBox
+    --
+    -- (!) same idea for Box content mutation: eg. due the reset notion
+    --     triggered at each selection (cf. `resetSelection`), a call via
+    --     `T.write` + `T.listen` will also create an infinite loop
+    let
 
-      void $ pure $ (window .= "branchFocus") []
+      resetSelection :: Unit -> Effect Unit
+      resetSelection _ = do
+        T.write_ Nothing selectedBranch
+        T.write_ Nothing selectedTerm
+        T.write_ ""      source
+        T.write_ Nothing selectedSource
+        T.write_ Nothing extractedCount
+        T.write_ mempty  extractedTerms
 
-    changeViewCallback <- pure $
-          flip T.write displayViewBox
-      >=> RS.changeDisplayView
+        void $ pure $ (window .= "branchFocus") []
 
-    sourceCallback <- pure \id -> do
-      -- (!) upcoming value from a `B.formSelect`, so simple <String> format
-      let mSource = RS.findSourceById sources =<< Int.fromString id
-      let mLabel  = pure <<< getter _.label =<< mSource
+      changeViewCallback :: DisplayView -> Effect Unit
+      changeViewCallback =
+            flip T.write displayView
+        >=> RS.changeDisplayView
 
-      resetSelection unit
-      T.write_ id sourceBox
-      T.write_ mLabel selectedSourceBox
-      RS.selectSource window mSource
+      sourceCallback :: String -> Effect Unit
+      sourceCallback id = do
+        -- (!) upcoming value from a `B.formSelect`, so simple <String> format
+        let mSource = RS.findSourceById sources' =<< Int.fromString id
+        let mLabel  = pure <<< getter _.label =<< mSource
 
-    searchCallback <- pure $
-          flip T.write searchBox
-      >=> RS.autocompleteSearch terms
-      >=> flip T.write_ resultBox
+        resetSelection unit
+        T.write_ id source
+        T.write_ mLabel selectedSource
+        RS.selectSource window mSource
 
-    resultCallback <- pure $ const $
-          resetSelection unit
-       *> RS.autocompleteSubmit displayViewBox result
+      searchCallback :: String -> Effect Unit
+      searchCallback =
+            flip T.write search
+        >=> RS.autocompleteSearch terms'
+        >=> flip T.write_ result
 
-    unselectCallback <- pure $ const $
-          resetSelection unit
-       *> RS.doubleClick
+      resultCallback :: Maybe Term -> Effect Unit
+      resultCallback mTerm =
+            resetSelection unit
+        *> RS.autocompleteSubmit displayView mTerm
 
-    selectTermCallback <- pure $ \s -> do
-      resetSelection unit
-      mTerm <- RS.autocompleteSearch terms s
-      RS.autocompleteSubmit displayViewBox mTerm
+      unselectCallback :: Unit -> Effect Unit
+      unselectCallback _ =
+            resetSelection unit
+        *> RS.doubleClick
 
-  -- Effects
-  ----------
+      selectTermCallback :: String -> Effect Unit
+      selectTermCallback s = do
+        resetSelection unit
+        mTerm <- RS.autocompleteSearch terms' s
+        RS.autocompleteSubmit displayView mTerm
+
+    -- | Effects
+    -- |
 
     -- Drawing the phylo
     useFirstEffect' do
-      (sortSources >>> flip T.write_ sourcesBox) o.sources
+      (sortSources >>> flip T.write_ sources) o.sources
       RS.setGlobalD3Reference window d3
       RS.setGlobalDependencies window (PhyloDataSet o)
       RS.drawPhylo
@@ -163,67 +159,79 @@ layoutCpt = here.component "layout" cpt where
         o.ancestorLinks
         o.branchLinks
         o.bb
-      RS.changeDisplayView displayView
-      T.write_ true isReadyBox
+      RS.changeDisplayView displayView'
+      T.write_ true isBuilt
       -- @NOTE #219: handling global variables
       --             (see `Resources.js` how they are being used)
-      T.write_ (window .. "terms") termsBox
+      T.write_ (window .. "terms") terms
 
     -- (see `Gargantext.Components.PhyloExplorer.Resources` > JavaScript >
     -- `pubsub` for detailed explanations)
     useFirstEffect' do
-      RS.subscribe (show ExtractedTermsEvent) $ flip T.write_ extractedTermsBox
+      RS.subscribe (show ExtractedTermsEvent) $ flip T.write_ extractedTerms
 
       RS.subscribe (show SelectedTermEvent) $ case _ of
         res
-          | true == null res -> T.write_ Nothing selectedTermBox
-          | otherwise        -> T.write_ (Just res) selectedTermBox
+          | true == null res -> T.write_ Nothing selectedTerm
+          | otherwise        -> T.write_ (Just res) selectedTerm
 
       RS.subscribe (show SelectedBranchEvent) $ case _ of
         res
-          | true == null res -> T.write_ Nothing selectedBranchBox
-          | otherwise        -> T.write_ (Just res) selectedBranchBox
+          | true == null res -> T.write_ Nothing selectedBranch
+          | otherwise        -> T.write_ (Just res) selectedBranch
 
       RS.subscribe (show SelectedSourceEvent) $ sourceCallback
 
       RS.subscribe (show DisplayViewEvent) $ read >>> case _ of
-        Nothing  -> pure unit
-        Just res -> T.write_ res displayViewBox
+        Nothing  -> R.nothing
+        Just res -> T.write_ res displayView
 
       RS.subscribe (show ExtractedCountEvent) $ JSON.readJSON >>> case _ of
         Left _ ->
-          T.write_ Nothing extractedCountBox
+          T.write_ Nothing extractedCount
         Right (res :: ExtractedCount) ->
-          T.write_ (Just res) extractedCountBox
+          T.write_ (Just res) extractedCount
 
-    R.useEffect1' isIsolineDisplayed do
+    R.useEffect1' isIsolineDisplayed' do
       mEl <- querySelector document ".phylo-isoline"
       case mEl of
-        Nothing -> pure unit
+        Nothing -> R.nothing
         Just el -> do
           style <- pure $ (el .. "style")
           pure $ (style .= "display") $
-            isIsolineDisplayed ? "flex" $ "none"
+            isIsolineDisplayed' ? "flex" $ "none"
 
     -- @NOTE #219: handling global variables (eg. via `window`)
     --             (see `Resources.js` how they are being used)
-    useUpdateEffect1' displayView do
-      pure $ (window .= "displayView") (show displayView)
+    useUpdateEffect1' displayView' do
+      pure $ (window .= "displayView") (show displayView')
 
-  -- Render
-  ---------
+    -- Educational behavior: automatically opening sidebar on first selection
+    useUpdateEffect3'
+      selectedTerm'
+      selectedBranch'
+      selectedSource'
+        if (sideBarDisplayed' == InitialClosed)
+        then
+             T.write_ Opened sideBarDisplayed
+          *> T.write_ SelectionTab sideBarTabView
+        else
+          R.nothing
+
+    -- | Render
+    -- |
 
     pure $
 
       H.div
       { className: intercalate " "
           [ "phylo"
-          , not isDisplayed ? "phylo--preloading" $ ""
+          , not isBuilt' ? "phylo--preloading" $ ""
           ]
       }
       [
         -- Preloading spinner
-        R2.if' (not isDisplayed) $
+        R2.if' (not isBuilt') $
 
           H.div
           { className: "phylo__spinner-wrapper" }
@@ -237,55 +245,56 @@ layoutCpt = here.component "layout" cpt where
         [
           R2.fragmentWithKey topBarPortalKey
           [
-            R2.if' (isDisplayed) $
+            R2.if' (isBuilt') $
               topBar
-              { sources
-              , source
-              , sourceCallback
-              , search
+              { sourceCallback
               , searchCallback
-              , result
               , resultCallback
-              , toolBar: toolBarDisplayedBox
-              , sideBar: sideBarDisplayedBox
               }
           ]
         ]
       ,
-        -- Sidebar
+        -- Sidebar + Focus frame
         H.div
-        { className: "phylo__sidebar"
-        -- @XXX: ReactJS lack of "keep-alive" feature workaround solution
-        -- @link https://github.com/facebook/react/issues/12039
-        , style: { display: sideBarDisplayed == Opened? "block" $ "none" }
-        }
+        { className: "phylo__frame" }
         [
-          sideBar
-          { nodeId
-          , docCount: o.nbDocs
-          , foundationCount: o.nbFoundations
-          , periodCount: o.nbPeriods
-          , termCount: o.nbTerms
-          , groupCount: o.nbGroups
-          , branchCount: o.nbBranches
-          , extractedTerms
-          , extractedCount
-          , selectedTerm
-          , selectedBranch
-          , selectedSource
-          , selectTermCallback
+          -- Doc focus
+          R2.fromMaybe_ frameDoc' \(frameDoc :: FrameDoc) ->
+
+            H.div
+            { className: "phylo__focus" }
+            [
+              H.div
+              { className: "phylo__focus__inner" }
+              [
+                H.text $ "hello"
+              ]
+            ]
+        ,
+          -- Sidebar
+          H.div
+          { className: "phylo__sidebar"
+          -- @XXX: ReactJS lack of "keep-alive" feature workaround solution
+          -- @link https://github.com/facebook/react/issues/12039
+          , style: { display: sideBarDisplayed' == Opened ? "block" $ "none" }
           }
+          [
+            H.div
+            { className: "phylo__sidebar__inner" }
+            [
+              sideBar
+              { selectTermCallback }
+            ]
+          ]
         ]
       ,
         -- Toolbar
-        R2.if' (toolBarDisplayed) $
+        R2.if' (toolBarDisplayed') $
           toolBar
-          { resetViewCallback: const RS.resetView
-          , exportCallback: const RS.exportViz
-          , unselectCallback: unselectCallback
-          , displayView
+          { resetViewCallback : const RS.resetView
+          , exportCallback    : const RS.exportViz
+          , unselectCallback  : unselectCallback
           , changeViewCallback
-          , isolineBox: isIsolineDisplayedBox
           }
       ,
         -- Iso Line

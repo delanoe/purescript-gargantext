@@ -8,7 +8,7 @@ import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.DocsTable.Types (Year)
 import Gargantext.Components.GraphQL.User (UserInfo)

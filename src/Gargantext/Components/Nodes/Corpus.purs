@@ -10,7 +10,7 @@ import Data.Show.Generic (genericShow)
 import Effect (Effect)
 import Effect.Aff (throwError)
 import Effect.Exception (error)
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.InputWithEnter (inputWithEnter)

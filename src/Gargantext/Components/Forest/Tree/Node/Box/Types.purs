@@ -4,7 +4,7 @@ import DOM.Simple as DOM
 import Data.Maybe (Maybe)
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
 import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction)
 import Gargantext.Prelude (Unit)
@@ -32,5 +32,3 @@ type NodePopupS =
   , name     :: Name
   , nodeType :: GT.NodeType
   )
-
-

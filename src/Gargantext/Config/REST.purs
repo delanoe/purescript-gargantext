@@ -34,7 +34,7 @@ instance Show RESTError where
   show (SendResponseError e) = "SendResponseError " <> showError e
     where
       showError (RequestContentError e')  = "(RequestContentError " <> show e' <> ")"
-      showError (ResponseBodyError fe rf) = "(ResponseBodyError " <> show fe <> " (rf)"  -- <> show rf <> ")"
+      showError (ResponseBodyError fe _) = "(ResponseBodyError " <> show fe <> " (rf)"  -- <> show rf <> ")"
       showError (TimeoutError)            = "(TimeoutError)"
       showError (RequestFailedError)      = "(RequestFailedError)"
       showError (XHROtherError e')        = "(XHROtherError " <> show e' <> ")"

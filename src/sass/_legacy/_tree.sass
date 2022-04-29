@@ -190,6 +190,7 @@ $node-popup-width: 544px
         left: calc( #{ $overlay-offset } + #{ $extra-right-overlay-offset })
 
   //----------------------------
+  $icon-button-margin: space-x(2.25)
 
   &__settings-icon
     visibility: hidden
@@ -198,16 +199,16 @@ $node-popup-width: 544px
     visibility: visible
 
     @include right-handed
-      margin-left: space-x(2)
+      margin-left: $icon-button-margin
     @include left-handed
-      margin-right: space-x(2)
+      margin-right: $icon-button-margin
 
   &__update-icon
 
     @include right-handed
-      margin-left: space-x(2)
+      margin-left: $icon-button-margin
     @include left-handed
-      margin-right: space-x(2)
+      margin-right: $icon-button-margin
 
   //----------------------------
 
@@ -215,10 +216,14 @@ $node-popup-width: 544px
   &__settings-icon
     // altering component overlay offset to fit it with the ".mainleaf" overlay
     // dimension
-    $aside-icon-offset-top: -5px
+    $aside-icon-offset-y: -5px
+    $aside-icon-offset-x: -6px
 
-    &.b-icon-button--overlay::before
-      top: $aside-icon-offset-top
+    &.b-icon-button::before
+      top: $aside-icon-offset-y
+      bottom: $aside-icon-offset-y
+      left: $aside-icon-offset-x
+      right: $aside-icon-offset-x
 
   //----------------------------
 

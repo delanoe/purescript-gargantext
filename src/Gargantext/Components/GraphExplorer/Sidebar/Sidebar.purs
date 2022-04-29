@@ -5,7 +5,7 @@ module Gargantext.Components.GraphExplorer.Sidebar
 import Gargantext.Prelude
 
 import Control.Parallel (parTraverse)
-import Data.Array (concat, head, last, mapWithIndex)
+import Data.Array (last, mapWithIndex)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Foldable (intercalate)
@@ -19,17 +19,16 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
-import Gargantext.Components.GraphExplorer.Sidebar.DocList (docList)
+import Gargantext.Components.GraphExplorer.Sidebar.ContactList (contactListWrapper)
+import Gargantext.Components.GraphExplorer.Sidebar.DocList (docListWrapper)
 import Gargantext.Components.GraphExplorer.Sidebar.Legend as Legend
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Components.NgramsTable.Core as NTC
-import Gargantext.Components.RandomText (words)
-import Gargantext.Components.Search (SearchType(..), SearchQuery(..))
 import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Data.Array (mapMaybe)
 import Gargantext.Ends (Frontends)
@@ -38,7 +37,6 @@ import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, FrontendError(..), NodeID, TabSubType(..), TabType(..), TermList(..), modeTabType)
 import Gargantext.Utils (nbsp)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Stores as Stores
 import Gargantext.Utils.Toestand as T2
 import Math as Math
 import Partial.Unsafe (unsafePartial)
@@ -51,8 +49,7 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.Sidebar"
 
 type Props =
-  ( boxes           :: Boxes
-  , metaData        :: GET.MetaData
+  ( metaData        :: GET.MetaData
   , session         :: Session
   , frontends       :: Frontends
   )
@@ -65,7 +62,7 @@ sidebarCpt = here.component "sidebar" cpt where
   cpt props _ = do
     -- States
     { sideTab
-    } <- Stores.useStore GraphStore.context
+    } <- GraphStore.use
 
     sideTab'  <- R2.useLive' sideTab
 
@@ -128,7 +125,7 @@ sideTabDataCpt = here.component "sideTabData" cpt where
     -- States
     { selectedNodeIds
     , graph
-    } <- Stores.useStore GraphStore.context
+    } <- GraphStore.use
 
     selectedNodeIds'  <- R2.useLive' selectedNodeIds
     graph'            <- R2.useLive' graph
@@ -171,12 +168,7 @@ sideTabDataCpt = here.component "sideTabData" cpt where
               sideBarTabSeparator
             ,
               docListWrapper
-              { frontends: props.frontends
-              , metaData: props.metaData
-              , nodesMap: SigmaxT.nodesGraphMap graph'
-              , searchType: SearchDoc
-              , selectedNodeIds: selectedNodeIds'
-              , session: props.session
+              { metaData: props.metaData
               }
             ]
       ]
@@ -188,11 +180,11 @@ sideTabCommunity = R2.leaf sideTabCommunityCpt
 
 sideTabCommunityCpt :: R.Component Props
 sideTabCommunityCpt = here.component "sideTabCommunity" cpt where
-  cpt props@{ frontends } _ = do
+  cpt props _ = do
     -- States
     { selectedNodeIds
     , graph
-    } <- Stores.useStore GraphStore.context
+    } <- GraphStore.use
 
     selectedNodeIds'  <- R2.useLive' selectedNodeIds
     graph'            <- R2.useLive' graph
@@ -234,13 +226,8 @@ sideTabCommunityCpt = here.component "sideTabCommunity" cpt where
             ,
               sideBarTabSeparator
             ,
-              docListWrapper
-              { frontends
-              , metaData: props.metaData
-              , nodesMap: SigmaxT.nodesGraphMap graph'
-              , searchType: SearchContact
-              , selectedNodeIds: selectedNodeIds'
-              , session: props.session
+              contactListWrapper
+              { metaData: props.metaData
               }
             ]
       ]
@@ -274,7 +261,7 @@ selectedNodesCpt = here.component "selectedNodes" cpt where
     -- States
     { selectedNodeIds
     , graph
-    } <- Stores.useStore GraphStore.context
+    } <- GraphStore.use
 
     selectedNodeIds' <- R2.useLive' selectedNodeIds
     graph'           <- R2.useLive' graph
@@ -353,7 +340,7 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
     -- States
     { selectedNodeIds
     , graph
-    } <- Stores.useStore GraphStore.context
+    } <- GraphStore.use
 
     selectedNodeIds' <-
       R2.useLive' selectedNodeIds
@@ -482,21 +469,21 @@ updateTermButton = R2.component updateTermButtonCpt
 
 updateTermButtonCpt :: R.Component UpdateTermButtonProps
 updateTermButtonCpt = here.component "updateTermButton" cpt where
-  cpt { boxes:
-          { errors
-          , reloadForest
-          }
-      , variant
+  cpt { variant
       , metaData
       , nodesMap
       , rType
       , session
       } children = do
     -- States
+    { errors
+    , reloadForest
+    } <- AppStore.use
+
     { removedNodeIds
     , selectedNodeIds
     , graphId
-    } <- Stores.useStore GraphStore.context
+    } <- GraphStore.use
 
     selectedNodeIds' <- R2.useLive' selectedNodeIds
     graphId'         <- R2.useLive' graphId
@@ -612,80 +599,6 @@ sendPatch termList session (GET.MetaData metaData) node = do
     patch_list :: NTC.Replace TermList
     patch_list = NTC.Replace { new: termList, old: MapTerm }
 
----------------------------------------------------------
-
-type DocListWrapper =
-  ( frontends       :: Frontends
-  , metaData        :: GET.MetaData
-  , nodesMap        :: SigmaxT.NodesMap
-  , searchType      :: SearchType
-  , selectedNodeIds :: SigmaxT.NodeIds
-  , session         :: Session
-  )
-
-docListWrapper :: R2.Leaf DocListWrapper
-docListWrapper = R2.leaf docListWrapperCpt
-
-docListWrapperCpt :: R.Component DocListWrapper
-docListWrapperCpt = here.component "docListWrapper" cpt where
-  cpt { frontends
-      , metaData: GET.MetaData metaData
-      , nodesMap
-      , searchType
-      , selectedNodeIds
-      , session
-      } _ = do
-    -- States
-    { showDoc
-    } <- Stores.useStore GraphStore.context
-
-    query /\ queryBox <- R2.useBox' Nothing
-
-    -- Helpers
-    let
-      toSearchQuery ids = SearchQuery
-        { expected: searchType
-        , query: concat $ toQuery <$> Set.toUnfoldable ids
-        }
-
-      toQuery id = case Map.lookup id nodesMap of
-        Nothing -> []
-        Just n -> words n.label
-
-      toGraphSideCorpus corpusId = GET.GraphSideCorpus
-        { corpusId
-        , corpusLabel: metaData.title
-        , listId     : metaData.list.listId
-        }
-
-    -- Hooks
-    R.useEffect1' selectedNodeIds $
-      T.write_ (selectedNodeIds # toSearchQuery >>> Just) queryBox
-
-    -- Render
-    pure $
-
-      R.fragment
-      [
-        case (head metaData.corpusId) /\ query of
-
-          (Just corpusId) /\ (Just query') ->
-            docList
-            { frontends
-            , query: query'
-            , session
-            , graphSideCorpus: toGraphSideCorpus corpusId
-            , showDoc
-            }
-
-          _ /\ _ ->
-            B.caveat
-            {}
-            [
-              H.text "You can link a corpus to your Graph to retrieve relative documents when selecting nodes"
-            ]
-
-      ]
 
 
 ------------------------------------------------------------------------

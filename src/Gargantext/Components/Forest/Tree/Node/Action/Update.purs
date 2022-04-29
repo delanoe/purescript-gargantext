@@ -1,7 +1,8 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Update where
 
-import Gargantext.Components.Forest.Tree.Node.Action.Update.Types
 import Gargantext.Prelude
+
+import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (Charts(..), Granularity(..), GraphMetric(..), Method(..), PartitionMethod(..), UpdateNodeParams(..))
 
 import DOM.Simple.Console (log3)
 import Data.Either (Either(..))
@@ -80,6 +81,10 @@ updateGraphCpt = here.component "updateGraph" cpt where
     methodGraphClustering <- T.useBox Spinglass
     methodGraphClustering' <- T.useLive T.unequal methodGraphClustering
 
+    let
+      callback :: Action -> Aff Unit
+      callback = dispatch >=> \_ -> dispatch ClosePopover
+
     pure $ panel [ -- H.text "Update with"
                   formChoiceSafe { items: [Order1, Order2]
                                  , default: methodGraphMetric'
@@ -94,7 +99,7 @@ updateGraphCpt = here.component "updateGraph" cpt where
                  (submitButton (UpdateNode $ UpdateNodeParamsGraph { methodGraphMetric: methodGraphMetric'
                                                                    , methodGraphClustering: methodGraphClustering'
                                                                    }
-                               ) dispatch
+                               ) callback
                   )
 
 
@@ -135,7 +140,9 @@ updatePhyloCpt = here.component "updatePhylo" cpt where
         Left error -> log3 "[handleFormError]" error r
         Right r'   -> do
           opts <- pure $ options r'
-          launchAff_ $ dispatch opts
+          launchAff_ do
+            dispatch opts
+            dispatch ClosePopover
 
         where
           options :: Phylo.UpdateData -> Action

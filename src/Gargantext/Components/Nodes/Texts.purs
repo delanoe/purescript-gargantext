@@ -7,7 +7,7 @@ import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (launchAff_)
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Charts.Options.ECharts (dispatchAction)
 import Gargantext.Components.Charts.Options.Type (EChartsInstance, EChartActionData)
 import Gargantext.Components.DocsTable as DT
@@ -108,7 +108,7 @@ textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
                     let NodePoly { name, date, hyperdata } = corpusNode
 
                     R.fragment
-                      [ Table.tableHeaderWithRenameLayout { 
+                      [ Table.tableHeaderWithRenameLayout {
                           cacheState
                         , name
                         , date

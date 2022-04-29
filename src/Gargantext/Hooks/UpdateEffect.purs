@@ -1,6 +1,8 @@
 module Gargantext.Hooks.UpdateEffect
   ( useUpdateEffect, useUpdateEffect'
   , useUpdateEffect1, useUpdateEffect1'
+  , useUpdateEffect2, useUpdateEffect2'
+  , useUpdateEffect3, useUpdateEffect3'
   ) where
 
 import Gargantext.Prelude
@@ -27,8 +29,26 @@ useUpdateEffect1 a e = useFirstMount >>= eff1 a e
 useUpdateEffect1' :: forall a b. a -> Effect b -> R.Hooks Unit
 useUpdateEffect1' a e = useFirstMount >>= eff1 a (e # thenNothing)
 
+useUpdateEffect2 :: forall a b. a -> b -> Effect (Effect Unit) -> R.Hooks Unit
+useUpdateEffect2 a b e = useFirstMount >>= eff2 a b e
+
+useUpdateEffect2' :: forall a b c. a -> b -> Effect c -> R.Hooks Unit
+useUpdateEffect2' a b e = useFirstMount >>= eff2 a b (e # thenNothing)
+
+useUpdateEffect3 :: forall a b c. a -> b -> c -> Effect (Effect Unit) -> R.Hooks Unit
+useUpdateEffect3 a b c e = useFirstMount >>= eff3 a b c e
+
+useUpdateEffect3' :: forall a b c d. a -> b -> c -> Effect d -> R.Hooks Unit
+useUpdateEffect3' a b c e = useFirstMount >>= eff3 a b c (e # thenNothing)
+
 eff :: Effect (Effect Unit) -> Boolean -> R.Hooks Unit
-eff e b = R.useEffect if b then nothing # thenNothing else e
+eff ef cd = R.useEffect if cd then nothing # thenNothing else ef
 
 eff1 :: forall a. a -> Effect (Effect Unit) -> Boolean -> R.Hooks Unit
-eff1 a e b = R.useEffect1 a if b then nothing # thenNothing else e
+eff1 a ef cd = R.useEffect1 a if cd then nothing # thenNothing else ef
+
+eff2 :: forall a b. a -> b -> Effect (Effect Unit) -> Boolean -> R.Hooks Unit
+eff2 a b ef cd = R.useEffect2 a b if cd then nothing # thenNothing else ef
+
+eff3 :: forall a b c. a -> b -> c -> Effect (Effect Unit) -> Boolean -> R.Hooks Unit
+eff3 a b c ef cd = R.useEffect3 a b c if cd then nothing # thenNothing else ef

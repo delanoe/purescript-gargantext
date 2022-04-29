@@ -8,6 +8,7 @@ import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), ComponentStatus(..), Variant(..))
+import Gargantext.Components.PhyloExplorer.Store as PhyloStore
 import Gargantext.Components.PhyloExplorer.Types (Term(..), Source(..))
 import Gargantext.Types (SidePanelState(..), toggleSidePanelState)
 import Gargantext.Utils ((?))
@@ -18,17 +19,9 @@ import Reactix.DOM.HTML as H
 import Toestand as T
 
 type Props =
-  ( sources             :: Array (Source)
-  , source              :: String
-  , sourceCallback      :: String -> Effect Unit
-
-  , search              :: String
+  ( sourceCallback      :: String -> Effect Unit
   , searchCallback      :: String -> Effect Unit
-  , result              :: Maybe Term
   , resultCallback      :: Maybe Term -> Effect Unit
-
-  , toolBar             :: T.Box (Boolean)
-  , sideBar             :: T.Box (SidePanelState)
   )
 
 here :: R2.Here
@@ -39,21 +32,27 @@ topBar = R2.leaf component
 
 component :: R.Component Props
 component = here.component "main" cpt where
-  cpt { sources
-      , source
-      , sourceCallback
-      , toolBar
-      , sideBar
-      , search
+  cpt { sourceCallback
       , searchCallback
-      , result
       , resultCallback
       } _ = do
-    -- States
-    toolBar'  <- R2.useLive' toolBar
-    sideBar'  <- R2.useLive' sideBar
+    -- | States
+    -- |
+    store@
+      { toolBarDisplayed
+      , sideBarDisplayed
+      } <- PhyloStore.use
 
-    -- Render
+    toolBar'  <- R2.useLive' toolBarDisplayed
+    sideBar'  <- R2.useLive' sideBarDisplayed
+
+    source    <- R2.useLive' store.source
+    sources   <- R2.useLive' store.sources
+    search    <- R2.useLive' store.search
+    result    <- R2.useLive' store.result
+
+    -- | Render
+    --
     pure $
 
       H.div
@@ -62,7 +61,7 @@ component = here.component "main" cpt where
         -- Toolbar toggle
         B.button
         { className: "phylo-topbar__toolbar"
-        , callback: \_ -> T.modify_ (not) toolBar
+        , callback: \_ -> T.modify_ (not) toolBarDisplayed
         , variant: toolBar' ?
             ButtonVariant Light $
             OutlinedButtonVariant Light
@@ -72,7 +71,7 @@ component = here.component "main" cpt where
         -- Sidebar toggle
         B.button
         { className: "phylo-topbar__sidebar"
-        , callback: \_ -> T.modify_ (toggleSidePanelState) sideBar
+        , callback: \_ -> T.modify_ (toggleSidePanelState) sideBarDisplayed
         , variant: sideBar' == Opened ?
             ButtonVariant Light $
             OutlinedButtonVariant Light
