@@ -2,7 +2,7 @@ module Gargantext.Components.GraphQL.Endpoints where
 
 import Gargantext.Prelude
 
-import Gargantext.Components.GraphQL.Node (Node, nodeParentQuery)
+import Gargantext.Components.GraphQL.Node (Node, nodeParentQuery, nodesQuery)
 import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, treeFirstLevelQuery)
 import Gargantext.Components.GraphQL.User (UserInfo, userInfoQuery)
 
