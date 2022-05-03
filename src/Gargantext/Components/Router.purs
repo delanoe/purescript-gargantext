@@ -36,7 +36,7 @@ import Gargantext.Ends (Backend)
 import Gargantext.Hooks.Resize (ResizeType(..), useResizeHandler)
 import Gargantext.Routes (AppRoute, Tile)
 import Gargantext.Routes as GR
-import Gargantext.Sessions (Session, WithSession)
+import Gargantext.Sessions (Session, WithSession, sessionId)
 import Gargantext.Sessions as Sessions
 import Gargantext.Types (CorpusId, Handed(..), ListId, NodeID, NodeType(..), SessionId, SidePanelState(..))
 import Gargantext.Utils ((?))
@@ -467,11 +467,12 @@ documentCpt = here.component "document" cpt where
 
 graphExplorer :: R2.Component SessionNodeProps
 graphExplorer = R.createElement graphExplorerCpt
+
 graphExplorerCpt :: R.Component SessionNodeProps
 graphExplorerCpt = here.component "graphExplorer" cpt where
   cpt props@{ nodeId } _ = do
     let
-      sessionProps = RE.pick props :: Record SessionProps
+      sessionProps = (RE.pick props :: Record SessionProps)
 
       authedProps =
         Record.merge
@@ -490,6 +491,7 @@ graphExplorerCpt = here.component "graphExplorer" cpt where
 
 phyloExplorer :: R2.Component SessionNodeProps
 phyloExplorer = R.createElement phyloExplorerCpt
+
 phyloExplorerCpt :: R.Component SessionNodeProps
 phyloExplorerCpt = here.component "phylo" cpt where
   cpt props@{ nodeId } _ = do
@@ -553,19 +555,34 @@ routeFileCpt = here.component "routeFile" cpt where
 
 --------------------------------------------------------------
 
-type RouteFrameProps = (
-  nodeType :: NodeType
+type RouteFrameProps =
+  ( nodeType :: NodeType
   | SessionNodeProps
   )
 
 routeFrame :: R2.Component RouteFrameProps
 routeFrame = R.createElement routeFrameCpt
+
 routeFrameCpt :: R.Component RouteFrameProps
 routeFrameCpt = here.component "routeFrame" cpt where
   cpt props@{ nodeId, nodeType } _ = do
-    let sessionProps = RE.pick props :: Record SessionProps
-    pure $ authed (Record.merge { content: \session ->
-                                   frameLayout { nodeId, nodeType, session } } sessionProps) []
+    let
+      sessionProps = (RE.pick props :: Record SessionProps)
+
+      authedProps =
+        Record.merge
+        { content:
+            \session ->
+              frameLayout
+              { nodeId
+              , nodeType
+              , key: show (sessionId session) <> "-" <> show nodeId
+              }
+
+        }
+        sessionProps
+
+    pure $ authed authedProps []
 
 --------------------------------------------------------------
 

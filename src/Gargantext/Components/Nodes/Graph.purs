@@ -24,9 +24,7 @@ import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
-import Reactix.DOM.HTML as H
 import Record as Record
-
 
 type Props =
   ( graphId   :: GET.GraphId
@@ -106,12 +104,9 @@ graphLayoutCpt = here.component "explorerLayout" cpt where
       { isDisplayed: isJust state'
       , idlingPhaseDuration: Just 150
       , cloakSlot:
-          H.div
-          { className: "graph-loader" }
-          [
-            B.spinner
-            { className: "graph-loader__spinner" }
-          ]
+          B.preloader
+          {}
+
       , defaultSlot:
           R2.fromMaybe_ state' handler
       }

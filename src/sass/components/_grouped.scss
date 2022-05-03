@@ -333,3 +333,25 @@
     }
   }
 }
+
+/// Preloader
+///-----------------------------------------------------------------------------
+
+.b-preloader {
+  width: 100%;
+  height: 100%;
+
+  &__spinner {
+    $size: 100px;
+    $weight: 6px;
+
+    position: absolute;
+    font-size: $weight;
+    height: $size;
+    width: $size;
+    // (?) `centered` mixin will not work here, due to Bootstrap process
+    //     interfering with the transform rule
+    top: calc( 50% - #{ $size / 2 } );
+    left: calc( 50% - #{ $size / 2 } );
+  }
+}

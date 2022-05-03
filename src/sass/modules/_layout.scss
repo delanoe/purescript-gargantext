@@ -12,6 +12,9 @@ $sidebar-width: 480px;
 $sidebar-height: calc(100vh - #{ $topbar-height });
 $sidebar-tab-margin-x: space-x(2.5);
 
+/// Grid constants
+$layout-height: calc(100vh - #{ $topbar-height} ); // @TODO: use css custom properties
+
 /// Misc
 $overlay-radius: 5px;
 

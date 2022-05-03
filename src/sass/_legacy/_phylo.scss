@@ -27,8 +27,6 @@
 /* Grid constants */
 
 $graph-margin: 16px;
-
-$layout-height: calc(100vh - #{ $topbar-height} );
 $graph-height: calc(100vh - #{ $topbar-height } - #{ $graph-margin * 2 });
 
 $isoline-height: 174px;

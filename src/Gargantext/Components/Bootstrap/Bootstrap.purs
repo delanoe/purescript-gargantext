@@ -12,6 +12,7 @@ import Gargantext.Components.Bootstrap.FormSelect(formSelect, formSelect') as Ex
 import Gargantext.Components.Bootstrap.FormTextarea(formTextarea) as Exports
 import Gargantext.Components.Bootstrap.Icon(icon) as Exports
 import Gargantext.Components.Bootstrap.IconButton(iconButton) as Exports
+import Gargantext.Components.Bootstrap.Preloader(preloader) as Exports
 import Gargantext.Components.Bootstrap.ProgressBar(progressBar) as Exports
 import Gargantext.Components.Bootstrap.Ripple(ripple) as Exports
 import Gargantext.Components.Bootstrap.Spinner(spinner) as Exports
@@ -32,4 +33,5 @@ import Gargantext.Components.Bootstrap.Shortcut(
   , b', b_
   , code', code_
   , label', label_
+  , p', p_
   ) as Exports

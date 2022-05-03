@@ -6178,6 +6178,19 @@ h3 {
   background-image: radial-gradient(circle, #111111 10%, transparent 10%);
 }
 
+.b-preloader {
+  width: 100%;
+  height: 100%;
+}
+.b-preloader__spinner {
+  position: absolute;
+  font-size: 6px;
+  height: 100px;
+  width: 100px;
+  top: calc( 50% - 50px );
+  left: calc( 50% - 50px );
+}
+
 .echarts-for-react {
   height: 300px;
 }
@@ -7324,20 +7337,6 @@ input[type=range]:-moz-focusring {
 
 .search-bar.closed {
   display: none;
-}
-
-/* Grid constants */
-.graph-loader {
-  width: 100%;
-  height: 100%;
-}
-.graph-loader__spinner {
-  position: absolute;
-  font-size: 6px;
-  height: 100px;
-  width: 100px;
-  top: calc( 50% - 50px );
-  left: calc( 50% - 50px );
 }
 
 .graph-layout {
@@ -8502,13 +8501,6 @@ a:focus, a:hover {
 }
 
 /* */
-.frame {
-  height: 100vh;
-}
-.frame iframe {
-  border: 0;
-}
-
 .join-button {
   padding-bottom: 100px;
   padding-top: 100px;
@@ -9216,6 +9208,12 @@ select.form-control {
 }
 .left-handed .phylo-toolbar__section {
   margin-left: 20px;
+}
+
+.frame-layout {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 56px );
 }
 
 /*# sourceMappingURL=bootstrap-monotony.css.map */
