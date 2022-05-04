@@ -158,8 +158,13 @@ let sigmaMouseSelector = (sigma, options) => {
       };
     };
 
-    _offset = calculateOffset(renderer.container);
-
+    // Container resize event listener
+    // @TODO: debounce?
+    const onContainerResize = (entries) => {
+      _offset = calculateOffset(_container);
+    };
+    const _resizeObserver = new ResizeObserver( onContainerResize );
+    _resizeObserver.observe(_container);
   }
 }
 
