@@ -6,7 +6,7 @@ import Gargantext.Prelude
 
 import DOM.Simple (document, querySelector)
 import DOM.Simple as DOM
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Nullable (Nullable, null, toMaybe)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (Variant(..))
@@ -84,43 +84,15 @@ layoutCpt = here.component "main" cpt where
     -- Other Frame Nodes
     _ -> do
 
-      -- @XXX: Runtime odd behavior
-      --       cannot use the `useEffect` + its cleanup function within the
-      --       same `Effect`, otherwise the below cleanup example will be
-      --       execute at mount
-
-      -- @XXX: inopinent <div> (see Gargantext.Components.Router) (@TODO?)
-      R.useEffectOnce' do
-        mEl <- querySelector document ".main-page__main-route .container"
-
-        case mEl of
-          Nothing -> R.nothing
-          Just el -> R2.addClass el [ "d-none" ]
-
-      R.useEffectOnce do
-        pure do
-          mEl <- querySelector document ".main-page__main-route .container"
-
-          case mEl of
-            Nothing -> R.nothing
-            Just el -> R2.removeClass el [ "d-none" ]
-
       -- @XXX: reset "main-page__main-route" wrapper margin
       --       see Gargantext.Components.Router) (@TODO?)
-      R.useEffectOnce' do
-        mEl <- querySelector document ".main-page__main-route"
-
-        case mEl of
-          Nothing -> R.nothing
-          Just el -> R2.addClass el [ "p-0" ]
-
-      R.useEffectOnce do
-        pure do
-          mEl <- querySelector document ".main-page__main-route"
-
-          case mEl of
-            Nothing -> R.nothing
-            Just el -> R2.removeClass el [ "p-0" ]
+      R.useLayoutEffect1 [] do
+        let mEl = querySelector document ".main-page__main-route"
+        -- Mount
+        mEl >>= maybe R.nothing (flip R2.addClass ["p-0"])
+        -- Unmount
+        pure $
+          mEl >>= maybe R.nothing (flip R2.removeClass ["p-0"])
 
       pure $
 

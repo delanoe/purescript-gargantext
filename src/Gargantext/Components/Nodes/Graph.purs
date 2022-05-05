@@ -1,5 +1,5 @@
 module Gargantext.Components.Nodes.Corpus.Graph
-  ( graphLayout
+  ( node
   ) where
 
 import Gargantext.Prelude
@@ -33,11 +33,11 @@ type Props =
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Graph"
 
-graphLayout :: R2.Leaf ( key :: String | Props )
-graphLayout = R2.leaf graphLayoutCpt
+node :: R2.Leaf ( key :: String | Props )
+node = R2.leaf nodeCpt
 
-graphLayoutCpt :: R.Component ( key :: String | Props )
-graphLayoutCpt = here.component "explorerLayout" cpt where
+nodeCpt :: R.Component ( key :: String | Props )
+nodeCpt = here.component "node" cpt where
   cpt { graphId } _ = do
     -- | States
     -- |
@@ -58,43 +58,15 @@ graphLayoutCpt = here.component "explorerLayout" cpt where
       , state
       }
 
-    -- @XXX: Runtime odd behavior
-    --       cannot use the `useEffect` + its cleanup function within the
-    --       same `Effect`, otherwise the below cleanup example will be
-    --       execute at mount
-
-    -- @XXX: inopinent <div> (see Gargantext.Components.Router) (@TODO?)
-    R.useEffectOnce' do
-      mEl <- querySelector document ".main-page__main-route .container"
-
-      case mEl of
-        Nothing -> R.nothing
-        Just el -> R2.addClass el [ "d-none" ]
-
-    R.useEffectOnce do
-      pure do
-        mEl <- querySelector document ".main-page__main-route .container"
-
-        case mEl of
-          Nothing -> R.nothing
-          Just el -> R2.removeClass el [ "d-none" ]
-
     -- @XXX: reset "main-page__main-route" wrapper margin
     --       see Gargantext.Components.Router) (@TODO?)
-    R.useEffectOnce' do
-      mEl <- querySelector document ".main-page__main-route"
-
-      case mEl of
-        Nothing -> R.nothing
-        Just el -> R2.addClass el [ "p-0" ]
-
-    R.useEffectOnce do
-      pure do
-        mEl <- querySelector document ".main-page__main-route"
-
-        case mEl of
-          Nothing -> R.nothing
-          Just el -> R2.removeClass el [ "p-0" ]
+    R.useLayoutEffect1 [] do
+      let mEl = querySelector document ".main-page__main-route"
+      -- Mount
+      mEl >>= maybe R.nothing (flip R2.addClass ["p-0"])
+      -- Unmount
+      pure $
+        mEl >>= maybe R.nothing (flip R2.removeClass ["p-0"])
 
     -- | Render
     -- |
@@ -108,7 +80,7 @@ graphLayoutCpt = here.component "explorerLayout" cpt where
           {}
 
       , defaultSlot:
-          R2.fromMaybe_ state' handler
+          R2.fromMaybe state' handler
       }
 
     where

@@ -154,7 +154,7 @@ subTreeTreeViewCpt = here.ntComponent "subTreeTreeView" cpt where
             [
               H.span { className: GT.fldr nodeType true } []
             ,
-              R2.if' hasChild $
+              R2.when hasChild $
 
                 if isExpanded then
                   H.span { className: "fa fa-chevron-down" } []
@@ -171,7 +171,7 @@ subTreeTreeViewCpt = here.ntComponent "subTreeTreeView" cpt where
             ]
           ]
       ,
-        R2.if' (hasChild && isExpanded) $
+        R2.when (hasChild && isExpanded) $
           H.div { className: "subtree__node__children" }
           children
       ]

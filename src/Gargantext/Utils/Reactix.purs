@@ -9,15 +9,14 @@ import DOM.Simple.Document (document)
 import DOM.Simple.Element as Element
 import DOM.Simple.Event as DE
 import DOM.Simple.Types (class IsNode, class IsElement, DOMRect)
-import Data.Array (singleton)
 import Data.Array as A
 import Data.Either (hush)
 import Data.Function.Uncurried (Fn1, runFn1, Fn2, runFn2)
+import Data.Maybe as Maybe
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
 import Data.Nullable (Nullable, null, toMaybe)
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
-import Data.UUID as UUID
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_, killFiber)
 import Effect.Class (liftEffect)
@@ -29,6 +28,7 @@ import Gargantext.Utils.Console as Console
 import Partial.Unsafe (unsafePartial)
 import React (class ReactPropFields, Children, ReactClass, ReactElement)
 import React as React
+import React.SyntheticEvent as SE
 import Reactix as R
 import Reactix.DOM.HTML (ElemFactory, createDOM, text)
 import Reactix.DOM.HTML as H
@@ -51,7 +51,7 @@ type Component p = Record p -> Array R.Element -> R.Element
 -- | UI Component type with only required props and no child
 type Leaf p = Record p -> R.Element
 
-leafComponent :: forall cpt p. (R.Component p) -> Record p -> R.Element
+leafComponent :: forall p. (R.Component p) -> Record p -> R.Element
 leafComponent cpt p = R.createElement cpt p []
 
 -- | UI Component type containing optional props and children
@@ -405,7 +405,7 @@ loadLocalStorageState key cell = do
   item :: Maybe String <- getItem key storage
   -- let json = hush <<< Argonaut.jsonParser =<< item
   -- let parsed = hush <<< Argonaut.decodeJson =<< json
-  let parsed = hush <<< JSON.readJSON $ fromMaybe "" item
+  let parsed = hush <<< JSON.readJSON $ Maybe.fromMaybe "" item
   case parsed of
     Nothing -> pure unit
     Just p  -> void $ T.write p cell
@@ -502,15 +502,17 @@ boundingRect els =
 
 --------------------------------------
 
--- | One-liner `if` simplifying render writing
+-- | One-liner `when` simplifying render writing
 -- | (best for one child)
-if' :: Boolean -> R.Element -> R.Element
-if' = if _ then _ else mempty
+when :: Boolean -> R.Element -> R.Element
+when true m  = m
+when false _ = mempty
 
--- | One-liner `if` simplifying render writing
+-- | One-liner `when` simplifying render writing
 -- | (best for multiple children)
-if_ :: Boolean -> Array (R.Element) -> R.Element
-if_ pred arr = if pred then (R.fragment arr) else mempty
+when' :: Boolean -> Array (R.Element) -> R.Element
+when' true m  = R.fragment m
+when' false _ = mempty
 
 -- | Toestand `useLive` automatically sets to "unchanged" behavior
 useLive' :: forall box b. T.Read box b => Eq b => box -> R.Hooks b
@@ -537,8 +539,8 @@ createPortal' Nothing     _        = mempty
 createPortal' (Just host) children = R.createPortal children host
 
 -- | Render a `mempty` Element if provided `Maybe` is `Nothing`
-fromMaybe_ :: forall a. Maybe a -> (a -> R.Element) -> R.Element
-fromMaybe_ m render = case m of
+fromMaybe :: forall a. Maybe a -> (a -> R.Element) -> R.Element
+fromMaybe m render = case m of
   Nothing -> mempty
   Just a  -> render a
 
@@ -562,3 +564,15 @@ addClass el args = pure $ (el .. "classList") ~~ "add" $ args
 
 removeClass :: forall el. el -> Array String -> Effect Unit
 removeClass el args = pure $ (el .. "classList") ~~ "remove" $ args
+
+--------------------------------------------------------
+
+-- | Check if trying to opening in a new tab
+-- | https://stackoverflow.com/a/20087506/6003907
+externalOpeningFlag :: SE.SyntheticMouseEvent -> Effect Boolean
+externalOpeningFlag event = ado
+  ctrlKey     <- SE.ctrlKey event
+  shiftKey    <- SE.shiftKey event
+  metaKey     <- SE.metaKey event
+  middleClick <- SE.button event
+  in ctrlKey || shiftKey || metaKey || (middleClick == 1.0)

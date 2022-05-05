@@ -133,7 +133,7 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
         { className: "graph-layout__frame" }
         [
           -- Doc focus
-          R2.fromMaybe_ showDoc' \(graphSideDoc :: GraphSideDoc) ->
+          R2.fromMaybe showDoc' \(graphSideDoc :: GraphSideDoc) ->
 
             H.div
             { className: "graph-layout__focus" }
@@ -187,7 +187,6 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
         [
           Controls.controls
           { reloadForest: reloadForest
-          , session
           , sigmaRef
           }
         ]

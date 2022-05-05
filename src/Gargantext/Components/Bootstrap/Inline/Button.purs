@@ -2,6 +2,7 @@ module Gargantext.Components.Bootstrap.Button (button) where
 
 import Gargantext.Prelude
 
+import DOM.Simple.Event as DE
 import Data.Array (elem)
 import Data.Foldable (intercalate)
 import Effect (Effect)
@@ -9,9 +10,9 @@ import Gargantext.Components.Bootstrap.Spinner (spinner)
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), ComponentStatus(..), Sizing(..), Variant(..))
 import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
-import React.SyntheticEvent as SE
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Reactix.SyntheticEvent as RE
 
 type Props =
   ( callback  :: Unit -> Effect Unit
@@ -57,23 +58,24 @@ component = R.hooksComponent componentName cpt where
             , status
             } children = do
     -- Computed
-    className <- pure $ intercalate " "
-      -- provided custom className
-      [ props.className
-      -- BEM classNames
-      , componentName
-      , componentName <> "--" <> show status
-      -- Bootstrap specific classNames
-      , bootstrapName
-      , bootstrapName <> "-" <> show props.variant
-      , bootstrapName <> "-" <> show props.size
-      , props.block == true ?
-          bootstrapName <> "-block" $
-          mempty
-      ]
-    -- Behaviors
     let
+      className = intercalate " "
+        -- provided custom className
+        [ props.className
+        -- BEM classNames
+        , componentName
+        , componentName <> "--" <> show status
+        -- Bootstrap specific classNames
+        , bootstrapName
+        , bootstrapName <> "-" <> show props.variant
+        , bootstrapName <> "-" <> show props.size
+        , props.block == true ?
+            bootstrapName <> "-block" $
+            mempty
+        ]
+
       click = onClick status callback
+
     -- Render
     pure $
 
@@ -84,27 +86,23 @@ component = R.hooksComponent componentName cpt where
       , type: props.type
       , title: props.title
       }
-
-      [ R2.if' (status == Deferred) $
+      [
+        R2.when (status == Deferred) $
           spinner
-          { className: componentName <> "__spinner"
-          }
-
-      , H.span
-        { className: componentName <> "__inner"
-        }
+          { className: componentName <> "__spinner" }
+      ,
+        H.span
+        { className: componentName <> "__inner" }
         children
       ]
 
 -- | Clicked event will effectively be triggered according to the
 -- | component status props
-onClick :: forall event.
+onClick ::
      ComponentStatus
   -> (Unit -> Effect Unit)
-  -> SE.SyntheticEvent_ event
+  -> RE.SyntheticEvent DE.Event
   -> Effect Unit
 onClick status callback event = do
-  SE.preventDefault event
-  if   status == Enabled
-  then callback unit
-  else pure unit
+  RE.preventDefault event
+  when (status == Enabled) $ callback unit

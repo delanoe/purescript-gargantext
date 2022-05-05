@@ -12,11 +12,6 @@
   top: 3.7em
   position: fixed
 
-  .corpus-doc-view
-    .annotated-field-wrapper
-      .annotated-field-runs
-        max-height: 200px
-        overflow-y: scroll
   .list-group
     .list-group-item-heading
       display: inline-block
@@ -33,6 +28,30 @@
 
     .header
       float: left
+
+  // @TODO: better side panel management
+  .texts-sidepanel
+
+    &__header
+      padding: $card-spacer-y $card-spacer-x
+      font-size: 20px
+
+      @include right-handed
+        float: right
+      @include left-handed
+        float: left
+
+    &__body
+      padding-left: $card-spacer-x
+      padding-right: $card-spacer-x
+
+      .document-layout__title
+        font-size: 23px
+
+      .document-layout__abstract__content
+        max-height: 200px
+        overflow-y: scroll
+        font-size: 16px
 
 
 .simple-layout
@@ -60,9 +79,6 @@
 
 .action-search
   margin: 10px
-
-.context-menu
-  position: fixed
 
 .search-bar
   margin: 10px
@@ -98,33 +114,37 @@ select.form-control
     $offset-y: 56px
     $min-width: 280px
 
-    position: relative
     flex-grow: 0
     flex-shrink: 0
     width: $min-width
     min-width: $min-width
     height: calc(100vh - #{ $offset-y })
+    z-index: z-index('main', 'sidebar')
 
-
-  &__handle
-    min-width: inherit
-    width: inherit
-    height: inherit
-    position: fixed
-    // @TODO: z-index management
-    z-index: 99999999999
-    pointer-events: none
-
-    &__action
-      $handle-width: 8px
-
-      width: $handle-width
+    &__inner
       height: inherit
-      background: transparent
-      cursor: col-resize
-      position: absolute
-      right: - #{ $handle-width / 2 }
-      pointer-events: all
+      width: inherit
+      min-width: inherit
+      position: fixed
+
+    &__handle
+      min-width: inherit
+      width: inherit
+      height: inherit
+      position: fixed
+      z-index: z-index('main', 'handlebar')
+      pointer-events: none
+
+      &__action
+        $handle-width: 8px
+
+        width: $handle-width
+        height: inherit
+        background: transparent
+        cursor: col-resize
+        position: absolute
+        right: - #{ $handle-width / 2 }
+        pointer-events: all
 
 
   &__body

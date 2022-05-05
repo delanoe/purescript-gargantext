@@ -100,7 +100,7 @@ component = R.hooksComponent "configForm" cpt where
                   { type: "number"
                   } `merge` bindStateKey "proximity"
                 ,
-                  R2.if' (fv.hasError' "proximity") $
+                  R2.when (fv.hasError' "proximity") $
                     H.div
                     { className: "form-group__error" }
                     [
@@ -136,7 +136,7 @@ component = R.hooksComponent "configForm" cpt where
                   { type: "number"
                   } `merge` bindStateKey "synchrony"
                 ,
-                  R2.if' (fv.hasError' "synchrony") $
+                  R2.when (fv.hasError' "synchrony") $
                     H.div
                     { className: "form-group__error" }
                     [
@@ -176,7 +176,7 @@ component = R.hooksComponent "configForm" cpt where
                   { type: "number"
                   } `merge` bindStateKey "quality"
                 ,
-                  R2.if' (fv.hasError' "quality") $
+                  R2.when (fv.hasError' "quality") $
                     H.div
                     { className: "form-group__error" }
                     [
@@ -212,7 +212,7 @@ component = R.hooksComponent "configForm" cpt where
                   { type: "number"
                   } `merge` bindStateKey "exportFilter"
                 ,
-                  R2.if' (fv.hasError' "exportFilter") $
+                  R2.when (fv.hasError' "exportFilter") $
                     H.div
                     { className: "form-group__error" }
                     [
@@ -301,7 +301,7 @@ component = R.hooksComponent "configForm" cpt where
                   { type: "number"
                   } `merge` bindStateKey "period"
                 ,
-                  R2.if' (fv.hasError' "period") $
+                  R2.when (fv.hasError' "period") $
                     H.div
                     { className: "form-group__error" }
                     [
@@ -333,7 +333,7 @@ component = R.hooksComponent "configForm" cpt where
                   { type: "number"
                   } `merge` bindStateKey "step"
                 ,
-                  R2.if' (fv.hasError' "step") $
+                  R2.when (fv.hasError' "step") $
                     H.div
                     { className: "form-group__error" }
                     [
@@ -365,7 +365,7 @@ component = R.hooksComponent "configForm" cpt where
                   { type: "number"
                   } `merge` bindStateKey "matchingFrame"
                 ,
-                  R2.if' (fv.hasError' "matchingFrame") $
+                  R2.when (fv.hasError' "matchingFrame") $
                     H.div
                     { className: "form-group__error" }
                     [
@@ -439,7 +439,7 @@ component = R.hooksComponent "configForm" cpt where
             ]
           ,
             -- TYPE::FIS_
-            R2.if' (state.cliqueType == show FIS_) $
+            R2.when (state.cliqueType == show FIS_) $
 
               H.div
               { className: "phylo-config-form__col" }
@@ -466,7 +466,7 @@ component = R.hooksComponent "configForm" cpt where
                     B.formInput $
                       bindStateKey "support"
                   ,
-                    R2.if' (fv.hasError' "support") $
+                    R2.when (fv.hasError' "support") $
                       H.div
                       { className: "form-group__error" }
                       [
@@ -497,7 +497,7 @@ component = R.hooksComponent "configForm" cpt where
                     B.formInput $
                       bindStateKey "size"
                   ,
-                    R2.if' (fv.hasError' "sjze") $
+                    R2.when (fv.hasError' "sjze") $
                       H.div
                       { className: "form-group__error" }
                       [
@@ -508,7 +508,7 @@ component = R.hooksComponent "configForm" cpt where
               ]
           ,
             -- TYPE::MaxClique_
-            R2.if' (state.cliqueType == show MaxClique_) $
+            R2.when (state.cliqueType == show MaxClique_) $
 
               H.div
               { className: "phylo-config-form__col" }
@@ -536,7 +536,7 @@ component = R.hooksComponent "configForm" cpt where
                     { type: "number"
                     } `merge` bindStateKey "size"
                   ,
-                    R2.if' (fv.hasError' "size") $
+                    R2.when (fv.hasError' "size") $
                       H.div
                       { className: "form-group__error" }
                       [
@@ -568,7 +568,7 @@ component = R.hooksComponent "configForm" cpt where
                     { type: "number"
                     } `merge` bindStateKey "threshold"
                   ,
-                    R2.if' (fv.hasError' "threshold") $
+                    R2.when (fv.hasError' "threshold") $
                       H.div
                       { className: "form-group__error" }
                       [

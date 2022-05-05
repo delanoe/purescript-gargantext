@@ -136,7 +136,7 @@ treeLoaderCpt = here.component "treeLoader" cpt where
       , cloakSlot:
           blankTree {}
       , defaultSlot:
-          R2.fromMaybe_ state $ loaded
+          R2.fromMaybe state $ loaded
       }
       where
         loaded tree' = tree props where
@@ -195,7 +195,7 @@ treeCpt = here.component "tree" cpt where
           , setPopoverRef
           }
         <>
-          R2.if' (folderOpen')
+          R2.when (folderOpen')
           (
             renderTreeChildren $
             { childProps:
@@ -283,7 +283,7 @@ childLoaderCpt = here.component "childLoader" cpt where
       , cloakSlot:
           blankTree {}
       , defaultSlot:
-          R2.fromMaybe_ state $ paint reload
+          R2.fromMaybe state $ paint reload
       }
 
     where

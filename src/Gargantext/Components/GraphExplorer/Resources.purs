@@ -168,7 +168,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
     -- |
     pure $
 
-      R2.fromMaybe_ (R.readNullableRef elRef) (R.createPortal [])
+      R2.fromMaybe (R.readNullableRef elRef) (R.createPortal [])
 
     -- NOTE: This div is not empty after sigma initializes.
     -- When we change state, we make it empty though.

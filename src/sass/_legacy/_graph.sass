@@ -1,5 +1,6 @@
 .graph-layout
   position: relative
+  z-index: 0 // new stacking context "graph"
   width: 100%
   height: $layout-height
 
@@ -8,7 +9,7 @@
 
     position: absolute
     display: flex
-    z-index: z-index('graph-layout', 'frame')
+    z-index: z-index('graph', 'frame')
     width: 100%
     height: $sidebar-height
     justify-content: flex-end
@@ -42,7 +43,7 @@
     // (?) last resort solution to have a fixed scrollable child, with
     //     its dimension relative to its parent
     //     (flaw: no overflow)
-    content: layout
+    // contain: layout
 
     &__inner
       @include fit-positions
@@ -52,13 +53,20 @@
 
   &__toolbar
     position: absolute
-    z-index: z-index('graph-layout', 'toolbar')
+    z-index: z-index('graph', 'toolbar')
     background-color: $body-bg
     width: 100%
     border-bottom: 1px solid $border-color
 
     .b-fieldset
       background-color: $body-bg
+
+    .toolbar-atlas-button
+      // @XXX Glyphicon icons lack of homogeneous width
+      //  ↳ empirically value matching every button icon width
+      $toolbar-atlas-button-width: 40px
+
+      width: $toolbar-atlas-button-width
 
   &__content
     width: 100%
@@ -94,8 +102,8 @@
   @include term-window
 
   &__header
-    padding: $card-spacer-y $card-spacer-x
-    font-size: 20px
+    padding: 0.5rem 1.5rem
+    z-index: z-index('tile', 'navbar')
 
     @include right-handed
       float: right
@@ -103,6 +111,11 @@
       float: left
 
   &__body
+    // extra position fitting the document title separator with the graph
+    // sidebar tabs nav border
+    $offset-top: 13px
+
+    padding-top: $offset-top
     padding-left: $card-spacer-x
     padding-right: $card-spacer-x
 
@@ -182,20 +195,38 @@
     white-space: normal
     word-break: break-word
 
+  &__expand
+    // Following <list-group-item> spacing
+    $position-x: $list-group-item-padding-x
+    // Empirical: fit well with icon overlay
+    $position-y: 1rem
+
+    position: absolute
+    right: $position-x
+    bottom: $position-y
+
   &__actions
-    $gutter: space-x(2)
 
-    display: flex
-    justify-content: space-around
-
+    .b-button-group
+      width: 100%
     .b-button
-      width: calc(50% - #{ space-x(2) / 2 } )
+      width: 50%
 
 
 .graph-neighborhood
 
   &__counter
     font-weight: bold
+
+  &__expand
+    // Following <list-group-item> spacing
+    $position-x: $list-group-item-padding-x
+    // Empirical: fit well with icon overlay
+    $position-y: 1rem
+
+    position: absolute
+    right: $position-x
+    bottom: $position-y
 
   &__badge
     white-space: normal

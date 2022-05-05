@@ -313,7 +313,11 @@ nodeSpanCpt = here.component "nodeSpan" cpt
           , session
           } []
         ,
-          R2.if' (showBox) $
+          -- @XXX: React Awesome Popover not suited for the feature UX
+          --       We SHOULD use a more common `Modal` type of thing
+          --       As of now, we have issues on z-index management and erratic
+          --       popup close action
+          R2.when (showBox) $
 
             Popover.popover
             { arrow: false
@@ -580,7 +584,7 @@ graphNodeActionsCpt = here.component "graphNodeActions" cpt where
       }
 
     -- Render
-    pure $ R2.fromMaybe_ state \gv ->
+    pure $ R2.fromMaybe state \gv ->
 
       nodeActionsGraph
       { graphVersions: gv, session, id, refresh }
@@ -607,7 +611,7 @@ listNodeActionsCpt = here.component "listNodeActions" cpt where
       }
 
     -- Render
-    pure $ R2.fromMaybe_ state \{ corpusId } ->
+    pure $ R2.fromMaybe state \{ corpusId } ->
 
       nodeActionsNodeList
       { listId: id
