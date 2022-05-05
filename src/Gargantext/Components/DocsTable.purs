@@ -437,6 +437,7 @@ pageLayoutCpt = here.component "pageLayout" cpt where
           , mkRequest
           , path
           , renderer: paint
+          , spinnerClass: Nothing
           }
       NT.CacheOff -> do
         localCategories <- T.useBox (Map.empty :: LocalUserScore)
