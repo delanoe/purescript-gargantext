@@ -1,5 +1,5 @@
 let upstream =
-      https://github.com/purescript/package-sets/releases/download/psc-0.14.7-20220404/packages.dhall sha256:75d0f0719f32456e6bdc3efd41cfc64785655d2b751e3d080bd849033ed053f2
+      https://github.com/purescript/package-sets/releases/download/psc-0.15.0-20220506/packages.dhall sha256:f83b68ff07cf6557e82379e749118e6ff11eecc6be5754540aae855cd1e46917
 
 let overrides =
       { globals =
@@ -110,15 +110,23 @@ let additions =
         }
       , ffi-simple =
         { dependencies =
-          [ "prelude"
+          [ "aff"
+          , "arrays"
           , "effect"
-          , "maybe"
+          , "foldable-traversable"
           , "functions"
+          , "maybe"
           , "nullable"
+          , "prelude"
+          , "psci-support"
+          , "refs"
+          , "spec"
+          , "tuples"
           , "unsafe-coerce"
+          , "unsafe-reference"
           ]
         , repo = "https://github.com/irresponsible/purescript-ffi-simple"
-        , version = "v0.2.10"
+        , version = "v0.3.0"
         }
       , dom-simple =
         { dependencies =
@@ -221,7 +229,7 @@ let additions =
         , version = "v2.2.0"
         }
       , uint =
-        { dependencies = [ "maybe", "math" ]
+        { dependencies = [ "maybe" ]
         , repo = "https://github.com/zaquest/purescript-uint"
         , version = "v5.1.1"
         }

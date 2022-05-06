@@ -9,6 +9,7 @@ import Data.Int (toNumber)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Nullable (null, Nullable)
+import Data.Number as DN
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (Tuple(..))
@@ -33,7 +34,6 @@ import Gargantext.Types as Types
 import Gargantext.Utils ((?))
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
-import Math as Math
 import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -287,7 +287,7 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
         , hidden : false
         , id    : n.id_
         , label : n.label
-        , size  : Math.log (toNumber n.size + 1.0)
+        , size  : DN.log (toNumber n.size + 1.0)
         , type  : modeGraphType gargType
         , x     : n.x -- cos (toNumber i)
         , y     : n.y -- sin (toNumber i)

@@ -42,7 +42,6 @@ import Gargantext.Types (CTabNgramType, FrontendError(..), NodeID, TabSubType(..
 import Gargantext.Utils (getter, nbsp)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
-import Math as Math
 import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as H

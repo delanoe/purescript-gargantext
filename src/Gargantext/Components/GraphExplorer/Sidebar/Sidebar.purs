@@ -13,6 +13,7 @@ import Data.Foldable as F
 import Data.Int (fromString)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
+import Data.Number as DN
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple.Nested ((/\))
@@ -38,7 +39,6 @@ import Gargantext.Types (CTabNgramType, FrontendError(..), NodeID, TabSubType(..
 import Gargantext.Utils (nbsp)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
-import Math as Math
 import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -359,9 +359,9 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
 
     -- Computed
     let
-      minSize = F.foldl Math.min 0.0 (Seq.map _.size (SigmaxT.graphNodes graph'))
+      minSize = F.foldl DN.min 0.0 (Seq.map _.size (SigmaxT.graphNodes graph'))
 
-      maxSize = F.foldl Math.max 0.0 (Seq.map _.size (SigmaxT.graphNodes graph'))
+      maxSize = F.foldl DN.max 0.0 (Seq.map _.size (SigmaxT.graphNodes graph'))
 
       maxTruncateResult = 5
 
@@ -522,7 +522,7 @@ badgeSize minSize maxSize size =
     minFontSize = 10.0
     maxFontSize = 24.0
     sizeScaled = (size - minSize) / (maxSize - minSize)  -- in [0; 1] range
-    scale' = Math.log (sizeScaled + 1.0) / (Math.log 2.0)  -- in [0; 1] range
+    scale' = DN.log (sizeScaled + 1.0) / (DN.log 2.0)  -- in [0; 1] range
     scale = minFontSize + scale' * (maxFontSize - minFontSize)
 
   in

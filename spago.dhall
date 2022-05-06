@@ -49,7 +49,6 @@ to generate this file without the comments in this block.
   , "lists"
   , "markdown"
   , "markdown-smolder"
-  , "math"
   , "maybe"
   , "media-types"
   , "milkis"

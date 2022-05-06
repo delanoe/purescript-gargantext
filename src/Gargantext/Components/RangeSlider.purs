@@ -10,6 +10,7 @@ import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
 import Data.Int (fromNumber)
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Number as DN
 import Data.Nullable (Nullable, null)
 import Data.Traversable (traverse_)
 import DOM.Simple as DOM
@@ -19,7 +20,6 @@ import DOM.Simple.EventListener as EL
 import DOM.Simple (DOMRect)
 import Global (toFixed)
 import Effect (Effect)
-import Math as M
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
@@ -65,7 +65,7 @@ rangeSliderCpt = here.component "rangeSlider" cpt
   where
     cpt props _ = do
       -- rounding precision (i.e. how many decimal digits are in epsilon)
-      let precision = fromMaybe 0 $ fromNumber $ max 0.0 $ - M.floor $ (M.log props.epsilon) / M.ln10
+      let precision = fromMaybe 0 $ fromNumber $ max 0.0 $ - DN.floor $ (DN.log props.epsilon) / DN.ln10
 
       -- scale bar
       scaleElem <- (R.useRef null) :: R.Hooks (R.Ref (Nullable DOM.Element)) -- dom ref

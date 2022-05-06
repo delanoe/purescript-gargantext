@@ -11,7 +11,6 @@ import Data.Maybe (Maybe(..))
 import Data.Ord as Ord
 import Effect (Effect)
 import Effect.Uncurried (EffectFn2, runEffectFn2)
-import Math as Math
 
 import Gargantext.Prelude
 
@@ -37,4 +36,4 @@ min xs = foldr reducer (A.head xs) xs
 range :: Int -> Int -> Int -> Array Int
 range start end step = map (\i -> start + i*step) $ A.range 0 end'
   where
-    end' = DI.round $ Math.floor $ (DI.toNumber $ end - start) / (DI.toNumber step)
+    end' = DI.round $ DI.floor $ (DI.toNumber $ end - start) / (DI.toNumber step)
