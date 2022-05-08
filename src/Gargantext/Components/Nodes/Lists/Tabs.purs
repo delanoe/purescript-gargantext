@@ -8,6 +8,7 @@ import Data.Tuple.Nested ((/\))
 import Effect.Class (liftEffect)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.NgramsTable as NT
+import Gargantext.Components.NgramsTable.Core (PageParams)
 import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
 import Gargantext.Components.Nodes.Corpus.Chart.Pie (pie, bar)
@@ -51,9 +52,31 @@ tabsCpt = here.component "tabs" cpt where
               , "Sources"    /\ view Sources []
               ]
       common = RX.pick props :: Record Props
-      view mode = ngramsView $ Record.merge common { mode }
+      view mode = tab $ Record.merge common { mode }
 
-type NgramsViewProps = ( mode :: Mode | Props )
+type TabProps = ( mode :: Mode | Props )
+
+tab :: R2.Component TabProps
+tab = R.createElement tabCpt
+
+tabCpt :: R.Component TabProps
+tabCpt = here.component "tab" cpt where
+  cpt props _ = do
+    path <- T.useBox $ NTC.initialPageParams props.session initialPath.corpusId [initialPath.listId] initialPath.tabType
+    pure $ ngramsView (Record.merge props { path }) []
+    where
+      tabNgramType = modeTabType props.mode
+      tabType      = TabCorpus (TabNgramType tabNgramType)
+      listId       = props.corpusData.defaultListId
+      corpusId     = props.corpusId
+      initialPath  = { corpusId
+                      -- , limit: Just 1000
+                      , listId
+                      , tabType
+                      }
+      
+
+type NgramsViewProps = ( path :: T.Box PageParams | TabProps )
 
 ngramsView :: R2.Component NgramsViewProps
 ngramsView = R.createElement ngramsViewCpt
@@ -62,12 +85,11 @@ ngramsViewCpt = here.component "ngramsView" cpt where
   cpt props@{ boxes
             , cacheState
             , corpusData: { defaultListId }
-            , corpusId
             , mode
-            , session } _ = do
+            , session
+            , path } _ = do
       chartsReload <- T.useBox T2.newReload
 
-      path <- T.useBox $ NTC.initialPageParams props.session initialPath.corpusId [initialPath.listId] initialPath.tabType
       { listIds, nodeId, params } <- T.useLive T.unequal path
 
       pure $
@@ -109,12 +131,6 @@ ngramsViewCpt = here.component "ngramsView" cpt where
         tabNgramType = modeTabType mode
         tabType      = TabCorpus (TabNgramType tabNgramType)
         mNgramsType  = mNgramsTypeFromTabType tabType
-        listId       = defaultListId
-        initialPath  = { corpusId
-                       -- , limit: Just 1000
-                       , listId
-                       , tabType
-                       }
 
 
 
