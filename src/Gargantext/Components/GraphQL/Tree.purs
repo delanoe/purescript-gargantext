@@ -11,6 +11,7 @@ type TreeNode =
   { name      :: String
   , id        :: Int
   , node_type :: NodeType
+  , parent_id :: Maybe Int
   }
 type TreeFirstLevel =
   { root     :: TreeNode
@@ -22,14 +23,17 @@ treeFirstLevelQuery = { tree: { root_id: Var :: _ "id" Int} =>>
   { root: { name: unit
           , node_type: unit
           , id: unit
+          , parent_id: unit
           }
   , children: { name: unit
               , node_type: unit
               , id: unit
+              , parent_id: unit
               }
   , parent: { name: unit
             , node_type: unit
             , id: unit
+            , parent_id: unit
             }
   }
  }

@@ -23,7 +23,8 @@ import Gargantext.Components.Forest.Tree.Node.Action.Update (updateRequest)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadArbitraryFile, uploadFile)
 import Gargantext.Components.Forest.Tree.Node.Box (nodePopupView)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
-import Gargantext.Components.GraphQL.Endpoints (getTreeFirstLevel)
+import Gargantext.Components.GraphQL.Endpoints (getNode, getTreeFirstLevel)
+import Gargantext.Components.GraphQL.Node (Node)
 import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, TreeNode)
 import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
@@ -32,7 +33,7 @@ import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Ordering, Unit, bind, compare, discard, otherwise, pure, unit, void, ($), (<$>), (<>))
 import Gargantext.Routes (AppRoute(Home), nodeTypeAppRoute)
 import Gargantext.Sessions (Session(..), sessionId)
-import Gargantext.Types (NodeType(..))
+import Gargantext.Types (NodeType(..), SessionId)
 import Gargantext.Types as GT
 import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
@@ -86,82 +87,58 @@ folderViewMain :: R2.Component FolderViewProps
 folderViewMain = R.createElement folderViewMainCpt
 folderViewMainCpt :: R.Component FolderViewProps
 folderViewMainCpt = here.component "folderViewMainCpt" cpt where
-  cpt { boxes
-      , folders: {parent: parentNode, children}
-      , nodeId
-      , reload
-      , session
-      , setPopoverRef } _ = do
-    let foldersS = A.sortBy sortFolders children
-    let parent = makeParentFolder parentNode session
-    let childrenEl = makeFolderElements foldersS { boxes, nodeId, reload, session, setPopoverRef }
+  cpt props@{ folders: {parent: parentNode, children, root} } _ = do
+    let folders' = A.sortBy sortFolders children
+    let parent = makeParentFolder root parentNode props
+    let childrenEl = makeFolderElements folders' props
 
     pure $ H.div {className: "fv folders"} $ parent <> childrenEl
 
-  makeFolderElements foldersS props = makeFolderElementsMap <$> foldersS where
+  makeFolderElements :: Array TreeNode -> Record FolderViewProps -> Array R.Element
+  makeFolderElements folders' props = makeFolderElementsMap <$> folders' where
     makeFolderElementsMap :: TreeNode -> R.Element
     makeFolderElementsMap node = folder { boxes: props.boxes
-                                                          , nodeId: node.id
-                                                          , nodeType: node.node_type
-                                                          , parentId: props.nodeId
-                                                          , reload: props.reload
-                                                          , session: props.session
-                                                          , setPopoverRef: props.setPopoverRef
-                                                          , style: FolderChild
-                                                          , text: node.name } []
+                                        , nodeId: node.id
+                                        , linkId: node.id
+                                        , nodeType: node.node_type
+                                        , linkNodeType: node.node_type
+                                        , parentId: props.nodeId
+                                        , reload: props.reload
+                                        , session: props.session
+                                        , setPopoverRef: props.setPopoverRef
+                                        , style: FolderChild
+                                        , text: node.name } []
 
-  makeParentFolder :: Maybe TreeNode -> Session -> Array R.Element
-  makeParentFolder (Just parent) session =
-    [ folderSimple {style: FolderUp, text: "..", nodeId: parent.id, nodeType: parent.node_type, session: session} [] ]
-  makeParentFolder Nothing _ = []
-
+  makeParentFolder :: TreeNode -> Maybe TreeNode -> Record FolderViewProps -> Array R.Element
+  makeParentFolder root (Just parent) props =
+    [ folder { boxes: props.boxes
+             , nodeId: root.id
+             , linkId: parent.id
+             , linkNodeType: parent.node_type
+             , nodeType: root.node_type
+             , parentId: parent.id
+             , reload: props.reload
+             , session: props.session
+             , setPopoverRef: props.setPopoverRef
+             , style: FolderUp
+             , text: root.name } [] ]
+  makeParentFolder _ Nothing _ = []
 
   sortFolders :: TreeNode-> TreeNode -> Ordering
   sortFolders a b = compare a.id b.id
 
-type FolderSimpleProps =
-  (
-    style :: FolderStyle
-  , text :: String
-  , nodeType :: GT.NodeType
-  , nodeId :: Int
-  , session :: Session
-  )
-
-folderSimple :: R2.Component FolderSimpleProps
-folderSimple = R.createElement folderSimpleCpt
-
-folderSimpleCpt :: R.Component FolderSimpleProps
-folderSimpleCpt = here.component "folderSimpleCpt" cpt where
-  cpt {style, text, nodeId, session, nodeType} _ = do
-    { goToRoute } <- useLinkHandler
-    let sid = sessionId session
-    let rootId = treeId session
-    pure $ H.button { className: "btn btn-primary"
-               , on: {click: \_ -> goToRoute $ route nodeId rootId nodeType sid} }
-      [ H.i { className: icon style nodeType } []
-      , H.br {}
-      , H.text text ]
-    where
-      treeId (Session {treeId: tId}) = tId
-      route nId rootId nType sid
-        | rootId == nodeId = Home
-        | otherwise        = getFolderPath nType sid nId
-
-
-  icon :: FolderStyle -> GT.NodeType -> String
-  icon FolderUp _ = "fa fa-folder-open"
-  icon _ nodeType = GT.fldr nodeType false
-
-  getFolderPath :: GT.NodeType -> GT.SessionId -> Int -> AppRoute
-  getFolderPath nodeType sid nodeId = fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
-
 type FolderProps =
-  ( boxes         :: Boxes
+  ( style         :: FolderStyle
+  , text          :: String
+  , nodeType      :: GT.NodeType
+  , nodeId        :: Int
+  , linkNodeType  :: GT.NodeType
+  , linkId        :: Int
+  , session       :: Session
+  , boxes         :: Boxes
   , parentId      :: Int
   , reload        :: T.Box T2.Reload
   , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
-  | FolderSimpleProps
   )
 
 folder :: R2.Component FolderProps
@@ -171,6 +148,8 @@ folderCpt = here.component "folderCpt" cpt where
   cpt props@{ boxes
             , nodeId
             , nodeType
+            , linkId
+            , linkNodeType
             , parentId
             , reload
             , session
@@ -178,6 +157,7 @@ folderCpt = here.component "folderCpt" cpt where
             , style
             , text } _ = do
     let sid = sessionId session
+    let rootId = treeId session
     let dispatch a = performAction a { boxes, nodeId, parentId, reload, session, setPopoverRef }
     popoverRef <- R.useRef null
     { goToRoute } <- useLinkHandler
@@ -197,18 +177,10 @@ folderCpt = here.component "folderCpt" cpt where
               popOverIcon
               , mNodePopupView (Record.merge props { dispatch }) (onPopoverClose popoverRef)
               ]]
-      , H.button {on: {click: \_ -> goToRoute $ getFolderPath nodeType sid nodeId }, className: "btn btn-primary fv btn" } [
+      , H.button {on: {click: \_ -> goToRoute $ route linkId rootId linkNodeType sid }, className: "btn btn-primary fv btn" } [
           H.i {className: icon style nodeType} []
         , H.br {}
         , H.text text]]
-
-
-  icon :: FolderStyle -> GT.NodeType -> String
-  icon FolderUp _ = "fa fa-folder-open"
-  icon _ nodeType = GT.fldr nodeType false
-
-  getFolderPath :: GT.NodeType -> GT.SessionId -> Int -> AppRoute
-  getFolderPath nodeType sid nodeId = fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
 
   onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
 
@@ -226,11 +198,22 @@ folderCpt = here.component "folderCpt" cpt where
                                            , name: props.text
                                            , session: props.session
                                            }
+  route :: Int -> Int -> NodeType -> SessionId -> AppRoute
+  route lId rootId nType sid
+    | rootId == lId    = Home
+    | otherwise        = getFolderPath nType sid lId
+
+  icon :: FolderStyle -> GT.NodeType -> String
+  icon FolderUp _ = "fa fa-folder-open"
+  icon _ nodeType = GT.fldr nodeType false
+
+  getFolderPath :: GT.NodeType -> GT.SessionId -> Int -> AppRoute
+  getFolderPath nodeType sid nodeId = fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
 
 backButton :: R2.Component ()
 backButton = R.createElement backButtonCpt
 backButtonCpt :: R.Component ()
-backButtonCpt = R.hooksComponent "backButton" cpt where
+backButtonCpt = here.component "backButton" cpt where
   cpt _ _ = do
     { goToPreviousPage } <- useLinkHandler
 
@@ -242,6 +225,46 @@ backButtonCpt = R.hooksComponent "backButton" cpt where
         H.i { className: "fa fa-arrow-left", title: "Previous view"} []
       ]
 
+backButtonSmart :: R2.Component (nodeId :: Int, session :: Session)
+backButtonSmart = R.createElement backButtonSmartCpt
+
+backButtonSmartCpt :: R.Component (nodeId :: Int, session :: Session)
+backButtonSmartCpt = here.component "backButtonSmart" cpt where
+  cpt {nodeId, session} _ = do
+    reload <- T.useBox T2.newReload
+    reload' <- T.useLive T.unequal reload
+    useLoader { errorHandler
+              , loader: loadNode
+              , path: { nodeId, session, reload: reload' }
+              , render: \node -> backButtonSmartMain { node, session } []
+    }
+    where
+      errorHandler = logRESTError here "[folderView]"
+
+backButtonSmartMain :: R2.Component (node :: Node, session :: Session)
+backButtonSmartMain = R.createElement backButtonSmartMainCpt
+
+backButtonSmartMainCpt :: R.Component (node :: Node, session :: Session)
+backButtonSmartMainCpt = here.component "backButtonSmartMain" cpt where
+  cpt { node, session } _ = do
+    handlers <- useLinkHandler
+    let rootId = treeId session
+
+    pure $ 
+      H.button {
+        className: "btn btn-primary"
+      , on: { click: action rootId node.parent_id handlers }
+      } [
+        H.i { className: "fa fa-arrow-left", title: "Previous view"} []
+      ]
+    where
+      action rootId pId handlers
+        | rootId == pId = handlers.goToRoute Home
+        | otherwise = handlers.goToPreviousPage unit
+
+treeId :: Session -> Int
+treeId (Session {treeId: tId}) = tId
+
 type LoadProps =
   (
     session :: Session,
@@ -251,6 +274,9 @@ type LoadProps =
 
 loadFolders :: Record LoadProps -> AffRESTError TreeFirstLevel
 loadFolders {nodeId, session} = getTreeFirstLevel session nodeId
+
+loadNode :: Record LoadProps -> AffRESTError Node
+loadNode {nodeId, session} = getNode session nodeId
 
 type PerformActionProps =
   ( boxes         :: Boxes
