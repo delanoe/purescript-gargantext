@@ -605,6 +605,7 @@ mainNgramsTableCacheOnCpt = here.component "mainNgramsTableCacheOn" cpt where
       , mkRequest
       , path: path'
       , renderer: render
+      , spinnerClass: Nothing
       }
   versionEndpoint { defaultListId, path: { nodeId, tabType, session } } _ = get session $ R.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
   errorHandler = logRESTError here "[mainNgramsTable]"

@@ -1,5 +1,6 @@
 module Gargantext.Components.LoadingSpinner where
 
+import Data.Maybe (Maybe(..), fromMaybe)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -10,7 +11,9 @@ import Gargantext.Utils.Reactix as R2
 here :: R2.Here
 here = R2.here "Gargantext.Components.LoadingSpinner"
 
-type Props = ()
+type Props =
+  ( additionalClass :: Maybe String  -- addtional classes for styling the spinner
+  )
 
 loadingSpinner :: Record Props -> R.Element
 loadingSpinner props = R.createElement loadingSpinnerCpt props []
@@ -22,5 +25,7 @@ loadingSpinnerCpt = here.component "LoadingSpinner" cpt
     -- cpt _ _ = H.i {className: "fa fa-globe fa-spin fa-3x fa-fw"} [H.text ""]
 
     -- cpt _ _ = H.i {className: "fa fa-circle-o-notch fa-spin fa-3x fa-fw"} [H.text ""]
-    cpt _ _ = do
-      pure $ H.i {className: "fa fa-spinner fa-pulse fa-3x fa-fw"} [H.text ""]
+    cpt { additionalClass } _ = do
+      pure $ H.i { className: "fa fa-spinner fa-pulse fa-3x fa-fw " <> c } [H.text ""]
+      where
+        c = fromMaybe "" additionalClass
