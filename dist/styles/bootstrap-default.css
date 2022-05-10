@@ -6173,6 +6173,10 @@ h3 {
   background-image: radial-gradient(circle, #343a40 10%, transparent 10%);
 }
 
+.echarts-for-react {
+  height: 300px;
+}
+
 html {
   box-sizing: border-box;
   height: 100%;

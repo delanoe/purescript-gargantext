@@ -32,13 +32,20 @@ type LoaderWithCacheAPIProps path res ret = (
   , mkRequest      :: path -> GUC.Request
   , path           :: path
   , renderer       :: ret -> R.Element
+  , spinnerClass   :: Maybe String
   )
 
 
 useLoaderWithCacheAPI :: forall path res ret. Eq path => JSON.ReadForeign res => Eq ret =>
                          Record (LoaderWithCacheAPIProps path res ret)
                       -> R.Hooks R.Element
-useLoaderWithCacheAPI { cacheEndpoint, errorHandler, handleResponse, mkRequest, path, renderer } = do
+useLoaderWithCacheAPI { cacheEndpoint
+                      , errorHandler
+                      , handleResponse
+                      , mkRequest
+                      , path
+                      , renderer
+                      , spinnerClass } = do
   state <- T.useBox Nothing
   state' <- T.useLive T.unequal state
 
@@ -48,7 +55,7 @@ useLoaderWithCacheAPI { cacheEndpoint, errorHandler, handleResponse, mkRequest, 
                            , mkRequest
                            , path
                            , state }
-  pure $ maybe (loadingSpinner {}) renderer state'
+  pure $ maybe (loadingSpinner { additionalClass: spinnerClass }) renderer state'
 
 type LoaderWithCacheAPIEffectProps path res ret = (
     cacheEndpoint  :: path -> AffRESTError Version

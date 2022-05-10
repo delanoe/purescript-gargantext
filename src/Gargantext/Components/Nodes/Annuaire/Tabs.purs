@@ -11,10 +11,8 @@ import Effect.Aff (Aff)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.DocsTable.Types (Year)
-import Gargantext.Components.GraphQL.User (UserInfo)
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.NgramsTable.Core as NTC
-import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (ContactData)
 import Gargantext.Components.Nodes.Lists.Types as LTypes
 import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Tab as Tab
@@ -22,6 +20,7 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType(..), PTabNgramType(..), TabSubType(..), TabType(..))
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Record as Record
 import Record.Extra as RX
@@ -67,9 +66,10 @@ tabsCpt = here.component "tabs" cpt where
   cpt props _ = do
     activeTab <- T.useBox 0
     yearFilter <- T.useBox (Nothing :: Maybe Year)
+    chartReload <- T.useBox T2.newReload
 
-    pure $ Tab.tabs { activeTab, tabs: tabs' yearFilter props }
-  tabs' yearFilter props@{ boxes, defaultListId, sidePanel } =
+    pure $ Tab.tabs { activeTab, tabs: tabs' yearFilter chartReload props }
+  tabs' yearFilter chartReload props@{ boxes, defaultListId, sidePanel } =
     [ "Documents"     /\ docs
     , "Patents"       /\ ngramsView (viewProps Patents)
     , "Books"         /\ ngramsView (viewProps Books)
@@ -78,7 +78,7 @@ tabsCpt = here.component "tabs" cpt where
     ] where
       viewProps mode = Record.merge props { mode }
       totalRecords = 4736  -- TODO lol
-      docs = DT.docViewLayout (Record.merge { boxes, sidePanel } $ Record.merge dtCommon dtExtra)
+      docs = DT.docViewLayout (Record.merge { boxes, chartReload, sidePanel } $ Record.merge dtCommon dtExtra)
       dtCommon = RX.pick props :: Record DTCommon
       dtExtra =
         { chart: mempty

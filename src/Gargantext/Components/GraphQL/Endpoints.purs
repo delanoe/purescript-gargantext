@@ -2,7 +2,7 @@ module Gargantext.Components.GraphQL.Endpoints where
 
 import Gargantext.Prelude
 
-import Gargantext.Components.GraphQL.Node (Node, nodeParentQuery)
+import Gargantext.Components.GraphQL.Node (Node, nodeParentQuery, nodesQuery)
 import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, treeFirstLevelQuery)
 import Gargantext.Components.GraphQL.User (UserInfo, userInfoQuery)
 
@@ -29,6 +29,15 @@ getIMTSchools session = do
                          GQLIMT.schoolsQuery
   liftEffect $ here.log2 "[getIMTSchools] imt_schools" imt_schools
   pure $ Right imt_schools
+
+getNode :: Session -> Int -> AffRESTError Node
+getNode session nodeId = do
+  { nodes } <- queryGql session "get nodes" $
+              nodesQuery `withVars` { id: nodeId }
+  liftEffect $ here.log2 "[getNode] node" nodes
+  pure $ case A.head nodes of
+    Nothing -> Left (CustomError $ "node with id" <> show nodeId <>" not found")
+    Just node -> Right node
 
 getNodeParent :: Session -> Int -> NodeType -> Aff (Array Node)
 getNodeParent session nodeId parentType = do

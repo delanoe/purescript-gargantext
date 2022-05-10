@@ -49,7 +49,6 @@ type TabProps = ( selected :: Int, index :: Int )
 
 tab :: R2.Component TabProps
 tab = R.createElement tabCpt
-
 -- | A tab only shows its contents if it is currently selected
 tabCpt :: R.Component TabProps
 tabCpt = here.component "tab" cpt

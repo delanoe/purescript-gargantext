@@ -7,7 +7,8 @@ import Data.Array as A
 import Data.Generic.Rep (class Generic)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
-import Effect.Aff (launchAff)
+import Effect.Aff (launchAff_)
+import Effect.Class (liftEffect)
 import Gargantext.Components.Category.Types (Category(..), Star(..), cat2score, categories, clickAgain, star2score, stars)
 import Gargantext.Components.DocsTable.Types (DocumentsView(..), LocalCategories, LocalUserScore)
 import Gargantext.Config.REST (AffRESTError)
@@ -15,6 +16,7 @@ import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, put)
 import Gargantext.Types (NodeID, NodeType(..))
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
@@ -23,19 +25,24 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Category"
 
 type RatingProps =
-  ( score              :: Star
+  ( chartReload        :: T2.ReloadS
   , nodeId             :: NodeID
   , row                :: DocumentsView
+  , score              :: Star
   , session            :: Session
   , setLocalCategories :: R.Setter LocalUserScore
   )
 
 rating :: R2.Component RatingProps
 rating = R.createElement ratingCpt
-
 ratingCpt :: R.Component RatingProps
 ratingCpt = here.component "rating" cpt where
-  cpt { nodeId, row: DocumentsView r, score, session, setLocalCategories } _ =
+  cpt { chartReload
+      , nodeId
+      , row: DocumentsView r
+      , score
+      , session
+      , setLocalCategories } _ =
     pure $ H.div { className:"flex" } divs where
       divs = map (\s -> H.div { className : icon' score s
                               , on: { click: onClick s } } []) stars
@@ -48,9 +55,9 @@ ratingCpt = here.component "rating" cpt where
                   else c
 
         setLocalCategories $ Map.insert r._id c'
-        void $ launchAff
-             $ putRating session nodeId
-             $ RatingQuery { nodeIds: [r._id], rating: c' }
+        launchAff_ $ do
+          _ <- putRating session nodeId $ RatingQuery { nodeIds: [r._id], rating: c' }
+          liftEffect $ T2.reload chartReload
 
 newtype RatingQuery =
   RatingQuery { nodeIds :: Array Int
@@ -98,9 +105,8 @@ carousselCpt = here.component "caroussel" cpt
 
         onClick c = \_-> do
           setLocalCategories $ Map.insert r._id c
-          void $ launchAff
-               $ putCategories session nodeId
-               $ CategoryQuery {nodeIds: [r._id], category: c}
+          launchAff_ $ do
+            putCategories session nodeId $ CategoryQuery {nodeIds: [r._id], category: c}
 
 icon :: Category -> Boolean -> String
 icon cat b = btn b $ "fa fa-" <> (color $ size b $ icon' cat b)

@@ -49,12 +49,11 @@ listsLayoutWithKey :: R2.Component ( key :: String | Props )
 listsLayoutWithKey = R.createElement listsLayoutWithKeyCpt
 listsLayoutWithKeyCpt :: R.Component ( key :: String | Props )
 listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
-  cpt { boxes: boxes@{ reloadMainPage }
+  cpt { boxes
       , nodeId
       , session
       , sessionUpdate } _ = do
     activeTab <- T.useBox 0
-    _reloadMainPage' <- T.useLive T.unequal reloadMainPage
 
     let path = { nodeId, session }
 
