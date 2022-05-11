@@ -118,7 +118,6 @@ let additions =
           , "maybe"
           , "nullable"
           , "prelude"
-          , "psci-support"
           , "refs"
           , "spec"
           , "tuples"
@@ -126,7 +125,7 @@ let additions =
           , "unsafe-reference"
           ]
         , repo = "https://github.com/irresponsible/purescript-ffi-simple"
-        , version = "v0.3.0"
+        , version = "v0.3.1"
         }
       , dom-simple =
         { dependencies =
@@ -140,7 +139,7 @@ let additions =
           , "unsafe-coerce"
           ]
         , repo = "https://github.com/irresponsible/purescript-dom-simple"
-        , version = "v0.2.7"
+        , version = "ps-15.0-upgrade"
         }
       , dom-filereader =
         { dependencies = [ "aff", "arraybuffer-types", "web-file", "web-html" ]
@@ -199,6 +198,36 @@ let additions =
           ]
         , repo = "https://github.com/poorscript/purescript-reactix"
         , version = "v0.4.13"
+        }
+      , simple-json =
+        { dependencies =
+          [ "arrays"
+          , "assert"
+          , "bifunctors"
+          , "console"
+          , "control"
+          , "effect"
+          , "either"
+          , "exceptions"
+          , "foldable-traversable"
+          , "foreign"
+          , "foreign-object"
+          , "identity"
+          , "lists"
+          , "maybe"
+          , "nonempty"
+          , "nullable"
+          , "partial"
+          , "prelude"
+          , "psci-support"
+          , "record"
+          , "sequences"
+          , "transformers"
+          , "typelevel-prelude"
+          , "variant"
+          ]
+        , repo = "https://github.com/cgenie/purescript-simple-json"
+        , version = "ps-0.15.0-upgrade"
         }
       , simple-json-generics =
         { dependencies = [ "simple-json" ]
