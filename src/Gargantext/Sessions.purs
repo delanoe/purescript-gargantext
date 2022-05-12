@@ -4,7 +4,8 @@ module Gargantext.Sessions
   , WithSession, WithSessionContext
   , load, change
   , Action(..), act, delete, get, post, put, put_
-  , postAuthRequest, deleteWithBody, postWwwUrlencoded
+  , postAuthRequest, postForgotPasswordRequest
+  , deleteWithBody, postWwwUrlencoded
   , getCacheState, setCacheState
   ) where
 
@@ -120,6 +121,13 @@ postAuthRequest backend ar@(AuthRequest {username}) =
       | {valid: Just (AuthData {token, tree_id, user_id})} <- ar2 =
           Right $ Session { backend, caches: Map.empty, token, treeId: tree_id, username, userId: user_id }
       | otherwise = Left "Invalid response from server"
+
+postForgotPasswordRequest :: Backend -> String -> Aff (Either String String)
+postForgotPasswordRequest backend email =
+  decode <$> REST.post Nothing (toUrl backend "forgotPassword") { email }
+  where
+    decode (Left _err) = Left "Error when sending REST.post"
+    decode (Right s) = Right s
 
 get :: forall a p. JSON.ReadForeign a => ToUrl Session p =>
        Session -> p -> REST.AffRESTError a
