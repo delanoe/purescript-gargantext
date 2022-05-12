@@ -5,3 +5,4 @@ in conf // {
   dependencies = conf.dependencies # [ "spec"
                                      , "spec-discovery"
                                      , "spec-quickcheck" ]
+}
