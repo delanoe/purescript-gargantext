@@ -1,5 +1,5 @@
 let upstream =
-      https://github.com/purescript/package-sets/releases/download/psc-0.15.0-20220506/packages.dhall sha256:f83b68ff07cf6557e82379e749118e6ff11eecc6be5754540aae855cd1e46917
+      https://github.com/purescript/package-sets/releases/download/psc-0.15.0-20220510/packages.dhall sha256:0b0d4db1f2f0acd3b37fa53220644ac6f64cf9b5d0226fd097c0593df563d5be
 
 let overrides =
       { globals =
@@ -124,7 +124,7 @@ let additions =
           , "unsafe-coerce"
           , "unsafe-reference"
           ]
-        , repo = "https://github.com/irresponsible/purescript-ffi-simple"
+        , repo = "https://github.com/garganscript/purescript-ffi-simple"
         , version = "v0.3.1"
         }
       , dom-simple =
@@ -138,7 +138,7 @@ let additions =
           , "prelude"
           , "unsafe-coerce"
           ]
-        , repo = "https://github.com/irresponsible/purescript-dom-simple"
+        , repo = "https://github.com/garganscript/purescript-dom-simple"
         , version = "ps-15.0-upgrade"
         }
       , dom-filereader =
@@ -157,12 +157,12 @@ let additions =
           , "typelevel-prelude"
           , "typisch"
           ]
-        , repo = "https://github.com/poorscript/purescript-formula"
+        , repo = "https://github.com/garganscript/purescript-formula"
         , version = "v0.2.1"
         }
       , markdown =
         { dependencies = [ "precise" ]
-        , repo = "https://github.com/poorscript/purescript-markdown"
+        , repo = "https://github.com/garganscript/purescript-markdown"
         , version = "2021-06-22"
         }
       , markdown-smolder =
@@ -189,14 +189,12 @@ let additions =
           , "prelude"
           , "psci-support"
           , "refs"
-          , "spec"
-          , "spec-mocha"
           , "strings"
           , "tuples"
           , "unfoldable"
           , "unsafe-coerce"
           ]
-        , repo = "https://github.com/poorscript/purescript-reactix"
+        , repo = "https://github.com/garganscript/purescript-reactix"
         , version = "v0.4.13"
         }
       , simple-json =
@@ -244,17 +242,17 @@ let additions =
           , "typelevel-prelude"
           , "typisch"
           ]
-        , repo = "https://github.com/poorscript/purescript-toestand"
+        , repo = "https://github.com/garganscript/purescript-toestand"
         , version = "v0.6.2"
         }
       , typisch =
         { dependencies = [ "prelude" ]
-        , repo = "https://github.com/poorscript/purescript-typisch"
+        , repo = "https://github.com/garganscript/purescript-typisch"
         , version = "v0.2.1"
         }
       , tuples-native =
         { dependencies = [ "prelude", "typelevel", "unsafe-coerce" ]
-        , repo = "https://github.com/poorscript/purescript-tuples-native"
+        , repo = "https://github.com/garganscript/purescript-tuples-native"
         , version = "v2.2.0"
         }
       , uint =

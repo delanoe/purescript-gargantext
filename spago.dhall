@@ -75,9 +75,6 @@ to generate this file without the comments in this block.
   , "simple-json-generics"
   , "simplecrypto"
   , "smolder"
-  , "spec"
-  , "spec-discovery"
-  , "spec-quickcheck"
   , "strings"
   , "strings-extra"
   , "stringutils"
@@ -101,5 +98,5 @@ to generate this file without the comments in this block.
   , "web-xhr"
   ]
 , packages = ./packages.dhall
-, sources = [ "src/**/*.purs", "test/**/*.purs" ]
+, sources = [ "src/**/*.purs" ]
 }

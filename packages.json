@@ -636,7 +636,7 @@
       "prelude",
       "unsafe-coerce"
     ],
-    "repo": "https://github.com/irresponsible/purescript-dom-simple",
+    "repo": "https://github.com/garganscript/purescript-dom-simple",
     "version": "v0.2.6"
   },
   "dotenv": {
@@ -776,7 +776,7 @@
       "nullable",
       "unsafe-coerce"
     ],
-    "repo": "https://github.com/irresponsible/purescript-ffi-simple",
+    "repo": "https://github.com/garganscript/purescript-ffi-simple",
     "version": "v0.2.4"
   },
   "filterable": {
@@ -1468,7 +1468,7 @@
     "dependencies": [
       "precise"
     ],
-    "repo": "https://github.com/poorscript/purescript-markdown",
+    "repo": "https://github.com/garganscript/purescript-markdown",
     "version": "2020-03-04"
   },
   "markdown-smolder": {
@@ -1476,7 +1476,7 @@
       "markdown",
       "smolder"
     ],
-    "repo": "https://github.com/poorscript/purescript-markdown-smolder",
+    "repo": "https://github.com/garganscript/purescript-markdown-smolder",
     "version": "2020-03-04"
   },
   "math": {
@@ -2358,7 +2358,7 @@
       "prelude",
       "unsafe-coerce"
     ],
-    "repo": "https://github.com/irresponsible/purescript-reactix",
+    "repo": "https://github.com/garganscript/purescript-reactix",
     "version": "v0.4.4"
   },
   "read": {
