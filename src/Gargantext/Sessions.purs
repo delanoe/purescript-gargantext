@@ -115,18 +115,18 @@ postAuthRequest :: Backend -> AuthRequest -> Aff (Either String Session)
 postAuthRequest backend ar@(AuthRequest {username}) =
   decode <$> REST.post Nothing (toUrl backend "auth") ar
   where
-    decode (Left _err) = Left "Error when sending REST.post"
+    decode (Left err) = Left $ "Error when sending REST.post: " <> show err
     decode (Right (AuthResponse ar2))
       | {inval: Just (AuthInvalid {message})}     <- ar2 = Left message
       | {valid: Just (AuthData {token, tree_id, user_id})} <- ar2 =
           Right $ Session { backend, caches: Map.empty, token, treeId: tree_id, username, userId: user_id }
       | otherwise = Left "Invalid response from server"
 
-postForgotPasswordRequest :: Backend -> String -> Aff (Either String String)
+postForgotPasswordRequest :: Backend -> String -> Aff (Either String { status :: String })
 postForgotPasswordRequest backend email =
   decode <$> REST.post Nothing (toUrl backend "forgotPassword") { email }
   where
-    decode (Left _err) = Left "Error when sending REST.post"
+    decode (Left err) = Left $ "Error when sending REST.post: " <> show err
     decode (Right s) = Right s
 
 get :: forall a p. JSON.ReadForeign a => ToUrl Session p =>
