@@ -124,7 +124,7 @@ postAuthRequest backend ar@(AuthRequest {username}) =
 
 postForgotPasswordRequest :: Backend -> String -> Aff (Either String { status :: String })
 postForgotPasswordRequest backend email =
-  decode <$> REST.post Nothing (toUrl backend "forgotPassword") { email }
+  decode <$> REST.post Nothing (toUrl backend "forgot-password") { email }
   where
     decode (Left err) = Left $ "Error when sending REST.post: " <> show err
     decode (Right s) = Right s
