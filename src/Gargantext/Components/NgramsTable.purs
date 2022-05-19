@@ -26,6 +26,8 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
 import Gargantext.Components.NgramsTable.Components as NTC
 import Gargantext.Components.NgramsTable.Core (Action(..), CoreAction(..), CoreState, Dispatch, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTerm, PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, VersionedWithCountNgramsTable, _NgramsElement, _NgramsRepoElement, _NgramsTable, _children, _list, _ngrams, _ngrams_repo_elements, _ngrams_scores, _occurrences, _root, addNewNgramA, applyNgramsPatches, applyPatchSet, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, fromNgramsPatches, ngramsRepoElementToNgramsElement, ngramsTermText, normNgram, patchSetFromMap, replace, setTermListA, singletonNgramsTablePatch, syncResetButtons, toVersioned)
 import Gargantext.Components.NgramsTable.Loader (useLoaderWithCacheAPI)
@@ -103,6 +105,7 @@ type TableContainerProps =
   , path              :: T.Box PageParams
   , tabNgramType      :: CTabNgramType
   , syncResetButton   :: Array R.Element
+  , addCallback       :: String -> Effect Unit
   )
 
 tableContainer :: Record TableContainerProps -> Record TT.TableContainerProps -> R.Element
@@ -117,6 +120,7 @@ tableContainerCpt { dispatch
                   , queryExactMatches
                   , tabNgramType
                   , syncResetButton
+                  , addCallback
                   } = here.component "tableContainer" cpt
   where
     cpt props _ = do
@@ -132,16 +136,13 @@ tableContainerCpt { dispatch
                   , if (not queryExactMatches || A.null props.tableBody) && searchQuery /= "" then
                   -- , if (not $ Set.member (normNgram tabNgramType searchQuery) ngramsSelection) && searchQuery /= "" then
                       H.li { className: "list-group-item" }
-                        [ H.button { className: "btn btn-primary"
-                                   , on: { click: const $ dispatch
-                                           $ CoreAction
-                                           $ addNewNgramA
-                                           (normNgram tabNgramType searchQuery)
-                                           MapTerm
-                                         }
-                                   }
-                          [ H.text ("Add " <> searchQuery) ]
-                        ] else H.div {} []
+                      [
+                        B.button
+                        { variant: ButtonVariant Primary
+                        , callback: const $ addCallback searchQuery
+                        }
+                        [ H.text ("Add " <> searchQuery) ]
+                      ] else H.div {} []
                 ]
                 , H.div {className: "col-md-2", style: {marginTop : "6px"}}
                   [ H.li {className: "list-group-item"}
@@ -379,6 +380,17 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
                                            , ngramsLocalPatch
                                            , performAction: performAction <<< CoreAction }
 
+        addCallback searchQuery = do
+          -- add new ngram as a "Map Term"
+          performAction
+            $ CoreAction
+            $ addNewNgramA (normNgram tabNgramType searchQuery) MapTerm
+          -- then sync the ngram list
+          performAction
+            $ CoreAction
+            $ Synchronize { afterSync: afterSync' }
+
+
         -- autoUpdate :: Array R.Element
 --         autoUpdate = if withAutoUpdate then
 --                        [ R2.buff
@@ -410,7 +422,9 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
           , path
           , queryExactMatches: exactMatches
           , syncResetButton: [ syncResetButton ]
-          , tabNgramType }
+          , tabNgramType
+          , addCallback
+          }
         , params
         , rows: filteredConvertedRows
         , syncResetButton: [ syncResetButton ]
