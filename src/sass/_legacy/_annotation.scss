@@ -1,0 +1,68 @@
+.annotation-run {
+  @include clickable();
+
+  &.candidate-term.graph-term.stop-term {
+    @include annotation-field-3(
+      $annotation-candidate-color,
+      $annotation-graph-color,
+      $annotation-stop-color
+    );
+  }
+
+  &.candidate-term.graph-term {
+    @include annotation-field-2(
+      $annotation-candidate-color,
+      $annotation-graph-color
+    );
+  }
+
+  &.candidate-term.stop-term {
+    @include annotation-field-2(
+      $annotation-candidate-color,
+      $annotation-stop-color
+    );
+  }
+
+  &.graph-term.stop-term {
+    @include annotation-field-2(
+      $annotation-graph-color,
+      $annotation-stop-color
+    );
+  }
+
+  &.candidate-term {
+    @include annotation-field-1($annotation-candidate-color);
+  }
+
+  &.graph-term {
+    @include annotation-field-1($annotation-graph-color)
+  }
+
+  &.stop-term {
+    @include annotation-field-1($annotation-stop-color)
+  }
+}
+
+.b-icon {
+
+  &.graph-term {
+    @include light-bulb($annotation-graph-color);
+  }
+
+  &.candidate-term {
+    @include light-bulb($annotation-candidate-color);
+  }
+
+  &.stop-term {
+    @include light-bulb($annotation-stop-color);
+  }
+
+  &.disabled-term {
+    // slightly dissolving the icon colour, this will dissociate the semantic
+    // from the "traffic lights" chart towards a web one (where diluted
+    // gray means disabled element)
+    $color: mix-alpha($list-group-disabled-color, 20%);
+
+    @include light-bulb($color);
+  }
+}

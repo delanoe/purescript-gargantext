@@ -178,11 +178,11 @@ contactListCpt = here.component "main" cpt where
     -- |
     pure $
 
-      R2.fromMaybe_ rows' \results ->
+      R2.fromMaybe rows' \results ->
 
         R.fragment
         [
-          R2.if' (results == Seq.empty) $
+          R2.when (results == Seq.empty) $
 
             B.caveat
             {}
@@ -190,7 +190,7 @@ contactListCpt = here.component "main" cpt where
               H.text "No contact found in your corpus for your selected terms"
             ]
         ,
-          R2.if' (not $ eq results Seq.empty) $
+          R2.when (not $ eq results Seq.empty) $
 
             H.ul
             { className: intercalate " "

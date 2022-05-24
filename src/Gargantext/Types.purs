@@ -174,35 +174,35 @@ instance VarTypeName NodeType where
   varTypeName _ = "NodeType!"
 
 instance Show NodeType where
-  show NodeUser        = "NodeUser"
+  show NodeUser          = "NodeUser"
 
-  show Folder          = "NodeFolder"
-  show FolderPrivate   = "NodeFolderPrivate"  -- Node Private Worktop
-  show FolderShared    = "NodeFolderShared"   -- Node Share Worktop
-  show FolderPublic    = "NodeFolderPublic"   -- Node Public Worktop
+  show Folder            = "NodeFolder"
+  show FolderPrivate     = "NodeFolderPrivate"  -- Node Private Worktop
+  show FolderShared      = "NodeFolderShared"   -- Node Share Worktop
+  show FolderPublic      = "NodeFolderPublic"   -- Node Public Worktop
 
-  show Annuaire        = "NodeAnnuaire"
-  show NodeContact     = "NodeContact"
-  show Corpus          = "NodeCorpus"
-  show Dashboard       = "NodeDashboard"
-  show Url_Document    = "NodeDocument"
-  show Error           = "NodeError"
-  show Graph           = "NodeGraph"
-  show Phylo           = "NodePhylo"
-  show Individu        = "NodeIndividu"
-  show Node            = "Node"
-  show Nodes           = "Nodes"
-  show Context         = "Context"
-  show Tree            = "NodeTree"
-  show Team            = "NodeTeam"
-  show NodeList        = "NodeList"
-  show NodeTexts       = "NodeTexts"
-  show NodeFrameWrite  = "NodeFrameWrite"
-  show NodeFrameCalc   = "NodeFrameCalc"
+  show Annuaire          = "NodeAnnuaire"
+  show NodeContact       = "NodeContact"
+  show Corpus            = "NodeCorpus"
+  show Dashboard         = "NodeDashboard"
+  show Url_Document      = "NodeDocument"
+  show Error             = "NodeError"
+  show Graph             = "NodeGraph"
+  show Phylo             = "NodePhylo"
+  show Individu          = "NodeIndividu"
+  show Node              = "Node"
+  show Nodes             = "Nodes"
+  show Context           = "Context"
+  show Tree              = "NodeTree"
+  show Team              = "NodeTeam"
+  show NodeList          = "NodeList"
+  show NodeTexts         = "NodeTexts"
+  show NodeFrameWrite    = "NodeFrameWrite"
+  show NodeFrameCalc     = "NodeFrameCalc"
   show NodeFrameNotebook = "NodeFrameNotebook"
   show NodeFrameVisio    = "NodeFrameVisio"
-  show (NodePublic nt) = "NodePublic" <> show nt
-  show NodeFile        = "NodeFile"
+  show (NodePublic nt)   = "NodePublic" <> show nt
+  show NodeFile          = "NodeFile"
 
 
 instance Read NodeType where
@@ -229,7 +229,7 @@ instance Read NodeType where
   read "Annuaire"          = Just Annuaire
   read "NodeFrameWrite"    = Just NodeFrameWrite
   read "NodeFrameCalc"     = Just NodeFrameCalc
-  read "NodeFrameNotebook"     = Just NodeFrameNotebook
+  read "NodeFrameNotebook" = Just NodeFrameNotebook
   read "NodeFrameVisio"    = Just NodeFrameVisio
   read "NodeFile"          = Just NodeFile
   -- TODO NodePublic read ?
@@ -356,7 +356,6 @@ getIcon NodeFrameVisio true  = "video-camera"
 getIcon NodeFrameVisio false = "video-camera"
 
 
-
 getIcon (NodePublic nt) b   = getIcon nt b
 
 getIcon _        true   = "folder-open"
@@ -389,33 +388,33 @@ instance Eq NodeType where
 -}
 ------------------------------------------------------------
 nodeTypePath :: NodeType -> String
-nodeTypePath Folder          = "folder"
-nodeTypePath FolderPrivate   = "folderPrivate"
-nodeTypePath FolderShared    = "folderShared"
-nodeTypePath FolderPublic    = "folderPublic"
-nodeTypePath Annuaire        = "annuaire"
-nodeTypePath Corpus          = "corpus"
-nodeTypePath Dashboard       = "dashboard"
-nodeTypePath Url_Document    = "document"
-nodeTypePath Error           = "ErrorNodeType"
-nodeTypePath Graph           = "graph"
-nodeTypePath Phylo           = "phylo"
-nodeTypePath Individu        = "individu"
-nodeTypePath Node            = "node"
-nodeTypePath Nodes           = "nodes"
-nodeTypePath Context         = "context"
-nodeTypePath NodeUser        = "user"
-nodeTypePath NodeContact     = "contact"
-nodeTypePath Tree            = "tree"
-nodeTypePath NodeList        = "lists"
-nodeTypePath NodeTexts       = "texts"
-nodeTypePath Team            = "team"
-nodeTypePath NodeFrameWrite  = "write"
-nodeTypePath NodeFrameCalc   = "calc"
+nodeTypePath Folder            = "folder"
+nodeTypePath FolderPrivate     = "folderPrivate"
+nodeTypePath FolderShared      = "folderShared"
+nodeTypePath FolderPublic      = "folderPublic"
+nodeTypePath Annuaire          = "annuaire"
+nodeTypePath Corpus            = "corpus"
+nodeTypePath Dashboard         = "dashboard"
+nodeTypePath Url_Document      = "document"
+nodeTypePath Error             = "ErrorNodeType"
+nodeTypePath Graph             = "graph"
+nodeTypePath Phylo             = "phylo"
+nodeTypePath Individu          = "individu"
+nodeTypePath Node              = "node"
+nodeTypePath Nodes             = "nodes"
+nodeTypePath Context           = "context"
+nodeTypePath NodeUser          = "user"
+nodeTypePath NodeContact       = "contact"
+nodeTypePath Tree              = "tree"
+nodeTypePath NodeList          = "lists"
+nodeTypePath NodeTexts         = "texts"
+nodeTypePath Team              = "team"
+nodeTypePath NodeFrameWrite    = "write"
+nodeTypePath NodeFrameCalc     = "calc"
 nodeTypePath NodeFrameNotebook = "code"
 nodeTypePath NodeFrameVisio    = "visio"
-nodeTypePath (NodePublic nt) = nodeTypePath nt
-nodeTypePath NodeFile        = "file"
+nodeTypePath (NodePublic nt)   = nodeTypePath nt
+nodeTypePath NodeFile          = "file"
 
 ------------------------------------------------------------
 type CorpusId   = Int

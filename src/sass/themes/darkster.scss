@@ -50,7 +50,11 @@ $gray-700: #DEE2E6;
 $gray-800: #E9ECEF;
 $gray-900: #F8F9FA;
 
+$annotation-text-color: $gray-600;
+$annotation-field-base-alpha: 15%;
 
+
+// (overriding bootstrap "_variable.scss")
 $enable-shadows:true;
 $body-bg:$black;
 $body-color:#cccccc;

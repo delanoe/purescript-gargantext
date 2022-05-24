@@ -20,21 +20,39 @@ $gray-800: #343A40;
 $gray-900: #212529;
 $black:    #000000;
 
+// Pastel colours
+$pastel-green   : hsla(149, 46%, 41%, 1);
+$pastel-blue    : hsla(206, 28%, 55%, 1);
+$pastel-yellow  : hsla(60, 100%, 71%, 1);
+$pastel-red     : hsla(3, 60%, 59%, 1);
+$pastel-orange  : hsla(40, 89%, 75%, 1);
+$pastel-purple  : hsla(278, 19%, 74%, 1);
+
 
 /// Z-Index Management
 /// @link https://medium.com/alistapart/sassier-z-index-management-for-complex-layouts-4540717a9488
 $z-indexes: (
   main: (
+    "sidebar",
+    "topbar",
+    "handlebar",
+    "floaty",
   ),
-  forest-layout: (
-    "teaser",
-  ),
-  phylo-layout: (
+  phylo: (
     "frame",
     "spinner",
   ),
-  graph-layout: (
+  graph: (
     "toolbar",
     "frame",
+  ),
+  tree: (
+    "content",
+    "badge",
+  ),
+  tile: (
+    "bottom-teaser"
+    "navbar",
+    "top-teaser",
   ),
 );

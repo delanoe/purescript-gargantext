@@ -114,6 +114,11 @@
   text-shadow: 0 0 4px brighten($color, 90);
 }
 
+@mixin light-bulb($color) {
+  color: $color;
+  text-shadow: 0 0 4px;
+}
+
 /// Add a basic ripple effect based on CSS pseudo class
 ///
 ///   * Not as qualitative as a dedicated ripple HTML element
