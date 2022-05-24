@@ -1,4 +1,13 @@
-module Gargantext.Components.App.Data (App, Boxes, emptyApp) where
+module Gargantext.Components.App.Store
+  ( Store
+  , State
+  , options
+  , context
+  , provide
+  , use
+  -- legacy
+  , Boxes
+  ) where
 
 
 import Gargantext.Prelude
@@ -16,11 +25,43 @@ import Gargantext.Sessions (Session, Sessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Sessions.Types (OpenNodes(..))
 import Gargantext.Types (FrontendError, Handed(RightHanded), SidePanelState(..))
+import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Stores as Stores
 import Gargantext.Utils.Toestand as T2
+import Reactix as R
 import Toestand as T
+import Unsafe.Coerce (unsafeCoerce)
 
-type App =
-  { backend             :: Maybe Backend
+here :: R2.Here
+here = R2.here "Gargantext.Components.App.Store"
+
+type Store =
+  ( backend             :: T.Box (Maybe Backend)
+  , errors              :: T.Box (Array FrontendError)
+  , forestOpen          :: T.Box OpenNodes
+  , graphVersion        :: T2.ReloadS
+  , handed              :: T.Box Handed
+  , lang                :: T.Box Lang.LandingLang
+  , reloadForest        :: T2.ReloadS
+  , reloadMainPage      :: T2.ReloadS
+  , reloadRoot          :: T2.ReloadS
+  , route               :: T.Box AppRoute
+  , session             :: T.Box (Maybe Session)
+  , sessions            :: T.Box Sessions
+  , showCorpus          :: T.Box Boolean
+  , showLogin           :: T.Box Boolean
+  , showTree            :: T.Box Boolean
+  , sidePanelLists      :: T.Box (Maybe (Record ListsT.SidePanel))
+  , sidePanelTexts      :: T.Box (Maybe (Record TextsT.SidePanel))
+  , sidePanelState      :: T.Box SidePanelState
+  , tasks               :: T.Box GAT.Storage
+  , theme               :: T.Box Themes.Theme
+  , tileAxisXList       :: T.Box (Array (Record Tile))
+  , tileAxisYList       :: T.Box (Array (Record Tile))
+  )
+
+type State =
+  ( backend             :: Maybe Backend
   , errors              :: Array FrontendError
   , forestOpen          :: OpenNodes
   , graphVersion        :: T2.Reload
@@ -42,10 +83,10 @@ type App =
   , theme               :: Themes.Theme
   , tileAxisXList       :: Array (Record Tile)
   , tileAxisYList       :: Array (Record Tile)
-  }
+  )
 
-emptyApp :: App
-emptyApp =
+options :: Record State
+options =
   { backend             : Nothing
   , errors              : []
   , forestOpen          : OpenNodes $ Set.empty
@@ -70,27 +111,15 @@ emptyApp =
   , tileAxisYList       : mempty
   }
 
-type Boxes =
-  { backend             :: T.Box (Maybe Backend)
-  , errors              :: T.Box (Array FrontendError)
-  , forestOpen          :: T.Box OpenNodes
-  , graphVersion        :: T2.ReloadS
-  , handed              :: T.Box Handed
-  , lang                :: T.Box Lang.LandingLang
-  , reloadForest        :: T2.ReloadS
-  , reloadMainPage      :: T2.ReloadS
-  , reloadRoot          :: T2.ReloadS
-  , route               :: T.Box AppRoute
-  , session             :: T.Box (Maybe Session)
-  , sessions            :: T.Box Sessions
-  , showCorpus          :: T.Box Boolean
-  , showLogin           :: T.Box Boolean
-  , showTree            :: T.Box Boolean
-  , sidePanelLists      :: T.Box (Maybe (Record ListsT.SidePanel))
-  , sidePanelTexts      :: T.Box (Maybe (Record TextsT.SidePanel))
-  , sidePanelState      :: T.Box SidePanelState
-  , tasks               :: T.Box GAT.Storage
-  , theme               :: T.Box Themes.Theme
-  , tileAxisXList       :: T.Box (Array (Record Tile))
-  , tileAxisYList       :: T.Box (Array (Record Tile))
-  }
+context :: R.Context (Record Store)
+context = R.createContext $ unsafeCoerce unit
+
+provide :: Record State -> Array R.Element -> R.Element
+provide values = Stores.provideStore here.name values context
+
+use :: R.Hooks (Record Store)
+use = Stores.useStore context
+
+------------------------------------------------------
+
+type Boxes = Record Store

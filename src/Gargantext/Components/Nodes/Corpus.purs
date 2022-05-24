@@ -10,7 +10,7 @@ import Data.Show.Generic (genericShow)
 import Effect (Effect)
 import Effect.Aff (throwError)
 import Effect.Exception (error)
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.InputWithEnter (inputWithEnter)
@@ -68,20 +68,22 @@ corpusLayoutMainCpt = here.component "corpusLayoutMain" cpt
         pure $ GR.CorpusCode (sessionId session) nodeId
       -- Render
       pure $
-
         H.div {}
         [
-          tileMenu
-          { boxes
-          , currentTile: Just corpusCodeRoute
-          , xTile: Just corpusCodeRoute
-          , yTile: Just corpusCodeRoute
-          }
-          [
-            H.button
-            { className: "btn btn-primary" }
+          R2.row [
+            FV.backButtonSmart { nodeId, session } []
+          , tileMenu
+            { boxes
+            , currentTile: Just corpusCodeRoute
+            , xTile: Just corpusCodeRoute
+            , yTile: Just corpusCodeRoute
+            }
             [
-              H.i { className: "fa fa-code" } []
+              H.button
+              { className: "btn btn-primary" }
+              [
+                H.i { className: "fa fa-code" } []
+              ]
             ]
           ]
         ,

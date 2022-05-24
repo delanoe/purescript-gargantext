@@ -6,8 +6,9 @@ import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
+import Effect (Effect)
 import Effect.Aff (launchAff_)
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Charts.Options.ECharts (dispatchAction)
 import Gargantext.Components.Charts.Options.Type (EChartsInstance, EChartActionData)
 import Gargantext.Components.DocsTable as DT
@@ -16,6 +17,7 @@ import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
+import Gargantext.Components.Nodes.Corpus.Chart.Types as CTypes
 import Gargantext.Components.Nodes.Corpus.Document as D
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
 import Gargantext.Components.Nodes.Lists.Types as LT
@@ -108,7 +110,7 @@ textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
                     let NodePoly { name, date, hyperdata } = corpusNode
 
                     R.fragment
-                      [ Table.tableHeaderWithRenameLayout { 
+                      [ Table.tableHeaderWithRenameLayout {
                           cacheState
                         , name
                         , date
@@ -203,14 +205,16 @@ tabsCpt = here.component "tabs" cpt
 
       activeTab <- T.useBox 0
 
+      chartReload <- T.useBox T2.newReload
+
       pure $ Tab.tabs {
           activeTab
         , tabs: [
             "Documents"       /\ R.fragment [
-                histo { boxes, path, session, onClick, onInit }
-              , docView' path TabDocs
+                histoRender { boxes, path, onClick, onInit, reload: chartReload, session } []
+              , docView' path chartReload TabDocs
               ]
-          , "Trash"           /\ docView' path TabTrash
+          , "Trash"           /\ docView' path chartReload TabTrash
           -- , "More like fav"   /\ docView' path TabMoreLikeFav
           -- , "More like trash" /\ docView' path TabMoreLikeTrash
           ]
@@ -221,31 +225,47 @@ tabsCpt = here.component "tabs" cpt
                       , listId: corpusData.defaultListId
                       , limit: Nothing
                       , tabType: TabCorpus TabDocs }
-        docView' path tabType = docView { boxes
-                                        , cacheState
-                                        , corpusData
-                                        , corpusId
-                                        , frontends
-                                        , listId: path.listId
-                                        -- , path
-                                        , session
-                                        , tabType
-                                        , sidePanel
-                                        , yearFilter
-                                        } []
+        docView' path chartReload tabType = docView { boxes
+                                                    , cacheState
+                                                    , chartReload
+                                                    , corpusData
+                                                    , corpusId
+                                                    , frontends
+                                                    , listId: path.listId
+                                                      -- , path
+                                                    , session
+                                                    , tabType
+                                                    , sidePanel
+                                                    , yearFilter
+                                                    } []
+
+type HistoProps =
+  ( reload  :: T2.ReloadS
+  | CTypes.Props
+  )
+
+histoRender :: R2.Component HistoProps
+histoRender = R.createElement histoRenderCpt
+histoRenderCpt :: R.Component HistoProps
+histoRenderCpt = here.component "histoRender" cpt where
+  cpt { boxes, path, onClick, onInit, reload, session } _ = do
+    reload' <- T.useLive T.unequal reload
+
+    pure $ histo { boxes, path, onClick, onInit, session }
 
 type DocViewProps a =
-  ( boxes      :: Boxes
-  , cacheState :: T.Box LT.CacheState
-  , corpusData :: CorpusData
-  , corpusId   :: NodeID
-  , frontends  :: Frontends
-  , listId     :: ListId
-  -- , path    :: Record DT.Path
-  , session    :: Session
-  , tabType    :: TabSubType a
-  , sidePanel  :: T.Box (Maybe (Record TT.SidePanel))
-  , yearFilter :: T.Box (Maybe Year)
+  ( boxes       :: Boxes
+  , cacheState  :: T.Box LT.CacheState
+  , chartReload :: T2.ReloadS
+  , corpusData  :: CorpusData
+  , corpusId    :: NodeID
+  , frontends   :: Frontends
+  , listId      :: ListId
+  -- , path     :: Record DT.Path
+  , session     :: Session
+  , tabType     :: TabSubType a
+  , sidePanel   :: T.Box (Maybe (Record TT.SidePanel))
+  , yearFilter  :: T.Box (Maybe Year)
   )
 
 docView :: forall a. R2.Component (DocViewProps a)
@@ -259,6 +279,7 @@ docViewCpt = here.component "docView" cpt
 -- docViewLayoutRec :: forall a. DocViewProps a -> Record DT.LayoutProps
 docViewLayoutRec { boxes
                  , cacheState
+                 , chartReload
                  , corpusId
                  , frontends
                  , listId
@@ -270,6 +291,7 @@ docViewLayoutRec { boxes
   { boxes
   , cacheState
   , chart  : H.div {} []
+  , chartReload
   , frontends
   , listId
   , mCorpusId: Just corpusId
@@ -284,6 +306,7 @@ docViewLayoutRec { boxes
   }
 docViewLayoutRec { boxes
                  , cacheState
+                 , chartReload
                  , corpusId
                  , frontends
                  , listId
@@ -295,6 +318,7 @@ docViewLayoutRec { boxes
   { boxes
   , cacheState
   , chart  : H.div {} []
+  , chartReload
   , frontends
   , listId
   , mCorpusId: Just corpusId
@@ -309,6 +333,7 @@ docViewLayoutRec { boxes
   }
 docViewLayoutRec { boxes
                  , cacheState
+                 , chartReload
                  , corpusId
                  , frontends
                  , listId
@@ -320,6 +345,7 @@ docViewLayoutRec { boxes
   { boxes
   , cacheState
   , chart  : H.div {} []
+  , chartReload
   , frontends
   , listId
   , mCorpusId: Just corpusId
@@ -334,6 +360,7 @@ docViewLayoutRec { boxes
   }
 docViewLayoutRec { boxes
                  , cacheState
+                 , chartReload
                  , corpusId
                  , frontends
                  , listId
@@ -345,6 +372,7 @@ docViewLayoutRec { boxes
   { boxes
   , cacheState
   , chart  : H.div {} []
+  , chartReload
   , frontends
   , listId
   , mCorpusId: Just corpusId
@@ -360,6 +388,7 @@ docViewLayoutRec { boxes
 -- DUMMY
 docViewLayoutRec { boxes
                  , cacheState
+                 , chartReload
                  , corpusId
                  , frontends
                  , listId
@@ -371,6 +400,7 @@ docViewLayoutRec { boxes
   { boxes
   , cacheState
   , chart  : H.div {} []
+  , chartReload
   , frontends
   , listId
   , mCorpusId: Just corpusId

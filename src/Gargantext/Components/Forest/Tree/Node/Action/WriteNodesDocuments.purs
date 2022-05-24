@@ -5,7 +5,7 @@ import Gargantext.Prelude
 import Data.Either (Either)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (panel, submitButton)
 import Gargantext.Config.REST (AffRESTError, RESTError)

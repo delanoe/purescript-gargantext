@@ -1,5 +1,5 @@
-module Gargantext.Components.GraphExplorer.Sidebar.DocList
-  ( docListWrapper
+module Gargantext.Components.GraphExplorer.Sidebar.ContactList
+  ( contactListWrapper
   ) where
 
 import Gargantext.Prelude
@@ -11,47 +11,47 @@ import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple.Nested ((/\))
-import Effect (Effect)
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Types (Variant(..))
-import Gargantext.Components.FacetsTable (DocumentsView(..), Rows(..), initialPagePath, loadPage, publicationDate)
+import Gargantext.Components.FacetsTable (ContactsView(..), Rows(..), initialPagePath, loadPage)
 import Gargantext.Components.GraphExplorer.Store as GraphStore
-import Gargantext.Components.GraphExplorer.Types (CorpusId, DocId, GraphSideDoc(..), ListId)
+import Gargantext.Components.GraphExplorer.Types (CorpusId, ListId)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.RandomText (words)
-import Gargantext.Components.Search (SearchQuery(..), SearchType(..))
+import Gargantext.Components.Search (HyperdataRowContact(..), SearchQuery(..), SearchType(..))
+import Gargantext.Config (defaultFrontends)
 import Gargantext.Config.REST (RESTError(..))
+import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Hooks.UpdateEffect (useUpdateEffect1')
-import Gargantext.Sessions (Session)
-import Gargantext.Utils ((?))
+import Gargantext.Routes as Routes
+import Gargantext.Sessions (Session, sessionId)
+import Gargantext.Utils (nbsp)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
 here :: R2.Here
-here = R2.here "Gargantext.Components.GraphExplorer.Sidebar.DocList"
+here = R2.here "Gargantext.Components.GraphExplorer.Sidebar.ContactList"
 
 type Props =
   ( metaData :: GET.MetaData
   )
 
-docListWrapper :: R2.Leaf Props
-docListWrapper = R2.leaf docListWrapperCpt
+contactListWrapper :: R2.Leaf Props
+contactListWrapper = R2.leaf contactListWrapperCpt
 
-docListWrapperCpt :: R.Component Props
-docListWrapperCpt = here.component "wrapper" cpt where
+contactListWrapperCpt :: R.Component Props
+contactListWrapperCpt = here.component "wrapper" cpt where
   cpt { metaData: GET.MetaData metaData
       } _ = do
     -- | States
     -- |
     session <- useSession
 
-    { showDoc
-    , graph
+    { graph
     , selectedNodeIds
     } <- GraphStore.use
 
@@ -63,10 +63,12 @@ docListWrapperCpt = here.component "wrapper" cpt where
     -- | Helpers
     -- |
     let
+      frontends = defaultFrontends
+
       nodesMap = SigmaxT.nodesGraphMap graph'
 
       toSearchQuery ids = SearchQuery
-        { expected: SearchDoc
+        { expected: SearchContact
         , query: concat $ toQuery <$> Set.toUnfoldable ids
         }
 
@@ -88,19 +90,19 @@ docListWrapperCpt = here.component "wrapper" cpt where
         case (head metaData.corpusId) /\ query' of
 
           (Just corpusId) /\ (Just q') ->
-            docList
-            { query: q'
+            contactList
+            { frontends
+            , query: q'
             , session
             , corpusId
             , listId: metaData.list.listId
-            , showDoc
             }
 
           _ /\ _ ->
             B.caveat
             {}
             [
-              H.text "You can link a corpus to retrieve relative documents about your selection"
+              H.text "You can link an annuaire to retrieve relative contacts about your selection"
             ]
 
       ]
@@ -111,15 +113,15 @@ type ListProps =
   ( query           :: SearchQuery
   , corpusId        :: CorpusId
   , listId          :: ListId
+  , frontends       :: Frontends
   , session         :: Session
-  , showDoc         :: T.Box (Maybe GraphSideDoc)
   )
 
-docList :: R2.Leaf ListProps
-docList = R2.leaf docListCpt
+contactList :: R2.Leaf ListProps
+contactList = R2.leaf contactListCpt
 
-docListCpt :: R.Component ListProps
-docListCpt = here.component "main" cpt where
+contactListCpt :: R.Component ListProps
+contactListCpt = here.component "main" cpt where
   -- | Helpers
   -- |
   errorHandler err = do
@@ -130,11 +132,11 @@ docListCpt = here.component "main" cpt where
       _ -> pure unit
   -- | Component
   -- |
-  cpt { query
+  cpt { frontends
+      , query
       , session
       , corpusId: nodeId
       , listId
-      , showDoc
       } _ = do
     -- | States
     -- |
@@ -147,9 +149,6 @@ docListCpt = here.component "main" cpt where
 
     rows' /\ rows <-
       R2.useBox' Nothing
-
-    showDoc' <-
-      R2.useLive' showDoc
 
     -- | Hooks
     -- |
@@ -172,42 +171,8 @@ docListCpt = here.component "main" cpt where
     useUpdateEffect1' state' case state' of
       Nothing -> T.write_ (Just Seq.empty) rows
       Just r -> case r of
-        Docs { docs } -> T.write_ (Just docs) rows
-        _             -> T.write_ (Just Seq.empty) rows
-
-    -- | Computed
-    -- |
-    let
-
-      callback :: Maybe GraphSideDoc -> DocId -> Effect Unit
-      callback
-        Nothing
-        new
-          = setGraphSideDoc new # Just # flip T.write_ showDoc
-
-      callback
-        (Just (GraphSideDoc { docId }))
-        new
-        | docId == new = T.write_ Nothing showDoc
-        | otherwise    = setGraphSideDoc new # Just # flip T.write_ showDoc
-
-      setGraphSideDoc :: DocId -> GraphSideDoc
-      setGraphSideDoc docId = GraphSideDoc
-        { docId
-        , listId
-        , corpusId: nodeId
-        }
-
-      isSelected :: Maybe GraphSideDoc -> DocumentsView -> Boolean
-      isSelected
-        (Just (GraphSideDoc { docId }))
-        (DocumentsView { id })
-          = docId == id
-
-      isSelected
-        _
-        _
-          = false
+        Contacts { contacts } -> T.write_ (Just contacts) rows
+        _                     -> T.write_ (Just Seq.empty) rows
 
     -- | Render
     -- |
@@ -222,23 +187,23 @@ docListCpt = here.component "main" cpt where
             B.caveat
             {}
             [
-              H.text "No document found in your corpus for your selected terms"
+              H.text "No contact found in your corpus for your selected terms"
             ]
         ,
           R2.if' (not $ eq results Seq.empty) $
 
             H.ul
             { className: intercalate " "
-                [ "graph-doc-list"
+                [ "graph-contact-list"
                 , "list-group"
                 ]
             } $
             Seq.toUnfoldable $ flip Seq.map results \r ->
 
               item
-              { documentView: (r :: DocumentsView)
-              , callback: callback showDoc'
-              , isSelected: isSelected showDoc' (r :: DocumentsView)
+              { frontends
+              , session
+              , contactView: (r :: ContactsView)
               }
         ]
 
@@ -246,9 +211,9 @@ docListCpt = here.component "main" cpt where
 ---------------------------------------------------------
 
 type ItemProps =
-  ( documentView :: DocumentsView
-  , callback     :: DocId -> Effect Unit
-  , isSelected   :: Boolean
+  ( contactView  :: ContactsView
+  , frontends    :: Frontends
+  , session      :: Session
   )
 
 item :: R2.Leaf ItemProps
@@ -256,57 +221,49 @@ item = R2.leaf itemCpt
 
 itemCpt :: R.Component ItemProps
 itemCpt = here.component "item" cpt where
-  cpt { documentView: dv@(DocumentsView { id, title, source })
-      , callback
-      , isSelected
+  cpt { contactView: ContactsView
+          { id
+          , annuaireId
+          , hyperdata: HyperdataRowContact
+              { firstname
+              , lastname
+              , labs
+              }
+          }
+      , frontends
+      , session
       } _ = do
     -- Computed
-    -- let
+    let
+
       -- Creating a href link
-      -- documentUrl id' { listId, nodeId } =
-      --   url frontends $ Routes.CorpusDocument (sessionId session) nodeId listId id'
+      contactUrl id'
+        = url frontends $ Routes.ContactPage (sessionId session) annuaireId id'
 
     -- Render
     pure $
 
       H.div
       { className: intercalate " "
-          [ "graph-doc-list__item"
-          , isSelected ? "graph-doc-list__item--selected" $ ""
+          [ "graph-contact-list__item"
           , "list-group-item"
           ]
-      , on: { click: \_ -> callback id }
       }
       [
-        B.ripple
-        { variant: Dark }
+        H.a
+        { className: "graph-contact-list__item__title"
+        , target: "_blank"
+        , href: contactUrl id
+        }
         [
-          H.div
-          { className: "graph-doc-list__item__main" }
-          [
-            B.div'
-            { className: "graph-doc-list__item__title" }
-            title
-          ,
-            B.div'
-            { className: "graph-doc-list__item__source" }
-            source
-          ,
-            B.div'
-            { className: "graph-doc-list__item__date" } $
-            publicationDate dv
-          ]
+          H.text $ firstname
         ,
-          H.div
-          { className: "graph-doc-list__item__aside" }
-          [
-            B.icon
-            { name: "eye-slash"
-            , className: intercalate " "
-                [ "text-info"
-                , isSelected ? "visible" $ "hidden"
-                ]
-            }
-          ]
+          H.text $ nbsp 1
+        ,
+          H.text $ lastname
         ]
+      ,
+        B.div'
+        { className: "graph-contact-list__item__subtitle" }
+        labs
       ]

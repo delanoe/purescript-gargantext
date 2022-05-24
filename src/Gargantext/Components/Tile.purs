@@ -7,7 +7,7 @@ import Gargantext.Prelude
 
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Routes (Tile)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R

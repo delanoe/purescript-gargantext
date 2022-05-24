@@ -9,7 +9,7 @@ import Data.Maybe (Maybe(..))
 import Data.UUID (UUID)
 import Data.UUID as UUID
 import Effect (Effect)
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.ErrorsView (errorsView)
 import Gargantext.Components.Footer (footer)
 import Gargantext.Components.Forest (forestLayout)
@@ -31,6 +31,7 @@ import Gargantext.Components.Nodes.Texts as Texts
 import Gargantext.Components.Tile (tileBlock)
 import Gargantext.Components.TopBar as TopBar
 import Gargantext.Config (defaultFrontends, defaultBackends)
+import Gargantext.Context.Session as SessionContext
 import Gargantext.Ends (Backend)
 import Gargantext.Hooks.Resize (ResizeType(..), useResizeHandler)
 import Gargantext.Routes (AppRoute, Tile)
@@ -330,7 +331,12 @@ authedCpt = here.component "authed" cpt where
 
     case session' of
       Nothing -> pure $ home homeProps []
-      Just s  -> pure $ R.fragment [ content s, footer {} [] ]
+      Just s -> pure $
+        R.provideContext SessionContext.context s
+        [ content s
+        -- @TODO: used? (cf. other notes regarding footer)
+        , footer {} []
+        ]
     where
       homeProps = RE.pick props :: Record Props
 
@@ -463,20 +469,17 @@ graphExplorer :: R2.Component SessionNodeProps
 graphExplorer = R.createElement graphExplorerCpt
 graphExplorerCpt :: R.Component SessionNodeProps
 graphExplorerCpt = here.component "graphExplorer" cpt where
-  cpt props@{ boxes
-            , nodeId } _ = do
+  cpt props@{ nodeId } _ = do
     let
       sessionProps = RE.pick props :: Record SessionProps
 
       authedProps =
         Record.merge
         { content:
-            \session -> graphLayout
-                        { boxes
-                        , graphId: nodeId
-                        , key: "graphId-" <> show nodeId
-                        , session
-                        }
+            \_ -> graphLayout
+                  { graphId: nodeId
+                  , key: "graphId-" <> show nodeId
+                  }
 
         }
         sessionProps
@@ -489,19 +492,16 @@ phyloExplorer :: R2.Component SessionNodeProps
 phyloExplorer = R.createElement phyloExplorerCpt
 phyloExplorerCpt :: R.Component SessionNodeProps
 phyloExplorerCpt = here.component "phylo" cpt where
-  cpt props@{ boxes
-            , nodeId } _ = do
+  cpt props@{ nodeId } _ = do
     let
       sessionProps = (RE.pick props :: Record SessionProps)
 
       authedProps =
         Record.merge
         { content:
-            \session -> phyloLayout
-                        { boxes
-                        , nodeId
-                        , session
-                        }
+            \_ -> phyloLayout
+                  { nodeId
+                  }
         }
         sessionProps
 
@@ -620,13 +620,18 @@ contact = R.createElement contactCpt
 contactCpt :: R.Component ContactProps
 contactCpt = here.component "contact" cpt where
   cpt props@{ annuaireId
-            , boxes
-            , nodeId } _ = do
-    let sessionProps = RE.pick props :: Record SessionProps
-    -- let forestedProps = RE.pick props :: Record Props
-    pure $ authed (Record.merge { content: \session ->
-                                   contactLayout { annuaireId
-                                                 , boxes
-                                                 , frontends: defaultFrontends
-                                                 , nodeId
-                                                 , session } [] } sessionProps) []
+            , nodeId
+            } _ = do
+    let
+      sessionProps = (RE.pick props :: Record SessionProps)
+
+      authedProps =
+        { content:
+            \_ -> contactLayout
+                  { nodeId
+                  , annuaireId
+                  , key: "annuaireId-" <> show annuaireId
+                  }
+        } `Record.merge` sessionProps
+
+    pure $ authed authedProps []

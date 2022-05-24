@@ -11,7 +11,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
 import Gargantext.Config.REST (RESTError, AffRESTError)
 import Gargantext.Config.Utils (handleRESTError)
@@ -62,7 +62,7 @@ loaderCpt = here.component "loader" cpt
     cpt { render, state } _ = do
       state' <- T.useLive T.unequal state
 
-      pure $ maybe (loadingSpinner {}) render state'
+      pure $ maybe (loadingSpinner { additionalClass: Nothing }) render state'
 
 type UseLoaderEffect path state =
   ( errorHandler :: RESTError -> Effect Unit
@@ -142,6 +142,7 @@ type LoaderWithCacheAPIProps path res ret =
   , mkRequest      :: path -> GUC.Request
   , path           :: path
   , renderer       :: ret -> R.Element
+  , spinnerClass   :: Maybe String
   )
 
 useLoaderWithCacheAPI :: forall path res ret.
@@ -153,7 +154,8 @@ useLoaderWithCacheAPI { boxes
                       , handleResponse
                       , mkRequest
                       , path
-                      , renderer } = do
+                      , renderer
+                      , spinnerClass } = do
   state <- T.useBox Nothing
   state' <- T.useLive T.unequal state
 
@@ -163,7 +165,7 @@ useLoaderWithCacheAPI { boxes
                            , mkRequest
                            , path
                            , state }
-  pure $ maybe (loadingSpinner {}) renderer state'
+  pure $ maybe (loadingSpinner { additionalClass: spinnerClass }) renderer state'
 
 type LoaderWithCacheAPIEffectProps path res ret = (
     boxes          :: Boxes

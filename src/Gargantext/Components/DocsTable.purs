@@ -25,7 +25,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Timer (setTimeout)
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..))
 import Gargantext.Components.Category (rating)
@@ -74,6 +74,7 @@ type Path a =
 type CommonProps =
   ( boxes          :: Boxes
   , cacheState     :: T.Box NT.CacheState
+  , chartReload :: T2.ReloadS
   , frontends      :: Frontends
   , listId         :: Int
   , mCorpusId      :: Maybe Int
@@ -88,8 +89,8 @@ type CommonProps =
   )
 
 type LayoutProps =
-  ( chart      :: R.Element
-  , showSearch :: Boolean
+  ( chart       :: R.Element
+  , showSearch  :: Boolean
   | CommonProps
   -- , path      :: Record (Path a)
   )
@@ -126,6 +127,7 @@ docViewCpt = here.component "docView" cpt where
   cpt { layout: { boxes
                 , cacheState
                 , chart
+                , chartReload
                 , frontends
                 , listId
                 , mCorpusId
@@ -204,20 +206,21 @@ docViewCpt = here.component "docView" cpt where
             ]
           , H.div {className: "col-md-12"}
             [ pageLayout { boxes
-                        , cacheState
-                        , frontends
-                        , key: "docView-" <> (show cacheState')
-                        , listId
-                        , mCorpusId
-                        , nodeId
-                        , params
-                        , query: query'
-                        , session
-                        , sidePanel
-                        , tabType
-                        , totalRecords
-                        , yearFilter
-                        } []
+                         , cacheState
+                         , chartReload
+                         , frontends
+                         , key: "docView-" <> (show cacheState')
+                         , listId
+                         , mCorpusId
+                         , nodeId
+                         , params
+                         , query: query'
+                         , session
+                         , sidePanel
+                         , tabType
+                         , totalRecords
+                         , yearFilter
+                         } []
             ]
           ]
         ]
@@ -434,6 +437,7 @@ pageLayoutCpt = here.component "pageLayout" cpt where
           , mkRequest
           , path
           , renderer: paint
+          , spinnerClass: Nothing
           }
       NT.CacheOff -> do
         localCategories <- T.useBox (Map.empty :: LocalUserScore)
@@ -448,7 +452,7 @@ pageLayoutCpt = here.component "pageLayout" cpt where
               pure $ handleResponse <$> eRes
         let render (Tuple count documents) = pagePaintRaw { documents
                                                           , layout: props' { params = paramsS'
-                                                                          , totalRecords = count }
+                                                                           , totalRecords = count }
                                                           , localCategories
                                                           , params: paramsS } []
         let errorHandler = logRESTError here "[pageLayout]"
@@ -515,9 +519,10 @@ type PagePaintRawProps =
 pagePaintRaw :: R2.Component PagePaintRawProps
 pagePaintRaw = R.createElement pagePaintRawCpt
 pagePaintRawCpt :: R.Component PagePaintRawProps
-pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
+pagePaintRawCpt = here.component "pagePaintRaw" cpt where
   cpt { documents
       , layout: { boxes
+                , chartReload
                 , frontends
                 , listId
                 , mCorpusId
@@ -539,7 +544,7 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
       { colNames
       , container: TT.defaultContainer
       , params
-      , rows: rows reload localCategories' mCurrentDocId'
+      , rows: rows reload chartReload localCategories' mCurrentDocId'
       , syncResetButton : [ H.div {} [] ]
       , totalRecords
       , wrapColElts
@@ -554,9 +559,9 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
           | otherwise = Routes.Document sid listId
         colNames = TT.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source", "Score" ]
         wrapColElts = const identity
-        rows reload localCategories' mCurrentDocId' = row reload <$> A.toUnfoldable documents
+        rows reload chartReload localCategories' mCurrentDocId' = row <$> A.toUnfoldable documents
           where
-            row reload dv@(DocumentsView r@{ _id, category }) =
+            row dv@(DocumentsView r@{ _id, category }) =
               { row:
                 TT.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
                             H.div { className: "" }
@@ -568,7 +573,8 @@ pagePaintRawCpt = here.component "pagePaintRawCpt" cpt where
                                   ]
                           --, H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
                           , H.div { className: "column-tag flex" }
-                                  [ rating { nodeId
+                                  [ rating { chartReload
+                                           , nodeId
                                            , row: dv
                                            , score: cat
                                            , setLocalCategories: \lc -> T.modify_ lc localCategories

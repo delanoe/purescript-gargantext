@@ -143,4 +143,3 @@ showUser { u_id
          , u_username
          , u_email } = "[" <> show u_id <> "] " <> u_username <> " :: " <> u_email
 showMUser u = maybe "" showUser u
-

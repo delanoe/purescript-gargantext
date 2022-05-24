@@ -24,7 +24,6 @@ import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Stores as Stores
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -66,7 +65,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     , sideTab
     , mouseSelectorSize
     , labelSize
-    } <- Stores.useStore GraphStore.context
+    } <- GraphStore.use
 
     forceAtlasState'    <- R2.useLive' forceAtlasState
     graph'              <- R2.useLive' graph

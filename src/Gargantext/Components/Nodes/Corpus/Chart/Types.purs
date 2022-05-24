@@ -3,7 +3,7 @@ module Gargantext.Components.Nodes.Corpus.Chart.Types where
 import Data.Maybe (Maybe)
 import Data.Tuple (Tuple)
 import Effect (Effect)
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Charts.Options.Type (EChartsInstance, MouseEvent)
 import Gargantext.Prelude (Unit)
 import Gargantext.Sessions (Session)

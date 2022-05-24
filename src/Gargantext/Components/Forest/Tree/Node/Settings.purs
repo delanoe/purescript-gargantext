@@ -116,6 +116,7 @@ settingsBox FolderPrivate =
                                 , Annuaire
                                 , NodeFrameWrite
                                 , NodeFrameCalc
+                                , NodeFrameNotebook
                                 ]
                           , Delete
                           ]
@@ -167,6 +168,7 @@ settingsBox Folder =
                                 , Annuaire
                                 , NodeFrameWrite
                                 , NodeFrameCalc
+                                , NodeFrameNotebook
                                 ]
                           , Move moveParameters
                           , Delete

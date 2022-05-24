@@ -9,7 +9,7 @@ import Data.Maybe (Maybe(..))
 import Data.Nullable (null)
 import Data.UUID as UUID
 import Effect (Effect)
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Hooks.LinkHandler (useLinkHandler)
 import Gargantext.Routes (AppRoute, Tile)
 import Gargantext.Utils.Popover as Popover

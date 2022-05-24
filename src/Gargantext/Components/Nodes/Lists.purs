@@ -4,7 +4,7 @@ import Gargantext.Prelude
 
 import Effect (Effect)
 import Effect.Aff (launchAff_)
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
@@ -49,12 +49,11 @@ listsLayoutWithKey :: R2.Component ( key :: String | Props )
 listsLayoutWithKey = R.createElement listsLayoutWithKeyCpt
 listsLayoutWithKeyCpt :: R.Component ( key :: String | Props )
 listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
-  cpt { boxes: boxes@{ reloadMainPage }
+  cpt { boxes
       , nodeId
       , session
       , sessionUpdate } _ = do
     activeTab <- T.useBox 0
-    _reloadMainPage' <- T.useLive T.unequal reloadMainPage
 
     let path = { nodeId, session }
 

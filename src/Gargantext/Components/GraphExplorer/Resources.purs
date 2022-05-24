@@ -12,7 +12,7 @@ import DOM.Simple.Types (Element)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.Themes (darksterTheme)
@@ -22,7 +22,6 @@ import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Utils (getter)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Stores as Stores
 import Reactix as R
 import Record (merge)
 import Toestand as T
@@ -31,8 +30,7 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Graph"
 
 type Props sigma forceatlas2 =
-  ( boxes                 :: Boxes
-  , elRef                 :: R.Ref (Nullable Element)
+  ( elRef                 :: R.Ref (Nullable Element)
   , forceAtlas2Settings   :: forceatlas2
   , sigmaRef              :: R.Ref Sigmax.Sigma
   , sigmaSettings         :: sigma
@@ -48,10 +46,11 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
   -- |
   cpt { elRef
       , sigmaRef
-      , boxes
       , forceAtlas2Settings: fa2
       , transformedGraph
       } _ = do
+
+    boxes <- AppStore.use
 
     { showEdges
     , graphStage
@@ -60,14 +59,13 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
     , selectedNodeIds
     , multiSelectEnabled
     , hyperdataGraph
-    } <- Stores.useStore GraphStore.context
+    } <- GraphStore.use
 
     showEdges'        <- R2.useLive' showEdges
     graphStage'       <- R2.useLive' graphStage
     graph'            <- R2.useLive' graph
     startForceAtlas'  <- R2.useLive' startForceAtlas
     hyperdataGraph'   <- R2.useLive' hyperdataGraph
-    selectedNodeIds'  <- R2.useLive' selectedNodeIds
 
     -- | Hooks
     -- |
@@ -144,9 +142,12 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
       _ -> pure unit
 
     -- Stage ready
-    -- (?) Probably this can be optimized to re-mark selected nodes only when
-    --     they changed → done on #375
-    R.useEffect1' selectedNodeIds' case graphStage' of
+    --
+    -- @TODO Probably this can be optimized to re-mark selected nodes only when
+    --       they changed → one solution could be to list every effects subject
+    --       to a graph transformation (eg. "showLouvain", "edgeConfluence",
+    --       etc) // drawback: don't forget to modify the effect white-list
+    R.useEffect' case graphStage' of
 
       GET.Ready -> do
         let tEdgesMap = SigmaxTypes.edgesGraphMap transformedGraph
@@ -157,7 +158,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
           Sigmax.updateEdges sigma tEdgesMap
           Sigmax.updateNodes sigma tNodesMap
           let edgesState = not $ SigmaxTypes.edgeStateHidden showEdges'
-          here.log2 "[graphCpt] edgesState" edgesState
+          -- here.log2 "[graphCpt] edgesState" edgesState
           Sigmax.setEdges sigma edgesState
 
       _ -> pure unit

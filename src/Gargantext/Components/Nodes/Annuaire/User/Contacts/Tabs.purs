@@ -7,12 +7,11 @@ import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.DocsTable.Types (Year)
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Components.NgramsTable.Core as NTC
-import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (ContactData')
 import Gargantext.Components.Nodes.Lists.Types as LTypes
 import Gargantext.Components.Nodes.Texts.Types as TTypes
 import Gargantext.Components.Tab as Tab
@@ -20,6 +19,7 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType(..), PTabNgramType(..), TabSubType(..), TabType(..))
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Toestand as T
 
@@ -72,10 +72,11 @@ tabsCpt = here.component "tabs" cpt
         } _ = do
       activeTab <- T.useBox 0
       yearFilter <- T.useBox (Nothing :: Maybe Year)
+      chartReload <- T.useBox T2.newReload
 
-      pure $ Tab.tabs { activeTab, tabs: tabs' yearFilter }
+      pure $ Tab.tabs { activeTab, tabs: tabs' yearFilter chartReload }
       where
-        tabs' yearFilter =
+        tabs' yearFilter chartReload =
           [ "Documents"     /\ docs
           , "Patents"       /\ ngramsView patentsView []
           , "Books"         /\ ngramsView booksView []
@@ -110,6 +111,7 @@ tabsCpt = here.component "tabs" cpt
               { boxes
               , cacheState
               , chart
+              , chartReload
               , frontends
               , listId: defaultListId
               , mCorpusId: Nothing

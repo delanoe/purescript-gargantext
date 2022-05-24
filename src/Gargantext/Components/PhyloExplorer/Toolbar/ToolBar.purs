@@ -7,6 +7,7 @@ import Gargantext.Prelude
 import Effect (Effect)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
+import Gargantext.Components.PhyloExplorer.Store as PhyloStore
 import Gargantext.Components.PhyloExplorer.Types (DisplayView(..))
 import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
@@ -16,10 +17,8 @@ import Toestand as T
 
 type Props =
   ( resetViewCallback   :: Unit -> Effect Unit
-  , displayView         :: DisplayView
   , changeViewCallback  :: DisplayView -> Effect Unit
   , exportCallback      :: Unit -> Effect Unit
-  , isolineBox          :: T.Box Boolean
   , unselectCallback    :: Unit -> Effect Unit
   )
 
@@ -32,16 +31,19 @@ toolBar = R2.leaf component
 component :: R.Component Props
 component = here.component "main" cpt where
   cpt { resetViewCallback
-      , displayView
       , changeViewCallback
       , exportCallback
-      , isolineBox
       , unselectCallback
       } _ = do
-    -- States
-    isIsolineDisplayed <- R2.useLive' isolineBox
+    -- | States
+    { isIsolineDisplayed
+    , displayView
+    } <- PhyloStore.use
 
-    -- Render
+    displayView'        <- R2.useLive' displayView
+    isIsolineDisplayed' <- R2.useLive' isIsolineDisplayed
+
+    -- | Render
     pure $
 
       H.div
@@ -76,7 +78,7 @@ component = here.component "main" cpt where
             { title: "Show emergence label only"
             , callback: \_ -> changeViewCallback HeadingMode
             , variant: OutlinedButtonVariant Secondary
-            , className: displayView == HeadingMode ?
+            , className: displayView' == HeadingMode ?
                 "active" $
                 ""
             }
@@ -89,7 +91,7 @@ component = here.component "main" cpt where
             { title: "Show node inner labels"
             , callback: \_ -> changeViewCallback LabelMode
             , variant: OutlinedButtonVariant Secondary
-            , className: displayView == LabelMode ?
+            , className: displayView' == LabelMode ?
                 "active" $
                 ""
             }
@@ -122,8 +124,8 @@ component = here.component "main" cpt where
         [
           -- Isoline button
           B.button
-          { callback: \_ -> T.modify_ not isolineBox
-          , variant: isIsolineDisplayed ?
+          { callback: \_ -> T.modify_ not isIsolineDisplayed
+          , variant: isIsolineDisplayed' ?
               ButtonVariant Secondary $
               OutlinedButtonVariant Secondary
           }

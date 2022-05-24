@@ -3,6 +3,7 @@ module Gargantext.Components.Nodes.Corpus.Chart.Common where
 import Gargantext.Prelude
 
 import Data.Array as A
+import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Gargantext.Components.Nodes.Corpus.Chart.Types (MetricsProps, ReloadPath)
 import Gargantext.Config.REST (AffRESTError)
@@ -86,4 +87,5 @@ metricsWithCacheLoadViewCpt = here.component "metricsWithCacheLoadView" cpt
                             , handleResponse
                             , mkRequest
                             , path: (reload' /\ path)
-                            , renderer: loaded { boxes, path, reload, session, onClick, onInit } }
+                            , renderer: loaded { boxes, path, reload, session, onClick, onInit }
+                            , spinnerClass: Just "echarts-for-react-spinner" }

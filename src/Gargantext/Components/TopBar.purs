@@ -3,7 +3,7 @@ module Gargantext.Components.TopBar where
 import Gargantext.Prelude
 
 import Data.Foldable (intercalate)
-import Gargantext.Components.App.Data (Boxes)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
 import Gargantext.Components.Lang (langSwitcher, allFeLangs)

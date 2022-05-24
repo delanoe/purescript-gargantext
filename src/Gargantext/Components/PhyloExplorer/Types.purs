@@ -10,6 +10,7 @@ module Gargantext.Components.PhyloExplorer.Types
   , TabView(..)
   , ExtractedTerm(..)
   , ExtractedCount(..)
+  , FrameDoc(..)
   ) where
 
 import Gargantext.Prelude
@@ -27,6 +28,7 @@ import Data.String.Extra (camelCase)
 import Data.Tuple as Tuple
 import Data.Tuple.Nested ((/\))
 import Gargantext.Components.PhyloExplorer.JSON (PhyloJSONSet(..), RawEdge(..), RawObject(..))
+import Gargantext.Types (NodeID)
 import Simple.JSON as JSON
 
 
@@ -321,6 +323,7 @@ newtype ExtractedTerm = ExtractedTerm
  , ratio :: Number
  }
 
+derive instance Newtype ExtractedTerm _
 derive instance Generic ExtractedTerm _
 derive instance Eq ExtractedTerm
 instance Show ExtractedTerm where show = genericShow
@@ -484,3 +487,14 @@ newtype ExtractedCount = ExtractedCount
 derive instance Generic ExtractedCount _
 derive instance Eq ExtractedCount
 derive newtype instance JSON.ReadForeign ExtractedCount
+
+-----------------------------------------------------------
+
+newtype FrameDoc = FrameDoc
+  { docId     :: NodeID
+  , corpusId  :: NodeID
+  , listId    :: NodeID
+  }
+
+derive instance Generic FrameDoc _
+derive instance Eq FrameDoc

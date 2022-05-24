@@ -4,6 +4,7 @@ module Gargantext.Components.GraphExplorer.Store
   , options
   , context
   , provide
+  , use
   ) where
 
 import Gargantext.Prelude
@@ -120,3 +121,6 @@ context = R.createContext $ unsafeCoerce unit
 
 provide :: Record State -> Array R.Element -> R.Element
 provide values = Stores.provideStore here.name values context
+
+use :: R.Hooks (Record Store)
+use = Stores.useStore context

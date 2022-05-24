@@ -6,7 +6,7 @@ import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Variant(..))
+import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Elevation(..), Variant(..))
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
@@ -62,7 +62,7 @@ graphUpdateButtonCpt = here.component "graphUpdateButton" cpt
         B.iconButton
         { className: "mainleaf__update-icon"
         , variant: Secondary
-        , overlay: true
+        , elevation: Level1
         , status: enabled' ? Enabled $ Disabled
         , callback: const $ onClick enabled' enabled
         , name: "refresh"

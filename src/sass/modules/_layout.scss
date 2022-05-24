@@ -48,7 +48,7 @@ $overlay-radius: 5px;
 }
 
 
-@mixin sidebar() {
+@mixin term-window() {
   @include hidden-scrollbar;
 
   $teaser-height: 16px;

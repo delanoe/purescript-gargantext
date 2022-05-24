@@ -7,23 +7,22 @@ import Gargantext.Prelude
 import DOM.Simple (document, querySelector)
 import Data.Maybe (Maybe(..), isJust)
 import Data.Tuple.Nested ((/\))
-import Gargantext.Components.App.Data (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.PhyloExplorer.API (get)
 import Gargantext.Components.PhyloExplorer.Layout (layout)
+import Gargantext.Components.PhyloExplorer.Store as PhyloStore
 import Gargantext.Components.PhyloExplorer.Types (PhyloDataSet)
 import Gargantext.Config.REST (logRESTError)
 import Gargantext.Hooks.Loader (useLoaderEffect)
-import Gargantext.Sessions (Session)
+import Gargantext.Hooks.Session (useSession)
 import Gargantext.Types (NodeID)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record as Record
 
 type MainProps =
   ( nodeId      :: NodeID
-  , session     :: Session
-  , boxes       :: Boxes
   )
 
 here :: R2.Here
@@ -34,13 +33,12 @@ phyloLayout = R2.leaf phyloLayoutCpt
 
 phyloLayoutCpt :: R.Component MainProps
 phyloLayoutCpt = here.component "main" cpt where
-  cpt { nodeId, session } _ = do
-
+  cpt { nodeId } _ = do
     -- | States
     -- |
+    session <- useSession
 
     state' /\ state <- R2.useBox' Nothing
-
 
     -- | Computed
     -- |
@@ -49,8 +47,8 @@ phyloLayoutCpt = here.component "main" cpt where
       errorHandler = logRESTError here "[phylo]"
 
       handler (phyloDataSet :: PhyloDataSet) =
-        layout
-        { nodeId
+        hydrateStore
+        { phyloId: nodeId
         , phyloDataSet
         }
 
@@ -64,6 +62,7 @@ phyloLayoutCpt = here.component "main" cpt where
       , path: nodeId
       , state
       }
+
 
     -- @XXX: Runtime odd behavior
     --       cannot use the `useEffect` + its cleanup function within the
@@ -126,3 +125,40 @@ phyloLayoutCpt = here.component "main" cpt where
       , defaultSlot:
           R2.fromMaybe_ state' handler
       }
+
+--------------------------------------------------------
+
+type HydrateStoreProps =
+  ( phyloDataSet :: PhyloDataSet
+  , phyloId      :: NodeID
+  )
+
+hydrateStore :: R2.Leaf HydrateStoreProps
+hydrateStore = R2.leaf hydrateStoreCpt
+
+hydrateStoreCpt :: R.Component HydrateStoreProps
+hydrateStoreCpt = here.component "layout" cpt where
+  cpt { phyloDataSet
+      , phyloId
+      } _ = do
+    -- | Computed
+    -- |
+    let
+      state :: Record PhyloStore.State
+      state =
+        -- Data
+        { phyloDataSet
+        , phyloId
+        -- (default options)
+        } `Record.merge` PhyloStore.options
+
+    -- | Render
+    -- |
+    pure $
+
+      PhyloStore.provide
+      state
+      [
+        layout
+        {}
+      ]

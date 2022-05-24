@@ -17,6 +17,7 @@ import Gargantext.Components.GraphQL.User (User, UserInfo, UserInfoM)
 import Gargantext.Ends (Backend(..))
 import Gargantext.Sessions (Session(..))
 import Gargantext.Utils.Reactix as R2
+import Gargnatext.Components.GraphQL.Contact (AnnuaireContact)
 import GraphQL.Client.Args (type (==>))
 import GraphQL.Client.BaseClients.Urql (UrqlClient, createClient)
 import GraphQL.Client.Query (queryWithDecoder)
@@ -64,16 +65,18 @@ queryGql session name q = do
   --query client name q
   client <- liftEffect $ getClient session
   gqlQuery (client :: Client UrqlClient Schema Mutation Void) name q
-  
-  --query_ "http://localhost:8008/gql" (Proxy :: Proxy Schema) 
+
+  --query_ "http://localhost:8008/gql" (Proxy :: Proxy Schema)
 
 -- Schema
 type Schema
   = { imt_schools :: {} ==> Array GQLIMT.School
+    , nodes :: { node_id :: Int } ==> Array Node
     , node_parent :: { node_id :: Int, parent_type :: String } ==> Array Node  -- TODO: parent_type :: NodeType
     , user_infos :: { user_id :: Int } ==> Array UserInfo
     , users :: { user_id :: Int } ==> Array User
     , tree :: { root_id :: Int } ==> TreeFirstLevel
+    , annuaire_contacts :: { contact_id :: Int } ==> Array AnnuaireContact
     }
 
 type Mutation
