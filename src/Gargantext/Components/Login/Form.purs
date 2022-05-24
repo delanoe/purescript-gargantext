@@ -1,6 +1,6 @@
 module Gargantext.Components.Login.Form where
 
-import Prelude (Unit, bind, discard, notEq, pure, show, ($), (&&), (*>), (<>))
+import Prelude (Unit, bind, discard, not, notEq, pure, show, ($), (&&), (*>), (<>))
 import Data.Either (Either(..))
 import DOM.Simple.Event as DE
 import Effect (Effect)
@@ -13,8 +13,8 @@ import Reactix.DOM.HTML as H
 import Toestand as T
 import Toestand (useFocusedFields)
 
-import Gargantext.Components.Login.Types (AuthRequest(..))
 import Gargantext.Components.Forms (clearfix, formGroup)
+import Gargantext.Components.Login.Types (AuthRequest(..), FormType(..))
 import Gargantext.Ends (Backend)
 import Gargantext.Sessions as Sessions
 import Gargantext.Sessions (Sessions, postAuthRequest)
@@ -45,6 +45,7 @@ formBoxes box = useFocusedFields box {}
 
 type Props s v =
   ( backend  :: Backend
+  , formType :: T.Box FormType
   , sessions :: s
   , visible  :: v
   )
@@ -55,7 +56,7 @@ form props = R.createElement formCpt props []
 formCpt :: forall s v. T.ReadWrite s Sessions => T.ReadWrite v Boolean
         => R.Component (Props s v)
 formCpt = here.component "form" cpt where
-  cpt { backend, sessions, visible } _ = do
+  cpt { backend, formType, sessions, visible } _ = do
     cell    <- T.useBox emptyForm
     cursors <- useFocusedFields cell {}
     pure $ R2.row
@@ -70,7 +71,8 @@ formCpt = here.component "form" cpt where
           [ passwordInput cursors.password
           , clearfix ]
         , termsCheckbox cursors.agreed
-        , submitButton { backend, sessions, visible, cell }
+        , forgotPassword { formType }
+        , submitButton { backend, formType, sessions, visible, cell }
         ]]
 
 -- might be wrong, all we care about is preventDefault
@@ -87,18 +89,15 @@ submitButton
   :: forall s v. T.ReadWrite s Sessions => T.Write v Boolean
   => R2.Leaf (SubmitButtonProps s v)
 submitButton = R2.leafComponent submitButtonCpt
-
 submitButtonCpt
   :: forall s v. T.ReadWrite s Sessions => T.Write v Boolean
   => R.Component (SubmitButtonProps s v)
 submitButtonCpt = here.component "submitButton" cpt where
-  cpt { backend, sessions, visible, cell } _ = do
+  cpt { backend, formType, sessions, visible, cell } _ = do
     { agreed, username, password } <- T.useLive T.unequal cell
-    pure $ 
-      if agreed && (username `notEq` "") && (password `notEq` "")
-      then H.div { className: "text-center" }
-           [ loginSubmit $ submitForm { backend, sessions, visible } cell ]
-      else H.div {} []
+    let isValid = agreed && (username `notEq` "") && (password `notEq` "")
+    pure $ H.div { className: "text-center" }
+           [ loginSubmit isValid $ submitForm { backend, formType, sessions, visible } cell ]
     
 -- Attempts to submit the form
 submitForm :: forall s v. T.ReadWrite s Sessions => T.Write v Boolean
@@ -157,9 +156,28 @@ passwordInput value =
   , id:   "id_password"
   }
 
-loginSubmit :: (ChangeEvent -> Effect Unit) -> R.Element
-loginSubmit click =
-  H.button { id, className, type: "submit", on: { click } }
+loginSubmit :: Boolean -> (ChangeEvent -> Effect Unit) -> R.Element
+loginSubmit isEnabled click =
+  H.button { id
+           , className
+           , disabled: not isEnabled
+           , type: "submit"
+           , on: { click } }
   [ H.text "Login" ] where
     id = "login-button"
     className = "btn btn-primary btn-rounded"
+
+type ForgotPasswordProps =
+  ( formType :: T.Box FormType )
+
+forgotPassword :: R2.Leaf ForgotPasswordProps
+forgotPassword = R2.leaf forgotPasswordCpt
+forgotPasswordCpt :: R.Component ForgotPasswordProps
+forgotPasswordCpt = here.component "forgotPassword" cpt where
+  cpt { formType } _ = do
+    pure $ H.div { className: "form-group text-center" }
+      [ H.button { className: "btn btn-danger"
+                 , on: { click } } [ H.text "Forgot password" ]
+      ]
+    where
+      click _ = T.write_ ForgotPassword formType
