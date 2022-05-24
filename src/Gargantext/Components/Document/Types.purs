@@ -1,4 +1,4 @@
-module Gargantext.Components.Nodes.Corpus.Document.Types where
+module Gargantext.Components.Document.Types where
 
 import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
@@ -28,11 +28,6 @@ type LoadedData =
   { document    :: NodeDocument
   , ngramsTable :: VersionedNgramsTable
   }
-
-type Props = (
-    loaded         :: LoadedData
-  , path           :: DocPath
-  )
 
 -- This is a subpart of NgramsTable.State.
 type State = CoreState ()
@@ -182,4 +177,3 @@ defaultDocument =
            --, url                : Nothing
            --, text               : Nothing
            }
-

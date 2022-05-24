@@ -27,8 +27,6 @@
 /* Grid constants */
 
 $graph-margin: 16px;
-
-$layout-height: calc(100vh - #{ $topbar-height} );
 $graph-height: calc(100vh - #{ $topbar-height } - #{ $graph-margin * 2 });
 
 $isoline-height: 174px;
@@ -312,6 +310,7 @@ $decreasing-color: #11638F;
 
 .phylo {
   position: relative;
+  z-index: 0; // new stacking context "phylo"
   width: 100%;
   height: $layout-height;
 
@@ -328,7 +327,7 @@ $decreasing-color: #11638F;
     @include fit-positions;
 
     position: absolute;
-    z-index: z-index("phylo-layout", "spinner");
+    z-index: z-index('phylo', 'spinner');
     background: $body-bg;
   }
 
@@ -351,7 +350,7 @@ $decreasing-color: #11638F;
 
     position: absolute;
     display: flex;
-    z-index: z-index('phylo-layout', 'frame');
+    z-index: z-index('phylo', 'frame');
     width: 100%;
     height: $sidebar-height;
     justify-content: flex-end;

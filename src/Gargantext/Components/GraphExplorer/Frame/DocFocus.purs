@@ -9,8 +9,8 @@ import Effect (Effect)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (Elevation(..))
 import Gargantext.Components.GraphExplorer.Types (GraphSideDoc(..))
-import Gargantext.Components.Nodes.Corpus.Document (documentMainLayout)
-import Gargantext.Sessions (Session)
+import Gargantext.Components.Nodes.Corpus.Document (node)
+import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -34,8 +34,6 @@ docFocusCpt = here.component "main" cpt where
       , session
       , closeCallback
       } _ = do
-
-
     -- | Render
     -- |
     pure $
@@ -57,12 +55,11 @@ docFocusCpt = here.component "main" cpt where
         { className: "graph-doc-focus__body" }
         [
           -- print the document node
-          documentMainLayout
+          node
           { listId
           , mCorpusId: Just corpusId
           , nodeId: docId
-          , session
+          , key: show (sessionId session) <> "-" <> show docId
           }
-          []
         ]
       ]

@@ -20,14 +20,18 @@ import Gargantext.Components.GraphExplorer.Types (CorpusId, DocId, GraphSideDoc(
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Search (SearchQuery(..), SearchType(..))
+import Gargantext.Config (defaultFrontends)
 import Gargantext.Config.REST (RESTError(..))
+import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Hooks.UpdateEffect (useUpdateEffect1')
-import Gargantext.Sessions (Session)
+import Gargantext.Routes as Routes
+import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
+import React.SyntheticEvent as SE
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
@@ -94,6 +98,7 @@ docListWrapperCpt = here.component "wrapper" cpt where
             , corpusId
             , listId: metaData.list.listId
             , showDoc
+            , frontends: defaultFrontends
             }
 
           _ /\ _ ->
@@ -113,6 +118,7 @@ type ListProps =
   , listId          :: ListId
   , session         :: Session
   , showDoc         :: T.Box (Maybe GraphSideDoc)
+  , frontends       :: Frontends
   )
 
 docList :: R2.Leaf ListProps
@@ -135,6 +141,7 @@ docListCpt = here.component "main" cpt where
       , corpusId: nodeId
       , listId
       , showDoc
+      , frontends
       } _ = do
     -- | States
     -- |
@@ -213,11 +220,11 @@ docListCpt = here.component "main" cpt where
     -- |
     pure $
 
-      R2.fromMaybe_ rows' \results ->
+      R2.fromMaybe rows' \results ->
 
         R.fragment
         [
-          R2.if' (results == Seq.empty) $
+          R2.when (results == Seq.empty) $
 
             B.caveat
             {}
@@ -225,7 +232,7 @@ docListCpt = here.component "main" cpt where
               H.text "No document found in your corpus for your selected terms"
             ]
         ,
-          R2.if' (not $ eq results Seq.empty) $
+          R2.when (not $ eq results Seq.empty) $
 
             H.ul
             { className: intercalate " "
@@ -239,6 +246,10 @@ docListCpt = here.component "main" cpt where
               { documentView: (r :: DocumentsView)
               , callback: callback showDoc'
               , isSelected: isSelected showDoc' (r :: DocumentsView)
+              , listId
+              , corpusId: nodeId
+              , session
+              , frontends
               }
         ]
 
@@ -249,6 +260,10 @@ type ItemProps =
   ( documentView :: DocumentsView
   , callback     :: DocId -> Effect Unit
   , isSelected   :: Boolean
+  , corpusId     :: CorpusId
+  , listId       :: ListId
+  , session      :: Session
+  , frontends    :: Frontends
   )
 
 item :: R2.Leaf ItemProps
@@ -259,23 +274,40 @@ itemCpt = here.component "item" cpt where
   cpt { documentView: dv@(DocumentsView { id, title, source })
       , callback
       , isSelected
+      , listId
+      , corpusId
+      , session
+      , frontends
       } _ = do
     -- Computed
-    -- let
+    let
       -- Creating a href link
-      -- documentUrl id' { listId, nodeId } =
-      --   url frontends $ Routes.CorpusDocument (sessionId session) nodeId listId id'
+      route = Routes.CorpusDocument (sessionId session) corpusId listId id
+      href = url frontends route
+
+    -- Methods
+    let
+      onClick ::
+           SE.SyntheticMouseEvent
+        -> Effect Unit
+      onClick event
+          = R2.externalOpeningFlag event
+        >>= case _ of
+              true  -> R.nothing
+              false -> SE.preventDefault event *> callback id
 
     -- Render
     pure $
 
-      H.div
+      H.a
       { className: intercalate " "
           [ "graph-doc-list__item"
           , isSelected ? "graph-doc-list__item--selected" $ ""
           , "list-group-item"
+          , "text-decoration-none"
           ]
-      , on: { click: \_ -> callback id }
+      , on: { click: onClick }
+      , href
       }
       [
         B.ripple
