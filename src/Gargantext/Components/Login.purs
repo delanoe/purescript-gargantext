@@ -12,6 +12,8 @@ import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Login.Form (form)
+import Gargantext.Components.Login.ForgotPassword (forgotPassword)
+import Gargantext.Components.Login.Types (FormType(..))
 import Gargantext.Components.NgramsTable.Loader as NTL
 import Gargantext.Ends (Backend(..))
 import Gargantext.Hooks.Loader as GHL
@@ -39,12 +41,13 @@ type Props =
 
 login :: R2.Leaf Props
 login = R2.leaf loginCpt
-
 loginCpt :: R.Component Props
 loginCpt = here.component "login" cpt where
   cpt props@{ sessions, visible } _ = do
     -- States
     mBackend <- R2.useLive' props.backend
+    formType <- T.useBox Login
+    formType' <- T.useLive T.unequal formType
     -- Render
     pure $
 
@@ -55,12 +58,13 @@ loginCpt = here.component "login" cpt where
       [
         case mBackend of
           Nothing      -> chooser props
-          Just backend -> form { backend, sessions, visible }
+          Just backend -> case formType' of
+                               Login -> form { backend, formType, sessions, visible }
+                               ForgotPassword -> forgotPassword { backend, sessions }
       ]
 
 chooser :: R2.Leaf Props
 chooser = R2.leafComponent chooserCpt
-
 chooserCpt :: R.Component Props
 chooserCpt = here.component "chooser" cpt where
   cpt { backend, backends, sessions } _ = do
