@@ -166,29 +166,35 @@ folderCpt = here.component "folderCpt" cpt where
         R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
 
     pure $
-        H.div {} [
-        H.span{style: {position: "absolute"}} [ Popover.popover {
-            arrow: false
-          , open: false
-          , onClose: \_ -> pure unit
-          , onOpen:  \_ -> pure unit
-          , ref: popoverRef
-          } [
-              popOverIcon
-              , mNodePopupView (Record.merge props { dispatch }) (onPopoverClose popoverRef)
-              ]]
-      , H.button {on: {click: \_ -> goToRoute $ route linkId rootId linkNodeType sid }, className: "btn btn-primary fv btn" } [
-          H.i {className: icon style nodeType} []
-        , H.br {}
-        , H.text text]]
+      H.div {}
+      [ H.span { style: { position: "absolute" } }
+        [ Popover.popover {
+             arrow: false
+             , open: false
+             , onClose: \_ -> pure unit
+             , onOpen:  \_ -> pure unit
+             , ref: popoverRef
+             }
+          [ popOverIcon
+          , mNodePopupView (Record.merge props { dispatch }) (onPopoverClose popoverRef)
+          ]
+        ]
+        , H.button { className: "btn btn-primary fv btn"
+                   , on: {click: \_ -> goToRoute $ route linkId rootId linkNodeType sid }
+                   }
+          [ H.i {className: icon style nodeType} []
+          , H.br {}
+          , H.text text
+          ]
+        ]
 
   onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
 
-  popOverIcon = H.span { className: "fv action" } [
-        H.a { className: "settings fa fa-cog"
-          , title : "Each node of the Tree can perform some actions.\n"
-            <> "Click here to execute one of them." } []
-      ]
+  popOverIcon = H.span { className: "fv action" }
+                [ H.a { className: "settings fa fa-cog"
+                      , title : "Each node of the Tree can perform some actions.\n"
+                        <> "Click here to execute one of them." } []
+                ]
 
   mNodePopupView props opc = nodePopupView { boxes: props.boxes
                                            , dispatch: props.dispatch
