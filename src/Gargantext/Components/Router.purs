@@ -604,10 +604,10 @@ routeFrameCpt = here.component "routeFrame" cpt where
         Record.merge
         { content:
             \session ->
-              Frame.frameLayout
+              Frame.node
               { nodeId
               , nodeType
-              , session
+              , key: show (sessionId session) <> "-" <> show nodeId
               }
 
         }
