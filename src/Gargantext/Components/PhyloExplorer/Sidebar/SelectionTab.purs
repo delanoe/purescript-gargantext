@@ -76,7 +76,7 @@ component = R.hooksComponent componentName cpt where
       { className: "phylo-selection-tab" }
       [
         -- No result
-        R2.if' (not haveSelection) $
+        R2.when (not haveSelection) $
 
           B.caveat
           { className: "phylo-selection-tab__nil" }
@@ -201,17 +201,17 @@ component = R.hooksComponent componentName cpt where
             ]
       ,
         -- (separator)
-        R2.if' (haveSelection) $
+        R2.when (haveSelection) $
 
           H.div
           { className: "phylo-selection-tab__separator" }
           [
             B.icon
-            { name: "angle-down" }
+            { name: "angle-double-down" }
           ]
       ,
         -- No extracted result
-        R2.if' (haveSelection && null extractedTerms) $
+        R2.when (haveSelection && null extractedTerms) $
 
           H.div
           { className: "phylo-selection-tab__selection" }
@@ -224,7 +224,7 @@ component = R.hooksComponent componentName cpt where
           ]
       ,
         -- Extracted Results
-        R2.if' (not null extractedTerms) $
+        R2.when (not null extractedTerms) $
 
           H.div
           { className: "phylo-selection-tab__selection" }
@@ -260,7 +260,7 @@ component = R.hooksComponent componentName cpt where
                 flip mapWithIndex extractedTerms
                   \index (ExtractedTerm { label, ratio }) ->
 
-                    R2.if'
+                    R2.when
                     (
                       truncateResults == false
                     || index < maxTruncateResult
@@ -284,7 +284,7 @@ component = R.hooksComponent componentName cpt where
                         ]
                       ]
               ,
-                R2.if' (truncateResults) $
+                R2.when (truncateResults) $
 
                   B.button
                   { variant: ButtonVariant Light
@@ -300,17 +300,17 @@ component = R.hooksComponent componentName cpt where
           ]
       -- ,
         -- (separator)
-        -- R2.if' (not null extractedTerms) $
+        -- R2.when (not null extractedTerms) $
 
         --   H.div
         --   { className: "phylo-selection-tab__separator" }
         --   [
         --     B.icon
-        --     { name: "angle-down" }
+        --     { name: "angle-double-down" }
         --   ]
       -- ,
         -- Extracted Docs
-        -- R2.if' (not null extractedTerms) $
+        -- R2.when (not null extractedTerms) $
       ]
 
 termFontSize :: Number -> String

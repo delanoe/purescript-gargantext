@@ -434,7 +434,7 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
 
       pure $
 
-        R2.fromMaybe_ droppedFile' \df ->
+        R2.fromMaybe droppedFile' \df ->
 
           H.div
           tooltipProps

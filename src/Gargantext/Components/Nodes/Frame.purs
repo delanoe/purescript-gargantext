@@ -83,10 +83,10 @@ type Base = String
 type FrameId = String
 
 hframeUrl :: NodeType -> Base -> FrameId -> String
-hframeUrl NodeFrameNotebook _ frame_id = frame_id  -- Temp fix : frame_id is currently the whole url created
-hframeUrl NodeFrameCalc  base frame_id = base <> "/" <> frame_id
-hframeUrl NodeFrameVisio base frame_id = base <> "/" <> frame_id
-hframeUrl _ base frame_id = base <> "/" <> frame_id <> "?view" -- "?both"
+hframeUrl NodeFrameNotebook base frame_id = base <> "/" <> frame_id  -- Temp fix : frame_id is currently the whole url created
+hframeUrl NodeFrameCalc  base frame_id    = base <> "/" <> frame_id
+hframeUrl NodeFrameVisio base frame_id    = base <> "/" <> frame_id
+hframeUrl _ base frame_id                 = base <> "/" <> frame_id <> "?view" -- "?both"
 
 frameLayoutView :: R2.Leaf ViewProps
 frameLayoutView = R2.leafComponent frameLayoutViewCpt

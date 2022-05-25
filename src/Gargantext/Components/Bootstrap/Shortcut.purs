@@ -11,6 +11,7 @@ module Gargantext.Components.Bootstrap.Shortcut
   , b', b_
   , code', code_
   , label', label_
+  , p', p_
   ) where
 
 import Reactix as R
@@ -112,3 +113,11 @@ label' props content = H.label props [ H.text content ]
 -- | Shorthand for using HTML <label> without writing its text node nor props
 label_ :: String -> R.Element
 label_ content = H.label {} [ H.text content ]
+
+-- | Shorthand for using HTML <p> without writing its text node
+p' :: forall r. Record r -> String -> R.Element
+p' props content = H.p props [ H.text content ]
+
+-- | Shorthand for using HTML <p> without writing its text node nor props
+p_ :: String -> R.Element
+p_ content = H.p {} [ H.text content ]

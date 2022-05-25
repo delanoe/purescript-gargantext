@@ -84,8 +84,8 @@ initialParams :: Params
 initialParams = stateParams {page: 1, pageSize: PS10, orderBy: Nothing, searchType: SearchDoc}
 -- TODO: Not sure this is the right place for this
 
-tableHeaderWithRenameLayout :: R2.Component TableHeaderWithRenameLayoutProps
-tableHeaderWithRenameLayout = R.createElement tableHeaderWithRenameLayoutCpt
+tableHeaderWithRenameLayout :: R2.Leaf TableHeaderWithRenameLayoutProps
+tableHeaderWithRenameLayout = R2.leaf tableHeaderWithRenameLayoutCpt
 
 tableHeaderWithRenameLayoutCpt :: R.Component TableHeaderWithRenameLayoutProps
 tableHeaderWithRenameLayoutCpt = here.component "tableHeaderWithRenameLayoutCpt" cpt

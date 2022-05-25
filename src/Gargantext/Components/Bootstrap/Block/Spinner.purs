@@ -36,14 +36,15 @@ component :: R.Component Props
 component = R.hooksComponent componentName cpt where
   cpt props _ = do
     -- Computed
-    className <- pure $ intercalate " "
-      -- provided custom className
-      [ props.className
-      -- BEM classNames
-      , componentName
-      -- Bootstrap specific classNames
-      , bootstrapName <> "-" <> show props.theme
-      ]
+    let
+      className = intercalate " "
+        -- provided custom className
+        [ props.className
+        -- BEM classNames
+        , componentName
+        -- Bootstrap specific classNames
+        , bootstrapName <> "-" <> show props.theme
+        ]
     -- Render
     pure $
 

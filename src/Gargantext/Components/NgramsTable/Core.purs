@@ -76,13 +76,13 @@ module Gargantext.Components.NgramsTable.Core
   , SyncResetButtonsProps
   , syncResetButtons
   , chartsAfterSync
+  , useAutoSync
   )
   where
 
 import Gargantext.Prelude
 
 import Control.Monad.State (class MonadState, execState)
-import DOM.Simple.Console (log2)
 import Data.Array (head)
 import Data.Array as A
 import Data.Bifunctor (lmap)
@@ -130,7 +130,7 @@ import Foreign.Object as FO
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Table as T
 import Gargantext.Components.Table.Types as T
-import Gargantext.Config.REST (RESTError, AffRESTError)
+import Gargantext.Config.REST (AffRESTError, RESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, post, put)
@@ -918,11 +918,11 @@ syncPatches props state callback = do
     launchAff_ $ do
       ePatches <- putNgramsPatches props pt
       case ePatches of
-        Left err -> liftEffect $ log2 "[syncPatches] RESTError" err
+        Left err -> liftEffect $ here.warn2 "[syncPatches] RESTError" err
         Right (Versioned { data: newPatch, version: newVersion }) -> do
           callback unit
           liftEffect $ do
-            log2 "[syncPatches] setting state, newVersion" newVersion
+            here.log2 "[syncPatches] setting state, newVersion" newVersion
             T.modify_ (\s ->
               -- I think that sometimes this setState does not fully go through.
               -- This is an issue because the version number does not get updated and the subsequent calls
@@ -934,7 +934,7 @@ syncPatches props state callback = do
                               -- First the already valid patch, then the local patch, then the newly received newPatch.
                 , ngramsVersion    = newVersion
                 }) state
-            log2 "[syncPatches] ngramsVersion" newVersion
+            here.log2 "[syncPatches] ngramsVersion" newVersion
     pure unit
 
 {-
@@ -951,7 +951,7 @@ syncPatchesAsync props@{ listIds, tabType }
       Versioned { data: newPatch, version: newVersion } <- postNgramsPatchesAsync props patch
       callback unit
       liftEffect $ do
-        log2 "[syncPatches] setting state, newVersion" newVersion
+        here.log2 "[syncPatches] setting state, newVersion" newVersion
         setState $ \s ->
           s {
               ngramsLocalPatch = fromNgramsPatches mempty
@@ -960,7 +960,7 @@ syncPatchesAsync props@{ listIds, tabType }
                               -- First the already valid patch, then the local patch, then the newly received newPatch.
             , ngramsVersion    = newVersion
             }
-        log2 "[syncPatches] ngramsVersion" newVersion
+        here.log2 "[syncPatches] ngramsVersion" newVersion
 -}
 
 commitPatch :: forall s. NgramsTablePatch -> T.Box (CoreState s) -> Effect Unit
@@ -1104,6 +1104,60 @@ syncResetButtonsCpt = here.component "syncResetButtons" cpt
           ]
         ]
 
+------------------------------------------------------------------
+
+
+type AutoSyncInput s =
+  ( state  :: T.Box (CoreState s)
+  , action :: CoreDispatch
+  )
+
+type AutoSyncOutput =
+  -- @XXX: cannot use an Either here due to the mecanism of `syncPatches` only
+  --       returning an `Aff Unit`
+  -- ( result :: T.Box (Maybe (Either RESTError Unit))
+  ( result    :: T.Box (Maybe Unit)
+  , onPending :: T.Box Boolean
+  )
+
+useAutoSync :: forall s.
+     Record (AutoSyncInput s)
+  -> R.Hooks (Record AutoSyncOutput)
+useAutoSync { state, action } = do
+  -- States
+  onPending <- T.useBox false
+  result    <- T.useBox Nothing
+
+  ngramsLocalPatch <-
+    T.useFocused
+      (_.ngramsLocalPatch)
+      (\a b -> b { ngramsLocalPatch = a }) state
+
+  -- Computed
+  let
+    exec { new } =
+      let hasChanges = new /= mempty
+      in when hasChanges do
+        T.write_ true onPending
+        T.write_ Nothing result
+        action $ Synchronize
+          { afterSync: onSuccess
+          }
+
+    onSuccess _ = liftEffect do
+      T.write_ false onPending
+      T.write_ (Just unit) result
+
+  -- Hooks
+  R.useEffectOnce' $ T.listen exec ngramsLocalPatch
+
+  -- Output
+  pure
+    { onPending
+    , result
+    }
+
+------------------------------------------------------------------
 
 type ResetButton = (Unit -> Aff Unit)
                -> { ngramsPatches :: PatchMap NgramsTerm NgramsPatch }
@@ -1124,7 +1178,7 @@ chartsAfterSync :: forall props discard.
 chartsAfterSync path'@{ nodeId } errors tasks _ = do
   eTask <- postNgramsChartsAsync path'
   handleRESTError errors eTask $ \task -> liftEffect $ do
-    log2 "[chartsAfterSync] Synchronize task" task
+    here.log2 "[chartsAfterSync] Synchronize task" task
     GAT.insert nodeId task tasks
 
 postNgramsChartsAsync :: forall s. CoreParams s -> AffRESTError AsyncTaskWithType
@@ -1135,4 +1189,3 @@ postNgramsChartsAsync { listIds, nodeId, session, tabType } = do
     acu = AsyncNgramsChartsUpdate { listId: head listIds
                                   , tabType }
     putNgramsAsync = PostNgramsChartsAsync (Just nodeId)
-

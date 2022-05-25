@@ -84,7 +84,7 @@ component = R.hooksComponent componentName cpt where
         , key: id
         }
         [
-          R2.if' (hasBackground) $
+          R2.when (hasBackground) $
             H.div
             { className: intercalate " "
                 [ componentName <> "__overlay"
@@ -111,7 +111,7 @@ component = R.hooksComponent componentName cpt where
                 ]
             }
             [
-              R2.if' (hasHeader) $
+              R2.when (hasHeader) $
                 H.div
                 { className: intercalate " "
                     [ componentName <> "__header"

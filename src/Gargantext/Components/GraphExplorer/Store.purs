@@ -35,6 +35,8 @@ type Store =
   , sideTab            :: T.Box GET.SideTab
   , showSidebar        :: T.Box GT.SidePanelState
   , showDoc            :: T.Box (Maybe GET.GraphSideDoc)
+  , showWordCloud      :: T.Box Boolean
+  , showNGramsActions  :: T.Box Boolean
   -- Controls
   , multiSelectEnabled :: T.Box Boolean
   , edgeConfluence     :: T.Box Range.NumberRange
@@ -63,6 +65,8 @@ type State =
   , sideTab            :: GET.SideTab
   , showSidebar        :: GT.SidePanelState
   , showDoc            :: Maybe GET.GraphSideDoc
+  , showWordCloud      :: Boolean
+  , showNGramsActions  :: Boolean
   -- Controls
   , multiSelectEnabled :: Boolean
   , edgeConfluence     :: Range.NumberRange
@@ -81,20 +85,25 @@ type State =
   )
 
 options ::
-  { labelSize           :: Number
-  , mouseSelectorSize   :: Number
-  , multiSelectEnabled  :: Boolean
-  , removedNodeIds      :: SigmaxT.NodeIds
-  , selectedNodeIds     :: SigmaxT.NodeIds
-  , showControls        :: Boolean
+  -- Layout
+  { showControls        :: Boolean
   , showDoc             :: Maybe GET.GraphSideDoc
   , showSidebar         :: GT.SidePanelState
   , sideTab             :: GET.SideTab
+  , showWordCloud       :: Boolean
+  , showNGramsActions  :: Boolean
+  -- Controls
+  , labelSize           :: Number
+  , mouseSelectorSize   :: Number
+  , multiSelectEnabled  :: Boolean
   , edgeConfluence      :: Range.NumberRange
   , graphStage          :: GET.Stage
   , nodeSize            :: Range.NumberRange
   , showLouvain         :: Boolean
   , showEdges           :: SigmaxT.ShowEdgesState
+  -- Terms update
+  , removedNodeIds      :: SigmaxT.NodeIds
+  , selectedNodeIds     :: SigmaxT.NodeIds
   }
 options =
   -- Layout
@@ -102,6 +111,8 @@ options =
   , sideTab             : GET.SideTabLegend
   , showSidebar         : GT.InitialClosed
   , showDoc             : Nothing
+  , showWordCloud       : true
+  , showNGramsActions   : true
   -- Controls
   , multiSelectEnabled  : false
   , labelSize           : 14.0

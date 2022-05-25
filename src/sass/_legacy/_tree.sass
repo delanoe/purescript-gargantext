@@ -13,6 +13,11 @@ $node-popup-width: 544px
 
   position: relative
 
+  // @NOTE #386: React Awesome Popover not suited for the feature UX
+  //           ↪ for now just avoiding to create a new stacking context
+  //             could be a long term issue
+  // z-index: 0 // new stacking context "tree"
+
   &__node
     margin-bottom: space-x(0.25)
 
@@ -34,6 +39,8 @@ $node-popup-width: 544px
     position: absolute
     font-size: 11px
     top: $caret-y-offset
+    // z-index macro-management due to "node__link::before" overlay
+    z-index: z-index("tree", "content")
 
     @include right-handed
       content: "└"
@@ -86,6 +93,8 @@ $node-popup-width: 544px
     font-size: 14px
     // @XXX Glyphicon icons lack of homogeneous width
     width: 16px
+    // z-index macro-management due to "node__link::before" overlay
+    z-index: z-index("tree", "content")
 
     &--leaf
       color: $gray-400
@@ -144,6 +153,7 @@ $node-popup-width: 544px
     border-radius: 50%
     bottom: $offset-y
     right: $offset-x
+    z-index: z-index("tree", "badge")
 
     // (remove hover effect to maintain continuity with folder + node icon
     // lack of hover effect)
@@ -177,7 +187,6 @@ $node-popup-width: 544px
       $extra-right-overlay-offset: - 12px
 
       position: absolute
-      z-index: -1
       top: $overlay-offset
       bottom: $overlay-offset
       border-radius: $overlay-radius
@@ -188,6 +197,10 @@ $node-popup-width: 544px
       @include left-handed
         right: calc( #{ $overlay-offset } + #{ $extra-left-overlay-offset })
         left: calc( #{ $overlay-offset } + #{ $extra-right-overlay-offset })
+
+    // creating a new stacking context due to the "::before" overlay
+    & a
+      position: relative
 
   //----------------------------
   $icon-button-margin: space-x(2.25)
@@ -239,7 +252,6 @@ $node-popup-width: 544px
 
       content: ""
       position: absolute
-      z-index: -1
       border: 1px solid $info
       border-radius: $overlay-radius
 
@@ -478,22 +490,9 @@ $node-popup-width: 544px
 /////////////////////////////////////////
 
 .forest-layout
-  // @TODO: z-index management
-  z-index: 909
+  @include term-window
 
-  // make the sidebar a scrollable component
-  height: inherit
-  width: inherit
-  min-width: inherit
-  position: fixed
-
-  // avoiding ugly scrollbar
-  scrollbar-width: none
-  overflow-y: scroll
-  overflow-x: clip
-
-  &::-webkit-scrollbar
-    display: none
+  overflow-x: clip // due to resizing content
 
   @include right-handed
     border-right: 2px solid $border-color
@@ -501,68 +500,48 @@ $node-popup-width: 544px
   @include left-handed
     border-left: 2px solid $border-color
 
-  // UX best pratice: when a lengthy column is overflowy hidden (with a scroll),
-  // a teaser UI element shows to the user that a scroll is possible
-  &__bottom-teaser
-    @include bottom-teaser
+  ///////////////
 
-    z-index: z-index('forest-layout', 'teaser')
-    pointer-events: none
-    position: sticky
-    bottom: 0
-    height: $forest-layout-bottom-teaser-height
-    width: 100%
+  &__action
+    display: flex
 
-  &__top-teaser
-    @include top-teaser
-
-    z-index: z-index('forest-layout', 'teaser')
-    pointer-events: none
-    position: sticky
-    top: 0
-    height: $forest-layout-top-teaser-height
-    width: 100%
-
-
-.forest-layout-action
-  display: flex
-
-  @include right-handed
-    flex-direction: row
-    padding-left: space-x(2)
-    padding-right: space-x(1)
-
-    &__button
-      margin-right: space-x(2)
-
-  @include left-handed
-    flex-direction: row-reverse
-    padding-left: space-x(1)
-    padding-right: space-x(2)
-
-    &__button
-      margin-left: space-x(2)
-
-
-.forest-layout-tree
-  margin-top: space-x(3)
-
-  &:last-child
-    margin-bottom: $forest-layout-bottom-teaser-height
-
-  // remove leaf nested caret for first entry only
-  & > .maintree--with-children > .maintree__node
-
-    &::before,
-    &::after
-        content: none
-
-  // remove horizontal offset for first entry only (see ".maintree")
-  & > .maintree > .maintree__node
     @include right-handed
-      margin-left: space-x(2)
+      flex-direction: row
+      padding-left: space-x(2)
+      padding-right: space-x(1)
+
+      &__button
+        margin-right: space-x(2)
+
     @include left-handed
-      margin-right: space-x(2)
+      flex-direction: row-reverse
+      padding-left: space-x(1)
+      padding-right: space-x(2)
+
+      &__button
+        margin-left: space-x(2)
+
+  ////////////////////////
+
+  &__tree
+    margin-top: space-x(3)
+
+    &:last-child
+      margin-bottom: $forest-layout-bottom-teaser-height
+
+    // remove leaf nested caret for first entry only
+    & > .maintree--with-children > .maintree__node
+
+      &::before,
+      &::after
+          content: none
+
+    // remove horizontal offset for first entry only (see ".maintree")
+    & > .maintree > .maintree__node
+      @include right-handed
+        margin-left: space-x(2)
+      @include left-handed
+        margin-right: space-x(2)
 
 
 /////////////////////////////////////////

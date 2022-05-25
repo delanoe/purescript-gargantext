@@ -12,6 +12,9 @@ $sidebar-width: 480px;
 $sidebar-height: calc(100vh - #{ $topbar-height });
 $sidebar-tab-margin-x: space-x(2.5);
 
+/// Grid constants
+$layout-height: calc(100vh - #{ $topbar-height} ); // @TODO: use css custom properties
+
 /// Misc
 $overlay-radius: 5px;
 
@@ -56,12 +59,13 @@ $overlay-radius: 5px;
   background-color: $body-bg;
   height: 100%;
   position: relative;
+  z-index: 0;
 
   &::before {
     @include top-teaser;
 
     content: "";
-    z-index: 1;
+    z-index: z-index("tile", "top-teaser");
     pointer-events: none;
     position: sticky;
     top: 0;
@@ -74,7 +78,7 @@ $overlay-radius: 5px;
     @include bottom-teaser;
 
     content: "";
-    z-index: 1;
+    z-index: z-index("tile", "bottom-teaser");
     pointer-events: none;
     position: sticky;
     bottom: 0;

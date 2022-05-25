@@ -1,3 +1,5 @@
+'use strict';
+
 exports._add = add;
 exports._remove = remove;
 /**

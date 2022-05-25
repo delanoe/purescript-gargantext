@@ -36,7 +36,7 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, FrontendError(..), NodeID, TabSubType(..), TabType(..), TermList(..), modeTabType)
-import Gargantext.Utils (nbsp)
+import Gargantext.Utils (nbsp, (?))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Partial.Unsafe (unsafePartial)
@@ -240,7 +240,7 @@ sideBarTabSeparator =
   { className: "graph-sidebar__separator" }
   [
     B.icon
-    { name: "angle-down" }
+    { name: "angle-double-down" }
   ]
 
 -------------------------------------------
@@ -261,14 +261,18 @@ selectedNodesCpt = here.component "selectedNodes" cpt where
     -- States
     { selectedNodeIds
     , graph
+    , showNGramsActions
     } <- GraphStore.use
 
-    selectedNodeIds' <- R2.useLive' selectedNodeIds
-    graph'           <- R2.useLive' graph
+    showNGramsActions'  <- R2.useLive' showNGramsActions
+    selectedNodeIds'    <- R2.useLive' selectedNodeIds
+    graph'              <- R2.useLive' graph
 
     -- Behaviors
     let
       onBadgeClick id _ = T.write_ (Set.singleton id) selectedNodeIds
+
+      onExpandClick _ = T.modify_ (not) showNGramsActions
 
     -- Render
     pure $
@@ -301,32 +305,61 @@ selectedNodesCpt = here.component "selectedNodes" cpt where
                 }
                 [ H.text node.label ]
               ]
-
+        ,
+          -- Expand NGrams actions
+          B.iconButton
+          { name: showNGramsActions' ?
+              "caret-up" $
+              "caret-down"
+          , className: "graph-selected-nodes__expand"
+          , callback: onExpandClick
+          }
         ]
       ,
-        H.li
-        { className: intercalate " "
-            [ "list-group-item"
-            , "graph-selected-nodes__actions"
+        -- NGrams actions
+        R2.when showNGramsActions' $
+
+          H.li
+          { className: intercalate " "
+              [ "list-group-item"
+              , "graph-selected-nodes__actions"
+              ]
+          }
+          [
+            B.buttonGroup
+            { collapse: false }
+            [
+              updateTermButton
+              ( props `Record.merge`
+                { variant: ButtonVariant Light
+                , rType: CandidateTerm
+                }
+              )
+              [
+                B.icon
+                { name: "circle"
+                , className: "mr-1 candidate-term"
+                }
+              ,
+                H.text "Move as candidate"
+              ]
+            ,
+              updateTermButton
+              ( props `Record.merge`
+                { variant: ButtonVariant Light
+                , rType: StopTerm
+                }
+              )
+              [
+                B.icon
+                { name: "circle"
+                , className: "mr-1 stop-term"
+                }
+              ,
+                H.text "Move as stop"
+              ]
             ]
-        }
-        [
-          updateTermButton
-          ( props `Record.merge`
-            { variant: ButtonVariant Secondary
-            , rType: CandidateTerm
-            }
-          )
-          [ H.text "Move as candidate" ]
-        ,
-          updateTermButton
-          ( props `Record.merge`
-            { variant: ButtonVariant Danger
-            , rType: StopTerm
-            }
-          )
-          [ H.text "Move as stop" ]
-        ]
+          ]
       ]
 
 ---------------------------------------------------------
@@ -340,10 +373,14 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
     -- States
     { selectedNodeIds
     , graph
+    , showWordCloud
     } <- GraphStore.use
 
     selectedNodeIds' <-
       R2.useLive' selectedNodeIds
+
+    showWordCloud' <-
+      R2.useLive' showWordCloud
 
     graph' <-
       R2.useLive' graph
@@ -371,6 +408,8 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
     -- Behaviors
     let
       onBadgeClick id _ = T.write_ (Set.singleton id) selectedNodeIds
+
+      onExpandClick _ = T.modify_ (not) showWordCloud
 
     -- Effects
     R.useEffect1' selectedNodeIds' do
@@ -404,55 +443,66 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
             show termCount
           ,
             H.text $ nbsp 1 <> "terms"
+          ,
+            -- Expand word cloud
+            B.iconButton
+            { name: showWordCloud' ?
+                "caret-up" $
+                "caret-down"
+            , className: "graph-neighborhood__expand"
+            , callback: onExpandClick
+            }
           ]
         ]
       ,
         -- Word cloud
-        H.li
-        { className: "list-group-item" }
-        [
-          H.ul
-          {} $
-          flip mapWithIndex termList \index node ->
+        R2.when showWordCloud' $
 
-            R2.if'
-            (
-               withTruncateResults == false
-            || index < maxTruncateResult
-            ) $
-              H.li
-              { className: "graph-neighborhood__badge" }
+          H.li
+          { className: "list-group-item"}
+          [
+            H.ul
+            {} $
+            flip mapWithIndex termList \index node ->
+
+              R2.when
+              (
+                withTruncateResults == false
+              || index < maxTruncateResult
+              ) $
+                H.li
+                { className: "graph-neighborhood__badge" }
+                [
+                  H.a
+                  { className: "badge badge-light"
+                  -- adjust font accordingly
+                  , style:
+                      { fontSize: badgeSize
+                          minSize
+                          maxSize
+                          node.size
+                      , lineHeight: badgeSize
+                          minSize
+                          maxSize
+                          node.size
+                      }
+                  , on: { click: onBadgeClick node.id }
+                  }
+                  [ H.text node.label ]
+                ]
+          ,
+            R2.when (withTruncateResults) $
+
+              B.button
+              { variant: ButtonVariant Light
+              , callback: \_ -> T.modify_ (not) showMoreBox
+              , block: true
+              , className: "graph-neighborhood__show-more"
+              }
               [
-                H.a
-                { className: "badge badge-light"
-                -- adjust font accordingly
-                , style:
-                    { fontSize: badgeSize
-                        minSize
-                        maxSize
-                        node.size
-                    , lineHeight: badgeSize
-                        minSize
-                        maxSize
-                        node.size
-                    }
-                , on: { click: onBadgeClick node.id }
-                }
-                [ H.text node.label ]
+                H.text "Show more"
               ]
-        ,
-          R2.if' (withTruncateResults) $
-
-            B.button
-            { variant: ButtonVariant Light
-            , callback: \_ -> T.modify_ (not) showMoreBox
-            , block: true
-            , className: "graph-neighborhood__show-more"
-            }
-            [
-              H.text "Show more"
-            ]
-        ]
+          ]
       ]
 
 ---------------------------------------------------------
