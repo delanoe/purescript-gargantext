@@ -85,47 +85,44 @@ let overrides =
       }
 
 let additions =
-      { sequences =
+      {
+        convertable-options =
           { dependencies =
-              [ "prelude"
-              , "unsafe-coerce"
-              , "partial"
-              , "unfoldable"
-              , "lazy"
-              , "arrays"
-              , "profunctor"
+              [ "console", "effect", "maybe", "record" ]
+          , repo =
+              "https://github.com/natefaubion/purescript-convertable-options"
+          , version =
+              "v1.0.0"
+          }
+      , d3 =
+          { dependencies =
+              [ "aff"
+              , "aff-promise"
+              , "dom-simple"
+              , "easy-ffi"
+              , "effect"
+              , "exceptions"
+              , "foreign"
+              , "functions"
+              , "js-date"
               , "maybe"
+              , "prelude"
+              , "psci-support"
               , "tuples"
-              , "newtype"
+              , "web-dom"
               ]
           , repo =
-              "https://github.com/hdgarrood/purescript-sequences.git"
+              "https://github.com/cgenie/purescript-d3"
           , version =
-              "v3.0.2"
+              "v0.9.1"
           }
-      , spec-discovery =
+      , dom-filereader =
           { dependencies =
-              [ "prelude", "effect", "arrays", "spec", "node-fs" ]
+              [ "aff", "arraybuffer-types", "web-file", "web-html" ]
           , repo =
-              "https://github.com/purescript-spec/purescript-spec-discovery"
+              "https://github.com/nwolverson/purescript-dom-filereader"
           , version =
-              "v4.0.0"
-          }
-      , spec-quickcheck =
-          { dependencies =
-              [ "prelude", "aff", "random", "quickcheck", "spec" ]
-          , repo =
-              "https://github.com/purescript-spec/purescript-spec-quickcheck"
-          , version =
-              "v3.1.0"
-          }
-      , ffi-simple =
-          { dependencies =
-              [ "functions", "maybe", "nullable", "prelude", "unsafe-coerce" ]
-          , repo =
-              "https://github.com/garganscript/purescript-ffi-simple"
-          , version =
-              "v0.3.2"
+              "v5.0.0"
           }
       , dom-simple =
           { dependencies =
@@ -141,13 +138,24 @@ let additions =
           , version =
               "ps-15.0-upgrade"
           }
-      , dom-filereader =
+      , easy-ffi =
+        { dependencies =
+          [ "arrays"
+          , "console"
+          , "effect"
+          , "prelude"
+          , "quickcheck"
+          ]
+        , repo = "https://github.com/pelotom/purescript-easy-ffi"
+        , version = "b8b6891277839167cd65af0857315acce0e9c6b6"
+        }
+      , ffi-simple =
           { dependencies =
-              [ "aff", "arraybuffer-types", "web-file", "web-html" ]
+              [ "functions", "maybe", "nullable", "prelude", "unsafe-coerce" ]
           , repo =
-              "https://github.com/nwolverson/purescript-dom-filereader"
+              "https://github.com/garganscript/purescript-ffi-simple"
           , version =
-              "v5.0.0"
+              "v0.3.2"
           }
       , formula =
           { dependencies =
@@ -210,6 +218,32 @@ let additions =
           , version =
               "v0.5.0"
           }
+      , read =
+          { dependencies =
+              [ "prelude", "maybe", "strings" ]
+          , repo =
+              "https://github.com/truqu/purescript-read"
+          , version =
+              "v1.0.1"
+          }
+      , sequences =
+          { dependencies =
+              [ "prelude"
+              , "unsafe-coerce"
+              , "partial"
+              , "unfoldable"
+              , "lazy"
+              , "arrays"
+              , "profunctor"
+              , "maybe"
+              , "tuples"
+              , "newtype"
+              ]
+          , repo =
+              "https://github.com/hdgarrood/purescript-sequences.git"
+          , version =
+              "v3.0.2"
+          }
       , simple-json =
           { dependencies =
               [ "arrays"
@@ -250,6 +284,30 @@ let additions =
           , version =
               "v0.1.0"
           }
+      , simplecrypto =
+          { dependencies =
+              [ "prelude", "maybe", "node-buffer" ]
+          , repo =
+              "https://github.com/alpacaaa/purescript-simplecrypto"
+          , version =
+              "v1.0.1"
+          }
+      , spec-discovery =
+          { dependencies =
+              [ "prelude", "effect", "arrays", "spec", "node-fs" ]
+          , repo =
+              "https://github.com/purescript-spec/purescript-spec-discovery"
+          , version =
+              "v4.0.0"
+          }
+      , spec-quickcheck =
+          { dependencies =
+              [ "prelude", "aff", "random", "quickcheck", "spec" ]
+          , repo =
+              "https://github.com/purescript-spec/purescript-spec-quickcheck"
+          , version =
+              "v3.1.0"
+          }
       , toestand =
           { dependencies =
               [ "effect"
@@ -267,14 +325,6 @@ let additions =
           , version =
               "v0.7.0"
           }
-      , typisch =
-          { dependencies =
-              [ "prelude" ]
-          , repo =
-              "https://github.com/garganscript/purescript-typisch"
-          , version =
-              "v0.3.0"
-          }
       , tuples-native =
           { dependencies =
               [ "prelude", "typelevel", "unsafe-coerce" ]
@@ -282,6 +332,14 @@ let additions =
               "https://github.com/garganscript/purescript-tuples-native"
           , version =
               "v2.2.0"
+          }
+      , typisch =
+          { dependencies =
+              [ "prelude" ]
+          , repo =
+              "https://github.com/garganscript/purescript-typisch"
+          , version =
+              "v0.3.0"
           }
       , uint =
           { dependencies =
@@ -306,14 +364,6 @@ let additions =
           , version =
               "v8.0.1"
           }
-      , read =
-          { dependencies =
-              [ "prelude", "maybe", "strings" ]
-          , repo =
-              "https://github.com/truqu/purescript-read"
-          , version =
-              "v1.0.1"
-          }
       , versions =
           { dependencies =
               [ "prelude" ]
@@ -322,14 +372,6 @@ let additions =
           , version =
               "v6.0.0"
           }
-      , simplecrypto =
-          { dependencies =
-              [ "prelude", "maybe", "node-buffer" ]
-          , repo =
-              "https://github.com/alpacaaa/purescript-simplecrypto"
-          , version =
-              "v1.0.1"
-          }
       , web-url =
           { dependencies =
               [ "prelude" ]
@@ -337,36 +379,6 @@ let additions =
               "https://github.com/mjepronk/purescript-web-url"
           , version =
               "v1.0.2"
-          }
-      , convertable-options =
-          { dependencies =
-              [ "console", "effect", "maybe", "record" ]
-          , repo =
-              "https://github.com/natefaubion/purescript-convertable-options"
-          , version =
-              "v1.0.0"
-          }
-      , d3 =
-          { dependencies =
-              [ "aff"
-              , "aff-promise"
-              , "dom-simple"
-              , "easy-ffi"
-              , "effect"
-              , "exceptions"
-              , "foreign"
-              , "functions"
-              , "js-date"
-              , "maybe"
-              , "prelude"
-              , "psci-support"
-              , "tuples"
-              , "web-dom"
-              ]
-          , repo =
-              "https://github.com/cgenie/purescript-d3"
-          , version =
-              "v0.9.1"
           }
       }
 
