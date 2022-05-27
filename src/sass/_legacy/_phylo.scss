@@ -590,6 +590,17 @@ $decreasing-color: #11638F;
     &__value {
       color: $info;
     }
+
+    &__expand {
+      // Following <list-group-item> spacing
+      $position-x: $list-group-item-padding-x;
+      // Empirical: fit well with icon overlay
+      $position-y: 1rem;
+
+      position: absolute;
+      right: $position-x;
+      bottom: $position-y;
+    }
   }
 
   &__nil {

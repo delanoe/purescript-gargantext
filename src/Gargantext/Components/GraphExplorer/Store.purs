@@ -14,6 +14,7 @@ import Data.Set as Set
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Types as GT
+import Gargantext.Utils (getter)
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Stores as Stores
@@ -35,8 +36,8 @@ type Store =
   , sideTab            :: T.Box GET.SideTab
   , showSidebar        :: T.Box GT.SidePanelState
   , showDoc            :: T.Box (Maybe GET.GraphSideDoc)
-  , showWordCloud      :: T.Box Boolean
-  , showNGramsActions  :: T.Box Boolean
+  , expandSelection    :: T.Box Boolean
+  , expandNeighborhood :: T.Box Boolean
   -- Controls
   , multiSelectEnabled :: T.Box Boolean
   , edgeConfluence     :: T.Box Range.NumberRange
@@ -65,8 +66,8 @@ type State =
   , sideTab            :: GET.SideTab
   , showSidebar        :: GT.SidePanelState
   , showDoc            :: Maybe GET.GraphSideDoc
-  , showWordCloud      :: Boolean
-  , showNGramsActions  :: Boolean
+  , expandSelection    :: Boolean
+  , expandNeighborhood :: Boolean
   -- Controls
   , multiSelectEnabled :: Boolean
   , edgeConfluence     :: Range.NumberRange
@@ -90,8 +91,8 @@ options ::
   , showDoc             :: Maybe GET.GraphSideDoc
   , showSidebar         :: GT.SidePanelState
   , sideTab             :: GET.SideTab
-  , showWordCloud       :: Boolean
-  , showNGramsActions  :: Boolean
+  , expandSelection     :: Boolean
+  , expandNeighborhood  :: Boolean
   -- Controls
   , labelSize           :: Number
   , mouseSelectorSize   :: Number
@@ -111,8 +112,8 @@ options =
   , sideTab             : GET.SideTabLegend
   , showSidebar         : GT.InitialClosed
   , showDoc             : Nothing
-  , showWordCloud       : true
-  , showNGramsActions   : true
+  , expandSelection     : getter _.expandSelection GET.defaultCacheParams
+  , expandNeighborhood  : getter _.expandNeighborhood GET.defaultCacheParams
   -- Controls
   , multiSelectEnabled  : false
   , labelSize           : 14.0

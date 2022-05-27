@@ -32,10 +32,11 @@ import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Data.Array (mapMaybe)
 import Gargantext.Ends (Frontends)
+import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, FrontendError(..), NodeID, TabSubType(..), TabType(..), TermList(..), modeTabType)
-import Gargantext.Utils (nbsp, (?))
+import Gargantext.Utils (nbsp, setter, (?))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Math as Math
@@ -258,23 +259,33 @@ selectedNodes = R2.leaf selectedNodesCpt
 selectedNodesCpt :: R.Component SelectedNodesProps
 selectedNodesCpt = here.component "selectedNodes" cpt where
   cpt props _ = do
-    -- States
+    -- | States
+    -- |
     { selectedNodeIds
     , graph
-    , showNGramsActions
+    , expandSelection
     } <- GraphStore.use
 
-    showNGramsActions'  <- R2.useLive' showNGramsActions
     selectedNodeIds'    <- R2.useLive' selectedNodeIds
     graph'              <- R2.useLive' graph
+    expandSelection'    <- R2.useLive' expandSelection
 
-    -- Behaviors
+    -- | Effects
+    -- |
+
+    -- transfer local Component change to Local Storage cache
+    useFirstEffect' $
+      flip T.listen expandSelection onExpandSelectionChange
+
+    -- | Behaviors
+    -- |
     let
       onBadgeClick id _ = T.write_ (Set.singleton id) selectedNodeIds
 
-      onExpandClick _ = T.modify_ (not) showNGramsActions
+      onExpandClick _ = T.modify_ (not) expandSelection
 
-    -- Render
+    -- | Render
+    -- |
     pure $
 
       H.ul
@@ -308,7 +319,7 @@ selectedNodesCpt = here.component "selectedNodes" cpt where
         ,
           -- Expand NGrams actions
           B.iconButton
-          { name: showNGramsActions' ?
+          { name: expandSelection' ?
               "caret-up" $
               "caret-down"
           , className: "graph-selected-nodes__expand"
@@ -317,7 +328,7 @@ selectedNodesCpt = here.component "selectedNodes" cpt where
         ]
       ,
         -- NGrams actions
-        R2.when showNGramsActions' $
+        R2.when expandSelection' $
 
           H.li
           { className: intercalate " "
@@ -362,6 +373,12 @@ selectedNodesCpt = here.component "selectedNodes" cpt where
           ]
       ]
 
+onExpandSelectionChange :: T.Change Boolean -> Effect Unit
+onExpandSelectionChange { new } = do
+  cache <- R2.loadLocalStorageState' R2.graphParamsKey GET.defaultCacheParams
+  let update = setter (_ { expandSelection = new }) cache
+  R2.setLocalStorageState R2.graphParamsKey update
+
 ---------------------------------------------------------
 
 neighborhood :: R2.Leaf ()
@@ -370,17 +387,18 @@ neighborhood = R2.leaf neighborhoodCpt
 neighborhoodCpt :: R.Memo ()
 neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
   cpt _ _ = do
-    -- States
+    -- | States
+    -- |
     { selectedNodeIds
     , graph
-    , showWordCloud
+    , expandNeighborhood
     } <- GraphStore.use
 
     selectedNodeIds' <-
       R2.useLive' selectedNodeIds
 
-    showWordCloud' <-
-      R2.useLive' showWordCloud
+    expandNeighborhood' <-
+      R2.useLive' expandNeighborhood
 
     graph' <-
       R2.useLive' graph
@@ -394,7 +412,8 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
     termCount /\ termCountBox <-
       R2.useBox' 0
 
-    -- Computed
+    -- | Computed
+    -- |
     let
       minSize = F.foldl Math.min 0.0 (Seq.map _.size (SigmaxT.graphNodes graph'))
 
@@ -405,13 +424,20 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
       withTruncateResults = (termCount > maxTruncateResult) && (not showMore)
 
 
-    -- Behaviors
+    -- | Behaviors
+    -- |
     let
       onBadgeClick id _ = T.write_ (Set.singleton id) selectedNodeIds
 
-      onExpandClick _ = T.modify_ (not) showWordCloud
+      onExpandClick _ = T.modify_ (not) expandNeighborhood
 
-    -- Effects
+    -- | Effects
+    -- |
+
+    -- transfer local Component change to Local Storage cache
+    useFirstEffect' $
+      flip T.listen expandNeighborhood onExpandNeighborhoodChange
+
     R.useEffect1' selectedNodeIds' do
       let refreshed = neighbourBadges graph' selectedNodeIds'
       let count     = Seq.length refreshed
@@ -420,7 +446,8 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
       T.write_ ordered termListBox
       T.write_ false showMoreBox
 
-    -- Render
+    -- | Render
+    -- |
     pure $
 
       H.ul
@@ -446,7 +473,7 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
           ,
             -- Expand word cloud
             B.iconButton
-            { name: showWordCloud' ?
+            { name: expandNeighborhood' ?
                 "caret-up" $
                 "caret-down"
             , className: "graph-neighborhood__expand"
@@ -456,7 +483,7 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
         ]
       ,
         -- Word cloud
-        R2.when showWordCloud' $
+        R2.when expandNeighborhood' $
 
           H.li
           { className: "list-group-item"}
@@ -504,6 +531,12 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
               ]
           ]
       ]
+
+onExpandNeighborhoodChange :: T.Change Boolean -> Effect Unit
+onExpandNeighborhoodChange { new } = do
+  cache <- R2.loadLocalStorageState' R2.graphParamsKey GET.defaultCacheParams
+  let update = setter (_ { expandNeighborhood = new }) cache
+  R2.setLocalStorageState R2.graphParamsKey update
 
 ---------------------------------------------------------
 

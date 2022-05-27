@@ -9463,6 +9463,11 @@ select.form-control {
 .phylo-selection-tab__counter__value {
   color: #0F81C7;
 }
+.phylo-selection-tab__counter__expand {
+  position: absolute;
+  right: 1.25rem;
+  bottom: 1rem;
+}
 .phylo-selection-tab__nil {
   margin: 16px 20px;
 }
