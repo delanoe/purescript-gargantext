@@ -163,24 +163,24 @@ folderCpt = here.component "folderCpt" cpt where
     { goToRoute } <- useLinkHandler
 
     R.useEffect' $ do
-        R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
+      R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
 
     pure $
       H.div {}
       [ H.span { style: { position: "absolute" } }
         [ Popover.popover {
-             arrow: false
-             , open: false
-             , onClose: \_ -> pure unit
-             , onOpen:  \_ -> pure unit
-             , ref: popoverRef
-             }
+            arrow: false
+          , open: false
+          , onClose: \_ -> pure unit
+          , onOpen:  \_ -> pure unit
+          , ref: popoverRef
+          }
           [ popOverIcon
           , mNodePopupView (Record.merge props { dispatch }) (onPopoverClose popoverRef)
           ]
         ]
         , H.button { className: "btn btn-primary fv btn"
-                   , on: {click: \_ -> goToRoute $ route linkId rootId linkNodeType sid }
+                   , on: { click: \_ -> goToRoute $ route linkId rootId linkNodeType sid }
                    }
           [ H.i {className: icon style nodeType} []
           , H.br {}
