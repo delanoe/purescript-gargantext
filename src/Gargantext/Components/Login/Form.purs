@@ -176,8 +176,8 @@ forgotPasswordCpt :: R.Component ForgotPasswordProps
 forgotPasswordCpt = here.component "forgotPassword" cpt where
   cpt { formType } _ = do
     pure $ H.div { className: "form-group text-center" }
-      [ H.button { className: "btn btn-danger"
-                 , on: { click } } [ H.text "Forgot password" ]
+      [ H.a { className: "text-primary",
+        on: { click } } [ H.text "Forgot password?" ]
       ]
     where
       click _ = T.write_ ForgotPassword formType
