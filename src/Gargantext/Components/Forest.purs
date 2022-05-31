@@ -61,12 +61,15 @@ forestLayoutCpt = here.component "forest" cpt where
         H.div
         { className: "forest-layout__tree" }
         [
-          treeLoader { boxes
-                   , frontends
-                   , handed: handed'
-                   , reload: reloadForest
-                   , root: treeId
-                   , session: s } []
+          treeLoader
+          { boxes
+          , frontends
+          , handed: handed'
+          , reload: reloadForest
+          , root: treeId
+          , session: s
+          , key: "tree-" <> (show treeId)
+          }
         ]
 
 type Plus = ( boxes :: Boxes )
