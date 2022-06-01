@@ -106,9 +106,10 @@ type PerformActionProps =
   | PACommon )
 
 -- | Loads and renders the tree starting at the given root node id.
-treeLoader :: R2.Component LoaderProps
-treeLoader = R.createElement treeLoaderCpt
-treeLoaderCpt :: R.Component LoaderProps
+treeLoader :: R2.Leaf ( key :: String | LoaderProps )
+treeLoader = R2.leaf treeLoaderCpt
+
+treeLoaderCpt :: R.Component ( key :: String | LoaderProps )
 treeLoaderCpt = here.component "treeLoader" cpt where
 -- treeLoaderCpt :: R.Memo LoaderProps
 -- treeLoaderCpt = R.memo (here.component "treeLoader" cpt) memoCmp where

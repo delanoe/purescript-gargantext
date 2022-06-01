@@ -17,10 +17,12 @@ import Gargantext.Components.GraphExplorer.Layout (convert, layout)
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Config.REST (logRESTError)
+import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
+import Gargantext.Utils (getter)
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -48,9 +50,19 @@ nodeCpt = here.component "node" cpt where
 
     graphVersion'   <- R2.useLive' graphVersion
     state' /\ state <- R2.useBox' Nothing
+    cache' /\ cache <- R2.useBox' (GET.defaultCacheParams :: GET.CacheParams)
+
+    -- | Computed
+    -- |
+    let errorHandler = logRESTError here "[explorerLayout]"
 
     -- | Hooks
     -- |
+
+    -- load Local Storage cache (if exists)
+    useFirstEffect' $
+      R2.loadLocalStorageState R2.graphParamsKey cache
+
     useLoaderEffect
       { errorHandler
       , loader: GraphAPI.getNodes session graphVersion'
@@ -80,20 +92,19 @@ nodeCpt = here.component "node" cpt where
           {}
 
       , defaultSlot:
-          R2.fromMaybe state' handler
+          R2.fromMaybe state' \loaded ->
+            let
+              GET.HyperdataGraph { graph: hyperdataGraph } = loaded
+              Tuple mMetaData graph = convert hyperdataGraph
+            in
+              hydrateStore
+              { graph
+              , hyperdataGraph: loaded
+              , mMetaData
+              , graphId
+              , cacheParams: cache'
+              }
       }
-
-    where
-      errorHandler = logRESTError here "[explorerLayout]"
-      handler loaded@(GET.HyperdataGraph { graph: hyperdataGraph }) =
-        hydrateStore
-        { graph
-        , hyperdataGraph: loaded
-        , mMetaData
-        , graphId
-        }
-        where
-          Tuple mMetaData graph = convert hyperdataGraph
 
 --------------------------------------------------------
 
@@ -102,6 +113,7 @@ type HydrateStoreProps =
   , graph           :: SigmaxT.SGraph
   , hyperdataGraph  :: GET.HyperdataGraph
   , graphId         :: GET.GraphId
+  , cacheParams     :: GET.CacheParams
   )
 
 hydrateStore:: R2.Leaf HydrateStoreProps
@@ -113,6 +125,7 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
       , graph
       , graphId
       , hyperdataGraph
+      , cacheParams
       } _ = do
     -- | Computed
     -- |
@@ -144,6 +157,9 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
           { min: 0.0
           , max: I.toNumber $ Seq.length $ SigmaxT.graphEdges graph
           }
+      -- (cache options)
+      , expandSelection: getter _.expandSelection cacheParams
+      , expandNeighborhood: getter _.expandNeighborhood cacheParams
       -- (default options)
       } `Record.merge` GraphStore.options
 

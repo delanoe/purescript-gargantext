@@ -12,8 +12,8 @@ import DOM.Simple.Types (class IsNode, class IsElement, DOMRect)
 import Data.Array as A
 import Data.Either (hush)
 import Data.Function.Uncurried (Fn1, runFn1, Fn2, runFn2)
-import Data.Maybe as Maybe
 import Data.Maybe (Maybe(..), fromJust, fromMaybe)
+import Data.Maybe as Maybe
 import Data.Nullable (Nullable, null, toMaybe)
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
@@ -397,6 +397,12 @@ getls = window >>= localStorage
 openNodesKey :: LocalStorageKey
 openNodesKey = "garg-open-nodes"
 
+graphParamsKey :: LocalStorageKey
+graphParamsKey = "garg-graph-params"
+
+phyloParamsKey :: LocalStorageKey
+phyloParamsKey = "garg-phylo-params"
+
 type LocalStorageKey = String
 
 loadLocalStorageState :: forall s. JSON.ReadForeign s => LocalStorageKey -> T.Box s -> Effect Unit
@@ -410,12 +416,31 @@ loadLocalStorageState key cell = do
     Nothing -> pure unit
     Just p  -> void $ T.write p cell
 
+loadLocalStorageState' :: forall s.
+     JSON.ReadForeign s
+  => LocalStorageKey
+  -> s
+  -> Effect s
+loadLocalStorageState' key default = do
+  (item :: Maybe String) <- getls >>= getItem key
+  let parsed = hush <<< JSON.readJSON $ Maybe.fromMaybe "" item
+  pure $ Maybe.fromMaybe default parsed
+
 listenLocalStorageState :: forall s. JSON.WriteForeign s => LocalStorageKey -> T.Change s -> Effect Unit
 listenLocalStorageState key { old, new } = do
   --let json = Json.stringify $ Argonaut.encodeJson new
   let json = JSON.writeJSON new
   storage <- getls
   setItem key json storage
+
+setLocalStorageState :: forall s.
+     JSON.WriteForeign s
+  => LocalStorageKey
+  -> s
+  -> Effect Unit
+setLocalStorageState key s =
+  let json = JSON.writeJSON s
+  in getls >>= setItem key json
 
 getMessageDataStr :: DE.MessageEvent -> String
 getMessageDataStr = getMessageData

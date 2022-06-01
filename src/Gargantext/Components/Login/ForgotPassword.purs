@@ -32,7 +32,7 @@ forgotPasswordCpt = here.component "forgotPassword" cpt where
     email <- T.useBox ""
     
     pure $ H.div { className: "row" }
-      [ H.form { className: "col-md-12" }
+      [ H.form { className: "text-center col-md-12" }
         [ H.h4 {} [ H.text "Forgot password" ]
         , formGroup
           [ emailInput email ]
@@ -60,7 +60,7 @@ submitButtonCpt = here.component "submitButton" cpt where
   cpt { backend, email, sessions } _ = do
     email' <- T.useLive T.unequal email
     
-    pure $ formGroup
+    pure $ H.div {className: "form-group text-center"} 
       [ H.button { className: "btn btn-primary"
                  , on: { click: click email' }}
         [ H.text "Submit" ]
