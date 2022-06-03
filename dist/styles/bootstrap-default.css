@@ -7817,14 +7817,15 @@ input[type=range]:-moz-focusring {
   background-color: #FCFCFC;
 }
 .graph-doc-list__item--selected::before {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
   content: "";
   position: absolute;
   z-index: 1;
   width: 2px;
   background-color: #17a2b8;
-  left: 0;
-  top: 0;
-  bottom: 0;
 }
 .graph-doc-list__item--selected:first-child::before {
   border-top-left-radius: 0.25rem;
@@ -9233,6 +9234,20 @@ select.form-control {
   border-right: 1px solid #dee2e6;
 }
 
+.phylo__focus {
+  flex-grow: 1;
+  pointer-events: all;
+  position: relative;
+}
+.phylo__focus__inner {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  position: absolute;
+  background-color: #fff;
+}
+
 .phylo-isoline {
   display: flex;
   position: relative;
@@ -9396,7 +9411,7 @@ select.form-control {
   font-weight: bold;
 }
 .phylo-selection-tab__selection {
-  margin: 16px 20px 0;
+  margin: 16px 20px;
 }
 .phylo-selection-tab__selection__item {
   white-space: normal;
@@ -9427,6 +9442,55 @@ select.form-control {
 .phylo-selection-tab__separator {
   color: #ADB5BD;
   text-align: center;
+}
+.phylo-selection-tab__extracted-docs {
+  margin: 16px 20px;
+}
+
+.phylo-doc-list__item {
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  transition: all 0.2s ease-in-out;
+}
+.phylo-doc-list__item:focus {
+  outline: 0;
+}
+.phylo-doc-list__item:hover {
+  background-color: #FCFCFC;
+}
+.phylo-doc-list__item--selected::before {
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  content: "";
+  position: absolute;
+  z-index: 1;
+  width: 2px;
+  background-color: #17a2b8;
+}
+.phylo-doc-list__item--selected:first-child::before {
+  border-top-left-radius: 0.25rem;
+}
+.phylo-doc-list__item--selected:last-child::before {
+  border-bottom-left-radius: 0.25rem;
+}
+.phylo-doc-list__item__main {
+  flex-grow: 1;
+  padding-right: 1.25rem;
+}
+.phylo-doc-list__item__title, .phylo-doc-list__item__source, .phylo-doc-list__item__date {
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+.phylo-doc-list__item__source {
+  font-size: 15px;
+  color: #495057;
+}
+.phylo-doc-list__item__date {
+  font-size: 14px;
+  color: #6C757D;
 }
 
 .phylo-toolbar {

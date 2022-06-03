@@ -25,7 +25,7 @@ import Data.String as String
 import Effect (Effect)
 import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn4, EffectFn7, runEffectFn1, runEffectFn2, runEffectFn4, runEffectFn7)
 import FFI.Simple ((..), (.=), (.?))
-import Gargantext.Components.PhyloExplorer.Types (AncestorLink, Branch, BranchLink, DisplayView(..), Group(..), Link, Period, PhyloDataSet(..), Source(..), Term(..))
+import Gargantext.Components.PhyloExplorer.Types (AncestorLink, Branch, BranchLink, DisplayView(..), Group(..), Link, Period, PhyloData(..), Source(..), Term(..))
 import Gargantext.Utils (getter)
 import Gargantext.Utils.Reactix ((~~))
 import Gargantext.Utils.Reactix as R2
@@ -203,8 +203,8 @@ selectionNodes = ffi ["selection", ""] "selection.nodes()"
 
 -----------------------------------------------------------
 
-setGlobalDependencies :: Window -> PhyloDataSet -> Effect Unit
-setGlobalDependencies w (PhyloDataSet o)
+setGlobalDependencies :: Window -> PhyloData -> Effect Unit
+setGlobalDependencies w (PhyloData o)
   = do
     _ <- pure $ (w .= "freq") {}
     _ <- pure $ (w .= "nbBranches") o.nbBranches

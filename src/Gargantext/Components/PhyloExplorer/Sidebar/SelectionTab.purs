@@ -12,6 +12,7 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
+import Gargantext.Components.PhyloExplorer.Sidebar.DocList (docListWrapper)
 import Gargantext.Components.PhyloExplorer.Store as PhyloStore
 import Gargantext.Components.PhyloExplorer.Types (ExtractedCount(..), ExtractedTerm(..), defaultCacheParams)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
@@ -322,19 +323,26 @@ component = here.component "main" cpt where
                 ]
             ]
           ]
-      -- ,
+      ,
         -- (separator)
-        -- R2.when (not null extractedTerms) $
+        R2.when (not null extractedTerms) $
 
-        --   H.div
-        --   { className: "phylo-selection-tab__separator" }
-        --   [
-        --     B.icon
-        --     { name: "angle-double-down" }
-        --   ]
-      -- ,
+          H.div
+          { className: "phylo-selection-tab__separator" }
+          [
+            B.icon
+            { name: "angle-double-down" }
+          ]
+      ,
         -- Extracted Docs
-        -- R2.when (not null extractedTerms) $
+        R2.when (not null extractedTerms) $
+
+          H.div
+          { className: "phylo-selection-tab__extracted-docs" }
+          [
+            docListWrapper
+            {}
+          ]
       ]
 
 termFontSize :: Number -> String
