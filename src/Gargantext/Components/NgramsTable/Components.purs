@@ -299,10 +299,20 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
 
 
 termStyle :: GT.TermList -> Number -> DOM.Props
-termStyle GT.MapTerm     opacity = DOM.style { color: "green", opacity }
-termStyle GT.StopTerm      opacity = DOM.style { color: "red",   opacity
-                                              , textDecoration: "line-through" }
-termStyle GT.CandidateTerm opacity = DOM.style { color: "#767676", opacity }
+termStyle GT.MapTerm       opacity = DOM.style
+  { color: "#11AA11"
+  , opacity
+  }
+termStyle GT.StopTerm      opacity = DOM.style
+  { color: "#EE3311"
+  , opacity
+  , textDecoration: "line-through"
+  }
+termStyle GT.CandidateTerm opacity = DOM.style
+  { color: "#5A90B6"
+  , fontStyle: "italic"
+  , opacity
+  }
 
 tablePatchHasNgrams :: NgramsTablePatch -> NgramsTerm -> Boolean
 tablePatchHasNgrams ngramsTablePatch ngrams =
