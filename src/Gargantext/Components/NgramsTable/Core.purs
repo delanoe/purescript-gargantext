@@ -1020,7 +1020,8 @@ data CoreAction
 
 data Action
   = CoreAction CoreAction
-  | SetParentResetChildren (Maybe NgramsTerm)
+  | ClearTreeEdit
+  | SetParentResetChildren (Maybe NgramsTerm) (List NgramsTerm)
   -- ^ This sets `ngramsParent` and resets `ngramsChildren`.
   | ToggleChild Boolean NgramsTerm
   -- ^ Toggles the NgramsTerm in the `PatchSet` `ngramsChildren`.
