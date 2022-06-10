@@ -4,6 +4,7 @@ import Data.Lens ((^..), (^.), view)
 import Data.Lens.At (at)
 import Data.Lens.Fold (folded)
 import Data.Lens.Index (ix)
+import Data.List (List)
 import Data.List (null, toUnfoldable) as L
 import Data.Maybe (Maybe(..), maybe, isJust)
 import Data.Nullable (null, toMaybe)
@@ -117,35 +118,35 @@ selectionCheckboxCpt = here.component "selectionCheckbox" cpt
 
 
 type RenderNgramsTree =
-  ( ngrams      :: NgramsTerm
-  , ngramsClick :: NgramsClick
-  , ngramsEdit  :: NgramsClick
-  , ngramsStyle :: Array DOM.Props
-  , ngramsTable :: NgramsTable
+  ( ngramsChildren :: List NgramsTerm
+  , ngramsClick    :: NgramsClick
+  , ngramsDepth    :: NgramsDepth
+  , ngramsEdit     :: NgramsClick
+  , ngramsStyle    :: Array DOM.Props
+  --, ngramsTable    :: NgramsTable
   )
 
 renderNgramsTree :: Record RenderNgramsTree -> R.Element
 renderNgramsTree p = R.createElement renderNgramsTreeCpt p []
-
 renderNgramsTreeCpt :: R.Component RenderNgramsTree
 renderNgramsTreeCpt = here.component "renderNgramsTree" cpt
   where
-    cpt { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit} _ =
-      pure $ H.ul {} [
-        H.span { className: "tree" } [
-          H.span { className: "righthanded" } [
-            tree { ngramsClick
-                 , ngramsDepth: {ngrams, depth: 0}
+    cpt { ngramsChildren, ngramsClick, ngramsDepth, ngramsEdit, ngramsStyle } _ =
+      pure $ H.ul {}
+      [ H.span { className: "tree" }
+        [ H.span { className: "righthanded" }
+          [ tree { ngramsChildren
+                 , ngramsClick
+                 , ngramsDepth
                  , ngramsEdit
                  , ngramsStyle
-                 , ngramsTable
                  }
           ]
         ]
       ]
 
 
-type NgramsDepth = {ngrams :: NgramsTerm, depth :: Int}
+type NgramsDepth = { ngrams :: NgramsTerm, depth :: Int }
 type NgramsClick = NgramsDepth -> Maybe (Effect Unit)
 
 type TagProps =
@@ -165,24 +166,28 @@ tag tagProps =
 -}
 
 type TreeProps =
-  ( ngramsEdit  :: NgramsClick
-  , ngramsTable :: NgramsTable
+  ( ngramsChildren :: List NgramsTerm
+  , ngramsEdit     :: NgramsClick
+  --, ngramsTable :: NgramsTable
   | TagProps
   )
 
 tree :: Record TreeProps -> R.Element
 tree p = R.createElement treeCpt p []
-
 treeCpt :: R.Component TreeProps
 treeCpt = here.component "tree" cpt
   where
-    cpt params@{ ngramsClick, ngramsDepth, ngramsEdit, ngramsStyle, ngramsTable } _ =
+    cpt params@{ ngramsChildren, ngramsClick, ngramsDepth, ngramsEdit, ngramsStyle } _ = do
+
+      R.useEffect' $ do
+        here.log2 "[tree] ngramsChildren" ngramsChildren
+      
       pure $
-        H.li { style: {width : "100%"} }
+        H.li { style: { width : "100%" } }
           ([ H.i { className, style } [] ]
            <> [ R2.buff $ tag [ text $ " " <> ngramsTermText ngramsDepth.ngrams ] ]
            <> maybe [] edit (ngramsEdit ngramsDepth)
-           <> [ forest cs ]
+           <> [ forest ngramsChildren ]
           )
       where
         tag =
@@ -195,11 +200,11 @@ treeCpt = here.component "tree" cpt
                       , H.i { className: "fa fa-pencil"
                             , on: { click: const effect } } []
                       ]
-        leaf = L.null cs
+        leaf = L.null ngramsChildren
         className = "fa fa-chevron-" <> if open then "down" else "right"
         style = if leaf then {color: "#adb5bd"} else {color: ""}
         open = not leaf || false {- TODO -}
-        cs   = ngramsTable ^.. ix ngramsDepth.ngrams <<< _NgramsRepoElement <<< _children <<< folded
+        --cs   = ngramsTable ^.. ix ngramsDepth.ngrams <<< _NgramsRepoElement <<< _children <<< folded
         -- cs has a list is ok, the length is the number of direct children of an ngram which is generally < 10.
 
         forest =
@@ -233,25 +238,30 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         , ngramsSelection
         , ngramsTable
         } _ = do
-      pure $ Tbl.makeRow [
-          H.div { className: "ngrams-selector" } [
-            H.span { className: "ngrams-chooser fa fa-eye-slash"
+      pure $ Tbl.makeRow
+        [ H.div { className: "ngrams-selector" }
+          [ H.span { className: "ngrams-chooser fa fa-eye-slash"
                    , on: { click: onClick } } []
           ]
         , selected
         , checkbox GT.MapTerm
         , checkbox GT.StopTerm
-        , H.div {} ( if ngramsParent == Nothing
-                       then [renderNgramsTree { ngramsTable, ngrams, ngramsStyle, ngramsClick, ngramsEdit }]
-                       else [H.a { on: { click: const $ dispatch $ ToggleChild true ngrams } }
-                                 [ H.i { className: "fa fa-plus" } []]
-                            , R2.buff $ tag [ text $ " " <> ngramsTermText ngramsDepth.ngrams ]
-                            ]
-                   )
+        , H.div {}
+          ( if ngramsParent == Nothing
+            then [renderNgramsTree { ngramsChildren
+                                   , ngramsClick
+                                   , ngramsDepth
+                                   , ngramsEdit
+                                   , ngramsStyle }]
+            else [H.a { on: { click: const $ dispatch $ ToggleChild true ngrams } }
+                  [ H.i { className: "fa fa-plus" } []]
+                 , R2.buff $ tag [ text $ " " <> ngramsTermText ngramsDepth.ngrams ]
+                 ]
+          )
         , H.text $ show (ngramsElement ^. _NgramsElement <<< _occurrences)
       ]
       where
-        ngramsDepth= {ngrams, depth: 0 }
+        ngramsDepth= { ngrams, depth: 0 }
         tag =
           case ngramsClick ngramsDepth of
             Just effect ->
@@ -263,7 +273,8 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         --   R2.callTrigger toggleSidePanel unit
         termList    = ngramsElement ^. _NgramsElement <<< _list
         ngramsStyle = [termStyle termList ngramsOpacity]
-        ngramsEdit  = Just <<< dispatch <<< SetParentResetChildren <<< Just <<< view _ngrams
+        ngramsEdit { ngrams } = Just $ dispatch $ SetParentResetChildren (Just ngrams) ngramsChildren
+        ngramsChildren = ngramsTable ^.. ix ngrams <<< _NgramsRepoElement <<< _children <<< folded
         ngramsClick =
           Just <<< dispatch <<< CoreAction <<< cycleTermListItem <<< view _ngrams
           -- ^ This is the old behavior it is nicer to use since one can
