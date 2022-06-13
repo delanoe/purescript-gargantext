@@ -33,7 +33,7 @@ import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
 import Gargantext.Components.NgramsTable.Components as NTC
-import Gargantext.Components.NgramsTable.Core (Action(..), CoreAction(..), CoreState, Dispatch, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTerm, PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, VersionedWithCountNgramsTable, _NgramsElement, _NgramsRepoElement, _NgramsTable, _children, _list, _ngrams, _ngrams_repo_elements, _ngrams_scores, _occurrences, _root, addNewNgramA, applyNgramsPatches, applyPatchSet, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, fromNgramsPatches, ngramsRepoElementToNgramsElement, ngramsTermText, normNgram, patchSetFromMap, replace, setTermListA, singletonNgramsTablePatch, syncResetButtons, toVersioned)
+import Gargantext.Components.NgramsTable.Core (Action(..), CoreAction(..), CoreState, Dispatch, NgramsClick, NgramsDepth, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTerm, PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, VersionedWithCountNgramsTable, _NgramsElement, _NgramsRepoElement, _NgramsTable, _children, _list, _ngrams, _ngrams_repo_elements, _ngrams_scores, _occurrences, _root, addNewNgramA, applyNgramsPatches, applyPatchSet, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, fromNgramsPatches, ngramsRepoElementToNgramsElement, ngramsTermText, normNgram, patchSetFromMap, replace, setTermListA, singletonNgramsTablePatch, syncResetButtons, toVersioned)
 import Gargantext.Components.NgramsTable.Loader (useLoaderWithCacheAPI)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as TT
@@ -591,7 +591,9 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
     cpt props@{ cacheState, path } _ = do
       searchQuery <- T.useFocused (_.searchQuery) (\a b -> b { searchQuery = a }) path
       cacheState' <- T.useLive T.unequal cacheState
-      onSave      <- T.useBox Nothing
+      onCancelRef <- R.useRef Nothing
+      onNgramsClickRef <- R.useRef Nothing
+      onSaveRef   <- R.useRef Nothing
       treeEdit    <- T.useBox initialTreeEdit
 
       -- let path = initialPageParams session nodeId [defaultListId] tabType
@@ -605,58 +607,78 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
         NT.CacheOff -> pure $ R.fragment
           [
             loadedNgramsTableHeader { searchQuery } []
-          , ngramsTreeEdit { onSave, treeEdit } []
-          , mainNgramsTableCacheOff (props { treeEdit = treeEdit }) []
+          , ngramsTreeEdit { treeEdit } []
+          , mainNgramsTableCacheOff (props { onCancelRef = onCancelRef
+                                           , onNgramsClickRef = onNgramsClickRef
+                                           , onSaveRef = onSaveRef
+                                           , treeEdit = treeEdit }) []
           ]
 
 type NgramsTreeEditProps =
-  ( onSave   :: T.Box (Maybe (Effect Unit))
-  , treeEdit :: T.Box TreeEdit )
+  ( onCancelRef      :: R.Ref (Maybe (Unit -> Effect Unit))
+  , onNgramsClickRef :: R.Ref (Maybe NgramsClick)
+  , onSaveRef        :: R.Ref (Maybe (Unit -> Effect Unit))
+  , treeEdit         :: T.Box TreeEdit )
 
 ngramsTreeEdit :: R2.Component NgramsTreeEditProps
 ngramsTreeEdit = R.createElement ngramsTreeEditCpt
 ngramsTreeEditCpt :: R.Component NgramsTreeEditProps
 ngramsTreeEditCpt = here.component "ngramsTreeEdit" cpt where
-  cpt { onSave, treeEdit } _ = do
+  cpt props@{ treeEdit } _ = do
     { ngramsParent } <- T.useLive T.unequal treeEdit
 
     pure $ if ngramsParent == Nothing
            then
              H.div {} []
            else
-             ngramsTreeEditReal { onSave, treeEdit } []
+             ngramsTreeEditReal props []
 
 ngramsTreeEditReal :: R2.Component NgramsTreeEditProps
 ngramsTreeEditReal = R.createElement ngramsTreeEditRealCpt
 ngramsTreeEditRealCpt :: R.Component NgramsTreeEditProps
 ngramsTreeEditRealCpt = here.component "ngramsTreeEditReal" cpt where
-  cpt { treeEdit } _ = do
-    pure $ H.div {} [ H.text "ngramsTreeEditReal" ]
-    -- pure $ H.div {}
-    --   [ H.p {}
-    --     [ H.text $ "Editing " <> ngramsTermText ngrams ]
-    --   , NTC.renderNgramsTree { ngramsClick
-    --                          , ngramsDepth
-    --                          , ngramsEdit
-    --                          , ngramsStyle: []
-    --                          , ngramsTable
-    --                          }
-    --   , H.button { className: "btn btn-primary"
-    --              , on: {click: (const $ dispatch AddTermChildren)}
-    --              } [H.text "Save"]
-    --   , H.button { className: "btn btn-primary"
-    --              , on: {click: (const $ dispatch ClearTreeEdit)}
-    --              } [H.text "Cancel"]
-    --   ]
-    --   where
-    --     ngramsTable = ngramsTableCache # at ngrams
-    --                   <<< _Just
-    --                   <<< _NgramsRepoElement
-    --                   <<< _children
-    --                   %~ applyPatchSet (patchSetFromMap ngramsChildrenDiff)
-    --     ngramsClick {depth: 1, ngrams: child} = Just $ dispatch $ ToggleChild false child
-    --     ngramsClick _ = Nothing
-    --     ngramsEdit  _ = Nothing
+  cpt { onCancelRef, onNgramsClickRef, onSaveRef, treeEdit } _ = do
+    -- pure $ H.div {} [ H.text "ngramsTreeEditReal" ]
+
+    { ngramsChildren, ngramsChildrenDiff, ngramsParent } <- T.useLive T.unequal treeEdit
+
+    --let ngramsTable = applyPatchSet (patchSetFromMap ngramsChildrenDiff) ngramsChildren
+    let ngramsDepth = { depth: 1, ngrams: ngramsParent }
+    
+    pure $ H.div {}
+      [ H.p {}
+        [ H.text $ "Editing " <> ngramsTermText ngramsDepth.ngrams ]
+      , NTC.renderNgramsTree { ngramsChildren: applyPatchSet (patchSetFromMap ngramsChildrenDiff) $ Set.toUnfoldable ngramsChildren
+                             , ngramsClick
+                             , ngramsDepth
+                             , ngramsEdit
+                             , ngramsStyle: []
+                             }
+      , H.button { className: "btn btn-primary"
+                 , on: {click: onSaveClick} --(const $ dispatch AddTermChildren)}
+                 } [H.text "Save"]
+      , H.button { className: "btn btn-primary"
+                 , on: {click: onCancelClick } --(const $ dispatch ClearTreeEdit)}
+                 } [H.text "Cancel"]
+      ]
+      where
+        -- ngramsTable = ngramsTableCache # at ngrams
+        --               <<< _Just
+        --               <<< _NgramsRepoElement
+        --               <<< _children
+        --               %~ applyPatchSet (patchSetFromMap ngramsChildrenDiff)
+        --ngramsClick {depth: 1, ngrams: child} = Just $ dispatch $ ToggleChild false child
+        --ngramsClick _ = Nothing
+        ngramsClick nd = case R.readRef onNgramsClickRef of
+          Nothing  -> Nothing
+          Just ngc -> ngc nd
+        ngramsEdit  _ = Nothing
+        onCancelClick _ = case R.readRef onCancelRef of
+          Nothing -> Nothing
+          Just onCancel -> onCancel unit
+        onSaveClick _ = case R.readRef onSaveRef of
+          Nothing -> Nothing
+          Just onSave -> onSave unit
 
 mainNgramsTableCacheOn :: R2.Component MainNgramsTableProps
 mainNgramsTableCacheOn = R.createElement mainNgramsTableCacheOnCpt

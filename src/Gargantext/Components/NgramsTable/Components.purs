@@ -12,7 +12,7 @@ import Data.Set (Set)
 import Data.Set as Set
 import Effect (Effect)
 import FFI.Simple (delay)
-import Gargantext.Components.NgramsTable.Core (Action(..), Dispatch, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm, _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list, _ngrams, _occurrences, ngramsTermText, replace, setTermListA)
+import Gargantext.Components.NgramsTable.Core (Action(..), Dispatch, NgramsClick, NgramsDepth, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm, _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list, _ngrams, _occurrences, ngramsTermText, replace, setTermListA)
 import Gargantext.Components.Table as Tbl
 import Gargantext.Prelude (Unit, bind, const, discard, map, not, otherwise, pure, show, unit, ($), (+), (/=), (<<<), (<>), (==), (>), (||))
 import Gargantext.Types as GT
@@ -145,9 +145,6 @@ renderNgramsTreeCpt = here.component "renderNgramsTree" cpt
         ]
       ]
 
-
-type NgramsDepth = { ngrams :: NgramsTerm, depth :: Int }
-type NgramsClick = NgramsDepth -> Maybe (Effect Unit)
 
 type TagProps =
   ( ngramsClick :: NgramsClick
