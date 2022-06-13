@@ -77,6 +77,9 @@ module Gargantext.Components.NgramsTable.Core
   , syncResetButtons
   , chartsAfterSync
   , useAutoSync
+
+  , NgramsDepth
+  , NgramsClick
   )
   where
 
@@ -1190,3 +1193,7 @@ postNgramsChartsAsync { listIds, nodeId, session, tabType } = do
     acu = AsyncNgramsChartsUpdate { listId: head listIds
                                   , tabType }
     putNgramsAsync = PostNgramsChartsAsync (Just nodeId)
+
+
+type NgramsDepth = { ngrams :: NgramsTerm, depth :: Int }
+type NgramsClick = NgramsDepth -> Maybe (Effect Unit)
