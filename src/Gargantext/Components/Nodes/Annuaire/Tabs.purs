@@ -113,21 +113,29 @@ ngramsViewCpt = here.component "ngramsView" cpt where
       NTC.initialPageParams session nodeId
       [ defaultListId ] (TabDocument TabDocs)
 
-    treeEdit <- T.useBox NT.initialTreeEdit
+    onCancelRef <- R.useRef Nothing
+    onNgramsClickRef <- R.useRef Nothing
+    onSaveRef <- R.useRef Nothing
+    treeEditBox <- T.useBox NT.initialTreeEdit
 
-    pure $ NT.mainNgramsTable (props' treeEdit path) []
-      where
-        most = RX.pick props :: Record NTCommon
-        props' treeEdit path =
+    let most = RX.pick props :: Record NTCommon
+        props' =
           (Record.merge most
            { afterSync
            , path
            , tabType:        TabPairing (TabNgramType $ modeTabType mode)
            , tabNgramType:   modeTabType' mode
-           , treeEdit
+           , treeEdit: { box: treeEditBox
+                       , getNgramsChildren: \_ -> pure []
+                       , onCancelRef
+                       , onNgramsClickRef
+                       , onSaveRef }
            , withAutoUpdate: false }) :: Record NT.MainNgramsTableProps
         afterSync :: Unit -> Aff Unit
         afterSync _ = pure unit
+
+
+    pure $ NT.mainNgramsTable props' []
 
 type NTCommon =
   ( boxes         :: Boxes

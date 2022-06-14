@@ -80,6 +80,7 @@ module Gargantext.Components.NgramsTable.Core
 
   , NgramsDepth
   , NgramsClick
+  , NgramsActionRef
   )
   where
 
@@ -1197,3 +1198,4 @@ postNgramsChartsAsync { listIds, nodeId, session, tabType } = do
 
 type NgramsDepth = { ngrams :: NgramsTerm, depth :: Int }
 type NgramsClick = NgramsDepth -> Maybe (Effect Unit)
+type NgramsActionRef = R.Ref (Maybe (Unit -> Effect Unit))

@@ -11,6 +11,8 @@ import Data.Nullable (null, toMaybe)
 import Data.Set (Set)
 import Data.Set as Set
 import Effect (Effect)
+import Effect.Aff (Aff, launchAff_)
+import Effect.Class (liftEffect)
 import FFI.Simple (delay)
 import Gargantext.Components.NgramsTable.Core (Action(..), Dispatch, NgramsClick, NgramsDepth, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm, _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list, _ngrams, _occurrences, ngramsTermText, replace, setTermListA)
 import Gargantext.Components.Table as Tbl
@@ -118,11 +120,12 @@ selectionCheckboxCpt = here.component "selectionCheckbox" cpt
 
 
 type RenderNgramsTree =
-  ( ngramsChildren :: List NgramsTerm
-  , ngramsClick    :: NgramsClick
-  , ngramsDepth    :: NgramsDepth
-  , ngramsEdit     :: NgramsClick
-  , ngramsStyle    :: Array DOM.Props
+  ( getNgramsChildren :: NgramsTerm -> Aff (Array NgramsTerm)
+  , ngramsChildren    :: List NgramsTerm
+  , ngramsClick       :: NgramsClick
+  , ngramsDepth       :: NgramsDepth
+  , ngramsEdit        :: NgramsClick
+  , ngramsStyle       :: Array DOM.Props
   --, ngramsTable    :: NgramsTable
   )
 
@@ -131,11 +134,12 @@ renderNgramsTree p = R.createElement renderNgramsTreeCpt p []
 renderNgramsTreeCpt :: R.Component RenderNgramsTree
 renderNgramsTreeCpt = here.component "renderNgramsTree" cpt
   where
-    cpt { ngramsChildren, ngramsClick, ngramsDepth, ngramsEdit, ngramsStyle } _ =
+    cpt { getNgramsChildren, ngramsChildren, ngramsClick, ngramsDepth, ngramsEdit, ngramsStyle } _ =
       pure $ H.ul {}
       [ H.span { className: "tree" }
         [ H.span { className: "righthanded" }
-          [ tree { ngramsChildren
+          [ tree { getNgramsChildren
+                 , ngramsChildren
                  , ngramsClick
                  , ngramsDepth
                  , ngramsEdit
@@ -163,8 +167,9 @@ tag tagProps =
 -}
 
 type TreeProps =
-  ( ngramsChildren :: List NgramsTerm
-  , ngramsEdit     :: NgramsClick
+  ( getNgramsChildren :: NgramsTerm -> Aff (Array NgramsTerm)
+  , ngramsChildren    :: List NgramsTerm
+  , ngramsEdit        :: NgramsClick
   --, ngramsTable :: NgramsTable
   | TagProps
   )
@@ -174,11 +179,13 @@ tree p = R.createElement treeCpt p []
 treeCpt :: R.Component TreeProps
 treeCpt = here.component "tree" cpt
   where
-    cpt params@{ ngramsChildren, ngramsClick, ngramsDepth, ngramsEdit, ngramsStyle } _ = do
-
+    cpt params@{ getNgramsChildren, ngramsChildren, ngramsClick, ngramsDepth, ngramsEdit, ngramsStyle } _ = do
       R.useEffect' $ do
-        here.log2 "[tree] ngramsChildren" ngramsChildren
-      
+        launchAff_ $ do
+          c <- getNgramsChildren ngramsDepth.ngrams
+          liftEffect $ here.log2 "[tree] ngrams" ngramsDepth.ngrams
+          liftEffect $ here.log2 "[tree] children" c
+       
       pure $
         H.li { style: { width : "100%" } }
           ([ H.i { className, style } [] ]
@@ -212,8 +219,9 @@ treeCpt = here.component "tree" cpt
             H.ul {} <<< map (\ngrams -> tree (params { ngramsDepth = {depth, ngrams} })) <<< L.toUnfoldable
 
 
-type RenderNgramsItem = (
-    dispatch          :: Action -> Effect Unit
+type RenderNgramsItem =
+  ( dispatch          :: Action -> Effect Unit
+  , getNgramsChildren :: NgramsTerm -> Aff (Array NgramsTerm)
   , ngrams            :: NgramsTerm
   , ngramsElement     :: NgramsElement
   , ngramsLocalPatch  :: NgramsTablePatch
@@ -228,6 +236,7 @@ renderNgramsItemCpt :: R.Component RenderNgramsItem
 renderNgramsItemCpt = here.component "renderNgramsItem" cpt
   where
     cpt { dispatch
+        , getNgramsChildren
         , ngrams
         , ngramsElement
         , ngramsLocalPatch
@@ -245,7 +254,8 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         , checkbox GT.StopTerm
         , H.div {}
           ( if ngramsParent == Nothing
-            then [renderNgramsTree { ngramsChildren
+            then [renderNgramsTree { getNgramsChildren
+                                   , ngramsChildren
                                    , ngramsClick
                                    , ngramsDepth
                                    , ngramsEdit

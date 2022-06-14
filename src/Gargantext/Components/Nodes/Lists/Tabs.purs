@@ -89,7 +89,10 @@ ngramsViewCpt = here.component "ngramsView" cpt where
             , session
             , path } _ = do
       chartsReload <- T.useBox T2.newReload
-      treeEdit <- T.useBox NT.initialTreeEdit
+      onCancelRef <- R.useRef Nothing
+      onNgramsClickRef <- R.useRef Nothing
+      onSaveRef <- R.useRef Nothing
+      treeEditBox <- T.useBox NT.initialTreeEdit
 
       { listIds, nodeId, params } <- T.useLive T.unequal path
 
@@ -115,7 +118,11 @@ ngramsViewCpt = here.component "ngramsView" cpt where
           , session
           , tabNgramType
           , tabType
-          , treeEdit
+          , treeEdit: { box: treeEditBox
+                      , getNgramsChildren: \_ -> pure []
+                      , onCancelRef
+                      , onNgramsClickRef
+                      , onSaveRef }
           , withAutoUpdate: false
           } []
         ]
