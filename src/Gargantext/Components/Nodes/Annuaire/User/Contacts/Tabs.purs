@@ -146,7 +146,10 @@ ngramsViewCpt = here.component "ngramsView" cpt
         , nodeId
         , session } _ = do
       path <- T.useBox $ NTC.initialPageParams session nodeId [defaultListId] (TabDocument TabDocs)
-      treeEdit <- T.useBox NT.initialTreeEdit
+      onCancelRef <- R.useRef Nothing
+      onNgramsClickRef <- R.useRef Nothing
+      onSaveRef <- R.useRef Nothing
+      treeEditBox <- T.useBox NT.initialTreeEdit
 
       pure $ NT.mainNgramsTable {
           afterSync: \_ -> pure unit
@@ -157,7 +160,11 @@ ngramsViewCpt = here.component "ngramsView" cpt
         , session
         , tabNgramType
         , tabType
-        , treeEdit
+        , treeEdit: { box: treeEditBox
+                    , getNgramsChildren: \_ -> pure []
+                    , onCancelRef
+                    , onNgramsClickRef
+                    , onSaveRef }
         , withAutoUpdate: false
         } []
       where
