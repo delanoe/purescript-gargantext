@@ -86,7 +86,7 @@ defaultNodeDocumentV3 =
   NodePoly { id : 0
            , typename : 0
            , userId   : 0
-           , parentId : 0
+           , parentId : Just 0
            , name     : "Default name"
            , date     : "Default date"
            , hyperdata : defaultDocumentV3
@@ -148,7 +148,7 @@ defaultNodeDocument =
   NodePoly { id : 0
            , typename : 0
            , userId   : 0
-           , parentId : 0
+           , parentId : Just 0
            , name     : "Default name"
            , date     : "Default date"
            , hyperdata : defaultDocument
