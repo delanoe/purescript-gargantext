@@ -183,8 +183,7 @@ tableContainerCpt { dispatch
             ]
           , editor
           , if (selectionsExist ngramsSelection)
-            then H.li {className: "list-group-item"}
-                 [selectButtons true]
+            then H.li {className: "list-group-item"} [selectButtons true]
             else H.div {} []
           , H.div {id: "terms_table", className: "card-body"}
             [ H.table {className: "table able"}
