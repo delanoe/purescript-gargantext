@@ -100,13 +100,13 @@ ngramsViewCpt = here.component "ngramsView" cpt where
         R.fragment
         [
           ngramsView'
-          { mode
-          , boxes
-          , session
-          , params
-          , listIds
-          , nodeId
+          { boxes
           , corpusData: props.corpusData
+          , listIds
+          , mode
+          , nodeId
+          , params
+          , session
           } []
         ,
           NT.mainNgramsTable
@@ -119,7 +119,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
           , tabNgramType
           , tabType
           , treeEdit: { box: treeEditBox
-                      , getNgramsChildren: \_ -> pure []
+                      , getNgramsChildren: NT.getNgramsChildrenAff session nodeId listIds tabType
                       , onCancelRef
                       , onNgramsClickRef
                       , onSaveRef }
@@ -148,26 +148,28 @@ ngramsViewCpt = here.component "ngramsView" cpt where
 
 -- @XXX re-render issue -> clone component
 type NgramsViewProps' =
-  ( mode          :: Mode
-  , boxes         :: Boxes
-  , session       :: Session
-  , listIds       :: Array Int
-  , params        :: Params
-  , nodeId        :: Int
+  ( boxes         :: Boxes
   , corpusData    :: CorpusData
+  , listIds       :: Array Int
+  , mode          :: Mode
+  , nodeId        :: Int
+  , params        :: Params
+  , session       :: Session
   )
 
 ngramsView' :: R2.Component NgramsViewProps'
 ngramsView' = R.createElement ngramsViewCpt'
-ngramsViewCpt' :: R.Memo NgramsViewProps'
-ngramsViewCpt' = R.memo' $ here.component "ngramsView_clone" cpt where
-  cpt { mode
-      , boxes
-      , session
-      , listIds
-      , params
-      , nodeId
+--ngramsViewCpt' :: R.Memo NgramsViewProps'
+--ngramsViewCpt' = R.memo' $ here.component "ngramsView_clone" cpt where
+ngramsViewCpt' :: R.Component NgramsViewProps'
+ngramsViewCpt' = here.component "ngramsView_clone" cpt where
+  cpt { boxes
       , corpusData: { defaultListId }
+      , listIds
+      , mode
+      , nodeId
+      , params
+      , session
       } _ = do
 
     let path' = {

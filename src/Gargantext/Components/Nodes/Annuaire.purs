@@ -151,16 +151,15 @@ pageLayoutCpt = here.component "pageLayout" cpt
         errorHandler = logRESTError here "[pageLayout]"
 
 type PageProps = 
-  ( session   :: Session
-  , frontends :: Frontends
+  ( frontends :: Frontends
   , pagePath  :: T.Box PagePath
   -- , info :: AnnuaireInfo
+  , session   :: Session
   , table     :: TableResult CT.NodeContact
   )
 
 page :: Record PageProps -> R.Element
 page props = R.createElement pageCpt props []
-
 pageCpt :: R.Component PageProps
 pageCpt = here.component "page" cpt
   where
