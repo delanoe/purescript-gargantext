@@ -36,8 +36,10 @@ import Effect.Class (liftEffect)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
-import Gargantext.Components.NgramsTable.Components as NTC
 import Gargantext.Components.NgramsTable.Core (addNewNgramA, applyNgramsPatches, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, ngramsRepoElementToNgramsElement, normNgram, patchSetFromMap, setTermListA, singletonNgramsTablePatch, toVersioned)
+import Gargantext.Components.NgramsTable.Search as NTS
+import Gargantext.Components.NgramsTable.SelectionCheckbox as NTSC
+import Gargantext.Components.NgramsTable.Tree as NTT
 import Gargantext.Components.NgramsTable.Loader (useLoaderWithCacheAPI)
 import Gargantext.Components.NgramsTable.SyncResetButton (syncResetButtons)
 import Gargantext.Components.Nodes.Lists.Types as NT
@@ -281,7 +283,7 @@ loadedNgramsTableHeaderCpt = here.component "loadedNgramsTableHeader" cpt where
       [ H.h4 { style: { textAlign : "center" } }
         [ H.span { className: "fa fa-hand-o-down" } []
         , H.text "Extracted Terms" ]
-      , NTC.searchInput { key: "search-input"
+      , NTS.searchInput { key: "search-input"
                         , searchQuery }
       ]
 
@@ -355,7 +357,7 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
         filteredConvertedRows = convertRow <$> filteredRows
 
         convertRow ngramsElement =
-          { row: NTC.renderNgramsItem { dispatch: performAction
+          { row: NTT.renderNgramsItem { dispatch: performAction
                                       , getNgramsChildren
                                       , ngrams: ngramsElement ^. _NgramsElement <<< _ngrams
                                       , ngramsElement
@@ -450,7 +452,7 @@ ngramsTableOrderWith orderBy =
     _              -> identity -- the server ordering is enough here
 
 -- This is used to *decorate* the Select header with the checkbox.
-wrapColElts scProps _         (TT.ColumnName "Select") = const [NTC.selectionCheckbox scProps]
+wrapColElts scProps _         (TT.ColumnName "Select") = const [NTSC.selectionCheckbox scProps]
 wrapColElts _       scoreType (TT.ColumnName "Score")  = (_ <> [H.text ("(" <> show scoreType <> ")")])
 wrapColElts _       _         _                        = identity
 
@@ -549,7 +551,7 @@ displayRow { ngramsElement: NgramsElement {ngrams, root, list}
     -- ^ and which satisfies the chosen term size
     || ngramsChildrenDiff ^. at ngrams == Just false
     -- ^ unless they are scheduled to be removed.
-    || NTC.tablePatchHasNgrams ngramsLocalPatch ngrams
+    || NTT.tablePatchHasNgrams ngramsLocalPatch ngrams
     -- ^ unless they are being processed at the moment.
 
 allNgramsSelectedOnFirstPage :: Set NgramsTerm -> PreConversionRows -> Boolean
@@ -686,7 +688,7 @@ ngramsTreeEditRealCpt = here.component "ngramsTreeEditReal" cpt where
     pure $ H.div {}
       [ H.p {}
         [ H.text $ "Editing " <> ngramsTermText ngramsDepth.ngrams ]
-      , NTC.renderNgramsTree { getNgramsChildren: gnc
+      , NTT.renderNgramsTree { getNgramsChildren: gnc
                              , ngramsClick
                              , ngramsDepth
                              , ngramsEdit
