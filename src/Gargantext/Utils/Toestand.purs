@@ -55,4 +55,3 @@ useMemberBox val box = T.useFocused (Set.member val) (toggleSet val) box
 toggleSet :: forall s. Ord s => s -> Boolean -> Set s -> Set s
 toggleSet val true  set = Set.insert val set
 toggleSet val false set = Set.delete val set
-

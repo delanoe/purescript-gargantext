@@ -12,8 +12,11 @@ import Gargantext.Components.AutoUpdate (autoUpdate)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (SpinnerTheme(..))
 import Gargantext.Components.Document.Types (DocPath, Document(..), LoadedData, initialState)
-import Gargantext.Components.NgramsTable.Core (CoreAction(..), Versioned(..), addNewNgramA, applyNgramsPatches, coreDispatch, findNgramRoot, replace, setTermListA, syncResetButtons, useAutoSync)
+import Gargantext.Components.NgramsTable.Core (addNewNgramA, applyNgramsPatches, coreDispatch, findNgramRoot, setTermListA)
+import Gargantext.Components.NgramsTable.AutoSync (useAutoSync)
+import Gargantext.Components.NgramsTable.SyncResetButton (syncResetButtons)
 import Gargantext.Components.Node (NodePoly(..))
+import Gargantext.Core.NgramsTable.Types (CoreAction(..), Versioned(..), replace)
 import Gargantext.Utils as U
 import Gargantext.Utils.Reactix as R2
 import Reactix as R

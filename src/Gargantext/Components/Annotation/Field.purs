@@ -23,7 +23,8 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Gargantext.Components.Annotation.Menu (annotationMenu, AnnotationMenu)
 import Gargantext.Components.Annotation.Types (termClass, MenuType(..))
-import Gargantext.Components.NgramsTable.Core (NgramsTable, NgramsTerm, findNgramTermList, highlightNgrams, normNgram)
+import Gargantext.Components.NgramsTable.Core (findNgramTermList, highlightNgrams, normNgram)
+import Gargantext.Core.NgramsTable.Types (NgramsTable, NgramsTerm)
 import Gargantext.Types (CTabNgramType(..), TermList)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Selection as Sel

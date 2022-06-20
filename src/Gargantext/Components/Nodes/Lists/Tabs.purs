@@ -8,7 +8,6 @@ import Data.Tuple.Nested ((/\))
 import Effect.Class (liftEffect)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.NgramsTable as NT
-import Gargantext.Components.NgramsTable.Core (PageParams)
 import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
 import Gargantext.Components.Nodes.Corpus.Chart.Pie (pie, bar)
@@ -17,6 +16,7 @@ import Gargantext.Components.Nodes.Corpus.Chart.Utils (mNgramsTypeFromTabType)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table.Types (Params)
+import Gargantext.Core.NgramsTable.Types (PageParams)
 import Gargantext.Prelude (bind, pure, unit, ($))
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType(..), Mode(..), TabSubType(..), TabType(..), modeTabType)
