@@ -1,4 +1,4 @@
-module Gargantext.Components.NgramsTable.Components where
+module Gargantext.Components.NgramsTable.Tree where
 
 import Data.Array as A
 import Data.Either (Either(..))
@@ -18,9 +18,8 @@ import DOM.Simple as DOM
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
-import FFI.Simple (delay)
 import Gargantext.Components.NgramsTable.Core (applyNgramsPatches, setTermListA)
-import Gargantext.Core.NgramsTable.Types (Action(..), Dispatch, NgramsClick, NgramsDepth, NgramsElement, NgramsTable, NgramsTablePatch(..), NgramsTerm, _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list, _ngrams, _occurrences, ngramsTermText, replace)
+import Gargantext.Core.NgramsTable.Types (Action(..), NgramsClick, NgramsDepth, NgramsElement, NgramsTable, NgramsTablePatch(..), NgramsTerm, _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list, _ngrams, _occurrences, ngramsTermText, replace)
 import Gargantext.Components.Table as Tbl
 import Gargantext.Config.REST (logRESTError)
 import Gargantext.Hooks.Loader (useLoader)
@@ -36,103 +35,7 @@ import Toestand as T
 import Type.Proxy (Proxy(..))
 
 here :: R2.Here
-here = R2.here "Gargantext.Components.NgramsTable.Components"
-
-type SearchInputProps =
-  ( searchQuery :: T.Box String
-  )
-
--- "key": to prevent refreshing & losing input
-searchInput :: R2.Leaf ( key :: String | SearchInputProps )
-searchInput = R2.leafComponent searchInputCpt
-searchInputCpt :: R.Component ( key :: String | SearchInputProps )
-searchInputCpt = here.component "searchInput" cpt
-  where
-    cpt { searchQuery } _ = do
-      inputRef <- R.useRef null
-      
-      pure $ R2.row
-        [ H.div { className: "col-12" }
-          [ H.div { className: "input-group" }
-            [ searchButton { inputRef, searchQuery } []
-            , searchFieldInput { inputRef, searchQuery } []
-            ]
-          ]
-        ]
-
-type SearchButtonProps =
-  ( inputRef    :: R.Ref (Nullable DOM.Element)
-  , searchQuery :: T.Box String
-  )
-
-searchButton :: R2.Component SearchButtonProps
-searchButton = R.createElement searchButtonCpt
-searchButtonCpt :: R.Component SearchButtonProps
-searchButtonCpt = here.component "searchButton" cpt where
-  cpt { inputRef, searchQuery } _ = do
-    searchQuery' <- T.useLive T.unequal searchQuery
-
-    pure $ H.div { className: "input-group-prepend" }
-      [ if searchQuery' /= ""
-        then
-          H.button { className: "btn btn-danger"
-                   , on: { click: \_ -> R2.setInputValue inputRef "" } }
-                            -- T.write "" searchQuery } }
-          [ H.span {className: "fa fa-times"} []]
-        else H.span { className: "fa fa-search input-group-text" } []
-      ]
-
-type SearchFieldInputProps =
-  ( inputRef    :: R.Ref (Nullable DOM.Element)
-  , searchQuery :: T.Box String
-  )
-
-searchFieldInput :: R2.Component SearchFieldInputProps
-searchFieldInput = R.createElement searchFieldInputCpt
-searchFieldInputCpt :: R.Component SearchFieldInputProps
-searchFieldInputCpt = here.component "searchFieldInput" cpt where
-  cpt { inputRef, searchQuery } _ = do
-    -- searchQuery' <- T.useLive T.unequal searchQuery
-    
-    pure $ H.input { className: "form-control"
-                   -- , defaultValue: searchQuery'
-                   , name: "search"
-                   , on: { input: \e -> T.write (R.unsafeEventValue e) searchQuery }
-                   , placeholder: "Search"
-                   , ref: inputRef
-                   , type: "value"
-                   }
-
-type SelectionCheckboxProps =
-  ( allNgramsSelected :: Boolean
-  , dispatch          :: Dispatch
-  , ngramsSelection   :: Set NgramsTerm
-  )
-
-selectionCheckbox :: Record SelectionCheckboxProps -> R.Element
-selectionCheckbox props = R.createElement selectionCheckboxCpt props []
-selectionCheckboxCpt :: R.Component SelectionCheckboxProps
-selectionCheckboxCpt = here.component "selectionCheckbox" cpt
-  where
-    cpt { allNgramsSelected, dispatch, ngramsSelection } _ = do
-      ref <- R.useRef null
-
-      R.useEffect' $ delay unit $ \_ -> do
-        let mCb = toMaybe $ R.readRef ref
-        case mCb of
-          Nothing -> pure unit
-          Just cb -> do
-            _ <- if allNgramsSelected || (Set.isEmpty ngramsSelection) then
-              R2.setIndeterminateCheckbox cb false
-            else
-              R2.setIndeterminateCheckbox cb true
-            pure unit
-
-      pure $ H.input { checked: allNgramsSelected
-                     , className: "checkbox"
-                     , on: { change: const $ dispatch $ ToggleSelectAll }
-                     , ref
-                     , type: "checkbox" }
+here = R2.here "Gargantext.Components.NgramsTable.Tree"
 
 
 type RenderNgramsTree =
