@@ -1,5 +1,6 @@
 module Gargantext.Components.NgramsTable.Components where
 
+import Data.Array as A
 import Data.Either (Either(..))
 import Data.Lens ((^..), (^.), view)
 import Data.Lens.At (at)
@@ -7,19 +8,23 @@ import Data.Lens.Fold (folded)
 import Data.Lens.Index (ix)
 import Data.List (List)
 import Data.List as L
+import Data.Map (Map)
+import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe, isJust)
-import Data.Nullable (null, toMaybe)
+import Data.Nullable (Nullable, null, toMaybe)
 import Data.Set (Set)
 import Data.Set as Set
+import DOM.Simple as DOM
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import FFI.Simple (delay)
-import Gargantext.Components.NgramsTable.Core (Action(..), Dispatch, NgramsClick, NgramsDepth, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm, _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list, _ngrams, _occurrences, ngramsTermText, replace, setTermListA)
+import Gargantext.Components.NgramsTable.Core (applyNgramsPatches, setTermListA)
+import Gargantext.Core.NgramsTable.Types (Action(..), Dispatch, NgramsClick, NgramsDepth, NgramsElement, NgramsTable, NgramsTablePatch(..), NgramsTerm, _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list, _ngrams, _occurrences, ngramsTermText, replace)
 import Gargantext.Components.Table as Tbl
 import Gargantext.Config.REST (logRESTError)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (Unit, bind, const, discard, map, not, otherwise, pure, show, unit, ($), (+), (/=), (<<<), (<>), (==), (>), (||))
+import Gargantext.Prelude (Unit, bind, const, discard, map, mempty, not, otherwise, pure, show, unit, ($), (+), (/=), (<<<), (<>), (==), (>), (||))
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import React.DOM (a, span, text)
@@ -44,51 +49,57 @@ searchInputCpt :: R.Component ( key :: String | SearchInputProps )
 searchInputCpt = here.component "searchInput" cpt
   where
     cpt { searchQuery } _ = do
+      inputRef <- R.useRef null
+      
       pure $ R2.row
         [ H.div { className: "col-12" }
           [ H.div { className: "input-group" }
-            [ searchButton { searchQuery } []
-            , searchFieldInput { searchQuery } []
+            [ searchButton { inputRef, searchQuery } []
+            , searchFieldInput { inputRef, searchQuery } []
             ]
           ]
         ]
 
 type SearchButtonProps =
-  ( searchQuery :: T.Box String
+  ( inputRef    :: R.Ref (Nullable DOM.Element)
+  , searchQuery :: T.Box String
   )
 
 searchButton :: R2.Component SearchButtonProps
 searchButton = R.createElement searchButtonCpt
 searchButtonCpt :: R.Component SearchButtonProps
 searchButtonCpt = here.component "searchButton" cpt where
-  cpt { searchQuery } _ = do
+  cpt { inputRef, searchQuery } _ = do
     searchQuery' <- T.useLive T.unequal searchQuery
 
     pure $ H.div { className: "input-group-prepend" }
       [ if searchQuery' /= ""
         then
           H.button { className: "btn btn-danger"
-                   , on: {click: \_ -> T.write "" searchQuery}}
+                   , on: { click: \_ -> R2.setInputValue inputRef "" } }
+                            -- T.write "" searchQuery } }
           [ H.span {className: "fa fa-times"} []]
         else H.span { className: "fa fa-search input-group-text" } []
       ]
 
 type SearchFieldInputProps =
-  ( searchQuery :: T.Box String
+  ( inputRef    :: R.Ref (Nullable DOM.Element)
+  , searchQuery :: T.Box String
   )
 
 searchFieldInput :: R2.Component SearchFieldInputProps
 searchFieldInput = R.createElement searchFieldInputCpt
 searchFieldInputCpt :: R.Component SearchFieldInputProps
 searchFieldInputCpt = here.component "searchFieldInput" cpt where
-  cpt { searchQuery } _ = do
+  cpt { inputRef, searchQuery } _ = do
     -- searchQuery' <- T.useLive T.unequal searchQuery
-
+    
     pure $ H.input { className: "form-control"
                    -- , defaultValue: searchQuery'
                    , name: "search"
                    , on: { input: \e -> T.write (R.unsafeEventValue e) searchQuery }
                    , placeholder: "Search"
+                   , ref: inputRef
                    , type: "value"
                    }
 
@@ -132,6 +143,7 @@ type RenderNgramsTree =
   , ngramsEdit        :: NgramsClick
   , ngramsStyle       :: Array DOM.Props
   --, ngramsTable    :: NgramsTable
+  , key               :: String -- used to refresh the tree on diff change
   )
 
 renderNgramsTree :: Record RenderNgramsTree -> R.Element
@@ -139,20 +151,20 @@ renderNgramsTree p = R.createElement renderNgramsTreeCpt p []
 renderNgramsTreeCpt :: R.Component RenderNgramsTree
 renderNgramsTreeCpt = here.component "renderNgramsTree" cpt
   where
-    cpt { getNgramsChildren, ngramsClick, ngramsDepth, ngramsEdit, ngramsStyle } _ =
+    cpt { getNgramsChildren, ngramsClick, ngramsDepth, ngramsEdit, ngramsStyle } _ = do
       pure $ H.ul {}
-      [ H.span { className: "tree" }
-        [ H.span { className: "righthanded" }
-          [ tree { getNgramsChildren
-                 --, ngramsChildren
-                 , ngramsClick
-                 , ngramsDepth
-                 , ngramsEdit
-                 , ngramsStyle
-                 }
+        [ H.span { className: "tree" }
+          [ H.span { className: "righthanded" }
+            [ tree { getNgramsChildren
+                     --, ngramsChildren
+                   , ngramsClick
+                   , ngramsDepth
+                   , ngramsEdit
+                   , ngramsStyle
+                   }
+            ]
           ]
         ]
-      ]
 
 
 type TagProps =
@@ -253,7 +265,7 @@ renderNgramsItemCpt :: R.Component RenderNgramsItem
 renderNgramsItemCpt = here.component "renderNgramsItem" cpt
   where
     cpt { dispatch
-        , getNgramsChildren
+        --, getNgramsChildren
         , ngrams
         , ngramsElement
         , ngramsLocalPatch
@@ -261,6 +273,9 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         , ngramsSelection
         , ngramsTable
         } _ = do
+      R.useEffect' $ do
+        here.log2 "[renderNgramsItem] tbl" tbl
+      
       pure $ Tbl.makeRow
         [ H.div { className: "ngrams-selector" }
           [ H.span { className: "ngrams-chooser fa fa-eye-slash"
@@ -271,11 +286,12 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         , checkbox GT.StopTerm
         , H.div {}
           ( if ngramsParent == Nothing
-            then [ renderNgramsTree { getNgramsChildren
+            then [ renderNgramsTree { getNgramsChildren: getNgramsChildren'
                                     , ngramsClick
                                     , ngramsDepth
                                     , ngramsEdit
-                                    , ngramsStyle } ]
+                                    , ngramsStyle
+                                    , key: "" } ]
             else [ H.a { on: { click: const $ dispatch $ ToggleChild true ngrams } }
                    [ H.i { className: "fa fa-plus" } [] ]
                  , R2.buff $ tag [ text $ " " <> ngramsTermText ngramsDepth.ngrams ]
@@ -297,7 +313,13 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         termList    = ngramsElement ^. _NgramsElement <<< _list
         ngramsStyle = [termStyle termList ngramsOpacity]
         ngramsEdit { ngrams } = Just $ dispatch $ SetParentResetChildren (Just ngrams) ngramsChildren
-        ngramsChildren = ngramsTable ^.. ix ngrams <<< _NgramsRepoElement <<< _children <<< folded
+        tbl = applyNgramsPatches { ngramsLocalPatch
+                                 , ngramsStagePatch: mempty
+                                 , ngramsValidPatch: mempty
+                                 , ngramsVersion: 0 } ngramsTable
+        getNgramsChildren' :: NgramsTerm -> Aff (Array NgramsTerm)
+        getNgramsChildren' n = if n == ngrams then (pure $ A.fromFoldable ngramsChildren) else pure []
+        ngramsChildren = tbl ^.. ix ngrams <<< _NgramsRepoElement <<< _children <<< folded
         ngramsClick =
           Just <<< dispatch <<< CoreAction <<< cycleTermListItem <<< view _ngrams
           -- ^ This is the old behavior it is nicer to use since one can
@@ -349,8 +371,8 @@ termStyle GT.CandidateTerm opacity = DOM.style
   }
 
 tablePatchHasNgrams :: NgramsTablePatch -> NgramsTerm -> Boolean
-tablePatchHasNgrams ngramsTablePatch ngrams =
-  isJust $ ngramsTablePatch.ngramsPatches ^. _PatchMap <<< at ngrams
+tablePatchHasNgrams (NgramsTablePatch ngramsPatches) ngrams =
+  isJust $ ngramsPatches ^. _PatchMap <<< at ngrams
 
 
 nextTermList :: GT.TermList -> GT.TermList

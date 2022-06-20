@@ -30,6 +30,7 @@ import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Config.REST (AffRESTError)
+import Gargantext.Core.NgramsTable.Types as CNT
 import Gargantext.Data.Array (mapMaybe)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
@@ -634,14 +635,14 @@ type SendPatches =
 sendPatches :: Record SendPatches -> Effect Unit
 sendPatches { errors, metaData, nodes, reloadForest, session, termList } = do
   launchAff_ do
-    patches <- (parTraverse (sendPatch termList session metaData) nodes) -- :: Aff (Array NTC.VersionedNgramsPatches)
+    patches <- (parTraverse (sendPatch termList session metaData) nodes) -- :: Aff (Array CNT.VersionedNgramsPatches)
     let mPatch = last patches
     case mPatch of
       Nothing -> pure unit
       Just (Left err) -> liftEffect $ do
         T.modify_ (A.cons $ FRESTError { error: err }) errors
         here.warn2 "[sendPatches] RESTError" err
-      Just (Right (NTC.Versioned _patch)) -> do
+      Just (Right (CNT.Versioned _patch)) -> do
         liftEffect $ T2.reload reloadForest
 
 -- Why is this called delete node?
@@ -649,7 +650,7 @@ sendPatch :: TermList
           -> Session
           -> GET.MetaData
           -> Record SigmaxT.Node
-          -> AffRESTError NTC.VersionedNgramsPatches
+          -> AffRESTError CNT.VersionedNgramsPatches
 sendPatch termList session (GET.MetaData metaData) node = do
     eRet  <- NTC.putNgramsPatches coreParams versioned
     case eRet of
@@ -661,10 +662,10 @@ sendPatch termList session (GET.MetaData metaData) node = do
     nodeId :: NodeID
     nodeId = unsafePartial $ fromJust $ fromString node.id
 
-    versioned :: NTC.VersionedNgramsPatches
-    versioned = NTC.Versioned {version: metaData.list.version, data: np}
+    versioned :: CNT.VersionedNgramsPatches
+    versioned = CNT.Versioned {version: metaData.list.version, data: np}
 
-    coreParams :: NTC.CoreParams ()
+    coreParams :: CNT.CoreParams ()
     coreParams = {session, nodeId, listIds: [metaData.list.listId], tabType}
 
     tabNgramType :: CTabNgramType
@@ -673,14 +674,14 @@ sendPatch termList session (GET.MetaData metaData) node = do
     tabType :: TabType
     tabType = TabCorpus (TabNgramType tabNgramType)
 
-    term :: NTC.NgramsTerm
+    term :: CNT.NgramsTerm
     term = NTC.normNgram tabNgramType node.label
 
-    np :: NTC.NgramsPatches
-    np = NTC.singletonPatchMap term $ NTC.NgramsPatch { patch_children: mempty, patch_list }
+    np :: CNT.NgramsPatches
+    np = NTC.singletonPatchMap term $ CNT.NgramsPatch { patch_children: mempty, patch_list }
 
-    patch_list :: NTC.Replace TermList
-    patch_list = NTC.Replace { new: termList, old: MapTerm }
+    patch_list :: CNT.Replace TermList
+    patch_list = CNT.Replace { new: termList, old: MapTerm }
 
 
 

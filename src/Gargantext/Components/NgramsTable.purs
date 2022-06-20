@@ -37,12 +37,14 @@ import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
 import Gargantext.Components.NgramsTable.Components as NTC
-import Gargantext.Components.NgramsTable.Core (Action(..), CoreAction(..), CoreState, Dispatch, NgramsActionRef, NgramsClick, NgramsDepth, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTerm(..), PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, VersionedWithCountNgramsTable, _NgramsElement, _NgramsRepoElement, _NgramsTable, _children, _list, _ngrams, _ngrams_repo_elements, _ngrams_scores, _occurrences, _root, addNewNgramA, applyNgramsPatches, applyPatchSet, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, fromNgramsPatches, ngramsRepoElementToNgramsElement, ngramsTermText, normNgram, patchSetFromMap, replace, setTermListA, singletonNgramsTablePatch, syncResetButtons, toVersioned)
+import Gargantext.Components.NgramsTable.Core (addNewNgramA, applyNgramsPatches, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, ngramsRepoElementToNgramsElement, normNgram, patchSetFromMap, setTermListA, singletonNgramsTablePatch, toVersioned)
 import Gargantext.Components.NgramsTable.Loader (useLoaderWithCacheAPI)
+import Gargantext.Components.NgramsTable.SyncResetButton (syncResetButtons)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as TT
 import Gargantext.Components.Table.Types as TT
-import Gargantext.Config.REST (AffRESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError, RESTError, logRESTError)
+import Gargantext.Core.NgramsTable.Types (Action(..), CoreAction(..), CoreState, Dispatch, NgramsActionRef, NgramsClick, NgramsDepth, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch(..), NgramsTerm(..), PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, VersionedWithCountNgramsTable, _NgramsElement, _NgramsRepoElement, _NgramsTable, _children, _list, _ngrams, _ngrams_repo_elements, _ngrams_scores, _occurrences, _root, applyPatchSet, ngramsTermText, replace)
 import Gargantext.Hooks.Loader (useLoaderBox)
 import Gargantext.Routes (SessionRoute(..)) as R
 import Gargantext.Sessions (Session, get)
@@ -85,18 +87,21 @@ initialTreeEdit =
   , ngramsChildrenDiff: Map.empty
   , ngramsParent      : Nothing }
 
-initialState :: VersionedNgramsTable -> State
-initialState (Versioned {version}) = {
-    ngramsLocalPatch: mempty
+initialState :: State
+initialState =
+  { ngramsLocalPatch: mempty
   , ngramsSelection:  mempty
   , ngramsStagePatch: mempty
   , ngramsValidPatch: mempty
-  , ngramsVersion:    version
+  , ngramsVersion:    0
   }
+
+initialStateWithVersion :: VersionedNgramsTable -> State
+initialStateWithVersion (Versioned { version }) = initialState { ngramsVersion = version }
 
 setTermListSetA :: NgramsTable -> Set NgramsTerm -> TermList -> Action
 setTermListSetA ngramsTable ns new_list =
-  CoreAction $ CommitPatch $ fromNgramsPatches $ PatchMap $ mapWithIndex f $ toMap ns
+  CoreAction $ CommitPatch $ NgramsTablePatch $ PatchMap $ mapWithIndex f $ toMap ns
   where
     f :: NgramsTerm -> Unit -> NgramsPatch
     f n _unit = NgramsPatch { patch_list, patch_children: mempty }
@@ -568,10 +573,12 @@ type MainNgramsTableProps = (
 
 getNgramsChildrenAff :: Session -> NodeID -> Array ListId -> TabType -> NgramsTerm -> Aff (Array NgramsTerm)
 getNgramsChildrenAff session nodeId listIds tabType (NormNgramsTerm ngrams) = do
-  res <- get session $ R.GetNgrams params (Just nodeId)
+  res :: Either RESTError ({ data :: Array { children :: Array String, ngrams :: String }}) <- get session $ R.GetNgrams params (Just nodeId)
   case res of
     Left err -> pure []
-    Right r -> pure r
+    Right { data: lst } -> case A.uncons (A.filter (\d -> d.ngrams == ngrams) lst) of
+      Nothing -> pure []
+      Just { head } -> pure $ NormNgramsTerm <$> head.children
   where
     params = { limit: 10
              , listIds
@@ -593,7 +600,8 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
       onCancelRef <- R.useRef Nothing
       onNgramsClickRef <- R.useRef Nothing
       onSaveRef   <- R.useRef Nothing
-      treeEditBox <- T.useBox initialTreeEdit
+      state <- T.useBox initialState
+      ngramsLocalPatch <- T.useFocused (_.ngramsLocalPatch) (\a b -> b { ngramsLocalPatch = a }) state
 
       nodeId <- T.useFocused (_.nodeId) (\a b -> b { nodeId = a }) path
       nodeId' <- T.useLive T.unequal nodeId
@@ -611,18 +619,19 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
         NT.CacheOn  -> pure $ R.fragment
           [
             loadedNgramsTableHeader { searchQuery } []
-          , mainNgramsTableCacheOn props []
+          , mainNgramsTableCacheOn (Record.merge props { state }) []
           ]
         NT.CacheOff -> pure $ R.fragment
           [
             loadedNgramsTableHeader { searchQuery } []
-          , ngramsTreeEdit treeEdit []
-          , mainNgramsTableCacheOff props []
+          , ngramsTreeEdit (treeEdit) []
+          , mainNgramsTableCacheOff (Record.merge props { state }) []
           ]
 
 type NgramsTreeEditProps =
   ( box               :: T.Box TreeEdit
   , getNgramsChildren :: NgramsTerm -> Aff (Array NgramsTerm)
+  --, ngramsLocalPatch  :: T.Box NgramsTablePatch
   , onCancelRef       :: NgramsActionRef
   , onNgramsClickRef  :: R.Ref (Maybe NgramsClick)
   , onSaveRef         :: NgramsActionRef
@@ -649,16 +658,30 @@ ngramsTreeEditReal :: R2.Component NgramsTreeEditRealProps
 ngramsTreeEditReal = R.createElement ngramsTreeEditRealCpt
 ngramsTreeEditRealCpt :: R.Component NgramsTreeEditRealProps
 ngramsTreeEditRealCpt = here.component "ngramsTreeEditReal" cpt where
-  cpt { box, getNgramsChildren, ngramsParent', onCancelRef, onNgramsClickRef, onSaveRef } _ = do
+  cpt { box
+      , getNgramsChildren
+      , ngramsParent'
+      , onCancelRef
+      , onNgramsClickRef
+      , onSaveRef } _ = do
     { ngramsChildren, ngramsChildrenDiff } <- T.useLive T.unequal box
 
-    let ngramsDepth = { depth: 1, ngrams: ngramsParent' }
+    R.useEffect' $ do
+      here.log2 "[ngramsTreeEditReal] ngramsParent'" ngramsParent'
+      here.log2 "[ngramsTreeEditReal] ngramsChildrenDiff" ngramsChildrenDiff
+
+    let ngramsDepth = { depth: 0, ngrams: ngramsParent' }
         ngramsChildrenPatched :: Set NgramsTerm
         ngramsChildrenPatched = applyPatchSet (patchSetFromMap ngramsChildrenDiff) $ Set.fromFoldable ngramsChildren
+        -- A patched version of getNgramsChildren. This is used
+        -- because we're editing the tree and so won't fetch the API
+        -- ngrams children.
         gnc ngrams = if ngrams == ngramsParent'
                        then do
+                         liftEffect $ here.log2 "[gnc] ngrams" ngrams
                          pure $ A.fromFoldable ngramsChildrenPatched
                        else do
+                         liftEffect $ here.log2 "[gnc] ngrams" ngrams
                          pure []
 
     pure $ H.div {}
@@ -669,6 +692,9 @@ ngramsTreeEditRealCpt = here.component "ngramsTreeEditReal" cpt where
                              , ngramsDepth
                              , ngramsEdit
                              , ngramsStyle: []
+                             , key: show ngramsParent'
+                                     <> "-" <> show ngramsChildren
+                                     <> "-" <> show ngramsChildrenDiff
                              }
       , H.button { className: "btn btn-primary"
                  , on: { click: onSaveClick } --(const $ dispatch AddTermChildren)}
@@ -695,14 +721,19 @@ ngramsTreeEditRealCpt = here.component "ngramsTreeEditReal" cpt where
           Nothing -> pure unit
           Just onSave -> onSave unit
 
-mainNgramsTableCacheOn :: R2.Component MainNgramsTableProps
+type MainNgramsTableCacheProps =
+  ( state :: T.Box State
+  | MainNgramsTableProps )
+
+mainNgramsTableCacheOn :: R2.Component MainNgramsTableCacheProps
 mainNgramsTableCacheOn = R.createElement mainNgramsTableCacheOnCpt
-mainNgramsTableCacheOnCpt :: R.Component MainNgramsTableProps
+mainNgramsTableCacheOnCpt :: R.Component MainNgramsTableCacheProps
 mainNgramsTableCacheOnCpt = here.component "mainNgramsTableCacheOn" cpt where
   cpt { afterSync
       , boxes
       , defaultListId
       , path
+      , state
       , tabNgramType
       , treeEdit
       , withAutoUpdate } _ = do
@@ -714,6 +745,7 @@ mainNgramsTableCacheOnCpt = here.component "mainNgramsTableCacheOn" cpt where
                                                 , boxes
                                                 , cacheState: NT.CacheOn
                                                 , path
+                                                , state
                                                 , tabNgramType
                                                 , treeEdit
                                                 , versioned
@@ -740,13 +772,14 @@ mainNgramsTableCacheOnCpt = here.component "mainNgramsTableCacheOn" cpt where
   handleResponse :: VersionedNgramsTable -> VersionedNgramsTable
   handleResponse v = v
 
-mainNgramsTableCacheOff :: R2.Component MainNgramsTableProps
+mainNgramsTableCacheOff :: R2.Component MainNgramsTableCacheProps
 mainNgramsTableCacheOff = R.createElement mainNgramsTableCacheOffCpt
-mainNgramsTableCacheOffCpt :: R.Component MainNgramsTableProps
+mainNgramsTableCacheOffCpt :: R.Component MainNgramsTableCacheProps
 mainNgramsTableCacheOffCpt = here.component "mainNgramsTableCacheOff" cpt where
   cpt { afterSync
       , boxes
       , path
+      , state
       , tabNgramType
       , treeEdit
       , withAutoUpdate } _ = do
@@ -754,6 +787,7 @@ mainNgramsTableCacheOffCpt = here.component "mainNgramsTableCacheOff" cpt where
                                                                 , boxes
                                                                 , cacheState: NT.CacheOff
                                                                 , path
+                                                                , state
                                                                 , tabNgramType
                                                                 , treeEdit
                                                                 , versionedWithCount
@@ -792,6 +826,7 @@ mainNgramsTableCacheOffCpt = here.component "mainNgramsTableCacheOff" cpt where
 type MainNgramsTablePaintProps = (
     cacheState        :: NT.CacheState
   , path              :: T.Box PageParams
+  , state             :: T.Box State
   , treeEdit          :: Record NgramsTreeEditProps
   , versioned         :: VersionedNgramsTable
   | CommonProps
@@ -806,14 +841,16 @@ mainNgramsTablePaintCpt = here.component "mainNgramsTablePaint" cpt
         , boxes
         , cacheState
         , path
+        , state
         , tabNgramType
         , treeEdit
         , versioned
         , withAutoUpdate } _ = do
-      state <- T.useBox $ initialState versioned
+      R.useEffectOnce' $ do
+        let (Versioned { version }) = versioned
+        T.modify_ (_ { ngramsVersion = version }) state
 
       pure $
-
         loadedNgramsTableBody
         { afterSync
         , boxes
@@ -830,6 +867,7 @@ mainNgramsTablePaintCpt = here.component "mainNgramsTablePaint" cpt
 type MainNgramsTablePaintNoCacheProps = (
     cacheState         :: NT.CacheState
   , path               :: T.Box PageParams
+  , state              :: T.Box State
   , treeEdit           :: Record NgramsTreeEditProps
   , versionedWithCount :: VersionedWithCountNgramsTable
   | CommonProps
@@ -844,6 +882,7 @@ mainNgramsTablePaintNoCacheCpt = here.component "mainNgramsTablePaintNoCache" cp
         , boxes
         , cacheState
         , path
+        , state
         , tabNgramType
         , treeEdit
         , versionedWithCount
@@ -851,7 +890,9 @@ mainNgramsTablePaintNoCacheCpt = here.component "mainNgramsTablePaintNoCache" cp
       -- TODO This is lame, make versionedWithCount a proper box?
       let count /\ versioned = toVersioned versionedWithCount
 
-      state <- T.useBox $ initialState versioned
+      R.useEffectOnce' $ do
+        let (Versioned { version }) = versioned
+        T.modify_ (_ { ngramsVersion = version }) state
 
       pure $
         loadedNgramsTableBody
