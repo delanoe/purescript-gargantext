@@ -1,4 +1,4 @@
-module Gargantext.Components.NgramsTable.Core
+module Gargantext.Core.NgramsTable.Functions
   where
 
 import Gargantext.Prelude
@@ -50,7 +50,7 @@ import Reactix as R
 import Toestand as T
 
 here :: R2.Here
-here = R2.here "Gargantext.Components.NgramsTable.Core"
+here = R2.here "Gargantext.Core.NgramsTable.Functions"
 
 toVersioned :: forall a. VersionedWithCount a -> Tuple Count (Versioned a)
 toVersioned (VersionedWithCount { count, data: d, version }) = Tuple count $ Versioned { data: d, version }

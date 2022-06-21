@@ -7,7 +7,7 @@ import Gargantext.Prelude
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Gargantext.Components.Document.Types (DocPath, LoadedData, NodeDocument)
-import Gargantext.Components.NgramsTable.Core (loadNgramsTable)
+import Gargantext.Core.NgramsTable.Functions (loadNgramsTable)
 import Gargantext.Components.Search (SearchType(..))
 import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Routes (SessionRoute(..))
