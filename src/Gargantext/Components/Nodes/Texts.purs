@@ -6,7 +6,6 @@ import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
-import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.App.Store as AppStore
@@ -128,7 +127,7 @@ textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt where
               }
     where
       errorHandler = logRESTError here "[textsLayoutWithKey]"
-      afterCacheStateChange cacheState = do
+      afterCacheStateChange _cacheState = do
         launchAff_ $ clearCache unit
         -- TODO
         --sessionUpdate $ setCacheState session nodeId cacheState
@@ -248,7 +247,7 @@ histoRender = R.createElement histoRenderCpt
 histoRenderCpt :: R.Component HistoProps
 histoRenderCpt = here.component "histoRender" cpt where
   cpt { boxes, path, onClick, onInit, reload, session } _ = do
-    reload' <- T.useLive T.unequal reload
+    _ <- T.useLive T.unequal reload
 
     pure $ histo { boxes, path, onClick, onInit, session }
 

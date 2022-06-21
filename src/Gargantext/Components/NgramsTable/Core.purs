@@ -8,7 +8,7 @@ import Data.Array (head)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
-import Data.Lens (use, view, (^?), (?=), (%~), (%=), (.~))
+import Data.Lens (use, view, (^?), (^.), (?=), (%~), (%=), (.~))
 import Data.Lens.At (at)
 import Data.Lens.Common (_Just)
 import Data.Lens.Fold (folded, traverseOf_)
@@ -17,7 +17,7 @@ import Data.List ((:), List(Nil))
 import Data.List as L
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), fromMaybe, fromMaybe')
+import Data.Maybe (Maybe(..), fromMaybe, fromMaybe', isJust)
 import Data.Set (Set)
 import Data.String as S
 import Data.String.Common as DSC
@@ -518,3 +518,8 @@ postNgramsChartsAsync { listIds, nodeId, session, tabType } = do
     acu = AsyncNgramsChartsUpdate { listId: head listIds
                                   , tabType }
     putNgramsAsync = PostNgramsChartsAsync (Just nodeId)
+
+
+tablePatchHasNgrams :: NgramsTablePatch -> NgramsTerm -> Boolean
+tablePatchHasNgrams (NgramsTablePatch ngramsPatches) ngrams =
+  isJust $ ngramsPatches ^. _PatchMap <<< at ngrams
