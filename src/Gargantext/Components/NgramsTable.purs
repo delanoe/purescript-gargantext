@@ -36,7 +36,7 @@ import Effect.Class (liftEffect)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
-import Gargantext.Components.NgramsTable.Core (addNewNgramA, applyNgramsPatches, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, ngramsRepoElementToNgramsElement, normNgram, patchSetFromMap, setTermListA, singletonNgramsTablePatch, tablePatchHasNgrams, toVersioned)
+import Gargantext.Core.NgramsTable.Functions (addNewNgramA, applyNgramsPatches, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, ngramsRepoElementToNgramsElement, normNgram, patchSetFromMap, setTermListA, singletonNgramsTablePatch, tablePatchHasNgrams, toVersioned)
 import Gargantext.Components.NgramsTable.Search as NTS
 import Gargantext.Components.NgramsTable.SelectionCheckbox as NTSC
 import Gargantext.Components.NgramsTable.Tree (renderNgramsItem, renderNgramsTree)

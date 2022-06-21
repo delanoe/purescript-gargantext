@@ -28,7 +28,7 @@ import Gargantext.Components.GraphExplorer.Sidebar.Legend as Legend
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.Lang (Lang(..))
-import Gargantext.Components.NgramsTable.Core as NTC
+import Gargantext.Core.NgramsTable.Functions as NTC
 import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Core.NgramsTable.Types as CNT
 import Gargantext.Data.Array (mapMaybe)

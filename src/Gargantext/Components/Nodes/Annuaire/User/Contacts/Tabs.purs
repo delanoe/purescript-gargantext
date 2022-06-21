@@ -11,7 +11,7 @@ import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.DocsTable.Types (Year)
 import Gargantext.Components.NgramsTable as NT
-import Gargantext.Components.NgramsTable.Core as NTC
+import Gargantext.Core.NgramsTable.Functions as NTC
 import Gargantext.Components.Nodes.Lists.Types as LTypes
 import Gargantext.Components.Nodes.Texts.Types as TTypes
 import Gargantext.Components.Tab as Tab
