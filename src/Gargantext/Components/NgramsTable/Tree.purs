@@ -214,20 +214,14 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         --   R2.callTrigger toggleSidePanel unit
         termList    = ngramsElement ^. _NgramsElement <<< _list
         ngramsStyle = [termStyle termList ngramsOpacity]
-        ngramsEdit { ngrams: n } =
-          if n == ngrams then
-            Just $ dispatch $ SetParentResetChildren (Just ngrams) ngramsChildren
-          else
-            Just $ do
-              here.log2 "[ngramsEdit] n" n
-              here.log2 "[ngramsEdit] ngrams" ngrams
+        ngramsEdit { ngrams: n } = Just $ dispatch $ SetParentResetChildren (Just n) (ngramsChildren n)
         tbl = applyNgramsPatches { ngramsLocalPatch
                                  , ngramsStagePatch: mempty
                                  , ngramsValidPatch: mempty
                                  , ngramsVersion: 0 } ngramsTable
         getNgramsChildren' :: NgramsTerm -> Aff (Array NgramsTerm)
-        getNgramsChildren' n = if n == ngrams then (pure $ A.fromFoldable ngramsChildren) else pure []
-        ngramsChildren = tbl ^.. ix ngrams <<< _NgramsRepoElement <<< _children <<< folded
+        getNgramsChildren' n = pure $ A.fromFoldable $ ngramsChildren n
+        ngramsChildren n = tbl ^.. ix n <<< _NgramsRepoElement <<< _children <<< folded
         ngramsClick =
           Just <<< dispatch <<< CoreAction <<< cycleTermListItem <<< view _ngrams
           -- ^ This is the old behavior it is nicer to use since one can
