@@ -66,7 +66,8 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.NgramsTable"
 
 type TreeEdit =
-  { ngramsChildren     :: List NgramsTerm
+  { isEditing          :: Boolean
+  , ngramsChildren     :: List NgramsTerm
                        -- ^ Root children, as were originally present
                        --   in the table, before editing
   , ngramsChildrenDiff :: Map NgramsTerm Boolean
@@ -85,7 +86,8 @@ type State =
 
 initialTreeEdit :: TreeEdit
 initialTreeEdit =
-  { ngramsChildren    : List.Nil
+  { isEditing         : false
+  , ngramsChildren    : List.Nil
   , ngramsChildrenDiff: Map.empty
   , ngramsParent      : Nothing }
 
@@ -310,6 +312,7 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
     params'@{ orderBy } <- T.useLive T.unequal params
     searchQueryFocused <- T.useFocused (_.searchQuery) (\a b -> b { searchQuery = a }) path
     searchQuery <- T.useLive T.unequal searchQueryFocused
+    isEditing <- T.useFocused (_.isEditing) (\a b -> b { isEditing = a}) treeEdit.box
 
     let ngramsTable = applyNgramsPatches state' initTable
         rowMap (Tuple ng nre) =
@@ -360,10 +363,10 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
         convertRow ngramsElement =
           { row: renderNgramsItem { dispatch: performAction
                                   , getNgramsChildren
+                                  , isEditing
                                   , ngrams: ngramsElement ^. _NgramsElement <<< _ngrams
                                   , ngramsElement
                                   , ngramsLocalPatch
-                                  , ngramsParent
                                   , ngramsSelection
                                   , ngramsTable } []
           , delete: false
@@ -474,7 +477,8 @@ mkDispatch { filteredRows
     performAction ClearTreeEdit = do
       T.write_ initialTreeEdit treeEdit.box
     performAction (SetParentResetChildren ngramsParent ngramsChildren) = do
-      T.write_ { ngramsChildren
+      T.write_ { isEditing: true
+               , ngramsChildren
                , ngramsChildrenDiff: Map.empty
                , ngramsParent } treeEdit.box
     performAction (ToggleChild b c) = do
@@ -644,13 +648,16 @@ ngramsTreeEdit = R.createElement ngramsTreeEditCpt
 ngramsTreeEditCpt :: R.Component NgramsTreeEditProps
 ngramsTreeEditCpt = here.component "ngramsTreeEdit" cpt where
   cpt props@{ box } _ = do
-    box' <- T.useLive T.unequal box
-    ngramsParentFocused <- T.useFocused (_.ngramsParent) (\a b -> b { ngramsParent = a }) box
+    isEditingFocused <- T.useFocused (_.isEditing) (\a b -> b { isEditing = a }) box
+    isEditingFocused' <- T.useLive T.unequal isEditingFocused
+    ngramsParentFocused <- T.useFocused (_.ngramsParent) (\a b -> b { ngramsParent = a}) box
     ngramsParentFocused' <- T.useLive T.unequal ngramsParentFocused
 
-    pure $ case ngramsParentFocused' of
-      Nothing -> H.div {} []
-      Just ngramsParent' -> ngramsTreeEditReal (Record.merge props { ngramsParent' }) []
+    pure $ if isEditingFocused'
+      then case ngramsParentFocused' of
+                Nothing -> H.div {} []
+                Just ngramsParent' -> ngramsTreeEditReal (Record.merge props { ngramsParent' }) []
+      else H.div {} []
 
 type NgramsTreeEditRealProps =
   ( ngramsParent' :: NgramsTerm

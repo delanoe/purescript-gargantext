@@ -154,10 +154,10 @@ treeLoadedCpt = here.component "treeLoaded" cpt where
 type RenderNgramsItem =
   ( dispatch          :: Action -> Effect Unit
   , getNgramsChildren :: NgramsTerm -> Aff (Array NgramsTerm)
+  , isEditing         :: T.Box Boolean
   , ngrams            :: NgramsTerm
   , ngramsElement     :: NgramsElement
   , ngramsLocalPatch  :: NgramsTablePatch
-  , ngramsParent      :: Maybe NgramsTerm
   , ngramsSelection   :: Set NgramsTerm
   , ngramsTable       :: NgramsTable
   )
@@ -169,15 +169,14 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
   where
     cpt { dispatch
         --, getNgramsChildren
+        , isEditing
         , ngrams
         , ngramsElement
         , ngramsLocalPatch
-        , ngramsParent
         , ngramsSelection
         , ngramsTable
         } _ = do
-      R.useEffect' $ do
-        here.log2 "[renderNgramsItem] tbl" tbl
+      isEditing' <- T.useLive T.unequal isEditing
       
       pure $ Tbl.makeRow
         [ H.div { className: "ngrams-selector" }
@@ -188,17 +187,17 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         , checkbox GT.MapTerm
         , checkbox GT.StopTerm
         , H.div {}
-          ( if ngramsParent == Nothing
-            then [ renderNgramsTree { getNgramsChildren: getNgramsChildren'
+          ( if isEditing'
+            then [ H.a { on: { click: const $ dispatch $ ToggleChild true ngrams } }
+                   [ H.i { className: "fa fa-plus" } [] ]
+                 , R2.buff $ tag [ text $ " " <> ngramsTermText ngramsDepth.ngrams ]
+                 ]
+            else [ renderNgramsTree { getNgramsChildren: getNgramsChildren'
                                     , ngramsClick
                                     , ngramsDepth
                                     , ngramsEdit
                                     , ngramsStyle
                                     , key: "" } ]
-            else [ H.a { on: { click: const $ dispatch $ ToggleChild true ngrams } }
-                   [ H.i { className: "fa fa-plus" } [] ]
-                 , R2.buff $ tag [ text $ " " <> ngramsTermText ngramsDepth.ngrams ]
-                 ]
           )
         , H.text $ show (ngramsElement ^. _NgramsElement <<< _occurrences)
       ]
@@ -215,7 +214,13 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         --   R2.callTrigger toggleSidePanel unit
         termList    = ngramsElement ^. _NgramsElement <<< _list
         ngramsStyle = [termStyle termList ngramsOpacity]
-        ngramsEdit { ngrams } = Just $ dispatch $ SetParentResetChildren (Just ngrams) ngramsChildren
+        ngramsEdit { ngrams: n } =
+          if n == ngrams then
+            Just $ dispatch $ SetParentResetChildren (Just ngrams) ngramsChildren
+          else
+            Just $ do
+              here.log2 "[ngramsEdit] n" n
+              here.log2 "[ngramsEdit] ngrams" ngrams
         tbl = applyNgramsPatches { ngramsLocalPatch
                                  , ngramsStagePatch: mempty
                                  , ngramsValidPatch: mempty
