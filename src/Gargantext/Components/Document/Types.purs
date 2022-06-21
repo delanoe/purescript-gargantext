@@ -10,7 +10,7 @@ import Simple.JSON as JSON
 import Gargantext.Prelude
 
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Components.NgramsTable.Core (CoreState, Versioned(..) , VersionedNgramsTable)
+import Gargantext.Core.NgramsTable.Types (CoreState, Versioned(..) , VersionedNgramsTable)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (ListId, NodeID, TabType)
 

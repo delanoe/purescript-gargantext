@@ -12,7 +12,8 @@ import Test.Spec (Spec, describe, it)
 
 import Test.Utils (shouldEqualArray)
 
-import Gargantext.Components.NgramsTable.Core (highlightNgrams, HighlightElement, NgramsElement(..), NgramsRepoElement(..), NgramsTable(..), NgramsTerm, normNgram)
+import Gargantext.Core.NgramsTable.Functions (highlightNgrams, normNgram)
+import Gargantext.Core.NgramsTable.Types (HighlightElement, NgramsElement(..), NgramsRepoElement(..), NgramsTable(..), NgramsTerm)
 import Gargantext.Types (CTabNgramType(..), TermList(..))
 
 

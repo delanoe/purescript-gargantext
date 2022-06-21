@@ -39,6 +39,16 @@ function blur(el) {
     return el.blur();
 }
 
+function triggerEvent(el, evtType) {
+  // https://stackoverflow.com/questions/8789423/trigger-onchange-event
+  var event = new UIEvent(evtType, {
+    view: window,
+    bubbles: true,
+    cancelable: true
+  });
+  el.dispatchEvent(event);
+}
+
 exports._addRootElement = addRootElement;
 exports._getSelection = getSelection;
 exports._stringify = stringify;
@@ -53,3 +63,4 @@ exports._keyCode = function(e) {
     // https://www.w3schools.com/jsref/event_key_keycode.asp
     return e.which || e.keyCode;
 }
+exports._triggerEvent = triggerEvent;
