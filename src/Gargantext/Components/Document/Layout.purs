@@ -14,7 +14,6 @@ import Gargantext.Components.Bootstrap.Types (SpinnerTheme(..))
 import Gargantext.Components.Document.Types (DocPath, Document(..), LoadedData, initialState)
 import Gargantext.Components.NgramsTable.Core (addNewNgramA, applyNgramsPatches, coreDispatch, findNgramRoot, setTermListA)
 import Gargantext.Components.NgramsTable.AutoSync (useAutoSync)
-import Gargantext.Components.NgramsTable.SyncResetButton (syncResetButtons)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Core.NgramsTable.Types (CoreAction(..), Versioned(..), replace)
 import Gargantext.Utils as U

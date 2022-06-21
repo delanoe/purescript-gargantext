@@ -36,10 +36,10 @@ import Effect.Class (liftEffect)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
-import Gargantext.Components.NgramsTable.Core (addNewNgramA, applyNgramsPatches, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, ngramsRepoElementToNgramsElement, normNgram, patchSetFromMap, setTermListA, singletonNgramsTablePatch, toVersioned)
+import Gargantext.Components.NgramsTable.Core (addNewNgramA, applyNgramsPatches, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, ngramsRepoElementToNgramsElement, normNgram, patchSetFromMap, setTermListA, singletonNgramsTablePatch, tablePatchHasNgrams, toVersioned)
 import Gargantext.Components.NgramsTable.Search as NTS
 import Gargantext.Components.NgramsTable.SelectionCheckbox as NTSC
-import Gargantext.Components.NgramsTable.Tree as NTT
+import Gargantext.Components.NgramsTable.Tree (renderNgramsItem, renderNgramsTree)
 import Gargantext.Components.NgramsTable.Loader (useLoaderWithCacheAPI)
 import Gargantext.Components.NgramsTable.SyncResetButton (syncResetButtons)
 import Gargantext.Components.Nodes.Lists.Types as NT
@@ -357,14 +357,14 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
         filteredConvertedRows = convertRow <$> filteredRows
 
         convertRow ngramsElement =
-          { row: NTT.renderNgramsItem { dispatch: performAction
-                                      , getNgramsChildren
-                                      , ngrams: ngramsElement ^. _NgramsElement <<< _ngrams
-                                      , ngramsElement
-                                      , ngramsLocalPatch
-                                      , ngramsParent
-                                      , ngramsSelection
-                                      , ngramsTable } []
+          { row: renderNgramsItem { dispatch: performAction
+                                  , getNgramsChildren
+                                  , ngrams: ngramsElement ^. _NgramsElement <<< _ngrams
+                                  , ngramsElement
+                                  , ngramsLocalPatch
+                                  , ngramsParent
+                                  , ngramsSelection
+                                  , ngramsTable } []
           , delete: false
           }
 
@@ -551,7 +551,7 @@ displayRow { ngramsElement: NgramsElement {ngrams, root, list}
     -- ^ and which satisfies the chosen term size
     || ngramsChildrenDiff ^. at ngrams == Just false
     -- ^ unless they are scheduled to be removed.
-    || NTT.tablePatchHasNgrams ngramsLocalPatch ngrams
+    || tablePatchHasNgrams ngramsLocalPatch ngrams
     -- ^ unless they are being processed at the moment.
 
 allNgramsSelectedOnFirstPage :: Set NgramsTerm -> PreConversionRows -> Boolean
@@ -688,15 +688,15 @@ ngramsTreeEditRealCpt = here.component "ngramsTreeEditReal" cpt where
     pure $ H.div {}
       [ H.p {}
         [ H.text $ "Editing " <> ngramsTermText ngramsDepth.ngrams ]
-      , NTT.renderNgramsTree { getNgramsChildren: gnc
-                             , ngramsClick
-                             , ngramsDepth
-                             , ngramsEdit
-                             , ngramsStyle: []
-                             , key: show ngramsParent'
-                                     <> "-" <> show ngramsChildren
-                                     <> "-" <> show ngramsChildrenDiff
-                             }
+      , renderNgramsTree { getNgramsChildren: gnc
+                         , ngramsClick
+                         , ngramsDepth
+                         , ngramsEdit
+                         , ngramsStyle: []
+                         , key: show ngramsParent'
+                                 <> "-" <> show ngramsChildren
+                                 <> "-" <> show ngramsChildrenDiff
+                         }
       , H.button { className: "btn btn-primary"
                  , on: { click: onSaveClick } --(const $ dispatch AddTermChildren)}
                  } [ H.text "Save" ]

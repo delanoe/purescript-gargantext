@@ -18,7 +18,7 @@ import DOM.Simple as DOM
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
-import Gargantext.Components.NgramsTable.Core (applyNgramsPatches, setTermListA)
+import Gargantext.Components.NgramsTable.Core (applyNgramsPatches, setTermListA, tablePatchHasNgrams)
 import Gargantext.Core.NgramsTable.Types (Action(..), NgramsClick, NgramsDepth, NgramsElement, NgramsTable, NgramsTablePatch(..), NgramsTerm, _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list, _ngrams, _occurrences, ngramsTermText, replace)
 import Gargantext.Components.Table as Tbl
 import Gargantext.Config.REST (logRESTError)
@@ -272,10 +272,6 @@ termStyle GT.CandidateTerm opacity = DOM.style
   , fontStyle: "italic"
   , opacity
   }
-
-tablePatchHasNgrams :: NgramsTablePatch -> NgramsTerm -> Boolean
-tablePatchHasNgrams (NgramsTablePatch ngramsPatches) ngrams =
-  isJust $ ngramsPatches ^. _PatchMap <<< at ngrams
 
 
 nextTermList :: GT.TermList -> GT.TermList
