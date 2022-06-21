@@ -481,8 +481,6 @@ mkDispatch { filteredRows
                , ngramsChildrenDiff: Map.empty
                , ngramsParent } treeEdit.box
     performAction (ToggleChild b c) = do
-      here.log2 "[mkDispatch] ToggleChild b" b
-      here.log2 "[mkDispatch] ToggleChild c" c
       T.modify_ (\g@{ ngramsChildrenDiff: ncd } -> g { ngramsChildrenDiff = newNC ncd }) treeEdit.box
       where
         newNC ncd = Map.alter (maybe (Just b) (const Nothing)) c ncd
@@ -674,10 +672,6 @@ ngramsTreeEditRealCpt = here.component "ngramsTreeEditReal" cpt where
       , onSaveRef } _ = do
     { ngramsChildren, ngramsChildrenDiff } <- T.useLive T.unequal box
 
-    R.useEffect' $ do
-      here.log2 "[ngramsTreeEditReal] ngramsParent'" ngramsParent'
-      here.log2 "[ngramsTreeEditReal] ngramsChildrenDiff" ngramsChildrenDiff
-
     let ngramsDepth = { depth: 0, ngrams: ngramsParent' }
         ngramsChildrenPatched :: Set NgramsTerm
         ngramsChildrenPatched = applyPatchSet (patchSetFromMap ngramsChildrenDiff) $ Set.fromFoldable ngramsChildren
@@ -686,10 +680,8 @@ ngramsTreeEditRealCpt = here.component "ngramsTreeEditReal" cpt where
         -- ngrams children.
         gnc ngrams = if ngrams == ngramsParent'
                        then do
-                         liftEffect $ here.log2 "[gnc] ngrams" ngrams
                          pure $ A.fromFoldable ngramsChildrenPatched
                        else do
-                         liftEffect $ here.log2 "[gnc] ngrams" ngrams
                          pure []
 
     pure $ H.div {}
