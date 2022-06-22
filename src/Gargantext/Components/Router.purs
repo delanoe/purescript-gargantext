@@ -5,7 +5,8 @@ import Gargantext.Prelude
 import Data.Array (filter, length)
 import Data.Array as A
 import Data.Foldable (intercalate)
-import Data.Maybe (Maybe(..))
+import Data.Map as M
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.UUID (UUID)
 import Data.UUID as UUID
 import Effect (Effect)
@@ -13,6 +14,7 @@ import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.ErrorsView (errorsView)
 import Gargantext.Components.Forest (forestLayout)
 import Gargantext.Components.Login (login)
+import Gargantext.Components.ForgotPassword (forgotPasswordLayout)
 import Gargantext.Components.Nodes.Annuaire (annuaireLayout)
 import Gargantext.Components.Nodes.Annuaire.User (userLayout)
 import Gargantext.Components.Nodes.Annuaire.User.Contact (contactLayout)
@@ -316,6 +318,7 @@ renderRouteCpt = R.memo' $ here.component "renderRoute" cpt where
         GR.Team s n               -> team (sessionNodeProps s n) []
         GR.NodeTexts s n          -> texts (sessionNodeProps s n) []
         GR.UserPage s n           -> user (sessionNodeProps s n) []
+        GR.ForgotPassword p       -> forgotPassword {boxes, params: p} []
       ]
 
 --------------------------------------------------------------
@@ -690,3 +693,18 @@ contactCpt = here.component "contact" cpt where
         } `Record.merge` sessionProps
 
     pure $ authed authedProps []
+
+--------------------------------------------------------------
+
+type ForgotPasswordProps = ( params :: (M.Map String String) | Props)
+
+forgotPassword :: R2.Component ForgotPasswordProps
+forgotPassword = R.createElement forgotPasswordCpt
+
+forgotPasswordCpt :: R.Component ForgotPasswordProps
+forgotPasswordCpt = here.component "forgotPassword" cpt where
+  cpt { params } _ = do
+    let server = fromMaybe "" $ M.lookup "server" params
+    let uuid = fromMaybe "" $ M.lookup "uuid" params
+    
+    pure $ forgotPasswordLayout { server, uuid } []
