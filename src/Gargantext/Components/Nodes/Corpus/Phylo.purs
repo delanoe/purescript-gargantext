@@ -11,11 +11,13 @@ import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.PhyloExplorer.API (get)
 import Gargantext.Components.PhyloExplorer.Layout (layout)
 import Gargantext.Components.PhyloExplorer.Store as PhyloStore
-import Gargantext.Components.PhyloExplorer.Types (PhyloDataSet)
+import Gargantext.Components.PhyloExplorer.Types (CacheParams, PhyloSet(..), defaultCacheParams)
 import Gargantext.Config.REST (logRESTError)
+import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Types (NodeID)
+import Gargantext.Utils (getter)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -38,7 +40,8 @@ nodeCpt = here.component "node" cpt where
     -- |
     session <- useSession
 
-    state' /\ state <- R2.useBox' Nothing
+    state' /\ state <- R2.useBox' (Nothing :: Maybe PhyloSet)
+    cache' /\ cache <- R2.useBox' (defaultCacheParams :: CacheParams)
 
     -- | Computed
     -- |
@@ -46,6 +49,10 @@ nodeCpt = here.component "node" cpt where
 
     -- | Hooks
     -- |
+
+    -- load Local Storage cache (if exists)
+    useFirstEffect' $
+      R2.loadLocalStorageState R2.phyloParamsKey cache
 
     useLoaderEffect
       { errorHandler
@@ -85,14 +92,19 @@ nodeCpt = here.component "node" cpt where
             ]
           ]
       , defaultSlot:
-          R2.fromMaybe state' \(phyloDataSet :: PhyloDataSet) ->
+          R2.fromMaybe state' \(PhyloSet { corpusId, listId, phyloData }) ->
 
             let
               state_ :: Record PhyloStore.State
               state_ =
                 -- Data
-                { phyloDataSet
+                { phyloData
+                , corpusId
+                , listId
                 , phyloId: nodeId
+                -- (cache params)
+                , expandSelection: getter _.expandSelection cache'
+                , expandNeighborhood: getter _.expandNeighborhood cache'
                 -- (default options)
                 } `Record.merge` PhyloStore.options
 

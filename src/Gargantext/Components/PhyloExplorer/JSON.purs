@@ -1,4 +1,9 @@
-module Gargantext.Components.PhyloExplorer.JSON where
+module Gargantext.Components.PhyloExplorer.JSON
+  ( PhyloJSON(..)
+  , GraphData(..)
+  , NodeData(..), RawObject(..)
+  , EdgeData(..), RawEdge(..)
+  ) where
 
 import Gargantext.Prelude
 
@@ -9,6 +14,26 @@ import Data.Show.Generic (genericShow)
 import Gargantext.Utils.SimpleJSON (untaggedSumRep)
 import Simple.JSON as JSON
 
+
+newtype PhyloJSON = PhyloJSON
+  { pd_corpusId       :: Int
+  , pd_listId         :: Int
+  , pd_data           ::
+      { _subgraph_cnt     :: Int
+      , directed          :: Boolean
+      , edges             :: Array RawEdge
+      , objects           :: Array RawObject
+      , strict            :: Boolean
+      | GraphData
+      }
+  }
+
+derive instance Generic PhyloJSON _
+derive instance Eq PhyloJSON
+instance Show PhyloJSON where show = genericShow
+derive newtype instance JSON.ReadForeign PhyloJSON
+
+--------------------------------------------------
 
 type GraphData =
   ( bb                :: String
@@ -36,22 +61,6 @@ type GraphData =
   , splines           :: String
   , style             :: String
   )
-
---------------------------------------------------
-
-newtype PhyloJSONSet = PhyloJSONSet
-  { _subgraph_cnt     :: Int
-  , directed          :: Boolean
-  , edges             :: Array RawEdge
-  , objects           :: Array RawObject
-  , strict            :: Boolean
-  | GraphData
-  }
-
-derive instance Generic PhyloJSONSet _
-derive instance Eq PhyloJSONSet
-instance Show PhyloJSONSet where show = genericShow
-derive newtype instance JSON.ReadForeign PhyloJSONSet
 
 --------------------------------------------------
 
@@ -124,7 +133,6 @@ derive instance Eq RawObject
 instance Show RawObject where show = genericShow
 instance JSON.ReadForeign RawObject where
   readImpl f = GR.to <$> untaggedSumRep f
-
 
 --------------------------------------------------
 

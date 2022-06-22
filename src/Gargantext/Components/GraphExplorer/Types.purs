@@ -3,11 +3,12 @@ module Gargantext.Components.GraphExplorer.Types where
 import Gargantext.Prelude
 
 import Data.Array ((!!), length)
-import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
 import Data.Ord.Generic (genericCompare)
+import Data.Show.Generic (genericShow)
 import Data.Symbol (SProxy(..))
 import Partial.Unsafe (unsafePartial)
 import Record as Record
@@ -267,3 +268,26 @@ instance JSON.WriteForeign HyperdataGraph where
 data Stage = Init | Ready | Cleanup
 derive instance Generic Stage _
 derive instance Eq Stage
+
+-----------------------------------------------------------------------
+
+newtype CacheParams = CacheParams
+  { expandSelection     :: Boolean
+  , expandNeighborhood  :: Boolean
+  }
+
+derive instance Newtype CacheParams _
+derive instance Generic CacheParams _
+derive instance Eq CacheParams
+instance Show CacheParams where show = genericShow
+derive newtype instance JSON.ReadForeign CacheParams
+derive newtype instance JSON.WriteForeign CacheParams
+
+-- (!) in case cache storage (ie. JavaScript Local Storage) returns an invalid
+--     objects (eg. possible data migration), this will safely set new default
+--     values
+defaultCacheParams :: CacheParams
+defaultCacheParams = CacheParams
+  { expandSelection   : true
+  , expandNeighborhood: true
+  }

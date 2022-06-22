@@ -387,8 +387,8 @@ loadCorpus {nodeId, session} = do
   case res of
     Left err -> pure $ Left err
     Right (NodePoly {parentId: corpusId} :: NodePoly {}) -> do
-      eCorpusNode     <-  get session $ corpusNodeRoute     corpusId ""
-      eDefaultListIds <- (get session $ defaultListIdsRoute corpusId)
+      eCorpusNode     <-  get session $ corpusNodeRoute     (fromMaybe 0 corpusId) ""
+      eDefaultListIds <- (get session $ defaultListIdsRoute (fromMaybe 0 corpusId))
                       :: forall a. JSON.ReadForeign a => AffETableResult (NodePoly a)
       case eCorpusNode of
         Left err -> pure $ Left err
@@ -398,7 +398,7 @@ loadCorpus {nodeId, session} = do
             Right defaultListIds -> do
               case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
                 Just (NodePoly { id: defaultListId }) ->
-                  pure $ Right { corpusId, corpusNode, defaultListId }
+                  pure $ Right { corpusId: (fromMaybe 0 corpusId), corpusNode, defaultListId }
                 Nothing ->
                   pure $ Left $ CustomError "Missing default list"
 
@@ -425,18 +425,18 @@ loadCorpusWithChild { nodeId: childId, session } = do
     Left err -> pure $ Left err
     Right listNode -> do
       let (NodePoly {parentId: corpusId} :: NodePoly {}) = listNode
-      eCorpusNode     <-  get session $ corpusNodeRoute     corpusId ""
+      eCorpusNode     <-  get session $ corpusNodeRoute     (fromMaybe 0 corpusId) ""
       case eCorpusNode of
         Left err -> pure $ Left err
         Right corpusNode -> do
-          eDefaultListIds <- (get session $ defaultListIdsRoute corpusId)
+          eDefaultListIds <- (get session $ defaultListIdsRoute (fromMaybe 0 corpusId))
                              :: forall a. JSON.ReadForeign a => AffETableResult (NodePoly a)
           case eDefaultListIds of
             Left err -> pure $ Left err
             Right defaultListIds -> do
               case (A.head defaultListIds.docs :: Maybe (NodePoly HyperdataList)) of
                 Just (NodePoly { id: defaultListId }) ->
-                  pure $ Right { corpusId, corpusNode, defaultListId }
+                  pure $ Right { corpusId: fromMaybe 0 corpusId, corpusNode, defaultListId }
                 Nothing ->
                   throwError $ error "Missing default list"
   where

@@ -8,8 +8,7 @@ import Data.Tuple.Nested ((/\))
 import Effect.Class (liftEffect)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.NgramsTable as NT
-import Gargantext.Components.NgramsTable.Core (PageParams)
-import Gargantext.Components.NgramsTable.Core as NTC
+import Gargantext.Core.NgramsTable.Functions as NTC
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
 import Gargantext.Components.Nodes.Corpus.Chart.Pie (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
@@ -17,6 +16,7 @@ import Gargantext.Components.Nodes.Corpus.Chart.Utils (mNgramsTypeFromTabType)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table.Types (Params)
+import Gargantext.Core.NgramsTable.Types (PageParams)
 import Gargantext.Prelude (bind, pure, unit, ($))
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType(..), Mode(..), TabSubType(..), TabType(..), modeTabType)
@@ -89,6 +89,10 @@ ngramsViewCpt = here.component "ngramsView" cpt where
             , session
             , path } _ = do
       chartsReload <- T.useBox T2.newReload
+      onCancelRef <- R.useRef Nothing
+      onNgramsClickRef <- R.useRef Nothing
+      onSaveRef <- R.useRef Nothing
+      treeEditBox <- T.useBox NT.initialTreeEdit
 
       { listIds, nodeId, params } <- T.useLive T.unequal path
 
@@ -96,13 +100,13 @@ ngramsViewCpt = here.component "ngramsView" cpt where
         R.fragment
         [
           ngramsView'
-          { mode
-          , boxes
-          , session
-          , params
-          , listIds
-          , nodeId
+          { boxes
           , corpusData: props.corpusData
+          , listIds
+          , mode
+          , nodeId
+          , params
+          , session
           } []
         ,
           NT.mainNgramsTable
@@ -114,6 +118,11 @@ ngramsViewCpt = here.component "ngramsView" cpt where
           , session
           , tabNgramType
           , tabType
+          , treeEdit: { box: treeEditBox
+                      , getNgramsChildren: NT.getNgramsChildrenAff session nodeId listIds tabType
+                      , onCancelRef
+                      , onNgramsClickRef
+                      , onSaveRef }
           , withAutoUpdate: false
           } []
         ]
@@ -139,26 +148,28 @@ ngramsViewCpt = here.component "ngramsView" cpt where
 
 -- @XXX re-render issue -> clone component
 type NgramsViewProps' =
-  ( mode          :: Mode
-  , boxes         :: Boxes
-  , session       :: Session
-  , listIds       :: Array Int
-  , params        :: Params
-  , nodeId        :: Int
+  ( boxes         :: Boxes
   , corpusData    :: CorpusData
+  , listIds       :: Array Int
+  , mode          :: Mode
+  , nodeId        :: Int
+  , params        :: Params
+  , session       :: Session
   )
 
 ngramsView' :: R2.Component NgramsViewProps'
 ngramsView' = R.createElement ngramsViewCpt'
-ngramsViewCpt' :: R.Memo NgramsViewProps'
-ngramsViewCpt' = R.memo' $ here.component "ngramsView_clone" cpt where
-  cpt { mode
-      , boxes
-      , session
-      , listIds
-      , params
-      , nodeId
+--ngramsViewCpt' :: R.Memo NgramsViewProps'
+--ngramsViewCpt' = R.memo' $ here.component "ngramsView_clone" cpt where
+ngramsViewCpt' :: R.Component NgramsViewProps'
+ngramsViewCpt' = here.component "ngramsView_clone" cpt where
+  cpt { boxes
       , corpusData: { defaultListId }
+      , listIds
+      , mode
+      , nodeId
+      , params
+      , session
       } _ = do
 
     let path' = {

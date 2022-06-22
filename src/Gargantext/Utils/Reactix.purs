@@ -3,25 +3,25 @@ module Gargantext.Utils.Reactix where
 import Prelude
 
 import ConvertableOptions as CO
+import Data.Array as A
+import Data.Either (hush)
+import Data.Function.Uncurried (Fn1, runFn1, Fn2, runFn2)
+import Data.Maybe (Maybe(..), fromJust, fromMaybe)
+import Data.Maybe as Maybe
+import Data.Nullable (Nullable, notNull, null, toMaybe)
+import Data.Tuple (Tuple)
+import Data.Tuple.Nested ((/\))
 import DOM.Simple as DOM
 import DOM.Simple.Console (log2)
 import DOM.Simple.Document (document)
 import DOM.Simple.Element as Element
 import DOM.Simple.Event as DE
 import DOM.Simple.Types (class IsNode, class IsElement, DOMRect)
-import Data.Array as A
-import Data.Either (hush)
-import Data.Function.Uncurried (Fn1, runFn1, Fn2, runFn2)
-import Data.Maybe as Maybe
-import Data.Maybe (Maybe(..), fromJust, fromMaybe)
-import Data.Nullable (Nullable, null, toMaybe)
-import Data.Tuple (Tuple)
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_, killFiber)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Effect.Uncurried (EffectFn1, EffectFn3, mkEffectFn1, mkEffectFn2, runEffectFn1, runEffectFn3)
+import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, mkEffectFn1, mkEffectFn2, runEffectFn1, runEffectFn2, runEffectFn3)
 import FFI.Simple (applyTo, args2, args3, defineProperty, delay, getProperty, (..), (...), (.=))
 import Gargantext.Utils.Console (RowConsole)
 import Gargantext.Utils.Console as Console
@@ -397,6 +397,12 @@ getls = window >>= localStorage
 openNodesKey :: LocalStorageKey
 openNodesKey = "garg-open-nodes"
 
+graphParamsKey :: LocalStorageKey
+graphParamsKey = "garg-graph-params"
+
+phyloParamsKey :: LocalStorageKey
+phyloParamsKey = "garg-phylo-params"
+
 type LocalStorageKey = String
 
 loadLocalStorageState :: forall s. JSON.ReadForeign s => LocalStorageKey -> T.Box s -> Effect Unit
@@ -410,12 +416,31 @@ loadLocalStorageState key cell = do
     Nothing -> pure unit
     Just p  -> void $ T.write p cell
 
+loadLocalStorageState' :: forall s.
+     JSON.ReadForeign s
+  => LocalStorageKey
+  -> s
+  -> Effect s
+loadLocalStorageState' key default = do
+  (item :: Maybe String) <- getls >>= getItem key
+  let parsed = hush <<< JSON.readJSON $ Maybe.fromMaybe "" item
+  pure $ Maybe.fromMaybe default parsed
+
 listenLocalStorageState :: forall s. JSON.WriteForeign s => LocalStorageKey -> T.Change s -> Effect Unit
 listenLocalStorageState key { old, new } = do
   --let json = Json.stringify $ Argonaut.encodeJson new
   let json = JSON.writeJSON new
   storage <- getls
   setItem key json storage
+
+setLocalStorageState :: forall s.
+     JSON.WriteForeign s
+  => LocalStorageKey
+  -> s
+  -> Effect Unit
+setLocalStorageState key s =
+  let json = JSON.writeJSON s
+  in getls >>= setItem key json
 
 getMessageDataStr :: DE.MessageEvent -> String
 getMessageDataStr = getMessageData
@@ -576,3 +601,17 @@ externalOpeningFlag event = ado
   metaKey     <- SE.metaKey event
   middleClick <- SE.button event
   in ctrlKey || shiftKey || metaKey || (middleClick == 1.0)
+
+foreign import _triggerEvent
+  :: forall e. EffectFn2 e String Unit
+
+triggerEvent :: forall el. el -> String -> Effect Unit
+triggerEvent = runEffectFn2 _triggerEvent
+-------------------------------------------------------
+setInputValue :: R.Ref (Nullable DOM.Element) -> String -> Effect Unit
+setInputValue elNullableRef val = case toMaybe (R.readRef elNullableRef) of
+  Nothing -> pure unit
+  Just el -> do
+    _ <- pure $ (el .= "value") val
+    triggerEvent el "change"
+    triggerEvent el "input"

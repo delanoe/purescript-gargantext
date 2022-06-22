@@ -90,7 +90,7 @@ updateGraphCpt = here.component "updateGraph" cpt where
                                  , default: methodGraphMetric'
                                  , callback: \val -> T.write_ val methodGraphMetric
                                  , print: show } []
-                 , formChoiceSafe { items: [Spinglass, Confluence]
+                 , formChoiceSafe { items: [Infomap, Spinglass, Confluence]
                                  , default: methodGraphClustering'
                                  , callback: \val -> T.write_ val methodGraphClustering
                                  , print: show } []

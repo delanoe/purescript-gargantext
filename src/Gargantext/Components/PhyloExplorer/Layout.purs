@@ -13,14 +13,16 @@ import Data.String (null)
 import Effect (Effect)
 import FFI.Simple ((..), (.=))
 import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.PhyloExplorer.Frame.DocFocus (docFocus)
 import Gargantext.Components.PhyloExplorer.Resources (PubSubEvent(..))
 import Gargantext.Components.PhyloExplorer.Resources as RS
 import Gargantext.Components.PhyloExplorer.SideBar (sideBar)
 import Gargantext.Components.PhyloExplorer.Store as PhyloStore
 import Gargantext.Components.PhyloExplorer.ToolBar (toolBar)
 import Gargantext.Components.PhyloExplorer.TopBar (topBar)
-import Gargantext.Components.PhyloExplorer.Types (DisplayView, ExtractedCount, FrameDoc, PhyloDataSet(..), TabView(..), Term, sortSources)
+import Gargantext.Components.PhyloExplorer.Types (DisplayView, ExtractedCount, FrameDoc, PhyloData(..), TabView(..), Term, sortSources)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
+import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.UpdateEffect (useUpdateEffect1', useUpdateEffect3')
 import Gargantext.Types (SidePanelState(..))
 import Gargantext.Utils (getter, (?))
@@ -59,11 +61,11 @@ layoutCpt = here.component "layout" cpt where
     , selectedSource
     , extractedCount
     , phyloId
-    , phyloDataSet
+    , phyloData
     , frameDoc
     } <- PhyloStore.use
 
-    (PhyloDataSet o)    <- R2.useLive' phyloDataSet
+    (PhyloData o)       <- R2.useLive' phyloData
     phyloId'            <- R2.useLive' phyloId
     sources'            <- R2.useLive' sources
     terms'              <- R2.useLive' terms
@@ -76,6 +78,8 @@ layoutCpt = here.component "layout" cpt where
     selectedBranch'     <- R2.useLive' selectedBranch
     selectedSource'     <- R2.useLive' selectedSource
     frameDoc'           <- R2.useLive' frameDoc
+
+    session <- useSession
 
     -- | Hooks
     -- |
@@ -143,6 +147,9 @@ layoutCpt = here.component "layout" cpt where
         mTerm <- RS.autocompleteSearch terms' s
         RS.autocompleteSubmit displayView mTerm
 
+      closeDocCallback :: Unit -> Effect Unit
+      closeDocCallback _ = T.write_ Nothing frameDoc
+
     -- | Effects
     -- |
 
@@ -150,7 +157,7 @@ layoutCpt = here.component "layout" cpt where
     useFirstEffect' do
       (sortSources >>> flip T.write_ sources) o.sources
       RS.setGlobalD3Reference window d3
-      RS.setGlobalDependencies window (PhyloDataSet o)
+      RS.setGlobalDependencies window (PhyloData o)
       RS.drawPhylo
         o.branches
         o.periods
@@ -256,7 +263,7 @@ layoutCpt = here.component "layout" cpt where
         { className: "phylo__frame" }
         [
           -- Doc focus
-          R2.fromMaybe frameDoc' \(f :: FrameDoc) ->
+          R2.fromMaybe frameDoc' \(frameDoc_ :: FrameDoc) ->
 
             H.div
             { className: "phylo__focus" }
@@ -264,7 +271,11 @@ layoutCpt = here.component "layout" cpt where
               H.div
               { className: "phylo__focus__inner" }
               [
-                H.text $ "hello"
+                docFocus
+                { session
+                , frameDoc: frameDoc_
+                , closeCallback: closeDocCallback
+                }
               ]
             ]
         ,

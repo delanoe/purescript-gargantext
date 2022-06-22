@@ -71,8 +71,8 @@ formCpt = here.component "form" cpt where
           [ passwordInput cursors.password
           , clearfix ]
         , termsCheckbox cursors.agreed
-        , forgotPassword { formType }
         , submitButton { backend, formType, sessions, visible, cell }
+        , forgotPassword { formType }
         ]]
 
 -- might be wrong, all we care about is preventDefault
@@ -175,8 +175,8 @@ forgotPassword = R2.leaf forgotPasswordCpt
 forgotPasswordCpt :: R.Component ForgotPasswordProps
 forgotPasswordCpt = here.component "forgotPassword" cpt where
   cpt { formType } _ = do
-    pure $ H.div { className: "form-group text-center" }
-      [ H.a { className: "text-primary",
+    pure $ H.div { className: "" }
+      [ H.a { className: "",
         on: { click } } [ H.text "Forgot password?" ]
       ]
     where
