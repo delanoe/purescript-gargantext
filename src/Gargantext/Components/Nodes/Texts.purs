@@ -3,7 +3,7 @@ module Gargantext.Components.Nodes.Texts where
 import Gargantext.Prelude
 
 import Data.Generic.Rep (class Generic)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isJust)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (launchAff_)
@@ -15,6 +15,9 @@ import Gargantext.Components.Charts.Options.ECharts (dispatchAction)
 import Gargantext.Components.Charts.Options.Type (EChartsInstance, EChartActionData)
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.DocsTable.Types (Year)
+import Gargantext.Components.Document.API (loadData)
+import Gargantext.Components.Document.Layout (layout)
+import Gargantext.Components.Document.Types (LoadedData, DocPath)
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
@@ -24,12 +27,13 @@ import Gargantext.Components.Nodes.Corpus.Document as D
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
 import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Components.Nodes.Texts.Types as TT
+import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Reload (textsReloadContext)
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table
 import Gargantext.Config.REST (logRESTError)
 import Gargantext.Ends (Frontends)
-import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Hooks.Loader (useLoader, useLoaderEffect)
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Sessions (Session, getCacheState, sessionId)
 import Gargantext.Types (CTabNgramType(..), ListId, NodeID, SidePanelState(..), TabSubType(..), TabType(..))
@@ -514,13 +518,83 @@ textsSidePanelCpt = here.component "sidePanel" cpt where
                 {}
                 [ H.text $ "You can select a document to see its content" ]
 
-              Just { corpusId, listId, nodeId } ->
-                D.node
-                { listId
-                , mCorpusId: Just corpusId
-                , nodeId
-                , key: show (sessionId session) <> "-" <> show nodeId
+              Just (sidePanelTexts_ :: Record TextsT.SidePanel) ->
+                sideText
+                { session
+                , sidePanelText: sidePanelTexts_
+                , key: show $ sidePanelTexts_.nodeId
                 }
           ]
         ]
+      ]
+
+-------------------------------------------------------
+
+type SideText =
+  ( sidePanelText  :: Record TextsT.SidePanel
+  , session       :: Session
+  -- @TODO handling `closeCallback` when SidePanelText will be extracted from
+  -- application layout business (and put inside the Node Document business)
+  -- , closeCallback :: Unit -> Effect Unit
+  )
+
+sideText :: R2.Leaf ( key :: String | SideText )
+sideText = R2.leaf sideTextCpt
+
+sideTextCpt :: R.Component ( key :: String | SideText )
+sideTextCpt = here.component "sideText" cpt where
+  cpt { sidePanelText: { corpusId, listId, nodeId }
+      , session
+      } _ = do
+    -- | States
+    -- |
+    state' /\ state <- R2.useBox' (Nothing :: Maybe LoadedData)
+
+    -- | Computed
+    -- |
+    let
+
+      tabType :: TabType
+      tabType = TabDocument (TabNgramType CTabTerms)
+
+      path :: DocPath
+      path =
+        { listIds: [listId]
+        , mCorpusId: Just corpusId
+        , nodeId
+        , session
+        , tabType
+        }
+
+    -- | Hooks
+    -- |
+    useLoaderEffect
+      { errorHandler: logRESTError here "[sidePanelText]"
+      , loader: loadData
+      , path
+      , state
+      }
+
+    -- | Render
+    -- |
+    pure $
+
+
+      H.div
+      { className: "graph-doc-focus" }
+      [
+        B.cloak
+        { isDisplayed: isJust state'
+        , idlingPhaseDuration: Just 150
+        , cloakSlot:
+            B.preloader
+            {}
+
+        , defaultSlot:
+            R2.fromMaybe state' \loaded ->
+              layout
+              { loaded
+              , path
+              }
+        }
       ]

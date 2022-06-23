@@ -30,7 +30,7 @@ import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Types as GT
 import Gargantext.Types as Types
-import Gargantext.Utils ((?))
+import Gargantext.Utils (getter, (?))
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 import Math as Math
@@ -145,6 +145,7 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
                 { session
                 , graphSideDoc
                 , closeCallback: closeDoc
+                , key: show $ getter _.docId graphSideDoc
                 }
               ]
             ]

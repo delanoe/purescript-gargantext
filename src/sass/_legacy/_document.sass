@@ -9,28 +9,21 @@ $document-container-width: 780px
 
   position: relative
   width: 100%
-  max-width: $document-container-width
-  margin: 0 auto
 
-  &__controls
-    // margin-bottom: space-x(4)
+  &__header
+    display: flex
+    justify-content: space-between
+    padding: $card-spacer-y $card-spacer-x
+    border-bottom: 1px solid $border-color
+    margin-bottom: $card-spacer-y
 
-    float: right
+  &__side-controls
+    display: flex
+    align-items: center
+
+  &__saving
     color: $primary
-
-    &__hint
-      margin-right: space-x(1)
-      font-style: italic
-      font-size: 14px
-
-      // delaying hint apparition
-      animation-name: fade-in
-      animation-delay: 400ms
-      animation-duration: 600ms
-      animation-timing-function: ease-in-out
-      animation-direction: alternate
-      animation-iteration-count: infinite
-      opacity: 0
+    display: flex
 
     &__spinner
       width: 16px
@@ -38,8 +31,14 @@ $document-container-width: 780px
 
     &__icon
       font-size: 20px
-      animation: fade-in 200ms ease-in-out
+      // fading icon apparition with a little pulse
+      // wait a little, then fading icon on hiding
+      animation: fade-in 200ms ease-in-out, fade-out 100ms ease-in-out 2000ms 1 normal forwards, pulse 200ms ease-in-out 0ms 1
 
+  &__body
+    max-width: $document-container-width
+    padding: $card-spacer-x
+    margin: 0 auto
 
   &__separator-label
     font-weight: bold

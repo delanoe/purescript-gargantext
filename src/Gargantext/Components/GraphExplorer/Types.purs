@@ -114,6 +114,7 @@ newtype GraphSideDoc = GraphSideDoc
   , corpusId  :: CorpusId
   , listId    :: ListId
   }
+derive instance Newtype GraphSideDoc _
 derive instance Generic GraphSideDoc _
 instance Eq GraphSideDoc where eq = genericEq
 
