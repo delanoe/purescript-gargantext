@@ -275,6 +275,7 @@ layoutCpt = here.component "layout" cpt where
                 { session
                 , frameDoc: frameDoc_
                 , closeCallback: closeDocCallback
+                , key: show $ getter _.docId frameDoc_
                 }
               ]
             ]

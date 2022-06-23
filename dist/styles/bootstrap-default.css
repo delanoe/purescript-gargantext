@@ -9336,6 +9336,50 @@ select.form-control {
   display: none;
 }
 
+.phylo-doc-focus {
+  scrollbar-width: none;
+  overflow-y: scroll;
+  background-color: #fff;
+  height: 100%;
+  position: relative;
+  z-index: 0;
+}
+.phylo-doc-focus::-webkit-scrollbar {
+  display: none;
+}
+.phylo-doc-focus::before {
+  background: linear-gradient(to top, rgba(255, 255, 255, 0) 0%, white 45%);
+  content: "";
+  z-index: 2;
+  pointer-events: none;
+  position: sticky;
+  top: 0;
+  height: 16px;
+  width: 100%;
+  display: block;
+}
+.phylo-doc-focus::after {
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, white 45%);
+  content: "";
+  pointer-events: none;
+  position: sticky;
+  bottom: 0;
+  height: 16px;
+  width: 100%;
+  display: block;
+}
+.right-handed .phylo-doc-focus__header {
+  margin-left: 32px;
+}
+
+.left-handed .phylo-doc-focus__header {
+  margin-right: 32px;
+}
+
+.phylo-doc-focus .document-layout__header {
+  padding-top: initial;
+}
+
 .phylo-sidebar {
   scrollbar-width: none;
   overflow-y: scroll;
