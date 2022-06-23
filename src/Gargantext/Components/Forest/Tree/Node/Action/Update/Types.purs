@@ -78,6 +78,7 @@ instance Show PartitionMethod where show = genericShow
 instance Read PartitionMethod where
   read "Spinglass"  = Just Spinglass
   read "Confluence" = Just Confluence
+  read "Infomap"    = Just Infomap
   read _           = Nothing
 instance JSON.ReadForeign PartitionMethod where readImpl = JSONG.enumSumRep
 instance JSON.WriteForeign PartitionMethod where writeImpl = JSON.writeImpl <<< show
