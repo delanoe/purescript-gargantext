@@ -383,6 +383,19 @@ $decreasing-color: #11638F;
       }
     }
   }
+
+  &__focus {
+    flex-grow: 1;
+    pointer-events: all;
+    position: relative;
+
+    &__inner {
+      @include fit-positions();
+
+      position: absolute;
+      background-color: $body-bg;
+    }
+  }
 }
 
 
@@ -563,7 +576,7 @@ $decreasing-color: #11638F;
   }
 
   &__selection {
-    margin: $margin-y $margin-x 0;
+    margin: $margin-y $margin-x;
 
     &__item {
       white-space: normal;
@@ -610,6 +623,65 @@ $decreasing-color: #11638F;
   &__separator {
     color: $gray-500;
     text-align: center;
+  }
+
+  &__extracted-docs {
+    margin: $margin-y $margin-x;
+  }
+}
+
+.phylo-doc-list {
+
+  &__item {
+    @include clickable();
+
+    display: flex;
+    align-items: flex-start;
+    transition: $transition-base;
+
+    &:hover {
+      background-color: $gray-50;
+    }
+
+    &--selected::before {
+      @include fit-positions();
+
+      content: "";
+      position: absolute;
+      z-index: 1;
+      width: 2px;
+      background-color: $info;
+    }
+
+    // (following list group item border radius)
+    &--selected:first-child::before {
+      border-top-left-radius: $list-group-border-radius;
+    }
+    &--selected:last-child::before {
+      border-bottom-left-radius: $list-group-border-radius;
+    }
+
+    &__main {
+      flex-grow: 1;
+      padding-right: $card-spacer-x;
+    }
+
+    &__title,
+    &__source,
+    &__date {
+      line-height: 1.3;
+      margin-bottom: space-x(0.5);
+    }
+
+    &__source {
+      font-size: 15px;
+      color: $gray-700;
+    }
+
+    &__date {
+      font-size: 14px;
+      color: $gray-600;
+    }
   }
 }
 

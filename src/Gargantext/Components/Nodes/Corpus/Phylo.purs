@@ -11,7 +11,7 @@ import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.PhyloExplorer.API (get)
 import Gargantext.Components.PhyloExplorer.Layout (layout)
 import Gargantext.Components.PhyloExplorer.Store as PhyloStore
-import Gargantext.Components.PhyloExplorer.Types (CacheParams, PhyloDataSet, defaultCacheParams)
+import Gargantext.Components.PhyloExplorer.Types (CacheParams, PhyloSet(..), defaultCacheParams)
 import Gargantext.Config.REST (logRESTError)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Hooks.Loader (useLoaderEffect)
@@ -40,7 +40,7 @@ nodeCpt = here.component "node" cpt where
     -- |
     session <- useSession
 
-    state' /\ state <- R2.useBox' (Nothing :: Maybe PhyloDataSet)
+    state' /\ state <- R2.useBox' (Nothing :: Maybe PhyloSet)
     cache' /\ cache <- R2.useBox' (defaultCacheParams :: CacheParams)
 
     -- | Computed
@@ -92,13 +92,15 @@ nodeCpt = here.component "node" cpt where
             ]
           ]
       , defaultSlot:
-          R2.fromMaybe state' \(phyloDataSet :: PhyloDataSet) ->
+          R2.fromMaybe state' \(PhyloSet { corpusId, listId, phyloData }) ->
 
             let
               state_ :: Record PhyloStore.State
               state_ =
                 -- Data
-                { phyloDataSet
+                { phyloData
+                , corpusId
+                , listId
                 , phyloId: nodeId
                 -- (cache params)
                 , expandSelection: getter _.expandSelection cache'

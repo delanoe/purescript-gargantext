@@ -71,13 +71,14 @@ instance Read GraphMetric where
 instance JSON.ReadForeign GraphMetric where readImpl = JSONG.enumSumRep
 instance JSON.WriteForeign GraphMetric where writeImpl = JSON.writeImpl <<< show
 
-data PartitionMethod = Spinglass | Confluence
+data PartitionMethod = Spinglass | Infomap | Confluence
 derive instance Generic PartitionMethod _
 derive instance Eq PartitionMethod
 instance Show PartitionMethod where show = genericShow
 instance Read PartitionMethod where
   read "Spinglass"  = Just Spinglass
   read "Confluence" = Just Confluence
+  read "Infomap"    = Just Infomap
   read _           = Nothing
 instance JSON.ReadForeign PartitionMethod where readImpl = JSONG.enumSumRep
 instance JSON.WriteForeign PartitionMethod where writeImpl = JSON.writeImpl <<< show

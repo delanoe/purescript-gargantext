@@ -5,7 +5,7 @@ module Gargantext.Components.PhyloExplorer.DetailsTab
 import Gargantext.Prelude
 
 import Gargantext.Components.PhyloExplorer.Store as PhyloStore
-import Gargantext.Components.PhyloExplorer.Types (PhyloDataSet(..))
+import Gargantext.Components.PhyloExplorer.Types (PhyloData(..))
 import Gargantext.Utils (nbsp)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -25,7 +25,7 @@ detailsTabCpt = here.component "" cpt where
     -- |
     store <- PhyloStore.use
 
-    (PhyloDataSet o) <- R2.useLive' store.phyloDataSet
+    (PhyloData o) <- R2.useLive' store.phyloData
 
     -- | Render
     -- |

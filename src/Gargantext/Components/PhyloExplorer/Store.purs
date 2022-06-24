@@ -11,7 +11,7 @@ module Gargantext.Components.PhyloExplorer.Store
 import Gargantext.Prelude
 
 import Data.Maybe (Maybe(..))
-import Gargantext.Components.PhyloExplorer.Types (DisplayView(..), ExtractedCount, ExtractedTerm, FrameDoc, PhyloDataSet, Source, TabView(..), Term, defaultCacheParams)
+import Gargantext.Components.PhyloExplorer.Types (CorpusId, DisplayView(..), ExtractedCount, ExtractedTerm, FrameDoc, PhyloData, Source, TabView(..), Term, ListId, defaultCacheParams)
 import Gargantext.Types (NodeID, SidePanelState(..))
 import Gargantext.Utils (getter)
 import Gargantext.Utils.Reactix as R2
@@ -25,8 +25,10 @@ here = R2.here "Gargantext.Components.GraphExplorer.Store"
 
 type Store =
   -- Data
-  ( phyloDataSet        :: T.Box PhyloDataSet
+  ( phyloData           :: T.Box PhyloData
   , phyloId             :: T.Box NodeID
+  , corpusId            :: T.Box CorpusId
+  , listId              :: T.Box ListId
   , isBuilt             :: T.Box Boolean
   -- Layout
   , toolBarDisplayed    :: T.Box Boolean
@@ -54,8 +56,10 @@ type Store =
 
 type State =
   -- Data
-  ( phyloDataSet        :: PhyloDataSet
+  ( phyloData           :: PhyloData
   , phyloId             :: NodeID
+  , corpusId            :: CorpusId
+  , listId              :: ListId
   , isBuilt             :: Boolean
   -- Layout
   , toolBarDisplayed    :: Boolean

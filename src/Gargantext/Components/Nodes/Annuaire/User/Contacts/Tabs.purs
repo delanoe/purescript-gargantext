@@ -11,7 +11,7 @@ import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.DocsTable.Types (Year)
 import Gargantext.Components.NgramsTable as NT
-import Gargantext.Components.NgramsTable.Core as NTC
+import Gargantext.Core.NgramsTable.Functions as NTC
 import Gargantext.Components.Nodes.Lists.Types as LTypes
 import Gargantext.Components.Nodes.Texts.Types as TTypes
 import Gargantext.Components.Tab as Tab
@@ -146,6 +146,10 @@ ngramsViewCpt = here.component "ngramsView" cpt
         , nodeId
         , session } _ = do
       path <- T.useBox $ NTC.initialPageParams session nodeId [defaultListId] (TabDocument TabDocs)
+      onCancelRef <- R.useRef Nothing
+      onNgramsClickRef <- R.useRef Nothing
+      onSaveRef <- R.useRef Nothing
+      treeEditBox <- T.useBox NT.initialTreeEdit
 
       pure $ NT.mainNgramsTable {
           afterSync: \_ -> pure unit
@@ -156,6 +160,11 @@ ngramsViewCpt = here.component "ngramsView" cpt
         , session
         , tabNgramType
         , tabType
+        , treeEdit: { box: treeEditBox
+                    , getNgramsChildren: \_ -> pure []
+                    , onCancelRef
+                    , onNgramsClickRef
+                    , onSaveRef }
         , withAutoUpdate: false
         } []
       where

@@ -10,8 +10,8 @@ import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
-import Gargantext.Components.NgramsTable.Core (Version, Versioned(..))
 import Gargantext.Config.REST (RESTError(..), AffRESTError)
+import Gargantext.Core.NgramsTable.Types (Version, Versioned(..))
 import Gargantext.Utils.CacheAPI as GUC
 import Reactix as R
 import Simple.JSON as JSON

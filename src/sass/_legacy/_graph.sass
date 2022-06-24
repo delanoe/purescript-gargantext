@@ -252,14 +252,13 @@
       background-color: $gray-50
 
     &--selected::before
+      @include fit-positions
+
       content: ""
       position: absolute
       z-index: 1
       width: 2px
       background-color: $info
-      left: 0
-      top: 0
-      bottom: 0
 
     // (following list group item border radius)
     &--selected:first-child::before

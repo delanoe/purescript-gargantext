@@ -1,101 +1,116 @@
 module Gargantext.Components.PhyloExplorer.Sidebar.DocList
-  where
-{-
+  ( docListWrapper
+  ) where
 
 import Gargantext.Prelude
 
-import Control.Parallel (parTraverse)
-import Data.Array (concat, head, last, mapWithIndex)
-import Data.Array as A
-import Data.Either (Either(..))
+import Data.Array (concat)
 import Data.Foldable (intercalate)
-import Data.Foldable as F
-import Data.Int (fromString)
-import Data.Map as Map
-import Data.Maybe (Maybe(..), fromJust)
+import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
-import Data.Set as Set
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Aff (launchAff_)
-import Effect.Class (liftEffect)
-import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
-import Gargantext.Components.GraphExplorer.Sidebar.DocList (docList)
-import Gargantext.Components.GraphExplorer.Sidebar.Legend as Legend
-import Gargantext.Components.GraphExplorer.Store as GraphStore
-import Gargantext.Components.GraphExplorer.Types as GET
-import Gargantext.Components.Lang (Lang(..))
-import Gargantext.Components.NgramsTable.Core as NTC
+import Gargantext.Components.Bootstrap.Types (Variant(..))
+import Gargantext.Components.FacetsTable (DocumentsView(..), Rows(..), initialPagePath, loadPage, publicationDate)
 import Gargantext.Components.PhyloExplorer.Store as PhyloStore
+import Gargantext.Components.PhyloExplorer.Types (CorpusId, DocId, FrameDoc(..), ListId)
 import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Search (SearchQuery(..), SearchType(..))
 import Gargantext.Config (defaultFrontends)
-import Gargantext.Config.REST (AffRESTError)
-import Gargantext.Data.Array (mapMaybe)
-import Gargantext.Ends (Frontends)
+import Gargantext.Config.REST (RESTError(..))
+import Gargantext.Ends (Frontends, url)
+import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Hooks.Session (useSession)
-import Gargantext.Hooks.Sigmax.Types as SigmaxT
-import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType, FrontendError(..), NodeID, TabSubType(..), TabType(..), TermList(..), modeTabType)
-import Gargantext.Utils (getter, nbsp)
+import Gargantext.Hooks.UpdateEffect (useUpdateEffect1')
+import Gargantext.Routes as Routes
+import Gargantext.Sessions (Session, sessionId)
+import Gargantext.Utils (getter, (?))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Partial.Unsafe (unsafePartial)
+import React.SyntheticEvent as SE
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Record as Record
 import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.PhyloExplorer.Sidebar.DocList"
 
+
 docListWrapper :: R2.Leaf ()
 docListWrapper = R2.leaf docListWrapperCpt
 
-docListWrapperCpt :: R.Memo ()
-docListWrapperCpt = R.memo' $ here.component "wrapper" cpt where
+docListWrapperCpt :: R.Component ()
+docListWrapperCpt = here.component "wrapper" cpt where
   cpt _ _ = do
     -- | States
     -- |
+    session <- useSession
+
     store <- PhyloStore.use
 
     extractedTerms <- R2.useLive' store.extractedTerms
+    corpusId       <- R2.useLive' store.corpusId
+    listId         <- R2.useLive' store.listId
 
     query' /\ query <- R2.useBox' Nothing
 
     -- | Helpers
     -- |
     let
-      toSearchQuery ids = SearchQuery
+
+      toSearchQuery items = SearchQuery
         { expected: SearchDoc
-        , query: map (getter _.label) ids
+        , query: concat $ words <$> (getter _.label) <$> items
         }
 
-      searchQuery
-        = extractedTerms
-        # toSearchQuery
-        # Just
-        # flip T.write_ query
+    -- | Hooks
+    -- |
+    R.useEffect1' extractedTerms $
+      T.write_ (extractedTerms # toSearchQuery >>> Just) query
 
     -- | Render
-    --
+    -- |
     pure $
 
-      docList
-      { searchQuery }
+      R.fragment
+      [
+        case query' of
 
---------------------------------------------------------------
+          Nothing ->
+            B.caveat
+            {}
+            [
+              H.text "You can link a corpus to retrieve relative documents about your selection"
+            ]
+
+          Just q' ->
+            docList
+            { query: q'
+            , session
+            , corpusId
+            , listId
+            , frameDoc: store.frameDoc
+            , frontends: defaultFrontends
+            }
+      ]
+
+-------------------------------------------------------------------
 
 type ListProps =
-  ( searchQuery :: SearchQuery
+  ( query           :: SearchQuery
+  , corpusId        :: CorpusId
+  , listId          :: ListId
+  , session         :: Session
+  , frameDoc        :: T.Box (Maybe FrameDoc)
+  , frontends       :: Frontends
   )
 
-docList :: R2.Leaf TabsProps
+docList :: R2.Leaf ListProps
 docList = R2.leaf docListCpt
 
-docListCpt :: R.Component TabsProps
+docListCpt :: R.Component ListProps
 docListCpt = here.component "main" cpt where
   -- | Helpers
   -- |
@@ -107,7 +122,12 @@ docListCpt = here.component "main" cpt where
       _ -> pure unit
   -- | Component
   -- |
-  cpt { searchQuery
+  cpt { query
+      , session
+      , corpusId: nodeId
+      , listId
+      , frameDoc
+      , frontends
       } _ = do
     -- | States
     -- |
@@ -121,8 +141,8 @@ docListCpt = here.component "main" cpt where
     rows' /\ rows <-
       R2.useBox' Nothing
 
-    showDoc' <-
-      R2.useLive' showDoc
+    frameDoc' <-
+      R2.useLive' frameDoc
 
     -- | Hooks
     -- |
@@ -152,35 +172,35 @@ docListCpt = here.component "main" cpt where
     -- |
     let
 
-      -- callback :: Maybe GraphSideDoc -> DocId -> Effect Unit
-      -- callback
-      --   Nothing
-      --   new
-      --     = setGraphSideDoc new # Just # flip T.write_ showDoc
+      callback :: Maybe FrameDoc -> DocId -> Effect Unit
+      callback
+        Nothing
+        new
+          = setFrameDoc new # Just # flip T.write_ frameDoc
 
-      -- callback
-      --   (Just (GraphSideDoc { docId }))
-      --   new
-      --   | docId == new = T.write_ Nothing showDoc
-      --   | otherwise    = setGraphSideDoc new # Just # flip T.write_ showDoc
+      callback
+        (Just (FrameDoc { docId }))
+        new
+        | docId == new = T.write_ Nothing frameDoc
+        | otherwise    = setFrameDoc new # Just # flip T.write_ frameDoc
 
-      -- setGraphSideDoc :: DocId -> GraphSideDoc
-      -- setGraphSideDoc docId = GraphSideDoc
-      --   { docId
-      --   , listId
-      --   , corpusId: nodeId
-      --   }
+      setFrameDoc :: DocId -> FrameDoc
+      setFrameDoc docId = FrameDoc
+        { docId
+        , listId
+        , corpusId: nodeId
+        }
 
-      -- isSelected :: Maybe GraphSideDoc -> DocumentsView -> Boolean
-      -- isSelected
-      --   (Just (GraphSideDoc { docId }))
-      --   (DocumentsView { id })
-      --     = docId == id
+      isSelected :: Maybe FrameDoc -> DocumentsView -> Boolean
+      isSelected
+        (Just (FrameDoc { docId }))
+        (DocumentsView { id })
+          = docId == id
 
-      -- isSelected
-      --   _
-      --   _
-      --     = false
+      isSelected
+        _
+        _
+          = false
 
     -- | Render
     -- |
@@ -195,26 +215,27 @@ docListCpt = here.component "main" cpt where
             B.caveat
             {}
             [
-              H.text "No docs found in your corpus for your selected terms"
+              H.text "No document found in your corpus for your selected terms"
             ]
         ,
           R2.when (not $ eq results Seq.empty) $
 
             H.ul
             { className: intercalate " "
-                [ "graph-doc-list"
+                [ "phylo-doc-list"
                 , "list-group"
                 ]
             } $
             Seq.toUnfoldable $ flip Seq.map results \r ->
 
               item
-              { frontends
-              , path: path'
+              { documentView: (r :: DocumentsView)
+              , callback: callback frameDoc'
+              , isSelected: isSelected frameDoc' (r :: DocumentsView)
+              , listId
+              , corpusId: nodeId
               , session
-              , documentView: (r :: DocumentsView)
-              , callback: callback showDoc'
-              , isSelected: isSelected showDoc' (r :: DocumentsView)
+              , frontends
               }
         ]
 
@@ -223,11 +244,12 @@ docListCpt = here.component "main" cpt where
 
 type ItemProps =
   ( documentView :: DocumentsView
-  , frontends    :: Frontends
-  , session      :: Session
-  , path         :: PagePath
   , callback     :: DocId -> Effect Unit
   , isSelected   :: Boolean
+  , corpusId     :: CorpusId
+  , listId       :: ListId
+  , session      :: Session
+  , frontends    :: Frontends
   )
 
 item :: R2.Leaf ItemProps
@@ -238,50 +260,63 @@ itemCpt = here.component "item" cpt where
   cpt { documentView: dv@(DocumentsView { id, title, source })
       , callback
       , isSelected
-      -- , frontends
-      -- , path
-      -- , session
+      , listId
+      , corpusId
+      , session
+      , frontends
       } _ = do
     -- Computed
-    -- let
+    let
       -- Creating a href link
-      -- documentUrl id' { listId, nodeId } =
-      --   url frontends $ Routes.CorpusDocument (sessionId session) nodeId listId id'
+      route = Routes.CorpusDocument (sessionId session) corpusId listId id
+      href = url frontends route
 
+    -- Methods
+    let
+      onClick ::
+           SE.SyntheticMouseEvent
+        -> Effect Unit
+      onClick event
+          = R2.externalOpeningFlag event
+        >>= case _ of
+              true  -> R.nothing
+              false -> SE.preventDefault event *> callback id
 
     -- Render
     pure $
 
-      H.div
+      H.a
       { className: intercalate " "
-          [ "graph-doc-list__item"
-          , isSelected ? "graph-doc-list__item--selected" $ ""
+          [ "phylo-doc-list__item"
+          , isSelected ? "phylo-doc-list__item--selected" $ ""
           , "list-group-item"
+          , "text-decoration-none"
           ]
-      , on: { click: \_ -> callback id }
+      , on: { click: onClick }
+      , href
       }
       [
         B.ripple
         { variant: Dark }
         [
           H.div
-          { className: "graph-doc-list__item__main" }
+          { className: "phylo-doc-list__item__main" }
           [
             B.div'
-            { className: "graph-doc-list__item__title" }
+            { className: "phylo-doc-list__item__title" }
             title
           ,
             B.div'
-            { className: "graph-doc-list__item__source" }
+            { className: "phylo-doc-list__item__source" }
             source
           ,
             B.div'
-            { className: "graph-doc-list__item__date" } $
+            { className: "phylo-doc-list__item__date" } $
             publicationDate dv
           ]
         ,
           H.div
-          { className: "graph-doc-list__item__aside" }
+          { className: "phylo-doc-list__item__aside" }
           [
             B.icon
             { name: "eye-slash"

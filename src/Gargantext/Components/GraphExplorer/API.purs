@@ -4,8 +4,8 @@ import Gargantext.Prelude
 
 import Data.Maybe (Maybe(..))
 import Gargantext.Components.GraphExplorer.Types as GET
-import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Config.REST (AffRESTError)
+import Gargantext.Core.NgramsTable.Types as CNT
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Routes as GR
@@ -20,7 +20,7 @@ type GraphAsyncUpdateParams =
   , nodes :: Array (Record SigmaxT.Node)
   , session :: Session
   , termList :: GT.TermList
-  , version :: NTC.Version
+  , version :: CNT.Version
   )
 
 graphAsyncUpdate :: Record GraphAsyncUpdateParams -> AffRESTError GT.AsyncTaskWithType
