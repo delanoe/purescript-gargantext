@@ -2,10 +2,6 @@ module Gargantext.Components.GraphQL.Endpoints where
 
 import Gargantext.Prelude
 
-import Gargantext.Components.GraphQL.Node (Node, nodeParentQuery, nodesQuery)
-import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, treeFirstLevelQuery)
-import Gargantext.Components.GraphQL.User (UserInfo, userInfoQuery)
-
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
@@ -13,6 +9,10 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.Components.GraphQL (queryGql)
 import Gargantext.Components.GraphQL.IMT as GQLIMT
+import Gargantext.Components.GraphQL.Node (Node, nodeParentQuery, nodesQuery)
+import Gargantext.Components.GraphQL.Team (TeamMember, teamQuery)
+import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, treeFirstLevelQuery)
+import Gargantext.Components.GraphQL.User (UserInfo, userInfoQuery)
 import Gargantext.Config.REST (RESTError(..), AffRESTError)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (NodeType)
@@ -70,3 +70,11 @@ getTreeFirstLevel session id = do
   { tree } <- queryGql session "get tree first level" $ treeFirstLevelQuery `withVars` { id }
   liftEffect $ here.log2 "[getTreeFirstLevel] tree first level" tree
   pure $ Right tree -- TODO: error handling
+
+getTeam :: Session -> Int -> AffRESTError TeamMember
+getTeam session id = do
+  { team } <- queryGql session "get team" $ teamQuery `withVars` { id }
+  liftEffect $ here.log2 "[getTree] data" team
+  pure $ case A.head team of
+    Nothing -> Left (CustomError $ "team node id=" <> show id <> " not found")
+    Just t -> Right t
