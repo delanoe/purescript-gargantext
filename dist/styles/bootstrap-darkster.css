@@ -7714,21 +7714,16 @@ input[type=range]:-moz-focusring {
   width: 100%;
   display: block;
 }
-.graph-doc-focus__header {
-  padding: 0.5rem 1.5rem;
-}
 .right-handed .graph-doc-focus__header {
-  float: right;
+  margin-left: 32px;
 }
 
 .left-handed .graph-doc-focus__header {
-  float: left;
+  margin-right: 32px;
 }
 
-.graph-doc-focus__body {
-  padding-top: 13px;
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
+.graph-doc-focus .document-layout__header {
+  padding-top: initial;
 }
 
 .graph-sidebar {
@@ -8713,21 +8708,14 @@ a:focus, a:hover {
 .side-panel .texts-sidepanel__header {
   padding: 0.75rem 1.25rem;
   font-size: 20px;
+  text-align: right;
 }
-.right-handed .side-panel .texts-sidepanel__header {
-  float: right;
-}
-
-.left-handed .side-panel .texts-sidepanel__header {
-  float: left;
-}
-
 .side-panel .texts-sidepanel__body {
   padding-left: 1.25rem;
   padding-right: 1.25rem;
 }
 .side-panel .texts-sidepanel__body .document-layout__title {
-  font-size: 23px;
+  font-size: 21px;
 }
 .side-panel .texts-sidepanel__body .document-layout__abstract__content {
   max-height: 200px;
@@ -9395,6 +9383,50 @@ select.form-control {
   display: none;
 }
 
+.phylo-doc-focus {
+  scrollbar-width: none;
+  overflow-y: scroll;
+  background-color: #000000;
+  height: 100%;
+  position: relative;
+  z-index: 0;
+}
+.phylo-doc-focus::-webkit-scrollbar {
+  display: none;
+}
+.phylo-doc-focus::before {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0) 0%, black 45%);
+  content: "";
+  z-index: 2;
+  pointer-events: none;
+  position: sticky;
+  top: 0;
+  height: 16px;
+  width: 100%;
+  display: block;
+}
+.phylo-doc-focus::after {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, black 45%);
+  content: "";
+  pointer-events: none;
+  position: sticky;
+  bottom: 0;
+  height: 16px;
+  width: 100%;
+  display: block;
+}
+.right-handed .phylo-doc-focus__header {
+  margin-left: 32px;
+}
+
+.left-handed .phylo-doc-focus__header {
+  margin-right: 32px;
+}
+
+.phylo-doc-focus .document-layout__header {
+  padding-top: initial;
+}
+
 .phylo-sidebar {
   scrollbar-width: none;
   overflow-y: scroll;
@@ -9573,32 +9605,34 @@ select.form-control {
 .document-layout {
   position: relative;
   width: 100%;
-  max-width: 780px;
-  margin: 0 auto;
 }
-.document-layout__controls {
-  float: right;
+.document-layout__header {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid #dee2e6;
+  margin-bottom: 0.75rem;
+}
+.document-layout__side-controls {
+  display: flex;
+  align-items: center;
+}
+.document-layout__saving {
   color: #FF550B;
+  display: flex;
 }
-.document-layout__controls__hint {
-  margin-right: 8px;
-  font-style: italic;
-  font-size: 14px;
-  animation-name: fade-in;
-  animation-delay: 400ms;
-  animation-duration: 600ms;
-  animation-timing-function: ease-in-out;
-  animation-direction: alternate;
-  animation-iteration-count: infinite;
-  opacity: 0;
-}
-.document-layout__controls__spinner {
+.document-layout__saving__spinner {
   width: 16px;
   height: 16px;
 }
-.document-layout__controls__icon {
+.document-layout__saving__icon {
   font-size: 20px;
-  animation: fade-in 200ms ease-in-out;
+  animation: fade-in 200ms ease-in-out, fade-out 100ms ease-in-out 2000ms 1 normal forwards, pulse 200ms ease-in-out 0ms 1;
+}
+.document-layout__body {
+  max-width: 780px;
+  padding: 1.25rem;
+  margin: 0 auto;
 }
 .document-layout__separator-label {
   font-weight: bold;

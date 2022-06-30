@@ -22,7 +22,7 @@ import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Gargantext.Components.Annotation.Menu (annotationMenu, AnnotationMenu)
-import Gargantext.Components.Annotation.Types (termClass, MenuType(..))
+import Gargantext.Components.Annotation.Types (MenuType(..), ModeType(..), termClass)
 import Gargantext.Core.NgramsTable.Functions (findNgramTermList, highlightNgrams, normNgram)
 import Gargantext.Core.NgramsTable.Types (NgramsTable, NgramsTerm)
 import Gargantext.Types (CTabNgramType(..), TermList)
@@ -42,6 +42,7 @@ type Props =
   ( ngrams       :: NgramsTable
   , setTermList  :: NgramsTerm -> Maybe TermList -> TermList -> Effect Unit
   , text         :: Maybe String
+  , mode         :: ModeType
   )
 type MouseEvent = E.SyntheticEvent DE.MouseEvent
 
@@ -73,7 +74,7 @@ annotatedFieldInner = R2.leafComponent annotatedFieldInnerCpt
 
 annotatedFieldInnerCpt :: R.Component InnerProps
 annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
-  cpt { menuRef, ngrams, redrawMenu, setTermList, text: fieldText } _ = do
+  cpt { menuRef, ngrams, redrawMenu, setTermList, text: fieldText, mode } _ = do
     _redrawMenu' <- T.useLive T.unequal redrawMenu
 
     -- menu <- T.useBox (Nothing :: Maybe (Record AnnotationMenu))
@@ -89,9 +90,29 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
       [
         annotationMenu { menuRef }
       ,
-        H.div
-        { className: "annotated-field-runs" }
-        ((\p -> annotateRun p) <$> wrap <$> compile ngrams fieldText)
+        case mode of
+
+          EditionMode ->
+
+            H.div
+            { className: "annotated-field-runs" }
+            ((\p -> annotateRun p) <$> wrap <$> compile ngrams fieldText)
+
+
+          AdditionMode ->
+
+            R2.fromMaybe fieldText \t ->
+
+              H.div
+              { className: "annotated-field-runs" }
+              [
+                annotateRun
+                { list: mempty
+                , text: t
+                , onSelect: onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList }
+                }
+              ]
+
       ]
 
 -----------------------------------------------------------

@@ -30,7 +30,6 @@ import Data.String.Extra (camelCase)
 import Data.Tuple as Tuple
 import Data.Tuple.Nested ((/\))
 import Gargantext.Components.PhyloExplorer.JSON (PhyloJSON(..), RawEdge(..), RawObject(..))
-import Gargantext.Types (NodeID)
 import Simple.JSON as JSON
 
 -- @NOTE #219: PureScript Date or stick to JavaScript foreign?
@@ -520,6 +519,7 @@ newtype FrameDoc = FrameDoc
   , listId    :: ListId
   }
 
+derive instance Newtype FrameDoc _
 derive instance Generic FrameDoc _
 derive instance Eq FrameDoc
 

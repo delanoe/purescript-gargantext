@@ -524,6 +524,27 @@ $decreasing-color: #11638F;
   }
 }
 
+/////////////////////////////////////////////
+
+.phylo-doc-focus {
+  @include term-window();
+
+  &__header {
+    // avoid overlap with document side controls
+    @include right-handed() {
+      margin-left: space-x(4);
+    }
+    @include left-handed () {
+      margin-right: space-x(4);
+    }
+  }
+  // remove document header top spacing due to the already presence of
+  // the inner column top teaser
+  .document-layout__header {
+    padding-top: initial;
+  }
+}
+
 ////////////////////////////////////////////////////////////////
 
 .phylo-sidebar {
