@@ -1,0 +1,156 @@
+.table
+  $row-min-height: 48px
+
+  tr td
+    height: $row-min-height
+
+  ///////////////////////
+
+  .page-paint-raw
+
+    &--selected
+      position: relative
+
+      td:first-child::before
+        @include fit-positions
+
+        content: ""
+        width: 3px
+        background-color: $info
+        position: absolute
+
+  ///////////////////////
+
+  .page-paint-row
+
+    &--active
+      // font-weight: bold
+
+    &--trash
+      text-decoration: line-through
+
+  ///////////////////////
+
+  .doc-chooser
+    $offset-top: 3px // flex alignment won't work, hence empirical value
+
+    padding-top: $offset-top
+    text-align: center
+
+  ///////////////////////
+
+  .rating-group
+    $offset-top: 3px // flex alignment won't work, hence empirical value
+
+    display: flex
+    padding-top: $offset-top
+
+    &__action
+      // @XXX Glyphicon icons lack of homogeneous width
+      width: 14px
+      margin-right: space-x(1)
+
+///////////////////////////////////////////////////:
+
+.search-button-prepend
+
+  .input-group-text
+    // @XXX Glyphicon icons lack of homogeneous width
+    width: 41px
+
+    // @XXX Bootstrap adding unwanted `z-index` on "_input-group.scss"
+    z-index: initial
+
+///////////////////////////////////////////////////:
+
+.ngrams-table-container
+
+  &__header
+    display: flex
+    align-items: flex-start
+
+    &__item
+      padding: $card-spacer-y $card-spacer-x
+
+      &:not(:first-child)
+        margin-left: space-x(1)
+      &:not(:last-child)
+        margin-right: space-x(1)
+
+  &__add-term
+    // struggling to create harmonious vertical gutters due to Bootstrap adding
+    // helper classes surrounding the element
+    $offset-top: -8px
+    $offset-bottom: 12px
+
+    margin-top: $offset-top
+    margin-bottom: $offset-bottom
+
+  &__footer
+    padding: $card-spacer-y $card-spacer-x
+
+    &__item
+      text-align: center
+
+///////////////////////////////////////////////////:
+
+.ngrams-tree-edit-real
+  // empirical value fitting the best size of the render tree
+  $min-with: 416px
+
+  min-width: $min-with
+  width: fit-content // growing purpose
+  border-color: $primary
+  margin-top: space-x(2)
+  margin-bottom: space-x(2)
+
+
+  &__actions
+    display: flex
+    margin-top: space-x(2)
+
+    .b-button
+      margin-right: space-x(1)
+
+//////////////////////////////////////////////////
+
+.loaded-ngrams-table-header
+  text-align: center
+  margin-top: space-x(1.5)
+  margin-bottom: space-x(1.5)
+
+  &__icon
+    font-size: 16px
+
+  &__text
+    font-size: 22px
+    font-weight: bold
+    font-family: $headings-font-family
+
+//////////////////////////////////////////////////
+
+.ngrams-tree-loaded-node
+
+
+  &--first-child::before,
+  &--grand-child::before
+    color: $gray-400
+    font-size: 11px
+    margin-right: space-x(0.5)
+
+    @include right-handed
+      content: "└"
+    @include left-handed
+      content: "┘"
+
+  &--first-child
+    // empirical value where the child separator aligns with its parent text
+    $child-offset: -2px
+
+    margin-left: -2px
+
+  &--grand-child
+    // empirical value where the child separator aligns with its parent text
+    $child-offset: 13px
+
+    margin-left: 13px

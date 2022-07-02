@@ -1,8 +1,12 @@
 module Gargantext.Components.NgramsTable.Search where
 
-import Data.Nullable (Nullable, null)
-import DOM.Simple as DOM
 import Gargantext.Prelude
+
+import DOM.Simple as DOM
+import Data.Foldable (intercalate)
+import Data.Nullable (Nullable, null)
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -24,7 +28,7 @@ searchInputCpt = here.component "searchInput" cpt
   where
     cpt { searchQuery } _ = do
       inputRef <- R.useRef null
-      
+
       pure $ R2.row
         [ H.div { className: "col-12" }
           [ H.div { className: "input-group" }
@@ -46,14 +50,34 @@ searchButtonCpt = here.component "searchButton" cpt where
   cpt { inputRef, searchQuery } _ = do
     searchQuery' <- T.useLive T.unequal searchQuery
 
-    pure $ H.div { className: "input-group-prepend" }
-      [ if searchQuery' /= ""
+    pure $
+
+      H.div
+      { className: intercalate " "
+          [ "search-button-prepend"
+          , "input-group-prepend"
+          ]
+         }
+      [
+        if searchQuery' /= ""
         then
-          H.button { className: "btn btn-danger"
-                   , on: { click: \_ -> R2.setInputValue inputRef "" } }
-                            -- T.write "" searchQuery } }
-          [ H.span {className: "fa fa-times"} []]
-        else H.span { className: "fa fa-search input-group-text" } []
+          B.button
+          { variant: ButtonVariant Light
+          , callback: \_ -> R2.setInputValue inputRef ""
+            -- T.write "" searchQuery
+          , className: "input-group-text"
+          }
+          [
+            B.icon
+            { name: "times"
+            , className: "text-danger"
+            }
+          ]
+        else
+          B.icon
+          { name: "search"
+          , className: "input-group-text"
+          }
       ]
 
 type SearchFieldInputProps =
@@ -67,7 +91,7 @@ searchFieldInputCpt :: R.Component SearchFieldInputProps
 searchFieldInputCpt = here.component "searchFieldInput" cpt where
   cpt { inputRef, searchQuery } _ = do
     -- searchQuery' <- T.useLive T.unequal searchQuery
-    
+
     pure $ H.input { className: "form-control"
                    -- , defaultValue: searchQuery'
                    , name: "search"
