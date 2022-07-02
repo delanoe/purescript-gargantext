@@ -9574,6 +9574,14 @@ select.form-control {
   padding: 0.25em 0.4em;
   font-weight: bold;
 }
+.phylo-selection-tab__highlight__expand {
+  position: absolute;
+  right: 1.25rem;
+  bottom: 1rem;
+}
+.phylo-selection-tab__highlight__actions {
+  margin-top: 16px;
+}
 .phylo-selection-tab__selection {
   margin: 16px 20px;
 }
