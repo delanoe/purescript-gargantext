@@ -306,6 +306,8 @@ tableCpt = here.component "table" cpt
 makeRow :: Array R.Element -> R.Element
 makeRow els = H.tr {} $ (\c -> H.td {} [c]) <$> els
 
+makeRow' :: forall r. Record r -> Array R.Element -> R.Element
+makeRow' p els = H.tr p $ (\c -> H.td {} [c]) <$> els
 
 type FilterRowsParams =
   (
@@ -320,7 +322,8 @@ filterRows { params: { limit, offset } } rs = newRs
 defaultContainer :: Record TableContainerProps -> R.Element
 defaultContainer props = R.fragment $ props.syncResetButton <> controls
   where
-    controls = [ R2.row
+    controls = [ H.div
+                 { className: "d-flex align-items-center mb-2" }
                  [ H.div {className: "col-md-4"} [ props.pageSizeDescription ]
                  , H.div {className: "col-md-4"} [ props.paginationLinks ]
                  , H.div {className: "col-md-4"} [ props.pageSizeControl ]
@@ -374,7 +377,7 @@ sizeDDCpt = here.component "sizeDD" cpt
 
 textDescription :: Int -> PageSizes -> Int -> R.Element
 textDescription currPage pageSize totalRecords =
-  H.div {className: "row1"} [ H.div {className: ""} [ H.text msg ] ] -- TODO or col-md-6 ?
+  H.div {className: ""} [ H.text msg ] -- TODO or col-md-6 ?
   where
     start = (currPage - 1) * pageSizes2Int pageSize + 1
     end' = currPage * pageSizes2Int pageSize

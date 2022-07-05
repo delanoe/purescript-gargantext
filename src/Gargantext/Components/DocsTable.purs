@@ -6,7 +6,6 @@ import Gargantext.Prelude
 import DOM.Simple.Event as DE
 import Data.Array (any)
 import Data.Array as A
-import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
 import Data.Lens ((^.))
 import Data.Lens.At (at)
@@ -27,7 +26,7 @@ import Effect.Class (liftEffect)
 import Effect.Timer (setTimeout)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Types (ComponentStatus(..))
+import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Variant(..))
 import Gargantext.Components.Category (rating)
 import Gargantext.Components.Category.Types (Star(..))
 import Gargantext.Components.DocsTable.DocumentFormCreation as DFC
@@ -540,6 +539,9 @@ pagePaintRawCpt = here.component "pagePaintRaw" cpt where
     reload <- T.useBox GUT.newReload
     localCategories' <- T.useLive T.unequal localCategories
 
+    let
+      selected = mCurrentDocId' == Just nodeId
+
     pure $ TT.table
       { colNames
       , container: TT.defaultContainer
@@ -551,9 +553,9 @@ pagePaintRawCpt = here.component "pagePaintRaw" cpt where
       }
       where
         sid = sessionId session
-        trashClassName Star_0 _ = "trash"
-        trashClassName _ true = "active"
-        trashClassName _ false = ""
+        trashClassName Star_0 _ = "page-paint-row page-paint-row--trash"
+        trashClassName _ true   = "page-paint-row page-paint-row--active"
+        trashClassName _ false  = ""
         corpusDocument
           | Just cid <- mCorpusId = Routes.CorpusDocument sid cid listId
           | otherwise = Routes.Document sid listId
@@ -563,7 +565,14 @@ pagePaintRawCpt = here.component "pagePaintRaw" cpt where
           where
             row dv@(DocumentsView r@{ _id, category }) =
               { row:
-                TT.makeRow [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
+                TT.makeRow'
+                { className: "page-paint-raw " <>
+                    (selected ?
+                      "page-paint-raw--selected" $
+                      ""
+                    )
+                }
+                [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
                             H.div { className: "" }
                                   [ docChooser { boxes
                                                , listId
@@ -582,10 +591,17 @@ pagePaintRawCpt = here.component "pagePaintRaw" cpt where
                 --, H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
                 -- TODO show date: Year-Month-Day only
                 , H.div { className: tClassName } [ R2.showText r.date ]
-                , H.div { className: tClassName }
-                        [ H.a { href: url frontends $ corpusDocument r._id, target: "_blank" }
-                              [ H.text r.title ]
-                        ]
+                ,
+                  H.div
+                  { className: tClassName }
+                  [
+                    H.a
+                    { href: url frontends $ corpusDocument r._id
+                    , target: "_blank"
+                    , className: "text-primary"
+                    }
+                    [ H.text r.title ]
+                  ]
                 , H.div { className: tClassName } [ H.text $ showSource r.source ]
                 , H.div {} [ H.text $ maybe "-" show r.ngramCount ]
                 ]
@@ -623,11 +639,19 @@ docChooserCpt = here.component "docChooser" cpt
       mCurrentDocId' <- T.useLive T.unequal mCurrentDocId
 
       let selected = mCurrentDocId' == Just nodeId
-          eyeClass = if selected then "fa-eye" else "fa-eye-slash"
+          eyeClass = selected ? "eye" $ "eye-slash"
+          variant = selected ? Info $ Dark
 
-      pure $ H.div { className: "btn" } [
-        H.span { className: "fa " <> eyeClass
-               , on: { click: onClick selected } } []
+      pure $
+        H.div
+        { className: "doc-chooser" }
+        [
+          B.iconButton
+          { name: eyeClass
+          , overlay: false
+          , variant
+          , callback: onClick selected
+          }
       ]
       where
         onClick selected _ = do
