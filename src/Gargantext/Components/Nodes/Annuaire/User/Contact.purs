@@ -16,7 +16,7 @@ import Gargantext.Hooks.Session (useSession)
 import Gargantext.Types (NodeID)
 import Gargantext.Utils (nbsp)
 import Gargantext.Utils.Reactix as R2
-import Gargnatext.Components.GraphQL.Contact (AnnuaireContact, _ac_firstName, _ac_lastName)
+import Gargnatext.Components.GraphQL.Contact (AnnuaireContact, _ac_city, _ac_country, _ac_firstName, _ac_labTeamDeptsFirst, _ac_lastName, _ac_office, _ac_organizationFirst, _ac_role, _ac_touchMail, _ac_touchPhone, _ac_touchUrl)
 import Reactix as R
 import Reactix.DOM.HTML as H
 
@@ -134,6 +134,186 @@ contactFormCpt = here.component "form" cpt where
                 { status: Disabled
                 , callback: const R.nothing
                 , value: view _ac_lastName fdata
+                }
+              ]
+            ]
+          , 
+            H.div
+            { className: "form-group" }
+            [
+              H.div
+              { className: "form-group__label" }
+              [
+                B.label_ "Organisation"
+              ]
+            ,
+              H.div
+              { className: "form-group__field" }
+              [
+                B.formInput
+                { status: Disabled
+                , callback: const R.nothing
+                , value: view _ac_organizationFirst fdata
+                }
+              ]
+            ]
+          ,
+            H.div
+            { className: "form-group" }
+            [
+              H.div
+              { className: "form-group__label" }
+              [
+                B.label_ "Lab/Team/Dept"
+              ]
+            ,
+              H.div
+              { className: "form-group__field" }
+              [
+                B.formInput
+                { status: Disabled
+                , callback: const R.nothing
+                , value: view _ac_labTeamDeptsFirst fdata
+                }
+              ]
+            ]
+          , 
+            H.div
+            { className: "form-group" }
+            [
+              H.div
+              { className: "form-group__label" }
+              [
+                B.label_ "Office"
+              ]
+            ,
+              H.div
+              { className: "form-group__field" }
+              [
+                B.formInput
+                { status: Disabled
+                , callback: const R.nothing
+                , value: view _ac_office fdata
+                }
+              ]
+            ]
+          ,
+            H.div
+            { className: "form-group" }
+            [
+              H.div
+              { className: "form-group__label" }
+              [
+                B.label_ "City"
+              ]
+            ,
+              H.div
+              { className: "form-group__field" }
+              [
+                B.formInput
+                { status: Disabled
+                , callback: const R.nothing
+                , value: view _ac_city fdata
+                }
+              ]
+            ]
+          ,
+            H.div
+            { className: "form-group" }
+            [
+              H.div
+              { className: "form-group__label" }
+              [
+                B.label_ "Country"
+              ]
+            ,
+              H.div
+              { className: "form-group__field" }
+              [
+                B.formInput
+                { status: Disabled
+                , callback: const R.nothing
+                , value: view _ac_country fdata
+                }
+              ]
+            ]
+          ,
+            H.div
+            { className: "form-group" }
+            [
+              H.div
+              { className: "form-group__label" }
+              [
+                B.label_ "Role"
+              ]
+            ,
+              H.div
+              { className: "form-group__field" }
+              [
+                B.formInput
+                { status: Disabled
+                , callback: const R.nothing
+                , value: view _ac_role fdata
+                }
+              ]
+            ]
+          ,
+            H.div
+            { className: "form-group" }
+            [
+              H.div
+              { className: "form-group__label" }
+              [
+                B.label_ "Phone"
+              ]
+            ,
+              H.div
+              { className: "form-group__field" }
+              [
+                B.formInput
+                { status: Disabled
+                , callback: const R.nothing
+                , value: view _ac_touchPhone fdata
+                }
+              ]
+            ]
+          ,
+            H.div
+            { className: "form-group" }
+            [
+              H.div
+              { className: "form-group__label" }
+              [
+                B.label_ "Mail"
+              ]
+            ,
+              H.div
+              { className: "form-group__field" }
+              [
+                B.formInput
+                { status: Disabled
+                , callback: const R.nothing
+                , value: view _ac_touchMail fdata
+                }
+              ]
+            ]
+          ,
+            H.div
+            { className: "form-group" }
+            [
+              H.div
+              { className: "form-group__label" }
+              [
+                B.label_ "URL"
+              ]
+            ,
+              H.div
+              { className: "form-group__field" }
+              [
+                B.formInput
+                { status: Disabled
+                , callback: const R.nothing
+                , value: view _ac_touchUrl fdata
                 }
               ]
             ]
