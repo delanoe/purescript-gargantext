@@ -32,8 +32,8 @@ searchInputCpt = here.component "searchInput" cpt
       pure $ R2.row
         [ H.div { className: "col-12" }
           [ H.div { className: "input-group" }
-            [ searchButton { inputRef, searchQuery } []
-            , searchFieldInput { inputRef, searchQuery } []
+            [ searchFieldInput { inputRef, searchQuery } []
+            , searchButton { inputRef, searchQuery } []
             ]
           ]
         ]
@@ -53,31 +53,34 @@ searchButtonCpt = here.component "searchButton" cpt where
     pure $
 
       H.div
-      { className: intercalate " "
-          [ "search-button-prepend"
-          , "input-group-prepend"
-          ]
-         }
+      { className: "search-button-append input-group-append" }
       [
         if searchQuery' /= ""
         then
-          B.button
-          { variant: ButtonVariant Light
-          , callback: \_ -> R2.setInputValue inputRef ""
-            -- T.write "" searchQuery
-          , className: "input-group-text"
-          }
-          [
-            B.icon
-            { name: "times"
-            , className: "text-danger"
-            }
-          ]
+          R.fragment
+            [ B.button
+              { variant: ButtonVariant Light
+              , callback: \_ -> do
+                                  R2.setInputValue inputRef ""
+                                  T.write_ "" searchQuery
+              , className: "input-group-text" }
+                [ B.icon
+                  { name: "times"
+                  , className: "text-danger"
+                  }
+                ]
+            , B.button { callback: \_ -> T.write_ (R2.getInputValue inputRef) searchQuery
+                       , className: "input-group-text" }
+                [ B.icon { name: "search" }
+                         
+                ]
+            ]
         else
-          B.icon
-          { name: "search"
-          , className: "input-group-text"
-          }
+          B.button { callback: \_ -> T.write_ (R2.getInputValue inputRef) searchQuery
+                   , className: "input-group-text" }
+            [ B.icon
+              { name: "search" }
+            ]
       ]
 
 type SearchFieldInputProps =
@@ -90,13 +93,20 @@ searchFieldInput = R.createElement searchFieldInputCpt
 searchFieldInputCpt :: R.Component SearchFieldInputProps
 searchFieldInputCpt = here.component "searchFieldInput" cpt where
   cpt { inputRef, searchQuery } _ = do
-    -- searchQuery' <- T.useLive T.unequal searchQuery
 
     pure $ H.input { className: "form-control"
                    -- , defaultValue: searchQuery'
                    , name: "search"
-                   , on: { input: \e -> T.write (R.unsafeEventValue e) searchQuery }
+                   , on: { keyPress: onKeyPress }
                    , placeholder: "Search"
                    , ref: inputRef
                    , type: "value"
                    }
+      where
+        onKeyPress e = do
+          char <- R2.keyCode e
+          if char == 13 then
+            T.write_ (R2.getInputValue inputRef) searchQuery
+          else
+            pure unit
+
