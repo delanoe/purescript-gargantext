@@ -17,6 +17,7 @@ import Gargantext.Components.PhyloExplorer.Sidebar.UpdateTerms (updateTerms)
 import Gargantext.Components.PhyloExplorer.Store as PhyloStore
 import Gargantext.Components.PhyloExplorer.Types (ExtractedCount(..), ExtractedTerm(..), defaultCacheParams)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
+import Gargantext.Types (CTabNgramType(..))
 import Gargantext.Utils (nbsp, setter, (?))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -230,7 +231,9 @@ component = here.component "main" cpt where
                       { className: "phylo-selection-tab__highlight__actions" }
                       [
                         updateTerms
-                        {}
+                        { selectedTerm: s
+                        , ngramType: CTabTerms
+                        }
                       ]
                     ]
                 ]
