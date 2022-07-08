@@ -209,8 +209,10 @@ tabsCpt = here.component "tabs" cpt
 
       chartReload <- T.useBox T2.newReload
 
-      pure $ Tab.tabs {
-          activeTab
+      pure $
+        Tab.tabs
+        { className: "nodes-texts-layout-tabs"
+        , activeTab
         , tabs: [
             "Documents"       /\ R.fragment [
                 histoRender { boxes, path, onClick, onInit, reload: chartReload, session } []

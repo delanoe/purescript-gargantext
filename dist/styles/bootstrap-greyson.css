@@ -8385,10 +8385,6 @@ a:focus, a:hover {
   user-select: none;
 }
 
-.cache-toggle {
-  cursor: pointer;
-}
-
 .side-panel {
   background-color: #fff;
   padding: 0.3em;
@@ -8591,6 +8587,15 @@ select.form-control {
   top: 6px;
 }
 
+.nodes-lists-layout-tabs .nav.nav-tabs,
+.nodes-texts-layout-tabs .nav.nav-tabs,
+.nodes-annuaire-layout-tabs .nav.nav-tabs {
+  margin-left: -32px;
+  margin-right: -32px;
+  padding-left: 32px;
+  padding-right: 32px;
+}
+
 .jitsi-iframe {
   height: 70em;
 }
@@ -8664,7 +8669,7 @@ select.form-control {
   margin-right: 8px;
 }
 
-.search-button-prepend .input-group-text {
+.ngrams-table-search-button .input-group-text {
   width: 41px;
   z-index: initial;
 }
@@ -8707,6 +8712,9 @@ select.form-control {
 .ngrams-tree-edit-real__actions .b-button {
   margin-right: 8px;
 }
+.ngrams-tree-edit-real .ngrams-tree-loaded-node a:hover {
+  text-decoration: line-through;
+}
 
 .loaded-ngrams-table-header {
   text-align: center;
@@ -8740,6 +8748,60 @@ select.form-control {
 }
 .ngrams-tree-loaded-node--grand-child {
   margin-left: 13px;
+}
+
+.table-header-rename {
+  margin-bottom: 8px;
+}
+.table-header-rename__header {
+  display: flex;
+  align-items: center;
+}
+.table-header-rename__header__line {
+  border-bottom: 1px solid #E9ECEF;
+  border-top: none;
+  height: 0;
+  flex-grow: 1;
+  margin-left: 32px;
+}
+.table-header-rename__cache {
+  margin-top: 16px;
+}
+.table-header-rename__cache--on {
+  font-weight: bold;
+}
+.table-header-rename__cache__button {
+  margin-left: 16px;
+  color: #6f7f8c;
+}
+.table-header-rename__cache__text {
+  cursor: pointer;
+}
+.table-header-rename__cache__text:focus {
+  outline: 0;
+}
+.table-header-rename__calendar__icon {
+  margin-right: 4px;
+  width: 16px;
+}
+.table-header-rename .renameable-wrapper--emphase .renameable-container__text {
+  font-size: 1.75rem;
+  font-family: "Oswald";
+}
+
+.renameable-container {
+  display: flex;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+.renameable-container__icon {
+  margin-right: 4px;
+  font-size: 14px;
+  width: 16px;
+  text-align: center;
+}
+.renameable-container__button {
+  margin-left: 16px;
 }
 
 .annotation-run {

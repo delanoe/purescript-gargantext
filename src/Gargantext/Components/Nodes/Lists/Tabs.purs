@@ -45,7 +45,9 @@ tabsCpt :: R.Component ( key :: String | Props )
 tabsCpt = here.component "tabs" cpt where
   cpt props@{ activeTab } _ = do
     pure $ Tab.tabs { activeTab
-                    , tabs: tabs' } where
+                    , tabs: tabs'
+                    , className: "nodes-lists-layout-tabs"
+                    } where
       tabs' = [ "Terms"      /\ view Terms []
               , "Authors"    /\ view Authors []
               , "Institutes" /\ view Institutes []
@@ -74,7 +76,7 @@ tabCpt = here.component "tab" cpt where
                       , listId
                       , tabType
                       }
-      
+
 
 type NgramsViewProps = ( path :: T.Box PageParams | TabProps )
 

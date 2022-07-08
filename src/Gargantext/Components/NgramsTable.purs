@@ -398,8 +398,8 @@ type Props =
 type LoadedNgramsTableHeaderProps =
   ( searchQuery :: T.Box SearchQuery )
 
-loadedNgramsTableHeader :: R2.Component LoadedNgramsTableHeaderProps
-loadedNgramsTableHeader = R.createElement loadedNgramsTableHeaderCpt
+loadedNgramsTableHeader :: R2.Leaf LoadedNgramsTableHeaderProps
+loadedNgramsTableHeader = R2.leaf loadedNgramsTableHeaderCpt
 loadedNgramsTableHeaderCpt :: R.Component LoadedNgramsTableHeaderProps
 loadedNgramsTableHeaderCpt = here.component "loadedNgramsTableHeader" cpt where
   cpt { searchQuery } _ = pure $
@@ -740,17 +740,17 @@ mainNgramsTable = R.createElement mainNgramsTableCpt
 mainNgramsTableCpt :: R.Component MainNgramsTableProps
 mainNgramsTableCpt = here.component "mainNgramsTable" cpt
   where
-    cpt props@{ cacheState, path, session, tabType, treeEdit } _ = do
+    cpt props@{ cacheState, path, treeEdit } _ = do
       searchQuery <- T.useFocused (_.searchQuery) (\a b -> b { searchQuery = a }) path
       cacheState' <- T.useLive T.unequal cacheState
-      onCancelRef <- R.useRef Nothing
-      onNgramsClickRef <- R.useRef Nothing
-      onSaveRef   <- R.useRef Nothing
+      -- onCancelRef <- R.useRef Nothing
+      -- onNgramsClickRef <- R.useRef Nothing
+      -- onSaveRef   <- R.useRef Nothing
       state <- T.useBox initialState
-      ngramsLocalPatch <- T.useFocused (_.ngramsLocalPatch) (\a b -> b { ngramsLocalPatch = a }) state
+      -- ngramsLocalPatch <- T.useFocused (_.ngramsLocalPatch) (\a b -> b { ngramsLocalPatch = a }) state
 
-      nodeId <- T.useFocused (_.nodeId) (\a b -> b { nodeId = a }) path
-      nodeId' <- T.useLive T.unequal nodeId
+      -- nodeId <- T.useFocused (_.nodeId) (\a b -> b { nodeId = a }) path
+      -- nodeId' <- T.useLive T.unequal nodeId
 
       -- let treeEdit = { box: treeEditBox
       --                , getNgramsChildren: getNgramsChildrenAff session nodeId' tabType
@@ -763,16 +763,16 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
 
       case cacheState' of
         NT.CacheOn  -> pure $ R.fragment
-          [
-            loadedNgramsTableHeader { searchQuery } []
-          , mainNgramsTableCacheOn (Record.merge props { state }) []
+          [ loadedNgramsTableHeader { searchQuery }
+          , ngramsTreeEdit (treeEdit)
+          , mainNgramsTableCacheOn (Record.merge props { state })
           ]
         NT.CacheOff -> pure $ R.fragment
-          [
-            loadedNgramsTableHeader { searchQuery } []
-          , ngramsTreeEdit (treeEdit) []
-          , mainNgramsTableCacheOff (Record.merge props { state }) []
+          [loadedNgramsTableHeader { searchQuery }
+          , ngramsTreeEdit (treeEdit)
+          , mainNgramsTableCacheOff (Record.merge props { state })
           ]
+
 
 type NgramsTreeEditProps =
   ( box               :: T.Box TreeEdit
@@ -783,8 +783,8 @@ type NgramsTreeEditProps =
   , onSaveRef         :: NgramsActionRef
   )
 
-ngramsTreeEdit :: R2.Component NgramsTreeEditProps
-ngramsTreeEdit = R.createElement ngramsTreeEditCpt
+ngramsTreeEdit :: R2.Leaf NgramsTreeEditProps
+ngramsTreeEdit = R2.leaf ngramsTreeEditCpt
 ngramsTreeEditCpt :: R.Component NgramsTreeEditProps
 ngramsTreeEditCpt = here.component "ngramsTreeEdit" cpt where
   cpt props@{ box } _ = do
@@ -799,15 +799,15 @@ ngramsTreeEditCpt = here.component "ngramsTreeEdit" cpt where
     pure $ if isEditingFocused'
       then case ngramsParentFocused' of
                 Nothing -> gutter
-                Just ngramsParent' -> ngramsTreeEditReal (Record.merge props { ngramsParent' }) []
+                Just ngramsParent' -> ngramsTreeEditReal (Record.merge props { ngramsParent' })
       else gutter
 
 type NgramsTreeEditRealProps =
   ( ngramsParent' :: NgramsTerm
   | NgramsTreeEditProps )
 
-ngramsTreeEditReal :: R2.Component NgramsTreeEditRealProps
-ngramsTreeEditReal = R.createElement ngramsTreeEditRealCpt
+ngramsTreeEditReal :: R2.Leaf NgramsTreeEditRealProps
+ngramsTreeEditReal = R2.leaf ngramsTreeEditRealCpt
 ngramsTreeEditRealCpt :: R.Component NgramsTreeEditRealProps
 ngramsTreeEditRealCpt = here.component "ngramsTreeEditReal" cpt where
   cpt { box
@@ -922,8 +922,8 @@ type MainNgramsTableCacheProps =
   ( state :: T.Box State
   | MainNgramsTableProps )
 
-mainNgramsTableCacheOn :: R2.Component MainNgramsTableCacheProps
-mainNgramsTableCacheOn = R.createElement mainNgramsTableCacheOnCpt
+mainNgramsTableCacheOn :: R2.Leaf MainNgramsTableCacheProps
+mainNgramsTableCacheOn = R2.leaf mainNgramsTableCacheOnCpt
 mainNgramsTableCacheOnCpt :: R.Component MainNgramsTableCacheProps
 mainNgramsTableCacheOnCpt = here.component "mainNgramsTableCacheOn" cpt where
   cpt { afterSync
@@ -969,8 +969,8 @@ mainNgramsTableCacheOnCpt = here.component "mainNgramsTableCacheOn" cpt where
   handleResponse :: VersionedNgramsTable -> VersionedNgramsTable
   handleResponse v = v
 
-mainNgramsTableCacheOff :: R2.Component MainNgramsTableCacheProps
-mainNgramsTableCacheOff = R.createElement mainNgramsTableCacheOffCpt
+mainNgramsTableCacheOff :: R2.Leaf MainNgramsTableCacheProps
+mainNgramsTableCacheOff = R2.leaf mainNgramsTableCacheOffCpt
 mainNgramsTableCacheOffCpt :: R.Component MainNgramsTableCacheProps
 mainNgramsTableCacheOffCpt = here.component "mainNgramsTableCacheOff" cpt where
   cpt { afterSync
