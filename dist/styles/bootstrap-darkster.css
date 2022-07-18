@@ -8120,7 +8120,8 @@ a:focus, a:hover {
   display: flex;
   align-items: center;
   margin-bottom: 3px;
-  width: max-content;
+  min-width: max-content;
+  position: relative;
 }
 .right-handed .mainleaf {
   flex-direction: row;
@@ -8300,6 +8301,28 @@ a:focus, a:hover {
   color: #FF550B;
   font-weight: bold;
 }
+.mainleaf--selected::after {
+  content: "";
+  font-family: ForkAwesome;
+  width: 4px;
+  color: #FFFFFF;
+  background-color: #FF550B;
+  top: 0;
+  bottom: 0;
+  position: absolute;
+}
+.right-handed .mainleaf--selected::after {
+  right: 0;
+  border-top-left-radius: 0.25rem;
+  border-bottom-left-radius: 0.25rem;
+}
+
+.left-handed .mainleaf--selected::after {
+  left: 0;
+  border-top-right-radius: 0.25rem;
+  border-bottom-right-radius: 0.25rem;
+}
+
 .mainleaf--file-dropped .mainleaf__node-link::before {
   content: "";
   border: 1px dotted #303030;
