@@ -68,7 +68,12 @@ tabsCpt = here.component "tabs" cpt where
     yearFilter <- T.useBox (Nothing :: Maybe Year)
     chartReload <- T.useBox T2.newReload
 
-    pure $ Tab.tabs { activeTab, tabs: tabs' yearFilter chartReload props }
+    pure $
+      Tab.tabs
+      { activeTab
+      , tabs: tabs' yearFilter chartReload props
+      , className: "nodes-annuaire-layout-tabs"
+      }
   tabs' yearFilter chartReload props@{ boxes, defaultListId, sidePanel } =
     [ "Documents"     /\ docs
     , "Patents"       /\ ngramsView (viewProps Patents)

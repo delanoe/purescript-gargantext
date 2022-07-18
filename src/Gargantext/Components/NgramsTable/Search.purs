@@ -45,42 +45,73 @@ type SearchButtonProps =
 
 searchButton :: R2.Component SearchButtonProps
 searchButton = R.createElement searchButtonCpt
+
 searchButtonCpt :: R.Component SearchButtonProps
 searchButtonCpt = here.component "searchButton" cpt where
   cpt { inputRef, searchQuery } _ = do
+    -- | States
+    -- |
     searchQuery' <- T.useLive T.unequal searchQuery
 
+    -- | Behaviors
+    -- |
+    let
+      onReset _ = do
+        R2.setInputValue inputRef ""
+        T.write_ "" searchQuery
+
+      onSubmit _ = do
+        T.write_ (R2.getInputValue inputRef) searchQuery
+
+    -- | Render
+    -- |
     pure $
 
       H.div
-      { className: "search-button-append input-group-append" }
+      { className: intercalate " "
+          [ "ngrams-table-search-button"
+          , "input-group-append"
+          ]
+      }
       [
         if searchQuery' /= ""
         then
           R.fragment
-            [ B.button
+            [
+              B.button
               { variant: ButtonVariant Light
-              , callback: \_ -> do
-                                  R2.setInputValue inputRef ""
-                                  T.write_ "" searchQuery
-              , className: "input-group-text" }
-                [ B.icon
+              , callback: onReset
+              , className: "input-group-text"
+              }
+                [
+                  B.icon
                   { name: "times"
                   , className: "text-danger"
                   }
                 ]
-            , B.button { callback: \_ -> T.write_ (R2.getInputValue inputRef) searchQuery
-                       , className: "input-group-text" }
-                [ B.icon { name: "search" }
-                         
+            ,
+              B.button
+              { variant: ButtonVariant Light
+              , callback: onSubmit
+              , className: "input-group-text"
+              }
+                [ B.icon
+                  { name: "search"
+                  , className: "text-secondary"
+                  }
                 ]
             ]
         else
-          B.button { callback: \_ -> T.write_ (R2.getInputValue inputRef) searchQuery
-                   , className: "input-group-text" }
-            [ B.icon
-              { name: "search" }
-            ]
+          B.button
+          { variant: ButtonVariant Light
+          , callback: onSubmit
+          , className: "input-group-text"
+          }
+          [ B.icon
+            { name: "search"
+            , className: "text-secondary"
+            }
+          ]
       ]
 
 type SearchFieldInputProps =
@@ -109,4 +140,3 @@ searchFieldInputCpt = here.component "searchFieldInput" cpt where
             T.write_ (R2.getInputValue inputRef) searchQuery
           else
             pure unit
-

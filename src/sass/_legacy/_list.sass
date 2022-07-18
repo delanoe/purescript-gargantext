@@ -52,7 +52,7 @@
 
 ///////////////////////////////////////////////////:
 
-.search-button-prepend
+.ngrams-table-search-button
 
   .input-group-text
     // @XXX Glyphicon icons lack of homogeneous width
@@ -104,13 +104,15 @@
   margin-top: space-x(2)
   margin-bottom: space-x(2)
 
-
   &__actions
     display: flex
     margin-top: space-x(2)
 
     .b-button
       margin-right: space-x(1)
+
+  .ngrams-tree-loaded-node a:hover
+    text-decoration: line-through
 
 //////////////////////////////////////////////////
 
@@ -154,3 +156,71 @@
     $child-offset: 13px
 
     margin-left: 13px
+
+////////////////////////////////////////////////////////
+$renameable-icon-margin: space-x(0.5)
+$renameable-button-margin: space-x(2)
+// @XXX Glyphicon icons lack of homogeneous width
+$renameable-icon-width: 16px
+
+.table-header-rename
+  margin-bottom: space-x(1)
+
+  &__header
+    display: flex
+    align-items: center
+
+    &__line
+      // (?) This is a peculiar line directly coming from the legacy style
+      //     It originaly was a solid 2px black one, that added to much
+      //     emphasize comparing to the surrounding gray border and lighter
+      //     element (font, icon, etc)
+      //
+      //     As far as it goes, we kept it for inheritance, but without more
+      //     previous decision on it, we can only make assumption here. Maybe
+      //     the line was intended to bring the page title out, as we can see
+      //     on the likes on some academing print paper
+      border-bottom: 1px solid $gray-200
+      border-top: none
+      // (?) strange behavior where browser engine add it by itself
+      height: 0
+      flex-grow: 1
+      margin-left: space-x(4)
+
+  &__cache
+    margin-top: space-x(2)
+
+    &--on
+      font-weight: bold
+
+    &__button
+      margin-left: $renameable-button-margin
+      color: $secondary
+
+    &__text
+      @include clickable
+
+  &__calendar
+
+    &__icon
+      margin-right: $renameable-icon-margin
+      width: $renameable-icon-width
+
+  .renameable-wrapper--emphase
+    .renameable-container__text
+      font-size: $h3-font-size
+      font-family: $headings-font-family
+
+.renameable-container
+  display: flex
+  align-items: baseline
+  margin-bottom: space-x(0.75)
+
+  &__icon
+    margin-right: $renameable-icon-margin
+    font-size: 14px
+    width: $renameable-icon-width
+    text-align: center
+
+  &__button
+    margin-left: $renameable-button-margin
