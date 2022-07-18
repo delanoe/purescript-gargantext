@@ -1,15 +1,17 @@
 module Gargantext.Components.Login.ForgotPassword where
 
+import Gargantext.Prelude
+
 import DOM.Simple.Event as DE
+import Data.Either (Either(..))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
+import Formula as F
 import Gargantext.Components.Forms (formGroup)
 import Gargantext.Ends (Backend)
-import Gargantext.Prelude
 import Gargantext.Sessions (Sessions, postForgotPasswordRequest)
 import Gargantext.Utils.Reactix as R2
-import Formula as F
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Reactix.SyntheticEvent as E
@@ -30,13 +32,15 @@ forgotPasswordCpt :: R.Component Props
 forgotPasswordCpt = here.component "forgotPassword" cpt where
   cpt { backend, sessions } _ = do
     email <- T.useBox ""
+    message <- T.useBox ""
     
     pure $ H.div { className: "row" }
       [ H.form { className: "text-center col-md-12" }
         [ H.h4 {} [ H.text "Forgot password" ]
+        , messageDisplay { message }
         , formGroup
           [ emailInput email ]
-        , submitButton { backend, email, sessions }
+        , submitButton { backend, email, sessions, message }
         ]
       ]
 
@@ -50,14 +54,15 @@ emailInput value = F.bindInput { value
                                , maxLength: "254" }
 
 type SubmitButtonProps =
-  ( email :: T.Box Email
+  ( email   :: T.Box Email
+  , message :: T.Box String
   | Props )
 
 submitButton :: R2.Leaf SubmitButtonProps
 submitButton = R2.leafComponent submitButtonCpt
 submitButtonCpt :: R.Component SubmitButtonProps
 submitButtonCpt = here.component "submitButton" cpt where
-  cpt { backend, email, sessions } _ = do
+  cpt { backend, email, sessions, message} _ = do
     email' <- T.useLive T.unequal email
     
     pure $ H.div {className: "form-group text-center"} 
@@ -75,3 +80,16 @@ submitButtonCpt = here.component "submitButton" cpt where
         launchAff_ $ do
           res <- postForgotPasswordRequest backend email'
           liftEffect $ here.log2 "res" res
+          liftEffect $ case res of
+            Left s -> T.write_ s message
+            Right _ -> T.write_ "Request sent!" message
+
+messageDisplay :: R2.Leaf (message :: T.Box String)
+messageDisplay = R2.leafComponent messageDisplayCpt
+
+messageDisplayCpt :: R.Component (message :: T.Box String)
+messageDisplayCpt = here.component "messageDisplay" cpt where
+  cpt {message} _ = do
+    message' <- T.useLive T.unequal message
+
+    pure $ H.p {} [H.text message']

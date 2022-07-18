@@ -4,6 +4,7 @@ import Prelude
 
 import Data.Maybe (Maybe(..))
 import Data.UUID (UUID)
+import Data.Map as M
 import Gargantext.Types (ChartOpts, ChartType, CorpusMetricOpts, CTabNgramType, Id, Limit, ListId, DocId, NgramsGetOpts, NgramsGetTableAllOpts, NodeType, Offset, OrderBy, SearchOpts, SessionId, TabSubType, TabType, TermList)
 import Gargantext.Types as GT
 
@@ -32,6 +33,7 @@ data AppRoute
   | Team            SessionId Int
   | NodeTexts       SessionId Int
   | UserPage        SessionId Int
+  | ForgotPassword  (M.Map String String)
 
 
 derive instance Eq AppRoute
@@ -63,6 +65,7 @@ data SessionRoute
 instance Show AppRoute where
   show Home                     = "Home"
   show Login                    = "Login"
+  show (ForgotPassword  u)      = "ForgotPassword" <> show u
   show (Folder        s i)      = "Folder"         <> show i <> " (" <> show s <> ")"
   show (FolderPrivate s i)      = "FolderPrivate"  <> show i <> " (" <> show s <> ")"
   show (FolderPublic  s i)      = "FolderPublic"   <> show i <> " (" <> show s <> ")"
@@ -90,11 +93,12 @@ instance Show AppRoute where
 appPath :: AppRoute -> String
 appPath Home                     = ""
 appPath Login                    = "login"
-appPath (Folder s i)             = "folder/"        <> show s <> "/" <> show i
-appPath (FolderPrivate s i)      = "folderPrivate/" <> show s <> "/" <> show i
-appPath (FolderPublic s i)       = "folderPublic/"  <> show s <> "/" <> show i
-appPath (FolderShared s i)       = "folderShared/"  <> show s <> "/" <> show i
-appPath (Team s i)               = "team/"          <> show s <> "/" <> show i
+appPath (ForgotPassword u)       = "forgotPassword/" <> show u
+appPath (Folder s i)             = "folder/"         <> show s <> "/" <> show i
+appPath (FolderPrivate s i)      = "folderPrivate/"  <> show s <> "/" <> show i
+appPath (FolderPublic s i)       = "folderPublic/"   <> show s <> "/" <> show i
+appPath (FolderShared s i)       = "folderShared/"   <> show s <> "/" <> show i
+appPath (Team s i)               = "team/"           <> show s <> "/" <> show i
 appPath (CorpusDocument s c l i) = "corpus/" <> show s <> "/" <> show c <> "/list/" <> show l <> "/document/" <> show i
 appPath (Corpus s i)             = "corpus/"     <> show s <> "/" <> show i
 appPath (CorpusCode s i)         = "corpusCode/" <> show s <> "/" <> show i
