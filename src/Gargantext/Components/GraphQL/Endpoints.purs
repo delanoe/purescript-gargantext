@@ -73,13 +73,11 @@ getTreeFirstLevel session id = do
   liftEffect $ here.log2 "[getTreeFirstLevel] tree first level" tree
   pure $ Right tree -- TODO: error handling
 
-getTeam :: Session -> Int -> AffRESTError TeamMember
+getTeam :: Session -> Int -> AffRESTError (Array TeamMember)
 getTeam session id = do
   { team } <- queryGql session "get team" $ teamQuery `withVars` { id }
   liftEffect $ here.log2 "[getTree] data" team
-  pure $ case A.head team of
-    Nothing -> Left (CustomError $ "team node id=" <> show id <> " not found")
-    Just t -> Right t
+  pure $ Right team
 
 type SharedFolderId = Int
 type TeamNodeId = Int
