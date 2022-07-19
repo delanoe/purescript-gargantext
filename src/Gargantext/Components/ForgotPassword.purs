@@ -24,7 +24,7 @@ forgotPasswordLayoutCpt = here.component "forgotPasswordLayout" cpt where
               , loader: loadPassword
               , path: { server, uuid }
               , render: \{ password } ->  
-                H.p {} [ H.text ("Your new password is:" <> password) ] }
+                H.p {} [ H.text ("Your new password is: " <> password) ] }
     where
       errorHandler = logRESTError here "[forgotPasswordLayout]"
 
