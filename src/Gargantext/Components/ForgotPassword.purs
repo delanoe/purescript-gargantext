@@ -23,8 +23,11 @@ forgotPasswordLayoutCpt = here.component "forgotPasswordLayout" cpt where
     useLoader { errorHandler
               , loader: loadPassword
               , path: { server, uuid }
-              , render: \{ password } ->  
-                H.p {} [ H.text ("Your new password is: " <> password) ] }
+              , render: \{ password } ->
+                H.div { className:"justify-content-center" } [
+                  H.img { src: "images/logo.png" }
+                , H.p {} [ H.text ("Your new password is: " <> password) ]     
+                  ]}
     where
       errorHandler = logRESTError here "[forgotPasswordLayout]"
 
