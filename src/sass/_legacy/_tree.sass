@@ -77,7 +77,10 @@ $node-popup-width: 544px
   // forcing inline width to overflow its container width
   // this is mainly due to the multi-level of nested folders that keeps
   // increasing the mainleaf width
-  width: max-content
+  // (as a "min-width" rule instead of "width" to allow the relative stacking
+  // context used for the selected UI border)
+  min-width: max-content
+  position: relative
 
   @include right-handed
     flex-direction: row
@@ -285,6 +288,30 @@ $node-popup-width: 544px
     &__node-link a
       color: $primary
       font-weight: bold
+
+  &--selected::after
+      content: ''
+      font-family: ForkAwesome
+      width: 4px
+      color: $white
+      background-color: $primary
+      top: 0
+      bottom: 0
+      position: absolute
+
+  @include right-handed
+
+    &--selected::after
+      right: 0
+      border-top-left-radius: $border-radius
+      border-bottom-left-radius: $border-radius
+
+  @include left-handed
+
+    &--selected::after
+      left: 0
+      border-top-right-radius: $border-radius
+      border-bottom-right-radius: $border-radius
 
   //----------------------------
 
