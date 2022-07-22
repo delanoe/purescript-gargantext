@@ -11,8 +11,9 @@ import Data.String as DST
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Login.Form (form)
+import Gargantext.Components.Bootstrap.Types (ModalSizing(..))
 import Gargantext.Components.Login.ForgotPassword (forgotPassword)
+import Gargantext.Components.Login.Form (form)
 import Gargantext.Components.Login.Types (FormType(..))
 import Gargantext.Components.NgramsTable.Loader as NTL
 import Gargantext.Ends (Backend(..))
@@ -48,12 +49,14 @@ loginCpt = here.component "login" cpt where
     mBackend <- R2.useLive' props.backend
     formType <- T.useBox Login
     formType' <- T.useLive T.unequal formType
+
     -- Render
     pure $
 
       B.baseModal
       { isVisibleBox: visible
-      , title: "GarganText ecosystem explorer"
+      , title: Just "GarganText ecosystem explorer"
+      , size: ExtraLargeModalSize
       }
       [
         case mBackend of

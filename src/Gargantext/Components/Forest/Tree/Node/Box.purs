@@ -5,11 +5,8 @@ import Gargantext.Prelude
 import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
-import Reactix as R
-import Reactix.DOM.HTML as H
-import Toestand as T
-
 import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Forest.Tree.Node.Action.Add (addNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (actionDelete)
@@ -34,6 +31,9 @@ import Gargantext.Types (ID, Name, prettyNodeType)
 import Gargantext.Types as GT
 import Gargantext.Utils.Glyphicon (glyphicon, glyphiconActive)
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Box"
@@ -53,24 +53,27 @@ nodePopupCpt = here.component "nodePopupView" cpt where
     action <- T.useFocused (_.action) (\a b -> b { action = a }) nodePopup
     nodePopup' <- T.useLive T.unequal nodePopup
 
-    pure $ H.div tooltipProps
-      [ H.div { className: "popup-container" }
-        [ H.div { className: "card" }
-          [ panelHeading renameIsOpen open p
-          , H.div { className: "popup-container-body" }
-            [
-              panelBody    action p
-            ,
-              mPanelAction nodePopup' p
-            ]
-          ]
+    pure $
+
+      H.div
+      { className: "node-popup-tooltip"
+      , title: "Node settings"
+      }
+      [
+        H.div
+        { className: "popup-container card" }
+        [
+          panelHeading renameIsOpen open p
+        ,
+          panelBody    action p
+        ,
+          mPanelAction nodePopup' p
         ]
       ]
+
   closePopover p = p.onPopoverClose <<< R.unsafeEventTarget
-  tooltipProps = { id: "node-popup-tooltip", title: "Node settings"
-                 , data: { toggle: "tooltip", placement: "right" } }
   panelHeading renameIsOpen open p@{ dispatch, id, name, nodeType } =
-    H.div { className: "card-header" }
+    H.div { className: "popup-container__header card-header" }
     [ R2.row
       [ H.div { className: "col-4" }
         [ H.span { className: GT.fldr nodeType true} [] -- TODO fix names
@@ -92,8 +95,8 @@ nodePopupCpt = here.component "nodePopupView" cpt where
   panelBody :: T.Box (Maybe NodeAction) -> Record NodePopupProps -> R.Element
   panelBody nodePopupState { nodeType } =
     let (SettingsBox { doc, buttons }) = settingsBox nodeType in
-    H.div {className: "card-body flex-space-between"}
-    $ [ H.p { className: "spacer" } []
+    H.div {className: "popup-container__body card-body flex-space-between"}
+    $ [ B.wad_ [ "m-1" ]
       , H.div { className: "flex-center" }
         [ buttonClick { action: doc, state: nodePopupState, nodeType } ]
       , H.div {className: "flex-center"}
@@ -114,15 +117,15 @@ nodePopupCpt = here.component "nodePopupView" cpt where
                 , session
                 }
   mPanelAction { action: Nothing } _ =
-    H.div { className: "card-footer" }
+    H.div { className: "popup-container__footer card-footer" }
     [ H.div {className:"center fa-hand-pointer-o"}
       [ H.h5 {} [ H.text " Select available actions of this node" ]
       , H.ul { className: "panel-actions" }
-        [ H.div { className: "fa-thumbs-o-up ok-to-use" }
+        [ H.div { className: "fa-thumbs-o-up panel-actions__ok-to-use" }
           [ H.text " Black: usable" ]
-        , H.div { className: "fa-exclamation-triangle almost-useable" }
+        , H.div { className: "fa-exclamation-triangle panel-actions__almost-useable" }
           [ H.text " Orange: almost useable" ]
-        , H.div { className: "fa-rocket development-in-progress" }
+        , H.div { className: "fa-rocket panel-actions__development-in-progress" }
           [ H.text " Red: development in progress" ]]]]
 
 type ActionState =

@@ -26,7 +26,7 @@ import Effect.Class (liftEffect)
 import Effect.Timer (setTimeout)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Variant(..))
+import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), ModalSizing(..), Variant(..))
 import Gargantext.Components.Category (rating)
 import Gargantext.Components.Category.Types (Star(..))
 import Gargantext.Components.DocsTable.DocumentFormCreation as DFC
@@ -227,8 +227,9 @@ docViewCpt = here.component "docView" cpt where
         -- Document Creation Modal
         B.baseModal
         { isVisibleBox: isDocumentModalVisibleBox
-        , title: "Add a new document"
+        , title: Just "Add a new document"
         , hasCollapsibleBackground: false
+        , size: LargeModalSize
         }
         [
           DFC.documentFormCreation

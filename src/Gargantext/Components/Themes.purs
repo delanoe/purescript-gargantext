@@ -2,33 +2,17 @@ module Gargantext.Components.Themes where
 
 import Gargantext.Prelude
 
-import DOM.Simple (document)
 import Data.Array as A
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
-import Data.Maybe (Maybe(..))
-import Data.Nullable (toMaybe)
+import Data.Maybe (Maybe(..), maybe)
 import Effect (Effect)
-import FFI.Simple ((...), (.=))
+import FFI.Simple ((.=))
+import Gargantext.Utils.Reactix (getElementById, (~~))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
-
--- (?) Unknown runtime DOM errors lead to a FFI workaround for setting the
---     property of the element (see `markThemeToDOMTree` method)
---
---     Both use cases throw the error:
---
---       ```
---       TypeError: FFI_Simple_Functions.applyMethod'(...)(...)(...) is not a function
---       ```
---
---       ```purescript
---        _ <- el ... "setAttribute" $ [ "data-theme", name ]
---        _ <- pure $ (el .= "data-theme") name
---       ```
-foreign import setAttribute :: R.Element -> String -> String -> Effect Unit
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Themes"
@@ -79,10 +63,9 @@ switchTheme (Theme { location }) = do
 
 markThemeToDOMTree :: Theme -> Effect Unit
 markThemeToDOMTree (Theme { name }) = do
-  mEl <- pure $ toMaybe (document ... "getElementById" $ [ "app" ])
-  case mEl of
-    Nothing -> pure unit
-    Just el -> setAttribute el "data-theme" name
+  let setTheme el = pure $ (el ~~ "setAttribute") [ "data-theme", name ]
+  getElementById "app"    >>= maybe R.nothing (setTheme)
+  getElementById "portal" >>= maybe R.nothing (setTheme)
 
 
 type ThemeSwitcherProps = (

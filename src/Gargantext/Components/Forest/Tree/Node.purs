@@ -18,7 +18,7 @@ import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Elevation(..), TooltipEffect(..), Variant(..))
+import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Elevation(..), ModalSizing(..), TooltipEffect(..), Variant(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (DroppedFile(..), fileTypeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..))
@@ -47,6 +47,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
 import Toestand as T
+import Unsafe.Coerce (unsafeCoerce)
 
 -- (?) never been able to properly declare PureScript Regex...
 foreign import nodeUserRegexp :: Regex.Regex
@@ -101,12 +102,13 @@ nodeSpanCpt = here.component "nodeSpan" cpt
       droppedFile'  <- T.useLive T.unequal droppedFile
       isDragOver    <- T.useBox false
       isDragOver'   <- T.useLive T.unequal isDragOver
-      popoverRef    <- R.useRef null
 
-      currentTasks <- GAT.focus id tasks
+      currentTasks  <- GAT.focus id tasks
       currentTasks' <- T.useLive T.unequal currentTasks
 
       folderOpen' <- R2.useLive' folderOpen
+
+      isSettingsModalVisible <- T.useBox false
 
       -- tasks' <- T.read tasks
 
@@ -205,10 +207,10 @@ nodeSpanCpt = here.component "nodeSpan" cpt
         onNodeLinkClick :: Unit -> Effect Unit
         onNodeLinkClick _ = when (not isSelected) (T.write_ true folderOpen)
 
-    -- Hooks
+        toggleSettingsModal :: Unit -> Effect Unit
+        toggleSettingsModal _ = T.modify_ (not) isSettingsModalVisible
 
-      useFirstEffect' $
-        R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
+    -- Hooks
 
       mVersion <- useVersion $ nodeType == GT.NodeUser ?
         Just { session } $
@@ -313,42 +315,18 @@ nodeSpanCpt = here.component "nodeSpan" cpt
           , session
           } []
         ,
-          -- @XXX: React Awesome Popover not suited for the feature UX
-          --       We SHOULD use a more common `Modal` type of thing
-          --       As of now, we have issues on z-index management and erratic
-          --       popup close action
           R2.when (showBox) $
 
-            Popover.popover
-            { arrow: false
-            , open: false
-            , onClose: \_ -> pure unit
-            , onOpen:  \_ -> pure unit
-            , ref: popoverRef
+            B.iconButton
+            { name: "cog"
+            , className: "mainleaf__settings-icon"
+            , callback: toggleSettingsModal
+            , title:
+                  "Each node of the Tree can perform some actions.\n"
+                <> "Click here to execute one of them."
+            , variant: Secondary
+            , elevation: Level1
             }
-            [
-              B.iconButton
-              { name: "cog"
-              , className: "mainleaf__settings-icon"
-              -- (cf. Popover callbacks)
-              , callback: const R.nothing
-              , title:
-                    "Each node of the Tree can perform some actions.\n"
-                  <> "Click here to execute one of them."
-              , variant: Secondary
-              , elevation: Level1
-              }
-            ,
-              nodePopupView
-              { boxes
-              , dispatch
-              , id
-              , name
-              , nodeType
-              , onPopoverClose: const $ onPopoverClose popoverRef
-              , session
-              }
-            ]
         ,
           R.fragment $ flip map currentTasks' \task ->
 
@@ -363,6 +341,27 @@ nodeSpanCpt = here.component "nodeSpan" cpt
               taskProgress
               {}
             ]
+          ,
+
+        -- // Modals //
+
+          B.baseModal
+          { isVisibleBox: isSettingsModalVisible
+          , noBody: true
+          , noHeader: true
+          , modalClassName: "forest-tree-node-modal"
+          }
+          [
+            nodePopupView
+            { boxes
+            , dispatch
+            , id
+            , name
+            , nodeType
+            , onPopoverClose: \_ -> toggleSettingsModal unit
+            , session
+            }
+          ]
         ]
 
 

@@ -5899,29 +5899,22 @@ h3 {
   font-weight: 700;
 }
 
-.b-modal--visible {
-  display: block;
-}
 .b-modal__content {
   background-color: #fff;
-  max-height: calc(100% - 3.5rem );
-  overflow: auto;
+  margin-left: 1.75rem;
+  margin-right: 1.75rem;
 }
 .b-modal__header {
   background-color: rgba(0, 0, 0, 0.03);
 }
-.b-modal__header__content {
+.b-modal__header__title {
   color: #222222;
   font-size: 21px;
 }
 .b-modal__overlay {
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
   position: absolute;
-}
-.b-modal__overlay--collapsible {
-  cursor: pointer;
 }
 
 .b-spinner {
@@ -8362,65 +8355,37 @@ a:focus, a:hover {
   padding-right: 20px;
 }
 
-#node-popup-tooltip {
-  position: fixed;
-  background-color: white;
-  border-radius: 6px;
-  top: 50%;
-  left: 50%;
-  transform: translateX(-50%) translateY(-50%);
+.forest-tree-node-modal {
+  width: fit-content;
+  min-width: 544px;
+  max-width: 100vw;
 }
-#node-popup-tooltip:hover {
-  border: none;
-  text-decoration: none;
-}
-#node-popup-tooltip .tree .node {
-  margin-top: 5px;
-}
-#node-popup-tooltip .tree .children .node {
-  padding-left: 15px;
-}
-#node-popup-tooltip .panel-actions .almost-useable {
+
+.node-popup-tooltip .panel-actions__almost-useable {
   color: orange;
 }
-#node-popup-tooltip .panel-actions .development-in-progress {
+.node-popup-tooltip .panel-actions__development-in-progress {
   color: red;
 }
-#node-popup-tooltip .panel-actions .ok-to-use {
+.node-popup-tooltip .panel-actions__ok-to-use {
   color: black;
 }
-#node-popup-tooltip .popup-container {
+.node-popup-tooltip .popup-container {
   display: flex;
-  flex-direction: colum;
+  flex-direction: column;
 }
-#node-popup-tooltip .popup-container > .card {
-  width: auto !important;
-  min-width: 544px;
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  margin-bottom: initial;
-}
-#node-popup-tooltip .popup-container > .card .fa-pencil {
+.node-popup-tooltip .popup-container__header .fa-pencil {
   color: black;
 }
-#node-popup-tooltip .popup-container > .card .card-body {
+.node-popup-tooltip .popup-container__body {
   display: flex;
   justify-content: center;
-  background-color: white;
-  border: none;
+  background-color: #fff;
 }
-#node-popup-tooltip .popup-container > .card .card-body .spacer {
-  margin: 8px;
-}
-#node-popup-tooltip .popup-container .frame-search.card {
-  border: 1px solid rgba(0, 0, 0, 0.2);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  height: 600px;
+
+.frame-search.card {
   width: 1000px;
-}
-#node-popup-tooltip .popup-container-body {
-  max-height: 70vh;
-  overflow-y: auto;
+  height: 600px;
 }
 
 .forest-layout {

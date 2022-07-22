@@ -2,19 +2,20 @@ module Gargantext.Components.Router (router) where
 
 import Gargantext.Prelude
 
+import DOM.Simple as DOM
 import Data.Array (filter, length)
 import Data.Array as A
 import Data.Foldable (intercalate)
 import Data.Map as M
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.UUID (UUID)
 import Data.UUID as UUID
 import Effect (Effect)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.ErrorsView (errorsView)
 import Gargantext.Components.Forest (forestLayout)
-import Gargantext.Components.Login (login)
 import Gargantext.Components.ForgotPassword (forgotPasswordLayout)
+import Gargantext.Components.Login (login)
 import Gargantext.Components.Nodes.Annuaire (annuaireLayout)
 import Gargantext.Components.Nodes.Annuaire.User (userLayout)
 import Gargantext.Components.Nodes.Annuaire.User.Contact (contactLayout)
@@ -66,26 +67,31 @@ router :: R2.Leaf Props
 router = R2.leafComponent routerCpt
 routerCpt :: R.Component Props
 routerCpt = here.component "router" cpt where
-  cpt { boxes: boxes@{ handed, showLogin } } _ = do
+  cpt { boxes: boxes@{ handed } } _ = do
     -- States
     handed'     <- R2.useLive' handed
-    showLogin'  <- R2.useLive' showLogin
 
-    -- Effects
+    -- Computed
     let
+      handedClassName :: Handed -> String
       handedClassName = case _ of
         LeftHanded  -> "left-handed"
         RightHanded -> "right-handed"
 
-    R.useEffect1' handed' $
-      getElementById "app" >>= case _ of
-        Nothing  -> pure unit
-        Just app -> do
-          R2.removeClass app
-            [ handedClassName LeftHanded
-            , handedClassName RightHanded
-            ]
-          R2.addClass app [ handedClassName handed' ]
+      toggleHandedClass :: Handed -> DOM.Element -> Effect Unit
+      toggleHandedClass new el = do
+        R2.removeClass el
+          [ handedClassName LeftHanded
+          , handedClassName RightHanded
+          ]
+        R2.addClass el
+          [ handedClassName new
+          ]
+
+    -- Effects
+    R.useLayoutEffect1' handed' do
+      getElementById "app"    >>= maybe R.nothing (toggleHandedClass handed')
+      getElementById "portal" >>= maybe R.nothing (toggleHandedClass handed')
 
     -- Render
     pure $
@@ -93,9 +99,7 @@ routerCpt = here.component "router" cpt where
       H.div
       { className: "router" }
       [
-        -- loginModal { boxes }
-         R2.when showLogin' $
-            login' boxes
+        login' boxes
        , TopBar.topBar { boxes }
        , errorsView { errors: boxes.errors } []
        , H.div { className: "router__inner" }
@@ -706,5 +710,5 @@ forgotPasswordCpt = here.component "forgotPassword" cpt where
   cpt { params } _ = do
     let server = fromMaybe "" $ M.lookup "server" params
     let uuid = fromMaybe "" $ M.lookup "uuid" params
-    
+
     pure $ forgotPasswordLayout { server, uuid } []

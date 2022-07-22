@@ -28,19 +28,24 @@ nodePopupViewCpt :: R.Component NodePopupProps
 nodePopupViewCpt = here.component "nodePopupView" cpt where
   cpt props  _ = do
 
-    pure $ H.div tooltipProps
-      [ H.div { className: "popup-container" }
-        [ H.div { className: "card" }
-          [ panelHeading  props
-          ]]]
+    pure $
+
+      H.div
+      { className: "node-popup-tooltip"
+      , title: "Node settings"
+      }
+      [
+        H.div
+        { className: "popup-container card" }
+        [
+          panelHeading  props
+        ]
+      ]
 
   closePopover props = props.onPopoverClose <<< R.unsafeEventTarget
 
-  tooltipProps = { id: "node-popup-tooltip", title: "Node settings"
-                 , data: { toggle: "tooltip", placement: "right" } }
-
   panelHeading props@{ nodeType } =
-    H.div { className: "card-header" }
+    H.div { className: "popup-container__header card-header" }
     [ R2.row
       [ H.div { className: "col-4" }
         [ H.span { className: GT.fldr nodeType true} [] -- TODO fix names
@@ -49,4 +54,4 @@ nodePopupViewCpt = here.component "nodePopupView" cpt where
         [ H.span { className: "text-primary center" } [ H.text props.name ] ]
       , H.div { className: "col-1" }
         [ H.a { type: "button", on: { click: closePopover props }, title: "Close"
-              , className: glyphicon "window-close" } [] ]]] 
+              , className: glyphicon "window-close" } [] ]]]
