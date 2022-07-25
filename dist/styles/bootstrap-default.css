@@ -8907,7 +8907,7 @@ select.form-control {
 .table tr td {
   height: 48px;
 }
-.table .page-paint-raw--selected {
+.table .page-paint-raw--selected td:first-child {
   position: relative;
 }
 .table .page-paint-raw--selected td:first-child::before {
