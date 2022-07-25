@@ -9,15 +9,17 @@
   .page-paint-raw
 
     &--selected
-      position: relative
 
-      td:first-child::before
-        @include fit-positions
+      td:first-child
+        position: relative
 
-        content: ""
-        width: 3px
-        background-color: $info
-        position: absolute
+        &::before
+          @include fit-positions
+
+          content: ""
+          width: 3px
+          background-color: $info
+          position: absolute
 
   ///////////////////////
 
