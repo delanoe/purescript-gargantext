@@ -86,7 +86,7 @@ updateGraphCpt = here.component "updateGraph" cpt where
 
     let
       callback :: Action -> Aff Unit
-      callback = dispatch >=> \_ -> dispatch ClosePopover
+      callback = dispatch >=> \_ -> dispatch CloseBox
 
     pure $ panel [ H.text "Show subjects with Order1 or concepts with Order2 ?"
                  , formChoiceSafe { items: [Order1, Order2]
@@ -153,7 +153,7 @@ updatePhyloCpt = here.component "updatePhylo" cpt where
           opts <- pure $ options r'
           launchAff_ do
             dispatch opts
-            dispatch ClosePopover
+            dispatch CloseBox
 
         where
           options :: Phylo.UpdateData -> Action

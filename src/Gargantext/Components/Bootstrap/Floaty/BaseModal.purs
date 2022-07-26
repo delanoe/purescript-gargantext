@@ -1,4 +1,7 @@
-module Gargantext.Components.Bootstrap.BaseModal (baseModal) where
+module Gargantext.Components.Bootstrap.BaseModal
+  (baseModal
+  , showModal, hideModal
+  ) where
 
 import Gargantext.Prelude
 
@@ -109,12 +112,14 @@ component = R.hooksComponent componentName cpt where
 
       id = componentName <> "-" <> uuid
 
+      selector = "#" <> id
+
     -- | Hooks
     -- |
     useUpdateEffect1' isVisible
       if isVisible
-      then showModal window $ "#" <> id
-      else hideModal window $ "#" <> id
+      then showModal window selector
+      else hideModal window selector
 
     -- | Behaviors
     -- |

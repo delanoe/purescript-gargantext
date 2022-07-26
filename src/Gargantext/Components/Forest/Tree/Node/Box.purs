@@ -39,8 +39,9 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Box"
 
 type CommonProps =
-  ( dispatch :: Action -> Aff Unit
-  , session :: Session )
+  ( dispatch  :: Action -> Aff Unit
+  , session   :: Session
+  )
 
 nodePopupView :: R2.Leaf NodePopupProps
 nodePopupView = R2.leafComponent nodePopupCpt
@@ -71,7 +72,6 @@ nodePopupCpt = here.component "nodePopupView" cpt where
         ]
       ]
 
-  closePopover p = p.onPopoverClose <<< R.unsafeEventTarget
   panelHeading renameIsOpen open p@{ dispatch, id, name, nodeType } =
     H.div { className: "popup-container__header card-header" }
     [ R2.row
@@ -86,7 +86,7 @@ nodePopupCpt = here.component "nodePopupView" cpt where
         ]
       , H.div { className: "col-1" } [ editIcon renameIsOpen open ]
       , H.div { className: "col-1" }
-        [ H.a { type: "button", on: { click: closePopover p }, title: "Close"
+        [ H.a { type: "button", on: { click: \_ -> p.closeCallback unit }, title: "Close"
               , className: glyphicon "window-close" } [] ]]]
   editIcon _ true = H.div {} []
   editIcon isOpen false =

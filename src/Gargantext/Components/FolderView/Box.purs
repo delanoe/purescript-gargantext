@@ -42,7 +42,7 @@ nodePopupViewCpt = here.component "nodePopupView" cpt where
         ]
       ]
 
-  closePopover props = props.onPopoverClose <<< R.unsafeEventTarget
+  closeBox props = props.onPopoverClose <<< R.unsafeEventTarget
 
   panelHeading props@{ nodeType } =
     H.div { className: "popup-container__header card-header" }
@@ -53,5 +53,5 @@ nodePopupViewCpt = here.component "nodePopupView" cpt where
       , H.div { className: "col-6" }
         [ H.span { className: "text-primary center" } [ H.text props.name ] ]
       , H.div { className: "col-1" }
-        [ H.a { type: "button", on: { click: closePopover props }, title: "Close"
+        [ H.a { type: "button", on: { click: closeBox props }, title: "Close"
               , className: glyphicon "window-close" } [] ]]]
