@@ -173,16 +173,26 @@ folderCpt = here.component "folderCpt" cpt where
       H.div
       {}
       [
-        B.iconButton
-        { name: "cog"
-        , callback: \_ -> T.write_ true isBoxVisible
-        , title:
-              "Each node of the Tree can perform some actions.\n"
-            <> "Click here to execute one of them."
-        , variant: Secondary
-        , elevation: Level0
-        , overlay: false
+        H.div
+        -- KISS CSS placement (BEM would be better)
+        { style:
+            { float: "right"
+            , position: "relative"
+            , right: "-14px"
+            }
         }
+        [
+          B.iconButton
+          { name: "cog"
+          , callback: \_ -> T.write_ true isBoxVisible
+          , title:
+                "Each node of the Tree can perform some actions.\n"
+              <> "Click here to execute one of them."
+          , variant: Secondary
+          , elevation: Level0
+          , overlay: false
+          }
+        ]
       ,
         H.button
         { className: "btn btn-primary fv btn"
