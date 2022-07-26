@@ -25,6 +25,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
 import Gargantext.Components.Forest.Tree.Node.Action.Update (update)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (actionUpload)
 import Gargantext.Components.Forest.Tree.Node.Action.WriteNodesDocuments (actionWriteNodesDocuments)
+import Gargantext.Components.Forest.Tree.Node.Action.ManageTeam (actionManageTeam)
 import Gargantext.Components.Forest.Tree.Node.Box.Types (NodePopupProps, NodePopupS)
 import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), SettingsBox(..), glyphiconNodeAction, settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Status (Status(..), hasStatus)
@@ -186,6 +187,7 @@ panelActionCpt = here.component "panelAction" cpt
     cpt { action: Download, id, nodeType, session}         _ = pure $ actionDownload { id, nodeType, session } []
     cpt { action: Upload, dispatch, id, nodeType, session} _ = pure $ actionUpload { dispatch, id, nodeType, session } []
     cpt { action: Delete, nodeType, dispatch}              _ = pure $ actionDelete { dispatch, nodeType } []
+    cpt { action: ManageTeam, nodeType, id, session}       _ = pure $ actionManageTeam { id, nodeType, session } []
     cpt { action: Add xs, dispatch, id, name, nodeType} _ =
       pure $ addNodeView {dispatch, id, name, nodeType, nodeTypes: xs} []
     cpt { action: Refresh , dispatch, nodeType } _ = pure $ update { dispatch, nodeType } []
