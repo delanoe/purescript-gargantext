@@ -26,7 +26,6 @@ import Gargantext.Components.Nodes.File (fileLayout)
 import Gargantext.Components.Nodes.Frame as Frame
 import Gargantext.Components.Nodes.Home (homeLayout)
 import Gargantext.Components.Nodes.Lists as Lists
-import Gargantext.Components.Nodes.Team (teamLayout)
 import Gargantext.Components.Nodes.Texts as Texts
 import Gargantext.Components.Tile (tileBlock)
 import Gargantext.Components.TopBar as TopBar
@@ -625,7 +624,7 @@ teamCpt = here.component "team" cpt where
   cpt props@{ boxes, nodeId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
-                                   teamLayout { boxes
+                                   corpusLayout { boxes
                                                 , nodeId
                                                 , session } } sessionProps) []
 
