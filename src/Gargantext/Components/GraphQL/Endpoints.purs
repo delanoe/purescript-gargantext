@@ -94,6 +94,6 @@ deleteTeamMembership session sharedFolderId teamNodeId = do
                                        , team_node_id: teamNodeId } }
   pure $ case A.head delete_team_membership of
     Nothing -> Left (CustomError $ "Failed  to delete team membership. team node id=" <> show teamNodeId <> " shared folder id=" <> show sharedFolderId)
-    Just i -> Right i
+    Just _ -> Right sharedFolderId
   where
     getToken (Session { token }) = token
