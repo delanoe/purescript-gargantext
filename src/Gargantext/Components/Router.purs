@@ -575,10 +575,12 @@ listsCpt = here.component "lists" cpt where
 
 login' :: Boxes -> R.Element
 login' { backend, sessions, showLogin: visible } =
-  login { backend
-        , backends: A.fromFoldable defaultBackends
-        , sessions
-        , visible }
+  login
+  { backend
+  , backends: A.fromFoldable defaultBackends
+  , sessions
+  , visible
+  }
 
 --------------------------------------------------------------
 
