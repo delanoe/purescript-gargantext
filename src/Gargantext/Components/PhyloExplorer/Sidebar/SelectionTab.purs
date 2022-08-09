@@ -13,9 +13,11 @@ import Effect (Effect)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
 import Gargantext.Components.PhyloExplorer.Sidebar.DocList (docListWrapper)
+import Gargantext.Components.PhyloExplorer.Sidebar.UpdateTerms (updateTerms)
 import Gargantext.Components.PhyloExplorer.Store as PhyloStore
 import Gargantext.Components.PhyloExplorer.Types (ExtractedCount(..), ExtractedTerm(..), defaultCacheParams)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
+import Gargantext.Types (CTabNgramType(..))
 import Gargantext.Utils (nbsp, setter, (?))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -47,6 +49,7 @@ component = here.component "main" cpt where
     selectedBranch      <- R2.useLive' store.selectedBranch
     selectedSource      <- R2.useLive' store.selectedSource
     expandNeighborhood  <- R2.useLive' store.expandNeighborhood
+    expandSelection     <- R2.useLive' store.expandSelection
 
     showMore' /\ showMore <- R2.useBox' false
 
@@ -79,8 +82,8 @@ component = here.component "main" cpt where
     -- | Behaviors
     -- |
     let
-      onExpandClick _ = T.modify_ (not) store.expandNeighborhood
-
+      onExpandNeighborhoodClick _ = T.modify_ (not) store.expandNeighborhood
+      onExpandSelectionClick _ = T.modify_ (not) store.expandSelection
 
     -- | Render
     -- |
@@ -195,21 +198,44 @@ component = here.component "main" cpt where
                     [
                       H.text "term"
                     ]
+                  ,
+                    -- Expand Selection actions
+                    B.iconButton
+                    { name: expandSelection ?
+                        "caret-up" $
+                        "caret-down"
+                    , className: "phylo-selection-tab__highlight__expand"
+                    , callback: onExpandSelectionClick
+                    }
                   ]
                 ,
-                  H.li
-                  { className: "list-group-item" }
-                  [
-                    H.a
-                    { href: "https://en.wikipedia.org/w/index.php?search=\""
-                        <> s
-                        <> "\""
-                    , target: "_blank"
-                    }
+                  -- Selection actions
+                  R2.when expandSelection $
+
+                    H.li
+                    { className: "list-group-item" }
                     [
-                      H.text "Click here for more info"
+                      -- Wikipedia informations
+                      H.a
+                      { href: "https://en.wikipedia.org/w/index.php?search=\""
+                          <> s
+                          <> "\""
+                      , target: "_blank"
+                      }
+                      [
+                        H.text "Click here for more info"
+                      ]
+                    ,
+                      -- NGrams edition
+                      H.div
+                      { className: "phylo-selection-tab__highlight__actions" }
+                      [
+                        updateTerms
+                        { selectedTerm: s
+                        , ngramType: CTabTerms
+                        }
+                      ]
                     ]
-                  ]
                 ]
               ]
             ]
@@ -270,7 +296,7 @@ component = here.component "main" cpt where
                         "caret-up" $
                         "caret-down"
                     , className: "phylo-selection-tab__counter__expand"
-                    , callback: onExpandClick
+                    , callback: onExpandNeighborhoodClick
                     }
                   ]
             ,

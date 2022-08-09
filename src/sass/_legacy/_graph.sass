@@ -102,23 +102,16 @@
   @include term-window
 
   &__header
-    padding: 0.5rem 1.5rem
-    z-index: z-index('tile', 'navbar')
-
+    // avoid overlap with document side controls
     @include right-handed
-      float: right
+      margin-left: space-x(4)
     @include left-handed
-      float: left
+      margin-right: space-x(4)
 
-  &__body
-    // extra position fitting the document title separator with the graph
-    // sidebar tabs nav border
-    $offset-top: 13px
-
-    padding-top: $offset-top
-    padding-left: $card-spacer-x
-    padding-right: $card-spacer-x
-
+  // remove document header top spacing due to the already presence of
+  // the inner column top teaser
+  .document-layout__header
+    padding-top: initial
 
 /////////////////////////////////////////////
 

@@ -1,156 +1,215 @@
-module Gargantext.Components.Bootstrap.BaseModal (baseModal) where
+module Gargantext.Components.Bootstrap.BaseModal
+  (baseModal
+  , showModal, hideModal
+  ) where
 
 import Gargantext.Prelude
 
 import DOM.Simple (Window, window)
 import Data.Foldable (intercalate)
+import Data.Maybe (Maybe(..))
+import Data.UUID as UUID
 import Effect (Effect)
 import Effect.Uncurried (EffectFn2, runEffectFn2)
-import Gargantext.Utils (nbsp, (?))
+import Gargantext.Components.Bootstrap.Types (ModalSizing(..))
+import Gargantext.Hooks.UpdateEffect (useUpdateEffect1')
+import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
-foreign import _addClassName :: EffectFn2 Window String Unit
-foreign import _removeClassName :: EffectFn2 Window String Unit
+foreign import _show :: EffectFn2
+  Window
+  String
+  Unit
+
+showModal ::
+     Window
+  -> String
+  -> Effect Unit
+showModal = runEffectFn2 _show
+
+foreign import _hide :: EffectFn2
+  Window
+  String
+  Unit
+
+hideModal ::
+     Window
+  -> String
+  -> Effect Unit
+hideModal = runEffectFn2 _hide
+
 
 type Props =
-  ( isVisibleBox :: T.Box Boolean
+  ( isVisibleBox              :: T.Box Boolean
   | Options
   )
 
 type Options =
-  ( id :: String
-  , title :: String
-  , hasBackground :: Boolean
-  , hasCollapsibleBackground :: Boolean
+  ( modalClassName            :: String
+  , title                     :: Maybe String
+  , hasCollapsibleBackground  :: Boolean
+  , hasInnerScroll            :: Boolean
+  , noHeader                  :: Boolean
+  , noBody                    :: Boolean -- ie. Bootstrap Body
+  , size                      :: ModalSizing
   )
 
 options :: Record Options
 options =
-  { id: ""
-  , title: ""
-  , hasBackground: true
-  , hasCollapsibleBackground: true
+  { modalClassName            : ""
+  , title                     : Nothing
+  , hasCollapsibleBackground  : true
+  , hasInnerScroll            : false
+  , noHeader                  : false
+  , noBody                    : false
+  , size                      : MediumModalSize
   }
 
 componentName :: String
 componentName = "b-modal"
 
-vendorName :: String
-vendorName = "modal"
-
+-- | Structural Component for the Bootstrap modal
+-- |
+-- | @XXX Bootstrap not removing some modal elements on "hide" method
+-- |      This implies that:
+-- |        - a FFI fix has been added to remove left elements
+-- |        - an overlay has been added to synchronise the close button
+-- |        - the keyboard shortcut has been removed
+-- | @https://stackoverflow.com/questions/50168312/bootstrap-4-close-modal-backdrop-doesnt-disappear
+-- |
+-- | https://getbootstrap.com/docs/4.6/components/modal/
 baseModal :: forall r. R2.OptComponent Options Props r
 baseModal = R2.optComponent component options
 
 component :: R.Component Props
 component = R.hooksComponent componentName cpt where
-  cpt { isVisibleBox
-      , id
-      , title
-      , hasBackground
-      , hasCollapsibleBackground
-      } children = do
-    -- State
+  cpt props@{ isVisibleBox
+            , title
+            , hasCollapsibleBackground
+            , hasInnerScroll
+            , noHeader
+            , noBody
+            , size
+            } children
+      = R.unsafeHooksEffect (UUID.genUUID >>= pure <<< UUID.toString)
+    >>= \uuid -> do
+    -- | States
+    -- |
     isVisible <- R2.useLive' isVisibleBox
 
-    -- Hooks
-    R.useEffect1' isVisible $
-      (isVisible ? addClassName $ removeClassName) window "modal-open"
-
-    -- Computed
+    -- | Computed
+    -- |
     let
       className = intercalate " "
         -- Component
         [ componentName
-        , isVisible ?
-            componentName <> "--visible" $
-            componentName <> "--hidden"
-        -- Vendor
-        , vendorName
+        -- Bootstrap
+        , "modal"
         ]
 
-      hasHeader = not $ eq title ""
+      id = componentName <> "-" <> uuid
 
-    -- Render
+      selector = "#" <> id
+
+    -- | Hooks
+    -- |
+    useUpdateEffect1' isVisible
+      if isVisible
+      then showModal window selector
+      else hideModal window selector
+
+    -- | Behaviors
+    -- |
+    let
+      onCloseButtonClick _ = T.modify_ (not) isVisibleBox
+
+    -- [ Render
+    -- |
     R.createPortal
       [
         H.div
-        { id
+        { id: id
         , className
-        , role: "dialog"
-        , data: { show: true }
+        , tabIndex: "-1"
         , key: id
+        , data:
+            { keyboard: "false"
+            , backdrop: hasCollapsibleBackground ?
+              "true" $
+              "static"
+            }
         }
         [
-          R2.when (hasBackground) $
+          -- Overlay fixing collapsable click event
+          R2.when (hasCollapsibleBackground) $
+
             H.div
-            { className: intercalate " "
-                [ componentName <> "__overlay"
-                , hasCollapsibleBackground ?
-                    componentName <> "__overlay--collapsible" $
-                    ""
-                ]
-            , on: { click: hasCollapsibleBackground ?
-                      toggle isVisibleBox $
-                      const $ pure unit
-                  }
+            { className: componentName <> "__overlay"
+            , on: { click: onCloseButtonClick }
             }
-            [ H.text $ nbsp 1 ]
+            []
         ,
           H.div
-          { className: "modal-dialog modal-lg"
-          , role: "document"
+          { className: intercalate " "
+              -- Bootstrap classNames
+              [ "modal-dialog"
+              , show size
+              , "modal-dialog-centered"
+              , hasInnerScroll ? "modal-dialog-scrollable" $ ""
+              -- provided custom className
+              , props.modalClassName
+              ]
           }
           [
             H.div
             { className: intercalate " "
                 [ componentName <> "__content"
-                , vendorName <> "-content"
+                , "modal-content"
                 ]
             }
             [
-              R2.when (hasHeader) $
+              -- Header
+              R2.when (not noHeader) $
+
                 H.div
                 { className: intercalate " "
                     [ componentName <> "__header"
-                    , vendorName <> "-header"
+                    , "modal-header"
                     ]
                 }
                 [
-                  H.div
-                  { className: componentName <> "__header__content" }
-                  [ H.text title ]
+                  R2.fromMaybe (title) \title' ->
+
+                    H.div
+                    { className: componentName <> "__header__title" }
+                    [ H.text title' ]
                 ,
                   H.button
                   { type: "button"
-                  , className: "close"
-                  , data: { dismiss: "modal" }
                   }
                   [
                     H.a
-                    { on: { click: toggle isVisibleBox }
-                    , className: "btn fa fa-times" }
+                    {
+                      on: { click: onCloseButtonClick }
+                    , className: "btn fa fa-times"
+                    }
                     []
                   ]
                 ]
             ,
+              -- Body
               H.div
-              { className: "modal-body" }
+              { className: intercalate " "
+                  [ componentName <> "__body"
+                  , noBody ? "" $ "modal-body"
+                  ]
+              }
               children
             ]
           ]
         ]
       ]
       <$> R2.getPortalHost
-
-
-toggle :: forall event. T.Box Boolean -> event -> Effect Unit
-toggle box _ = T.modify_ not box
-
-addClassName :: Window -> String -> Effect Unit
-addClassName = runEffectFn2 _addClassName
-
-removeClassName :: Window -> String -> Effect Unit
-removeClassName = runEffectFn2 _removeClassName

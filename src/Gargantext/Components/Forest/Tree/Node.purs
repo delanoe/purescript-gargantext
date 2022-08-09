@@ -8,7 +8,6 @@ import Gargantext.Prelude
 import Data.Array.NonEmpty as NArray
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..), maybe)
-import Data.Nullable (null)
 import Data.String.Regex as Regex
 import Data.Symbol (SProxy(..))
 import Data.Tuple.Nested ((/\))
@@ -31,7 +30,6 @@ import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Config.REST (logRESTError)
 import Gargantext.Context.Progress (asyncContext, asyncProgress)
 import Gargantext.Ends (Frontends, url)
-import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Hooks.Version (Version, useVersion)
 import Gargantext.Routes as Routes
@@ -39,7 +37,6 @@ import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (ID, Name)
 import Gargantext.Types as GT
 import Gargantext.Utils (nbsp, textEllipsisBreak, (?))
-import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import React.SyntheticEvent as SE
@@ -67,7 +64,7 @@ type NodeSpanProps =
   , reload        :: T2.ReloadS
   , root          :: ID
   , session       :: Session
-  , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
+  , isBoxVisible  :: T.Box Boolean
   )
 
 type IsLeaf = Boolean
@@ -91,7 +88,7 @@ nodeSpanCpt = here.component "nodeSpan" cpt
               , nodeType
               , reload
               , session
-              , setPopoverRef
+              , isBoxVisible
               } _ = do
     -- States
 
@@ -101,9 +98,8 @@ nodeSpanCpt = here.component "nodeSpan" cpt
       droppedFile'  <- T.useLive T.unequal droppedFile
       isDragOver    <- T.useBox false
       isDragOver'   <- T.useLive T.unequal isDragOver
-      popoverRef    <- R.useRef null
 
-      currentTasks <- GAT.focus id tasks
+      currentTasks  <- GAT.focus id tasks
       currentTasks' <- T.useLive T.unequal currentTasks
 
       folderOpen' <- R2.useLive' folderOpen
@@ -196,19 +192,11 @@ nodeSpanCpt = here.component "nodeSpan" cpt
           --   Nothing -> pure unit
           -- T2.reload reloadRoot
 
-        onPopoverClose ::
-             Popover.PopoverRef
-          -> Effect Unit
-        onPopoverClose ref = Popover.setOpen ref false
-
         -- NOTE Don't toggle tree if it is not selected
         onNodeLinkClick :: Unit -> Effect Unit
         onNodeLinkClick _ = when (not isSelected) (T.write_ true folderOpen)
 
     -- Hooks
-
-      useFirstEffect' $
-        R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
 
       mVersion <- useVersion $ nodeType == GT.NodeUser ?
         Just { session } $
@@ -313,42 +301,18 @@ nodeSpanCpt = here.component "nodeSpan" cpt
           , session
           } []
         ,
-          -- @XXX: React Awesome Popover not suited for the feature UX
-          --       We SHOULD use a more common `Modal` type of thing
-          --       As of now, we have issues on z-index management and erratic
-          --       popup close action
           R2.when (showBox) $
 
-            Popover.popover
-            { arrow: false
-            , open: false
-            , onClose: \_ -> pure unit
-            , onOpen:  \_ -> pure unit
-            , ref: popoverRef
+            B.iconButton
+            { name: "cog"
+            , className: "mainleaf__settings-icon"
+            , callback: \_ -> T.write_ true isBoxVisible
+            , title:
+                  "Each node of the Tree can perform some actions.\n"
+                <> "Click here to execute one of them."
+            , variant: Secondary
+            , elevation: Level1
             }
-            [
-              B.iconButton
-              { name: "cog"
-              , className: "mainleaf__settings-icon"
-              -- (cf. Popover callbacks)
-              , callback: const R.nothing
-              , title:
-                    "Each node of the Tree can perform some actions.\n"
-                  <> "Click here to execute one of them."
-              , variant: Secondary
-              , elevation: Level1
-              }
-            ,
-              nodePopupView
-              { boxes
-              , dispatch
-              , id
-              , name
-              , nodeType
-              , onPopoverClose: const $ onPopoverClose popoverRef
-              , session
-              }
-            ]
         ,
           R.fragment $ flip map currentTasks' \task ->
 
@@ -363,6 +327,27 @@ nodeSpanCpt = here.component "nodeSpan" cpt
               taskProgress
               {}
             ]
+          ,
+
+        -- // Modals //
+
+          B.baseModal
+          { isVisibleBox: isBoxVisible
+          , noBody: true
+          , noHeader: true
+          , modalClassName: "forest-tree-node-modal"
+          }
+          [
+            nodePopupView
+            { boxes
+            , dispatch
+            , id
+            , name
+            , nodeType
+            , closeCallback: \_ -> T.write_ false isBoxVisible
+            , session
+            }
+          ]
         ]
 
 

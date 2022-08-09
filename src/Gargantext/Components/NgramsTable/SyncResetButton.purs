@@ -1,10 +1,13 @@
 module Gargantext.Components.NgramsTable.SyncResetButton where
 
+import Gargantext.Prelude
+
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import FFI.Simple.Functions (delay)
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), ComponentStatus(..), Variant(..))
 import Gargantext.Core.NgramsTable.Types (CoreAction(..), CoreDispatch, NgramsTablePatch)
-import Gargantext.Prelude
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -32,9 +35,14 @@ syncResetButtonsCpt = here.component "syncResetButtons" cpt
 
       let
         hasChanges = ngramsLocalPatch /= mempty
-        hasChangesClass = if hasChanges then "" else " disabled"
 
-        synchronizingClass = if synchronizing' then " disabled" else ""
+        statusReset _     true = Disabled
+        statusReset false _ = Disabled
+        statusReset _     _ = Enabled
+
+        statusSync _     true = Deferred
+        statusSync false _    = Disabled
+        statusSync _     _    = Enabled
 
         resetClick _ = do
           performAction ResetPatches
@@ -47,16 +55,24 @@ syncResetButtonsCpt = here.component "syncResetButtons" cpt
           afterSync x
           liftEffect $ T.write_ false synchronizing
 
-      pure $ H.div { className: "btn-toolbar" }
-        [ H.div { className: "btn-group mr-2" }
-          [ H.button { className: "btn btn-danger " <> hasChangesClass <> synchronizingClass
-                     , on: { click: resetClick }
-                     } [ H.text "Reset" ]
-          ]
-        , H.div { className: "btn-group mr-2" }
-          [ H.button { className: "btn btn-primary " <> hasChangesClass <> synchronizingClass
-                     , on: { click: synchronizeClick }
-                     } [ H.text "Sync" ]
-          ]
-        ]
+      pure $
 
+        B.wad
+        [ "d-flex" ]
+        [
+          B.button
+          { variant: ButtonVariant Light
+          , callback: resetClick
+          , status: statusReset hasChanges synchronizing'
+          }
+          [ H.text "Reset" ]
+        ,
+          B.wad_ [ "mr-1", "d-inline-block" ]
+        ,
+          B.button
+          { variant: ButtonVariant Primary
+          , callback: synchronizeClick
+          , status: statusSync hasChanges synchronizing'
+          }
+          [ H.text "Sync" ]
+        ]

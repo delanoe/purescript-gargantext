@@ -22,39 +22,30 @@
   $self: &;
   $wrapper-margin: 1.75rem; // from "_modal.scss"
 
-  &--visible {
-    display: block;
-  }
-
   &__content {
     background-color: $modal-content-bg;
-    max-height: calc(100% - #{ $wrapper-margin * 2 } );
-    overflow: auto;
+    margin-left: $wrapper-margin;
+    margin-right: $wrapper-margin;
   }
 
   &__header {
     background-color: $card-cap-bg;
 
-    &__content {
+    &__title {
       color: $primary;
       font-size: 21px;
     }
   }
 
+  // @XXX Bootstrap not removing some modal elements on "hide" method
+  //      Adding an overlay that the user could click to synchronise the hide
+  //      cinematic
+  // @https://stackoverflow.com/questions/50168312/bootstrap-4-close-modal-backdrop-doesnt-disappear
   &__overlay {
     width: 100%;
     height: 100%;
-    background-color: mix-alpha($black, 50%);
     position: absolute;
-
-    &--collapsible {
-      cursor: pointer;
-    }
   }
-
-  // @at-root body.modal-open {
-    // overflow: hidden;
-  // }
 }
 
 /// Spinner

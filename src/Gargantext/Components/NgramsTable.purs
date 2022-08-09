@@ -13,12 +13,12 @@ import Gargantext.Prelude
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.FunctorWithIndex (mapWithIndex)
-import Data.Lens (to, view, (%~), (.~), (^.), (^?), (^..))
+import Data.Lens (to, view, (.~), (^.), (^?))
 import Data.Lens.At (at)
 import Data.Lens.Common (_Just)
 import Data.Lens.Fold (folded)
 import Data.Lens.Index (ix)
-import Data.List (List)
+import Data.List (List, intercalate)
 import Data.List as List
 import Data.Map (Map)
 import Data.Map as Map
@@ -32,26 +32,25 @@ import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff)
-import Effect.Class (liftEffect)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
-import Gargantext.Core.NgramsTable.Functions (addNewNgramA, applyNgramsPatches, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, ngramsRepoElementToNgramsElement, normNgram, patchSetFromMap, setTermListA, singletonNgramsTablePatch, tablePatchHasNgrams, toVersioned)
+import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Sizing(..), Variant(..))
+import Gargantext.Components.NgramsTable.Loader (useLoaderWithCacheAPI)
 import Gargantext.Components.NgramsTable.Search as NTS
 import Gargantext.Components.NgramsTable.SelectionCheckbox as NTSC
-import Gargantext.Components.NgramsTable.Tree (renderNgramsItem, renderNgramsTree)
-import Gargantext.Components.NgramsTable.Loader (useLoaderWithCacheAPI)
 import Gargantext.Components.NgramsTable.SyncResetButton (syncResetButtons)
+import Gargantext.Components.NgramsTable.Tree (renderNgramsItem, renderNgramsTree)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table as TT
 import Gargantext.Components.Table.Types as TT
 import Gargantext.Config.REST (AffRESTError, RESTError, logRESTError)
-import Gargantext.Core.NgramsTable.Types (Action(..), CoreAction(..), CoreState, Dispatch, NgramsActionRef, NgramsClick, NgramsDepth, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch(..), NgramsTerm(..), PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, VersionedWithCountNgramsTable, _NgramsElement, _NgramsRepoElement, _NgramsTable, _children, _list, _ngrams, _ngrams_repo_elements, _ngrams_scores, _occurrences, _root, applyPatchSet, ngramsTermText, replace)
+import Gargantext.Core.NgramsTable.Functions (addNewNgramA, applyNgramsPatches, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, ngramsRepoElementToNgramsElement, normNgram, patchSetFromMap, singletonNgramsTablePatch, tablePatchHasNgrams, toVersioned)
+import Gargantext.Core.NgramsTable.Types (Action(..), CoreAction(..), CoreState, Dispatch, NgramsActionRef, NgramsClick, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch(..), NgramsTerm(..), PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, VersionedWithCountNgramsTable, _NgramsElement, _NgramsRepoElement, _NgramsTable, _children, _list, _ngrams, _ngrams_repo_elements, _ngrams_scores, _occurrences, _root, applyPatchSet, ngramsTermText, replace)
 import Gargantext.Hooks.Loader (useLoaderBox)
-import Gargantext.Routes (SessionRoute(..)) as R
+import Gargantext.Routes (SessionRoute(..)) as Routes
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (CTabNgramType, ListId, NodeID, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
-import Gargantext.Utils (queryExactMatchesLabel, queryMatchesLabel, toggleSet, sortWith)
+import Gargantext.Utils (nbsp, queryExactMatchesLabel, queryMatchesLabel, sortWith, toggleSet)
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Seq as Seq
@@ -147,107 +146,230 @@ tableContainerCpt { addCallback
                   , queryExactMatches
                   , syncResetButton
                   , tabNgramType
-                  } = here.component "tableContainer" cpt
-  where
-    cpt props _ = do
-      { searchQuery, termListFilter, termSizeFilter } <- T.useLive T.unequal path
+                  } = here.component "tableContainer" cpt where
+  cpt props _ = do
+    -- | States
+    -- |
+    { searchQuery
+    , termListFilter
+    , termSizeFilter
+    } <- T.useLive T.unequal path
 
-      pure $ H.div {className: "container-fluid"}
-        [ R2.row
-          [ H.div {className: "card col-12"}
-            [ H.div {className: "card-header"}
-              [ R2.row
-                [ H.div { className: "col-md-2", style: {marginTop: "6px" } }
-                  [ H.div {} syncResetButton
-                  , if (not queryExactMatches || A.null props.tableBody) && searchQuery /= "" then
-                  -- , if (not $ Set.member (normNgram tabNgramType searchQuery) ngramsSelection) && searchQuery /= "" then
-                      H.li { className: "list-group-item" }
-                      [
-                        B.button
-                        { variant: ButtonVariant Primary
-                        , callback: const $ addCallback searchQuery
-                        }
-                        [ H.text ("Add " <> searchQuery) ]
-                      ] else H.div {} []
-                ]
-                , H.div {className: "col-md-2", style: {marginTop : "6px"}}
-                  [ H.li {className: "list-group-item"}
-                    [ R2.select { id: "picklistmenu"
-                                , className: "form-control custom-select"
-                                , defaultValue: (maybe "" show termListFilter)
-                                , on: {change: setTermListFilter <<< read <<< R.unsafeEventValue}}
-                      (map optps1 termLists)]
-                  ]
-                , H.div {className: "col-md-2", style: {marginTop : "6px"}}
-                  [ H.li {className: "list-group-item"}
-                    [ R2.select {id: "picktermtype"
-                                , className: "form-control custom-select"
-                                , defaultValue: (maybe "" show termSizeFilter)
-                                , on: {change: setTermSizeFilter <<< read <<< R.unsafeEventValue}}
-                      (map optps1 termSizes)]
-                  ]
-                , H.div { className: "col-md-2", style: { marginTop: "6px" } }
-                  [ H.li {className: "list-group-item"}
-                    [ H.div { className: "form-inline" }
-                      [ H.div { className: "form-group" }
-                        [ props.pageSizeControl
-                        , H.label {} [ H.text " items" ]
-                          --   H.div { className: "col-md-6" } [ props.pageSizeControl ]
-                          -- , H.div { className: "col-md-6" } [
-                          --    ]
-                        ]
-                      ]
-                    ]
-                  ]
-                , H.div {className: "col-md-4", style: {marginTop : "6px", marginBottom : "1px"}}
-                  [ H.li {className: "list-group-item"}
-                    [ props.pageSizeDescription
-                    , props.paginationLinks
-                    ]
-                  ]
-                ]
+    -- | Computed
+    -- |
+    let
+      showAddNewTerm =
+        (
+          (not queryExactMatches || A.null props.tableBody)
+        &&
+          (searchQuery /= "")
+        )
+
+    -- | Render
+    -- |
+    pure $
+
+      H.div
+      { className: intercalate " "
+        [ "ngrams-table-container"
+        , "card"
+        ]
+      }
+      [
+
+        H.div
+        { className: intercalate " "
+            [ "ngrams-table-container__header"
+            , "card-header"
             ]
-          , if (selectionsExist ngramsSelection)
-            then H.li {className: "list-group-item"} [selectButtons true]
-            else H.div {} []
-          , H.div {id: "terms_table", className: "card-body"}
-            [ H.table {className: "table able"}
-              [ H.thead {className: ""} [props.tableHead]
-              , H.tbody {} props.tableBody
+        }
+        [
+        --   H.div
+        --   { className: "col-md-2"
+        --   , style: { marginTop: "6px" }
+        --   }
+        --   [
+        --     H.li
+        --     { className: "list-group-item" }
+        --     syncResetButton
+        --   ,
+        --     -- , if (not $ Set.member (normNgram tabNgramType searchQuery) ngramsSelection) && searchQuery /= "" then
+        --
+        --   ]
+        -- ,
+
+          H.div
+          { className: intercalate " "
+              [ "ngrams-table-container__header__item"
+              , "card"
               ]
-            , H.li {className: "list-group-item"}
-              [ H.div { className: "row" }
-                [ H.div { className: "col-md-4" }
-                  [selectButtons (selectionsExist ngramsSelection)]
-                , H.div {className: "col-md-4 col-md-offset-4"}
-                  [props.paginationLinks]
-                ]
+          }
+          syncResetButton
+        ,
+          H.div
+          { className: intercalate " "
+              [ "ngrams-table-container__header__item"
+              , "card"
               ]
+          }
+          [
+            R2.select
+            { id: "picklistmenu"
+            , className: "form-control custom-select"
+            , defaultValue: (maybe "" show termListFilter)
+            , on: {change: setTermListFilter <<< read <<< R.unsafeEventValue}
+            }
+            (map optps1 termLists)
+          ]
+        ,
+          H.div
+          { className: intercalate " "
+              [ "ngrams-table-container__header__item"
+              , "card"
+              ]
+          }
+          [
+            R2.select
+            { id: "picktermtype"
+            , className: "form-control custom-select"
+            , defaultValue: (maybe "" show termSizeFilter)
+            , on: {change: setTermSizeFilter <<< read <<< R.unsafeEventValue}
+            }
+            (map optps1 termSizes)
+          ]
+        ,
+          H.div
+          { className: intercalate " "
+              [ "ngrams-table-container__header__item"
+              , "card"
+              ]
+          }
+          [
+            B.wad
+            [ "d-flex", "align-items-center" ]
+            [
+              props.pageSizeControl
+            ,
+              B.wad_ [ "mr-2", "d-inline-block" ]
+            ,
+              B.label_ "items"
+              --   H.div { className: "col-md-6" } [ props.pageSizeControl ]
+              -- , H.div { className: "col-md-6" } [
+              --    ]
+            ]
+          ]
+        ,
+          H.div
+          { className: intercalate " "
+              [ "ngrams-table-container__header__item"
+              , "card"
+              , "flex-grow-1"
+              ]
+          }
+          [
+            props.pageSizeDescription
+          ,
+            props.paginationLinks
+          ]
+        ]
+      ,
+        R2.when (selectionsExist ngramsSelection) $
+
+          H.li
+          { className: "card" }
+          [
+            selectButtons true
+          ]
+      ,
+        H.div
+        { id: "terms_table"
+        , className: "card-body"
+        }
+        [
+          R2.when showAddNewTerm $
+
+            H.div
+            { className: "ngrams-table-container__add-term" }
+            [
+              B.button
+              { variant: ButtonVariant Light
+              , callback: const $ addCallback searchQuery
+              }
+              [
+                B.icon
+                { name: "circle"
+                , className: "mr-1 graph-term"
+                }
+              ,
+                H.text "Add"
+              ,
+                H.text $ nbsp 1
+              ,
+                B.b_ $ "« " <> searchQuery <> " »"
+              ,
+                H.text $ nbsp 1
+              ,
+                H.text "to Map terms"
+              ]
+            ]
+        ,
+          H.table
+          { className: "table able" }
+          [
+            H.thead
+            {}
+            [
+              props.tableHead
+            ]
+          ,
+            H.tbody
+            {}
+            props.tableBody
+          ]
+        ,
+          H.li
+          { className: intercalate " "
+              [ "ngrams-table-container__footer"
+              , "card"
+              ]
+          }
+          [
+            H.div
+            { className: "ngrams-table-container__footer__item" }
+            [
+              selectButtons (selectionsExist ngramsSelection)
+            ]
+          ,
+            H.div
+            { className: "ngrams-table-container__footer__item" }
+            [
+              props.paginationLinks
             ]
           ]
         ]
       ]
-    -- WHY setPath     f = origSetPageParams (const $ f path)
-    setTermListFilter x = T.modify (_ { termListFilter = x }) path
-    setTermSizeFilter x = T.modify (_ { termSizeFilter = x }) path
-    setSelection term = dispatch $ setTermListSetA ngramsTableCache ngramsSelection term
 
-    selectionsExist :: Set NgramsTerm -> Boolean
-    selectionsExist = not <<< Set.isEmpty
+  -- WHY setPath     f = origSetPageParams (const $ f path)
+  setTermListFilter x = T.modify (_ { termListFilter = x }) path
+  setTermSizeFilter x = T.modify (_ { termSizeFilter = x }) path
+  setSelection term = dispatch $ setTermListSetA ngramsTableCache ngramsSelection term
 
-    selectButtons false = H.div {} []
-    selectButtons true =
-      H.div {} [
-        H.button { className: "btn btn-primary"
-                , on: { click: const $ setSelection MapTerm }
-                } [ H.text "Map" ]
-        , H.button { className: "btn btn-primary"
-                  , on: { click: const $ setSelection StopTerm }
-                  } [ H.text "Stop" ]
-        , H.button { className: "btn btn-primary"
-                  , on: { click: const $ setSelection CandidateTerm }
-                  } [ H.text "Candidate" ]
-      ]
+  selectionsExist :: Set NgramsTerm -> Boolean
+  selectionsExist = not <<< Set.isEmpty
+
+  selectButtons false = H.div {} []
+  selectButtons true =
+    H.div {} [
+      H.button { className: "btn btn-primary"
+              , on: { click: const $ setSelection MapTerm }
+              } [ H.text "Map" ]
+      , H.button { className: "btn btn-primary"
+                , on: { click: const $ setSelection StopTerm }
+                } [ H.text "Stop" ]
+      , H.button { className: "btn btn-primary"
+                , on: { click: const $ setSelection CandidateTerm }
+                } [ H.text "Candidate" ]
+    ]
 
 -- NEXT
 
@@ -276,18 +398,34 @@ type Props =
 type LoadedNgramsTableHeaderProps =
   ( searchQuery :: T.Box SearchQuery )
 
-loadedNgramsTableHeader :: R2.Component LoadedNgramsTableHeaderProps
-loadedNgramsTableHeader = R.createElement loadedNgramsTableHeaderCpt
+loadedNgramsTableHeader :: R2.Leaf LoadedNgramsTableHeaderProps
+loadedNgramsTableHeader = R2.leaf loadedNgramsTableHeaderCpt
 loadedNgramsTableHeaderCpt :: R.Component LoadedNgramsTableHeaderProps
 loadedNgramsTableHeaderCpt = here.component "loadedNgramsTableHeader" cpt where
-  cpt { searchQuery } _ = do
-    pure $ R.fragment
-      [ H.h4 { style: { textAlign : "center" } }
-        [ H.span { className: "fa fa-hand-o-down" } []
-        , H.text "Extracted Terms" ]
-      , NTS.searchInput { key: "search-input"
-                        , searchQuery }
+  cpt { searchQuery } _ = pure $
+
+    R.fragment
+    [
+      H.div
+      { className: "loaded-ngrams-table-header" }
+      [
+        B.icon
+        { name: "hand-o-down"
+        , className: "loaded-ngrams-table-header__icon"
+        }
+      ,
+        B.wad_ [ "mr-1", "d-inline-block" ]
+      ,
+        B.span'
+        { className: "loaded-ngrams-table-header__text" } $
+        "Extracted Terms"
       ]
+    ,
+      NTS.searchInput
+      { key: "search-input"
+      , searchQuery
+      }
+    ]
 
 loadedNgramsTableBody :: R2.Component PropsNoReload
 loadedNgramsTableBody = R.createElement loadedNgramsTableBodyCpt
@@ -441,7 +579,12 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
         , wrapColElts:
           wrapColElts { allNgramsSelected, dispatch: performAction, ngramsSelection } scoreType
         }
-      , syncResetButton
+      ,
+        B.wad
+        [ "mt-2", "d-inline-block" ]
+        [
+          syncResetButton
+        ]
       ]
       where
         colNames = TT.ColumnName <$> ["Show", "Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
@@ -576,7 +719,7 @@ type MainNgramsTableProps = (
 
 getNgramsChildrenAff :: Session -> NodeID -> Array ListId -> TabType -> NgramsTerm -> Aff (Array NgramsTerm)
 getNgramsChildrenAff session nodeId listIds tabType (NormNgramsTerm ngrams) = do
-  res :: Either RESTError ({ data :: Array { children :: Array String, ngrams :: String }}) <- get session $ R.GetNgrams params (Just nodeId)
+  res :: Either RESTError ({ data :: Array { children :: Array String, ngrams :: String }}) <- get session $ Routes.GetNgrams params (Just nodeId)
   case res of
     Left err -> pure []
     Right { data: lst } -> case A.uncons (A.filter (\d -> d.ngrams == ngrams) lst) of
@@ -597,39 +740,39 @@ mainNgramsTable = R.createElement mainNgramsTableCpt
 mainNgramsTableCpt :: R.Component MainNgramsTableProps
 mainNgramsTableCpt = here.component "mainNgramsTable" cpt
   where
-    cpt props@{ cacheState, path, session, tabType, treeEdit } _ = do
+    cpt props@{ cacheState, path, treeEdit } _ = do
       searchQuery <- T.useFocused (_.searchQuery) (\a b -> b { searchQuery = a }) path
       cacheState' <- T.useLive T.unequal cacheState
-      onCancelRef <- R.useRef Nothing
-      onNgramsClickRef <- R.useRef Nothing
-      onSaveRef   <- R.useRef Nothing
+      -- onCancelRef <- R.useRef Nothing
+      -- onNgramsClickRef <- R.useRef Nothing
+      -- onSaveRef   <- R.useRef Nothing
       state <- T.useBox initialState
-      ngramsLocalPatch <- T.useFocused (_.ngramsLocalPatch) (\a b -> b { ngramsLocalPatch = a }) state
+      -- ngramsLocalPatch <- T.useFocused (_.ngramsLocalPatch) (\a b -> b { ngramsLocalPatch = a }) state
 
-      nodeId <- T.useFocused (_.nodeId) (\a b -> b { nodeId = a }) path
-      nodeId' <- T.useLive T.unequal nodeId
+      -- nodeId <- T.useFocused (_.nodeId) (\a b -> b { nodeId = a }) path
+      -- nodeId' <- T.useLive T.unequal nodeId
 
       -- let treeEdit = { box: treeEditBox
       --                , getNgramsChildren: getNgramsChildrenAff session nodeId' tabType
       --                , onCancelRef
       --                , onNgramsClickRef
-      --                , onSaveRef 
+      --                , onSaveRef
       --                }
 
       -- let path = initialPageParams session nodeId [defaultListId] tabType
 
       case cacheState' of
         NT.CacheOn  -> pure $ R.fragment
-          [
-            loadedNgramsTableHeader { searchQuery } []
-          , mainNgramsTableCacheOn (Record.merge props { state }) []
+          [ loadedNgramsTableHeader { searchQuery }
+          , ngramsTreeEdit (treeEdit)
+          , mainNgramsTableCacheOn (Record.merge props { state })
           ]
         NT.CacheOff -> pure $ R.fragment
-          [
-            loadedNgramsTableHeader { searchQuery } []
-          , ngramsTreeEdit (treeEdit) []
-          , mainNgramsTableCacheOff (Record.merge props { state }) []
+          [loadedNgramsTableHeader { searchQuery }
+          , ngramsTreeEdit (treeEdit)
+          , mainNgramsTableCacheOff (Record.merge props { state })
           ]
+
 
 type NgramsTreeEditProps =
   ( box               :: T.Box TreeEdit
@@ -640,8 +783,8 @@ type NgramsTreeEditProps =
   , onSaveRef         :: NgramsActionRef
   )
 
-ngramsTreeEdit :: R2.Component NgramsTreeEditProps
-ngramsTreeEdit = R.createElement ngramsTreeEditCpt
+ngramsTreeEdit :: R2.Leaf NgramsTreeEditProps
+ngramsTreeEdit = R2.leaf ngramsTreeEditCpt
 ngramsTreeEditCpt :: R.Component NgramsTreeEditProps
 ngramsTreeEditCpt = here.component "ngramsTreeEdit" cpt where
   cpt props@{ box } _ = do
@@ -650,18 +793,21 @@ ngramsTreeEditCpt = here.component "ngramsTreeEdit" cpt where
     ngramsParentFocused <- T.useFocused (_.ngramsParent) (\a b -> b { ngramsParent = a}) box
     ngramsParentFocused' <- T.useLive T.unequal ngramsParentFocused
 
+    let
+      gutter = B.wad_ [ "mb-2", "d-inline-block" ]
+
     pure $ if isEditingFocused'
       then case ngramsParentFocused' of
-                Nothing -> H.div {} []
-                Just ngramsParent' -> ngramsTreeEditReal (Record.merge props { ngramsParent' }) []
-      else H.div {} []
+                Nothing -> gutter
+                Just ngramsParent' -> ngramsTreeEditReal (Record.merge props { ngramsParent' })
+      else gutter
 
 type NgramsTreeEditRealProps =
   ( ngramsParent' :: NgramsTerm
   | NgramsTreeEditProps )
 
-ngramsTreeEditReal :: R2.Component NgramsTreeEditRealProps
-ngramsTreeEditReal = R.createElement ngramsTreeEditRealCpt
+ngramsTreeEditReal :: R2.Leaf NgramsTreeEditRealProps
+ngramsTreeEditReal = R2.leaf ngramsTreeEditRealCpt
 ngramsTreeEditRealCpt :: R.Component NgramsTreeEditRealProps
 ngramsTreeEditRealCpt = here.component "ngramsTreeEditReal" cpt where
   cpt { box
@@ -669,40 +815,91 @@ ngramsTreeEditRealCpt = here.component "ngramsTreeEditReal" cpt where
       , ngramsParent'
       , onCancelRef
       , onNgramsClickRef
-      , onSaveRef } _ = do
-    { ngramsChildren, ngramsChildrenDiff } <- T.useLive T.unequal box
+      , onSaveRef
+      } _ = do
+    -- | States
+    -- |
+    { ngramsChildren
+    , ngramsChildrenDiff
+    } <- T.useLive T.unequal box
 
-    let ngramsDepth = { depth: 0, ngrams: ngramsParent' }
-        ngramsChildrenPatched :: Set NgramsTerm
-        ngramsChildrenPatched = applyPatchSet (patchSetFromMap ngramsChildrenDiff) $ Set.fromFoldable ngramsChildren
-        -- A patched version of getNgramsChildren. This is used
-        -- because we're editing the tree and so won't fetch the API
-        -- ngrams children.
-        gnc ngrams = if ngrams == ngramsParent'
-                       then do
-                         pure $ A.fromFoldable ngramsChildrenPatched
-                       else do
-                         pure []
+    -- | Computed
+    -- |
+    let
+      ngramsDepth = { depth: 0, ngrams: ngramsParent' }
 
-    pure $ H.div {}
-      [ H.p {}
-        [ H.text $ "Editing " <> ngramsTermText ngramsDepth.ngrams ]
-      , renderNgramsTree { getNgramsChildren: gnc
-                         , ngramsClick
-                         , ngramsDepth
-                         , ngramsEdit
-                         , ngramsStyle: []
-                         , key: show ngramsParent'
-                                 <> "-" <> show ngramsChildren
-                                 <> "-" <> show ngramsChildrenDiff
-                         }
-      , H.button { className: "btn btn-primary"
-                 , on: { click: onSaveClick } --(const $ dispatch AddTermChildren)}
-                 } [ H.text "Save" ]
-      , H.button { className: "btn btn-primary"
-                 , on: { click: onCancelClick } --(const $ dispatch ClearTreeEdit)}
-                 } [ H.text "Cancel" ]
+      ngramsChildrenPatched :: Set NgramsTerm
+      ngramsChildrenPatched = applyPatchSet (patchSetFromMap ngramsChildrenDiff) $ Set.fromFoldable ngramsChildren
+      -- A patched version of getNgramsChildren. This is used
+      -- because we're editing the tree and so won't fetch the API
+      -- ngrams children.
+      gnc ngrams =
+        if ngrams == ngramsParent'
+        then do
+          pure $ A.fromFoldable ngramsChildrenPatched
+        else do
+          pure []
+
+
+    -- | Render
+    -- |
+    pure $
+
+      H.div
+      { className: intercalate " "
+          [ "ngrams-tree-edit-real"
+          , "card"
+          ]
+      }
+      [
+        H.div
+        { className: "card-header" }
+        [
+          B.icon
+          { name: "pencil-square-o"
+          }
+        ,
+          B.wad_
+          [ "mr-1", "d-inline-block" ]
+        ,
+          B.b_ $ ngramsTermText ngramsDepth.ngrams
+        ]
+      ,
+        H.div
+        { className: "card-body" }
+        [
+          renderNgramsTree
+          { getNgramsChildren: gnc
+          , ngramsClick
+          , ngramsDepth
+          , ngramsEdit
+          , ngramsStyle: []
+          , key: show ngramsParent'
+                  <> "-" <> show ngramsChildren
+                  <> "-" <> show ngramsChildrenDiff
+          }
+        ,
+          H.div
+          { className: "ngrams-tree-edit-real__actions" }
+          [
+            B.button
+            { variant: ButtonVariant Light
+            , callback: onCancelClick --(const $ dispatch ClearTreeEdit)}
+            , size: SmallSize
+            }
+            [ H.text "Cancel" ]
+          ,
+            B.button
+            { variant: ButtonVariant Primary
+            , callback: onSaveClick --(const $ dispatch AddTermChildren)}
+            , size: SmallSize
+            }
+            [ H.text "Save" ]
+          ]
+        ]
       ]
+      -- | Helpers
+      -- |
       where
         --ngramsClick {depth: 1, ngrams: child} = Just $ dispatch $ ToggleChild false child
         --ngramsClick _ = Nothing
@@ -712,11 +909,11 @@ ngramsTreeEditRealCpt = here.component "ngramsTreeEditReal" cpt where
           Just ngc -> ngc nd
         ngramsEdit :: NgramsClick
         ngramsEdit  _ = Nothing
-        onCancelClick :: forall e. e -> Effect Unit
+        onCancelClick :: Unit -> Effect Unit
         onCancelClick _ = case R.readRef onCancelRef of
           Nothing -> pure unit
           Just onCancel -> onCancel unit
-        onSaveClick :: forall e. e -> Effect Unit
+        onSaveClick :: Unit -> Effect Unit
         onSaveClick _ = case R.readRef onSaveRef of
           Nothing -> pure unit
           Just onSave -> onSave unit
@@ -725,8 +922,8 @@ type MainNgramsTableCacheProps =
   ( state :: T.Box State
   | MainNgramsTableProps )
 
-mainNgramsTableCacheOn :: R2.Component MainNgramsTableCacheProps
-mainNgramsTableCacheOn = R.createElement mainNgramsTableCacheOnCpt
+mainNgramsTableCacheOn :: R2.Leaf MainNgramsTableCacheProps
+mainNgramsTableCacheOn = R2.leaf mainNgramsTableCacheOnCpt
 mainNgramsTableCacheOnCpt :: R.Component MainNgramsTableCacheProps
 mainNgramsTableCacheOnCpt = here.component "mainNgramsTableCacheOn" cpt where
   cpt { afterSync
@@ -759,7 +956,7 @@ mainNgramsTableCacheOnCpt = here.component "mainNgramsTableCacheOn" cpt where
       , renderer: render
       , spinnerClass: Nothing
       }
-  versionEndpoint { defaultListId, path: { nodeId, tabType, session } } _ = get session $ R.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
+  versionEndpoint { defaultListId, path: { nodeId, tabType, session } } _ = get session $ Routes.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
   errorHandler = logRESTError here "[mainNgramsTable]"
   mkRequest :: PageParams -> GUC.Request
   mkRequest path@{ session } = GUC.makeGetRequest session $ url path
@@ -767,13 +964,13 @@ mainNgramsTableCacheOnCpt = here.component "mainNgramsTableCacheOn" cpt where
       url { listIds
           , nodeId
           , tabType
-          } = R.GetNgramsTableAll { listIds
+          } = Routes.GetNgramsTableAll { listIds
                                   , tabType } (Just nodeId)
   handleResponse :: VersionedNgramsTable -> VersionedNgramsTable
   handleResponse v = v
 
-mainNgramsTableCacheOff :: R2.Component MainNgramsTableCacheProps
-mainNgramsTableCacheOff = R.createElement mainNgramsTableCacheOffCpt
+mainNgramsTableCacheOff :: R2.Leaf MainNgramsTableCacheProps
+mainNgramsTableCacheOff = R2.leaf mainNgramsTableCacheOffCpt
 mainNgramsTableCacheOffCpt :: R.Component MainNgramsTableCacheProps
 mainNgramsTableCacheOffCpt = here.component "mainNgramsTableCacheOff" cpt where
   cpt { afterSync
@@ -810,7 +1007,7 @@ mainNgramsTableCacheOffCpt = here.component "mainNgramsTableCacheOff" cpt where
          , termListFilter
          , termSizeFilter
          } =
-    get session $ R.GetNgrams params (Just nodeId)
+    get session $ Routes.GetNgrams params (Just nodeId)
     where
       params = { limit
                , listIds

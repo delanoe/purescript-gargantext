@@ -384,7 +384,6 @@ onExpandSelectionChange { new } = do
 
 neighborhood :: R2.Leaf ()
 neighborhood = R2.leaf neighborhoodCpt
-
 neighborhoodCpt :: R.Memo ()
 neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
   cpt _ _ = do
@@ -495,8 +494,9 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
 
               R2.when
               (
-                withTruncateResults == false
-              || index < maxTruncateResult
+                (withTruncateResults == false
+                || index < maxTruncateResult)
+                && (not $ Set.member node.id selectedNodeIds')
               ) $
                 H.li
                 { className: "graph-neighborhood__badge" }

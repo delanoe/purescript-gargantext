@@ -1,6 +1,5 @@
 module Gargantext.Components.Forest.Tree.Node.Box.Types where
 
-import DOM.Simple as DOM
 import Data.Maybe (Maybe)
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -18,11 +17,11 @@ type CommonProps =
   )
 
 type NodePopupProps =
-  ( boxes :: Boxes
-  , id             :: ID
-  , name           :: Name
-  , nodeType       :: GT.NodeType
-  , onPopoverClose :: DOM.Element -> Effect Unit
+  ( boxes           :: Boxes
+  , id              :: ID
+  , name            :: Name
+  , nodeType        :: GT.NodeType
+  , closeCallback   :: Unit -> Effect Unit
   | CommonProps
   )
 

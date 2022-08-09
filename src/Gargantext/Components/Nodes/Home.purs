@@ -11,7 +11,7 @@ import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Lang (LandingLang(..))
 import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
-import Gargantext.Components.Nodes.Home.Public (renderPublic)
+-- import Gargantext.Components.Nodes.Home.Public (renderPublic)
 import Gargantext.Config as Config
 import Gargantext.License (license)
 import Gargantext.Sessions (Sessions)
@@ -75,8 +75,8 @@ homeLayoutCpt = here.component "homeLayout" cpt
         , H.div { className: "home-research-form" } [] -- TODO
         , joinButtonOrTutorial boxes sessions' (click backend')
         , H.div { className: "home-public" }
-          [ renderPublic { }
-          , H.div { className:"col-12 d-flex justify-content-center" }
+          [ -- renderPublic { }
+           H.div { className:"col-12 d-flex justify-content-center" }
             [ H.h1 {} [ H.text "" ]] -- H.span {className: "fa fa-star-o"} []
           , H.div { className: "home-landing-data" }
             [ blocksRandomText' landingData ]

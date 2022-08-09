@@ -6,6 +6,7 @@ module Gargantext.Components.Bootstrap.Types
   , TooltipEffect(..), TooltipPosition(..)
   , Position(..)
   , Elevation(..)
+  , ModalSizing(..)
   ) where
 
 import Gargantext.Prelude
@@ -164,7 +165,7 @@ instance Show TooltipPosition where
 
 ----------------------------------------------------------------------
 
--- | Elevarion measure scale values used on various custom components
+-- | Elevation measure scale values used on various custom components
 -- | and properties
 -- |
 -- | Example: https://material.io/design/environment/elevation.html
@@ -176,3 +177,22 @@ data Elevation
 derive instance Generic Elevation _
 derive instance Eq Elevation
 instance Show Elevation where show = kebabCase <<< genericShow
+
+----------------------------------------------------------------------
+
+-- | Modal custom sizing used by Bootstrap for its modals
+-- |
+-- | https://getbootstrap.com/docs/4.6/components/modal/#optional-sizes
+data  ModalSizing
+  = SmallModalSize
+  | MediumModalSize
+  | LargeModalSize
+  | ExtraLargeModalSize
+
+derive instance Generic ModalSizing _
+derive instance Eq ModalSizing
+instance Show ModalSizing where
+  show SmallModalSize       = "modal-sm"
+  show MediumModalSize      = ""
+  show LargeModalSize       = "modal-lg"
+  show ExtraLargeModalSize  = "modal-xl"

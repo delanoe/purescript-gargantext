@@ -9,12 +9,15 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (Variant(..))
 import Gargantext.Components.Category.Types (Category(..), Star(..), cat2score, categories, clickAgain, star2score, stars)
 import Gargantext.Components.DocsTable.Types (DocumentsView(..), LocalCategories, LocalUserScore)
 import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, put)
 import Gargantext.Types (NodeID, NodeType(..))
+import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
@@ -42,22 +45,52 @@ ratingCpt = here.component "rating" cpt where
       , row: DocumentsView r
       , score
       , session
-      , setLocalCategories } _ =
-    pure $ H.div { className:"flex" } divs where
-      divs = map (\s -> H.div { className : icon' score s
-                              , on: { click: onClick s } } []) stars
-      icon' Star_0 Star_0  = "fa fa-times-circle"
-      icon' _ Star_0       = "fa fa-times"
-      icon' c s = if star2score c < star2score s then "fa fa-star-o" else "fa fa-star"
+      , setLocalCategories
+      } _ = do
+    -- | Computed
+    -- |
+    let
+      icon' Star_0 Star_0  = "times-circle"
+      icon' _      Star_0  = "times"
+      icon' c      s       = star2score c < star2score s ? "star-o" $ "star"
+
+      variant' Star_0 Star_0 = Dark
+      variant' _      Star_0 = Dark
+      variant' _      _      = Dark
+
+      className' Star_0 Star_0 = "rating-group__action"
+      className' _      Star_0 = "rating-group__action"
+      className' _      _      = "rating-group__star"
+
+    -- | Behaviors
+    -- |
+    let
       onClick c _ = do
-        let c' = if score == c
-                  then clickAgain c
-                  else c
+        let c' = score == c ? clickAgain c $ c
 
         setLocalCategories $ Map.insert r._id c'
-        launchAff_ $ do
-          _ <- putRating session nodeId $ RatingQuery { nodeIds: [r._id], rating: c' }
+        launchAff_ do
+          _ <- putRating session nodeId $ RatingQuery
+            { nodeIds: [r._id]
+            , rating: c'
+            }
           liftEffect $ T2.reload chartReload
+
+    -- | Render
+    -- |
+    pure $
+
+      H.div
+      { className: "rating-group" } $
+      stars <#> \s ->
+        B.iconButton
+        { name: icon' score s
+        , callback: onClick s
+        , overlay: false
+        , variant: variant' score s
+        , className: className' score s
+        }
+
 
 newtype RatingQuery =
   RatingQuery { nodeIds :: Array Int

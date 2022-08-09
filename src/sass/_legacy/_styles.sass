@@ -2,9 +2,6 @@
 .no-user-select
   user-select: none
 
-.cache-toggle
-  cursor: pointer
-
 .side-panel
   background-color: #fff
   padding: 0.3em
@@ -35,18 +32,14 @@
     &__header
       padding: $card-spacer-y $card-spacer-x
       font-size: 20px
-
-      @include right-handed
-        float: right
-      @include left-handed
-        float: left
+      text-align: right
 
     &__body
       padding-left: $card-spacer-x
       padding-right: $card-spacer-x
 
       .document-layout__title
-        font-size: 23px
+        font-size: 21px
 
       .document-layout__abstract__content
         max-height: 200px
@@ -63,25 +56,6 @@
     left: 50%
     top: 50%
 
-.table
-  tr
-    td
-      color: #005a9aff
-      .active
-        font-weight: bold
-        text-decoration: underline
-      .ngrams-selector
-        display: flex
-        .ngrams-chooser
-          padding: 3px
-      .trash
-        text-decoration: line-through
-
-.action-search
-  margin: 10px
-
-.search-bar
-  margin: 10px
 
 /* */
 
@@ -224,6 +198,20 @@ select.form-control
     height: $spinner-size
     left: $spinner-left-offset
     top: $spinner-top-offset
+
+// @TODO expand <tabs> to fit a ".main-page__main-route" with its padding
+//       really KISS solution, better prevent the whole padding set (as the
+//       likes of many pages, such as the Graph Explorer one)
+.nodes-lists-layout-tabs,
+.nodes-texts-layout-tabs,
+.nodes-annuaire-layout-tabs
+
+  .nav.nav-tabs
+    margin-left: -32px
+    margin-right: -32px
+    padding-left: 32px
+    padding-right: 32px
+
 
 .jitsi-iframe
   height: 70em

@@ -1,30 +1,29 @@
 module Gargantext.Components.NgramsTable.Tree where
 
+import Gargantext.Prelude
+
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Lens ((^..), (^.), view)
-import Data.Lens.At (at)
 import Data.Lens.Fold (folded)
 import Data.Lens.Index (ix)
-import Data.List (List)
+import Data.List (List, intercalate)
 import Data.List as L
-import Data.Map (Map)
-import Data.Map as Map
-import Data.Maybe (Maybe(..), maybe, isJust)
-import Data.Nullable (Nullable, null, toMaybe)
+import Data.Maybe (Maybe(..), maybe)
 import Data.Set (Set)
 import Data.Set as Set
-import DOM.Simple as DOM
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
-import Effect.Class (liftEffect)
-import Gargantext.Core.NgramsTable.Functions (applyNgramsPatches, setTermListA, tablePatchHasNgrams)
-import Gargantext.Core.NgramsTable.Types (Action(..), NgramsClick, NgramsDepth, NgramsElement, NgramsTable, NgramsTablePatch(..), NgramsTerm, _NgramsElement, _NgramsRepoElement, _PatchMap, _children, _list, _ngrams, _occurrences, ngramsTermText, replace)
+import Effect.Aff (Aff)
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Variant(..))
 import Gargantext.Components.Table as Tbl
 import Gargantext.Config.REST (logRESTError)
+import Gargantext.Core.NgramsTable.Functions (applyNgramsPatches, setTermListA, tablePatchHasNgrams)
+import Gargantext.Core.NgramsTable.Types (Action(..), NgramsClick, NgramsDepth, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm, _NgramsElement, _NgramsRepoElement, _children, _list, _ngrams, _occurrences, ngramsTermText, replace)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (Unit, bind, const, discard, map, mempty, not, otherwise, pure, show, unit, ($), (+), (/=), (<<<), (<>), (==), (>), (||))
+import Gargantext.Prelude (Unit, bind, const, map, mempty, not, otherwise, pure, show, unit, ($), (+), (<<<), (<>), (==), (>), (||))
 import Gargantext.Types as GT
+import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
 import React.DOM (a, span, text)
 import React.DOM.Props as DOM
@@ -55,7 +54,9 @@ renderNgramsTreeCpt :: R.Component RenderNgramsTree
 renderNgramsTreeCpt = here.component "renderNgramsTree" cpt
   where
     cpt { getNgramsChildren, ngramsClick, ngramsDepth, ngramsEdit, ngramsStyle } _ = do
-      pure $ H.ul {}
+      pure $
+        H.ul
+        { className: "render-ngrams-tree" }
         [ H.span { className: "tree" }
           [ H.span { className: "righthanded" }
             [ tree { getNgramsChildren
@@ -118,13 +119,37 @@ treeLoaded :: Record TreeLoaded -> R.Element
 treeLoaded p = R.createElement treeLoadedCpt p []
 treeLoadedCpt :: R.Component TreeLoaded
 treeLoadedCpt = here.component "treeLoaded" cpt where
-  cpt params@{ ngramsChildren, ngramsClick, ngramsDepth, ngramsEdit, ngramsStyle } _ = do
+  cpt params@{ ngramsChildren
+             , ngramsClick
+             , ngramsDepth
+             , ngramsEdit
+             , ngramsStyle
+             } _ = do
     pure $
-      H.li { style: { width : "100%" } }
-      ([ H.i { className, style } [] ]
-       <> [ R2.buff $ tag [ text $ " " <> ngramsTermText ngramsDepth.ngrams ] ]
-       <> maybe [] edit (ngramsEdit ngramsDepth)
-       <> [ forest ngramsChildren ]
+
+      H.li
+      -- { className: "ngrams-tree-loaded-node" }
+      { className: intercalate " "
+          [ "ngrams-tree-loaded-node"
+          , ngramsDepth.depth == 1 ?
+              "ngrams-tree-loaded-node--first-child" $
+              ""
+          , ngramsDepth.depth > 1 ?
+              "ngrams-tree-loaded-node--grand-child" $
+              ""
+          ]
+      }
+      (
+        -- @NOTE #414: currently commenting this, as the below icon is not
+        --             a call-to-action, thus deceiving the user of possible
+        --             yet-to-become reveal/collapse node children feature
+        -- [ H.i { className, style } [] ]
+      -- <>
+        [ R2.buff $ tag [ text $ " " <> ngramsTermText ngramsDepth.ngrams ] ]
+      <>
+        maybe [] edit (ngramsEdit ngramsDepth)
+      <>
+        [ forest ngramsChildren ]
       )
     where
       tag =
@@ -133,10 +158,16 @@ treeLoadedCpt = here.component "treeLoaded" cpt where
             a (ngramsStyle <> [DOM.onClick $ const effect])
           Nothing ->
             span ngramsStyle
-      edit effect = [ H.text " "
-                    , H.i { className: "fa fa-pencil"
-                          , on: { click: const effect } } []
-                    ]
+      edit effect =
+        [
+          B.iconButton
+          { name: "pencil"
+          , className: "ml-1"
+          , variant: Secondary
+          , callback: const effect
+          , overlay: false
+          }
+        ]
       leaf = L.null ngramsChildren
       className = "fa fa-chevron-" <> if open then "down" else "right"
       style = if leaf then {color: "#adb5bd"} else {color: ""}
@@ -177,29 +208,55 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         , ngramsTable
         } _ = do
       isEditing' <- T.useLive T.unequal isEditing
-      
+
       pure $ Tbl.makeRow
-        [ H.div { className: "ngrams-selector" }
-          [ H.span { className: "ngrams-chooser fa fa-eye-slash"
-                   , on: { click: onClick } } []
+        [
+          H.div
+          { className: "text-center"
+          , style: { marginTop: "6px" }
+          }
+          [
+            B.iconButton
+            { name: "eye-slash"
+            , status: Disabled -- see `onClick` behavior
+            , callback: onClick
+            , className: ""
+            }
           ]
         , selected
         , checkbox GT.MapTerm
         , checkbox GT.StopTerm
         , H.div {}
           ( if isEditing'
-            then [ H.a { on: { click: const $ dispatch $ ToggleChild true ngrams } }
-                   [ H.i { className: "fa fa-plus" } [] ]
-                 , R2.buff $ tag [ text $ " " <> ngramsTermText ngramsDepth.ngrams ]
-                 ]
-            else [ renderNgramsTree { getNgramsChildren: getNgramsChildren'
-                                    , ngramsClick
-                                    , ngramsDepth
-                                    , ngramsEdit
-                                    , ngramsStyle
-                                    , key: "" } ]
+            then
+              [
+                B.iconButton
+                { name: "plus"
+                , className: "mr-1 align-bottom"
+                , overlay: false
+                , variant: Primary
+                , callback: const $ dispatch $ ToggleChild true ngrams
+                }
+              ,
+                R2.buff $
+                tag [ text $ " " <> ngramsTermText ngramsDepth.ngrams ]
+              ]
+            else
+              [
+                renderNgramsTree
+                { getNgramsChildren: getNgramsChildren'
+                , ngramsClick
+                , ngramsDepth
+                , ngramsEdit
+                , ngramsStyle
+                , key: ""
+                }
+              ]
           )
-        , H.text $ show (ngramsElement ^. _NgramsElement <<< _occurrences)
+        ,
+          B.wad'
+          [ "pl-3" ] $
+          show (ngramsElement ^. _NgramsElement <<< _occurrences)
       ]
       where
         ngramsDepth = { ngrams, depth: 0 }
@@ -232,21 +289,42 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
           -- | ngramsTransient = const Nothing
           -- | otherwise       = Just <<< dispatch <<< cycleTermListItem <<< view _ngrams
         selected    =
-          H.input { checked: Set.member ngrams ngramsSelection
-                  , className: "checkbox"
-                  , on: { change: const $ dispatch $ ToggleSelect ngrams }
-                  , type: "checkbox"
-                  }
+          B.wad
+          [ "text-center" ]
+          [
+            H.input
+            { checked: Set.member ngrams ngramsSelection
+            , className: "checkbox"
+            , on: { change: const $ dispatch $ ToggleSelect ngrams }
+            , type: "checkbox"
+            , style:
+                { cursor: "pointer"
+                , marginTop: "6px"
+                }
+            }
+          ]
+
         checkbox termList' =
           let chkd = termList == termList'
               termList'' = if chkd then GT.CandidateTerm else termList'
           in
-          H.input { checked: chkd
-                  , className: "checkbox"
-                  , on: { change: const $ dispatch $ CoreAction $
-                          setTermListA ngrams (replace termList termList'') }
-                  , readOnly: ngramsTransient
-                  , type: "checkbox" }
+            B.wad
+            [ "text-center" ]
+            [
+              H.input
+              { checked: chkd
+              , className: "checkbox"
+              , on: { change: const $ dispatch $ CoreAction $
+                      setTermListA ngrams (replace termList termList'') }
+              , readOnly: ngramsTransient
+              , type: "checkbox"
+              , style:
+                  { cursor: "pointer"
+                  , marginTop: "6px"
+                  }
+              }
+            ]
+
         ngramsTransient = tablePatchHasNgrams ngramsLocalPatch ngrams
           -- ^ TODO here we do not look at ngramsNewElems, shall we?
         ngramsOpacity

@@ -1,6 +1,5 @@
 $forest-layout-top-teaser-height: 24px
 $forest-layout-bottom-teaser-height: 24px // ~line-height to 1.5 (covering tree)
-$node-popop-radius: 6px
 $node-popup-width: 544px
 
 
@@ -77,7 +76,10 @@ $node-popup-width: 544px
   // forcing inline width to overflow its container width
   // this is mainly due to the multi-level of nested folders that keeps
   // increasing the mainleaf width
-  width: max-content
+  // (as a "min-width" rule instead of "width" to allow the relative stacking
+  // context used for the selected UI border)
+  min-width: max-content
+  position: relative
 
   @include right-handed
     flex-direction: row
@@ -286,6 +288,30 @@ $node-popup-width: 544px
       color: $primary
       font-weight: bold
 
+  &--selected::after
+      content: ''
+      font-family: ForkAwesome
+      width: 4px
+      color: $white
+      background-color: $primary
+      top: 0
+      bottom: 0
+      position: absolute
+
+  @include right-handed
+
+    &--selected::after
+      right: 0
+      border-top-left-radius: $border-radius
+      border-bottom-left-radius: $border-radius
+
+  @include left-handed
+
+    &--selected::after
+      left: 0
+      border-top-right-radius: $border-radius
+      border-bottom-right-radius: $border-radius
+
   //----------------------------
 
   &--file-dropped
@@ -403,89 +429,47 @@ $node-popup-width: 544px
 
 /////////////////////////////////////////
 
-#node-popup-tooltip
-  // @XXX "react-awesome-popover" lack of parent host parameter
-  //
-  //      hence, the popover will be added from within the overflow context
-  //      of component where its CTA lies, causing an issue with the hidden
-  //      overflow of its parent component
-  //
-  //      to avoid a truncated popover, this position workaround has to be set
-  //      (so the popover will be hoisted to the overflow context of the window)
-  //
-  // @link https://gitlab.iscpif.fr/gargantext/purescript-gargantext/issues/302
-  position: fixed
+.forest-tree-node-modal
+  // will enlarge popup when inner content is larger (see issue #315),
+  // with a minimal width to avoid row item collapsing (see issue #324)
+  width: fit-content
+  min-width: $node-popup-width
+  max-width: 100vw // override Bootstrap modal rules (via sizing props)
 
 
-  background-color: white
-  border-radius: $node-popop-radius
-
-  &:hover
-    border: none
-    text-decoration: none
-
-  // @XXX "react-awesome-popover" lack of parent host parameter
-  //
-  //       as the container where the popover will be appended is actually a
-  //       a heighthy sidebar (which a large is hidden with a scrollbar),
-  //       the library tends to add the tooltip position in the middle of the
-  //       sidebar height: which can be off screen
-  //
-  //       this workaround appends the tooltip centered in a static position
-  @include centered
-
-  .tree
-    .node
-      margin-top: 5px
-    .children
-      .node
-        padding-left: 15px
+.node-popup-tooltip
 
   .panel-actions
-    .almost-useable
+    &__almost-useable
       color: orange
-    .development-in-progress
+    &__development-in-progress
       color: red
-    .ok-to-use
+    &__ok-to-use
       color: black
 
 
   .popup-container
     display: flex
-    flex-direction: colum
+    flex-direction: column
 
-    & > .card
-      // will enlarge popup when inner content is larger (see issue #315),
-      // with a minimal width to avoid row item collapsing (see issue #324)
-      width: auto !important
-      min-width: $node-popup-width
-
-
-      border: 1px solid rgba(0,0,0,0.2)
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2)
-      margin-bottom: initial
+    &__header
 
       .fa-pencil
         color: black
 
-      .card-body
-        display: flex
-        justify-content: center
-        background-color: white
-        border: none
-        .spacer
-          margin: space-x(1)
+    &__body
+      display: flex
+      justify-content: center
+      background-color: $body-bg
 
-    .frame-search.card
-      border: 1px solid rgba(0,0,0,0.2)
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2)
-      height: 600px
-      width: 1000px
+/////////////////////////////////////////
 
-  .popup-container-body
-    // empirical value (see issue #308, #315)
-    max-height: 70vh
-    overflow-y: auto
+.frame-search.card
+  $frame-width: 1000px
+  $frame-height: 600px
+
+  width: $frame-width
+  height: $frame-height
 
 /////////////////////////////////////////
 

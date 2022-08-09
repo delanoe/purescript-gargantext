@@ -608,6 +608,12 @@ foreign import _triggerEvent
 triggerEvent :: forall el. el -> String -> Effect Unit
 triggerEvent = runEffectFn2 _triggerEvent
 -------------------------------------------------------
+getInputValue :: R.Ref (Nullable DOM.Element) -> String
+getInputValue elNullableRef = case toMaybe (R.readRef elNullableRef) of
+  Nothing -> ""
+  Just el -> 
+    el .. "value"
+
 setInputValue :: R.Ref (Nullable DOM.Element) -> String -> Effect Unit
 setInputValue elNullableRef val = case toMaybe (R.readRef elNullableRef) of
   Nothing -> pure unit

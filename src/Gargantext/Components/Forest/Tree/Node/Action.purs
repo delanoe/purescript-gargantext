@@ -46,7 +46,7 @@ icon (UploadFile _ _ _ _ _ _)       = glyphiconNodeAction Upload
 icon (UploadArbitraryFile _ _ _ _ ) = glyphiconNodeAction Upload
 icon UploadFrameCalc                = glyphiconNodeAction Upload
 icon  RefreshTree                   = glyphiconNodeAction Refresh
-icon  ClosePopover                  = glyphiconNodeAction CloseNodePopover
+icon  CloseBox                      = glyphiconNodeAction CloseNodePopover
 icon  DownloadNode                  = glyphiconNodeAction Download
 icon (MoveNode _ )                  = glyphiconNodeAction (Move  { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
 icon (MergeNode _ )                 = glyphiconNodeAction (Merge { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
@@ -70,7 +70,7 @@ text (UploadFile _  _ _ _ _ _)      = "Upload File !"
 text (UploadArbitraryFile _ _  _ _) = "Upload arbitrary file !"
 text UploadFrameCalc                = "Upload frame calc"
 text  RefreshTree                   = "Refresh Tree !"
-text  ClosePopover                  = "Close Popover !"
+text  CloseBox                      = "Close Box !"
 text DownloadNode                   = "Download !"
 text (MoveNode  _ )                 = "Move !"
 text (MergeNode _ )                 = "Merge !"
@@ -78,4 +78,3 @@ text (LinkNode  _ )                 = "Link !"
 text (DocumentsFromWriteNodes _ )   = "Documents from Write Nodes !"
 text NoAction                       = "No Action"
 -----------------------------------------------------------------------
-

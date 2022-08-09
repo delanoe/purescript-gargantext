@@ -524,6 +524,27 @@ $decreasing-color: #11638F;
   }
 }
 
+/////////////////////////////////////////////
+
+.phylo-doc-focus {
+  @include term-window();
+
+  &__header {
+    // avoid overlap with document side controls
+    @include right-handed() {
+      margin-left: space-x(4);
+    }
+    @include left-handed () {
+      margin-right: space-x(4);
+    }
+  }
+  // remove document header top spacing due to the already presence of
+  // the inner column top teaser
+  .document-layout__header {
+    padding-top: initial;
+  }
+}
+
 ////////////////////////////////////////////////////////////////
 
 .phylo-sidebar {
@@ -572,6 +593,21 @@ $decreasing-color: #11638F;
     &__type {
       padding: $badge-padding-y $badge-padding-x;
       font-weight: bold;
+    }
+
+    &__expand {
+      // Following <list-group-item> spacing
+      $position-x: $list-group-item-padding-x;
+      // Empirical: fit well with icon overlay
+      $position-y: 1rem;
+
+      position: absolute;
+      right: $position-x;
+      bottom: $position-y;
+    }
+
+    &__actions {
+      margin-top: space-x(2);
     }
   }
 
