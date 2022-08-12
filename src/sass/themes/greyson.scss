@@ -28,6 +28,7 @@ $warning    :#6e9fa5;
 $light      :#eceeec;
 $dark       :#1e2b37;
 
+// Palettes
 $theme-colors: map.merge(
   $theme-colors,
   (
@@ -40,6 +41,33 @@ $theme-colors: map.merge(
     'light': $light,
     'dark': $dark,
   )
+);
+$palette-semantic: $theme-colors;
+
+$palette-gray: (
+  '0':    $white,
+  '50':   $gray-50,
+  '100':  $gray-100,
+  '150':  $gray-150,
+  '175':  $gray-175,
+  '200':  $gray-200,
+  '300':  $gray-300,
+  '400':  $gray-400,
+  '500':  $gray-500,
+  '600':  $gray-600,
+  '700':  $gray-700,
+  '800':  $gray-800,
+  '900':  $gray-900,
+  '1000': $black
+);
+
+$palette-pastel: (
+  'green':  $pastel-green,
+  'blue':   $pastel-blue,
+  'yellow': $pastel-yellow,
+  'red':    $pastel-red,
+  'orange': $pastel-orange,
+  'purple': $pastel-purple
 );
 
 // Misc

@@ -72,6 +72,12 @@ instance JSON.ReadForeign Cluster where
 instance JSON.WriteForeign Cluster where
   writeImpl (Cluster cl) = JSON.writeImpl $ Record.rename clustDefaultP clust_defaultP cl
 
+newtype ClusterCount = ClusterCount
+  { id    :: Int
+  , count :: Int
+  }
+derive instance Generic ClusterCount _
+derive instance Newtype ClusterCount _
 
 newtype Edge = Edge {
     confluence :: Number

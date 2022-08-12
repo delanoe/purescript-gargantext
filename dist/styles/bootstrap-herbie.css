@@ -6536,9 +6536,29 @@ a:focus {
   }
 }
 
+#app .w-auto,
+#portal .w-auto {
+  width: auto;
+}
+#app .w-inherit,
+#portal .w-inherit {
+  width: inherit;
+}
+#app .w-min-content,
+#portal .w-min-content {
+  width: min-content;
+}
+#app .w-max-content,
+#portal .w-max-content {
+  width: max-content;
+}
+#app .w-fit-content,
+#portal .w-fit-content {
+  width: fit-content;
+}
 #app .w-0,
 #portal .w-0 {
-  width: 0;
+  width: 0px;
 }
 #app .w-1,
 #portal .w-1 {
@@ -6560,21 +6580,153 @@ a:focus {
 #portal .w-5 {
   width: 40px;
 }
-#app .w-auto,
-#portal .w-auto {
-  width: auto;
+#app .w-6,
+#portal .w-6 {
+  width: 48px;
+}
+#app .w-7,
+#portal .w-7 {
+  width: 56px;
+}
+#app .w-8,
+#portal .w-8 {
+  width: 64px;
+}
+#app .w-9,
+#portal .w-9 {
+  width: 72px;
+}
+#app .w-10,
+#portal .w-10 {
+  width: 80px;
+}
+#app .w-0,
+#portal .w-0 {
+  width: 0;
 }
 #app .w-fluid,
 #portal .w-fluid {
   width: 100%;
 }
-#app .w-inherit,
-#portal .w-inherit {
-  width: inherit;
+#app .w-1\/2,
+#portal .w-1\/2 {
+  width: 50%;
+}
+#app .w-1\/3,
+#portal .w-1\/3 {
+  width: 33.333333%;
+}
+#app .w-2\/3,
+#portal .w-2\/3 {
+  width: 66.666667%;
+}
+#app .w-1\/4,
+#portal .w-1\/4 {
+  width: 25%;
+}
+#app .w-2\/4,
+#portal .w-2\/4 {
+  width: 50%;
+}
+#app .w-3\/4,
+#portal .w-3\/4 {
+  width: 75%;
+}
+#app .w-1\/5,
+#portal .w-1\/5 {
+  width: 20%;
+}
+#app .w-2\/5,
+#portal .w-2\/5 {
+  width: 40%;
+}
+#app .w-3\/5,
+#portal .w-3\/5 {
+  width: 60%;
+}
+#app .w-4\/5,
+#portal .w-4\/5 {
+  width: 80%;
+}
+#app .w-1\/6,
+#portal .w-1\/6 {
+  width: 16.666667%;
+}
+#app .w-2\/6,
+#portal .w-2\/6 {
+  width: 33.333333%;
+}
+#app .w-3\/6,
+#portal .w-3\/6 {
+  width: 50%;
+}
+#app .w-4\/6,
+#portal .w-4\/6 {
+  width: 66.666667%;
+}
+#app .w-5\/6,
+#portal .w-5\/6 {
+  width: 83.333333%;
+}
+#app .w-1\/12,
+#portal .w-1\/12 {
+  width: 8.333333%;
+}
+#app .w-2\/12,
+#portal .w-2\/12 {
+  width: 16.666667%;
+}
+#app .w-3\/12,
+#portal .w-3\/12 {
+  width: 25%;
+}
+#app .w-4\/12,
+#portal .w-4\/12 {
+  width: 33.333333%;
+}
+#app .w-5\/12,
+#portal .w-5\/12 {
+  width: 41.666667%;
+}
+#app .w-6\/12,
+#portal .w-6\/12 {
+  width: 50%;
+}
+#app .w-7\/12,
+#portal .w-7\/12 {
+  width: 58.333333%;
+}
+#app .w-8\/12,
+#portal .w-8\/12 {
+  width: 66.666667%;
+}
+#app .w-9\/12,
+#portal .w-9\/12 {
+  width: 75%;
+}
+#app .w-10\/12,
+#portal .w-10\/12 {
+  width: 83.333333%;
+}
+#app .w-11\/12,
+#portal .w-11\/12 {
+  width: 91.666667%;
+}
+#app .h-auto,
+#portal .h-auto {
+  height: auto;
+}
+#app .h-fluid,
+#portal .h-fluid {
+  height: 100%;
+}
+#app .h-inherit,
+#portal .h-inherit {
+  height: inherit;
 }
 #app .h-0,
 #portal .h-0 {
-  height: 0;
+  height: 0px;
 }
 #app .h-1,
 #portal .h-1 {
@@ -6596,67 +6748,99 @@ a:focus {
 #portal .h-5 {
   height: 40px;
 }
-#app .h-auto,
-#portal .h-auto {
-  height: auto;
+#app .h-6,
+#portal .h-6 {
+  height: 48px;
 }
-#app .h-fluid,
-#portal .h-fluid {
-  height: 100%;
+#app .h-7,
+#portal .h-7 {
+  height: 56px;
 }
-#app .h-inherit,
-#portal .h-inherit {
-  height: inherit;
+#app .h-8,
+#portal .h-8 {
+  height: 64px;
+}
+#app .h-9,
+#portal .h-9 {
+  height: 72px;
+}
+#app .h-10,
+#portal .h-10 {
+  height: 80px;
+}
+#app .ml-auto, #app .mx-auto,
+#portal .ml-auto,
+#portal .mx-auto {
+  margin-left: auto;
+}
+#app .mr-auto, #app .mx-auto,
+#portal .mr-auto,
+#portal .mx-auto {
+  margin-right: auto;
 }
 #app .m-0,
 #portal .m-0 {
-  margin: 0;
+  margin: 0px;
+}
+#app .mt-0,
+#portal .mt-0 {
+  margin-top: 0px;
+}
+#app .mr-0,
+#portal .mr-0 {
+  margin-right: 0px;
+}
+#app .mb-0,
+#portal .mb-0 {
+  margin-bottom: 0px;
+}
+#app .ml-0,
+#portal .ml-0 {
+  margin-left: 0px;
+}
+#app .mx-0,
+#portal .mx-0 {
+  margin-left: 0px;
+  margin-right: 0px;
+}
+#app .my-0,
+#portal .my-0 {
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+#app .m-0\.5,
+#portal .m-0\.5 {
+  margin: 4px;
+}
+#app .mt-0\.5,
+#portal .mt-0\.5 {
+  margin-top: 4px;
+}
+#app .mr-0\.5,
+#portal .mr-0\.5 {
+  margin-right: 4px;
+}
+#app .mb-0\.5,
+#portal .mb-0\.5 {
+  margin-bottom: 4px;
+}
+#app .ml-0\.5,
+#portal .ml-0\.5 {
+  margin-left: 4px;
+}
+#app .mx-0\.5,
+#portal .mx-0\.5 {
+  margin-left: 4px;
+  margin-right: 4px;
+}
+#app .my-0\.5,
+#portal .my-0\.5 {
+  margin-top: 4px;
+  margin-bottom: 4px;
 }
 #app .m-1,
 #portal .m-1 {
   margin: 8px;
-}
-#app .m-2,
-#portal .m-2 {
-  margin: 16px;
-}
-#app .m-3,
-#portal .m-3 {
-  margin: 24px;
-}
-#app .m-4,
-#portal .m-4 {
-  margin: 32px;
-}
-#app .m-5,
-#portal .m-5 {
-  margin: 40px;
-}
-#app .mt-0,
-#portal .mt-0 {
-  margin-top: 0;
-}
-#app .mr-0,
-#portal .mr-0 {
-  margin-right: 0;
-}
-#app .mb-0,
-#portal .mb-0 {
-  margin-bottom: 0;
-}
-#app .ml-0,
-#portal .ml-0 {
-  margin-left: 0;
-}
-#app .mx-0,
-#portal .mx-0 {
-  margin-left: 0;
-  margin-right: 0;
-}
-#app .my-0,
-#portal .my-0 {
-  margin-top: 0;
-  margin-bottom: 0;
 }
 #app .mt-1,
 #portal .mt-1 {
@@ -6684,6 +6868,40 @@ a:focus {
   margin-top: 8px;
   margin-bottom: 8px;
 }
+#app .m-1\.5,
+#portal .m-1\.5 {
+  margin: 12px;
+}
+#app .mt-1\.5,
+#portal .mt-1\.5 {
+  margin-top: 12px;
+}
+#app .mr-1\.5,
+#portal .mr-1\.5 {
+  margin-right: 12px;
+}
+#app .mb-1\.5,
+#portal .mb-1\.5 {
+  margin-bottom: 12px;
+}
+#app .ml-1\.5,
+#portal .ml-1\.5 {
+  margin-left: 12px;
+}
+#app .mx-1\.5,
+#portal .mx-1\.5 {
+  margin-left: 12px;
+  margin-right: 12px;
+}
+#app .my-1\.5,
+#portal .my-1\.5 {
+  margin-top: 12px;
+  margin-bottom: 12px;
+}
+#app .m-2,
+#portal .m-2 {
+  margin: 16px;
+}
 #app .mt-2,
 #portal .mt-2 {
   margin-top: 16px;
@@ -6702,13 +6920,47 @@ a:focus {
 }
 #app .mx-2,
 #portal .mx-2 {
-  margin-right: 16px;
   margin-left: 16px;
+  margin-right: 16px;
 }
 #app .my-2,
 #portal .my-2 {
   margin-top: 16px;
   margin-bottom: 16px;
+}
+#app .m-2\.5,
+#portal .m-2\.5 {
+  margin: 20px;
+}
+#app .mt-2\.5,
+#portal .mt-2\.5 {
+  margin-top: 20px;
+}
+#app .mr-2\.5,
+#portal .mr-2\.5 {
+  margin-right: 20px;
+}
+#app .mb-2\.5,
+#portal .mb-2\.5 {
+  margin-bottom: 20px;
+}
+#app .ml-2\.5,
+#portal .ml-2\.5 {
+  margin-left: 20px;
+}
+#app .mx-2\.5,
+#portal .mx-2\.5 {
+  margin-left: 20px;
+  margin-right: 20px;
+}
+#app .my-2\.5,
+#portal .my-2\.5 {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+#app .m-3,
+#portal .m-3 {
+  margin: 24px;
 }
 #app .mt-3,
 #portal .mt-3 {
@@ -6728,73 +6980,497 @@ a:focus {
 }
 #app .mx-3,
 #portal .mx-3 {
-  margin-right: 24px;
   margin-left: 24px;
+  margin-right: 24px;
 }
 #app .my-3,
 #portal .my-3 {
-  margin-bottom: 24px;
   margin-top: 24px;
+  margin-bottom: 24px;
 }
-#app .ml-auto, #app .mx-auto,
-#portal .ml-auto,
-#portal .mx-auto {
-  margin-left: auto;
+#app .m-3\.5,
+#portal .m-3\.5 {
+  margin: 28px;
 }
-#app .mr-auto, #app .mx-auto,
-#portal .mr-auto,
-#portal .mx-auto {
-  margin-right: auto;
+#app .mt-3\.5,
+#portal .mt-3\.5 {
+  margin-top: 28px;
+}
+#app .mr-3\.5,
+#portal .mr-3\.5 {
+  margin-right: 28px;
+}
+#app .mb-3\.5,
+#portal .mb-3\.5 {
+  margin-bottom: 28px;
+}
+#app .ml-3\.5,
+#portal .ml-3\.5 {
+  margin-left: 28px;
+}
+#app .mx-3\.5,
+#portal .mx-3\.5 {
+  margin-left: 28px;
+  margin-right: 28px;
+}
+#app .my-3\.5,
+#portal .my-3\.5 {
+  margin-top: 28px;
+  margin-bottom: 28px;
+}
+#app .m-4,
+#portal .m-4 {
+  margin: 32px;
+}
+#app .mt-4,
+#portal .mt-4 {
+  margin-top: 32px;
+}
+#app .mr-4,
+#portal .mr-4 {
+  margin-right: 32px;
+}
+#app .mb-4,
+#portal .mb-4 {
+  margin-bottom: 32px;
+}
+#app .ml-4,
+#portal .ml-4 {
+  margin-left: 32px;
+}
+#app .mx-4,
+#portal .mx-4 {
+  margin-left: 32px;
+  margin-right: 32px;
+}
+#app .my-4,
+#portal .my-4 {
+  margin-top: 32px;
+  margin-bottom: 32px;
+}
+#app .m-4\.5,
+#portal .m-4\.5 {
+  margin: 36px;
+}
+#app .mt-4\.5,
+#portal .mt-4\.5 {
+  margin-top: 36px;
+}
+#app .mr-4\.5,
+#portal .mr-4\.5 {
+  margin-right: 36px;
+}
+#app .mb-4\.5,
+#portal .mb-4\.5 {
+  margin-bottom: 36px;
+}
+#app .ml-4\.5,
+#portal .ml-4\.5 {
+  margin-left: 36px;
+}
+#app .mx-4\.5,
+#portal .mx-4\.5 {
+  margin-left: 36px;
+  margin-right: 36px;
+}
+#app .my-4\.5,
+#portal .my-4\.5 {
+  margin-top: 36px;
+  margin-bottom: 36px;
+}
+#app .m-5,
+#portal .m-5 {
+  margin: 40px;
+}
+#app .mt-5,
+#portal .mt-5 {
+  margin-top: 40px;
+}
+#app .mr-5,
+#portal .mr-5 {
+  margin-right: 40px;
+}
+#app .mb-5,
+#portal .mb-5 {
+  margin-bottom: 40px;
+}
+#app .ml-5,
+#portal .ml-5 {
+  margin-left: 40px;
+}
+#app .mx-5,
+#portal .mx-5 {
+  margin-left: 40px;
+  margin-right: 40px;
+}
+#app .my-5,
+#portal .my-5 {
+  margin-top: 40px;
+  margin-bottom: 40px;
+}
+#app .m-5\.5,
+#portal .m-5\.5 {
+  margin: 44px;
+}
+#app .mt-5\.5,
+#portal .mt-5\.5 {
+  margin-top: 44px;
+}
+#app .mr-5\.5,
+#portal .mr-5\.5 {
+  margin-right: 44px;
+}
+#app .mb-5\.5,
+#portal .mb-5\.5 {
+  margin-bottom: 44px;
+}
+#app .ml-5\.5,
+#portal .ml-5\.5 {
+  margin-left: 44px;
+}
+#app .mx-5\.5,
+#portal .mx-5\.5 {
+  margin-left: 44px;
+  margin-right: 44px;
+}
+#app .my-5\.5,
+#portal .my-5\.5 {
+  margin-top: 44px;
+  margin-bottom: 44px;
+}
+#app .m-6,
+#portal .m-6 {
+  margin: 48px;
+}
+#app .mt-6,
+#portal .mt-6 {
+  margin-top: 48px;
+}
+#app .mr-6,
+#portal .mr-6 {
+  margin-right: 48px;
+}
+#app .mb-6,
+#portal .mb-6 {
+  margin-bottom: 48px;
+}
+#app .ml-6,
+#portal .ml-6 {
+  margin-left: 48px;
+}
+#app .mx-6,
+#portal .mx-6 {
+  margin-left: 48px;
+  margin-right: 48px;
+}
+#app .my-6,
+#portal .my-6 {
+  margin-top: 48px;
+  margin-bottom: 48px;
+}
+#app .m-6\.5,
+#portal .m-6\.5 {
+  margin: 52px;
+}
+#app .mt-6\.5,
+#portal .mt-6\.5 {
+  margin-top: 52px;
+}
+#app .mr-6\.5,
+#portal .mr-6\.5 {
+  margin-right: 52px;
+}
+#app .mb-6\.5,
+#portal .mb-6\.5 {
+  margin-bottom: 52px;
+}
+#app .ml-6\.5,
+#portal .ml-6\.5 {
+  margin-left: 52px;
+}
+#app .mx-6\.5,
+#portal .mx-6\.5 {
+  margin-left: 52px;
+  margin-right: 52px;
+}
+#app .my-6\.5,
+#portal .my-6\.5 {
+  margin-top: 52px;
+  margin-bottom: 52px;
+}
+#app .m-7,
+#portal .m-7 {
+  margin: 56px;
+}
+#app .mt-7,
+#portal .mt-7 {
+  margin-top: 56px;
+}
+#app .mr-7,
+#portal .mr-7 {
+  margin-right: 56px;
+}
+#app .mb-7,
+#portal .mb-7 {
+  margin-bottom: 56px;
+}
+#app .ml-7,
+#portal .ml-7 {
+  margin-left: 56px;
+}
+#app .mx-7,
+#portal .mx-7 {
+  margin-left: 56px;
+  margin-right: 56px;
+}
+#app .my-7,
+#portal .my-7 {
+  margin-top: 56px;
+  margin-bottom: 56px;
+}
+#app .m-7\.5,
+#portal .m-7\.5 {
+  margin: 60px;
+}
+#app .mt-7\.5,
+#portal .mt-7\.5 {
+  margin-top: 60px;
+}
+#app .mr-7\.5,
+#portal .mr-7\.5 {
+  margin-right: 60px;
+}
+#app .mb-7\.5,
+#portal .mb-7\.5 {
+  margin-bottom: 60px;
+}
+#app .ml-7\.5,
+#portal .ml-7\.5 {
+  margin-left: 60px;
+}
+#app .mx-7\.5,
+#portal .mx-7\.5 {
+  margin-left: 60px;
+  margin-right: 60px;
+}
+#app .my-7\.5,
+#portal .my-7\.5 {
+  margin-top: 60px;
+  margin-bottom: 60px;
+}
+#app .m-8,
+#portal .m-8 {
+  margin: 64px;
+}
+#app .mt-8,
+#portal .mt-8 {
+  margin-top: 64px;
+}
+#app .mr-8,
+#portal .mr-8 {
+  margin-right: 64px;
+}
+#app .mb-8,
+#portal .mb-8 {
+  margin-bottom: 64px;
+}
+#app .ml-8,
+#portal .ml-8 {
+  margin-left: 64px;
+}
+#app .mx-8,
+#portal .mx-8 {
+  margin-left: 64px;
+  margin-right: 64px;
+}
+#app .my-8,
+#portal .my-8 {
+  margin-top: 64px;
+  margin-bottom: 64px;
+}
+#app .m-8\.5,
+#portal .m-8\.5 {
+  margin: 68px;
+}
+#app .mt-8\.5,
+#portal .mt-8\.5 {
+  margin-top: 68px;
+}
+#app .mr-8\.5,
+#portal .mr-8\.5 {
+  margin-right: 68px;
+}
+#app .mb-8\.5,
+#portal .mb-8\.5 {
+  margin-bottom: 68px;
+}
+#app .ml-8\.5,
+#portal .ml-8\.5 {
+  margin-left: 68px;
+}
+#app .mx-8\.5,
+#portal .mx-8\.5 {
+  margin-left: 68px;
+  margin-right: 68px;
+}
+#app .my-8\.5,
+#portal .my-8\.5 {
+  margin-top: 68px;
+  margin-bottom: 68px;
+}
+#app .m-9,
+#portal .m-9 {
+  margin: 72px;
+}
+#app .mt-9,
+#portal .mt-9 {
+  margin-top: 72px;
+}
+#app .mr-9,
+#portal .mr-9 {
+  margin-right: 72px;
+}
+#app .mb-9,
+#portal .mb-9 {
+  margin-bottom: 72px;
+}
+#app .ml-9,
+#portal .ml-9 {
+  margin-left: 72px;
+}
+#app .mx-9,
+#portal .mx-9 {
+  margin-left: 72px;
+  margin-right: 72px;
+}
+#app .my-9,
+#portal .my-9 {
+  margin-top: 72px;
+  margin-bottom: 72px;
+}
+#app .m-9\.5,
+#portal .m-9\.5 {
+  margin: 76px;
+}
+#app .mt-9\.5,
+#portal .mt-9\.5 {
+  margin-top: 76px;
+}
+#app .mr-9\.5,
+#portal .mr-9\.5 {
+  margin-right: 76px;
+}
+#app .mb-9\.5,
+#portal .mb-9\.5 {
+  margin-bottom: 76px;
+}
+#app .ml-9\.5,
+#portal .ml-9\.5 {
+  margin-left: 76px;
+}
+#app .mx-9\.5,
+#portal .mx-9\.5 {
+  margin-left: 76px;
+  margin-right: 76px;
+}
+#app .my-9\.5,
+#portal .my-9\.5 {
+  margin-top: 76px;
+  margin-bottom: 76px;
+}
+#app .m-10,
+#portal .m-10 {
+  margin: 80px;
+}
+#app .mt-10,
+#portal .mt-10 {
+  margin-top: 80px;
+}
+#app .mr-10,
+#portal .mr-10 {
+  margin-right: 80px;
+}
+#app .mb-10,
+#portal .mb-10 {
+  margin-bottom: 80px;
+}
+#app .ml-10,
+#portal .ml-10 {
+  margin-left: 80px;
+}
+#app .mx-10,
+#portal .mx-10 {
+  margin-left: 80px;
+  margin-right: 80px;
+}
+#app .my-10,
+#portal .my-10 {
+  margin-top: 80px;
+  margin-bottom: 80px;
+}
+#app .m-10\.5,
+#portal .m-10\.5 {
+  margin: 84px;
+}
+#app .mt-10\.5,
+#portal .mt-10\.5 {
+  margin-top: 84px;
+}
+#app .mr-10\.5,
+#portal .mr-10\.5 {
+  margin-right: 84px;
+}
+#app .mb-10\.5,
+#portal .mb-10\.5 {
+  margin-bottom: 84px;
+}
+#app .ml-10\.5,
+#portal .ml-10\.5 {
+  margin-left: 84px;
+}
+#app .mx-10\.5,
+#portal .mx-10\.5 {
+  margin-left: 84px;
+  margin-right: 84px;
+}
+#app .my-10\.5,
+#portal .my-10\.5 {
+  margin-top: 84px;
+  margin-bottom: 84px;
 }
 #app .p-0,
 #portal .p-0 {
-  padding: 0;
+  padding: 0px;
+}
+#app .pt-0,
+#portal .pt-0 {
+  padding-top: 0px;
+}
+#app .pr-0,
+#portal .pr-0 {
+  padding-right: 0px;
+}
+#app .pb-0,
+#portal .pb-0 {
+  padding-bottom: 0px;
+}
+#app .pl-0,
+#portal .pl-0 {
+  padding-left: 0px;
+}
+#app .px-0,
+#portal .px-0 {
+  padding-left: 0px;
+  padding-right: 0px;
+}
+#app .py-0,
+#portal .py-0 {
+  padding-top: 0px;
+  padding-bottom: 0px;
 }
 #app .p-1,
 #portal .p-1 {
   padding: 8px;
-}
-#app .p-2,
-#portal .p-2 {
-  padding: 16px;
-}
-#app .p-3,
-#portal .p-3 {
-  padding: 24px;
-}
-#app .p-4,
-#portal .p-4 {
-  padding: 32px;
-}
-#app .p-5,
-#portal .p-5 {
-  padding: 40px;
-}
-#app .pt-0,
-#portal .pt-0 {
-  padding-top: 0;
-}
-#app .pr-0,
-#portal .pr-0 {
-  padding-right: 0;
-}
-#app .pb-0,
-#portal .pb-0 {
-  padding-bottom: 0;
-}
-#app .pl-0,
-#portal .pl-0 {
-  padding-left: 0;
-}
-#app .px-0,
-#portal .px-0 {
-  padding-left: 0;
-  padding-right: 0;
-}
-#app .py-0,
-#portal .py-0 {
-  padding-top: 0;
-  padding-bottom: 0;
 }
 #app .pt-1,
 #portal .pt-1 {
@@ -6822,6 +7498,10 @@ a:focus {
   padding-top: 8px;
   padding-bottom: 8px;
 }
+#app .p-2,
+#portal .p-2 {
+  padding: 16px;
+}
 #app .pt-2,
 #portal .pt-2 {
   padding-top: 16px;
@@ -6840,13 +7520,17 @@ a:focus {
 }
 #app .px-2,
 #portal .px-2 {
-  padding-right: 16px;
   padding-left: 16px;
+  padding-right: 16px;
 }
 #app .py-2,
 #portal .py-2 {
   padding-top: 16px;
   padding-bottom: 16px;
+}
+#app .p-3,
+#portal .p-3 {
+  padding: 24px;
 }
 #app .pt-3,
 #portal .pt-3 {
@@ -6866,13 +7550,223 @@ a:focus {
 }
 #app .px-3,
 #portal .px-3 {
-  padding-right: 24px;
   padding-left: 24px;
+  padding-right: 24px;
 }
 #app .py-3,
 #portal .py-3 {
-  padding-bottom: 24px;
   padding-top: 24px;
+  padding-bottom: 24px;
+}
+#app .p-4,
+#portal .p-4 {
+  padding: 32px;
+}
+#app .pt-4,
+#portal .pt-4 {
+  padding-top: 32px;
+}
+#app .pr-4,
+#portal .pr-4 {
+  padding-right: 32px;
+}
+#app .pb-4,
+#portal .pb-4 {
+  padding-bottom: 32px;
+}
+#app .pl-4,
+#portal .pl-4 {
+  padding-left: 32px;
+}
+#app .px-4,
+#portal .px-4 {
+  padding-left: 32px;
+  padding-right: 32px;
+}
+#app .py-4,
+#portal .py-4 {
+  padding-top: 32px;
+  padding-bottom: 32px;
+}
+#app .p-5,
+#portal .p-5 {
+  padding: 40px;
+}
+#app .pt-5,
+#portal .pt-5 {
+  padding-top: 40px;
+}
+#app .pr-5,
+#portal .pr-5 {
+  padding-right: 40px;
+}
+#app .pb-5,
+#portal .pb-5 {
+  padding-bottom: 40px;
+}
+#app .pl-5,
+#portal .pl-5 {
+  padding-left: 40px;
+}
+#app .px-5,
+#portal .px-5 {
+  padding-left: 40px;
+  padding-right: 40px;
+}
+#app .py-5,
+#portal .py-5 {
+  padding-top: 40px;
+  padding-bottom: 40px;
+}
+#app .p-6,
+#portal .p-6 {
+  padding: 48px;
+}
+#app .pt-6,
+#portal .pt-6 {
+  padding-top: 48px;
+}
+#app .pr-6,
+#portal .pr-6 {
+  padding-right: 48px;
+}
+#app .pb-6,
+#portal .pb-6 {
+  padding-bottom: 48px;
+}
+#app .pl-6,
+#portal .pl-6 {
+  padding-left: 48px;
+}
+#app .px-6,
+#portal .px-6 {
+  padding-left: 48px;
+  padding-right: 48px;
+}
+#app .py-6,
+#portal .py-6 {
+  padding-top: 48px;
+  padding-bottom: 48px;
+}
+#app .p-7,
+#portal .p-7 {
+  padding: 56px;
+}
+#app .pt-7,
+#portal .pt-7 {
+  padding-top: 56px;
+}
+#app .pr-7,
+#portal .pr-7 {
+  padding-right: 56px;
+}
+#app .pb-7,
+#portal .pb-7 {
+  padding-bottom: 56px;
+}
+#app .pl-7,
+#portal .pl-7 {
+  padding-left: 56px;
+}
+#app .px-7,
+#portal .px-7 {
+  padding-left: 56px;
+  padding-right: 56px;
+}
+#app .py-7,
+#portal .py-7 {
+  padding-top: 56px;
+  padding-bottom: 56px;
+}
+#app .p-8,
+#portal .p-8 {
+  padding: 64px;
+}
+#app .pt-8,
+#portal .pt-8 {
+  padding-top: 64px;
+}
+#app .pr-8,
+#portal .pr-8 {
+  padding-right: 64px;
+}
+#app .pb-8,
+#portal .pb-8 {
+  padding-bottom: 64px;
+}
+#app .pl-8,
+#portal .pl-8 {
+  padding-left: 64px;
+}
+#app .px-8,
+#portal .px-8 {
+  padding-left: 64px;
+  padding-right: 64px;
+}
+#app .py-8,
+#portal .py-8 {
+  padding-top: 64px;
+  padding-bottom: 64px;
+}
+#app .p-9,
+#portal .p-9 {
+  padding: 72px;
+}
+#app .pt-9,
+#portal .pt-9 {
+  padding-top: 72px;
+}
+#app .pr-9,
+#portal .pr-9 {
+  padding-right: 72px;
+}
+#app .pb-9,
+#portal .pb-9 {
+  padding-bottom: 72px;
+}
+#app .pl-9,
+#portal .pl-9 {
+  padding-left: 72px;
+}
+#app .px-9,
+#portal .px-9 {
+  padding-left: 72px;
+  padding-right: 72px;
+}
+#app .py-9,
+#portal .py-9 {
+  padding-top: 72px;
+  padding-bottom: 72px;
+}
+#app .p-10,
+#portal .p-10 {
+  padding: 80px;
+}
+#app .pt-10,
+#portal .pt-10 {
+  padding-top: 80px;
+}
+#app .pr-10,
+#portal .pr-10 {
+  padding-right: 80px;
+}
+#app .pb-10,
+#portal .pb-10 {
+  padding-bottom: 80px;
+}
+#app .pl-10,
+#portal .pl-10 {
+  padding-left: 80px;
+}
+#app .px-10,
+#portal .px-10 {
+  padding-left: 80px;
+  padding-right: 80px;
+}
+#app .py-10,
+#portal .py-10 {
+  padding-top: 80px;
+  padding-bottom: 80px;
 }
 #app .d-none,
 #portal .d-none {
@@ -6938,38 +7832,6 @@ a:focus {
 #portal .overflow-hidden {
   overflow: hidden;
 }
-#app .text-primary,
-#portal .text-primary {
-  color: #083358;
-}
-#app .text-secondary,
-#portal .text-secondary {
-  color: #F67280;
-}
-#app .text-info,
-#portal .text-info {
-  color: #74DBEF;
-}
-#app .text-success,
-#portal .text-success {
-  color: #0074E4;
-}
-#app .text-warning,
-#portal .text-warning {
-  color: #FC3C3C;
-}
-#app .text-danger,
-#portal .text-danger {
-  color: #FF4057;
-}
-#app .text-dark,
-#portal .text-dark {
-  color: #072247;
-}
-#app .text-light,
-#portal .text-light {
-  color: #F2F2F0;
-}
 #app .text-bold,
 #portal .text-bold {
   font-weight: bold;
@@ -7022,6 +7884,254 @@ a:focus {
 #portal .text-decoration-underline {
   text-decoration: underline;
 }
+#app .font-size-5,
+#portal .font-size-5 {
+  font-size: 5%;
+}
+#app .font-size-10,
+#portal .font-size-10 {
+  font-size: 10%;
+}
+#app .font-size-15,
+#portal .font-size-15 {
+  font-size: 15%;
+}
+#app .font-size-20,
+#portal .font-size-20 {
+  font-size: 20%;
+}
+#app .font-size-25,
+#portal .font-size-25 {
+  font-size: 25%;
+}
+#app .font-size-30,
+#portal .font-size-30 {
+  font-size: 30%;
+}
+#app .font-size-35,
+#portal .font-size-35 {
+  font-size: 35%;
+}
+#app .font-size-40,
+#portal .font-size-40 {
+  font-size: 40%;
+}
+#app .font-size-45,
+#portal .font-size-45 {
+  font-size: 45%;
+}
+#app .font-size-50,
+#portal .font-size-50 {
+  font-size: 50%;
+}
+#app .font-size-55,
+#portal .font-size-55 {
+  font-size: 55%;
+}
+#app .font-size-60,
+#portal .font-size-60 {
+  font-size: 60%;
+}
+#app .font-size-65,
+#portal .font-size-65 {
+  font-size: 65%;
+}
+#app .font-size-70,
+#portal .font-size-70 {
+  font-size: 70%;
+}
+#app .font-size-75,
+#portal .font-size-75 {
+  font-size: 75%;
+}
+#app .font-size-80,
+#portal .font-size-80 {
+  font-size: 80%;
+}
+#app .font-size-85,
+#portal .font-size-85 {
+  font-size: 85%;
+}
+#app .font-size-90,
+#portal .font-size-90 {
+  font-size: 90%;
+}
+#app .font-size-95,
+#portal .font-size-95 {
+  font-size: 95%;
+}
+#app .font-size-100,
+#portal .font-size-100 {
+  font-size: 100%;
+}
+#app .font-size-105,
+#portal .font-size-105 {
+  font-size: 105%;
+}
+#app .font-size-110,
+#portal .font-size-110 {
+  font-size: 110%;
+}
+#app .font-size-115,
+#portal .font-size-115 {
+  font-size: 115%;
+}
+#app .font-size-120,
+#portal .font-size-120 {
+  font-size: 120%;
+}
+#app .font-size-125,
+#portal .font-size-125 {
+  font-size: 125%;
+}
+#app .font-size-130,
+#portal .font-size-130 {
+  font-size: 130%;
+}
+#app .font-size-135,
+#portal .font-size-135 {
+  font-size: 135%;
+}
+#app .font-size-140,
+#portal .font-size-140 {
+  font-size: 140%;
+}
+#app .font-size-145,
+#portal .font-size-145 {
+  font-size: 145%;
+}
+#app .font-size-150,
+#portal .font-size-150 {
+  font-size: 150%;
+}
+#app .font-size-155,
+#portal .font-size-155 {
+  font-size: 155%;
+}
+#app .font-size-160,
+#portal .font-size-160 {
+  font-size: 160%;
+}
+#app .font-size-165,
+#portal .font-size-165 {
+  font-size: 165%;
+}
+#app .font-size-170,
+#portal .font-size-170 {
+  font-size: 170%;
+}
+#app .font-size-175,
+#portal .font-size-175 {
+  font-size: 175%;
+}
+#app .font-size-180,
+#portal .font-size-180 {
+  font-size: 180%;
+}
+#app .font-size-185,
+#portal .font-size-185 {
+  font-size: 185%;
+}
+#app .font-size-190,
+#portal .font-size-190 {
+  font-size: 190%;
+}
+#app .font-size-195,
+#portal .font-size-195 {
+  font-size: 195%;
+}
+#app .font-size-200,
+#portal .font-size-200 {
+  font-size: 200%;
+}
+#app .line-height-normal,
+#portal .line-height-normal {
+  line-height: normal;
+}
+#app .line-height-inherit,
+#portal .line-height-inherit {
+  line-height: normal;
+}
+#app .line-height-1,
+#portal .line-height-1 {
+  line-height: 0;
+}
+#app .line-height-2,
+#portal .line-height-2 {
+  line-height: 0;
+}
+#app .line-height-3,
+#portal .line-height-3 {
+  line-height: 0;
+}
+#app .line-height-4,
+#portal .line-height-4 {
+  line-height: 0;
+}
+#app .line-height-5,
+#portal .line-height-5 {
+  line-height: 0;
+}
+#app .line-height-6,
+#portal .line-height-6 {
+  line-height: 0;
+}
+#app .line-height-7,
+#portal .line-height-7 {
+  line-height: 0;
+}
+#app .line-height-8,
+#portal .line-height-8 {
+  line-height: 0;
+}
+#app .line-height-9,
+#portal .line-height-9 {
+  line-height: 0;
+}
+#app .line-height-10,
+#portal .line-height-10 {
+  line-height: 0;
+}
+#app .line-height-11,
+#portal .line-height-11 {
+  line-height: 0;
+}
+#app .line-height-12,
+#portal .line-height-12 {
+  line-height: 0;
+}
+#app .line-height-13,
+#portal .line-height-13 {
+  line-height: 0;
+}
+#app .line-height-14,
+#portal .line-height-14 {
+  line-height: 0;
+}
+#app .line-height-15,
+#portal .line-height-15 {
+  line-height: 0;
+}
+#app .line-height-16,
+#portal .line-height-16 {
+  line-height: 0;
+}
+#app .line-height-17,
+#portal .line-height-17 {
+  line-height: 0;
+}
+#app .line-height-18,
+#portal .line-height-18 {
+  line-height: 0;
+}
+#app .line-height-19,
+#portal .line-height-19 {
+  line-height: 0;
+}
+#app .line-height-20,
+#portal .line-height-20 {
+  line-height: 0;
+}
 #app .align-baseline,
 #portal .align-baseline {
   vertical-align: baseline;
@@ -7046,6 +8156,146 @@ a:focus {
 #portal .align-text-top {
   vertical-align: text-top;
 }
+#app .text-white,
+#app .color-white,
+#portal .text-white,
+#portal .color-white {
+  color: #FFFFFF;
+}
+#app .text-black,
+#app .color-black,
+#portal .text-black,
+#portal .color-black {
+  color: #000000;
+}
+#app .text-primary,
+#app .color-primary,
+#portal .text-primary,
+#portal .color-primary {
+  color: #083358;
+}
+#app .text-secondary,
+#app .color-secondary,
+#portal .text-secondary,
+#portal .color-secondary {
+  color: #F67280;
+}
+#app .text-success,
+#app .color-success,
+#portal .text-success,
+#portal .color-success {
+  color: #0074E4;
+}
+#app .text-info,
+#app .color-info,
+#portal .text-info,
+#portal .color-info {
+  color: #74DBEF;
+}
+#app .text-warning,
+#app .color-warning,
+#portal .text-warning,
+#portal .color-warning {
+  color: #FC3C3C;
+}
+#app .text-danger,
+#app .color-danger,
+#portal .text-danger,
+#portal .color-danger {
+  color: #FF4057;
+}
+#app .text-light,
+#app .color-light,
+#portal .text-light,
+#portal .color-light {
+  color: #F2F2F0;
+}
+#app .text-dark,
+#app .color-dark,
+#portal .text-dark,
+#portal .color-dark {
+  color: #072247;
+}
+#app .color-gray-0,
+#portal .color-gray-0 {
+  color: #FFFFFF;
+}
+#app .color-gray-50,
+#portal .color-gray-50 {
+  color: #FCFCFC;
+}
+#app .color-gray-100,
+#portal .color-gray-100 {
+  color: #F8F9FA;
+}
+#app .color-gray-150,
+#portal .color-gray-150 {
+  color: #FAFAFA;
+}
+#app .color-gray-175,
+#portal .color-gray-175 {
+  color: #F0F0F0;
+}
+#app .color-gray-200,
+#portal .color-gray-200 {
+  color: #E9ECEF;
+}
+#app .color-gray-300,
+#portal .color-gray-300 {
+  color: #DEE2E6;
+}
+#app .color-gray-400,
+#portal .color-gray-400 {
+  color: #CED4DA;
+}
+#app .color-gray-500,
+#portal .color-gray-500 {
+  color: #ADB5BD;
+}
+#app .color-gray-600,
+#portal .color-gray-600 {
+  color: #6C757D;
+}
+#app .color-gray-700,
+#portal .color-gray-700 {
+  color: #495057;
+}
+#app .color-gray-800,
+#portal .color-gray-800 {
+  color: #343A40;
+}
+#app .color-gray-900,
+#portal .color-gray-900 {
+  color: #212529;
+}
+#app .color-gray-1000,
+#portal .color-gray-1000 {
+  color: #000000;
+}
+#app .color-pastel-green,
+#portal .color-pastel-green {
+  color: #389967;
+}
+#app .color-pastel-blue,
+#portal .color-pastel-blue {
+  color: #6c91ac;
+}
+#app .color-pastel-yellow,
+#portal .color-pastel-yellow {
+  color: #ffff6b;
+}
+#app .color-pastel-red,
+#portal .color-pastel-red {
+  color: #d55e58;
+}
+#app .color-pastel-orange,
+#portal .color-pastel-orange {
+  color: #f8d287;
+}
+#app .color-pastel-purple,
+#portal .color-pastel-purple {
+  color: #c0b0c9;
+}
 #app .bg-white,
 #portal .bg-white {
   background-color: #FFFFFF;
@@ -7066,13 +8316,13 @@ a:focus {
 #portal .bg-secondary {
   background-color: #F67280;
 }
-#app .bg-info,
-#portal .bg-info {
-  background-color: #74DBEF;
-}
 #app .bg-success,
 #portal .bg-success {
   background-color: #0074E4;
+}
+#app .bg-info,
+#portal .bg-info {
+  background-color: #74DBEF;
 }
 #app .bg-warning,
 #portal .bg-warning {
@@ -7082,13 +8332,13 @@ a:focus {
 #portal .bg-danger {
   background-color: #FF4057;
 }
-#app .bg-dark,
-#portal .bg-dark {
-  background-color: #072247;
-}
 #app .bg-light,
 #portal .bg-light {
   background-color: #F2F2F0;
+}
+#app .bg-dark,
+#portal .bg-dark {
+  background-color: #072247;
 }
 #app .border-0,
 #portal .border-0 {
@@ -7109,6 +8359,38 @@ a:focus {
 #app .border-left-0,
 #portal .border-left-0 {
   border-left: 0;
+}
+#app .border-primary,
+#portal .border-primary {
+  border-color: #083358;
+}
+#app .border-secondary,
+#portal .border-secondary {
+  border-color: #F67280;
+}
+#app .border-success,
+#portal .border-success {
+  border-color: #0074E4;
+}
+#app .border-info,
+#portal .border-info {
+  border-color: #74DBEF;
+}
+#app .border-warning,
+#portal .border-warning {
+  border-color: #FC3C3C;
+}
+#app .border-danger,
+#portal .border-danger {
+  border-color: #FF4057;
+}
+#app .border-light,
+#portal .border-light {
+  border-color: #F2F2F0;
+}
+#app .border-dark,
+#portal .border-dark {
+  border-color: #072247;
 }
 #app .rounded-circle,
 #portal .rounded-circle {
@@ -7725,8 +9007,19 @@ input[type=range]:-moz-focusring {
 }
 
 .graph-legend__item {
+  display: flex;
+  align-items: baseline;
   list-style: none;
-  margin-bottom: 6px;
+  position: relative;
+}
+.graph-legend__item:not(:first-child) {
+  margin-top: 24px;
+}
+.graph-legend__title {
+  color: #343A40;
+  font-size: 15px;
+  font-weight: bold;
+  margin-bottom: 2px;
 }
 .graph-legend__code {
   width: 24px;
@@ -7735,8 +9028,29 @@ input[type=range]:-moz-focusring {
   margin-right: 20px;
   border: 1px solid #ADB5BD;
 }
-.graph-legend__caption {
-  vertical-align: top;
+
+.graph-legend-nodes__item {
+  display: inline-block;
+}
+.graph-legend-nodes__item:first-child {
+  margin-top: 6px;
+}
+.graph-legend-nodes__item:not(:last-child) {
+  margin-bottom: 4px;
+  margin-right: 4px;
+}
+.graph-legend-nodes__item--count {
+  color: #343A40;
+  font-size: 12px;
+  font-weight: bold;
+}
+.graph-legend-nodes__badge {
+  font-size: 13px;
+  white-space: normal;
+  word-break: break-word;
+}
+.graph-legend-nodes__badge--selected {
+  background-color: #dadad5;
 }
 
 .graph-documentation__text-section {

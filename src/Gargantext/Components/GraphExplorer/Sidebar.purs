@@ -27,9 +27,10 @@ import Gargantext.Components.GraphExplorer.Sidebar.DocList (docListWrapper)
 import Gargantext.Components.GraphExplorer.Sidebar.Legend as Legend
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Components.GraphExplorer.Utils as GEU
 import Gargantext.Components.Lang (Lang(..))
-import Gargantext.Core.NgramsTable.Functions as NTC
 import Gargantext.Config.REST (AffRESTError)
+import Gargantext.Core.NgramsTable.Functions as NTC
 import Gargantext.Core.NgramsTable.Types as CNT
 import Gargantext.Data.Array (mapMaybe)
 import Gargantext.Ends (Frontends)
@@ -37,7 +38,7 @@ import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, FrontendError(..), NodeID, TabSubType(..), TabType(..), TermList(..), modeTabType)
-import Gargantext.Utils (nbsp, setter, (?))
+import Gargantext.Utils (getter, nbsp, setter, (?))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Math as Math
@@ -101,15 +102,53 @@ sideTabLegend :: R2.Leaf Props
 sideTabLegend = R2.leaf sideTabLegendCpt
 
 sideTabLegendCpt :: R.Component Props
-sideTabLegendCpt = here.component "sideTabLegend" cpt
-  where
-    cpt { metaData: GET.MetaData { legend } } _ = pure $
+sideTabLegendCpt = here.component "sideTabLegend" cpt where
+  cpt { metaData: GET.MetaData { legend } } _ = do
+    -- | States
+    -- |
+    store <- GraphStore.use
+
+    hyperdataGraph
+      <- R2.useLive' store.hyperdataGraph
+
+    -- | Computed
+    -- |
+    let
+      maxItemPerCluster = 4
+
+    -- | Hooks
+    -- |
+
+    -- For each provided Cluster (see Legend), extract the greatest nodes
+    extractedNodeList <- R.useMemo1 hyperdataGraph $ const $
+      flip A.foldMap legend
+      (   getter _.id_
+      >>> GEU.takeGreatestNodeByCluster
+            hyperdataGraph
+            maxItemPerCluster
+      )
+
+    -- For each provided Cluster (see Legend), count the number of nodes
+    nodeCountList <- R.useMemo1 hyperdataGraph $ const $
+      flip A.foldMap legend
+      (   getter _.id_
+      >>> GEU.countNodeByCluster hyperdataGraph
+      >>> A.singleton
+      )
+
+    -- | Render
+    -- |
+    pure $
 
       H.div
       { className: "graph-sidebar__legend-tab" }
       [
         Legend.legend
-        { items: Seq.fromFoldable legend }
+        { legendSeq: Seq.fromFoldable legend
+        , extractedNodeList
+        , nodeCountList
+        , selectedNodeIds: store.selectedNodeIds
+        }
       ,
         H.hr {}
       ,
