@@ -24,7 +24,6 @@ let overrides =
           , "exceptions"
           , "foldable-traversable"
           , "foreign"
-          , "foreign-generic"
           , "foreign-object"
           , "functions"
           , "halogen-subscriptions"
