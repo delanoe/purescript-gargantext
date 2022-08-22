@@ -142,8 +142,19 @@
   $legend-code-height: 12px
 
   &__item
+    display: flex
+    align-items: baseline
     list-style: none
-    margin-bottom: space-x(0.75)
+    position: relative
+
+    &:not(:first-child)
+      margin-top: space-x(3)
+
+  &__title
+    color: $gray-800
+    font-size: 15px
+    font-weight: bold
+    margin-bottom: space-x(0.25)
 
   &__code
     width: $legend-code-width
@@ -152,8 +163,32 @@
     margin-right: space-x(2.5)
     border: 1px solid $gray-500
 
-  &__caption
-    vertical-align: top
+
+.graph-legend-nodes
+
+  &__item
+    display: inline-block
+
+    &:first-child
+      margin-top: space-x(0.75)
+
+    &:not(:last-child)
+      margin-bottom: space-x(0.5)
+      margin-right: space-x(0.5)
+
+    &--count
+      color: $gray-800
+      font-size: 12px
+      font-weight: bold
+
+
+  &__badge
+    font-size: 13px
+    white-space: normal
+    word-break: break-word
+
+    &--selected
+      background-color: darken($light, 10%) // from Bootstrap "_badge.scss"
 
 
 .graph-documentation
