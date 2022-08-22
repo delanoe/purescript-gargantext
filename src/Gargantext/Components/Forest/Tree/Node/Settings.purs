@@ -16,6 +16,7 @@ data NodeAction = Documentation NodeType
                 | Download | Upload | Refresh | Config
                 | Delete
                 | Share
+                | ManageTeam
                 | Publish { subTreeParams :: SubTreeParams }
                 | Add    (Array NodeType)
                 | Merge { subTreeParams :: SubTreeParams }
@@ -37,6 +38,7 @@ instance Eq NodeAction where
   eq Clone Clone                             = true
   eq Delete Delete                           = true
   eq Share Share                             = true
+  eq ManageTeam ManageTeam                   = true
   eq (Link x) (Link y)                       = x == y
   eq (Add  x) (Add  y)                       = x == y
   eq (Merge x) (Merge y)                     = x == y
@@ -57,6 +59,7 @@ instance Show NodeAction where
   show Clone               = "Clone"
   show Delete              = "Delete"
   show Share               = "Share"
+  show ManageTeam          = "Team"
   show Config              = "Config"
   show (Link _)            = "Link to " -- <> show x
   show (Add _)             = "Add Child" -- foldl (\a b -> a <> show b) "Add " xs
@@ -78,6 +81,7 @@ glyphiconNodeAction (Merge _)           = "random"
 glyphiconNodeAction Refresh             = "refresh"
 glyphiconNodeAction Config              = "wrench"
 glyphiconNodeAction Share               = "user-plus"
+glyphiconNodeAction ManageTeam          = "users"
 glyphiconNodeAction AddingContact       = "user-plus"
 glyphiconNodeAction (Move _)            = "share-square-o"
 glyphiconNodeAction (Publish _)         = fldr FolderPublic true
@@ -137,6 +141,7 @@ settingsBox Team =
                                 , NodeFrameVisio
                                 ]
                           , Share
+                          , ManageTeam
                           , Delete
                           ]
               }
