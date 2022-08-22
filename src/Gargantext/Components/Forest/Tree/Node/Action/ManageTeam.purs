@@ -2,7 +2,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.ManageTeam where
 
 import Gargantext.Prelude
 
-import Data.Array (filter)
+import Data.Array (filter, null)
 import Data.Either (Either(..))
 import Effect.Aff (runAff_)
 import Effect.Class (liftEffect)
@@ -78,18 +78,22 @@ teamLayoutRows = R2.leafComponent teamLayoutRowsCpt
 teamLayoutRowsCpt :: R.Component TeamRowProps
 teamLayoutRowsCpt = here.component "teamLayoutRows" cpt where
   cpt { team, nodeId, session, error, team', error' } _ = do
-    
-    pure $ Tools.panel (map makeTeam team') (H.div {} [H.text error'])
+
+    case null team' of
+         true  -> pure $ H.div { style: {margin: "10px"}}
+                        [ H.h4 {} [H.text "Your team is empty, you can send some invitations."]]
+         false -> pure $ Tools.panel (map makeTeam team') (H.div {} [H.text error'])
+
     where
       makeTeam :: TeamMember -> R.Element
       makeTeam { username, shared_folder_id } = H.div {className: "from-group row"} [ H.div { className: "col-8" } [ H.text username ]
                                                                                     , H.a { className: "text-danger col-2 fa fa-times"
                                                                                           , title: "Remove user from team"
                                                                                           , type: "button"
-                                                                                          , on: {click: submit shared_folder_id } 
+                                                                                          , on: {click: submit shared_folder_id }
                                                                                           } []
                                                                                     ]
-      
+
       submit sharedFolderId _ = do
         runAff_ callback $ saveDeleteTeam { session, nodeId, sharedFolderId }
 
