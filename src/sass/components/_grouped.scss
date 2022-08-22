@@ -22,39 +22,30 @@
   $self: &;
   $wrapper-margin: 1.75rem; // from "_modal.scss"
 
-  &--visible {
-    display: block;
-  }
-
   &__content {
     background-color: $modal-content-bg;
-    max-height: calc(100% - #{ $wrapper-margin * 2 } );
-    overflow: auto;
+    margin-left: $wrapper-margin;
+    margin-right: $wrapper-margin;
   }
 
   &__header {
     background-color: $card-cap-bg;
 
-    &__content {
+    &__title {
       color: $primary;
       font-size: 21px;
     }
   }
 
+  // @XXX Bootstrap not removing some modal elements on "hide" method
+  //      Adding an overlay that the user could click to synchronise the hide
+  //      cinematic
+  // @https://stackoverflow.com/questions/50168312/bootstrap-4-close-modal-backdrop-doesnt-disappear
   &__overlay {
     width: 100%;
     height: 100%;
-    background-color: mix-alpha($black, 50%);
     position: absolute;
-
-    &--collapsible {
-      cursor: pointer;
-    }
   }
-
-  // @at-root body.modal-open {
-    // overflow: hidden;
-  // }
 }
 
 /// Spinner
@@ -321,7 +312,7 @@
     transition: transform 0s, opacity 0s;
   }
 
-  @each $name, $value in $theme-colors {
+  @each $name, $value in $palette-semantic {
 
     &--#{ $name }:after {
       background-image:
@@ -330,6 +321,99 @@
           #{ $value } 10%,
           transparent 10%
         );
+    }
+  }
+
+  &--disabled:after,
+  &--deferred:after,
+  &--muted:after {
+    content: none;
+  }
+}
+
+/// Preloader
+///-----------------------------------------------------------------------------
+
+.b-preloader {
+  width: 100%;
+  height: 100%;
+
+  &__spinner {
+    $size: 100px;
+    $weight: 6px;
+
+    position: absolute;
+    font-size: $weight;
+    height: $size;
+    width: $size;
+    // (?) `centered` mixin will not work here, due to Bootstrap process
+    //     interfering with the transform rule
+    top: calc( 50% - #{ $size / 2 } );
+    left: calc( 50% - #{ $size / 2 } );
+  }
+}
+
+
+/// Context Menu
+///-----------------------------------------------------------------------------
+
+.b-context-menu {
+  $minimum-width: 280px;
+
+  @include fit-positions();
+
+  position: fixed;
+  z-index: z-index('main', 'floaty');
+  background-color: transparent;
+
+  &__inner {
+    position: fixed;
+    box-shadow: $box-shadow-lg;
+    border: 1px solid $gray-100;
+    word-wrap: break-word;
+    background-color: $body-bg;
+    border-radius: $card-border-radius;
+    min-width: $minimum-width;
+  }
+}
+
+.b-context-menu-item {
+  @include clickable();
+
+  position: relative;
+  background-color: $body-bg;
+  padding: $list-group-item-padding-y $list-group-item-padding-x;
+  font-size: 15px;
+
+  &--disabled,
+  &--deferred,
+  &--idled {
+    @include unclickable();
+
+    color: $list-group-disabled-color;
+  }
+
+  &--enabled:hover,
+  &--muted:hover {
+    background-color: $list-group-hover-bg;
+  }
+}
+
+
+/// Button Group
+///-----------------------------------------------------------------------------
+
+.b-button-group {
+  $gutter: 2px;
+
+  &--no-collapse {
+
+    .btn:not(:first-child) {
+      margin-left: calc( #{ $gutter } / 2 );
+    }
+
+    .btn:not(:last-child) {
+      margin-right: calc( #{ $gutter } / 2 );
     }
   }
 }

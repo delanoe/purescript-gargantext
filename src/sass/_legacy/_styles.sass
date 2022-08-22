@@ -2,9 +2,6 @@
 .no-user-select
   user-select: none
 
-.cache-toggle
-  cursor: pointer
-
 .side-panel
   background-color: #fff
   padding: 0.3em
@@ -12,11 +9,6 @@
   top: 3.7em
   position: fixed
 
-  .corpus-doc-view
-    .annotated-field-wrapper
-      .annotated-field-runs
-        max-height: 200px
-        overflow-y: scroll
   .list-group
     .list-group-item-heading
       display: inline-block
@@ -34,6 +26,26 @@
     .header
       float: left
 
+  // @TODO: better side panel management
+  .texts-sidepanel
+
+    &__header
+      padding: $card-spacer-y $card-spacer-x
+      font-size: 20px
+      text-align: right
+
+    &__body
+      padding-left: $card-spacer-x
+      padding-right: $card-spacer-x
+
+      .document-layout__title
+        font-size: 21px
+
+      .document-layout__abstract__content
+        max-height: 200px
+        overflow-y: scroll
+        font-size: 16px
+
 
 .simple-layout
   height: 100%
@@ -44,35 +56,8 @@
     left: 50%
     top: 50%
 
-.table
-  tr
-    td
-      color: #005a9aff
-      .active
-        font-weight: bold
-        text-decoration: underline
-      .ngrams-selector
-        display: flex
-        .ngrams-chooser
-          padding: 3px
-      .trash
-        text-decoration: line-through
-
-.action-search
-  margin: 10px
-
-.context-menu
-  position: fixed
-
-.search-bar
-  margin: 10px
 
 /* */
-
-.frame
-  height: 100vh
-  iframe
-    border: 0
 
 .join-button
   padding-bottom: 100px
@@ -103,33 +88,37 @@ select.form-control
     $offset-y: 56px
     $min-width: 280px
 
-    position: relative
     flex-grow: 0
     flex-shrink: 0
     width: $min-width
     min-width: $min-width
     height: calc(100vh - #{ $offset-y })
+    z-index: z-index('main', 'sidebar')
 
-
-  &__handle
-    min-width: inherit
-    width: inherit
-    height: inherit
-    position: fixed
-    // @TODO: z-index management
-    z-index: 99999999999
-    pointer-events: none
-
-    &__action
-      $handle-width: 8px
-
-      width: $handle-width
+    &__inner
       height: inherit
-      background: transparent
-      cursor: col-resize
-      position: absolute
-      right: - #{ $handle-width / 2 }
-      pointer-events: all
+      width: inherit
+      min-width: inherit
+      position: fixed
+
+    &__handle
+      min-width: inherit
+      width: inherit
+      height: inherit
+      position: fixed
+      z-index: z-index('main', 'handlebar')
+      pointer-events: none
+
+      &__action
+        $handle-width: 8px
+
+        width: $handle-width
+        height: inherit
+        background: transparent
+        cursor: col-resize
+        position: absolute
+        right: - #{ $handle-width / 2 }
+        pointer-events: all
 
 
   &__body
@@ -209,6 +198,20 @@ select.form-control
     height: $spinner-size
     left: $spinner-left-offset
     top: $spinner-top-offset
+
+// @TODO expand <tabs> to fit a ".main-page__main-route" with its padding
+//       really KISS solution, better prevent the whole padding set (as the
+//       likes of many pages, such as the Graph Explorer one)
+.nodes-lists-layout-tabs,
+.nodes-texts-layout-tabs,
+.nodes-annuaire-layout-tabs
+
+  .nav.nav-tabs
+    margin-left: -32px
+    margin-right: -32px
+    padding-left: 32px
+    padding-right: 32px
+
 
 .jitsi-iframe
   height: 70em

@@ -11,7 +11,7 @@ import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Charts.Options.Type (EChartsInstance, MouseEvent)
 import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
-import Gargantext.Components.Nodes.Corpus.Chart.Pie (pie)
+import Gargantext.Components.Nodes.Corpus.Chart.Pie (bar, pie)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (Mode(..), NodeID, TabSubType(..), TabType(..), modeTabType)
@@ -99,7 +99,7 @@ render CTermsMetrics { boxes, corpusId, limit, listId, session, onClick, onInit 
            , tabType: TabCorpus (TabNgramType $ modeTabType Terms)
            }
 render CSourcesBar { boxes, corpusId, limit, listId, session, onClick, onInit } =
-  metrics { boxes, path, session, onClick, onInit }
+  bar { boxes, path, session, onClick, onInit }
   where
     path = { corpusId
            , limit

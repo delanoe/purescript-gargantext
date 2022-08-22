@@ -1,13 +1,13 @@
 module Gargantext.Components.Node 
   where
 
-import Data.Generic.Rep (class Generic)
+import Gargantext.Prelude
+
 import Data.Eq.Generic (genericEq)
-import Data.Maybe (Maybe)
+import Data.Generic.Rep (class Generic)
+import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Simple.JSON as JSON
-
-import Gargantext.Prelude
 
 type NodePolyCommon a =
   ( id :: Int
@@ -18,7 +18,7 @@ type NodePolyCommon a =
 
 newtype NodePoly a =
   NodePoly { userId   :: Int
-           , parentId  :: Int
+           , parentId  :: Maybe Int
            | NodePolyCommon a
            }
 derive instance Generic (NodePoly a) _
@@ -26,7 +26,7 @@ derive instance Newtype (NodePoly a) _
 instance Eq a => Eq (NodePoly a) where eq = genericEq
 instance JSON.ReadForeign a => JSON.ReadForeign (NodePoly a) where
   readImpl f = do
-    inst :: { user_id :: Int, parent_id :: Int | NodePolyCommon a } <- JSON.readImpl f
+    inst :: { user_id :: Int, parent_id :: Maybe Int | NodePolyCommon a } <- JSON.readImpl f
     pure $ NodePoly { id: inst.id
                     , typename: inst.typename
                     , userId: inst.user_id

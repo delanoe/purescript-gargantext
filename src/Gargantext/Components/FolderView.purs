@@ -1,15 +1,18 @@
 module Gargantext.Components.FolderView where
 
+import Gargantext.Prelude
+
+import DOM.Simple (window)
 import Data.Array as A
-import Data.Eq ((==))
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Nullable (null)
 import Data.Traversable (traverse_)
-import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.BaseModal (hideModal)
+import Gargantext.Components.Bootstrap.Types (Elevation(..), Variant(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (deleteNode, unpublishNode)
@@ -30,17 +33,14 @@ import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Hooks.LinkHandler (useLinkHandler)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (Ordering, Unit, bind, compare, discard, otherwise, pure, unit, void, ($), (<$>), (<>))
 import Gargantext.Routes (AppRoute(Home), nodeTypeAppRoute)
 import Gargantext.Sessions (Session(..), sessionId)
 import Gargantext.Types (NodeType(..), SessionId)
 import Gargantext.Types as GT
-import Gargantext.Utils.Popover as Popover
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Record as Record
 import Toestand as T
 
 here :: R2.Here
@@ -59,7 +59,6 @@ folderView = R2.leafComponent folderViewCpt
 folderViewCpt :: R.Component Props
 folderViewCpt = here.component "folderViewCpt" cpt where
   cpt { boxes, nodeId, session } _ = do
-    setPopoverRef <- R.useRef Nothing
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
     useLoader { errorHandler
@@ -70,7 +69,7 @@ folderViewCpt = here.component "folderViewCpt" cpt where
                                                    , nodeId
                                                    , reload
                                                    , session
-                                                   , setPopoverRef } [] }
+                                                   } [] }
     where
       errorHandler = logRESTError here "[folderView]"
 
@@ -80,7 +79,6 @@ type FolderViewProps =
   , nodeId        :: Int
   , reload        :: T.Box T2.Reload
   , session       :: Session
-  , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
   )
 
 folderViewMain :: R2.Component FolderViewProps
@@ -105,23 +103,26 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
                                         , parentId: props.nodeId
                                         , reload: props.reload
                                         , session: props.session
-                                        , setPopoverRef: props.setPopoverRef
                                         , style: FolderChild
-                                        , text: node.name } []
+                                        , text: node.name
+                                        }
 
   makeParentFolder :: TreeNode -> Maybe TreeNode -> Record FolderViewProps -> Array R.Element
   makeParentFolder root (Just parent) props =
-    [ folder { boxes: props.boxes
-             , nodeId: root.id
-             , linkId: parent.id
-             , linkNodeType: parent.node_type
-             , nodeType: root.node_type
-             , parentId: parent.id
-             , reload: props.reload
-             , session: props.session
-             , setPopoverRef: props.setPopoverRef
-             , style: FolderUp
-             , text: root.name } [] ]
+    [
+      folder
+      { boxes: props.boxes
+      , nodeId: root.id
+      , linkId: parent.id
+      , linkNodeType: parent.node_type
+      , nodeType: root.node_type
+      , parentId: parent.id
+      , reload: props.reload
+      , session: props.session
+      , style: FolderUp
+      , text: root.name
+      }
+    ]
   makeParentFolder _ Nothing _ = []
 
   sortFolders :: TreeNode-> TreeNode -> Ordering
@@ -138,11 +139,10 @@ type FolderProps =
   , boxes         :: Boxes
   , parentId      :: Int
   , reload        :: T.Box T2.Reload
-  , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
   )
 
-folder :: R2.Component FolderProps
-folder = R.createElement folderCpt
+folder :: R2.Leaf FolderProps
+folder = R2.leaf folderCpt
 folderCpt :: R.Component FolderProps
 folderCpt = here.component "folderCpt" cpt where
   cpt props@{ boxes
@@ -153,51 +153,81 @@ folderCpt = here.component "folderCpt" cpt where
             , parentId
             , reload
             , session
-            , setPopoverRef
             , style
-            , text } _ = do
-    let sid = sessionId session
-    let rootId = treeId session
-    let dispatch a = performAction a { boxes, nodeId, parentId, reload, session, setPopoverRef }
-    popoverRef <- R.useRef null
+            , text
+            } _ = do
+    -- States
+    isBoxVisible <- T.useBox false
+
+    -- Hooks
     { goToRoute } <- useLinkHandler
 
-    R.useEffect' $ do
-        R.setRef setPopoverRef $ Just $ Popover.setOpen popoverRef
+    -- Computed
+    let sid = sessionId session
+    let rootId = treeId session
+    let dispatch a = performAction a { boxes, nodeId, parentId, reload, session, isBoxVisible }
 
+    -- Render
     pure $
-        H.div {} [
-        H.span{style: {position: "absolute"}} [ Popover.popover {
-            arrow: false
-          , open: false
-          , onClose: \_ -> pure unit
-          , onOpen:  \_ -> pure unit
-          , ref: popoverRef
-          } [
-              popOverIcon
-              , mNodePopupView (Record.merge props { dispatch }) (onPopoverClose popoverRef)
-              ]]
-      , H.button {on: {click: \_ -> goToRoute $ route linkId rootId linkNodeType sid }, className: "btn btn-primary fv btn" } [
-          H.i {className: icon style nodeType} []
-        , H.br {}
-        , H.text text]]
 
-  onPopoverClose popoverRef _ = Popover.setOpen popoverRef false
-
-  popOverIcon = H.span { className: "fv action" } [
-        H.a { className: "settings fa fa-cog"
-          , title : "Each node of the Tree can perform some actions.\n"
-            <> "Click here to execute one of them." } []
+      H.div
+      {}
+      [
+        H.div
+        -- KISS CSS placement (BEM would be better)
+        { style:
+            { float: "right"
+            , position: "relative"
+            , right: "-14px"
+            }
+        }
+        [
+          B.iconButton
+          { name: "cog"
+          , callback: \_ -> T.write_ true isBoxVisible
+          , title:
+                "Each node of the Tree can perform some actions.\n"
+              <> "Click here to execute one of them."
+          , variant: Secondary
+          , elevation: Level0
+          , overlay: false
+          }
+        ]
+      ,
+        H.button
+        { className: "btn btn-primary fv btn"
+        , on: { click: \_ -> goToRoute $ route linkId rootId linkNodeType sid }
+        }
+        [
+          H.i
+          { className: icon style nodeType }
+          []
+        ,
+          H.br {}
+        ,
+          H.text text
+        ]
+      ,
+        -- // Modals //
+        B.baseModal
+        { isVisibleBox: isBoxVisible
+        , noBody: true
+        , noHeader: true
+        , modalClassName: "forest-tree-node-modal"
+        }
+        [
+          nodePopupView
+          { boxes: props.boxes
+          , dispatch: dispatch
+          , id: props.nodeId
+          , nodeType: props.nodeType
+          , name: props.text
+          , session: props.session
+          , closeCallback: \_ -> T.write_ false isBoxVisible
+          }
+        ]
       ]
 
-  mNodePopupView props opc = nodePopupView { boxes: props.boxes
-                                           , dispatch: props.dispatch
-                                           , id: props.nodeId
-                                           , onPopoverClose: opc
-                                           , nodeType: props.nodeType
-                                           , name: props.text
-                                           , session: props.session
-                                           }
   route :: Int -> Int -> NodeType -> SessionId -> AppRoute
   route lId rootId nType sid
     | rootId == lId    = Home
@@ -250,7 +280,7 @@ backButtonSmartMainCpt = here.component "backButtonSmartMain" cpt where
     handlers <- useLinkHandler
     let rootId = treeId session
 
-    pure $ 
+    pure $
       H.button {
         className: "btn btn-primary"
       , on: { click: action rootId node.parent_id handlers }
@@ -283,8 +313,8 @@ type PerformActionProps =
   , nodeId        :: Int
   , parentId      :: Int
   , reload        :: T.Box T2.Reload
-  , setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
   , session       :: Session
+  , isBoxVisible  :: T.Box Boolean
   )
 
 performAction :: Action -> Record PerformActionProps -> Aff Unit
@@ -306,16 +336,30 @@ performAction = performAction' where
   performAction' (MergeNode {params}) p = mergeNode params p
   performAction' (LinkNode { nodeType, params }) p = linkNode nodeType params p
   performAction' NoAction _ = liftEffect $ here.log "[performAction] NoAction"
-  performAction' ClosePopover p = closePopover p
+  performAction' CloseBox p = closeBox p
   performAction' _ _ = liftEffect $ here.log "[performAction] unsupported action"
 
-  closePopover { setPopoverRef } =
-    liftEffect $ traverse_ (\set -> set false) (R.readRef setPopoverRef)
+  closeBox { isBoxVisible, nodeId } =
+    liftEffect $ do
+      T.write_ false isBoxVisible
+      -- @XXX ReactJS unreactive ref
+      --
+      -- /!\ extra care here:
+      --
+      --  - due to a ReactJS yet another flaw, we have to make an extra closing
+      --    modal method call here (bc. even if the `T.Box` change its value
+      --    no reactivity will be perfomed, for some unknown reason, and
+      --    the modal would so partially close)
+      --
+      --  - also make an extra assumption here, as the `querySelector` used for
+      --    modal close call should be the same as the selector qualifying the
+      --    created <base-modal>)
+      hideModal window $ "#" <> (show nodeId)
 
   refreshFolders p@{ boxes: { reloadForest }, reload } = do
     liftEffect $ T2.reload reload
     liftEffect $ T2.reload reloadForest
-    closePopover p
+    closeBox p
 
   deleteNode' nt p@{ nodeId: id, parentId: parent_id, session } = do
     case nt of

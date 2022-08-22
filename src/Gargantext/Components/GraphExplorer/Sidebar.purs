@@ -28,15 +28,18 @@ import Gargantext.Components.GraphExplorer.Sidebar.DocList (docListWrapper)
 import Gargantext.Components.GraphExplorer.Sidebar.Legend as Legend
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Components.GraphExplorer.Utils as GEU
 import Gargantext.Components.Lang (Lang(..))
-import Gargantext.Components.NgramsTable.Core as NTC
 import Gargantext.Config.REST (AffRESTError)
+import Gargantext.Core.NgramsTable.Functions as NTC
+import Gargantext.Core.NgramsTable.Types as CNT
 import Gargantext.Data.Array (mapMaybe)
 import Gargantext.Ends (Frontends)
+import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, FrontendError(..), NodeID, TabSubType(..), TabType(..), TermList(..), modeTabType)
-import Gargantext.Utils (nbsp)
+import Gargantext.Utils (getter, nbsp, setter, (?))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Partial.Unsafe (unsafePartial)
@@ -99,15 +102,53 @@ sideTabLegend :: R2.Leaf Props
 sideTabLegend = R2.leaf sideTabLegendCpt
 
 sideTabLegendCpt :: R.Component Props
-sideTabLegendCpt = here.component "sideTabLegend" cpt
-  where
-    cpt { metaData: GET.MetaData { legend } } _ = pure $
+sideTabLegendCpt = here.component "sideTabLegend" cpt where
+  cpt { metaData: GET.MetaData { legend } } _ = do
+    -- | States
+    -- |
+    store <- GraphStore.use
+
+    hyperdataGraph
+      <- R2.useLive' store.hyperdataGraph
+
+    -- | Computed
+    -- |
+    let
+      maxItemPerCluster = 4
+
+    -- | Hooks
+    -- |
+
+    -- For each provided Cluster (see Legend), extract the greatest nodes
+    extractedNodeList <- R.useMemo1 hyperdataGraph $ const $
+      flip A.foldMap legend
+      (   getter _.id_
+      >>> GEU.takeGreatestNodeByCluster
+            hyperdataGraph
+            maxItemPerCluster
+      )
+
+    -- For each provided Cluster (see Legend), count the number of nodes
+    nodeCountList <- R.useMemo1 hyperdataGraph $ const $
+      flip A.foldMap legend
+      (   getter _.id_
+      >>> GEU.countNodeByCluster hyperdataGraph
+      >>> A.singleton
+      )
+
+    -- | Render
+    -- |
+    pure $
 
       H.div
       { className: "graph-sidebar__legend-tab" }
       [
         Legend.legend
-        { items: Seq.fromFoldable legend }
+        { legendSeq: Seq.fromFoldable legend
+        , extractedNodeList
+        , nodeCountList
+        , selectedNodeIds: store.selectedNodeIds
+        }
       ,
         H.hr {}
       ,
@@ -240,7 +281,7 @@ sideBarTabSeparator =
   { className: "graph-sidebar__separator" }
   [
     B.icon
-    { name: "angle-down" }
+    { name: "angle-double-down" }
   ]
 
 -------------------------------------------
@@ -258,19 +299,33 @@ selectedNodes = R2.leaf selectedNodesCpt
 selectedNodesCpt :: R.Component SelectedNodesProps
 selectedNodesCpt = here.component "selectedNodes" cpt where
   cpt props _ = do
-    -- States
+    -- | States
+    -- |
     { selectedNodeIds
     , graph
+    , expandSelection
     } <- GraphStore.use
 
-    selectedNodeIds' <- R2.useLive' selectedNodeIds
-    graph'           <- R2.useLive' graph
+    selectedNodeIds'    <- R2.useLive' selectedNodeIds
+    graph'              <- R2.useLive' graph
+    expandSelection'    <- R2.useLive' expandSelection
 
-    -- Behaviors
+    -- | Effects
+    -- |
+
+    -- transfer local Component change to Local Storage cache
+    useFirstEffect' $
+      flip T.listen expandSelection onExpandSelectionChange
+
+    -- | Behaviors
+    -- |
     let
       onBadgeClick id _ = T.write_ (Set.singleton id) selectedNodeIds
 
-    -- Render
+      onExpandClick _ = T.modify_ (not) expandSelection
+
+    -- | Render
+    -- |
     pure $
 
       H.ul
@@ -301,49 +356,88 @@ selectedNodesCpt = here.component "selectedNodes" cpt where
                 }
                 [ H.text node.label ]
               ]
-
+        ,
+          -- Expand NGrams actions
+          B.iconButton
+          { name: expandSelection' ?
+              "caret-up" $
+              "caret-down"
+          , className: "graph-selected-nodes__expand"
+          , callback: onExpandClick
+          }
         ]
       ,
-        H.li
-        { className: intercalate " "
-            [ "list-group-item"
-            , "graph-selected-nodes__actions"
+        -- NGrams actions
+        R2.when expandSelection' $
+
+          H.li
+          { className: intercalate " "
+              [ "list-group-item"
+              , "graph-selected-nodes__actions"
+              ]
+          }
+          [
+            B.buttonGroup
+            { collapse: false }
+            [
+              updateTermButton
+              ( props `Record.merge`
+                { variant: ButtonVariant Light
+                , rType: CandidateTerm
+                }
+              )
+              [
+                B.icon
+                { name: "circle"
+                , className: "mr-1 candidate-term"
+                }
+              ,
+                H.text "Move as candidate"
+              ]
+            ,
+              updateTermButton
+              ( props `Record.merge`
+                { variant: ButtonVariant Light
+                , rType: StopTerm
+                }
+              )
+              [
+                B.icon
+                { name: "circle"
+                , className: "mr-1 stop-term"
+                }
+              ,
+                H.text "Move as stop"
+              ]
             ]
-        }
-        [
-          updateTermButton
-          ( props `Record.merge`
-            { variant: ButtonVariant Secondary
-            , rType: CandidateTerm
-            }
-          )
-          [ H.text "Move as candidate" ]
-        ,
-          updateTermButton
-          ( props `Record.merge`
-            { variant: ButtonVariant Danger
-            , rType: StopTerm
-            }
-          )
-          [ H.text "Move as stop" ]
-        ]
+          ]
       ]
+
+onExpandSelectionChange :: T.Change Boolean -> Effect Unit
+onExpandSelectionChange { new } = do
+  cache <- R2.loadLocalStorageState' R2.graphParamsKey GET.defaultCacheParams
+  let update = setter (_ { expandSelection = new }) cache
+  R2.setLocalStorageState R2.graphParamsKey update
 
 ---------------------------------------------------------
 
 neighborhood :: R2.Leaf ()
 neighborhood = R2.leaf neighborhoodCpt
-
 neighborhoodCpt :: R.Memo ()
 neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
   cpt _ _ = do
-    -- States
+    -- | States
+    -- |
     { selectedNodeIds
     , graph
+    , expandNeighborhood
     } <- GraphStore.use
 
     selectedNodeIds' <-
       R2.useLive' selectedNodeIds
+
+    expandNeighborhood' <-
+      R2.useLive' expandNeighborhood
 
     graph' <-
       R2.useLive' graph
@@ -357,7 +451,8 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
     termCount /\ termCountBox <-
       R2.useBox' 0
 
-    -- Computed
+    -- | Computed
+    -- |
     let
       minSize = F.foldl DN.min 0.0 (Seq.map _.size (SigmaxT.graphNodes graph'))
 
@@ -368,11 +463,20 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
       withTruncateResults = (termCount > maxTruncateResult) && (not showMore)
 
 
-    -- Behaviors
+    -- | Behaviors
+    -- |
     let
       onBadgeClick id _ = T.write_ (Set.singleton id) selectedNodeIds
 
-    -- Effects
+      onExpandClick _ = T.modify_ (not) expandNeighborhood
+
+    -- | Effects
+    -- |
+
+    -- transfer local Component change to Local Storage cache
+    useFirstEffect' $
+      flip T.listen expandNeighborhood onExpandNeighborhoodChange
+
     R.useEffect1' selectedNodeIds' do
       let refreshed = neighbourBadges graph' selectedNodeIds'
       let count     = Seq.length refreshed
@@ -381,7 +485,8 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
       T.write_ ordered termListBox
       T.write_ false showMoreBox
 
-    -- Render
+    -- | Render
+    -- |
     pure $
 
       H.ul
@@ -404,56 +509,74 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
             show termCount
           ,
             H.text $ nbsp 1 <> "terms"
+          ,
+            -- Expand word cloud
+            B.iconButton
+            { name: expandNeighborhood' ?
+                "caret-up" $
+                "caret-down"
+            , className: "graph-neighborhood__expand"
+            , callback: onExpandClick
+            }
           ]
         ]
       ,
         -- Word cloud
-        H.li
-        { className: "list-group-item" }
-        [
-          H.ul
-          {} $
-          flip mapWithIndex termList \index node ->
+        R2.when expandNeighborhood' $
 
-            R2.if'
-            (
-               withTruncateResults == false
-            || index < maxTruncateResult
-            ) $
-              H.li
-              { className: "graph-neighborhood__badge" }
+          H.li
+          { className: "list-group-item"}
+          [
+            H.ul
+            {} $
+            flip mapWithIndex termList \index node ->
+
+              R2.when
+              (
+                (withTruncateResults == false
+                || index < maxTruncateResult)
+                && (not $ Set.member node.id selectedNodeIds')
+              ) $
+                H.li
+                { className: "graph-neighborhood__badge" }
+                [
+                  H.a
+                  { className: "badge badge-light"
+                  -- adjust font accordingly
+                  , style:
+                      { fontSize: badgeSize
+                          minSize
+                          maxSize
+                          node.size
+                      , lineHeight: badgeSize
+                          minSize
+                          maxSize
+                          node.size
+                      }
+                  , on: { click: onBadgeClick node.id }
+                  }
+                  [ H.text node.label ]
+                ]
+          ,
+            R2.when (withTruncateResults) $
+
+              B.button
+              { variant: ButtonVariant Light
+              , callback: \_ -> T.modify_ (not) showMoreBox
+              , block: true
+              , className: "graph-neighborhood__show-more"
+              }
               [
-                H.a
-                { className: "badge badge-light"
-                -- adjust font accordingly
-                , style:
-                    { fontSize: badgeSize
-                        minSize
-                        maxSize
-                        node.size
-                    , lineHeight: badgeSize
-                        minSize
-                        maxSize
-                        node.size
-                    }
-                , on: { click: onBadgeClick node.id }
-                }
-                [ H.text node.label ]
+                H.text "Show more"
               ]
-        ,
-          R2.if' (withTruncateResults) $
-
-            B.button
-            { variant: ButtonVariant Light
-            , callback: \_ -> T.modify_ (not) showMoreBox
-            , block: true
-            , className: "graph-neighborhood__show-more"
-            }
-            [
-              H.text "Show more"
-            ]
-        ]
+          ]
       ]
+
+onExpandNeighborhoodChange :: T.Change Boolean -> Effect Unit
+onExpandNeighborhoodChange { new } = do
+  cache <- R2.loadLocalStorageState' R2.graphParamsKey GET.defaultCacheParams
+  let update = setter (_ { expandNeighborhood = new }) cache
+  R2.setLocalStorageState R2.graphParamsKey update
 
 ---------------------------------------------------------
 
@@ -551,14 +674,14 @@ type SendPatches =
 sendPatches :: Record SendPatches -> Effect Unit
 sendPatches { errors, metaData, nodes, reloadForest, session, termList } = do
   launchAff_ do
-    patches <- (parTraverse (sendPatch termList session metaData) nodes) -- :: Aff (Array NTC.VersionedNgramsPatches)
+    patches <- (parTraverse (sendPatch termList session metaData) nodes) -- :: Aff (Array CNT.VersionedNgramsPatches)
     let mPatch = last patches
     case mPatch of
       Nothing -> pure unit
       Just (Left err) -> liftEffect $ do
         T.modify_ (A.cons $ FRESTError { error: err }) errors
         here.warn2 "[sendPatches] RESTError" err
-      Just (Right (NTC.Versioned _patch)) -> do
+      Just (Right (CNT.Versioned _patch)) -> do
         liftEffect $ T2.reload reloadForest
 
 -- Why is this called delete node?
@@ -566,7 +689,7 @@ sendPatch :: TermList
           -> Session
           -> GET.MetaData
           -> Record SigmaxT.Node
-          -> AffRESTError NTC.VersionedNgramsPatches
+          -> AffRESTError CNT.VersionedNgramsPatches
 sendPatch termList session (GET.MetaData metaData) node = do
     eRet  <- NTC.putNgramsPatches coreParams versioned
     case eRet of
@@ -578,10 +701,10 @@ sendPatch termList session (GET.MetaData metaData) node = do
     nodeId :: NodeID
     nodeId = unsafePartial $ fromJust $ fromString node.id
 
-    versioned :: NTC.VersionedNgramsPatches
-    versioned = NTC.Versioned {version: metaData.list.version, data: np}
+    versioned :: CNT.VersionedNgramsPatches
+    versioned = CNT.Versioned {version: metaData.list.version, data: np}
 
-    coreParams :: NTC.CoreParams ()
+    coreParams :: CNT.CoreParams ()
     coreParams = {session, nodeId, listIds: [metaData.list.listId], tabType}
 
     tabNgramType :: CTabNgramType
@@ -590,14 +713,14 @@ sendPatch termList session (GET.MetaData metaData) node = do
     tabType :: TabType
     tabType = TabCorpus (TabNgramType tabNgramType)
 
-    term :: NTC.NgramsTerm
+    term :: CNT.NgramsTerm
     term = NTC.normNgram tabNgramType node.label
 
-    np :: NTC.NgramsPatches
-    np = NTC.singletonPatchMap term $ NTC.NgramsPatch { patch_children: mempty, patch_list }
+    np :: CNT.NgramsPatches
+    np = NTC.singletonPatchMap term $ CNT.NgramsPatch { patch_children: mempty, patch_list }
 
-    patch_list :: NTC.Replace TermList
-    patch_list = NTC.Replace { new: termList, old: MapTerm }
+    patch_list :: CNT.Replace TermList
+    patch_list = CNT.Replace { new: termList, old: MapTerm }
 
 
 

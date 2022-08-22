@@ -1,13 +1,14 @@
 { pkgs ? import ./pinned.nix { } }:
 
-import
-  (
-    pkgs.fetchFromGitHub {
-      owner = "justinwoo";
-      repo = "easy-purescript-nix";
-      rev = "0ad5775c1e80cdd952527db2da969982e39ff592";
-      sha256 = "bwbpXSTD8Hf7tlCXfZuLfo2QivvX1ZDJ1PijXXRTo3Q=";
-    }
-  ) {
+import /home/przemek/git-work/github/easy-purescript-nix
+  # (
+    # pkgs.fetchFromGitHub {
+    #   owner = "justinwoo";
+    #   repo = "easy-purescript-nix";
+    #   rev = "5dca2f0f3b9ec0bceabb23fa1fd2b5f8ec30fa53";
+    #   sha256 = "1vsc08ik9rs7vhnv8bg6bqf6gyqvywjfr5502rw1wpird74whhcs";
+    # }
+  # ) {
+  {
   inherit pkgs;
 }

@@ -7,7 +7,6 @@ import Data.Array as Array
 import Data.Maybe (Maybe(..), isJust)
 import Data.Traversable (intercalate, traverse, traverse_)
 import Data.Tuple.Nested ((/\))
-import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
@@ -31,13 +30,13 @@ import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..
 import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Ends (Frontends)
-import Gargantext.Hooks.Loader (useLoader, useLoaderEffect)
+import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, get, mkNodeId)
 import Gargantext.Sessions.Types (useOpenNodesMemberBox, openNodesInsert, openNodesDelete)
-import Gargantext.Types (Handed, ID, isPublic, publicize, switchHanded)
+import Gargantext.Types (Handed, ID, isPublic, publicize)
 import Gargantext.Types as GT
-import Gargantext.Utils (nbsp, (?))
+import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
@@ -99,16 +98,19 @@ type ChildLoaderProps =
   ( id     :: ID
   , render :: R2.Leaf TreeProps
   , root   :: ID
-  | NodeProps )
+  | NodeProps
+  )
 
 type PerformActionProps =
-  ( setPopoverRef :: R.Ref (Maybe (Boolean -> Effect Unit))
-  | PACommon )
+  ( isBoxVisible :: T.Box Boolean
+  | PACommon
+  )
 
 -- | Loads and renders the tree starting at the given root node id.
-treeLoader :: R2.Component LoaderProps
-treeLoader = R.createElement treeLoaderCpt
-treeLoaderCpt :: R.Component LoaderProps
+treeLoader :: R2.Leaf ( key :: String | LoaderProps )
+treeLoader = R2.leaf treeLoaderCpt
+
+treeLoaderCpt :: R.Component ( key :: String | LoaderProps )
 treeLoaderCpt = here.component "treeLoader" cpt where
 -- treeLoaderCpt :: R.Memo LoaderProps
 -- treeLoaderCpt = R.memo (here.component "treeLoader" cpt) memoCmp where
@@ -136,7 +138,7 @@ treeLoaderCpt = here.component "treeLoader" cpt where
       , cloakSlot:
           blankTree {}
       , defaultSlot:
-          R2.fromMaybe_ state $ loaded
+          R2.fromMaybe state $ loaded
       }
       where
         loaded tree' = tree props where
@@ -162,9 +164,9 @@ treeCpt = here.component "tree" cpt where
         , session
         , tree: NTree (LNode { id, name, nodeType }) children } _ = do
 
-    setPopoverRef <- R.useRef Nothing
-    folderOpen <- useOpenNodesMemberBox nodeId forestOpen
-    folderOpen' <- T.useLive T.unequal folderOpen
+    isBoxVisible  <- T.useBox false
+    folderOpen    <- useOpenNodesMemberBox nodeId forestOpen
+    folderOpen'   <- T.useLive T.unequal folderOpen
 
     pure $
 
@@ -182,7 +184,7 @@ treeCpt = here.component "tree" cpt where
         [
           nodeSpan
           { boxes
-          , dispatch: dispatch setPopoverRef
+          , dispatch: dispatch' isBoxVisible
           , folderOpen
           , frontends
           , id
@@ -192,10 +194,10 @@ treeCpt = here.component "tree" cpt where
           , reload
           , root
           , session
-          , setPopoverRef
+          , isBoxVisible
           }
         <>
-          R2.if' (folderOpen')
+          R2.when (folderOpen')
           (
             renderTreeChildren $
             { childProps:
@@ -212,9 +214,9 @@ treeCpt = here.component "tree" cpt where
       nodeId = mkNodeId session id
       children' = A.sortWith fTreeID pubChildren
       pubChildren = if isPublic nodeType then map (map pub) children else children
-      dispatch setPopoverRef a = performAction a (Record.merge common' spr) where
+      dispatch' isBoxVisible a = performAction a (Record.merge common' extra) where
         common' = RecordE.pick p :: Record PACommon
-        spr = { setPopoverRef }
+        extra = { isBoxVisible }
   pub (LNode n@{ nodeType: t }) = LNode (n { nodeType = publicize t })
 
 
@@ -283,7 +285,7 @@ childLoaderCpt = here.component "childLoader" cpt where
       , cloakSlot:
           blankTree {}
       , defaultSlot:
-          R2.fromMaybe_ state $ paint reload
+          R2.fromMaybe state $ paint reload
       }
 
     where
@@ -294,10 +296,10 @@ childLoaderCpt = here.component "childLoader" cpt where
         extra = { root, tree: tree' }
         nodeProps = RecordE.pick p :: Record NodeProps
 
-closePopover { setPopoverRef } =
-   liftEffect $ traverse_ (\set -> set false) (R.readRef setPopoverRef)
+closeBox { isBoxVisible } =
+  liftEffect $ T.write_ false isBoxVisible
 
-refreshTree p@{ reloadTree } = liftEffect $ T2.reload reloadTree *> closePopover p
+refreshTree p@{ reloadTree } = liftEffect $ T2.reload reloadTree *> closeBox p
 
 deleteNode' nt p@{ boxes: { forestOpen }, session, tree: (NTree (LNode {id, parent_id}) _) } = do
   case nt of
@@ -406,6 +408,6 @@ performAction (MoveNode {params}) p                           = moveNode params 
 performAction (MergeNode {params}) p                          = mergeNode params p
 performAction (LinkNode { nodeType, params }) p               = linkNode nodeType params p
 performAction RefreshTree p                                   = refreshTree p
-performAction ClosePopover p                                  = closePopover p
+performAction CloseBox p                                      = closeBox p
 performAction (DocumentsFromWriteNodes { id }) p              = documentsFromWriteNodes id p
 performAction NoAction _                                      = liftEffect $ here.log "[performAction] NoAction"

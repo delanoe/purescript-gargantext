@@ -170,9 +170,9 @@ component = R.hooksComponent cname cpt where
 
       R.fragment
       [
-        R2.if' canCloakBeDisplayed    props.cloakSlot
+        R2.when canCloakBeDisplayed    props.cloakSlot
       ,
-        R2.if' canContentBeDisplayed  props.defaultSlot
+        R2.when canContentBeDisplayed  props.defaultSlot
       ]
 
 

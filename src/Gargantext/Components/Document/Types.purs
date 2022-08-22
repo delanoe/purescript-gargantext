@@ -1,4 +1,4 @@
-module Gargantext.Components.Nodes.Corpus.Document.Types where
+module Gargantext.Components.Document.Types where
 
 import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
@@ -10,7 +10,7 @@ import Simple.JSON as JSON
 import Gargantext.Prelude
 
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Components.NgramsTable.Core (CoreState, Versioned(..) , VersionedNgramsTable)
+import Gargantext.Core.NgramsTable.Types (CoreState, Versioned(..) , VersionedNgramsTable)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (ListId, NodeID, TabType)
 
@@ -28,11 +28,6 @@ type LoadedData =
   { document    :: NodeDocument
   , ngramsTable :: VersionedNgramsTable
   }
-
-type Props = (
-    loaded         :: LoadedData
-  , path           :: DocPath
-  )
 
 -- This is a subpart of NgramsTable.State.
 type State = CoreState ()
@@ -91,7 +86,7 @@ defaultNodeDocumentV3 =
   NodePoly { id : 0
            , typename : 0
            , userId   : 0
-           , parentId : 0
+           , parentId : Just 0
            , name     : "Default name"
            , date     : "Default date"
            , hyperdata : defaultDocumentV3
@@ -153,7 +148,7 @@ defaultNodeDocument =
   NodePoly { id : 0
            , typename : 0
            , userId   : 0
-           , parentId : 0
+           , parentId : Just 0
            , name     : "Default name"
            , date     : "Default date"
            , hyperdata : defaultDocument
@@ -182,4 +177,3 @@ defaultDocument =
            --, url                : Nothing
            --, text               : Nothing
            }
-

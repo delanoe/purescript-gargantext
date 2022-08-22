@@ -1,6 +1,7 @@
 module Gargantext.Components.PhyloExplorer.Types
-  ( PhyloDataSet(..)
-  , parsePhyloJSONSet
+  ( PhyloSet(..), parseToPhyloSet
+  , CorpusId, ListId, DocId
+  , PhyloData(..)
   , Branch(..), Period(..), Group(..)
   , Link(..), AncestorLink(..), BranchLink(..)
   , Term(..)
@@ -11,6 +12,7 @@ module Gargantext.Components.PhyloExplorer.Types
   , ExtractedTerm(..)
   , ExtractedCount(..)
   , FrameDoc(..)
+  , CacheParams(..), defaultCacheParams
   ) where
 
 import Gargantext.Prelude
@@ -27,18 +29,71 @@ import Data.String as String
 import Data.String.Extra (camelCase)
 import Data.Tuple as Tuple
 import Data.Tuple.Nested ((/\))
-import Gargantext.Components.PhyloExplorer.JSON (PhyloJSONSet(..), RawEdge(..), RawObject(..))
-import Gargantext.Types (NodeID)
+import Gargantext.Components.PhyloExplorer.JSON (PhyloJSON(..), RawEdge(..), RawObject(..))
 import Simple.JSON as JSON
-
 
 -- @NOTE #219: PureScript Date or stick to JavaScript foreign?
 foreign import yearToDate       :: String -> Date.Date
 foreign import stringToDate     :: String -> Date.Date
 foreign import utcStringToDate  :: String -> Date.Date
 
+type CorpusId = Int
+type ListId   = Int
+type DocId    = Int
 
-data PhyloDataSet = PhyloDataSet
+------------------------------------------------------------------
+
+data PhyloSet = PhyloSet
+  { corpusId  :: CorpusId
+  , listId    :: ListId
+  , phyloData :: PhyloData
+  }
+
+derive instance Generic PhyloSet _
+derive instance Eq PhyloSet
+instance Show PhyloSet where show = genericShow
+
+parseToPhyloSet :: PhyloJSON -> PhyloSet
+parseToPhyloSet (PhyloJSON o) = PhyloSet
+  { corpusId  : o.pd_corpusId
+  , listId    : o.pd_listId
+  , phyloData : PhyloData
+      { ancestorLinks
+      , bb            : parseBB p.bb
+      , branchLinks
+      , branches
+      , groups
+      , links
+      , name          : p.name
+      , nbBranches    : parseInt p.phyloBranches
+      -- @NOTE #219: remotely stringify as a Double instead of an Int (reason?)
+      , nbDocs        : (parseFloat >>> parseInt') p.phyloDocs
+      , nbFoundations : parseInt p.phyloFoundations
+      , nbGroups      : parseInt p.phyloGroups
+      , nbPeriods     : parseInt p.phyloPeriods
+      , nbTerms       : parseInt p.phyloTerms
+      , periods
+      , sources       : parseSources p.phyloSources
+      , timeScale     : p.phyloTimeScale
+      , weighted      : getGlobalWeightedValue groups
+      }
+  }
+
+  where
+    p             = o.pd_data
+
+    epochTS       = p.phyloTimeScale == "epoch"
+
+    ancestorLinks = parseAncestorLinks p.edges
+    branchLinks   = parseBranchLinks p.edges
+    branches      = parseBranches p.objects
+    groups        = parseGroups epochTS p.objects
+    links         = parseLinks p.edges
+    periods       = parsePeriods epochTS p.objects
+
+----------------------------------------------------------------------
+
+data PhyloData = PhyloData
   { ancestorLinks :: Array AncestorLink
   , bb            :: Array Number
   , branchLinks   :: Array BranchLink
@@ -58,41 +113,9 @@ data PhyloDataSet = PhyloDataSet
   , weighted      :: Boolean
   }
 
-derive instance Generic PhyloDataSet _
-derive instance Eq PhyloDataSet
-instance Show PhyloDataSet where show = genericShow
-
-parsePhyloJSONSet :: PhyloJSONSet -> PhyloDataSet
-parsePhyloJSONSet (PhyloJSONSet o) = PhyloDataSet
-  { ancestorLinks
-  , bb            : parseBB o.bb
-  , branchLinks
-  , branches
-  , groups
-  , links
-  , name          : o.name
-  , nbBranches    : parseInt o.phyloBranches
-  -- @NOTE #219: remotely stringify as a Double instead of an Int (reason?)
-  , nbDocs        : (parseFloat >>> parseInt') o.phyloDocs
-  , nbFoundations : parseInt o.phyloFoundations
-  , nbGroups      : parseInt o.phyloGroups
-  , nbPeriods     : parseInt o.phyloPeriods
-  , nbTerms       : parseInt o.phyloTerms
-  , periods
-  , sources       : parseSources o.phyloSources
-  , timeScale     : o.phyloTimeScale
-  , weighted      : getGlobalWeightedValue groups
-  }
-
-  where
-    epochTS       = o.phyloTimeScale == "epoch"
-
-    ancestorLinks = parseAncestorLinks o.edges
-    branchLinks   = parseBranchLinks o.edges
-    branches      = parseBranches o.objects
-    groups        = parseGroups epochTS o.objects
-    links         = parseLinks o.edges
-    periods       = parsePeriods epochTS o.objects
+derive instance Generic PhyloData _
+derive instance Eq PhyloData
+instance Show PhyloData where show = genericShow
 
 -----------------------------------------------------------
 
@@ -491,10 +514,34 @@ derive newtype instance JSON.ReadForeign ExtractedCount
 -----------------------------------------------------------
 
 newtype FrameDoc = FrameDoc
-  { docId     :: NodeID
-  , corpusId  :: NodeID
-  , listId    :: NodeID
+  { docId     :: DocId
+  , corpusId  :: CorpusId
+  , listId    :: ListId
   }
 
+derive instance Newtype FrameDoc _
 derive instance Generic FrameDoc _
 derive instance Eq FrameDoc
+
+----------------------------------------------------------------
+
+newtype CacheParams = CacheParams
+  { expandSelection     :: Boolean
+  , expandNeighborhood  :: Boolean
+  }
+
+derive instance Newtype CacheParams _
+derive instance Generic CacheParams _
+derive instance Eq CacheParams
+instance Show CacheParams where show = genericShow
+derive newtype instance JSON.ReadForeign CacheParams
+derive newtype instance JSON.WriteForeign CacheParams
+
+-- (!) in case cache storage (ie. JavaScript Local Storage) returns an invalid
+--     objects (eg. possible data migration), this will safely set new default
+--     values
+defaultCacheParams :: CacheParams
+defaultCacheParams = CacheParams
+  { expandSelection   : true
+  , expandNeighborhood: true
+  }

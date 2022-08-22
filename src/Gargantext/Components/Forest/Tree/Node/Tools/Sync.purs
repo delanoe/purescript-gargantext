@@ -36,7 +36,7 @@ nodeActionsGraphCpt = here.component "nodeActionsGraph" cpt where
     let sameVersions = (graphVersions.gv_graph == Just graphVersions.gv_repo)
     in pure $
 
-      R2.if' (not sameVersions) $
+      R2.when (not sameVersions) $
 
         graphUpdateButton { id, session, refresh }
 

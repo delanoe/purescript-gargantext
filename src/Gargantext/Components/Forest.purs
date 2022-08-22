@@ -1,6 +1,5 @@
 module Gargantext.Components.Forest
-  ( forest
-  , forestLayout
+  ( forestLayout
   , Props
   ) where
 
@@ -30,10 +29,11 @@ type Props =
   , frontends :: Frontends
   )
 
-forest :: R2.Component Props
-forest = R.createElement forestCpt
-forestCpt :: R.Component Props
-forestCpt = here.component "forest" cpt where
+forestLayout :: R2.Leaf Props
+forestLayout = R2.leaf forestLayoutCpt
+
+forestLayoutCpt :: R.Component Props
+forestLayoutCpt = here.component "forest" cpt where
   cpt { boxes: boxes@{ handed
                      , reloadForest
                      , sessions }
@@ -50,20 +50,26 @@ forestCpt = here.component "forest" cpt where
 
     -- TODO If `reloadForest` is set, `reload` state should be updated
     -- TODO fix tasks ref
-    pure $ R.fragment
+    pure $
+
+      H.div
+      { className: "forest-layout" }
       (A.cons (plus { boxes }) (trees handed' sessions'))
     where
       trees handed' sessions' = (tree handed') <$> unSessions sessions'
       tree handed' s@(Session { treeId }) =
         H.div
-        { className: "forest-layout-tree" }
+        { className: "forest-layout__tree" }
         [
-          treeLoader { boxes
-                   , frontends
-                   , handed: handed'
-                   , reload: reloadForest
-                   , root: treeId
-                   , session: s } []
+          treeLoader
+          { boxes
+          , frontends
+          , handed: handed'
+          , reload: reloadForest
+          , root: treeId
+          , session: s
+          , key: "tree-" <> (show treeId)
+          }
         ]
 
 type Plus = ( boxes :: Boxes )
@@ -87,22 +93,8 @@ plusCpt = here.component "plus" cpt where
     -- Render
     pure $
       H.div
-      { className: "forest-layout-action" }
+      { className: "forest-layout__action" }
       [
-        -- H.a
-        -- { className: intercalate " "
-        --     [ "btn btn-primary"
-        --     , "forest-layout-action__button"
-        --     ]
-        -- , href: appPath Home
-        -- }
-        -- [
-        --   H.i
-        --   { className: "fa fa-home"
-        --   , title: "Back to home"
-        --   }
-        --   []
-        -- ]
         B.tooltipContainer
         { delayShow: 600
         , position: TooltipPosition Top
@@ -110,7 +102,7 @@ plusCpt = here.component "plus" cpt where
             B.span_ "Back to home"
         , defaultSlot:
             B.button
-            { className: "forest-layout-action__button"
+            { className: "forest-layout__action__button"
             , callback: const $ goToRoute Home
             , variant: ButtonVariant Light
             }
@@ -126,7 +118,7 @@ plusCpt = here.component "plus" cpt where
             B.span_ "Add or remove connection to the server(s)"
         , defaultSlot:
             B.button
-            { className: "forest-layout-action__button"
+            { className: "forest-layout__action__button"
             , callback: click
             , variant: ButtonVariant Light
             }
@@ -146,18 +138,18 @@ plusCpt = here.component "plus" cpt where
   -- [ H.i { className: "material-icons md-36"} [] ]
 
 
-forestLayout :: R2.Leaf Props
-forestLayout = R2.leaf forestLayoutCpt
-forestLayoutCpt :: R.Memo Props
-forestLayoutCpt = R.memo' $ here.component "forestLayout" cpt where
-  cpt p _ = pure $
+-- forestLayout :: R2.Leaf Props
+-- forestLayout = R2.leaf forestLayoutCpt
+-- forestLayoutCpt :: R.Memo Props
+-- forestLayoutCpt = R.memo' $ here.component "forestLayout" cpt where
+--   cpt p _ = pure $
 
-    H.div
-    { className: "forest-layout" }
-    [
-      H.div { className: "forest-layout__top-teaser" } []
-    ,
-      forest p []
-    ,
-      H.div { className: "forest-layout__bottom-teaser" } []
-    ]
+--     H.div
+--     { className: "forest-layout" }
+--     [
+--       H.div { className: "forest-layout__top-teaser" } []
+--     ,
+--       forest p []
+--     ,
+--       H.div { className: "forest-layout__bottom-teaser" } []
+--     ]

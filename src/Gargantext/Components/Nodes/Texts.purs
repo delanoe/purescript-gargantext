@@ -3,16 +3,21 @@ module Gargantext.Components.Nodes.Texts where
 import Gargantext.Prelude
 
 import Data.Generic.Rep (class Generic)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isJust)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
-import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.App.Store as AppStore
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (Elevation(..))
 import Gargantext.Components.Charts.Options.ECharts (dispatchAction)
 import Gargantext.Components.Charts.Options.Type (EChartsInstance, EChartActionData)
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.DocsTable.Types (Year)
+import Gargantext.Components.Document.API (loadData)
+import Gargantext.Components.Document.Layout (layout)
+import Gargantext.Components.Document.Types (LoadedData, DocPath)
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
@@ -22,14 +27,17 @@ import Gargantext.Components.Nodes.Corpus.Document as D
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
 import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Components.Nodes.Texts.Types as TT
+import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Reload (textsReloadContext)
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table
 import Gargantext.Config.REST (logRESTError)
 import Gargantext.Ends (Frontends)
-import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Sessions (WithSession, Session, getCacheState)
+import Gargantext.Hooks.Loader (useLoader, useLoaderEffect)
+import Gargantext.Hooks.Session (useSession)
+import Gargantext.Sessions (Session, getCacheState, sessionId)
 import Gargantext.Types (CTabNgramType(..), ListId, NodeID, SidePanelState(..), TabSubType(..), TabType(..))
+import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
@@ -39,23 +47,17 @@ import Toestand as T
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Texts"
 
---------------------------------------------------------
-
-
-type CommonPropsNoSession =
-  ( boxes     :: Boxes
-  , frontends :: Frontends
+type Props =
+  ( frontends :: Frontends
   , nodeId    :: NodeID
   )
 
-type Props = WithSession CommonPropsNoSession
+textsLayout :: R2.Leaf Props
+textsLayout = R2.leaf textsLayoutCpt
 
-
-textsLayout :: R2.Component Props
-textsLayout = R.createElement textsLayoutCpt
 textsLayoutCpt :: R.Component Props
 textsLayoutCpt = here.component "textsLayout" cpt where
-  cpt { boxes, frontends, nodeId, session } children = do
+  cpt { frontends, nodeId } _ = do
 
     _ /\ reloadBox <- R2.useBox' T2.newReload
 
@@ -63,79 +65,79 @@ textsLayoutCpt = here.component "textsLayout" cpt where
       R.provideContext textsReloadContext (Just reloadBox)
       [
         textsLayoutWithKey
-          { key
-          , boxes
+          { key: show nodeId
           , frontends
           , nodeId
-          , session } children
+          }
       ]
 
-      where
-        key = show nodeId
-        -- key = show sid <> "-" <> show nodeId
-        --   where
-        --     sid = sessionId session
+---------------------------------------------------------------
 
-type KeyProps = (
-    key       :: String
-  , boxes     :: Boxes
-  , frontends :: Frontends
-  , nodeId    :: NodeID
-  , session   :: Session
-  )
+textsLayoutWithKey :: R2.Leaf ( key :: String | Props )
+textsLayoutWithKey = R2.leaf textsLayoutWithKeyCpt
 
-textsLayoutWithKey :: R2.Component KeyProps
-textsLayoutWithKey = R.createElement textsLayoutWithKeyCpt
-textsLayoutWithKeyCpt :: R.Component KeyProps
-textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt
-  where
-    cpt { boxes: boxes@{ sidePanelTexts }
-        , frontends
-        , nodeId
-        , session } _children = do
-      cacheState <- T.useBox $ getCacheState LT.CacheOff session nodeId
-      cacheState' <- T.useLive T.unequal cacheState
+textsLayoutWithKeyCpt :: R.Component ( key :: String | Props )
+textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt where
+  cpt { frontends
+      , nodeId
+      } _ = do
+    session <- useSession
 
-      yearFilter <- T.useBox (Nothing :: Maybe Year)
+    boxes@{ sidePanelTexts } <- AppStore.use
 
-      eChartsInstance <- T.useBox (Nothing :: Maybe EChartsInstance)
+    cacheState <- T.useBox $ getCacheState LT.CacheOff session nodeId
+    cacheState' <- T.useLive T.unequal cacheState
 
-      R.useEffectOnce' $ do
-        T.listen (\{ new } -> afterCacheStateChange new) cacheState
+    yearFilter <- T.useBox (Nothing :: Maybe Year)
 
-      useLoader { errorHandler
-                , loader: loadCorpusWithChild
-                , path: { nodeId, session }
-                , render: \corpusData@{ corpusId, corpusNode } -> do
-                    let NodePoly { name, date, hyperdata } = corpusNode
+    eChartsInstance <- T.useBox (Nothing :: Maybe EChartsInstance)
 
-                    R.fragment
-                      [ Table.tableHeaderWithRenameLayout {
-                          cacheState
-                        , name
-                        , date
-                        , hyperdata
-                        , nodeId: corpusId
-                        , session
-                        , key: "textsLayoutWithKey-" <> (show cacheState') } []
-                      , tabs { boxes
-                             , cacheState
-                             , corpusData
-                             , corpusId
-                             , eChartsInstance
-                             , frontends
-                             , session
-                             , sidePanel: sidePanelTexts
-                             , yearFilter
-                             }
-                      ] }
-      where
-        errorHandler = logRESTError here "[textsLayoutWithKey]"
-        afterCacheStateChange cacheState = do
-          launchAff_ $ clearCache unit
-          -- TODO
-          --sessionUpdate $ setCacheState session nodeId cacheState
-          --_ <- setCacheState session nodeId cacheState
+    R.useEffectOnce' $ do
+      T.listen (\{ new } -> afterCacheStateChange new) cacheState
+
+    useLoader { errorHandler
+              , loader: loadCorpusWithChild
+              , path: { nodeId, session }
+              , render: \corpusData@{ corpusId, corpusNode } ->
+                  let
+                    NodePoly { name, date, hyperdata } = corpusNode
+
+                  in
+                    H.div
+                    { className: "texts-layout" }
+                    [
+                      Table.tableHeaderWithRenameLayout
+                      { cacheState
+                      , name
+                      , date
+                      , hyperdata
+                      , nodeId: corpusId
+                      , session
+                      , key: "textsLayoutWithKey-" <> (show cacheState')
+                      }
+                    ,
+                      tabs
+                      { boxes
+                      , cacheState
+                      , corpusData
+                      , corpusId
+                      , eChartsInstance
+                      , frontends
+                      , session
+                      , sidePanel: sidePanelTexts
+                      , yearFilter
+                      }
+                    ]
+              }
+    where
+      errorHandler = logRESTError here "[textsLayoutWithKey]"
+      afterCacheStateChange _cacheState = do
+        launchAff_ $ clearCache unit
+        -- TODO
+        --sessionUpdate $ setCacheState session nodeId cacheState
+        --_ <- setCacheState session nodeId cacheState
+
+-----------------------------------------------------
 
 data Mode = MoreLikeFav | MoreLikeTrash
 
@@ -207,8 +209,10 @@ tabsCpt = here.component "tabs" cpt
 
       chartReload <- T.useBox T2.newReload
 
-      pure $ Tab.tabs {
-          activeTab
+      pure $
+        Tab.tabs
+        { className: "nodes-texts-layout-tabs"
+        , activeTab
         , tabs: [
             "Documents"       /\ R.fragment [
                 histoRender { boxes, path, onClick, onInit, reload: chartReload, session } []
@@ -249,7 +253,7 @@ histoRender = R.createElement histoRenderCpt
 histoRenderCpt :: R.Component HistoProps
 histoRenderCpt = here.component "histoRender" cpt where
   cpt { boxes, path, onClick, onInit, reload, session } _ = do
-    reload' <- T.useLive T.unequal reload
+    _ <- T.useLive T.unequal reload
 
     pure $ histo { boxes, path, onClick, onInit, session }
 
@@ -416,104 +420,183 @@ docViewLayoutRec { boxes
 
 
 --------------------------------------------------------
-type SidePanelProps = (
-    boxes     :: Boxes
-  , session   :: Session
-  , sidePanel :: T.Box (Maybe (Record TT.SidePanel))
-  )
 
-textsSidePanel :: R2.Component SidePanelProps
-textsSidePanel = R.createElement textsSidePanelCpt
-textsSidePanelCpt :: R.Component SidePanelProps
-textsSidePanelCpt = here.component "sidePanel" cpt
-  where
-    cpt { boxes: { sidePanelState }
-        , session
-        , sidePanel } _ = do
+textsSidePanel :: R2.Leaf ()
+textsSidePanel = R2.leaf textsSidePanelCpt
 
-      sidePanelState' <- T.useLive T.unequal sidePanelState
-      sidePanel' <- T.useLive T.unequal sidePanel
+textsSidePanelCpt :: R.Component ()
+textsSidePanelCpt = here.component "sidePanel" cpt where
+  cpt _ _ = do
 
-      -- R.useEffect' $ do
-      --   let toggleSidePanel' _  = snd sidePanelState toggleSidePanelState
-      --       triggerSidePanel' _ = snd sidePanelState $ const Opened
-      --   R2.setTrigger toggleSidePanel  toggleSidePanel'
-      --   R2.setTrigger triggerSidePanel triggerSidePanel'
+    { sidePanelState
+    , sidePanelTexts
+    } <- AppStore.use
 
-      -- (mCorpusId /\ setMCorpusId) <- R.useState' Nothing
-      -- (mListId /\ setMListId) <- R.useState' Nothing
-      -- (mNodeId /\ setMNodeId) <- R.useState' Nothing
+    session <- useSession
 
-      -- R.useEffect3 mCorpusId mListId mNodeId $ do
-      --   if mCorpusId == Just corpusId && mListId == Just listId && mNodeId == Just nodeId && mCurrentDocId == Just nodeId then do
-      --     T.modify_ (\sp -> sp { mCurrentDocId = Nothing }) sidePanel
-      --   else do
-      --     T.modify_ (\sp -> sp { mCorpusId = Just corpusId
-      --                         , mCurrentDocId = Just nodeId
-      --                         , mListId = Just listId
-      --                         , mNodeId = Just nodeId }) sidePanel
-        -- let trigger :: Record TriggerAnnotatedDocIdChangeParams -> Effect Unit
-        --     trigger { corpusId, listId, nodeId } = do
-              -- log2 "[sidePanel trigger] trigger corpusId change" corpusId
-              -- log2 "[sidePanel trigger] trigger listId change" listId
-              -- log2 "[sidePanel trigger] trigger nodeId change" nodeId
-              -- if mCorpusId == Just corpusId && mListId == Just listId && mNodeId == Just nodeId && mCurrentDocId == Just nodeId then do
-                -- R.setRef currentDocIdRef Nothing
-                -- T.modify_ (\sp -> sp { mCurrentDocId = Nothing }) sidePanel
-                -- R2.callTrigger toggleSidePanel unit
-              -- else do
-                -- setMCorpusId $ const $ Just corpusId
-                -- setMListId $ const $ Just listId
-                -- setMNodeId $ const $ Just nodeId
-                -- R.setRef currentDocIdRef $ Just nodeId
-                -- R2.callTrigger triggerSidePanel unit
-                -- T.modify_ (\sp -> sp { mCorpusId = Just corpusId
-                --                     , mCurrentDocId = Just nodeId
-                --                     , mListId = Just listId
-                --                     , mNodeId = Just nodeId }) sidePanel
-        -- log2 "[sidePanel] trigger" trigger
-        -- R2.setTrigger triggerAnnotatedDocIdChange trigger
-        -- pure unit
+    sidePanelState' <- R2.useLive' sidePanelState
+    sidePanelTexts' <- R2.useLive' sidePanelTexts
 
-        -- pure $ do
-        --   -- log "[sidePanel] clearing triggerAnnotatedDocIdChange"
-        --   R2.clearTrigger triggerAnnotatedDocIdChange
+    -- R.useEffect' $ do
+    --   let toggleSidePanel' _  = snd sidePanelState toggleSidePanelState
+    --       triggerSidePanel' _ = snd sidePanelState $ const Opened
+    --   R2.setTrigger toggleSidePanel  toggleSidePanel'
+    --   R2.setTrigger triggerSidePanel triggerSidePanel'
 
-      let mainStyle = case sidePanelState' of
-            Opened -> { display: "block" }
-            _      -> { display: "none" }
+    -- (mCorpusId /\ setMCorpusId) <- R.useState' Nothing
+    -- (mListId /\ setMListId) <- R.useState' Nothing
+    -- (mNodeId /\ setMNodeId) <- R.useState' Nothing
 
-      let closeSidePanel _ = do
-            -- T.modify_ (\sp -> sp { mCurrentDocId = Nothing
-            --                     , state = Closed }) sidePanel
-            T.write_ Closed sidePanelState
-            T.write_ Nothing sidePanel
+    -- R.useEffect3 mCorpusId mListId mNodeId $ do
+    --   if mCorpusId == Just corpusId && mListId == Just listId && mNodeId == Just nodeId && mCurrentDocId == Just nodeId then do
+    --     T.modify_ (\sp -> sp { mCurrentDocId = Nothing }) sidePanelTexts
+    --   else do
+    --     T.modify_ (\sp -> sp { mCorpusId = Just corpusId
+    --                         , mCurrentDocId = Just nodeId
+    --                         , mListId = Just listId
+    --                         , mNodeId = Just nodeId }) sidePanelTexts
+      -- let trigger :: Record TriggerAnnotatedDocIdChangeParams -> Effect Unit
+      --     trigger { corpusId, listId, nodeId } = do
+            -- log2 "[sidePanel trigger] trigger corpusId change" corpusId
+            -- log2 "[sidePanel trigger] trigger listId change" listId
+            -- log2 "[sidePanel trigger] trigger nodeId change" nodeId
+            -- if mCorpusId == Just corpusId && mListId == Just listId && mNodeId == Just nodeId && mCurrentDocId == Just nodeId then do
+              -- R.setRef currentDocIdRef Nothing
+              -- T.modify_ (\sp -> sp { mCurrentDocId = Nothing }) sidePanelTexts
+              -- R2.callTrigger toggleSidePanel unit
+            -- else do
+              -- setMCorpusId $ const $ Just corpusId
+              -- setMListId $ const $ Just listId
+              -- setMNodeId $ const $ Just nodeId
+              -- R.setRef currentDocIdRef $ Just nodeId
+              -- R2.callTrigger triggerSidePanel unit
+              -- T.modify_ (\sp -> sp { mCorpusId = Just corpusId
+              --                     , mCurrentDocId = Just nodeId
+              --                     , mListId = Just listId
+              --                     , mNodeId = Just nodeId }) sidePanelTexts
+      -- log2 "[sidePanel] trigger" trigger
+      -- R2.setTrigger triggerAnnotatedDocIdChange trigger
+      -- pure unit
 
-      pure $ H.div { style: mainStyle } [
-        H.div { className: "header" } [
-          H.span { className: "btn btn-danger"
-                 , on: { click: closeSidePanel } } [
-            H.span { className: "fa fa-times" } []
+      -- pure $ do
+      --   -- log "[sidePanel] clearing triggerAnnotatedDocIdChange"
+      --   R2.clearTrigger triggerAnnotatedDocIdChange
+
+    let closeSidePanel _ = do
+          -- T.modify_ (\sp -> sp { mCurrentDocId = Nothing
+          --                     , state = Closed }) sidePanelTexts
+          T.write_ Closed sidePanelState
+          T.write_ Nothing sidePanelTexts
+
+
+    pure $
+
+      H.div
+      -- @XXX: ReactJS lack of "keep-alive" feature workaround solution
+      -- @link https://github.com/facebook/react/issues/12039
+      { className: "texts-sidepanel"
+      , style: { display: sidePanelState' == Opened ? "block" $ "none" }
+      }
+      [
+        H.div
+        { className: "texts-sidepanel__inner" }
+        [
+          H.div
+          { className: "texts-sidepanel__header" }
+          [
+            B.iconButton
+            { name: "times"
+            , elevation: Level2
+            , callback: closeSidePanel
+            }
+          ]
+        ,
+          H.div
+          { className: "texts-sidepanel__body" }
+          [
+            case sidePanelTexts' of
+              Nothing ->
+                B.caveat
+                {}
+                [ H.text $ "You can select a document to see its content" ]
+
+              Just (sidePanelTexts_ :: Record TextsT.SidePanel) ->
+                sideText
+                { session
+                , sidePanelText: sidePanelTexts_
+                , key: show $ sidePanelTexts_.nodeId
+                }
           ]
         ]
-      , sidePanelDocView { mSidePanel: sidePanel', session } []
       ]
 
-type SidePanelDocView = (
-    mSidePanel :: Maybe (Record TT.SidePanel)
-  , session    :: Session
+-------------------------------------------------------
+
+type SideText =
+  ( sidePanelText  :: Record TextsT.SidePanel
+  , session       :: Session
+  -- @TODO handling `closeCallback` when SidePanelText will be extracted from
+  -- application layout business (and put inside the Node Document business)
+  -- , closeCallback :: Unit -> Effect Unit
   )
 
-sidePanelDocView :: R2.Component SidePanelDocView
-sidePanelDocView = R.createElement sidePanelDocViewCpt
-sidePanelDocViewCpt :: R.Component SidePanelDocView
-sidePanelDocViewCpt = here.component "sidePanelDocView" cpt
-  where
-    cpt { mSidePanel: Nothing } _ = do
-      pure $ H.div {} []
-    cpt { mSidePanel: Just { corpusId, listId, nodeId }
-        , session } _ = do
-      pure $ D.documentLayout { listId
-                              , mCorpusId: Just corpusId
-                              , nodeId
-                              , session } []
+sideText :: R2.Leaf ( key :: String | SideText )
+sideText = R2.leaf sideTextCpt
+
+sideTextCpt :: R.Component ( key :: String | SideText )
+sideTextCpt = here.component "sideText" cpt where
+  cpt { sidePanelText: { corpusId, listId, nodeId }
+      , session
+      } _ = do
+    -- | States
+    -- |
+    state' /\ state <- R2.useBox' (Nothing :: Maybe LoadedData)
+
+    -- | Computed
+    -- |
+    let
+
+      tabType :: TabType
+      tabType = TabDocument (TabNgramType CTabTerms)
+
+      path :: DocPath
+      path =
+        { listIds: [listId]
+        , mCorpusId: Just corpusId
+        , nodeId
+        , session
+        , tabType
+        }
+
+    -- | Hooks
+    -- |
+    useLoaderEffect
+      { errorHandler: logRESTError here "[sidePanelText]"
+      , loader: loadData
+      , path
+      , state
+      }
+
+    -- | Render
+    -- |
+    pure $
+
+
+      H.div
+      { className: "graph-doc-focus" }
+      [
+        B.cloak
+        { isDisplayed: isJust state'
+        , idlingPhaseDuration: Just 150
+        , cloakSlot:
+            B.preloader
+            {}
+
+        , defaultSlot:
+            R2.fromMaybe state' \loaded ->
+              layout
+              { loaded
+              , path
+              }
+        }
+      ]

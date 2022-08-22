@@ -15,6 +15,7 @@ import Data.DateTime as DDT
 import Data.DateTime.Instant as DDI
 import Data.Either (Either(..))
 import Data.Enum (fromEnum)
+import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
 import Data.String as DS
 import Effect.Aff (launchAff_)
@@ -204,7 +205,10 @@ pauseForceAtlasButtonCpt = here.component "forceAtlasToggleButton" cpt
 
         B.button
         { variant: vrt state'
-        , className: cls state'
+        , className: intercalate " "
+            [ cls state'
+            , "toolbar-atlas-button"
+            ]
         , callback: \_ -> T.modify_ SigmaxTypes.toggleForceAtlasState state
         }
         [

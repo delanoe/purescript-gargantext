@@ -11,108 +11,105 @@
 /// @https://sebastiandedeyne.com/why-we-use-important-with-tailwind/
 /// @https://css-tricks.com/css-cascade-layers/
 
-#app {
+#app,
+#portal {
 
-  // Width
-  .w-0 { width: 0;          }
-  .w-1 { width: space-x(1); }
-  .w-2 { width: space-x(2); }
-  .w-3 { width: space-x(3); }
-  .w-4 { width: space-x(4); }
-  .w-5 { width: space-x(5); }
+  /// Width
+  $widths:
+    auto,
+    inherit,
+    min-content,
+    max-content,
+    fit-content;
 
-  .w-auto     { width: auto;    }
-  .w-fluid    { width: 100%;    }
-  .w-inherit  { width: inherit; }
+  @each $value in $widths {
+    .w-#{$value} { width: $value; }
+  }
 
-  // Height
-  .h-0 { height: 0;          }
-  .h-1 { height: space-x(1); }
-  .h-2 { height: space-x(2); }
-  .h-3 { height: space-x(3); }
-  .h-4 { height: space-x(4); }
-  .h-5 { height: space-x(5); }
+  @for $i from 0 through 10 {
+    .w-#{$i} { width: space-x($i) }
+  }
 
+  .w-0        { width: 0;           }
+  .w-fluid    { width: 100%;        }
+
+  .w-1\/2	    { width: 50%;         }
+  .w-1\/3	    { width: 33.333333%;  }
+  .w-2\/3	    { width: 66.666667%;  }
+  .w-1\/4	    { width: 25%;         }
+  .w-2\/4	    { width: 50%;         }
+  .w-3\/4	    { width: 75%;         }
+  .w-1\/5	    { width: 20%;         }
+  .w-2\/5	    { width: 40%;         }
+  .w-3\/5	    { width: 60%;         }
+  .w-4\/5	    { width: 80%;         }
+  .w-1\/6	    { width: 16.666667%;  }
+  .w-2\/6  	  { width: 33.333333%;  }
+  .w-3\/6	    { width: 50%;         }
+  .w-4\/6	    { width: 66.666667%;  }
+  .w-5\/6	    { width: 83.333333%;  }
+  .w-1\/12	  { width: 8.333333%;   }
+  .w-2\/12	  { width: 16.666667%;  }
+  .w-3\/12	  { width: 25%;         }
+  .w-4\/12	  { width: 33.333333%;  }
+  .w-5\/12	  { width: 41.666667%;  }
+  .w-6\/12	  { width: 50%;         }
+  .w-7\/12	  { width: 58.333333%;  }
+  .w-8\/12	  { width: 66.666667%;  }
+  .w-9\/12	  { width: 75%;         }
+  .w-10\/12	  { width: 83.333333%;  }
+  .w-11\/12	  { width: 91.666667%;  }
+
+  /// Height
   .h-auto     { height: auto;     }
   .h-fluid    { height: 100%;     }
   .h-inherit  { height: inherit;  }
 
-  // Margin
-  .m-0 { margin: 0;           }
-  .m-1 { margin: space-x(1);  }
-  .m-2 { margin: space-x(2);  }
-  .m-3 { margin: space-x(3);  }
-  .m-4 { margin: space-x(4);  }
-  .m-5 { margin: space-x(5);  }
+  @for $i from 0 through 10 {
+    .h-#{$i} { height: space-x($i) }
+  }
 
-  .mt-0 { margin-top:     0;                      }
-  .mr-0 { margin-right:   0;                      }
-  .mb-0 { margin-bottom:  0;                      }
-  .ml-0 { margin-left:    0;                      }
-  .mx-0 { margin-left:    0;  margin-right:   0;  }
-  .my-0 { margin-top:     0;  margin-bottom:  0;  }
 
-  .mt-1 { margin-top:     space-x(1);                             }
-  .mr-1 { margin-right:   space-x(1);                             }
-  .mb-1 { margin-bottom:  space-x(1);                             }
-  .ml-1 { margin-left:    space-x(1);                             }
-  .mx-1 { margin-left:    space-x(1); margin-right:   space-x(1); }
-  .my-1 { margin-top:     space-x(1); margin-bottom:  space-x(1); }
-
-  .mt-2 { margin-top:     space-x(2);                             }
-  .mr-2 { margin-right:   space-x(2);                             }
-  .mb-2 { margin-bottom:  space-x(2);                             }
-  .ml-2 { margin-left:    space-x(2);                             }
-  .mx-2 { margin-right:   space-x(2); margin-left:    space-x(2); }
-  .my-2 { margin-top:     space-x(2); margin-bottom:  space-x(2); }
-
-  .mt-3 { margin-top:     space-x(3);                             }
-  .mr-3 { margin-right:   space-x(3);                             }
-  .mb-3 { margin-bottom:  space-x(3);                             }
-  .ml-3 { margin-left:    space-x(3);                             }
-  .mx-3 { margin-right:   space-x(3); margin-left:  space-x(3);   }
-  .my-3 { margin-bottom:  space-x(3); margin-top:   space-x(3);   }
-
+  /// Margin
   .ml-auto, .mx-auto { margin-left: auto;  }
   .mr-auto, .mx-auto { margin-right: auto; }
 
-  // Padding
-  .p-0 { padding: 0;          }
-  .p-1 { padding: space-x(1); }
-  .p-2 { padding: space-x(2); }
-  .p-3 { padding: space-x(3); }
-  .p-4 { padding: space-x(4); }
-  .p-5 { padding: space-x(5); }
+  @for $i from 0 through 10 {
+    .m-#{$i}   { margin: space-x($i);                                          }
 
-  .pt-0 { padding-top:    0;                      }
-  .pr-0 { padding-right:  0;                      }
-  .pb-0 { padding-bottom: 0;                      }
-  .pl-0 { padding-left:   0;                      }
-  .px-0 { padding-left:   0;  padding-right:  0;  }
-  .py-0 { padding-top:    0;  padding-bottom: 0;  }
+    .mt-#{$i}  { margin-top:     space-x($i);                                  }
+    .mr-#{$i}  { margin-right:   space-x($i);                                  }
+    .mb-#{$i}  { margin-bottom:  space-x($i);                                  }
+    .ml-#{$i}  { margin-left:    space-x($i);                                  }
+    .mx-#{$i}  { margin-left:    space-x($i);  margin-right:   space-x($i);    }
+    .my-#{$i}  { margin-top:     space-x($i);  margin-bottom:  space-x($i);    }
 
-  .pt-1 { padding-top:    space-x(1);                             }
-  .pr-1 { padding-right:  space-x(1);                             }
-  .pb-1 { padding-bottom: space-x(1);                             }
-  .pl-1 { padding-left:   space-x(1);                             }
-  .px-1 { padding-left:   space-x(1); padding-right:  space-x(1); }
-  .py-1 { padding-top:    space-x(1); padding-bottom: space-x(1); }
 
-  .pt-2 { padding-top:    space-x(2);                             }
-  .pr-2 { padding-right:  space-x(2);                             }
-  .pb-2 { padding-bottom: space-x(2);                             }
-  .pl-2 { padding-left:   space-x(2);                             }
-  .px-2 { padding-right:  space-x(2); padding-left:   space-x(2); }
-  .py-2 { padding-top:    space-x(2); padding-bottom: space-x(2); }
+    .m-#{$i}\.5   { margin: space-x($i + .5);                                  }
 
-  .pt-3 { padding-top:    space-x(3);                           }
-  .pr-3 { padding-right:  space-x(3);                           }
-  .pb-3 { padding-bottom: space-x(3);                           }
-  .pl-3 { padding-left:   space-x(3);                           }
-  .px-3 { padding-right:  space-x(3); padding-left: space-x(3); }
-  .py-3 { padding-bottom: space-x(3); padding-top:  space-x(3); }
+    .mt-#{$i}\.5  { margin-top:     space-x($i + .5);                          }
+    .mr-#{$i}\.5  { margin-right:   space-x($i + .5);                          }
+    .mb-#{$i}\.5  { margin-bottom:  space-x($i + .5);                          }
+    .ml-#{$i}\.5  { margin-left:    space-x($i + .5);                          }
+    .mx-#{$i}\.5  { margin-left:    space-x($i + .5);
+                    margin-right:   space-x($i + .5);                          }
+    .my-#{$i}\.5  { margin-top:     space-x($i + .5);
+                    margin-bottom:  space-x($i + .5);                          }
+  }
 
-  // Display
+  /// Padding
+  @for $i from 0 through 10 {
+    .p-#{$i}   { padding: space-x($i);                                         }
+
+    .pt-#{$i}  { padding-top:     space-x($i);                                 }
+    .pr-#{$i}  { padding-right:   space-x($i);                                 }
+    .pb-#{$i}  { padding-bottom:  space-x($i);                                 }
+    .pl-#{$i}  { padding-left:    space-x($i);                                 }
+    .px-#{$i}  { padding-left:    space-x($i);  padding-right:   space-x($i);  }
+    .py-#{$i}  { padding-top:     space-x($i);  padding-bottom:  space-x($i);  }
+  }
+
+  /// Display
   $displays:
     none,
     inline,
@@ -128,7 +125,7 @@
     .d-#{$value} { display: $value; }
   }
 
-  // Position
+  /// Position
   $positions:
     static,
     relative,
@@ -140,26 +137,16 @@
     .position-#{$value} { position: $value; }
   }
 
-  // Overflow
+  /// Overflow
   $overflows: auto, hidden !default;
 
   @each $value in $overflows {
     .overflow-#{$value} { overflow: $value; }
   }
 
-  // Typography
-  .text-primary     { color: $primary;      }
-  .text-secondary   { color: $secondary;    }
-  .text-info        { color: $info;         }
-  .text-success     { color: $success;      }
-  .text-warning     { color: $warning;      }
-  .text-danger      { color: $danger;       }
-  .text-dark        { color: $dark;         }
-  .text-light       { color: $light;        }
-
+  /// Typography
   .text-bold      { font-weight: bold;          }
   .text-italic    { font-style: italic;         }
-  .text-underline { text-decoration: underline; }
 
   .text-justify  { text-align: justify; }
   .text-wrap     { white-space: normal; }
@@ -173,13 +160,28 @@
   .text-uppercase  { text-transform: uppercase;   }
   .text-capitalize { text-transform: capitalize;  }
 
-  .font-italic     { font-style: italic;          }
-
   .text-decoration-none       { text-decoration: none;      }
   .text-decoration-underline  { text-decoration: underline; }
 
+  /// Font-size
+  @for $unit from 1 through 40 {
+    .font-size-#{$unit * 5} { font-size: #{$unit * 5%}; }
+  }
 
-  // Align
+  /// Line-height
+  $line-heights:
+    normal,
+    inherit;
+
+  @each $value in $line-heights {
+    .line-height-#{$value} { line-height: normal; }
+  }
+
+  @for $unit from 1 through 20 {
+    .line-height-#{$unit + 0} { line-height: #{$unit * + 0}; }
+  }
+
+  /// Align
   .align-baseline    { vertical-align: baseline;    }
   .align-top         { vertical-align: top;         }
   .align-middle      { vertical-align: middle;      }
@@ -187,35 +189,53 @@
   .align-text-bottom { vertical-align: text-bottom; }
   .align-text-top    { vertical-align: text-top;    }
 
-  // Background
+  /// Color (keep ".text" classes for Bootstrap legacy)
+  .text-white,
+  .color-white { color: $white; }
+  .text-black,
+  .color-black { color: $black; }
+
+  @each $theme, $value in $palette-semantic {
+    .text-#{$theme},
+    .color-#{$theme} { color: $value; }
+  }
+
+  @each $theme, $value in $palette-gray {
+    .color-gray-#{$theme} { color: $value; }
+  }
+
+  @each $theme, $value in $palette-pastel {
+    .color-pastel-#{$theme} { color: $value; }
+  }
+
+  /// Background
   .bg-white          { background-color: $white;      }
   .bg-black          { background-color: $black;      }
   .bg-transparent    { background-color: transparent; }
 
-  .bg-primary     { background-color: $primary;      }
-  .bg-secondary   { background-color: $secondary;    }
-  .bg-info        { background-color: $info;         }
-  .bg-success     { background-color: $success;      }
-  .bg-warning     { background-color: $warning;      }
-  .bg-danger      { background-color: $danger;       }
-  .bg-dark        { background-color: $dark;         }
-  .bg-light       { background-color: $light;        }
+  @each $theme, $value in $palette-semantic {
+    .bg-#{$theme} { background-color: $value;}
+  }
 
-  // Border
+  /// Border
   .border-0        { border: 0;         }
   .border-top-0    { border-top: 0;     }
   .border-right-0  { border-right: 0;   }
   .border-bottom-0 { border-bottom: 0;  }
   .border-left-0   { border-left: 0;    }
 
-  // Border radius
+  @each $theme, $value in $palette-semantic {
+    .border-#{$theme} { border-color: $value;}
+  }
+
+  /// Border radius
   .rounded-circle   { border-radius: 50%; }
   .rounded-0        { border-radius: 0;   }
 
-  // Clearfix
+  /// Clearfix
   .clearfix       { @include clearfix; }
 
-  // Flex
+  /// Flex
   .flex-row            { flex-direction: row;             }
   .flex-column         { flex-direction: column;          }
   .flex-row-reverse    { flex-direction: row-reverse;     }
@@ -256,14 +276,12 @@
   .align-self-baseline { align-self: baseline;    }
   .align-self-stretch  { align-self: stretch;     }
 
-  // Float
+  /// Float
   .float-left   { float: left;  }
   .float-right  { float: right; }
   .float-none   { float: none;  }
 
-
-  // Visibility
+  /// Visibility
   .visible  { visibility: visible; }
   .hidden   { visibility: hidden;  }
-
 }

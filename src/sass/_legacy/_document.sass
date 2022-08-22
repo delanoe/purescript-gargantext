@@ -1,0 +1,93 @@
+// Every website specialised in scientific articles deals with a column
+// container between 760px and 800px
+$document-container-width: 780px
+
+///////////////////////////////////////////////////////////
+
+.document-layout
+  $label-column-size: 96px
+
+  position: relative
+  width: 100%
+
+  &__header
+    display: flex
+    justify-content: space-between
+    padding: $card-spacer-y $card-spacer-x
+    border-bottom: 1px solid $border-color
+    margin-bottom: $card-spacer-y
+
+  &__side-controls
+    display: flex
+    align-items: center
+
+  &__saving
+    color: $primary
+    display: flex
+
+    &__spinner
+      width: 16px
+      height: 16px
+
+    &__icon
+      font-size: 20px
+      // fading icon apparition with a little pulse
+      // wait a little, then fading icon on hiding
+      animation: fade-in 200ms ease-in-out, fade-out 100ms ease-in-out 2000ms 1 normal forwards, pulse 200ms ease-in-out 0ms 1
+
+  &__body
+    max-width: $document-container-width
+    padding: $card-spacer-x
+    margin: 0 auto
+
+  &__separator-label
+    font-weight: bold
+    border-bottom: 1px solid $gray-200
+    padding-bottom: space-x(0.5)
+    margin-bottom: space-x(1.5)
+
+  &__title
+    font-size: 26px
+    font-weight: bold
+    line-height: 1.4
+    word-wrap: break-word
+    margin-bottom: space-x(3)
+    font-family: $headings-font-family
+
+  &__authors
+    display: flex
+    margin-bottom: space-x(0.5)
+
+    &__label
+      font-weight: bold
+      flex-basis: $label-column-size
+      flex-shrink: 0
+      font-size: 15px
+
+    &__content
+      line-height: 1.2
+      color: $gray-800
+
+  &__source,
+  &__date
+    display: flex
+    margin-bottom: space-x(0.5)
+
+    &__label
+      font-weight: bold
+      flex-basis: $label-column-size
+      flex-shrink: 0
+      font-size: 15px
+
+    &__content
+      font-size: 15px
+      color: $gray-600
+
+  &__abstract
+    margin-top: space-x(4)
+    margin-bottom: space-x(3)
+
+    &__content
+      color: $gray-800
+      font-size: 18px
+      line-height: 1.4

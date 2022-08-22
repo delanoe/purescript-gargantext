@@ -14,21 +14,32 @@ import Gargantext.Utils.Reactix as R2
 here :: R2.Here
 here = R2.here "Gargantext.Components.Tab"
 
-type TabsProps = (
-    activeTab  :: T.Box Int
+type TabsProps =
+  ( activeTab  :: T.Box Int
   , tabs       :: Array (Tuple String R.Element)
+  | TabsOptions
   )
 
-tabs :: R2.Leaf TabsProps
-tabs = R2.leafComponent tabsCpt
+type TabsOptions =
+  ( className :: String
+  )
+
+tabsOptions :: Record TabsOptions
+tabsOptions =
+  { className: ""
+  }
+
+tabs :: forall r. R2.OptLeaf TabsOptions TabsProps r
+tabs = R2.optLeaf tabsCpt tabsOptions
 -- this is actually just the list of tabs, not the tab contents itself
 tabsCpt :: R.Component TabsProps
 tabsCpt = here.component "tabs" cpt where
-  cpt { activeTab
-      , tabs: tabs' } _ = do
+  cpt props@{ activeTab
+            , tabs: tabs'
+            } _ = do
     activeTab' <- T.useLive T.unequal activeTab
 
-    pure $ H.div {}
+    pure $ H.div { className: props.className }
       [ H.nav {}
         [ H.br {}
         , H.div { className: "nav nav-tabs", title: "Search result" }
@@ -58,4 +69,3 @@ tabCpt = here.component "tab" cpt
         same = selected == index
         className = "tab-pane" <> (if same then "show active" else "fade")
         children' = if same then children else []
-

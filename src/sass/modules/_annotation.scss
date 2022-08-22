@@ -1,0 +1,39 @@
+$annotation-graph-color     : #11AA11;
+// $annotation-candidate-color : #33AAEE;
+$annotation-candidate-color : #5A90B6;
+$annotation-stop-color      : #EE3311;
+
+$annotation-field-base-alpha: 17.5%;
+
+$annotation-text-color: $black;
+
+
+@mixin annotation-field-1($_color1) {
+  $color1: mix-alpha($_color1, $annotation-field-base-alpha);
+
+  color: $annotation-text-color;
+  background-color: $color1;
+}
+
+@mixin annotation-field-2($_color1, $_color2) {
+  $color1: mix-alpha($_color1, $annotation-field-base-alpha);
+  $color2: mix-alpha($_color2, $annotation-field-base-alpha);
+  $blend: 20%;
+
+  color: $annotation-text-color;
+  background-image:
+    linear-gradient(mix-alpha($color1, $blend), mix-alpha($color1, $blend)), linear-gradient(mix-alpha($color2, $blend), mix-alpha($color2, $blend));
+}
+
+@mixin annotation-field-3($_color1, $_color2, $_color3) {
+  $color1: mix-alpha($_color1, $annotation-field-base-alpha);
+  $color2: mix-alpha($_color2, $annotation-field-base-alpha);
+  $color3: mix-alpha($_color3, $annotation-field-base-alpha);
+  $blend: 10%;
+
+  color: $annotation-text-color;
+  background-image:
+    linear-gradient(mix-alpha($color1, $blend), mix-alpha($color1, $blend)),
+    linear-gradient(mix-alpha($color2, $blend), mix-alpha($color2, $blend)),
+    linear-gradient(mix-alpha($color3, $blend), mix-alpha($color3, $blend));
+}

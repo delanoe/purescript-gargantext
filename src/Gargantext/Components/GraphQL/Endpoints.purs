@@ -2,22 +2,24 @@ module Gargantext.Components.GraphQL.Endpoints where
 
 import Gargantext.Prelude
 
-import Gargantext.Components.GraphQL.Node (Node, nodeParentQuery, nodesQuery)
-import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, treeFirstLevelQuery)
-import Gargantext.Components.GraphQL.User (UserInfo, userInfoQuery)
-
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Gargantext.Components.GraphQL (queryGql)
+import Gargantext.Components.GraphQL (getClient, queryGql)
 import Gargantext.Components.GraphQL.IMT as GQLIMT
+import Gargantext.Components.GraphQL.Node (Node, nodeParentQuery, nodesQuery)
+import Gargantext.Components.GraphQL.Team (TeamMember, teamQuery)
+import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, treeFirstLevelQuery)
+import Gargantext.Components.GraphQL.User (UserInfo, userInfoQuery)
 import Gargantext.Config.REST (RESTError(..), AffRESTError)
-import Gargantext.Sessions (Session)
+import Gargantext.Sessions (Session(..))
 import Gargantext.Types (NodeType)
 import Gargantext.Utils.Reactix as R2
 import Gargnatext.Components.GraphQL.Contact (AnnuaireContact, annuaireContactQuery)
+import GraphQL.Client.Args (onlyArgs)
+import GraphQL.Client.Query (mutation)
 import GraphQL.Client.Variables (withVars)
 
 here :: R2.Here
@@ -70,3 +72,28 @@ getTreeFirstLevel session id = do
   { tree } <- queryGql session "get tree first level" $ treeFirstLevelQuery `withVars` { id }
   liftEffect $ here.log2 "[getTreeFirstLevel] tree first level" tree
   pure $ Right tree -- TODO: error handling
+
+getTeam :: Session -> Int -> AffRESTError (Array TeamMember)
+getTeam session id = do
+  { team } <- queryGql session "get team" $ teamQuery `withVars` { id }
+  liftEffect $ here.log2 "[getTree] data" team
+  pure $ Right team
+
+type SharedFolderId = Int
+type TeamNodeId = Int
+
+deleteTeamMembership :: Session -> SharedFolderId -> TeamNodeId -> AffRESTError Int
+deleteTeamMembership session sharedFolderId teamNodeId = do
+  let token = getToken session
+  client <- liftEffect $ getClient session
+  { delete_team_membership } <- mutation
+    client
+    "delete_team_membership"
+    { delete_team_membership: onlyArgs { token: token
+                                       , shared_folder_id: sharedFolderId
+                                       , team_node_id: teamNodeId } }
+  pure $ case A.head delete_team_membership of
+    Nothing -> Left (CustomError $ "Failed  to delete team membership. team node id=" <> show teamNodeId <> " shared folder id=" <> show sharedFolderId)
+    Just _ -> Right sharedFolderId
+  where
+    getToken (Session { token }) = token

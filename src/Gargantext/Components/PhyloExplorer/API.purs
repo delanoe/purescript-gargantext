@@ -16,8 +16,8 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.Show.Generic (genericShow)
 import Data.Symbol (SProxy(..))
-import Gargantext.Components.PhyloExplorer.JSON (PhyloJSONSet)
-import Gargantext.Components.PhyloExplorer.Types (PhyloDataSet, parsePhyloJSONSet)
+import Gargantext.Components.PhyloExplorer.JSON (PhyloJSON)
+import Gargantext.Components.PhyloExplorer.Types (PhyloSet, parseToPhyloSet)
 import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Routes as GR
@@ -30,10 +30,10 @@ import Simple.JSON as JSON
 import Simple.JSON.Generics as JSONG
 
 
-get :: S.Session -> NodeID -> AffRESTError (PhyloDataSet)
-get session nodeId = request >>= (_ <#> parsePhyloJSONSet) >>> pure
+get :: S.Session -> NodeID -> AffRESTError (PhyloSet)
+get session nodeId = request >>= (_ <#> parseToPhyloSet) >>> pure
   where
-    request :: AffRESTError (PhyloJSONSet)
+    request :: AffRESTError (PhyloJSON)
     request = S.get session $ PhyloAPI nodeId
 
 ----------------------------------------------------------

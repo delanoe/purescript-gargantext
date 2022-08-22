@@ -3,32 +3,32 @@ module Gargantext.Utils.Reactix where
 import Prelude
 
 import ConvertableOptions as CO
+import Data.Array as A
+import Data.Either (hush)
+import Data.Function.Uncurried (Fn1, runFn1, Fn2, runFn2)
+import Data.Maybe (Maybe(..), fromJust, fromMaybe)
+import Data.Maybe as Maybe
+import Data.Nullable (Nullable, notNull, null, toMaybe)
+import Data.Tuple (Tuple)
+import Data.Tuple.Nested ((/\))
 import DOM.Simple as DOM
 import DOM.Simple.Console (log2)
 import DOM.Simple.Document (document)
 import DOM.Simple.Element as Element
 import DOM.Simple.Event as DE
 import DOM.Simple.Types (class IsNode, class IsElement, DOMRect)
-import Data.Array (singleton)
-import Data.Array as A
-import Data.Either (hush)
-import Data.Function.Uncurried (Fn1, runFn1, Fn2, runFn2)
-import Data.Maybe (Maybe(..), fromJust, fromMaybe)
-import Data.Nullable (Nullable, null, toMaybe)
-import Data.Tuple (Tuple)
-import Data.Tuple.Nested ((/\))
-import Data.UUID as UUID
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_, killFiber)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Effect.Uncurried (EffectFn1, EffectFn3, mkEffectFn1, mkEffectFn2, runEffectFn1, runEffectFn3)
+import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, mkEffectFn1, mkEffectFn2, runEffectFn1, runEffectFn2, runEffectFn3)
 import FFI.Simple (applyTo, args2, args3, defineProperty, delay, getProperty, (..), (...), (.=))
 import Gargantext.Utils.Console (RowConsole)
 import Gargantext.Utils.Console as Console
 import Partial.Unsafe (unsafePartial)
 import React (class ReactPropFields, Children, ReactClass, ReactElement)
 import React as React
+import React.SyntheticEvent as SE
 import Reactix as R
 import Reactix.DOM.HTML (ElemFactory, createDOM, text)
 import Reactix.DOM.HTML as H
@@ -51,7 +51,7 @@ type Component p = Record p -> Array R.Element -> R.Element
 -- | UI Component type with only required props and no child
 type Leaf p = Record p -> R.Element
 
-leafComponent :: forall cpt p. (R.Component p) -> Record p -> R.Element
+leafComponent :: forall p. (R.Component p) -> Record p -> R.Element
 leafComponent cpt p = R.createElement cpt p []
 
 -- | UI Component type containing optional props and children
@@ -397,6 +397,12 @@ getls = window >>= localStorage
 openNodesKey :: LocalStorageKey
 openNodesKey = "garg-open-nodes"
 
+graphParamsKey :: LocalStorageKey
+graphParamsKey = "garg-graph-params"
+
+phyloParamsKey :: LocalStorageKey
+phyloParamsKey = "garg-phylo-params"
+
 type LocalStorageKey = String
 
 loadLocalStorageState :: forall s. JSON.ReadForeign s => LocalStorageKey -> T.Box s -> Effect Unit
@@ -405,10 +411,20 @@ loadLocalStorageState key cell = do
   item :: Maybe String <- getItem key storage
   -- let json = hush <<< Argonaut.jsonParser =<< item
   -- let parsed = hush <<< Argonaut.decodeJson =<< json
-  let parsed = hush <<< JSON.readJSON $ fromMaybe "" item
+  let parsed = hush <<< JSON.readJSON $ Maybe.fromMaybe "" item
   case parsed of
     Nothing -> pure unit
     Just p  -> void $ T.write p cell
+
+loadLocalStorageState' :: forall s.
+     JSON.ReadForeign s
+  => LocalStorageKey
+  -> s
+  -> Effect s
+loadLocalStorageState' key default = do
+  (item :: Maybe String) <- getls >>= getItem key
+  let parsed = hush <<< JSON.readJSON $ Maybe.fromMaybe "" item
+  pure $ Maybe.fromMaybe default parsed
 
 listenLocalStorageState :: forall s. JSON.WriteForeign s => LocalStorageKey -> T.Change s -> Effect Unit
 listenLocalStorageState key { old, new } = do
@@ -416,6 +432,15 @@ listenLocalStorageState key { old, new } = do
   let json = JSON.writeJSON new
   storage <- getls
   setItem key json storage
+
+setLocalStorageState :: forall s.
+     JSON.WriteForeign s
+  => LocalStorageKey
+  -> s
+  -> Effect Unit
+setLocalStorageState key s =
+  let json = JSON.writeJSON s
+  in getls >>= setItem key json
 
 getMessageDataStr :: DE.MessageEvent -> String
 getMessageDataStr = getMessageData
@@ -502,15 +527,17 @@ boundingRect els =
 
 --------------------------------------
 
--- | One-liner `if` simplifying render writing
+-- | One-liner `when` simplifying render writing
 -- | (best for one child)
-if' :: Boolean -> R.Element -> R.Element
-if' = if _ then _ else mempty
+when :: Boolean -> R.Element -> R.Element
+when true m  = m
+when false _ = mempty
 
--- | One-liner `if` simplifying render writing
+-- | One-liner `when` simplifying render writing
 -- | (best for multiple children)
-if_ :: Boolean -> Array (R.Element) -> R.Element
-if_ pred arr = if pred then (R.fragment arr) else mempty
+when' :: Boolean -> Array (R.Element) -> R.Element
+when' true m  = R.fragment m
+when' false _ = mempty
 
 -- | Toestand `useLive` automatically sets to "unchanged" behavior
 useLive' :: forall box b. T.Read box b => Eq b => box -> R.Hooks b
@@ -537,8 +564,8 @@ createPortal' Nothing     _        = mempty
 createPortal' (Just host) children = R.createPortal children host
 
 -- | Render a `mempty` Element if provided `Maybe` is `Nothing`
-fromMaybe_ :: forall a. Maybe a -> (a -> R.Element) -> R.Element
-fromMaybe_ m render = case m of
+fromMaybe :: forall a. Maybe a -> (a -> R.Element) -> R.Element
+fromMaybe m render = case m of
   Nothing -> mempty
   Just a  -> render a
 
@@ -562,3 +589,35 @@ addClass el args = pure $ (el .. "classList") ~~ "add" $ args
 
 removeClass :: forall el. el -> Array String -> Effect Unit
 removeClass el args = pure $ (el .. "classList") ~~ "remove" $ args
+
+--------------------------------------------------------
+
+-- | Check if trying to opening in a new tab
+-- | https://stackoverflow.com/a/20087506/6003907
+externalOpeningFlag :: SE.SyntheticMouseEvent -> Effect Boolean
+externalOpeningFlag event = ado
+  ctrlKey     <- SE.ctrlKey event
+  shiftKey    <- SE.shiftKey event
+  metaKey     <- SE.metaKey event
+  middleClick <- SE.button event
+  in ctrlKey || shiftKey || metaKey || (middleClick == 1.0)
+
+foreign import _triggerEvent
+  :: forall e. EffectFn2 e String Unit
+
+triggerEvent :: forall el. el -> String -> Effect Unit
+triggerEvent = runEffectFn2 _triggerEvent
+-------------------------------------------------------
+getInputValue :: R.Ref (Nullable DOM.Element) -> String
+getInputValue elNullableRef = case toMaybe (R.readRef elNullableRef) of
+  Nothing -> ""
+  Just el -> 
+    el .. "value"
+
+setInputValue :: R.Ref (Nullable DOM.Element) -> String -> Effect Unit
+setInputValue elNullableRef val = case toMaybe (R.readRef elNullableRef) of
+  Nothing -> pure unit
+  Just el -> do
+    _ <- pure $ (el .= "value") val
+    triggerEvent el "change"
+    triggerEvent el "input"

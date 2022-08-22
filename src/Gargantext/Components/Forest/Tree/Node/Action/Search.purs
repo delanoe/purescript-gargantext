@@ -37,7 +37,7 @@ actionSearchCpt = here.component "actionSearch" cpt
     cpt { boxes: { errors }, dispatch, id, session } _ = do
       search <- T.useBox $ defaultSearch { node_id = id }
       pure $ R.fragment
-        [ H.p { className: "action-search" }
+        [ H.p { className: "action-search m-1" }
           [ H.text $ "Search and create a private "
             <> "corpus with the search query as corpus name." ]
         , searchBar { errors
@@ -54,7 +54,7 @@ actionSearchCpt = here.component "actionSearch" cpt
           searchOn dispatch' task = do
             _ <- launchAff $ dispatch' (DoSearch task)
             -- close popup
-            _ <- launchAff $ dispatch' ClosePopover
+            _ <- launchAff $ dispatch' CloseBox
             -- TODO
             --snd p $ const Nothing
             pure unit

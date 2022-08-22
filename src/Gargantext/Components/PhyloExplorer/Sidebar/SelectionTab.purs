@@ -12,9 +12,13 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
+import Gargantext.Components.PhyloExplorer.Sidebar.DocList (docListWrapper)
+import Gargantext.Components.PhyloExplorer.Sidebar.UpdateTerms (updateTerms)
 import Gargantext.Components.PhyloExplorer.Store as PhyloStore
-import Gargantext.Components.PhyloExplorer.Types (ExtractedCount(..), ExtractedTerm(..))
-import Gargantext.Utils (nbsp, (?))
+import Gargantext.Components.PhyloExplorer.Types (ExtractedCount(..), ExtractedTerm(..), defaultCacheParams)
+import Gargantext.Hooks.FirstEffect (useFirstEffect')
+import Gargantext.Types (CTabNgramType(..))
+import Gargantext.Utils (nbsp, setter, (?))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -28,22 +32,24 @@ type Props =
 selectionTab :: R2.Leaf Props
 selectionTab = R2.leaf component
 
-componentName :: String
-componentName = "Gargantext.Components.PhyloExplorer.SideBar.SelectionTab"
+here :: R2.Here
+here = R2.here "Gargantext.Components.PhyloExplorer.SideBar.SelectionTab"
 
 component :: R.Component Props
-component = R.hooksComponent componentName cpt where
+component = here.component "main" cpt where
   cpt { selectTermCallback
       } _ = do
     -- | State
     -- |
     store <- PhyloStore.use
 
-    extractedTerms <- R2.useLive' store.extractedTerms
-    extractedCount <- R2.useLive' store.extractedCount
-    selectedTerm   <- R2.useLive' store.selectedTerm
-    selectedBranch <- R2.useLive' store.selectedBranch
-    selectedSource <- R2.useLive' store.selectedSource
+    extractedTerms      <- R2.useLive' store.extractedTerms
+    extractedCount      <- R2.useLive' store.extractedCount
+    selectedTerm        <- R2.useLive' store.selectedTerm
+    selectedBranch      <- R2.useLive' store.selectedBranch
+    selectedSource      <- R2.useLive' store.selectedSource
+    expandNeighborhood  <- R2.useLive' store.expandNeighborhood
+    expandSelection     <- R2.useLive' store.expandSelection
 
     showMore' /\ showMore <- R2.useBox' false
 
@@ -68,6 +74,17 @@ component = R.hooksComponent componentName cpt where
     R.useEffect1' extractedTerms $
       T.write_ false showMore
 
+    -- transfer local Component change to Local Storage cache
+    useFirstEffect' $
+      flip T.listen store.expandNeighborhood onExpandNeighborhoodChange
+
+
+    -- | Behaviors
+    -- |
+    let
+      onExpandNeighborhoodClick _ = T.modify_ (not) store.expandNeighborhood
+      onExpandSelectionClick _ = T.modify_ (not) store.expandSelection
+
     -- | Render
     -- |
     pure $
@@ -76,7 +93,7 @@ component = R.hooksComponent componentName cpt where
       { className: "phylo-selection-tab" }
       [
         -- No result
-        R2.if' (not haveSelection) $
+        R2.when (not haveSelection) $
 
           B.caveat
           { className: "phylo-selection-tab__nil" }
@@ -181,37 +198,60 @@ component = R.hooksComponent componentName cpt where
                     [
                       H.text "term"
                     ]
+                  ,
+                    -- Expand Selection actions
+                    B.iconButton
+                    { name: expandSelection ?
+                        "caret-up" $
+                        "caret-down"
+                    , className: "phylo-selection-tab__highlight__expand"
+                    , callback: onExpandSelectionClick
+                    }
                   ]
                 ,
-                  H.li
-                  { className: "list-group-item" }
-                  [
-                    H.a
-                    { href: "https://en.wikipedia.org/w/index.php?search=\""
-                        <> s
-                        <> "\""
-                    , target: "_blank"
-                    }
+                  -- Selection actions
+                  R2.when expandSelection $
+
+                    H.li
+                    { className: "list-group-item" }
                     [
-                      H.text "Click here for more info"
+                      -- Wikipedia informations
+                      H.a
+                      { href: "https://en.wikipedia.org/w/index.php?search=\""
+                          <> s
+                          <> "\""
+                      , target: "_blank"
+                      }
+                      [
+                        H.text "Click here for more info"
+                      ]
+                    ,
+                      -- NGrams edition
+                      H.div
+                      { className: "phylo-selection-tab__highlight__actions" }
+                      [
+                        updateTerms
+                        { selectedTerm: s
+                        , ngramType: CTabTerms
+                        }
+                      ]
                     ]
-                  ]
                 ]
               ]
             ]
       ,
         -- (separator)
-        R2.if' (haveSelection) $
+        R2.when (haveSelection) $
 
           H.div
           { className: "phylo-selection-tab__separator" }
           [
             B.icon
-            { name: "angle-down" }
+            { name: "angle-double-down" }
           ]
       ,
         -- No extracted result
-        R2.if' (haveSelection && null extractedTerms) $
+        R2.when (haveSelection && null extractedTerms) $
 
           H.div
           { className: "phylo-selection-tab__selection" }
@@ -224,7 +264,7 @@ component = R.hooksComponent componentName cpt where
           ]
       ,
         -- Extracted Results
-        R2.if' (not null extractedTerms) $
+        R2.when (not null extractedTerms) $
 
           H.div
           { className: "phylo-selection-tab__selection" }
@@ -249,68 +289,86 @@ component = R.hooksComponent componentName cpt where
                     ,
                       detailsCount count.branchCount "branches" false
                     ]
+                  ,
+                    -- Expand word cloud
+                    B.iconButton
+                    { name: expandNeighborhood ?
+                        "caret-up" $
+                        "caret-down"
+                    , className: "phylo-selection-tab__counter__expand"
+                    , callback: onExpandNeighborhoodClick
+                    }
                   ]
             ,
               -- Term word cloud
-              H.li
-              { className: "list-group-item" }
-              [
-                H.ul
-                {} $
-                flip mapWithIndex extractedTerms
-                  \index (ExtractedTerm { label, ratio }) ->
+              R2.when expandNeighborhood $
 
-                    R2.if'
-                    (
-                      truncateResults == false
-                    || index < maxTruncateResult
-                    ) $
-                      H.li
-                      { className: "phylo-selection-tab__selection__item"}
-                      [
-                        H.a
-                        { className: "badge badge-light"
-                        -- adjust font size according to term frequency
-                        , style:
-                            { fontSize: termFontSize ratio
-                            , lineHeight: termFontSize ratio
-                            }
-                        , on:
-                          { click: \_ -> selectTermCallback label
-                          }
-                        }
+                H.li
+                { className: "list-group-item" }
+                [
+                  H.ul
+                  {} $
+                  flip mapWithIndex extractedTerms
+                    \index (ExtractedTerm { label, ratio }) ->
+
+                      R2.when
+                      (
+                        truncateResults == false
+                      || index < maxTruncateResult
+                      ) $
+                        H.li
+                        { className: "phylo-selection-tab__selection__item"}
                         [
-                          H.text label
+                          H.a
+                          { className: "badge badge-light"
+                          -- adjust font size according to term frequency
+                          , style:
+                              { fontSize: termFontSize ratio
+                              , lineHeight: termFontSize ratio
+                              }
+                          , on:
+                            { click: \_ -> selectTermCallback label
+                            }
+                          }
+                          [
+                            H.text label
+                          ]
                         ]
-                      ]
-              ,
-                R2.if' (truncateResults) $
+                ,
+                  R2.when (truncateResults) $
 
-                  B.button
-                  { variant: ButtonVariant Light
-                  , callback: \_ -> T.modify_ not showMore
-                  , block: true
-                  , className: "phylo-selection-tab__selection__show-more"
-                  }
-                  [
-                    H.text "Show more"
-                  ]
-              ]
+                    B.button
+                    { variant: ButtonVariant Light
+                    , callback: \_ -> T.modify_ not showMore
+                    , block: true
+                    , className: "phylo-selection-tab__selection__show-more"
+                    }
+                    [
+                      H.text "Show more"
+                    ]
+                ]
             ]
           ]
-      -- ,
+      ,
         -- (separator)
-        -- R2.if' (not null extractedTerms) $
+        R2.when (not null extractedTerms) $
 
-        --   H.div
-        --   { className: "phylo-selection-tab__separator" }
-        --   [
-        --     B.icon
-        --     { name: "angle-down" }
-        --   ]
-      -- ,
+          H.div
+          { className: "phylo-selection-tab__separator" }
+          [
+            B.icon
+            { name: "angle-double-down" }
+          ]
+      ,
         -- Extracted Docs
-        -- R2.if' (not null extractedTerms) $
+        R2.when (not null extractedTerms) $
+
+          H.div
+          { className: "phylo-selection-tab__extracted-docs" }
+          [
+            docListWrapper
+            {}
+          ]
       ]
 
 termFontSize :: Number -> String
@@ -346,3 +404,9 @@ detailsCount value label weighty =
       H.text $ nbsp 1 <> label
     ]
   ]
+
+onExpandNeighborhoodChange :: T.Change Boolean -> Effect Unit
+onExpandNeighborhoodChange { new } = do
+  cache <- R2.loadLocalStorageState' R2.phyloParamsKey defaultCacheParams
+  let update = setter (_ { expandNeighborhood = new }) cache
+  R2.setLocalStorageState R2.phyloParamsKey update

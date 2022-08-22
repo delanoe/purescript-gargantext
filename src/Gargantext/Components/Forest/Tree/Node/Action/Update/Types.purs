@@ -14,6 +14,7 @@ import Simple.JSON.Generics as JSONG
 data UpdateNodeParams
   = UpdateNodeParamsList  { methodList  :: Method      }
   | UpdateNodeParamsGraph { methodGraphMetric :: GraphMetric
+                          , methodGraphEdgesStrength :: Strength
                           , methodGraphClustering :: PartitionMethod
                           }
   | UpdateNodeParamsTexts { methodTexts :: Granularity }
@@ -28,9 +29,9 @@ instance JSON.WriteForeign UpdateNodeParams where
   writeImpl (UpdateNodeParamsList { methodList }) =
     JSON.writeImpl { type: "UpdateNodeParamsList"
                    , methodList }
-  writeImpl (UpdateNodeParamsGraph { methodGraphMetric, methodGraphClustering }) =
+  writeImpl (UpdateNodeParamsGraph { methodGraphMetric, methodGraphClustering, methodGraphEdgesStrength}) =
     JSON.writeImpl { type: "UpdateNodeParamsGraph"
-                   , methodGraphMetric, methodGraphClustering }
+                   , methodGraphMetric, methodGraphClustering, methodGraphEdgesStrength}
   writeImpl (UpdateNodeParamsTexts { methodTexts }) =
     JSON.writeImpl { type: "UpdateNodeParamsTexts"
                    , methodTexts }
@@ -71,13 +72,27 @@ instance Read GraphMetric where
 instance JSON.ReadForeign GraphMetric where readImpl = JSONG.enumSumRep
 instance JSON.WriteForeign GraphMetric where writeImpl = JSON.writeImpl <<< show
 
-data PartitionMethod = Spinglass | Confluence
+data Strength = Strong | Weak
+derive instance Generic Strength _
+derive instance Eq Strength
+instance Show Strength where show = genericShow
+instance Read Strength where
+  read "Strong"  = Just Strong
+  read "Weak"    = Just Weak
+  read _         = Nothing
+instance JSON.ReadForeign  Strength where readImpl = JSONG.enumSumRep
+instance JSON.WriteForeign Strength where writeImpl = JSON.writeImpl <<< show
+
+
+
+data PartitionMethod = Spinglass | Infomap | Confluence
 derive instance Generic PartitionMethod _
 derive instance Eq PartitionMethod
 instance Show PartitionMethod where show = genericShow
 instance Read PartitionMethod where
   read "Spinglass"  = Just Spinglass
   read "Confluence" = Just Confluence
+  read "Infomap"    = Just Infomap
   read _           = Nothing
 instance JSON.ReadForeign PartitionMethod where readImpl = JSONG.enumSumRep
 instance JSON.WriteForeign PartitionMethod where writeImpl = JSON.writeImpl <<< show

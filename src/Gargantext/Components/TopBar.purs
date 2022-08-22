@@ -142,6 +142,13 @@ divDropdownLeftCpt = here.component "divDropdownLeft" cpt
               , icon  : "fa fa-lightbulb-o"
               , text  : "Tutorials"
               }
+
+      , LiNav { title : "Learn with us!"
+              , href  : "https://iscpif.fr/projects/gargantext/"
+              , icon  : "fa fa-life-ring"
+              , text  : "Subscribe to Garg Lessons"
+              }
+
       , LiNav { title : "Report bug here"
               , href  : "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"
               , icon  : "fa fa-bullhorn"
@@ -179,8 +186,8 @@ divDropdownLeftCpt = here.component "divDropdownLeft" cpt
       ]
 
       ,------------------------------------------------------------
-      [ LiNav { title : "More about us (you)"
-              , href  : "https://iscpif.fr"
+      [ LiNav { title : "Learn more about us"
+              , href  : "https://iscpif.fr/projects/gargantext/"
               , icon  : "fa fa-question"
               , text  : "About"
               }

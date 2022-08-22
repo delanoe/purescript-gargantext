@@ -265,7 +265,7 @@ uploadButtonCpt = here.component "uploadButton" cpt
               T.write_ Plain fileFormat
               T.write_ EN lang
               T.write_ false onPendingBox
-            dispatch ClosePopover
+            dispatch CloseBox
 
 uploadListView :: R2.Leaf Props
 uploadListView = R2.leafComponent uploadListViewCpt
@@ -434,7 +434,7 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
 
       pure $
 
-        R2.fromMaybe_ droppedFile' \df ->
+        R2.fromMaybe droppedFile' \df ->
 
           H.div
           tooltipProps

@@ -21,7 +21,7 @@ data Action = AddNode     String GT.NodeType
             | UploadFrameCalc
             | DownloadNode
             | RefreshTree
-            | ClosePopover
+            | CloseBox
 
             | ShareTeam   String
             | AddContact  AddContactParams
@@ -48,7 +48,7 @@ instance Eq Action where
   eq UploadFrameCalc UploadFrameCalc = true
   eq DownloadNode DownloadNode = true
   eq RefreshTree RefreshTree = true
-  eq ClosePopover ClosePopover = true
+  eq CloseBox CloseBox = true
   eq (ShareTeam s1) (ShareTeam s2) = eq s1 s2
   eq (AddContact ac1) (AddContact ac2) = eq ac1 ac2
   eq (SharePublic p1) (SharePublic p2) = eq p1 p2
@@ -72,7 +72,7 @@ instance Show Action where
   show (UploadArbitraryFile _ _ _ _) = "UploadArbitraryFile"
   show UploadFrameCalc               = "UploadFrameCalc"
   show  RefreshTree                  = "RefreshTree"
-  show  ClosePopover                 = "ClosePopover"
+  show  CloseBox                     = "CloseBox"
   show  DownloadNode                 = "Download"
   show (MoveNode  _ )                = "MoveNode"
   show (MergeNode _ )                = "MergeNode"

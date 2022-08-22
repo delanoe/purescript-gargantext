@@ -1,21 +1,23 @@
 module Gargantext.Components.Nodes.Corpus.Phylo
-  ( phyloLayout
+  ( node
   ) where
 
 import Gargantext.Prelude
 
 import DOM.Simple (document, querySelector)
-import Data.Maybe (Maybe(..), isJust)
+import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.Tuple.Nested ((/\))
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.PhyloExplorer.API (get)
 import Gargantext.Components.PhyloExplorer.Layout (layout)
 import Gargantext.Components.PhyloExplorer.Store as PhyloStore
-import Gargantext.Components.PhyloExplorer.Types (PhyloDataSet)
+import Gargantext.Components.PhyloExplorer.Types (CacheParams, PhyloSet(..), defaultCacheParams)
 import Gargantext.Config.REST (logRESTError)
+import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Types (NodeID)
+import Gargantext.Utils (getter)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -28,33 +30,29 @@ type MainProps =
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Phylo"
 
-phyloLayout :: R2.Leaf MainProps
-phyloLayout = R2.leaf phyloLayoutCpt
+node :: R2.Leaf MainProps
+node = R2.leaf nodeCpt
 
-phyloLayoutCpt :: R.Component MainProps
-phyloLayoutCpt = here.component "main" cpt where
+nodeCpt :: R.Component MainProps
+nodeCpt = here.component "node" cpt where
   cpt { nodeId } _ = do
     -- | States
     -- |
     session <- useSession
 
-    state' /\ state <- R2.useBox' Nothing
+    state' /\ state <- R2.useBox' (Nothing :: Maybe PhyloSet)
+    cache' /\ cache <- R2.useBox' (defaultCacheParams :: CacheParams)
 
     -- | Computed
     -- |
-    let
-
-      errorHandler = logRESTError here "[phylo]"
-
-      handler (phyloDataSet :: PhyloDataSet) =
-        hydrateStore
-        { phyloId: nodeId
-        , phyloDataSet
-        }
-
+    let errorHandler = logRESTError here "[phylo]"
 
     -- | Hooks
     -- |
+
+    -- load Local Storage cache (if exists)
+    useFirstEffect' $
+      R2.loadLocalStorageState R2.phyloParamsKey cache
 
     useLoaderEffect
       { errorHandler
@@ -63,44 +61,15 @@ phyloLayoutCpt = here.component "main" cpt where
       , state
       }
 
-
-    -- @XXX: Runtime odd behavior
-    --       cannot use the `useEffect` + its cleanup function within the
-    --       same `Effect`, otherwise the below cleanup example will be
-    --       execute at mount
-
-    -- @XXX: inopinent <div> (see Gargantext.Components.Router) (@TODO?)
-    R.useEffectOnce' do
-      mEl <- querySelector document ".main-page__main-route .container"
-
-      case mEl of
-        Nothing -> R.nothing
-        Just el -> R2.addClass el [ "d-none" ]
-
-    R.useEffectOnce do
-      pure do
-        mEl <- querySelector document ".main-page__main-route .container"
-
-        case mEl of
-          Nothing -> R.nothing
-          Just el -> R2.removeClass el [ "d-none" ]
-
     -- @XXX: reset "main-page__main-route" wrapper margin
     --       see Gargantext.Components.Router) (@TODO?)
-    R.useEffectOnce' do
-      mEl <- querySelector document ".main-page__main-route"
-
-      case mEl of
-        Nothing -> R.nothing
-        Just el -> R2.addClass el [ "p-0" ]
-
-    R.useEffectOnce do
-      pure do
-        mEl <- querySelector document ".main-page__main-route"
-
-        case mEl of
-          Nothing -> R.nothing
-          Just el -> R2.removeClass el [ "p-0" ]
+    R.useLayoutEffect1 [] do
+      let mEl = querySelector document ".main-page__main-route"
+      -- Mount
+      mEl >>= maybe R.nothing (flip R2.addClass ["p-0"])
+      -- Unmount
+      pure $
+        mEl >>= maybe R.nothing (flip R2.removeClass ["p-0"])
 
 
     -- | Render
@@ -123,42 +92,27 @@ phyloLayoutCpt = here.component "main" cpt where
             ]
           ]
       , defaultSlot:
-          R2.fromMaybe_ state' handler
+          R2.fromMaybe state' \(PhyloSet { corpusId, listId, phyloData }) ->
+
+            let
+              state_ :: Record PhyloStore.State
+              state_ =
+                -- Data
+                { phyloData
+                , corpusId
+                , listId
+                , phyloId: nodeId
+                -- (cache params)
+                , expandSelection: getter _.expandSelection cache'
+                , expandNeighborhood: getter _.expandNeighborhood cache'
+                -- (default options)
+                } `Record.merge` PhyloStore.options
+
+            in
+              PhyloStore.provide
+              state_
+              [
+                layout
+                {}
+              ]
       }
-
---------------------------------------------------------
-
-type HydrateStoreProps =
-  ( phyloDataSet :: PhyloDataSet
-  , phyloId      :: NodeID
-  )
-
-hydrateStore :: R2.Leaf HydrateStoreProps
-hydrateStore = R2.leaf hydrateStoreCpt
-
-hydrateStoreCpt :: R.Component HydrateStoreProps
-hydrateStoreCpt = here.component "layout" cpt where
-  cpt { phyloDataSet
-      , phyloId
-      } _ = do
-    -- | Computed
-    -- |
-    let
-      state :: Record PhyloStore.State
-      state =
-        -- Data
-        { phyloDataSet
-        , phyloId
-        -- (default options)
-        } `Record.merge` PhyloStore.options
-
-    -- | Render
-    -- |
-    pure $
-
-      PhyloStore.provide
-      state
-      [
-        layout
-        {}
-      ]

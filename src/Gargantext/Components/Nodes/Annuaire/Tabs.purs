@@ -12,7 +12,7 @@ import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.DocsTable.Types (Year)
 import Gargantext.Components.NgramsTable as NT
-import Gargantext.Components.NgramsTable.Core as NTC
+import Gargantext.Core.NgramsTable.Functions as NTC
 import Gargantext.Components.Nodes.Lists.Types as LTypes
 import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Tab as Tab
@@ -68,7 +68,12 @@ tabsCpt = here.component "tabs" cpt where
     yearFilter <- T.useBox (Nothing :: Maybe Year)
     chartReload <- T.useBox T2.newReload
 
-    pure $ Tab.tabs { activeTab, tabs: tabs' yearFilter chartReload props }
+    pure $
+      Tab.tabs
+      { activeTab
+      , tabs: tabs' yearFilter chartReload props
+      , className: "nodes-annuaire-layout-tabs"
+      }
   tabs' yearFilter chartReload props@{ boxes, defaultListId, sidePanel } =
     [ "Documents"     /\ docs
     , "Patents"       /\ ngramsView (viewProps Patents)
@@ -113,18 +118,29 @@ ngramsViewCpt = here.component "ngramsView" cpt where
       NTC.initialPageParams session nodeId
       [ defaultListId ] (TabDocument TabDocs)
 
-    pure $ NT.mainNgramsTable (props' path) [] where
-      most = RX.pick props :: Record NTCommon
-      props' path =
-        (Record.merge most
-          { afterSync
-          , path
-          , tabType:        TabPairing (TabNgramType $ modeTabType mode)
-          , tabNgramType:   modeTabType' mode
-          , withAutoUpdate: false }) :: Record NT.MainNgramsTableProps
-        where
-          afterSync :: Unit -> Aff Unit
-          afterSync _ = pure unit
+    onCancelRef <- R.useRef Nothing
+    onNgramsClickRef <- R.useRef Nothing
+    onSaveRef <- R.useRef Nothing
+    treeEditBox <- T.useBox NT.initialTreeEdit
+
+    let most = RX.pick props :: Record NTCommon
+        props' =
+          (Record.merge most
+           { afterSync
+           , path
+           , tabType:        TabPairing (TabNgramType $ modeTabType mode)
+           , tabNgramType:   modeTabType' mode
+           , treeEdit: { box: treeEditBox
+                       , getNgramsChildren: \_ -> pure []
+                       , onCancelRef
+                       , onNgramsClickRef
+                       , onSaveRef }
+           , withAutoUpdate: false }) :: Record NT.MainNgramsTableProps
+        afterSync :: Unit -> Aff Unit
+        afterSync _ = pure unit
+
+
+    pure $ NT.mainNgramsTable props' []
 
 type NTCommon =
   ( boxes         :: Boxes

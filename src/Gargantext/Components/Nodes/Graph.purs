@@ -1,5 +1,5 @@
 module Gargantext.Components.Nodes.Corpus.Graph
-  ( graphLayout
+  ( node
   ) where
 
 import Gargantext.Prelude
@@ -17,16 +17,16 @@ import Gargantext.Components.GraphExplorer.Layout (convert, layout)
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Config.REST (logRESTError)
+import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
+import Gargantext.Utils (getter)
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
-import Reactix.DOM.HTML as H
 import Record as Record
-
 
 type Props =
   ( graphId   :: GET.GraphId
@@ -35,11 +35,11 @@ type Props =
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Graph"
 
-graphLayout :: R2.Leaf ( key :: String | Props )
-graphLayout = R2.leaf graphLayoutCpt
+node :: R2.Leaf ( key :: String | Props )
+node = R2.leaf nodeCpt
 
-graphLayoutCpt :: R.Component ( key :: String | Props )
-graphLayoutCpt = here.component "explorerLayout" cpt where
+nodeCpt :: R.Component ( key :: String | Props )
+nodeCpt = here.component "node" cpt where
   cpt { graphId } _ = do
     -- | States
     -- |
@@ -50,9 +50,19 @@ graphLayoutCpt = here.component "explorerLayout" cpt where
 
     graphVersion'   <- R2.useLive' graphVersion
     state' /\ state <- R2.useBox' Nothing
+    cache' /\ cache <- R2.useBox' (GET.defaultCacheParams :: GET.CacheParams)
+
+    -- | Computed
+    -- |
+    let errorHandler = logRESTError here "[explorerLayout]"
 
     -- | Hooks
     -- |
+
+    -- load Local Storage cache (if exists)
+    useFirstEffect' $
+      R2.loadLocalStorageState R2.graphParamsKey cache
+
     useLoaderEffect
       { errorHandler
       , loader: GraphAPI.getNodes session graphVersion'
@@ -60,43 +70,15 @@ graphLayoutCpt = here.component "explorerLayout" cpt where
       , state
       }
 
-    -- @XXX: Runtime odd behavior
-    --       cannot use the `useEffect` + its cleanup function within the
-    --       same `Effect`, otherwise the below cleanup example will be
-    --       execute at mount
-
-    -- @XXX: inopinent <div> (see Gargantext.Components.Router) (@TODO?)
-    R.useEffectOnce' do
-      mEl <- querySelector document ".main-page__main-route .container"
-
-      case mEl of
-        Nothing -> R.nothing
-        Just el -> R2.addClass el [ "d-none" ]
-
-    R.useEffectOnce do
-      pure do
-        mEl <- querySelector document ".main-page__main-route .container"
-
-        case mEl of
-          Nothing -> R.nothing
-          Just el -> R2.removeClass el [ "d-none" ]
-
     -- @XXX: reset "main-page__main-route" wrapper margin
     --       see Gargantext.Components.Router) (@TODO?)
-    R.useEffectOnce' do
-      mEl <- querySelector document ".main-page__main-route"
-
-      case mEl of
-        Nothing -> R.nothing
-        Just el -> R2.addClass el [ "p-0" ]
-
-    R.useEffectOnce do
-      pure do
-        mEl <- querySelector document ".main-page__main-route"
-
-        case mEl of
-          Nothing -> R.nothing
-          Just el -> R2.removeClass el [ "p-0" ]
+    R.useLayoutEffect1 [] do
+      let mEl = querySelector document ".main-page__main-route"
+      -- Mount
+      mEl >>= maybe R.nothing (flip R2.addClass ["p-0"])
+      -- Unmount
+      pure $
+        mEl >>= maybe R.nothing (flip R2.removeClass ["p-0"])
 
     -- | Render
     -- |
@@ -106,27 +88,23 @@ graphLayoutCpt = here.component "explorerLayout" cpt where
       { isDisplayed: isJust state'
       , idlingPhaseDuration: Just 150
       , cloakSlot:
-          H.div
-          { className: "graph-loader" }
-          [
-            B.spinner
-            { className: "graph-loader__spinner" }
-          ]
-      , defaultSlot:
-          R2.fromMaybe_ state' handler
-      }
+          B.preloader
+          {}
 
-    where
-      errorHandler = logRESTError here "[explorerLayout]"
-      handler loaded@(GET.HyperdataGraph { graph: hyperdataGraph }) =
-        hydrateStore
-        { graph
-        , hyperdataGraph: loaded
-        , mMetaData
-        , graphId
-        }
-        where
-          Tuple mMetaData graph = convert hyperdataGraph
+      , defaultSlot:
+          R2.fromMaybe state' \loaded ->
+            let
+              GET.HyperdataGraph { graph: hyperdataGraph } = loaded
+              Tuple mMetaData graph = convert hyperdataGraph
+            in
+              hydrateStore
+              { graph
+              , hyperdataGraph: loaded
+              , mMetaData
+              , graphId
+              , cacheParams: cache'
+              }
+      }
 
 --------------------------------------------------------
 
@@ -135,6 +113,7 @@ type HydrateStoreProps =
   , graph           :: SigmaxT.SGraph
   , hyperdataGraph  :: GET.HyperdataGraph
   , graphId         :: GET.GraphId
+  , cacheParams     :: GET.CacheParams
   )
 
 hydrateStore:: R2.Leaf HydrateStoreProps
@@ -146,6 +125,7 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
       , graph
       , graphId
       , hyperdataGraph
+      , cacheParams
       } _ = do
     -- | Computed
     -- |
@@ -177,6 +157,9 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
           { min: 0.0
           , max: I.toNumber $ Seq.length $ SigmaxT.graphEdges graph
           }
+      -- (cache options)
+      , expandSelection: getter _.expandSelection cacheParams
+      , expandNeighborhood: getter _.expandNeighborhood cacheParams
       -- (default options)
       } `Record.merge` GraphStore.options
 

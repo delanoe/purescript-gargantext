@@ -11,8 +11,9 @@ module Gargantext.Components.PhyloExplorer.Store
 import Gargantext.Prelude
 
 import Data.Maybe (Maybe(..))
-import Gargantext.Components.PhyloExplorer.Types (DisplayView(..), ExtractedCount, ExtractedTerm, FrameDoc, PhyloDataSet, Source, TabView(..), Term)
+import Gargantext.Components.PhyloExplorer.Types (CorpusId, DisplayView(..), ExtractedCount, ExtractedTerm, FrameDoc, PhyloData, Source, TabView(..), Term, ListId, defaultCacheParams)
 import Gargantext.Types (NodeID, SidePanelState(..))
+import Gargantext.Utils (getter)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Stores as Stores
 import Reactix as R
@@ -24,104 +25,116 @@ here = R2.here "Gargantext.Components.GraphExplorer.Store"
 
 type Store =
   -- Data
-  ( phyloDataSet       :: T.Box PhyloDataSet
-  , phyloId            :: T.Box NodeID
-  , isBuilt            :: T.Box Boolean
+  ( phyloData           :: T.Box PhyloData
+  , phyloId             :: T.Box NodeID
+  , corpusId            :: T.Box CorpusId
+  , listId              :: T.Box ListId
+  , isBuilt             :: T.Box Boolean
   -- Layout
-  , toolBarDisplayed   :: T.Box Boolean
-  , isIsolineDisplayed :: T.Box Boolean
-  , sideBarDisplayed   :: T.Box SidePanelState
-  , sideBarTabView     :: T.Box TabView
-  , frameDoc           :: T.Box (Maybe FrameDoc)
+  , toolBarDisplayed    :: T.Box Boolean
+  , isIsolineDisplayed  :: T.Box Boolean
+  , sideBarDisplayed    :: T.Box SidePanelState
+  , sideBarTabView      :: T.Box TabView
+  , frameDoc            :: T.Box (Maybe FrameDoc)
+  , expandSelection     :: T.Box Boolean
+  , expandNeighborhood  :: T.Box Boolean
   -- Topbar
-  , source             :: T.Box String
-  , sources            :: T.Box (Array Source)
-  , terms              :: T.Box (Array Term)
-  , search             :: T.Box String
-  , result             :: T.Box (Maybe Term)
+  , source              :: T.Box String
+  , sources             :: T.Box (Array Source)
+  , terms               :: T.Box (Array Term)
+  , search              :: T.Box String
+  , result              :: T.Box (Maybe Term)
   -- Sidebar
-  , extractedTerms     :: T.Box (Array ExtractedTerm)
-  , selectedTerm       :: T.Box (Maybe String)
-  , selectedBranch     :: T.Box (Maybe String)
-  , selectedSource     :: T.Box (Maybe String)
-  , extractedCount     :: T.Box (Maybe ExtractedCount)
+  , extractedTerms      :: T.Box (Array ExtractedTerm)
+  , selectedTerm        :: T.Box (Maybe String)
+  , selectedBranch      :: T.Box (Maybe String)
+  , selectedSource      :: T.Box (Maybe String)
+  , extractedCount      :: T.Box (Maybe ExtractedCount)
   -- Toolbar
-  , displayView        :: T.Box DisplayView
+  , displayView         :: T.Box DisplayView
   )
 
 type State =
   -- Data
-  ( phyloDataSet       :: PhyloDataSet
-  , phyloId            :: NodeID
-  , isBuilt            :: Boolean
+  ( phyloData           :: PhyloData
+  , phyloId             :: NodeID
+  , corpusId            :: CorpusId
+  , listId              :: ListId
+  , isBuilt             :: Boolean
   -- Layout
-  , toolBarDisplayed   :: Boolean
-  , isIsolineDisplayed :: Boolean
-  , sideBarDisplayed   :: SidePanelState
-  , sideBarTabView     :: TabView
-  , frameDoc           :: Maybe FrameDoc
+  , toolBarDisplayed    :: Boolean
+  , isIsolineDisplayed  :: Boolean
+  , sideBarDisplayed    :: SidePanelState
+  , sideBarTabView      :: TabView
+  , frameDoc            :: Maybe FrameDoc
+  , expandSelection     :: Boolean
+  , expandNeighborhood  :: Boolean
   -- Topbar
-  , source             :: String
-  , sources            :: Array Source
-  , terms              :: Array Term
-  , search             :: String
-  , result             :: Maybe Term
+  , source              :: String
+  , sources             :: Array Source
+  , terms               :: Array Term
+  , search              :: String
+  , result              :: Maybe Term
   -- Sidebar
-  , extractedTerms     :: Array ExtractedTerm
-  , selectedTerm       :: Maybe String
-  , selectedBranch     :: Maybe String
-  , selectedSource     :: Maybe String
-  , extractedCount     :: Maybe ExtractedCount
+  , extractedTerms      :: Array ExtractedTerm
+  , selectedTerm        :: Maybe String
+  , selectedBranch      :: Maybe String
+  , selectedSource      :: Maybe String
+  , extractedCount      :: Maybe ExtractedCount
   -- Toolbar
-  , displayView        :: DisplayView
+  , displayView         :: DisplayView
   )
 
 options ::
-  { isBuilt            :: Boolean
+  { isBuilt             :: Boolean
   -- Layout
-  , toolBarDisplayed   :: Boolean
-  , isIsolineDisplayed :: Boolean
-  , sideBarDisplayed   :: SidePanelState
-  , sideBarTabView     :: TabView
-  , frameDoc           :: Maybe FrameDoc
+  , toolBarDisplayed    :: Boolean
+  , isIsolineDisplayed  :: Boolean
+  , sideBarDisplayed    :: SidePanelState
+  , sideBarTabView      :: TabView
+  , frameDoc            :: Maybe FrameDoc
+  , expandSelection     :: Boolean
+  , expandNeighborhood  :: Boolean
   -- Topbar
-  , source             :: String
-  , sources            :: Array Source
-  , terms              :: Array Term
-  , search             :: String
-  , result             :: Maybe Term
+  , source              :: String
+  , sources             :: Array Source
+  , terms               :: Array Term
+  , search              :: String
+  , result              :: Maybe Term
   -- Sidebar
-  , extractedTerms     :: Array ExtractedTerm
-  , selectedTerm       :: Maybe String
-  , selectedBranch     :: Maybe String
-  , selectedSource     :: Maybe String
-  , extractedCount     :: Maybe ExtractedCount
+  , extractedTerms      :: Array ExtractedTerm
+  , selectedTerm        :: Maybe String
+  , selectedBranch      :: Maybe String
+  , selectedSource      :: Maybe String
+  , extractedCount      :: Maybe ExtractedCount
   -- Toolbar
-  , displayView        :: DisplayView
+  , displayView         :: DisplayView
   }
 options =
   -- Data
-  { isBuilt            : false
+  { isBuilt             : false
   -- Layout
-  , toolBarDisplayed   : false
-  , isIsolineDisplayed : false
-  , sideBarDisplayed   : InitialClosed
-  , sideBarTabView     : DetailsTab
-  , frameDoc           : Nothing
+  , toolBarDisplayed    : false
+  , isIsolineDisplayed  : false
+  , sideBarDisplayed    : InitialClosed
+  , sideBarTabView      : DetailsTab
+  , frameDoc            : Nothing
+  , expandSelection     : getter _.expandSelection defaultCacheParams
+  , expandNeighborhood  : getter _.expandNeighborhood defaultCacheParams
   -- Topbar
-  , source             : ""
-  , sources            : mempty
-  , terms              : mempty
-  , search             : ""
-  , result             : Nothing
+  , source              : ""
+  , sources             : mempty
+  , terms               : mempty
+  , search              : ""
+  , result              : Nothing
   -- Sidebar
-  , extractedTerms     : mempty
-  , selectedTerm       : Nothing
-  , selectedBranch     : Nothing
-  , selectedSource     : Nothing
-  , extractedCount     : Nothing
+  , extractedTerms      : mempty
+  , selectedTerm        : Nothing
+  , selectedBranch      : Nothing
+  , selectedSource      : Nothing
+  , extractedCount      : Nothing
   -- Toolbar
-  , displayView        : HeadingMode
+  , displayView         : HeadingMode
   }
 
 context :: R.Context (Record Store)

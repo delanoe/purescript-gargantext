@@ -2,7 +2,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Update where
 
 import Gargantext.Prelude
 
-import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (Charts(..), Granularity(..), GraphMetric(..), Method(..), PartitionMethod(..), UpdateNodeParams(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (Charts(..), Granularity(..), GraphMetric(..), Method(..), PartitionMethod(..), UpdateNodeParams(..), Strength(..))
 
 import DOM.Simple.Console (log3)
 import Data.Either (Either(..))
@@ -78,19 +78,29 @@ updateGraphCpt = here.component "updateGraph" cpt where
     methodGraphMetric <- T.useBox Order1
     methodGraphMetric' <- T.useLive T.unequal methodGraphMetric
 
+    methodGraphEdgesStrength  <- T.useBox Strong
+    methodGraphEdgesStrength' <- T.useLive T.unequal methodGraphEdgesStrength
+
     methodGraphClustering <- T.useBox Spinglass
     methodGraphClustering' <- T.useLive T.unequal methodGraphClustering
 
     let
       callback :: Action -> Aff Unit
-      callback = dispatch >=> \_ -> dispatch ClosePopover
+      callback = dispatch >=> \_ -> dispatch CloseBox
 
-    pure $ panel [ -- H.text "Update with"
-                  formChoiceSafe { items: [Order1, Order2]
+    pure $ panel [ H.text "Show subjects with Order1 or concepts with Order2 ?"
+                 , formChoiceSafe { items: [Order1, Order2]
                                  , default: methodGraphMetric'
                                  , callback: \val -> T.write_ val methodGraphMetric
                                  , print: show } []
-                 , formChoiceSafe { items: [Spinglass, Confluence]
+
+                 , H.text "Show Strong (expected) links or weak (maybe unexpected) links?"
+                 , formChoiceSafe { items: [Strong, Weak]
+                                 , default: methodGraphEdgesStrength'
+                                 , callback: \val -> T.write_ val methodGraphEdgesStrength
+                                 , print: show } []
+
+                 , formChoiceSafe { items: [Spinglass, Infomap, Confluence]
                                  , default: methodGraphClustering'
                                  , callback: \val -> T.write_ val methodGraphClustering
                                  , print: show } []
@@ -98,6 +108,7 @@ updateGraphCpt = here.component "updateGraph" cpt where
                  ]
                  (submitButton (UpdateNode $ UpdateNodeParamsGraph { methodGraphMetric: methodGraphMetric'
                                                                    , methodGraphClustering: methodGraphClustering'
+                                                                   , methodGraphEdgesStrength : methodGraphEdgesStrength'
                                                                    }
                                ) callback
                   )
@@ -142,7 +153,7 @@ updatePhyloCpt = here.component "updatePhylo" cpt where
           opts <- pure $ options r'
           launchAff_ do
             dispatch opts
-            dispatch ClosePopover
+            dispatch CloseBox
 
         where
           options :: Phylo.UpdateData -> Action

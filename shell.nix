@@ -108,7 +108,7 @@ let
 in
 pkgs.mkShell {
   buildInputs = [
-    easy-ps.purs-0_15_0
+    easy-ps.purs-0_15_4
     easy-ps.psc-package
     easy-ps.dhall-json-simple
     easy-ps.zephyr

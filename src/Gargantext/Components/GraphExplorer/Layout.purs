@@ -31,7 +31,7 @@ import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Types as GT
 import Gargantext.Types as Types
-import Gargantext.Utils ((?))
+import Gargantext.Utils (getter, (?))
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 import Partial.Unsafe (unsafePartial)
@@ -133,7 +133,7 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
         { className: "graph-layout__frame" }
         [
           -- Doc focus
-          R2.fromMaybe_ showDoc' \(graphSideDoc :: GraphSideDoc) ->
+          R2.fromMaybe showDoc' \(graphSideDoc :: GraphSideDoc) ->
 
             H.div
             { className: "graph-layout__focus" }
@@ -145,6 +145,7 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
                 { session
                 , graphSideDoc
                 , closeCallback: closeDoc
+                , key: show $ getter _.docId graphSideDoc
                 }
               ]
             ]
@@ -187,7 +188,6 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
         [
           Controls.controls
           { reloadForest: reloadForest
-          , session
           , sigmaRef
           }
         ]

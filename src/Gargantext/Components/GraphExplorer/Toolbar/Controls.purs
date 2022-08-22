@@ -18,9 +18,9 @@ import Gargantext.Components.GraphExplorer.Toolbar.Buttons (centerButton, camera
 import Gargantext.Components.GraphExplorer.Toolbar.RangeControl (edgeConfluenceControl, edgeWeightControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.Toolbar.SlideButton (labelSizeButton, mouseSelectorSizeButton)
 import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
-import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
@@ -34,7 +34,6 @@ here = R2.here "Gargantext.Components.GraphExplorer.Toolbar.Controls"
 
 type Controls =
   ( reloadForest       :: T2.ReloadS
-  , session            :: Session
   , sigmaRef           :: R.Ref Sigmax.Sigma
   )
 
@@ -44,7 +43,6 @@ controls = R2.leaf controlsCpt
 controlsCpt :: R.Memo Controls
 controlsCpt = R.memo' $ here.component "controls" cpt where
   cpt { reloadForest
-      , session
       , sigmaRef
       } _ = do
     -- | States
@@ -74,6 +72,8 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     hyperdataGraph'     <- R2.useLive' hyperdataGraph
     selectedNodeIds'    <- R2.useLive' selectedNodeIds
     showSidebar'        <- R2.useLive' showSidebar
+
+    session <- useSession
 
     -- ref to track automatic FA pausing
     -- If user pauses FA before auto is triggered, clear the timeoutId
