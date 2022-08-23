@@ -957,7 +957,7 @@ mainNgramsTableCacheOnCpt = here.component "mainNgramsTableCacheOn" cpt where
       , spinnerClass: Nothing
       }
   versionEndpoint { defaultListId, path: { nodeId, tabType, session } } _ = get session $ Routes.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
-  errorHandler = logRESTError here "[mainNgramsTable]"
+  errorHandler = logRESTError here "[mainNgramsTableCacheOn]"
   mkRequest :: PageParams -> GUC.Request
   mkRequest path@{ session } = GUC.makeGetRequest session $ url path
     where
@@ -994,7 +994,7 @@ mainNgramsTableCacheOffCpt = here.component "mainNgramsTableCacheOff" cpt where
                  , path
                  , render }
 
-  errorHandler = logRESTError here "[mainNgramsTable]"
+  errorHandler = logRESTError here "[mainNgramsTableCacheOff]"
 
   -- NOTE With cache off
   loader :: PageParams -> AffRESTError VersionedWithCountNgramsTable
