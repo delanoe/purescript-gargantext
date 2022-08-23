@@ -84,6 +84,7 @@ useLoaderEffect { errorHandler, loader: loader', path, state } = do
     then pure $ R.nothing
     else do
       R.setRef oPath path
+      liftEffect $ T.write_ Nothing state
       R2.affEffect "G.H.Loader.useLoaderEffect" $ do
         l <- loader' path
         case l of
