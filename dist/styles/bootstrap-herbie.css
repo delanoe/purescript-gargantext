@@ -9935,6 +9935,10 @@ a:focus, a:hover {
   user-select: none;
 }
 
+.no-pointer-events {
+  pointer-events: none;
+}
+
 .side-panel {
   background-color: #fff;
   padding: 0.3em;
