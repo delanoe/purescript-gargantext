@@ -8,7 +8,6 @@ import Gargantext.Prelude
 import DOM.Simple (Window, window)
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
-import Data.Tuple.Nested ((/\))
 import Data.UUID as UUID
 import Effect (Effect)
 import Effect.Uncurried (EffectFn2, runEffectFn2)
@@ -16,7 +15,6 @@ import Gargantext.Components.Bootstrap.Types (ModalSizing(..))
 import Gargantext.Hooks.UpdateEffect (useUpdateEffect1')
 import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
-import Reactix (useMemo)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
