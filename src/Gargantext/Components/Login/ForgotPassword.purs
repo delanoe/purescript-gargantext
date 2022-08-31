@@ -73,9 +73,11 @@ submitButtonCpt :: R.Component SubmitButtonProps
 submitButtonCpt = here.component "submitButton" cpt where
   cpt { backend, email, sessions, message, disabled} _ = do
     email' <- T.useLive T.unequal email
+    disabled' <- T.useLive T.unequal disabled
     
     pure $ H.div {className: "form-group text-center"} 
       [ H.button { className: "btn btn-primary"
+                 , disabled: disabled'
                  , on: { click: click email' }}
         [ H.text "Submit" ]
       ]
