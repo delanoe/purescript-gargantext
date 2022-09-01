@@ -78,14 +78,14 @@ componentName = "b-modal"
 -- |        - a FFI fix has been added to remove left elements
 -- |        - an overlay has been added to synchronise the close button
 -- |        - the keyboard shortcut has been removed
--- | @https://stackoverflow.com/questions/50168312/bootstrap-4-close-modal-backdrop-doesnt-disappear
+-- | @link https://stackoverflow.com/questions/50168312/bootstrap-4-close-modal-backdrop-doesnt-disappear
 -- |
--- | https://getbootstrap.com/docs/4.6/components/modal/
+-- | @link https://getbootstrap.com/docs/4.6/components/modal/
 baseModal :: forall r. R2.OptComponent Options Props r
 baseModal = R2.optComponent component options
 
-component :: R.Component Props
-component = R.hooksComponent componentName cpt where
+component :: R.Memo Props
+component = R.memo' $ R.hooksComponent componentName cpt where
   cpt props@{ isVisibleBox
             , title
             , hasCollapsibleBackground
@@ -94,11 +94,12 @@ component = R.hooksComponent componentName cpt where
             , noBody
             , size
             } children
-      = R.unsafeHooksEffect (UUID.genUUID >>= pure <<< UUID.toString)
-    >>= \uuid -> do
+      = do
     -- | States
     -- |
     isVisible <- R2.useLive' isVisibleBox
+
+    uuid <- R.unsafeHooksEffect (UUID.genUUID >>= pure <<< UUID.toString)
 
     -- | Computed
     -- |

@@ -74,12 +74,18 @@
   }
 }
 
+// Browser cursor consistency
+.custom-select:disabled,
+.form-control:disabled {
+  @include unclickable();
+}
+
 // Rectify Bootstrap readonly UI
 .custom-select:disabled[readonly],
 .form-control[readonly] {
   background-color: $input-bg;
   // (opinionated rules)
-  color: $input-placeholder-color;
+  // color: $input-placeholder-color;
   border-style: dashed;
 }
 

@@ -299,7 +299,7 @@ childLoaderCpt = here.component "childLoader" cpt where
 closeBox { isBoxVisible } =
   liftEffect $ T.write_ false isBoxVisible
 
-refreshTree p@{ reloadTree } = liftEffect $ T2.reload reloadTree *> closeBox p
+refreshTree p@{ reloadTree } = liftEffect $ closeBox p *> T2.reload reloadTree
 
 deleteNode' nt p@{ boxes: { forestOpen }, session, tree: (NTree (LNode {id, parent_id}) _) } = do
   case nt of

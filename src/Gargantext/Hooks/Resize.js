@@ -3,7 +3,7 @@
 exports._add = add;
 exports._remove = remove;
 /**
- * @name add
+ * @function add
  * @param {Window} window
  * @param {Document} document
  * @param {String} sourceQuery
@@ -22,13 +22,18 @@ function add(window, document, sourceQuery, targetQuery, type) {
   }
 
   function startResizing(e) {
+    var height = e.clientY - target.offsetTop
+    var width = e.clientX - target.offsetLeft
+
     if (type === 'both' || type === 'horizontal')
-      target.style.height = (e.clientY - target.offsetTop) + 'px';
+      target.style.height = height + 'px';
     if (type === 'both' || type === 'vertical')
-      target.style.width = (e.clientX - target.offsetLeft) + 'px';
+      target.style.width = width + 'px';
 
     // prevent "user-select" highlights
     document.body.classList.add('no-user-select');
+    // prevent event focus losing (eg. while hovering iframe, see #422)
+    document.body.classList.add('no-pointer-events');
   }
 
   function stopResizing(e) {
@@ -36,10 +41,11 @@ function add(window, document, sourceQuery, targetQuery, type) {
     window.removeEventListener('mouseup', stopResizing, false);
 
     document.body.classList.remove('no-user-select');
+    document.body.classList.remove('no-pointer-events');
   }
 }
 /**
- * @name remove
+ * @function remove
  * @param {Document} document
  * @param {String} sourceQuery
  */

@@ -312,7 +312,7 @@
     transition: transform 0s, opacity 0s;
   }
 
-  @each $name, $value in $theme-colors {
+  @each $name, $value in $palette-semantic {
 
     &--#{ $name }:after {
       background-image:

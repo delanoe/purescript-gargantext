@@ -74,15 +74,31 @@ annotatedFieldInner = R2.leafComponent annotatedFieldInnerCpt
 
 annotatedFieldInnerCpt :: R.Component InnerProps
 annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
-  cpt { menuRef, ngrams, redrawMenu, setTermList, text: fieldText, mode } _ = do
+  cpt { menuRef
+      , ngrams
+      , redrawMenu
+      , setTermList
+      , text: fieldText
+      , mode
+      } _ = do
+    -- | States
+    -- |
     _redrawMenu' <- T.useLive T.unequal redrawMenu
 
     -- menu <- T.useBox (Nothing :: Maybe (Record AnnotationMenu))
 
-    let wrap (text /\ list) = { list
-                              , onSelect: onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList }
-                              , text }
+    -- | Computed
+    -- |
+    let
+      wrap :: Tuple String (List (Tuple NgramsTerm TermList)) -> Record RunProps
+      wrap (text /\ list)
+        = { list
+          , onSelect: onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList }
+          , text
+          }
 
+    -- | Render
+    -- |
     pure $
 
       H.div

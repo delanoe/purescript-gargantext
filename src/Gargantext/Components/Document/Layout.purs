@@ -5,18 +5,22 @@ module Gargantext.Components.Document.Layout
 import Gargantext.Prelude
 
 import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
+import Data.Ord (greaterThan)
+import Data.String (length)
 import Data.String as String
 import Data.Tuple.Nested ((/\))
 import Gargantext.Components.Annotation.Field as AnnotatedField
 import Gargantext.Components.Annotation.Types as AFT
 import Gargantext.Components.AutoUpdate (autoUpdate)
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Types (SpinnerTheme(..))
+import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), SpinnerTheme(..))
 import Gargantext.Components.Document.Types (DocPath, Document(..), LoadedData, initialState)
 import Gargantext.Components.NgramsTable.AutoSync (useAutoSync)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Core.NgramsTable.Functions (addNewNgramA, applyNgramsPatches, coreDispatch, findNgramRoot, setTermListA)
 import Gargantext.Core.NgramsTable.Types (CoreAction(..), Versioned(..), replace)
+import Gargantext.Hooks.FirstEffect (useFirstEffect')
+import Gargantext.Utils ((?))
 import Gargantext.Utils as U
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -63,12 +67,11 @@ layoutCpt = here.component "main" cpt where
     state'@{ ngramsLocalPatch } /\ state <-
       R2.useBox' $ initialState { loaded }
 
-    mode' /\ mode <- R2.useBox' AFT.EditionMode
+    mode' /\ mode <- R2.useBox' AFT.AdditionMode
 
-    -- | Hooks
-    -- |
+    forceAdditionMode' /\ forceAdditionMode <- R2.useBox' false
+
     let dispatch = coreDispatch path state
-
     { onPending, result } <- useAutoSync { state, action: dispatch }
 
     onPending' <- R2.useLive' onPending
@@ -77,6 +80,7 @@ layoutCpt = here.component "main" cpt where
     -- | Computed
     -- |
     let
+
       withAutoUpdate = false
 
       ngrams = applyNgramsPatches state' initTable
@@ -97,6 +101,21 @@ layoutCpt = here.component "main" cpt where
         dispatch <<< setTermListOrAddA (findNgramRoot ngrams ngram) mOldList
 
       hasAbstract =  maybe false (not String.null) doc.abstract
+
+    -- | Hooks
+    -- |
+
+    -- (?) Limit large document feature with empirical length value
+    --     see #423
+    useFirstEffect' do
+      let len = maybe 0 (length) doc.abstract
+      if (len `greaterThan` 4500)
+      then
+            T.write_ true forceAdditionMode
+        *>  T.write_ AFT.AdditionMode mode
+      else
+            T.write_ false forceAdditionMode
+        *>  T.write_ AFT.EditionMode mode
 
     -- | Behaviors
     -- |
@@ -123,7 +142,7 @@ layoutCpt = here.component "main" cpt where
           [
             -- Viewing mode
             B.wad
-            [ "d-flex", "align-items-center" ]
+            [ "d-flex", "align-items-center", "width-auto" ]
             [
               H.label
               { className: "mr-1"
@@ -136,6 +155,9 @@ layoutCpt = here.component "main" cpt where
               B.formSelect
               { value: show mode'
               , callback: onModeChange
+              , status: forceAdditionMode' ?
+                  Idled $
+                  Enabled
               }
               [
                 H.option
@@ -147,6 +169,14 @@ layoutCpt = here.component "main" cpt where
                 [ H.text "Add and edit terms" ]
               ]
             ]
+          ,
+            R2.when forceAdditionMode' $
+
+              B.wad
+              [ "color-warning", "font-size-100", "mx-2", "inline-block" ]
+              [
+                H.text "limited term feature due to abstract length"
+              ]
           ,
             R2.when withAutoUpdate $
               -- (?) purpose? would still working with current code?
@@ -162,6 +192,7 @@ layoutCpt = here.component "main" cpt where
           --   , ngramsLocalPatch
           --   , performAction: dispatch
           --   }
+
           ]
         ,
           H.div

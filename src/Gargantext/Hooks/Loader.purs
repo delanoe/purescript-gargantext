@@ -84,6 +84,7 @@ useLoaderEffect { errorHandler, loader: loader', path, state } = do
     then pure $ R.nothing
     else do
       R.setRef oPath path
+      liftEffect $ T.write_ Nothing state
       R2.affEffect "G.H.Loader.useLoaderEffect" $ do
         l <- loader' path
         case l of
@@ -102,31 +103,9 @@ useLoaderBox :: forall path st. Eq path => Eq st
           => Record (UseLoaderBox path st)
           -> R.Hooks R.Element
 useLoaderBox { errorHandler, loader: loader', path, render } = do
-  state <- T.useBox Nothing
-
-  useLoaderBoxEffect { errorHandler, loader: loader', path, state: state }
-
-  pure $ loader { render, state } []
-
-type UseLoaderBoxEffect path state =
-  ( errorHandler :: RESTError -> Effect Unit
-  , loader       :: path -> AffRESTError state
-  , path         :: T.Box path
-  , state        :: T.Box (Maybe state)
-  )
-
-useLoaderBoxEffect :: forall st path. Eq path => Eq st
-                   => Record (UseLoaderBoxEffect path st)
-                   -> R.Hooks Unit
-useLoaderBoxEffect { errorHandler, loader: loader', path, state } = do
   path' <- T.useLive T.unequal path
 
-  R.useEffect' $ do
-    R2.affEffect "G.H.Loader.useLoaderBoxEffect" $ do
-      l <- loader' path'
-      case l of
-        Left err -> liftEffect $ errorHandler err
-        Right l' -> liftEffect $ T.write_ (Just l') state
+  useLoader { errorHandler, loader: loader', path: path', render }
 
 
 newtype HashedResponse a = HashedResponse { hash  :: Hash, value :: a }
