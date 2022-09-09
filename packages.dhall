@@ -1,5 +1,5 @@
 let upstream =
-      https://github.com/purescript/package-sets/releases/download/psc-0.15.4-20220821/packages.dhall sha256:a2f8f83c1a195dc641089d5e3efe9ff997d487b570fd8a2e12994a73942711e5
+      https://github.com/purescript/package-sets/releases/download/psc-0.15.4-20220829/packages.dhall sha256:9ec64ed24ec308770ccdd3d0edb74a814fcfbe34c7df5c28266935f0b5e585d7
 
 let overrides =
       { globals =
@@ -276,7 +276,7 @@ let additions =
           [ "aff"
           , "aff-promise"
           , "dom-simple"
-          , "easy-ffi"
+          , "small-ffi"
           , "effect"
           , "exceptions"
           , "foreign"
