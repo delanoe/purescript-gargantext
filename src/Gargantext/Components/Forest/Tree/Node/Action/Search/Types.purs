@@ -63,7 +63,7 @@ data DataField = Gargantext
 
 derive instance Generic DataField _
 instance Show DataField where
-  show Gargantext   = "Gargantext"
+  show Gargantext   = "Gargantext (Beta)"
   show (External _) = "Databases (APIs)" -- <> show x
   show Web          = "Web"
   show Files        = "Files"
