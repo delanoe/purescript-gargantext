@@ -1,15 +1,6 @@
 let upstream =
-      https://github.com/purescript/package-sets/releases/download/psc-0.15.4-20220901/packages.dhall sha256:f1531b29c21ac437ffe5666c1b6cc76f0a9c29d3c9d107ff047aa2567744994f
-
--- TODO remove me, replace upstream with proper garganscript-package-sets
-let garganscript =
-      ../../../git-work/github/PURESCRIPT/garganscript-package-sets/release.dhall
-
--- TODO remove me
-let localOverrides =
-      { d3 = ../../../git-work/github/PURESCRIPT/purescript-d3/spago.dhall as Location
-      , simplecrypto = ../../../git-work/github/PURESCRIPT/purescript-simplecrypto/spago.dhall as Location
-      }
+      https://github.com/garganscript/package-sets/releases/download/v0.1.4/release.dhall
+        sha256:e03eafe0c7ea0ac143d07ec6d9f20c804bd6b6f95a8d89bf287c279e770584c8
 
 let overrides =
       { graphql-client =
@@ -96,7 +87,21 @@ let overrides =
         , version = "f6e8ee91298f2fc13c4277e75a19e0538de5f7a2"
         }
       , record-extra =
-          ../../../git-work/github/PURESCRIPT/purescript-record-extra/spago.dhall as Location
+        { dependencies =
+          [ "arrays"
+          , "effect"
+          , "functions"
+          , "lists"
+          , "maybe"
+          , "prelude"
+          , "record"
+          , "test-unit"
+          , "tuples"
+          , "typelevel-prelude"
+          ]
+        , repo = "https://github.com/justinwoo/purescript-record-extra"
+        , version = "0.15.0-starter-kit"
+        }
       }
 
 let additions =
@@ -139,7 +144,7 @@ let additions =
         }
       , simple-json-generics =
         { dependencies =
-          [ "assert"  -- test
+          [ "assert"
           , "control"
           , "effect"
           , "either"
@@ -150,7 +155,8 @@ let additions =
           , "transformers"
           , "typelevel-prelude"
           ]
-        , repo = "https://github.com/garganscript/purescript-simple-json-generics"
+        , repo =
+            "https://github.com/garganscript/purescript-simple-json-generics"
         , version = "master"
         }
       , tuples-native =
@@ -188,4 +194,4 @@ let additions =
         }
       }
 
-in  upstream // garganscript // overrides // localOverrides // additions
+in  upstream // overrides // additions
