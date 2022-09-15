@@ -1,8 +1,7 @@
 "use strict";
 
-import * as ReactEcharts from "echarts-for-react";
+import eChartsClass from "echarts-for-react";
 
-let eChartsClass = ReactEcharts.default;
 export { eChartsClass };
 
 /**

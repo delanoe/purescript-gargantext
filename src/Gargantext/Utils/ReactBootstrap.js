@@ -1,14 +1,14 @@
 'use strict';
 
-import * as ReactBootstrap from 'react-bootstrap';
+import ReactBootstrap from 'react-bootstrap';
 
 if (typeof window !== 'undefined') {
   window.ReactBootstrap = ReactBootstrap;
 }
 
-import * as Alert from 'react-bootstrap/Alert';
-import * as OverlayTrigger from 'react-bootstrap/OverlayTrigger';
-import * as Popover from 'react-bootstrap/Popover';
+import Alert from 'react-bootstrap/Alert';
+import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
+import Popover from 'react-bootstrap/Popover';
 
 let Content = Popover.Content;
 let Title = Popover.Title;
