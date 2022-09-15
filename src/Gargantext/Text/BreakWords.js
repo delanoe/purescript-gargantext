@@ -1,2 +1,3 @@
 'use strict';
-exports._wordRegex = /[a-z]+/gi;
+
+export _wordRegex = /[a-z]+/gi;

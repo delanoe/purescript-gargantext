@@ -134,7 +134,7 @@ mainPageCpt = here.component "mainPage" cpt where
         -> (Unit -> Effect Unit)
       deleteTile tile listBox = const do
         list <- T.read listBox
-        newList <- pure $ filter (_ # tile.id # findTile # not) list
+        newList <- pure $ filter (not $ findTile $ tile.id) list
         T.write_ newList listBox
 
     let hasHorizontalTiles = not $ eq 0 $ length tileAxisXList

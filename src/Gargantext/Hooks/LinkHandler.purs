@@ -72,7 +72,7 @@ changeTileRoute tileAxisXList tileAxisYList tile newRoute = do
     findTile id tile' = eq id $ get (Proxy :: Proxy "id") tile'
 
     hasTile :: Array (Record Tile) -> UUID -> Maybe Int
-    hasTile list id = findIndex (_ # id # findTile) list
+    hasTile list id = findIndex (findTile id) list
 
     updateTile :: Int -> AppRoute -> Array (Record Tile) -> Array (Record Tile)
     updateTile index route list = modifyAtIndices

@@ -1,20 +1,28 @@
 'use strict';
 
-const sigma = require('sigma/src/garg.js').sigma;
+//import { sigma } from 'sigma/src/garg.js';
+import sigma from 'sigma';
+
+console.log('imported sigma', sigma);
 
 if (typeof window !== 'undefined') {
   window.sigma = sigma;
 }
 
-const CustomShapes = require('sigma/plugins/garg.js').init(sigma, window).customShapes;
-require('sigma/src/utils/sigma.utils.js').init(sigma);
+/*import('sigma/plugins/garg.js').then((module) => {
+  let CustomShapes = module.init(sigma, window).customShapes;
+  CustomShapes.init();
+  });
+  */
+//import('sigma/src/utils/sigma.utils.js').then((module) => { module.init(sigma) });
 
 // Black circle around a node
+/*
 (function() {
-  var originalDef = sigma.canvas.nodes.def;
+  let originalDef = sigma.canvas.nodes.def;
 
   sigma.canvas.nodes.def = (node, context, settings) => {
-    var prefix = settings('prefix') || '';
+    let prefix = settings('prefix') || '';
 
     originalDef(node, context, settings);
 
@@ -32,7 +40,9 @@ require('sigma/src/utils/sigma.utils.js').init(sigma);
     context.stroke();
   }
 })()
+*/
 
+/*
 sigma.canvas.nodes.selected = (node, context, settings) => {
   // hack
   // We need to temporarily set node.type to 'def'. This is for 2 reasons
@@ -43,16 +53,18 @@ sigma.canvas.nodes.selected = (node, context, settings) => {
   sigma.canvas.hovers.def(node, context, settings);
   node.type = 'selected';
   //console.log('hovers, settings:', settings);
-};
+  };
+*/
 
-CustomShapes.init();
+//CustomShapes.init();
 
-let sigmaMouseSelector = (sigma, options) => {
+/*
+let sigmaMouseSelector = function(sigma, options) {
   sigma.plugins = sigma.plugins || {};
 
   sigma.plugins.mouseSelector = (s, renderer) => {
-    var _self = this;
-    var _offset = null;
+    let _self = this;
+    let _offset = null;
     const _s = s;
     const _renderer = renderer;
     const _container = _renderer.container;
@@ -169,6 +181,7 @@ let sigmaMouseSelector = (sigma, options) => {
 }
 
 sigmaMouseSelector(sigma);
+*/
 
 function _sigma(left, right, opts) {
   try {
@@ -178,14 +191,14 @@ function _sigma(left, right, opts) {
   }
 }
 
-function addRenderer(left, right, sigma, renderer) {
+function _addRenderer(left, right, sigma, renderer) {
   try {
     return right(sigma.addRenderer(renderer));
   } catch(e) {
     return left(e);
   }
 }
-function bindMouseSelectorPlugin(left, right, sig) {
+function _bindMouseSelectorPlugin(left, right, sig) {
   try {
     return right(sigma.plugins.mouseSelector(sig, sig.renderers[0]));
   } catch(e) {
@@ -193,9 +206,9 @@ function bindMouseSelectorPlugin(left, right, sig) {
     return left(e);
   }
 }
-function bind(sigma, event, handler) { sigma.bind(event, handler); }
+function _bind(sigma, event, handler) { sigma.bind(event, handler); }
 
-function takeScreenshot(sigma) {
+function _takeScreenshot(sigma) {
   let c = sigma.renderers[0].container;
   let edges = c.getElementsByClassName('sigma-edges')[0];
   let scene = c.getElementsByClassName('sigma-scene')[0];
@@ -209,26 +222,26 @@ function takeScreenshot(sigma) {
   return edges.toDataURL('image/png');
 }
 
-function getEdges(sigma) {
+function _getEdges(sigma) {
   return sigma.graph.edges();
 }
 
-function getNodes(sigma) {
+function _getNodes(sigma) {
   return sigma.graph.nodes();
 }
 
-function proxySetSettings(window, sigma, settings) {
+function _proxySetSettings(window, sigma, settings) {
   var id = sigma.id;
 
   window.sigma.instances(id).settings(settings);
   window.sigma.instances(id).refresh();
 }
 
-exports._sigma = _sigma;
-exports._addRenderer = addRenderer;
-exports._bindMouseSelectorPlugin = bindMouseSelectorPlugin;
-exports._bind = bind;
-exports._takeScreenshot = takeScreenshot;
-exports._getEdges = getEdges;
-exports._getNodes = getNodes;
-exports._proxySetSettings = proxySetSettings;
+export { _sigma,
+         _addRenderer,
+         _bindMouseSelectorPlugin,
+         _bind,
+         _takeScreenshot,
+         _getEdges,
+         _getNodes,
+         _proxySetSettings };

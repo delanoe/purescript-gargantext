@@ -9,10 +9,10 @@ import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
-import Data.Symbol (SProxy(..))
 import Partial.Unsafe (unsafePartial)
 import Record as Record
 import Simple.JSON as JSON
+import Type.Proxy (Proxy(..))
 
 type GraphId = Int
 
@@ -27,18 +27,18 @@ newtype Node = Node {
   , y          :: Number
   }
 
-x_coordP = SProxy :: SProxy "x_coord"
-xP = SProxy :: SProxy "x"
-y_coordP = SProxy :: SProxy "y_coord"
-yP = SProxy :: SProxy "y"
-clustDefaultP = SProxy :: SProxy "clustDefault"
-clust_defaultP = SProxy :: SProxy "clust_default"
-cameraP = SProxy :: SProxy "camera"
-mCameraP = SProxy :: SProxy "mCamera"
-idP = SProxy :: SProxy "id"
-id_P = SProxy :: SProxy "id_"
-typeP = SProxy :: SProxy "type"
-type_P = SProxy :: SProxy "type_"
+x_coordP = Proxy :: Proxy "x_coord"
+xP = Proxy :: Proxy "x"
+y_coordP = Proxy :: Proxy "y_coord"
+yP = Proxy :: Proxy "y"
+clustDefaultP = Proxy :: Proxy "clustDefault"
+clust_defaultP = Proxy :: Proxy "clust_default"
+cameraP = Proxy :: Proxy "camera"
+mCameraP = Proxy :: Proxy "mCamera"
+idP = Proxy :: Proxy "id"
+id_P = Proxy :: Proxy "id_"
+typeP = Proxy :: Proxy "type"
+type_P = Proxy :: Proxy "type_"
 
 derive instance Generic Node _
 derive instance Newtype Node _

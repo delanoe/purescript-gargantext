@@ -18,7 +18,7 @@ data BrokenWord = Word String | Space String
 
 breakWords :: String -> Effect (Array BrokenWord)
 breakWords s = loop $ break s
-  where loop b = breakNext b >>= (h b) 
+  where loop b = breakNext b >>= (h b)
         h :: Breaking -> Boolean -> Effect (Array BrokenWord)
         h b cont
           | cont = loop b
@@ -40,19 +40,19 @@ next b origin word =
   do traverse_ (pushSpace b) $ preceding b origin word
      pushWord b word
      pure true
-    
+
 preceding :: Breaking -> Int -> String -> Maybe String
 preceding b origin word = p $ (lastIndex b) - (length word)
   where p o
           | o == origin = Nothing
-          | otherwise = slice origin o b.source
+          | otherwise = Just $ slice origin o b.source
 
 finish :: Breaking -> Int -> Effect Boolean
-finish b origin =
-  do let last = slice origin (-1) b.source
-     traverse_ (pushSpace b) last
-     pure false
-     
+finish b origin = do
+  let last = slice origin (-1) b.source :: String
+  pushSpace b last
+  pure false
+
 type Breaking = { source :: String, wordRegex :: Regex, results :: Array BrokenWord }
 
 -- almost `pure`
@@ -64,13 +64,13 @@ break s = { source, wordRegex, results }
 
 search :: Breaking -> Effect (Maybe String)
 search b = execRegex b.wordRegex b.source
-     
+
 lastIndex :: Breaking -> Int
 lastIndex b = getRegexLastIndex b.wordRegex
 
 pushResult :: Breaking -> BrokenWord -> Effect Unit
 pushResult b = push b.results
-  
+
 pushSpace :: Breaking -> String -> Effect Unit
 pushSpace b = pushResult b <<< Space
 
@@ -78,4 +78,3 @@ pushWord :: Breaking -> String -> Effect Unit
 pushWord b = pushResult b <<< Word
 
 foreign import _wordRegex :: Regex
-

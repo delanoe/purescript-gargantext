@@ -4,7 +4,6 @@ import Data.Array (foldl)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype)
-import Data.Symbol (SProxy(..))
 import Gargantext.Components.Charts.Options.Data (DataD1, DataD2)
 import Gargantext.Components.Charts.Options.Font (ItemStyle, Tooltip)
 import Gargantext.Components.Charts.Options.Legend (SelectedMode)
@@ -13,6 +12,7 @@ import Prelude (class Eq, class Show, bind, map, pure, show, ($), (+), (<<<), (<
 import Record      as Record
 import Record.Unsafe (unsafeSet)
 import Simple.JSON as JSON
+import Type.Proxy (Proxy(..))
 import Unsafe.Coerce (unsafeCoerce)
 
 
@@ -213,8 +213,8 @@ treeLeaf :: String -> Int -> TreeNode
 treeLeaf n v = TreeNode { name : n, value : v, children : []}
 
 
-nameP = SProxy :: SProxy "name"
-labelP = SProxy :: SProxy "label"
+nameP = Proxy :: Proxy "name"
+labelP = Proxy :: Proxy "label"
 
 
 -- | TODO

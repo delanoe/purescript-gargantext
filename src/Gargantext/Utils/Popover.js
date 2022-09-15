@@ -1,12 +1,12 @@
 'use strict';
 
-const popover = require('react-awesome-popover');
+import popover from 'react-awesome-popover';
 
 if (typeof window !== 'undefined') {
     window.Popover = popover;
 }
 
-exports.popoverCpt = popover;
-exports._setState = function(el, val) {
+export { popover as popoverCpt };
+export function _setState(el, val) {
     el.setState(val);
 }

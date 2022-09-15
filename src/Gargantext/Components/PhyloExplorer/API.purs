@@ -15,7 +15,6 @@ import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.Show.Generic (genericShow)
-import Data.Symbol (SProxy(..))
 import Gargantext.Components.PhyloExplorer.JSON (PhyloJSON)
 import Gargantext.Components.PhyloExplorer.Types (PhyloSet, parseToPhyloSet)
 import Gargantext.Config.REST (AffRESTError)
@@ -28,6 +27,7 @@ import Gargantext.Types as GT
 import Record as Record
 import Simple.JSON as JSON
 import Simple.JSON.Generics as JSONG
+import Type.Proxy (Proxy(..))
 
 
 get :: S.Session -> NodeID -> AffRESTError (PhyloSet)
@@ -57,23 +57,23 @@ instance JSON.WriteForeign UpdateData where
     where
       rename
           = Record.rename
-            (SProxy :: SProxy "proximity")
-            (SProxy :: SProxy "_sc_phyloProximity")
+            (Proxy :: Proxy "proximity")
+            (Proxy :: Proxy "_sc_phyloProximity")
         >>> Record.rename
-            (SProxy :: SProxy "synchrony")
-            (SProxy :: SProxy "_sc_phyloSynchrony")
+            (Proxy :: Proxy "synchrony")
+            (Proxy :: Proxy "_sc_phyloSynchrony")
         >>> Record.rename
-            (SProxy :: SProxy "quality")
-            (SProxy :: SProxy "_sc_phyloQuality")
+            (Proxy :: Proxy "quality")
+            (Proxy :: Proxy "_sc_phyloQuality")
         >>> Record.rename
-            (SProxy :: SProxy "timeUnit")
-            (SProxy :: SProxy "_sc_timeUnit")
+            (Proxy :: Proxy "timeUnit")
+            (Proxy :: Proxy "_sc_timeUnit")
         >>> Record.rename
-            (SProxy :: SProxy "clique")
-            (SProxy :: SProxy "_sc_clique")
+            (Proxy :: Proxy "clique")
+            (Proxy :: Proxy "_sc_clique")
         >>> Record.rename
-            (SProxy :: SProxy "exportFilter")
-            (SProxy :: SProxy "_sc_exportFilter")
+            (Proxy :: Proxy "exportFilter")
+            (Proxy :: Proxy "_sc_exportFilter")
 
 data TimeUnit
   = Epoch TimeUnitCriteria
@@ -96,68 +96,68 @@ instance JSON.WriteForeign TimeUnit where
     where
       parseEpoch
           = Record.rename
-            (SProxy :: SProxy "period")
-            (SProxy :: SProxy "_epoch_period")
+            (Proxy :: Proxy "period")
+            (Proxy :: Proxy "_epoch_period")
         >>> Record.rename
-            (SProxy :: SProxy "step")
-            (SProxy :: SProxy "_epoch_step")
+            (Proxy :: Proxy "step")
+            (Proxy :: Proxy "_epoch_step")
         >>> Record.rename
-            (SProxy :: SProxy "matchingFrame")
-            (SProxy :: SProxy "_epoch_matchingFrame")
+            (Proxy :: Proxy "matchingFrame")
+            (Proxy :: Proxy "_epoch_matchingFrame")
         >>> Record.insert
-            (SProxy :: SProxy "tag")
+            (Proxy :: Proxy "tag")
             "Epoch"
       parseYear
           = Record.rename
-            (SProxy :: SProxy "period")
-            (SProxy :: SProxy "_year_period")
+            (Proxy :: Proxy "period")
+            (Proxy :: Proxy "_year_period")
         >>> Record.rename
-            (SProxy :: SProxy "step")
-            (SProxy :: SProxy "_year_step")
+            (Proxy :: Proxy "step")
+            (Proxy :: Proxy "_year_step")
         >>> Record.rename
-            (SProxy :: SProxy "matchingFrame")
-            (SProxy :: SProxy "_year_matchingFrame")
+            (Proxy :: Proxy "matchingFrame")
+            (Proxy :: Proxy "_year_matchingFrame")
         >>> Record.insert
-            (SProxy :: SProxy "tag")
+            (Proxy :: Proxy "tag")
             "Year"
       parseMonth
           = Record.rename
-            (SProxy :: SProxy "period")
-            (SProxy :: SProxy "_month_period")
+            (Proxy :: Proxy "period")
+            (Proxy :: Proxy "_month_period")
         >>> Record.rename
-            (SProxy :: SProxy "step")
-            (SProxy :: SProxy "_month_step")
+            (Proxy :: Proxy "step")
+            (Proxy :: Proxy "_month_step")
         >>> Record.rename
-            (SProxy :: SProxy "matchingFrame")
-            (SProxy :: SProxy "_month_matchingFrame")
+            (Proxy :: Proxy "matchingFrame")
+            (Proxy :: Proxy "_month_matchingFrame")
         >>> Record.insert
-            (SProxy :: SProxy "tag")
+            (Proxy :: Proxy "tag")
             "Month"
       parseWeek
           = Record.rename
-            (SProxy :: SProxy "period")
-            (SProxy :: SProxy "_week_period")
+            (Proxy :: Proxy "period")
+            (Proxy :: Proxy "_week_period")
         >>> Record.rename
-            (SProxy :: SProxy "step")
-            (SProxy :: SProxy "_week_step")
+            (Proxy :: Proxy "step")
+            (Proxy :: Proxy "_week_step")
         >>> Record.rename
-            (SProxy :: SProxy "matchingFrame")
-            (SProxy :: SProxy "_week_matchingFrame")
+            (Proxy :: Proxy "matchingFrame")
+            (Proxy :: Proxy "_week_matchingFrame")
         >>> Record.insert
-            (SProxy :: SProxy "tag")
+            (Proxy :: Proxy "tag")
             "Week"
       parseDay
           = Record.rename
-            (SProxy :: SProxy "period")
-            (SProxy :: SProxy "_day_period")
+            (Proxy :: Proxy "period")
+            (Proxy :: Proxy "_day_period")
         >>> Record.rename
-            (SProxy :: SProxy "step")
-            (SProxy :: SProxy "_day_step")
+            (Proxy :: Proxy "step")
+            (Proxy :: Proxy "_day_step")
         >>> Record.rename
-            (SProxy :: SProxy "matchingFrame")
-            (SProxy :: SProxy "_day_matchingFrame")
+            (Proxy :: Proxy "matchingFrame")
+            (Proxy :: Proxy "_day_matchingFrame")
         >>> Record.insert
-            (SProxy :: SProxy "tag")
+            (Proxy :: Proxy "tag")
             "Day"
 
 
@@ -217,27 +217,27 @@ instance JSON.WriteForeign Clique where
     where
       parseFIS
           = Record.insert
-            (SProxy :: SProxy "tag")
+            (Proxy :: Proxy "tag")
             "Fis"
         >>> Record.rename
-            (SProxy :: SProxy "support")
-            (SProxy :: SProxy "_fis_support")
+            (Proxy :: Proxy "support")
+            (Proxy :: Proxy "_fis_support")
         >>> Record.rename
-            (SProxy :: SProxy "size")
-            (SProxy :: SProxy "_fis_size")
+            (Proxy :: Proxy "size")
+            (Proxy :: Proxy "_fis_size")
       parseMaxClique
           = Record.insert
-            (SProxy :: SProxy "tag")
+            (Proxy :: Proxy "tag")
             "MaxClique"
         >>> Record.rename
-            (SProxy :: SProxy "size")
-            (SProxy :: SProxy "_mcl_size")
+            (Proxy :: Proxy "size")
+            (Proxy :: Proxy "_mcl_size")
         >>> Record.rename
-            (SProxy :: SProxy "threshold")
-            (SProxy :: SProxy "_mcl_threshold")
+            (Proxy :: Proxy "threshold")
+            (Proxy :: Proxy "_mcl_threshold")
         >>> Record.rename
-            (SProxy :: SProxy "filter")
-            (SProxy :: SProxy "_mcl_filter")
+            (Proxy :: Proxy "filter")
+            (Proxy :: Proxy "_mcl_filter")
 
 
 data ReflexiveClique

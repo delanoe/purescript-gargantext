@@ -11,6 +11,7 @@ import Data.Eq.Generic (genericEq)
 import Data.Int (fromNumber)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Number as DN
+import Data.Number.Format as DNF
 import Data.Nullable (Nullable, null)
 import Data.Traversable (traverse_)
 import DOM.Simple as DOM
@@ -18,7 +19,6 @@ import DOM.Simple.Document (document)
 import DOM.Simple.Event as Event
 import DOM.Simple.EventListener as EL
 import DOM.Simple (DOMRect)
-import Global (toFixed)
 import Effect (Effect)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -169,8 +169,9 @@ renderScaleSel ref props (Range.Closed {min, max}) =
     style = {left: computeLeft, width: computeWidth}
     percOffsetMin = Range.normalise props.bounds min
     percOffsetMax = Range.normalise props.bounds max
-    computeLeft = (show $ 100.0 * percOffsetMin) <> "%"
-    computeWidth = (show $ 100.0 * (percOffsetMax - percOffsetMin)) <> "%"
+    computeLeft = formatter $ 100.0 * percOffsetMin
+    computeWidth = formatter $ 100.0 * (percOffsetMax - percOffsetMin)
+    formatter n = (DNF.toStringWith (DNF.fixed 0) n) <> "%"
 
 
 renderKnob :: Knob -> R.Ref (Nullable DOM.Element) -> Range.NumberRange -> Bounds -> T.Box (Maybe Knob) -> Int -> R.Element
@@ -178,12 +179,10 @@ renderKnob knob ref (Range.Closed value) bounds set precision =
   H.div { ref, tabIndex, className, aria, on: { mouseDown: onMouseDown }, style } [
       H.div { className: "range-slider__placeholder" }
         [
-          H.text $ text $ toFixed precision val
+          H.text $ DNF.toStringWith (DNF.precision precision) val
         ]
   ]
   where
-    text (Just num) = num
-    text Nothing = "error"
     tabIndex = 0
     className = "range-slider__knob"
     aria = { label: labelPrefix knob <> "value: " <> show val }

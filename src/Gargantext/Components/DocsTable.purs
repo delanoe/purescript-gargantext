@@ -17,7 +17,6 @@ import Data.Ord.Down (Down(..))
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as Str
-import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
@@ -56,6 +55,7 @@ import Reactix.DOM.HTML as H
 import Record.Extra as RX
 import Simple.JSON as JSON
 import Toestand as T
+import Type.Proxy (Proxy(..))
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.DocsTable"
@@ -100,8 +100,8 @@ type PageLayoutProps =
   | CommonProps
   )
 
-_documentIdsDeleted  = prop (SProxy :: SProxy "documentIdsDeleted")
-_localCategories     = prop (SProxy :: SProxy "localCategories")
+_documentIdsDeleted  = prop (Proxy :: Proxy "documentIdsDeleted")
+_localCategories     = prop (Proxy :: Proxy "localCategories")
 
 docViewLayout :: Record LayoutProps -> R.Element
 docViewLayout props = R.createElement docViewLayoutCpt props []
@@ -270,7 +270,7 @@ scanDocumentCreationProgress boxes session nodeId currentTask cbk = do
           , GT.IsKilled
           , GT.IsFailure
           ]
-        hasEndingStatus s = any (_ # s # eq) endingStatusList
+        hasEndingStatus s = any (eq s) endingStatusList
 
       if (hasEndingStatus status)
       then

@@ -4,6 +4,7 @@ import Data.Array as A
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Show.Generic (genericShow)
@@ -156,7 +157,7 @@ fieldsCodeEditorCpt = here.component "fieldsCodeEditorCpt" cpt
               List.modifyAt idx (\{ ftField: Field f } -> { idx, ftField: Field $ f { name = newName } }) fs) fields
 
     recomputeIndices :: FTFieldsWithIndex -> FTFieldsWithIndex
-    recomputeIndices (FTFieldsWithIndex lst) = FTFieldsWithIndex $ List.mapWithIndex (\idx -> \{ ftField } -> { idx, ftField }) lst
+    recomputeIndices (FTFieldsWithIndex lst) = FTFieldsWithIndex $ mapWithIndex (\idx -> \{ ftField } -> { idx, ftField }) lst
 
 hash :: FTFieldWithIndex -> Hash
 hash { idx, ftField } = Crypto.hash $ "--idx--" <> (show idx) <> "--field--" <> (show ftField)

@@ -1,23 +1,31 @@
 let upstream =
-      https://github.com/purescript/package-sets/releases/download/psc-0.15.4-20220829/packages.dhall sha256:9ec64ed24ec308770ccdd3d0edb74a814fcfbe34c7df5c28266935f0b5e585d7
+      https://github.com/purescript/package-sets/releases/download/psc-0.15.4-20220901/packages.dhall sha256:f1531b29c21ac437ffe5666c1b6cc76f0a9c29d3c9d107ff047aa2567744994f
+
+-- TODO remove me, replace upstream with proper garganscript-package-sets
+let garganscript =
+      ../../../git-work/github/PURESCRIPT/garganscript-package-sets/release.dhall
+
+-- TODO remove me
+let localOverrides =
+      { d3 = ../../../git-work/github/PURESCRIPT/purescript-d3/spago.dhall as Location
+      , simplecrypto = ../../../git-work/github/PURESCRIPT/purescript-simplecrypto/spago.dhall as Location
+      }
 
 let overrides =
-      { globals =
-        { dependencies = [ "functions", "maybe" ]
-        , repo = "https://github.com/purescript/purescript-globals"
-        , version = "v4.1.0"
-        }
-      , graphql-client =
+      { graphql-client =
         { dependencies =
           [ "aff"
           , "aff-promise"
           , "affjax"
+          , "affjax-node"
+          , "affjax-web"
           , "argonaut-codecs"
           , "argonaut-core"
           , "arrays"
           , "bifunctors"
           , "control"
           , "datetime"
+          , "debug"
           , "effect"
           , "either"
           , "enums"
@@ -53,198 +61,110 @@ let overrides =
           , "strings-extra"
           , "transformers"
           , "tuples"
-          , "typelevel-prelude"
           , "unicode"
+          , "unsafe-coerce"
+          , "variant"
           ]
         , repo =
             "https://github.com/OxfordAbstracts/purescript-graphql-client.git"
-        , version = "update-package-set-#73"
+        , version = "v9.2.2"
         }
-      , smolder =
-        { dependencies =
-          [ "bifunctors"
-          , "catenable-lists"
-          , "free"
-          , "ordered-collections"
+      , jest =
+        { -- markdown-it dependency
+          dependencies =
+          [ "aff"
+          , "aff-promise"
+          , "effect"
+          , "foldable-traversable"
           , "prelude"
-          , "strings"
-          , "test-unit"
-          , "transformers"
+          , "psci-support"
+          ]
+        , repo = "https://github.com/nonbili/purescript-jest"
+        , version = "018543987af27db6a3842048b6b3f5ec47609087"
+        }
+      , markdown-it =
+        { dependencies =
+          [ "effect"
+          , "foldable-traversable"
+          , "foreign"
+          , "jest"
+          , "options"
+          , "prelude"
           , "tuples"
           ]
-        , repo = "https://github.com/bodil/purescript-smolder"
-        , version = "v12.3.0"
+        , repo = "https://github.com/nonbili/purescript-markdown-it"
+        , version = "f6e8ee91298f2fc13c4277e75a19e0538de5f7a2"
         }
+      , record-extra =
+          ../../../git-work/github/PURESCRIPT/purescript-record-extra/spago.dhall as Location
       }
 
 let additions =
       { sequences =
         { dependencies =
-          [ "prelude"
-          , "unsafe-coerce"
-          , "partial"
-          , "unfoldable"
+          [ "arrays"
+          , "assert"
+          , "console"
+          , "control"
+          , "effect"
           , "lazy"
-          , "arrays"
-          , "profunctor"
           , "maybe"
-          , "tuples"
           , "newtype"
+          , "nonempty"
+          , "partial"
+          , "prelude"
+          , "profunctor"
+          , "psci-support"
+          , "tuples"
+          , "unfoldable"
+          , "unsafe-coerce"
           ]
-        , repo = "https://github.com/hdgarrood/purescript-sequences.git"
-        , version = "v3.0.2"
+        , repo = "https://github.com/garganscript/purescript-sequences.git"
+        , version = "7ad61fde5239fbf66ceeefc0b7608aa9cbc53701"
         }
       , spec-discovery =
         { dependencies = [ "prelude", "effect", "arrays", "spec", "node-fs" ]
         , repo = "https://github.com/purescript-spec/purescript-spec-discovery"
-        , version = "v4.0.0"
+        , version = "v8.0.0"
         }
       , spec-quickcheck =
         { dependencies = [ "prelude", "aff", "random", "quickcheck", "spec" ]
         , repo = "https://github.com/purescript-spec/purescript-spec-quickcheck"
         , version = "v3.1.0"
         }
-      , ffi-simple =
-        { dependencies =
-          [ "functions", "maybe", "nullable", "prelude", "unsafe-coerce" ]
-        , repo = "https://github.com/garganscript/purescript-ffi-simple"
-        , version = "v0.3.2"
-        }
-      , dom-simple =
-        { dependencies =
-          [ "effect"
-          , "ffi-simple"
-          , "maybe"
-          , "nullable"
-          , "prelude"
-          , "unsafe-coerce"
-          ]
-        , repo = "https://github.com/garganscript/purescript-dom-simple"
-        , version = "ps-15.0-upgrade"
-        }
       , dom-filereader =
         { dependencies = [ "aff", "arraybuffer-types", "web-file", "web-html" ]
         , repo = "https://github.com/nwolverson/purescript-dom-filereader"
         , version = "v5.0.0"
         }
-      , formula =
+      , simple-json-generics =
         { dependencies =
-          [ "effect"
-          , "prelude"
-          , "reactix"
-          , "record"
-          , "toestand"
-          , "tuples"
-          , "typelevel-prelude"
-          , "typisch"
-          ]
-        , repo = "https://github.com/garganscript/purescript-formula"
-        , version = "v0.2.1"
-        }
-      , markdown =
-        { dependencies = [ "precise" ]
-        , repo = "https://github.com/garganscript/purescript-markdown"
-        , version = "2021-06-22"
-        }
-      , markdown-smolder =
-        { dependencies = [ "markdown", "smolder" ]
-        , repo = "https://github.com/hgiasac/purescript-markdown-smolder"
-        , version = "v2.2.0"
-        }
-      , reactix =
-        { dependencies =
-          [ "dom-simple"
-          , "effect"
-          , "ffi-simple"
-          , "foldable-traversable"
-          , "functions"
-          , "maybe"
-          , "nullable"
-          , "prelude"
-          , "strings"
-          , "tuples"
-          , "unsafe-coerce"
-          ]
-        , repo = "https://github.com/garganscript/purescript-reactix"
-        , version = "v0.5.0"
-        }
-      , simple-json =
-        { dependencies =
-          [ "arrays"
-          , "assert"
-          , "bifunctors"
-          , "console"
+          [ "assert"  -- test
           , "control"
           , "effect"
           , "either"
-          , "exceptions"
-          , "foldable-traversable"
           , "foreign"
-          , "foreign-object"
-          , "identity"
-          , "lists"
-          , "maybe"
-          , "nonempty"
-          , "nullable"
           , "partial"
           , "prelude"
-          , "psci-support"
-          , "record"
-          , "sequences"
+          , "simple-json"
           , "transformers"
           , "typelevel-prelude"
-          , "variant"
           ]
-        , repo = "https://github.com/cgenie/purescript-simple-json"
-        , version = "ps-0.15.0-upgrade"
-        }
-      , simple-json-generics =
-        { dependencies = [ "simple-json" ]
-        , repo = "https://github.com/justinwoo/purescript-simple-json-generics"
-        , version = "v0.1.0"
-        }
-      , toestand =
-        { dependencies =
-          [ "effect"
-          , "foldable-traversable"
-          , "ordered-collections"
-          , "prelude"
-          , "reactix"
-          , "record"
-          , "tuples"
-          , "typelevel-prelude"
-          , "typisch"
-          ]
-        , repo = "https://github.com/garganscript/purescript-toestand"
-        , version = "v0.7.0"
-        }
-      , typisch =
-        { dependencies = [ "prelude" ]
-        , repo = "https://github.com/garganscript/purescript-typisch"
-        , version = "v0.3.0"
+        , repo = "https://github.com/garganscript/purescript-simple-json-generics"
+        , version = "master"
         }
       , tuples-native =
-        { dependencies = [ "prelude", "typelevel", "unsafe-coerce" ]
-        , repo = "https://github.com/garganscript/purescript-tuples-native"
-        , version = "v2.2.0"
-        }
-      , uint =
-        { dependencies = [ "maybe" ]
-        , repo = "https://github.com/zaquest/purescript-uint"
-        , version = "v5.1.1"
-        }
-      , uri =
         { dependencies =
-          [ "these"
-          , "arrays"
-          , "profunctor-lenses"
-          , "unfoldable"
-          , "parsing"
-          , "integers"
-          , "globals"
+          [ "console"
+          , "effect"
+          , "functions"
+          , "prelude"
+          , "tuples"
+          , "typelevel"
+          , "typelevel-prelude"
           ]
-        , repo = "https://github.com/slamdata/purescript-uri"
-        , version = "v8.0.1"
+        , repo = "https://github.com/garganscript/purescript-tuples-native"
+        , version = "v2.3.0"
         }
       , read =
         { dependencies = [ "prelude", "maybe", "strings" ]
@@ -256,41 +176,16 @@ let additions =
         , repo = "https://github.com/hdgarrood/purescript-versions.git"
         , version = "v6.0.0"
         }
-      , simplecrypto =
-        { dependencies = [ "prelude", "maybe", "node-buffer" ]
-        , repo = "https://github.com/alpacaaa/purescript-simplecrypto"
-        , version = "v1.0.1"
-        }
       , web-url =
         { dependencies = [ "prelude" ]
         , repo = "https://github.com/mjepronk/purescript-web-url"
-        , version = "v1.0.2"
+        , version = "v2.0.0"
         }
       , convertable-options =
         { dependencies = [ "console", "effect", "maybe", "record" ]
         , repo = "https://github.com/natefaubion/purescript-convertable-options"
         , version = "v1.0.0"
         }
-      , d3 =
-        { dependencies =
-          [ "aff"
-          , "aff-promise"
-          , "dom-simple"
-          , "small-ffi"
-          , "effect"
-          , "exceptions"
-          , "foreign"
-          , "functions"
-          , "js-date"
-          , "maybe"
-          , "prelude"
-          , "psci-support"
-          , "tuples"
-          , "web-dom"
-          ]
-        , repo = "https://github.com/cgenie/purescript-d3"
-        , version = "v0.9.1"
-        }
       }
 
-in  upstream ⫽ overrides ⫽ additions
+in  upstream // garganscript // overrides // localOverrides // additions

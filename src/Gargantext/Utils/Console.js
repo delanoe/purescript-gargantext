@@ -3,6 +3,6 @@
  * Get Creation Date
  * @return {string}
  */
-exports.getCreationDate = function() {
+export function getCreationDate() {
   return new Date().toLocaleTimeString()
 }

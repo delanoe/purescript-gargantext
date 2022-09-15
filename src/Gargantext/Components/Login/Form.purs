@@ -1,6 +1,6 @@
 module Gargantext.Components.Login.Form where
 
-import Prelude (Unit, bind, discard, not, notEq, pure, show, ($), (&&), (*>), (<>))
+import Prelude (Unit, bind, discard, not, notEq, pure, show, unit, ($), (&&), (*>), (<>))
 import Data.Either (Either(..))
 import DOM.Simple.Event as DE
 import Effect (Effect)
@@ -107,13 +107,14 @@ submitForm { backend, sessions, visible } cell e = do
   state <- T.read cell
   launchAff_ $ do
     res <- postAuthRequest backend (req state)
-    case res of
+    _ <- case res of
       Left message -> liftEffect $ T.write (state { error = message }) cell
       Right sess ->
         liftEffect $
           Sessions.change (Sessions.Login sess) sessions
           *> T.write false visible
           *> T.write (state { error = "" }) cell
+    pure unit
     where
       req { username, password } = AuthRequest { username, password }
 

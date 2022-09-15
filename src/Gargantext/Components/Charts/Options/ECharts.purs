@@ -54,7 +54,7 @@ chartWith options =
 
       refListener (Options { onInit }) = case onInit of
         Nothing -> pure unit
-        Just fn -> listenerFn1 (_ # fn # execOnInit)
+        Just fn -> listenerFn1 (execOnInit fn)
 
       execOnInit fn = toMaybe >>> case _ of
         Nothing                        -> pure unit

@@ -40,7 +40,7 @@ magenta :: Color
 magenta = stringColor "magenta"
 
 violet :: Color
-violet = cssColor CSS.violet
+violet = stringColor "violet"
 
 black :: Color
 black = stringColor "black"

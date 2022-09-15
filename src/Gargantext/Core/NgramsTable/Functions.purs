@@ -188,7 +188,7 @@ highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
 
 --applyNgramsTablePatchToSingleTerm :: NgramsTerm -> NgramsTablePatch -> Set NgramsTerm -> Set NgramsTerm
 --applyNgramsTablePatchToSingleTerm ngram patch s =
---  applyNgramsTablePatch patch $ 
+--  applyNgramsTablePatch patch $
 
 patchSetFromMap :: forall a. Ord a => Map a Boolean -> PatchSet a
 patchSetFromMap m = PatchSet { rem: Map.keys (Map.filter not m)

@@ -11,7 +11,8 @@ import Foreign (Foreign, ForeignError(..), fail)
 import Foreign as Foreign
 import Foreign.Object as FO
 import Simple.JSON as JSON
-import Type.Prelude (class IsSymbol, SProxy(..), reflectSymbol)
+import Type.Prelude (class IsSymbol, reflectSymbol)
+import Type.Proxy (Proxy(..))
 
 taggedSumRep :: forall a rep
    . GR.Generic a rep
@@ -51,7 +52,7 @@ instance ( GenericTaggedSumRep a
          then withExcept (map $ ErrorAtProperty name) $ GR.Constructor <$> (genericTaggedSumRep $ Foreign.unsafeToForeign obj)
          else fail $ ForeignError $ "Wrong type tag " <> n' <> " where " <> name <> " was expected."
     where
-      nameP = SProxy :: SProxy name
+      nameP = Proxy :: Proxy name
       name = reflectSymbol nameP
 
 instance ( JSON.ReadForeign a

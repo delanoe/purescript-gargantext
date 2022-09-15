@@ -45,4 +45,3 @@ withMin (Closed {max}) min = Closed { min, max }
 -- | Updates the maximum value in a closed range
 withMax :: forall t. Closed t -> t -> Closed t
 withMax (Closed {min}) max = Closed { min, max }
-

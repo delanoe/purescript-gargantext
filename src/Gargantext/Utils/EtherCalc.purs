@@ -1,6 +1,6 @@
 module Gargantext.Utils.EtherCalc where
 
-import Affjax (Error, Response, defaultRequest, request)
+import Affjax.Web (Error, Response, defaultRequest, request)
 import Affjax.ResponseFormat as ResponseFormat
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(GET))
@@ -17,4 +17,3 @@ downloadCSV base nodeId = do
             , responseFormat = ResponseFormat.string
             , method = Left GET }
   request req
-  

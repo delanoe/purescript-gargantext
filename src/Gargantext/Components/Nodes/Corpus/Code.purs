@@ -1,6 +1,7 @@
 module Gargantext.Components.Nodes.Corpus.Code where
 
 import Data.Either (Either(..))
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.List as List
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
@@ -59,7 +60,7 @@ corpusCodeView props = R.createElement corpusCodeViewCpt props []
 corpusCodeViewCpt :: R.Component ViewProps
 corpusCodeViewCpt = here.component "corpusCodeView" cpt where
   cpt {corpus: (NodePoly {hyperdata: Hyperdata {fields: FTFieldList fields}}), nodeId, reload, session, boxes} _ = do
-    let fieldsWithIndex = FTFieldsWithIndex $ List.mapWithIndex (\idx -> \ftField -> { idx, ftField }) fields
+    let fieldsWithIndex = FTFieldsWithIndex $ mapWithIndex (\idx -> \ftField -> { idx, ftField }) fields
     fieldsS <- T.useBox fieldsWithIndex
     fields' <- T.useLive T.unequal fieldsS
     fieldsRef <- R.useRef fields

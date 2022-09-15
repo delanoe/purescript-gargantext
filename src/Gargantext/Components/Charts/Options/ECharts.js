@@ -1,8 +1,9 @@
 "use strict";
 
-var ReactEcharts = require("echarts-for-react");
+import * as ReactEcharts from "echarts-for-react";
 
-exports.eChartsClass = ReactEcharts.default;
+let eChartsClass = ReactEcharts.default;
+export { eChartsClass };
 
 /**
  * @XXX "echarts-for-react" unsuitable to proper PureScript implementation
@@ -11,7 +12,7 @@ exports.eChartsClass = ReactEcharts.default;
  * @param {function} fn
  * @returns
  */
-exports.listenerFn1 = function(fn) {
+export function listenerFn1(fn) {
   return function() {
     var args = Array.prototype.slice.call(arguments);
     fn(args[0])()
@@ -24,7 +25,7 @@ exports.listenerFn1 = function(fn) {
  * @param {object} opts
  * @returns
  */
-exports.dispatchAction = function(eChartsInstance) {
+export function dispatchAction(eChartsInstance) {
   return function(opts) {
     return function() {
       eChartsInstance.dispatchAction(opts);

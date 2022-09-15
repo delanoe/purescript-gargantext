@@ -1,17 +1,20 @@
 'use strict';
 
-const ReactBootstrap = require('react-bootstrap');
+import * as ReactBootstrap from 'react-bootstrap';
 
 if (typeof window !== 'undefined') {
   window.ReactBootstrap = ReactBootstrap;
 }
 
-const Alert = require('react-bootstrap/Alert');
-const OverlayTrigger = require('react-bootstrap/OverlayTrigger');
-const Popover = require('react-bootstrap/Popover');
+import * as Alert from 'react-bootstrap/Alert';
+import * as OverlayTrigger from 'react-bootstrap/OverlayTrigger';
+import * as Popover from 'react-bootstrap/Popover';
 
-exports.alertCpt = Alert;
-exports.overlayTriggerCpt = OverlayTrigger;
-exports.popoverCpt = Popover;
-exports.popoverContentCpt = Popover.Content;
-exports.popoverTitleCpt = Popover.Title;
+let Content = Popover.Content;
+let Title = Popover.Title;
+
+export { Alert as alertCpt,
+         OverlayTrigger as overlayTriggerCpt,
+         Popover as popoverCpt,
+         Content as popoverContentCpt,
+         Title as popoverTitleCpt };

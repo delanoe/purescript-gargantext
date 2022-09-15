@@ -5,7 +5,8 @@ module Gargantext.Components.GraphExplorer.Toolbar.SlideButton
   , mouseSelectorSizeButton
   ) where
 
-import Global (readFloat)
+import Data.Maybe (Maybe(..))
+import Data.Number as DN
 import Prelude
 import Effect (Effect)
 import Reactix as R
@@ -29,7 +30,6 @@ type Props =
 
 sizeButton :: Record Props -> R.Element
 sizeButton props = R.createElement sizeButtonCpt props []
-
 sizeButtonCpt :: R.Component Props
 sizeButtonCpt = here.component "sizeButton" cpt where
   cpt { state, caption, min, max, onChange } _ = do
@@ -67,15 +67,18 @@ labelSizeButton sigmaRef state =
     , max: 30.0
     , onChange: \e -> do
       let sigma = R.readRef sigmaRef
-      let newValue = readFloat $ R.unsafeEventValue e
-      Sigmax.dependOnSigma sigma "[labelSizeButton] sigma: Nothing" $ \s -> do
-        Sigma.setSettings s {
-          defaultLabelSize: newValue
-        , drawLabels: true
-        , maxNodeSize: newValue / 2.5
-        --, labelSizeRatio: newValue / 2.5
-        }
-      T.write_ newValue state
+      let newValue' = DN.fromString $ R.unsafeEventValue e
+      case newValue' of
+        Nothing -> pure unit
+        Just newValue ->
+          Sigmax.dependOnSigma sigma "[labelSizeButton] sigma: Nothing" $ \s -> do
+            Sigma.setSettings s {
+              defaultLabelSize: newValue
+              , drawLabels: true
+              , maxNodeSize: newValue / 2.5
+                --, labelSizeRatio: newValue / 2.5
+              }
+            T.write_ newValue state
     }
 
 mouseSelectorSizeButton :: R.Ref Sigmax.Sigma -> T.Box Number -> R.Element
@@ -87,10 +90,13 @@ mouseSelectorSizeButton sigmaRef state =
     , max: 50.0
     , onChange: \e -> do
       let sigma = R.readRef sigmaRef
-      let newValue = readFloat $ R.unsafeEventValue e
-      Sigmax.dependOnSigma sigma "[mouseSelectorSizeButton] sigma: Nothing" $ \s -> do
-        Sigma.setSettings s {
-          mouseSelectorSize: newValue
-        }
-      T.write_ newValue state
-  }
+      let newValue' = DN.fromString $ R.unsafeEventValue e
+      case newValue' of
+        Nothing -> pure unit
+        Just newValue ->
+          Sigmax.dependOnSigma sigma "[mouseSelectorSizeButton] sigma: Nothing" $ \s -> do
+            Sigma.setSettings s {
+              mouseSelectorSize: newValue
+              }
+            T.write_ newValue state
+    }

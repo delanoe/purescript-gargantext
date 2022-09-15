@@ -1,22 +1,22 @@
-exports._makeRequest = function(url) {
+export function _makeRequest(url) {
     return function(options) {
         return new Request(url, options);
     }
 }
 
-exports._openCache = function(cacheName) {
+export function _openCache(cacheName) {
     return function() {
         return window.caches.open(cacheName);
     }
 }
 
-exports._delete = function(cacheName) {
+export function _delete(cacheName) {
     return function() {
         return caches.delete(cacheName);
     }
 }
 
-exports._deleteReq = function(cache) {
+export function _deleteReq(cache) {
     return function(req) {
         return function() {
             return cache.delete(req);
@@ -24,7 +24,7 @@ exports._deleteReq = function(cache) {
     }
 }
 
-exports._add = function(cache) {
+export function _add(cache) {
     return function(req) {
         return function() {
             return cache.add(req);
@@ -32,7 +32,7 @@ exports._add = function(cache) {
     }
 }
 
-exports._match = function(cache) {
+export function _match(cache) {
     return function(req) {
         return function() {
             return cache.match(req);
@@ -40,7 +40,7 @@ exports._match = function(cache) {
     }
 }
 
-exports._fetch = function(req) {
+export function _fetch(req) {
     return function() {
         return fetch(req);
     }

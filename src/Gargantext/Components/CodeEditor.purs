@@ -11,12 +11,13 @@ import Data.String.Utils (endsWith)
 import DOM.Simple.Types (Element)
 import Effect (Effect)
 import FFI.Simple ((.=))
+import MarkdownIt (renderString)
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Text.Markdown.SlamDown.Parser (parseMd)
-import Text.Markdown.SlamDown.Smolder as MD
-import Text.Markdown.SlamDown.Syntax (SlamDownP)
-import Text.Smolder.Renderer.String as Smolder
+-- import Text.Markdown.SlamDown.Parser (parseMd)
+-- import Text.Markdown.SlamDown.Smolder as MD
+-- import Text.Markdown.SlamDown.Syntax (SlamDownP)
+-- import Text.Smolder.Renderer.String as Smolder
 import Toestand as T
 
 import Gargantext.Prelude
@@ -58,16 +59,18 @@ codeNlFix :: CodeType -> Code -> Code
 codeNlFix _ "" = " "
 codeNlFix _ c = if endsWith "\n" c then (c <> " ") else c
 
-render :: CodeType -> Code -> Either Error Html
-render Haskell code = Right $ renderHaskell $ codeNlFix Haskell code
-render Python  code = Right $ renderPython  $ codeNlFix Python code
-render JSON code = result
+render :: CodeType -> Code -> Effect (Either Error Html)
+render Haskell code = pure $ Right $ renderHaskell $ codeNlFix Haskell code
+render Python  code = pure $ Right $ renderPython  $ codeNlFix Python code
+render JSON code = pure result
   where
     parsedE = jsonParser code
     result = case parsedE of
       Left err -> Left err
       Right parsed -> Right $ R2.stringify parsed 2
-render Markdown code = Right $ renderMd $ codeNlFix Markdown code
+render Markdown code = do
+  r <- renderMd $ codeNlFix Markdown code
+  pure $ Right r
 
 previewPostProcess :: CodeType -> Element -> Effect Unit
 previewPostProcess Haskell htmlEl = do
@@ -83,13 +86,14 @@ previewPostProcess Markdown _ = pure unit
 
 -- TODO Replace with markdown-it?
 -- https://pursuit.purescript.org/packages/purescript-markdown-it
-renderMd' :: forall e. MD.ToMarkupOptions e -> String -> String
-renderMd' options input =
-  either identity (MD.toMarkup' options >>> Smolder.render)
-  (parseMd input :: Either String (SlamDownP String))
+-- renderMd' :: forall e. MD.ToMarkupOptions e -> String -> String
+-- renderMd' options input =
+--   either identity (MD.toMarkup' options >>> Smolder.render)
+--   (parseMd input :: Either String (SlamDownP String))
 
-renderMd :: String -> String
-renderMd = renderMd' MD.defaultToMarkupOptions
+renderMd :: String -> Effect String
+renderMd = renderString
+--renderMd = renderMd' MD.defaultToMarkupOptions
 
 renderHaskell :: String -> String
 renderHaskell s = s
@@ -189,7 +193,8 @@ renderHtml code codeType htmlElRef error =
   case (toMaybe $ R.readRef htmlElRef) of
     Nothing -> pure unit
     Just htmlEl -> do
-      case render codeType code of
+      r <- render codeType code
+      case r of
         Left err -> do
           T.write_ (Just err) error
         Right rendered -> do

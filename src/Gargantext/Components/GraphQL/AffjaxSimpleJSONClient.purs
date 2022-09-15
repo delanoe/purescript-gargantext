@@ -4,7 +4,7 @@ module Gargantext.Components.GraphQL.AffjaxSimpleJSONClient
 
 import Prelude
 
-import Affjax (Error(..), Response, URL, defaultRequest, printError, request)
+import Affjax.Web (Error(..), Response, URL, defaultRequest, printError, request)
 import Affjax.RequestBody as RequestBody
 import Affjax.RequestHeader (RequestHeader(..))
 import Affjax.ResponseFormat as ResponseFormat
@@ -21,18 +21,18 @@ import Simple.JSON as JSON
 
 data AffjaxClient
   = AffjaxClient URL (Array RequestHeader)
--- 
+--
 -- instance queryClient :: QueryClient AffjaxClient Unit Unit where
 --   clientQuery _ (AffjaxClient url headers) name q vars = throwLeft =<< convertJsonResponse =<< queryPostForeign "query" url headers name q vars
 --   clientMutation _ (AffjaxClient url headers) name q vars = throwLeft =<< convertJsonResponse =<< queryPostForeign "mutation" url headers name q vars
 --   defQueryOpts = const unit
 --   defMutationOpts = const unit
--- 
+--
 -- throwLeft :: forall r body. Either Error { body :: body | r } -> Aff body
 -- throwLeft = case _ of
 --   Left err -> throwError $ error $ printError err
 --   Right { body } -> pure body
--- 
+--
 -- queryPostForeign ::
 --   forall d.
 --   JSON.WriteForeign d =>
@@ -57,13 +57,13 @@ data AffjaxClient
 --               }
 --       , headers = headers <> [ ContentType applicationJSON ]
 --       }
--- 
+--
 -- convertJsonResponse :: Either Error (Response String) -> Aff (Either Error (Response Json))
 -- convertJsonResponse (Left err) = pure $ Left err
 -- convertJsonResponse (Right res@{ body }) = pure $ case JSON.readJSON body of
 --   Left err -> Left $ ResponseBodyError (DLN.head err) (res { body = unsafeToForeign body })
 --   Right body' -> Right $ res { body = toJSON body' }
--- 
+--
 -- foreign import toJSON :: forall d. JSON.ReadForeign d => d -> Json
--- 
--- 
+--
+--

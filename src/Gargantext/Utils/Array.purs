@@ -36,4 +36,4 @@ min xs = foldr reducer (A.head xs) xs
 range :: Int -> Int -> Int -> Array Int
 range start end step = map (\i -> start + i*step) $ A.range 0 end'
   where
-    end' = DI.round $ DI.floor $ (DI.toNumber $ end - start) / (DI.toNumber step)
+    end' = DI.floor $ (DI.toNumber $ end - start) / (DI.toNumber step)

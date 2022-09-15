@@ -5,11 +5,12 @@ module Gargantext.Components.GraphExplorer.Sidebar
 import Gargantext.Prelude
 
 import Control.Parallel (parTraverse)
-import Data.Array (last, mapWithIndex)
+import Data.Array (last)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Foldable (intercalate)
 import Data.Foldable as F
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int (fromString)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)

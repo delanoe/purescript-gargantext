@@ -1,1 +1,1 @@
-exports.nodeUserRegexp = /(@{1}.*).gargantext.org$/;
+export const nodeUserRegexp = /(@{1}.*).gargantext.org$/;

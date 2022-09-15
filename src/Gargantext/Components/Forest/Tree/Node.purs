@@ -9,7 +9,6 @@ import Data.Array.NonEmpty as NArray
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..), maybe)
 import Data.String.Regex as Regex
-import Data.Symbol (SProxy(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
@@ -44,6 +43,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
 import Toestand as T
+import Type.Proxy (Proxy(..))
 
 -- (?) never been able to properly declare PureScript Regex...
 foreign import nodeUserRegexp :: Regex.Regex
@@ -544,7 +544,7 @@ nodeActionsCpt :: R.Component NodeActionsProps
 nodeActionsCpt = here.component "nodeActions" cpt where
   cpt props _ = pure (child props.nodeType)
     where
-      nodeActionsP      = SProxy :: SProxy "nodeType"
+      nodeActionsP      = Proxy :: Proxy "nodeType"
 
       childProps        = Record.delete nodeActionsP props
 

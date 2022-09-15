@@ -1,5 +1,6 @@
 'use strict';
-exports.goToImpl = function(cam) {
+
+export function goToImpl(cam) {
   return function(props) {
     return cam.goTo(props);
   };

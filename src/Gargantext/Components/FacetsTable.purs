@@ -147,7 +147,9 @@ docViewCpt = here.component "docView" cpt
 
 performDeletions :: Session -> Int -> T.Box Deletions -> Deletions -> Effect Unit
 performDeletions session nodeId deletions deletions' = do
-  launchAff_ $ deleteDocuments session nodeId (DeleteDocumentQuery q)
+  launchAff_ $ do
+    _ <- deleteDocuments session nodeId (DeleteDocumentQuery q)
+    pure unit
   T.modify_ del deletions
   where
     q = { documents: Set.toUnfoldable deletions'.pending }
@@ -155,7 +157,9 @@ performDeletions session nodeId deletions deletions' = do
 
 markCategory :: Session -> NodeID -> Category -> Array NodeID -> Effect Unit
 markCategory session nodeId category nids =
-  void $ launchAff_ $ putCategories session nodeId (CategoryQuery q)
+  void $ launchAff_ $ do
+    _ <- putCategories session nodeId (CategoryQuery q)
+    pure unit
   where -- TODO add array of delete rows here
     q = {nodeIds: nids, category: favCategory category}
 

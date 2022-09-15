@@ -128,5 +128,5 @@ textEllipsisBreak :: Int -> String -> String
 textEllipsisBreak len n =
   if S.length n < len then n
   else case (slice 0 len n) of
-    Nothing -> "???"
-    Just s  -> s <> "…"
+    "" -> "???"
+    s  -> s <> "…"

@@ -1,1 +1,3 @@
-exports._getSelection = function() { return window.getSelection() || null; };
+export function _getSelection() {
+  return window.getSelection() || null;
+};

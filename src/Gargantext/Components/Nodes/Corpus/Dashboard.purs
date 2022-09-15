@@ -2,6 +2,7 @@ module Gargantext.Components.Nodes.Corpus.Dashboard where
 
 import Data.Array as A
 import Data.Either (Either(..))
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
@@ -129,7 +130,7 @@ dashboardLayoutLoadedCpt = here.component "dashboardLayoutLoaded" cpt
           where
             onClickAddChart _ = onChange { charts: A.cons P.CDocsHistogram charts
                                          , fields }
-        chartsEls = A.mapWithIndex chartIdx charts
+        chartsEls = mapWithIndex chartIdx charts
         chartIdx idx chart =
           renderChart { boxes
                       , chart
@@ -158,7 +159,7 @@ dashboardCodeEditorCpt :: R.Component CodeEditorProps
 dashboardCodeEditorCpt = here.component "dashboardCodeEditor" cpt
   where
     cpt { fields: FTFieldList fields, nodeId, onChange, session } _ = do
-      let fieldsWithIndex = FTFieldsWithIndex $ List.mapWithIndex (\idx -> \ftField -> { idx, ftField }) fields
+      let fieldsWithIndex = FTFieldsWithIndex $ mapWithIndex (\idx -> \ftField -> { idx, ftField }) fields
       fieldsS <- T.useBox fieldsWithIndex
       fields' <- T.useLive T.unequal fieldsS
       fieldsRef <- R.useRef fields'
