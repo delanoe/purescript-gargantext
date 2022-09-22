@@ -5388,7 +5388,14 @@ graceful-fs@^4.1.2:
   resolved "https://registry.yarnpkg.com/graceful-fs/-/graceful-fs-4.2.6.tgz#ff040b2b0853b23c3d31027523706f1885d76bee"
   integrity sha512-nTnJ528pbqxYanhpDYsi4Rd8MAeaBA67+RZ10CM1m3bTAVFEDcd5AuA4a6W5YkGZ1iNXHzZz8T6TBKLeBuNriQ==
 
-graphology-utils@^2.5.0:
+graphology-layout-forceatlas2@^0.9.2:
+  version "0.9.2"
+  resolved "https://registry.yarnpkg.com/graphology-layout-forceatlas2/-/graphology-layout-forceatlas2-0.9.2.tgz#0f5986f55ef0d72162f23edd1837aa8dac69f20e"
+  integrity sha512-VUF1xGnoq5qT0Svo03Bn4a31bA1ofPjakwpILD72J2N5t6g66hLQq/r8TKIx041DN7DATQZ0v6LnrA6Iyqs/Ow==
+  dependencies:
+    graphology-utils "^2.1.0"
+
+graphology-utils@^2.1.0, graphology-utils@^2.5.0:
   version "2.5.2"
   resolved "https://registry.yarnpkg.com/graphology-utils/-/graphology-utils-2.5.2.tgz#4d30d6e567d27c01f105e1494af816742e8d2440"
   integrity sha512-ckHg8MXrXJkOARk56ZaSCM1g1Wihe2d6iTmz1enGOz4W/l831MBCKSayeFQfowgF8wd+PQ4rlch/56Vs/VZLDQ==

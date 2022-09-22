@@ -120,17 +120,22 @@ handleForceAtlas2Pause sigmaRef forceAtlasState mFAPauseRef settings = do
   let sigma = R.readRef sigmaRef
   toggled <- T.read forceAtlasState
   dependOnSigma sigma "[handleForceAtlas2Pause] sigma: Nothing" $ \s -> do
-    let isFARunning = Sigma.isForceAtlas2Running s
+    -- TODO Rewrite using R.Ref FA2Layout instead of a Sigma ref
+    --let isFARunning = Sigma.isForceAtlas2Running s
+    let isFARunning = false
     case Tuple toggled isFARunning of
       Tuple ST.InitialRunning false -> do
-        Sigma.restartForceAtlas2 s settings
+        --Sigma.restartForceAtlas2 s settings
+        pure unit
       Tuple ST.Running false -> do
-        Sigma.restartForceAtlas2 s settings
+        --Sigma.restartForceAtlas2 s settings
+        pure unit
         case R.readRef mFAPauseRef of
           Nothing -> pure unit
           Just timeoutId -> clearTimeout timeoutId
       Tuple ST.Paused true -> do
-        Sigma.stopForceAtlas2 s
+        --Sigma.stopForceAtlas2 s
+        pure unit
       _ -> pure unit
 
 setEdges :: Sigma.Sigma -> Boolean -> Effect Unit
@@ -225,7 +230,8 @@ performDiff sigma g = do
   traverse_ (Graphology.removeEdge sigmaGraph) removeEdges
   traverse_ (Graphology.removeNode sigmaGraph) removeNodes
   Sigma.refresh sigma
-  Sigma.killForceAtlas2 sigma
+  -- TODO Use FA2Layout here
+  --Sigma.killForceAtlas2 sigma
   where
     sigmaGraph = Sigma.graph sigma
     sigmaEdgeIds = Graphology.edgeIds sigmaGraph

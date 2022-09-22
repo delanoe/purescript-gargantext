@@ -161,48 +161,6 @@ proxySetSettings :: forall settings.
   Window -> Sigma -> settings -> Effect Unit
 proxySetSettings = runEffectFn3 _proxySetSettings
 
--- TODO
--- | Start forceAtlas2 on a sigmajs instance.
-startForceAtlas2 :: forall settings. Sigma -> settings -> Effect Unit
-startForceAtlas2 _ _ = pure unit
---startForceAtlas2 s settings = pure $ s ... "startForceAtlas2" $ [ settings ]
-
--- | Restart forceAtlas2 on a sigmajs instance.
-restartForceAtlas2 :: forall settings. Sigma -> settings -> Effect Unit
-restartForceAtlas2 s settings = startForceAtlas2 s settings
-
--- TODO
--- | Stop forceAtlas2 on a sigmajs instance.
-stopForceAtlas2 :: Sigma -> Effect Unit
-stopForceAtlas2 _ = pure unit
---stopForceAtlas2 s = pure $ s ... "stopForceAtlas2" $ []
-
--- TODO
--- | Kill forceAtlas2 on a sigmajs instance.
-killForceAtlas2 :: Sigma -> Effect Unit
-killForceAtlas2 _ = pure unit
---killForceAtlas2 s = pure $ s ... "killForceAtlas2" $ []
-
--- | Return whether forceAtlas2 is running on a sigmajs instance.
-isForceAtlas2Running :: Sigma -> Boolean
-isForceAtlas2Running _ = false
---isForceAtlas2Running s = s ... "isForceAtlas2Running" $ [] :: Boolean
-
--- | Refresh forceAtlas2 (with a `setTimeout` hack as it seems it doesn't work
--- | otherwise).
-refreshForceAtlas :: forall settings. Sigma -> settings -> Effect Unit
-refreshForceAtlas s settings = do
-  let isRunning = isForceAtlas2Running s
-  if isRunning then
-    pure unit
-  else do
-    _ <- setTimeout 100 $ do
-      restartForceAtlas2 s settings
-      _ <- setTimeout 100 $
-        stopForceAtlas2 s
-      pure unit
-    pure unit
-
 newtype SigmaEasing = SigmaEasing String
 
 sigmaEasing ::

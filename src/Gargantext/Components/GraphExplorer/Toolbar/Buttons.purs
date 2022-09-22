@@ -237,8 +237,9 @@ resetForceAtlasButtonCpt = here.component "resetForceAtlasToggleButton" cpt
       -- TODO Sigma.killForceAtlas2 sigma
       -- startForceAtlas2 sigma
       Sigmax.dependOnSigma (R.readRef sigmaRef) "[resetForceAtlasButton] no sigma" $ \sigma -> do
-        Sigma.killForceAtlas2 sigma
-        Sigma.refreshForceAtlas sigma Graph.forceAtlas2Settings
+        -- TODO Use fa2Ref instead of sigmaRef
+        --Sigma.killForceAtlas2 sigma
+        --Sigma.refreshForceAtlas sigma Graph.forceAtlas2Settings
         T.write_ SigmaxTypes.Killed forceAtlasState
 
 ------------------------------------------------------------------

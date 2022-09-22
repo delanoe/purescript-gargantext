@@ -20,6 +20,7 @@ import Gargantext.Components.Themes (darksterTheme)
 import Gargantext.Components.Themes as Themes
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Graphology as Graphology
+import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas2
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Utils (getter)
@@ -43,6 +44,8 @@ drawGraph :: forall s fa2. R2.Leaf (Props s fa2)
 drawGraph = R2.leaf drawGraphCpt
 drawGraphCpt :: forall s fa2. R.Memo (Props s fa2)
 drawGraphCpt = R.memo' $ here.component "graph" cpt where
+-- drawGraphCpt :: forall s fa2. R.Component (Props s fa2)
+-- drawGraphCpt = here.component "graph" cpt where
   -- | Component
   -- |
   cpt { elRef
@@ -52,6 +55,8 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
       } _ = do
 
     boxes <- AppStore.use
+
+    fa2Ref <- R.useRef (Nothing :: Maybe ForceAtlas2.FA2Layout)
 
     { showEdges
     , graphStage
@@ -75,8 +80,14 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
     R.useEffectOnce $ do
       pure $ do
         here.log "[graphCpt (Cleanup)]"
+        case R.readRef fa2Ref of
+          Nothing -> pure unit
+          Just fa2 -> do
+            ForceAtlas2.stop fa2
+            ForceAtlas2.kill fa2
+            R.setRef fa2Ref Nothing
         Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Cleanup)] no sigma" $ \sigma -> do
-          Sigma.stopForceAtlas2 sigma
+          --Sigma.stopForceAtlas2 sigma
           here.log2 "[graphCpt (Cleanup)] forceAtlas stopped for" sigma
           Sigma.kill sigma
           here.log "[graphCpt (Cleanup)] sigma killed"
@@ -122,9 +133,18 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
 
                 -- here.log2 "[graph] startForceAtlas" startForceAtlas
                 if startForceAtlas' then
-                  Sigma.startForceAtlas2 sig fa2
+                  case R.readRef fa2Ref of
+                    Nothing -> do
+                      fa2 <- ForceAtlas2.init (Sigma.graph sig)
+                      ForceAtlas2.start fa2
+                      R.setRef fa2Ref (Just fa2)
+                    Just fa2 -> do
+                      -- TODO Kill and restart? Maybe check fa2.graph first? Should be equal to sigma.graph
+                      pure unit
                 else
-                  Sigma.stopForceAtlas2 sig
+                  case R.readRef fa2Ref of
+                    Nothing -> pure unit
+                    Just fa2 -> ForceAtlas2.stop fa2
 
                 case mCamera of
                   Just (GET.Camera { ratio, x, y }) -> do

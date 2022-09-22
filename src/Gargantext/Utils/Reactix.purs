@@ -611,7 +611,7 @@ triggerEvent = runEffectFn2 _triggerEvent
 getInputValue :: R.Ref (Nullable DOM.Element) -> String
 getInputValue elNullableRef = case toMaybe (R.readRef elNullableRef) of
   Nothing -> ""
-  Just el -> 
+  Just el ->
     el .. "value"
 
 setInputValue :: R.Ref (Nullable DOM.Element) -> String -> Effect Unit
