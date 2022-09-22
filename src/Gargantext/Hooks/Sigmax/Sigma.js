@@ -1,12 +1,13 @@
 'use strict';
 
-//import { sigma } from 'sigma/src/garg.js';
-import sigma from 'sigma';
+import Graph from 'graphology';
+import Sigma from 'sigma';
 
-console.log('imported sigma', sigma);
+let sigma = Sigma.Sigma;
+console.log('imported sigma', Sigma);
 
 if (typeof window !== 'undefined') {
-  window.sigma = sigma;
+  window.sigma = Sigma;
 }
 
 /*import('sigma/plugins/garg.js').then((module) => {
@@ -183,9 +184,12 @@ let sigmaMouseSelector = function(sigma, options) {
 sigmaMouseSelector(sigma);
 */
 
-function _sigma(left, right, opts) {
+function _sigma(left, right, el, opts) {
   try {
-    return right(new sigma(opts));
+    let graph = new Graph();
+    console.log('initializing sigma with el', el);
+    console.log('initializing sigma with opts', opts);
+    return right(new sigma(graph, el, opts));
   } catch(e) {
     return left(e);
   }
@@ -206,7 +210,7 @@ function _bindMouseSelectorPlugin(left, right, sig) {
     return left(e);
   }
 }
-function _bind(sigma, event, handler) { sigma.bind(event, handler); }
+function _on(sigma, event, handler) { sigma.on(event, handler); }
 
 function _takeScreenshot(sigma) {
   let c = sigma.renderers[0].container;
@@ -237,11 +241,20 @@ function _proxySetSettings(window, sigma, settings) {
   window.sigma.instances(id).refresh();
 }
 
+let dummy = function() {};
+
+let _setSettings = function(g, settings) {
+  for(const key in settings) {
+    g.setSetting(key, settings[key]);
+  }
+}
+
 export { _sigma,
          _addRenderer,
-         _bindMouseSelectorPlugin,
-         _bind,
+         dummy as _bindMouseSelectorPlugin,
+         _on,
          _takeScreenshot,
          _getEdges,
          _getNodes,
-         _proxySetSettings };
+         _proxySetSettings,
+         _setSettings };

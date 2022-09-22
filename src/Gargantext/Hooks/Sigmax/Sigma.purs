@@ -6,22 +6,19 @@ import DOM.Simple.Types (Element, Window)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Maybe (Maybe)
-import Data.Sequence as Seq
-import Data.Set as Set
 import Data.Traversable (traverse_)
 import Effect (Effect)
 import Effect.Exception as EEx
 import Effect.Timer (setTimeout)
-import Effect.Uncurried (EffectFn1, EffectFn3, EffectFn4, mkEffectFn1, runEffectFn1, runEffectFn3, runEffectFn4)
+import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, EffectFn4, mkEffectFn1, runEffectFn1, runEffectFn2, runEffectFn3, runEffectFn4)
 import FFI.Simple ((..), (...), (.=))
 import Foreign.Object as Object
+import Gargantext.Hooks.Sigmax.Graphology as Graphology
 import Gargantext.Hooks.Sigmax.Types as Types
 import Type.Row (class Union)
 
 -- | Type representing a sigmajs instance
 foreign import data Sigma :: Type
--- | Type representing `sigma.graph`
-foreign import data SigmaGraph :: Type
 
 type NodeRequiredProps = ( id :: Types.NodeId )
 type EdgeRequiredProps = ( id :: Types.EdgeId, source :: Types.NodeId, target :: Types.NodeId )
@@ -37,12 +34,11 @@ instance edgeProps
   :: Union EdgeRequiredProps extra all
   => EdgeProps all extra
 
-type Graph n e = { nodes :: Array {|n}, edges :: Array {|e} }
 type SigmaOpts s = { settings :: s }
 
 -- | Initialize sigmajs.
-sigma :: forall opts err. SigmaOpts opts -> Effect (Either err Sigma)
-sigma = runEffectFn3 _sigma Left Right
+sigma :: forall opts err. Element -> SigmaOpts opts -> Effect (Either err Sigma)
+sigma = runEffectFn4 _sigma Left Right
 
 -- | Kill a sigmajs instance.
 kill :: Sigma -> Effect Unit
@@ -102,81 +98,27 @@ killSigma :: Sigma -> Effect (Either EEx.Error Unit)
 killSigma s = EEx.try $ pure $ s ... "kill" $ []
 
 -- | Get the `.graph` object from a sigmajs instance.
-graph :: Sigma -> SigmaGraph
-graph s = s .. "graph" :: SigmaGraph
-
--- | Read graph into a sigmajs instance.
-graphRead :: forall nodeExtra node edgeExtra edge. NodeProps nodeExtra node => EdgeProps edgeExtra edge => SigmaGraph -> Graph node edge -> Effect (Either EEx.Error Unit)
-graphRead sg g = EEx.try $ pure $ sg ... "read" $ [ g ]
-
--- | Clear a sigmajs graph.
-clear :: SigmaGraph -> Effect Unit
-clear sg = pure $ sg ... "clear" $ []
+graph :: Sigma -> Graphology.Graph
+graph s = s ... "getGraph" $ [] :: Graphology.Graph
 
 -- | Call `sigma.bind(event, handler)` on a sigmajs instance.
-bind_ :: forall e. Sigma -> String -> (e -> Effect Unit) -> Effect Unit
-bind_ s e h = runEffectFn3 _bind s e (mkEffectFn1 h)
+on_ :: forall e. Sigma -> String -> (e -> Effect Unit) -> Effect Unit
+on_ s e h = runEffectFn3 _on s e (mkEffectFn1 h)
 
 -- | Generic function to bind a sigmajs event for edges.
 bindEdgeEvent :: Sigma -> String -> (Record Types.Edge -> Effect Unit) -> Effect Unit
-bindEdgeEvent s ev f = bind_ s ev $ \e -> do
+bindEdgeEvent s ev f = on_ s ev $ \e -> do
   let edge = e .. "data" .. "edge" :: Record Types.Edge
   f edge
 -- | Generic function to bind a sigmajs event for nodes.
 bindNodeEvent :: Sigma -> String -> (Record Types.Node -> Effect Unit) -> Effect Unit
-bindNodeEvent s ev f = bind_ s ev $ \e -> do
+bindNodeEvent s ev f = on_ s ev $ \e -> do
   let node = e .. "data" .. "node" :: Record Types.Node
   f node
 
 -- | Call `sigma.unbind(event)` on a sigmajs instance.
 unbind_ :: Sigma -> String -> Effect Unit
 unbind_ s e = pure $ s ... "unbind" $ [e]
-
-edges_ :: SigmaGraph -> Array (Record Types.Edge)
-edges_ sg = sg ... "edges" $ [] :: Array (Record Types.Edge)
-nodes_ :: SigmaGraph -> Array (Record Types.Node)
-nodes_ sg = sg ... "nodes" $ [] :: Array (Record Types.Node)
-
--- | Call `sigmaGraph.edges()` on a sigmajs graph instance.
-edges :: SigmaGraph -> Seq.Seq (Record Types.Edge)
-edges = Seq.fromFoldable <<< edges_
--- | Call `sigmaGraph.nodes()` on a sigmajs graph instance.
-nodes :: SigmaGraph -> Seq.Seq (Record Types.Node)
-nodes = Seq.fromFoldable <<< nodes_
-
--- | Fetch ids of graph edges in a sigmajs instance.
-sigmaEdgeIds :: SigmaGraph -> Types.EdgeIds
-sigmaEdgeIds sg =  Set.fromFoldable edgeIds
-  where
-    edgeIds = _.id <$> edges sg
-
--- | Fetch ids of graph nodes in a sigmajs instance.
-sigmaNodeIds :: SigmaGraph -> Types.NodeIds
-sigmaNodeIds sg = Set.fromFoldable nodeIds
-  where
-    nodeIds = _.id <$> nodes sg
-
--- | Call `addEdge` on a sigmajs graph.
-addEdge :: SigmaGraph -> Record Types.Edge -> Effect Unit
-addEdge sg e = pure $ sg ... "addEdge" $ [e]
--- | Call `removeEdge` on a sigmajs graph.
-removeEdge :: SigmaGraph -> String -> Effect Unit
-removeEdge sg eId = pure $ sg ... "dropEdge" $ [eId]
---removeEdge = runEffectFn2 _removeEdge
-
--- | Call `addNode` on a sigmajs graph.
-addNode :: SigmaGraph -> Record Types.Node -> Effect Unit
-addNode sg n = pure $ sg ... "addNode" $ [n]
--- | Call `removeNode` on a sigmajs graph.
-removeNode :: SigmaGraph -> String -> Effect Unit
-removeNode sg nId = pure $ sg ... "dropNode" $ [nId]
-
--- | Iterate over all edges in a sigmajs graph.
-forEachEdge :: SigmaGraph -> (Record Types.Edge -> Effect Unit) -> Effect Unit
-forEachEdge sg f = traverse_ f (edges sg)
--- | Iterate over all nodes in a sigmajs graph.
-forEachNode :: SigmaGraph -> (Record Types.Node -> Effect Unit) -> Effect Unit
-forEachNode sg f = traverse_ f (nodes sg)
 
 -- | Bind a `clickNode` event.
 bindClickNode :: Sigma -> (Record Types.Node -> Effect Unit) -> Effect Unit
@@ -187,7 +129,7 @@ unbindClickNode s = unbind_ s "clickNode"
 
 -- | Bind a `clickNodes` event.
 bindClickNodes :: Sigma -> (Array (Record Types.Node) -> Effect Unit) -> Effect Unit
-bindClickNodes s f = bind_ s "clickNodes" $ \e -> do
+bindClickNodes s f = on_ s "clickNodes" $ \e -> do
   let ns = e .. "data" .. "node" :: Array (Record Types.Node)
   f ns
 -- | Unbind a `clickNodes` event.
@@ -211,34 +153,39 @@ bindOverEdge s f = bindEdgeEvent s "overEdge" f
 
 -- | Call `settings(s)` on a sigmajs instance.
 setSettings :: forall settings. Sigma -> settings -> Effect Unit
-setSettings s settings = do
-  _ <- pure $ s ... "settings" $ [ settings ]
-  refresh s
+setSettings = runEffectFn2 _setSettings
 
 -- | Call `settins(s)` on the the main proxy `window.sigma`
 proxySetSettings :: forall settings.
   Window -> Sigma -> settings -> Effect Unit
 proxySetSettings = runEffectFn3 _proxySetSettings
 
+-- TODO
 -- | Start forceAtlas2 on a sigmajs instance.
 startForceAtlas2 :: forall settings. Sigma -> settings -> Effect Unit
-startForceAtlas2 s settings = pure $ s ... "startForceAtlas2" $ [ settings ]
+startForceAtlas2 _ _ = pure unit
+--startForceAtlas2 s settings = pure $ s ... "startForceAtlas2" $ [ settings ]
 
 -- | Restart forceAtlas2 on a sigmajs instance.
 restartForceAtlas2 :: forall settings. Sigma -> settings -> Effect Unit
 restartForceAtlas2 s settings = startForceAtlas2 s settings
 
+-- TODO
 -- | Stop forceAtlas2 on a sigmajs instance.
 stopForceAtlas2 :: Sigma -> Effect Unit
-stopForceAtlas2 s = pure $ s ... "stopForceAtlas2" $ []
+stopForceAtlas2 _ = pure unit
+--stopForceAtlas2 s = pure $ s ... "stopForceAtlas2" $ []
 
+-- TODO
 -- | Kill forceAtlas2 on a sigmajs instance.
 killForceAtlas2 :: Sigma -> Effect Unit
-killForceAtlas2 s = pure $ s ... "killForceAtlas2" $ []
+killForceAtlas2 _ = pure unit
+--killForceAtlas2 s = pure $ s ... "killForceAtlas2" $ []
 
 -- | Return whether forceAtlas2 is running on a sigmajs instance.
 isForceAtlas2Running :: Sigma -> Boolean
-isForceAtlas2Running s = s ... "isForceAtlas2Running" $ [] :: Boolean
+isForceAtlas2Running _ = false
+--isForceAtlas2Running s = s ... "isForceAtlas2Running" $ [] :: Boolean
 
 -- | Refresh forceAtlas2 (with a `setTimeout` hack as it seems it doesn't work
 -- | otherwise).
@@ -327,8 +274,9 @@ getNodes = runEffectFn1 _getNodes
 -- | FFI
 foreign import _sigma ::
   forall a b opts err.
-  EffectFn3 (a -> Either a b)
+  EffectFn4 (a -> Either a b)
             (b -> Either a b)
+            Element
             (SigmaOpts opts)
             (Either err Sigma)
 foreign import _addRenderer
@@ -344,7 +292,7 @@ foreign import _bindMouseSelectorPlugin
             (b -> Either a b)
             Sigma
             (Either err Unit)
-foreign import _bind :: forall e. EffectFn3 Sigma String (EffectFn1 e Unit) Unit
+foreign import _on :: forall e. EffectFn3 Sigma String (EffectFn1 e Unit) Unit
 foreign import _takeScreenshot :: EffectFn1 Sigma String
 foreign import _getEdges :: EffectFn1 Sigma (Array (Record Types.Edge))
 foreign import _getNodes :: EffectFn1 Sigma (Array (Record Types.Node))
@@ -354,3 +302,4 @@ foreign import _proxySetSettings
             Sigma
             settings
             Unit
+foreign import _setSettings :: forall settings. EffectFn2 Sigma settings Unit

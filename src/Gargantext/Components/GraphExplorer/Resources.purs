@@ -12,12 +12,14 @@ import DOM.Simple.Types (Element)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
+import Effect.Class.Console as ECC
 import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.Themes (darksterTheme)
 import Gargantext.Components.Themes as Themes
 import Gargantext.Hooks.Sigmax as Sigmax
+import Gargantext.Hooks.Sigmax.Graphology as Graphology
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Utils (getter)
@@ -39,7 +41,6 @@ type Props sigma forceatlas2 =
 
 drawGraph :: forall s fa2. R2.Leaf (Props s fa2)
 drawGraph = R2.leaf drawGraphCpt
-
 drawGraphCpt :: forall s fa2. R.Memo (Props s fa2)
 drawGraphCpt = R.memo' $ here.component "graph" cpt where
   -- | Component
@@ -90,7 +91,11 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
         case Sigmax.readSigma rSigma of
           Nothing -> do
             theme <- T.read boxes.theme
-            eSigma <- Sigma.sigma {settings: sigmaSettings theme}
+            eSigma <- case R.readNullableRef elRef of
+              Nothing -> do
+                _ <- ECC.error "elRef is empty"
+                pure $ Left "elRef is empty"
+              Just el -> Sigma.sigma el {settings: sigmaSettings theme}
             case eSigma of
               Left err -> here.warn2 "[graphCpt] error creating sigma" err
               Right sig -> do
@@ -104,7 +109,8 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
                     }
                   pure unit
 
-                Sigmax.refreshData sig $ Sigmax.sigmafy graph'
+                newGraph <- Graphology.graphFromSigmaxGraph graph'
+                Sigmax.refreshData sig newGraph
 
                 Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Ready)] no sigma" $ \sigma -> do
                   -- bind the click event only initially, when ref was empty

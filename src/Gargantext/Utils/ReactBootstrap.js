@@ -1,11 +1,5 @@
 'use strict';
 
-import ReactBootstrap from 'react-bootstrap';
-
-if (typeof window !== 'undefined') {
-  window.ReactBootstrap = ReactBootstrap;
-}
-
 import Alert from 'react-bootstrap/Alert';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 import Popover from 'react-bootstrap/Popover';
