@@ -213,15 +213,19 @@ selectorWithSize _ _ = do
 
 performDiff :: Sigma.Sigma -> ST.SGraph -> Effect Unit
 performDiff sigma g = do
-  if (Seq.null addEdges) && (Seq.null addNodes) && (Set.isEmpty removeEdges) && (Set.isEmpty removeNodes) then
-    pure unit
-  else do
-    traverse_ (Graphology.addNode sigmaGraph) addNodes
-    traverse_ (Graphology.addEdge sigmaGraph) addEdges
-    traverse_ (Graphology.removeEdge sigmaGraph) removeEdges
-    traverse_ (Graphology.removeNode sigmaGraph) removeNodes
-    Sigma.refresh sigma
-    Sigma.killForceAtlas2 sigma
+  -- if (Seq.null addEdges) && (Seq.null addNodes) && (Set.isEmpty removeEdges) && (Set.isEmpty removeNodes) then
+  --   pure unit
+  -- else do
+  console.log2 "[performDiff] addNodes" addNodes
+  console.log2 "[performDiff] addEdges" $ A.fromFoldable addEdges
+  console.log2 "[performDiff] removeNodes" removeNodes
+  console.log2 "[performDiff] removeEdges" removeEdges
+  traverse_ (Graphology.addNode sigmaGraph) addNodes
+  traverse_ (Graphology.addEdge sigmaGraph) addEdges
+  traverse_ (Graphology.removeEdge sigmaGraph) removeEdges
+  traverse_ (Graphology.removeNode sigmaGraph) removeNodes
+  Sigma.refresh sigma
+  Sigma.killForceAtlas2 sigma
   where
     sigmaGraph = Sigma.graph sigma
     sigmaEdgeIds = Graphology.edgeIds sigmaGraph

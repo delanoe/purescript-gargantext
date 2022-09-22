@@ -8,6 +8,7 @@ module Gargantext.Hooks.Sigmax.Graphology where
 import Prelude
 
 import Data.Array as A
+import Data.Function.Uncurried (Fn2, runFn2)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Traversable (traverse)
@@ -23,8 +24,9 @@ foreign import data Graph :: Type
 foreign import _newGraph :: EffectFn1 Unit Graph
 foreign import _addNode :: EffectFn3 Graph String (Record Types.Node) String
 foreign import _addEdge :: EffectFn4 Graph String String (Record Types.Edge) String
-foreign import _mapNodes :: forall a. EffectFn2 Graph (Record Types.Node -> a) (Array a)
-foreign import _mapEdges :: forall a. EffectFn2 Graph (Record Types.Edge -> a) (Array a)
+foreign import _mapNodes :: forall a. Fn2 Graph (Record Types.Node -> a) (Array a)
+foreign import _forEachEdge :: EffectFn2 Graph (Record Types.Edge -> Effect Unit) Unit
+foreign import _mapEdges :: forall a. Fn2 Graph (Record Types.Edge -> a) (Array a)
 
 newGraph :: Unit -> Effect Graph
 newGraph = runEffectFn1 _newGraph
@@ -47,17 +49,18 @@ forEachNode :: Graph -> (Record Types.Node -> Effect Unit) -> Effect Unit
 -- TODO Check this: how does FFI translate function of two arguments
 -- into PS \x y ?
 forEachNode g fn = pure $ g ... "forEachNode" $ [\_ n -> fn n]
-mapNodes :: Graph -> (Record Types.Node -> Record Types.Node) -> Effect (Array (Record Types.Node))
-mapNodes = runEffectFn2 _mapNodes
+mapNodes :: forall a. Graph -> (Record Types.Node -> a) -> Array a
+mapNodes = runFn2 _mapNodes
 
 addEdge :: Graph -> Record Types.Edge -> Effect String
 addEdge g edge@{ source, target } = runEffectFn4 _addEdge g source target edge
 removeEdge :: Graph -> String -> Effect Unit
 removeEdge g eId = pure $ g ... "dropEdge" $ [eId]
 forEachEdge :: Graph -> (Record Types.Edge -> Effect Unit) -> Effect Unit
-forEachEdge g fn = pure $ g ... "forEachEdge" $ [\_ e -> fn e]
-mapEdges :: Graph -> (Record Types.Edge -> Record Types.Edge) -> Effect (Array (Record Types.Edge))
-mapEdges = runEffectFn2 _mapEdges
+forEachEdge = runEffectFn2 _forEachEdge
+--forEachEdge g fn = pure $ g ... "forEachEdge" $ [\_ e -> fn e]
+mapEdges :: forall a. Graph -> (Record Types.Edge -> a) -> Array a
+mapEdges = runFn2 _mapEdges
 
 -- TODO Maybe our use of this function (`updateWithGraph`) in code is
 -- too much. We convert Types.Graph into Graphology.Graph and then
@@ -99,20 +102,17 @@ edges_ g = g ... "edges" $ [] :: Array Types.EdgeId
 nodes_ :: Graph -> Array Types.NodeId
 nodes_ g = g ... "nodes" $ [] :: Array Types.NodeId
 
--- | Call `sigmaGraph.edges()` on a sigmajs graph instance.
-edges :: Graph -> Effect (Seq.Seq (Record Types.Edge))
-edges g = do
-  edges' <- mapEdges g identity
-  pure $ Seq.fromFoldable edges'
--- | Call `sigmaGraph.nodes()` on a sigmajs graph instance.
-nodes :: Graph -> Effect (Seq.Seq (Record Types.Node))
-nodes g = do
-  nodes' <- mapNodes g identity
-  pure $ Seq.fromFoldable nodes'
+-- | `sigma.edges()` returns only edge keys, we need to map to get the full edge
+edges :: Graph -> Seq.Seq (Record Types.Edge)
+edges g = Seq.fromFoldable $ mapEdges g identity
+-- | `sigma.nodes()` returns only node keys, we need to map to get the full node
+nodes :: Graph -> Seq.Seq (Record Types.Node)
+nodes g = Seq.fromFoldable $ mapNodes g identity
 
 -- | Fetch ids of graph edges in a sigmajs instance.
 edgeIds :: Graph -> Types.EdgeIds
-edgeIds =  Set.fromFoldable <<< edges_
+-- auto-assigned edge ids are different from our edge ids
+edgeIds g = Set.fromFoldable $ mapEdges g (\{ id } -> id) -- -<<< edges_
 
 -- | Fetch ids of graph nodes in a sigmajs instance.
 nodeIds :: Graph -> Types.NodeIds
