@@ -249,6 +249,11 @@ let _setSettings = function(g, settings) {
   }
 }
 
+let _refresh = function(g) {
+  console.log('[refresh], g', g);
+  return g.refresh();
+}
+
 export { _sigma,
          _addRenderer,
          dummy as _bindMouseSelectorPlugin,
@@ -257,4 +262,5 @@ export { _sigma,
          _getEdges,
          _getNodes,
          _proxySetSettings,
-         _setSettings };
+         _setSettings,
+         _refresh };

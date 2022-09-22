@@ -63,6 +63,8 @@ mapEdges = runEffectFn2 _mapEdges
 -- too much. We convert Types.Graph into Graphology.Graph and then
 -- update Sigma.graph with this.
 
+-- NOTE: See `sigmax.performDiff`
+
 -- | Since we don't want to replace directly the sigma.graph, we call
 -- update.  This "intelligently" scans the `target` graph and updates
 -- so that in the end it is the same as `source`.
