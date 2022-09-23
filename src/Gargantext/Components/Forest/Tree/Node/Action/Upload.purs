@@ -59,11 +59,15 @@ actionUploadCpt :: R.Component ActionUpload
 actionUploadCpt = here.component "actionUpload" cpt where
   cpt { nodeType: Corpus, dispatch, id, session } _ =
     pure $ uploadFileView { dispatch, id, nodeType: GT.Corpus, session }
+
   cpt { nodeType: NodeList, dispatch, id, session } _ =
     pure $ uploadTermListView { dispatch, id, nodeType: GT.NodeList, session } []
+
   cpt props@{ nodeType: NodeFrameCalc } _ = pure $ uploadFrameCalcView props []
-  cpt props@{ nodeType: Annuaire, dispatch, id, session } _ = do
+
+  cpt props@{ nodeType: Annuaire, dispatch, id, session } _ =
     pure $ uploadListView { dispatch, id, nodeType: GT.Annuaire, session }
+
   cpt props@{ nodeType: _ } _ = pure $ actionUploadOther props []
 
 {-
@@ -103,15 +107,15 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
   where
     cpt { dispatch, id, nodeType, session } _ = do
       -- mFile    :: R.State (Maybe UploadFile) <- R.useState' Nothing
-      mFile <- T.useBox (Nothing :: Maybe UploadFile)
-      fileType <- T.useBox CSV
-      fileFormat <- T.useBox Plain
-      lang <- T.useBox EN
-      selection <- T.useBox ListSelection.MyListsFirst
+      mFile       <- T.useBox (Nothing :: Maybe UploadFile)
+      fileType    <- T.useBox CSV
+      fileFormat  <- T.useBox Plain
+      lang        <- T.useBox EN
+      selection   <- T.useBox ListSelection.MyListsFirst
 
-      let setFileType' val = T.write_ val fileType
+      let setFileType'   val = T.write_ val fileType
       let setFileFormat' val = T.write_ val fileFormat
-      let setLang' val = T.write_ val lang
+      let setLang'       val = T.write_ val lang
 
       let bodies =
             [ R2.row
@@ -148,7 +152,8 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
                 [ formChoiceSafe { items: [EN, FR, No_extraction, Universal]
                                  , default: EN
                                  , callback: setLang'
-                                 , print: show } []
+                                 , print: show
+                                 } []
                 ]
               ]
             , R2.row
@@ -195,6 +200,7 @@ type UploadButtonProps =
 
 uploadButton :: R2.Component UploadButtonProps
 uploadButton = R.createElement uploadButtonCpt
+
 uploadButtonCpt :: R.Component UploadButtonProps
 uploadButtonCpt = here.component "uploadButton" cpt
   where
@@ -206,10 +212,11 @@ uploadButtonCpt = here.component "uploadButton" cpt
         , nodeType
         , selection
         } _ = do
-      fileType' <- T.useLive T.unequal fileType
+      fileType'   <- T.useLive T.unequal fileType
       fileFormat' <- T.useLive T.unequal fileFormat
-      mFile' <- T.useLive T.unequal mFile
-      selection' <- T.useLive T.unequal selection
+      mFile'      <- T.useLive T.unequal mFile
+      lang'       <- T.useLive T.unequal lang
+      selection'  <- T.useLive T.unequal selection
       onPending /\ onPendingBox <- R2.useBox' false
 
       let disabled = isNothing mFile' || onPending
@@ -237,6 +244,7 @@ uploadButtonCpt = here.component "uploadButton" cpt
                           fileFormat'
                           fileType'
                           mFile'
+                          lang'
                           selection'
                           onPendingBox
                 }
@@ -246,7 +254,7 @@ uploadButtonCpt = here.component "uploadButton" cpt
 
 
       where
-        onClick fileFormat' fileType' mFile' selection' onPendingBox e = do
+        onClick fileFormat' fileType' mFile' lang' selection' onPendingBox e = do
           let { blob, name } = unsafePartial $ fromJust mFile'
           T.write_ true onPendingBox
           here.log2 "[uploadButton] fileType" fileType'
@@ -258,7 +266,7 @@ uploadButtonCpt = here.component "uploadButton" cpt
                 contents <- case fileFormat' of
                   Plain -> readUFBAsText blob
                   ZIP -> readUFBAsBase64 blob
-                dispatch $ UploadFile nodeType fileType' fileFormat' (Just name) contents selection'
+                dispatch $ UploadFile nodeType fileType' fileFormat' lang' (Just name) contents selection'
             liftEffect $ do
               T.write_ Nothing mFile
               T.write_ CSV fileType
@@ -485,7 +493,7 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
                                              }) droppedFile
             renderOption opt = H.option {} [ H.text $ show opt ]
 
-        panelFooter (DroppedFile { blob, fileType }) =
+        panelFooter (DroppedFile { blob, fileType, lang}) =
           H.div {className: "card-footer"}
           [
             case fileType of
@@ -496,7 +504,7 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
                                    T.write_ Nothing droppedFile
                                    launchAff $ do
                                      contents <- readUFBAsText blob
-                                     dispatch $ UploadFile nodeType ft Plain Nothing contents (SelectedLists [])
+                                     dispatch $ UploadFile nodeType ft Plain lang Nothing contents (SelectedLists [])
                                }
                          } [H.text "Upload"]
               Nothing ->
@@ -522,6 +530,7 @@ uploadFile :: { contents  :: String
               , fileFormat :: FileFormat
               , fileType  :: FileType
               , id        :: ID
+              , lang      :: Lang
               , nodeType  :: GT.NodeType
               , mName     :: Maybe String
               , selection :: ListSelection.Selection
@@ -537,21 +546,24 @@ uploadFile session NodeList id JSON { mName, contents } = do
   task <- post session url body
   pure $ GT.AsyncTaskWithType { task, typ: GT.Form }
   -}
-uploadFile { contents, fileFormat, fileType, id, nodeType, mName, session } = do
+uploadFile { contents, fileFormat, lang, fileType, id, nodeType, mName, session } = do
   -- contents <- readAsText blob
   eTask :: Either RESTError GT.AsyncTask <- postWwwUrlencoded session p body
   pure $ (\task -> GT.AsyncTaskWithType { task, typ }) <$> eTask
     --postMultipartFormData session p fileContents
   where
-    bodyParams = [ Tuple "_wf_data"     (Just contents)
-                 , Tuple "_wf_filetype" (Just $ show fileType)
+    bodyParams = [ Tuple "_wf_data"       (Just contents)
+                 , Tuple "_wf_filetype"   (Just $ show fileType)
                  , Tuple "_wf_fileformat" (Just $ show fileFormat)
-                 , Tuple "_wf_name"      mName
+                 , Tuple "_wf_lang"       (Just $ show lang)
+                 , Tuple "_wf_name"       mName
                  ]
-    csvBodyParams = [ Tuple "_wtf_data" (Just contents)
-                    , Tuple "_wtf_filetype" (Just $ show NodeList)
+    csvBodyParams = [ Tuple "_wtf_data"       (Just contents)
+                    , Tuple "_wtf_filetype"   (Just $ show NodeList)
                     , Tuple "_wtf_fileformat" (Just $ show fileFormat)
-                    , Tuple "_wtf_name" mName ]
+                    , Tuple "_wf_lang"        (Just $ show lang)
+                    , Tuple "_wtf_name" mName
+                    ]
 
     (typ /\ p /\ body) = case nodeType of
       Corpus   -> GT.CorpusFormUpload /\ (GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.CorpusFormUpload) /\ bodyParams
@@ -685,7 +697,7 @@ uploadTermButtonCpt = here.component "uploadTermButton" cpt
           let {name, blob} = unsafePartial $ fromJust mFile'
           void $ launchAff do
             contents <- readUFBAsText blob
-            _ <- dispatch $ UploadFile nodeType uploadType' Plain (Just name) contents (SelectedLists [])
+            _ <- dispatch $ UploadFile nodeType uploadType' Plain EN (Just name) contents (SelectedLists [])
             liftEffect $ do
               T.write_ Nothing mFile
 ------------------------------------------------------------------------
