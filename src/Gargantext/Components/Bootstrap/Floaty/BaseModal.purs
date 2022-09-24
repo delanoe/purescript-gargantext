@@ -1,5 +1,5 @@
 module Gargantext.Components.Bootstrap.BaseModal
-  (baseModal
+  ( baseModal
   , showModal, hideModal
   ) where
 
