@@ -2,13 +2,13 @@ module Gargantext.Components.Forest.Tree.Node.Action.ManageTeam where
 
 import Gargantext.Prelude
 
-import Data.Array (filter, null)
+import Data.Array (filter, null, (:))
 import Data.Either (Either(..))
 import Effect.Aff (runAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.GraphQL.Endpoints (deleteTeamMembership, getTeam)
-import Gargantext.Components.GraphQL.Team (TeamMember)
+import Gargantext.Components.GraphQL.Team (Team, TeamMember)
 import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (Session)
@@ -47,7 +47,7 @@ actionManageTeamCpt = here.component "actionManageTeam" cpt where
 type TeamProps =
   ( nodeId  :: ID
   , session :: Session
-  , team    :: (Array TeamMember)
+  , team    :: Team
   )
 
 teamLayoutWrapper :: R2.Component TeamProps
@@ -55,21 +55,22 @@ teamLayoutWrapper = R.createElement teamLayoutWrapperCpt
 
 teamLayoutWrapperCpt :: R.Component TeamProps
 teamLayoutWrapperCpt = here.component "teamLayoutWrapper" cpt where
-  cpt {nodeId, session, team} _ = do
-    teamS <- T.useBox team
+  cpt {nodeId, session, team: {team_leader_username, team_members}} _ = do
+    teamS <- T.useBox team_members
     team' <- T.useLive T.unequal teamS
     error <- T.useBox ""
     error' <- T.useLive T.unequal error
 
-    pure $ teamLayoutRows {nodeId, session, team: teamS, team', error, error'}
+    pure $ teamLayoutRows {nodeId, session, team: teamS, team', error, error', team_leader_username}
 
 type TeamRowProps =
-  ( nodeId  :: ID
-  , session :: Session
-  , team    :: T.Box (Array TeamMember)
-  , error   :: T.Box String 
-  , team'   :: Array TeamMember
-  , error'  :: String
+  ( nodeId               :: ID
+  , session              :: Session
+  , team                 :: T.Box (Array TeamMember)
+  , error                :: T.Box String 
+  , team'                :: Array TeamMember
+  , error'               :: String
+  , team_leader_username :: String
   )
 
 teamLayoutRows :: R2.Leaf TeamRowProps
@@ -77,12 +78,12 @@ teamLayoutRows = R2.leafComponent teamLayoutRowsCpt
 
 teamLayoutRowsCpt :: R.Component TeamRowProps
 teamLayoutRowsCpt = here.component "teamLayoutRows" cpt where
-  cpt { team, nodeId, session, error, team', error' } _ = do
+  cpt { team, nodeId, session, error, team', error', team_leader_username} _ = do
 
     case null team' of
          true  -> pure $ H.div { style: {margin: "10px"}}
                         [ H.h4 {} [H.text "Your team is empty, you can send some invitations."]]
-         false -> pure $ Tools.panel (map makeTeam team') (H.div {} [H.text error'])
+         false -> pure $ Tools.panel (makeLeader team_leader_username : (map makeTeam team')) (H.div {} [H.text error'])
 
     where
       makeTeam :: TeamMember -> R.Element
@@ -93,6 +94,10 @@ teamLayoutRowsCpt = here.component "teamLayoutRows" cpt where
                                                                                           , on: {click: submit shared_folder_id }
                                                                                           } []
                                                                                     ]
+      
+      makeLeader username = H.div {className: "from-group row"} [ H.div { className: "col-8"} [ H.text username ] 
+                                                                , H.p { className: "col-2"} [ H.text "leader"]
+                                                                ]
 
       submit sharedFolderId _ = do
         runAff_ callback $ saveDeleteTeam { session, nodeId, sharedFolderId }
@@ -114,17 +119,17 @@ teamLayoutRowsCpt = here.component "teamLayoutRows" cpt where
 type LoadProps =
   (
     session :: Session,
-    nodeId :: Int
+    nodeId  :: Int
   )
 
 
-loadTeam :: Record LoadProps -> AffRESTError (Array TeamMember)
+loadTeam :: Record LoadProps -> AffRESTError Team
 loadTeam { session, nodeId } = getTeam session nodeId
 
 type DeleteProps =
   (
-    session :: Session,
-    nodeId :: Int,
+    session        :: Session,
+    nodeId         :: Int,
     sharedFolderId :: Int
   )
 
