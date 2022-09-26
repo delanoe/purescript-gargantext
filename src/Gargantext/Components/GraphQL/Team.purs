@@ -6,7 +6,7 @@ import GraphQL.Client.Args (NotNull, (=>>))
 import GraphQL.Client.Variable (Var(..))
 
 type Team
-  = { team_leader_username :: String
+  = { team_owner_username :: String
     , team_members         :: Array TeamMember
     }
 
@@ -22,7 +22,7 @@ type TeamDeleteM
     }
 
 teamQuery = { team: { team_node_id: Var :: _ "id" Int } =>>
-              { team_leader_username: unit
+              { team_owner_username: unit
               , team_members: { username: unit
                               , shared_folder_id: unit 
                               }

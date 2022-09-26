@@ -55,13 +55,13 @@ teamLayoutWrapper = R.createElement teamLayoutWrapperCpt
 
 teamLayoutWrapperCpt :: R.Component TeamProps
 teamLayoutWrapperCpt = here.component "teamLayoutWrapper" cpt where
-  cpt {nodeId, session, team: {team_leader_username, team_members}} _ = do
+  cpt {nodeId, session, team: {team_owner_username, team_members}} _ = do
     teamS <- T.useBox team_members
     team' <- T.useLive T.unequal teamS
     error <- T.useBox ""
     error' <- T.useLive T.unequal error
 
-    pure $ teamLayoutRows {nodeId, session, team: teamS, team', error, error', team_leader_username}
+    pure $ teamLayoutRows {nodeId, session, team: teamS, team', error, error', team_owner_username}
 
 type TeamRowProps =
   ( nodeId               :: ID
@@ -70,7 +70,7 @@ type TeamRowProps =
   , error                :: T.Box String 
   , team'                :: Array TeamMember
   , error'               :: String
-  , team_leader_username :: String
+  , team_owner_username :: String
   )
 
 teamLayoutRows :: R2.Leaf TeamRowProps
@@ -78,12 +78,12 @@ teamLayoutRows = R2.leafComponent teamLayoutRowsCpt
 
 teamLayoutRowsCpt :: R.Component TeamRowProps
 teamLayoutRowsCpt = here.component "teamLayoutRows" cpt where
-  cpt { team, nodeId, session, error, team', error', team_leader_username} _ = do
+  cpt { team, nodeId, session, error, team', error', team_owner_username} _ = do
 
     case null team' of
          true  -> pure $ H.div { style: {margin: "10px"}}
                         [ H.h4 {} [H.text "Your team is empty, you can send some invitations."]]
-         false -> pure $ Tools.panel (makeLeader team_leader_username : (map makeTeam team')) (H.div {} [H.text error'])
+         false -> pure $ Tools.panel (makeLeader team_owner_username : (map makeTeam team')) (H.div {} [H.text error'])
 
     where
       makeTeam :: TeamMember -> R.Element
