@@ -153,6 +153,7 @@ tableContainerCpt { addCallback
     { searchQuery
     , termListFilter
     , termSizeFilter
+    , params
     } <- T.useLive T.unequal path
 
     -- | Computed
