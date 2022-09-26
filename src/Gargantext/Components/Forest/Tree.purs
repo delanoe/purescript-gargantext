@@ -313,11 +313,12 @@ doSearch task { boxes: { tasks }, tree: NTree (LNode {id}) _ } = liftEffect $ do
   GAT.insert id task tasks
   here.log2 "[doSearch] DoSearch task:" task
 
-updateNode params { boxes: { errors, tasks }, session, tree: (NTree (LNode {id}) _) } = do
+updateNode params p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode {id}) _) } = do
   eTask <- updateRequest params session id
   handleRESTError errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
     here.log2 "[updateNode] UpdateNode task:" task
+    closeBox p
 
 renameNode name p@{ boxes: { errors }, session, tree: (NTree (LNode {id}) _) } = do
   eTask <- rename session id $ RenameValue { text: name }

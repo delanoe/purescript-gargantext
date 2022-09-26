@@ -4,10 +4,11 @@ import Gargantext.Prelude
 
 import DOM.Simple as DOM
 import Effect (Effect)
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (Elevation(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (prettyNodeType)
 import Gargantext.Types (ID, Name)
 import Gargantext.Types as GT
-import Gargantext.Utils.Glyphicon (glyphicon)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -45,13 +46,37 @@ nodePopupViewCpt = here.component "nodePopupView" cpt where
   closeBox props = props.onPopoverClose <<< R.unsafeEventTarget
 
   panelHeading props@{ nodeType } =
-    H.div { className: "popup-container__header card-header" }
-    [ R2.row
-      [ H.div { className: "col-4" }
-        [ H.span { className: GT.fldr nodeType true} [] -- TODO fix names
-        , H.span { className: "h5" } [ H.text $ prettyNodeType nodeType ] ]
-      , H.div { className: "col-6" }
-        [ H.span { className: "text-primary center" } [ H.text props.name ] ]
-      , H.div { className: "col-1" }
-        [ H.a { type: "button", on: { click: closeBox props }, title: "Close"
-              , className: glyphicon "window-close" } [] ]]]
+    H.div
+    { className: "popup-container__header card-header" }
+    [
+      B.wad
+      [ "d-flex", "align-items-center" ]
+      [
+        H.div
+        { className: "w-3/12" }
+        [
+          H.span { className: GT.fldr nodeType true} [] -- TODO fix names
+        ,
+          B.span' { className: "ml-1 h5" } $ prettyNodeType nodeType
+        ]
+      ,
+        B.wad
+        [ "w-7/12", "pl-1" ]
+        [
+          B.wad'
+          [ "text-primary" ]
+          props.name
+        ]
+      ,
+        B.wad
+        [ "w-2/12", "text-right" ]
+        [
+          B.iconButton
+          { callback: closeBox props
+          , title: "Close"
+          , elevation: Level1
+          , name: "times"
+          }
+        ]
+      ]
+    ]

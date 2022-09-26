@@ -357,9 +357,9 @@ performAction = performAction' where
       hideModal window $ "#" <> (show nodeId)
 
   refreshFolders p@{ boxes: { reloadForest }, reload } = do
+    closeBox p
     liftEffect $ T2.reload reload
     liftEffect $ T2.reload reloadForest
-    closeBox p
 
   deleteNode' nt p@{ nodeId: id, parentId: parent_id, session } = do
     case nt of

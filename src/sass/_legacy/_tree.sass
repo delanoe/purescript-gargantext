@@ -440,12 +440,18 @@ $node-popup-width: 544px
 .node-popup-tooltip
 
   .panel-actions
+    font-size: 90%
+    padding-left: space-x(2.5)
+
+    .b-icon
+      margin-right: space-x(1)
+
     &__almost-useable
-      color: orange
+      color: darken($pastel-orange, 25%)
     &__development-in-progress
-      color: red
+      color: darken($pastel-red, 25%)
     &__ok-to-use
-      color: black
+      color: $body-color
 
 
   .popup-container

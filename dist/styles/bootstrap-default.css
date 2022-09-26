@@ -9678,14 +9678,21 @@ a:focus, a:hover {
   max-width: 100vw;
 }
 
+.node-popup-tooltip .panel-actions {
+  font-size: 90%;
+  padding-left: 20px;
+}
+.node-popup-tooltip .panel-actions .b-icon {
+  margin-right: 8px;
+}
 .node-popup-tooltip .panel-actions__almost-useable {
-  color: orange;
+  color: #f1a50e;
 }
 .node-popup-tooltip .panel-actions__development-in-progress {
-  color: red;
+  color: #8b2823;
 }
 .node-popup-tooltip .panel-actions__ok-to-use {
-  color: black;
+  color: #212529;
 }
 .node-popup-tooltip .popup-container {
   display: flex;
