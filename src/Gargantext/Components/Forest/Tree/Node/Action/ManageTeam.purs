@@ -96,7 +96,7 @@ teamLayoutRowsCpt = here.component "teamLayoutRows" cpt where
                                                                                     ]
       
       makeLeader username = H.div {className: "from-group row"} [ H.div { className: "col-8"} [ H.text username ] 
-                                                                , H.p { className: "col-2"} [ H.text "leader"]
+                                                                , H.p { className: "col-2"} [ H.text "owner"]
                                                                 ]
 
       submit sharedFolderId _ = do
