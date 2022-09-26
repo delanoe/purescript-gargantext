@@ -18,6 +18,7 @@ import Effect (Effect)
 import Effect.Class.Console (error)
 import Effect.Timer (TimeoutId, clearTimeout)
 import FFI.Simple ((.=))
+import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
 import Gargantext.Hooks.Sigmax.Graphology as Graphology
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as ST
@@ -115,28 +116,29 @@ dependOnContainer container notFoundMsg f = do
 -- | Effect for handling pausing FA via state changes.  We need this because
 -- | pausing can be done not only via buttons but also from the initial
 -- | setTimer.
-handleForceAtlas2Pause :: forall settings. R.Ref Sigma -> T.Box ST.ForceAtlasState -> R.Ref (Maybe TimeoutId) -> settings -> Effect Unit
-handleForceAtlas2Pause sigmaRef forceAtlasState mFAPauseRef settings = do
-  let sigma = R.readRef sigmaRef
+handleForceAtlas2Pause :: forall settings. R.Ref (Maybe ForceAtlas.FA2Layout)
+                          -> T.Box ST.ForceAtlasState
+                          -> R.Ref (Maybe TimeoutId)
+                          -> settings
+                          -> Effect Unit
+handleForceAtlas2Pause fa2Ref forceAtlasState mFAPauseRef settings = do
+  let fa2_ = R.readRef fa2Ref
   toggled <- T.read forceAtlasState
-  dependOnSigma sigma "[handleForceAtlas2Pause] sigma: Nothing" $ \s -> do
-    -- TODO Rewrite using R.Ref FA2Layout instead of a Sigma ref
-    --let isFARunning = Sigma.isForceAtlas2Running s
-    let isFARunning = false
-    case Tuple toggled isFARunning of
-      Tuple ST.InitialRunning false -> do
-        --Sigma.restartForceAtlas2 s settings
-        pure unit
-      Tuple ST.Running false -> do
-        --Sigma.restartForceAtlas2 s settings
-        pure unit
-        case R.readRef mFAPauseRef of
-          Nothing -> pure unit
-          Just timeoutId -> clearTimeout timeoutId
-      Tuple ST.Paused true -> do
-        --Sigma.stopForceAtlas2 s
-        pure unit
-      _ -> pure unit
+  case fa2_ of
+    Nothing -> pure unit
+    Just fa2 -> do
+      isFARunning <- ForceAtlas.isRunning fa2
+      case Tuple toggled isFARunning of
+        Tuple ST.InitialRunning false -> do
+          ForceAtlas.restart fa2
+        Tuple ST.Running false -> do
+          ForceAtlas.restart fa2
+          case R.readRef mFAPauseRef of
+            Nothing -> pure unit
+            Just timeoutId -> clearTimeout timeoutId
+        Tuple ST.Paused true -> do
+          ForceAtlas.stop fa2
+        _ -> pure unit
 
 setEdges :: Sigma.Sigma -> Boolean -> Effect Unit
 setEdges sigma val = do

@@ -19,6 +19,7 @@ import Gargantext.Components.GraphExplorer.Toolbar.RangeControl (edgeConfluenceC
 import Gargantext.Components.GraphExplorer.Toolbar.SlideButton (labelSizeButton, mouseSelectorSizeButton)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Session (useSession)
+import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Types as GT
@@ -33,16 +34,17 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.Toolbar.Controls"
 
 type Controls =
-  ( reloadForest       :: T2.ReloadS
-  , sigmaRef           :: R.Ref Sigmax.Sigma
+  ( fa2Ref       :: R.Ref (Maybe ForceAtlas.FA2Layout)
+  , reloadForest :: T2.ReloadS
+  , sigmaRef     :: R.Ref Sigmax.Sigma
   )
 
 controls :: R2.Leaf Controls
 controls = R2.leaf controlsCpt
-
 controlsCpt :: R.Memo Controls
 controlsCpt = R.memo' $ here.component "controls" cpt where
-  cpt { reloadForest
+  cpt { fa2Ref
+      , reloadForest
       , sigmaRef
       } _ = do
     -- | States
@@ -91,7 +93,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
         _          -> pure unit
 
     -- Handle case when FA is paused from outside events, eg. the automatic timer.
-    R.useEffect' $ Sigmax.handleForceAtlas2Pause sigmaRef forceAtlasState mFAPauseRef Graph.forceAtlas2Settings
+    R.useEffect' $ Sigmax.handleForceAtlas2Pause fa2Ref forceAtlasState mFAPauseRef Graph.forceAtlas2Settings
 
     -- Handle automatic edge hiding when FA is running (to prevent flickering).
     -- TODO Commented temporarily: this breaks forceatlas rendering after reset

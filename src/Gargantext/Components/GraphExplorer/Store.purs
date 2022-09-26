@@ -12,6 +12,7 @@ import Gargantext.Prelude
 import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Types as GT
 import Gargantext.Utils (getter)

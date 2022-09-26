@@ -44,7 +44,11 @@ isRunning = runEffectFn1 _isRunning
 
 -- TODO?
 restart :: FA2Layout -> Effect Unit
-restart = start
+restart fa2 = do
+  stop fa2
+  _ <- setTimeout 100 $ do
+    start fa2
+  pure unit
 
 refresh :: FA2Layout -> Effect Unit
 refresh f = do

@@ -27,6 +27,7 @@ import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Config (defaultFrontends)
 import Gargantext.Data.Louvain as Louvain
 import Gargantext.Hooks.Session (useSession)
+import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Types as GT
@@ -43,15 +44,16 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.Layout"
 
 type Props =
-  ( sigmaRef        :: R.Ref Sigmax.Sigma
+  ( fa2Ref   :: R.Ref (Maybe ForceAtlas.FA2Layout)
+  , sigmaRef :: R.Ref Sigmax.Sigma
   )
 
 layout :: R2.Leaf Props
 layout = R2.leaf layoutCpt
-
 layoutCpt :: R.Memo Props
 layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
-  cpt { sigmaRef
+  cpt { fa2Ref
+      , sigmaRef
       } _ = do
     -- | States
     -- |
@@ -187,7 +189,8 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
         }
         [
           Controls.controls
-          { reloadForest: reloadForest
+          { fa2Ref
+          , reloadForest: reloadForest
           , sigmaRef
           }
         ]
@@ -200,6 +203,7 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
         [
           graphView
           { elRef: graphRef
+          , fa2Ref
           , sigmaRef
           }
         ]
@@ -208,8 +212,9 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
 --------------------------------------------------------------
 
 type GraphProps =
-  ( elRef           :: R.Ref (Nullable Element)
-  , sigmaRef        :: R.Ref Sigmax.Sigma
+  ( elRef    :: R.Ref (Nullable Element)
+  , fa2Ref   :: R.Ref (Maybe ForceAtlas.FA2Layout)
+  , sigmaRef :: R.Ref Sigmax.Sigma
   )
 
 graphView :: R2.Leaf GraphProps
@@ -217,6 +222,7 @@ graphView = R2.leaf graphViewCpt
 graphViewCpt :: R.Memo GraphProps
 graphViewCpt = R.memo' $ here.component "graphView" cpt where
   cpt { elRef
+      , fa2Ref
       , sigmaRef
       } _ = do
     -- | States
@@ -265,6 +271,7 @@ graphViewCpt = R.memo' $ here.component "graphView" cpt where
 
       Graph.drawGraph
       { elRef
+      , fa2Ref
       , forceAtlas2Settings: Graph.forceAtlas2Settings
       , sigmaRef
       , sigmaSettings: Graph.sigmaSettings

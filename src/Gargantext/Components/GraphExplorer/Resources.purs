@@ -30,10 +30,11 @@ import Record (merge)
 import Toestand as T
 
 here :: R2.Here
-here = R2.here "Gargantext.Components.Graph"
+here = R2.here "Gargantext.Components.GraphExplorer.Resources"
 
 type Props sigma forceatlas2 =
   ( elRef                 :: R.Ref (Nullable Element)
+  , fa2Ref                :: R.Ref (Maybe ForceAtlas2.FA2Layout)
   , forceAtlas2Settings   :: forceatlas2
   , sigmaRef              :: R.Ref Sigmax.Sigma
   , sigmaSettings         :: sigma
@@ -49,14 +50,13 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
   -- | Component
   -- |
   cpt { elRef
+      , fa2Ref
       , sigmaRef
       , forceAtlas2Settings: fa2
       , transformedGraph
       } _ = do
 
     boxes <- AppStore.use
-
-    fa2Ref <- R.useRef (Nothing :: Maybe ForceAtlas2.FA2Layout)
 
     { showEdges
     , graphStage
@@ -85,10 +85,9 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
           Just fa2 -> do
             ForceAtlas2.stop fa2
             ForceAtlas2.kill fa2
+            here.log2 "[graphCpt (Cleanup)] forceAtlas stopped for" fa2
             R.setRef fa2Ref Nothing
         Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Cleanup)] no sigma" $ \sigma -> do
-          --Sigma.stopForceAtlas2 sigma
-          here.log2 "[graphCpt (Cleanup)] forceAtlas stopped for" sigma
           Sigma.kill sigma
           here.log "[graphCpt (Cleanup)] sigma killed"
 
