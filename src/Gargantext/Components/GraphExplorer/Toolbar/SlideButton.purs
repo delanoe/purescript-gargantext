@@ -98,5 +98,7 @@ mouseSelectorSizeButton sigmaRef state =
             Sigma.setSettings s {
               mouseSelectorSize: newValue
               }
+            here.log "[mouseSelectorSizeButton] write start"
             T.write_ newValue state
+            here.log "[mouseSelectorSizeButton] write stop"
     }
