@@ -261,7 +261,7 @@ instance GT.ToQuery SearchQuery where
             [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
 instance JSON.WriteForeign SearchQuery where
   writeImpl (SearchQuery { databases, datafield, lang, node_id, query, selection }) =
-    JSON.writeImpl { query: String.replace (String.Pattern "\"") (String.Replacement "\\\"") query
+    JSON.writeImpl { query: query -- String.replace (String.Pattern "\"") (String.Replacement "\\\"") query
                    , databases
                    , datafield
                    , lang: maybe "EN" show lang
