@@ -43,6 +43,7 @@ import Gargantext.Components.NgramsTable.Tree (renderNgramsItem, renderNgramsTre
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table (changePage)
 import Gargantext.Components.Table as TT
+import Gargantext.Components.Table.Types (Params)
 import Gargantext.Components.Table.Types as TT
 import Gargantext.Config.REST (AffRESTError, RESTError, logRESTError)
 import Gargantext.Core.NgramsTable.Functions (addNewNgramA, applyNgramsPatches, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, ngramsRepoElementToNgramsElement, normNgram, patchSetFromMap, singletonNgramsTablePatch, tablePatchHasNgrams, toVersioned)
@@ -407,13 +408,13 @@ type Props =
   | PropsNoReload )
 
 type LoadedNgramsTableHeaderProps =
-  ( searchQuery :: T.Box SearchQuery )
+  ( searchQuery :: T.Box SearchQuery, params :: T.Box Params )
 
 loadedNgramsTableHeader :: R2.Leaf LoadedNgramsTableHeaderProps
 loadedNgramsTableHeader = R2.leaf loadedNgramsTableHeaderCpt
 loadedNgramsTableHeaderCpt :: R.Component LoadedNgramsTableHeaderProps
 loadedNgramsTableHeaderCpt = here.component "loadedNgramsTableHeader" cpt where
-  cpt { searchQuery } _ = pure $
+  cpt { searchQuery, params } _ = pure $
 
     R.fragment
     [
@@ -435,6 +436,7 @@ loadedNgramsTableHeaderCpt = here.component "loadedNgramsTableHeader" cpt where
       NTS.searchInput
       { key: "search-input"
       , searchQuery
+      , params
       }
     ]
 
@@ -541,6 +543,7 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
           performAction
             $ CoreAction
             $ Synchronize { afterSync: afterSync' }
+          changePage 1 params
 
 
         -- autoUpdate :: Array R.Element
@@ -753,6 +756,7 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
   where
     cpt props@{ cacheState, path, treeEdit } _ = do
       searchQuery <- T.useFocused (_.searchQuery) (\a b -> b { searchQuery = a }) path
+      params <- T.useFocused (_.params) (\a b -> b { params = a }) path
       cacheState' <- T.useLive T.unequal cacheState
       -- onCancelRef <- R.useRef Nothing
       -- onNgramsClickRef <- R.useRef Nothing
@@ -774,12 +778,12 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
 
       case cacheState' of
         NT.CacheOn  -> pure $ R.fragment
-          [ loadedNgramsTableHeader { searchQuery }
+          [ loadedNgramsTableHeader { searchQuery, params }
           , ngramsTreeEdit (treeEdit)
           , mainNgramsTableCacheOn (Record.merge props { state })
           ]
         NT.CacheOff -> pure $ R.fragment
-          [loadedNgramsTableHeader { searchQuery }
+          [loadedNgramsTableHeader { searchQuery, params}
           , ngramsTreeEdit (treeEdit)
           , mainNgramsTableCacheOff (Record.merge props { state })
           ]

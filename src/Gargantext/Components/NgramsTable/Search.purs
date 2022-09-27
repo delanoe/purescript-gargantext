@@ -7,6 +7,8 @@ import Data.Foldable (intercalate)
 import Data.Nullable (Nullable, null)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
+import Gargantext.Components.Table (changePage)
+import Gargantext.Components.Table.Types (Params)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -18,6 +20,7 @@ here = R2.here "Gargantext.Components.NgramsTable.Search"
 
 type SearchInputProps =
   ( searchQuery :: T.Box String
+  , params      :: T.Box Params
   )
 
 -- "key": to prevent refreshing & losing input
@@ -26,14 +29,14 @@ searchInput = R2.leafComponent searchInputCpt
 searchInputCpt :: R.Component ( key :: String | SearchInputProps )
 searchInputCpt = here.component "searchInput" cpt
   where
-    cpt { searchQuery } _ = do
+    cpt { searchQuery, params } _ = do
       inputRef <- R.useRef null
 
       pure $ R2.row
         [ H.div { className: "col-12" }
           [ H.div { className: "input-group" }
             [ searchFieldInput { inputRef, searchQuery } []
-            , searchButton { inputRef, searchQuery } []
+            , searchButton { inputRef, searchQuery, params } []
             ]
           ]
         ]
@@ -41,6 +44,7 @@ searchInputCpt = here.component "searchInput" cpt
 type SearchButtonProps =
   ( inputRef    :: R.Ref (Nullable DOM.Element)
   , searchQuery :: T.Box String
+  , params      :: T.Box Params
   )
 
 searchButton :: R2.Component SearchButtonProps
@@ -48,7 +52,7 @@ searchButton = R.createElement searchButtonCpt
 
 searchButtonCpt :: R.Component SearchButtonProps
 searchButtonCpt = here.component "searchButton" cpt where
-  cpt { inputRef, searchQuery } _ = do
+  cpt { inputRef, searchQuery, params } _ = do
     -- | States
     -- |
     searchQuery' <- T.useLive T.unequal searchQuery
@@ -59,9 +63,11 @@ searchButtonCpt = here.component "searchButton" cpt where
       onReset _ = do
         R2.setInputValue inputRef ""
         T.write_ "" searchQuery
+        changePage 1 params
 
       onSubmit _ = do
         T.write_ (R2.getInputValue inputRef) searchQuery
+        changePage 1 params
 
     -- | Render
     -- |
