@@ -129,9 +129,9 @@ unbindClickNode :: Sigma -> Effect Unit
 unbindClickNode s = unbind_ s "clickNode"
 
 -- | Bind a `clickNodes` event.
-bindClickNodes :: Sigma -> (Array (Record Types.Node) -> Effect Unit) -> Effect Unit
+bindClickNodes :: Sigma -> (Array Types.NodeId -> Effect Unit) -> Effect Unit
 bindClickNodes s f = on_ s "clickNodes" $ \e -> do
-  let ns = e .. "data" .. "node" :: Array (Record Types.Node)
+  let ns = e .. "nodeIds" :: Array Types.NodeId
   f ns
 -- | Unbind a `clickNodes` event.
 unbindClickNodes :: Sigma -> Effect Unit

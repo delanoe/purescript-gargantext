@@ -140,7 +140,9 @@ let sigmaMouseSelector = function(sigma, options) {
     }
 
     const onClick = (e) => {
-      if(!_isValidClick) {
+      // TODO For some reason this event is sent again, with
+      // _clickPositionX/Y empty
+      if(!_isValidClick || !_clickPositionX || !_clickPositionY) {
         return;
       }
       const size = sigma.settings['mouseSelectorSize'] || 3;
@@ -148,12 +150,12 @@ let sigmaMouseSelector = function(sigma, options) {
       //const y = e.data.clientY + document.body.scrollTop - _offset.top - size/2;
       //const prefix = _renderer.options.prefix;
       //console.log('[sigmaMouseSelector] clicked', e, x, y, size);
-      let nodes = [];
-      for(let node in sigma.nodeDataCache) {
-        let data = sigma.nodeDataCache[node];
+      let nodeIds = [];
+      for(let nodeId in sigma.nodeDataCache) {
+        let data = sigma.nodeDataCache[nodeId];
         let position = sigma.framedGraphToViewport(data);
         if(distance(e.x, e.y, position.x, position.y) <= size) {
-          nodes.push(node);
+          nodeIds.push(nodeId);
         }
       }
       /*
@@ -163,10 +165,12 @@ let sigmaMouseSelector = function(sigma, options) {
         }
         });
         */
-      console.log('clicked node ids', nodes);
       //console.log('[sigmaMouseSelector] nodes', nodes);
-      sigma.emit('clickNode', {
-        node: nodes
+      // nodes.forEach((n) => {
+      //   sigma.emit('clickNode', { node: n });
+      // })
+      sigma.emit('clickNodes', {
+        nodeIds: nodeIds
         //captor: e.data
       })
       _clickPositionX = null;
@@ -194,6 +198,10 @@ let sigmaMouseSelector = function(sigma, options) {
   }
 
   mouseSelector();
+
+  // sigma.on('clickNode', (e) => {
+  //   console.log('clickNode', e);
+  // })
 }
 
 //sigmaMouseSelector(sigma);
@@ -266,7 +274,6 @@ let _setSettings = function(g, settings) {
 }
 
 let _refresh = function(g) {
-  console.log('[refresh], g', g);
   return g.refresh();
 }
 

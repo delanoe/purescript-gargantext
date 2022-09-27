@@ -196,8 +196,9 @@ multiSelectUpdate new selected = foldl fld selected new
 
 bindSelectedNodesClick :: Sigma.Sigma -> T.Box ST.NodeIds -> T.Box Boolean -> Effect Unit
 bindSelectedNodesClick sigma selectedNodeIds multiSelectEnabled =
-  Sigma.bindClickNodes sigma $ \nodes -> do
-    let nodeIds = Set.fromFoldable $ map _.id nodes
+  Sigma.bindClickNodes sigma $ \nodeIds' -> do
+    console.log2 "[bindSelectedNodesClick] nodeIds'" nodeIds'
+    let nodeIds = Set.fromFoldable nodeIds'
     multiSelectEnabled' <- T.read multiSelectEnabled
     if multiSelectEnabled' then
       T.modify_ (multiSelectUpdate nodeIds) selectedNodeIds
