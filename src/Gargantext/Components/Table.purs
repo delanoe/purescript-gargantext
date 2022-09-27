@@ -426,7 +426,8 @@ sizeDDCpt = here.component "sizeDD" cpt
         className = "form-control"
         change e = do
           let ps = string2PageSize $ R.unsafeEventValue e
-          T.modify (\p -> stateParams $ (paramsState p) { pageSize = ps }) params
+          _ <- T.modify (\p -> stateParams $ (paramsState p) { pageSize = ps }) params
+          changePage 1 params
         sizes = map option pageSizes
         option size = H.option {value} [H.text value]
           where value = show size

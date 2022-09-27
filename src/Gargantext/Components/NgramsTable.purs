@@ -41,6 +41,7 @@ import Gargantext.Components.NgramsTable.SelectionCheckbox as NTSC
 import Gargantext.Components.NgramsTable.SyncResetButton (syncResetButtons)
 import Gargantext.Components.NgramsTable.Tree (renderNgramsItem, renderNgramsTree)
 import Gargantext.Components.Nodes.Lists.Types as NT
+import Gargantext.Components.Table (changePage)
 import Gargantext.Components.Table as TT
 import Gargantext.Components.Table.Types as TT
 import Gargantext.Config.REST (AffRESTError, RESTError, logRESTError)
@@ -155,6 +156,7 @@ tableContainerCpt { addCallback
     , termSizeFilter
     , params
     } <- T.useLive T.unequal path
+    params <- T.useFocused (_.params) (\a b -> b { params = a }) path
 
     -- | Computed
     -- |
@@ -218,7 +220,7 @@ tableContainerCpt { addCallback
             { id: "picklistmenu"
             , className: "form-control custom-select"
             , defaultValue: (maybe "" show termListFilter)
-            , on: {change: setTermListFilter <<< read <<< R.unsafeEventValue}
+            , on: {change: changeTermList params}
             }
             (map optps1 termLists)
           ]
@@ -234,7 +236,7 @@ tableContainerCpt { addCallback
             { id: "picktermtype"
             , className: "form-control custom-select"
             , defaultValue: (maybe "" show termSizeFilter)
-            , on: {change: setTermSizeFilter <<< read <<< R.unsafeEventValue}
+            , on: {change: changeTermSize params}
             }
             (map optps1 termSizes)
           ]
@@ -354,6 +356,14 @@ tableContainerCpt { addCallback
   setTermListFilter x = T.modify (_ { termListFilter = x }) path
   setTermSizeFilter x = T.modify (_ { termSizeFilter = x }) path
   setSelection term = dispatch $ setTermListSetA ngramsTableCache ngramsSelection term
+
+  changeTermList params e = do
+    _ <- setTermListFilter $ read $ R.unsafeEventValue e
+    changePage 1 params
+
+  changeTermSize params e = do
+    _ <- setTermSizeFilter $ read $ R.unsafeEventValue e
+    changePage 1 params
 
   selectionsExist :: Set NgramsTerm -> Boolean
   selectionsExist = not <<< Set.isEmpty
