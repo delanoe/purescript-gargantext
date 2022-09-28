@@ -35,7 +35,7 @@ searchInputCpt = here.component "searchInput" cpt
       pure $ R2.row
         [ H.div { className: "col-12" }
           [ H.div { className: "input-group" }
-            [ searchFieldInput { inputRef, searchQuery } []
+            [ searchFieldInput { inputRef, searchQuery, params } []
             , searchButton { inputRef, searchQuery, params } []
             ]
           ]
@@ -123,14 +123,14 @@ searchButtonCpt = here.component "searchButton" cpt where
 type SearchFieldInputProps =
   ( inputRef    :: R.Ref (Nullable DOM.Element)
   , searchQuery :: T.Box String
+  , params      :: T.Box Params
   )
 
 searchFieldInput :: R2.Component SearchFieldInputProps
 searchFieldInput = R.createElement searchFieldInputCpt
 searchFieldInputCpt :: R.Component SearchFieldInputProps
 searchFieldInputCpt = here.component "searchFieldInput" cpt where
-  cpt { inputRef, searchQuery } _ = do
-
+  cpt { inputRef, searchQuery, params } _ = do
     pure $ H.input { className: "form-control"
                    -- , defaultValue: searchQuery'
                    , name: "search"
@@ -142,7 +142,8 @@ searchFieldInputCpt = here.component "searchFieldInput" cpt where
       where
         onKeyPress e = do
           char <- R2.keyCode e
-          if char == 13 then
-            T.write_ (R2.getInputValue inputRef) searchQuery
+          if char == 13 then do
+            _ <- T.write_ (R2.getInputValue inputRef) searchQuery
+            changePage 1 params
           else
             pure unit
