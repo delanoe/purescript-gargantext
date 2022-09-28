@@ -59,12 +59,13 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
     boxes <- AppStore.use
 
     { showEdges
-    , graphStage
     , graph
-    , startForceAtlas
-    , selectedNodeIds
-    , multiSelectEnabled
+    , graphStage
     , hyperdataGraph
+    , mouseSelectorSize
+    , multiSelectEnabled
+    , selectedNodeIds
+    , startForceAtlas
     } <- GraphStore.use
 
     showEdges'        <- R2.useLive' showEdges
@@ -125,6 +126,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
                 Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Ready)] no sigma" $ \sigma -> do
                   -- bind the click event only initially, when ref was empty
                   Sigmax.bindSelectedNodesClick sigma selectedNodeIds multiSelectEnabled
+                  Sigmax.bindShiftWheel sigma mouseSelectorSize
                   _ <- Sigma.bindMouseSelectorPlugin sigma
                   pure unit
 

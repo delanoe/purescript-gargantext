@@ -85,7 +85,7 @@ mouseSelectorSizeButton :: R.Ref Sigmax.Sigma -> T.Box Number -> R.Element
 mouseSelectorSizeButton sigmaRef state =
   sizeButton {
       state
-    , caption: "Selector size"
+    , caption: "Selector size (Shift + wheel)"
     , min: 1.0
     , max: 50.0
     , onChange: \e -> do
@@ -98,7 +98,5 @@ mouseSelectorSizeButton sigmaRef state =
             Sigma.setSettings s {
               mouseSelectorSize: newValue
               }
-            here.log "[mouseSelectorSizeButton] write start"
             T.write_ newValue state
-            here.log "[mouseSelectorSizeButton] write stop"
     }

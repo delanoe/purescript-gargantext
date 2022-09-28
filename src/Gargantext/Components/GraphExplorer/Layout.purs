@@ -292,6 +292,7 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
         , equilateral: { numPoints: 3 }
         , gargType
         , hidden : false
+        , highlighted: false
         , id    : n.id_
         , label : n.label
         , size  : DN.log (toNumber n.size + 1.0)
@@ -406,9 +407,9 @@ transformGraph graph { edgeConfluence'
     nodeMarked :: Record SigmaxT.Node -> Record SigmaxT.Node
     nodeMarked node@{ id } =
       if Set.member id selectedNodeIds' then
-        node { borderColor = "#000", type = "selected" }
+        node { borderColor = "#000", highlighted = true, type = "selected" }
       else
-        node
+        node { highlighted = false }
 
     nodeHideSize :: Record SigmaxT.Node -> Record SigmaxT.Node
     nodeHideSize node@{ size } =

@@ -63,73 +63,55 @@ let sigmaMouseSelector = function(sigma, options) {
   const distance = (x1, y1, x2, y2) => Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
 
   let mouseSelector = () => {
-    let _self = this;
-    let _offset = null;
+    const _self = this;
     const _s = sigma;
-    //const _renderer = renderer;
     const captor = sigma.mouseCaptor;
     const _container = captor.container;
-    //renderer.initDOM('canvas', 'mouseSelector');
-    // A hack to force resize to be called (there is a width/height equality
-    // check which can't be escaped in any other way).
-    //renderer.resize(renderer.width - 1, renderer.height - 1);
-    //renderer.resize(renderer.width + 1, renderer.height + 1);
-    //const _context = _renderer.contexts.mouseSelector;
     const _context = _container.getContext('2d');
-    // These are used to prevent using the 'click' event when in fact this was a drag
-    let _clickPositionX = null;
-    let _clickPositionY = null;
-    let _isValidClick = false;
 
-    _container.onmousemove = (e) => { return mouseMove(e); };
-    _container.onclick = (e) => { return onClick(e); };
-    //_context.canvas.onclick = function(e) { return onClick(e); };
-    _container.onmousedown = (e) => { return onMouseDown(e); }
-    _container.onmouseup = (e) => { return onMouseUp(e); }
-    captor.on('click', (e) => { return onClick(e); });
-    // The mouseSelector canvas will pass its events down to the "mouse" canvas.
-    //_context.canvas.style.pointerEvents = 'none';
+    const unbindAll = () => {
+      // TODO Maybe not needed if sigma is killed and we did bind to
+      // mouse captor instead of the canvas?
 
-    sigma.on('kill', () => _self.unbindAll());
-
-    this.unbindAll = () => {
-      // console.log('[sigmaMouseSelector] unbinding');
-      _container.onclick = null;
-      //_context.canvas.onmousemove = null;
-      _container.onmousemove = null;
-      _container.onmousedown = null;
-      _container.onmouseup = null;
+      // _container.onclick = null;
+      // _container.onmousemove = null;
+      // _container.onmousedown = null;
+      // _container.onmouseup = null;
     }
 
-    const onMouseDown = (e) => {
-      _clickPositionX = e.clientX;
-      _clickPositionY = e.clientY;
+    const bindAll = () => {
+      captor.on('mousemove', mouseMove);
+      captor.on('click', onClick);
+      captor.on('wheel', onWheel);
+
+      sigma.on('kill', () => unbindAll());
     }
 
-    const onMouseUp = (e) => {
-      // Prevent triggering click when in fact this was a drag
-      if ((_clickPositionX != e.clientX) || (_clickPositionY != e.clientY)) {
-        _clickPositionX = null;
-        _clickPositionY = null;
-        _isValidClick = false;
-      } else {
-        _isValidClick = true;
+    const onWheel = (e) => {
+      const shiftPressed = e.original.shiftKey;
+      // zoom in has e.delta > 0 (around 0.44)
+      // zoom out has e.delta < 0 (around -0.44)
+      if(shiftPressed) {
+        // TODO Fix this so that the canvas is not zoomed.
+        console.log('[onWheel] e', e);
+        e.original.preventDefault();
+        e.original.stopPropagation();
+        sigma.emit('shiftWheel', {
+          delta: e.delta
+        });
       }
     }
 
+    // Responsible for rendering the selector properly
     const mouseMove = (e) => {
       const size = sigma.settings['mouseSelectorSize'] || 3;
-      //const x = e.clientX + document.body.scrollLeft - _offset.left - size/2;
-      //const y = e.clientY + document.body.scrollTop - _offset.top - size/2;
-      const x = e.layerX;
-      const y = e.layerY;
       _context.clearRect(0, 0, _context.canvas.width, _context.canvas.height);
 
       _context.fillStyle = 'rgba(91, 192, 222, 0.7)';
       _context.beginPath();
       _context.arc(
-        x,
-        y,
+        e.x,
+        e.y,
         size,
         0,
         Math.PI * 2,
@@ -140,61 +122,33 @@ let sigmaMouseSelector = function(sigma, options) {
     }
 
     const onClick = (e) => {
-      // TODO For some reason this event is sent again, with
-      // _clickPositionX/Y empty
-      if(!_isValidClick || !_clickPositionX || !_clickPositionY) {
-        return;
-      }
       const size = sigma.settings['mouseSelectorSize'] || 3;
-      //const x = e.data.clientX + document.body.scrollLeft - _offset.left - size/2;
-      //const y = e.data.clientY + document.body.scrollTop - _offset.top - size/2;
-      //const prefix = _renderer.options.prefix;
-      //console.log('[sigmaMouseSelector] clicked', e, x, y, size);
       let nodeIds = [];
       for(let nodeId in sigma.nodeDataCache) {
         let data = sigma.nodeDataCache[nodeId];
         let position = sigma.framedGraphToViewport(data);
+        // TODO Either distance or node is clicked directly
         if(distance(e.x, e.y, position.x, position.y) <= size) {
           nodeIds.push(nodeId);
         }
       }
-      /*
-      sigma.graph.forEachNode((node, attrs) => {
-        if(distance(x, y, attrs.x, attrs.y) <= size) {
-          nodes.push(node);
-        }
-        });
-        */
-      //console.log('[sigmaMouseSelector] nodes', nodes);
-      // nodes.forEach((n) => {
-      //   sigma.emit('clickNode', { node: n });
-      // })
+      // handle node click when our selector doesn't cover it's center
+      // (e.g. large nodes)
+      const nodeAtPosition = sigma.getNodeAtPosition(e);
+      if((nodeAtPosition && (nodeIds.indexOf(nodeAtPosition) == -1))) {
+        nodeIds.push(nodeAtPosition);
+      }
       sigma.emit('clickNodes', {
         nodeIds: nodeIds
         //captor: e.data
       })
       _clickPositionX = null;
       _clickPositionY = null;
+
+      return false;
     }
 
-    const calculateOffset = (element) => {
-      var style = window.getComputedStyle(element);
-      var getCssProperty = function(prop) {
-        return parseInt(style.getPropertyValue(prop).replace('px', '')) || 0;
-      };
-      return {
-        left: element.getBoundingClientRect().left + getCssProperty('padding-left'),
-        top: element.getBoundingClientRect().top + getCssProperty('padding-top')
-      };
-    };
-
-    // Container resize event listener
-    // @TODO: debounce?
-    const onContainerResize = (entries) => {
-      _offset = calculateOffset(_container);
-    };
-    const _resizeObserver = new ResizeObserver( onContainerResize );
-    _resizeObserver.observe(_container);
+    bindAll();
   }
 
   mouseSelector();
@@ -209,9 +163,8 @@ let sigmaMouseSelector = function(sigma, options) {
 function _sigma(left, right, el, opts) {
   try {
     let graph = new Graph();
-    console.log('initializing sigma with el', el);
-    console.log('initializing sigma with opts', opts);
     let s = new sigma(graph, el, opts);
+    console.log('initializing sigma with el', el, 'opts', 'sigma', s);
     sigmaMouseSelector(s);
     return right(s);
   } catch(e) {

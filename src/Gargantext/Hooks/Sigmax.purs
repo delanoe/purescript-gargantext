@@ -24,7 +24,8 @@ import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as ST
 import Gargantext.Utils.Console as C
 import Gargantext.Utils.Reactix as R2
-import Prelude (Unit, bind, discard, flip, map, not, pure, unit, ($), (&&), (*>), (<<<), (<>), (>>=))
+import Gargantext.Utils.Set as GSet
+import Prelude (Unit, bind, discard, flip, map, not, pure, unit, ($), (&&), (*>), (<<<), (<>), (>>=), (+), (>), negate)
 import Reactix as R
 import Toestand as T
 
@@ -184,20 +185,15 @@ updateNodes sigma nodesMap = do
 
 
 -- | Toggles item visibility in the selected set
+--   Basically: add items that are NOT in `selected` and remove items
+--   that are in `selected`.
 multiSelectUpdate :: ST.NodeIds -> ST.NodeIds -> ST.NodeIds
-multiSelectUpdate new selected = foldl fld selected new
-  where
-    fld selectedAcc item =
-      if Set.member item selectedAcc then
-        Set.delete item selectedAcc
-      else
-        Set.insert item selectedAcc
+multiSelectUpdate new selected = foldl GSet.toggle selected new
 
 
 bindSelectedNodesClick :: Sigma.Sigma -> T.Box ST.NodeIds -> T.Box Boolean -> Effect Unit
 bindSelectedNodesClick sigma selectedNodeIds multiSelectEnabled =
   Sigma.bindClickNodes sigma $ \nodeIds' -> do
-    console.log2 "[bindSelectedNodesClick] nodeIds'" nodeIds'
     let nodeIds = Set.fromFoldable nodeIds'
     multiSelectEnabled' <- T.read multiSelectEnabled
     if multiSelectEnabled' then
@@ -205,15 +201,16 @@ bindSelectedNodesClick sigma selectedNodeIds multiSelectEnabled =
     else
       T.write_ nodeIds selectedNodeIds
 
-bindSelectedEdgesClick :: R.Ref Sigma -> R.State ST.EdgeIds -> Effect Unit
-bindSelectedEdgesClick sigmaRef (_ /\ setEdgeIds) =
-  dependOnSigma (R.readRef sigmaRef) "[graphCpt] no sigma" $ \sigma -> do
-    Sigma.bindClickEdge sigma $ \edge -> do
-      setEdgeIds \eids ->
-        if Set.member edge.id eids then
-          Set.delete edge.id eids
-        else
-          Set.insert edge.id eids
+bindShiftWheel :: Sigma.Sigma -> T.Box Number -> Effect Unit
+bindShiftWheel sigma mouseSelectorSize =
+  Sigma.bindShiftWheel sigma $ \delta -> do
+    let step = if delta > 0.0 then 5.0 else -5.0
+    val <- T.read mouseSelectorSize
+    let newVal = val + step
+    Sigma.setSettings sigma {
+      mouseSelectorSize: newVal
+      }
+    T.write_ newVal mouseSelectorSize
 
 selectorWithSize :: Sigma.Sigma -> Int -> Effect Unit
 selectorWithSize _ _ = do
@@ -224,10 +221,10 @@ performDiff sigma g = do
   -- if (Seq.null addEdges) && (Seq.null addNodes) && (Set.isEmpty removeEdges) && (Set.isEmpty removeNodes) then
   --   pure unit
   -- else do
-  console.log2 "[performDiff] addNodes" addNodes
-  console.log2 "[performDiff] addEdges" $ A.fromFoldable addEdges
-  console.log2 "[performDiff] removeNodes" removeNodes
-  console.log2 "[performDiff] removeEdges" removeEdges
+  -- console.log2 "[performDiff] addNodes" addNodes
+  -- console.log2 "[performDiff] addEdges" $ A.fromFoldable addEdges
+  -- console.log2 "[performDiff] removeNodes" removeNodes
+  -- console.log2 "[performDiff] removeEdges" removeEdges
   traverse_ (Graphology.addNode sigmaGraph) addNodes
   traverse_ (Graphology.addEdge sigmaGraph) addEdges
   traverse_ (Graphology.removeEdge sigmaGraph) removeEdges

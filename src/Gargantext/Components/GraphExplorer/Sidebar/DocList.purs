@@ -80,8 +80,8 @@ docListWrapperCpt = here.component "wrapper" cpt where
 
     -- | Hooks
     -- |
-    R.useEffect1' selectedNodeIds' $
-      T.write_ (selectedNodeIds' # toSearchQuery >>> Just) query
+    R.useEffect1' selectedNodeIds' $ do
+      T.write_ (Just $ toSearchQuery selectedNodeIds') query
 
     -- | Render
     -- |

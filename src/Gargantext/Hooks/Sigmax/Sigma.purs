@@ -137,6 +137,14 @@ bindClickNodes s f = on_ s "clickNodes" $ \e -> do
 unbindClickNodes :: Sigma -> Effect Unit
 unbindClickNodes s = unbind_ s "clickNodes"
 
+-- | Shift + mousewheel changes selector size
+bindShiftWheel :: Sigma -> (Number -> Effect Unit) -> Effect Unit
+bindShiftWheel s f = on_ s "shiftWheel" $ \e -> do
+  let delta = e .. "delta" :: Number
+  f delta
+unbindShiftWheel :: Sigma -> Effect Unit
+unbindShiftWheel s = unbind_ s "shiftWheel"
+
 -- | Bind a `overNode` event.
 bindOverNode :: Sigma -> (Record Types.Node -> Effect Unit) -> Effect Unit
 bindOverNode s f = bindNodeEvent s "overNode" f

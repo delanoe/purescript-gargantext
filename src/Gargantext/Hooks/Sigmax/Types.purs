@@ -40,6 +40,7 @@ type Node = (
   , equilateral :: { numPoints :: Int }
   , gargType    :: GT.Mode
   , hidden      :: Boolean
+  , highlighted :: Boolean
   , id          :: NodeId
   , label       :: String
   , size        :: Number

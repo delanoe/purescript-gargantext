@@ -227,7 +227,7 @@ loadPage { session, nodeId, listId, query, params: {limit, offset, orderBy } } =
   case eSearchResult of
     Left err -> pure $ Left err
     Right (SearchResult {result}) -> do
-      liftEffect $ here.log2 "[loadPage] result" result
+      --liftEffect $ here.log2 "[loadPage] result" result
       -- $ SearchQuery {query: concat query, expected: SearchDoc}
       pure $ Right $ case result of
               SearchResultDoc     {docs}     -> Docs     {docs: doc2view     <$> Seq.fromFoldable docs}
