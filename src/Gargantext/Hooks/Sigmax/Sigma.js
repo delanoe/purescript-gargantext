@@ -203,14 +203,6 @@ function _takeScreenshot(sigma) {
   return edges.toDataURL('image/png');
 }
 
-function _getEdges(sigma) {
-  return sigma.graph.edges();
-}
-
-function _getNodes(sigma) {
-  return sigma.graph.nodes();
-}
-
 function _proxySetSettings(window, sigma, settings) {
   var id = sigma.id;
 
@@ -235,8 +227,6 @@ export { _sigma,
          dummy as _bindMouseSelectorPlugin,
          _on,
          _takeScreenshot,
-         _getEdges,
-         _getNodes,
          _proxySetSettings,
          _setSettings,
          _refresh };

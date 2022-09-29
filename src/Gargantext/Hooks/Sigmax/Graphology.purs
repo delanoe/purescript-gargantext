@@ -23,7 +23,9 @@ foreign import data Graph :: Type
 
 foreign import _newGraph :: EffectFn1 Unit Graph
 foreign import _addNode :: EffectFn3 Graph String (Record Types.Node) String
+foreign import _updateNode :: EffectFn3 Graph String (Record Types.Node -> Record Types.Node) Unit
 foreign import _addEdge :: EffectFn4 Graph String String (Record Types.Edge) String
+--foreign import _updateEdge :: EffectFn4 Graph String String (Record Types.Edge) String
 foreign import _mapNodes :: forall a. Fn2 Graph (Record Types.Node -> a) (Array a)
 foreign import _forEachEdge :: EffectFn2 Graph (Record Types.Edge -> Effect Unit) Unit
 foreign import _mapEdges :: forall a. Fn2 Graph (Record Types.Edge -> a) (Array a)
@@ -45,6 +47,11 @@ addNode :: Graph -> Record Types.Node -> Effect String
 addNode g node@{ id } = runEffectFn3 _addNode g id node
 removeNode :: Graph -> String -> Effect Unit
 removeNode g nId = pure $ g ... "dropNode" $ [nId]
+updateNode :: Graph -> Record Types.Node -> Effect Unit
+-- | See Types.compareNodes
+updateNode g node@{ id, hidden, highlighted } =
+  runEffectFn3 _updateNode g id (\n -> n { hidden = hidden
+                                         , highlighted = highlighted })
 forEachNode :: Graph -> (Record Types.Node -> Effect Unit) -> Effect Unit
 -- TODO Check this: how does FFI translate function of two arguments
 -- into PS \x y ?
@@ -56,6 +63,9 @@ addEdge :: Graph -> Record Types.Edge -> Effect String
 addEdge g edge@{ source, target } = runEffectFn4 _addEdge g source target edge
 removeEdge :: Graph -> String -> Effect Unit
 removeEdge g eId = pure $ g ... "dropEdge" $ [eId]
+updateEdge :: Graph -> Record Types.Edge -> Effect Unit
+updateEdge _ _ = pure unit  -- TODO
+--updateEdge g edge@{ source, target } = runEffectFn4 _updateEdge g source target edge
 forEachEdge :: Graph -> (Record Types.Edge -> Effect Unit) -> Effect Unit
 forEachEdge = runEffectFn2 _forEachEdge
 --forEachEdge g fn = pure $ g ... "forEachEdge" $ [\_ e -> fn e]

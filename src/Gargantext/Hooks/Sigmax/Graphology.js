@@ -10,6 +10,10 @@ export function _addNode(g, name, n) {
   return g.addNode(name, n);
 }
 
+export function _updateNode(g, name, updater) {
+  return g.updateNode(name, updater);
+}
+
 export function _addEdge(g, source, target, e) {
   return g.addEdge(source, target, e);
 }

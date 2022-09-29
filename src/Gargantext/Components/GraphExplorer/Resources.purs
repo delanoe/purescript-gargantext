@@ -120,8 +120,8 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
                     }
                   pure unit
 
-                newGraph <- Graphology.graphFromSigmaxGraph graph'
-                Sigmax.refreshData sig newGraph
+                --newGraph <- Graphology.graphFromSigmaxGraph graph'
+                --gmax.refreshData sig newGraph
 
                 Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Ready)] no sigma" $ \sigma -> do
                   -- bind the click event only initially, when ref was empty
@@ -156,9 +156,10 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
                     Sigma.updateCamera sig { ratio: 1.1, x: 0.0, y: 0.0 }
 
                 -- Reload Sigma on Theme changes
-                _ <- flip T.listen boxes.theme \{ old, new } ->
-                  if (eq old new) then pure unit
-                  else Sigma.proxySetSettings window sig $ sigmaSettings new
+                -- TODO
+                -- _ <- flip T.listen boxes.theme \{ old, new } ->
+                --   if (eq old new) then pure unit
+                --   else Sigma.proxySetSettings window sig $ sigmaSettings new
 
                 pure unit
           Just _sig -> do

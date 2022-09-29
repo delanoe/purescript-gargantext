@@ -10,14 +10,16 @@ module Gargantext.Components.GraphExplorer.Toolbar.Buttons
 
 import Prelude
 
-import DOM.Simple.Console (log2)
+import Data.Array as A
 import Data.DateTime as DDT
 import Data.DateTime.Instant as DDI
 import Data.Either (Either(..))
 import Data.Enum (fromEnum)
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
+import Data.Sequence as Seq
 import Data.String as DS
+import DOM.Simple.Console (log2)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Now as EN
@@ -30,6 +32,7 @@ import Gargantext.Components.GraphExplorer.Resources as Graph
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.GraphExplorer.Utils as GEU
 import Gargantext.Hooks.Sigmax as Sigmax
+import Gargantext.Hooks.Sigmax.Graphology as Graphology
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Sessions (Session)
@@ -88,10 +91,11 @@ cameraButton { id
                                      , show $ fromEnum $ DDT.hour nowt
                                      , show $ fromEnum $ DDT.minute nowt
                                      , show $ fromEnum $ DDT.second nowt ]
-        edges <- Sigma.getEdges s
-        nodes <- Sigma.getNodes s
-        let graphData = GET.GraphData $ hyperdataGraph { edges = map GEU.stEdgeToGET edges
-                                                       , nodes = GEU.normalizeNodes $ map GEU.stNodeToGET nodes }
+        let graph = Sigma.graph s
+            edges = Graphology.edges graph
+            nodes = Graphology.nodes graph
+            graphData = GET.GraphData $ hyperdataGraph { edges = A.fromFoldable $ Seq.map GEU.stEdgeToGET edges
+                                                       , nodes = A.fromFoldable $ GEU.normalizeNodes $ Seq.map GEU.stNodeToGET nodes }
         let cameras = map Sigma.toCamera $ Sigma.cameras s
         let camera = case cameras of
               [c] -> GET.Camera { ratio: c.ratio, x: c.x, y: c.y }

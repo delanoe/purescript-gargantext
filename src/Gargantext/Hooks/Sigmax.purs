@@ -25,7 +25,7 @@ import Gargantext.Hooks.Sigmax.Types as ST
 import Gargantext.Utils.Console as C
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Set as GSet
-import Prelude (Unit, bind, discard, flip, map, not, pure, unit, ($), (&&), (*>), (<<<), (<>), (>>=), (+), (>), negate)
+import Prelude (Unit, bind, discard, flip, map, not, pure, unit, ($), (&&), (*>), (<<<), (<>), (>>=), (+), (>), negate, (/=), (==), (<$>))
 import Reactix as R
 import Toestand as T
 
@@ -229,64 +229,87 @@ performDiff sigma g = do
   traverse_ (Graphology.addEdge sigmaGraph) addEdges
   traverse_ (Graphology.removeEdge sigmaGraph) removeEdges
   traverse_ (Graphology.removeNode sigmaGraph) removeNodes
-  Sigma.refresh sigma
+  traverse_ (Graphology.updateEdge sigmaGraph) updateEdges
+  traverse_ (Graphology.updateNode sigmaGraph) updateNodes
+  --Sigma.refresh sigma
   -- TODO Use FA2Layout here
   --Sigma.killForceAtlas2 sigma
   where
     sigmaGraph = Sigma.graph sigma
-    {add: Tuple addEdges addNodes, remove: Tuple removeEdges removeNodes} = sigmaDiff sigmaGraph g
+    { add: Tuple addEdges addNodes
+    , remove: Tuple removeEdges removeNodes
+    , update: Tuple updateEdges updateNodes } = sigmaDiff sigmaGraph g
 
 
 
 -- | Compute a diff between current sigma graph and whatever is set via custom controls
-sigmaDiff :: Graphology.Graph -> ST.Graph -> Record ST.SigmaDiff
-sigmaDiff graph g@(ST.Graph {nodes, edges}) = {add, remove, update}
+sigmaDiff :: Graphology.Graph -> ST.SGraph -> Record ST.SigmaDiff
+sigmaDiff sigmaGraph gControls = { add, remove, update }
   where
     add = Tuple addEdges addNodes
     remove = Tuple removeEdges removeNodes
-    -- TODO
-    update = Tuple Seq.empty Seq.empty
+    update = Tuple updateEdges updateNodes
 
-    addG = ST.edgesFilter (\e -> not (Set.member e.id sigmaEdgeIds)) $
-           ST.nodesFilter (\n -> not (Set.member n.id sigmaNodeIds)) g
-    addEdges = ST.graphEdges addG
-    addNodes = ST.graphNodes addG
+    sigmaNodes = Graphology.nodes sigmaGraph
+    sigmaEdges = Graphology.edges sigmaGraph
+    sigmaNodeIds = Set.fromFoldable $ Seq.map _.id sigmaNodes
+    sigmaEdgeIds = Set.fromFoldable $ Seq.map _.id sigmaEdges
 
-    removeEdges = Set.difference sigmaEdgeIds (Set.fromFoldable $ Seq.map _.id edges)
-    removeNodes = Set.difference sigmaNodeIds (Set.fromFoldable $ Seq.map _.id nodes)
+    gcNodes = ST.graphNodes gControls
+    gcEdges = ST.graphEdges gControls
+    gcNodeIds = Seq.map _.id gcNodes
+    gcEdgeIds = Seq.map _.id gcEdges
 
-    sigmaNodeIds = Graphology.nodeIds graph
-    sigmaEdgeIds = Graphology.edgeIds graph
+
+    -- Add nodes/edges which aren't present in `sigmaGraph`, but are
+    -- in `gControls`
+    addGC = ST.edgesFilter (\e -> not (Set.member e.id sigmaEdgeIds)) $
+            ST.nodesFilter (\n -> not (Set.member n.id sigmaNodeIds)) gControls
+    addEdges = ST.graphEdges addGC
+    addNodes = ST.graphNodes addGC
+
+    -- Remove nodes/edges from `sigmaGraph` which aren't in
+    -- `gControls`
+    removeEdges = Set.difference sigmaEdgeIds (Set.fromFoldable gcEdgeIds)
+    removeNodes = Set.difference sigmaNodeIds (Set.fromFoldable gcNodeIds)
+
+    commonNodeIds = Set.intersection sigmaNodeIds $ Set.fromFoldable gcNodeIds
+    commonEdgeIds = Set.intersection sigmaEdgeIds $ Set.fromFoldable gcEdgeIds
+    sigmaNodeIdsMap = Map.fromFoldable $ Seq.map (\n -> Tuple n.id n) sigmaNodes
+    sigmaEdgeIdsMap = Map.fromFoldable $ Seq.map (\e -> Tuple e.id e) sigmaEdges
+    updateEdges = Seq.filter (\e -> Just e /= Map.lookup e.id sigmaEdgeIdsMap) gcEdges
+    -- Find nodes for which `ST.compareNodes` returns `false`, i.e. nodes differ
+    updateNodes = Seq.filter (\n -> (ST.compareNodes n <$> (Map.lookup n.id sigmaNodeIdsMap)) == Just false) gcNodes
 
 
 -- DEPRECATED
 
-markSelectedEdges :: Sigma.Sigma -> ST.EdgeIds -> ST.EdgesMap -> Effect Unit
-markSelectedEdges sigma selectedEdgeIds graphEdges = do
-  Graphology.forEachEdge (Sigma.graph sigma) \e -> do
-    case Map.lookup e.id graphEdges of
-      Nothing -> error $ "Edge id " <> e.id <> " not found in graphEdges map"
-      Just {color} -> do
-        let newColor =
-              if Set.member e.id selectedEdgeIds then
-                "#ff0000"
-              else
-                color
-        _ <- pure $ (e .= "color") newColor
-        pure unit
-  Sigma.refresh sigma
+-- markSelectedEdges :: Sigma.Sigma -> ST.EdgeIds -> ST.EdgesMap -> Effect Unit
+-- markSelectedEdges sigma selectedEdgeIds graphEdges = do
+--   Graphology.forEachEdge (Sigma.graph sigma) \e -> do
+--     case Map.lookup e.id graphEdges of
+--       Nothing -> error $ "Edge id " <> e.id <> " not found in graphEdges map"
+--       Just {color} -> do
+--         let newColor =
+--               if Set.member e.id selectedEdgeIds then
+--                 "#ff0000"
+--               else
+--                 color
+--         _ <- pure $ (e .= "color") newColor
+--         pure unit
+--   Sigma.refresh sigma
 
-markSelectedNodes :: Sigma.Sigma -> ST.NodeIds -> ST.NodesMap -> Effect Unit
-markSelectedNodes sigma selectedNodeIds graphNodes = do
-  Graphology.forEachNode (Sigma.graph sigma) \n -> do
-    case Map.lookup n.id graphNodes of
-      Nothing -> error $ "Node id " <> n.id <> " not found in graphNodes map"
-      Just {color} -> do
-        let newColor =
-              if Set.member n.id selectedNodeIds then
-                "#ff0000"
-              else
-                color
-        _ <- pure $ (n .= "color") newColor
-        pure unit
-  Sigma.refresh sigma
+-- markSelectedNodes :: Sigma.Sigma -> ST.NodeIds -> ST.NodesMap -> Effect Unit
+-- markSelectedNodes sigma selectedNodeIds graphNodes = do
+--   Graphology.forEachNode (Sigma.graph sigma) \n -> do
+--     case Map.lookup n.id graphNodes of
+--       Nothing -> error $ "Node id " <> n.id <> " not found in graphNodes map"
+--       Just {color} -> do
+--         let newColor =
+--               if Set.member n.id selectedNodeIds then
+--                 "#ff0000"
+--               else
+--                 color
+--         _ <- pure $ (n .= "color") newColor
+--         pure unit
+--   Sigma.refresh sigma

@@ -7,12 +7,14 @@ module Gargantext.Components.GraphExplorer.Utils
 import Gargantext.Prelude
 
 import Data.Array as A
+import Data.Foldable (maximum, minimum)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (wrap)
+import Data.Sequence as Seq
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax.Types as ST
 import Gargantext.Utils (getter)
-import Gargantext.Utils.Array as GUA
+import Gargantext.Utils.Seq as GUS
 
 stEdgeToGET :: Record ST.Edge -> GET.Edge
 stEdgeToGET { _original } = _original
@@ -31,15 +33,15 @@ stNodeToGET { id, label, x, y, _original: GET.Node { attributes, size, type_ } }
 
 -----------------------------------------------------------------------
 
-normalizeNodes :: Array GET.Node -> Array GET.Node
-normalizeNodes ns = map normalizeNode ns
+normalizeNodes :: Seq.Seq GET.Node -> Seq.Seq GET.Node
+normalizeNodes ns = Seq.map normalizeNode ns
   where
     xs = map (\(GET.Node { x }) -> x) ns
     ys = map (\(GET.Node { y }) -> y) ns
-    mMinx = GUA.min xs
-    mMaxx = GUA.max xs
-    mMiny = GUA.min ys
-    mMaxy = GUA.max ys
+    mMinx = minimum xs
+    mMaxx = maximum xs
+    mMiny = minimum ys
+    mMaxy = maximum ys
     mXrange = do
       minx <- mMinx
       maxx <- mMaxx

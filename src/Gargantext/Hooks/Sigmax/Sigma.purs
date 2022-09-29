@@ -5,6 +5,7 @@ import Prelude
 import DOM.Simple.Types (Element, Window)
 import Data.Array as A
 import Data.Either (Either(..))
+import Data.Function.Uncurried (Fn1, runFn1)
 import Data.Maybe (Maybe)
 import Data.Traversable (traverse_)
 import Effect (Effect)
@@ -232,12 +233,6 @@ goToAllCameras s props = traverse_ (goTo props) $ cameras s
 takeScreenshot :: Sigma -> Effect String
 takeScreenshot =  runEffectFn1 _takeScreenshot
 
-getEdges :: Sigma -> Effect (Array (Record Types.Edge))
-getEdges = runEffectFn1 _getEdges
-
-getNodes :: Sigma -> Effect (Array (Record Types.Node))
-getNodes = runEffectFn1 _getNodes
-
 -- | FFI
 foreign import _sigma ::
   forall a b opts err.
@@ -261,8 +256,6 @@ foreign import _bindMouseSelectorPlugin
             (Either err Unit)
 foreign import _on :: forall e. EffectFn3 Sigma String (EffectFn1 e Unit) Unit
 foreign import _takeScreenshot :: EffectFn1 Sigma String
-foreign import _getEdges :: EffectFn1 Sigma (Array (Record Types.Edge))
-foreign import _getNodes :: EffectFn1 Sigma (Array (Record Types.Node))
 foreign import _proxySetSettings
   :: forall settings.
   EffectFn3 Window

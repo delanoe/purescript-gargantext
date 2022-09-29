@@ -70,6 +70,12 @@ type EdgeIds = Set.Set EdgeId
 type EdgesMap = Map.Map String (Record Edge)
 type NodesMap = Map.Map String (Record Node)
 
+-- | When comparing nodes, we don't want to compare all fields. Only
+-- | some are relevant (when updating sigma graph).
+compareNodes :: Record Node -> Record Node -> Boolean
+compareNodes n1 n2 = n1.hidden == n2.hidden &&
+                     n1.highlighted == n2.highlighted
+
 emptyEdgeIds :: EdgeIds
 emptyEdgeIds = Set.empty
 emptyNodeIds :: NodeIds
