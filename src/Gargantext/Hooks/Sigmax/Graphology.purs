@@ -25,6 +25,7 @@ foreign import _newGraph :: EffectFn1 Unit Graph
 foreign import _addNode :: EffectFn3 Graph String (Record Types.Node) String
 foreign import _updateNode :: EffectFn3 Graph String (Record Types.Node -> Record Types.Node) Unit
 foreign import _addEdge :: EffectFn4 Graph String String (Record Types.Edge) String
+foreign import _mergeNodeAttributes :: forall a. EffectFn3 Graph String a Unit
 --foreign import _updateEdge :: EffectFn4 Graph String String (Record Types.Edge) String
 foreign import _mapNodes :: forall a. Fn2 Graph (Record Types.Node -> a) (Array a)
 foreign import _forEachEdge :: EffectFn2 Graph (Record Types.Edge -> Effect Unit) Unit
@@ -49,9 +50,14 @@ removeNode :: Graph -> String -> Effect Unit
 removeNode g nId = pure $ g ... "dropNode" $ [nId]
 updateNode :: Graph -> Record Types.Node -> Effect Unit
 -- | See Types.compareNodes
-updateNode g node@{ id, hidden, highlighted } =
-  runEffectFn3 _updateNode g id (\n -> n { hidden = hidden
+updateNode g node@{ id, borderColor, color, equilateral, hidden, highlighted, type: t } =
+  runEffectFn3 _updateNode g id (\n -> n { borderColor = borderColor
+                                         , color = color
+                                         , equilateral = equilateral
+                                         , hidden = hidden
                                          , highlighted = highlighted })
+mergeNodeAttributes :: forall a. Graph -> Types.NodeId -> a -> Effect Unit
+mergeNodeAttributes = runEffectFn3 _mergeNodeAttributes
 forEachNode :: Graph -> (Record Types.Node -> Effect Unit) -> Effect Unit
 -- TODO Check this: how does FFI translate function of two arguments
 -- into PS \x y ?

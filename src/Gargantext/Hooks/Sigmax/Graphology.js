@@ -14,6 +14,10 @@ export function _updateNode(g, name, updater) {
   return g.updateNode(name, updater);
 }
 
+export function _mergeNodeAttributes(g, name, attrs) {
+  return g.mergeNodeAttributes(name, attrs);
+}
+
 export function _addEdge(g, source, target, e) {
   return g.addEdge(source, target, e);
 }

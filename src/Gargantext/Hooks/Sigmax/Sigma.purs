@@ -46,9 +46,8 @@ kill :: Sigma -> Effect Unit
 kill s = pure $ s ... "kill" $ []
 
 -- | Call the `refresh()` method on a sigmajs instance.
-refresh :: Sigma -> Effect Unit
-refresh = runEffectFn1 _refresh
---refresh s = pure $ s ... "refresh" $ []
+-- refresh :: Sigma -> Effect Unit
+-- refresh = runEffectFn1 _refresh
 
 -- | Type representing a sigmajs renderer.
 foreign import data Renderer :: Type

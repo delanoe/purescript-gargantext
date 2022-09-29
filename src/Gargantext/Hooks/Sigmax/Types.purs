@@ -72,9 +72,15 @@ type NodesMap = Map.Map String (Record Node)
 
 -- | When comparing nodes, we don't want to compare all fields. Only
 -- | some are relevant (when updating sigma graph).
+-- NOTE For some reason, `Graphology.updateNode` throws error if `type` is set
 compareNodes :: Record Node -> Record Node -> Boolean
-compareNodes n1 n2 = n1.hidden == n2.hidden &&
+compareNodes n1 n2 = n1.borderColor == n2.borderColor &&
+                     n1.color == n2.color &&
+                     n1.equilateral == n2.equilateral &&
+                     n1.hidden == n2.hidden &&
                      n1.highlighted == n2.highlighted
+
+-- TODO For edges, see `Sigmax.updateEdges` (`color` and `hidden`)
 
 emptyEdgeIds :: EdgeIds
 emptyEdgeIds = Set.empty

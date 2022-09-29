@@ -121,7 +121,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
                   pure unit
 
                 --newGraph <- Graphology.graphFromSigmaxGraph graph'
-                --gmax.refreshData sig newGraph
+                --Sigmax.refreshData sig newGraph
 
                 Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Ready)] no sigma" $ \sigma -> do
                   -- bind the click event only initially, when ref was empty
@@ -183,8 +183,8 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
 
         Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Ready)] no sigma" $ \sigma -> do
           Sigmax.performDiff sigma transformedGraph
-          Sigmax.updateEdges sigma tEdgesMap
-          Sigmax.updateNodes sigma tNodesMap
+          -- Sigmax.updateEdges sigma tEdgesMap
+          -- Sigmax.updateNodes sigma tNodesMap
           let edgesState = not $ SigmaxTypes.edgeStateHidden showEdges'
           -- here.log2 "[graphCpt] edgesState" edgesState
           Sigmax.setEdges sigma edgesState

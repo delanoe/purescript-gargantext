@@ -80,24 +80,24 @@ cleanupSigma sigma context = traverse_ kill (readSigma sigma)
     errorMsg = prefix <> "Error killing sigma:"
     successMsg = prefix <> "Killed sigma"
 
-refreshData :: Sigma.Sigma -> Graphology.Graph -> Effect Unit
-refreshData sigma graph = do
-  console.log clearingMsg
-  Graphology.clear sigmaGraph
-  console.log readingMsg
-  _ <- Graphology.updateWithGraph sigmaGraph graph
+-- refreshData :: Sigma.Sigma -> Graphology.Graph -> Effect Unit
+-- refreshData sigma graph = do
+--   console.log clearingMsg
+--   Graphology.clear sigmaGraph
+--   console.log readingMsg
+--   _ <- Graphology.updateWithGraph sigmaGraph graph
 
-  -- refresh
-  console.log refreshingMsg
-  Sigma.refresh sigma
-  --pure $ either (console.log2 errorMsg) refresh
-  where
-    sigmaGraph = Sigma.graph sigma
-    refresh _ = console.log refreshingMsg *> Sigma.refresh sigma
-    clearingMsg = "[refreshData] Clearing existing graph data"
-    readingMsg = "[refreshData] Reading graph data"
-    refreshingMsg = "[refreshData] Refreshing graph"
-    errorMsg = "[refreshData] Error reading graph data:"
+--   -- refresh
+--   console.log refreshingMsg
+--   Sigma.refresh sigma
+--   --pure $ either (console.log2 errorMsg) refresh
+--   where
+--     sigmaGraph = Sigma.graph sigma
+--     refresh _ = console.log refreshingMsg *> Sigma.refresh sigma
+--     clearingMsg = "[refreshData] Clearing existing graph data"
+--     readingMsg = "[refreshData] Reading graph data"
+--     refreshingMsg = "[refreshData] Refreshing graph"
+--     errorMsg = "[refreshData] Error reading graph data:"
 
 dependOnSigma :: Sigma -> String -> (Sigma.Sigma -> Effect Unit) -> Effect Unit
 dependOnSigma sigma notFoundMsg f = do
@@ -151,37 +151,37 @@ setEdges sigma val = do
   Sigma.setSettings sigma settings
 
 
-updateEdges :: Sigma.Sigma -> ST.EdgesMap -> Effect Unit
-updateEdges sigma edgesMap = do
-  Graphology.forEachEdge (Sigma.graph sigma) \e -> do
-    let mTEdge = Map.lookup e.id edgesMap
-    case mTEdge of
-      Nothing -> error $ "Edge id " <> e.id <> " not found in edgesMap"
-      (Just {color: tColor, hidden: tHidden}) -> do
-        _ <- pure $ (e .= "color") tColor
-        _ <- pure $ (e .= "hidden") tHidden
-        pure unit
-  --Sigma.refresh sigma
+-- updateEdges :: Sigma.Sigma -> ST.EdgesMap -> Effect Unit
+-- updateEdges sigma edgesMap = do
+--   Graphology.forEachEdge (Sigma.graph sigma) \e -> do
+--     let mTEdge = Map.lookup e.id edgesMap
+--     case mTEdge of
+--       Nothing -> error $ "Edge id " <> e.id <> " not found in edgesMap"
+--       (Just {color: tColor, hidden: tHidden}) -> do
+--         _ <- pure $ (e .= "color") tColor
+--         _ <- pure $ (e .= "hidden") tHidden
+--         pure unit
+--   --Sigma.refresh sigma
 
 
-updateNodes :: Sigma.Sigma -> ST.NodesMap -> Effect Unit
-updateNodes sigma nodesMap = do
-  Graphology.forEachNode (Sigma.graph sigma) \n -> do
-    let mTNode = Map.lookup n.id nodesMap
-    case mTNode of
-      Nothing -> error $ "Node id " <> n.id <> " not found in nodesMap"
-      (Just { borderColor: tBorderColor
-             , color: tColor
-             , equilateral: tEquilateral
-             , hidden: tHidden
-             , type: tType }) -> do
-        _ <- pure $ (n .= "borderColor") tBorderColor
-        _ <- pure $ (n .= "color") tColor
-        _ <- pure $ (n .= "equilateral") tEquilateral
-        _ <- pure $ (n .= "hidden") tHidden
-        _ <- pure $ (n .= "type") tType
-        pure unit
-  --Sigma.refresh sigma
+-- updateNodes :: Sigma.Sigma -> ST.NodesMap -> Effect Unit
+-- updateNodes sigma nodesMap = do
+--   Graphology.forEachNode (Sigma.graph sigma) \n -> do
+--     let mTNode = Map.lookup n.id nodesMap
+--     case mTNode of
+--       Nothing -> error $ "Node id " <> n.id <> " not found in nodesMap"
+--       (Just { borderColor: tBorderColor
+--              , color: tColor
+--              , equilateral: tEquilateral
+--              , hidden: tHidden
+--              , type: tType }) -> do
+--         _ <- pure $ (n .= "borderColor") tBorderColor
+--         _ <- pure $ (n .= "color") tColor
+--         _ <- pure $ (n .= "equilateral") tEquilateral
+--         _ <- pure $ (n .= "hidden") tHidden
+--         _ <- pure $ (n .= "type") tType
+--         pure unit
+--   --Sigma.refresh sigma
 
 
 -- | Toggles item visibility in the selected set
@@ -230,7 +230,12 @@ performDiff sigma g = do
   traverse_ (Graphology.removeEdge sigmaGraph) removeEdges
   traverse_ (Graphology.removeNode sigmaGraph) removeNodes
   traverse_ (Graphology.updateEdge sigmaGraph) updateEdges
-  traverse_ (Graphology.updateNode sigmaGraph) updateNodes
+  --traverse_ (Graphology.updateNode sigmaGraph) updateNodes
+  traverse_ (\n -> Graphology.mergeNodeAttributes sigmaGraph n.id { borderColor: n.borderColor
+                                                                  , color: n.color
+                                                                  , equilateral: n.equilateral
+                                                                  , hidden: n.hidden
+                                                                  , highlighted: n.highlighted }) updateNodes
   --Sigma.refresh sigma
   -- TODO Use FA2Layout here
   --Sigma.killForceAtlas2 sigma
