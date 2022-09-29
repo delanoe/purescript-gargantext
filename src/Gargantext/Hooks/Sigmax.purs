@@ -234,9 +234,31 @@ performDiff sigma g = do
   --Sigma.killForceAtlas2 sigma
   where
     sigmaGraph = Sigma.graph sigma
-    sigmaEdgeIds = Graphology.edgeIds sigmaGraph
-    sigmaNodeIds = Graphology.nodeIds sigmaGraph
-    {add: Tuple addEdges addNodes, remove: Tuple removeEdges removeNodes} = ST.sigmaDiff sigmaEdgeIds sigmaNodeIds g
+    {add: Tuple addEdges addNodes, remove: Tuple removeEdges removeNodes} = sigmaDiff sigmaGraph g
+
+
+
+-- | Compute a diff between current sigma graph and whatever is set via custom controls
+sigmaDiff :: Graphology.Graph -> ST.Graph -> Record ST.SigmaDiff
+sigmaDiff graph g@(ST.Graph {nodes, edges}) = {add, remove, update}
+  where
+    add = Tuple addEdges addNodes
+    remove = Tuple removeEdges removeNodes
+    -- TODO
+    update = Tuple Seq.empty Seq.empty
+
+    addG = ST.edgesFilter (\e -> not (Set.member e.id sigmaEdgeIds)) $
+           ST.nodesFilter (\n -> not (Set.member n.id sigmaNodeIds)) g
+    addEdges = ST.graphEdges addG
+    addNodes = ST.graphNodes addG
+
+    removeEdges = Set.difference sigmaEdgeIds (Set.fromFoldable $ Seq.map _.id edges)
+    removeNodes = Set.difference sigmaNodeIds (Set.fromFoldable $ Seq.map _.id nodes)
+
+    sigmaNodeIds = Graphology.nodeIds graph
+    sigmaEdgeIds = Graphology.edgeIds graph
+
+
 -- DEPRECATED
 
 markSelectedEdges :: Sigma.Sigma -> ST.EdgeIds -> ST.EdgesMap -> Effect Unit
@@ -268,9 +290,3 @@ markSelectedNodes sigma selectedNodeIds graphNodes = do
         _ <- pure $ (n .= "color") newColor
         pure unit
   Sigma.refresh sigma
-
-getEdges :: Sigma.Sigma -> Effect (Array (Record ST.Edge))
-getEdges sigma = Sigma.getEdges sigma
-
-getNodes :: Sigma.Sigma -> Effect (Array (Record ST.Node))
-getNodes sigma = Sigma.getNodes sigma

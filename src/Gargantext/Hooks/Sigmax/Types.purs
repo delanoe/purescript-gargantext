@@ -84,6 +84,7 @@ type SigmaDiff =
   (
     add :: Tuple (Seq.Seq (Record Edge)) (Seq.Seq (Record Node))
   , remove :: Tuple EdgeIds NodeIds
+  , update :: Tuple (Seq.Seq (Record Edge)) (Seq.Seq (Record Node))
   )
 
 graphEdges :: SGraph -> Seq.Seq (Record Edge)
@@ -123,20 +124,6 @@ sub graph (Graph {nodes, edges}) = newGraph
                     && (not $ Set.member e.target nodeIds)
     filteredEdges = edgesFilter edgeFilterFunc graph
     newGraph = nodesFilter (\n -> not (Set.member n.id nodeIds)) filteredEdges
-
--- | Compute a diff between current sigma graph and whatever is set via customer controls
-sigmaDiff :: EdgeIds -> NodeIds -> SGraph -> Record SigmaDiff
-sigmaDiff sigmaEdges sigmaNodes g@(Graph {nodes, edges}) = {add, remove}
-  where
-    add = Tuple addEdges addNodes
-    remove = Tuple removeEdges removeNodes
-
-    addG = edgesFilter (\e -> not (Set.member e.id sigmaEdges)) $ nodesFilter (\n -> not (Set.member n.id sigmaNodes)) g
-    addEdges = graphEdges addG
-    addNodes = graphNodes addG
-
-    removeEdges = Set.difference sigmaEdges (Set.fromFoldable $ Seq.map _.id edges)
-    removeNodes = Set.difference sigmaNodes (Set.fromFoldable $ Seq.map _.id nodes)
 
 neighbours :: SGraph -> Seq.Seq (Record Node) -> Seq.Seq (Record Node)
 neighbours g nodes = Seq.fromFoldable $ Set.unions [Set.fromFoldable nodes, sources, targets]

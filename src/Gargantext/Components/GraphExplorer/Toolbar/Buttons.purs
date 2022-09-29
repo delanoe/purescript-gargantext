@@ -88,8 +88,8 @@ cameraButton { id
                                      , show $ fromEnum $ DDT.hour nowt
                                      , show $ fromEnum $ DDT.minute nowt
                                      , show $ fromEnum $ DDT.second nowt ]
-        edges <- Sigmax.getEdges s
-        nodes <- Sigmax.getNodes s
+        edges <- Sigma.getEdges s
+        nodes <- Sigma.getNodes s
         let graphData = GET.GraphData $ hyperdataGraph { edges = map GEU.stEdgeToGET edges
                                                        , nodes = GEU.normalizeNodes $ map GEU.stNodeToGET nodes }
         let cameras = map Sigma.toCamera $ Sigma.cameras s
