@@ -120,7 +120,8 @@ pkgs.mkShell {
     build-zephyr
     build
     minify-bundle
-    pkgs.closurecompiler
+    #pkgs.closurecompiler
+    pkgs.esbuild
     pkgs.minify
     pkgs.nodejs
     pkgs.python  # needed for msgpack etc
