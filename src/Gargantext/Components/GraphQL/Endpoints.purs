@@ -10,7 +10,7 @@ import Effect.Class (liftEffect)
 import Gargantext.Components.GraphQL (getClient, queryGql)
 import Gargantext.Components.GraphQL.IMT as GQLIMT
 import Gargantext.Components.GraphQL.Node (Node, nodeParentQuery, nodesQuery)
-import Gargantext.Components.GraphQL.Team (TeamMember, teamQuery)
+import Gargantext.Components.GraphQL.Team (Team, teamQuery)
 import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, treeFirstLevelQuery)
 import Gargantext.Components.GraphQL.User (UserInfo, userInfoQuery)
 import Gargantext.Config.REST (RESTError(..), AffRESTError)
@@ -73,7 +73,7 @@ getTreeFirstLevel session id = do
   liftEffect $ here.log2 "[getTreeFirstLevel] tree first level" tree
   pure $ Right tree -- TODO: error handling
 
-getTeam :: Session -> Int -> AffRESTError (Array TeamMember)
+getTeam :: Session -> Int -> AffRESTError Team
 getTeam session id = do
   { team } <- queryGql session "get team" $ teamQuery `withVars` { id }
   liftEffect $ here.log2 "[getTree] data" team

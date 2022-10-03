@@ -8,12 +8,13 @@ import Data.Set as Set
 import Data.String as S
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (Elevation(..), Variant(..))
 import Gargantext.Components.Forest.Tree.Node.Action (icon, text)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Types as GT
 import Gargantext.Utils (toggleSet)
-import Gargantext.Utils.Glyphicon (glyphicon)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -58,36 +59,55 @@ textInputBoxCpt = here.component "textInputBox" cpt where
     where
       content false _ = (R.fragment [])
       content true renameNodeNameRef =
-        H.div { className: "from-group row" }
-        [ textInput renameNodeNameRef
-        , submitBtn renameNodeNameRef
-        , cancelBtn
+        H.div
+        { className: "d-flex align-items-center" }
+        [
+          textInput renameNodeNameRef
+        ,
+          B.wad_ [ "d-inline-block", "w-3" ]
+        ,
+          submitBtn renameNodeNameRef
+        ,
+          B.wad_ [ "d-inline-block", "w-3" ]
+        ,
+          cancelBtn
         ]
+
       textInput renameNodeNameRef =
-        H.div { className: "col-8" }
-          [ inputWithEnter {
-                autoFocus: true
-              , className: "form-control"
-              , defaultValue: text
-              , onBlur: R.setRef renameNodeNameRef
-              , onEnter: submit renameNodeNameRef
-              , onValueChanged: R.setRef renameNodeNameRef
-              , placeholder: (boxName <> " Node")
-              , type: "text"
-              }
-          ]
+        H.div
+        {}
+        [
+          inputWithEnter
+          { autoFocus: true
+          , className: "form-control"
+          , defaultValue: text
+          , onBlur: R.setRef renameNodeNameRef
+          , onEnter: submit renameNodeNameRef
+          , onValueChanged: R.setRef renameNodeNameRef
+          , placeholder: (boxName <> " Node")
+          , type: "text"
+          }
+        ]
+
       submitBtn renameNodeNameRef =
-        H.a { type: "button"
-            , title: "Submit"
-            , on: { click: submit renameNodeNameRef }
-            , className: "col-2 " <> glyphicon "floppy-o" } []
+        B.iconButton
+        { callback: submit renameNodeNameRef
+        , title: "Submit"
+        , name: "floppy-o"
+        , elevation: Level1
+        }
+
       cancelBtn =
-        H.a { type: "button", title: "Cancel", on: { click }
-            , className: "text-danger col-2 " <> glyphicon "times" } []
+        B.iconButton
+        { callback: const $ T.write_ false isOpen
+        , variant: Danger
+        , title: "Cancel"
+        , name: "times"
+        }
+
       submit ref _ = do
         launchAff_ $ dispatch (boxAction $ R.readRef ref)
         T.write_ false isOpen
-      click _ = T.write_ false isOpen
 
 type DefaultText = String
 

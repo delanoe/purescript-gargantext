@@ -33,46 +33,58 @@ forgotPasswordCpt = here.component "forgotPassword" cpt where
   cpt { backend, sessions } _ = do
     email <- T.useBox ""
     message <- T.useBox ""
+    disabled <- T.useBox false
     
     pure $ H.div { className: "row" }
       [ H.form { className: "text-center col-md-12" }
         [ H.h4 {} [ H.text "Forgot password" ]
         , messageDisplay { message }
         , formGroup
-          [ emailInput email ]
-        , submitButton { backend, email, sessions, message }
+          [ emailInput { email, disabled} ]
+        , submitButton { backend, email, sessions, message, disabled }
         ]
       ]
 
-emailInput :: forall cell. T.ReadWrite cell Email => cell -> R.Element
-emailInput value = F.bindInput { value
-                               , type: "email"
-                               , className: "form-control"
-                               , id: "id_email"
-                               , placeholder: "email"
-                               , name: "email"
-                               , maxLength: "254" }
+emailInput :: R2.Leaf (email :: T.Box Email, disabled :: T.Box Boolean)
+emailInput = R2.leaf emailInputCpt
+
+emailInputCpt :: R.Component (email :: T.Box Email, disabled :: T.Box Boolean)
+emailInputCpt = here.component "emailInput" cpt where
+  cpt { email, disabled } _ = do
+    disabled' <- T.useLive T.unequal disabled  
+    pure $ F.bindInput { value: email
+                  , type: "email"
+                  , className: "form-control"
+                  , id: "id_email"
+                  , placeholder: "email"
+                  , name: "email"
+                  , maxLength: "254"
+                  , disabled: disabled' }
 
 type SubmitButtonProps =
-  ( email   :: T.Box Email
-  , message :: T.Box String
+  ( email    :: T.Box Email
+  , message  :: T.Box String
+  , disabled :: T.Box Boolean
   | Props )
 
 submitButton :: R2.Leaf SubmitButtonProps
 submitButton = R2.leafComponent submitButtonCpt
 submitButtonCpt :: R.Component SubmitButtonProps
 submitButtonCpt = here.component "submitButton" cpt where
-  cpt { backend, email, sessions, message} _ = do
+  cpt { backend, email, sessions, message, disabled} _ = do
     email' <- T.useLive T.unequal email
+    disabled' <- T.useLive T.unequal disabled
     
     pure $ H.div {className: "form-group text-center"} 
       [ H.button { className: "btn btn-primary"
+                 , disabled: disabled'
                  , on: { click: click email' }}
         [ H.text "Submit" ]
       ]
     where
       click :: Email -> R.SyntheticEvent DE.MouseEvent -> Effect Unit
       click email' e = do
+        liftEffect $ T.write_ true disabled
         E.preventDefault e
         here.log2 "email" email'
         here.log2 "backend" backend
@@ -81,7 +93,9 @@ submitButtonCpt = here.component "submitButton" cpt where
           res <- postForgotPasswordRequest backend email'
           liftEffect $ here.log2 "res" res
           liftEffect $ case res of
-            Left s -> T.write_ s message
+            Left s -> do
+              T.write_ false disabled
+              T.write_ s message
             Right _ -> T.write_ "Request sent!" message
 
 messageDisplay :: R2.Leaf (message :: T.Box String)

@@ -161,7 +161,7 @@ treeLoadedCpt = here.component "treeLoaded" cpt where
       edit effect =
         [
           B.iconButton
-          { name: "pencil"
+          { name: "plus"
           , className: "ml-1"
           , variant: Secondary
           , callback: const effect

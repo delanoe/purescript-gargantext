@@ -327,8 +327,8 @@ performAction = performAction' where
   performAction' (SharePublic { params }) p = sharePublic params p
   performAction' (AddContact params) p = addContact params p
   performAction' (AddNode name nodeType) p = addNode' name nodeType p
-  performAction' (UploadFile nodeType fileType fileFormat mName contents selection) p =
-    uploadFile' nodeType fileType fileFormat mName contents p selection
+  performAction' (UploadFile nodeType fileType fileFormat lang mName contents selection) p =
+    uploadFile' nodeType fileType fileFormat lang mName contents p selection
   performAction' (UploadArbitraryFile fileFormat mName blob selection) p =
     uploadArbitraryFile' fileFormat mName blob p selection
   performAction' DownloadNode _ = liftEffect $ here.log "[performAction] DownloadNode"
@@ -357,9 +357,9 @@ performAction = performAction' where
       hideModal window $ "#" <> (show nodeId)
 
   refreshFolders p@{ boxes: { reloadForest }, reload } = do
+    closeBox p
     liftEffect $ T2.reload reload
     liftEffect $ T2.reload reloadForest
-    closeBox p
 
   deleteNode' nt p@{ nodeId: id, parentId: parent_id, session } = do
     case nt of
@@ -391,8 +391,8 @@ performAction = performAction' where
   addContact params { nodeId: id, session } =
     void $ Contact.contactReq session id params
 
-  uploadFile' nodeType fileType fileFormat mName contents { boxes: { errors, tasks }, nodeId: id, session } selection = do
-    eTask <- uploadFile { contents, fileType, fileFormat, id, nodeType, mName, selection, session }
+  uploadFile' nodeType fileType fileFormat lang mName contents { boxes: { errors, tasks }, nodeId: id, session } selection = do
+    eTask <- uploadFile { contents, fileType, fileFormat, lang, id, nodeType, mName, selection, session }
     handleRESTError errors eTask $ \task -> liftEffect $ do
       GAT.insert id task tasks
       here.log2 "[performAction] UploadFile, uploaded, task:" task
