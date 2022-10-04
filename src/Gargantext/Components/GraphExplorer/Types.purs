@@ -51,7 +51,7 @@ instance JSON.ReadForeign Node where
       Record.rename idP id_P $
       Record.rename typeP type_P $
       Record.rename x_coordP xP $
-      Record.rename y_coordP yP inst
+      Record.rename y_coordP yP $ inst
 instance JSON.WriteForeign Node where
   writeImpl (Node nd) = JSON.writeImpl $
                         Record.rename id_P idP $

@@ -153,7 +153,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
                   -- Default camera: slightly de-zoom the graph to avoid
                   -- nodes sticking to the container borders
                   Nothing                           ->
-                    Sigma.updateCamera sig { ratio: 1.1, x: 0.0, y: 0.0 }
+                    Sigma.updateCamera sig { ratio: 1.1, x: 0.5, y: 0.5 }
 
                 -- Reload Sigma on Theme changes
                 -- TODO
