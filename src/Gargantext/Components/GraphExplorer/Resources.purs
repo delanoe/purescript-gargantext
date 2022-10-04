@@ -52,7 +52,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
   cpt { elRef
       , fa2Ref
       , sigmaRef
-      , forceAtlas2Settings: fa2
+      , forceAtlas2Settings: fa2Settings
       , transformedGraph
       } _ = do
 
@@ -136,7 +136,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
                 if startForceAtlas' then
                   case R.readRef fa2Ref of
                     Nothing -> do
-                      fa2 <- ForceAtlas2.init (Sigma.graph sig)
+                      fa2 <- ForceAtlas2.init (Sigma.graph sig) fa2Settings
                       ForceAtlas2.start fa2
                       R.setRef fa2Ref (Just fa2)
                     Just fa2 -> do
@@ -389,7 +389,7 @@ type ForceAtlas2Settings =
   -- , worker                      :: Boolean
   )
 
-forceAtlas2Settings :: {|ForceAtlas2Settings}
+forceAtlas2Settings :: Record ForceAtlas2Settings
 forceAtlas2Settings =
   { adjustSizes                    : true
   , barnesHutOptimize              : true
@@ -405,7 +405,7 @@ forceAtlas2Settings =
   , outboundAttractionDistribution : false
   , scalingRatio                   : 1000.0
   , skipHidden                     : false
-  , slowDown                       : 1.0
+  , slowDown                       : 0.2
   , startingIterations             : 10.0
   , strongGravityMode              : false
   }

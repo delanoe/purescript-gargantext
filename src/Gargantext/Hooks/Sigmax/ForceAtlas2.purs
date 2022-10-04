@@ -21,14 +21,14 @@ foreign import data FA2Layout :: Type
 
 -- TODO inferSettings
 -- TODO init with settings
-foreign import _init :: EffectFn1 Graphology.Graph FA2Layout
+foreign import _init :: forall settings. EffectFn2 Graphology.Graph settings FA2Layout
 foreign import _start :: EffectFn1 FA2Layout Unit
 foreign import _stop :: EffectFn1 FA2Layout Unit
 foreign import _kill :: EffectFn1 FA2Layout Unit
 foreign import _isRunning :: EffectFn1 FA2Layout Boolean
 
-init :: Graphology.Graph -> Effect FA2Layout
-init = runEffectFn1 _init
+init :: forall settings. Graphology.Graph -> settings -> Effect FA2Layout
+init = runEffectFn2 _init
 
 start :: FA2Layout -> Effect Unit
 start = runEffectFn1 _start

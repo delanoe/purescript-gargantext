@@ -2,11 +2,13 @@
 
 // https://graphology.github.io/standard-library/layout-forceatlas2.html
 
+// import forceAtlas2 from 'graphology-layout-forceatlas2';
 import FA2Layout from 'graphology-layout-forceatlas2/worker';
 
-export function _init(graph) {
+export function _init(graph, settings) {
+  // let inferred = forceAtlas2.inferSettings(graph);
   return new FA2Layout(graph, {
-    settings: {gravity: 1},
+    settings,
     getEdgeWeight: 'weight'
   })
 }
