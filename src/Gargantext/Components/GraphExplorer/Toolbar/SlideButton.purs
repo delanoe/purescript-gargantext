@@ -2,6 +2,7 @@ module Gargantext.Components.GraphExplorer.Toolbar.SlideButton
   ( Props
   , sizeButton
   , labelSizeButton
+  , labelRenderedSizeThresholdButton
   , mouseSelectorSizeButton
   ) where
 
@@ -73,10 +74,31 @@ labelSizeButton sigmaRef state =
         Just newValue ->
           Sigmax.dependOnSigma sigma "[labelSizeButton] sigma: Nothing" $ \s -> do
             Sigma.setSettings s {
-              defaultLabelSize: newValue
+                defaultLabelSize: newValue
               , drawLabels: true
+              , labelSize: newValue
               , maxNodeSize: newValue / 2.5
                 --, labelSizeRatio: newValue / 2.5
+              }
+            T.write_ newValue state
+    }
+
+labelRenderedSizeThresholdButton :: R.Ref Sigmax.Sigma -> T.Box Number -> R.Element
+labelRenderedSizeThresholdButton sigmaRef state =
+  sizeButton {
+      state
+    , caption: "Label rendered size threshold"
+    , min: 0.0
+    , max: 10.0
+    , onChange: \e -> do
+      let sigma = R.readRef sigmaRef
+      let newValue' = DN.fromString $ R.unsafeEventValue e
+      case newValue' of
+        Nothing -> pure unit
+        Just newValue ->
+          Sigmax.dependOnSigma sigma "[labelRenderdSizeThresholdButton] sigma: Nothing" $ \s -> do
+            Sigma.setSettings s {
+                labelRenderedSizeThreshold: newValue
               }
             T.write_ newValue state
     }

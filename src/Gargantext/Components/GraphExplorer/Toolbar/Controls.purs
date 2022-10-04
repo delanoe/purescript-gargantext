@@ -16,7 +16,7 @@ import Gargantext.Components.GraphExplorer.Resources as Graph
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Toolbar.Buttons (centerButton, cameraButton, edgesToggleButton, louvainToggleButton, pauseForceAtlasButton, multiSelectEnabledButton)
 import Gargantext.Components.GraphExplorer.Toolbar.RangeControl (edgeConfluenceControl, edgeWeightControl, nodeSizeControl)
-import Gargantext.Components.GraphExplorer.Toolbar.SlideButton (labelSizeButton, mouseSelectorSizeButton)
+import Gargantext.Components.GraphExplorer.Toolbar.SlideButton (labelSizeButton, labelRenderedSizeThresholdButton, mouseSelectorSizeButton)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
@@ -56,6 +56,9 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     , graphId
     , graphStage
     , hyperdataGraph
+    , labelRenderedSizeThreshold
+    , labelSize
+    , mouseSelectorSize
     , multiSelectEnabled
     , nodeSize
     , selectedNodeIds
@@ -63,8 +66,6 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     , showLouvain
     , showSidebar
     , sideTab
-    , mouseSelectorSize
-    , labelSize
     } <- GraphStore.use
 
     forceAtlasState'    <- R2.useLive' forceAtlasState
@@ -262,6 +263,24 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             , state: nodeSize }
 
           ]
+        ,
+          H.div
+          { className: "d-flex justify-content-between" }
+          [
+            -- change level
+            -- file upload
+            -- run demo
+            -- search button
+            -- search topics
+            labelRenderedSizeThresholdButton sigmaRef labelRenderedSizeThreshold
+          -- ,
+          --   -- labels size: 1-4
+          --   nodeSizeControl
+          --   { range: nodeSizeRange
+          --   , state: nodeSize }
+
+          ]
+
         ]
       ]
 
