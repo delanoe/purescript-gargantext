@@ -32,6 +32,7 @@ import Gargantext.Components.GraphExplorer.Resources as Graph
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.GraphExplorer.Utils as GEU
 import Gargantext.Hooks.Sigmax as Sigmax
+import Gargantext.Hooks.Sigmax.Camera as Camera
 import Gargantext.Hooks.Sigmax.Graphology as Graphology
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
@@ -54,7 +55,7 @@ centerButton sigmaRef = B.button
   , callback: \_ -> do
       let sigma = R.readRef sigmaRef
       Sigmax.dependOnSigma sigma "[centerButton] sigma: Nothing" $ \s ->
-        Sigma.goToAllCameras s {x: 0.0, y: 0.0, ratio: 1.0, angle: 0.0}
+        Camera.updateCamera (Camera.camera s) Camera.defaultCamera
   }
   [ H.text "Center" ]
 
@@ -96,10 +97,7 @@ cameraButton { id
             nodes = Graphology.nodes graph
             graphData = GET.GraphData $ hyperdataGraph { edges = A.fromFoldable $ Seq.map GEU.stEdgeToGET edges
                                                        , nodes = A.fromFoldable $ GEU.normalizeNodes $ Seq.map GEU.stNodeToGET nodes }
-        let cameras = map Sigma.toCamera $ Sigma.cameras s
-        let camera = case cameras of
-              [c] -> GET.Camera { ratio: c.ratio, x: c.x, y: c.y }
-              _   -> GET.Camera { ratio: 1.0, x: 0.0, y: 0.0 }
+        let camera = Camera.toCamera $ Camera.camera s
         let hyperdataGraph' = GET.HyperdataGraph { graph: graphData, mCamera: Just camera }
         launchAff_ $ do
           eClonedGraphId <- cloneGraph { id, hyperdataGraph: hyperdataGraph', session }

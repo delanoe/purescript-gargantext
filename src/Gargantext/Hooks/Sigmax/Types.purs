@@ -13,7 +13,7 @@ import Data.Tuple (Tuple(..))
 import Partial.Unsafe (unsafePartial)
 import Prelude (class Eq, class Show, map, ($), (&&), (==), (||), (<$>), mod, not)
 
-import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Components.GraphExplorer.GraphTypes as GEGT
 import Gargantext.Data.Louvain as Louvain
 import Gargantext.Types as GT
 
@@ -47,7 +47,7 @@ type Node = (
   , type        :: String  -- available types: circle, cross, def, diamond, equilateral, pacman, square, star
   , x           :: Number
   , y           :: Number
-  , _original   :: GET.Node
+  , _original   :: GEGT.Node
   )
 
 type Edge = (
@@ -62,7 +62,7 @@ type Edge = (
   , targetNode :: Record Node
   , weight     :: Number
   , weightIdx  :: Int
-  , _original  :: GET.Edge
+  , _original  :: GEGT.Edge
   )
 
 type NodeIds = Set.Set NodeId

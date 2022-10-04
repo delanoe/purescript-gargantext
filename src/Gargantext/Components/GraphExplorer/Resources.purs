@@ -19,6 +19,7 @@ import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.Themes (darksterTheme)
 import Gargantext.Components.Themes as Themes
 import Gargantext.Hooks.Sigmax as Sigmax
+import Gargantext.Hooks.Sigmax.Camera as Camera
 import Gargantext.Hooks.Sigmax.Graphology as Graphology
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas2
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
@@ -148,12 +149,12 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
                     Just fa2 -> ForceAtlas2.stop fa2
 
                 case mCamera of
-                  Just (GET.Camera { ratio, x, y }) -> do
-                    Sigma.updateCamera sig { ratio, x, y }
+                  Just cam -> do
+                    Camera.updateCamera (Camera.camera sig) cam
                   -- Default camera: slightly de-zoom the graph to avoid
                   -- nodes sticking to the container borders
-                  Nothing                           ->
-                    Sigma.updateCamera sig { ratio: 1.1, x: 0.5, y: 0.5 }
+                  Nothing ->
+                    Camera.updateCamera (Camera.camera sig) Camera.defaultCamera
 
                 -- Reload Sigma on Theme changes
                 -- TODO

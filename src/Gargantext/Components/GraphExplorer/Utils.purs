@@ -11,16 +11,17 @@ import Data.Foldable (maximum, minimum)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (wrap)
 import Data.Sequence as Seq
+import Gargantext.Components.GraphExplorer.GraphTypes as GEGT
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax.Types as ST
 import Gargantext.Utils (getter)
 import Gargantext.Utils.Seq as GUS
 
-stEdgeToGET :: Record ST.Edge -> GET.Edge
+stEdgeToGET :: Record ST.Edge -> GEGT.Edge
 stEdgeToGET { _original } = _original
 
-stNodeToGET :: Record ST.Node -> GET.Node
-stNodeToGET { id, label, x, y, _original: GET.Node { attributes, size, type_ } } = GET.Node {
+stNodeToGET :: Record ST.Node -> GEGT.Node
+stNodeToGET { id, label, x, y, _original: GEGT.Node { attributes, size, type_ } } = GEGT.Node {
     attributes
   , children: []
   , id_: id
@@ -33,11 +34,11 @@ stNodeToGET { id, label, x, y, _original: GET.Node { attributes, size, type_ } }
 
 -----------------------------------------------------------------------
 
-normalizeNodes :: Seq.Seq GET.Node -> Seq.Seq GET.Node
+normalizeNodes :: Seq.Seq GEGT.Node -> Seq.Seq GEGT.Node
 normalizeNodes ns = Seq.map normalizeNode ns
   where
-    xs = map (\(GET.Node { x }) -> x) ns
-    ys = map (\(GET.Node { y }) -> y) ns
+    xs = map (\(GEGT.Node { x }) -> x) ns
+    ys = map (\(GEGT.Node { y }) -> y) ns
     mMinx = minimum xs
     mMaxx = maximum xs
     mMiny = minimum ys
@@ -56,12 +57,12 @@ normalizeNodes ns = Seq.map normalizeNode ns
     ydivisor = case mYrange of
       Nothing -> 1.0
       Just ydiv -> 1.0 / ydiv
-    normalizeNode (GET.Node n@{ x, y }) = GET.Node $ n { x = x * xdivisor
-                                                       , y = y * ydivisor }
+    normalizeNode (GEGT.Node n@{ x, y }) = GEGT.Node $ n { x = x * xdivisor
+                                                         , y = y * ydivisor }
 
 ------------------------------------------------------------------------
 
-takeGreatestNodeByCluster :: GET.HyperdataGraph -> Int -> Int -> Array GET.Node
+takeGreatestNodeByCluster :: GET.HyperdataGraph -> Int -> Int -> Array GEGT.Node
 takeGreatestNodeByCluster graphData take clusterId
   =   graphData
   #   getter _.graph
@@ -77,7 +78,7 @@ takeGreatestNodeByCluster graphData take clusterId
   >>> A.takeEnd take
   >>> A.reverse
 
-countNodeByCluster :: GET.HyperdataGraph -> Int -> GET.ClusterCount
+countNodeByCluster :: GET.HyperdataGraph -> Int -> GEGT.ClusterCount
 countNodeByCluster graphData clusterId
   =   graphData
   #   getter _.graph

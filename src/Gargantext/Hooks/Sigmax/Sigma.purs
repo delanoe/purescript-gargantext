@@ -190,44 +190,19 @@ sigmaEasing =
   , cubicInOut : SigmaEasing "cubicInOut"
   }
 
-type CameraProps =
-  ( x :: Number
-  , y :: Number
-  , ratio :: Number
-  , angle :: Number
-  )
+-- DEPRECATED
+-- -- | Get an array of a sigma instance's `cameras`.
+-- cameras :: Sigma -> Array CameraInstance
+-- cameras s = Object.values cs
+--   where
+--     -- For some reason, `sigma.cameras` is an object with integer keys.
+--     cs = s .. "cameras" :: Object.Object CameraInstance
 
-foreign import data CameraInstance' :: Row Type
-type CameraInstance = { | CameraInstance' }
+-- goTo :: Record CameraProps -> CameraInstance -> Effect Unit
+-- goTo props cam = pure $ cam ... "goTo" $ [props]
 
--- | Get an array of a sigma instance's `cameras`.
-cameras :: Sigma -> Array CameraInstance
-cameras s = Object.values cs
-  where
-    -- For some reason, `sigma.cameras` is an object with integer keys.
-    cs = s .. "cameras" :: Object.Object CameraInstance
-
-toCamera :: CameraInstance -> Record CameraProps
-toCamera c = { angle, ratio, x, y }
-  where
-    angle = c .. "angle" :: Number
-    ratio = c .. "ratio" :: Number
-    x = c .. "x" :: Number
-    y = c .. "y" :: Number
-
-updateCamera :: Sigma -> { ratio :: Number, x :: Number, y :: Number } -> Effect Unit
-updateCamera sig { ratio, x, y } = do
-  let camera = sig .. "camera"
-  _ <- pure $ (camera .= "ratio") ratio
-  _ <- pure $ (camera .= "x") x
-  _ <- pure $ (camera .= "y") y
-  pure unit
-
-goTo :: Record CameraProps -> CameraInstance -> Effect Unit
-goTo props cam = pure $ cam ... "goTo" $ [props]
-
-goToAllCameras :: Sigma -> Record CameraProps -> Effect Unit
-goToAllCameras s props = traverse_ (goTo props) $ cameras s
+-- goToAllCameras :: Sigma -> Record CameraProps -> Effect Unit
+-- goToAllCameras s props = traverse_ (goTo props) $ cameras s
 
 takeScreenshot :: Sigma -> Effect String
 takeScreenshot =  runEffectFn1 _takeScreenshot

@@ -17,6 +17,7 @@ import Effect (Effect)
 import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.GraphExplorer.Frame.DocFocus (docFocus)
+import Gargantext.Components.GraphExplorer.GraphTypes as GEGT
 import Gargantext.Components.GraphExplorer.Resources as Graph
 import Gargantext.Components.GraphExplorer.Sidebar as GES
 import Gargantext.Components.GraphExplorer.Store as GraphStore
@@ -289,7 +290,7 @@ convert :: GET.GraphData -> Tuple (Maybe GET.MetaData) SigmaxT.SGraph
 convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
   where
     nodes = foldMapWithIndex nodeFn r.nodes
-    nodeFn _i nn@(GET.Node n) =
+    nodeFn _i nn@(GEGT.Node n) =
       Seq.singleton {
           borderColor: color
         , children: n.children
@@ -307,12 +308,12 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
         , _original: nn
         }
       where
-        cDef (GET.Cluster {clustDefault}) = clustDefault
+        cDef (GEGT.Cluster {clustDefault}) = clustDefault
         color = GET.intColor (cDef n.attributes)
         gargType =  unsafePartial $ fromJust $ Types.modeFromString n.type_
     nodesMap = SigmaxT.nodesMap nodes
-    edges = foldMapWithIndex edgeFn $ A.sortWith (\(GET.Edge {weight}) -> weight) r.edges
-    edgeFn i ee@(GET.Edge e) =
+    edges = foldMapWithIndex edgeFn $ A.sortWith (\(GEGT.Edge {weight}) -> weight) r.edges
+    edgeFn i ee@(GEGT.Edge e) =
       Seq.singleton
         { id : e.id_
         , color
