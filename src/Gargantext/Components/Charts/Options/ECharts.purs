@@ -48,7 +48,8 @@ chartWith options =
       getEvents (Options { onClick }) =
         { click: listenerFn1 \e -> case onClick of
             -- sanitize parsing (see MouseEvent comment)
-            Just fn -> RX.pick (e :: MouseEvent) # fn
+            Just _ -> pure unit
+            -- Just fn -> RX.pick (e :: MouseEvent) # fn
             Nothing -> pure unit
         }
 
