@@ -11,11 +11,12 @@ import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (Tuple(..))
 import Partial.Unsafe (unsafePartial)
-import Prelude (class Eq, class Show, map, ($), (&&), (==), (||), (<$>), mod, not)
+import Prelude (class Eq, class Show, map, ($), (&&), (==), (||), (<$>), (<), mod, not)
 
 import Gargantext.Components.GraphExplorer.GraphTypes as GEGT
 import Gargantext.Data.Louvain as Louvain
 import Gargantext.Types as GT
+import Gargantext.Utils.Range as Range
 
 newtype Graph n e = Graph { edges :: Seq.Seq {|e}, nodes :: Seq.Seq {|n} }
 
@@ -51,18 +52,18 @@ type Node = (
   )
 
 type Edge = (
-    color      :: String
-  , confluence :: Number
-  , id         :: EdgeId
-  , hidden     :: Boolean
-  , size       :: Number
-  , source     :: NodeId
-  , sourceNode :: Record Node
-  , target     :: NodeId
-  , targetNode :: Record Node
-  , weight     :: Number
-  , weightIdx  :: Int
-  , _original  :: GEGT.Edge
+    color            :: String
+  , confluence       :: Number
+  , id               :: EdgeId
+  , hidden           :: Boolean
+  , size             :: Number
+  , source           :: NodeId
+  , sourceNode       :: Record Node
+  , target           :: NodeId
+  , targetNode       :: Record Node
+  , weight           :: Number
+  , weightIdx        :: Int
+  , _original        :: GEGT.Edge
   )
 
 type NodeIds = Set.Set NodeId
@@ -266,3 +267,13 @@ defaultPalette = ["#5fa571","#ab9ba2","#da876d","#bdd3ff"
                  ,"#ccffc7","#52a1b0","#d2ecff","#99fffe"
                  ,"#9295ae","#5ea38b","#fff0b3","#d99e68"
                  ]
+
+
+type EdgeVisibilityProps =
+  ( edgeWeight :: Range.NumberRange
+  , showEdges  :: ShowEdgesState )
+
+setEdgeVisibility :: Record EdgeVisibilityProps -> Record Edge -> Record Edge
+setEdgeVisibility { edgeWeight, showEdges } e@{ weight } = e { hidden = hidden }
+  where
+    hidden = (edgeStateHidden showEdges) || (not $ Range.within edgeWeight weight)

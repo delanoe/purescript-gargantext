@@ -39,6 +39,15 @@ export function _forEachEdge(g, fn) {
   });
 }
 
+export function _updateEachEdgeAttributes(g, fn) {
+  return g.updateEachEdgeAttributes(function(name, attrs, source, target) {
+    return fn({id: name,
+               source,
+               target,
+               ...attrs});
+  });
+}
+
 // Almost the same as graphology.mapNodes but with a change that only
 // 1 argument is passed: the whole node structure
 // https://graphology.github.io/iteration.html#mapedges

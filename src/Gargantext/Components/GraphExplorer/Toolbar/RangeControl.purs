@@ -25,7 +25,6 @@ type Props =
 
 rangeControl :: R2.Leaf Props
 rangeControl = R2.leaf rangeControlCpt
-
 rangeControlCpt :: R.Component Props
 rangeControlCpt = here.component "rangeButton" cpt
   where
@@ -50,7 +49,6 @@ type EdgeConfluenceControlProps =
 
 edgeConfluenceControl :: R2.Leaf EdgeConfluenceControlProps
 edgeConfluenceControl = R2.leaf edgeConfluenceControlCpt
-
 edgeConfluenceControlCpt :: R.Component EdgeConfluenceControlProps
 edgeConfluenceControlCpt = here.component "edgeConfluenceControl" cpt
   where
@@ -81,7 +79,6 @@ type EdgeWeightControlProps =
 
 edgeWeightControl :: R2.Leaf EdgeWeightControlProps
 edgeWeightControl = R2.leaf edgeWeightControlCpt
-
 edgeWeightControlCpt :: R.Component EdgeWeightControlProps
 edgeWeightControlCpt = here.component "edgeWeightControl" cpt
   where
@@ -99,7 +96,9 @@ edgeWeightControlCpt = here.component "edgeWeightControl" cpt
           , step: 1.0
           , width: 10.0
           , height: 5.0
-          , onChange: \rng -> T.write_ rng state
+          , onChange: \rng -> do
+            here.log2 "[edgeWeightControl] new range" rng
+            T.write_ rng state
           }
         }
 
@@ -112,7 +111,6 @@ type NodeSideControlProps =
 
 nodeSizeControl :: R2.Leaf NodeSideControlProps
 nodeSizeControl = R2.leaf nodeSizeControlCpt
-
 nodeSizeControlCpt :: R.Component NodeSideControlProps
 nodeSizeControlCpt = here.component "nodeSizeControl" cpt
   where

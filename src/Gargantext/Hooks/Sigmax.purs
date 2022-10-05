@@ -141,14 +141,13 @@ handleForceAtlas2Pause fa2Ref forceAtlasState mFAPauseRef settings = do
           ForceAtlas.stop fa2
         _ -> pure unit
 
-setEdges :: Sigma.Sigma -> Boolean -> Effect Unit
-setEdges sigma val = do
+setSigmaEdgesVisibility :: Sigma.Sigma -> Record ST.EdgeVisibilityProps -> Effect Unit
+setSigmaEdgesVisibility sigma ev = do
   let settings = {
-        drawEdges: val
-      , drawEdgeLabels: val
-      , hideEdgesOnMove: not val
+      hideEdgesOnMove: ST.edgeStateHidden ev.showEdges
     }
   Sigma.setSettings sigma settings
+  Graphology.updateEachEdgeAttributes (Sigma.graph sigma) $ ST.setEdgeVisibility ev
 
 
 -- updateEdges :: Sigma.Sigma -> ST.EdgesMap -> Effect Unit

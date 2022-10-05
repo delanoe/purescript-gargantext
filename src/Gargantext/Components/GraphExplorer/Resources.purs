@@ -60,6 +60,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
     boxes <- AppStore.use
 
     { showEdges
+    , edgeWeight
     , graph
     , graphStage
     , hyperdataGraph
@@ -70,6 +71,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
     } <- GraphStore.use
 
     showEdges'        <- R2.useLive' showEdges
+    edgeWeight'       <- R2.useLive' edgeWeight
     graphStage'       <- R2.useLive' graphStage
     graph'            <- R2.useLive' graph
     startForceAtlas'  <- R2.useLive' startForceAtlas
@@ -131,7 +133,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
                   _ <- Sigma.bindMouseSelectorPlugin sigma
                   pure unit
 
-                Sigmax.setEdges sig false
+                Sigmax.setSigmaEdgesVisibility sig { edgeWeight: edgeWeight', showEdges: showEdges' }
 
                 -- here.log2 "[graph] startForceAtlas" startForceAtlas
                 if startForceAtlas' then
@@ -188,7 +190,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
           -- Sigmax.updateNodes sigma tNodesMap
           let edgesState = not $ SigmaxTypes.edgeStateHidden showEdges'
           -- here.log2 "[graphCpt] edgesState" edgesState
-          Sigmax.setEdges sigma edgesState
+          Sigmax.setSigmaEdgesVisibility sigma { edgeWeight: edgeWeight', showEdges: showEdges' }
 
       _ -> pure unit
 
@@ -230,8 +232,8 @@ type SigmaSettings =
   -- , doubleClickZoomingRatio :: Number
   -- , doubleTapTimeout :: Number
   -- , dragTimeout :: Number
-  , drawEdgeLabels :: Boolean
-  , drawEdges :: Boolean
+  -- , drawEdgeLabels :: Boolean
+  -- , drawEdges :: Boolean
   , drawLabels :: Boolean
   , drawNodes :: Boolean
   -- , edgeColor :: String
@@ -313,8 +315,8 @@ sigmaSettings theme =
   , defaultNodeBorderColor  : "#000"   -- <- if nodeBorderColor = 'default'
   , defaultNodeColor : "#FFF"
   , doubleClickEnabled : false -- indicates whether or not the graph can be zoomed on double-click
-  , drawEdgeLabels : true
-  , drawEdges : true
+  -- , drawEdgeLabels : true
+  -- , drawEdges : true
   , drawLabels : true
   , drawNodes : true
   , enableEdgeHovering : false

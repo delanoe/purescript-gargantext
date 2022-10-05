@@ -100,7 +100,7 @@ killSigma s = EEx.try $ pure $ s ... "kill" $ []
 
 -- | Get the `.graph` object from a sigmajs instance.
 graph :: Sigma -> Graphology.Graph
-graph s = s ... "getGraph" $ [] :: Graphology.Graph
+graph s = s .. "graph" :: Graphology.Graph
 
 -- | Call `sigma.bind(event, handler)` on a sigmajs instance.
 on_ :: forall e. Sigma -> String -> (e -> Effect Unit) -> Effect Unit

@@ -29,6 +29,7 @@ foreign import _mergeNodeAttributes :: forall a. EffectFn3 Graph String a Unit
 --foreign import _updateEdge :: EffectFn4 Graph String String (Record Types.Edge) String
 foreign import _mapNodes :: forall a. Fn2 Graph (Record Types.Node -> a) (Array a)
 foreign import _forEachEdge :: EffectFn2 Graph (Record Types.Edge -> Effect Unit) Unit
+foreign import _updateEachEdgeAttributes :: EffectFn2 Graph (Record Types.Edge -> Record Types.Edge) Unit
 foreign import _mapEdges :: forall a. Fn2 Graph (Record Types.Edge -> a) (Array a)
 
 newGraph :: Unit -> Effect Graph
@@ -77,6 +78,8 @@ forEachEdge = runEffectFn2 _forEachEdge
 --forEachEdge g fn = pure $ g ... "forEachEdge" $ [\_ e -> fn e]
 mapEdges :: forall a. Graph -> (Record Types.Edge -> a) -> Array a
 mapEdges = runFn2 _mapEdges
+updateEachEdgeAttributes :: Graph -> (Record Types.Edge -> Record Types.Edge) -> Effect Unit
+updateEachEdgeAttributes = runEffectFn2 _updateEachEdgeAttributes
 
 -- TODO Maybe our use of this function (`updateWithGraph`) in code is
 -- too much. We convert Types.Graph into Graphology.Graph and then

@@ -8,6 +8,7 @@ module Gargantext.Components.RangeSlider where
 
 import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
+import Data.Foldable (maximum)
 import Data.Int (fromNumber)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Number as DN
@@ -50,9 +51,6 @@ type Props =
   , height :: Number
   , onChange :: Range.NumberRange -> Effect Unit )
 
-rangeSlider :: Record Props -> R.Element
-rangeSlider props = R.createElement rangeSliderCpt props []
-
 data Knob = MinKnob | MaxKnob
 derive instance Generic Knob _
 instance Eq Knob where
@@ -60,12 +58,24 @@ instance Eq Knob where
 
 data RangeUpdate = SetMin Number | SetMax Number
 
+rangeSlider :: Record Props -> R.Element
+rangeSlider props = R.createElement rangeSliderCpt props []
 rangeSliderCpt :: R.Component Props
 rangeSliderCpt = here.component "rangeSlider" cpt
   where
     cpt props _ = do
       -- rounding precision (i.e. how many decimal digits are in epsilon)
-      let precision = fromMaybe 0 $ fromNumber $ max 0.0 $ - DN.floor $ (DN.log props.epsilon) / DN.ln10
+      let (Range.Closed { min: minR, max: maxR }) = props.initialValue
+      let decPrecision num =
+            -- int digits
+            (fromMaybe 0 $ fromNumber $ DN.ceil $ (DN.log num) / DN.ln10)
+            -- float digits
+            + (fromMaybe 0 $ fromNumber $ DN.ceil $ -(DN.log (num - (DN.floor num))) / DN.ln10)
+      let epsilonPrecision = decPrecision props.epsilon
+      let minPrecision = decPrecision minR
+      let maxPrecision = decPrecision maxR
+      --let precision = fromMaybe 0 $ fromNumber $ max 0.0 epsilonPrecision
+      let precision = fromMaybe 0 $ maximum [0, epsilonPrecision, minPrecision, maxPrecision]
 
       -- scale bar
       scaleElem <- (R.useRef null) :: R.Hooks (R.Ref (Nullable DOM.Element)) -- dom ref
@@ -186,11 +196,13 @@ renderKnob knob ref (Range.Closed value) bounds set precision =
     tabIndex = 0
     className = "range-slider__knob"
     aria = { label: labelPrefix knob <> "value: " <> show val }
+    labelPrefix :: Knob -> String
     labelPrefix MinKnob = "Minimum "
     labelPrefix MaxKnob = "Maximum "
     onMouseDown _ = T.write_ (Just knob) set
     percOffset = Range.normalise bounds val
     style = { left: (show $ 100.0 * percOffset) <> "%" }
+    val :: Number
     val = case knob of
       MinKnob -> value.min
       MaxKnob -> value.max

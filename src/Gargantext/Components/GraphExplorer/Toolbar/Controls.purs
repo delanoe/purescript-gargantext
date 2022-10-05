@@ -101,6 +101,8 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     -- NOTE This is a hack anyways. It's force atlas that should be fixed.
     R.useEffect2' sigmaRef forceAtlasState' $ do
       T.modify_ (SigmaxT.forceAtlasEdgeState forceAtlasState') showEdges
+      v <- T.read showEdges
+      here.log2 "[controls] modifed showEdges to forceAtlasState'" v
 
     -- Automatic opening of sidebar when a node is selected (but only first time).
     R.useEffect' $ do
