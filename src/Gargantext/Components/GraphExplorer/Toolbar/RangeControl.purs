@@ -97,7 +97,6 @@ edgeWeightControlCpt = here.component "edgeWeightControl" cpt
           , width: 10.0
           , height: 5.0
           , onChange: \rng -> do
-            here.log2 "[edgeWeightControl] new range" rng
             T.write_ rng state
           }
         }
