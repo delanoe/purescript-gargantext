@@ -81,6 +81,12 @@ updateGraphCpt = here.component "updateGraph" cpt where
     methodGraphEdgesStrength  <- T.useBox Strong
     methodGraphEdgesStrength' <- T.useLive T.unequal methodGraphEdgesStrength
 
+    methodGraphNodeType1  <- T.useBox GT.CTabTerms
+    methodGraphNodeType1' <- T.useLive T.unequal methodGraphNodeType1
+
+    methodGraphNodeType2  <- T.useBox GT.CTabTerms
+    methodGraphNodeType2' <- T.useLive T.unequal methodGraphNodeType2
+
     methodGraphClustering <- T.useBox Spinglass
     methodGraphClustering' <- T.useLive T.unequal methodGraphClustering
 
@@ -92,6 +98,18 @@ updateGraphCpt = here.component "updateGraph" cpt where
                  , formChoiceSafe { items: [Order1, Order2]
                                  , default: methodGraphMetric'
                                  , callback: \val -> T.write_ val methodGraphMetric
+                                 , print: show } []
+
+                 , H.text "NodeType 1 ?"
+                 , formChoiceSafe { items: [GT.CTabTerms, GT.CTabSources, GT.CTabAuthors, GT.CTabInstitutes]
+                                 , default: methodGraphNodeType1'
+                                 , callback: \val -> T.write_ val methodGraphNodeType1
+                                 , print: show } []
+
+                 , H.text "NodeType 2 ?"
+                 , formChoiceSafe { items: [GT.CTabTerms, GT.CTabSources, GT.CTabAuthors, GT.CTabInstitutes]
+                                 , default: methodGraphNodeType2'
+                                 , callback: \val -> T.write_ val methodGraphNodeType2
                                  , print: show } []
 
                  , H.text "Show Strong (expected) links or weak (maybe unexpected) links?"
@@ -110,6 +128,8 @@ updateGraphCpt = here.component "updateGraph" cpt where
                  (submitButton (UpdateNode $ UpdateNodeParamsGraph { methodGraphMetric: methodGraphMetric'
                                                                    , methodGraphClustering: methodGraphClustering'
                                                                    , methodGraphEdgesStrength : methodGraphEdgesStrength'
+                                                                   , methodGraphNodeType1 : methodGraphNodeType1'
+                                                                   , methodGraphNodeType2 : methodGraphNodeType2'
                                                                    }
                                ) callback
                   )

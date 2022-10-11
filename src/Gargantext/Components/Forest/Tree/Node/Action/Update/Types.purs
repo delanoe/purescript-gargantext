@@ -16,6 +16,8 @@ data UpdateNodeParams
   | UpdateNodeParamsGraph { methodGraphMetric :: GraphMetric
                           , methodGraphEdgesStrength :: Strength
                           , methodGraphClustering :: PartitionMethod
+                          , methodGraphNodeType1  :: GT.CTabNgramType
+                          , methodGraphNodeType2  :: GT.CTabNgramType
                           }
   | UpdateNodeParamsTexts { methodTexts :: Granularity }
   | UpdateNodeParamsBoard { methodBoard :: Charts      }
@@ -29,9 +31,9 @@ instance JSON.WriteForeign UpdateNodeParams where
   writeImpl (UpdateNodeParamsList { methodList }) =
     JSON.writeImpl { type: "UpdateNodeParamsList"
                    , methodList }
-  writeImpl (UpdateNodeParamsGraph { methodGraphMetric, methodGraphClustering, methodGraphEdgesStrength}) =
+  writeImpl (UpdateNodeParamsGraph { methodGraphMetric, methodGraphClustering, methodGraphEdgesStrength, methodGraphNodeType1, methodGraphNodeType2}) =
     JSON.writeImpl { type: "UpdateNodeParamsGraph"
-                   , methodGraphMetric, methodGraphClustering, methodGraphEdgesStrength}
+                   , methodGraphMetric, methodGraphClustering, methodGraphEdgesStrength, methodGraphNodeType1, methodGraphNodeType2}
   writeImpl (UpdateNodeParamsTexts { methodTexts }) =
     JSON.writeImpl { type: "UpdateNodeParamsTexts"
                    , methodTexts }

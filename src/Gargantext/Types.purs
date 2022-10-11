@@ -544,6 +544,13 @@ instance Show CTabNgramType where
   show CTabSources    = "Sources"
   show CTabAuthors    = "Authors"
   show CTabInstitutes = "Institutes"
+instance Read CTabNgramType where
+  read "Terms"     = Just CTabTerms
+  read "Sources"   = Just CTabSources
+  read "Authors"   = Just CTabAuthors
+  read "Institutes" = Just CTabInstitutes
+  read _            = Nothing
+instance JSON.ReadForeign  CTabNgramType where readImpl = JSONG.enumSumRep
 instance JSON.WriteForeign CTabNgramType where writeImpl = JSON.writeImpl <<< show
 
 data PTabNgramType = PTabPatents | PTabBooks | PTabCommunication
