@@ -8,6 +8,7 @@ import Gargantext.Prelude
 
 import Data.Array as A
 import Data.Foldable (maximum, minimum)
+import Data.Lens (lens)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (wrap)
 import Data.Sequence as Seq
@@ -15,6 +16,7 @@ import Gargantext.Components.GraphExplorer.GraphTypes as GEGT
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax.Types as ST
 import Gargantext.Utils (getter)
+import Gargantext.Utils.Lens as GUL
 import Gargantext.Utils.Seq as GUS
 
 stEdgeToGET :: Record ST.Edge -> GEGT.Edge
@@ -34,31 +36,37 @@ stNodeToGET { id, label, x, y, _original: GEGT.Node { attributes, size, type_ } 
 
 -----------------------------------------------------------------------
 
+-- | Normalize nodes, i.e. set their {x, y} values so that they are in
+-- | range [0, 1].
 normalizeNodes :: Seq.Seq GEGT.Node -> Seq.Seq GEGT.Node
-normalizeNodes ns = Seq.map normalizeNode ns
+normalizeNodes ns = GUL.normalizeLens xLens $ GUL.normalizeLens yLens ns
   where
-    xs = map (\(GEGT.Node { x }) -> x) ns
-    ys = map (\(GEGT.Node { y }) -> y) ns
-    mMinx = minimum xs
-    mMaxx = maximum xs
-    mMiny = minimum ys
-    mMaxy = maximum ys
-    mXrange = do
-      minx <- mMinx
-      maxx <- mMaxx
-      pure $ maxx - minx
-    mYrange = do
-      miny <- mMiny
-      maxy <- mMaxy
-      pure $ maxy - miny
-    xdivisor = case mXrange of
-      Nothing -> 1.0
-      Just xdiv -> 1.0 / xdiv
-    ydivisor = case mYrange of
-      Nothing -> 1.0
-      Just ydiv -> 1.0 / ydiv
-    normalizeNode (GEGT.Node n@{ x, y }) = GEGT.Node $ n { x = x * xdivisor
-                                                         , y = y * ydivisor }
+    xLens = lens (\(GEGT.Node { x }) -> x) $ (\(GEGT.Node n) val -> GEGT.Node (n { x = val }))
+    yLens = lens (\(GEGT.Node { y }) -> y) $ (\(GEGT.Node n) val -> GEGT.Node (n { y = val }))
+-- normalizeNodes ns = Seq.map normalizeNode ns
+--   where
+--     xs = map (\(GEGT.Node { x }) -> x) ns
+--     ys = map (\(GEGT.Node { y }) -> y) ns
+--     mMinx = minimum xs
+--     mMaxx = maximum xs
+--     mMiny = minimum ys
+--     mMaxy = maximum ys
+--     mXrange = do
+--       minx <- mMinx
+--       maxx <- mMaxx
+--       pure $ maxx - minx
+--     mYrange = do
+--       miny <- mMiny
+--       maxy <- mMaxy
+--       pure $ maxy - miny
+--     xdivisor = case mXrange of
+--       Nothing -> 1.0
+--       Just xdiv -> 1.0 / xdiv
+--     ydivisor = case mYrange of
+--       Nothing -> 1.0
+--       Just ydiv -> 1.0 / ydiv
+--     normalizeNode (GEGT.Node n@{ x, y }) = GEGT.Node $ n { x = x * xdivisor
+--                                                          , y = y * ydivisor }
 
 ------------------------------------------------------------------------
 
