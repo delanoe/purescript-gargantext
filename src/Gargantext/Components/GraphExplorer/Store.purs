@@ -121,7 +121,7 @@ options =
   -- Controls
   , multiSelectEnabled         : false
   , labelSize                  : 14.0
-  , labelRenderedSizeThreshold : 6.0
+  , labelRenderedSizeThreshold : 2.0
   , mouseSelectorSize          : 15.0
   , edgeConfluence             : Range.Closed { min: 0.0, max: 1.0 }
   , graphStage                 : GET.Init
