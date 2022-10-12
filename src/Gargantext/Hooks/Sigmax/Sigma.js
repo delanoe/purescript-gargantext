@@ -163,11 +163,13 @@ let sigmaMouseSelector = function(sigma, options) {
 function _sigma(left, right, el, opts) {
   try {
     let graph = new Graph();
-    let s = new sigma(graph, el, opts);
-    console.log('initializing sigma with el', el, 'opts', 'sigma', s);
+    let s = new sigma(graph, el, opts.settigns);
+    console.log('[_sigma] initializing sigma with el', el, 'opts', opts, 'sigma', s);
+    console.log('[_sigma] labelRenderedSizeThreshold', opts.settings.labelRenderedSizeThreshold);
     sigmaMouseSelector(s);
     return right(s);
   } catch(e) {
+    console.log('[_sigma] error', e);
     return left(e);
   }
 }
