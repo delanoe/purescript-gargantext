@@ -2,6 +2,7 @@
 
 import Graph from 'graphology';
 import Sigma from 'sigma';
+import { takeScreenshot } from '../../src/external-deps/sigmajs-screenshot.js';
 
 let sigma = Sigma.Sigma;
 console.log('imported sigma', Sigma);
@@ -192,17 +193,7 @@ function _bindMouseSelectorPlugin(left, right, sig) {
 function _on(sigma, event, handler) { sigma.on(event, handler); }
 
 function _takeScreenshot(sigma) {
-  let c = sigma.renderers[0].container;
-  let edges = c.getElementsByClassName('sigma-edges')[0];
-  let scene = c.getElementsByClassName('sigma-scene')[0];
-  // let sceneCtx = scene.getContext('2d');
-  // sceneCtx.globalAlpha = 1;
-  // sceneCtx.drawImage(edges, 0, 0);
-  // return scene.toDataURL('image/png');
-  let edgesCtx = edges.getContext('2d');
-  edgesCtx.globalAlpha = 1;
-  edgesCtx.drawImage(scene, 0, 0);
-  return edges.toDataURL('image/png');
+  return takeScreenshot(sigma);
 }
 
 function _proxySetSettings(window, sigma, settings) {
