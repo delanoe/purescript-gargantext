@@ -10218,6 +10218,11 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
   integrity sha1-WuaBd/GS1EViadEIr6k/+HQ/T2Q=
 
+twgl.js@^5.0.4:
+  version "5.0.4"
+  resolved "https://registry.yarnpkg.com/twgl.js/-/twgl.js-5.0.4.tgz#4e3d54c4e8ff01af418bfbf7ce38df26595a6108"
+  integrity sha512-8U0ehLWvqOMTqMQd3xGjeQJSDwCNtoFvLg4V3Ne4QTCaPoJmOB4CSpy7MMHkMkc1qO2DMRhnV0uAgZmhO3Q/2w==
+
 type-check@~0.3.2:
   version "0.3.2"
   resolved "https://registry.yarnpkg.com/type-check/-/type-check-0.3.2.tgz#5884cab512cf1d355e3fb784f30804b2b520db72"
