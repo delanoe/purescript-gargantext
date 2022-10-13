@@ -3,7 +3,7 @@ module Gargantext.Utils.Lens where
 import Gargantext.Prelude
 
 import Data.Foldable (maximum, minimum)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Lens
 import Data.Traversable
 
@@ -20,7 +20,6 @@ normalizeLens l ns = over traversed normalize' ns
       minv <- vMin
       maxv <- vMax
       pure $ maxv - minv
-    divisor = case vRange of
-      Nothing -> 1.0
-      Just d -> 1.0 / d
-    normalize' n = over l (_ * divisor) n
+    divisor = maybe 1.0 (\r -> 1.0 / r) vRange
+    min = fromMaybe 0.0 vMin
+    normalize' n = over l (\v -> (v - min) * divisor) n

@@ -25,6 +25,7 @@ import Gargantext.Components.GraphExplorer.Toolbar.Controls as Controls
 import Gargantext.Components.GraphExplorer.TopBar as GETB
 import Gargantext.Components.GraphExplorer.Types (GraphSideDoc)
 import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Components.GraphExplorer.Utils as GEU
 import Gargantext.Config (defaultFrontends)
 import Gargantext.Data.Louvain as Louvain
 import Gargantext.Hooks.Session (useSession)
@@ -289,7 +290,7 @@ graphViewCpt = R.memo' $ here.component "graphView" cpt where
 convert :: GET.GraphData -> Tuple (Maybe GET.MetaData) SigmaxT.SGraph
 convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
   where
-    nodes = foldMapWithIndex nodeFn r.nodes
+    nodes = foldMapWithIndex nodeFn $ GEU.normalizeNodeSize 1 10000 r.nodes
     nodeFn _i nn@(GEGT.Node n) =
       Seq.singleton {
           borderColor: color
@@ -302,6 +303,7 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
         , id    : n.id_
         , label : n.label
         , size  : DN.log (toNumber n.size + 1.0)
+        --, size: toNumber n.size
         , type  : modeGraphType gargType
         , x     : n.x -- cos (toNumber i)
         , y     : n.y -- sin (toNumber i)

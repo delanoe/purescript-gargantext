@@ -13,6 +13,7 @@ import Data.Tuple.Nested ((/\))
 import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.GraphExplorer.API as GraphAPI
+import Gargantext.Components.GraphExplorer.GraphTypes as GEGT
 import Gargantext.Components.GraphExplorer.Layout (convert, layout)
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types as GET
@@ -116,7 +117,7 @@ type HydrateStoreProps =
   , cacheParams     :: GET.CacheParams
   )
 
-hydrateStore:: R2.Leaf HydrateStoreProps
+hydrateStore :: R2.Leaf HydrateStoreProps
 hydrateStore = R2.leaf hydrateStoreCpt
 hydrateStoreCpt :: R.Component HydrateStoreProps
 hydrateStoreCpt = here.component "hydrateStore" cpt where
@@ -126,6 +127,11 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
       , hyperdataGraph
       , cacheParams
       } _ = do
+    R.useEffect' $ do
+      let (GET.HyperdataGraph { graph: hg }) = hyperdataGraph
+      let GET.GraphData g = hg
+      here.log2 "[hydrateStore] sizes" $ (\(GEGT.Node { id_, size }) -> "id: " <> id_ <> ", size: " <> show size) <$> g.nodes
+
     -- | Computed
     -- |
     let
