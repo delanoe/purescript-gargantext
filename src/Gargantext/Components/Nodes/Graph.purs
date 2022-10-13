@@ -127,11 +127,6 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
       , hyperdataGraph
       , cacheParams
       } _ = do
-    R.useEffect' $ do
-      let (GET.HyperdataGraph { graph: hg }) = hyperdataGraph
-      let GET.GraphData g = hg
-      here.log2 "[hydrateStore] sizes" $ (\(GEGT.Node { id_, size }) -> "id: " <> id_ <> ", size: " <> show size) <$> g.nodes
-
     -- | Computed
     -- |
     let
