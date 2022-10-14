@@ -31,8 +31,8 @@ const fragmentShader = `
 precision mediump float;
 
     // our 2 canvases
-    uniform sampler2D u_canvas1;
-    uniform sampler2D u_canvas2;
+    uniform sampler2D u_nodes;
+    uniform sampler2D u_edges;
 
     // the texCoords passed in from the vertex shader.
     // note: we're only using 1 set of texCoords which means
@@ -40,15 +40,22 @@ precision mediump float;
     varying vec2 v_texCoord;
 
     void main() {
-         // Look up a pixel from first canvas
-         vec4 color1 = texture2D(u_canvas1, v_texCoord);
+         // Look up a pixel from nodes canvas
+         vec4 n_color = texture2D(u_nodes, v_texCoord);
 
-         // Look up a pixel from second canvas
-         vec4 color2 = texture2D(u_canvas2, v_texCoord);
+         // Look up a pixel from edges canvas
+         vec4 e_color = texture2D(u_edges, v_texCoord);
 
-         // return the 2 colors multiplied
-         // TODO Modify this
-         gl_FragColor = color1 * color2;
+         // return overlay of n_color on e_color
+         if(all(equal(n_color.rgb, vec3(1, 1, 1)))) {  // n_color is white, use e_color
+             gl_FragColor = e_color;
+         } else {
+             if(all(equal(e_color.rgb, vec3(1, 1, 1)))) {  // e_color is white, set transparent
+                 gl_FragColor = vec4(e_color.rgb, 1);
+             } else {
+                 gl_FragColor = n_color;
+             }
+         }
     }
 `;
 
@@ -125,8 +132,8 @@ export function takeScreenshot(sigma) {
   // Set a rectangle the same size as the image.
   setRectangle(gl, 0, 0, gl.canvas.width, gl.canvas.height);
 
-  let tex1 = setupTexture(gl, nodes, 0, program, "u_canvas1");
-  let tex2 = setupTexture(gl, edges, 1, program, "u_canvas2");
+  let tex1 = setupTexture(gl, nodes, 0, program, "u_nodes");
+  let tex2 = setupTexture(gl, edges, 1, program, "u_edges");
 
   // Draw the rectangle.
   gl.drawArrays(gl.TRIANGLES, 0, 6);
