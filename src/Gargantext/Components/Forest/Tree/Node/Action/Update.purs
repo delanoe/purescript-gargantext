@@ -100,6 +100,7 @@ updateGraphCpt = here.component "updateGraph" cpt where
                                  , callback: \val -> T.write_ val methodGraphMetric
                                  , print: show } []
 
+{-
                  , H.text "NodeType 1 ?"
                  , formChoiceSafe { items: [GT.CTabTerms, GT.CTabSources, GT.CTabAuthors, GT.CTabInstitutes]
                                  , default: methodGraphNodeType1'
@@ -111,7 +112,7 @@ updateGraphCpt = here.component "updateGraph" cpt where
                                  , default: methodGraphNodeType2'
                                  , callback: \val -> T.write_ val methodGraphNodeType2
                                  , print: show } []
-
+                                 -}
                  , H.text "Show Strong (expected) links or weak (maybe unexpected) links?"
                  , formChoiceSafe { items: [Strong, Weak]
                                  , default: methodGraphEdgesStrength'
