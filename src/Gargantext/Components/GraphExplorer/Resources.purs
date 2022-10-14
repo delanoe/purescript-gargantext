@@ -60,6 +60,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
     boxes <- AppStore.use
 
     { showEdges
+    , edgeConfluence
     , edgeWeight
     , graph
     , graphStage
@@ -71,6 +72,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
     } <- GraphStore.use
 
     showEdges'        <- R2.useLive' showEdges
+    edgeConfluence'   <- R2.useLive' edgeConfluence
     edgeWeight'       <- R2.useLive' edgeWeight
     graphStage'       <- R2.useLive' graphStage
     graph'            <- R2.useLive' graph
@@ -133,7 +135,9 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
                   _ <- Sigma.bindMouseSelectorPlugin sigma
                   pure unit
 
-                Sigmax.setSigmaEdgesVisibility sig { edgeWeight: edgeWeight', showEdges: showEdges' }
+                Sigmax.setSigmaEdgesVisibility sig { edgeConfluence: edgeConfluence'
+                                                   , edgeWeight: edgeWeight'
+                                                   , showEdges: showEdges' }
 
                 -- here.log2 "[graph] startForceAtlas" startForceAtlas
                 if startForceAtlas' then
@@ -190,7 +194,9 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
           -- Sigmax.updateNodes sigma tNodesMap
           let edgesState = not $ SigmaxTypes.edgeStateHidden showEdges'
           -- here.log2 "[graphCpt] edgesState" edgesState
-          Sigmax.setSigmaEdgesVisibility sigma { edgeWeight: edgeWeight', showEdges: showEdges' }
+          Sigmax.setSigmaEdgesVisibility sigma { edgeConfluence: edgeConfluence'
+                                               , edgeWeight: edgeWeight'
+                                               , showEdges: showEdges' }
 
       _ -> pure unit
 

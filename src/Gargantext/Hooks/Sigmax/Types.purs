@@ -270,10 +270,13 @@ defaultPalette = ["#5fa571","#ab9ba2","#da876d","#bdd3ff"
 
 
 type EdgeVisibilityProps =
-  ( edgeWeight :: Range.NumberRange
-  , showEdges  :: ShowEdgesState )
+  ( edgeConfluence :: Range.NumberRange
+  , edgeWeight     :: Range.NumberRange
+  , showEdges      :: ShowEdgesState )
 
 setEdgeVisibility :: Record EdgeVisibilityProps -> Record Edge -> Record Edge
-setEdgeVisibility { edgeWeight, showEdges } e@{ weight } = e { hidden = hidden }
+setEdgeVisibility { edgeConfluence, edgeWeight, showEdges } e@{ confluence, weight } = e { hidden = hidden }
   where
-    hidden = (edgeStateHidden showEdges) || (not $ Range.within edgeWeight weight)
+    hidden = (edgeStateHidden showEdges)
+             || (not $ Range.within edgeConfluence confluence)
+             || (not $ Range.within edgeWeight weight)

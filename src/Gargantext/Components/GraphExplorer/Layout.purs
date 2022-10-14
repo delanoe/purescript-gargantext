@@ -268,9 +268,9 @@ graphViewCpt = R.memo' $ here.component "graphView" cpt where
                                                         , showEdges' }
 
     -- R.useEffect' $ do
-    --   here.log2 "[graphView] selectedNodeIds'" $ A.fromFoldable selectedNodeIds'
-    --   let (SigmaxT.Graph { nodes: n }) = transformedGraph
-    --   here.log2 "[graphView] transformedGraph nodes" $ A.fromFoldable n
+    --   let (SigmaxT.Graph { edges: e }) = transformedGraph
+    --   here.log2 "[graphView] transformedGraph edges" $ A.fromFoldable e
+    --   here.log2 "[graphView] hidden edges" $ A.filter(_.hidden) $ A.fromFoldable e
 
     -- | Render
     -- |
