@@ -100,11 +100,12 @@ updateGraphCpt = here.component "updateGraph" cpt where
                                  , callback: \val -> T.write_ val methodGraphEdgesStrength
                                  , print: show } []
 
+{-
                  , formChoiceSafe { items: [Spinglass, Infomap, Confluence]
                                  , default: methodGraphClustering'
                                  , callback: \val -> T.write_ val methodGraphClustering
                                  , print: show } []
-
+-}
                  ]
                  (submitButton (UpdateNode $ UpdateNodeParamsGraph { methodGraphMetric: methodGraphMetric'
                                                                    , methodGraphClustering: methodGraphClustering'

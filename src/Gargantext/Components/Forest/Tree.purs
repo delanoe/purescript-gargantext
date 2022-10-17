@@ -351,6 +351,7 @@ uploadFile' nodeType fileType fileFormat lang mName contents p@{ boxes: { errors
   handleRESTError errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
     here.log2 "[uploadFile'] UploadFile, uploaded, task:" task
+    closeBox p
 
 uploadArbitraryFile' fileFormat mName blob p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
   eTask <- uploadArbitraryFile session id { blob, fileFormat, mName } selection
