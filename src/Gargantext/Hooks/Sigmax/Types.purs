@@ -178,7 +178,6 @@ toggleForceAtlasState Killed = InitialRunning
 -- | NOTE ETempHiddenThenShow state is a hack for force atlas
 -- | flickering. Ideally it should be removed from here.
 data ShowEdgesState = EShow | EHide | ETempHiddenThenShow
-
 derive instance Generic ShowEdgesState _
 instance Eq ShowEdgesState where
   eq = genericEq
@@ -199,21 +198,6 @@ toggleShowEdgesState s =
   else
     EHide
 
--- | Return the temporary hidden state, if applicable.
-edgeStateTempHide :: ShowEdgesState -> ShowEdgesState
-edgeStateTempHide EHide = EHide
-edgeStateTempHide _ = ETempHiddenThenShow
-
--- | Whether, after disabling the temp state, edges will be shown or hidden.
-edgeStateWillBeHidden :: ShowEdgesState -> Boolean
-edgeStateWillBeHidden EHide = true
-edgeStateWillBeHidden _ = false
-
--- | Get rid of the temporary transition
-edgeStateStabilize :: ShowEdgesState -> ShowEdgesState
-edgeStateStabilize ETempHiddenThenShow = EShow
-edgeStateStabilize s = s
-
 -- | Return state in which showEdges should be depending on forceAtlasState
 forceAtlasEdgeState :: ForceAtlasState -> ShowEdgesState -> ShowEdgesState
 forceAtlasEdgeState InitialRunning EShow = ETempHiddenThenShow
@@ -225,6 +209,21 @@ forceAtlasEdgeState Paused ETempHiddenThenShow = EShow
 forceAtlasEdgeState Paused es = es
 forceAtlasEdgeState Killed ETempHiddenThenShow = EShow
 forceAtlasEdgeState Killed es = es
+
+
+-- Similar situation for labels: hide them when force atlas is
+-- running, to prevent flickering.
+-- However, for labels this is simpler because we don't have a toggle
+-- button.
+
+-- | Return state in which labels should be depending on forceAtlasState
+forceAtlasLabelState :: ForceAtlasState -> Boolean
+forceAtlasLabelState InitialRunning = false
+forceAtlasLabelState InitialStopped = true
+forceAtlasLabelState Running = false
+forceAtlasLabelState Paused = true
+forceAtlasLabelState Killed = true
+
 
 
 louvainEdges :: SGraph -> Array (Record Louvain.Edge)

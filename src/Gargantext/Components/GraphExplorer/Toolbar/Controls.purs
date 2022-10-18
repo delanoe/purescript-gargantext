@@ -21,6 +21,7 @@ import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
 import Gargantext.Hooks.Sigmax as Sigmax
+import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Types as GT
 import Gargantext.Utils.Range as Range
@@ -101,8 +102,12 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     -- NOTE This is a hack anyways. It's force atlas that should be fixed.
     R.useEffect2' sigmaRef forceAtlasState' $ do
       T.modify_ (SigmaxT.forceAtlasEdgeState forceAtlasState') showEdges
-      v <- T.read showEdges
-      here.log2 "[controls] modifed showEdges to forceAtlasState'" v
+      let renderLabels = SigmaxT.forceAtlasLabelState forceAtlasState'
+      here.log2 "[controls] renderLabels" renderLabels
+      Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Cleanup)] no sigma" $ \sigma -> do
+          Sigma.setSettings sigma { renderLabels }
+      -- v <- T.read showEdges
+      -- here.log2 "[controls] modifed showEdges to forceAtlasState'" v
 
     -- Automatic opening of sidebar when a node is selected (but only first time).
     R.useEffect' $ do

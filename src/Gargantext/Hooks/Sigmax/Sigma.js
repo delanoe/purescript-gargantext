@@ -165,7 +165,7 @@ function _sigma(left, right, el, opts) {
   try {
     let graph = new Graph();
     let s = new sigma(graph, el, opts.settigns);
-    console.log('[_sigma] initializing sigma with el', el, 'opts', opts, 'sigma', s);
+    console.log('[_sigma] initializing sigma with el', el, 'opts', opts.settings, 'sigma', s);
     console.log('[_sigma] labelRenderedSizeThreshold', opts.settings.labelRenderedSizeThreshold);
     sigmaMouseSelector(s);
     return right(s);
@@ -207,6 +207,7 @@ let dummy = function() {};
 
 let _setSettings = function(g, settings) {
   for(const key in settings) {
+    //console.log('[setSettings] key', key, settings[key]);
     g.setSetting(key, settings[key]);
   }
 }
