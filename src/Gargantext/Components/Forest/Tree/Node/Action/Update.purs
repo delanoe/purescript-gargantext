@@ -105,6 +105,7 @@ updateGraphCpt = here.component "updateGraph" cpt where
 
 
 
+{-
                  , H.text "Bridgness Method : Basic is ok, Advanced in Development"
                  , formChoiceSafe { items: [BridgenessMethod_Basic, BridgenessMethod_Advanced]
                                  , default: methodGraphBridgeness'
@@ -112,7 +113,6 @@ updateGraphCpt = here.component "updateGraph" cpt where
                                  , print: show } []
 
 
-{-
                  , H.text "NodeType 1 ?"
                  , formChoiceSafe { items: [GT.CTabTerms, GT.CTabSources, GT.CTabAuthors, GT.CTabInstitutes]
                                  , default: methodGraphNodeType1'
