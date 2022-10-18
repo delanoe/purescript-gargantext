@@ -133,6 +133,10 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
                   Sigmax.bindSelectedNodesClick sigma selectedNodeIds multiSelectEnabled
                   Sigmax.bindShiftWheel sigma mouseSelectorSize
                   _ <- Sigma.bindMouseSelectorPlugin sigma
+                  -- NOTE For some reason, setting 'renderLabels:
+                  -- false' in sigmaSettings and initializing sigma
+                  -- with those settings doesn't work. We need to set
+                  -- the renderLabels: false here again.
                   Sigma.setSettings sigma { renderLabels: false }
                   pure unit
 
