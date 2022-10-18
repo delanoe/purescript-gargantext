@@ -111,7 +111,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
               Nothing -> do
                 _ <- ECC.error "elRef is empty"
                 pure $ Left "elRef is empty"
-              Just el -> Sigma.sigma el {settings: sigmaSettings theme}
+              Just el -> Sigma.sigma el { settings: sigmaSettings theme }
             case eSigma of
               Left err -> here.warn2 "[graphCpt] error creating sigma" err
               Right sig -> do
@@ -133,6 +133,11 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
                   Sigmax.bindSelectedNodesClick sigma selectedNodeIds multiSelectEnabled
                   Sigmax.bindShiftWheel sigma mouseSelectorSize
                   _ <- Sigma.bindMouseSelectorPlugin sigma
+                  -- NOTE For some reason, setting 'renderLabels:
+                  -- false' in sigmaSettings and initializing sigma
+                  -- with those settings doesn't work. We need to set
+                  -- the renderLabels: false here again.
+                  Sigma.setSettings sigma { renderLabels: false }
                   pure unit
 
                 Sigmax.setSigmaEdgesVisibility sig { edgeConfluence: edgeConfluence'
@@ -281,6 +286,7 @@ type SigmaSettings =
   -- , nodeBorderColor :: String
   -- , nodeHoverColor :: String
   --, nodesPowRatio :: Number
+  , renderLabels :: Boolean
   -- , rescaleIgnoreSize :: Boolean
   -- , scalingMode :: String
   -- , sideMargin :: Number
@@ -349,6 +355,7 @@ sigmaSettings theme =
   -- , mouseZoomDuration : 150.0
   -- , nodeBorderColor : "default"           -- choices: "default" color vs. "node" color
   --, nodesPowRatio  : 10.8
+  , renderLabels: false  -- initially false, because of forceatlas
   -- , rescaleIgnoreSize  : false
   -- , singleHover  : true
   -- , touchEnabled  : true
