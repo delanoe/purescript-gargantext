@@ -16,6 +16,7 @@ data UpdateNodeParams
   | UpdateNodeParamsGraph { methodGraphMetric :: GraphMetric
                           , methodGraphEdgesStrength :: Strength
                           , methodGraphClustering :: PartitionMethod
+                          , methodGraphBridgeness :: BridgenessMethod
                           , methodGraphNodeType1  :: GT.CTabNgramType
                           , methodGraphNodeType2  :: GT.CTabNgramType
                           }
@@ -31,9 +32,9 @@ instance JSON.WriteForeign UpdateNodeParams where
   writeImpl (UpdateNodeParamsList { methodList }) =
     JSON.writeImpl { type: "UpdateNodeParamsList"
                    , methodList }
-  writeImpl (UpdateNodeParamsGraph { methodGraphMetric, methodGraphClustering, methodGraphEdgesStrength, methodGraphNodeType1, methodGraphNodeType2}) =
+  writeImpl (UpdateNodeParamsGraph { methodGraphMetric, methodGraphClustering, methodGraphBridgeness, methodGraphEdgesStrength, methodGraphNodeType1, methodGraphNodeType2}) =
     JSON.writeImpl { type: "UpdateNodeParamsGraph"
-                   , methodGraphMetric, methodGraphClustering, methodGraphEdgesStrength, methodGraphNodeType1, methodGraphNodeType2}
+                   , methodGraphMetric, methodGraphClustering, methodGraphBridgeness, methodGraphEdgesStrength, methodGraphNodeType1, methodGraphNodeType2}
   writeImpl (UpdateNodeParamsTexts { methodTexts }) =
     JSON.writeImpl { type: "UpdateNodeParamsTexts"
                    , methodTexts }
@@ -98,6 +99,22 @@ instance Read PartitionMethod where
   read _           = Nothing
 instance JSON.ReadForeign PartitionMethod where readImpl = JSONG.enumSumRep
 instance JSON.WriteForeign PartitionMethod where writeImpl = JSON.writeImpl <<< show
+
+
+data BridgenessMethod = BridgenessMethod_Basic
+                      | BridgenessMethod_Advanced
+
+derive instance Generic BridgenessMethod _
+derive instance Eq BridgenessMethod
+instance Show BridgenessMethod where show = genericShow
+instance Read BridgenessMethod where
+  read "BridgenessMethod_Basic"     = Just BridgenessMethod_Basic
+  read "BridgenessMethod_Advanced"  = Just BridgenessMethod_Advanced
+  read _           = Nothing
+instance JSON.ReadForeign BridgenessMethod where readImpl = JSONG.enumSumRep
+instance JSON.WriteForeign BridgenessMethod where writeImpl = JSON.writeImpl <<< show
+
+
 
 ----------------------------------------------------------------------
 

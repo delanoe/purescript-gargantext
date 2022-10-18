@@ -2,7 +2,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Update where
 
 import Gargantext.Prelude
 
-import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (Charts(..), Granularity(..), GraphMetric(..), Method(..), PartitionMethod(..), UpdateNodeParams(..), Strength(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (Charts(..), Granularity(..), GraphMetric(..), Method(..), PartitionMethod(..), UpdateNodeParams(..), Strength(..), BridgenessMethod(..))
 
 import DOM.Simple.Console (log3)
 import Data.Either (Either(..))
@@ -90,6 +90,9 @@ updateGraphCpt = here.component "updateGraph" cpt where
     methodGraphClustering <- T.useBox Spinglass
     methodGraphClustering' <- T.useLive T.unequal methodGraphClustering
 
+    methodGraphBridgeness <- T.useBox BridgenessMethod_Basic
+    methodGraphBridgeness' <- T.useLive T.unequal methodGraphBridgeness
+
     let
       callback :: Action -> Aff Unit
       callback = dispatch >=> \_ -> dispatch CloseBox
@@ -99,6 +102,15 @@ updateGraphCpt = here.component "updateGraph" cpt where
                                  , default: methodGraphMetric'
                                  , callback: \val -> T.write_ val methodGraphMetric
                                  , print: show } []
+
+
+
+                 , H.text "Bridgness Method : Basic is ok, Advanced in Development"
+                 , formChoiceSafe { items: [BridgenessMethod_Basic, BridgenessMethod_Advanced]
+                                 , default: methodGraphBridgeness'
+                                 , callback: \val -> T.write_ val methodGraphBridgeness
+                                 , print: show } []
+
 
 {-
                  , H.text "NodeType 1 ?"
@@ -113,6 +125,7 @@ updateGraphCpt = here.component "updateGraph" cpt where
                                  , callback: \val -> T.write_ val methodGraphNodeType2
                                  , print: show } []
                                  -}
+
                  , H.text "Show Strong (expected) links or weak (maybe unexpected) links?"
                  , formChoiceSafe { items: [Strong, Weak]
                                  , default: methodGraphEdgesStrength'
@@ -128,6 +141,7 @@ updateGraphCpt = here.component "updateGraph" cpt where
                  ]
                  (submitButton (UpdateNode $ UpdateNodeParamsGraph { methodGraphMetric: methodGraphMetric'
                                                                    , methodGraphClustering: methodGraphClustering'
+                                                                   , methodGraphBridgeness: methodGraphBridgeness'
                                                                    , methodGraphEdgesStrength : methodGraphEdgesStrength'
                                                                    , methodGraphNodeType1 : methodGraphNodeType1'
                                                                    , methodGraphNodeType2 : methodGraphNodeType2'
