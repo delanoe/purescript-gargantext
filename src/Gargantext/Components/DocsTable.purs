@@ -47,7 +47,7 @@ import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), SidePanelSta
 import Gargantext.Types as GT
 import Gargantext.Utils (sortWith, (?))
 import Gargantext.Utils.CacheAPI as GUC
-import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParam, mQueryParamS, queryParam, queryParamS)
+import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParam, mQueryParamS, mQueryParamS', queryParam, queryParamS)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as GUT
 import Gargantext.Utils.Toestand as T2
@@ -709,7 +709,7 @@ tableRouteWithPage { listId, nodeId, params: { limit, offset, orderBy, searchTyp
     st  = queryParam "searchType" searchType
     tt  = queryParamS "tabType" (showTabType' tabType)
     q   = queryParamS "query" query
-    y   = mQueryParam "year" yearFilter
+    y   = mQueryParamS' "year" yearFilter
 
 deleteAllDocuments :: Session -> Int -> AffRESTError (Array Int)
 deleteAllDocuments session = delete session <<< documentsRoute
