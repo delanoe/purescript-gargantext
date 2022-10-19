@@ -11,7 +11,7 @@ import Data.Array as A
 import Data.Function.Uncurried (Fn2, runFn2)
 import Data.Sequence as Seq
 import Data.Set as Set
-import Data.Traversable (traverse)
+import Data.Traversable (traverse, traverse_)
 import Effect (Effect)
 import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, EffectFn4, runEffectFn1, runEffectFn2, runEffectFn3, runEffectFn4)
 import FFI.Simple ((..), (...), (.=))
@@ -22,15 +22,20 @@ import Record as Record
 foreign import data Graph :: Type
 
 foreign import _newGraph :: EffectFn1 Unit Graph
+
 foreign import _addNode :: EffectFn3 Graph String (Record Types.Node) String
 foreign import _updateNode :: EffectFn3 Graph String (Record Types.Node -> Record Types.Node) Unit
 foreign import _addEdge :: EffectFn4 Graph String String (Record Types.Edge) String
 foreign import _mergeNodeAttributes :: forall a. EffectFn3 Graph String a Unit
 --foreign import _updateEdge :: EffectFn4 Graph String String (Record Types.Edge) String
 foreign import _mapNodes :: forall a. Fn2 Graph (Record Types.Node -> a) (Array a)
+foreign import _filterNodes :: Fn2 Graph (Record Types.Node -> Boolean) (Array Types.NodeId)
+
 foreign import _forEachEdge :: EffectFn2 Graph (Record Types.Edge -> Effect Unit) Unit
 foreign import _updateEachEdgeAttributes :: EffectFn2 Graph (Record Types.Edge -> Record Types.Edge) Unit
 foreign import _mapEdges :: forall a. Fn2 Graph (Record Types.Edge -> a) (Array a)
+foreign import _filterEdges :: Fn2 Graph (Record Types.Edge -> Boolean) (Array Types.EdgeId)
+
 
 newGraph :: Unit -> Effect Graph
 newGraph = runEffectFn1 _newGraph
@@ -65,6 +70,8 @@ forEachNode :: Graph -> (Record Types.Node -> Effect Unit) -> Effect Unit
 forEachNode g fn = pure $ g ... "forEachNode" $ [\_ n -> fn n]
 mapNodes :: forall a. Graph -> (Record Types.Node -> a) -> Array a
 mapNodes = runFn2 _mapNodes
+filterNodes :: Graph -> (Record Types.Node -> Boolean) -> Array Types.NodeId
+filterNodes = runFn2 _filterNodes
 
 addEdge :: Graph -> Record Types.Edge -> Effect String
 addEdge g edge@{ source, target } = runEffectFn4 _addEdge g source target edge
@@ -80,6 +87,8 @@ mapEdges :: forall a. Graph -> (Record Types.Edge -> a) -> Array a
 mapEdges = runFn2 _mapEdges
 updateEachEdgeAttributes :: Graph -> (Record Types.Edge -> Record Types.Edge) -> Effect Unit
 updateEachEdgeAttributes = runEffectFn2 _updateEachEdgeAttributes
+filterEdges :: Graph -> (Record Types.Edge -> Boolean) -> Array Types.EdgeId
+filterEdges = runFn2 _filterEdges
 
 -- TODO Maybe our use of this function (`updateWithGraph`) in code is
 -- too much. We convert Types.Graph into Graphology.Graph and then
@@ -137,6 +146,14 @@ edgeIds g = Set.fromFoldable $ mapEdges g (\{ id } -> id) -- -<<< edges_
 nodeIds :: Graph -> Types.NodeIds
 nodeIds = Set.fromFoldable <<< nodes_
 
+
+-- | Leave out only visible nodes/edges in a graph
+updateGraphOnlyVisible :: Graph -> Effect Unit
+updateGraphOnlyVisible g = do
+  let hiddenNodeIds = filterNodes g (_.hidden)
+  let hiddenEdgeIds = filterEdges g (_.hidden)
+  traverse_ (removeEdge g) hiddenEdgeIds
+  traverse_ (removeNode g) hiddenNodeIds
 
 -- | Read graph into a graphology instance.
 -- graphRead :: forall nodeExtra node edgeExtra edge.
