@@ -1,7 +1,6 @@
 module Gargantext.Hooks.Sigmax
   where
 
-import DOM.Simple.Types (Element)
 import Data.Array as A
 import Data.Either (either)
 import Data.Foldable (sequence_, foldl)
@@ -14,6 +13,7 @@ import Data.Set as Set
 import Data.Traversable (traverse_)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Types (Element)
 import Effect (Effect)
 import Effect.Class.Console (error)
 import Effect.Timer (TimeoutId, clearTimeout)
@@ -131,13 +131,17 @@ handleForceAtlas2Pause fa2Ref forceAtlasState mFAPauseRef settings = do
       isFARunning <- ForceAtlas.isRunning fa2
       case Tuple toggled isFARunning of
         Tuple ST.InitialRunning false -> do
-          ForceAtlas.restart fa2
+          -- console.log "[handleForceAtlas2Paue)] restarting FA (InitialRunning)"
+          ForceAtlas.start fa2
         Tuple ST.Running false -> do
-          ForceAtlas.restart fa2
+          -- console.log2 "[handleForceAtlas2Pause] restarting FA (Running)" fa2
+          Graphology.updateGraphOnlyVisible (ForceAtlas.graph fa2)
+          ForceAtlas.start fa2
           case R.readRef mFAPauseRef of
             Nothing -> pure unit
             Just timeoutId -> clearTimeout timeoutId
         Tuple ST.Paused true -> do
+          -- console.log "[handleForceAtlas2Pause] stopping FA (Paused)"
           ForceAtlas.stop fa2
         _ -> pure unit
 

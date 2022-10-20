@@ -7,6 +7,7 @@ import FA2Layout from 'graphology-layout-forceatlas2/worker';
 
 export function _init(graph, settings) {
   // let inferred = forceAtlas2.inferSettings(graph);
+  // console.log('[init] graph', graph, 'settings', settings);
   return new FA2Layout(graph, {
     settings,
     getEdgeWeight: 'weight'

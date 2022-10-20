@@ -7,11 +7,12 @@ module Gargantext.Components.GraphExplorer.Resources
 
 import Gargantext.Prelude
 
-import DOM.Simple (window)
-import DOM.Simple.Types (Element)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
+import Data.Tuple (Tuple(..))
+import DOM.Simple (window)
+import DOM.Simple.Types (Element)
 import Effect.Class.Console as ECC
 import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.GraphExplorer.Store as GraphStore
@@ -62,6 +63,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
     { showEdges
     , edgeConfluence
     , edgeWeight
+    , forceAtlasState
     , graph
     , graphStage
     , hyperdataGraph
@@ -74,6 +76,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
     showEdges'        <- R2.useLive' showEdges
     edgeConfluence'   <- R2.useLive' edgeConfluence
     edgeWeight'       <- R2.useLive' edgeWeight
+    forceAtlasState' <- R2.useLive' forceAtlasState
     graphStage'       <- R2.useLive' graphStage
     graph'            <- R2.useLive' graph
     startForceAtlas'  <- R2.useLive' startForceAtlas
@@ -85,17 +88,17 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
     -- Clean up
     R.useEffectOnce $ do
       pure $ do
-        here.log "[graphCpt (Cleanup)]"
+        here.log "[drawGraph (Cleanup)]"
         case R.readRef fa2Ref of
           Nothing -> pure unit
           Just fa2 -> do
             ForceAtlas2.stop fa2
             ForceAtlas2.kill fa2
-            here.log2 "[graphCpt (Cleanup)] forceAtlas stopped for" fa2
+            here.log2 "[drawGraph (Cleanup)] forceAtlas stopped for" fa2
             R.setRef fa2Ref Nothing
-        Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Cleanup)] no sigma" $ \sigma -> do
+        Sigmax.dependOnSigma (R.readRef sigmaRef) "[drawGraph (Cleanup)] no sigma" $ \sigma -> do
           Sigma.kill sigma
-          here.log "[graphCpt (Cleanup)] sigma killed"
+          here.log "[drawGraph (Cleanup)] sigma killed"
 
     -- Stage Init
     R.useEffect1' graphStage' $ case graphStage' of
@@ -113,11 +116,11 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
                 pure $ Left "elRef is empty"
               Just el -> Sigma.sigma el { settings: sigmaSettings theme }
             case eSigma of
-              Left err -> here.warn2 "[graphCpt] error creating sigma" err
+              Left err -> here.warn2 "[drawGraph] error creating sigma" err
               Right sig -> do
                 Sigmax.writeSigma rSigma $ Just sig
 
-                Sigmax.dependOnContainer elRef "[graphCpt (Ready)] container not found" $ \c -> do
+                Sigmax.dependOnContainer elRef "[drawGraph (Ready)] container not found" $ \c -> do
                   _ <- Sigma.addRenderer sig {
                       "type": "canvas"
                     , container: c
@@ -128,7 +131,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
                 --newGraph <- Graphology.graphFromSigmaxGraph graph'
                 --Sigmax.refreshData sig newGraph
 
-                Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Ready)] no sigma" $ \sigma -> do
+                Sigmax.dependOnSigma (R.readRef sigmaRef) "[drawGraph (Ready)] no sigma" $ \sigma -> do
                   -- bind the click event only initially, when ref was empty
                   Sigmax.bindSelectedNodesClick sigma selectedNodeIds multiSelectEnabled
                   Sigmax.bindShiftWheel sigma mouseSelectorSize
@@ -187,23 +190,27 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
     --       they changed → one solution could be to list every effects subject
     --       to a graph transformation (eg. "showLouvain", "edgeConfluence",
     --       etc) // drawback: don't forget to modify the effect white-list
-    R.useEffect' case graphStage' of
+    R.useEffect' $ do
+      let updateGraph = do
+              let tEdgesMap = SigmaxTypes.edgesGraphMap transformedGraph
+              let tNodesMap = SigmaxTypes.nodesGraphMap transformedGraph
 
-      GET.Ready -> do
-        let tEdgesMap = SigmaxTypes.edgesGraphMap transformedGraph
-        let tNodesMap = SigmaxTypes.nodesGraphMap transformedGraph
+              Sigmax.dependOnSigma (R.readRef sigmaRef) "[drawGraph (Ready)] no sigma" $ \sigma -> do
+                Sigmax.performDiff sigma transformedGraph
+                -- Sigmax.updateEdges sigma tEdgesMap
+                -- Sigmax.updateNodes sigma tNodesMap
+                let edgesState = not $ SigmaxTypes.edgeStateHidden showEdges'
+                -- here.log2 "[graphCpt] edgesState" edgesState
+                Sigmax.setSigmaEdgesVisibility sigma { edgeConfluence: edgeConfluence'
+                                                     , edgeWeight: edgeWeight'
+                                                     , showEdges: showEdges' }
 
-        Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Ready)] no sigma" $ \sigma -> do
-          Sigmax.performDiff sigma transformedGraph
-          -- Sigmax.updateEdges sigma tEdgesMap
-          -- Sigmax.updateNodes sigma tNodesMap
-          let edgesState = not $ SigmaxTypes.edgeStateHidden showEdges'
-          -- here.log2 "[graphCpt] edgesState" edgesState
-          Sigmax.setSigmaEdgesVisibility sigma { edgeConfluence: edgeConfluence'
-                                               , edgeWeight: edgeWeight'
-                                               , showEdges: showEdges' }
+      case Tuple forceAtlasState' graphStage' of
 
-      _ -> pure unit
+        Tuple SigmaxTypes.InitialRunning GET.Ready -> updateGraph
+        Tuple SigmaxTypes.Paused GET.Ready -> updateGraph
+
+        _ -> pure unit
 
 
     -- | Render

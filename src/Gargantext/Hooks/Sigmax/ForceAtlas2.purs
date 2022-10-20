@@ -19,6 +19,9 @@ import Record as Record
 -- | Type representing the web worker.
 foreign import data FA2Layout :: Type
 
+graph :: FA2Layout -> Graphology.Graph
+graph s = s .. "graph" :: Graphology.Graph
+
 -- TODO inferSettings
 -- TODO init with settings
 foreign import _init :: forall settings. EffectFn2 Graphology.Graph settings FA2Layout

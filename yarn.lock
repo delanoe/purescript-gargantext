@@ -5395,7 +5395,14 @@ graphology-layout-forceatlas2@^0.9.2:
   dependencies:
     graphology-utils "^2.1.0"
 
-graphology-utils@^2.1.0, graphology-utils@^2.5.0:
+graphology-operators@^1.6.0:
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/graphology-operators/-/graphology-operators-1.6.0.tgz#daad1600219ad47a3005504f252f80d9b402ad09"
+  integrity sha512-yfnVNsFd6plBw7r6Td4luGlNoQn9MKI56EZ/NcFcRmvu/D1R8eWHjpipNUdBjl5MVV8iSW8e/XuY8YsjRDnLoA==
+  dependencies:
+    graphology-utils "^2.0.0"
+
+graphology-utils@^2.0.0, graphology-utils@^2.1.0, graphology-utils@^2.5.0:
   version "2.5.2"
   resolved "https://registry.yarnpkg.com/graphology-utils/-/graphology-utils-2.5.2.tgz#4d30d6e567d27c01f105e1494af816742e8d2440"
   integrity sha512-ckHg8MXrXJkOARk56ZaSCM1g1Wihe2d6iTmz1enGOz4W/l831MBCKSayeFQfowgF8wd+PQ4rlch/56Vs/VZLDQ==

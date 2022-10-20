@@ -180,7 +180,7 @@ type ForceAtlasProps =
 pauseForceAtlasButton :: R2.Leaf ForceAtlasProps
 pauseForceAtlasButton = R2.leaf pauseForceAtlasButtonCpt
 pauseForceAtlasButtonCpt :: R.Component ForceAtlasProps
-pauseForceAtlasButtonCpt = here.component "forceAtlasToggleButton" cpt
+pauseForceAtlasButtonCpt = here.component "pauseForceAtlasButtonButton" cpt
   where
     cpt { state } _ = do
       -- States

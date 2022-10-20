@@ -30,6 +30,13 @@ export function _mapNodes(g, fn) {
   });
 }
 
+export function _filterNodes(g, fn) {
+  return g.filterNodes(function(name, attrs) {
+    return fn({id: name, ...attrs});
+  })
+}
+
+
 export function _forEachEdge(g, fn) {
   return g.forEachEdge(function(name, attrs, source, target, sourceAttributes, targetAttributes, undirected) {
     return fn({id: name,
@@ -58,4 +65,10 @@ export function _mapEdges(g, fn) {
                target,
                ...attrs});
   });
+}
+
+export function _filterEdges(g, fn) {
+  return g.filterEdges(function(name, attrs) {
+    return fn({id: name, ...attrs});
+  })
 }
