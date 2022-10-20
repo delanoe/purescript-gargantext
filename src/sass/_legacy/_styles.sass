@@ -2,8 +2,8 @@
 .no-user-select
   user-select: none
 
-.cache-toggle
-  cursor: pointer
+.no-pointer-events
+  pointer-events: none
 
 .side-panel
   background-color: #fff
@@ -69,6 +69,7 @@
 // Add pointer to Bootstrap Select
 select.form-control
   cursor: pointer
+
 
 #app
   width: 100%
@@ -200,6 +201,20 @@ select.form-control
     height: $spinner-size
     left: $spinner-left-offset
     top: $spinner-top-offset
+
+// @TODO expand <tabs> to fit a ".main-page__main-route" with its padding
+//       really KISS solution, better prevent the whole padding set (as the
+//       likes of many pages, such as the Graph Explorer one)
+.nodes-lists-layout-tabs,
+.nodes-texts-layout-tabs,
+.nodes-annuaire-layout-tabs
+
+  .nav.nav-tabs
+    margin-left: -32px
+    margin-right: -32px
+    padding-left: 32px
+    padding-right: 32px
+
 
 .jitsi-iframe
   height: 70em

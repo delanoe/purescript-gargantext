@@ -4,11 +4,14 @@ import Gargantext.Prelude
 
 import Data.Array as A
 import Data.Either (Either(..))
+import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (Elevation(..), Variant(..))
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
 import Gargantext.Components.Nodes.Corpus (saveCorpus)
@@ -20,6 +23,7 @@ import Gargantext.Components.Search (SearchType(..))
 import Gargantext.Components.Table.Types (ColumnName, OrderBy, OrderByDirection(..), Params, Props, TableContainerProps, columnName)
 import Gargantext.Sessions.Types (Session)
 import Gargantext.Types (NodeID)
+import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix (effectLink)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -106,42 +110,95 @@ tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxed
       cacheState' <- T.useLive T.unequal cacheState
       CorpusInfo {title, desc, query, authors} <- T.read corpusInfoS
 
-      pure $ R.fragment
-        [ R2.row [FV.backButton {} []]
-        ,
-          R2.row
-          [ H.div {className: "col-md-3"} [ H.h3 {} [renameable {icon: "", text: name, onRename: onRenameCorpus} []] ]
-          , H.div {className: "col-md-9"}
-            [ H.hr {style: {height: "2px", backgroundColor: "black"}} ]
+      pure $
+
+        H.div
+        { className: "table-header-rename" }
+        [
+        --   R2.row
+        --   [
+        --     FV.backButton {} []
+        --   ]
+        -- ,
+          H.div
+          { className: "table-header-rename__header" }
+          [
+            renameable
+            { text: name
+            , onRename: onRenameCorpus
+            , className: "renameable-wrapper--emphase"
+            }
+          ,
+            H.hr
+            { className: "table-header-rename__header__line" }
           ]
           , R2.row
-            [ H.div {className: "col-md-8 content"}
-              [ H.div {}
+            [
+              H.div
+              { className: "col-md-8" }
+              [
+                renameable
+                { icon: Just "info"
+                , text: title
+                , onRename: onRenameTitle
+                }
+              ,
+                renameable
+                { icon: Just "globe"
+                , text: desc
+                , onRename: onRenameDesc
+                }
+              ,
+                renameable
+                { icon: Just "search-plus"
+                , text: query
+                , onRename: onRenameQuery
+                }
+              ,
+                H.div
+                { className: intercalate " "
+                    [ "table-header-rename__cache"
+                    , cacheState' == NT.CacheOn ?
+                        "table-header-rename__cache--on" $
+                        ""
+                    ]
+                }
                 [
-                  renameable {icon: "fa fa-info", text: title, onRename: onRenameTitle} []
-                ]
-              , H.div {}
-                [
-                  renameable {icon: "fa fa-globe", text: desc, onRename: onRenameDesc} []
-                ]
-              , H.div {}
-                [
-                  renameable {icon: "fa fa-search-plus", text: query, onRename: onRenameQuery} []
-                ]
-              , H.div { className: "cache-toggle"
-                    , on: { click: cacheClick cacheState } }
-                [ H.span { className: "fa " <> (cacheToggle cacheState') } []
-                , H.text $ cacheText cacheState'
+                  H.span
+                  { className: "table-header-rename__cache__text"
+                  , on: { click: cacheClick cacheState }
+                  }
+                  [
+                    H.text $ cacheText cacheState'
+                  ]
+                ,
+                  B.iconButton
+                  { name: cacheToggle cacheState'
+                  , className: "table-header-rename__cache__button"
+                  , variant: Secondary
+                  , elevation: Level1
+                  , callback: cacheClick cacheState
+                  }
                 ]
               ]
-            , H.div {className: "col-md-4 content"}
-              [ H.div {}
+            ,
+              H.div {className: "col-md-4"}
+              [
+                renameable
+                { icon: Just "user"
+                , text: authors
+                , onRename: onRenameAuthors
+                }
+              ,
+                H.div
+                { className: "table-header-rename__calendar" }
                 [
-                  renameable {icon: "fa fa-user", text: authors, onRename: onRenameAuthors} []
-                ]
-              , H.div {}
-                [ H.span {className: "fa fa-calendar"} []
-                , H.text $ " " <> date
+                  B.icon
+                  { name: "calendar"
+                  , className: "table-header-rename__calendar__icon"
+                  }
+                ,
+                  B.span_ date
                 ]
               ]
             ]
@@ -175,14 +232,13 @@ tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxed
           save {fields: newFields, session, nodeId}
 
 
-    cacheToggle NT.CacheOn = "fa-toggle-on"
-    cacheToggle NT.CacheOff = "fa-toggle-off"
+    cacheToggle NT.CacheOn = "toggle-on"
+    cacheToggle NT.CacheOff = "toggle-off"
 
     cacheText NT.CacheOn = "Cache On"
     cacheText NT.CacheOff = "Cache Off"
 
-    cacheClick cacheState _ = do
-      T.modify cacheStateToggle cacheState
+    cacheClick cacheState _ = T.modify_ cacheStateToggle cacheState
 
     cacheStateToggle NT.CacheOn = NT.CacheOff
     cacheStateToggle NT.CacheOff = NT.CacheOn
@@ -370,7 +426,8 @@ sizeDDCpt = here.component "sizeDD" cpt
         className = "form-control"
         change e = do
           let ps = string2PageSize $ R.unsafeEventValue e
-          T.modify (\p -> stateParams $ (paramsState p) { pageSize = ps }) params
+          _ <- T.modify (\p -> stateParams $ (paramsState p) { pageSize = ps }) params
+          changePage 1 params
         sizes = map option pageSizes
         option size = H.option {value} [H.text value]
           where value = show size

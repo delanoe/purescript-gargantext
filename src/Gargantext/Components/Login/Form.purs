@@ -98,7 +98,7 @@ submitButtonCpt = here.component "submitButton" cpt where
     let isValid = agreed && (username `notEq` "") && (password `notEq` "")
     pure $ H.div { className: "text-center" }
            [ loginSubmit isValid $ submitForm { backend, formType, sessions, visible } cell ]
-    
+
 -- Attempts to submit the form
 submitForm :: forall s v. T.ReadWrite s Sessions => T.Write v Boolean
            => Record (Props s v) -> T.Box Form -> ChangeEvent -> Effect Unit

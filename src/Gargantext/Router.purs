@@ -6,11 +6,12 @@ import Data.Foldable (oneOf)
 import Data.Int (floor)
 import Gargantext.Routes (AppRoute(..))
 import Gargantext.Types (SessionId(..))
-import Routing.Match (Match, lit, num, str)
+import Routing.Match (Match, lit, num, params, str)
 
 router :: Match AppRoute
 router = oneOf
   [ Login            <$   route "login"
+  , ForgotPassword   <$> (route "forgotPassword" *> params)
   , Folder           <$> (route "folder"     *> sid) <*> int
     , FolderPrivate    <$> (route "folderPrivate"     *> sid) <*> int
     , FolderPublic     <$> (route "folderPublic"     *> sid) <*> int

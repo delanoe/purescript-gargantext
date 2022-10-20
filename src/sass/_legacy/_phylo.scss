@@ -594,6 +594,21 @@ $decreasing-color: #11638F;
       padding: $badge-padding-y $badge-padding-x;
       font-weight: bold;
     }
+
+    &__expand {
+      // Following <list-group-item> spacing
+      $position-x: $list-group-item-padding-x;
+      // Empirical: fit well with icon overlay
+      $position-y: 1rem;
+
+      position: absolute;
+      right: $position-x;
+      bottom: $position-y;
+    }
+
+    &__actions {
+      margin-top: space-x(2);
+    }
   }
 
   &__selection {

@@ -4,10 +4,11 @@ import Gargantext.Prelude
 
 import DOM.Simple as DOM
 import Effect (Effect)
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (Elevation(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (prettyNodeType)
 import Gargantext.Types (ID, Name)
 import Gargantext.Types as GT
-import Gargantext.Utils.Glyphicon (glyphicon)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -28,25 +29,54 @@ nodePopupViewCpt :: R.Component NodePopupProps
 nodePopupViewCpt = here.component "nodePopupView" cpt where
   cpt props  _ = do
 
-    pure $ H.div tooltipProps
-      [ H.div { className: "popup-container" }
-        [ H.div { className: "card" }
-          [ panelHeading  props
-          ]]]
+    pure $
 
-  closePopover props = props.onPopoverClose <<< R.unsafeEventTarget
+      H.div
+      { className: "node-popup-tooltip"
+      , title: "Node settings"
+      }
+      [
+        H.div
+        { className: "popup-container card" }
+        [
+          panelHeading  props
+        ]
+      ]
 
-  tooltipProps = { id: "node-popup-tooltip", title: "Node settings"
-                 , data: { toggle: "tooltip", placement: "right" } }
+  closeBox props = props.onPopoverClose <<< R.unsafeEventTarget
 
   panelHeading props@{ nodeType } =
-    H.div { className: "card-header" }
-    [ R2.row
-      [ H.div { className: "col-4" }
-        [ H.span { className: GT.fldr nodeType true} [] -- TODO fix names
-        , H.span { className: "h5" } [ H.text $ prettyNodeType nodeType ] ]
-      , H.div { className: "col-6" }
-        [ H.span { className: "text-primary center" } [ H.text props.name ] ]
-      , H.div { className: "col-1" }
-        [ H.a { type: "button", on: { click: closePopover props }, title: "Close"
-              , className: glyphicon "window-close" } [] ]]] 
+    H.div
+    { className: "popup-container__header card-header" }
+    [
+      B.wad
+      [ "d-flex", "align-items-center" ]
+      [
+        H.div
+        { className: "w-3/12" }
+        [
+          H.span { className: GT.fldr nodeType true} [] -- TODO fix names
+        ,
+          B.span' { className: "ml-1 h5" } $ prettyNodeType nodeType
+        ]
+      ,
+        B.wad
+        [ "w-7/12", "pl-1" ]
+        [
+          B.wad'
+          [ "text-primary" ]
+          props.name
+        ]
+      ,
+        B.wad
+        [ "w-2/12", "text-right" ]
+        [
+          B.iconButton
+          { callback: closeBox props
+          , title: "Close"
+          , elevation: Level1
+          , name: "times"
+          }
+        ]
+      ]
+    ]

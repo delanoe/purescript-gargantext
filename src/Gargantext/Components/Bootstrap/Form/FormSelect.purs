@@ -93,7 +93,7 @@ component = R.hooksComponent componentName cpt where
       R2.select
       { className
       , on: { change }
-      , disabled: elem status [ Disabled ]
+      , disabled: elem status [ Disabled, Idled ]
       , readOnly: elem status [ Idled ]
       , type: props.type
       , value: props.value

@@ -63,14 +63,14 @@ data DataField = Gargantext
 
 derive instance Generic DataField _
 instance Show DataField where
-  show Gargantext   = "Gargantext"
+  show Gargantext   = "Gargantext (Beta)"
   show (External _) = "Databases (APIs)" -- <> show x
   show Web          = "Web"
   show Files        = "Files"
 instance Doc DataField where
   doc Gargantext   = "All Gargantext Database"
   doc (External _) = "External (scientific) databases"
-  doc Web          = "All the web crawled with meta-search-engine SearX"
+  doc Web          = "To launch an analysis on french news (FR only supported for now): put your query, select FR and launch with button on bottom."
   doc Files        = "Zip files with formats.."
 derive instance Eq DataField
 instance JSON.WriteForeign DataField where
@@ -261,7 +261,7 @@ instance GT.ToQuery SearchQuery where
             [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
 instance JSON.WriteForeign SearchQuery where
   writeImpl (SearchQuery { databases, datafield, lang, node_id, query, selection }) =
-    JSON.writeImpl { query: String.replace (String.Pattern "\"") (String.Replacement "\\\"") query
+    JSON.writeImpl { query: query -- String.replace (String.Pattern "\"") (String.Replacement "\\\"") query
                    , databases
                    , datafield
                    , lang: maybe "EN" show lang

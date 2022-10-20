@@ -1,14 +1,14 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Types where
 
-import Gargantext.Prelude
-
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact.Types (AddContactParams)
 import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (UpdateNodeParams)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileFormat, FileType, UploadFileBlob)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut)
+import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Components.ListSelection.Types (Selection)
+import Gargantext.Prelude
 import Gargantext.Types as GT
 
 data Action = AddNode     String GT.NodeType
@@ -16,12 +16,12 @@ data Action = AddNode     String GT.NodeType
             | RenameNode  String
             | UpdateNode  UpdateNodeParams
             | DoSearch    GT.AsyncTaskWithType
-            | UploadFile  GT.NodeType FileType FileFormat (Maybe String) String Selection
+            | UploadFile  GT.NodeType FileType FileFormat Lang (Maybe String) String Selection
             | UploadArbitraryFile FileFormat (Maybe String) UploadFileBlob Selection
             | UploadFrameCalc
             | DownloadNode
             | RefreshTree
-            | ClosePopover
+            | CloseBox
 
             | ShareTeam   String
             | AddContact  AddContactParams
@@ -42,13 +42,13 @@ instance Eq Action where
   eq (RenameNode s1) (RenameNode s2) = eq s1 s2
   eq (UpdateNode un1) (UpdateNode un2) = eq un1 un2
   eq (DoSearch at1) (DoSearch at2) = eq at1 at2
-  eq (UploadFile nt1 ft1 ff1 s1 _ _) (UploadFile nt2 ft2 ff2 s2 _ _) =
-    (eq nt1 nt2) && (eq ft1 ft2) && (eq ff1 ff2) && (eq s1 s2)
+  eq (UploadFile nt1 ft1 ff1 l1 s1 _ _) (UploadFile nt2 ft2 ff2 l2 s2 _ _) =
+    (eq nt1 nt2) && (eq ft1 ft2) && (eq ff1 ff2) && (eq l1 l2) && (eq s1 s2)
   eq (UploadArbitraryFile ff1 s1 _ _) (UploadArbitraryFile ff2 s2 _ _) = (eq ff1 ff2) && (eq s1 s2)
   eq UploadFrameCalc UploadFrameCalc = true
   eq DownloadNode DownloadNode = true
   eq RefreshTree RefreshTree = true
-  eq ClosePopover ClosePopover = true
+  eq CloseBox CloseBox = true
   eq (ShareTeam s1) (ShareTeam s2) = eq s1 s2
   eq (AddContact ac1) (AddContact ac2) = eq ac1 ac2
   eq (SharePublic p1) (SharePublic p2) = eq p1 p2
@@ -68,11 +68,11 @@ instance Show Action where
   show (AddContact  _      )         = "AddContact"
   show (SharePublic _      )         = "SharePublic"
   show (DoSearch    _      )         = "SearchQuery"
-  show (UploadFile _ _ _ _ _ _)      = "UploadFile"
+  show (UploadFile _ _ _ _ _ _ _)      = "UploadFile"
   show (UploadArbitraryFile _ _ _ _) = "UploadArbitraryFile"
   show UploadFrameCalc               = "UploadFrameCalc"
   show  RefreshTree                  = "RefreshTree"
-  show  ClosePopover                 = "ClosePopover"
+  show  CloseBox                     = "CloseBox"
   show  DownloadNode                 = "Download"
   show (MoveNode  _ )                = "MoveNode"
   show (MergeNode _ )                = "MergeNode"

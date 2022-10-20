@@ -54,7 +54,7 @@ actionSearchCpt = here.component "actionSearch" cpt
           searchOn dispatch' task = do
             _ <- launchAff $ dispatch' (DoSearch task)
             -- close popup
-            _ <- launchAff $ dispatch' ClosePopover
+            _ <- launchAff $ dispatch' CloseBox
             -- TODO
             --snd p $ const Nothing
             pure unit

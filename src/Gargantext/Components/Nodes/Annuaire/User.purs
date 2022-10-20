@@ -16,7 +16,7 @@ import Effect.Class (liftEffect)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.GraphQL (getClient)
 import Gargantext.Components.GraphQL.Endpoints (getUserInfo)
-import Gargantext.Components.GraphQL.User (UserInfo, _ui_cwCity, _ui_cwCountry, _ui_cwFirstName, _ui_cwLabTeamDeptsFirst, _ui_cwLastName, _ui_cwOffice, _ui_cwOrganizationFirst, _ui_cwRole, _ui_cwTouchMail, _ui_cwTouchPhone)
+import Gargantext.Components.GraphQL.User (UserInfo, _ui_cwCity, _ui_cwCountry, _ui_cwFirstName, _ui_cwLabTeamDeptsFirst, _ui_cwLastName, _ui_cwOffice, _ui_cwOrganizationFirst, _ui_cwRole, _ui_cwTouchMail, _ui_cwTouchPhone, _ui_cwDescription)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
@@ -170,6 +170,7 @@ contactInfoItems =
   , { label: "Role"         , defaultVal: "Empty Role"         , lens: _ui_cwRole                         }
   , { label: "Phone"        , defaultVal: "Empty Phone"        , lens: _ui_cwTouchPhone                   }
   , { label: "Mail"         , defaultVal: "Empty Mail"         , lens: _ui_cwTouchMail                    }
+  , { label: "Description"  , defaultVal: "No description"     , lens: _ui_cwDescription                  }
   ]
 
 type UserInfoLens = L.ALens' UserInfo String
@@ -284,7 +285,8 @@ saveUserInfo session id ui = do
                                  , ui_cwCountry: ga ui.ui_cwCountry
                                  , ui_cwRole: ga ui.ui_cwRole
                                  , ui_cwTouchPhone: ga ui.ui_cwTouchPhone
-                                 , ui_cwTouchMail: ga ui.ui_cwTouchMail } }
+                                 , ui_cwTouchMail: ga ui.ui_cwTouchMail
+                                 , ui_cwDescription: ga ui.ui_cwDescription } }
   pure $ Right res.update_user_info
   where
     ga Nothing = ArgL IgnoreArg

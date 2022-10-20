@@ -5,14 +5,17 @@ module Gargantext.Components.Login where
 
 import Gargantext.Prelude
 
+import DOM.Simple.Event as DE
 import Data.Array (head)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String as DST
+import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Login.Form (form)
+import Gargantext.Components.Bootstrap.Types (ModalSizing(..))
 import Gargantext.Components.Login.ForgotPassword (forgotPassword)
+import Gargantext.Components.Login.Form (form)
 import Gargantext.Components.Login.Types (FormType(..))
 import Gargantext.Components.NgramsTable.Loader as NTL
 import Gargantext.Ends (Backend(..))
@@ -22,6 +25,7 @@ import Gargantext.Sessions as Sessions
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Reactix.SyntheticEvent as RE
 import Toestand as T
 
 here :: R2.Here
@@ -43,61 +47,131 @@ login :: R2.Leaf Props
 login = R2.leaf loginCpt
 loginCpt :: R.Component Props
 loginCpt = here.component "login" cpt where
-  cpt props@{ sessions, visible } _ = do
-    -- States
-    mBackend <- R2.useLive' props.backend
-    formType <- T.useBox Login
-    formType' <- T.useLive T.unequal formType
+  cpt props@{ visible } _ = do
     -- Render
     pure $
 
       B.baseModal
       { isVisibleBox: visible
-      , title: "GarganText ecosystem explorer"
+      , title: Just "GarganText ecosystem explorer"
+      , size: ExtraLargeModalSize
       }
+      [
+        loginContainer
+        props
+      ]
+
+-- | @XXX React re-rendering issue with `React.Portal`
+-- | @link https://github.com/facebook/react/issues/12247
+loginContainer :: R2.Leaf Props
+loginContainer = R2.leaf loginContainerCpt
+
+loginContainerCpt :: R.Component Props
+loginContainerCpt = here.component "container" cpt where
+  cpt props@{ sessions, visible } _ = do
+    -- States
+    mBackend <- R2.useLive' props.backend
+    formType <- T.useBox Login
+    formType' <- T.useLive T.unequal formType
+
+    -- Render
+    pure $
+
+      H.div
+      {}
       [
         case mBackend of
           Nothing      -> chooser props
           Just backend -> case formType' of
-                               Login -> form { backend, formType, sessions, visible }
-                               ForgotPassword -> forgotPassword { backend, sessions }
+            Login ->
+              form
+              { backend
+              , formType
+              , sessions
+              , visible
+              }
+            ForgotPassword ->
+              forgotPassword
+              { backend
+              , sessions
+              }
       ]
 
 chooser :: R2.Leaf Props
-chooser = R2.leafComponent chooserCpt
+chooser = R2.leaf chooserCpt
 chooserCpt :: R.Component Props
 chooserCpt = here.component "chooser" cpt where
   cpt { backend, backends, sessions } _ = do
     sessions' <- T.useLive T.unequal sessions
     pure $
-      R.fragment $
-        [ H.h2 { className: "mx-auto" } [ H.text "Workspace manager" ]]
-        <> activeConnections sessions sessions' <>
-        [ H.h3 {} [ H.text "Existing places (click to login)" ]
-        , H.table { className : "table" }
-                  [ H.thead { className: "thead-light" }
-                            [ H.tr {} (map header headers) ]
-                  , H.tbody {} (map (renderBackend backend) backends)
-                  ]
-        , H.input { className: "form-control", type:"text", placeholder } ]
-  placeholder = "Search for your institute"
+      H.div
+      {} $
+      [
+        H.h2
+        { className: "mx-auto" }
+        [ H.text "Workspace manager" ]
+      ]
+      <>
+        activeConnections sessions sessions'
+      <>
+      [
+        H.h3
+        {}
+        [ H.text "Existing places (click to login)" ]
+      ,
+        H.table
+        { className : "table" }
+        [
+          H.thead
+          { className: "thead-light" }
+          [
+            H.tr
+            {}
+            (map header headers)
+          ]
+        ,
+          H.tbody
+          {}
+          (map (renderBackend backend) backends)
+        ]
+      ,
+        H.input
+        { className: "form-control"
+        , type:"text"
+        , placeholder: "Search for your institute"
+        }
+      ]
   headers = [ "", "GarganText places", "Fonction", "Garg protocol url" ]
   header label = H.th {} [ H.text label ]
 
 -- Shown in the chooser
 activeConnections :: forall s. T.ReadWrite s Sessions => s -> Sessions -> Array R.Element
-activeConnections _        sessions' | Sessions.null sessions' = []
-activeConnections sessions sessions' =
-  [ H.h3 {} [ H.text "Active place(s)" ]
-  , H.table { className : "table" }
-                  [ H.thead { className: "thead-light" }
-                            [ H.tr {} (map header headers) ]
-                  , H.tbody {} [renderSessions sessions sessions']
-                  ]
+activeConnections _        sessions' | Sessions.null sessions'  = mempty
+activeConnections sessions sessions'                            =
+  [
+    H.h3
+    {}
+    [ H.text "Active place(s)" ]
+  ,
+    H.table
+    { className : "table" }
+    [
+      H.thead
+      { className: "thead-light" }
+      [
+        H.tr
+        {}
+        (map header headers)
+      ]
+    ,
+      H.tbody
+      {}
+      [ renderSessions sessions sessions' ]
+    ]
   ]
-    where
-      headers = [ "", "Active(s) connection(s)", "Fonction", "Clear data/Logout"]
-      header label = H.th {} [ H.text label ]
+  where
+    headers = [ "", "Active(s) connection(s)", "Fonction", "Clear data/Logout"]
+    header label = H.th {} [ H.text label ]
 
 
 
@@ -141,7 +215,11 @@ renderBackend cursor backend@(Backend {name, baseUrl, backendType}) =
   ]
     where
       className = "fa fa-hand-o-right" -- "glyphitem fa fa-log-in"
-      click _ = T.write_ (Just backend) cursor
+
+      click :: RE.SyntheticEvent DE.Event -> Effect Unit
+      click e = do
+        RE.preventDefault e
+        T.write_ (Just backend) cursor
 
 backendLabel :: String -> String
 backendLabel =

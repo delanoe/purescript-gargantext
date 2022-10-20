@@ -42,7 +42,7 @@ options =
 
 -- | Structural Component for the Bootstrap button
 -- |
--- | https://getbootstrap.com/docs/4.0/components/buttons/
+-- | https://getbootstrap.com/docs/4.6/components/buttons/
 button :: forall r. R2.OptComponent Options Props r
 button = R2.optComponent component options
 

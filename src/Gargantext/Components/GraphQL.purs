@@ -14,6 +14,7 @@ import Gargantext.Components.GraphQL.IMT as GQLIMT
 import Gargantext.Components.GraphQL.Node (Node)
 import Gargantext.Components.GraphQL.Tree (TreeFirstLevel)
 import Gargantext.Components.GraphQL.User (User, UserInfo, UserInfoM)
+import Gargantext.Components.GraphQL.Team (Team, TeamDeleteM)
 import Gargantext.Ends (Backend(..))
 import Gargantext.Sessions (Session(..))
 import Gargantext.Utils.Reactix as R2
@@ -77,7 +78,9 @@ type Schema
     , users :: { user_id :: Int } ==> Array User
     , tree :: { root_id :: Int } ==> TreeFirstLevel
     , annuaire_contacts :: { contact_id :: Int } ==> Array AnnuaireContact
+    , team :: { team_node_id :: Int } ==> Team
     }
 
 type Mutation
-  = { update_user_info :: UserInfoM ==> Int }
+  = { update_user_info :: UserInfoM ==> Int
+    , delete_team_membership :: TeamDeleteM ==> Array Int }
