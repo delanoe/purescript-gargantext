@@ -11,15 +11,13 @@ module Gargantext.Components.GraphExplorer.Toolbar.Buttons
 import Prelude
 
 import Data.Array as A
-import Data.DateTime as DDT
-import Data.DateTime.Instant as DDI
 import Data.Either (Either(..))
-import Data.Enum (fromEnum)
+import Data.Formatter.DateTime as DFDT
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
-import Data.String as DS
 import DOM.Simple.Console (log2)
+import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Now as EN
@@ -64,53 +62,53 @@ centerButton sigmaRef = B.button
 type CameraButtonProps =
   ( id             :: Int
   , hyperdataGraph :: GET.HyperdataGraph
+  , reloadForest   :: T2.ReloadS
   , session        :: Session
   , sigmaRef       :: R.Ref Sigmax.Sigma
-  , reloadForest   :: T2.ReloadS
   )
 
+screenshotFilename :: Effect String
+screenshotFilename = do
+  nowdt <- EN.nowDateTime
+  pure $ case DFDT.formatDateTime "YYYY-MM-DDTHH:mm:ss" nowdt of
+    Left err -> err
+    Right s -> s <> "-screenshot.png"
 
-cameraButton :: Record CameraButtonProps -> R.Element
-cameraButton { id
-             , hyperdataGraph: GET.HyperdataGraph { graph: GET.GraphData hyperdataGraph }
-             , session
-             , sigmaRef
-             , reloadForest } = B.button
-
-  { variant: OutlinedButtonVariant Secondary
-  , callback: \_ -> do
-      let sigma = R.readRef sigmaRef
-      Sigmax.dependOnSigma sigma "[cameraButton] sigma: Nothing" $ \s -> do
-        screen <- Sigma.takeScreenshot s
-        now <- EN.now
-        let nowdt = DDI.toDateTime now
-            nowd = DDT.date nowdt
-            nowt = DDT.time nowdt
-            nowStr = DS.joinWith "-" [ show $ fromEnum $ DDT.year nowd
-                                     , show $ fromEnum $ DDT.month nowd
-                                     , show $ fromEnum $ DDT.day nowd
-                                     , show $ fromEnum $ DDT.hour nowt
-                                     , show $ fromEnum $ DDT.minute nowt
-                                     , show $ fromEnum $ DDT.second nowt ]
-        let graph = Sigma.graph s
-            edges = Graphology.edges graph
-            nodes = Graphology.nodes graph
-            graphData = GET.GraphData $ hyperdataGraph { edges = A.fromFoldable $ Seq.map GEU.stEdgeToGET edges
-                                                       , nodes = A.fromFoldable $ GEU.normalizeNodes $ Seq.map GEU.stNodeToGET nodes }
-        let camera = Camera.toCamera $ Camera.camera s
-        let hyperdataGraph' = GET.HyperdataGraph { graph: graphData, mCamera: Just camera }
-        launchAff_ $ do
-          eClonedGraphId <- cloneGraph { id, hyperdataGraph: hyperdataGraph', session }
-          case eClonedGraphId of
-            Left err -> liftEffect $ log2 "[cameraButton] RESTError" err
-            Right clonedGraphId -> do
-              eRet <- uploadArbitraryData session clonedGraphId Plain (Just $ nowStr <> "-" <> "screenshot.png") screen
-              case eRet of
-                Left err -> liftEffect $ log2 "[cameraButton] RESTError" err
-                Right _ret -> do
-                  liftEffect $ T2.reload reloadForest
-  }
-  [ H.text "Screenshot" ]
+cameraButton :: R2.Leaf CameraButtonProps
+cameraButton = R2.leaf cameraButtonCpt
+cameraButtonCpt :: R.Component CameraButtonProps
+cameraButtonCpt = here.component "cameraButton" cpt
+  where
+    cpt { id
+        , hyperdataGraph: GET.HyperdataGraph { graph: GET.GraphData hyperdataGraph }
+        , reloadForest
+        , session
+        , sigmaRef } _ = do
+      pure $ B.button
+        { callback: \_ -> do
+             filename <- screenshotFilename
+             let sigma = R.readRef sigmaRef
+             Sigmax.dependOnSigma sigma "[cameraButton] sigma: Nothing" $ \s -> do
+               screen <- Sigma.takeScreenshot s
+               let graph = Sigma.graph s
+                   edges = Graphology.edges graph
+                   nodes = Graphology.nodes graph
+                   graphData = GET.GraphData $ hyperdataGraph { edges = A.fromFoldable $ Seq.map GEU.stEdgeToGET edges
+                                                              , nodes = A.fromFoldable $ GEU.normalizeNodes $ Seq.map GEU.stNodeToGET nodes }
+               let camera = Camera.toCamera $ Camera.camera s
+               let hyperdataGraph' = GET.HyperdataGraph { graph: graphData, mCamera: Just camera }
+               launchAff_ $ do
+                 eClonedGraphId <- cloneGraph { id, hyperdataGraph: hyperdataGraph', session }
+                 case eClonedGraphId of
+                   Left err -> liftEffect $ log2 "[cameraButton] RESTError" err
+                   Right clonedGraphId -> do
+                     eRet <- uploadArbitraryData session clonedGraphId Plain (Just filename) screen
+                     case eRet of
+                       Left err -> liftEffect $ log2 "[cameraButton] RESTError" err
+                       Right _ret -> do
+                         liftEffect $ T2.reload reloadForest
+        , variant: OutlinedButtonVariant Secondary
+        } [ H.text "Screenshot" ]
 
 ------------------------------------------------------
 
