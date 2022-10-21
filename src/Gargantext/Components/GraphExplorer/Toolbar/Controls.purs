@@ -198,7 +198,8 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             , titleSlot: H.text "View settings"
             }
             [
-              centerButton sigmaRef
+              centerButton { forceAtlasState: forceAtlasState'
+                           , sigmaRef }
             ,
               gap
             ,

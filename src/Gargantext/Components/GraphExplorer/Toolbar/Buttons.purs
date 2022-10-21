@@ -47,15 +47,25 @@ here = R2.here "Gargantext.Components.GraphExplorer.Toolbar.Button"
 
 ------------------------------------------------------
 
-centerButton :: R.Ref Sigmax.Sigma -> R.Element
-centerButton sigmaRef = B.button
-  { variant: OutlinedButtonVariant Secondary
-  , callback: \_ -> do
-      let sigma = R.readRef sigmaRef
-      Sigmax.dependOnSigma sigma "[centerButton] sigma: Nothing" $ \s ->
-        Camera.updateCamera (Camera.camera s) Camera.defaultCamera
-  }
-  [ H.text "Center" ]
+type CenterButtonProps =
+  ( forceAtlasState :: SigmaxTypes.ForceAtlasState
+  , sigmaRef        :: R.Ref Sigmax.Sigma )
+
+centerButton :: R2.Leaf CenterButtonProps
+centerButton = R2.leaf centerButtonCpt
+centerButtonCpt :: R.Component CenterButtonProps
+centerButtonCpt = here.component "centerButton" cpt
+  where
+    cpt { forceAtlasState
+        , sigmaRef } _ = do
+      pure $ B.button
+        { callback: \_ -> do
+          Sigmax.dependOnSigma (R.readRef sigmaRef) "[centerButton] sigma: Nothing" $ \s ->
+            Camera.updateCamera (Camera.camera s) Camera.defaultCamera
+        , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState
+        , variant: OutlinedButtonVariant Secondary
+        }
+        [ H.text "Center" ]
 
 ------------------------------------------------------
 
@@ -108,7 +118,7 @@ cameraButtonCpt = here.component "cameraButton" cpt
                        Left err -> liftEffect $ log2 "[cameraButton] RESTError" err
                        Right _ret -> do
                          liftEffect $ T2.reload reloadForest
-        ,  status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState
+        , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState
         , variant: OutlinedButtonVariant Secondary
         } [ H.text "Screenshot" ]
 
@@ -238,7 +248,7 @@ resetForceAtlasButtonCpt = here.component "resetForceAtlasToggleButton" cpt
     onClick forceAtlasState sigmaRef _ = do
       -- TODO Sigma.killForceAtlas2 sigma
       -- startForceAtlas2 sigma
-      Sigmax.dependOnSigma (R.readRef sigmaRef) "[resetForceAtlasButton] no sigma" $ \sigma -> do
+      Sigmax.dependOnSigma (R.readRef sigmaRef) "[resetForceAtlasButton] no sigma" $ \_sigma -> do
         -- TODO Use fa2Ref instead of sigmaRef
         --Sigma.killForceAtlas2 sigma
         --Sigma.refreshForceAtlas sigma Graph.forceAtlas2Settings
