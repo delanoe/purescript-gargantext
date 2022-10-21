@@ -60,11 +60,12 @@ centerButton sigmaRef = B.button
 ------------------------------------------------------
 
 type CameraButtonProps =
-  ( id             :: Int
-  , hyperdataGraph :: GET.HyperdataGraph
-  , reloadForest   :: T2.ReloadS
-  , session        :: Session
-  , sigmaRef       :: R.Ref Sigmax.Sigma
+  ( id              :: Int
+  , hyperdataGraph  :: GET.HyperdataGraph
+  , forceAtlasState :: SigmaxTypes.ForceAtlasState
+  , reloadForest    :: T2.ReloadS
+  , session         :: Session
+  , sigmaRef        :: R.Ref Sigmax.Sigma
   )
 
 screenshotFilename :: Effect String
@@ -80,21 +81,21 @@ cameraButtonCpt :: R.Component CameraButtonProps
 cameraButtonCpt = here.component "cameraButton" cpt
   where
     cpt { id
-        , hyperdataGraph: GET.HyperdataGraph { graph: GET.GraphData hyperdataGraph }
+        , forceAtlasState
+        , hyperdataGraph: GET.HyperdataGraph { graph: GET.GraphData graphData' }
         , reloadForest
         , session
         , sigmaRef } _ = do
       pure $ B.button
         { callback: \_ -> do
              filename <- screenshotFilename
-             let sigma = R.readRef sigmaRef
-             Sigmax.dependOnSigma sigma "[cameraButton] sigma: Nothing" $ \s -> do
+             Sigmax.dependOnSigma (R.readRef sigmaRef) "[cameraButton] sigma: Nothing" $ \s -> do
                screen <- Sigma.takeScreenshot s
                let graph = Sigma.graph s
                    edges = Graphology.edges graph
                    nodes = Graphology.nodes graph
-                   graphData = GET.GraphData $ hyperdataGraph { edges = A.fromFoldable $ Seq.map GEU.stEdgeToGET edges
-                                                              , nodes = A.fromFoldable $ GEU.normalizeNodes $ Seq.map GEU.stNodeToGET nodes }
+                   graphData = GET.GraphData $ graphData' { edges = A.fromFoldable $ Seq.map GEU.stEdgeToGET edges
+                                                          , nodes = A.fromFoldable $ GEU.normalizeNodes $ Seq.map GEU.stNodeToGET nodes }
                let camera = Camera.toCamera $ Camera.camera s
                let hyperdataGraph' = GET.HyperdataGraph { graph: graphData, mCamera: Just camera }
                launchAff_ $ do
@@ -107,6 +108,7 @@ cameraButtonCpt = here.component "cameraButton" cpt
                        Left err -> liftEffect $ log2 "[cameraButton] RESTError" err
                        Right _ret -> do
                          liftEffect $ T2.reload reloadForest
+        ,  status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState
         , variant: OutlinedButtonVariant Secondary
         } [ H.text "Screenshot" ]
 

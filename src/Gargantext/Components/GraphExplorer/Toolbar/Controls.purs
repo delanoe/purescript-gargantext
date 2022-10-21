@@ -184,6 +184,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             ,
               cameraButton
               { id: graphId'
+              , forceAtlasState: forceAtlasState'
               , hyperdataGraph: hyperdataGraph'
               , reloadForest
               , session: session
