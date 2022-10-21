@@ -20,7 +20,7 @@ import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Nodes.Types (FTFieldList)
 import Gargantext.Components.Renameable (renameable)
 import Gargantext.Components.Search (SearchType(..))
-import Gargantext.Components.Table.Types (ColumnName, OrderBy, OrderByDirection(..), Params, Props, TableContainerProps, columnName)
+import Gargantext.Components.Table.Types (ColumnName(..), OrderBy, OrderByDirection(..), Params, Props, TableContainerProps, columnName)
 import Gargantext.Sessions.Types (Session)
 import Gargantext.Types (NodeID)
 import Gargantext.Utils ((?))
@@ -85,7 +85,7 @@ type TableHeaderWithRenameBoxedLayoutProps = (
 )
 
 initialParams :: Params
-initialParams = stateParams {page: 1, pageSize: PS10, orderBy: Nothing, searchType: SearchDoc}
+initialParams = stateParams {page: 1, pageSize: PS10, orderBy: Just (DESC (ColumnName "Date")), searchType: SearchDoc}
 -- TODO: Not sure this is the right place for this
 
 tableHeaderWithRenameLayout :: R2.Leaf TableHeaderWithRenameLayoutProps
