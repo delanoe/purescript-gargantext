@@ -48,7 +48,7 @@ here = R2.here "Gargantext.Components.GraphExplorer.Toolbar.Button"
 ------------------------------------------------------
 
 type CenterButtonProps =
-  ( forceAtlasState :: SigmaxTypes.ForceAtlasState
+  ( forceAtlasState :: T.Box SigmaxTypes.ForceAtlasState
   , sigmaRef        :: R.Ref Sigmax.Sigma )
 
 centerButton :: R2.Leaf CenterButtonProps
@@ -58,11 +58,13 @@ centerButtonCpt = here.component "centerButton" cpt
   where
     cpt { forceAtlasState
         , sigmaRef } _ = do
+      forceAtlasState' <- R2.useLive' forceAtlasState
+
       pure $ B.button
         { callback: \_ -> do
           Sigmax.dependOnSigma (R.readRef sigmaRef) "[centerButton] sigma: Nothing" $ \s ->
             Camera.updateCamera (Camera.camera s) Camera.defaultCamera
-        , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState
+        , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState'
         , variant: OutlinedButtonVariant Secondary
         }
         [ H.text "Center" ]
@@ -72,7 +74,7 @@ centerButtonCpt = here.component "centerButton" cpt
 type CameraButtonProps =
   ( id              :: Int
   , hyperdataGraph  :: GET.HyperdataGraph
-  , forceAtlasState :: SigmaxTypes.ForceAtlasState
+  , forceAtlasState :: T.Box SigmaxTypes.ForceAtlasState
   , reloadForest    :: T2.ReloadS
   , session         :: Session
   , sigmaRef        :: R.Ref Sigmax.Sigma
@@ -96,6 +98,8 @@ cameraButtonCpt = here.component "cameraButton" cpt
         , reloadForest
         , session
         , sigmaRef } _ = do
+      forceAtlasState' <- R2.useLive' forceAtlasState
+
       pure $ B.button
         { callback: \_ -> do
              filename <- screenshotFilename
@@ -118,7 +122,7 @@ cameraButtonCpt = here.component "cameraButton" cpt
                        Left err -> liftEffect $ log2 "[cameraButton] RESTError" err
                        Right _ret -> do
                          liftEffect $ T2.reload reloadForest
-        , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState
+        , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState'
         , variant: OutlinedButtonVariant Secondary
         } [ H.text "Screenshot" ]
 
@@ -139,28 +143,23 @@ edgesToggleButtonCpt = here.component "edgesToggleButton" cpt
       state'      <- R2.useLive' state
       stateAtlas' <- R2.useLive' stateAtlas
 
-      -- Computed
-      let
-        cst SigmaxTypes.InitialRunning  = Disabled
-        cst SigmaxTypes.Running         = Disabled
-        cst _                           = Enabled
-
       -- Render
       pure $
         B.button
-        { variant: state' == SigmaxTypes.EShow ?
+        { -- TODO: Move this to Graph.purs to the R.useEffect handler which renders nodes/edges
+          callback: \_ -> T.modify_ SigmaxTypes.toggleShowEdgesState state
+        , status: SigmaxTypes.forceAtlasComponentStatus stateAtlas'
+        , variant: state' == SigmaxTypes.EShow ?
             ButtonVariant Secondary $
             OutlinedButtonVariant Secondary
-        , status: cst stateAtlas'
-          -- TODO: Move this to Graph.purs to the R.useEffect handler which renders nodes/edges
-        , callback: \_ -> T.modify_ SigmaxTypes.toggleShowEdgesState state
         }
         [ H.text "Edges" ]
 
 ------------------------------------------------------
 
 type LouvainToggleButtonProps =
-  ( state :: T.Box Boolean
+  ( forceAtlasState :: T.Box SigmaxTypes.ForceAtlasState
+  , state           :: T.Box Boolean
   )
 
 louvainToggleButton :: R2.Leaf LouvainToggleButtonProps
@@ -168,16 +167,17 @@ louvainToggleButton = R2.leaf louvainToggleButtonCpt
 louvainToggleButtonCpt :: R.Component LouvainToggleButtonProps
 louvainToggleButtonCpt = here.component "louvainToggleButton" cpt
   where
-    cpt { state } _ = do
+    cpt { forceAtlasState, state } _ = do
       state' <- R2.useLive' state
+      forceAtlasState' <- R2.useLive' forceAtlasState
 
       pure $
-
         B.button
-        { variant: state' ?
+        { callback: \_ -> T.modify_ (not) state
+        , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState'
+        , variant: state' ?
             ButtonVariant Secondary $
             OutlinedButtonVariant Secondary
-        , callback: \_ -> T.modify_ (not) state
         }
         [ H.text "Louvain" ]
 
@@ -257,7 +257,8 @@ resetForceAtlasButtonCpt = here.component "resetForceAtlasToggleButton" cpt
 ------------------------------------------------------------------
 
 type MultiSelectEnabledButtonProps =
-  ( state       :: T.Box Boolean
+  ( forceAtlasState :: T.Box SigmaxTypes.ForceAtlasState
+  , state           :: T.Box Boolean
   )
 
 multiSelectEnabledButton :: R2.Leaf MultiSelectEnabledButtonProps
@@ -265,29 +266,31 @@ multiSelectEnabledButton = R2.leaf multiSelectEnabledButtonCpt
 multiSelectEnabledButtonCpt :: R.Component MultiSelectEnabledButtonProps
 multiSelectEnabledButtonCpt = here.component "multiSelectEnabledButton" cpt
   where
-    cpt { state } _ = do
+    cpt { forceAtlasState, state } _ = do
       state' <- R2.useLive' state
+      forceAtlasState' <- R2.useLive' forceAtlasState
 
       pure $
-
         H.div
         { className: "btn-group"
         , role: "group"
         }
         [
           B.button
-          { variant: state' ?
+          { callback: \_ -> T.write_ false state
+          , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState'
+          , variant: state' ?
               OutlinedButtonVariant Secondary $
               ButtonVariant Secondary
-          , callback: \_ -> T.write_ false state
           }
           [ H.text "Single" ]
         ,
           B.button
-          { variant: state' ?
+          { callback: \_ -> T.write_ true state
+          , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState'
+          , variant: state' ?
               ButtonVariant Secondary $
               OutlinedButtonVariant Secondary
-          , callback: \_ -> T.write_ true state
           }
           [ H.text "Multiple" ]
         ]

@@ -229,10 +229,8 @@ forceAtlasEdgeState Killed es = es
 -- | Return state in which labels should be depending on forceAtlasState
 forceAtlasLabelState :: ForceAtlasState -> Boolean
 forceAtlasLabelState InitialRunning = false
-forceAtlasLabelState InitialStopped = true
-forceAtlasLabelState Running = false
-forceAtlasLabelState Paused = true
-forceAtlasLabelState Killed = true
+forceAtlasLabelState Running        = false
+forceAtlasLabelState _              = true
 
 
 
