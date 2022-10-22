@@ -64,12 +64,13 @@ component = R.hooksComponent componentName cpt where
     R.useLayoutEffect1 (R.readRef ref) do
       for_ (toMaybe $ R.readRef ref) \el -> do
 
-        let rect  = Element.boundingRect el
-        let pos   = position { x, y } rect
-        let style = el .. "style"
+        let rect      = Element.boundingRect el
+        let pos       = position { x, y } rect
+        let style     = el .. "style"
+        let toPixels  = show >>> (_ <> "px")
 
-        void $ pure $ setProperty' style "left" [ show pos.left ]
-        void $ pure $ setProperty' style "top" [ show pos.top ]
+        void $ pure $ setProperty' style "left" [ pos.left # toPixels ]
+        void $ pure $ setProperty' style "top" [ pos.top # toPixels ]
 
 
       R.nothing # R.thenNothing
