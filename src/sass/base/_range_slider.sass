@@ -64,6 +64,9 @@ $knob-size: 14px
     // alignement with the bar
     transform: translateX(-5px) translateY(-3px)
 
+    &.disabled
+      cursor: not-allowed
+
     &:hover
       background-color: darken($range-bg-progress-color, 15%)
 
@@ -101,6 +104,9 @@ $knob-size: 14px
 
   &__field
     position: relative
+
+  & input[disabled]
+    cursor: not-allowed
 
 ////////////////////////////////////////////
 

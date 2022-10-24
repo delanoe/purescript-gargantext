@@ -13,7 +13,6 @@ import Data.Tuple.Nested ((/\))
 import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.GraphExplorer.API as GraphAPI
-import Gargantext.Components.GraphExplorer.GraphTypes as GEGT
 import Gargantext.Components.GraphExplorer.Layout (convert, layout)
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types as GET

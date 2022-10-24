@@ -8617,6 +8617,9 @@ a:focus {
 .range-slider__knob:focus {
   outline: 0;
 }
+.range-slider__knob.disabled {
+  cursor: not-allowed;
+}
 .range-slider__knob:hover {
   background-color: #0056b3;
 }
@@ -8650,6 +8653,9 @@ a:focus {
 }
 .range-simple__field {
   position: relative;
+}
+.range-simple input[disabled] {
+  cursor: not-allowed;
 }
 
 input[type=range] {
