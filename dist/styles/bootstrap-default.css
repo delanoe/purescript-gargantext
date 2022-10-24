@@ -9468,6 +9468,10 @@ a:focus, a:hover {
   right: -4px;
   z-index: 2;
 }
+.mainleaf__version-badge .b-icon-button__inner {
+  top: -3px;
+  left: 1px;
+}
 .mainleaf__version-badge--matched.b-icon-button, .mainleaf__version-badge--matched.b-icon-button:hover {
   color: #28a745;
 }
@@ -10334,21 +10338,10 @@ select.form-control {
   flex-grow: 1;
   margin-left: 32px;
 }
-.table-header-rename__cache {
-  margin-top: 16px;
-}
-.table-header-rename__cache--on {
-  font-weight: bold;
-}
-.table-header-rename__cache__button {
-  margin-left: 16px;
-  color: #007bff;
-}
-.table-header-rename__cache__text {
-  cursor: pointer;
-}
-.table-header-rename__cache__text:focus {
-  outline: 0;
+.table-header-rename__cache-toolbar {
+  width: 136px;
+  margin-left: 4px;
+  margin-right: 4px;
 }
 .table-header-rename__calendar__icon {
   margin-right: 4px;

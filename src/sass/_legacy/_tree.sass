@@ -157,6 +157,14 @@ $node-popup-width: 544px
     right: $offset-x
     z-index: z-index("tree", "badge")
 
+    // (?) unknown regresion: empirical offset re-alignement
+    .b-icon-button__inner
+      $offset-y: -3px
+      $offset-x: 1px
+
+      top: $offset-y
+      left: $offset-x
+
     // (remove hover effect to maintain continuity with folder + node icon
     // lack of hover effect)
     &--matched

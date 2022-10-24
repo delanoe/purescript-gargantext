@@ -4,14 +4,13 @@ import Gargantext.Prelude
 
 import Data.Array as A
 import Data.Either (Either(..))
-import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Types (Elevation(..), Variant(..))
+import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
 import Gargantext.Components.Nodes.Corpus (saveCorpus)
@@ -106,10 +105,28 @@ tableHeaderWithRenameBoxedLayout = R.createElement tableHeaderWithRenameBoxedLay
 tableHeaderWithRenameBoxedLayoutCpt :: R.Component TableHeaderWithRenameBoxedLayoutProps
 tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxedLayoutCpt" cpt
   where
-    cpt { hyperdata: Hyperdata h, nodeId, session, cacheState, name, date, corpusInfoS} _ = do
+    cpt { hyperdata: Hyperdata h
+        , nodeId
+        , session
+        , cacheState
+        , name
+        , date
+        , corpusInfoS
+        } _ = do
+      -- | States
+      -- |
       cacheState' <- T.useLive T.unequal cacheState
       CorpusInfo {title, desc, query, authors} <- T.read corpusInfoS
 
+      -- | Hooks
+      -- |
+
+      topBarPortalKey <- pure $ "portal-topbar::" <> show nodeId
+
+      mTopBarHost <- R.unsafeHooksEffect $ R2.getElementById "portal-topbar"
+
+      -- | Render
+      -- |
       pure $
 
         H.div
@@ -155,30 +172,24 @@ tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxed
                 , onRename: onRenameQuery
                 }
               ,
-                H.div
-                { className: intercalate " "
-                    [ "table-header-rename__cache"
-                    , cacheState' == NT.CacheOn ?
-                        "table-header-rename__cache--on" $
-                        ""
-                    ]
-                }
+                -- [To Topbar portal]
+                -- @NOTE #446: UI flicker artfact when user toggle the CTA
+                --             This is due to a re-render + portal input focus --             lost
+                R2.createPortal' mTopBarHost
                 [
-                  H.span
-                  { className: "table-header-rename__cache__text"
-                  , on: { click: cacheClick cacheState }
-                  }
+                  R2.fragmentWithKey topBarPortalKey
                   [
-                    H.text $ cacheText cacheState'
+                    B.button
+                    { className: "table-header-rename__cache-toolbar"
+                    , callback: cacheClick cacheState
+                    , variant: cacheState' == NT.CacheOn ?
+                        ButtonVariant Light $
+                        OutlinedButtonVariant Light
+                    }
+                    [
+                      H.text $ cacheText cacheState'
+                    ]
                   ]
-                ,
-                  B.iconButton
-                  { name: cacheToggle cacheState'
-                  , className: "table-header-rename__cache__button"
-                  , variant: Secondary
-                  , elevation: Level1
-                  , callback: cacheClick cacheState
-                  }
                 ]
               ]
             ,
@@ -231,9 +242,6 @@ tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxed
           let newFields = saveCorpusInfo corpusInfo h.fields
           save {fields: newFields, session, nodeId}
 
-
-    cacheToggle NT.CacheOn = "toggle-on"
-    cacheToggle NT.CacheOff = "toggle-off"
 
     cacheText NT.CacheOn = "Cache On"
     cacheText NT.CacheOff = "Cache Off"

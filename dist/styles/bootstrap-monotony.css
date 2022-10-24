@@ -9473,6 +9473,10 @@ a:focus, a:hover {
   right: -4px;
   z-index: 2;
 }
+.mainleaf__version-badge .b-icon-button__inner {
+  top: -3px;
+  left: 1px;
+}
 .mainleaf__version-badge--matched.b-icon-button, .mainleaf__version-badge--matched.b-icon-button:hover {
   color: #333333;
 }
