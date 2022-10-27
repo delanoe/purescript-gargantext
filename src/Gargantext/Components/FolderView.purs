@@ -105,6 +105,7 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
                                         , session: props.session
                                         , style: FolderChild
                                         , text: node.name
+                                        , disabled: false
                                         }
 
   makeParentFolder :: TreeNode -> Maybe TreeNode -> Record FolderViewProps -> Array R.Element
@@ -120,9 +121,12 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
       , reload: props.reload
       , session: props.session
       , style: FolderUp
-      , text: root.name
+      , text: "..."
+      , disabled: disabled parent
       }
     ]
+    where
+      disabled { node_type } = if node_type == GT.FolderShared then true else false
   makeParentFolder _ Nothing _ = []
 
   sortFolders :: TreeNode-> TreeNode -> Ordering
@@ -139,6 +143,7 @@ type FolderProps =
   , boxes         :: Boxes
   , parentId      :: Int
   , reload        :: T.Box T2.Reload
+  , disabled      :: Boolean
   )
 
 folder :: R2.Leaf FolderProps
@@ -155,6 +160,7 @@ folderCpt = here.component "folderCpt" cpt where
             , session
             , style
             , text
+            , disabled
             } _ = do
     -- States
     isBoxVisible <- T.useBox false
@@ -197,6 +203,7 @@ folderCpt = here.component "folderCpt" cpt where
         H.button
         { className: "btn btn-primary fv btn"
         , on: { click: \_ -> goToRoute $ route linkId rootId linkNodeType sid }
+        , disabled: disabled
         }
         [
           H.i
