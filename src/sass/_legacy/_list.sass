@@ -160,17 +160,17 @@
     margin-left: 13px
 
 ////////////////////////////////////////////////////////
-$renameable-icon-margin: space-x(0.5)
-$renameable-button-margin: space-x(2)
-// @XXX Glyphicon icons lack of homogeneous width
-$renameable-icon-width: 16px
 
 .table-header-rename
   margin-bottom: space-x(1)
 
-  &__header
+  &__title
     display: flex
     align-items: center
+
+    &__text
+      font-size: $h3-font-size
+      font-family: $headings-font-family
 
     &__line
       // (?) This is a peculiar line directly coming from the legacy style
@@ -188,33 +188,31 @@ $renameable-icon-width: 16px
       height: 0
       flex-grow: 1
       margin-left: space-x(4)
+      margin-right: space-x(4)
 
   &__cache-toolbar
     width: $topbar-fixed-button-width
     margin-left: $topbar-item-margin
     margin-right: $topbar-item-margin
 
-  &__calendar
 
-    &__icon
-      margin-right: $renameable-icon-margin
-      width: $renameable-icon-width
+.table-header-rename-edition
+  margin-top: space-x(1)
+  padding: $card-spacer-y $card-spacer-y
 
-  .renameable-wrapper--emphase
-    .renameable-container__text
-      font-size: $h3-font-size
-      font-family: $headings-font-family
+  .form-group
+    display: flex
+    align-items: baseline
+    margin-bottom: space-x(0.75)
 
-.renameable-container
-  display: flex
-  align-items: baseline
-  margin-bottom: space-x(0.75)
+    // remove "bootstrap" not-needed-here rule
+    flex-wrap: initial
 
-  &__icon
-    margin-right: $renameable-icon-margin
+  .form-group__label .b-icon
+    // @XXX Glyphicon icons lack of homogeneous width
+    $icon-width: 16px
+
+    margin-right: space-x(1)
+    width: $icon-width
     font-size: 14px
-    width: $renameable-icon-width
     text-align: center
-
-  &__button
-    margin-left: $renameable-button-margin

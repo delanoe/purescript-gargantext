@@ -31,7 +31,8 @@
   }
 
   .w-0        { width: 0;           }
-  .w-fluid    { width: 100%;        }
+  .w-fluid,
+  .w-100      { width: 100%;        }
 
   .w-1\/2	    { width: 50%;         }
   .w-1\/3	    { width: 33.333333%;  }
@@ -137,8 +138,19 @@
     .position-#{$value} { position: $value; }
   }
 
-  /// Overflow
-  $overflows: auto, hidden !default;
+  /// Placement
+  $placements:
+    top,
+    right,
+    bottom,
+    left;
+
+  @each $value in $placements {
+    .#{$value}-0 { #{$value}: 0; }
+  }
+
+  // Overflow
+  $overflows: auto, hidden;
 
   @each $value in $overflows {
     .overflow-#{$value} { overflow: $value; }
@@ -181,31 +193,33 @@
     .line-height-#{$unit + 0} { line-height: #{$unit * + 0}; }
   }
 
-  /// Align
-  .align-baseline    { vertical-align: baseline;    }
-  .align-top         { vertical-align: top;         }
-  .align-middle      { vertical-align: middle;      }
-  .align-bottom      { vertical-align: bottom;      }
-  .align-text-bottom { vertical-align: text-bottom; }
-  .align-text-top    { vertical-align: text-top;    }
+  /// Vertical Alignment
+  $vertical-aligns:
+    baseline,
+    top,
+    middle,
+    bottom,
+    text-bottom,
+    text-top;
+
+  @each $value in $vertical-aligns {
+    .vertical-align-#{$value} { vertical-align: $value; }
+  }
 
   /// Color (keep ".text" classes for Bootstrap legacy)
-  .text-white,
-  .color-white { color: $white; }
-  .text-black,
-  .color-black { color: $black; }
+  .text-white, .color-white { color: $white; }
+  .text-black, .color-black { color: $black; }
 
   @each $theme, $value in $palette-semantic {
-    .text-#{$theme},
-    .color-#{$theme} { color: $value; }
+    .text-#{$theme}, .color-#{$theme} { color: $value; }
   }
 
   @each $theme, $value in $palette-gray {
-    .color-gray-#{$theme} { color: $value; }
+    .text-gray-#{$theme}, .color-gray-#{$theme} { color: $value; }
   }
 
   @each $theme, $value in $palette-pastel {
-    .color-pastel-#{$theme} { color: $value; }
+    .text-pastel-#{$theme}, .color-pastel-#{$theme} { color: $value; }
   }
 
   /// Background
@@ -214,7 +228,14 @@
   .bg-transparent    { background-color: transparent; }
 
   @each $theme, $value in $palette-semantic {
-    .bg-#{$theme} { background-color: $value;}
+    .bg-#{$theme} { background-color: $value; }
+  }
+
+  @each $theme, $value in $palette-gray {
+    .bg-gray-#{$theme} { background-color: $value; }
+  }
+  @each $theme, $value in $palette-pastel {
+    .bg-pastel-#{$theme} { background-color: $value; }
   }
 
   /// Border
@@ -226,6 +247,13 @@
 
   @each $theme, $value in $palette-semantic {
     .border-#{$theme} { border-color: $value;}
+  }
+
+  @each $theme, $value in $palette-gray {
+    .border-gray-#{$theme} { border-color: $value;}
+  }
+  @each $theme, $value in $palette-pastel {
+    .border-pastel-#{$theme} { border-color: $value;}
   }
 
   /// Border radius
@@ -250,31 +278,45 @@
   .flex-shrink-0     { flex-shrink: 0;          }
   .flex-shrink-1     { flex-shrink: 1;          }
 
-  .justify-content-start   { justify-content: flex-start;     }
-  .justify-content-end     { justify-content: flex-end;       }
-  .justify-content-center  { justify-content: center;         }
-  .justify-content-between { justify-content: space-between;  }
-  .justify-content-around  { justify-content: space-around;   }
+  .justify-content-start          { justify-content: start;           }
+  .justify-content-end            { justify-content: end;             }
+  .justify-content-flex-start     { justify-content: flex-start;      }
+  .justify-content-flex-end       { justify-content: flex-end;        }
+  .justify-content-center         { justify-content: center;          }
+  .justify-content-space-between  { justify-content: space-between;   }
+  .justify-content-space-around   { justify-content: space-around;    }
 
-  .align-items-start    { align-items: flex-start;  }
-  .align-items-end      { align-items: flex-end;    }
-  .align-items-center   { align-items: center;      }
-  .align-items-baseline { align-items: baseline;    }
-  .align-items-stretch  { align-items: stretch;     }
+  .align-items-start              { align-items: start;               }
+  .align-items-end                { align-items: end;                 }
+  .align-items-flex-start         { align-items: flex-start;          }
+  .align-items-flex-end           { align-items: flex-end;            }
+  .align-items-center             { align-items: center;              }
+  .align-items-baseline           { align-items: baseline;            }
+  .align-items-stretch            { align-items: stretch;             }
 
-  .align-content-start   { align-content: flex-start;     }
-  .align-content-end     { align-content: flex-end;       }
-  .align-content-center  { align-content: center;         }
-  .align-content-between { align-content: space-between;  }
-  .align-content-around  { align-content: space-around;   }
-  .align-content-stretch { align-content: stretch;        }
+  .align-content-start            { align-content: start;             }
+  .align-content-end              { align-content: end;               }
+  .align-content-flex-start       { align-content: flex-start;        }
+  .align-content-flex-end         { align-content: flex-end;          }
+  .align-content-center           { align-content: center;            }
+  .align-content-stretch          { align-content: stretch;           }
+  .align-content-space-between    { align-content: space-between;     }
+  .align-content-space-around     { align-content: space-around;      }
 
-  .align-self-auto     { align-self: auto;        }
-  .align-self-start    { align-self: flex-start;  }
-  .align-self-end      { align-self: flex-end;    }
-  .align-self-center   { align-self: center;      }
-  .align-self-baseline { align-self: baseline;    }
-  .align-self-stretch  { align-self: stretch;     }
+  .align-self-auto                { align-self: auto;                 }
+  .align-self-start               { align-self: start;                }
+  .align-self-end                 { align-self: end;                  }
+  .align-self-flex-start          { align-self: flex-start;           }
+  .align-self-flex-end            { align-self: flex-end;             }
+  .align-self-center              { align-self: center;               }
+  .align-self-baseline            { align-self: baseline;             }
+  .align-self-stretch             { align-self: stretch;              }
+
+  @for $i from 0 through 10 {
+    .gap-#{$i}          { gap: space-x($i);         }
+    .column-gap-#{$i}   { column-gap: space-x($i);  }
+    .row-gap-#{$i}      { row-gap: space-x($i);     }
+  }
 
   /// Float
   .float-left   { float: left;  }

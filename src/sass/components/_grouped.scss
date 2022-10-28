@@ -13,6 +13,13 @@
     letter-spacing: space-x(1);
     font-weight: 700;
   }
+
+  // remove "bootstrap" focus ring for this state
+  &--idled:active,
+  &--idled:focus {
+    border-color: $input-border-color;
+    box-shadow: unset;
+  }
 }
 
 /// Modal
