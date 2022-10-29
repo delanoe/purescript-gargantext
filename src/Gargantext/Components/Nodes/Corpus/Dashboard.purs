@@ -9,7 +9,7 @@ import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.App.Store (Boxes)
-import Gargantext.Components.Nodes.Corpus (fieldsCodeEditor)
+import Gargantext.Components.Corpus.CodeSection (fieldsCodeEditor)
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
 import Gargantext.Components.Nodes.Dashboard.Types as DT
 import Gargantext.Components.Nodes.Types (FTFieldList(..), FTFieldsWithIndex(..), defaultField)

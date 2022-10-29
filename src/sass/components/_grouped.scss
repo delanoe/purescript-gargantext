@@ -176,8 +176,10 @@
     &#{ $self }--primary:hover    { color: darken($primary, 10%); }
     &#{ $self }--secondary:hover  { color: darken($secondary, 10%); }
     &#{ $self }--dark:hover       { color: darken($body-color, 10%); }
+  }
 
-    // active effect
+  &--enabled#{ $self }--focus-ring,
+  &--muted#{ $self }--focus-ring {
     &#{ $self }:active,
     &#{ $self }--active {
 

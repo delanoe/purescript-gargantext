@@ -1,0 +1,63 @@
+.folder-view
+  display: flex
+  gap: space-x(4.5)
+  flex-wrap: wrap
+
+
+/////////////////////////////
+
+.folder-view-item
+  $body-size: 200px
+  $icon-size: 30px
+  $text-size: 17px
+
+  display: flex
+  align-items: stretch
+  width: $body-size
+  flex-grow: 0
+  flex-shrink: 0
+  position: relative
+
+  &__body
+    @include clickable
+    flex-grow: 1
+    display: flex
+    flex-direction: column
+    align-items: center
+    position: relative
+    padding: #{ $card-spacer-y * 2 } $card-spacer-x
+    border-radius: $border-radius
+    transition: $transition-base
+    background-color: $gray-100
+    border: 1px solid $gray-100
+
+    &:hover,
+    &:active,
+    &:focus
+      background-color: $gray-200
+
+  &__icon
+    font-size: $icon-size
+    margin-bottom: #{ $card-spacer-y * 2 }
+
+  &__text
+    line-height: 1.2
+    text-align: center
+    font-size: $text-size
+
+  &__settings
+    // best alignment to fit <icon-button> hovering block
+    $offset-y: 6px
+    $offset-x: 11px
+
+    position: absolute
+    top: $offset-y
+    right: $offset-x
+
+    // enhenced hover contrast
+    .b-icon-button:hover::before
+      background-color: $gray-200
+
+    // fitting radius with its parent container
+    .b-icon-button::before
+      border-radius: $border-radius

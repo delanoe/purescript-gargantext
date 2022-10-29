@@ -63,7 +63,8 @@
 
   /// Height
   .h-auto     { height: auto;     }
-  .h-fluid    { height: 100%;     }
+  .h-fluid,
+  .h-100      { height: 100%;     }
   .h-inherit  { height: inherit;  }
 
   @for $i from 0 through 10 {
@@ -326,4 +327,11 @@
   /// Visibility
   .visible  { visibility: visible; }
   .hidden   { visibility: hidden;  }
+
+  /// Content helpers
+  .virtual-space {
+    &::after {
+      content: "\200B";
+    }
+  }
 }

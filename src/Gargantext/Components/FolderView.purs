@@ -10,6 +10,7 @@ import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.BaseModal (hideModal)
 import Gargantext.Components.Bootstrap.Types (Elevation(..), Variant(..))
@@ -33,7 +34,7 @@ import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Hooks.LinkHandler (useLinkHandler)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Routes (AppRoute(Home), nodeTypeAppRoute)
+import Gargantext.Routes (AppRoute(Home), appPath, nodeTypeAppRoute)
 import Gargantext.Sessions (Session(..), sessionId)
 import Gargantext.Types (NodeType(..), SessionId)
 import Gargantext.Types as GT
@@ -47,8 +48,7 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.FolderView"
 
 type Props =
-  ( boxes      :: Boxes
-  , nodeId     :: Int
+  ( nodeId     :: Int
   , session    :: Session
   )
 
@@ -58,14 +58,13 @@ folderView :: R2.Leaf Props
 folderView = R2.leafComponent folderViewCpt
 folderViewCpt :: R.Component Props
 folderViewCpt = here.component "folderViewCpt" cpt where
-  cpt { boxes, nodeId, session } _ = do
+  cpt { nodeId, session } _ = do
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
     useLoader { errorHandler
               , loader: loadFolders
               , path: { nodeId, session, reload: reload'}
-              , render: \folders -> folderViewMain { boxes
-                                                   , folders
+              , render: \folders -> folderViewMain { folders
                                                    , nodeId
                                                    , reload
                                                    , session
@@ -74,8 +73,7 @@ folderViewCpt = here.component "folderViewCpt" cpt where
       errorHandler = logRESTError here "[folderView]"
 
 type FolderViewProps =
-  ( boxes         :: Boxes
-  , folders       :: TreeFirstLevel
+  ( folders       :: TreeFirstLevel
   , nodeId        :: Int
   , reload        :: T.Box T2.Reload
   , session       :: Session
@@ -90,13 +88,16 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
     let parent = makeParentFolder root parentNode props
     let childrenEl = makeFolderElements folders' props
 
-    pure $ H.div {className: "fv folders"} $ parent <> childrenEl
+    pure $
+
+      H.div
+      { className: "folder-view" } $
+      parent <> childrenEl
 
   makeFolderElements :: Array TreeNode -> Record FolderViewProps -> Array R.Element
   makeFolderElements folders' props = makeFolderElementsMap <$> folders' where
     makeFolderElementsMap :: TreeNode -> R.Element
-    makeFolderElementsMap node = folder { boxes: props.boxes
-                                        , nodeId: node.id
+    makeFolderElementsMap node = folder { nodeId: node.id
                                         , linkId: node.id
                                         , nodeType: node.node_type
                                         , linkNodeType: node.node_type
@@ -111,8 +112,7 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
   makeParentFolder root (Just parent) props =
     [
       folder
-      { boxes: props.boxes
-      , nodeId: root.id
+      { nodeId: root.id
       , linkId: parent.id
       , linkNodeType: parent.node_type
       , nodeType: root.node_type
@@ -120,7 +120,7 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
       , reload: props.reload
       , session: props.session
       , style: FolderUp
-      , text: root.name
+      , text: ". ."
       }
     ]
   makeParentFolder _ Nothing _ = []
@@ -136,7 +136,6 @@ type FolderProps =
   , linkNodeType  :: GT.NodeType
   , linkId        :: Int
   , session       :: Session
-  , boxes         :: Boxes
   , parentId      :: Int
   , reload        :: T.Box T2.Reload
   )
@@ -145,8 +144,7 @@ folder :: R2.Leaf FolderProps
 folder = R2.leaf folderCpt
 folderCpt :: R.Component FolderProps
 folderCpt = here.component "folderCpt" cpt where
-  cpt props@{ boxes
-            , nodeId
+  cpt props@{ nodeId
             , nodeType
             , linkId
             , linkNodeType
@@ -156,31 +154,47 @@ folderCpt = here.component "folderCpt" cpt where
             , style
             , text
             } _ = do
-    -- States
+    -- | States
+    -- |
+
+    boxes <- AppStore.use
     isBoxVisible <- T.useBox false
 
-    -- Hooks
-    { goToRoute } <- useLinkHandler
+    -- | Computed
+    -- |
 
-    -- Computed
     let sid = sessionId session
     let rootId = treeId session
     let dispatch a = performAction a { boxes, nodeId, parentId, reload, session, isBoxVisible }
 
-    -- Render
+    -- | Render
+    -- |
     pure $
 
       H.div
-      {}
+      { className: "folder-view-item" }
       [
-        H.div
-        -- KISS CSS placement (BEM would be better)
-        { style:
-            { float: "right"
-            , position: "relative"
-            , right: "-14px"
-            }
+        H.a
+        { className: "folder-view-item__body"
+        , href: "/#/" <> href linkId rootId linkNodeType sid
         }
+        [
+          B.ripple
+          { variant: Dark }
+          [
+            B.icon
+            { className: "folder-view-item__icon"
+            , name: icon style nodeType
+            }
+          ,
+            B.div'
+            { className: "folder-view-item__text" }
+            text
+          ]
+        ]
+      ,
+        H.div
+        { className: "folder-view-item__settings" }
         [
           B.iconButton
           { name: "cog"
@@ -189,23 +203,10 @@ folderCpt = here.component "folderCpt" cpt where
                 "Each node of the Tree can perform some actions.\n"
               <> "Click here to execute one of them."
           , variant: Secondary
-          , elevation: Level0
-          , overlay: false
+          , elevation: Level1
+          , overlay: true
+          , focusRing: false
           }
-        ]
-      ,
-        H.button
-        { className: "btn btn-primary fv btn"
-        , on: { click: \_ -> goToRoute $ route linkId rootId linkNodeType sid }
-        }
-        [
-          H.i
-          { className: icon style nodeType }
-          []
-        ,
-          H.br {}
-        ,
-          H.text text
         ]
       ,
         -- // Modals //
@@ -217,7 +218,7 @@ folderCpt = here.component "folderCpt" cpt where
         }
         [
           nodePopupView
-          { boxes: props.boxes
+          { boxes
           , dispatch: dispatch
           , id: props.nodeId
           , nodeType: props.nodeType
@@ -228,14 +229,14 @@ folderCpt = here.component "folderCpt" cpt where
         ]
       ]
 
-  route :: Int -> Int -> NodeType -> SessionId -> AppRoute
-  route lId rootId nType sid
-    | rootId == lId    = Home
-    | otherwise        = getFolderPath nType sid lId
+  href :: Int -> Int -> NodeType -> SessionId -> String
+  href lId rootId nType sId
+    | rootId == lId  = appPath Home
+    | otherwise      = appPath $ getFolderPath nType sId lId
 
   icon :: FolderStyle -> GT.NodeType -> String
-  icon FolderUp _ = "fa fa-folder-open"
-  icon _ nodeType = GT.fldr nodeType false
+  icon FolderUp _  = "folder-open"
+  icon _        nt = GT.getIcon nt true
 
   getFolderPath :: GT.NodeType -> GT.SessionId -> Int -> AppRoute
   getFolderPath nodeType sid nodeId = fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId

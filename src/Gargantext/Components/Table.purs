@@ -14,9 +14,9 @@ import Effect.Class (liftEffect)
 import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), ComponentStatus(..), Variant(..))
+import Gargantext.Components.Corpus.CodeSection (saveCorpus)
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
-import Gargantext.Components.Nodes.Corpus (saveCorpus)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusInfo(..), Hyperdata(..), getCorpusInfo, saveCorpusInfo)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Nodes.Types (FTFieldList)
