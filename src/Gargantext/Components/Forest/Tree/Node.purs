@@ -260,8 +260,7 @@ nodeSpanCpt = here.component "nodeSpan" cpt
           (
             { nodeType
             , isLeaf
-            -- , callback: const $ T.modify_ (not) folderOpen
-            , callback: \_ -> T.write_ true isBoxVisible
+            , callback: const $ T.modify_ (not) folderOpen
             , isSelected
             }
           )
