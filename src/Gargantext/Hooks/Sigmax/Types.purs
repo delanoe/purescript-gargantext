@@ -13,6 +13,7 @@ import Data.Tuple (Tuple(..))
 import Partial.Unsafe (unsafePartial)
 import Prelude (class Eq, class Show, map, ($), (&&), (==), (||), (<$>), (<), mod, not)
 
+import Gargantext.Components.Bootstrap.Types (ComponentStatus(..))
 import Gargantext.Components.GraphExplorer.GraphTypes as GEGT
 import Gargantext.Data.Louvain as Louvain
 import Gargantext.Types as GT
@@ -172,6 +173,15 @@ toggleForceAtlasState Running = Paused
 toggleForceAtlasState Paused = Running
 toggleForceAtlasState Killed = InitialRunning
 
+
+forceAtlasComponentStatus :: ForceAtlasState -> ComponentStatus
+forceAtlasComponentStatus InitialRunning = Disabled
+forceAtlasComponentStatus InitialStopped = Enabled
+forceAtlasComponentStatus Running = Disabled
+forceAtlasComponentStatus Paused = Enabled
+forceAtlasComponentStatus Killed = Enabled
+
+
 -- | Custom state for show edges. Normally it is EShow or EHide (show/hide
 -- | edges). However, edges are temporarily turned off when forceAtlas is
 -- | running.
@@ -219,10 +229,8 @@ forceAtlasEdgeState Killed es = es
 -- | Return state in which labels should be depending on forceAtlasState
 forceAtlasLabelState :: ForceAtlasState -> Boolean
 forceAtlasLabelState InitialRunning = false
-forceAtlasLabelState InitialStopped = true
-forceAtlasLabelState Running = false
-forceAtlasLabelState Paused = true
-forceAtlasLabelState Killed = true
+forceAtlasLabelState Running        = false
+forceAtlasLabelState _              = true
 
 
 

@@ -16,7 +16,7 @@ import Gargantext.Components.GraphExplorer.Resources as Graph
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Toolbar.Buttons (centerButton, cameraButton, edgesToggleButton, louvainToggleButton, pauseForceAtlasButton, multiSelectEnabledButton)
 import Gargantext.Components.GraphExplorer.Toolbar.RangeControl (edgeConfluenceControl, edgeWeightControl, nodeSizeControl)
-import Gargantext.Components.GraphExplorer.Toolbar.SlideButton (labelSizeButton, labelRenderedSizeThresholdButton, mouseSelectorSizeButton)
+import Gargantext.Components.GraphExplorer.Toolbar.SlideButton (labelSizeButton, labelRenderedSizeThresholdButton, mouseSelectorSizeSlider)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
@@ -184,10 +184,11 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             ,
               cameraButton
               { id: graphId'
+              , forceAtlasState
               , hyperdataGraph: hyperdataGraph'
+              , reloadForest
               , session: session
               , sigmaRef: sigmaRef
-              , reloadForest
               }
             ]
           ,
@@ -197,7 +198,8 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             , titleSlot: H.text "View settings"
             }
             [
-              centerButton sigmaRef
+              centerButton { forceAtlasState
+                           , sigmaRef }
             ,
               gap
             ,
@@ -208,7 +210,8 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             ,
               gap
             ,
-              louvainToggleButton { state: showLouvain }
+              louvainToggleButton { forceAtlasState
+                                  , state: showLouvain }
             ]
           ]
         ,
@@ -222,13 +225,16 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
           }
           [
             -- zoom: 0 -100 - calculate ratio
-            multiSelectEnabledButton { state: multiSelectEnabled }
+            multiSelectEnabledButton { forceAtlasState
+                                     , state: multiSelectEnabled }
           ,
             gap
           ,
             -- toggle multi node selection
             -- save button
-            mouseSelectorSizeButton sigmaRef mouseSelectorSize
+            mouseSelectorSizeSlider { forceAtlasState
+                                    , sigmaRef
+                                    , state: mouseSelectorSize }
           ]
         ]
       ,
@@ -262,7 +268,9 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             -- run demo
             -- search button
             -- search topics
-            labelSizeButton sigmaRef labelSize
+            labelSizeButton { forceAtlasState
+                            , sigmaRef
+                            , state: labelSize }
           ,
             -- labels size: 1-4
             nodeSizeControl
@@ -279,7 +287,9 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             -- run demo
             -- search button
             -- search topics
-            labelRenderedSizeThresholdButton sigmaRef labelRenderedSizeThreshold
+            labelRenderedSizeThresholdButton { forceAtlasState
+                                             , sigmaRef
+                                             , state: labelRenderedSizeThreshold }
           -- ,
           --   -- labels size: 1-4
           --   nodeSizeControl

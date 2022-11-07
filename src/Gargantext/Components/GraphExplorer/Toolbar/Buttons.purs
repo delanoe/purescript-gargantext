@@ -11,15 +11,13 @@ module Gargantext.Components.GraphExplorer.Toolbar.Buttons
 import Prelude
 
 import Data.Array as A
-import Data.DateTime as DDT
-import Data.DateTime.Instant as DDI
 import Data.Either (Either(..))
-import Data.Enum (fromEnum)
+import Data.Formatter.DateTime as DFDT
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
-import Data.String as DS
 import DOM.Simple.Console (log2)
+import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Now as EN
@@ -49,68 +47,84 @@ here = R2.here "Gargantext.Components.GraphExplorer.Toolbar.Button"
 
 ------------------------------------------------------
 
-centerButton :: R.Ref Sigmax.Sigma -> R.Element
-centerButton sigmaRef = B.button
-  { variant: OutlinedButtonVariant Secondary
-  , callback: \_ -> do
-      let sigma = R.readRef sigmaRef
-      Sigmax.dependOnSigma sigma "[centerButton] sigma: Nothing" $ \s ->
-        Camera.updateCamera (Camera.camera s) Camera.defaultCamera
-  }
-  [ H.text "Center" ]
+type CenterButtonProps =
+  ( forceAtlasState :: T.Box SigmaxTypes.ForceAtlasState
+  , sigmaRef        :: R.Ref Sigmax.Sigma )
+
+centerButton :: R2.Leaf CenterButtonProps
+centerButton = R2.leaf centerButtonCpt
+centerButtonCpt :: R.Component CenterButtonProps
+centerButtonCpt = here.component "centerButton" cpt
+  where
+    cpt { forceAtlasState
+        , sigmaRef } _ = do
+      forceAtlasState' <- R2.useLive' forceAtlasState
+
+      pure $ B.button
+        { callback: \_ -> do
+          Sigmax.dependOnSigma (R.readRef sigmaRef) "[centerButton] sigma: Nothing" $ \s ->
+            Camera.updateCamera (Camera.camera s) Camera.defaultCamera
+        , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState'
+        , variant: OutlinedButtonVariant Secondary
+        }
+        [ H.text "Center" ]
 
 ------------------------------------------------------
 
 type CameraButtonProps =
-  ( id             :: Int
-  , hyperdataGraph :: GET.HyperdataGraph
-  , session        :: Session
-  , sigmaRef       :: R.Ref Sigmax.Sigma
-  , reloadForest   :: T2.ReloadS
+  ( id              :: Int
+  , hyperdataGraph  :: GET.HyperdataGraph
+  , forceAtlasState :: T.Box SigmaxTypes.ForceAtlasState
+  , reloadForest    :: T2.ReloadS
+  , session         :: Session
+  , sigmaRef        :: R.Ref Sigmax.Sigma
   )
 
+screenshotFilename :: Effect String
+screenshotFilename = do
+  nowdt <- EN.nowDateTime
+  pure $ case DFDT.formatDateTime "YYYY-MM-DDTHH:mm:ss" nowdt of
+    Left err -> err
+    Right s -> s <> "-screenshot.png"
 
-cameraButton :: Record CameraButtonProps -> R.Element
-cameraButton { id
-             , hyperdataGraph: GET.HyperdataGraph { graph: GET.GraphData hyperdataGraph }
-             , session
-             , sigmaRef
-             , reloadForest } = B.button
+cameraButton :: R2.Leaf CameraButtonProps
+cameraButton = R2.leaf cameraButtonCpt
+cameraButtonCpt :: R.Component CameraButtonProps
+cameraButtonCpt = here.component "cameraButton" cpt
+  where
+    cpt { id
+        , forceAtlasState
+        , hyperdataGraph: GET.HyperdataGraph { graph: GET.GraphData graphData' }
+        , reloadForest
+        , session
+        , sigmaRef } _ = do
+      forceAtlasState' <- R2.useLive' forceAtlasState
 
-  { variant: OutlinedButtonVariant Secondary
-  , callback: \_ -> do
-      let sigma = R.readRef sigmaRef
-      Sigmax.dependOnSigma sigma "[cameraButton] sigma: Nothing" $ \s -> do
-        screen <- Sigma.takeScreenshot s
-        now <- EN.now
-        let nowdt = DDI.toDateTime now
-            nowd = DDT.date nowdt
-            nowt = DDT.time nowdt
-            nowStr = DS.joinWith "-" [ show $ fromEnum $ DDT.year nowd
-                                     , show $ fromEnum $ DDT.month nowd
-                                     , show $ fromEnum $ DDT.day nowd
-                                     , show $ fromEnum $ DDT.hour nowt
-                                     , show $ fromEnum $ DDT.minute nowt
-                                     , show $ fromEnum $ DDT.second nowt ]
-        let graph = Sigma.graph s
-            edges = Graphology.edges graph
-            nodes = Graphology.nodes graph
-            graphData = GET.GraphData $ hyperdataGraph { edges = A.fromFoldable $ Seq.map GEU.stEdgeToGET edges
-                                                       , nodes = A.fromFoldable $ GEU.normalizeNodes $ Seq.map GEU.stNodeToGET nodes }
-        let camera = Camera.toCamera $ Camera.camera s
-        let hyperdataGraph' = GET.HyperdataGraph { graph: graphData, mCamera: Just camera }
-        launchAff_ $ do
-          eClonedGraphId <- cloneGraph { id, hyperdataGraph: hyperdataGraph', session }
-          case eClonedGraphId of
-            Left err -> liftEffect $ log2 "[cameraButton] RESTError" err
-            Right clonedGraphId -> do
-              eRet <- uploadArbitraryData session clonedGraphId Plain (Just $ nowStr <> "-" <> "screenshot.png") screen
-              case eRet of
-                Left err -> liftEffect $ log2 "[cameraButton] RESTError" err
-                Right _ret -> do
-                  liftEffect $ T2.reload reloadForest
-  }
-  [ H.text "Screenshot" ]
+      pure $ B.button
+        { callback: \_ -> do
+             filename <- screenshotFilename
+             Sigmax.dependOnSigma (R.readRef sigmaRef) "[cameraButton] sigma: Nothing" $ \s -> do
+               screen <- Sigma.takeScreenshot s
+               let graph = Sigma.graph s
+                   edges = Graphology.edges graph
+                   nodes = Graphology.nodes graph
+                   graphData = GET.GraphData $ graphData' { edges = A.fromFoldable $ Seq.map GEU.stEdgeToGET edges
+                                                          , nodes = A.fromFoldable $ GEU.normalizeNodes $ Seq.map GEU.stNodeToGET nodes }
+               let camera = Camera.toCamera $ Camera.camera s
+               let hyperdataGraph' = GET.HyperdataGraph { graph: graphData, mCamera: Just camera }
+               launchAff_ $ do
+                 eClonedGraphId <- cloneGraph { id, hyperdataGraph: hyperdataGraph', session }
+                 case eClonedGraphId of
+                   Left err -> liftEffect $ log2 "[cameraButton] RESTError" err
+                   Right clonedGraphId -> do
+                     eRet <- uploadArbitraryData session clonedGraphId Plain (Just filename) screen
+                     case eRet of
+                       Left err -> liftEffect $ log2 "[cameraButton] RESTError" err
+                       Right _ret -> do
+                         liftEffect $ T2.reload reloadForest
+        , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState'
+        , variant: OutlinedButtonVariant Secondary
+        } [ H.text "Screenshot" ]
 
 ------------------------------------------------------
 
@@ -129,28 +143,23 @@ edgesToggleButtonCpt = here.component "edgesToggleButton" cpt
       state'      <- R2.useLive' state
       stateAtlas' <- R2.useLive' stateAtlas
 
-      -- Computed
-      let
-        cst SigmaxTypes.InitialRunning  = Disabled
-        cst SigmaxTypes.Running         = Disabled
-        cst _                           = Enabled
-
       -- Render
       pure $
         B.button
-        { variant: state' == SigmaxTypes.EShow ?
+        { -- TODO: Move this to Graph.purs to the R.useEffect handler which renders nodes/edges
+          callback: \_ -> T.modify_ SigmaxTypes.toggleShowEdgesState state
+        , status: SigmaxTypes.forceAtlasComponentStatus stateAtlas'
+        , variant: state' == SigmaxTypes.EShow ?
             ButtonVariant Secondary $
             OutlinedButtonVariant Secondary
-        , status: cst stateAtlas'
-          -- TODO: Move this to Graph.purs to the R.useEffect handler which renders nodes/edges
-        , callback: \_ -> T.modify_ SigmaxTypes.toggleShowEdgesState state
         }
         [ H.text "Edges" ]
 
 ------------------------------------------------------
 
 type LouvainToggleButtonProps =
-  ( state :: T.Box Boolean
+  ( forceAtlasState :: T.Box SigmaxTypes.ForceAtlasState
+  , state           :: T.Box Boolean
   )
 
 louvainToggleButton :: R2.Leaf LouvainToggleButtonProps
@@ -158,16 +167,17 @@ louvainToggleButton = R2.leaf louvainToggleButtonCpt
 louvainToggleButtonCpt :: R.Component LouvainToggleButtonProps
 louvainToggleButtonCpt = here.component "louvainToggleButton" cpt
   where
-    cpt { state } _ = do
+    cpt { forceAtlasState, state } _ = do
       state' <- R2.useLive' state
+      forceAtlasState' <- R2.useLive' forceAtlasState
 
       pure $
-
         B.button
-        { variant: state' ?
+        { callback: \_ -> T.modify_ (not) state
+        , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState'
+        , variant: state' ?
             ButtonVariant Secondary $
             OutlinedButtonVariant Secondary
-        , callback: \_ -> T.modify_ (not) state
         }
         [ H.text "Louvain" ]
 
@@ -238,7 +248,7 @@ resetForceAtlasButtonCpt = here.component "resetForceAtlasToggleButton" cpt
     onClick forceAtlasState sigmaRef _ = do
       -- TODO Sigma.killForceAtlas2 sigma
       -- startForceAtlas2 sigma
-      Sigmax.dependOnSigma (R.readRef sigmaRef) "[resetForceAtlasButton] no sigma" $ \sigma -> do
+      Sigmax.dependOnSigma (R.readRef sigmaRef) "[resetForceAtlasButton] no sigma" $ \_sigma -> do
         -- TODO Use fa2Ref instead of sigmaRef
         --Sigma.killForceAtlas2 sigma
         --Sigma.refreshForceAtlas sigma Graph.forceAtlas2Settings
@@ -247,7 +257,8 @@ resetForceAtlasButtonCpt = here.component "resetForceAtlasToggleButton" cpt
 ------------------------------------------------------------------
 
 type MultiSelectEnabledButtonProps =
-  ( state       :: T.Box Boolean
+  ( forceAtlasState :: T.Box SigmaxTypes.ForceAtlasState
+  , state           :: T.Box Boolean
   )
 
 multiSelectEnabledButton :: R2.Leaf MultiSelectEnabledButtonProps
@@ -255,29 +266,31 @@ multiSelectEnabledButton = R2.leaf multiSelectEnabledButtonCpt
 multiSelectEnabledButtonCpt :: R.Component MultiSelectEnabledButtonProps
 multiSelectEnabledButtonCpt = here.component "multiSelectEnabledButton" cpt
   where
-    cpt { state } _ = do
+    cpt { forceAtlasState, state } _ = do
       state' <- R2.useLive' state
+      forceAtlasState' <- R2.useLive' forceAtlasState
 
       pure $
-
         H.div
         { className: "btn-group"
         , role: "group"
         }
         [
           B.button
-          { variant: state' ?
+          { callback: \_ -> T.write_ false state
+          , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState'
+          , variant: state' ?
               OutlinedButtonVariant Secondary $
               ButtonVariant Secondary
-          , callback: \_ -> T.write_ false state
           }
           [ H.text "Single" ]
         ,
           B.button
-          { variant: state' ?
+          { callback: \_ -> T.write_ true state
+          , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState'
+          , variant: state' ?
               ButtonVariant Secondary $
               OutlinedButtonVariant Secondary
-          , callback: \_ -> T.write_ true state
           }
           [ H.text "Multiple" ]
         ]
