@@ -181,7 +181,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
               pauseForceAtlasButton { state: forceAtlasState }
             ,
               gap
-            ,
+{-            ,
               cameraButton
               { id: graphId'
               , forceAtlasState
@@ -190,6 +190,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
               , session: session
               , sigmaRef: sigmaRef
               }
+-}
             ]
           ,
             -- View Settings
