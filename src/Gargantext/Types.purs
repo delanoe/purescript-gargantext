@@ -814,3 +814,24 @@ data FrontendError =
 
 derive instance Generic FrontendError _
 instance Eq FrontendError where eq = genericEq
+
+-----------------------------------------------------------------------
+
+newtype CacheParams = CacheParams
+  { expandTableEdition    :: Boolean
+  }
+
+derive instance Newtype CacheParams _
+derive instance Generic CacheParams _
+derive instance Eq CacheParams
+instance Show CacheParams where show = genericShow
+derive newtype instance JSON.ReadForeign CacheParams
+derive newtype instance JSON.WriteForeign CacheParams
+
+-- (!) in case cache storage (ie. JavaScript Local Storage) returns an invalid
+--     objects (eg. possible data migration), this will safely set new default
+--     values
+defaultCacheParams :: CacheParams
+defaultCacheParams = CacheParams
+  { expandTableEdition    : false
+  }

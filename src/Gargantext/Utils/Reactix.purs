@@ -397,6 +397,9 @@ getls = window >>= localStorage
 openNodesKey :: LocalStorageKey
 openNodesKey = "garg-open-nodes"
 
+appParamsKey :: LocalStorageKey
+appParamsKey = "garg-app-params"
+
 graphParamsKey :: LocalStorageKey
 graphParamsKey = "garg-graph-params"
 

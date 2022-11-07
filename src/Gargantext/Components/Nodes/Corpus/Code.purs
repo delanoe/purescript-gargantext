@@ -1,5 +1,7 @@
 module Gargantext.Components.Nodes.Corpus.Code where
 
+import Gargantext.Prelude
+
 import Data.Either (Either(..))
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.List as List
@@ -8,16 +10,18 @@ import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), ComponentStatus(..), Sizing(..), Variant(..))
+import Gargantext.Components.Corpus.CodeSection (fieldsCodeEditor, loadCorpusWithReload, saveCorpus)
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Components.Nodes.Corpus (fieldsCodeEditor, loadCorpusWithReload, saveCorpus)
 import Gargantext.Components.Nodes.Corpus.Types (Hyperdata(..))
 import Gargantext.Components.Nodes.Types (FTFieldList(..), FTFieldsWithIndex(..), defaultField)
 import Gargantext.Components.TileMenu (tileMenu)
 import Gargantext.Config.REST (logRESTError)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (Unit, bind, discard, pure, unit, ($), (<$>), (<>), (==), const)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, sessionId)
+import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
@@ -79,57 +83,87 @@ corpusCodeViewCpt = here.component "corpusCodeView" cpt where
     pure $
 
       H.div
-      {}
+      { className: "corpus-code-layout" }
       [
-        tileMenu
-        { boxes
-        , currentTile: Just corpusRoute
-        , xTile: Just corpusRoute
-        , yTile: Just corpusRoute
-        }
+        H.div
+        { className: "corpus-code-layout__toolbar" }
         [
-          H.button
-          { className: "btn btn-primary" }
+          tileMenu
+          { boxes
+          , currentTile: Just corpusRoute
+          , xTile: Just corpusRoute
+          , yTile: Just corpusRoute
+          }
           [
-            H.i { className: "fa fa-folder" } []
+            B.button
+            { callback: const $ pure unit
+            , status: Muted
+            , size: SmallSize
+            , variant: ButtonVariant Secondary
+            }
+            [
+              B.icon
+              { name: "folder" }
+            ,
+              B.wad_
+              [ "d-inline-block", "virtual-space", "w-1" ]
+            ,
+              H.text "Folders section"
+            ]
+          ]
+        ,
+          B.wad
+          [ "d-flex", "justify-content-flex-end gap-1" ]
+          [
+            B.button
+            { callback: onClickAdd fieldsS
+            , variant: OutlinedButtonVariant Primary
+            }
+            [
+              B.icon
+              { name: "plus" }
+            ,
+              B.wad_
+              [ "d-inline-block", "virtual-spacer", "w-1" ]
+            ,
+              H.text "New field"
+            ]
+          ,
+            B.button
+            { variant: ButtonVariant Primary
+            , status: saveEnabled fieldsWithIndex fields'
+            , callback: onClickSave
+                          { fields: fields'
+                          , nodeId
+                          , reload
+                          , session
+                          }
+            }
+            [
+              B.icon
+              { name: "floppy-o" }
+            ,
+              B.wad_
+              [ "d-inline-flex", "virtual-space", "w-1" ]
+            ,
+              H.text "Save changes"
+            ]
           ]
         ]
       ,
-        H.hr {}
-      ,
         H.div
-        { className: "mb-4" }
-        [
-          H.div
-          { className: "btn btn-primary " <> (saveEnabled fieldsWithIndex fields')
-          , on: { click: onClickSave {fields: fields', nodeId, reload, session} }
-          }
-          [ H.span { className: "fa fa-floppy-o" } [ ] ]
-        ]
-      ,
-        H.div
-        {}
+        { className: "corpus-code-layout__fields" }
         [
           fieldsCodeEditor
           { fields: fieldsS
           , nodeId
-          , session }
-          []
-        ]
-      ,
-        H.div
-        { className: "mb-4" }
-        [
-          H.div
-          { className: "btn btn-primary"
-          , on: { click: onClickAdd fieldsS }
-          }
-          [ H.span { className: "fa fa-plus" } [  ] ]
+          , session
+          } []
         ]
       ]
 
-  saveEnabled :: FTFieldsWithIndex -> FTFieldsWithIndex -> String
-  saveEnabled fs fsS = if fs == fsS then "disabled" else "enabled"
+  saveEnabled :: FTFieldsWithIndex -> FTFieldsWithIndex -> ComponentStatus
+  saveEnabled fs fsS = fs == fsS ? Disabled $ Enabled
 
   onClickSave :: forall e. { fields :: FTFieldsWithIndex
                             , nodeId :: Int

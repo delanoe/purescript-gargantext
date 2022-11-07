@@ -23,9 +23,9 @@ import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..),
 import Gargantext.Components.Forest.Tree.Node.Box (nodePopupView)
 import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Tools.Sync (nodeActionsGraph, nodeActionsNodeList)
+import Gargantext.Components.Corpus.CodeSection (loadCorpusWithChild)
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (Lang(EN))
-import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Config.REST (logRESTError)
 import Gargantext.Context.Progress (asyncContext, asyncProgress)
 import Gargantext.Ends (Frontends, url)

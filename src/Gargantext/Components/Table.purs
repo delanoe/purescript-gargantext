@@ -4,25 +4,28 @@ import Gargantext.Prelude
 
 import Data.Array as A
 import Data.Either (Either(..))
+import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Aff (launchAff_)
+import Effect.Aff (Milliseconds(..), delay, launchAff_)
 import Effect.Class (liftEffect)
+import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
+import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), ComponentStatus(..), Variant(..))
+import Gargantext.Components.Corpus.CodeSection (saveCorpus)
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Forest.Tree.Node.Action.Rename (RenameValue(..), rename)
-import Gargantext.Components.Nodes.Corpus (saveCorpus)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusInfo(..), Hyperdata(..), getCorpusInfo, saveCorpusInfo)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Nodes.Types (FTFieldList)
-import Gargantext.Components.Renameable (renameable)
 import Gargantext.Components.Search (SearchType(..))
 import Gargantext.Components.Table.Types (ColumnName(..), OrderBy, OrderByDirection(..), Params, Props, TableContainerProps, columnName)
+import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Sessions.Types (Session)
-import Gargantext.Types (NodeID)
-import Gargantext.Utils ((?))
+import Gargantext.Types (NodeID, defaultCacheParams)
+import Gargantext.Utils (setter, (?))
 import Gargantext.Utils.Reactix (effectLink)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -105,18 +108,22 @@ tableHeaderWithRenameBoxedLayout = R.createElement tableHeaderWithRenameBoxedLay
 tableHeaderWithRenameBoxedLayoutCpt :: R.Component TableHeaderWithRenameBoxedLayoutProps
 tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxedLayoutCpt" cpt
   where
-    cpt { hyperdata: Hyperdata h
-        , nodeId
-        , session
-        , cacheState
-        , name
-        , date
-        , corpusInfoS
-        } _ = do
+    cpt p@{ nodeId
+          , session
+          , cacheState
+          , name
+          , date
+          , corpusInfoS
+          } _ = do
       -- | States
       -- |
       cacheState' <- T.useLive T.unequal cacheState
       CorpusInfo {title, desc, query, authors} <- T.read corpusInfoS
+
+      { expandTableEdition
+      } <- AppStore.use
+
+      expandTableEdition' <- R2.useLive' expandTableEdition
 
       -- | Hooks
       -- |
@@ -125,6 +132,18 @@ tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxed
 
       mTopBarHost <- R.unsafeHooksEffect $ R2.getElementById "portal-topbar"
 
+      -- | Effects
+      -- |
+
+      -- transfer local Component change to Local Storage cache
+      useFirstEffect' $
+        flip T.listen expandTableEdition onExpandTableEditionChange
+
+      -- | Behaviors
+      -- |
+      let
+        onExpandClick _ = T.modify_ (not) expandTableEdition
+
       -- | Render
       -- |
       pure $
@@ -132,116 +151,62 @@ tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxed
         H.div
         { className: "table-header-rename" }
         [
-        --   R2.row
-        --   [
-        --     FV.backButton {} []
-        --   ]
-        -- ,
-          H.div
-          { className: "table-header-rename__header" }
+          -- [To Topbar portal]
+          -- @NOTE #446: UI flicker artfact when user toggle the CTA
+          --             This is due to a re-render + portal input focus --             lost
+          R2.createPortal' mTopBarHost
           [
-            renameable
-            { text: name
-            , onRename: onRenameCorpus
-            , className: "renameable-wrapper--emphase"
-            }
-          ,
-            H.hr
-            { className: "table-header-rename__header__line" }
-          ]
-          , R2.row
+            R2.fragmentWithKey topBarPortalKey
             [
-              H.div
-              { className: "col-md-8" }
+              B.button
+              { className: "table-header-rename__cache-toolbar"
+              , callback: cacheClick cacheState
+              , variant: cacheState' == NT.CacheOn ?
+                  ButtonVariant Light $
+                  OutlinedButtonVariant Light
+              }
               [
-                renameable
-                { icon: Just "info"
-                , text: title
-                , onRename: onRenameTitle
-                }
-              ,
-                renameable
-                { icon: Just "globe"
-                , text: desc
-                , onRename: onRenameDesc
-                }
-              ,
-                renameable
-                { icon: Just "search-plus"
-                , text: query
-                , onRename: onRenameQuery
-                }
-              ,
-                -- [To Topbar portal]
-                -- @NOTE #446: UI flicker artfact when user toggle the CTA
-                --             This is due to a re-render + portal input focus --             lost
-                R2.createPortal' mTopBarHost
-                [
-                  R2.fragmentWithKey topBarPortalKey
-                  [
-                    B.button
-                    { className: "table-header-rename__cache-toolbar"
-                    , callback: cacheClick cacheState
-                    , variant: cacheState' == NT.CacheOn ?
-                        ButtonVariant Light $
-                        OutlinedButtonVariant Light
-                    }
-                    [
-                      H.text $ cacheText cacheState'
-                    ]
-                  ]
-                ]
-              ]
-            ,
-              H.div {className: "col-md-4"}
-              [
-                renameable
-                { icon: Just "user"
-                , text: authors
-                , onRename: onRenameAuthors
-                }
-              ,
-                H.div
-                { className: "table-header-rename__calendar" }
-                [
-                  B.icon
-                  { name: "calendar"
-                  , className: "table-header-rename__calendar__icon"
-                  }
-                ,
-                  B.span_ date
-                ]
+                H.text $ cacheText cacheState'
               ]
             ]
           ]
-      where
-        onRenameCorpus newName = do
-          saveCorpusName {name: newName, session, nodeId}
+        ,
+          H.div
+          { className: "table-header-rename__title" }
+          [
+            B.div'
+            { className: "table-header-rename__title__text" }
+            name
+          ,
+            H.hr
+            { className: "table-header-rename__title__line" }
+          ,
+            B.iconButton
+            { name: expandTableEdition' ?
+                "caret-up" $
+                "caret-down"
+            , className: "table-header-rename__title__expand"
+            , callback: onExpandClick
+            }
+          ]
+        ,
+          R2.when expandTableEdition' $
 
-        onRenameTitle newTitle = do
-          _ <- T.modify (\(CorpusInfo c) -> CorpusInfo $ c {title = newTitle}) corpusInfoS
-          corpusInfo <- T.read corpusInfoS
-          let newFields = saveCorpusInfo corpusInfo h.fields
-          save {fields: newFields, session, nodeId}
-
-        onRenameDesc newDesc = do
-          _ <- T.modify (\(CorpusInfo c) -> CorpusInfo $ c {desc = newDesc}) corpusInfoS
-          corpusInfo <- T.read corpusInfoS
-          let newFields = saveCorpusInfo corpusInfo h.fields
-          save {fields: newFields, session, nodeId}
-
-        onRenameQuery newQuery = do
-          _ <- T.modify (\(CorpusInfo c) -> CorpusInfo $ c {query = newQuery}) corpusInfoS
-          corpusInfo <- T.read corpusInfoS
-          let newFields = saveCorpusInfo corpusInfo h.fields
-          save {fields: newFields, session, nodeId}
-
-        onRenameAuthors newAuthors = do
-          _ <- T.modify (\(CorpusInfo c) -> CorpusInfo $ c {authors = newAuthors}) corpusInfoS
-          corpusInfo <- T.read corpusInfoS
-          let newFields = saveCorpusInfo corpusInfo h.fields
-          save {fields: newFields, session, nodeId}
-
+          tableHeaderEditionBlock
+          { hyperdata: p.hyperdata
+          , nodeId
+          , session
+          , corpusInfoS
+          , defaultData:
+            { name
+            , title
+            , query
+            , desc
+            , authors
+            , date
+            }
+          }
+        ]
 
     cacheText NT.CacheOn = "Cache On"
     cacheText NT.CacheOff = "Cache Off"
@@ -251,26 +216,462 @@ tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxed
     cacheStateToggle NT.CacheOn = NT.CacheOff
     cacheStateToggle NT.CacheOff = NT.CacheOn
 
+onExpandTableEditionChange :: T.Change Boolean -> Effect Unit
+onExpandTableEditionChange { new } = do
+  cache <- R2.loadLocalStorageState' R2.appParamsKey defaultCacheParams
+  let update = setter (_ { expandTableEdition = new }) cache
+  R2.setLocalStorageState R2.appParamsKey update
 
-save :: {fields :: FTFieldList, session :: Session, nodeId :: Int} -> Effect Unit
-save {fields, session, nodeId} = do
+----------------------------------------------------------
+
+type TableHeaderEditionBlockDefaultData =
+  ( name    :: String
+  , title   :: String
+  , desc    :: String
+  , query   :: String
+  , authors :: String
+  , date    :: String
+  )
+
+type TableHeaderEditionBlockProps =
+  ( defaultData :: Record TableHeaderEditionBlockDefaultData
+  , corpusInfoS :: T.Box CorpusInfo
+  , session     :: Session
+  , hyperdata   :: Hyperdata
+  , nodeId      :: NodeID
+  )
+
+tableHeaderEditionBlock :: R2.Leaf TableHeaderEditionBlockProps
+tableHeaderEditionBlock = R2.leaf tableHeaderEditionBlockCpt
+
+tableHeaderEditionBlockCpt :: R.Component TableHeaderEditionBlockProps
+tableHeaderEditionBlockCpt = here.component "tableHeaderEditionBlock" cpt where
+  cpt { defaultData
+      , corpusInfoS
+      , hyperdata: Hyperdata h
+      , nodeId
+      , session
+      } _ = do
+    -- | States
+    -- |
+    name' /\ name
+      <- R2.useBox' defaultData.name
+
+    title' /\ title
+      <- R2.useBox' defaultData.title
+
+    desc' /\ desc
+      <- R2.useBox' defaultData.desc
+
+    query' /\ query
+      <- R2.useBox' defaultData.query
+
+    authors' /\ authors
+      <- R2.useBox' defaultData.authors
+
+    date' /\ _
+      <- R2.useBox' defaultData.date
+
+    onNamePending' /\ onNamePending
+      <- R2.useBox' false
+
+    onTitlePending' /\ onTitlePending
+      <- R2.useBox' false
+
+    onDescPending' /\ onDescPending
+      <- R2.useBox' false
+
+    onQueryPending' /\ onQueryPending
+      <- R2.useBox' false
+
+    onAuthorsPending' /\ onAuthorsPending
+      <- R2.useBox' false
+
+    -- | Behaviors
+    -- |
+    let
+      onRenameCorpus newName = do
+        saveCorpusName { name: newName
+                       , session
+                       , nodeId
+                       , onPending: onNamePending
+                       }
+
+      onRenameTitle newTitle = do
+        _ <- T.modify (\(CorpusInfo c) -> CorpusInfo $ c {title = newTitle}) corpusInfoS
+        corpusInfo <- T.read corpusInfoS
+        let newFields = saveCorpusInfo corpusInfo h.fields
+        save { fields: newFields
+             , session
+             , nodeId
+             , onPending: onTitlePending
+             }
+
+      onRenameDesc newDesc = do
+        _ <- T.modify (\(CorpusInfo c) -> CorpusInfo $ c {desc = newDesc}) corpusInfoS
+        corpusInfo <- T.read corpusInfoS
+        let newFields = saveCorpusInfo corpusInfo h.fields
+        save { fields: newFields
+             , session
+             , nodeId
+             , onPending: onDescPending
+             }
+
+      onRenameQuery newQuery = do
+        _ <- T.modify (\(CorpusInfo c) -> CorpusInfo $ c {query = newQuery}) corpusInfoS
+        corpusInfo <- T.read corpusInfoS
+        let newFields = saveCorpusInfo corpusInfo h.fields
+        save { fields: newFields
+             , session
+             , nodeId
+             , onPending: onQueryPending
+             }
+
+      onRenameAuthors newAuthors = do
+        _ <- T.modify (\(CorpusInfo c) -> CorpusInfo $ c {authors = newAuthors}) corpusInfoS
+        corpusInfo <- T.read corpusInfoS
+        let newFields = saveCorpusInfo corpusInfo h.fields
+        save { fields: newFields
+             , session
+             , nodeId
+             , onPending: onAuthorsPending
+             }
+
+    -- | Render
+    -- |
+    pure $
+
+      H.div
+      { className: "table-header-rename-edition" }
+      [
+        B.wad
+        [ "d-flex gap-4 " ]
+        [
+          B.wad
+          [ "flex-grow-1" ]
+          [
+            -- Corpus name
+            H.form
+            { className: intercalate " "
+                [ "form-group"
+                , "input-group input-group-sm"
+                ]
+            }
+            [
+              H.div
+              { className: "form-group__label" }
+              [
+                B.icon
+                { name: "book" }
+              ]
+            ,
+              H.div
+              { className: intercalate " "
+                  [ "form-group__field"
+                  , "input-group input-group-sm"
+                  ]
+              }
+              [
+                B.formInput
+                { callback: flip T.write_ name
+                , value: name'
+                }
+              ,
+                H.div
+                { className: "input-group-append" }
+                [
+                  B.button
+                  {
+                    variant: ButtonVariant Light
+                  , type: "submit"
+                  , callback: const $ onRenameCorpus name'
+                  , className: "input-group-text"
+                  , status: onNamePending' ?
+                      Disabled $
+                      Enabled
+                  }
+                  [
+                    B.icon
+                    { name: "floppy-o"
+                    , className: "text-darker"
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ,
+            -- Node title
+            H.form
+            { className: intercalate " "
+                [ "form-group"
+                , "input-group input-group-sm"
+                ]
+            }
+            [
+              H.div
+              { className: "form-group__label" }
+              [
+                B.icon
+                { name: "header" }
+              ]
+            ,
+              H.div
+              { className: intercalate " "
+                  [ "form-group__field"
+                  , "input-group input-group-sm"
+                  ]
+              }
+              [
+                B.formInput
+                { callback: flip T.write_ title
+                , value: title'
+                }
+              ,
+                H.div
+                { className: "input-group-append" }
+                [
+                  B.button
+                  { variant: ButtonVariant Light
+                  , type: "submit"
+                  , callback: const $ onRenameTitle title'
+                  , className: "input-group-text"
+                  , status: onTitlePending' ?
+                      Disabled $
+                      Enabled
+                  }
+                  [
+                    B.icon
+                    { name: "floppy-o"
+                    , className: "text-darker"
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ,
+            -- Description
+            H.form
+            { className: intercalate " "
+                [ "form-group"
+                , "input-group input-group-sm"
+                ]
+            }
+            [
+              H.div
+              { className: "form-group__label" }
+              [
+                B.icon
+                { name: "info" }
+              ]
+            ,
+              H.div
+              { className: intercalate " "
+                  [ "form-group__field"
+                  , "input-group input-group-sm"
+                  ]
+              }
+              [
+                B.formInput
+                { callback: flip T.write_ desc
+                , value: desc'
+                }
+              ,
+                H.div
+                { className: "input-group-append" }
+                [
+                  B.button
+                  { variant: ButtonVariant Light
+                  , type: "submit"
+                  , callback: const $ onRenameDesc desc'
+                  , className: "input-group-text"
+                  , status: onDescPending' ?
+                      Disabled $
+                      Enabled
+                  }
+                  [
+                    B.icon
+                    { name: "floppy-o"
+                    , className: "text-darker"
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ,
+          B.wad
+          [ "flex-grow-1"]
+          [
+            -- Search query
+            H.form
+            { className: intercalate " "
+                [ "form-group"
+                , "input-group input-group-sm"
+                ]
+            }
+            [
+              H.div
+              { className: "form-group__label" }
+              [
+                B.icon
+                { name: "search-plus" }
+              ]
+            ,
+              H.div
+              { className: intercalate " "
+                  [ "form-group__field"
+                  , "input-group input-group-sm"
+                  ]
+              }
+              [
+                B.formInput
+                { callback: flip T.write_ query
+                , value: query'
+                }
+              ,
+                H.div
+                { className: "input-group-append" }
+                [
+                  B.button
+                  { variant: ButtonVariant Light
+                  , type: "submit"
+                  , callback: const $ onRenameQuery query'
+                  , className: "input-group-text"
+                  , status: onQueryPending' ?
+                      Disabled $
+                      Enabled
+                  }
+                  [
+                    B.icon
+                    { name: "floppy-o"
+                    , className: "text-darker"
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ,
+            -- Authors
+            H.form
+            { className: intercalate " "
+                [ "form-group"
+                , "input-group input-group-sm"
+                ]
+            }
+            [
+              H.div
+              { className: "form-group__label" }
+              [
+                B.icon
+                { name: "user" }
+              ]
+            ,
+              H.div
+              { className: intercalate " "
+                  [ "form-group__field"
+                  , "input-group input-group-sm"
+                  ]
+              }
+              [
+                B.formInput
+                { callback: flip T.write_ authors
+                , value: authors'
+                }
+              ,
+                H.div
+                { className: "input-group-append" }
+                [
+                  B.button
+                  { variant: ButtonVariant Light
+                  , type: "submit"
+                  , callback: const $ onRenameAuthors authors'
+                  , className: "input-group-text"
+                  , status: onAuthorsPending' ?
+                      Disabled $
+                      Enabled
+                  }
+                  [
+                    B.icon
+                    { name: "floppy-o"
+                    , className: "text-darker"
+                    }
+                  ]
+                ]
+              ]
+            ]
+          ,
+            -- Date
+            H.form
+            { className: intercalate " "
+                [ "form-group"
+                , "input-group input-group-sm"
+                ]
+            }
+            [
+              H.div
+              { className: "form-group__label" }
+              [
+                B.icon
+                { name: "calendar" }
+              ]
+            ,
+              H.div
+              { className: intercalate " "
+                  [ "form-group__field"
+                  , "input-group input-group-sm"
+                  ]
+              }
+              [
+                B.formInput
+                { callback: const $ pure unit
+                , value: date'
+                , status: Idled
+                }
+              ]
+            ]
+          ]
+        ]
+      ]
+
+-----------------------------------------------------------
+
+save ::
+      { fields    :: FTFieldList
+      , session   :: Session
+      , nodeId    :: Int
+      , onPending :: T.Box Boolean
+      }
+  ->  Effect Unit
+save { fields, session, nodeId, onPending } = do
+  T.write_ true onPending
   launchAff_ do
     res <- saveCorpus $ {hyperdata: Hyperdata {fields}, session, nodeId}
     liftEffect $ do
-          _ <- case res of
-                Left err -> here.warn2 "[corpusLayoutView] onClickSave RESTError" err
-                _ -> pure unit
-          pure unit
+      case res of
+        Left err -> here.warn2 "[corpusLayoutView] onClickSave RESTError" err
+        _ -> pure unit
+    -- add a human minimal cognitive delay telling something has being executed
+    delay $ Milliseconds 200.0
+    liftEffect $ T.write_ false onPending
 
-saveCorpusName :: {name :: String, session :: Session, nodeId :: Int} -> Effect Unit
-saveCorpusName {name, session, nodeId} = do
+saveCorpusName ::
+      { name      :: String
+      , session   :: Session
+      , nodeId    :: Int
+      , onPending :: T.Box Boolean
+      }
+  ->  Effect Unit
+saveCorpusName { name, session, nodeId, onPending } = do
+  T.write_ true onPending
   launchAff_ do
     res <- rename session nodeId $ RenameValue {text: name}
     liftEffect $ do
-          _ <- case res of
-                Left err -> here.warn2 "[corpusLayoutView] onClickSave RESTError" err
-                _ -> pure unit
-          pure unit
+      case res of
+        Left err -> here.warn2 "[corpusLayoutView] onClickSave RESTError" err
+        _ -> pure unit
+    -- add a human minimal cognitive delay telling something has being executed
+    delay $ Milliseconds 200.0
+    liftEffect $ T.write_ false onPending
 
 tableHeaderLayout :: R2.Component TableHeaderLayoutProps
 tableHeaderLayout = R.createElement tableHeaderLayoutCpt

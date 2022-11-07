@@ -13,6 +13,13 @@
     letter-spacing: space-x(1);
     font-weight: 700;
   }
+
+  // remove "bootstrap" focus ring for this state
+  &--idled:active,
+  &--idled:focus {
+    border-color: $input-border-color;
+    box-shadow: unset;
+  }
 }
 
 /// Modal
@@ -169,8 +176,10 @@
     &#{ $self }--primary:hover    { color: darken($primary, 10%); }
     &#{ $self }--secondary:hover  { color: darken($secondary, 10%); }
     &#{ $self }--dark:hover       { color: darken($body-color, 10%); }
+  }
 
-    // active effect
+  &--enabled#{ $self }--focus-ring,
+  &--muted#{ $self }--focus-ring {
     &#{ $self }:active,
     &#{ $self }--active {
 

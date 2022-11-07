@@ -19,7 +19,7 @@ import Gargantext.Components.Login (login)
 import Gargantext.Components.Nodes.Annuaire (annuaireLayout)
 import Gargantext.Components.Nodes.Annuaire.User (userLayout)
 import Gargantext.Components.Nodes.Annuaire.User.Contact (contactLayout)
-import Gargantext.Components.Nodes.Corpus (corpusLayout)
+import Gargantext.Components.Nodes.Corpus as Corpus
 import Gargantext.Components.Nodes.Corpus.Code (corpusCodeLayout)
 import Gargantext.Components.Nodes.Corpus.Dashboard (dashboardLayout)
 import Gargantext.Components.Nodes.Corpus.Document as Document
@@ -398,12 +398,21 @@ corpus :: R2.Component SessionNodeProps
 corpus = R.createElement corpusCpt
 corpusCpt :: R.Component SessionNodeProps
 corpusCpt = here.component "corpus" cpt where
-  cpt props@{ boxes, nodeId } _ = do
-    let sessionProps = RE.pick props :: Record SessionProps
-    pure $ authed (Record.merge { content: \session ->
-                                   corpusLayout { boxes
-                                                , nodeId
-                                                , session } } sessionProps) []
+  cpt props@{ nodeId } _ = do
+    let
+      sessionProps = RE.pick props :: Record SessionProps
+
+      authedProps =
+        Record.merge
+        { content:
+            \session -> Corpus.node
+                  { nodeId
+                  , key: show (sessionId session) <> "-" <> show nodeId
+                  }
+        }
+        sessionProps
+
+    pure $ authed authedProps []
 
 --------------------------------------------------------------
 
@@ -630,12 +639,21 @@ team :: R2.Component SessionNodeProps
 team = R.createElement teamCpt
 teamCpt :: R.Component SessionNodeProps
 teamCpt = here.component "team" cpt where
-  cpt props@{ boxes, nodeId } _ = do
-    let sessionProps = RE.pick props :: Record SessionProps
-    pure $ authed (Record.merge { content: \session ->
-                                   corpusLayout { boxes
-                                                , nodeId
-                                                , session } } sessionProps) []
+  cpt props@{ nodeId } _ = do
+    let
+      sessionProps = RE.pick props :: Record SessionProps
+
+      authedProps =
+        Record.merge
+        { content:
+            \session -> Corpus.node
+                  { nodeId
+                  , key: show (sessionId session) <> "-" <> show nodeId
+                  }
+        }
+        sessionProps
+
+    pure $ authed authedProps []
 
 --------------------------------------------------------------
 

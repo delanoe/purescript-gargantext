@@ -1,19 +1,47 @@
-module Gargantext.Components.Nodes.Home where
+module Gargantext.Components.Nodes.Home
+  ( Action(..)
+  , HomeProps
+  , State(..)
+  , Tuto(..)
+  , TutorialProps
+  , blocksRandomText
+  , blocksRandomText'
+  , docButton
+  , expertTutos
+  , here
+  , homeLayout
+  , homeLayoutCpt
+  , imageEnter
+  , incompatible
+  , initialState
+  , joinButtonOrTutorial
+  , jumboTitle
+  , langLandingData
+  , license
+  , performAction
+  , playTutos
+  , startTutos
+  , summary
+  , tutorial
+  , tutorialCpt
+  , video
+  )
+  where
 
 import Gargantext.Prelude
 
+import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Effect (Effect)
 import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Lang (LandingLang(..))
 import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
--- import Gargantext.Components.Nodes.Home.Public (renderPublic)
 import Gargantext.Config as Config
-import Gargantext.License (license)
 import Gargantext.Sessions (Sessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Sessions.Types (Session(..), cleanBackendUrl)
@@ -64,25 +92,19 @@ homeLayoutCpt = here.component "homeLayout" cpt
                        , sessions
                        , showLogin }
         } _ = do
+      -- | States
+      -- |
       backend'  <- T.useLive T.unequal backend
       sessions' <- T.useLive T.unequal sessions
       lang'     <- T.useLive T.unequal lang
+
+      -- | Computed
+      -- |
       let landingData = langLandingData lang'
-      pure $
-        H.span {}
-        [ H.div { className: "home-title" }
-          [ jumboTitle landingData ]
-        , H.div { className: "home-research-form" } [] -- TODO
-        , joinButtonOrTutorial boxes sessions' (click backend')
-        , H.div { className: "home-public" }
-          [ -- renderPublic { }
-           H.div { className:"col-12 d-flex justify-content-center" }
-            [ H.h1 {} [ H.text "" ]] -- H.span {className: "fa fa-star-o"} []
-          , H.div { className: "home-landing-data" }
-            [ blocksRandomText' landingData ]
-          , license
-          ]
-        ] where
+
+      -- | Behaviors
+      -- |
+      let
         click mBackend _ =
           case mBackend of
             Nothing -> do
@@ -93,6 +115,39 @@ homeLayoutCpt = here.component "homeLayout" cpt
                   T.write_ (Just b) backend
                   T.write_ true showLogin
             Just _ -> T.write_ true showLogin
+
+      -- | Render
+      -- |
+      pure $
+
+        R.fragment
+        [
+          H.div { className: "home-title" }
+          [
+            H.div
+            { className: "home-title__logo" }
+            [
+              jumboTitle landingData
+            ]
+          ,
+            H.div
+            { className: "home-title__jumbo" }
+            [
+              joinButtonOrTutorial boxes sessions' (click backend')
+            ]
+          ]
+          -- @TODO
+          -- H.div { className: "home-research-form" } []
+        ,
+          blocksRandomText' landingData
+        ,
+          B.wad
+          [ "mt-8" ]
+          [
+            license
+          ]
+        ]
+
 
 joinButtonOrTutorial :: forall e. Boxes
                      -> Sessions
@@ -107,12 +162,28 @@ joinButton :: forall e. (e -> Effect Unit) -> R.Element
 joinButton click =
   -- TODO Add G.C.L.F.form -- which backend to use?
   -- form { backend, sessions, visible }
-  H.div { className: divClass
-        , style: { paddingTop: "100px", paddingBottom: "100px" } }
-        [ H.button { className: buttonClass, title, on: { click } } [ H.text "Log in" ] ] where
-    title = "Connect to the server"
-    divClass = "flex-space-around d-flex justify-content-center"
-    buttonClass = "btn btn-primary btn-lg btn-block"
+  B.wad
+  [ "d-flex", "flex-space-around", "justify-content-center", "align-items-center", "h-100" ]
+  [
+    H.button
+    { className: "btn btn-primary py-2 w-1/3 font-size-140"
+    , title: "Connect to the server"
+    , on: { click }
+    , style: { minWidth: "200px"}
+    }
+    [
+      B.icon
+      { name: "sign-in"
+      , className: "font-size-90"
+      }
+    ,
+      B.wad_
+      [ "virtual-space", "w-2", "d-inline-block" ]
+
+    ,
+      H.text "Log in"
+    ]
+  ]
 
 incompatible :: String
 incompatible =
@@ -155,19 +226,20 @@ tutorial :: R2.Leaf TutorialProps
 tutorial = R2.leafComponent tutorialCpt
 tutorialCpt :: R.Component TutorialProps
 tutorialCpt = here.component "tutorial" cpt where
-  cpt { boxes
-      , sessions } _ = do
-    let folders = makeFolders sessions
+  cpt { sessions } _ = do
 
-    pure $ H.div { className: "mx-auto" }
-      [ H.div {className: "d-flex justify-content-center"} [ H.div { className: "folders" } folders ]
+    pure $
+
+      H.div
+      { className: "home-tutorial" } $
+      makeFolders sessions
+
       -- , H.h1 {} [H.text "Tutorials"]
       -- , summary
       -- , H.h3 {} [H.text "Resources"]
       -- , section "How to start?" "alert-info" startTutos
       -- , section "How to play?" "alert-warning" playTutos
       -- , section "How to master?" "alert-danger" expertTutos
-      ]
     where
       {-
       section name class' tutos =
@@ -181,11 +253,39 @@ tutorialCpt = here.component "tutorial" cpt where
       makeFolders s = sessionToFolder <$> s
         where
           sessionToFolder session@(Session {treeId, username, backend}) =
-            H.span { className: "folder" } [
-              H.div { className: "d-flex justify-content-center" } [ H.text (username <> "@" <> (cleanBackendUrl backend)) ]
-            , H.div {} [ FV.folderView { boxes
-                                       , nodeId: treeId
-                                       , session } ] ]
+            H.div
+            { className: intercalate " "
+                [ "home-title__folders"
+                , "card border-dark"
+                ]
+            }
+            [
+              H.div
+              { className: "card-header bg-dark color-white" }
+              [
+                B.wad
+                [ "d-flex", "align-items-center" ]
+                [
+                  B.icon
+                  { name: "user" }
+                ,
+                  B.wad_
+                  [ "virtual-space", "w-1" ]
+                ,
+                  B.span_ $
+                  username <> "@" <> cleanBackendUrl backend
+                ]
+              ]
+            ,
+              H.div
+              { className: "card-body" }
+              [
+                FV.folderView
+                { nodeId: treeId
+                , session
+                }
+              ]
+            ]
 
 startTutos :: Array Tuto
 startTutos =
@@ -279,34 +379,59 @@ blocksRandomText' (LandingData hd) = blocksRandomText hd.blockTexts
 
 blocksRandomText :: BlockTexts -> R.Element
 blocksRandomText (BlockTexts bt) =
-  H.div { className: "row" } ( map showBlock bt.blocks )
+  B.wad
+  [ "d-flex", "gap-3" ]
+  ( map showBlock bt.blocks )
   where
     showBlock :: BlockText -> R.Element
     showBlock (BlockText b) =
-      H.div { className: "col-md-4 content" }
-      [ H.h3 {}
-        [ H.a { href: b.href, title: b.title}
-          [ H.i { className: b.icon } []
-          , H.text ("   " <> b.titleText) ]]
-        , H.p {} [ H.text b.text ]
-        , H.p {} [ docButton b.docButton ]]
+      B.wad
+      [ "w-1/3" ]
+      [
+        H.h3
+        {}
+        [
+          H.a
+          { href: b.href
+          , title: b.title
+          }
+          [
+            H.i { className: b.icon } []
+          , H.text ("   " <> b.titleText) ]
+        ]
+      ,
+        B.wad
+        [ "my-2" ]
+        [ H.text b.text ]
+      ,
+        H.p {} [ docButton b.docButton ]
+      ]
 
 docButton :: Button -> R.Element
 docButton (Button b) =
-  H.a { className, href: b.href, target: "blank", title: b.title }
-  [ H.span { aria: { hidden: true }, className: "fa fa-hand-right" } []
-  , H.text b.text ] where
-    className = "btn btn-outline-secondary btn-sm spacing-class"
+  H.a
+  { className: "btn btn-outline-secondary btn-sm spacing-class"
+  , href: b.href
+  , target: "blank"
+  , title: b.title
+  }
+  [
+    H.span
+    { aria: { hidden: true }
+    , className: "fa fa-hand-right"
+    } []
+  ,
+    H.text b.text
+  ]
 
 -- | TODO
 -- <img src='logo.png' onmouseover="this.src='gargantextuel.png';" onmouseout="this.src='logo.png';" />
 jumboTitle :: LandingData -> R.Element
 jumboTitle (LandingData hd) =
-  H.div {}
-  [ H.div { className: "row" }
-    [ H.div { className: "mx-auto" }
-      [ H.div { id: "logo-designed" }
-        [ H.img { src: "images/logo.png", title: hd.logoTitle } ]]]]
+  H.img
+  { src: "images/logo.png"
+  , title: hd.logoTitle
+  }
 
 imageEnter :: forall t. LandingData -> t -> R.Element
 imageEnter (LandingData hd) action =
@@ -314,3 +439,46 @@ imageEnter (LandingData hd) action =
   [ H.div {className: "col-md-offset-5 col-md-6 content"}
     [ H.img { src, action, id: "funnyimg", title: hd.imageTitle } ] ] where
       src = "images/Gargantextuel-212x300.jpg"
+
+license :: R.Element
+license =
+  H.div
+  { className: "home-license" }
+  [
+    H.text "GarganText "
+  ,
+    B.icon
+    { name: "registered" }
+  ,
+    H.text " is made by "
+  ,
+    H.a
+    { href: "https://iscpif.fr"
+    , target: "_blank"
+    }
+    [
+      H.text "CNRS/ISCPIF"
+    ]
+  ,
+    H.a
+    { href: "http://gitlab.iscpif.fr/humanities/gargantext/blob/stable/LICENSE"
+    , target: "_blank"
+    , title: "Legal instructions of the project."
+    }
+    [
+      H.text ", with licences aGPLV3 and CECILL variant Affero compliant, "
+    ]
+  ,
+    B.icon
+    { name: "copyright" }
+  ,
+    H.a
+    { href: "https://cnrs.fr"
+    , target: "_blank"
+    }
+    [
+      H.text " CNRS 2017-Present "
+    ]
+  ,
+    H.text "."
+  ]

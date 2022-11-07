@@ -4,3 +4,8 @@
 .table {
   border-collapse: collapse;
 }
+
+// remove side-effect's z-index
+.input-group-prepend .btn, .input-group-append .btn {
+  z-index: initial;
+}

@@ -13,6 +13,7 @@ import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (Elevation(..))
 import Gargantext.Components.Charts.Options.ECharts (dispatchAction)
 import Gargantext.Components.Charts.Options.Type (EChartsInstance, EChartActionData)
+import Gargantext.Components.Corpus.CodeSection (loadCorpusWithChild)
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.DocsTable.Types (Year)
 import Gargantext.Components.Document.API (loadData)
@@ -20,10 +21,8 @@ import Gargantext.Components.Document.Layout (layout)
 import Gargantext.Components.Document.Types (LoadedData, DocPath)
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Components.Nodes.Corpus (loadCorpusWithChild)
 import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
 import Gargantext.Components.Nodes.Corpus.Chart.Types as CTypes
-import Gargantext.Components.Nodes.Corpus.Document as D
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
 import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Components.Nodes.Texts.Types as TT
@@ -35,7 +34,7 @@ import Gargantext.Config.REST (logRESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader, useLoaderEffect)
 import Gargantext.Hooks.Session (useSession)
-import Gargantext.Sessions (Session, getCacheState, sessionId)
+import Gargantext.Sessions (Session, getCacheState)
 import Gargantext.Types (CTabNgramType(..), ListId, NodeID, SidePanelState(..), TabSubType(..), TabType(..))
 import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
