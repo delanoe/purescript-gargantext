@@ -68,8 +68,8 @@ sizeButtonCpt = here.component "sizeButton" cpt where
 
 type LabelSizeButtonProps =
   ( forceAtlasState :: T.Box SigmaxTypes.ForceAtlasState
-  , sigmaRef :: R.Ref Sigmax.Sigma
-  , state    :: T.Box Number)
+  , sigmaRef        :: R.Ref Sigmax.Sigma
+  , state           :: T.Box Number)
 
 labelSizeButton :: R2.Leaf LabelSizeButtonProps
 labelSizeButton = R2.leaf labelSizeButtonCpt

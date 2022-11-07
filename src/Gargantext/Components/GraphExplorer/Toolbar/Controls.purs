@@ -252,11 +252,13 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
           { className: "d-flex justify-content-between mb-3" }
           [
             edgeConfluenceControl
-            { range: edgeConfluenceRange
+            { forceAtlasState
+            , range: edgeConfluenceRange
             , state: edgeConfluence }
           ,
             edgeWeightControl
-            { range: edgeWeightRange
+            { forceAtlasState
+            , range: edgeWeightRange
             , state: edgeWeight }
           ]
         ,
@@ -274,7 +276,8 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
           ,
             -- labels size: 1-4
             nodeSizeControl
-            { range: nodeSizeRange
+            { forceAtlasState
+            , range: nodeSizeRange
             , state: nodeSize }
 
           ]
