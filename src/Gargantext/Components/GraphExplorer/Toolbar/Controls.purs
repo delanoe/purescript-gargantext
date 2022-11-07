@@ -256,11 +256,12 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             { forceAtlasState
             , range: edgeConfluenceRange
             , state: edgeConfluence }
-          ,
+          {- ,
             edgeWeightControl
             { forceAtlasState
             , range: edgeWeightRange
             , state: edgeWeight }
+          -}
           ]
         ,
           H.div
