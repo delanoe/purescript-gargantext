@@ -10,23 +10,22 @@ module Gargantext.Components.GraphExplorer.Toolbar.Buttons
 
 import Prelude
 
+import DOM.Simple.Console (log2)
 import Data.Array as A
 import Data.Either (Either(..))
-import Data.Formatter.DateTime as DFDT
 import Data.Foldable (intercalate)
+import Data.Formatter.DateTime as DFDT
 import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
-import DOM.Simple.Console (log2)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Now as EN
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), ComponentStatus(..), Variant(..))
+import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (uploadArbitraryData)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileFormat(..))
 import Gargantext.Components.GraphExplorer.API (cloneGraph)
-import Gargantext.Components.GraphExplorer.Resources as Graph
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.GraphExplorer.Utils as GEU
 import Gargantext.Hooks.Sigmax as Sigmax
@@ -272,7 +271,10 @@ multiSelectEnabledButtonCpt = here.component "multiSelectEnabledButton" cpt
 
       pure $
         H.div
-        { className: "btn-group"
+        { className: intercalate " "
+            [ "btn-group"
+            , "align-items-center"
+            ]
         , role: "group"
         }
         [

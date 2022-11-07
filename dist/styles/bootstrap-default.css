@@ -9252,6 +9252,7 @@ input[type=range]:-moz-focusring {
 }
 .graph-layout__toolbar .b-fieldset {
   background-color: #fff;
+  flex-grow: 1;
 }
 .graph-layout__toolbar .toolbar-atlas-button {
   width: 40px;
@@ -9569,7 +9570,7 @@ input[type=range]:-moz-focusring {
 }
 .graph-toolbar__section--controls .range-control,
 .graph-toolbar__section--controls .range-simple {
-  flex-basis: calc(50% - 16px);
+  flex-basis: 100%;
 }
 
 .on-running-animation .b-icon {

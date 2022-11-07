@@ -60,6 +60,7 @@
 
     .b-fieldset
       background-color: $body-bg
+      flex-grow: 1
 
     .toolbar-atlas-button
       // @XXX Glyphicon icons lack of homogeneous width
@@ -367,7 +368,8 @@
 
       .range-control,
       .range-simple
-        flex-basis: calc(50% - #{ $item-margin * 2 })
+        // flex-basis: calc(50% - #{ $item-margin * 2 })
+        flex-basis: 100%
 
 
 // Atlas button animation
