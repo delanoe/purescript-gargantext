@@ -275,7 +275,12 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             labelSizeButton { forceAtlasState
                             , sigmaRef
                             , state: labelSize }
-          ,
+          ]
+
+        ,
+          H.div
+          { className: "d-flex justify-content-between" }
+          [
             -- labels size: 1-4
             nodeSizeControl
             { forceAtlasState
