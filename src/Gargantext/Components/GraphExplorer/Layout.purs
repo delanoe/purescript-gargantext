@@ -343,7 +343,8 @@ modeGraphType Types.Authors     = "square"
 modeGraphType Types.Institutes  = "equilateral"
 modeGraphType Types.Sources     = "star"
 --modeGraphType Types.Terms       = "def"
-modeGraphType Types.Terms       = "circle"
+--modeGraphType Types.Terms       = "circle"
+modeGraphType Types.Terms       = "ccircle"
 
 --------------------------------------------------------------
 
