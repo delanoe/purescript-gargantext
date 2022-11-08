@@ -509,7 +509,7 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
             [ "text-info", "d-inline" ] $
             show termCount
           ,
-            H.text $ nbsp 1 <> "terms"
+            H.text $ nbsp 1 <> "related terms"
           ,
             -- Expand word cloud
             B.iconButton
@@ -643,11 +643,12 @@ updateTermButtonCpt = here.component "updateTermButton" cpt where
 badgeSize :: Number -> Number -> Number -> String
 badgeSize minSize maxSize size =
   let
-    minFontSize = 10.0
-    maxFontSize = 24.0
+    minFontSize = 7.0
+    maxFontSize = 28.0
     sizeScaled = (size - minSize) / (maxSize - minSize)  -- in [0; 1] range
-    scale' = DN.log (sizeScaled + 1.0) / (DN.log 2.0)  -- in [0; 1] range
-    scale = minFontSize + scale' * (maxFontSize - minFontSize)
+    --scale' = DN.log (sizeScaled + 1.0) / (DN.log 2.0)  -- in [0; 1] range
+    --scale = minFontSize + scale' * (maxFontSize - minFontSize)
+    scale = minFontSize + sizeScaled * (maxFontSize - minFontSize)
 
   in
     show scale <> "px"

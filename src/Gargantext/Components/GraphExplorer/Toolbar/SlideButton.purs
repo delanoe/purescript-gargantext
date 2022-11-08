@@ -145,7 +145,7 @@ mouseSelectorSizeSliderCpt = here.component "mouseSelectorSizeSlider" cpt
           caption: "Selector size (Shift + wheel)"
         , forceAtlasState
         , min: 1.0
-        , max: 50.0
+        , max: 100.0
         , onChange: \e -> do
           let sigma = R.readRef sigmaRef
           let newValue' = DN.fromString $ R.unsafeEventValue e
