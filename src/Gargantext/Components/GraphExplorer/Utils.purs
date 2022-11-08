@@ -1,6 +1,7 @@
 module Gargantext.Components.GraphExplorer.Utils
   ( stEdgeToGET, stNodeToGET
   , normalizeNodes
+  , normalizeNodeSizeDefault
   , normalizeNodeSize
   , takeGreatestNodeByCluster, countNodeByCluster
   ) where
@@ -13,6 +14,7 @@ import Data.Lens (Lens', lens, over, traversed, (^.))
 import Data.Int (floor, toNumber)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (wrap)
+import Data.Number as DN
 import Data.Sequence as Seq
 import Data.Traversable (class Traversable)
 import Gargantext.Components.GraphExplorer.GraphTypes as GEGT
@@ -49,8 +51,16 @@ normalizeNodes ns = GUL.normalizeLens xLens $ GUL.normalizeLens yLens ns
     yLens :: Lens' GEGT.Node Number
     yLens = lens (\(GEGT.Node { y }) -> y) $ (\(GEGT.Node n) val -> GEGT.Node (n { y = val }))
 
-normalizeNodeSize :: forall t. Traversable t => Int -> Int -> t GEGT.Node -> t GEGT.Node
-normalizeNodeSize minSize maxSize ns = over traversed (over sizeLens (\s -> toNumber minSize + (s - sizeMin') * quotient)) ns
+type NodeSize r = { size :: Number | r }
+
+normalizeNodeSizeDefault :: forall t r. Traversable t => t (NodeSize r) -> t (NodeSize r)
+normalizeNodeSizeDefault ns = logSize <$> normalizeNodeSize 50.0 100000.0 ns
+  where
+    logSize (n@{ size }) = n { size = DN.log (size + 1.0) }
+
+normalizeNodeSize :: forall t r. Traversable t =>
+                     Number -> Number -> t (NodeSize r) -> t (NodeSize r)
+normalizeNodeSize minSize maxSize ns = over traversed (over sizeLens (\s -> minSize + (s - sizeMin') * quotient)) ns
   where
     sizes = over traversed (_ ^. sizeLens) ns
     sizeMin = minimum sizes
@@ -62,9 +72,12 @@ normalizeNodeSize minSize maxSize ns = over traversed (over sizeLens (\s -> toNu
     sizeMin' = fromMaybe 0.0 sizeMin
     divisor = maybe 1.0 (\r -> 1.0 / r) range
     quotient :: Number
-    quotient = (toNumber $ maxSize - minSize) * divisor
-    sizeLens :: Lens' GEGT.Node Number
-    sizeLens = lens (\(GEGT.Node { size }) -> toNumber size) $ (\(GEGT.Node n) val -> GEGT.Node (n { size = floor val }))
+    quotient = (maxSize - minSize) * divisor
+    --quotient = (toNumber $ maxSize - minSize) * divisor
+    --sizeLens :: Lens' GEGT.Node Number
+    --sizeLens = lens (\(GEGT.Node { size }) -> size) $ (\(GEGT.Node n) val -> GEGT.Node (n { size = val }))
+    sizeLens :: Lens' { size :: Number | r } Number
+    sizeLens = lens (\{ size } -> size) $ \n val -> (n { size = val })
 
 ------------------------------------------------------------------------
 

@@ -94,7 +94,7 @@ labelSizeButtonCpt = here.component "labelSizeButton" cpt
                     defaultLabelSize: newValue
                   , drawLabels: true
                   , labelSize: newValue
-                  , maxNodeSize: newValue / 2.5
+                  -- , maxNodeSize: newValue / 2.5
                     --, labelSizeRatio: newValue / 2.5
                   }
                 T.write_ newValue state

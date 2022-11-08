@@ -39,7 +39,7 @@ newtype Node = Node {
   , children   :: Array String
   , id_        :: String
   , label      :: String
-  , size       :: Int
+  , size       :: Number
   , type_      :: String
   , x          :: Number
   , y          :: Number

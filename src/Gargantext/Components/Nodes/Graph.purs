@@ -98,22 +98,22 @@ nodeCpt = here.component "node" cpt where
               Tuple mMetaData graph = convert hyperdataGraph
             in
               hydrateStore
-              { graph
+              { cacheParams: cache'
+              , graph
+              , graphId
               , hyperdataGraph: loaded
               , mMetaData
-              , graphId
-              , cacheParams: cache'
               }
       }
 
 --------------------------------------------------------
 
 type HydrateStoreProps =
-  ( mMetaData       :: Maybe GET.MetaData
+  ( cacheParams     :: GET.CacheParams
   , graph           :: SigmaxT.SGraph
-  , hyperdataGraph  :: GET.HyperdataGraph
   , graphId         :: GET.GraphId
-  , cacheParams     :: GET.CacheParams
+  , hyperdataGraph  :: GET.HyperdataGraph
+  , mMetaData       :: Maybe GET.MetaData
   )
 
 hydrateStore :: R2.Leaf HydrateStoreProps
