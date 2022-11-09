@@ -27,6 +27,7 @@ foreign import _addNode :: EffectFn3 Graph String (Record Types.Node) String
 foreign import _updateNode :: EffectFn3 Graph String (Record Types.Node -> Record Types.Node) Unit
 foreign import _addEdge :: EffectFn4 Graph String String (Record Types.Edge) String
 foreign import _mergeNodeAttributes :: forall a. EffectFn3 Graph String a Unit
+foreign import _forEachNode :: EffectFn2 Graph (Record Types.Node -> Effect Unit) Unit
 --foreign import _updateEdge :: EffectFn4 Graph String String (Record Types.Edge) String
 foreign import _mapNodes :: forall a. Fn2 Graph (Record Types.Node -> a) (Array a)
 foreign import _filterNodes :: Fn2 Graph (Record Types.Node -> Boolean) (Array Types.NodeId)
@@ -65,9 +66,7 @@ updateNode g node@{ id, borderColor, color, equilateral, hidden, highlighted, ty
 mergeNodeAttributes :: forall a. Graph -> Types.NodeId -> a -> Effect Unit
 mergeNodeAttributes = runEffectFn3 _mergeNodeAttributes
 forEachNode :: Graph -> (Record Types.Node -> Effect Unit) -> Effect Unit
--- TODO Check this: how does FFI translate function of two arguments
--- into PS \x y ?
-forEachNode g fn = pure $ g ... "forEachNode" $ [\_ n -> fn n]
+forEachNode = runEffectFn2 _forEachNode
 mapNodes :: forall a. Graph -> (Record Types.Node -> a) -> Array a
 mapNodes = runFn2 _mapNodes
 filterNodes :: Graph -> (Record Types.Node -> Boolean) -> Array Types.NodeId

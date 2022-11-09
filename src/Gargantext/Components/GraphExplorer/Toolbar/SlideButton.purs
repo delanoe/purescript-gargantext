@@ -6,6 +6,8 @@ module Gargantext.Components.GraphExplorer.Toolbar.SlideButton
   , mouseSelectorSizeSlider
   ) where
 
+import Data.Array as A
+import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Number as DN
 import Prelude
@@ -15,7 +17,10 @@ import Reactix.DOM.HTML as H
 import Toestand as T
 
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(Disabled))
+import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Components.GraphExplorer.Utils as GEU
 import Gargantext.Hooks.Sigmax as Sigmax
+import Gargantext.Hooks.Sigmax.Graphology as Graphology
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Utils.Reactix as R2
@@ -68,6 +73,7 @@ sizeButtonCpt = here.component "sizeButton" cpt where
 
 type LabelSizeButtonProps =
   ( forceAtlasState :: T.Box SigmaxTypes.ForceAtlasState
+  , graph           :: T.Box SigmaxTypes.SGraph
   , sigmaRef        :: R.Ref Sigmax.Sigma
   , state           :: T.Box Number)
 
@@ -76,13 +82,19 @@ labelSizeButton = R2.leaf labelSizeButtonCpt
 labelSizeButtonCpt :: R.Component LabelSizeButtonProps
 labelSizeButtonCpt = here.component "labelSizeButton" cpt
   where
-    cpt { forceAtlasState, sigmaRef, state} _ = do
+    cpt { forceAtlasState, graph, sigmaRef, state} _ = do
+      graph' <- T.useLive T.unequal graph
+
+      let minLabelSize = 1.0
+      let maxLabelSize = 30.0
+      let defaultLabelSize = 14.0
+
       pure $ sizeButton {
           state
         , caption: "Label size"
         , forceAtlasState
-        , min: 1.0
-        , max: 30.0
+        , min: minLabelSize
+        , max: maxLabelSize
         , onChange: \e -> do
           let sigma = R.readRef sigmaRef
           let newValue' = DN.fromString $ R.unsafeEventValue e
@@ -90,6 +102,15 @@ labelSizeButtonCpt = here.component "labelSizeButton" cpt
             Nothing -> pure unit
             Just newValue ->
               Sigmax.dependOnSigma sigma "[labelSizeButton] sigma: Nothing" $ \s -> do
+                let ratio = (newValue - minLabelSize) / (defaultLabelSize - minLabelSize)
+                let nodes = SigmaxTypes.graphNodes graph'
+                let nodesResized = (\n@{ size } -> n { size = size * ratio }) <$> nodes
+                let nodesMap = SigmaxTypes.idMap nodesResized
+                Graphology.forEachNode (Sigma.graph s) $ \{ id } -> do
+                  case Map.lookup id nodesMap of
+                    Nothing -> pure unit
+                    Just { size } -> Graphology.mergeNodeAttributes (Sigma.graph s) id { size }
+
                 Sigma.setSettings s {
                     defaultLabelSize: newValue
                   , drawLabels: true

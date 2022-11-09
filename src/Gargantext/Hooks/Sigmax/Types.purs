@@ -9,6 +9,7 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Sequence as Seq
 import Data.Set as Set
+import Data.Traversable (class Traversable)
 import Data.Tuple (Tuple(..))
 import Partial.Unsafe (unsafePartial)
 import Prelude (class Eq, class Show, map, ($), (&&), (==), (||), (<$>), (<), mod, not)
@@ -107,19 +108,20 @@ graphEdges (Graph {edges}) = edges
 graphNodes :: SGraph -> Seq.Seq (Record Node)
 graphNodes (Graph {nodes}) = nodes
 
+idMap :: forall r t. Traversable t => t { id :: String | r } -> Map.Map String { id :: String | r }
+idMap xs = Map.fromFoldable $ (\x@{ id } -> Tuple id x) <$> xs
+
 edgesGraphMap :: SGraph -> EdgesMap
-edgesGraphMap graph =
-  Map.fromFoldable $ map (\e -> Tuple e.id e) $ graphEdges graph
+edgesGraphMap graph = idMap $ graphEdges graph
 
 edgesFilter :: (Record Edge -> Boolean) -> SGraph -> SGraph
 edgesFilter f (Graph {edges, nodes}) = Graph { edges: Seq.filter f edges, nodes }
 
 nodesMap :: Seq.Seq (Record Node) -> NodesMap
-nodesMap nodes = Map.fromFoldable $ map (\n -> Tuple n.id n) nodes
+nodesMap = idMap
 
 nodesGraphMap :: SGraph -> NodesMap
-nodesGraphMap graph =
-  nodesMap $ graphNodes graph
+nodesGraphMap graph = idMap $ graphNodes graph
 
 nodesFilter :: (Record Node -> Boolean) -> SGraph -> SGraph
 nodesFilter f (Graph {edges, nodes}) = Graph { edges, nodes: Seq.filter f nodes }

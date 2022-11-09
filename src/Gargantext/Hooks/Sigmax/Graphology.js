@@ -18,6 +18,13 @@ export function _mergeNodeAttributes(g, name, attrs) {
   return g.mergeNodeAttributes(name, attrs);
 }
 
+export function _forEachNode(g, fn) {
+  return g.forEachNode(function(_name, attrs) {
+    // NOTE: fn is an effectful function, it wraps `do` in a separate function
+    return fn(attrs)();
+  })
+}
+
 export function _addEdge(g, source, target, e) {
   //return g.addEdge(source, target, e);
 

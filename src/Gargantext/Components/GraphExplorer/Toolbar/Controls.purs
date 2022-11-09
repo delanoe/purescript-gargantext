@@ -273,6 +273,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             -- search button
             -- search topics
             labelSizeButton { forceAtlasState
+                            , graph
                             , sigmaRef
                             , state: labelSize }
           ]
