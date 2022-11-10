@@ -9,7 +9,6 @@ import Data.Int (toNumber)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Nullable (null, Nullable)
-import Data.Number as DN
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Tuple (Tuple(..))
@@ -290,7 +289,11 @@ graphViewCpt = R.memo' $ here.component "graphView" cpt where
 convert :: GET.GraphData -> Tuple (Maybe GET.MetaData) SigmaxT.SGraph
 convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
   where
-    nodes = foldMapWithIndex nodeFn $ GEU.normalizeNodeSize 1 10000 r.nodes
+    normalizedNodes :: Array GEGT.Node
+    normalizedNodes = GEGT.Node <$> (GEU.normalizeNodeSizeDefault $ (\(GEGT.Node n) -> n) <$> r.nodes)
+    nodes :: Seq.Seq (Record SigmaxT.Node)
+    nodes = foldMapWithIndex nodeFn normalizedNodes
+    nodeFn :: Int -> GEGT.Node -> Seq.Seq (Record SigmaxT.Node)
     nodeFn _i nn@(GEGT.Node n) =
       Seq.singleton {
           borderColor: color
@@ -302,7 +305,7 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
         , highlighted: false
         , id    : n.id_
         , label : n.label
-        , size  : DN.log (toNumber n.size + 1.0)
+        , size  : n.size
         --, size: toNumber n.size
         , type  : modeGraphType gargType
         , x     : n.x -- cos (toNumber i)
@@ -343,7 +346,8 @@ modeGraphType Types.Authors     = "square"
 modeGraphType Types.Institutes  = "equilateral"
 modeGraphType Types.Sources     = "star"
 --modeGraphType Types.Terms       = "def"
-modeGraphType Types.Terms       = "circle"
+--modeGraphType Types.Terms       = "circle"
+modeGraphType Types.Terms       = "ccircle"
 
 --------------------------------------------------------------
 

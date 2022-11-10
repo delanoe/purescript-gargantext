@@ -165,51 +165,54 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
       H.nav
       { className: "graph-toolbar" }
       [
-        B.wad
-        [ "flex-shrink-0" ]
+        H.div
+        { className: "flex-shrink-0" }
         [
-          B.wad
-          [ "d-flex" ]
+          H.div
+          { className: "d-flex" }
           [
+            -- Actions
+            B.fieldset
+            { className: "graph-toolbar__section"
+            , titleSlot: H.text "Actions"
+            }
+            [
+              -- resetForceAtlasButton { forceAtlasState, sigmaRef }
+              pauseForceAtlasButton { state: forceAtlasState }
+            ,
+              gap
+{-            ,
+              cameraButton
+              { id: graphId'
+              , forceAtlasState
+              , hyperdataGraph: hyperdataGraph'
+              , reloadForest
+              , session: session
+              , sigmaRef: sigmaRef
+              }
+-}
+            ]
+          ,
             -- View Settings
             B.fieldset
             { className: "graph-toolbar__section"
             , titleSlot: H.text "View settings"
             }
             [
-              B.wad
-              [ "d-flex", "justify-content-space-between" ]
-              [
-                B.wad
-                []
-                [
-                  -- resetForceAtlasButton { forceAtlasState, sigmaRef }
-                  pauseForceAtlasButton { state: forceAtlasState }
-                ]
-              ,
-                B.wad
-                []
-                [
-                  centerButton
-                  { forceAtlasState
-                  , sigmaRef
-                  }
-                ,
-                  gap
-                ,
-                  edgesToggleButton
-                  { state: showEdges
-                  , stateAtlas: forceAtlasState
-                  }
-                ,
-                  gap
-                ,
-                  louvainToggleButton
-                  { forceAtlasState
-                  , state: showLouvain
-                  }
-                ]
-              ]
+              centerButton { forceAtlasState
+                           , sigmaRef }
+            ,
+              gap
+            ,
+              edgesToggleButton
+              { state: showEdges
+              , stateAtlas: forceAtlasState
+              }
+            ,
+              gap
+            ,
+              louvainToggleButton { forceAtlasState
+                                  , state: showLouvain }
             ]
           ]
         ,
@@ -223,20 +226,16 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
           }
           [
             -- zoom: 0 -100 - calculate ratio
-            multiSelectEnabledButton
-            { forceAtlasState
-            , state: multiSelectEnabled
-            }
+            multiSelectEnabledButton { forceAtlasState
+                                     , state: multiSelectEnabled }
           ,
             gap
           ,
             -- toggle multi node selection
             -- save button
-            mouseSelectorSizeSlider
-            { forceAtlasState
-            , sigmaRef
-            , state: mouseSelectorSize
-            }
+            mouseSelectorSizeSlider { forceAtlasState
+                                    , sigmaRef
+                                    , state: mouseSelectorSize }
           ]
         ]
       ,
@@ -245,86 +244,71 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
         { className: intercalate " "
             [ "graph-toolbar__section"
             , "graph-toolbar__section--controls"
-            , "flex-grow-1", "flex-shrink-1"
+            , "flex-grow-1 flex-shrink-1"
             ]
         , titleSlot: H.text "Controls"
         }
         [
-          B.wad
-          [ "d-flex", "gap-2" ]
+          H.div
+          { className: "d-flex justify-content-between mb-3" }
           [
-            B.wad
-            [ "flex-grow-1", "px-2", "mb-2"  ]
-            [
-              B.wad
-              [ "d-flex", "justify-content-between", "mb-6" ]
-              [
-                edgeConfluenceControl
-                { forceAtlasState
-                , range: edgeConfluenceRange
-                , state: edgeConfluence
-                }
-              {- ,
-                edgeWeightControl
-                { forceAtlasState
-                , range: edgeWeightRange
-                , state: edgeWeight
-                }
-              -}
-              ]
-            ,
-              B.wad
-              [ "d-flex", "justify-content-between" ]
-              [
-                -- change level
-                -- file upload
-                -- run demo
-                -- search button
-                -- search topics
-                labelSizeButton
-                { forceAtlasState
-                , sigmaRef
-                , state: labelSize
-                }
-              ]
-            ]
-          ,
-            B.wad
-            [ "flex-grow-1", "px-2", "mb-2" ]
-            [
-              B.wad
-              [ "d-flex", "justify-content-between", "mb-6" ]
-              [
-                -- labels size: 1-4
-                nodeSizeControl
-                { forceAtlasState
-                , range: nodeSizeRange
-                , state: nodeSize
-                }
-              ]
-            ,
-              B.wad
-              [ "d-flex", "justify-content-between" ]
-              [
-                -- change level
-                -- file upload
-                -- run demo
-                -- search button
-                -- search topics
-                labelRenderedSizeThresholdButton
-                { forceAtlasState
-                , sigmaRef
-                , state: labelRenderedSizeThreshold
-                }
-              -- ,
-              --   -- labels size: 1-4
-              --   nodeSizeControl
-              --   { range: nodeSizeRange
-              --   , state: nodeSize
-              --   }
-              ]
-            ]
+            edgeConfluenceControl
+            { forceAtlasState
+            , range: edgeConfluenceRange
+            , state: edgeConfluence }
+          {- ,
+            edgeWeightControl
+            { forceAtlasState
+            , range: edgeWeightRange
+            , state: edgeWeight }
+          -}
           ]
+        ,
+          H.div
+          { className: "d-flex justify-content-between" }
+          [
+            -- change level
+            -- file upload
+            -- run demo
+            -- search button
+            -- search topics
+            labelSizeButton { forceAtlasState
+                            , graph
+                            , sigmaRef
+                            , state: labelSize }
+          ]
+
+        ,
+          H.div
+          { className: "d-flex justify-content-between" }
+          [
+            -- labels size: 1-4
+            nodeSizeControl
+            { forceAtlasState
+            , range: nodeSizeRange
+            , state: nodeSize }
+
+          ]
+        ,
+          H.div
+          { className: "d-flex justify-content-between" }
+          [
+            -- change level
+            -- file upload
+            -- run demo
+            -- search button
+            -- search topics
+            labelRenderedSizeThresholdButton { forceAtlasState
+                                             , sigmaRef
+                                             , state: labelRenderedSizeThreshold }
+          -- ,
+          --   -- labels size: 1-4
+          --   nodeSizeControl
+          --   { range: nodeSizeRange
+          --   , state: nodeSize }
+
+          ]
+
         ]
       ]
 

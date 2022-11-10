@@ -9448,6 +9448,10 @@ input[type=range]:-moz-focusring {
   margin-bottom: 12px;
 }
 
+.graph-selected-nodes__item {
+  display: inline-block;
+  padding: 2px;
+}
 .graph-selected-nodes__item:not(:last-child) {
   margin-bottom: 4px;
 }

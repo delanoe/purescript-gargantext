@@ -3,6 +3,8 @@
 import Graph from 'graphology';
 import Sigma from 'sigma';
 import { takeScreenshot } from '../../src/external-deps/sigmajs-screenshot.js';
+import CircleNodeProgram from 'sigma/rendering/webgl/programs/node.fast';
+import ContourCircleNodeProgram from '../../src/external-deps/sigmajs-circle-with-contour.js';
 
 let sigma = Sigma.Sigma;
 console.log('imported sigma', Sigma);
@@ -164,7 +166,14 @@ let sigmaMouseSelector = function(sigma, options) {
 function _sigma(left, right, el, opts) {
   try {
     let graph = new Graph();
-    let s = new sigma(graph, el, opts.settigns);
+    const settings = {
+      nodeProgramClasses: {
+        circle: CircleNodeProgram.default,  // TODO why default? It seems that import should be fixed
+        ccircle: ContourCircleNodeProgram
+      },
+      ...opts.settings
+    };
+    let s = new sigma(graph, el, settings);
     console.log('[_sigma] initializing sigma with el', el, 'opts', opts.settings, 'sigma', s);
     console.log('[_sigma] labelRenderedSizeThreshold', opts.settings.labelRenderedSizeThreshold);
     sigmaMouseSelector(s);
