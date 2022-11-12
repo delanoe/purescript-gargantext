@@ -9809,6 +9809,7 @@ a:focus, a:hover {
 }
 .node-popup-tooltip .panel-actions .b-icon {
   margin-right: 8px;
+  font-size: 11px;
 }
 .node-popup-tooltip .panel-actions__almost-useable {
   color: #f1a50e;
@@ -9818,18 +9819,40 @@ a:focus, a:hover {
 }
 .node-popup-tooltip .panel-actions__ok-to-use {
   color: #212529;
+  display: none;
 }
 .node-popup-tooltip .popup-container {
   display: flex;
   flex-direction: column;
 }
-.node-popup-tooltip .popup-container__header .fa-pencil {
-  color: black;
-}
 .node-popup-tooltip .popup-container__body {
   display: flex;
   justify-content: center;
   background-color: #fff;
+  padding: 40px 56px;
+  gap: 48px;
+}
+.node-popup-tooltip .popup-container__cta {
+  position: relative;
+}
+.node-popup-tooltip .popup-container__cta__button {
+  font-size: 18px;
+}
+.node-popup-tooltip .popup-container__cta__icon {
+  position: absolute;
+  top: -9px;
+  right: -13px;
+  font-size: 11px;
+}
+.node-popup-tooltip .popup-container__cta--almost-useable .popup-container__cta__icon {
+  color: #f1a50e;
+}
+.node-popup-tooltip .popup-container__cta--development-in-progress .popup-container__cta__icon {
+  color: #8b2823;
+}
+.node-popup-tooltip .popup-container__cta--ok-to-use .popup-container__cta__icon {
+  color: #212529;
+  display: none;
 }
 
 .frame-search.card {
