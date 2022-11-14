@@ -3,11 +3,12 @@ module Gargantext.Components.Forest.Tree.Node.Box where
 import Gargantext.Prelude
 
 import Data.Array as A
+import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Types (Elevation(..))
+import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Elevation(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Add (addNodeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Contact as Contact
 import Gargantext.Components.Forest.Tree.Node.Action.Delete (actionDelete)
@@ -31,7 +32,7 @@ import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, textInputBox)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (ID, Name, prettyNodeType)
 import Gargantext.Types as GT
-import Gargantext.Utils.Glyphicon (glyphiconActive)
+import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -119,7 +120,7 @@ nodePopupCpt = here.component "nodePopupView" cpt where
           { callback: const $ p.closeCallback unit
           , title: "Close"
           , name: "times"
-          , elevation: Level1
+          , elevation: Level2
           }
         ]
       ]
@@ -131,22 +132,42 @@ nodePopupCpt = here.component "nodePopupView" cpt where
     { name: "pencil"
     , title: "Rename"
     , callback: const $ T.write_ true isOpen
-    , elevation: Level1
+    , elevation: Level2
     }
 
   panelBody :: T.Box (Maybe NodeAction) -> Record NodePopupProps -> R.Element
   panelBody nodePopupState { nodeType } =
-    let (SettingsBox { doc, buttons }) = settingsBox nodeType in
-    H.div {className: "popup-container__body card-body flex-space-between"}
-    $ [ B.wad_ [ "m-1" ]
-      , H.div { className: "flex-center" }
-        [ buttonClick { action: doc, state: nodePopupState, nodeType } ]
-      , H.div {className: "flex-center"}
-        $ map (\t -> buttonClick { action: t, state: nodePopupState, nodeType }) buttons ]
-        -- FIXME trick to increase the size of the box
-        <> if A.length buttons < 2
-           then [ H.div { className: "col-4" } [] ]
-           else []
+    let (SettingsBox { doc, buttons }) = settingsBox nodeType
+    in
+      H.div
+      { className: intercalate " "
+          [ "popup-container__body"
+          , "card-body"
+          ]
+      } $
+      [
+        buttonClick
+        { action: doc
+        , state: nodePopupState
+        , nodeType
+        }
+      ]
+      <>
+        (
+          buttons <#> \t ->
+
+            buttonClick
+            { action: t
+            , state: nodePopupState
+            , nodeType
+            }
+        )
+
+      -- FIXME trick to increase the size of the box
+      <> if A.length buttons < 2
+          then [ H.div { className: "col-4" } [] ]
+          else []
+
   mPanelAction :: Record NodePopupS -> Record NodePopupProps -> R.Element
   mPanelAction { action: Just action }
                { boxes, dispatch, id, name, nodeType, session } =
@@ -219,27 +240,75 @@ type ButtonClickProps =
   , nodeType :: GT.NodeType
   )
 
-buttonClick :: Record ButtonClickProps -> R.Element
-buttonClick p = R.createElement buttonClickCpt p []
+buttonClick :: R2.Leaf ButtonClickProps
+buttonClick = R2.leaf buttonClickCpt
 
 buttonClickCpt :: R.Component ButtonClickProps
 buttonClickCpt = here.component "buttonClick" cpt where
-  cpt {action: todo, state, nodeType} _ = do
-    action <- T.useLive T.unequal state
-    let className = glyphiconActive (glyphiconNodeAction todo) (action == (Just todo))
-    let style = iconAStyle nodeType todo
-    let click _ = T.write_ (if action == Just todo then Nothing else Just todo) state
-    pure $ H.div { className: "col-1" }
-      [ H.a { style, className, id: show todo, title: show todo, on: { click } } [] ]
-        -- | Open the help indications if selected already
-  iconAStyle n a =
-    { color: hasColor (hasStatus n a)
-    , paddingTop: "6px", paddingBottom: "6px" }
+  cpt { action: todo
+      , state
+      , nodeType
+      } _ = do
+    -- | States
+    -- |
+    action <- R2.useLive' state
 
-hasColor :: Status -> String
-hasColor Stable = "black"
-hasColor Test   = "orange"
-hasColor Dev    = "red"
+    -- | Behaviors
+    -- |
+    let
+      click _ = T.write_ (Just todo) state
+
+    -- | Render
+    pure $
+
+      -- B.iconButton
+      -- { className: intercalate " "
+      --     [ "popup-container__body__button"
+      --     , modifierClassName (hasStatus nodeType todo)
+      --     ]
+      -- , name: glyphiconNodeAction todo
+      -- , title: show todo
+      -- , callback: click
+      -- , elevation: Level2
+      -- , status: action == Just todo ?
+      --     Disabled $
+      --     Enabled
+      -- }
+
+      H.div
+      { className: intercalate " "
+          [ "popup-container__cta"
+          , modifierClassName (hasStatus nodeType todo)
+          ]
+      }
+      [
+        B.iconButton
+        { className: "popup-container__cta__button"
+        , name: glyphiconNodeAction todo
+        , title: show todo
+        , callback: click
+        , elevation: Level2
+        , status: action == Just todo ?
+            Disabled $
+            Enabled
+        }
+      ,
+        B.icon
+        { className: "popup-container__cta__icon"
+        , name: "circle"
+        }
+      ]
+
+  -- | Helpers
+  -- |
+
+  modifierClassName :: Status -> String
+  modifierClassName = case _ of
+    Stable -> blk <> "--ok-to-use"
+    Test   -> blk <> "--almost-useable"
+    Dev    -> blk <> "--development-in-progress"
+    where
+      blk = "popup-container__cta"
 
 type NodeProps =
   ( id       :: ID
