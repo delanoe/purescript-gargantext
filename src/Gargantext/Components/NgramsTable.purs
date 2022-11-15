@@ -23,7 +23,6 @@ import Data.List as List
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isNothing, maybe)
-import Data.Monoid.Additive (Additive(..))
 import Data.Ord.Down (Down(..))
 import Data.Sequence as Seq
 import Data.Set (Set)
@@ -466,11 +465,11 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
 
     let ngramsTable = applyNgramsPatches state' initTable
         rowMap (Tuple ng nre) =
-          let ng_scores :: Map NgramsTerm (Additive Int)
+          let ng_scores :: Map NgramsTerm (Set Int)
               ng_scores = ngramsTable ^. _NgramsTable <<< _ngrams_scores
-              Additive s = ng_scores ^. at ng <<< _Just
+              s = ng_scores ^. at ng <<< _Just
               addOcc ne =
-                let Additive occurrences = sumOccurrences ngramsTable (ngramsElementToNgramsOcc ne) in
+                let occurrences = sumOccurrences ngramsTable (ngramsElementToNgramsOcc ne) in
                 ne # _NgramsElement <<< _occurrences .~ occurrences
           in
           addOcc <$> rowsFilter (ngramsRepoElementToNgramsElement ng s nre)
@@ -1119,23 +1118,23 @@ mainNgramsTablePaintNoCacheCpt = here.component "mainNgramsTablePaintNoCache" cp
         , versioned
         , withAutoUpdate } []
 
-type NgramsOcc = { occurrences :: Additive Int, children :: Set NgramsTerm }
+type NgramsOcc = { occurrences :: Set Int, children :: Set NgramsTerm }
 
 ngramsElementToNgramsOcc :: NgramsElement -> NgramsOcc
-ngramsElementToNgramsOcc (NgramsElement {occurrences, children}) = {occurrences: Additive occurrences, children}
+ngramsElementToNgramsOcc (NgramsElement {occurrences, children}) = {occurrences, children}
 
-sumOccurrences :: NgramsTable -> NgramsOcc -> Additive Int
+sumOccurrences :: NgramsTable -> NgramsOcc -> Set Int
 sumOccurrences nt = sumOccChildren mempty
     where
-      sumOccTerm :: Set NgramsTerm -> NgramsTerm -> Additive Int
+      sumOccTerm :: Set NgramsTerm -> NgramsTerm -> Set Int
       sumOccTerm seen label
-        | Set.member label seen = Additive 0 -- TODO: Should not happen, emit a warning/error.
+        | Set.member label seen = Set.empty -- TODO: Should not happen, emit a warning/error.
         | otherwise =
             sumOccChildren (Set.insert label seen)
                            { occurrences: nt ^. _NgramsTable <<< _ngrams_scores <<< ix label
                            , children:    nt ^. ix label <<< _NgramsRepoElement <<< _children
                            }
-      sumOccChildren :: Set NgramsTerm -> NgramsOcc -> Additive Int
+      sumOccChildren :: Set NgramsTerm -> NgramsOcc -> Set Int
       sumOccChildren seen {occurrences, children} =
         occurrences <> children ^. folded <<< to (sumOccTerm seen)
 

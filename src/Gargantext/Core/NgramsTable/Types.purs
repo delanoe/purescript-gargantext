@@ -16,7 +16,6 @@ import Data.List (List)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), isJust)
-import Data.Monoid.Additive (Additive(..))
 import Data.Newtype (class Newtype)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
@@ -255,7 +254,7 @@ newtype NgramsElement = NgramsElement
   , root        :: Maybe NgramsTerm -- ok
   , parent      :: Maybe NgramsTerm -- ok
   , children    :: Set NgramsTerm -- ok
-  , occurrences :: Int -- HERE
+  , occurrences :: Set Int -- HERE
   }
 derive instance Eq NgramsElement
 derive instance Newtype NgramsElement _
@@ -267,13 +266,15 @@ instance JSON.ReadForeign NgramsElement where
             , size :: Int
             , list :: GT.TermList
             , ngrams :: NgramsTerm
-            , occurrences :: Int
+            , occurrences :: Array Int
             , parent :: Maybe NgramsTerm
-            , root :: Maybe NgramsTerm }<- JSON.readImpl f
-    pure $ NgramsElement $ inst { children = Set.fromFoldable inst.children }
+            , root :: Maybe NgramsTerm } <- JSON.readImpl f
+    pure $ NgramsElement $ inst { children = Set.fromFoldable inst.children
+                                , occurrences = Set.fromFoldable inst.occurrences }
 instance JSON.WriteForeign NgramsElement where
   writeImpl (NgramsElement ne) =
-    JSON.writeImpl $ ne { children = Set.toUnfoldable ne.children :: Array _ }
+    JSON.writeImpl $ ne { children = Set.toUnfoldable ne.children :: Array _
+                        , occurrences = Set.toUnfoldable ne.occurrences :: Array _ }
 
 _parent :: forall parent row. Lens' { parent :: parent | row } parent
 _parent = prop (Proxy :: Proxy "parent")
@@ -287,7 +288,7 @@ _ngrams = prop (Proxy :: Proxy "ngrams")
 _children :: forall row. Lens' { children :: Set NgramsTerm | row } (Set NgramsTerm)
 _children = prop (Proxy :: Proxy "children")
 
-_occurrences :: forall row. Lens' { occurrences :: Int | row } Int
+_occurrences :: forall row. Lens' { occurrences :: Set Int | row } (Set Int)
 _occurrences = prop (Proxy :: Proxy "occurrences")
 
 _list :: forall a row. Lens' { list :: a | row } a
@@ -304,7 +305,7 @@ _NgramsElement  :: Iso' NgramsElement {
   , size        :: Int
   , list        :: GT.TermList
   , ngrams      :: NgramsTerm
-  , occurrences :: Int
+  , occurrences :: Set Int
   , parent      :: Maybe NgramsTerm
   , root        :: Maybe NgramsTerm
   }
@@ -356,7 +357,7 @@ _NgramsRepoElement = _Newtype
 -}
 newtype NgramsTable = NgramsTable
   { ngrams_repo_elements :: Map NgramsTerm NgramsRepoElement
-  , ngrams_scores        :: Map NgramsTerm (Additive Int)
+  , ngrams_scores        :: Map NgramsTerm (Set Int)
   }
 derive instance Newtype NgramsTable _
 derive instance Generic NgramsTable _
@@ -372,11 +373,11 @@ instance JSON.ReadForeign NgramsTable where
     where
       f (NgramsElement {ngrams, size, list, root, parent, children}) =
         Tuple ngrams (NgramsRepoElement {size, list, root, parent, children})
-      g (NgramsElement e) = Tuple e.ngrams (Additive e.occurrences)
+      g (NgramsElement e) = Tuple e.ngrams e.occurrences
 
 _NgramsTable :: Iso' NgramsTable
                      { ngrams_repo_elements :: Map NgramsTerm NgramsRepoElement
-                     , ngrams_scores        :: Map NgramsTerm (Additive Int)
+                     , ngrams_scores        :: Map NgramsTerm (Set Int)
                      }
 _NgramsTable = _Newtype
 
