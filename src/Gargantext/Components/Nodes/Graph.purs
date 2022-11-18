@@ -1,4 +1,4 @@
-module Gargantext.Components.Nodes.Corpus.Graph
+module Gargantext.Components.Nodes.Graph
   ( node
   ) where
 
@@ -6,7 +6,7 @@ import Gargantext.Prelude
 
 import DOM.Simple (document, querySelector)
 import Data.Int as I
-import Data.Maybe (Maybe(..), isJust, maybe)
+import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
 import Data.Sequence as Seq
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
@@ -27,14 +27,16 @@ import Gargantext.Utils (getter)
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
+import Reactix.DOM.HTML as H
 import Record as Record
+import Toestand as T
 
 type Props =
   ( graphId :: GET.GraphId
   )
 
 here :: R2.Here
-here = R2.here "Gargantext.Components.Nodes.Corpus.Graph"
+here = R2.here "Gargantext.Components.Nodes.Graph"
 
 node :: R2.Leaf ( key :: String | Props )
 node = R2.leaf nodeCpt
@@ -49,8 +51,8 @@ nodeCpt = here.component "node" cpt where
     session <- useSession
 
     graphVersion'   <- R2.useLive' graphVersion
-    state' /\ state <- R2.useBox' Nothing
-    cache' /\ cache <- R2.useBox' (GET.defaultCacheParams :: GET.CacheParams)
+    state <- T.useBox Nothing
+    cache <- T.useBox (GET.defaultCacheParams :: GET.CacheParams)
 
     -- | Computed
     -- |
@@ -82,8 +84,23 @@ nodeCpt = here.component "node" cpt where
 
     -- | Render
     -- |
-    pure $
+    pure $ renderNode { cache, graphId, state }
 
+type RenderNodeProps = (
+  cache   :: T.Box GET.CacheParams,
+  graphId :: GET.GraphId,
+  state   :: T.Box (Maybe GET.HyperdataGraph)
+)
+
+renderNode :: R2.Leaf RenderNodeProps
+renderNode = R2.leaf renderNodeCpt
+renderNodeCpt :: R.Component RenderNodeProps
+renderNodeCpt = here.component "renderNode" cpt where
+  cpt { cache, graphId, state } _ = do
+    cache' <- T.useLive T.unequal cache
+    state' <- T.useLive T.unequal state
+
+    pure $
       B.cloak
       { isDisplayed: isJust state'
       , idlingPhaseDuration: Just 150
@@ -97,6 +114,7 @@ nodeCpt = here.component "node" cpt where
               GET.HyperdataGraph { graph: hyperdataGraph } = loaded
               Tuple mMetaData graph = convert hyperdataGraph
             in
+             -- H.div {} [ H.text "hello" ]
               hydrateStore
               { cacheParams: cache'
               , graph

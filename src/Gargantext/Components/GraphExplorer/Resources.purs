@@ -101,7 +101,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
           here.log "[drawGraph (Cleanup)] sigma killed"
 
     -- Stage Init
-    R.useEffect1' graphStage' $ case graphStage' of
+    R.useEffect2' hyperdataGraph' graphStage' $ case graphStage' of
 
       GET.Init -> do
         let mCamera = getter _.mCamera hyperdataGraph'
