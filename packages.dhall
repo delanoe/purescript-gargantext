@@ -1,6 +1,5 @@
 let upstream =
-      https://github.com/garganscript/package-sets/releases/download/v0.1.4/release.dhall
-        sha256:e03eafe0c7ea0ac143d07ec6d9f20c804bd6b6f95a8d89bf287c279e770584c8
+      https://github.com/garganscript/package-sets/releases/download/v0.1.5/release.dhall sha256:6ae91fac46ad0453a7f3f7fd4a34df78a8e7fb926960a8d020bdcf3da65a896a
 
 let overrides =
       { graphql-client =
@@ -61,8 +60,7 @@ let overrides =
         , version = "v9.2.2"
         }
       , jest =
-        { -- markdown-it dependency
-          dependencies =
+        { dependencies =
           [ "aff"
           , "aff-promise"
           , "effect"
@@ -194,4 +192,4 @@ let additions =
         }
       }
 
-in  upstream // overrides // additions
+in  upstream ⫽ overrides ⫽ additions
