@@ -1,5 +1,5 @@
 let upstream =
-      https://github.com/garganscript/package-sets/releases/download/v0.1.5/release.dhall sha256:6ae91fac46ad0453a7f3f7fd4a34df78a8e7fb926960a8d020bdcf3da65a896a
+      https://github.com/garganscript/package-sets/releases/download/v0.1.6/release.dhall sha256:443a37602d5b9353c4daf4349079a77d5dddf07a7b35219016b167404d1e1138
 
 let overrides =
       { graphql-client =
