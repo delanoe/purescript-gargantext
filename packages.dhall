@@ -123,7 +123,7 @@ let additions =
           , "unsafe-coerce"
           ]
         , repo = "https://github.com/garganscript/purescript-sequences.git"
-        , version = "7ad61fde5239fbf66ceeefc0b7608aa9cbc53701"
+        , version = "recursion-fix"
         }
       , spec-discovery =
         { dependencies = [ "prelude", "effect", "arrays", "spec", "node-fs" ]
