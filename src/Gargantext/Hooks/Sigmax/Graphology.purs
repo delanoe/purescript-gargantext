@@ -44,12 +44,9 @@ newGraph = runEffectFn1 _newGraph
 graphFromSigmaxGraph :: Types.Graph Types.Node Types.Edge -> Effect Graph
 graphFromSigmaxGraph (Types.Graph g) = do
   graph <- newGraph unit
-  _ <- traverse (addNode graph) nodes
-  _ <- traverse (addEdge graph) edges
+  _ <- traverse (addNode graph) g.nodes
+  _ <- traverse (addEdge graph) g.edges
   pure graph
-  where
-    nodes = A.fromFoldable g.nodes
-    edges = A.fromFoldable g.edges
 
 addNode :: Graph -> Record Types.Node -> Effect String
 addNode g node@{ id } = runEffectFn3 _addNode g id node

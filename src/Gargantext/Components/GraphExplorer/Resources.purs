@@ -64,7 +64,6 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
     , edgeConfluence
     , edgeWeight
     , forceAtlasState
-    , graph
     , graphStage
     , hyperdataGraph
     , mouseSelectorSize
@@ -78,7 +77,6 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
     edgeWeight'       <- R2.useLive' edgeWeight
     forceAtlasState' <- R2.useLive' forceAtlasState
     graphStage'       <- R2.useLive' graphStage
-    graph'            <- R2.useLive' graph
     startForceAtlas'  <- R2.useLive' startForceAtlas
     hyperdataGraph'   <- R2.useLive' hyperdataGraph
 

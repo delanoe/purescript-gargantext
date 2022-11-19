@@ -54,9 +54,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     , edgeWeight
     , forceAtlasState
     , graph
-    , graphId
     , graphStage
-    , hyperdataGraph
     , labelRenderedSizeThreshold
     , labelSize
     , mouseSelectorSize
@@ -71,9 +69,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
 
     forceAtlasState'    <- R2.useLive' forceAtlasState
     graph'              <- R2.useLive' graph
-    graphId'            <- R2.useLive' graphId
     graphStage'         <- R2.useLive' graphStage
-    hyperdataGraph'     <- R2.useLive' hyperdataGraph
     selectedNodeIds'    <- R2.useLive' selectedNodeIds
     showSidebar'        <- R2.useLive' showSidebar
 
@@ -89,7 +85,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
 
     -- When graph is changed, cleanup the mFAPauseRef so that forceAtlas
     -- timeout is retriggered.
-    R.useEffect' $ do
+    R.useEffect1' graphStage' $ do
       case graphStage' of
         GET.Init -> R.setRef mFAPauseRef Nothing
         _          -> pure unit

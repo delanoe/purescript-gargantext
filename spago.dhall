@@ -70,7 +70,6 @@ to generate this file without the comments in this block.
   , "record"
   , "record-extra"
   , "routing"
-  , "sequences"
   , "simple-json"
   , "simple-json-generics"
   , "simplecrypto"

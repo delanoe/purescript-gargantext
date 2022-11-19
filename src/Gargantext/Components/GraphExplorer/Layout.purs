@@ -51,8 +51,8 @@ type Props =
 
 layout :: R2.Leaf Props
 layout = R2.leaf layoutCpt
-layoutCpt :: R.Memo Props
-layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
+layoutCpt :: R.Component Props
+layoutCpt = here.component "layout" cpt where
   cpt { fa2Ref
       , sigmaRef
       } _ = do

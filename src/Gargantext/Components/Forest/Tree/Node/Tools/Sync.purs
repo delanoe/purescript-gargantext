@@ -49,7 +49,6 @@ type GraphUpdateButtonProps =
 
 graphUpdateButton :: Record GraphUpdateButtonProps -> R.Element
 graphUpdateButton p = R.createElement graphUpdateButtonCpt p []
-
 graphUpdateButtonCpt :: R.Component GraphUpdateButtonProps
 graphUpdateButtonCpt = here.component "graphUpdateButton" cpt
   where
