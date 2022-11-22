@@ -87,7 +87,7 @@ normNgramWithTrim nt = DSC.trim <<< normNgramInternal nt
 normNgram :: CTabNgramType -> String -> NgramsTerm
 normNgram tabType = NormNgramsTerm <<< normNgramWithTrim tabType
 
-ngramsRepoElementToNgramsElement :: NgramsTerm -> Int -> NgramsRepoElement -> NgramsElement
+ngramsRepoElementToNgramsElement :: NgramsTerm -> Set Int -> NgramsRepoElement -> NgramsElement
 ngramsRepoElementToNgramsElement ngrams occurrences (NgramsRepoElement { children, list, parent, root, size }) =
   NgramsElement
   { children

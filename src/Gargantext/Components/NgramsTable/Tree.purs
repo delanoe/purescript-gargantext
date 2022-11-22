@@ -256,7 +256,7 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         ,
           B.wad'
           [ "pl-3" ] $
-          show (ngramsElement ^. _NgramsElement <<< _occurrences)
+          show $ A.length $ A.fromFoldable (ngramsElement ^. _NgramsElement <<< _occurrences)
       ]
       where
         ngramsDepth = { ngrams, depth: 0 }
