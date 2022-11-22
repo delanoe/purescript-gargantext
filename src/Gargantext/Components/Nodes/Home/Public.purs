@@ -116,7 +116,7 @@ tableau (PublicData { title, abstract, img, url, date, database, author }) =
     , H.p { className: "card-text"} [ H.text $ (take 252 abstract) <> "..." ]
     , H.div { className: "center justify-content-between align-items-center" }
       [ H.div { className: "btn-group" }
-        [ H.div { className : "small text-muted flex-end" }
+        [ H.div { className : "small text-muted d-flex justify-content-flex-end" }
           [ H.text
             $  "Made by " <> author
             <> " on "     <> date

@@ -5903,6 +5903,19 @@ h3 {
   box-shadow: unset;
 }
 
+.b-form-checkbox {
+  cursor: pointer;
+}
+.b-form-checkbox:focus {
+  outline: 0;
+}
+.b-form-checkbox--disabled, .b-form-checkbox--deferred, .b-form-checkbox--idled {
+  cursor: default;
+}
+.b-form-checkbox--disabled:focus, .b-form-checkbox--deferred:focus, .b-form-checkbox--idled:focus {
+  outline: 0;
+}
+
 .b-modal__content {
   background-color: #fff;
   margin-left: 1.75rem;
@@ -5910,10 +5923,14 @@ h3 {
 }
 .b-modal__header {
   background-color: rgba(0, 0, 0, 0.03);
+  align-items: center;
 }
 .b-modal__header__title {
   color: #222222;
   font-size: 21px;
+}
+.b-modal__header__close {
+  margin-right: 8px;
 }
 .b-modal__overlay {
   width: 100%;
@@ -6065,6 +6082,12 @@ h3 {
 }
 .b-icon-button--disabled.b-icon-button--dark, .b-icon-button--deferred.b-icon-button--dark {
   color: #434b53;
+}
+.b-icon-button--disabled.b-icon-button--level-1:hover::before, .b-icon-button--deferred.b-icon-button--level-2:hover::before {
+  background-color: initial;
+}
+.b-icon-button--disabled.b-icon-button--level-2::before, .b-icon-button--disabled.b-icon-button--level-2:hover::before, .b-icon-button--deferred.b-icon-button--level-2::before, .b-icon-button--deferred.b-icon-button--level-2:hover::before {
+  background-color: white;
 }
 
 .b-fieldset {
@@ -6289,6 +6312,11 @@ html {
 img {
   max-width: 100%;
   display: block;
+}
+
+a:focus,
+a:hover {
+  cursor: pointer;
 }
 
 .form-group {
@@ -6527,6 +6555,49 @@ a:focus {
 
 .input-group-prepend .btn, .input-group-append .btn {
   z-index: initial;
+}
+
+.custom-control:not(.custom-switch) .custom-control-label::before {
+  top: 0.05rem;
+}
+.custom-control:not(.custom-switch) .custom-control-label::after {
+  top: 0.05rem;
+}
+
+.custom-control {
+  z-index: initial;
+}
+
+.font-weight-light {
+  font-weight: 300;
+}
+
+.font-weight-lighter {
+  font-weight: lighter;
+}
+
+.font-weight-normal {
+  font-weight: 400;
+}
+
+.font-weight-bold {
+  font-weight: 700;
+}
+
+.font-weight-bolder {
+  font-weight: bolder;
+}
+
+.font-family-base {
+  font-family: "Montserrat";
+}
+
+.font-family-monospace {
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.font-family-heading {
+  font-family: "Open Sans";
 }
 
 .maintree--blank::after {
@@ -8933,6 +9004,46 @@ a:focus {
 #portal .hidden {
   visibility: hidden;
 }
+#app .cursor-crosshair,
+#portal .cursor-crosshair {
+  cursor: crosshair;
+}
+#app .cursor-text,
+#portal .cursor-text {
+  cursor: text;
+}
+#app .cursor-move,
+#portal .cursor-move {
+  cursor: move;
+}
+#app .cursor-grab,
+#portal .cursor-grab {
+  cursor: grab;
+}
+#app .cursor-grabbing,
+#portal .cursor-grabbing {
+  cursor: grabbing;
+}
+#app .cursor-not-allowed,
+#portal .cursor-not-allowed {
+  cursor: not-allowed;
+}
+#app .cursor-all-scroll,
+#portal .cursor-all-scroll {
+  cursor: all-scroll;
+}
+#app .cursor-ew-resize,
+#portal .cursor-ew-resize {
+  cursor: ew-resize;
+}
+#app .cursor-ns-resize,
+#portal .cursor-ns-resize {
+  cursor: ns-resize;
+}
+#app .cursor-pointer,
+#portal .cursor-pointer {
+  cursor: pointer;
+}
 #app .virtual-space::after,
 #portal .virtual-space::after {
   content: "​";
@@ -9591,126 +9702,134 @@ input[type=range]:-moz-focusring {
   animation-play-state: running;
 }
 
-#user-page-header {
-  border-bottom: 1px solid black;
+.login-modal thead th {
+  padding: 0.3rem;
+}
+.login-modal__active-places__actions {
+  display: flex;
+  gap: 28px;
 }
 
-#user-page-info {
-  margin-top: 38px;
+.login-modal-form__title {
+  position: relative;
+  background-color: #dee2e6;
+  padding: 0.75rem 1.25rem;
+  text-align: center;
+  margin-top: -1rem;
+  margin-left: -1rem;
+  margin-right: -1rem;
 }
-
-.tableHeader {
-  color: white;
-}
-
-#toolbar {
-  display: inline;
-}
-#toolbar ul li {
-  display: inline;
-  margin-right: 19px;
-}
-#toolbar ul li form {
-  display: inline;
-}
-
-#horizontal-checkbox ul li {
-  display: inline;
-  float: left;
-  margin-top: 12px;
-  margin-right: 21px;
-}
-
-li#rename #rename-a {
-  display: none;
-  position: absolute;
-  left: 125px;
-}
-
-#create-node-tooltip {
-  position: absolute;
-  left: 96px;
-  top: -64px;
-  background-color: white;
-  z-index: 4;
-}
-#create-node-tooltip .card-body input {
-  min-width: 200px;
-}
-
-#file-type-tooltip {
+.login-modal-form__title__return {
   top: 50%;
   left: 50%;
   transform: translateX(-50%) translateY(-50%);
   position: absolute;
-  background-color: white;
-  z-index: 4;
+  left: 28px;
 }
-
-.glyphitem {
-  top: 0;
+.login-modal-form__title__text {
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 20px;
+  font-weight: bold;
+}
+.login-modal-form__separator {
+  padding: 0.75rem calc(2* 1.25rem);
+  position: relative;
+}
+.login-modal-form__separator__text {
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  position: absolute;
   display: inline-block;
-  float: right;
-  opacity: 0.6;
-  padding-right: 5px;
-  cursor: pointer;
-  transition: transform 0.1s ease-out 0s;
-  font-size: 15px;
+  padding-left: 32px;
+  padding-right: 32px;
+  font-family: "Open Sans";
+  font-size: 24px;
+  background-color: #fff;
+}
+.login-modal-form__request-access {
+  margin-top: calc(3 * 0.75rem);
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 1rem;
+  width: 200px;
+  display: block;
+  font-weight: bold;
+}
+.login-modal-form__log-in {
+  padding: 0.5rem 1rem;
+  width: 200px;
+  margin-bottom: calc(2 * 0.75rem);
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 0.75rem;
+  display: block;
+  font-weight: bold;
+}
+.login-modal-form__form {
+  margin: 0 auto;
+  width: 520px;
+}
+.login-modal-form__error {
+  margin-bottom: 24px;
+  color: #434343;
   text-align: center;
 }
-.glyphitem:hover {
-  display: inline-block;
-  opacity: 1;
-  transform: scale(1.4);
-}
 
-#sp-container {
-  -webkit-transition: width 2s;
-  transition: width 2s;
+.forgot-password-form__title {
+  position: relative;
+  background-color: #dee2e6;
+  padding: 0.75rem 1.25rem;
+  text-align: center;
+  margin-top: -1rem;
+  margin-left: -1rem;
+  margin-right: -1rem;
 }
-
-.nooverflow {
-  max-width: 300px;
-  height: 24px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.forgot-password-form__title__return {
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  position: absolute;
+  left: 28px;
 }
-.nooverflow:hover {
-  overflow: visible;
-  height: auto;
+.forgot-password-form__title__text {
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 20px;
+  font-weight: bold;
 }
-
-.nopadding {
-  padding: 0 !important;
-  margin: 0 !important;
+.forgot-password-form__subtitle {
+  padding-top: calc(2 * 0.75rem);
+  padding-left: calc(2* 1.25rem);
+  padding-right: calc(2* 1.25rem);
+  padding-bottom: 0.75rem;
+  text-align: center;
+  font-family: "Open Sans";
+  font-size: 24px;
 }
-
-.tab-pane .reload-btn {
-  padding-right: 6px;
+.forgot-password-form__submit {
+  padding: 0.5rem 1rem;
+  width: 200px;
+  margin-bottom: calc(2 * 0.75rem);
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 0.75rem;
+  display: block;
+  font-weight: bold;
 }
-
-.flex {
-  display: flex;
+.forgot-password-form__form {
+  margin: 0 auto;
+  width: 520px;
 }
-
-.flex-end {
-  display: flex;
-  justify-content: flex-end;
+.forgot-password-form__error {
+  margin-bottom: 24px;
+  color: #434343;
+  text-align: center;
 }
-
-.flex-center {
-  display: flex;
-  flew-wrap: wrap;
-  justify-content: center;
-}
-
-.flex-space-between, .flex-center {
-  display: flex;
-  justify-content: space-between;
-}
-
-a:focus, a:hover {
-  cursor: pointer;
+.forgot-password-form__success {
+  margin-bottom: 24px;
+  color: #333333;
+  text-align: center;
 }
 
 .maintree {
@@ -10232,6 +10351,15 @@ a:focus, a:hover {
   border-top: 1px solid rgba(0, 0, 0, 0.125);
 }
 
+.file-type-tooltip {
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  position: absolute;
+  background-color: white;
+  z-index: 4;
+}
+
 .code-editor .editor .code-area {
   flex-grow: 1;
   max-height: 200px;
@@ -10633,6 +10761,23 @@ select.form-control {
 }
 .home-license .b-icon {
   font-size: 12px;
+}
+
+.glyphitem {
+  top: 0;
+  display: inline-block;
+  float: right;
+  opacity: 0.6;
+  padding-right: 5px;
+  cursor: pointer;
+  transition: transform 0.1s ease-out 0s;
+  font-size: 15px;
+  text-align: center;
+}
+.glyphitem:hover {
+  display: inline-block;
+  opacity: 1;
+  transform: scale(1.4);
 }
 
 .table tr td {
@@ -11636,6 +11781,20 @@ select.form-control {
 
 .code-section-item .card-header .b-icon-button--disabled {
   opacity: 0.2;
+}
+.code-section-item [aria-expanded=true] {
+  transform: rotate(180deg);
+}
+
+.page-annuaire__nooverflow {
+  max-width: 300px;
+  height: 24px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.page-annuaire__nooverflow:hover {
+  overflow: visible;
+  height: auto;
 }
 
 /*# sourceMappingURL=bootstrap-monotony.css.map */

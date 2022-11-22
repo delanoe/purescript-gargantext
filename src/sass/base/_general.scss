@@ -14,8 +14,8 @@ img {
   display: block;
 }
 
-/// Remove hyperlink very first interaction (not including in "_reset.scss"
-/// as this interaction came as an intricated-native feature)
-// a:focus,a:visited,a:active{
-  // outline: none;
-// }
+/// Opiniotated
+a:focus,
+a:hover {
+  cursor: pointer;
+}

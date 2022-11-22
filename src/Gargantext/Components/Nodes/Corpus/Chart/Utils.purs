@@ -26,7 +26,7 @@ reloadButtonWrap setReload el = H.div {} [
 
 reloadButton :: T2.ReloadS -> R.Element
 reloadButton reloadS = H.a { className, on: { click }, title: "Reload" } [] where
-  className = "reload-btn fa fa-refresh"
+  className = "pr-1 fa fa-refresh"
   click _ = T2.reload reloadS
 
 

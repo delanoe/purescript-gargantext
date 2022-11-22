@@ -22,6 +22,19 @@
   }
 }
 
+/// Checkbox
+///-----------------------------------------------------------------------------
+
+.b-form-checkbox {
+  @include clickable();
+
+  &--disabled,
+  &--deferred,
+  &--idled {
+    @include unclickable();
+  }
+}
+
 /// Modal
 ///-----------------------------------------------------------------------------
 
@@ -37,10 +50,17 @@
 
   &__header {
     background-color: $card-cap-bg;
+    align-items: center;
 
     &__title {
       color: $primary;
       font-size: 21px;
+    }
+
+    &__close {
+      // better positioning due to button overlay
+      $offset-x: 8px;
+      margin-right: $offset-x;
     }
   }
 
@@ -204,6 +224,16 @@
     &#{ $self }--primary    { color: lighten($primary, 15%); }
     &#{ $self }--secondary  { color: lighten($secondary, 15%); }
     &#{ $self }--dark       { color: lighten($body-color, 15%); }
+  }
+  &--disabled#{$self}--level-1:hover::before,
+  &--deferred#{$self}--level-2:hover::before {
+    background-color: initial;
+  }
+  &--disabled#{$self}--level-2::before,
+  &--disabled#{$self}--level-2:hover::before,
+  &--deferred#{$self}--level-2::before,
+  &--deferred#{$self}--level-2:hover::before {
+    background-color: lighten($gray-100, 15%);
   }
 }
 

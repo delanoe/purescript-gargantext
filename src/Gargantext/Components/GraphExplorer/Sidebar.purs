@@ -726,19 +726,7 @@ sendPatch termList session (GET.MetaData metaData) node = do
 
 
 
-------------------------------------------------------------------------
-
-            {-, H.div { className: "col-md-12", id: "horizontal-checkbox" }
-              [ H.ul {}
-                [ checkbox "Pubs"
-                , checkbox "Projects"
-                , checkbox "Patents"
-                , checkbox "Others"
-                ]
-              ]
-              -}
---------------------------------------------------------------------------
-
+-----------------------------------------------------
 documentation :: Lang -> R.Element
 documentation _ =
 
