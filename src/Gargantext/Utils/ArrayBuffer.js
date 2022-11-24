@@ -2,7 +2,7 @@
 // https://stackoverflow.com/a/9458996
 // This is because base64-codec/Data.Base64.encodeBase64 was too slow
 
-exports.arrayBufferToBase64Impl = function(buffer) {
+export function arrayBufferToBase64Impl(buffer) {
     var binary = '';
     var bytes = new Uint8Array( buffer );
     var len = bytes.byteLength;

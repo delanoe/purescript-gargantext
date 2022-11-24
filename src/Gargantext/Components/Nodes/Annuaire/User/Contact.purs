@@ -137,7 +137,7 @@ contactFormCpt = here.component "form" cpt where
                 }
               ]
             ]
-          , 
+          ,
             H.div
             { className: "form-group" }
             [
@@ -177,7 +177,7 @@ contactFormCpt = here.component "form" cpt where
                 }
               ]
             ]
-          , 
+          ,
             H.div
             { className: "form-group" }
             [
@@ -321,7 +321,7 @@ contactFormCpt = here.component "form" cpt where
         ]
       ,
         B.wad
-        [ "align-self-start", "ml-3" ]
+        [ "align-self-flex-start", "ml-3" ]
         [
           B.caveat
           {}

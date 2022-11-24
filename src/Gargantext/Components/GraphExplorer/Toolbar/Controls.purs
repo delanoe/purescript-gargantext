@@ -16,10 +16,12 @@ import Gargantext.Components.GraphExplorer.Resources as Graph
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Toolbar.Buttons (centerButton, cameraButton, edgesToggleButton, louvainToggleButton, pauseForceAtlasButton, multiSelectEnabledButton)
 import Gargantext.Components.GraphExplorer.Toolbar.RangeControl (edgeConfluenceControl, edgeWeightControl, nodeSizeControl)
-import Gargantext.Components.GraphExplorer.Toolbar.SlideButton (labelSizeButton, mouseSelectorSizeButton)
+import Gargantext.Components.GraphExplorer.Toolbar.SlideButton (labelSizeButton, labelRenderedSizeThresholdButton, mouseSelectorSizeSlider)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Session (useSession)
+import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
 import Gargantext.Hooks.Sigmax as Sigmax
+import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Types as GT
 import Gargantext.Utils.Range as Range
@@ -33,16 +35,17 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.Toolbar.Controls"
 
 type Controls =
-  ( reloadForest       :: T2.ReloadS
-  , sigmaRef           :: R.Ref Sigmax.Sigma
+  ( fa2Ref       :: R.Ref (Maybe ForceAtlas.FA2Layout)
+  , reloadForest :: T2.ReloadS
+  , sigmaRef     :: R.Ref Sigmax.Sigma
   )
 
 controls :: R2.Leaf Controls
 controls = R2.leaf controlsCpt
-
 controlsCpt :: R.Memo Controls
 controlsCpt = R.memo' $ here.component "controls" cpt where
-  cpt { reloadForest
+  cpt { fa2Ref
+      , reloadForest
       , sigmaRef
       } _ = do
     -- | States
@@ -54,6 +57,9 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     , graphId
     , graphStage
     , hyperdataGraph
+    , labelRenderedSizeThreshold
+    , labelSize
+    , mouseSelectorSize
     , multiSelectEnabled
     , nodeSize
     , selectedNodeIds
@@ -61,8 +67,6 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     , showLouvain
     , showSidebar
     , sideTab
-    , mouseSelectorSize
-    , labelSize
     } <- GraphStore.use
 
     forceAtlasState'    <- R2.useLive' forceAtlasState
@@ -91,13 +95,19 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
         _          -> pure unit
 
     -- Handle case when FA is paused from outside events, eg. the automatic timer.
-    R.useEffect' $ Sigmax.handleForceAtlas2Pause sigmaRef forceAtlasState mFAPauseRef Graph.forceAtlas2Settings
+    R.useEffect' $ Sigmax.handleForceAtlas2Pause fa2Ref forceAtlasState mFAPauseRef Graph.forceAtlas2Settings
 
     -- Handle automatic edge hiding when FA is running (to prevent flickering).
     -- TODO Commented temporarily: this breaks forceatlas rendering after reset
     -- NOTE This is a hack anyways. It's force atlas that should be fixed.
     R.useEffect2' sigmaRef forceAtlasState' $ do
       T.modify_ (SigmaxT.forceAtlasEdgeState forceAtlasState') showEdges
+      let renderLabels = SigmaxT.forceAtlasLabelState forceAtlasState'
+      here.log2 "[controls] renderLabels" renderLabels
+      Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphCpt (Cleanup)] no sigma" $ \sigma -> do
+          Sigma.setSettings sigma { renderLabels }
+      -- v <- T.read showEdges
+      -- here.log2 "[controls] modifed showEdges to forceAtlasState'" v
 
     -- Automatic opening of sidebar when a node is selected (but only first time).
     R.useEffect' $ do
@@ -171,14 +181,16 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
               pauseForceAtlasButton { state: forceAtlasState }
             ,
               gap
-            ,
+{-            ,
               cameraButton
               { id: graphId'
+              , forceAtlasState
               , hyperdataGraph: hyperdataGraph'
+              , reloadForest
               , session: session
               , sigmaRef: sigmaRef
-              , reloadForest
               }
+-}
             ]
           ,
             -- View Settings
@@ -187,7 +199,8 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             , titleSlot: H.text "View settings"
             }
             [
-              centerButton sigmaRef
+              centerButton { forceAtlasState
+                           , sigmaRef }
             ,
               gap
             ,
@@ -198,7 +211,8 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             ,
               gap
             ,
-              louvainToggleButton { state: showLouvain }
+              louvainToggleButton { forceAtlasState
+                                  , state: showLouvain }
             ]
           ]
         ,
@@ -212,13 +226,16 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
           }
           [
             -- zoom: 0 -100 - calculate ratio
-            multiSelectEnabledButton { state: multiSelectEnabled }
+            multiSelectEnabledButton { forceAtlasState
+                                     , state: multiSelectEnabled }
           ,
             gap
           ,
             -- toggle multi node selection
             -- save button
-            mouseSelectorSizeButton sigmaRef mouseSelectorSize
+            mouseSelectorSizeSlider { forceAtlasState
+                                    , sigmaRef
+                                    , state: mouseSelectorSize }
           ]
         ]
       ,
@@ -236,12 +253,15 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
           { className: "d-flex justify-content-between mb-3" }
           [
             edgeConfluenceControl
-            { range: edgeConfluenceRange
+            { forceAtlasState
+            , range: edgeConfluenceRange
             , state: edgeConfluence }
-          ,
+          {- ,
             edgeWeightControl
-            { range: edgeWeightRange
+            { forceAtlasState
+            , range: edgeWeightRange
             , state: edgeWeight }
+          -}
           ]
         ,
           H.div
@@ -252,14 +272,43 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             -- run demo
             -- search button
             -- search topics
-            labelSizeButton sigmaRef labelSize
-          ,
+            labelSizeButton { forceAtlasState
+                            , graph
+                            , sigmaRef
+                            , state: labelSize }
+          ]
+
+        ,
+          H.div
+          { className: "d-flex justify-content-between" }
+          [
             -- labels size: 1-4
             nodeSizeControl
-            { range: nodeSizeRange
+            { forceAtlasState
+            , range: nodeSizeRange
             , state: nodeSize }
 
           ]
+        ,
+          H.div
+          { className: "d-flex justify-content-between" }
+          [
+            -- change level
+            -- file upload
+            -- run demo
+            -- search button
+            -- search topics
+            labelRenderedSizeThresholdButton { forceAtlasState
+                                             , sigmaRef
+                                             , state: labelRenderedSizeThreshold }
+          -- ,
+          --   -- labels size: 1-4
+          --   nodeSizeControl
+          --   { range: nodeSizeRange
+          --   , state: nodeSize }
+
+          ]
+
         ]
       ]
 

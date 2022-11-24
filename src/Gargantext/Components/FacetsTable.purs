@@ -147,7 +147,9 @@ docViewCpt = here.component "docView" cpt
 
 performDeletions :: Session -> Int -> T.Box Deletions -> Deletions -> Effect Unit
 performDeletions session nodeId deletions deletions' = do
-  launchAff_ $ deleteDocuments session nodeId (DeleteDocumentQuery q)
+  launchAff_ $ do
+    _ <- deleteDocuments session nodeId (DeleteDocumentQuery q)
+    pure unit
   T.modify_ del deletions
   where
     q = { documents: Set.toUnfoldable deletions'.pending }
@@ -155,7 +157,9 @@ performDeletions session nodeId deletions deletions' = do
 
 markCategory :: Session -> NodeID -> Category -> Array NodeID -> Effect Unit
 markCategory session nodeId category nids =
-  void $ launchAff_ $ putCategories session nodeId (CategoryQuery q)
+  void $ launchAff_ $ do
+    _ <- putCategories session nodeId (CategoryQuery q)
+    pure unit
   where -- TODO add array of delete rows here
     q = {nodeIds: nids, category: favCategory category}
 
@@ -223,7 +227,7 @@ loadPage { session, nodeId, listId, query, params: {limit, offset, orderBy } } =
   case eSearchResult of
     Left err -> pure $ Left err
     Right (SearchResult {result}) -> do
-      liftEffect $ here.log2 "[loadPage] result" result
+      --liftEffect $ here.log2 "[loadPage] result" result
       -- $ SearchQuery {query: concat query, expected: SearchDoc}
       pure $ Right $ case result of
               SearchResultDoc     {docs}     -> Docs     {docs: doc2view     <$> Seq.fromFoldable docs}

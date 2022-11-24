@@ -4,8 +4,9 @@ module Gargantext.Components.PhyloExplorer.SelectionTab
 
 import Gargantext.Prelude
 
-import Data.Array (length, mapWithIndex, null)
+import Data.Array (length, null)
 import Data.Foldable (intercalate)
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int (ceil)
 import Data.Maybe (Maybe(..), isJust)
 import Data.Tuple.Nested ((/\))

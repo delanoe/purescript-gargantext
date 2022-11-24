@@ -4,7 +4,7 @@
  * @param {string} year
  * @returns {Date}
  */
-function yearToDate(year) {
+export function yearToDate(year) {
   var d = new Date();
 
   d.setYear(parseInt(year));
@@ -18,7 +18,7 @@ function yearToDate(year) {
  * @param {string} str
  * @returns {Date}
  */
-function stringToDate(str) {
+export function stringToDate(str) {
   var arr = (str.replace('"','')).split('-');
   var d = new Date();
 
@@ -34,7 +34,7 @@ function stringToDate(str) {
  * @param {string} str
  * @returns {Date}
  */
-function utcStringToDate(str) {
+export function utcStringToDate(str) {
   var arr = ((str.replace('"','')).replace(' UTC','')).split(/[\s-:]+/);
   var d = new Date();
 
@@ -45,7 +45,3 @@ function utcStringToDate(str) {
 
   return d;
 }
-
-exports.yearToDate      = yearToDate;
-exports.stringToDate    = stringToDate;
-exports.utcStringToDate = utcStringToDate;

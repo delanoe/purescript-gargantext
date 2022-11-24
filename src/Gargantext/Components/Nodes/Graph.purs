@@ -20,6 +20,7 @@ import Gargantext.Config.REST (logRESTError)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Hooks.Session (useSession)
+import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Utils (getter)
@@ -29,7 +30,7 @@ import Reactix as R
 import Record as Record
 
 type Props =
-  ( graphId   :: GET.GraphId
+  ( graphId :: GET.GraphId
   )
 
 here :: R2.Here
@@ -37,7 +38,6 @@ here = R2.here "Gargantext.Components.Nodes.Corpus.Graph"
 
 node :: R2.Leaf ( key :: String | Props )
 node = R2.leaf nodeCpt
-
 nodeCpt :: R.Component ( key :: String | Props )
 nodeCpt = here.component "node" cpt where
   cpt { graphId } _ = do
@@ -98,27 +98,26 @@ nodeCpt = here.component "node" cpt where
               Tuple mMetaData graph = convert hyperdataGraph
             in
               hydrateStore
-              { graph
+              { cacheParams: cache'
+              , graph
+              , graphId
               , hyperdataGraph: loaded
               , mMetaData
-              , graphId
-              , cacheParams: cache'
               }
       }
 
 --------------------------------------------------------
 
 type HydrateStoreProps =
-  ( mMetaData       :: Maybe GET.MetaData
+  ( cacheParams     :: GET.CacheParams
   , graph           :: SigmaxT.SGraph
-  , hyperdataGraph  :: GET.HyperdataGraph
   , graphId         :: GET.GraphId
-  , cacheParams     :: GET.CacheParams
+  , hyperdataGraph  :: GET.HyperdataGraph
+  , mMetaData       :: Maybe GET.MetaData
   )
 
-hydrateStore:: R2.Leaf HydrateStoreProps
+hydrateStore :: R2.Leaf HydrateStoreProps
 hydrateStore = R2.leaf hydrateStoreCpt
-
 hydrateStoreCpt :: R.Component HydrateStoreProps
 hydrateStoreCpt = here.component "hydrateStore" cpt where
   cpt { mMetaData
@@ -142,6 +141,7 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
     -- |
 
     sigmaRef <- Sigmax.initSigma >>= R.useRef
+    fa2Ref <- R.useRef (Nothing :: Maybe ForceAtlas.FA2Layout)
 
     -- Hydrate GraphStore
     (state :: Record GraphStore.State) <- pure $
@@ -171,5 +171,6 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
       state
       [
         layout
-        { sigmaRef }
+        { fa2Ref
+        , sigmaRef }
       ]

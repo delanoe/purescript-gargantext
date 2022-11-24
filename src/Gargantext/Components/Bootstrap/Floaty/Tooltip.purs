@@ -7,7 +7,6 @@ module Gargantext.Components.Bootstrap.Tooltip
 import Gargantext.Prelude
 
 import ConvertableOptions as CO
-import Data.Symbol (SProxy(..))
 import Data.UUID as UUID
 import Gargantext.Components.Bootstrap.Types (TooltipEffect(..), TooltipPosition(..), Variant(..))
 import Gargantext.Utils.Reactix as R2
@@ -15,6 +14,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
 import Record.Extra as RX
+import Type.Proxy (Proxy(..))
 
 foreign import reactTooltipCpt :: R.Component Props
 
@@ -61,20 +61,20 @@ tooltip props = R.rawCreateElement reactTooltipCpt props''
     props'  = CO.defaults options props
     props'' = props'
         # Record.set
-          (SProxy :: SProxy "effect")
+          (Proxy :: Proxy "effect")
           (show props'.effect)
       >>> Record.set
-          (SProxy :: SProxy "variant")
+          (Proxy :: Proxy "variant")
           (show props'.variant)
       >>> Record.rename
-          (SProxy :: SProxy "variant")
-          (SProxy :: SProxy "type")
+          (Proxy :: Proxy "variant")
+          (Proxy :: Proxy "type")
       >>> Record.set
-          (SProxy :: SProxy "position")
+          (Proxy :: Proxy "position")
           (show props'.position)
       >>> Record.rename
-          (SProxy :: SProxy "position")
-          (SProxy :: SProxy "place")
+          (Proxy :: Proxy "position")
+          (Proxy :: Proxy "place")
 
 -------------------------------------------------------------
 

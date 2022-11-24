@@ -4,35 +4,35 @@
 ///    FIELDS
 ////////////////////////////////////////////////////////////////////////////////
 
-var EXTRACTED_TERMS_EVENT     = 'extracted_terms_event';
-var EXTRACTED_COUNT_EVENT     = 'extracted_count_event';
-var SELECTED_TERM_EVENT       = 'selected_term_event';
-var SELECTED_BRANCH_EVENT     = 'selected_branch_event';
-var SELECTED_SOURCE_EVENT     = 'selected_source_event';
-var DISPLAY_VIEW_EVENT        = 'display_view_event';
+const EXTRACTED_TERMS_EVENT     = 'extracted_terms_event';
+const EXTRACTED_COUNT_EVENT     = 'extracted_count_event';
+const SELECTED_TERM_EVENT       = 'selected_term_event';
+const SELECTED_BRANCH_EVENT     = 'selected_branch_event';
+const SELECTED_SOURCE_EVENT     = 'selected_source_event';
+const DISPLAY_VIEW_EVENT        = 'display_view_event';
 
-var ISO_LINE_DOM_QUERY      = '.phylo-isoline';
-var LEFT_COLUMN_DOM_QUERY   = '.phylo-grid__blueprint__left';
-var CENTER_COLUMN_DOM_QUERY = '.phylo-grid__blueprint__center';
-var SCAPE_DOM_QUERY         = '.phylo-grid__content__scape';
+const ISO_LINE_DOM_QUERY      = '.phylo-isoline';
+const LEFT_COLUMN_DOM_QUERY   = '.phylo-grid__blueprint__left';
+const CENTER_COLUMN_DOM_QUERY = '.phylo-grid__blueprint__center';
+const SCAPE_DOM_QUERY         = '.phylo-grid__content__scape';
 
 //  (?) Global thread dependencies:
 //    * d3 <Object> (main D3 proxy))
 //    * window <Window> (cf. below function signature for window uses)
 //    * document <HTMLDocument>
 
-var memoTickText          = {};        // <Object> of <Int> => <TickText>
+let memoTickText          = {};        // <Object> of <Int> => <TickText>
 ///   <TickText> ::
 ///       <Int> bId
 ///       <Float> limit
 ///       <String>text
-var panel                 = undefined; // <Object> instanceof d3.selection
-var svg                   = undefined; // <Object> instanceof d3.selection
-var label                 = undefined; // <Object> instanceof d3.selection
-var zoom                  = undefined; // <Function> see https://github.com/d3/d3-zoom#zoom
-var xScale0               = undefined; // <Function> see https://github.com/d3/d3-scale#_continuous
-var yScale0               = undefined; // <Function> see https://github.com/d3/d3-scale#_continuous
-var subscribers           = {};        // <Object> dictionary for pubsub pattern
+let panel                 = undefined; // <Object> instanceof d3.selection
+let svg                   = undefined; // <Object> instanceof d3.selection
+let label                 = undefined; // <Object> instanceof d3.selection
+let zoom                  = undefined; // <Function> see https://github.com/d3/d3-zoom#zoom
+let xScale0               = undefined; // <Function> see https://github.com/d3/d3-scale#_continuous
+let yScale0               = undefined; // <Function> see https://github.com/d3/d3-scale#_continuous
+let subscribers           = {};        // <Object> dictionary for pubsub pattern
 
 ////////////////////////////////////////////////////////////////////////////////
 ///    HELPERS
@@ -2279,26 +2279,29 @@ function addEmergenceLabels(k, emergences, branchByGroup, fontScale, opacityScal
 ///    EXPORTS
 ////////////////////////////////////////////////////////////////////////////////
 
-exports._extractedTermsEvent    = EXTRACTED_TERMS_EVENT;
-exports._extractedCountEvent    = EXTRACTED_COUNT_EVENT;
-exports._selectedTermEvent      = SELECTED_TERM_EVENT;
-exports._selectedBranchEvent    = SELECTED_BRANCH_EVENT;
-exports._selectedSourceEvent    = SELECTED_SOURCE_EVENT;
-exports._displayViewEvent       = DISPLAY_VIEW_EVENT;
+export const _extractedTermsEvent    = EXTRACTED_TERMS_EVENT;
+export const _extractedCountEvent    = EXTRACTED_COUNT_EVENT;
+export const _selectedTermEvent      = SELECTED_TERM_EVENT;
+export const _selectedBranchEvent    = SELECTED_BRANCH_EVENT;
+export const _selectedSourceEvent    = SELECTED_SOURCE_EVENT;
+export const _displayViewEvent       = DISPLAY_VIEW_EVENT;
 
-exports._drawPhylo        = drawPhylo;
-exports._drawWordCloud    = drawWordCloud;
-exports._showLabel        = showLabel;
-exports._termClick        = termClick;
-exports._resetView        = resetView;
-exports._showLabel        = showLabel;
-exports._showHeading      = showHeading;
-exports._showLanding      = showLanding;
-exports._exportViz        = exportViz;
-exports._doubleClick      = doubleClick;
-exports._highlightGroups  = highlightGroups;
-exports._initPath         = initPath;
+let pubsubPublish = pubsub.publish;
+let pubsubSubscribe = pubsub.subscribe;
+let pubsubUnsubscribe = pubsub.unsubscribe;
 
-exports._publish          = pubsub.publish;
-exports._subscribe        = pubsub.subscribe;
-exports._unsubscribe      = pubsub.unsubscribe;
+export { drawPhylo         as _drawPhylo,
+         drawWordCloud     as _drawWordCloud,
+         showLabel         as _showLabel,
+         termClick         as _termClick,
+         resetView         as _resetView,
+         showHeading       as _showHeading,
+         showLanding       as _showLanding,
+         exportViz         as _exportViz,
+         doubleClick       as _doubleClick,
+         highlightGroups   as _highlightGroups,
+         initPath          as _initPath,
+
+         pubsubPublish     as _publish,
+         pubsubSubscribe   as _subscribe,
+         pubsubUnsubscribe as _unsubscribe };

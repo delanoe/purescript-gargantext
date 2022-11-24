@@ -9,13 +9,16 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Sequence as Seq
 import Data.Set as Set
+import Data.Traversable (class Traversable)
 import Data.Tuple (Tuple(..))
 import Partial.Unsafe (unsafePartial)
-import Prelude (class Eq, class Show, map, ($), (&&), (==), (||), (<$>), mod, not)
+import Prelude (class Eq, class Show, map, ($), (&&), (==), (||), (<$>), (<), mod, not)
 
-import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Components.Bootstrap.Types (ComponentStatus(..))
+import Gargantext.Components.GraphExplorer.GraphTypes as GEGT
 import Gargantext.Data.Louvain as Louvain
 import Gargantext.Types as GT
+import Gargantext.Utils.Range as Range
 
 newtype Graph n e = Graph { edges :: Seq.Seq {|e}, nodes :: Seq.Seq {|n} }
 
@@ -40,34 +43,47 @@ type Node = (
   , equilateral :: { numPoints :: Int }
   , gargType    :: GT.Mode
   , hidden      :: Boolean
+  , highlighted :: Boolean
   , id          :: NodeId
   , label       :: String
   , size        :: Number
   , type        :: String  -- available types: circle, cross, def, diamond, equilateral, pacman, square, star
   , x           :: Number
   , y           :: Number
-  , _original   :: GET.Node
+  , _original   :: GEGT.Node
   )
 
 type Edge = (
-    color      :: String
-  , confluence :: Number
-  , id         :: EdgeId
-  , hidden     :: Boolean
-  , size       :: Number
-  , source     :: NodeId
-  , sourceNode :: Record Node
-  , target     :: NodeId
-  , targetNode :: Record Node
-  , weight     :: Number
-  , weightIdx  :: Int
-  , _original  :: GET.Edge
+    color            :: String
+  , confluence       :: Number
+  , id               :: EdgeId
+  , hidden           :: Boolean
+  , size             :: Number
+  , source           :: NodeId
+  , sourceNode       :: Record Node
+  , target           :: NodeId
+  , targetNode       :: Record Node
+  , weight           :: Number
+  , weightIdx        :: Int
+  , _original        :: GEGT.Edge
   )
 
 type NodeIds = Set.Set NodeId
 type EdgeIds = Set.Set EdgeId
 type EdgesMap = Map.Map String (Record Edge)
 type NodesMap = Map.Map String (Record Node)
+
+-- | When comparing nodes, we don't want to compare all fields. Only
+-- | some are relevant (when updating sigma graph).
+-- NOTE For some reason, `Graphology.updateNode` throws error if `type` is set
+compareNodes :: Record Node -> Record Node -> Boolean
+compareNodes n1 n2 = n1.borderColor == n2.borderColor &&
+                     n1.color == n2.color &&
+                     n1.equilateral == n2.equilateral &&
+                     n1.hidden == n2.hidden &&
+                     n1.highlighted == n2.highlighted
+
+-- TODO For edges, see `Sigmax.updateEdges` (`color` and `hidden`)
 
 emptyEdgeIds :: EdgeIds
 emptyEdgeIds = Set.empty
@@ -83,6 +99,7 @@ type SigmaDiff =
   (
     add :: Tuple (Seq.Seq (Record Edge)) (Seq.Seq (Record Node))
   , remove :: Tuple EdgeIds NodeIds
+  , update :: Tuple (Seq.Seq (Record Edge)) (Seq.Seq (Record Node))
   )
 
 graphEdges :: SGraph -> Seq.Seq (Record Edge)
@@ -91,19 +108,20 @@ graphEdges (Graph {edges}) = edges
 graphNodes :: SGraph -> Seq.Seq (Record Node)
 graphNodes (Graph {nodes}) = nodes
 
+idMap :: forall r t. Traversable t => t { id :: String | r } -> Map.Map String { id :: String | r }
+idMap xs = Map.fromFoldable $ (\x@{ id } -> Tuple id x) <$> xs
+
 edgesGraphMap :: SGraph -> EdgesMap
-edgesGraphMap graph =
-  Map.fromFoldable $ map (\e -> Tuple e.id e) $ graphEdges graph
+edgesGraphMap graph = idMap $ graphEdges graph
 
 edgesFilter :: (Record Edge -> Boolean) -> SGraph -> SGraph
 edgesFilter f (Graph {edges, nodes}) = Graph { edges: Seq.filter f edges, nodes }
 
 nodesMap :: Seq.Seq (Record Node) -> NodesMap
-nodesMap nodes = Map.fromFoldable $ map (\n -> Tuple n.id n) nodes
+nodesMap = idMap
 
 nodesGraphMap :: SGraph -> NodesMap
-nodesGraphMap graph =
-  nodesMap $ graphNodes graph
+nodesGraphMap graph = idMap $ graphNodes graph
 
 nodesFilter :: (Record Node -> Boolean) -> SGraph -> SGraph
 nodesFilter f (Graph {edges, nodes}) = Graph { edges, nodes: Seq.filter f nodes }
@@ -122,20 +140,6 @@ sub graph (Graph {nodes, edges}) = newGraph
                     && (not $ Set.member e.target nodeIds)
     filteredEdges = edgesFilter edgeFilterFunc graph
     newGraph = nodesFilter (\n -> not (Set.member n.id nodeIds)) filteredEdges
-
--- | Compute a diff between current sigma graph and whatever is set via customer controls
-sigmaDiff :: EdgeIds -> NodeIds -> SGraph -> Record SigmaDiff
-sigmaDiff sigmaEdges sigmaNodes g@(Graph {nodes, edges}) = {add, remove}
-  where
-    add = Tuple addEdges addNodes
-    remove = Tuple removeEdges removeNodes
-
-    addG = edgesFilter (\e -> not (Set.member e.id sigmaEdges)) $ nodesFilter (\n -> not (Set.member n.id sigmaNodes)) g
-    addEdges = graphEdges addG
-    addNodes = graphNodes addG
-
-    removeEdges = Set.difference sigmaEdges (Set.fromFoldable $ Seq.map _.id edges)
-    removeNodes = Set.difference sigmaNodes (Set.fromFoldable $ Seq.map _.id nodes)
 
 neighbours :: SGraph -> Seq.Seq (Record Node) -> Seq.Seq (Record Node)
 neighbours g nodes = Seq.fromFoldable $ Set.unions [Set.fromFoldable nodes, sources, targets]
@@ -171,13 +175,21 @@ toggleForceAtlasState Running = Paused
 toggleForceAtlasState Paused = Running
 toggleForceAtlasState Killed = InitialRunning
 
+
+forceAtlasComponentStatus :: ForceAtlasState -> ComponentStatus
+forceAtlasComponentStatus InitialRunning = Disabled
+forceAtlasComponentStatus InitialStopped = Enabled
+forceAtlasComponentStatus Running = Disabled
+forceAtlasComponentStatus Paused = Enabled
+forceAtlasComponentStatus Killed = Enabled
+
+
 -- | Custom state for show edges. Normally it is EShow or EHide (show/hide
 -- | edges). However, edges are temporarily turned off when forceAtlas is
 -- | running.
 -- | NOTE ETempHiddenThenShow state is a hack for force atlas
 -- | flickering. Ideally it should be removed from here.
 data ShowEdgesState = EShow | EHide | ETempHiddenThenShow
-
 derive instance Generic ShowEdgesState _
 instance Eq ShowEdgesState where
   eq = genericEq
@@ -198,21 +210,6 @@ toggleShowEdgesState s =
   else
     EHide
 
--- | Return the temporary hidden state, if applicable.
-edgeStateTempHide :: ShowEdgesState -> ShowEdgesState
-edgeStateTempHide EHide = EHide
-edgeStateTempHide _ = ETempHiddenThenShow
-
--- | Whether, after disabling the temp state, edges will be shown or hidden.
-edgeStateWillBeHidden :: ShowEdgesState -> Boolean
-edgeStateWillBeHidden EHide = true
-edgeStateWillBeHidden _ = false
-
--- | Get rid of the temporary transition
-edgeStateStabilize :: ShowEdgesState -> ShowEdgesState
-edgeStateStabilize ETempHiddenThenShow = EShow
-edgeStateStabilize s = s
-
 -- | Return state in which showEdges should be depending on forceAtlasState
 forceAtlasEdgeState :: ForceAtlasState -> ShowEdgesState -> ShowEdgesState
 forceAtlasEdgeState InitialRunning EShow = ETempHiddenThenShow
@@ -224,6 +221,19 @@ forceAtlasEdgeState Paused ETempHiddenThenShow = EShow
 forceAtlasEdgeState Paused es = es
 forceAtlasEdgeState Killed ETempHiddenThenShow = EShow
 forceAtlasEdgeState Killed es = es
+
+
+-- Similar situation for labels: hide them when force atlas is
+-- running, to prevent flickering.
+-- However, for labels this is simpler because we don't have a toggle
+-- button.
+
+-- | Return state in which labels should be depending on forceAtlasState
+forceAtlasLabelState :: ForceAtlasState -> Boolean
+forceAtlasLabelState InitialRunning = false
+forceAtlasLabelState Running        = false
+forceAtlasLabelState _              = true
+
 
 
 louvainEdges :: SGraph -> Array (Record Louvain.Edge)
@@ -266,3 +276,16 @@ defaultPalette = ["#5fa571","#ab9ba2","#da876d","#bdd3ff"
                  ,"#ccffc7","#52a1b0","#d2ecff","#99fffe"
                  ,"#9295ae","#5ea38b","#fff0b3","#d99e68"
                  ]
+
+
+type EdgeVisibilityProps =
+  ( edgeConfluence :: Range.NumberRange
+  , edgeWeight     :: Range.NumberRange
+  , showEdges      :: ShowEdgesState )
+
+setEdgeVisibility :: Record EdgeVisibilityProps -> Record Edge -> Record Edge
+setEdgeVisibility { edgeConfluence, edgeWeight, showEdges } e@{ confluence, weight } = e { hidden = hidden }
+  where
+    hidden = (edgeStateHidden showEdges)
+             || (not $ Range.within edgeConfluence confluence)
+             || (not $ Range.within edgeWeight weight)

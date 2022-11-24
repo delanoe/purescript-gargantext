@@ -139,7 +139,8 @@ carousselCpt = here.component "caroussel" cpt
         onClick c = \_-> do
           setLocalCategories $ Map.insert r._id c
           launchAff_ $ do
-            putCategories session nodeId $ CategoryQuery {nodeIds: [r._id], category: c}
+            _ <- putCategories session nodeId $ CategoryQuery {nodeIds: [r._id], category: c}
+            pure unit
 
 icon :: Category -> Boolean -> String
 icon cat b = btn b $ "fa fa-" <> (color $ size b $ icon' cat b)

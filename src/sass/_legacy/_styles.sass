@@ -50,15 +50,6 @@
         font-size: 16px
 
 
-.simple-layout
-  height: 100%
-  .license
-    padding-top: 10px
-  .spinner
-    position: absolute
-    left: 50%
-    top: 50%
-
 
 /* */
 
@@ -257,3 +248,58 @@ select.form-control
 
     &:after
       opacity: var(--over50, 0)
+
+/////////////////////////////////////////////:
+
+// @TODO better responsive display for tablet screens
+.home-title
+  $raw-logo-width: 334px
+
+  padding: space-x(3)
+  display: flex
+  gap: space-x(3)
+  margin-bottom: space-x(5)
+
+  &__logo
+    flex-basis: $raw-logo-width
+    flex-shrink: 1
+
+  &__jumbo
+    flex-grow: 1
+    position: relative
+
+  &__folders
+
+    &:not(:first-child)
+      margin-top: space-x(3)
+
+
+.home-tutorial
+  // for preload purpose
+  $card-estimated-width: 712px
+  $card-estimated-height: 164px
+
+  text-align: center
+
+  .card
+    min-width: $card-estimated-width
+    display: inline-flex
+
+    &:not(:last-child)
+      margin-bottom: space-x(3)
+
+  .card-body
+    min-height: $card-estimated-height
+
+  .folder-view
+    display: inline-flex
+    flex-wrap: unset
+
+
+.home-license
+  font-size: 15px
+
+  .b-icon
+    font-size: 12px
+
+/////////////////////////////////////////////

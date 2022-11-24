@@ -7,9 +7,9 @@ import Data.Lens (Lens', lens)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.String as S
-import Data.Symbol (SProxy(..))
 import Record as Record
 import Simple.JSON as JSON
+import Type.Proxy (Proxy(..))
 
 import Gargantext.Prelude (class Eq, bind, pure, ($))
 
@@ -32,7 +32,7 @@ instance JSON.ReadForeign NodeContact where
   readImpl f = do
     inst <- JSON.readImpl f
     pure $ NodeContact $ Record.rename parent_idP parentIdP $ Record.rename user_idP userIdP inst
-      
+
 ----------------------------------------------------------------------------
 
 newtype Contact' =
@@ -347,8 +347,8 @@ _phone = lens getter setter
   where
     getter (ContactTouch {phone}) = fromMaybe "" phone
     setter (ContactTouch ct) val = ContactTouch $ ct { phone = Just val }
-    
-user_idP = SProxy :: SProxy "user_id"
-userIdP = SProxy :: SProxy "userId"
-parent_idP = SProxy :: SProxy "parent_id"
-parentIdP = SProxy :: SProxy "parentId"
+
+user_idP = Proxy :: Proxy "user_id"
+userIdP = Proxy :: Proxy "userId"
+parent_idP = Proxy :: Proxy "parent_id"
+parentIdP = Proxy :: Proxy "parentId"

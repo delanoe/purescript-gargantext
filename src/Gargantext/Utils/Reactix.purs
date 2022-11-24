@@ -397,6 +397,9 @@ getls = window >>= localStorage
 openNodesKey :: LocalStorageKey
 openNodesKey = "garg-open-nodes"
 
+appParamsKey :: LocalStorageKey
+appParamsKey = "garg-app-params"
+
 graphParamsKey :: LocalStorageKey
 graphParamsKey = "garg-graph-params"
 
@@ -611,7 +614,7 @@ triggerEvent = runEffectFn2 _triggerEvent
 getInputValue :: R.Ref (Nullable DOM.Element) -> String
 getInputValue elNullableRef = case toMaybe (R.readRef elNullableRef) of
   Nothing -> ""
-  Just el -> 
+  Just el ->
     el .. "value"
 
 setInputValue :: R.Ref (Nullable DOM.Element) -> String -> Effect Unit

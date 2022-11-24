@@ -20,24 +20,24 @@ type Props =
   )
 
 type Options =
-  ( status    :: ComponentStatus
-  , size      :: Sizing
-  , variant   :: ButtonVariant
-  , type      :: String
+  ( block     :: Boolean
   , className :: String
-  , block     :: Boolean
+  , size      :: Sizing
+  , status    :: ComponentStatus
   , title     :: String
+  , type      :: String
+  , variant   :: ButtonVariant
   )
 
 options :: Record Options
 options =
-  { status    : Enabled
-  , size      : MediumSize
-  , variant   : ButtonVariant Primary
-  , type      : "button"
+  { block     : false
   , className : ""
-  , block     : false
+  , status    : Enabled
+  , size      : MediumSize
   , title     : ""
+  , type      : "button"
+  , variant   : ButtonVariant Primary
   }
 
 -- | Structural Component for the Bootstrap button

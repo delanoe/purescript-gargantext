@@ -27,6 +27,8 @@ import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Utils (getter, (?))
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
+import Partial.Unsafe (unsafePartial)
 import React.SyntheticEvent as SE
 import Reactix as R
 import Reactix.DOM.HTML as H

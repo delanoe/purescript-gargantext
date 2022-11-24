@@ -1,6 +1,6 @@
 module Gargantext.Components.Login.Form where
 
-import Prelude (Unit, bind, discard, not, notEq, pure, show, ($), (&&), (*>), (<>))
+import Prelude (Unit, bind, discard, not, notEq, pure, show, unit, ($), (&&), (*>), (<>))
 import Data.Either (Either(..))
 import DOM.Simple.Event as DE
 import Effect (Effect)
@@ -12,6 +12,7 @@ import Reactix.SyntheticEvent as E
 import Reactix.DOM.HTML as H
 import Toestand as T
 import Toestand (useFocusedFields)
+import Data.String as String
 
 import Gargantext.Components.Forms (clearfix, formGroup)
 import Gargantext.Components.Login.Types (AuthRequest(..), FormType(..))
@@ -85,13 +86,12 @@ formLoginLink backend =
 
 type SubmitButtonProps s v = ( cell :: T.Box Form | Props s v )
 
-submitButton
-  :: forall s v. T.ReadWrite s Sessions => T.Write v Boolean
-  => R2.Leaf (SubmitButtonProps s v)
+submitButton :: forall s v. T.ReadWrite s Sessions => T.Write v Boolean
+             => R2.Leaf (SubmitButtonProps s v)
 submitButton = R2.leafComponent submitButtonCpt
-submitButtonCpt
-  :: forall s v. T.ReadWrite s Sessions => T.Write v Boolean
-  => R.Component (SubmitButtonProps s v)
+
+submitButtonCpt :: forall s v. T.ReadWrite s Sessions => T.Write v Boolean
+                => R.Component (SubmitButtonProps s v)
 submitButtonCpt = here.component "submitButton" cpt where
   cpt { backend, formType, sessions, visible, cell } _ = do
     { agreed, username, password } <- T.useLive T.unequal cell
@@ -107,15 +107,23 @@ submitForm { backend, sessions, visible } cell e = do
   state <- T.read cell
   launchAff_ $ do
     res <- postAuthRequest backend (req state)
-    case res of
+    _ <- case res of
       Left message -> liftEffect $ T.write (state { error = message }) cell
       Right sess ->
         liftEffect $
           Sessions.change (Sessions.Login sess) sessions
           *> T.write false visible
           *> T.write (state { error = "" }) cell
+    pure unit
     where
-      req { username, password } = AuthRequest { username, password }
+      -- User usually copy space before or after the username and password
+      req { username, password } = AuthRequest {username:cleanString username, password:cleanString password }
+      -- req { username, password } = AuthRequest {username, password }
+
+cleanString :: String -> String
+cleanString str = String.replace (String.Pattern " ")
+                                 (String.Replacement "") str
+
 
 csrfTokenInput :: R.Element -- TODO hard-coded CSRF token
 csrfTokenInput = H.input { type: "hidden", name, value } where

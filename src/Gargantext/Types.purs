@@ -544,6 +544,13 @@ instance Show CTabNgramType where
   show CTabSources    = "Sources"
   show CTabAuthors    = "Authors"
   show CTabInstitutes = "Institutes"
+instance Read CTabNgramType where
+  read "Terms"     = Just CTabTerms
+  read "Sources"   = Just CTabSources
+  read "Authors"   = Just CTabAuthors
+  read "Institutes" = Just CTabInstitutes
+  read _            = Nothing
+instance JSON.ReadForeign  CTabNgramType where readImpl = JSONG.enumSumRep
 instance JSON.WriteForeign CTabNgramType where writeImpl = JSON.writeImpl <<< show
 
 data PTabNgramType = PTabPatents | PTabBooks | PTabCommunication
@@ -807,3 +814,24 @@ data FrontendError =
 
 derive instance Generic FrontendError _
 instance Eq FrontendError where eq = genericEq
+
+-----------------------------------------------------------------------
+
+newtype CacheParams = CacheParams
+  { expandTableEdition    :: Boolean
+  }
+
+derive instance Newtype CacheParams _
+derive instance Generic CacheParams _
+derive instance Eq CacheParams
+instance Show CacheParams where show = genericShow
+derive newtype instance JSON.ReadForeign CacheParams
+derive newtype instance JSON.WriteForeign CacheParams
+
+-- (!) in case cache storage (ie. JavaScript Local Storage) returns an invalid
+--     objects (eg. possible data migration), this will safely set new default
+--     values
+defaultCacheParams :: CacheParams
+defaultCacheParams = CacheParams
+  { expandTableEdition    : false
+  }

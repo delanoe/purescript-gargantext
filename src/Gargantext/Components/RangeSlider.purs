@@ -8,8 +8,11 @@ module Gargantext.Components.RangeSlider where
 
 import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
+import Data.Foldable (maximum)
 import Data.Int (fromNumber)
 import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Number as DN
+import Data.Number.Format as DNF
 import Data.Nullable (Nullable, null)
 import Data.Traversable (traverse_)
 import DOM.Simple as DOM
@@ -17,15 +20,14 @@ import DOM.Simple.Document (document)
 import DOM.Simple.Event as Event
 import DOM.Simple.EventListener as EL
 import DOM.Simple (DOMRect)
-import Global (toFixed)
 import Effect (Effect)
-import Math as M
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
 import Gargantext.Prelude
 
+import Gargantext.Components.Bootstrap.Types (ComponentStatus(..))
 import Gargantext.Utils.Math (roundToMultiple)
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
@@ -41,17 +43,15 @@ type Epsilon = Number
 -- and 'max' as being the bounds of the scale and 'low' and 'high' as
 -- being the selected values
 type Props =
-  ( bounds :: Bounds                  -- The minimum and maximum values it is possible to select
+  ( bounds       :: Bounds                  -- The minimum and maximum values it is possible to select
   , initialValue :: Range.NumberRange -- The user's selection of minimum and maximum values
-  , epsilon :: Number                 -- The smallest possible change (for mouse)
-  , step :: Number                    -- The 'standard' change (for keyboard)
-  -- , axis :: Axis                   -- Which direction to move in
-  , width :: Number
-  , height :: Number
-  , onChange :: Range.NumberRange -> Effect Unit )
-
-rangeSlider :: Record Props -> R.Element
-rangeSlider props = R.createElement rangeSliderCpt props []
+  , epsilon      :: Number                 -- The smallest possible change (for mouse)
+  , step         :: Number                    -- The 'standard' change (for keyboard)
+  -- , axis      :: Axis                   -- Which direction to move in
+  , width        :: Number
+  , height       :: Number
+  , onChange     :: Range.NumberRange -> Effect Unit
+  , status       :: ComponentStatus )
 
 data Knob = MinKnob | MaxKnob
 derive instance Generic Knob _
@@ -60,12 +60,24 @@ instance Eq Knob where
 
 data RangeUpdate = SetMin Number | SetMax Number
 
+rangeSlider :: Record Props -> R.Element
+rangeSlider props = R.createElement rangeSliderCpt props []
 rangeSliderCpt :: R.Component Props
 rangeSliderCpt = here.component "rangeSlider" cpt
   where
     cpt props _ = do
       -- rounding precision (i.e. how many decimal digits are in epsilon)
-      let precision = fromMaybe 0 $ fromNumber $ max 0.0 $ - M.floor $ (M.log props.epsilon) / M.ln10
+      let (Range.Closed { min: minR, max: maxR }) = props.initialValue
+      let decPrecision num =
+            -- int digits
+            (fromMaybe 0 $ fromNumber $ DN.ceil $ (DN.log num) / DN.ln10)
+            -- float digits
+            + (fromMaybe 0 $ fromNumber $ DN.ceil $ -(DN.log (num - (DN.floor num))) / DN.ln10)
+      let epsilonPrecision = decPrecision props.epsilon
+      let minPrecision = decPrecision minR
+      let maxPrecision = decPrecision maxR
+      --let precision = fromMaybe 0 $ fromNumber $ max 0.0 epsilonPrecision
+      let precision = fromMaybe 0 $ maximum [0, epsilonPrecision, minPrecision, maxPrecision]
 
       -- scale bar
       scaleElem <- (R.useRef null) :: R.Hooks (R.Ref (Nullable DOM.Element)) -- dom ref
@@ -119,8 +131,8 @@ rangeSliderCpt = here.component "rangeSlider" cpt
       pure $ H.div { className, aria }
         [ renderScale scaleElem props value'
         , renderScaleSel scaleSelElem props value'
-        , renderKnob MinKnob lowElem  value' props.bounds dragKnob precision
-        , renderKnob MaxKnob highElem value' props.bounds dragKnob precision
+        , renderKnob MinKnob lowElem  value' props.bounds dragKnob precision props.status
+        , renderKnob MaxKnob highElem value' props.bounds dragKnob precision props.status
         ]
     className = "range-slider"
     aria = { label: "Range Slider Control. Expresses filtering data by a minimum and maximum value range through two slider knobs. Knobs can be adjusted with the arrow keys." }
@@ -169,29 +181,32 @@ renderScaleSel ref props (Range.Closed {min, max}) =
     style = {left: computeLeft, width: computeWidth}
     percOffsetMin = Range.normalise props.bounds min
     percOffsetMax = Range.normalise props.bounds max
-    computeLeft = (show $ 100.0 * percOffsetMin) <> "%"
-    computeWidth = (show $ 100.0 * (percOffsetMax - percOffsetMin)) <> "%"
+    computeLeft = formatter $ 100.0 * percOffsetMin
+    computeWidth = formatter $ 100.0 * (percOffsetMax - percOffsetMin)
+    formatter n = (DNF.toStringWith (DNF.fixed 0) n) <> "%"
 
 
-renderKnob :: Knob -> R.Ref (Nullable DOM.Element) -> Range.NumberRange -> Bounds -> T.Box (Maybe Knob) -> Int -> R.Element
-renderKnob knob ref (Range.Closed value) bounds set precision =
+renderKnob :: Knob -> R.Ref (Nullable DOM.Element) -> Range.NumberRange -> Bounds -> T.Box (Maybe Knob) -> Int -> ComponentStatus -> R.Element
+renderKnob knob ref (Range.Closed value) bounds set precision status =
   H.div { ref, tabIndex, className, aria, on: { mouseDown: onMouseDown }, style } [
-      H.div { className: "range-slider__placeholder" }
+      H.div { className: "range-slider__placeholder " }
         [
-          H.text $ text $ toFixed precision val
+          H.text $ DNF.toStringWith (DNF.precision precision) val
         ]
   ]
   where
-    text (Just num) = num
-    text Nothing = "error"
     tabIndex = 0
-    className = "range-slider__knob"
+    className = "range-slider__knob " <> (show status)
     aria = { label: labelPrefix knob <> "value: " <> show val }
+    labelPrefix :: Knob -> String
     labelPrefix MinKnob = "Minimum "
     labelPrefix MaxKnob = "Maximum "
-    onMouseDown _ = T.write_ (Just knob) set
+    onMouseDown _ = case status of
+      Disabled -> pure unit
+      _ -> T.write_ (Just knob) set
     percOffset = Range.normalise bounds val
     style = { left: (show $ 100.0 * percOffset) <> "%" }
+    val :: Number
     val = case knob of
       MinKnob -> value.min
       MaxKnob -> value.max

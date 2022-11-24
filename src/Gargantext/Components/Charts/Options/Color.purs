@@ -33,14 +33,14 @@ red :: Color
 red = stringColor "red"
 
 blue :: Color
-blue = cssColor $ rgba 100 150 200 0.0
--- stringColor "blue"
+blue = cssColor $ rgba 100 150 200 1.0
+       -- stringColor "blue"
 
 magenta :: Color
 magenta = stringColor "magenta"
 
 violet :: Color
-violet = cssColor CSS.violet
+violet = stringColor "violet"
 
 black :: Color
 black = stringColor "black"

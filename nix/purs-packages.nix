@@ -212,7 +212,7 @@
     name = "dom-simple";
     version = "v0.2.7";
     src = pkgs.fetchgit {
-      url = "https://github.com/irresponsible/purescript-dom-simple";
+      url = "https://github.com/garganscript/purescript-dom-simple";
       rev = "v0.2.7";
       sha256 = "02f1vsjk5frva3p3xpbrnj2zg4rg01l07dnvc3i6axvc5k30i282";
     };
@@ -266,7 +266,7 @@
     name = "ffi-simple";
     version = "v0.2.10";
     src = pkgs.fetchgit {
-      url = "https://github.com/irresponsible/purescript-ffi-simple";
+      url = "https://github.com/garganscript/purescript-ffi-simple";
       rev = "v0.2.10";
       sha256 = "14slcccmy96ml7r8rzhhqnw486qj1b385i9095fdymms78g5gnj5";
     };
@@ -329,7 +329,7 @@
     name = "formula";
     version = "v0.2.1";
     src = pkgs.fetchgit {
-      url = "https://github.com/poorscript/purescript-formula";
+      url = "https://github.com/garganscript/purescript-formula";
       rev = "v0.2.1";
       sha256 = "0511r2n51sz59ksalzvrcbwwhbpj42h2dj2zknns7dnhkdkmf4a6";
     };
@@ -473,7 +473,7 @@
     name = "markdown";
     version = "2021-06-22";
     src = pkgs.fetchgit {
-      url = "https://github.com/poorscript/purescript-markdown";
+      url = "https://github.com/garganscript/purescript-markdown";
       rev = "2021-06-22";
       sha256 = "0crqn2mih21bwhhba9sm2g3lx5xla14qqz7mv04dpqf9ca998bbx";
     };
@@ -752,7 +752,7 @@
     name = "reactix";
     version = "v0.4.13";
     src = pkgs.fetchgit {
-      url = "https://github.com/poorscript/purescript-reactix";
+      url = "https://github.com/garganscript/purescript-reactix";
       rev = "v0.4.13";
       sha256 = "0b4hjwcw8y55p6iiyygzpw7c1jyh01nhmpszs7fnadjbg9x6d9d3";
     };
@@ -968,7 +968,7 @@
     name = "toestand";
     version = "v0.6.2";
     src = pkgs.fetchgit {
-      url = "https://github.com/poorscript/purescript-toestand";
+      url = "https://github.com/garganscript/purescript-toestand";
       rev = "v0.6.2";
       sha256 = "0wgav789ii14gsz0xc67nl5lc82sisdjd5wi6pwl5kj0i7ayz66y";
     };
@@ -995,7 +995,7 @@
     name = "tuples-native";
     version = "v2.2.0";
     src = pkgs.fetchgit {
-      url = "https://github.com/poorscript/purescript-tuples-native";
+      url = "https://github.com/garganscript/purescript-tuples-native";
       rev = "v2.2.0";
       sha256 = "0hplpqc2sbcjin084jqzhzqhprlc1achbqmsn9czpnf6ylgkqhaz";
     };
@@ -1031,7 +1031,7 @@
     name = "typisch";
     version = "v0.2.1";
     src = pkgs.fetchgit {
-      url = "https://github.com/poorscript/purescript-typisch";
+      url = "https://github.com/garganscript/purescript-typisch";
       rev = "v0.2.1";
       sha256 = "1jccgfayh20qsmqgbh54knl4dwbwk3144mkzzv2pi07jprp8mzbf";
     };

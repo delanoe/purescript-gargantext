@@ -96,8 +96,8 @@ useFormValidation = do
   result   /\ resultBox   <- R2.useBox' (V (Right mempty) :: VForm)
 
   memoHasError  <- R.useMemo1 result $ const $ hasError result
-  memoHasError' <- R.useMemo1 result $ const $ (_ # result # hasError')
-  memoHasError_ <- R.useMemo1 result $ const $ (_ # result # hasError_)
+  memoHasError' <- R.useMemo1 result $ const $ hasError' result
+  memoHasError_ <- R.useMemo1 result $ const $ hasError_ result
 
   pure
     { tryCount

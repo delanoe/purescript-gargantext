@@ -20,6 +20,10 @@ mQueryParamS :: forall a. String -> (a -> String) ->  Maybe a -> String
 mQueryParamS _ _ Nothing = ""
 mQueryParamS key mFunc (Just v) = queryParamS key $ mFunc v
 
+mQueryParamS' :: String -> Maybe String -> String
+mQueryParamS' _ Nothing = ""
+mQueryParamS' key (Just v) = queryParamS key v
+
 joinQueryStrings :: Array String -> String
 joinQueryStrings qs =
   case uncons qs of

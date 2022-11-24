@@ -78,6 +78,6 @@ main stateBox = do
   pure
     { state
     , stateBox
-    , setStateKey : (_ # stateBox # setter)
-    , bindStateKey: (_ # stateBox # binder $ state)
+    , setStateKey : setter stateBox -- (_ # stateBox # setter)
+    , bindStateKey: binder stateBox state -- (_ # stateBox # binder $ state)
     }

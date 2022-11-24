@@ -38,6 +38,7 @@ here = R2.here "Gargantext.Components.App.Store"
 type Store =
   ( backend             :: T.Box (Maybe Backend)
   , errors              :: T.Box (Array FrontendError)
+  , expandTableEdition  :: T.Box Boolean
   , forestOpen          :: T.Box OpenNodes
   , graphVersion        :: T2.ReloadS
   , handed              :: T.Box Handed
@@ -63,6 +64,7 @@ type Store =
 type State =
   ( backend             :: Maybe Backend
   , errors              :: Array FrontendError
+  , expandTableEdition  :: Boolean
   , forestOpen          :: OpenNodes
   , graphVersion        :: T2.Reload
   , handed              :: Handed
@@ -89,6 +91,7 @@ options :: Record State
 options =
   { backend             : Nothing
   , errors              : []
+  , expandTableEdition  : false
   , forestOpen          : OpenNodes $ Set.empty
   , graphVersion        : T2.newReload
   , handed              : RightHanded

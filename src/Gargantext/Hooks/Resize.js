@@ -1,7 +1,5 @@
 'use strict';
 
-exports._add = add;
-exports._remove = remove;
 /**
  * @function add
  * @param {Window} window
@@ -10,7 +8,7 @@ exports._remove = remove;
  * @param {String} targetQuery
  * @param {String} type
  */
-function add(window, document, sourceQuery, targetQuery, type) {
+export function _add(window, document, sourceQuery, targetQuery, type) {
   var source = document.querySelector(sourceQuery);
   var target = document.querySelector(targetQuery);
 
@@ -49,7 +47,7 @@ function add(window, document, sourceQuery, targetQuery, type) {
  * @param {Document} document
  * @param {String} sourceQuery
  */
-function remove(document, sourceQuery) {
+export function _remove(document, sourceQuery) {
   var source = document.querySelector(sourceQuery);
   console.log(sourceQuery)
   source.removeEventListener('mousedown');

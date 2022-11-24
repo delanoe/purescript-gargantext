@@ -8,7 +8,8 @@ import Data.Argonaut as Argonaut
 import Data.Argonaut.Decode.Error (JsonDecodeError(..))
 import Data.Either (Either(..))
 import Data.Generic.Rep as GR
-import Data.Symbol (class IsSymbol, SProxy(..), reflectSymbol)
+import Data.Symbol (class IsSymbol, reflectSymbol)
+import Type.Proxy (Proxy(..))
 
 -- | Provide a generic sum JSON decoding for sum types deriving Generic
 genericSumDecodeJson
@@ -51,7 +52,7 @@ instance
   genericSumDecodeJsonRep f = do
     -- here we attempt to read the following json:
     -- { "ConstructorName": argument }
-    let name = reflectSymbol (SProxy :: _ name)
+    let name = reflectSymbol (Proxy :: _ name)
     obj <- Argonaut.decodeJson f
     inner <- Argonaut.getField obj name
     argument <- genericSumDecodeJsonRep inner
@@ -81,7 +82,7 @@ instance
   genericSumEncodeJsonRep (GR.Constructor inner) = do
     -- here we attempt to write the following json:
     -- { "ConstructorName": argument }
-    let name = reflectSymbol (SProxy :: _ name)
+    let name = reflectSymbol (Proxy :: _ name)
     let argument = genericSumEncodeJsonRep inner
     Argonaut.jsonSingletonObject name argument
 
@@ -123,7 +124,7 @@ instance
        then pure $ GR.Constructor GR.NoArguments
        else Left $ Named s $ TypeMismatch $ "Enum did not match expected string " <> name
     where
-      name = reflectSymbol (SProxy :: SProxy name)
+      name = reflectSymbol (Proxy :: Proxy name)
 
 genericEnumEncodeJson :: forall a rep
    . GR.Generic a rep
@@ -147,4 +148,4 @@ instance
 instance
   ( IsSymbol name
   ) => GenericEnumEncodeJson (GR.Constructor name GR.NoArguments) where
-  genericEnumEncodeJsonRep _ = Argonaut.encodeJson $ reflectSymbol (SProxy :: SProxy name)
+  genericEnumEncodeJsonRep _ = Argonaut.encodeJson $ reflectSymbol (Proxy :: Proxy name)

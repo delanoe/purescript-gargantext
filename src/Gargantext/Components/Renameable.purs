@@ -170,8 +170,8 @@ editingCpt = here.component "editing" cpt where
         T.write_ false isEditing
         onRename text
 
-      onReset _ = do
-        T.write_ false isEditing
+      -- onReset _ = do
+      --   T.write_ false isEditing
 
     -- | Render
     -- |

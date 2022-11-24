@@ -1,5 +1,7 @@
 'use strict';
 
-const pkg = require('../../package.json');
+import pkg from '../../package.json';
 
-exports.version = pkg.version;
+let version = pkg.version
+
+export { version };

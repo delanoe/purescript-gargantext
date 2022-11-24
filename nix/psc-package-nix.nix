@@ -3,6 +3,6 @@
 pkgs.fetchFromGitHub {
   owner = "justinwoo";
   repo = "psc-package-nix";
-  rev = "0f1f001e2ea17ad461871a1873050f6aef5f1284";
-  sha256 = "0gbwcvw8rvxhlg9p6avd0812y263jzim1sra5frbdi0s6q0ngsgi";
+  rev = "e00fdaf2a2628b6b056db12ff4a3069aa04cb536";
+  sha256 = "0p2cblmpma7s058r5nfwzpvdsi98qhh5isvc47052wjbmfinh8db";
 }

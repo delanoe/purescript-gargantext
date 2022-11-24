@@ -6,8 +6,7 @@ import Data.Maybe (Maybe(..))
 import Data.Nullable (toMaybe)
 import Effect (Effect)
 import FFI.Simple ((...))
-import Gargantext.Components.App (app)
-import Gargantext.Components.App.Store as AppStore
+import Gargantext.Components.App as App
 import Gargantext.Utils.Reactix as R2
 import Prelude (Unit, ($))
 
@@ -19,12 +18,6 @@ main = paint $ toMaybe (document ... "getElementById" $ [ "app" ])
 
 paint :: Maybe Element -> Effect Unit
 paint Nothing  = here.error "[main] Container not found"
-paint (Just c) = R2.render app' c
+paint (Just c) = R2.render app c
   where
-    state = AppStore.options
-    app' =
-      AppStore.provide
-      state
-      [
-        app {} []
-      ]
+    app = App.app {}

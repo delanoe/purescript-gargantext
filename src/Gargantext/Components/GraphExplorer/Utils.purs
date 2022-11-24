@@ -1,24 +1,34 @@
 module Gargantext.Components.GraphExplorer.Utils
   ( stEdgeToGET, stNodeToGET
   , normalizeNodes
+  , normalizeNodeSizeDefault
+  , normalizeNodeSize
   , takeGreatestNodeByCluster, countNodeByCluster
   ) where
 
 import Gargantext.Prelude
 
 import Data.Array as A
-import Data.Maybe (Maybe(..))
+import Data.Foldable (maximum, minimum)
+import Data.Lens (Lens', lens, over, traversed, (^.))
+import Data.Int (floor, toNumber)
+import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (wrap)
+import Data.Number as DN
+import Data.Sequence as Seq
+import Data.Traversable (class Traversable)
+import Gargantext.Components.GraphExplorer.GraphTypes as GEGT
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax.Types as ST
 import Gargantext.Utils (getter)
-import Gargantext.Utils.Array as GUA
+import Gargantext.Utils.Lens as GUL
+import Gargantext.Utils.Seq as GUS
 
-stEdgeToGET :: Record ST.Edge -> GET.Edge
+stEdgeToGET :: Record ST.Edge -> GEGT.Edge
 stEdgeToGET { _original } = _original
 
-stNodeToGET :: Record ST.Node -> GET.Node
-stNodeToGET { id, label, x, y, _original: GET.Node { attributes, size, type_ } } = GET.Node {
+stNodeToGET :: Record ST.Node -> GEGT.Node
+stNodeToGET { id, label, x, y, _original: GEGT.Node { attributes, size, type_ } } = GEGT.Node {
     attributes
   , children: []
   , id_: id
@@ -31,35 +41,47 @@ stNodeToGET { id, label, x, y, _original: GET.Node { attributes, size, type_ } }
 
 -----------------------------------------------------------------------
 
-normalizeNodes :: Array GET.Node -> Array GET.Node
-normalizeNodes ns = map normalizeNode ns
+-- | Normalize nodes, i.e. set their {x, y} values so that they are in
+-- | range [0, 1].
+normalizeNodes :: forall t. Traversable t => t GEGT.Node -> t GEGT.Node
+normalizeNodes ns = GUL.normalizeLens xLens $ GUL.normalizeLens yLens ns
   where
-    xs = map (\(GET.Node { x }) -> x) ns
-    ys = map (\(GET.Node { y }) -> y) ns
-    mMinx = GUA.min xs
-    mMaxx = GUA.max xs
-    mMiny = GUA.min ys
-    mMaxy = GUA.max ys
-    mXrange = do
-      minx <- mMinx
-      maxx <- mMaxx
-      pure $ maxx - minx
-    mYrange = do
-      miny <- mMiny
-      maxy <- mMaxy
-      pure $ maxy - miny
-    xdivisor = case mXrange of
-      Nothing -> 1.0
-      Just xdiv -> 1.0 / xdiv
-    ydivisor = case mYrange of
-      Nothing -> 1.0
-      Just ydiv -> 1.0 / ydiv
-    normalizeNode (GET.Node n@{ x, y }) = GET.Node $ n { x = x * xdivisor
-                                                       , y = y * ydivisor }
+    xLens :: Lens' GEGT.Node Number
+    xLens = lens (\(GEGT.Node { x }) -> x) $ (\(GEGT.Node n) val -> GEGT.Node (n { x = val }))
+    yLens :: Lens' GEGT.Node Number
+    yLens = lens (\(GEGT.Node { y }) -> y) $ (\(GEGT.Node n) val -> GEGT.Node (n { y = val }))
+
+type NodeSize r = { size :: Number | r }
+
+normalizeNodeSizeDefault :: forall t r. Traversable t => t (NodeSize r) -> t (NodeSize r)
+normalizeNodeSizeDefault ns = logSize <$> normalizeNodeSize 50.0 100000.0 ns
+  where
+    logSize (n@{ size }) = n { size = DN.log (size + 1.0) }
+
+normalizeNodeSize :: forall t r. Traversable t =>
+                     Number -> Number -> t (NodeSize r) -> t (NodeSize r)
+normalizeNodeSize minSize maxSize ns = over traversed (over sizeLens (\s -> minSize + (s - sizeMin') * quotient)) ns
+  where
+    sizes = over traversed (_ ^. sizeLens) ns
+    sizeMin = minimum sizes
+    sizeMax = maximum sizes
+    range = do
+      sMin <- sizeMin
+      sMax <- sizeMax
+      pure $ sMax - sMin
+    sizeMin' = fromMaybe 0.0 sizeMin
+    divisor = maybe 1.0 (\r -> 1.0 / r) range
+    quotient :: Number
+    quotient = (maxSize - minSize) * divisor
+    --quotient = (toNumber $ maxSize - minSize) * divisor
+    --sizeLens :: Lens' GEGT.Node Number
+    --sizeLens = lens (\(GEGT.Node { size }) -> size) $ (\(GEGT.Node n) val -> GEGT.Node (n { size = val }))
+    sizeLens :: Lens' { size :: Number | r } Number
+    sizeLens = lens (\{ size } -> size) $ \n val -> (n { size = val })
 
 ------------------------------------------------------------------------
 
-takeGreatestNodeByCluster :: GET.HyperdataGraph -> Int -> Int -> Array GET.Node
+takeGreatestNodeByCluster :: GET.HyperdataGraph -> Int -> Int -> Array GEGT.Node
 takeGreatestNodeByCluster graphData take clusterId
   =   graphData
   #   getter _.graph
@@ -75,7 +97,7 @@ takeGreatestNodeByCluster graphData take clusterId
   >>> A.takeEnd take
   >>> A.reverse
 
-countNodeByCluster :: GET.HyperdataGraph -> Int -> GET.ClusterCount
+countNodeByCluster :: GET.HyperdataGraph -> Int -> GEGT.ClusterCount
 countNodeByCluster graphData clusterId
   =   graphData
   #   getter _.graph

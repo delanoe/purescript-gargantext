@@ -157,6 +157,14 @@ $node-popup-width: 544px
     right: $offset-x
     z-index: z-index("tree", "badge")
 
+    // (?) unknown regresion: empirical offset re-alignement
+    .b-icon-button__inner
+      $offset-y: -3px
+      $offset-x: 1px
+
+      top: $offset-y
+      left: $offset-x
+
     // (remove hover effect to maintain continuity with folder + node icon
     // lack of hover effect)
     &--matched
@@ -445,28 +453,54 @@ $node-popup-width: 544px
 
     .b-icon
       margin-right: space-x(1)
+      font-size: 11px
 
     &__almost-useable
-      color: darken($pastel-orange, 25%)
+      color: $almost-useable
     &__development-in-progress
-      color: darken($pastel-red, 25%)
+      color: $development-in-progress
     &__ok-to-use
-      color: $body-color
+      color: $ok-to-use
+      // (?) avoid unnecessary informations
+      display: none
 
 
   .popup-container
     display: flex
     flex-direction: column
 
-    &__header
-
-      .fa-pencil
-        color: black
-
     &__body
       display: flex
       justify-content: center
       background-color: $body-bg
+      padding: space-x(5) space-x(7)
+      gap: space-x(6)
+
+    &__cta
+      position: relative
+
+      &__button
+        font-size: 18px
+
+      &__icon
+        $offset-y: -9px
+        $offset-x: -13px
+
+        position: absolute
+        top: $offset-y
+        right: $offset-x
+        font-size: 11px
+
+      // @XXX SASS lacking of immediate parent selector
+      &--almost-useable .popup-container__cta__icon
+        color: $almost-useable
+      &--development-in-progress .popup-container__cta__icon
+        color: $development-in-progress
+      &--ok-to-use .popup-container__cta__icon
+        color: $ok-to-use
+        // (?) avoid unnecessary informations
+        display: none
+
 
 /////////////////////////////////////////
 

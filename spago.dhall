@@ -15,6 +15,7 @@ to generate this file without the comments in this block.
   [ "aff"
   , "aff-promise"
   , "affjax"
+  , "affjax-web"
   , "argonaut"
   , "argonaut-codecs"
   , "argonaut-core"
@@ -39,17 +40,15 @@ to generate this file without the comments in this block.
   , "foreign"
   , "foreign-object"
   , "form-urlencoded"
+  , "formatters"
   , "formula"
   , "functions"
-  , "globals"
   , "graphql-client"
   , "http-methods"
   , "integers"
   , "js-timers"
   , "lists"
-  , "markdown"
-  , "markdown-smolder"
-  , "math"
+  , "markdown-it"
   , "maybe"
   , "media-types"
   , "milkis"
@@ -75,10 +74,6 @@ to generate this file without the comments in this block.
   , "simple-json"
   , "simple-json-generics"
   , "simplecrypto"
-  , "smolder"
-  , "spec"
-  , "spec-discovery"
-  , "spec-quickcheck"
   , "strings"
   , "strings-extra"
   , "stringutils"
@@ -102,5 +97,5 @@ to generate this file without the comments in this block.
   , "web-xhr"
   ]
 , packages = ./packages.dhall
-, sources = [ "src/**/*.purs", "test/**/*.purs" ]
+, sources = [ "src/**/*.purs" ]
 }

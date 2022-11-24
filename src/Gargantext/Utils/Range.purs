@@ -14,7 +14,7 @@ derive instance Newtype (Closed t) _
 
 instance Ord t => Range (Closed t) t where
   clamp (Closed r) = max r.min <<< min r.max
-  within (Closed r) v = (v <= r.max) && (v >= r.min)
+  within (Closed r) v = (r.min <= v) && (v <= r.max)
 
 instance Eq t => Eq (Closed t) where
   eq (Closed r1) (Closed r2) = (r1.min == r2.min) && (r1.max == r2.max)
@@ -45,4 +45,3 @@ withMin (Closed {max}) min = Closed { min, max }
 -- | Updates the maximum value in a closed range
 withMax :: forall t. Closed t -> t -> Closed t
 withMax (Closed {min}) max = Closed { min, max }
-

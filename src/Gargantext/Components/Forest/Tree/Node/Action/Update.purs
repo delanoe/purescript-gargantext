@@ -2,7 +2,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Update where
 
 import Gargantext.Prelude
 
-import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (Charts(..), Granularity(..), GraphMetric(..), Method(..), PartitionMethod(..), UpdateNodeParams(..), Strength(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (Charts(..), Granularity(..), GraphMetric(..), Method(..), PartitionMethod(..), UpdateNodeParams(..), Strength(..), BridgenessMethod(..))
 
 import DOM.Simple.Console (log3)
 import Data.Either (Either(..))
@@ -81,8 +81,17 @@ updateGraphCpt = here.component "updateGraph" cpt where
     methodGraphEdgesStrength  <- T.useBox Strong
     methodGraphEdgesStrength' <- T.useLive T.unequal methodGraphEdgesStrength
 
+    methodGraphNodeType1  <- T.useBox GT.CTabTerms
+    methodGraphNodeType1' <- T.useLive T.unequal methodGraphNodeType1
+
+    methodGraphNodeType2  <- T.useBox GT.CTabTerms
+    methodGraphNodeType2' <- T.useLive T.unequal methodGraphNodeType2
+
     methodGraphClustering <- T.useBox Spinglass
     methodGraphClustering' <- T.useLive T.unequal methodGraphClustering
+
+    methodGraphBridgeness <- T.useBox BridgenessMethod_Basic
+    methodGraphBridgeness' <- T.useLive T.unequal methodGraphBridgeness
 
     let
       callback :: Action -> Aff Unit
@@ -94,21 +103,48 @@ updateGraphCpt = here.component "updateGraph" cpt where
                                  , callback: \val -> T.write_ val methodGraphMetric
                                  , print: show } []
 
+
+
+                 , H.text "Bridgness Method : Basic is ok, Advanced in Development"
+                 , formChoiceSafe { items: [BridgenessMethod_Basic, BridgenessMethod_Advanced]
+                                 , default: methodGraphBridgeness'
+                                 , callback: \val -> T.write_ val methodGraphBridgeness
+                                 , print: show } []
+
+{-
+
+                 , H.text "NodeType 1 ?"
+                 , formChoiceSafe { items: [GT.CTabTerms, GT.CTabSources, GT.CTabAuthors, GT.CTabInstitutes]
+                                 , default: methodGraphNodeType1'
+                                 , callback: \val -> T.write_ val methodGraphNodeType1
+                                 , print: show } []
+
+                 , H.text "NodeType 2 ?"
+                 , formChoiceSafe { items: [GT.CTabTerms, GT.CTabSources, GT.CTabAuthors, GT.CTabInstitutes]
+                                 , default: methodGraphNodeType2'
+                                 , callback: \val -> T.write_ val methodGraphNodeType2
+                                 , print: show } []
+                                 -}
+
                  , H.text "Show Strong (expected) links or weak (maybe unexpected) links?"
                  , formChoiceSafe { items: [Strong, Weak]
                                  , default: methodGraphEdgesStrength'
                                  , callback: \val -> T.write_ val methodGraphEdgesStrength
                                  , print: show } []
 
+{-
                  , formChoiceSafe { items: [Spinglass, Infomap, Confluence]
                                  , default: methodGraphClustering'
                                  , callback: \val -> T.write_ val methodGraphClustering
                                  , print: show } []
-
+-}
                  ]
                  (submitButton (UpdateNode $ UpdateNodeParamsGraph { methodGraphMetric: methodGraphMetric'
                                                                    , methodGraphClustering: methodGraphClustering'
+                                                                   , methodGraphBridgeness: methodGraphBridgeness'
                                                                    , methodGraphEdgesStrength : methodGraphEdgesStrength'
+                                                                   , methodGraphNodeType1 : methodGraphNodeType1'
+                                                                   , methodGraphNodeType2 : methodGraphNodeType2'
                                                                    }
                                ) callback
                   )
@@ -130,7 +166,7 @@ updatePhyloCpt = here.component "updatePhylo" cpt where
       defaultData = Phylo.UpdateData
         { proximity: 0.5
         , synchrony: 0.5
-        , quality: 0.5
+        , quality: 0.8
         , exportFilter: 3.0
         , timeUnit: Phylo.Year $ Phylo.TimeUnitCriteria
           { period: 3

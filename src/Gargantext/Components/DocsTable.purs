@@ -17,7 +17,6 @@ import Data.Ord.Down (Down(..))
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as Str
-import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
@@ -47,7 +46,7 @@ import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), SidePanelSta
 import Gargantext.Types as GT
 import Gargantext.Utils (sortWith, (?))
 import Gargantext.Utils.CacheAPI as GUC
-import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParam, mQueryParamS, queryParam, queryParamS)
+import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParam, mQueryParamS, mQueryParamS', queryParam, queryParamS)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as GUT
 import Gargantext.Utils.Toestand as T2
@@ -56,6 +55,7 @@ import Reactix.DOM.HTML as H
 import Record.Extra as RX
 import Simple.JSON as JSON
 import Toestand as T
+import Type.Proxy (Proxy(..))
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.DocsTable"
@@ -100,8 +100,8 @@ type PageLayoutProps =
   | CommonProps
   )
 
-_documentIdsDeleted  = prop (SProxy :: SProxy "documentIdsDeleted")
-_localCategories     = prop (SProxy :: SProxy "localCategories")
+_documentIdsDeleted  = prop (Proxy :: Proxy "documentIdsDeleted")
+_localCategories     = prop (Proxy :: Proxy "localCategories")
 
 docViewLayout :: Record LayoutProps -> R.Element
 docViewLayout props = R.createElement docViewLayoutCpt props []
@@ -270,7 +270,7 @@ scanDocumentCreationProgress boxes session nodeId currentTask cbk = do
           , GT.IsKilled
           , GT.IsFailure
           ]
-        hasEndingStatus s = any (_ # s # eq) endingStatusList
+        hasEndingStatus s = any (eq s) endingStatusList
 
       if (hasEndingStatus status)
       then
@@ -709,7 +709,7 @@ tableRouteWithPage { listId, nodeId, params: { limit, offset, orderBy, searchTyp
     st  = queryParam "searchType" searchType
     tt  = queryParamS "tabType" (showTabType' tabType)
     q   = queryParamS "query" query
-    y   = mQueryParam "year" yearFilter
+    y   = mQueryParamS' "year" yearFilter
 
 deleteAllDocuments :: Session -> Int -> AffRESTError (Array Int)
 deleteAllDocuments session = delete session <<< documentsRoute

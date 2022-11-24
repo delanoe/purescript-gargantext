@@ -1,6 +1,6 @@
 "use strict";
 
-exports.createDropdown = function(iid) {
+export function createDropdown(iid) {
     var el = document.getElementById(iid);
 
     if (!window.Dropdown) return;

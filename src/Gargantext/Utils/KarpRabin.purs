@@ -26,6 +26,7 @@ module Gargantext.Utils.KarpRabin ( -- * Overview
 import Data.Array as A
 import Data.Enum (fromEnum)
 import Data.Foldable (class Foldable, minimum, foldl)
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int (quot)
 import Data.List as L
 import Data.Map as M
@@ -139,7 +140,7 @@ strictMatcher pats = unsafePartial search
         <<< S.take hLen
     hashMap =
       M.fromFoldableWith (flip (<>))
-                         (A.mapWithIndex (\i a -> Tuple (hash a) [i]) pats)
+                         (mapWithIndex (\i a -> Tuple (hash a) [i]) pats)
     search :: Partial => String -> Array (Tuple Int (Array Int))
     search str = if strLen < hLen then []
                                   else A.fromFoldable (go 0 shash)

@@ -20,10 +20,13 @@ let
 
     echo "Compiling"
     #build-purs
-    spago build
-    echo "Bundling"
+    #spago build
+    #echo "Bundling"
     #pulp browserify --skip-compile -t dist/bundle.js --src-path output
-    browserify
+    #browserify
+
+    # 0.15
+    spago bundle-app --main Main --to dist/bundle.js
   '';
 
 
@@ -105,7 +108,7 @@ let
 in
 pkgs.mkShell {
   buildInputs = [
-    easy-ps.purs-0_14_7
+    easy-ps.purs-0_15_4
     easy-ps.psc-package
     easy-ps.dhall-json-simple
     easy-ps.zephyr
@@ -117,7 +120,8 @@ pkgs.mkShell {
     build-zephyr
     build
     minify-bundle
-    pkgs.closurecompiler
+    #pkgs.closurecompiler
+    pkgs.esbuild
     pkgs.minify
     pkgs.nodejs
     pkgs.python  # needed for msgpack etc

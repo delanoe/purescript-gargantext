@@ -20,6 +20,7 @@ import Gargantext.Prelude
 import Data.Array as Array
 import Data.Date as Date
 import Data.Generic.Rep (class Generic)
+import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype)
@@ -379,7 +380,7 @@ parseSources
 --                  sorting purpose only
 sortSources :: Array String -> Array Source
 sortSources
-  =   Array.mapWithIndex setSource
+  =   mapWithIndex setSource
   >>> Array.sortWith getLabel
 
   where

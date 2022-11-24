@@ -1,14 +1,12 @@
 'use strict';
 
-exports._show = show;
-exports._hide = hide;
 /**
  * @function show
  * @param {Window} window
  * @param {string} querySelector
  * @unpure {Object} window.$
  */
-function show(window, querySelector) {
+export function _show(window, querySelector) {
   window.$(querySelector).modal('show');
 }
 /**
@@ -17,7 +15,7 @@ function show(window, querySelector) {
  * @param {string} querySelector
  * @unpure {Object} window.$
  */
-function hide(window, querySelector) {
+export function _hide(window, querySelector) {
   window.$(querySelector).modal('hide');
   // @XXX Bootstrap not removing some modal elements on "hide" method
   // @https://stackoverflow.com/questions/50168312/bootstrap-4-close-modal-backdrop-doesnt-disappear

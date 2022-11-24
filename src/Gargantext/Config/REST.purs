@@ -1,6 +1,6 @@
 module Gargantext.Config.REST where
 
-import Affjax (Error(..), defaultRequest, request)
+import Affjax.Web (Error(..), defaultRequest, request)
 import Affjax as Affjax
 import Affjax.RequestBody (formData, formURLEncoded, string)
 import Affjax.RequestHeader as ARH

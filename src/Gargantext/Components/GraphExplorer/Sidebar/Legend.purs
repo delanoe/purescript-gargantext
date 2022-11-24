@@ -10,6 +10,7 @@ import Data.Sequence (Seq)
 import Data.Set as Set
 import Data.Traversable (foldMap, intercalate)
 import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.GraphExplorer.GraphTypes as GEGT
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax.Types as ST
 import Gargantext.Utils (getter, nbsp, (?))
@@ -23,8 +24,8 @@ here = R2.here "Gargantext.Components.GraphExplorer.Sidebar.Legend"
 
 type Props =
   ( legendSeq             :: Seq GET.Legend
-  , extractedNodeList     :: Array GET.Node
-  , nodeCountList         :: Array GET.ClusterCount
+  , extractedNodeList     :: Array GEGT.Node
+  , nodeCountList         :: Array GEGT.ClusterCount
   , selectedNodeIds       :: T.Box ST.NodeIds
   )
 
@@ -76,7 +77,7 @@ legendCpt = here.component "legend" cpt where
           ]
       ]
 
-filterByCluster :: Int -> Array GET.Node -> Array GET.Node
+filterByCluster :: Int -> Array GEGT.Node -> Array GEGT.Node
 filterByCluster id
   =   A.filter
       (   getter _.attributes
@@ -84,7 +85,7 @@ filterByCluster id
       >>> eq id
       )
 
-getClusterNodeCount :: Array GET.ClusterCount -> Int -> Int
+getClusterNodeCount :: Array GEGT.ClusterCount -> Int -> Int
 getClusterNodeCount nodeCountList id
   =   nodeCountList
   #   A.find
@@ -98,7 +99,7 @@ getClusterNodeCount nodeCountList id
 ---------------------------------------------------------
 
 type SelectedNodesProps =
-  ( extractedNodeList     :: Array GET.Node
+  ( extractedNodeList     :: Array GEGT.Node
   , selectedNodeIds       :: T.Box ST.NodeIds
   , clusterId             :: Int
   , nodeCount             :: Int
@@ -146,7 +147,7 @@ selectedNodesCpt = here.component "selectedNodes" cpt where
       { className: "graph-legend-nodes" }
       [
         flip foldMap (filterByCluster clusterId extractedNodeList)
-        \(GET.Node { label: nodeLabel, id_: nodeId }) ->
+        \(GEGT.Node { label: nodeLabel, id_: nodeId }) ->
 
           H.li
           { className: "graph-legend-nodes__item" }

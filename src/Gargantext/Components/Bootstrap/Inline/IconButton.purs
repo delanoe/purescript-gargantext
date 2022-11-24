@@ -24,6 +24,7 @@ type Options =
   , overlay   :: Boolean
   , elevation :: Elevation
   , variant   :: Variant
+  , focusRing :: Boolean
   )
 
 options :: Record Options
@@ -34,6 +35,7 @@ options =
   , overlay   : true
   , elevation : Level0
   , variant   : Dark
+  , focusRing : true
   }
 
 -- | Structural Component for a simple Glyphicon element with call-to-action
@@ -67,6 +69,9 @@ component = R.hooksComponent componentName cpt where
             componentName <> "--overlay" $
             ""
         , componentName <> "--" <> show props.elevation
+        , props.focusRing ?
+            componentName <> "--focus-ring" $
+            ""
         ]
 
       contentClassName = intercalate " "

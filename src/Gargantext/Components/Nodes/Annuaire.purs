@@ -10,7 +10,6 @@ import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Newtype (class Newtype)
 import Data.Sequence as Seq
-import Data.Symbol (SProxy(..))
 import Effect.Aff (launchAff_)
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types as CT
@@ -30,6 +29,7 @@ import Reactix.DOM.HTML as H
 import Record as Record
 import Simple.JSON as JSON
 import Toestand as T
+import Type.Proxy (Proxy(..))
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Annuaire"
@@ -150,7 +150,7 @@ pageLayoutCpt = here.component "pageLayout" cpt
       where
         errorHandler = logRESTError here "[pageLayout]"
 
-type PageProps = 
+type PageProps =
   ( frontends :: Frontends
   , pagePath  :: T.Box PagePath
   -- , info :: AnnuaireInfo
@@ -263,10 +263,10 @@ instance JSON.ReadForeign AnnuaireInfo where
     inst <- JSON.readImpl f
     pure $ AnnuaireInfo $ Record.rename user_idP userIdP $ Record.rename parent_idP parentIdP inst
     where
-      user_idP = SProxy :: SProxy "user_id"
-      userIdP = SProxy :: SProxy "userId"
-      parent_idP = SProxy :: SProxy "parent_id"
-      parentIdP = SProxy :: SProxy "parentId"
+      user_idP = Proxy :: Proxy "user_id"
+      userIdP = Proxy :: Proxy "userId"
+      parent_idP = Proxy :: Proxy "parent_id"
+      parentIdP = Proxy :: Proxy "parentId"
 
 --newtype AnnuaireTable  = AnnuaireTable  { annuaireTable :: Array (Maybe Contact)}
 
@@ -292,4 +292,3 @@ loadPage session {nodeId, params: { offset, limit }} =
 
 getAnnuaireInfo :: Session -> Int -> AffRESTError AnnuaireInfo
 getAnnuaireInfo session id = get session (NodeAPI Node (Just id) "")
-

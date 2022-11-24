@@ -34,5 +34,3 @@ instance IsHashable (Set String) where
 
       concat :: Array Hash -> String
       concat = Array.foldl (<>) ""
-
-

@@ -16,6 +16,7 @@ import Effect (Effect)
 import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.GraphExplorer.Frame.DocFocus (docFocus)
+import Gargantext.Components.GraphExplorer.GraphTypes as GEGT
 import Gargantext.Components.GraphExplorer.Resources as Graph
 import Gargantext.Components.GraphExplorer.Sidebar as GES
 import Gargantext.Components.GraphExplorer.Store as GraphStore
@@ -23,9 +24,11 @@ import Gargantext.Components.GraphExplorer.Toolbar.Controls as Controls
 import Gargantext.Components.GraphExplorer.TopBar as GETB
 import Gargantext.Components.GraphExplorer.Types (GraphSideDoc)
 import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Components.GraphExplorer.Utils as GEU
 import Gargantext.Config (defaultFrontends)
 import Gargantext.Data.Louvain as Louvain
 import Gargantext.Hooks.Session (useSession)
+import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Types as GT
@@ -33,7 +36,6 @@ import Gargantext.Types as Types
 import Gargantext.Utils (getter, (?))
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
-import Math as Math
 import Partial.Unsafe (unsafePartial)
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -43,15 +45,16 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.Layout"
 
 type Props =
-  ( sigmaRef        :: R.Ref Sigmax.Sigma
+  ( fa2Ref   :: R.Ref (Maybe ForceAtlas.FA2Layout)
+  , sigmaRef :: R.Ref Sigmax.Sigma
   )
 
 layout :: R2.Leaf Props
 layout = R2.leaf layoutCpt
-
 layoutCpt :: R.Memo Props
 layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
-  cpt { sigmaRef
+  cpt { fa2Ref
+      , sigmaRef
       } _ = do
     -- | States
     -- |
@@ -187,7 +190,8 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
         }
         [
           Controls.controls
-          { reloadForest: reloadForest
+          { fa2Ref
+          , reloadForest: reloadForest
           , sigmaRef
           }
         ]
@@ -200,6 +204,7 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
         [
           graphView
           { elRef: graphRef
+          , fa2Ref
           , sigmaRef
           }
         ]
@@ -208,8 +213,9 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
 --------------------------------------------------------------
 
 type GraphProps =
-  ( elRef           :: R.Ref (Nullable Element)
-  , sigmaRef        :: R.Ref Sigmax.Sigma
+  ( elRef    :: R.Ref (Nullable Element)
+  , fa2Ref   :: R.Ref (Maybe ForceAtlas.FA2Layout)
+  , sigmaRef :: R.Ref Sigmax.Sigma
   )
 
 graphView :: R2.Leaf GraphProps
@@ -217,6 +223,7 @@ graphView = R2.leaf graphViewCpt
 graphViewCpt :: R.Memo GraphProps
 graphViewCpt = R.memo' $ here.component "graphView" cpt where
   cpt { elRef
+      , fa2Ref
       , sigmaRef
       } _ = do
     -- | States
@@ -259,12 +266,18 @@ graphViewCpt = R.memo' $ here.component "graphView" cpt where
                                                         , selectedNodeIds'
                                                         , showEdges' }
 
+    -- R.useEffect' $ do
+    --   let (SigmaxT.Graph { edges: e }) = transformedGraph
+    --   here.log2 "[graphView] transformedGraph edges" $ A.fromFoldable e
+    --   here.log2 "[graphView] hidden edges" $ A.filter(_.hidden) $ A.fromFoldable e
+
     -- | Render
     -- |
     pure $
 
       Graph.drawGraph
       { elRef
+      , fa2Ref
       , forceAtlas2Settings: Graph.forceAtlas2Settings
       , sigmaRef
       , sigmaSettings: Graph.sigmaSettings
@@ -276,8 +289,12 @@ graphViewCpt = R.memo' $ here.component "graphView" cpt where
 convert :: GET.GraphData -> Tuple (Maybe GET.MetaData) SigmaxT.SGraph
 convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
   where
-    nodes = foldMapWithIndex nodeFn r.nodes
-    nodeFn _i nn@(GET.Node n) =
+    normalizedNodes :: Array GEGT.Node
+    normalizedNodes = GEGT.Node <$> (GEU.normalizeNodeSizeDefault $ (\(GEGT.Node n) -> n) <$> r.nodes)
+    nodes :: Seq.Seq (Record SigmaxT.Node)
+    nodes = foldMapWithIndex nodeFn normalizedNodes
+    nodeFn :: Int -> GEGT.Node -> Seq.Seq (Record SigmaxT.Node)
+    nodeFn _i nn@(GEGT.Node n) =
       Seq.singleton {
           borderColor: color
         , children: n.children
@@ -285,21 +302,23 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
         , equilateral: { numPoints: 3 }
         , gargType
         , hidden : false
+        , highlighted: false
         , id    : n.id_
         , label : n.label
-        , size  : Math.log (toNumber n.size + 1.0)
+        , size  : n.size
+        --, size: toNumber n.size
         , type  : modeGraphType gargType
         , x     : n.x -- cos (toNumber i)
         , y     : n.y -- sin (toNumber i)
         , _original: nn
         }
       where
-        cDef (GET.Cluster {clustDefault}) = clustDefault
+        cDef (GEGT.Cluster {clustDefault}) = clustDefault
         color = GET.intColor (cDef n.attributes)
         gargType =  unsafePartial $ fromJust $ Types.modeFromString n.type_
     nodesMap = SigmaxT.nodesMap nodes
-    edges = foldMapWithIndex edgeFn $ A.sortWith (\(GET.Edge {weight}) -> weight) r.edges
-    edgeFn i ee@(GET.Edge e) =
+    edges = foldMapWithIndex edgeFn $ A.sortWith (\(GEGT.Edge {weight}) -> weight) r.edges
+    edgeFn i ee@(GEGT.Edge e) =
       Seq.singleton
         { id : e.id_
         , color
@@ -326,7 +345,9 @@ modeGraphType :: Types.Mode -> String
 modeGraphType Types.Authors     = "square"
 modeGraphType Types.Institutes  = "equilateral"
 modeGraphType Types.Sources     = "star"
-modeGraphType Types.Terms       = "def"
+--modeGraphType Types.Terms       = "def"
+--modeGraphType Types.Terms       = "circle"
+modeGraphType Types.Terms       = "ccircle"
 
 --------------------------------------------------------------
 
@@ -398,9 +419,9 @@ transformGraph graph { edgeConfluence'
     nodeMarked :: Record SigmaxT.Node -> Record SigmaxT.Node
     nodeMarked node@{ id } =
       if Set.member id selectedNodeIds' then
-        node { borderColor = "#000", type = "selected" }
+        node { borderColor = "#000", highlighted = true, type = "selected" }
       else
-        node
+        node { highlighted = false }
 
     nodeHideSize :: Record SigmaxT.Node -> Record SigmaxT.Node
     nodeHideSize node@{ size } =

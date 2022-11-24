@@ -1,0 +1,74 @@
+.corpus-layout
+  margin-bottom: space-x(1)
+
+  &__title
+    display: flex
+    align-items: center
+
+    &__text
+      font-size: $h3-font-size
+      font-family: $headings-font-family
+
+    &__line
+      // (?) see "_list.sass" > ".table-header-rename__line" for more infos
+      border-bottom: 1px solid $gray-200
+      border-top: none
+      // (?) strange behavior where browser engine add it by itself
+      height: 0
+      flex-grow: 1
+      margin-left: space-x(4)
+      margin-right: space-x(4)
+
+    &__expand
+      margin-left: space-x(4)
+
+
+  &__edition-block
+    border-bottom: 1px solid $gray-200
+    // using <table-header-rename-edition> padding to prettify the overall UI
+    // (+ <form-group> padding)
+    margin-bottom: calc( #{$card-spacer-y} + #{ space-x(0.75) } )
+
+  &__code-section
+    margin-top: space-x(1)
+
+  &__folders
+    margin-top: space-x(6)
+
+  // @TODO: switch <tile-menu> component using a <popover> for a reworked
+  //        <context-menu> (easier to use). <popover> has far too many issues,
+  //        such as the below micro-managing
+  .tile-menu__popover
+    position: relative
+    width: 200px
+
+//////////////////////////////////////////////////////
+
+.corpus-code-layout
+  position: relative
+
+  &__toolbar
+    display: flex
+    align-items: center
+    justify-content: space-between
+    border-bottom: 1px solid $border-color
+    padding: $card-spacer-y $card-spacer-x
+    background-color: $body-bg
+    position: sticky
+    top: $topbar-height
+    z-index: z-index('corpus-code', 'toolbar')
+
+    // @XXX: reset "main-page__main-route" wrapper margin
+    margin-left: space-x(-4)
+    margin-right: space-x(-4)
+    margin-top: space-x(-3)
+
+  &__fields
+    margin-top: space-x(3)
+    z-index: z-index('corpus-code', 'content')
+
+.code-section-item
+
+  // accentuate disabled icon effect
+  .card-header .b-icon-button--disabled
+    opacity: 0.2

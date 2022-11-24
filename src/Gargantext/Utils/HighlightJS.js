@@ -1,9 +1,7 @@
 'use strict';
 
-const hljs = require('highlightjs/highlight.pack.min.js');
+import hljs from 'highlightjs/highlight.pack.min.js';
 
-function highlightBlock(el) {
+export function _highlightBlock(el) {
     hljs.highlightBlock(el);
 }
-
-exports._highlightBlock = highlightBlock;

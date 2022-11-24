@@ -1,9 +1,9 @@
 'use strict';
 
-const reactTooltip = require('react-tooltip');
+import Tooltip from 'react-tooltip';
 
 if (typeof window !== 'undefined') {
-    window.ReactTooltip = reactTooltip;
+    window.ReactTooltip = Tooltip;
 }
 
-exports.reactTooltipCpt = reactTooltip;
+export { Tooltip as reactTooltipCpt };

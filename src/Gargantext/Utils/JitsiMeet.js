@@ -1,10 +1,10 @@
 'use strict';
 
-var API = require('../../src/external-deps/JitsiMeetAPI.js');
+import API from '../../src/external-deps/JitsiMeetAPI.js';
 
 // console.log('API', API);
 
-exports._api = API;
-exports._jitsiMeetAPI = function(host, options) {
+export { API as _api };
+export function _jitsiMeetAPI(host, options) {
     return new API(host, options);
 };

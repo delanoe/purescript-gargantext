@@ -23,7 +23,6 @@ import Data.Show.Generic (genericShow)
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String.Regex (Regex, regex, replace) as R
-import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -36,6 +35,7 @@ import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
 import Simple.JSON as JSON
 import Reactix as R
+import Type.Proxy (Proxy(..))
 
 type Endo a = a -> a
 
@@ -276,28 +276,28 @@ instance JSON.WriteForeign NgramsElement where
     JSON.writeImpl $ ne { children = Set.toUnfoldable ne.children :: Array _ }
 
 _parent :: forall parent row. Lens' { parent :: parent | row } parent
-_parent = prop (SProxy :: SProxy "parent")
+_parent = prop (Proxy :: Proxy "parent")
 
 _root :: forall root row. Lens' { root :: root | row } root
-_root   = prop (SProxy :: SProxy "root")
+_root   = prop (Proxy :: Proxy "root")
 
 _ngrams :: forall row. Lens' { ngrams :: NgramsTerm | row } NgramsTerm
-_ngrams = prop (SProxy :: SProxy "ngrams")
+_ngrams = prop (Proxy :: Proxy "ngrams")
 
 _children :: forall row. Lens' { children :: Set NgramsTerm | row } (Set NgramsTerm)
-_children = prop (SProxy :: SProxy "children")
+_children = prop (Proxy :: Proxy "children")
 
 _occurrences :: forall row. Lens' { occurrences :: Int | row } Int
-_occurrences = prop (SProxy :: SProxy "occurrences")
+_occurrences = prop (Proxy :: Proxy "occurrences")
 
 _list :: forall a row. Lens' { list :: a | row } a
-_list = prop (SProxy :: SProxy "list")
+_list = prop (Proxy :: Proxy "list")
 
 _ngrams_repo_elements :: forall a row. Lens' { ngrams_repo_elements :: a | row } a
-_ngrams_repo_elements = prop (SProxy :: SProxy "ngrams_repo_elements")
+_ngrams_repo_elements = prop (Proxy :: Proxy "ngrams_repo_elements")
 
 _ngrams_scores :: forall a row. Lens' { ngrams_scores :: a | row } a
-_ngrams_scores = prop (SProxy :: SProxy "ngrams_scores")
+_ngrams_scores = prop (Proxy :: Proxy "ngrams_scores")
 
 _NgramsElement  :: Iso' NgramsElement {
     children    :: Set NgramsTerm
