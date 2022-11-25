@@ -328,6 +328,23 @@
   .visible  { visibility: visible; }
   .hidden   { visibility: hidden;  }
 
+  /// Cursor
+  $cursors:
+    crosshair,
+    text,
+    move,
+    grab,
+    grabbing,
+    not-allowed,
+    all-scroll,
+    ew-resize,
+    ns-resize,
+    pointer;
+
+  @each $value in $cursors {
+    .cursor-#{$value} { cursor: $value; }
+  }
+
   /// Content helpers
   .virtual-space {
     &::after {

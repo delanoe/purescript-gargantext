@@ -229,7 +229,7 @@ fieldCodeEditorWrapperCpt = here.component "fieldCodeEditorWrapperCpt" cpt where
         { id: bodyId
         , className: "collapse card-body"
         , aria:
-            { labelledBy: headerId
+            { labelledby: headerId
             }
         }
         [

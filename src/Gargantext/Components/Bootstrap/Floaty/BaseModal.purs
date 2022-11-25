@@ -11,7 +11,8 @@ import Data.Maybe (Maybe(..))
 import Data.UUID as UUID
 import Effect (Effect)
 import Effect.Uncurried (EffectFn2, runEffectFn2)
-import Gargantext.Components.Bootstrap.Types (ModalSizing(..))
+import Gargantext.Components.Bootstrap.IconButton (iconButton)
+import Gargantext.Components.Bootstrap.Types (Elevation(..), ModalSizing(..))
 import Gargantext.Hooks.UpdateEffect (useUpdateEffect1')
 import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
@@ -188,17 +189,12 @@ component = R.memo' $ R.hooksComponent componentName cpt where
                     { className: componentName <> "__header__title" }
                     [ H.text title' ]
                 ,
-                  H.button
-                  { type: "button"
+                  iconButton
+                  { name: "times"
+                  , callback: onCloseButtonClick
+                  , elevation: Level2
+                  , className: componentName <> "__header__close"
                   }
-                  [
-                    H.a
-                    {
-                      on: { click: onCloseButtonClick }
-                    , className: "btn fa fa-times"
-                    }
-                    []
-                  ]
                 ]
             ,
               -- Body

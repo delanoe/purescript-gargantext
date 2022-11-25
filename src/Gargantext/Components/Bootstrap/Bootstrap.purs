@@ -9,6 +9,7 @@ import Gargantext.Components.Bootstrap.Caveat(caveat) as Exports
 import Gargantext.Components.Bootstrap.Cloak (cloak) as Exports
 import Gargantext.Components.Bootstrap.ContextMenu(contextMenu, contextMenuItem) as Exports
 import Gargantext.Components.Bootstrap.Fieldset(fieldset) as Exports
+import Gargantext.Components.Bootstrap.FormCheckbox(formCheckbox) as Exports
 import Gargantext.Components.Bootstrap.FormInput(formInput) as Exports
 import Gargantext.Components.Bootstrap.FormSelect(formSelect, formSelect') as Exports
 import Gargantext.Components.Bootstrap.FormTextarea(formTextarea) as Exports
@@ -36,4 +37,6 @@ import Gargantext.Components.Bootstrap.Shortcut(
   , code', code_
   , label', label_
   , p', p_
+  , td', td_
+  , th', th_
   ) as Exports

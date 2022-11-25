@@ -52,6 +52,13 @@ instance maximumString :: Maximum String where
     | (length input) > max = pure $ invalid [ field /\ "maximum" ]
     | otherwise            = pure $ pure unit
 
+-- Regarding Boolean field value
+
+instance equalsBoolean :: Equals Boolean where
+  equals field input input'
+    | (not eq input input') = pure $ invalid [ field /\ "equals" ]
+    | otherwise             = pure $ pure unit
+
 uppercase :: Field -> String -> Effect VForm
 uppercase field input
   | (toLower input) == input = pure $ invalid [ field /\ "uppercase" ]
