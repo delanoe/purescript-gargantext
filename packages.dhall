@@ -1,6 +1,5 @@
 let upstream =
-      https://github.com/garganscript/package-sets/releases/download/v0.1.4/release.dhall
-        sha256:e03eafe0c7ea0ac143d07ec6d9f20c804bd6b6f95a8d89bf287c279e770584c8
+      https://github.com/garganscript/package-sets/releases/download/v0.1.6/release.dhall sha256:443a37602d5b9353c4daf4349079a77d5dddf07a7b35219016b167404d1e1138
 
 let overrides =
       { graphql-client =
@@ -61,8 +60,7 @@ let overrides =
         , version = "v9.2.2"
         }
       , jest =
-        { -- markdown-it dependency
-          dependencies =
+        { dependencies =
           [ "aff"
           , "aff-promise"
           , "effect"
@@ -125,7 +123,7 @@ let additions =
           , "unsafe-coerce"
           ]
         , repo = "https://github.com/garganscript/purescript-sequences.git"
-        , version = "7ad61fde5239fbf66ceeefc0b7608aa9cbc53701"
+        , version = "recursion-fix"
         }
       , spec-discovery =
         { dependencies = [ "prelude", "effect", "arrays", "spec", "node-fs" ]
@@ -194,4 +192,4 @@ let additions =
         }
       }
 
-in  upstream // overrides // additions
+in  upstream ⫽ overrides ⫽ additions

@@ -23,8 +23,8 @@ import Gargantext.Components.Nodes.Corpus as Corpus
 import Gargantext.Components.Nodes.Corpus.Code (corpusCodeLayout)
 import Gargantext.Components.Nodes.Corpus.Dashboard (dashboardLayout)
 import Gargantext.Components.Nodes.Corpus.Document as Document
-import Gargantext.Components.Nodes.Corpus.Graph as Graph
 import Gargantext.Components.Nodes.Corpus.Phylo as Phylo
+import Gargantext.Components.Nodes.Graph as Graph
 import Gargantext.Components.Nodes.File (fileLayout)
 import Gargantext.Components.Nodes.Frame as Frame
 import Gargantext.Components.Nodes.Home (homeLayout)

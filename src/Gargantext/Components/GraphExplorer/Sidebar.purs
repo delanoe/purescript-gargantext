@@ -160,7 +160,6 @@ sideTabLegendCpt = here.component "sideTabLegend" cpt where
 
 sideTabData :: R2.Leaf Props
 sideTabData = R2.leaf sideTabDataCpt
-
 sideTabDataCpt :: R.Component Props
 sideTabDataCpt = here.component "sideTabData" cpt where
   cpt props _ = do

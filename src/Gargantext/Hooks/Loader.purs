@@ -78,7 +78,7 @@ useLoaderEffect { errorHandler, loader: loader', path, state } = do
   state' <- T.useLive T.unequal state
   oPath <- R.useRef path
 
-  R.useEffect' $ do
+  R.useEffect2' path state' $ do
     path' <- R.readRefM oPath
     if (path' == path) && (isJust state')
     then pure $ R.nothing
