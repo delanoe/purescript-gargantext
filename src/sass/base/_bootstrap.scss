@@ -9,3 +9,33 @@
 .input-group-prepend .btn, .input-group-append .btn {
   z-index: initial;
 }
+
+
+/// vue-bootstrap "_form-checkbox.scss"
+/// wrong equation
+.custom-control:not(.custom-switch) {
+
+  .custom-control-label {
+    &::before { top: 0.05rem; }
+    &::after  { top: 0.05rem; }
+  }
+}
+
+/// Bootstrap "_custom-forms.scss"
+/// strange rule
+.custom-control {
+  z-index: initial;
+}
+
+/// Bootstrap "_text.scss"
+/// (cf "~/assets/sass/base/_all.scss": remove file, keep below rules)
+.font-weight-light   { font-weight: $font-weight-light ; }
+.font-weight-lighter { font-weight: $font-weight-lighter ; }
+.font-weight-normal  { font-weight: $font-weight-normal ; }
+.font-weight-bold    { font-weight: $font-weight-bold ; }
+.font-weight-bolder  { font-weight: $font-weight-bolder ; }
+
+/// Extend our own "utilities" module with Bootstrap rule
+.font-family-base           { font-family: $font-family-base; }
+.font-family-monospace      { font-family: $font-family-monospace; }
+.font-family-heading        { font-family: $headings-font-family; }

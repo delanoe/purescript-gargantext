@@ -55,6 +55,6 @@ instance Eq AuthData where
 _AuthData :: Iso' AuthData { token :: Token, tree_id :: TreeId, user_id :: UserId }
 _AuthData = iso (\(AuthData v) -> v) AuthData
 
-data FormType = Login | ForgotPassword
+data FormType = Login | ForgotPassword | Manager
 derive instance Generic FormType _
 derive instance Eq FormType

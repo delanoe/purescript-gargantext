@@ -120,7 +120,7 @@ carousselCpt :: R.Component CarousselProps
 carousselCpt = here.component "caroussel" cpt
   where
     cpt { category, nodeId, row: DocumentsView r, session, setLocalCategories } _ = do
-      pure $ H.div {className:"flex"} divs
+      pure $ H.div {className:"d-flex"} divs
       where
         divs = map (\c -> if category == c
                             then

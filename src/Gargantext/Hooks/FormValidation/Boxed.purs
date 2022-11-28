@@ -61,6 +61,17 @@ instance maximumString :: Maximum String where
       | (length input) > max -> pure $ invalid [ field /\ "maximum" ]
       | otherwise            -> pure $ pure unit
 
+-- Regarding Boolean field value
+
+instance equalsBoolean :: Equals Boolean where
+  equals field box box' = do
+    input  <- T.read box
+    input' <- T.read box'
+    case unit of
+      _
+        | (not eq input input') -> pure $ invalid [ field /\ "equals" ]
+        | otherwise             -> pure $ pure unit
+
 uppercase :: Field -> T.Box String -> Effect VForm
 uppercase field = T.read >=> case _ of
   input

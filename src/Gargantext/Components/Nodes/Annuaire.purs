@@ -170,14 +170,21 @@ pageCpt = here.component "page" cpt
       pagePath' <- T.useLive T.unequal pagePath
       params <- T.useFocused (_.params) (\a b -> b { params = a }) pagePath
 
-      pure $ TT.table { colNames
-                      , container
-                      , params
-                      , rows: rows pagePath'
-                      , syncResetButton : [ H.div {} [] ]
-                      , totalRecords
-                      , wrapColElts
-                      }
+      pure $
+
+        H.div
+        { className: "page-annuaire" }
+        [
+          TT.table
+          { colNames
+          , container
+          , params
+          , rows: rows pagePath'
+          , syncResetButton : [ H.div {} [] ]
+          , totalRecords
+          , wrapColElts
+          }
+        ]
       where
         rows pagePath' = (row pagePath') <$> Seq.fromFoldable docs
         row { nodeId } contact = { row: contactCells { annuaireId: nodeId, frontends, contact, session }
@@ -207,7 +214,7 @@ contactCellsCpt = here.component "contactCells" cpt where
       --, H.a { href, target: "blank" } [ H.text $ fromMaybe "name" contact.title ]
     , H.text "No ContactWhere"
     , H.text "No ContactWhereDept"
-    , H.div { className: "nooverflow" }
+    , H.div { className: "page-annuaire__nooverflow" }
       [ H.text "No ContactWhereRole" ]
     ]
   cpt { annuaireId, frontends, session
