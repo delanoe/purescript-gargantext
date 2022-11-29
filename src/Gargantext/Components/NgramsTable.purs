@@ -10,6 +10,7 @@ module Gargantext.Components.NgramsTable
 
 import Gargantext.Prelude
 
+import DOM.Simple.Console (log)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.FunctorWithIndex (mapWithIndex)
@@ -42,7 +43,7 @@ import Gargantext.Components.NgramsTable.Tree (renderNgramsItem, renderNgramsTre
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table (changePage)
 import Gargantext.Components.Table as TT
-import Gargantext.Components.Table.Types (Params)
+import Gargantext.Components.Table.Types (Params, orderByToGTOrderBy)
 import Gargantext.Components.Table.Types as TT
 import Gargantext.Config.REST (AffRESTError, RESTError, logRESTError)
 import Gargantext.Core.NgramsTable.Functions (addNewNgramA, applyNgramsPatches, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, ngramsRepoElementToNgramsElement, normNgram, patchSetFromMap, singletonNgramsTablePatch, tablePatchHasNgrams, toVersioned)
@@ -56,6 +57,7 @@ import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Seq as Seq
 import Gargantext.Utils.Toestand as T2
+import Reactix (useEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
@@ -1014,19 +1016,18 @@ mainNgramsTableCacheOffCpt = here.component "mainNgramsTableCacheOff" cpt where
   loader :: PageParams -> AffRESTError VersionedWithCountNgramsTable
   loader { listIds
          , nodeId
-         , params: { limit, offset }
+         , params: { limit, offset, orderBy }
          , searchQuery
          , session
          , tabType
          , termListFilter
          , termSizeFilter
-         } =
-    get session $ Routes.GetNgrams params (Just nodeId)
+         } = get session $ Routes.GetNgrams params (Just nodeId)
     where
       params = { limit
                , listIds
                , offset: Just offset
-               , orderBy: Nothing  -- TODO
+               , orderBy: orderByToGTOrderBy orderBy
                , searchQuery
                , tabType
                , termListFilter
