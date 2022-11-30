@@ -1,4 +1,4 @@
-module Data.Sequence where
+module Data.SequenceArr where
 
 import Prelude
 import Data.Array as A
@@ -27,4 +27,3 @@ singleton = A.singleton
 splitAt idx seq = Tuple s.before s.after
   where
     s = A.splitAt idx seq
-
