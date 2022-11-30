@@ -1,5 +1,5 @@
 let upstream =
-      https://github.com/garganscript/package-sets/releases/download/v0.1.6/release.dhall sha256:443a37602d5b9353c4daf4349079a77d5dddf07a7b35219016b167404d1e1138
+      https://github.com/garganscript/package-sets/releases/download/v0.1.7/release.dhall sha256:52886309e1f0158a85427f80c1e3d47ce747c5f14fcec671a81fe5c2c711a6db
 
 let overrides =
       { graphql-client =
@@ -98,7 +98,7 @@ let overrides =
           , "typelevel-prelude"
           ]
         , repo = "https://github.com/justinwoo/purescript-record-extra"
-        , version = "0.15.0-starter-kit"
+        , version = "v5.0.1"
         }
       }
 

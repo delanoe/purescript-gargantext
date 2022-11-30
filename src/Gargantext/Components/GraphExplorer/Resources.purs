@@ -10,10 +10,14 @@ import Gargantext.Prelude
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
-import Data.Tuple (Tuple(..))
+import Data.Sequence as Seq
+import Data.Set as Set
+import Data.Traversable (traverse_)
+import Data.Tuple (Tuple(..), fst, snd)
 import DOM.Simple (window)
 import DOM.Simple.Types (Element)
 import Effect.Class.Console as ECC
+import Effect.Timer (setTimeout)
 import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types as GET
@@ -45,10 +49,10 @@ type Props sigma forceatlas2 =
 
 drawGraph :: forall s fa2. R2.Leaf (Props s fa2)
 drawGraph = R2.leaf drawGraphCpt
-drawGraphCpt :: forall s fa2. R.Memo (Props s fa2)
-drawGraphCpt = R.memo' $ here.component "graph" cpt where
--- drawGraphCpt :: forall s fa2. R.Component (Props s fa2)
--- drawGraphCpt = here.component "graph" cpt where
+-- drawGraphCpt :: forall s fa2. R.Memo (Props s fa2)
+-- drawGraphCpt = R.memo' $ here.component "drawGraph" cpt where
+drawGraphCpt :: forall s fa2. R.Component (Props s fa2)
+drawGraphCpt = here.component "drawGraph" cpt where
   -- | Component
   -- |
   cpt { elRef
@@ -75,10 +79,10 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
     showEdges'        <- R2.useLive' showEdges
     edgeConfluence'   <- R2.useLive' edgeConfluence
     edgeWeight'       <- R2.useLive' edgeWeight
-    forceAtlasState' <- R2.useLive' forceAtlasState
+    forceAtlasState'  <- R2.useLive' forceAtlasState
     graphStage'       <- R2.useLive' graphStage
     startForceAtlas'  <- R2.useLive' startForceAtlas
-    hyperdataGraph'   <- R2.useLive' hyperdataGraph
+    --hyperdataGraph'   <- R2.useLive' hyperdataGraph
 
     -- | Hooks
     -- |
@@ -99,9 +103,10 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
           here.log "[drawGraph (Cleanup)] sigma killed"
 
     -- Stage Init
-    R.useEffect2' hyperdataGraph' graphStage' $ case graphStage' of
+    R.useEffect1' graphStage' $ case graphStage' of
 
       GET.Init -> do
+        hyperdataGraph' <- T.read hyperdataGraph
         let mCamera = getter _.mCamera hyperdataGraph'
         let rSigma = R.readRef sigmaRef
 
@@ -193,18 +198,26 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
               let tEdgesMap = SigmaxTypes.edgesGraphMap transformedGraph
               let tNodesMap = SigmaxTypes.nodesGraphMap transformedGraph
 
-              Sigmax.dependOnSigma (R.readRef sigmaRef) "[drawGraph (Ready)] no sigma" $ \sigma -> do
-                Sigmax.performDiff sigma transformedGraph
-                -- Sigmax.updateEdges sigma tEdgesMap
-                -- Sigmax.updateNodes sigma tNodesMap
-                let edgesState = not $ SigmaxTypes.edgeStateHidden showEdges'
-                -- here.log2 "[graphCpt] edgesState" edgesState
-                Sigmax.setSigmaEdgesVisibility sigma { edgeConfluence: edgeConfluence'
-                                                     , edgeWeight: edgeWeight'
-                                                     , showEdges: showEdges' }
+              let updateSigma _ = do
+                    Sigmax.dependOnSigma (R.readRef sigmaRef) "[drawGraph (Ready)] no sigma" $ \sigma -> do
+                      Sigmax.performDiff sigma transformedGraph
+                      -- Sigmax.updateEdges sigma tEdgesMap
+                      -- Sigmax.updateNodes sigma tNodesMap
+                      let edgesState = not $ SigmaxTypes.edgeStateHidden showEdges'
+                      -- here.log2 "[graphCpt] edgesState" edgesState
+                      Sigmax.setSigmaEdgesVisibility sigma { edgeConfluence: edgeConfluence'
+                                                           , edgeWeight: edgeWeight'
+                                                           , showEdges: showEdges' }
+
+              -- TODO This is a temporary solution that seems to fix
+              -- blank page of graph when there are too many edges. It
+              -- still throws error though, just in another thread.
+              _ <- setTimeout 100 $ updateSigma unit
+              pure unit
 
       case Tuple forceAtlasState' graphStage' of
 
+        --Tuple SigmaxTypes.InitialLoading GET.Ready -> updateGraph
         Tuple SigmaxTypes.InitialRunning GET.Ready -> updateGraph
         Tuple SigmaxTypes.Paused GET.Ready -> updateGraph
 

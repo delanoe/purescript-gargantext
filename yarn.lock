@@ -9471,10 +9471,10 @@ side-channel@^1.0.4:
     get-intrinsic "^1.0.2"
     object-inspect "^1.9.0"
 
-sigma@^2.3.1:
-  version "2.3.1"
-  resolved "https://registry.yarnpkg.com/sigma/-/sigma-2.3.1.tgz#69fd9165479fa49ed84348afcd0432215fdf935f"
-  integrity sha512-YfQsVZf78CeIUv8EYLqp/yvhMwwBXGrbpy+rD1N2X9IqtJ11+VfQRjWfVqHDhjM8oPfWPsaJMtpWFQ8pIflvCA==
+sigma@^2.4.0:
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/sigma/-/sigma-2.4.0.tgz#efa213c82e8561138c9237c3a87cf15c0bbaee76"
+  integrity sha512-spi4C+c3cjlhCklT+RvAxJJcarMmjRpF6RPNvBIBYDduALq8iSNm7FwSpijQNGtI+ryeZ2EfvyBNLp36OFaZiw==
   dependencies:
     "@yomguithereal/helpers" "^1.1.1"
     events "^3.3.0"
