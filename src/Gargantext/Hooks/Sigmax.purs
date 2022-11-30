@@ -249,7 +249,6 @@ performDiff sigma g = do
     , update: Tuple updateEdges updateNodes } = sigmaDiff sigmaGraph g
 
 
-
 -- | Compute a diff between current sigma graph and whatever is set via custom controls
 sigmaDiff :: Graphology.Graph -> ST.SGraph -> Record ST.SigmaDiff
 sigmaDiff sigmaGraph gControls = { add, remove, update }
@@ -275,6 +274,8 @@ sigmaDiff sigmaGraph gControls = { add, remove, update }
             ST.nodesFilter (\n -> not (Set.member n.id sigmaNodeIds)) gControls
     addEdges = ST.graphEdges addGC
     addNodes = ST.graphNodes addGC
+    -- addEdges = Seq.empty
+    -- addNodes = ST.graphNodes addGC
 
     -- Remove nodes/edges from `sigmaGraph` which aren't in
     -- `gControls`
@@ -288,6 +289,8 @@ sigmaDiff sigmaGraph gControls = { add, remove, update }
     updateEdges = Seq.filter (\e -> Just e /= Map.lookup e.id sigmaEdgeIdsMap) gcEdges
     -- Find nodes for which `ST.compareNodes` returns `false`, i.e. nodes differ
     updateNodes = Seq.filter (\n -> (ST.compareNodes n <$> (Map.lookup n.id sigmaNodeIdsMap)) == Just false) gcNodes
+    -- updateEdges = Seq.empty
+    -- updateNodes = Seq.empty
 
 
 -- DEPRECATED

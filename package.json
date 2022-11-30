@@ -58,7 +58,7 @@
         "react-dom": "^17.0.2",
         "react-tooltip": "^4.2.8",
         "secp256k1": "^4.0.2",
-        "sigma": "^2.3.1",
+        "sigma": "^2.4.0",
         "twgl.js": "^5.0.4"
     },
     "devDependencies": {

@@ -42,10 +42,12 @@ type Store =
   -- Controls
   , multiSelectEnabled         :: T.Box Boolean
   , edgeConfluence             :: T.Box Range.NumberRange
+  , edgeConfluenceRange        :: T.Box Range.NumberRange
   , edgeWeight                 :: T.Box Range.NumberRange
   , forceAtlasState            :: T.Box SigmaxT.ForceAtlasState
   , graphStage                 :: T.Box GET.Stage
   , nodeSize                   :: T.Box Range.NumberRange
+  , nodeSizeRange              :: T.Box Range.NumberRange
   , showEdges                  :: T.Box SigmaxT.ShowEdgesState
   , showLouvain                :: T.Box Boolean
   , labelSize                  :: T.Box Number
@@ -73,10 +75,12 @@ type State =
   -- Controls
   , multiSelectEnabled         :: Boolean
   , edgeConfluence             :: Range.NumberRange
+  , edgeConfluenceRange        :: Range.NumberRange
   , edgeWeight                 :: Range.NumberRange
   , forceAtlasState            :: SigmaxT.ForceAtlasState
   , graphStage                 :: GET.Stage
   , nodeSize                   :: Range.NumberRange
+  , nodeSizeRange              :: Range.NumberRange
   , showEdges                  :: SigmaxT.ShowEdgesState
   , showLouvain                :: Boolean
   , labelSize                  :: Number

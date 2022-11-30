@@ -51,6 +51,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     -- | States
     -- |
     { edgeConfluence
+    , edgeConfluenceRange
     , edgeWeight
     , forceAtlasState
     , graph
@@ -60,6 +61,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     , mouseSelectorSize
     , multiSelectEnabled
     , nodeSize
+    , nodeSizeRange
     , selectedNodeIds
     , showEdges
     , showLouvain
@@ -68,10 +70,12 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     } <- GraphStore.use
 
     forceAtlasState'    <- R2.useLive' forceAtlasState
-    graph'              <- R2.useLive' graph
     graphStage'         <- R2.useLive' graphStage
     selectedNodeIds'    <- R2.useLive' selectedNodeIds
     showSidebar'        <- R2.useLive' showSidebar
+
+    edgeConfluenceRange' <- R2.useLive' edgeConfluenceRange
+    nodeSizeRange' <- R2.useLive' nodeSizeRange
 
     session <- useSession
 
@@ -116,40 +120,18 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     -- Timer to turn off the initial FA. This is because FA eats up lot of
     -- CPU, has memory leaks etc.
     R.useEffect1' forceAtlasState' $ do
-      if forceAtlasState' == SigmaxT.InitialRunning then do
-        timeoutId <- setTimeout 9000 $ do
-          case forceAtlasState' of
-            SigmaxT.InitialRunning ->
-              T.write_ SigmaxT.Paused forceAtlasState
-            _ -> pure unit
-          R.setRef mFAPauseRef Nothing
-        R.setRef mFAPauseRef $ Just timeoutId
-        pure unit
-        else
+      case forceAtlasState' of
+        SigmaxT.InitialRunning -> do
+          timeoutId <- setTimeout 9000 $ do
+            case forceAtlasState' of
+              SigmaxT.InitialRunning ->
+                T.write_ SigmaxT.Paused forceAtlasState
+              _ -> pure unit
+            R.setRef mFAPauseRef Nothing
+          R.setRef mFAPauseRef $ Just timeoutId
           pure unit
+        _ -> pure unit
 
-
-    -- | Computed
-    -- |
-
-    let edgesConfluenceSorted = A.sortWith (_.confluence) $ Seq.toUnfoldable $ SigmaxT.graphEdges graph'
-    let edgeConfluenceMin = maybe 0.0 _.confluence $ A.head edgesConfluenceSorted
-    let edgeConfluenceMax = maybe 100.0 _.confluence $ A.last edgesConfluenceSorted
-    let edgeConfluenceRange = Range.Closed { min: edgeConfluenceMin, max: edgeConfluenceMax }
-
-    --let edgesWeightSorted = A.sortWith (_.weight) $ Seq.toUnfoldable $ SigmaxT.graphEdges graph
-    --let edgeWeightMin = maybe 0.0 _.weight $ A.head edgesWeightSorted
-    --let edgeWeightMax = maybe 100.0 _.weight $ A.last edgesWeightSorted
-    --let edgeWeightRange = Range.Closed { min: edgeWeightMin, max: edgeWeightMax }
-    let edgeWeightRange = Range.Closed {
-          min: 0.0
-        , max: I.toNumber $ Seq.length $ SigmaxT.graphEdges graph'
-        }
-
-    let nodesSorted = A.sortWith (_.size) $ Seq.toUnfoldable $ SigmaxT.graphNodes graph'
-    let nodeSizeMin = maybe 0.0 _.size $ A.head nodesSorted
-    let nodeSizeMax = maybe 100.0 _.size $ A.last nodesSorted
-    let nodeSizeRange = Range.Closed { min: nodeSizeMin, max: nodeSizeMax }
 
     let gap = H.span { className: "graph-toolbar__gap" } []
 
@@ -250,7 +232,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
           [
             edgeConfluenceControl
             { forceAtlasState
-            , range: edgeConfluenceRange
+            , range: edgeConfluenceRange'
             , state: edgeConfluence }
           {- ,
             edgeWeightControl
@@ -281,7 +263,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             -- labels size: 1-4
             nodeSizeControl
             { forceAtlasState
-            , range: nodeSizeRange
+            , range: nodeSizeRange'
             , state: nodeSize }
 
           ]

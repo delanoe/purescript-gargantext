@@ -205,6 +205,7 @@ pauseForceAtlasButtonCpt = here.component "pauseForceAtlasButtonButton" cpt
         vrt SigmaxTypes.Running         = ButtonVariant Secondary
         vrt _                           = OutlinedButtonVariant Secondary
 
+        --icn SigmaxTypes.InitialLoading  = "pause"
         icn SigmaxTypes.InitialRunning  = "pause"
         icn SigmaxTypes.InitialStopped  = "play"
         icn SigmaxTypes.Running         = "pause"
