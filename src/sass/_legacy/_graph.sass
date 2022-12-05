@@ -214,13 +214,11 @@
 
 .graph-selected-nodes
 
-  &__item
-
-    display: inline-block
-    padding: 2px
-
-    &:not(:last-child)
-      margin-bottom: space-x(0.5)
+  &__list
+    display: flex
+    gap: space-x(0.5)
+    flex-wrap: wrap
+    padding-right: space-x(4)
 
   &__badge
     font-size: $font-size-base
@@ -231,11 +229,11 @@
     // Following <list-group-item> spacing
     $position-x: $list-group-item-padding-x
     // Empirical: fit well with icon overlay
-    $position-y: 1rem
+    $position-y: 0.75rem
 
     position: absolute
     right: $position-x
-    bottom: $position-y
+    top: $position-y
 
   &__actions
 
@@ -254,11 +252,11 @@
     // Following <list-group-item> spacing
     $position-x: $list-group-item-padding-x
     // Empirical: fit well with icon overlay
-    $position-y: 1rem
+    $position-y: 0.75rem
 
     position: absolute
     right: $position-x
-    bottom: $position-y
+    top: $position-y
 
   &__badge
     white-space: normal
@@ -266,6 +264,12 @@
 
     &:not(:last-child)
       margin-bottom: space-x(0.75)
+
+    .badge
+      // reduce bootstrap padding due to a vertical asymmetry (empirical)
+      $padding-top: 0.15em
+
+      padding-top: $padding-top
 
   &__show-more
     margin-top: space-x(2)

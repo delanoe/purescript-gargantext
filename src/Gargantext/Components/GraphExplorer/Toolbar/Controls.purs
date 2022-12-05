@@ -4,27 +4,22 @@ module Gargantext.Components.GraphExplorer.Toolbar.Controls
 
 import Prelude
 
-import Data.Array as A
 import Data.Foldable (intercalate)
-import Data.Int as I
-import Data.Maybe (Maybe(..), maybe)
-import Data.Sequence as Seq
+import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Effect.Timer (setTimeout)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.GraphExplorer.Resources as Graph
 import Gargantext.Components.GraphExplorer.Store as GraphStore
-import Gargantext.Components.GraphExplorer.Toolbar.Buttons (centerButton, cameraButton, edgesToggleButton, louvainToggleButton, pauseForceAtlasButton, multiSelectEnabledButton)
-import Gargantext.Components.GraphExplorer.Toolbar.RangeControl (edgeConfluenceControl, edgeWeightControl, nodeSizeControl)
+import Gargantext.Components.GraphExplorer.Toolbar.Buttons (centerButton, edgesToggleButton, louvainToggleButton, pauseForceAtlasButton, multiSelectEnabledButton)
+import Gargantext.Components.GraphExplorer.Toolbar.RangeControl (edgeConfluenceControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.Toolbar.SlideButton (labelSizeButton, labelRenderedSizeThresholdButton, mouseSelectorSizeSlider)
 import Gargantext.Components.GraphExplorer.Types as GET
-import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Types as GT
-import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
@@ -45,14 +40,14 @@ controls = R2.leaf controlsCpt
 controlsCpt :: R.Memo Controls
 controlsCpt = R.memo' $ here.component "controls" cpt where
   cpt { fa2Ref
-      , reloadForest
+      -- , reloadForest
       , sigmaRef
       } _ = do
     -- | States
     -- |
     { edgeConfluence
     , edgeConfluenceRange
-    , edgeWeight
+    -- , edgeWeight
     , forceAtlasState
     , graph
     , graphStage
@@ -69,15 +64,14 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     , sideTab
     } <- GraphStore.use
 
-    forceAtlasState'    <- R2.useLive' forceAtlasState
-    graphStage'         <- R2.useLive' graphStage
-    selectedNodeIds'    <- R2.useLive' selectedNodeIds
-    showSidebar'        <- R2.useLive' showSidebar
+    forceAtlasState'      <- R2.useLive' forceAtlasState
+    graphStage'           <- R2.useLive' graphStage
+    selectedNodeIds'      <- R2.useLive' selectedNodeIds
+    showSidebar'          <- R2.useLive' showSidebar
+    edgeConfluenceRange'  <- R2.useLive' edgeConfluenceRange
+    nodeSizeRange'        <- R2.useLive' nodeSizeRange
 
-    edgeConfluenceRange' <- R2.useLive' edgeConfluenceRange
-    nodeSizeRange' <- R2.useLive' nodeSizeRange
-
-    session <- useSession
+    -- session <- useSession
 
     -- ref to track automatic FA pausing
     -- If user pauses FA before auto is triggered, clear the timeoutId
@@ -227,66 +221,52 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
         , titleSlot: H.text "Controls"
         }
         [
-          H.div
-          { className: "d-flex justify-content-between mb-3" }
+          B.wad
+          [ "d-flex",  "gap-6", "px-1" ]
           [
-            edgeConfluenceControl
-            { forceAtlasState
-            , range: edgeConfluenceRange'
-            , state: edgeConfluence }
-          {- ,
-            edgeWeightControl
-            { forceAtlasState
-            , range: edgeWeightRange
-            , state: edgeWeight }
-          -}
+            B.wad
+            [ "d-flex", "flex-column", "flex-grow-1", "pt-1", "gap-4" ]
+            [
+              edgeConfluenceControl
+              { forceAtlasState
+              , range: edgeConfluenceRange'
+              , state: edgeConfluence }
+            {- ,
+              edgeWeightControl
+              { forceAtlasState
+              , range: edgeWeightRange
+              , state: edgeWeight }
+            -}
+            ,
+              nodeSizeControl
+              { forceAtlasState
+              , range: nodeSizeRange'
+              , state: nodeSize
+              }
+            ]
+          ,
+            B.wad
+            [ "d-flex", "flex-column", "flex-grow-1", "pt-1", "gap-4" ]
+            [
+              labelSizeButton
+              { forceAtlasState
+              , graph
+              , sigmaRef
+              , state: labelSize
+              }
+            ,
+              labelRenderedSizeThresholdButton
+              { forceAtlasState
+              , sigmaRef
+              , state: labelRenderedSizeThreshold
+              }
+              -- ,
+              --   nodeSizeControl
+              --   { range: nodeSizeRange
+              --   , state: nodeSize
+              --   }
+            ]
           ]
-        ,
-          H.div
-          { className: "d-flex justify-content-between" }
-          [
-            -- change level
-            -- file upload
-            -- run demo
-            -- search button
-            -- search topics
-            labelSizeButton { forceAtlasState
-                            , graph
-                            , sigmaRef
-                            , state: labelSize }
-          ]
-
-        ,
-          H.div
-          { className: "d-flex justify-content-between" }
-          [
-            -- labels size: 1-4
-            nodeSizeControl
-            { forceAtlasState
-            , range: nodeSizeRange'
-            , state: nodeSize }
-
-          ]
-        ,
-          H.div
-          { className: "d-flex justify-content-between" }
-          [
-            -- change level
-            -- file upload
-            -- run demo
-            -- search button
-            -- search topics
-            labelRenderedSizeThresholdButton { forceAtlasState
-                                             , sigmaRef
-                                             , state: labelRenderedSizeThreshold }
-          -- ,
-          --   -- labels size: 1-4
-          --   nodeSizeControl
-          --   { range: nodeSizeRange
-          --   , state: nodeSize }
-
-          ]
-
         ]
       ]
 

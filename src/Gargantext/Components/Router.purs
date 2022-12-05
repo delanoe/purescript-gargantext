@@ -12,7 +12,7 @@ import Data.UUID (UUID)
 import Data.UUID as UUID
 import Effect (Effect)
 import Gargantext.Components.App.Store (Boxes)
-import Gargantext.Components.ErrorsView (errorsView)
+import Gargantext.Components.ErrorsView as ErrorsView
 import Gargantext.Components.Forest (forestLayout)
 import Gargantext.Components.ForgotPassword (forgotPasswordLayout)
 import Gargantext.Components.Login (login)
@@ -100,17 +100,23 @@ routerCpt = here.component "router" cpt where
       { className: "router" }
       [
         login' boxes
-       , TopBar.topBar { boxes }
-       , errorsView { errors: boxes.errors } []
-       , H.div { className: "router__inner" }
-         [
+      ,
+        TopBar.component
+        {}
+      ,
+        ErrorsView.component
+        {}
+      ,
+        H.div
+        { className: "router__inner" }
+        [
           forest { boxes }
-         ,
+        ,
           mainPage { boxes }
-         ,
+        ,
           sidePanel { boxes }
-         ]
-       ]
+        ]
+      ]
 
 --------------------------------------------------------------
 
