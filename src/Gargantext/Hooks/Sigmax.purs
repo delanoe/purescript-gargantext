@@ -16,7 +16,7 @@ import Data.Tuple.Nested ((/\))
 import DOM.Simple.Types (Element)
 import Effect (Effect)
 import Effect.Class.Console (error)
-import Effect.Timer (TimeoutId, clearTimeout)
+import Effect.Timer (TimeoutId, clearTimeout, setTimeout)
 import FFI.Simple ((.=))
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
 import Gargantext.Hooks.Sigmax.Graphology as Graphology
@@ -24,6 +24,7 @@ import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as ST
 import Gargantext.Utils.Console as C
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Seq as GSeq
 import Gargantext.Utils.Set as GSet
 import Prelude (Unit, bind, discard, flip, map, not, pure, unit, ($), (&&), (*>), (<<<), (<>), (>>=), (+), (>), negate, (/=), (==), (<$>))
 import Reactix as R
@@ -229,7 +230,9 @@ performDiff sigma g = do
   -- console.log2 "[performDiff] removeNodes" removeNodes
   -- console.log2 "[performDiff] removeEdges" removeEdges
   traverse_ (Graphology.addNode sigmaGraph) addNodes
-  traverse_ (Graphology.addEdge sigmaGraph) addEdges
+  --traverse_ (Graphology.addEdge sigmaGraph) addEdges
+  -- insert edges in batches, otherwise a maximum recursion error is thrown
+  traverse_ (\edges -> setTimeout 100 $ traverse_ (Graphology.addEdge sigmaGraph) edges) $ GSeq.groupBy 5000 addEdges
   traverse_ (Graphology.removeEdge sigmaGraph) removeEdges
   traverse_ (Graphology.removeNode sigmaGraph) removeNodes
   traverse_ (Graphology.updateEdge sigmaGraph) updateEdges
@@ -274,8 +277,6 @@ sigmaDiff sigmaGraph gControls = { add, remove, update }
             ST.nodesFilter (\n -> not (Set.member n.id sigmaNodeIds)) gControls
     addEdges = ST.graphEdges addGC
     addNodes = ST.graphNodes addGC
-    -- addEdges = Seq.empty
-    -- addNodes = ST.graphNodes addGC
 
     -- Remove nodes/edges from `sigmaGraph` which aren't in
     -- `gControls`
@@ -283,10 +284,13 @@ sigmaDiff sigmaGraph gControls = { add, remove, update }
     removeNodes = Set.difference sigmaNodeIds (Set.fromFoldable gcNodeIds)
 
     commonNodeIds = Set.intersection sigmaNodeIds $ Set.fromFoldable gcNodeIds
+    commonNodes = Seq.filter (\n -> Set.member n.id commonNodeIds) sigmaNodes
     commonEdgeIds = Set.intersection sigmaEdgeIds $ Set.fromFoldable gcEdgeIds
-    sigmaNodeIdsMap = Map.fromFoldable $ Seq.map (\n -> Tuple n.id n) sigmaNodes
-    sigmaEdgeIdsMap = Map.fromFoldable $ Seq.map (\e -> Tuple e.id e) sigmaEdges
-    updateEdges = Seq.filter (\e -> Just e /= Map.lookup e.id sigmaEdgeIdsMap) gcEdges
+    commonEdges = Seq.filter (\e -> Set.member e.id commonEdgeIds) sigmaEdges
+    sigmaNodeIdsMap = Map.fromFoldable $ Seq.map (\n -> Tuple n.id n) commonNodes --sigmaNodes
+    sigmaEdgeIdsMap = Map.fromFoldable $ Seq.map (\e -> Tuple e.id e) commonEdges --sigmaEdges
+    -- updateEdges = Seq.filter (\e -> Just e /= Map.lookup e.id sigmaEdgeIdsMap) gcEdges
+    updateEdges = Seq.empty
     -- Find nodes for which `ST.compareNodes` returns `false`, i.e. nodes differ
     updateNodes = Seq.filter (\n -> (ST.compareNodes n <$> (Map.lookup n.id sigmaNodeIdsMap)) == Just false) gcNodes
     -- updateEdges = Seq.empty
