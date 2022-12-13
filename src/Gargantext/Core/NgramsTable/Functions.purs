@@ -35,7 +35,7 @@ import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Table as T
 import Gargantext.Components.Table.Types as T
-import Gargantext.Config.REST (AffRESTError, RESTError)
+import Gargantext.Config.REST (AffRESTError, RESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Core.NgramsTable.Types
 import Gargantext.Routes (SessionRoute(..))
@@ -375,7 +375,7 @@ syncPatches props state callback = do
     launchAff_ $ do
       ePatches <- putNgramsPatches props pt
       case ePatches of
-        Left err -> liftEffect $ here.warn2 "[syncPatches] RESTError" err
+        Left err -> liftEffect $ logRESTError here "[syncPatches]" err
         Right (Versioned { data: newPatch, version: newVersion }) -> do
           callback unit
           liftEffect $ do

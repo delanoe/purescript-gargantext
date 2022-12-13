@@ -13,9 +13,10 @@ import Data.Lens.Index (class Index, ix)
 import Data.Lens.Iso.Newtype (_Newtype)
 import Data.Lens.Record (prop)
 import Data.List (List)
+import Data.List.Types (NonEmptyList(..))
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), isJust)
+import Data.Maybe (Maybe(..), fromJust, isJust)
 import Data.Newtype (class Newtype)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
@@ -32,6 +33,7 @@ import Gargantext.Components.Table.Types as T
 import Gargantext.Prelude
 import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
+import Gargantext.Utils.SimpleJSON as USJ
 import Simple.JSON as JSON
 import Reactix as R
 import Type.Proxy (Proxy(..))
@@ -207,14 +209,17 @@ instance JSON.ReadForeign NgramsPatch where
   readImpl f = do
     inst :: { patch_old :: Maybe NgramsRepoElement
             , patch_new :: Maybe NgramsRepoElement
-            , patch_children :: PatchSet NgramsTerm
-            , patch_list :: Replace GT.TermList } <- JSON.readImpl f
+            , patch_children :: Maybe (PatchSet NgramsTerm)
+            , patch_list :: Maybe (Replace GT.TermList) } <- JSON.readImpl f
     -- TODO handle empty fields
     -- TODO handle patch_new
     if isJust inst.patch_new || isJust inst.patch_old then
-      pure $ NgramsReplace { patch_old: inst.patch_old, patch_new: inst.patch_new }
-    else do
-      pure $ NgramsPatch { patch_list: inst.patch_list, patch_children: inst.patch_children }
+      pure $ NgramsReplace { patch_old: inst.patch_old
+                           , patch_new: inst.patch_new }
+    else case (Tuple inst.patch_children inst.patch_list) of
+      Tuple (Just patch_children) (Just patch_list) ->
+        pure $ NgramsPatch { patch_list, patch_children }
+      _ -> USJ.throwJSONError $ F.ForeignError "[readForeign NgramsPatch] patch_children or patch_list undefined"
 
 -----------------------------------------------------
 newtype NgramsTerm = NormNgramsTerm String
