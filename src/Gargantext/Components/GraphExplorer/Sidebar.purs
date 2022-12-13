@@ -101,7 +101,6 @@ sidebarCpt = here.component "sidebar" cpt where
 
 sideTabLegend :: R2.Leaf Props
 sideTabLegend = R2.leaf sideTabLegendCpt
-
 sideTabLegendCpt :: R.Component Props
 sideTabLegendCpt = here.component "sideTabLegend" cpt where
   cpt { metaData: GET.MetaData { legend } } _ = do
@@ -165,11 +164,9 @@ sideTabDataCpt = here.component "sideTabData" cpt where
   cpt props _ = do
     -- States
     { selectedNodeIds
-    , graph
     } <- GraphStore.use
 
     selectedNodeIds'  <- R2.useLive' selectedNodeIds
-    graph'            <- R2.useLive' graph
 
     -- Computed
     let
@@ -186,39 +183,57 @@ sideTabDataCpt = here.component "sideTabData" cpt where
           -- No result
           false ->
 
-            B.caveat
-            {}
-            [
-              H.text "Select one or more nodes to get their informations"
-            ]
-
+            sideTabDataNoSelection {}
           -- Nodes have been selected
           true ->
-
-            R.fragment
-            [
-              selectedNodes $
-              { nodesMap: SigmaxT.nodesGraphMap graph'
-              } `Record.merge` props
-            ,
-              sideBarTabSeparator
-            ,
-              neighborhood
-              {}
-            ,
-              sideBarTabSeparator
-            ,
-              docListWrapper
-              { metaData: props.metaData
-              }
-            ]
+            sideTabDataWithSelection props
       ]
+
+
+sideTabDataNoSelection :: R2.Leaf ()
+sideTabDataNoSelection = R2.leaf sideTabDataNoSelectionCpt
+sideTabDataNoSelectionCpt :: R.Component ()
+sideTabDataNoSelectionCpt = here.component "sideTabDataNoSelection" cpt where
+  cpt {} _ = do
+    pure $ B.caveat
+      {}
+      [
+        H.text "Select one or more nodes to get their informations"
+      ]
+
+sideTabDataWithSelection :: R2.Leaf Props
+sideTabDataWithSelection = R2.leaf sideTabDataWithSelectionCpt
+sideTabDataWithSelectionCpt :: R.Component Props
+sideTabDataWithSelectionCpt = here.component "sideTabDataWithSelection" cpt where
+  cpt props _ = do
+    -- States
+    { graph
+    } <- GraphStore.use
+
+    graph'  <- R2.useLive' graph
+
+    pure $
+      R.fragment [
+        selectedNodes $
+        { nodesMap: SigmaxT.nodesGraphMap graph'
+        } `Record.merge` props
+        ,
+        sideBarTabSeparator
+        ,
+        neighborhood
+        {}
+        ,
+        sideBarTabSeparator
+        ,
+        docListWrapper
+        { metaData: props.metaData
+        }
+        ]
 
 ------------------------------------------------------------
 
 sideTabCommunity :: R2.Leaf Props
 sideTabCommunity = R2.leaf sideTabCommunityCpt
-
 sideTabCommunityCpt :: R.Component Props
 sideTabCommunityCpt = here.component "sideTabCommunity" cpt where
   cpt props _ = do
@@ -244,33 +259,52 @@ sideTabCommunityCpt = here.component "sideTabCommunity" cpt where
 
           -- No result
           false ->
-
-            B.caveat
-            {}
-            [
-              H.text "Select one or more nodes to get their informations"
-            ]
+            sideTabCommunityNoSelection {}
 
           -- Nodes have been selection
           true ->
+            sideTabCommunityWithSelection props
+      ]
 
-            R.fragment
-            [
-              selectedNodes $
-              { nodesMap: SigmaxT.nodesGraphMap graph'
-              } `Record.merge` props
-            ,
-              sideBarTabSeparator
-            ,
-              neighborhood
-              {}
-            ,
-              sideBarTabSeparator
-            ,
-              contactListWrapper
-              { metaData: props.metaData
-              }
-            ]
+sideTabCommunityNoSelection :: R2.Leaf ()
+sideTabCommunityNoSelection = R2.leaf sideTabCommunityNoSelectionCpt
+sideTabCommunityNoSelectionCpt :: R.Component ()
+sideTabCommunityNoSelectionCpt = here.component "sideTabCommunityNoSelection" cpt where
+  cpt {} _ = do
+    pure $ B.caveat
+      {}
+      [
+        H.text "Select one or more nodes to get their informations"
+      ]
+
+
+sideTabCommunityWithSelection :: R2.Leaf Props
+sideTabCommunityWithSelection = R2.leaf sideTabCommunityWithSelectionCpt
+sideTabCommunityWithSelectionCpt :: R.Component Props
+sideTabCommunityWithSelectionCpt = here.component "sideTabCommunityWithSelection" cpt where
+  cpt props _ = do
+    { graph
+    } <- GraphStore.use
+
+    graph'  <- R2.useLive' graph
+
+    pure $
+      R.fragment
+      [
+        selectedNodes $
+        { nodesMap: SigmaxT.nodesGraphMap graph'
+        } `Record.merge` props
+      ,
+        sideBarTabSeparator
+      ,
+        neighborhood
+        {}
+      ,
+        sideBarTabSeparator
+      ,
+        contactListWrapper
+        { metaData: props.metaData
+        }
       ]
 
 -------------------------------------------
@@ -295,7 +329,6 @@ type SelectedNodesProps =
 
 selectedNodes :: R2.Leaf SelectedNodesProps
 selectedNodes = R2.leaf selectedNodesCpt
-
 selectedNodesCpt :: R.Component SelectedNodesProps
 selectedNodesCpt = here.component "selectedNodes" cpt where
   cpt props _ = do

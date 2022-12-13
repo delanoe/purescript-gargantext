@@ -25,7 +25,9 @@ newtype Graph n e = Graph { edges :: Seq.Seq {|e}, nodes :: Seq.Seq {|n} }
 derive instance Generic (Graph n e) _
 
 instance (Eq (Record n), Eq (Record e)) => Eq (Graph n e) where
-  eq = genericEq
+  --eq = genericEq
+  eq (Graph { edges: e1, nodes: n1 }) (Graph { edges: e2, nodes: n2 }) =
+    (Seq.length e1 == Seq.length e2) && (Seq.length n1 == Seq.length n2)
 
 --instance Eq Graph where
 --  eq (Graph {nodes: n1, edges: e1}) (Graph {nodes: n2, edges: e2}) = n1 == n2 && e1 == e2
@@ -162,13 +164,14 @@ eqGraph (Graph {nodes: n1, edges: e1}) (Graph {nodes: n2, edges: e2}) = (n1 == n
 -- however when graph is loaded initially, forceAtlas is running for a couple of
 -- seconds and then stops (unless the user alters this by clicking the toggle
 -- button).
-data ForceAtlasState = InitialRunning | InitialStopped | Running | Paused | Killed
+data ForceAtlasState = {- InitialLoading | -} InitialRunning | InitialStopped | Running | Paused | Killed
 
 derive instance Generic ForceAtlasState _
 instance Eq ForceAtlasState where
   eq = genericEq
 
 toggleForceAtlasState :: ForceAtlasState -> ForceAtlasState
+-- toggleForceAtlasState InitialLoading = InitialRunning
 toggleForceAtlasState InitialRunning = Paused
 toggleForceAtlasState InitialStopped = InitialRunning
 toggleForceAtlasState Running = Paused
@@ -177,6 +180,7 @@ toggleForceAtlasState Killed = InitialRunning
 
 
 forceAtlasComponentStatus :: ForceAtlasState -> ComponentStatus
+-- forceAtlasComponentStatus InitialLoading = Disabled
 forceAtlasComponentStatus InitialRunning = Disabled
 forceAtlasComponentStatus InitialStopped = Enabled
 forceAtlasComponentStatus Running = Disabled
@@ -212,6 +216,7 @@ toggleShowEdgesState s =
 
 -- | Return state in which showEdges should be depending on forceAtlasState
 forceAtlasEdgeState :: ForceAtlasState -> ShowEdgesState -> ShowEdgesState
+-- forceAtlasEdgeState InitialLoading _ = ETempHiddenThenShow
 forceAtlasEdgeState InitialRunning EShow = ETempHiddenThenShow
 forceAtlasEdgeState InitialRunning es = es
 forceAtlasEdgeState InitialStopped es = es

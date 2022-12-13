@@ -4,12 +4,13 @@ module Gargantext.Components.Nodes.Graph
 
 import Gargantext.Prelude
 
-import DOM.Simple (document, querySelector)
+import Data.Array as A
 import Data.Int as I
 import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
 import Data.Sequence as Seq
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
+import DOM.Simple (document, querySelector)
 import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.GraphExplorer.API as GraphAPI
@@ -56,7 +57,7 @@ nodeCpt = here.component "node" cpt where
 
     -- | Computed
     -- |
-    let errorHandler = logRESTError here "[explorerLayout]"
+    let errorHandler = logRESTError here "[node]"
 
     -- | Hooks
     -- |
@@ -151,6 +152,7 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
 
       forceAtlasState
         = if startForceAtlas
+          --then SigmaxT.InitialLoading
           then SigmaxT.InitialRunning
           else SigmaxT.InitialStopped
 
@@ -159,6 +161,29 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
 
     sigmaRef <- Sigmax.initSigma >>= R.useRef
     fa2Ref <- R.useRef (Nothing :: Maybe ForceAtlas.FA2Layout)
+
+    -- | Precompute some values
+    -- |
+
+    let edgesConfluenceSorted = A.sortWith (_.confluence) $ Seq.toUnfoldable $ SigmaxT.graphEdges graph
+    let edgeConfluenceMin = maybe 0.0 _.confluence $ A.head edgesConfluenceSorted
+    let edgeConfluenceMax = maybe 100.0 _.confluence $ A.last edgesConfluenceSorted
+    let edgeConfluenceRange = Range.Closed { min: edgeConfluenceMin, max: edgeConfluenceMax }
+
+    --let edgesWeightSorted = A.sortWith (_.weight) $ Seq.toUnfoldable $ SigmaxT.graphEdges graph
+    --let edgeWeightMin = maybe 0.0 _.weight $ A.head edgesWeightSorted
+    --let edgeWeightMax = maybe 100.0 _.weight $ A.last edgesWeightSorted
+    --let edgeWeightRange = Range.Closed { min: edgeWeightMin, max: edgeWeightMax }
+    let edgeWeightRange = Range.Closed {
+          min: 0.0
+        , max: I.toNumber $ Seq.length $ SigmaxT.graphEdges graph
+        }
+
+    let nodesSorted = A.sortWith (_.size) $ Seq.toUnfoldable $ SigmaxT.graphNodes graph
+    let nodeSizeMin = maybe 0.0 _.size $ A.head nodesSorted
+    let nodeSizeMax = maybe 100.0 _.size $ A.last nodesSorted
+    let nodeSizeRange = Range.Closed { min: nodeSizeMin, max: nodeSizeMax }
+
 
     -- Hydrate GraphStore
     (state :: Record GraphStore.State) <- pure $
@@ -174,6 +199,8 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
           { min: 0.0
           , max: I.toNumber $ Seq.length $ SigmaxT.graphEdges graph
           }
+      , edgeConfluenceRange
+      , nodeSizeRange
       -- (cache options)
       , expandSelection: getter _.expandSelection cacheParams
       , expandNeighborhood: getter _.expandNeighborhood cacheParams

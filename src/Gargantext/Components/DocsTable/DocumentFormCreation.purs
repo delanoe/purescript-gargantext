@@ -143,6 +143,45 @@ component = R.hooksComponent "documentFormCreation" cpt where
           ]
         ]
       ,
+        -- Language
+        H.div 
+        { className: intercalate " "
+            [ "form-group"
+            , (fv.hasError' "language") ?
+                "form-group--error" $
+                mempty
+            ]
+        }
+        [
+          H.div { className: "form-group__label"}
+          [
+            H.label {} [ H.text "Language" ]
+          ]
+        ,
+          H.div { className: "form-group__field" }
+          [
+            B.formSelect (
+              bindStateKey "language"
+            )
+            [
+              H.option
+              {value: "EN"}
+              [ H.text "EN"]
+            ,
+              H.option
+              { value: "FR" }
+              [ H.text "FR"]
+            ,
+              H.option
+              { value: "Nothing" }
+              [ H.text "Nothing"]
+            , H.option
+              { value: "All" }
+              [ H.text "All"]
+            ]
+          ]
+        ]
+        ,
         -- Date
         H.div
         { className: intercalate " "
@@ -218,6 +257,7 @@ type FormData =
   , authors   :: String
   , date      :: String
   , abstract  :: String
+  , language  :: String
   )
 
 defaultData :: Record FormData
@@ -227,6 +267,7 @@ defaultData =
   , authors   : ""
   , date      : ""
   , abstract  : ""
+  , language  : "EN"
   }
 
 documentFormValidation :: Record FormData -> Effect VForm
@@ -236,6 +277,7 @@ documentFormValidation r = foldl append mempty rules
       [ FV.nonEmpty "title" r.title
       , FV.nonEmpty "source" r.source
       , FV.nonEmpty "authors" r.authors
+      , FV.nonEmpty "language" r.language
       , FV.date "date" r.date
       ]
 
