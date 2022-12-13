@@ -194,7 +194,7 @@ instance Monoid NgramsPatch where
   mempty = NgramsPatch { patch_children: mempty, patch_list: mempty }
 instance Semigroup NgramsPatch where
   append (NgramsReplace p) (NgramsReplace q)
-    | p.patch_old /= q.patch_new = unsafeThrow "append/NgramsPatch: old != new"
+    | p.patch_old /= q.patch_new = unsafeThrow $ "append/NgramsPatch: old != new: " <> show p.patch_old <> " != " <> show q.patch_new
     | otherwise                  = ngramsReplace q.patch_old p.patch_new
   append (NgramsPatch p)   (NgramsPatch q) = NgramsPatch
     { patch_children: p.patch_children <> q.patch_children
