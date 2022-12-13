@@ -9315,12 +9315,11 @@ input[type=range]:-moz-focusring {
   margin-bottom: 12px;
 }
 
-.graph-selected-nodes__item {
-  display: inline-block;
-  padding: 2px;
-}
-.graph-selected-nodes__item:not(:last-child) {
-  margin-bottom: 4px;
+.graph-selected-nodes__list {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding-right: 32px;
 }
 .graph-selected-nodes__badge {
   font-size: 1rem;
@@ -9330,7 +9329,7 @@ input[type=range]:-moz-focusring {
 .graph-selected-nodes__expand {
   position: absolute;
   right: 1.25rem;
-  bottom: 1rem;
+  top: 0.75rem;
 }
 .graph-selected-nodes__actions .b-button-group {
   width: 100%;
@@ -9345,7 +9344,7 @@ input[type=range]:-moz-focusring {
 .graph-neighborhood__expand {
   position: absolute;
   right: 1.25rem;
-  bottom: 1rem;
+  top: 0.75rem;
 }
 .graph-neighborhood__badge {
   white-space: normal;
@@ -9353,6 +9352,9 @@ input[type=range]:-moz-focusring {
 }
 .graph-neighborhood__badge:not(:last-child) {
   margin-bottom: 6px;
+}
+.graph-neighborhood__badge .badge {
+  padding-top: 0.15em;
 }
 .graph-neighborhood__show-more {
   margin-top: 16px;

@@ -819,6 +819,7 @@ instance Eq FrontendError where eq = genericEq
 
 newtype CacheParams = CacheParams
   { expandTableEdition    :: Boolean
+  , showTree              :: Boolean
   }
 
 derive instance Newtype CacheParams _
@@ -834,4 +835,5 @@ derive newtype instance JSON.WriteForeign CacheParams
 defaultCacheParams :: CacheParams
 defaultCacheParams = CacheParams
   { expandTableEdition    : false
+  , showTree              : true
   }

@@ -65,6 +65,7 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
     (state :: Record AppStore.State) <- pure $
       -- (cache options)
       { expandTableEdition: getter _.expandTableEdition cacheParams
+      , showTree: getter _.showTree cacheParams
       -- (default options)
       } `Record.merge` AppStore.options
 

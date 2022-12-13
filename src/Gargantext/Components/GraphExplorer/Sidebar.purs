@@ -239,11 +239,9 @@ sideTabCommunityCpt = here.component "sideTabCommunity" cpt where
   cpt props _ = do
     -- States
     { selectedNodeIds
-    , graph
     } <- GraphStore.use
 
     selectedNodeIds'  <- R2.useLive' selectedNodeIds
-    graph'            <- R2.useLive' graph
 
     -- Computed
     let
@@ -372,7 +370,7 @@ selectedNodesCpt = here.component "selectedNodes" cpt where
         { className: "list-group-item" }
         [
           H.ul
-          {} $
+          { className: "graph-selected-nodes__list" } $
 
           Seq.toUnfoldable $
             flip Seq.map (badges graph' selectedNodeIds') \node ->
@@ -675,12 +673,11 @@ updateTermButtonCpt = here.component "updateTermButton" cpt where
 badgeSize :: Number -> Number -> Number -> String
 badgeSize minSize maxSize size =
   let
-    minFontSize = 7.0
-    maxFontSize = 28.0
+    minFontSize = 8.0
+    maxFontSize = 26.0
     sizeScaled = (size - minSize) / (maxSize - minSize)  -- in [0; 1] range
-    --scale' = DN.log (sizeScaled + 1.0) / (DN.log 2.0)  -- in [0; 1] range
-    --scale = minFontSize + scale' * (maxFontSize - minFontSize)
-    scale = minFontSize + sizeScaled * (maxFontSize - minFontSize)
+    scale' = DN.log (sizeScaled + 1.0) / (DN.log 2.0)  -- in [0; 1] range
+    scale = minFontSize + scale' * (maxFontSize - minFontSize)
 
   in
     show scale <> "px"
