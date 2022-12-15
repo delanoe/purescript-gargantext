@@ -546,7 +546,7 @@ uploadFile session NodeList id JSON { mName, contents } = do
   task <- post session url body
   pure $ GT.AsyncTaskWithType { task, typ: GT.Form }
   -}
-uploadFile { contents, fileFormat, lang, fileType, id, nodeType, mName, session } = do
+uploadFile { contents, fileFormat, lang, fileType, id, nodeType, mName, selection, session } = do
   -- contents <- readAsText blob
   eTask :: Either RESTError GT.AsyncTask <- postWwwUrlencoded session p body
   pure $ (\task -> GT.AsyncTaskWithType { task, typ }) <$> eTask
@@ -557,12 +557,14 @@ uploadFile { contents, fileFormat, lang, fileType, id, nodeType, mName, session 
                  , Tuple "_wf_fileformat" (Just $ show fileFormat)
                  , Tuple "_wf_lang"       (Just $ show lang)
                  , Tuple "_wf_name"       mName
+                 , Tuple "_wf_selection"  (Just $ show selection)
                  ]
     csvBodyParams = [ Tuple "_wtf_data"       (Just contents)
                     , Tuple "_wtf_filetype"   (Just $ show NodeList)
                     , Tuple "_wtf_fileformat" (Just $ show fileFormat)
                     , Tuple "_wf_lang"        (Just $ show lang)
                     , Tuple "_wtf_name" mName
+                    , Tuple "_wtf_selection"  (Just $ show selection)
                     ]
 
     (typ /\ p /\ body) = case nodeType of
