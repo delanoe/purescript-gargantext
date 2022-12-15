@@ -40,11 +40,11 @@ selectionCpt = here.component "selection" cpt where
         , list: [ MyListsFirst
                 , OtherListsFirst
                 , SelectedLists []
+                , NoList
                 ]
         }
         []
-      ,
-        selectedIds { selection, session } []
+      , selectedIds { selection, session } []
       ]
 
 selectedIds :: R2.Component Props
@@ -88,7 +88,8 @@ type ListTreeProps =
   , nodeType  :: NodeType
   , root      :: ID
   , selection :: T.Box Selection
-  , session   :: Session )
+  , session   :: Session
+  )
 
 listTree :: R2.Leaf ListTreeProps
 listTree props = R.createElement listTreeCpt props []
@@ -110,7 +111,8 @@ type ListTreeChildrenProps =
   ( render    :: Render
   , root      :: ID
   , selection :: T.Box Selection
-  , session   :: Session )
+  , session   :: Session
+  )
 
 listTreeChildren :: R2.Component ListTreeChildrenProps
 listTreeChildren = R.createElement listTreeChildrenCpt

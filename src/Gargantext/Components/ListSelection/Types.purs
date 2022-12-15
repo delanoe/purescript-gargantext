@@ -9,20 +9,23 @@ import Data.Newtype (class Newtype)
 import Gargantext.Types (ID, ListId, NodeType)
 import Simple.JSON as JSON
 
-data Selection = MyListsFirst | OtherListsFirst | SelectedLists (Array ListId)
+data Selection = MyListsFirst | OtherListsFirst | SelectedLists (Array ListId) | NoList
 derive instance Generic Selection _
 instance Show Selection where
   show MyListsFirst = "My lists first"
   show OtherListsFirst = "Other lists first"
+  show NoList = "NoList"
   show (SelectedLists _) = "Selected lists"
 instance Eq Selection where eq = genericEq
 instance Read Selection where
   read "My lists first" = Just MyListsFirst
   read "Other lists first" = Just OtherListsFirst
   read "Selected lists" = Just $ SelectedLists []
+  read "NoList"         = Just NoList
   read _ = Nothing
 instance JSON.WriteForeign Selection where
   writeImpl MyListsFirst = JSON.writeImpl { "type": "MyListsFirst" }
+  writeImpl NoList = JSON.writeImpl { "type": "NoList" }
   writeImpl OtherListsFirst = JSON.writeImpl { "type": "OtherListsFirst" }
   writeImpl (SelectedLists ids) = JSON.writeImpl { "type": "SelectedLists", value: ids }
 

@@ -265,7 +265,7 @@ uploadButtonCpt = here.component "uploadButton" cpt
               _ -> do
                 contents <- case fileFormat' of
                   Plain -> readUFBAsText blob
-                  ZIP -> readUFBAsBase64 blob
+                  ZIP   -> readUFBAsBase64 blob
                 dispatch $ UploadFile nodeType fileType' fileFormat' lang' (Just name) contents selection'
             liftEffect $ do
               T.write_ Nothing mFile
