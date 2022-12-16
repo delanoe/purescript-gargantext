@@ -327,6 +327,8 @@ settingsBox NodeFrameWrite =
               , doc  : Documentation NodeFrameWrite
               , buttons : [ Add [ NodeFrameWrite
                                 , NodeFrameCalc
+                                , Folder
+                                , Corpus
                                 ]
                           , Move moveFrameParameters
                           , Delete
