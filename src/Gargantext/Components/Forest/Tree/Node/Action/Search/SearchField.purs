@@ -583,43 +583,42 @@ triggerSearch { onSearch, errors, session, selection, search } =
 
 searchQuery :: ListSelection.Selection -> Search -> SearchQuery
 searchQuery selection { datafield: Nothing, term } =
-  over SearchQuery (_ { query = term
-                      , selection = selection }) defaultSearchQuery
+                      over SearchQuery (_ { query = term
+                                          , selection = selection }) defaultSearchQuery
 -- TODO Simplify both HAL Nothing and HAL (Just IMT) cases
 searchQuery selection { databases
                       , datafield: datafield@(Just (External (Just (HAL Nothing))))
                       , lang
                       , term
                       , node_id
-                      , years } =
-  over SearchQuery (_ { databases = databases
-                      , datafield = datafield
-                      , lang      = lang
-                      , node_id   = node_id
-                      , query     = queryHAL term Nothing lang years
-                      , selection = selection
-                      }) defaultSearchQuery
+                      , years } = over SearchQuery (_ { databases = databases
+                                                      , datafield = datafield
+                                                      , lang      = lang
+                                                      , node_id   = node_id
+                                                      , query     = queryHAL term Nothing lang years
+                                                      , selection = selection
+                                                      }) defaultSearchQuery
 searchQuery selection { databases
                       , datafield: datafield@(Just (External (Just (HAL (Just (IMT imtOrgs))))))
                       , lang
                       , term
                       , node_id
-                      , years } =
-  over SearchQuery (_ { databases = databases
-                      , datafield = datafield
-                      , lang      = lang
-                      , node_id   = node_id
-                      , query     = queryHAL term (Just imtOrgs) lang years
-                      , selection = selection
-                      }) defaultSearchQuery
+                      , years } = over SearchQuery (_ { databases = databases
+                                , datafield = datafield
+                                , lang      = lang
+                                , node_id   = node_id
+                                , query     = queryHAL term (Just imtOrgs) lang years
+                                , selection = selection
+                                }) defaultSearchQuery
+
 searchQuery selection { databases, datafield, lang, term, node_id } =
-  over SearchQuery (_ { databases = databases
-                      , datafield = datafield
-                      , lang      = lang
-                      , node_id   = node_id
-                      , query     = term
-                      , selection = selection
-                      }) defaultSearchQuery
+                                    over SearchQuery (_ { databases = databases
+                                                        , datafield = datafield
+                                                        , lang      = lang
+                                                        , node_id   = node_id
+                                                        , query     = term
+                                                        , selection = selection
+                                                        }) defaultSearchQuery
 
 queryHAL :: String -> Maybe (Set.Set IMT_org) -> Maybe Lang -> Array String -> String
 queryHAL term mIMTOrgs lang years =
