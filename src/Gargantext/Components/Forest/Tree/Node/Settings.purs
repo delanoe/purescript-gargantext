@@ -400,11 +400,15 @@ moveParameters = { subTreeParams : SubTreeParams
                                               , Team
                                               , FolderPublic
                                               , Folder
+                                              , NodeFrameWrite
+                                              , Corpus
                                               ]
                                  , valitypes: [ FolderPrivate
                                               , Team
                                               -- , FolderPublic
                                               , Folder
+                                              , NodeFrameWrite
+                                              , Corpus
                                               ]
                                  }
                   }
