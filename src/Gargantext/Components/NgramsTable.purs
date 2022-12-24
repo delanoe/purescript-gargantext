@@ -604,10 +604,13 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
       where
         colNames = TT.ColumnName <$> ["Show", "Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
 
+ngramsTableOrderWith :: Maybe (TT.OrderByDirection TT.ColumnName)
+                     -> Seq.Seq NgramsElement
+                     -> Seq.Seq NgramsElement
 ngramsTableOrderWith orderBy =
   case convOrderBy <$> orderBy of
-    Just ScoreAsc  -> sortWith \x -> x        ^. _NgramsElement <<< _occurrences
-    Just ScoreDesc -> sortWith \x -> Down $ x ^. _NgramsElement <<< _occurrences
+    Just ScoreAsc  -> sortWith \x -> x        ^. _NgramsElement <<< _occurrences <<< to Set.size
+    Just ScoreDesc -> sortWith \x -> Down $ x ^. _NgramsElement <<< _occurrences <<< to Set.size
     Just TermAsc   -> sortWith \x -> x        ^. _NgramsElement <<< _ngrams
     Just TermDesc  -> sortWith \x -> Down $ x ^. _NgramsElement <<< _ngrams
     _              -> identity -- the server ordering is enough here
