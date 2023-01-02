@@ -709,15 +709,64 @@ uploadFrameCalcView = R.createElement uploadFrameCalcViewCpt
 uploadFrameCalcViewCpt :: R.Component Props
 uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt
   where
-    cpt { dispatch } _ = do
-      let bodies =
-            [ R2.row
-              [ H.div { className: "col-12 flex-space-around" }
-                [ H.h4 {}
-                  [ H.text "This will upload current calc as Corpus CSV" ]
-                ]
-              ]
-            ]
+    cpt { dispatch, session } _ = do
+      lang /\ langBox
+        <- R2.useBox' EN
+      selection
+        <- T.useBox ListSelection.MyListsFirst
+
+      let bodies = [ 
+        H.div 
+        { className: "col-12 flex-space-around" }
+        [ H.h4 {}
+          [ H.text "This will upload current calc as Corpus CSV" ]
+        ]
+      ,
+        -- Lang
+        H.div
+        { className: "form-group" }
+        [
+          H.div
+          { className: "form-group__label" }
+          [
+            B.label_ $
+            "File lang"
+          ]
+        ,
+          H.div
+          { className: "form-group__field" }
+          [
+            B.formSelect'
+            { callback: flip T.write_ langBox
+            , value: lang
+            , list: [ EN, FR, No_extraction, Universal ]
+            }
+            []
+          ]
+        ]
+      ,  
+        -- List selection
+        H.div
+        { className: "form-group" }
+        [
+          H.div
+          { className: "form-group__label" }
+          [
+            B.label_ $
+              "List selection"
+          ]
+        ,
+          H.div
+          { className: "form-group__field" }
+          [
+            ListSelection.selection
+            { selection
+            , session
+            } []
+          ]
+        ]
+      ]
+
       let footer = H.div {}
                    [ H.button { className: "btn btn-primary"
                               , on: { click: onClick } }
