@@ -111,7 +111,6 @@ renderPython s = s
 -- | I took the idea from: https://github.com/satya164/react-simple-code-editor
 codeEditor :: R2.Leaf Props
 codeEditor = R2.leaf codeEditorCpt
-
 codeEditorCpt :: R.Component Props
 codeEditorCpt = here.component "codeEditor" cpt where
   cpt {code, defaultCodeType, onChange} _ = do
@@ -245,7 +244,6 @@ type ToolbarProps =
 
 toolbar :: R2.Leaf ToolbarProps
 toolbar = R2.leaf toolbarCpt
-
 toolbarCpt :: R.Component ToolbarProps
 toolbarCpt = here.component "toolbar" cpt where
   cpt { controls: { codeS, codeType, viewType }
@@ -294,7 +292,6 @@ type ErrorComponentProps =
 
 errorComponent :: Record ErrorComponentProps -> R.Element
 errorComponent p = R.createElement errorComponentCpt p []
-
 errorComponentCpt :: R.Component ErrorComponentProps
 errorComponentCpt = here.component "errorComponent" cpt
   where
@@ -313,7 +310,6 @@ type CodeTypeSelectorProps =
 
 codeTypeSelector :: R2.Leaf CodeTypeSelectorProps
 codeTypeSelector = R2.leaf codeTypeSelectorCpt
-
 codeTypeSelectorCpt :: R.Component CodeTypeSelectorProps
 codeTypeSelectorCpt = here.component "codeTypeSelector" cpt where
   cpt { codeType, onChange } _ = do

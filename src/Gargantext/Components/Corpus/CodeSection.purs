@@ -82,9 +82,11 @@ fieldsCodeEditorCpt = here.component "fieldsCodeEditorCpt" cpt
       where
         onChange :: Index -> FieldType -> Effect Unit
         onChange idx typ = do
-          T.modify_ (\(FTFieldsWithIndex fs) ->
-            FTFieldsWithIndex $ fromMaybe fs $
-              List.modifyAt idx (\{ ftField: Field f} -> { idx, ftField: Field $ f { typ = typ } }) fs) fields
+          T.modify_ (
+            (\(FTFieldsWithIndex fs) ->
+              FTFieldsWithIndex $ fromMaybe fs $
+                List.modifyAt idx (\{ ftField: Field f} -> { idx, ftField: Field $ f { typ = typ } }) fs))
+            fields
 
         onMoveDown :: T2.ReloadS -> Index -> Unit -> Effect Unit
         onMoveDown masterKey idx _ = do
@@ -352,7 +354,7 @@ changeCode onc (Python {python}) CE.Markdown _ = onc $ Markdown $ defaultMarkdow
 
 changeCode onc (Markdown _)  CE.Haskell  c = onc $ Haskell  $ defaultHaskell'  { haskell = c }
 changeCode onc (Markdown _)  CE.Python   c = onc $ Python   $ defaultPython'   { python  = c }
-changeCode onc (Markdown _)  CE.JSON     c = onc $ Markdown $ defaultMarkdown' { text    = c }
+changeCode onc (Markdown _)  CE.JSON     c = onc $ JSON     $ defaultJSON'     { desc    = c }
 changeCode onc (Markdown md) CE.Markdown c = onc $ Markdown $ md               { text    = c }
 
 changeCode onc (JSON j) CE.Haskell _ = onc $ Haskell $ defaultHaskell' { haskell = haskell }
