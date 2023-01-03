@@ -58,41 +58,33 @@ actionDownloadGraphCpt = here.component "actionDownloadGraph" cpt where
       href  = url session $ Routes.NodeAPI GT.Graph (Just id) "gexf"
       info  = "Info about the Graph as GEXF format"
 
+data NodeListDownloadFormat = NL_CSV | NL_JSON
+derive instance Eq NodeListDownloadFormat
+derive instance Generic NodeListDownloadFormat _
+instance Show NodeListDownloadFormat
+  where
+    show NL_CSV = "CSV"
+    show NL_JSON = "JSON"
+
+readNodeListDownloadFormat :: String -> NodeListDownloadFormat
+readNodeListDownloadFormat "CSV" = NL_CSV
+readNodeListDownloadFormat "JSON" = NL_JSON
+readNodeListDownloadFormat _ = NL_JSON
+
 actionDownloadNodeList :: R2.Component ActionDownload
 actionDownloadNodeList = R.createElement actionDownloadNodeListCpt
 actionDownloadNodeListCpt :: R.Component ActionDownload
 actionDownloadNodeListCpt = here.component "actionDownloadNodeList" cpt where
   cpt { id, session } _ = do
-    pure $ panel [ H.div {} [H.text info] ]
-      (submitButtonHref DownloadNode href)
-    where
-      href  = url session $ Routes.NodeAPI GT.NodeList (Just id) ""
-      info  = "Info about the List as JSON format"
-
-data NodeTextsDownloadFormat = CSV | JSON
-derive instance Eq NodeTextsDownloadFormat
-derive instance Generic NodeTextsDownloadFormat _
-instance Show NodeTextsDownloadFormat where show = genericShow
-
-readDownloadFormat :: String -> NodeTextsDownloadFormat
-readDownloadFormat "CSV" = CSV
-readDownloadFormat "JSON" = JSON
-readDownloadFormat _ = JSON
-
-actionDownloadNodeTexts :: R2.Component ActionDownload
-actionDownloadNodeTexts = R.createElement actionDownloadNodeTextsCpt
-actionDownloadNodeTextsCpt :: R.Component ActionDownload
-actionDownloadNodeTextsCpt = here.component "actionDownloadNodeTexts" cpt where
-  cpt { id, session } _ = do
-    downloadFormat <- T.useBox JSON
+    downloadFormat <- T.useBox NL_JSON
     downloadFormat' <- T.useLive T.unequal downloadFormat
-    
+
     pure $ panel
       [ R2.select { className: "form-control"
                   , defaultValue: show downloadFormat'
                   , on: { change: onChange downloadFormat } }
-        [ opt CSV downloadFormat
-        , opt JSON downloadFormat ]
+        [ opt NL_CSV downloadFormat
+        , opt NL_JSON downloadFormat ]
       , H.div {} [ H.text $ info downloadFormat' ]
       ]
       (submitButtonHref DownloadNode $ href downloadFormat')
@@ -100,8 +92,47 @@ actionDownloadNodeTextsCpt = here.component "actionDownloadNodeTexts" cpt where
       opt t downloadFormat = H.option { value: show t } [ H.text $ show t ]
         where
           onClick _ = T.write_ t downloadFormat
-      onChange downloadFormat e = T.write_ (readDownloadFormat $ R.unsafeEventValue e) downloadFormat
+      onChange downloadFormat e = T.write_ (readNodeListDownloadFormat $ R.unsafeEventValue e) downloadFormat
+      href :: NodeListDownloadFormat -> String
+      href t = url session $ Routes.NodeAPI GT.NodeList (Just id) (toLower $ show t)
+      info :: NodeListDownloadFormat -> String
+      info t = "Info about the Documents as " <> show t <> " format"
+
+data NodeTextsDownloadFormat = NT_CSV | NT_JSON
+derive instance Eq NodeTextsDownloadFormat
+derive instance Generic NodeTextsDownloadFormat _
+instance Show NodeTextsDownloadFormat where show = genericShow
+
+readNodeTextsDownloadFormat :: String -> NodeTextsDownloadFormat
+readNodeTextsDownloadFormat "CSV" = NT_CSV
+readNodeTextsDownloadFormat "JSON" = NT_JSON
+readNodeTextsDownloadFormat _ = NT_JSON
+
+actionDownloadNodeTexts :: R2.Component ActionDownload
+actionDownloadNodeTexts = R.createElement actionDownloadNodeTextsCpt
+actionDownloadNodeTextsCpt :: R.Component ActionDownload
+actionDownloadNodeTextsCpt = here.component "actionDownloadNodeTexts" cpt where
+  cpt { id, session } _ = do
+    downloadFormat <- T.useBox NT_JSON
+    downloadFormat' <- T.useLive T.unequal downloadFormat
+
+    pure $ panel
+      [ R2.select { className: "form-control"
+                  , defaultValue: show downloadFormat'
+                  , on: { change: onChange downloadFormat } }
+        [ opt NT_CSV downloadFormat
+        , opt NT_JSON downloadFormat ]
+      , H.div {} [ H.text $ info downloadFormat' ]
+      ]
+      (submitButtonHref DownloadNode $ href downloadFormat')
+    where
+      opt t downloadFormat = H.option { value: show t } [ H.text $ show t ]
+        where
+          onClick _ = T.write_ t downloadFormat
+      onChange downloadFormat e = T.write_ (readNodeTextsDownloadFormat $ R.unsafeEventValue e) downloadFormat
+      href :: NodeTextsDownloadFormat -> String
       href t  = url session $ Routes.NodeAPI GT.NodeTexts (Just id) ("export/" <> (toLower $ show t))
+      info :: NodeTextsDownloadFormat -> String
       info t  = "Info about the Documents as " <> show t <> " format"
 
 {-

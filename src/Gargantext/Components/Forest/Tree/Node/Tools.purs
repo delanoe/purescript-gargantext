@@ -212,7 +212,8 @@ type Href  = String
 
 submitButtonHref :: Action -> Href -> R.Element
 submitButtonHref action href =
-  H.a { className, href, target: "_blank" } [ H.text $ " " <> text action ] where
+  H.a { className, href, target: "_blank" } [ H.text $ " " <> text action ]
+  where
     className = "btn btn-primary fa fa-" <> icon action
 
 ------------------------------------------------------------------------

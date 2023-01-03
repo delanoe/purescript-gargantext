@@ -47,9 +47,9 @@ type CommonProps =
   )
 
 nodePopupView :: R2.Leaf NodePopupProps
-nodePopupView = R2.leafComponent nodePopupCpt
-nodePopupCpt :: R.Component NodePopupProps
-nodePopupCpt = here.component "nodePopupView" cpt where
+nodePopupView = R2.leafComponent nodePopupViewCpt
+nodePopupViewCpt :: R.Component NodePopupProps
+nodePopupViewCpt = here.component "nodePopupView" cpt where
   cpt p@{ id, name, nodeType }  _ = do
     renameIsOpen <- T.useBox false
     open <- T.useLive T.unequal renameIsOpen
