@@ -359,8 +359,8 @@ uploadArbitraryFile' fileFormat mName blob p@{ boxes: { errors, tasks }, session
     GAT.insert id task tasks
     here.log2 "[uploadArbitraryFile'] UploadArbitraryFile, uploaded, task:" task
 
-uploadFrameCalc' p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } = do
-  eTask <- uploadFrameCalc session id
+uploadFrameCalc' lang p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
+  eTask <- uploadFrameCalc session id lang selection
   handleRESTError errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
     here.log2 "[performAction] UploadFrameCalc, uploaded, task:" task
@@ -400,7 +400,7 @@ performAction (ShareTeam username) p                          = shareTeam userna
 performAction (SharePublic { params }) p                      = sharePublic params p
 performAction (AddContact params) p                           = addContact params p
 performAction (AddNode name nodeType) p                       = addNode' name nodeType p
-performAction UploadFrameCalc p                               = uploadFrameCalc' p
+performAction (UploadFrameCalc lang selection) p              = uploadFrameCalc' lang p selection
 performAction (UploadFile nodeType fileType fileFormat lang mName contents selection) p =
   uploadFile' nodeType fileType fileFormat lang mName contents p selection
 performAction (UploadArbitraryFile fileFormat mName blob selection) p              =

@@ -710,10 +710,10 @@ uploadFrameCalcViewCpt :: R.Component Props
 uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt
   where
     cpt { dispatch, session } _ = do
-      lang /\ langBox
+      lang' /\ langBox
         <- R2.useBox' EN
-      selection
-        <- T.useBox ListSelection.MyListsFirst
+      selection' /\ selectionBox
+        <- R2.useBox' ListSelection.MyListsFirst
 
       let bodies = [ 
         H.div 
@@ -738,7 +738,7 @@ uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt
           [
             B.formSelect'
             { callback: flip T.write_ langBox
-            , value: lang
+            , value: lang'
             , list: [ EN, FR, No_extraction, Universal ]
             }
             []
@@ -760,7 +760,7 @@ uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt
           { className: "form-group__field" }
           [
             ListSelection.selection
-            { selection
+            { selection: selectionBox
             , session
             } []
           ]
@@ -769,22 +769,29 @@ uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt
 
       let footer = H.div {}
                    [ H.button { className: "btn btn-primary"
-                              , on: { click: onClick } }
+                              , on: { click: onClick lang' selection' } }
                      [ H.text "Upload!" ]
                    ]
 
       pure $ panel bodies footer
 
       where
-        onClick _ = do
+        onClick lang' selection' _ = do
           void $ launchAff do
-            dispatch UploadFrameCalc
+            dispatch $ UploadFrameCalc lang' selection'
 
 uploadFrameCalc :: Session
                     -> ID
+                    -> Lang
+                    -> ListSelection.Selection
                     -> AffRESTError GT.AsyncTaskWithType
-uploadFrameCalc session id = do
+uploadFrameCalc session id lang selection = do
   let p = GR.NodeAPI GT.Node (Just id) $ GT.asyncTaskTypePath GT.UploadFrameCalc
+  let body = [
+    Tuple "_wf_lang"       (Just $ show lang)
+  , Tuple "_wf_selection"  (Just $ show selection)
+  ]
 
-  eTask <- post session p ([] :: Array String)
+  eTask <- postWwwUrlencoded session p body
   pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.UploadFrameCalc }) <$> eTask
+
