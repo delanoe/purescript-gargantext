@@ -443,7 +443,7 @@ forceAtlas2Settings =
   , batchEdgesDrawing              : true
   , edgeWeightInfluence            : 1.0
     -- fixedY                      : false
-  , gravity                        : 1.0
+  , gravity                        : 0.01
   , hideEdgesOnMove                : true
   , includeHiddenEdges             : false
   , includeHiddenNodes             : true
@@ -454,5 +454,5 @@ forceAtlas2Settings =
   , skipHidden                     : false
   , slowDown                       : 0.2
   , startingIterations             : 10.0
-  , strongGravityMode              : false
+  , strongGravityMode              : true
   }
