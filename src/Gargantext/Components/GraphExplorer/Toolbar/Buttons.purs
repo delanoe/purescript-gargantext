@@ -4,6 +4,7 @@ module Gargantext.Components.GraphExplorer.Toolbar.Buttons
   , edgesToggleButton
   , louvainToggleButton
   , pauseForceAtlasButton
+  , pauseNoverlapButton
   , resetForceAtlasButton
   , multiSelectEnabledButton
   ) where
@@ -227,6 +228,45 @@ pauseForceAtlasButtonCpt = here.component "pauseForceAtlasButtonButton" cpt
           B.icon
           { name: icn state'}
         ]
+
+
+
+type NoverlapButtonProps =
+  ( state :: T.Box SigmaxTypes.NoverlapState
+  )
+
+pauseNoverlapButton :: R2.Leaf NoverlapButtonProps
+pauseNoverlapButton = R2.leaf pauseNoverlapButtonCpt
+pauseNoverlapButtonCpt :: R.Component NoverlapButtonProps
+pauseNoverlapButtonCpt = here.component "pauseNoverlapButton" cpt
+  where
+    cpt { state } _ = do
+      -- States
+      state' <- R2.useLive' state
+
+      -- Computed
+      let
+        vrt SigmaxTypes.NoverlapRunning = ButtonVariant Secondary
+        vrt _                           = OutlinedButtonVariant Secondary
+
+        icn SigmaxTypes.NoverlapRunning = "object-ungroup"
+        icn SigmaxTypes.NoverlapPaused  = "object-ungroup"
+
+      -- Render
+      pure $
+
+        B.button
+        { variant: vrt state'
+        , className: intercalate " "
+            [ "toolbar-atlas-button"
+            ]
+        , callback: \_ -> T.modify_ SigmaxTypes.toggleNoverlapState state
+        }
+        [
+          B.icon
+          { name: icn state'}
+        ]
+
 
 --------------------------------------------------------
 

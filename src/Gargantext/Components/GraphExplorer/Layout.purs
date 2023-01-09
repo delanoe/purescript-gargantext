@@ -29,6 +29,7 @@ import Gargantext.Config (defaultFrontends)
 import Gargantext.Data.Louvain as Louvain
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
+import Gargantext.Hooks.Sigmax.Noverlap as Noverlap
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Types as GT
@@ -46,6 +47,7 @@ here = R2.here "Gargantext.Components.GraphExplorer.Layout"
 
 type Props =
   ( fa2Ref   :: R.Ref (Maybe ForceAtlas.FA2Layout)
+  , noverlapRef :: R.Ref (Maybe Noverlap.NoverlapLayout)
   , sigmaRef :: R.Ref Sigmax.Sigma
   )
 
@@ -54,6 +56,7 @@ layout = R2.leaf layoutCpt
 layoutCpt :: R.Component Props
 layoutCpt = here.component "layout" cpt where
   cpt { fa2Ref
+      , noverlapRef
       , sigmaRef
       } _ = do
     -- | States
@@ -191,6 +194,7 @@ layoutCpt = here.component "layout" cpt where
         [
           Controls.controls
           { fa2Ref
+          , noverlapRef
           , reloadForest: reloadForest
           , sigmaRef
           }
@@ -205,6 +209,7 @@ layoutCpt = here.component "layout" cpt where
           graphView
           { elRef: graphRef
           , fa2Ref
+          , noverlapRef
           , sigmaRef
           }
         ]
@@ -215,6 +220,7 @@ layoutCpt = here.component "layout" cpt where
 type GraphProps =
   ( elRef    :: R.Ref (Nullable Element)
   , fa2Ref   :: R.Ref (Maybe ForceAtlas.FA2Layout)
+  , noverlapRef :: R.Ref (Maybe Noverlap.NoverlapLayout)
   , sigmaRef :: R.Ref Sigmax.Sigma
   )
 
@@ -224,6 +230,7 @@ graphViewCpt :: R.Memo GraphProps
 graphViewCpt = R.memo' $ here.component "graphView" cpt where
   cpt { elRef
       , fa2Ref
+      , noverlapRef
       , sigmaRef
       } _ = do
     -- | States
@@ -278,6 +285,7 @@ graphViewCpt = R.memo' $ here.component "graphView" cpt where
       Graph.drawGraph
       { elRef
       , fa2Ref
+      , noverlapRef
       , forceAtlas2Settings: Graph.forceAtlas2Settings
       , sigmaRef
       , sigmaSettings: Graph.sigmaSettings

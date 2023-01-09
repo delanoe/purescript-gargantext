@@ -11,11 +11,12 @@ import Effect.Timer (setTimeout)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.GraphExplorer.Resources as Graph
 import Gargantext.Components.GraphExplorer.Store as GraphStore
-import Gargantext.Components.GraphExplorer.Toolbar.Buttons (centerButton, edgesToggleButton, louvainToggleButton, pauseForceAtlasButton, multiSelectEnabledButton)
+import Gargantext.Components.GraphExplorer.Toolbar.Buttons (centerButton, edgesToggleButton, louvainToggleButton, pauseForceAtlasButton, pauseNoverlapButton, multiSelectEnabledButton)
 import Gargantext.Components.GraphExplorer.Toolbar.RangeControl (edgeConfluenceControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.Toolbar.SlideButton (labelSizeButton, labelRenderedSizeThresholdButton, mouseSelectorSizeSlider)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
+import Gargantext.Hooks.Sigmax.Noverlap as Noverlap
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
@@ -31,6 +32,7 @@ here = R2.here "Gargantext.Components.GraphExplorer.Toolbar.Controls"
 
 type Controls =
   ( fa2Ref       :: R.Ref (Maybe ForceAtlas.FA2Layout)
+  , noverlapRef  :: R.Ref (Maybe Noverlap.NoverlapLayout)
   , reloadForest :: T2.ReloadS
   , sigmaRef     :: R.Ref Sigmax.Sigma
   )
@@ -40,6 +42,7 @@ controls = R2.leaf controlsCpt
 controlsCpt :: R.Memo Controls
 controlsCpt = R.memo' $ here.component "controls" cpt where
   cpt { fa2Ref
+      , noverlapRef
       -- , reloadForest
       , sigmaRef
       } _ = do
@@ -49,6 +52,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     , edgeConfluenceRange
     -- , edgeWeight
     , forceAtlasState
+    , noverlapState
     , graph
     , graphStage
     , labelRenderedSizeThreshold
@@ -65,6 +69,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     } <- GraphStore.use
 
     forceAtlasState'      <- R2.useLive' forceAtlasState
+    noverlapState'        <- R2.useLive' noverlapState
     graphStage'           <- R2.useLive' graphStage
     selectedNodeIds'      <- R2.useLive' selectedNodeIds
     showSidebar'          <- R2.useLive' showSidebar
@@ -90,6 +95,17 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
 
     -- Handle case when FA is paused from outside events, eg. the automatic timer.
     R.useEffect' $ Sigmax.handleForceAtlas2Pause fa2Ref forceAtlasState mFAPauseRef Graph.forceAtlas2Settings
+
+    R.useEffect' do
+      here.log2 "[controls] noverlapState'" noverlapState'
+      case R.readRef noverlapRef of
+        Nothing -> pure unit
+        Just noverlap -> do
+          case noverlapState' of
+            SigmaxT.NoverlapRunning -> do
+              Noverlap.start noverlap
+            SigmaxT.NoverlapPaused -> do
+              Noverlap.stop noverlap
 
     -- Handle automatic edge hiding when FA is running (to prevent flickering).
     -- TODO Commented temporarily: this breaks forceatlas rendering after reset
@@ -151,6 +167,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             [
               -- resetForceAtlasButton { forceAtlasState, sigmaRef }
               pauseForceAtlasButton { state: forceAtlasState }
+            , pauseNoverlapButton { state: noverlapState }
             ,
               gap
 {-            ,

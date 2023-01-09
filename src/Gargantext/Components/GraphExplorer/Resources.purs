@@ -27,6 +27,7 @@ import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Camera as Camera
 import Gargantext.Hooks.Sigmax.Graphology as Graphology
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas2
+import Gargantext.Hooks.Sigmax.Noverlap as Noverlap
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Utils (getter)
@@ -41,6 +42,7 @@ here = R2.here "Gargantext.Components.GraphExplorer.Resources"
 type Props sigma forceatlas2 =
   ( elRef                 :: R.Ref (Nullable Element)
   , fa2Ref                :: R.Ref (Maybe ForceAtlas2.FA2Layout)
+  , noverlapRef           :: R.Ref (Maybe Noverlap.NoverlapLayout)
   , forceAtlas2Settings   :: forceatlas2
   , sigmaRef              :: R.Ref Sigmax.Sigma
   , sigmaSettings         :: sigma
@@ -57,6 +59,7 @@ drawGraphCpt = here.component "drawGraph" cpt where
   -- |
   cpt { elRef
       , fa2Ref
+      , noverlapRef
       , sigmaRef
       , forceAtlas2Settings: fa2Settings
       , transformedGraph
@@ -157,13 +160,20 @@ drawGraphCpt = here.component "drawGraph" cpt where
                       fa2 <- ForceAtlas2.init (Sigma.graph sig) fa2Settings
                       ForceAtlas2.start fa2
                       R.setRef fa2Ref (Just fa2)
-                    Just fa2 -> do
+                    Just _fa2 -> do
                       -- TODO Kill and restart? Maybe check fa2.graph first? Should be equal to sigma.graph
                       pure unit
                 else
                   case R.readRef fa2Ref of
                     Nothing -> pure unit
                     Just fa2 -> ForceAtlas2.stop fa2
+
+                case R.readRef noverlapRef of
+                  Nothing -> do
+                    noverlap <- Noverlap.init (Sigma.graph sig) {}
+                    R.setRef noverlapRef (Just noverlap)
+                  Just _noverlap -> do
+                    pure unit
 
                 case mCamera of
                   Just cam -> do

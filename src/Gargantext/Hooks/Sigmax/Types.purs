@@ -165,7 +165,6 @@ eqGraph (Graph {nodes: n1, edges: e1}) (Graph {nodes: n2, edges: e2}) = (n1 == n
 -- seconds and then stops (unless the user alters this by clicking the toggle
 -- button).
 data ForceAtlasState = {- InitialLoading | -} InitialRunning | InitialStopped | Running | Paused | Killed
-
 derive instance Generic ForceAtlasState _
 instance Eq ForceAtlasState where
   eq = genericEq
@@ -186,6 +185,15 @@ forceAtlasComponentStatus InitialStopped = Enabled
 forceAtlasComponentStatus Running = Disabled
 forceAtlasComponentStatus Paused = Enabled
 forceAtlasComponentStatus Killed = Enabled
+
+data NoverlapState = NoverlapPaused | NoverlapRunning
+derive instance Generic NoverlapState _
+instance Eq NoverlapState where
+  eq = genericEq
+
+toggleNoverlapState :: NoverlapState -> NoverlapState
+toggleNoverlapState NoverlapRunning = NoverlapPaused
+toggleNoverlapState NoverlapPaused = NoverlapRunning
 
 
 -- | Custom state for show edges. Normally it is EShow or EHide (show/hide

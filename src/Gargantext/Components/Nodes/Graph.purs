@@ -22,6 +22,7 @@ import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
+import Gargantext.Hooks.Sigmax.Noverlap as Noverlap
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Utils (getter)
@@ -161,6 +162,7 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
 
     sigmaRef <- Sigmax.initSigma >>= R.useRef
     fa2Ref <- R.useRef (Nothing :: Maybe ForceAtlas.FA2Layout)
+    noverlapRef <- R.useRef (Nothing :: Maybe Noverlap.NoverlapLayout)
 
     -- | Precompute some values
     -- |
@@ -195,6 +197,7 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
       -- Controls
       , startForceAtlas
       , forceAtlasState
+      , noverlapState: SigmaxT.NoverlapPaused
       , edgeWeight:  Range.Closed
           { min: 0.0
           , max: I.toNumber $ Seq.length $ SigmaxT.graphEdges graph
@@ -217,5 +220,6 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
       [
         layout
         { fa2Ref
+        , noverlapRef
         , sigmaRef }
       ]
