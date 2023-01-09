@@ -68,6 +68,7 @@ fieldsCodeEditorCpt = here.component "fieldsCodeEditorCpt" cpt
           , onRename: onRename idx
           , idx
           , nodeId
+          , initiallyOpened: idx == 0
           }
 
       pure $
@@ -115,17 +116,18 @@ hash :: FTFieldWithIndex -> Hash
 hash { idx, ftField } = Crypto.hash $ "--idx--" <> (show idx) <> "--field--" <> (show ftField)
 
 type FieldCodeEditorProps =
-  ( idx         :: Int
-  , nodeId      :: ID
-  , canMoveDown :: Boolean
-  , canMoveUp   :: Boolean
-  , field       :: FTField
-  , key         :: String
-  , onChange    :: FieldType -> Effect Unit
-  , onMoveDown  :: Unit -> Effect Unit
-  , onMoveUp    :: Unit -> Effect Unit
-  , onRemove    :: Unit -> Effect Unit
-  , onRename    :: String -> Effect Unit
+  ( idx             :: Int
+  , nodeId          :: ID
+  , canMoveDown     :: Boolean
+  , canMoveUp       :: Boolean
+  , field           :: FTField
+  , key             :: String
+  , onChange        :: FieldType -> Effect Unit
+  , onMoveDown      :: Unit -> Effect Unit
+  , onMoveUp        :: Unit -> Effect Unit
+  , onRemove        :: Unit -> Effect Unit
+  , onRename        :: String -> Effect Unit
+  , initiallyOpened :: Boolean
   )
 
 fieldCodeEditorWrapper :: Record FieldCodeEditorProps -> R.Element
@@ -141,6 +143,7 @@ fieldCodeEditorWrapperCpt = here.component "fieldCodeEditorWrapperCpt" cpt where
             , onRename
             , idx
             , nodeId
+            , initiallyOpened
             } _ = do
     -- | Computed
     -- |
@@ -229,7 +232,10 @@ fieldCodeEditorWrapperCpt = here.component "fieldCodeEditorWrapperCpt" cpt where
       ,
         H.div
         { id: bodyId
-        , className: "collapse card-body"
+        , className: intercalate " "
+            [ "collapse card-body"
+            , initiallyOpened ? "show" $ ""
+            ]
         , aria:
             { labelledby: headerId
             }
