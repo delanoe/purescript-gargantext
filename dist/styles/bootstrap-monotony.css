@@ -9483,6 +9483,11 @@ input[type=range]:-moz-focusring {
   width: 100%;
   display: block;
 }
+.graph-sidebar__close {
+  position: absolute;
+  right: 0;
+  margin-right: 24px;
+}
 .graph-sidebar__legend-tab {
   padding: 16px 20px;
 }
@@ -11436,6 +11441,11 @@ select.form-control {
   height: 16px;
   width: 100%;
   display: block;
+}
+.phylo-sidebar__close {
+  position: absolute;
+  right: 0;
+  margin-right: 24px;
 }
 
 .phylo-details-tab__counter {

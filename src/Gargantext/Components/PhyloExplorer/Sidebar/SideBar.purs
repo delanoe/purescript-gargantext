@@ -6,10 +6,12 @@ import Gargantext.Prelude
 
 import Effect (Effect)
 import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (Elevation(..))
 import Gargantext.Components.PhyloExplorer.DetailsTab (detailsTab)
 import Gargantext.Components.PhyloExplorer.SelectionTab (selectionTab)
 import Gargantext.Components.PhyloExplorer.Store as PhyloStore
 import Gargantext.Components.PhyloExplorer.Types (TabView(..))
+import Gargantext.Types (SidePanelState(..))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -32,6 +34,7 @@ component = R.hooksComponent componentName cpt where
     -- |
     { sideBarTabView
     , phyloId
+    , sideBarDisplayed
     } <- PhyloStore.use
 
     sideBarTabView' <- R2.useLive' sideBarTabView
@@ -42,6 +45,12 @@ component = R.hooksComponent componentName cpt where
     let
       tabList = [ DetailsTab, SelectionTab ]
 
+    -- | Behaviors
+    -- |
+    let
+      closeCallback :: Unit -> Effect Unit
+      closeCallback _ = T.write_ Closed sideBarDisplayed
+
     -- | Render
     -- |
     pure $
@@ -49,6 +58,14 @@ component = R.hooksComponent componentName cpt where
       H.div
       { className: "phylo-sidebar" }
       [
+        -- Close CTA
+        B.iconButton
+        { name: "times"
+        , elevation: Level2
+        , callback: closeCallback
+        , className: "phylo-sidebar__close"
+        }
+      ,
         -- Menu
         B.tabs
         { value: sideBarTabView'
