@@ -43,11 +43,10 @@ options =
   }
 
 here :: R2.Here
-here = R2.here "Gargantext.Components.Document.layout"
+here = R2.here "Gargantext.Components.Document.Layout"
 
 layout :: forall r. R2.OptLeaf Options Props r
 layout = R2.optLeaf layoutCpt options
-
 layoutCpt :: R.Component Props
 layoutCpt = here.component "main" cpt where
   -- Component
@@ -226,10 +225,6 @@ layoutCpt = here.component "main" cpt where
         H.div
         { className: "document-layout__body" }
         [
-          B.div'
-          { className: "document-layout__separator-label" }
-          "Title"
-        ,
           H.div
           { className: "document-layout__title" }
           [
