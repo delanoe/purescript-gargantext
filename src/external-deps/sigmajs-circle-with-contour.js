@@ -52,13 +52,15 @@ export default class NodeContourFastProgram extends CircleNodeProgram {
     }
 
     const color = floatColor(data.color);
-    const black = floatColor('black');
+    //const black = floatColor('black');
+    const gray = floatColor('#aaa')
 
     // contour
     array[i++] = data.x;
     array[i++] = data.y;
     array[i++] = data.size + 1;
-    array[i++] = black;
+    //array[i++] = black;
+    array[i++] = gray;
 
     // circle
     array[i++] = data.x;

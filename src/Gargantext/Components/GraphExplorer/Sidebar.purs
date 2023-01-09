@@ -559,7 +559,7 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
           { className: "list-group-item"}
           [
             H.ul
-            {} $
+            { className: "graph-neighborhood__parent" } $
             flip mapWithIndex termList \index node ->
 
               R2.when

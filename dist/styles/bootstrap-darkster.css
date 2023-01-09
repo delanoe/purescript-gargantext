@@ -9629,6 +9629,11 @@ input[type=range]:-moz-focusring {
   width: 50%;
 }
 
+.graph-neighborhood__parent {
+  display: flex;
+  list-style: none;
+  flex-wrap: wrap;
+}
 .graph-neighborhood__counter {
   font-weight: bold;
 }
@@ -9638,14 +9643,17 @@ input[type=range]:-moz-focusring {
   top: 0.75rem;
 }
 .graph-neighborhood__badge {
+  border: 1px solid;
+  border-radius: 6px;
   white-space: normal;
   word-break: break-word;
-}
-.graph-neighborhood__badge:not(:last-child) {
+  margin-right: 6px;
   margin-bottom: 6px;
 }
 .graph-neighborhood__badge .badge {
   padding-top: 0.15em;
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0);
 }
 .graph-neighborhood__show-more {
   margin-top: 16px;
