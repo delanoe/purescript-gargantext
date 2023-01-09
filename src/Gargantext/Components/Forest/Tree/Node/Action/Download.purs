@@ -101,7 +101,13 @@ actionDownloadNodeListCpt = here.component "actionDownloadNodeList" cpt where
 data NodeTextsDownloadFormat = NT_CSV | NT_JSON
 derive instance Eq NodeTextsDownloadFormat
 derive instance Generic NodeTextsDownloadFormat _
-instance Show NodeTextsDownloadFormat where show = genericShow
+instance Show NodeTextsDownloadFormat where
+ show NT_CSV = "CSV"
+ show NT_JSON = "JSON"
+
+urlNodeTextsDownloadFormat :: NodeTextsDownloadFormat -> String
+urlNodeTextsDownloadFormat NT_CSV = "csv"
+urlNodeTextsDownloadFormat NT_JSON = "json"
 
 readNodeTextsDownloadFormat :: String -> NodeTextsDownloadFormat
 readNodeTextsDownloadFormat "CSV" = NT_CSV
@@ -131,7 +137,7 @@ actionDownloadNodeTextsCpt = here.component "actionDownloadNodeTexts" cpt where
           onClick _ = T.write_ t downloadFormat
       onChange downloadFormat e = T.write_ (readNodeTextsDownloadFormat $ R.unsafeEventValue e) downloadFormat
       href :: NodeTextsDownloadFormat -> String
-      href t  = url session $ Routes.NodeAPI GT.NodeTexts (Just id) ("export/" <> (toLower $ show t))
+      href t  = url session $ Routes.NodeAPI GT.NodeTexts (Just id) ("export/" <> urlNodeTextsDownloadFormat t)
       info :: NodeTextsDownloadFormat -> String
       info t  = "Info about the Documents as " <> show t <> " format"
 
