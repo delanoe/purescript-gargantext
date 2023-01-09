@@ -163,10 +163,33 @@ let sigmaMouseSelector = function(sigma, options) {
 
 //sigmaMouseSelector(sigma);
 
+
+function drawLabel(
+  context,
+  data,
+  settings
+) {
+  if (!data.label) return;
+
+  const size = data.size, //settings.labelSize,
+    font = settings.labelFont,
+    weight = settings.labelWeight,
+    color = settings.labelColor.attribute
+      ? data[settings.labelColor.attribute] || settings.labelColor.color || "#000"
+      : settings.labelColor.color;
+
+  context.fillStyle = color;
+  context.font = `${weight} ${size}px ${font}`;
+
+  context.fillText(data.label, data.x, data.y + size / 3);
+}
+
+
 function _sigma(left, right, el, opts) {
   try {
     let graph = new Graph();
     const settings = {
+      labelRenderer: drawLabel,
       nodeProgramClasses: {
         circle: CircleNodeProgram.default,  // TODO why default? It seems that import should be fixed
         ccircle: ContourCircleNodeProgram
