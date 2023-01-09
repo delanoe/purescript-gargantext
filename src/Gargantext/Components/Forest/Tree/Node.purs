@@ -17,13 +17,13 @@ import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Elevation(..), TooltipEffect(..), Variant(..))
+import Gargantext.Components.Corpus.CodeSection (loadCorpusWithChild)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Upload (DroppedFile(..), fileTypeView)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileType(..), UploadFileBlob(..))
 import Gargantext.Components.Forest.Tree.Node.Box (nodePopupView)
 import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
 import Gargantext.Components.Forest.Tree.Node.Tools.Sync (nodeActionsGraph, nodeActionsNodeList)
-import Gargantext.Components.Corpus.CodeSection (loadCorpusWithChild)
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (Lang(EN))
 import Gargantext.Config.REST (logRESTError)
@@ -208,146 +208,162 @@ nodeSpanCpt = here.component "nodeSpan" cpt
 
       pure $
 
-        H.span
-        { className: intercalate " "
-            [ "mainleaf"
-            , dropClass droppedFile' isDragOver'
-            , isSelected ? "mainleaf--selected" $ ""
-            ]
-        , on: { dragLeave: onDragLeave isDragOver
-              , dragOver: onDragOverHandler isDragOver
-              , drop: dropHandler
-              }
-        }
+        R.fragment
         [
-
-      -- // Abstract informations //
-
-          nodeTooltip
-          { id
-          , nodeType
-          , name
-          }
-          [
-            case mVersion of
-              Nothing -> mempty
-              Just v  -> versionComparator v
-          ]
-        ,
-          R.createPortal
-          [
-            fileTypeView
-            { dispatch
-            , droppedFile
-            , id
-            , isDragOver
-            , nodeType
-            , key: "fileType-" <> show id
-            }
-          ]
-          host
-        ,
-
-      -- // Leaf informations data //
-
-          folderIcon
-          { isLeaf
-          , isOpened: folderOpen'
-          , callback: const $ T.modify_ (not) folderOpen
-          }
-        ,
-          nodeIcon
-          (
-            { nodeType
-            , isLeaf
-            , callback: const $ T.modify_ (not) folderOpen
-            , isSelected
-            }
-          )
-          [
-            case mVersion of
-              Nothing                              -> mempty
-              Just { clientVersion, remoteVersion} ->
-                B.iconButton $
-                { className: intercalate " "
-                    [ "mainleaf__version-badge"
-                    , clientVersion == remoteVersion ?
-                        "mainleaf__version-badge--matched" $
-                        "mainleaf__version-badge--mismatched"
-                    ]
-                , name: clientVersion == remoteVersion ?
-                    "check-circle" $
-                    "exclamation-circle"
-                , callback: const $ T.modify_ (not) folderOpen
-                , overlay: false
+          H.span
+          { className: intercalate " "
+              [ "mainleaf"
+              , dropClass droppedFile' isDragOver'
+              , isSelected ? "mainleaf--selected" $ ""
+              ]
+          , on: { dragLeave: onDragLeave isDragOver
+                , dragOver: onDragOverHandler isDragOver
+                , drop: dropHandler
                 }
-          ]
-        ,
-          nodeLink
-          { callback: onNodeLinkClick
-          , href
-          , id
-          , name: name' props.name nodeType session
-          , type: nodeType
           }
-        ,
+          [
 
-      -- // Leaf action features //
+        -- // Abstract informations //
 
-          nodeActions
-          { id
-          , nodeType
-          , refresh: const $ dispatch RefreshTree
-          , session
-          } []
-        ,
-          R2.when (showBox) $
-
-            B.iconButton
-            { name: "cog"
-            , className: "mainleaf__settings-icon"
-            , callback: \_ -> T.write_ true isBoxVisible
-            , title:
-                  "Each node of the Tree can perform some actions.\n"
-                <> "Click here to execute one of them."
-            , variant: Secondary
-            , elevation: Level1
-            }
-        ,
-          R.fragment $ flip map currentTasks' \task ->
-
-            asyncProgress
-            { asyncTask: task
-            , errors
-            , nodeId: id
-            , onFinish: onTaskFinish id task
-            , session
+            nodeTooltip
+            { id
+            , nodeType
+            , name
             }
             [
-              taskProgress
-              {}
+              case mVersion of
+                Nothing -> mempty
+                Just v  -> versionComparator v
             ]
           ,
+            R.createPortal
+            [
+              fileTypeView
+              { dispatch
+              , droppedFile
+              , id
+              , isDragOver
+              , nodeType
+              , key: "fileType-" <> show id
+              }
+            ]
+            host
+          ,
 
-        -- // Modals //
+        -- // Leaf informations data //
 
-          B.baseModal
-          { isVisibleBox: isBoxVisible
-          , noBody: true
-          , noHeader: true
-          , modalClassName: "forest-tree-node-modal"
-          }
-          [
-            nodePopupView
-            { boxes
-            , dispatch
-            , id
-            , name
-            , nodeType
-            , closeCallback: \_ -> T.write_ false isBoxVisible
-            , session
+            folderIcon
+            { isLeaf
+            , isOpened: folderOpen'
+            , callback: const $ T.modify_ (not) folderOpen
             }
+          ,
+            nodeIcon
+            (
+              { nodeType
+              , isLeaf
+              , callback: const $ T.modify_ (not) folderOpen
+              , isSelected
+              }
+            )
+            [
+              case mVersion of
+                Nothing                              -> mempty
+                Just { clientVersion, remoteVersion} ->
+                  B.iconButton $
+                  { className: intercalate " "
+                      [ "mainleaf__version-badge"
+                      , clientVersion == remoteVersion ?
+                          "mainleaf__version-badge--matched" $
+                          "mainleaf__version-badge--mismatched"
+                      ]
+                  , name: clientVersion == remoteVersion ?
+                      "check-circle" $
+                      "exclamation-circle"
+                  , callback: const $ T.modify_ (not) folderOpen
+                  , overlay: false
+                  }
+            ]
+          ,
+            nodeLink
+            { callback: onNodeLinkClick
+            , href
+            , id
+            , name: name' props.name nodeType session
+            , type: nodeType
+            }
+          ,
+
+        -- // Leaf action features //
+
+            nodeActions
+            { id
+            , nodeType
+            , refresh: const $ dispatch RefreshTree
+            , session
+            } []
+          ,
+            R2.when (showBox) $
+
+              B.iconButton
+              { name: "cog"
+              , className: "mainleaf__settings-icon"
+              , callback: \_ -> T.write_ true isBoxVisible
+              , title:
+                    "Each node of the Tree can perform some actions.\n"
+                  <> "Click here to execute one of them."
+              , variant: Secondary
+              , elevation: Level1
+              }
+          ,
+            R.fragment $ flip map currentTasks' \task ->
+
+              asyncProgress
+              { asyncTask: task
+              , errors
+              , nodeId: id
+              , onFinish: onTaskFinish id task
+              , session
+              }
+              [
+                taskProgress
+                {}
+              ]
+            ,
+
+          -- // Modals //
+
+            B.baseModal
+            { isVisibleBox: isBoxVisible
+            , noBody: true
+            , noHeader: true
+            , modalClassName: "forest-tree-node-modal"
+            }
+            [
+              nodePopupView
+              { boxes
+              , dispatch
+              , id
+              , name
+              , nodeType
+              , closeCallback: \_ -> T.write_ false isBoxVisible
+              , session
+              }
+            ]
           ]
+        ,
+        -- // Mainleaf indicator of selected node //
+        --
+        --    (?) why not integrating this block directly within the
+        --        "mainleaf"? → this is due to the "relative" position set rule,
+        --        whereas this indicator should have its stacking context based
+        --        on the Forest sidebar width (and not the "mainleaf", which
+        --        can be hidden due to the Forest sidebar overflow hidden)
+          R2.when isSelected $
+
+            H.div
+            { class: "mainleaf-selection-indicator" }
+            []
         ]
 
 
