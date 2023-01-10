@@ -10065,28 +10065,6 @@ input[type=range]:-moz-focusring {
   color: #005a9a;
   font-weight: bold;
 }
-.mainleaf--selected::after {
-  content: "";
-  font-family: ForkAwesome;
-  width: 4px;
-  color: #FFFFFF;
-  background-color: #005a9a;
-  top: 0;
-  bottom: 0;
-  position: absolute;
-}
-.right-handed .mainleaf--selected::after {
-  right: 0;
-  border-top-left-radius: 0.25rem;
-  border-bottom-left-radius: 0.25rem;
-}
-
-.left-handed .mainleaf--selected::after {
-  left: 0;
-  border-top-right-radius: 0.25rem;
-  border-bottom-right-radius: 0.25rem;
-}
-
 .mainleaf--file-dropped .mainleaf__node-link::before {
   content: "";
   border: 1px dotted #007bff;
@@ -10104,6 +10082,31 @@ input[type=range]:-moz-focusring {
   width: 120px;
   position: absolute;
   top: 5px;
+}
+
+.mainleaf-selection-indicator {
+  height: fit-content;
+  top: 0;
+  right: 0;
+  width: 4px;
+  background-color: #005a9a;
+  position: absolute;
+  box-shadow: 0 0 0 4px #FFFFFF;
+  z-index: 1;
+}
+.mainleaf-selection-indicator::after {
+  content: "​";
+}
+.right-handed .mainleaf-selection-indicator {
+  right: 0;
+  border-top-left-radius: 0.25rem;
+  border-bottom-left-radius: 0.25rem;
+}
+
+.left-handed .mainleaf-selection-indicator {
+  left: 0;
+  border-top-right-radius: 0.25rem;
+  border-bottom-right-radius: 0.25rem;
 }
 
 @media screen and (-webkit-min-device-pixel-ratio: 0) {

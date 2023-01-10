@@ -119,6 +119,16 @@
   text-shadow: 0 0 4px;
 }
 
+/// Extend element to fit all four positions
+/// @param {value} value [default: 0]
+@mixin fit-positions($value: 0) {
+  top: $value;
+  right: $value;
+  bottom: $value;
+  left: $value;
+}
+
+
 /// Add a basic ripple effect based on CSS pseudo class
 ///
 ///   * Not as qualitative as a dedicated ripple HTML element
@@ -187,14 +197,16 @@
   }
 }
 
+/// Add a virtual space on pure empty tag
+/// This will allow to set a width or height rules
+@mixin virtual-content() {
+  content: "\200B";
+}
+@mixin virtual-space() {
 
-/// Extend element to fit all four positions
-/// @param {value} value [default: 0]
-@mixin fit-positions($value: 0) {
-  top: $value;
-  right: $value;
-  bottom: $value;
-  left: $value;
+  &::after {
+    @include virtual-content();
+  }
 }
 
 /// Hidden vertical scrollbar
