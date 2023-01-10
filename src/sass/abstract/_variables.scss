@@ -3,8 +3,8 @@
 /// Global spacing value
 $space-unit: 8px;
 
-// Bootstrap color system
-// * with added shades of gray (+)
+/// Bootstrap color system
+/// * with added shades of gray (+)
 $white:    #FFFFFF;
 $gray-50 : #FCFCFC; // (+)
 $gray-100: #F8F9FA;
@@ -20,13 +20,23 @@ $gray-800: #343A40;
 $gray-900: #212529;
 $black:    #000000;
 
-// Pastel colours
+/// Pastel colours
 $pastel-green   : hsla(149, 46%, 41%, 1);
 $pastel-blue    : hsla(206, 28%, 55%, 1);
 $pastel-yellow  : hsla(60, 100%, 71%, 1);
 $pastel-red     : hsla(3, 60%, 59%, 1);
 $pastel-orange  : hsla(40, 89%, 75%, 1);
 $pastel-purple  : hsla(278, 19%, 74%, 1);
+
+
+/// Breakpoints
+/// (for media query: best sorted from highest to lowest)
+$breakpoints: (
+  'screen'  : 2000px,
+  'desktop' : 1200px,
+  'tablet'  : 780px,
+  'mobile'  : 540px,
+); // (?) will also overrides "vendors/include-media" default
 
 
 /// Z-Index Management
