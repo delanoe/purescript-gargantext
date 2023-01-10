@@ -559,6 +559,10 @@ uploadFile { contents, fileFormat, lang, fileType, id, nodeType, mName, selectio
                  , Tuple "_wf_name"       mName
                  , Tuple "_wf_selection"  (Just $ show selection)
                  ]
+    jsonBodyParams = [ Tuple "_wjf_data"       (Just contents)
+                     , Tuple "_wjf_filetype"   (Just $ show fileType)
+                     , Tuple "_wjf_name"       mName
+                 ]
     csvBodyParams = [ Tuple "_wtf_data"       (Just contents)
                     , Tuple "_wtf_filetype"   (Just $ show NodeList)
                     , Tuple "_wtf_fileformat" (Just $ show fileFormat)
@@ -571,7 +575,7 @@ uploadFile { contents, fileFormat, lang, fileType, id, nodeType, mName, selectio
       Corpus   -> GT.CorpusFormUpload /\ (GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.CorpusFormUpload) /\ bodyParams
       Annuaire -> GT.UploadFile /\ (GR.NodeAPI nodeType (Just id) "annuaire") /\ bodyParams
       NodeList -> case fileType of
-        JSON -> GT.ListUpload /\ (GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.ListUpload) /\ bodyParams
+        JSON -> GT.ListUpload /\ (GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.ListUpload) /\ jsonBodyParams
         CSV  -> GT.ListCSVUpload /\ (GR.NodeAPI NodeList (Just id) $ GT.asyncTaskTypePath GT.ListCSVUpload) /\ csvBodyParams
         _    -> GT.UploadFile /\ (GR.NodeAPI nodeType (Just id) "") /\ bodyParams
       _        -> GT.UploadFile /\ (GR.NodeAPI nodeType (Just id) "") /\ bodyParams
@@ -715,8 +719,8 @@ uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt
       selection' /\ selectionBox
         <- R2.useBox' ListSelection.MyListsFirst
 
-      let bodies = [ 
-        H.div 
+      let bodies = [
+        H.div
         { className: "col-12 flex-space-around" }
         [ H.h4 {}
           [ H.text "This will upload current calc as Corpus CSV" ]
@@ -744,7 +748,7 @@ uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt
             []
           ]
         ]
-      ,  
+      ,
         -- List selection
         H.div
         { className: "form-group" }
@@ -794,4 +798,3 @@ uploadFrameCalc session id lang selection = do
 
   eTask <- postWwwUrlencoded session p body
   pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.UploadFrameCalc }) <$> eTask
-
