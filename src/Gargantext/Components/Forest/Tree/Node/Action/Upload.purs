@@ -709,33 +709,89 @@ uploadFrameCalcView = R.createElement uploadFrameCalcViewCpt
 uploadFrameCalcViewCpt :: R.Component Props
 uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt
   where
-    cpt { dispatch } _ = do
-      let bodies =
-            [ R2.row
-              [ H.div { className: "col-12 flex-space-around" }
-                [ H.h4 {}
-                  [ H.text "This will upload current calc as Corpus CSV" ]
-                ]
-              ]
-            ]
+    cpt { dispatch, session } _ = do
+      lang' /\ langBox
+        <- R2.useBox' EN
+      selection' /\ selectionBox
+        <- R2.useBox' ListSelection.MyListsFirst
+
+      let bodies = [ 
+        H.div 
+        { className: "col-12 flex-space-around" }
+        [ H.h4 {}
+          [ H.text "This will upload current calc as Corpus CSV" ]
+        ]
+      ,
+        -- Lang
+        H.div
+        { className: "form-group" }
+        [
+          H.div
+          { className: "form-group__label" }
+          [
+            B.label_ $
+            "File lang"
+          ]
+        ,
+          H.div
+          { className: "form-group__field" }
+          [
+            B.formSelect'
+            { callback: flip T.write_ langBox
+            , value: lang'
+            , list: [ EN, FR, No_extraction, Universal ]
+            }
+            []
+          ]
+        ]
+      ,  
+        -- List selection
+        H.div
+        { className: "form-group" }
+        [
+          H.div
+          { className: "form-group__label" }
+          [
+            B.label_ $
+              "List selection"
+          ]
+        ,
+          H.div
+          { className: "form-group__field" }
+          [
+            ListSelection.selection
+            { selection: selectionBox
+            , session
+            } []
+          ]
+        ]
+      ]
+
       let footer = H.div {}
                    [ H.button { className: "btn btn-primary"
-                              , on: { click: onClick } }
+                              , on: { click: onClick lang' selection' } }
                      [ H.text "Upload!" ]
                    ]
 
       pure $ panel bodies footer
 
       where
-        onClick _ = do
+        onClick lang' selection' _ = do
           void $ launchAff do
-            dispatch UploadFrameCalc
+            dispatch $ UploadFrameCalc lang' selection'
 
 uploadFrameCalc :: Session
                     -> ID
+                    -> Lang
+                    -> ListSelection.Selection
                     -> AffRESTError GT.AsyncTaskWithType
-uploadFrameCalc session id = do
+uploadFrameCalc session id lang selection = do
   let p = GR.NodeAPI GT.Node (Just id) $ GT.asyncTaskTypePath GT.UploadFrameCalc
+  let body = [
+    Tuple "_wf_lang"       (Just $ show lang)
+  , Tuple "_wf_selection"  (Just $ show selection)
+  ]
 
-  eTask <- post session p ([] :: Array String)
+  eTask <- postWwwUrlencoded session p body
   pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.UploadFrameCalc }) <$> eTask
+

@@ -18,7 +18,7 @@ data Action = AddNode     String GT.NodeType
             | DoSearch    GT.AsyncTaskWithType
             | UploadFile  GT.NodeType FileType FileFormat Lang (Maybe String) String Selection
             | UploadArbitraryFile FileFormat (Maybe String) UploadFileBlob Selection
-            | UploadFrameCalc
+            | UploadFrameCalc Lang Selection
             | DownloadNode
             | RefreshTree
             | CloseBox
@@ -45,7 +45,7 @@ instance Eq Action where
   eq (UploadFile nt1 ft1 ff1 l1 s1 _ _) (UploadFile nt2 ft2 ff2 l2 s2 _ _) =
     (eq nt1 nt2) && (eq ft1 ft2) && (eq ff1 ff2) && (eq l1 l2) && (eq s1 s2)
   eq (UploadArbitraryFile ff1 s1 _ _) (UploadArbitraryFile ff2 s2 _ _) = (eq ff1 ff2) && (eq s1 s2)
-  eq UploadFrameCalc UploadFrameCalc = true
+  eq (UploadFrameCalc l1 s1) (UploadFrameCalc l2 s2) = (eq l1 l2) && (eq s1 s2)
   eq DownloadNode DownloadNode = true
   eq RefreshTree RefreshTree = true
   eq CloseBox CloseBox = true
@@ -70,7 +70,7 @@ instance Show Action where
   show (DoSearch    _      )         = "SearchQuery"
   show (UploadFile _ _ _ _ _ _ _)      = "UploadFile"
   show (UploadArbitraryFile _ _ _ _) = "UploadArbitraryFile"
-  show UploadFrameCalc               = "UploadFrameCalc"
+  show (UploadFrameCalc _ _ )        = "UploadFrameCalc"
   show  RefreshTree                  = "RefreshTree"
   show  CloseBox                     = "CloseBox"
   show  DownloadNode                 = "Download"
