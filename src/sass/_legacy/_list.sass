@@ -54,6 +54,18 @@
 
 ///////////////////////////////////////////////////:
 
+.loaded-ngrams-table-header
+  display: flex
+  margin-top: space-x(4)
+
+  &__search
+    flex-basis: 380px
+    flex-grow: 0
+    flex-shrink: 1
+
+
+///////////////////////////////////////////////////:
+
 .ngrams-table-search-button
 
   .input-group-text
@@ -69,30 +81,110 @@
 
   &__header
     display: flex
-    align-items: flex-start
+    align-items: center
+    justify-content: space-between
+    background-color: $card-bg
+    position: sticky
+    top: $topbar-height
+    z-index: z-index('main', 'topbar')
+    padding: $card-spacer-y $card-spacer-x
+    border-bottom: 1px solid $border-color
 
-    &__item
-      padding: $card-spacer-y $card-spacer-x
-
-      &:not(:first-child)
-        margin-left: space-x(1)
-      &:not(:last-child)
-        margin-right: space-x(1)
+  &__navigation
+    display: flex
+    justify-content: space-between
+    align-items: center
+    margin-bottom: space-x(1)
 
   &__add-term
-    // struggling to create harmonious vertical gutters due to Bootstrap adding
-    // helper classes surrounding the element
-    $offset-top: -8px
-    $offset-bottom: 12px
+    margin-top: space-x(1.5)
+    margin-left: space-x(1.5)
+    display: flex
+    align-items: center
+    gap: space-x(1)
+    font-size: 14px
 
-    margin-top: $offset-top
-    margin-bottom: $offset-bottom
+    &::before
+      $offset-y: 1px
 
-  &__footer
-    padding: $card-spacer-y $card-spacer-x
+      content: "└"
+      color: $gray-400
+      font-size: 18px
+      line-height: 0
+      position: relative
+      top: $offset-y
+      padding-right: space-x(1)
 
-    &__item
-      text-align: center
+  &__action-term
+    margin-left: space-x(1.5)
+    display: flex
+    align-items: center
+    gap: space-x(1)
+    font-size: 14px
+
+    &::before
+      content: "┌"
+      color: $gray-400
+      font-size: 18px
+      line-height: 0
+      position: relative
+      padding-right: space-x(2)
+
+  &__table
+
+    tbody
+      padding-left: $card-spacer-x
+      padding-right: $card-spacer-x
+
+
+  &__table
+    $select-column-width: 100px
+    $score-column-width: 25%
+
+    /// as of now (one-based index):
+    /// nth(1) → "Select"
+    /// nth(2) → "Terms"
+    /// nth(3) → "Score"
+
+    // (header)
+    th:nth-child(1)
+      width: $select-column-width
+      padding-left: space-x(4)
+      input
+        @include clickable
+    th:nth-child(2)
+      padding-left: space-x(4)
+    th:nth-child(3)
+      width: $score-column-width
+
+    // (rows)
+    td:nth-child(1)
+      padding: initial
+
+      div
+        $offset-y: 14px
+
+        @include clickable
+
+        height: 100%
+        padding-left: space-x(4)
+        padding-top: $offset-y
+    td:nth-child(2)
+      padding-left: space-x(4)
+
+      .tree-loaded-plus
+        $offset-y: 1px
+
+        visibility: hidden
+        position: relative
+        top: $offset-y
+        margin-left: space-x(1.5)
+
+    tr:hover
+
+      .tree-loaded-plus
+        visibility: unset
+
 
 ///////////////////////////////////////////////////:
 
@@ -115,21 +207,6 @@
 
   .ngrams-tree-loaded-node a:hover
     text-decoration: line-through
-
-//////////////////////////////////////////////////
-
-.loaded-ngrams-table-header
-  text-align: center
-  margin-top: space-x(1.5)
-  margin-bottom: space-x(1.5)
-
-  &__icon
-    font-size: 16px
-
-  &__text
-    font-size: 22px
-    font-weight: bold
-    font-family: $headings-font-family
 
 //////////////////////////////////////////////////
 

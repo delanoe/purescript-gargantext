@@ -10,8 +10,8 @@ module Gargantext.Components.NgramsTable
 
 import Gargantext.Prelude
 
-import DOM.Simple.Console (log)
 import Data.Array as A
+import Data.Array as Array
 import Data.Either (Either(..))
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Lens (to, view, (.~), (^.), (^?))
@@ -52,12 +52,11 @@ import Gargantext.Hooks.Loader (useLoaderBox)
 import Gargantext.Routes (SessionRoute(..)) as Routes
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (CTabNgramType, ListId, NodeID, OrderBy(..), SearchQuery, TabType, TermList(..), TermSize, termLists, termSizes)
-import Gargantext.Utils (nbsp, queryExactMatchesLabel, queryMatchesLabel, sortWith, toggleSet)
+import Gargantext.Utils (nbsp, queryExactMatchesLabel, queryMatchesLabel, sortWith, toggleSet, (?))
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Seq as Seq
 import Gargantext.Utils.Toestand as T2
-import Reactix (useEffect)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
@@ -170,185 +169,155 @@ tableContainerCpt { addCallback
           (searchQuery /= "")
         )
 
+
+    -- | Hooks
+    -- |
+
+    -- @TODO: add security →prepend portal key/id with an extra id
+    filterPortalKey <- pure $ "portal-ngrams-table-filter"
+    mFilterHost <- R.unsafeHooksEffect $ R2.getElementById "portal-ngrams-table-filter"
+
+    -- @TODO: add security →prepend portal key/id with an extra id
+    subfilterPortalKey <- pure $ "portal-ngrams-table-subfilter"
+    mSubFilterHost <- R.unsafeHooksEffect $ R2.getElementById "portal-ngrams-table-subfilter"
+
     -- | Render
     -- |
     pure $
 
       H.div
-      { className: intercalate " "
-        [ "ngrams-table-container"
-        , "card"
-        ]
-      }
+      { classname: "ngrams-table-container" }
       [
 
-        H.div
-        { className: intercalate " "
-            [ "ngrams-table-container__header"
-            , "card-header"
-            ]
-        }
+        -- Portal filters
+        R2.createPortal' mFilterHost
         [
-        --   H.div
-        --   { className: "col-md-2"
-        --   , style: { marginTop: "6px" }
-        --   }
-        --   [
-        --     H.li
-        --     { className: "list-group-item" }
-        --     syncResetButton
-        --   ,
-        --     -- , if (not $ Set.member (normNgram tabNgramType searchQuery) ngramsSelection) && searchQuery /= "" then
-        --
-        --   ]
-        -- ,
+          R2.fragmentWithKey filterPortalKey
+          [
+            B.wad
+            [ "d-flex", "ml-2", "gap-2" ]
+            [
+              R2.select
+              { id: "picklistmenu"
+              , className: "form-control custom-select"
+              , defaultValue: (maybe "" show termListFilter)
+              , on: {change: changeTermList params}
+              }
+              (map optps1 termLists)
+            ,
+              R2.select
+              { id: "picktermtype"
+              , className: "form-control custom-select"
+              , defaultValue: (maybe "" show termSizeFilter)
+              , on: {change: changeTermSize params}
+              }
+              (map optps1 termSizes)
+            ]
+          ]
+        ]
+      ,
+        -- Portal subfilters
+        R2.createPortal' mSubFilterHost
+        [
+          R2.fragmentWithKey subfilterPortalKey
+          [
+              R2.when showAddNewTerm $
+
+                H.div
+                { className: "ngrams-table-container__add-term" }
+                [
+                  B.wad
+                  []
+                  [
+                    H.text "adding"
+                  ,
+                    H.text $ nbsp 1
+                  ,
+                    B.b_ $ "« " <> searchQuery <> " »"
+                  ,
+                    H.text $ nbsp 1
+                  ,
+                    H.text "to"
+                  ]
+                ,
+                  B.button
+                  { variant: ButtonVariant Light
+                  , callback: const $ addCallback searchQuery
+                  , size: SmallSize
+                  }
+                  [
+                    B.icon
+                    { name: "circle"
+                    , className: "mr-1 graph-term"
+                    }
+                  ,
+                    H.text "Map terms"
+                  ]
+                ]
+
+          ]
+        ]
+      ,
+
+        H.div
+        { className: "ngrams-table-container__navigation" }
+        [
+          props.pageSizeDescription
+        ,
+          props.paginationLinks
+        ,
+          B.wad
+          [ "d-flex", "align-items-center" ]
+          [
+            B.label_ "per page"
+          ,
+            B.wad_ [ "virtual-space", "w-1" ]
+          ,
+            props.pageSizeControl
+          ]
+        ]
+      ,
+        H.div
+        { className: "card" }
+        [
 
           H.div
           { className: intercalate " "
-              [ "ngrams-table-container__header__item"
-              , "card"
-              ]
-          }
-          syncResetButton
-        ,
-          H.div
-          { className: intercalate " "
-              [ "ngrams-table-container__header__item"
-              , "card"
-              ]
-          }
-          [
-            R2.select
-            { id: "picklistmenu"
-            , className: "form-control custom-select"
-            , defaultValue: (maybe "" show termListFilter)
-            , on: {change: changeTermList params}
-            }
-            (map optps1 termLists)
-          ]
-        ,
-          H.div
-          { className: intercalate " "
-              [ "ngrams-table-container__header__item"
-              , "card"
-              ]
-          }
-          [
-            R2.select
-            { id: "picktermtype"
-            , className: "form-control custom-select"
-            , defaultValue: (maybe "" show termSizeFilter)
-            , on: {change: changeTermSize params}
-            }
-            (map optps1 termSizes)
-          ]
-        ,
-          H.div
-          { className: intercalate " "
-              [ "ngrams-table-container__header__item"
-              , "card"
+              [ "ngrams-table-container__header"
               ]
           }
           [
             B.wad
-            [ "d-flex", "align-items-center" ]
+            []
             [
-              props.pageSizeControl
-            ,
-              B.wad_ [ "mr-2", "d-inline-block" ]
-            ,
-              B.label_ "items"
-              --   H.div { className: "col-md-6" } [ props.pageSizeControl ]
-              -- , H.div { className: "col-md-6" } [
-              --    ]
+              R2.when (selectionsExist ngramsSelection) $
+
+                selectButtons (selectionsLength ngramsSelection)
             ]
+          ,
+            B.wad
+            []
+            syncResetButton
           ]
         ,
           H.div
           { className: intercalate " "
-              [ "ngrams-table-container__header__item"
-              , "card"
-              , "flex-grow-1"
+              [ "ngrams-table-container__table"
               ]
           }
           [
-            props.pageSizeDescription
-          ,
-            props.paginationLinks
-          ]
-        ]
-      ,
-        R2.when (selectionsExist ngramsSelection) $
-
-          H.li
-          { className: "card" }
-          [
-            selectButtons true
-          ]
-      ,
-        H.div
-        { id: "terms_table"
-        , className: "card-body"
-        }
-        [
-          R2.when showAddNewTerm $
-
-            H.div
-            { className: "ngrams-table-container__add-term" }
+            H.table
+            { className: "table able" }
             [
-              B.button
-              { variant: ButtonVariant Light
-              , callback: const $ addCallback searchQuery
-              }
+              H.thead
+              {}
               [
-                B.icon
-                { name: "circle"
-                , className: "mr-1 graph-term"
-                }
-              ,
-                H.text "Add"
-              ,
-                H.text $ nbsp 1
-              ,
-                B.b_ $ "« " <> searchQuery <> " »"
-              ,
-                H.text $ nbsp 1
-              ,
-                H.text "to Map terms"
+                props.tableHead
               ]
-            ]
-        ,
-          H.table
-          { className: "table able" }
-          [
-            H.thead
-            {}
-            [
-              props.tableHead
-            ]
-          ,
-            H.tbody
-            {}
-            props.tableBody
-          ]
-        ,
-          H.li
-          { className: intercalate " "
-              [ "ngrams-table-container__footer"
-              , "card"
-              ]
-          }
-          [
-            H.div
-            { className: "ngrams-table-container__footer__item" }
-            [
-              selectButtons (selectionsExist ngramsSelection)
-            ]
-          ,
-            H.div
-            { className: "ngrams-table-container__footer__item" }
-            [
-              props.paginationLinks
+            ,
+              H.tbody
+              {}
+              props.tableBody
             ]
           ]
         ]
@@ -370,18 +339,76 @@ tableContainerCpt { addCallback
   selectionsExist :: Set NgramsTerm -> Boolean
   selectionsExist = not <<< Set.isEmpty
 
-  selectButtons false = H.div {} []
-  selectButtons true =
-    H.div {} [
-      H.button { className: "btn btn-primary"
-              , on: { click: const $ setSelection MapTerm }
-              } [ H.text "Map" ]
-      , H.button { className: "btn btn-primary"
-                , on: { click: const $ setSelection StopTerm }
-                } [ H.text "Stop" ]
-      , H.button { className: "btn btn-primary"
-                , on: { click: const $ setSelection CandidateTerm }
-                } [ H.text "Candidate" ]
+  selectionsLength :: Set NgramsTerm -> Int
+  selectionsLength = Array.length <<< Set.toUnfoldable
+
+  selectButtons :: Int -> R.Element
+  selectButtons 0     = mempty
+  selectButtons count =
+    H.div
+    { className: "ngrams-table-container__action-term" }
+    [
+      B.wad
+      []
+      [
+        H.text $ show count
+      ,
+        H.text $ nbsp 1
+      ,
+        H.text (count > 1 ? "terms" $ "term")
+      ,
+        H.text $ nbsp 1
+      ,
+        H.text "selected"
+      ]
+    ,
+      B.buttonGroup
+      { collapse: false
+
+      }
+      [
+        B.button
+        { variant: ButtonVariant Light
+        , callback: const $ setSelection MapTerm
+        , size: SmallSize
+        }
+        [
+          B.icon
+          { name: "circle"
+          , className: "mr-1 graph-term"
+          }
+        ,
+          H.text "Map"
+        ]
+      ,
+        B.button
+        { variant: ButtonVariant Light
+        , callback: const $ setSelection CandidateTerm
+        , size: SmallSize
+        }
+        [
+          B.icon
+          { name: "circle"
+          , className: "mr-1 candidate-term"
+          }
+        ,
+          H.text "Candidate"
+        ]
+      ,
+        B.button
+        { variant: ButtonVariant Light
+        , callback: const $ setSelection StopTerm
+        , size: SmallSize
+        }
+        [
+          B.icon
+          { name: "circle"
+          , className: "mr-1 stop-term"
+          }
+        ,
+          H.text "Stop"
+        ]
+      ]
     ]
 
 -- NEXT
@@ -415,31 +442,53 @@ loadedNgramsTableHeader :: R2.Leaf LoadedNgramsTableHeaderProps
 loadedNgramsTableHeader = R2.leaf loadedNgramsTableHeaderCpt
 loadedNgramsTableHeaderCpt :: R.Component LoadedNgramsTableHeaderProps
 loadedNgramsTableHeaderCpt = here.component "loadedNgramsTableHeader" cpt where
-  cpt { searchQuery, params } _ = pure $
-
-    R.fragment
-    [
-      H.div
-      { className: "loaded-ngrams-table-header" }
-      [
-        B.icon
-        { name: "hand-o-down"
-        , className: "loaded-ngrams-table-header__icon"
-        }
-      ,
-        B.wad_ [ "mr-1", "d-inline-block" ]
-      ,
-        B.span'
-        { className: "loaded-ngrams-table-header__text" } $
-        "Extracted Terms"
-      ]
-    ,
-      NTS.searchInput
-      { key: "search-input"
-      , searchQuery
+  cpt { searchQuery
       , params
-      }
-    ]
+      } _ = do
+    -- | Render
+    -- |
+    pure $
+
+      R.fragment
+      [
+        -- H.div
+        -- { className: "loaded-ngrams-table-header" }
+        -- [
+        --   B.icon
+        --   { name: "hand-o-down"
+        --   , className: "loaded-ngrams-table-header__icon"
+        --   }
+        -- ,
+        --   B.wad_ [ "mr-1", "d-inline-block" ]
+        -- ,
+        --   B.span'
+        --   { className: "loaded-ngrams-table-header__text" } $
+        --   "Extracted Terms"
+        -- ]
+      -- ,
+
+        H.div
+        { className: "loaded-ngrams-table-header" }
+        [
+          H.div
+          { className: "loaded-ngrams-table-header__search" }
+          [
+            NTS.searchInput
+            { key: "search-input"
+            , searchQuery
+            , params
+            }
+          ]
+        ,
+          -- @TODO: add security → prepend portal key/id with an extra id
+          H.div
+          { id: "portal-ngrams-table-filter" } []
+        ]
+      ,
+        -- @TODO: add security → prepend portal key/id with an extra id
+        H.div
+        { id: "portal-ngrams-table-subfilter" } []
+      ]
 
 loadedNgramsTableBody :: R2.Component PropsNoReload
 loadedNgramsTableBody = R.createElement loadedNgramsTableBodyCpt
@@ -573,36 +622,35 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
           ngramsClick  _ = Nothing
       R.setRef treeEdit.onNgramsClickRef $ Just ngramsClick
 
-    pure $ R.fragment
-      [ TT.table
-        { colNames
-        , container: tableContainer
-          { addCallback
-          , dispatch: performAction
-          , getNgramsChildren
-          , ngramsSelection
-          , ngramsTable
-          , path
-          , queryExactMatches: exactMatches
-          , syncResetButton: [ syncResetButton ]
-          , tabNgramType
-          }
-        , params
-        , rows: filteredConvertedRows
+    pure $
+
+      TT.table
+      { colNames
+      , container: tableContainer
+        { addCallback
+        , dispatch: performAction
+        , getNgramsChildren
+        , ngramsSelection
+        , ngramsTable
+        , path
+        , queryExactMatches: exactMatches
         , syncResetButton: [ syncResetButton ]
-        , totalRecords
-        , wrapColElts:
-          wrapColElts { allNgramsSelected, dispatch: performAction, ngramsSelection } scoreType
+        , tabNgramType
         }
-      ,
-        B.wad
-        [ "mt-2", "d-inline-block" ]
-        [
-          syncResetButton
-        ]
-      ]
+      , params
+      , rows: filteredConvertedRows
+      , syncResetButton: [ syncResetButton ]
+      , totalRecords
+      , wrapColElts:
+          wrapColElts
+          { allNgramsSelected
+          , dispatch: performAction
+          , ngramsSelection
+          }
+          scoreType
+      }
       where
-        colNames = TT.ColumnName <$> ["Show", "Select", "Map", "Stop", "Terms", "Score"] -- see convOrderBy
+        colNames = TT.ColumnName <$> [ "Select", "Terms", "Score"] -- see convOrderBy
 
 ngramsTableOrderWith :: Maybe (TT.OrderByDirection TT.ColumnName)
                      -> Seq.Seq NgramsElement
@@ -620,8 +668,8 @@ wrapColElts scProps _         (TT.ColumnName "Select") = const [NTSC.selectionCh
 wrapColElts _       scoreType (TT.ColumnName "Score")  = (_ <> [H.text ("(" <> show scoreType <> ")")])
 wrapColElts _       _         _                        = identity
 
-type MkDispatchProps = (
-    filteredRows :: PreConversionRows
+type MkDispatchProps =
+  ( filteredRows :: PreConversionRows
   , path         :: PageParams
   , state        :: T.Box State
   , treeEdit     :: Record NgramsTreeEditProps

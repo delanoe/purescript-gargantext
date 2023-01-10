@@ -20,4 +20,9 @@
 //     the `modules/form` file, and check where its mixin `inputError` has been
 //     being used
 @import '../_abstract';
+
+// Module abstract
 @import '../_modules';
+
+// Vendor abstract
+@import '../vendors/_include-media';
