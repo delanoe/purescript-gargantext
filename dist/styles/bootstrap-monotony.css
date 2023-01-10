@@ -6398,7 +6398,12 @@ a:hover {
   max-height: 300px;
   overflow-y: scroll;
   width: 300px;
-  top: 50px;
+  top: 60px;
+}
+@media (max-width: 991px) {
+  .input-with-autocomplete .completions {
+    top: 90px;
+  }
 }
 
 .with-icon-font {

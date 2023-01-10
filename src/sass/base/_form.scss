@@ -95,6 +95,9 @@
     max-height: 300px;
     overflow-y: scroll;
     width: 300px;
-    top: 50px;
+    top: 60px;
+    @media(max-width: 991px) {
+      top: 90px;
+    }
   }
 }
