@@ -162,7 +162,7 @@ treeLoadedCpt = here.component "treeLoaded" cpt where
         [
           B.iconButton
           { name: "plus"
-          , className: "ml-1"
+          , className: "tree-loaded-plus"
           , variant: Secondary
           , callback: const effect
           , overlay: false
@@ -211,22 +211,9 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
 
       pure $ Tbl.makeRow
         [
-          H.div
-          { className: "text-center"
-          , style: { marginTop: "6px" }
-          }
-          [
-            B.iconButton
-            { name: "eye-slash"
-            , status: Disabled -- see `onClick` behavior
-            , callback: onClick
-            , className: ""
-            }
-          ]
-        , selected
-        , checkbox GT.MapTerm
-        , checkbox GT.StopTerm
-        , H.div {}
+          selected
+        ,
+          H.div {}
           ( if isEditing'
             then
               [
@@ -266,9 +253,7 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
               a (ngramsStyle <> [DOM.onClick $ const effect])
             Nothing ->
               span ngramsStyle
-        onClick _ = pure unit :: Effect Unit
-        -- onClick _ = do
-        --   R2.callTrigger toggleSidePanel unit
+
         termList    = ngramsElement ^. _NgramsElement <<< _list
         ngramsStyle = [termStyle termList ngramsOpacity]
         ngramsEdit { ngrams: n } = Just $ dispatch $ SetParentResetChildren (Just n) (ngramsChildren n)
@@ -289,41 +274,43 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
           -- | ngramsTransient = const Nothing
           -- | otherwise       = Just <<< dispatch <<< cycleTermListItem <<< view _ngrams
         selected    =
-          B.wad
-          [ "text-center" ]
-          [
-            H.input
-            { checked: Set.member ngrams ngramsSelection
-            , className: "checkbox"
-            , on: { change: const $ dispatch $ ToggleSelect ngrams }
-            , type: "checkbox"
-            , style:
-                { cursor: "pointer"
-                , marginTop: "6px"
+          H.div
+          { on: { click: const $ dispatch $ ToggleSelect ngrams
                 }
+          }
+          [
+            B.icon
+            { name: Set.member ngrams ngramsSelection ?
+                "check-square" $
+                "square-o"
+            , className: Set.member ngrams ngramsSelection ?
+                "color-primary" $
+                ""
             }
           ]
 
-        checkbox termList' =
-          let chkd = termList == termList'
-              termList'' = if chkd then GT.CandidateTerm else termList'
-          in
-            B.wad
-            [ "text-center" ]
-            [
-              H.input
-              { checked: chkd
-              , className: "checkbox"
-              , on: { change: const $ dispatch $ CoreAction $
-                      setTermListA ngrams (replace termList termList'') }
-              , readOnly: ngramsTransient
-              , type: "checkbox"
-              , style:
-                  { cursor: "pointer"
-                  , marginTop: "6px"
-                  }
-              }
-            ]
+        -- (?) removing quick action turning ngram to Candidate or Stop via
+        --     a checkbox click
+        -- checkbox termList' =
+        --   let chkd = termList == termList'
+        --       termList'' = if chkd then GT.CandidateTerm else termList'
+        --   in
+        --     B.wad
+        --     [ "text-center" ]
+        --     [
+        --       H.input
+        --       { checked: chkd
+        --       , className: "checkbox"
+        --       , on: { change: const $ dispatch $ CoreAction $
+        --               setTermListA ngrams (replace termList termList'') }
+        --       , readOnly: ngramsTransient
+        --       , type: "checkbox"
+        --       , style:
+        --           { cursor: "pointer"
+        --           , marginTop: "6px"
+        --           }
+        --       }
+        --     ]
 
         ngramsTransient = tablePatchHasNgrams ngramsLocalPatch ngrams
           -- ^ TODO here we do not look at ngramsNewElems, shall we?
