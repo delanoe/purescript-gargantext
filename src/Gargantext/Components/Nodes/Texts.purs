@@ -541,7 +541,6 @@ type SideText =
 
 sideText :: R2.Leaf ( key :: String | SideText )
 sideText = R2.leaf sideTextCpt
-
 sideTextCpt :: R.Component ( key :: String | SideText )
 sideTextCpt = here.component "sideText" cpt where
   cpt { sidePanelText: { corpusId, listId, nodeId }

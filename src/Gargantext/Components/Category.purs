@@ -7,13 +7,17 @@ import Data.Array as A
 import Data.Generic.Rep (class Generic)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
+import Data.Tuple.Nested ((/\))
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (Variant(..))
-import Gargantext.Components.Category.Types (Category(..), Star(..), cat2score, categories, clickAgain, star2score, stars)
+import Gargantext.Components.Category.Types (Category(..), Star(..), cat2score, categories, clickAgain, decodeStar, star2score, stars)
 import Gargantext.Components.DocsTable.Types (DocumentsView(..), LocalCategories, LocalUserScore)
-import Gargantext.Config.REST (AffRESTError)
+import Gargantext.Components.GraphQL.Context (NodeContext, NodeContext')
+import Gargantext.Components.GraphQL.Endpoints (getNodeContext)
+import Gargantext.Config.REST (AffRESTError, RESTError(..))
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, put)
 import Gargantext.Types (NodeID, NodeType(..))
@@ -47,21 +51,6 @@ ratingCpt = here.component "rating" cpt where
       , session
       , setLocalCategories
       } _ = do
-    -- | Computed
-    -- |
-    let
-      icon' Star_0 Star_0  = "times-circle"
-      icon' _      Star_0  = "times"
-      icon' c      s       = star2score c < star2score s ? "star-o" $ "star"
-
-      variant' Star_0 Star_0 = Dark
-      variant' _      Star_0 = Dark
-      variant' _      _      = Dark
-
-      className' Star_0 Star_0 = "rating-group__action"
-      className' _      Star_0 = "rating-group__action"
-      className' _      _      = "rating-group__star"
-
     -- | Behaviors
     -- |
     let
@@ -84,11 +73,89 @@ ratingCpt = here.component "rating" cpt where
       { className: "rating-group" } $
       stars <#> \s ->
         B.iconButton
-        { name: icon' score s
+        { name: ratingIcon score s
         , callback: onClick s
         , overlay: false
-        , variant: variant' score s
-        , className: className' score s
+        , variant: ratingVariant score s
+        , className: ratingClassName score s
+        }
+
+ratingIcon Star_0 Star_0  = "times-circle"
+ratingIcon _      Star_0  = "times"
+ratingIcon c      s       = star2score c < star2score s ? "star-o" $ "star"
+
+ratingVariant Star_0 Star_0 = Dark
+ratingVariant _      Star_0 = Dark
+ratingVariant _      _      = Dark
+
+ratingClassName Star_0 Star_0 = "rating-group__action"
+ratingClassName _      Star_0 = "rating-group__action"
+ratingClassName _      _      = "rating-group__star"
+
+
+------------------------------------------------
+
+type RatingSimpleLoaderProps =
+  ( docId    :: NodeID
+  , corpusId :: NodeID
+  , session  :: Session
+)
+
+ratingSimpleLoader :: R2.Component RatingSimpleLoaderProps
+ratingSimpleLoader = R.createElement ratingSimpleLoaderCpt
+ratingSimpleLoaderCpt :: R.Component RatingSimpleLoaderProps
+ratingSimpleLoaderCpt = here.component "ratingSimpleLoader" cpt where
+  cpt { docId
+      , corpusId
+      , session
+      } _ = do
+    useLoader { errorHandler
+              , loader: loadDocumentContext session
+              , path: { docId, corpusId }
+              , render: \nc -> renderRatingSimple nc [] }
+    where
+      errorHandler err = do
+        here.warn2 "[pageLayout] RESTError" err
+        case err of
+          ReadJSONError err' -> here.warn2 "[pageLayout] ReadJSONError" $ show err'
+          _ -> pure unit
+
+type ContextParams =
+  ( docId    :: NodeID
+  , corpusId :: NodeID )
+
+loadDocumentContext :: Session -> Record ContextParams -> AffRESTError NodeContext
+loadDocumentContext session { docId, corpusId } = getNodeContext session docId corpusId
+
+renderRatingSimple :: R2.Component NodeContext'
+renderRatingSimple = R.createElement renderRatingSimpleCpt
+renderRatingSimpleCpt :: R.Component NodeContext'
+renderRatingSimpleCpt = here.component "renderRatingSimple" cpt where
+  cpt { nc_category
+      } _ = do
+    pure $ case nc_category of
+      Nothing -> H.div {} []
+      Just category -> ratingSimple { score: decodeStar category } []
+
+type RatingSimpleProps =
+  ( score :: Star )
+
+ratingSimple :: R2.Component RatingSimpleProps
+ratingSimple = R.createElement ratingSimpleCpt
+ratingSimpleCpt :: R.Component RatingSimpleProps
+ratingSimpleCpt = here.component "ratingSimple" cpt where
+  cpt { score
+      } _ = do
+    pure $
+      H.div
+      { className: "rating-group" } $
+      stars <#> \s ->
+        B.iconButton
+        { name: ratingIcon score s
+        , callback: \_ -> pure unit  -- onClick s
+        , overlay: false
+        , variant: ratingVariant score s
+        , className: ratingClassName score s
         }
 
 

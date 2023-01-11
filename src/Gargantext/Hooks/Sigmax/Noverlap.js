@@ -17,12 +17,10 @@ export function _init(graph, options) {
 }
 
 export function _start(layout) {
-  console.log('[noverlap] _start', layout);
   return layout.start();
 }
 
 export function _stop(layout) {
-  console.log('[noverlap] _stop', layout);
   return layout.stop();
 }
 

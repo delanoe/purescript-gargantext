@@ -16,7 +16,7 @@ import Gargantext.Hooks.Session (useSession)
 import Gargantext.Types (NodeID)
 import Gargantext.Utils (nbsp)
 import Gargantext.Utils.Reactix as R2
-import Gargnatext.Components.GraphQL.Contact (AnnuaireContact, _ac_city, _ac_country, _ac_firstName, _ac_labTeamDeptsFirst, _ac_lastName, _ac_office, _ac_organizationFirst, _ac_role, _ac_touchMail, _ac_touchPhone, _ac_touchUrl)
+import Gargantext.Components.GraphQL.Contact (AnnuaireContact, _ac_city, _ac_country, _ac_firstName, _ac_labTeamDeptsFirst, _ac_lastName, _ac_office, _ac_organizationFirst, _ac_role, _ac_touchMail, _ac_touchPhone, _ac_touchUrl)
 import Reactix as R
 import Reactix.DOM.HTML as H
 

@@ -1,4 +1,4 @@
-module Gargnatext.Components.GraphQL.Contact
+module Gargantext.Components.GraphQL.Contact
   ( AnnuaireContact
   , annuaireContactQuery
   -- Lenses

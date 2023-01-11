@@ -4,6 +4,7 @@ module Gargantext.Components.Document.Layout
 
 import Gargantext.Prelude
 
+import Data.Array as A
 import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
 import Data.Ord (greaterThan)
 import Data.String (length)
@@ -14,6 +15,8 @@ import Gargantext.Components.Annotation.Types as AFT
 import Gargantext.Components.AutoUpdate (autoUpdate)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), SpinnerTheme(..))
+import Gargantext.Components.Category (ratingSimpleLoader)
+import Gargantext.Components.Category.Types (decodeStar)
 import Gargantext.Components.Document.Types (DocPath, Document(..), LoadedData, initialState)
 import Gargantext.Components.NgramsTable.AutoSync (useAutoSync)
 import Gargantext.Components.Node (NodePoly(..))
@@ -48,7 +51,7 @@ here = R2.here "Gargantext.Components.Document.Layout"
 layout :: forall r. R2.OptLeaf Options Props r
 layout = R2.optLeaf layoutCpt options
 layoutCpt :: R.Component Props
-layoutCpt = here.component "main" cpt where
+layoutCpt = here.component "layout" cpt where
   -- Component
   cpt { path
       , loaded:
@@ -273,6 +276,11 @@ layoutCpt = here.component "main" cpt where
               { className: "document-layout__date__content" }
               (publicationDate $ Document doc)
             ]
+        , case path.mCorpusId of
+            Nothing -> H.div {} []
+            Just corpusId -> ratingSimpleLoader { docId: path.nodeId
+                                                , corpusId
+                                                , session: path.session  } []
         ,
           R2.when hasAbstract $
 

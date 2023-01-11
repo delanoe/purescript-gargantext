@@ -60,7 +60,6 @@ type Props =
 
 sidebar :: R2.Leaf Props
 sidebar = R2.leaf sidebarCpt
-
 sidebarCpt :: R.Component Props
 sidebarCpt = here.component "sidebar" cpt where
   cpt props _ = do
