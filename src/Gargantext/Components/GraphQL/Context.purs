@@ -2,13 +2,14 @@ module Gargantext.Components.GraphQL.Context
   ( NodeContext
   , NodeContext'
   , nodeContextQuery
+  , NodeContextCategoryM
   ) where
 
 import Gargantext.Prelude
 
 import Data.Lens (Lens', lens)
 import Data.Maybe (Maybe(..), fromMaybe)
-import GraphQL.Client.Args (Args, (=>>))
+import GraphQL.Client.Args (Args, NotNull, (=>>))
 import GraphQL.Client.Variable (Var(..))
 
 import Data.Array as A
@@ -47,3 +48,9 @@ nodeContextQuery
     }
 
 ------------------------------------------------------------------------
+
+type NodeContextCategoryM
+  = { context_id :: NotNull Int
+    , node_id    :: NotNull Int
+    , category   :: Int
+    }

@@ -24,7 +24,7 @@ type TeamDeleteM
 teamQuery = { team: { team_node_id: Var :: _ "id" Int } =>>
               { team_owner_username: unit
               , team_members: { username: unit
-                              , shared_folder_id: unit 
+                              , shared_folder_id: unit
                               }
               }
             }

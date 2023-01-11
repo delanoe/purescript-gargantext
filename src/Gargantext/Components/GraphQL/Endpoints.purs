@@ -102,7 +102,20 @@ deleteTeamMembership session sharedFolderId teamNodeId = do
 getNodeContext :: Session -> Int -> Int -> AffRESTError GQLCTX.NodeContext
 getNodeContext session context_id node_id = do
   { contexts } <- queryGql session "get node context" $ GQLCTX.nodeContextQuery `withVars` { context_id, node_id }
-  liftEffect $ here.log2 "[getNodeContext] node context" contexts
+  --liftEffect $ here.log2 "[getNodeContext] node context" contexts
   case A.head contexts of
     Nothing -> pure $ Left $ CustomError "no node context found"
     Just context -> pure $ Right context -- TODO: error handling
+
+updateNodeContextCategory :: Session -> Int -> Int -> Int -> AffRESTError Int
+updateNodeContextCategory session context_id node_id category = do
+  client <- liftEffect $ getClient session
+  { update_node_context_category } <- mutation
+    client
+    "update_node_context_category"
+    { update_node_context_category: onlyArgs { context_id
+                                             , node_id
+                                             , category } }
+  pure $ case A.head update_node_context_category of
+    Nothing -> Left (CustomError $ "Failed to update node category")
+    Just _ -> Right context_id

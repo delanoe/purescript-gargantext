@@ -6,7 +6,7 @@ import Gargantext.Prelude
 import Data.Array as A
 import Data.Generic.Rep (class Generic)
 import Data.Map as Map
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
@@ -15,7 +15,7 @@ import Gargantext.Components.Bootstrap.Types (Variant(..))
 import Gargantext.Components.Category.Types (Category(..), Star(..), cat2score, categories, clickAgain, decodeStar, star2score, stars)
 import Gargantext.Components.DocsTable.Types (DocumentsView(..), LocalCategories, LocalUserScore)
 import Gargantext.Components.GraphQL.Context (NodeContext, NodeContext')
-import Gargantext.Components.GraphQL.Endpoints (getNodeContext)
+import Gargantext.Components.GraphQL.Endpoints (getNodeContext, updateNodeContextCategory)
 import Gargantext.Config.REST (AffRESTError, RESTError(..))
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI))
@@ -27,6 +27,7 @@ import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Category"
@@ -112,7 +113,10 @@ ratingSimpleLoaderCpt = here.component "ratingSimpleLoader" cpt where
     useLoader { errorHandler
               , loader: loadDocumentContext session
               , path: { docId, corpusId }
-              , render: \nc -> renderRatingSimple nc [] }
+              , render: \nc -> renderRatingSimple { docId
+                                                  , corpusId
+                                                  , context: nc
+                                                  , session } [] }
     where
       errorHandler err = do
         here.warn2 "[pageLayout] RESTError" err
@@ -127,35 +131,68 @@ type ContextParams =
 loadDocumentContext :: Session -> Record ContextParams -> AffRESTError NodeContext
 loadDocumentContext session { docId, corpusId } = getNodeContext session docId corpusId
 
-renderRatingSimple :: R2.Component NodeContext'
+type RenderRatingSimpleProps =
+  ( docId    :: NodeID
+  , corpusId :: NodeID
+  , context  :: NodeContext
+  , session  :: Session )
+
+renderRatingSimple :: R2.Component RenderRatingSimpleProps
 renderRatingSimple = R.createElement renderRatingSimpleCpt
-renderRatingSimpleCpt :: R.Component NodeContext'
+renderRatingSimpleCpt :: R.Component RenderRatingSimpleProps
 renderRatingSimpleCpt = here.component "renderRatingSimple" cpt where
-  cpt { nc_category
+  cpt { docId
+      , corpusId
+      , context: { nc_category }
+      , session
       } _ = do
+    score <- T.useBox $ decodeStar $ fromMaybe 0 nc_category
+
     pure $ case nc_category of
       Nothing -> H.div {} []
-      Just category -> ratingSimple { score: decodeStar category } []
+      Just category -> do
+        ratingSimple { docId
+                     , corpusId
+                     , score
+                     , session } []
 
 type RatingSimpleProps =
-  ( score :: Star )
+  ( docId    :: NodeID
+  , corpusId :: NodeID
+  , score    :: T.Box Star
+  , session  :: Session )
 
 ratingSimple :: R2.Component RatingSimpleProps
 ratingSimple = R.createElement ratingSimpleCpt
 ratingSimpleCpt :: R.Component RatingSimpleProps
 ratingSimpleCpt = here.component "ratingSimple" cpt where
-  cpt { score
+  cpt { docId
+      , corpusId
+      , score
+      , session
       } _ = do
+    score' <- T.useLive T.unequal score
+
+    let
+      onClick c _ = do
+        let c' = score' == c ? clickAgain c $ c
+
+        -- setLocalCategories $ Map.insert r._id c'
+        launchAff_ do
+          _ <- updateNodeContextCategory session docId corpusId $ star2score c'
+          liftEffect $ T.write_ c' score
+          pure unit
+
     pure $
       H.div
       { className: "rating-group" } $
       stars <#> \s ->
         B.iconButton
-        { name: ratingIcon score s
-        , callback: \_ -> pure unit  -- onClick s
+        { name: ratingIcon score' s
+        , callback: onClick s
         , overlay: false
-        , variant: ratingVariant score s
-        , className: ratingClassName score s
+        , variant: ratingVariant score' s
+        , className: ratingClassName score' s
         }
 
 

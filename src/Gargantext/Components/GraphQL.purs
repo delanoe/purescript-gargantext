@@ -85,4 +85,5 @@ type Schema
 
 type Mutation
   = { update_user_info :: UserInfoM ==> Int
-    , delete_team_membership :: TeamDeleteM ==> Array Int }
+    , delete_team_membership :: TeamDeleteM ==> Array Int
+    , update_node_context_category :: GQLCTX.NodeContextCategoryM ==> Array Int }
