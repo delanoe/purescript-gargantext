@@ -134,6 +134,7 @@ type TableContainerProps =
   , queryExactMatches :: Boolean
   , syncResetButton   :: Array R.Element
   , tabNgramType      :: CTabNgramType
+  , treeEdit          :: Record NgramsTreeEditProps
   )
 
 tableContainer :: Record TableContainerProps -> Record TT.TableContainerProps -> R.Element
@@ -148,6 +149,7 @@ tableContainerCpt { addCallback
                   , queryExactMatches
                   , syncResetButton
                   , tabNgramType
+                  , treeEdit
                   } = here.component "tableContainer" cpt where
   cpt props _ = do
     -- | States
@@ -186,7 +188,7 @@ tableContainerCpt { addCallback
     pure $
 
       H.div
-      { classname: "ngrams-table-container" }
+      { className: "ngrams-table-container" }
       [
 
         -- Portal filters
@@ -278,15 +280,19 @@ tableContainerCpt { addCallback
         ]
       ,
         H.div
-        { className: "card" }
+        { className: "ngrams-table-container__table-wrapper" }
         [
 
           H.div
           { className: intercalate " "
-              [ "ngrams-table-container__header"
+              [ "ngrams-table-container__actions"
               ]
           }
           [
+            B.wad
+            []
+            syncResetButton
+          ,
             B.wad
             []
             [
@@ -294,10 +300,6 @@ tableContainerCpt { addCallback
 
                 selectButtons (selectionsLength ngramsSelection)
             ]
-          ,
-            B.wad
-            []
-            syncResetButton
           ]
         ,
           H.div
@@ -319,6 +321,8 @@ tableContainerCpt { addCallback
               {}
               props.tableBody
             ]
+          ,
+            ngramsTreeEdit (treeEdit)
           ]
         ]
       ]
@@ -346,7 +350,7 @@ tableContainerCpt { addCallback
   selectButtons 0     = mempty
   selectButtons count =
     H.div
-    { className: "ngrams-table-container__action-term" }
+    { className: "ngrams-table-container__selection-cta" }
     [
       B.wad
       []
@@ -636,6 +640,7 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
         , queryExactMatches: exactMatches
         , syncResetButton: [ syncResetButton ]
         , tabNgramType
+        , treeEdit
         }
       , params
       , rows: filteredConvertedRows
@@ -650,7 +655,7 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
           scoreType
       }
       where
-        colNames = TT.ColumnName <$> [ "Select", "Terms", "Score"] -- see convOrderBy
+        colNames = TT.ColumnName <$> [ "Select", "Score", "Terms"] -- see convOrderBy
 
 ngramsTableOrderWith :: Maybe (TT.OrderByDirection TT.ColumnName)
                      -> Seq.Seq NgramsElement
@@ -831,12 +836,10 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
       case cacheState' of
         NT.CacheOn  -> pure $ R.fragment
           [ loadedNgramsTableHeader { searchQuery, params }
-          , ngramsTreeEdit (treeEdit)
           , mainNgramsTableCacheOn (Record.merge props { state })
           ]
         NT.CacheOff -> pure $ R.fragment
           [loadedNgramsTableHeader { searchQuery, params}
-          , ngramsTreeEdit (treeEdit)
           , mainNgramsTableCacheOff (Record.merge props { state })
           ]
 
@@ -860,14 +863,13 @@ ngramsTreeEditCpt = here.component "ngramsTreeEdit" cpt where
     ngramsParentFocused <- T.useFocused (_.ngramsParent) (\a b -> b { ngramsParent = a}) box
     ngramsParentFocused' <- T.useLive T.unequal ngramsParentFocused
 
-    let
-      gutter = B.wad_ [ "mb-2", "d-inline-block" ]
 
-    pure $ if isEditingFocused'
+    pure $
+      if isEditingFocused'
       then case ngramsParentFocused' of
-                Nothing -> gutter
+                Nothing -> mempty
                 Just ngramsParent' -> ngramsTreeEditReal (Record.merge props { ngramsParent' })
-      else gutter
+      else mempty
 
 type NgramsTreeEditRealProps =
   ( ngramsParent' :: NgramsTerm

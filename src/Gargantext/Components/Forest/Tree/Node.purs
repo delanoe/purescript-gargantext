@@ -362,7 +362,7 @@ nodeSpanCpt = here.component "nodeSpan" cpt
           R2.when isSelected $
 
             H.div
-            { class: "mainleaf-selection-indicator" }
+            { className: "mainleaf-selection-indicator" }
             []
         ]
 

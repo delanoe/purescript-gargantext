@@ -213,6 +213,10 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         [
           selected
         ,
+          B.wad'
+          [ "pl-3" ] $
+          show $ A.length $ A.fromFoldable (ngramsElement ^. _NgramsElement <<< _occurrences)
+        ,
           H.div {}
           ( if isEditing'
             then
@@ -240,10 +244,6 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
                 }
               ]
           )
-        ,
-          B.wad'
-          [ "pl-3" ] $
-          show $ A.length $ A.fromFoldable (ngramsElement ^. _NgramsElement <<< _occurrences)
       ]
       where
         ngramsDepth = { ngrams, depth: 0 }
