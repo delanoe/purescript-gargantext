@@ -3,7 +3,7 @@ module Gargantext.Components.NgramsTable
   , CommonProps
   , TreeEdit
   , NgramsTreeEditProps
-  , getNgramsChildrenAff
+  , getNgramsChildrenAffRequest
   , initialTreeEdit
   , mainNgramsTable
   ) where
@@ -127,7 +127,8 @@ type PreConversionRows = Seq.Seq NgramsElement
 type TableContainerProps =
   ( addCallback       :: String -> Effect Unit
   , dispatch          :: Dispatch
-  , getNgramsChildren :: NgramsTerm -> Aff (Array NgramsTerm)
+  , getNgramsChildrenAff :: Maybe (NgramsTerm -> Aff (Array NgramsTerm))
+  , getNgramsChildren :: Maybe (NgramsTerm -> Array NgramsTerm)
   , ngramsSelection   :: Set NgramsTerm
   , ngramsTable       :: NgramsTable
   , path              :: T.Box PageParams
@@ -142,7 +143,6 @@ tableContainer p q = R.createElement (tableContainerCpt p) q []
 tableContainerCpt :: Record TableContainerProps -> R.Component TT.TableContainerProps
 tableContainerCpt { addCallback
                   , dispatch
-                  , getNgramsChildren
                   , ngramsSelection
                   , ngramsTable: ngramsTableCache
                   , path
@@ -506,7 +506,7 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
       , path
       , state
       , tabNgramType
-      , treeEdit: treeEdit@{ getNgramsChildren }
+      , treeEdit: treeEdit@{ getNgramsChildrenAff, getNgramsChildren }
       , versioned: Versioned { data: initTable }
       } _ = do
     treeEdit'@{ ngramsParent } <- T.useLive T.unequal treeEdit.box
@@ -566,6 +566,7 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
 
         convertRow ngramsElement =
           { row: renderNgramsItem { dispatch: performAction
+                                  , getNgramsChildrenAff
                                   , getNgramsChildren
                                   , isEditing
                                   , ngrams: ngramsElement ^. _NgramsElement <<< _ngrams
@@ -633,6 +634,7 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
       , container: tableContainer
         { addCallback
         , dispatch: performAction
+        , getNgramsChildrenAff
         , getNgramsChildren
         , ngramsSelection
         , ngramsTable
@@ -788,8 +790,8 @@ type MainNgramsTableProps = (
   | CommonProps
   )
 
-getNgramsChildrenAff :: Session -> NodeID -> Array ListId -> TabType -> NgramsTerm -> Aff (Array NgramsTerm)
-getNgramsChildrenAff session nodeId listIds tabType (NormNgramsTerm ngrams) = do
+getNgramsChildrenAffRequest :: Session -> NodeID -> Array ListId -> TabType -> NgramsTerm -> Aff (Array NgramsTerm)
+getNgramsChildrenAffRequest session nodeId listIds tabType (NormNgramsTerm ngrams) = do
   res :: Either RESTError ({ data :: Array { children :: Array String, ngrams :: String }}) <- get session $ Routes.GetNgrams params (Just nodeId)
   case res of
     Left err -> pure []
@@ -845,12 +847,13 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
 
 
 type NgramsTreeEditProps =
-  ( box               :: T.Box TreeEdit
-  , getNgramsChildren :: NgramsTerm -> Aff (Array NgramsTerm)
+  ( box                   :: T.Box TreeEdit
+  , getNgramsChildrenAff  :: Maybe (NgramsTerm -> Aff (Array NgramsTerm))
+  , getNgramsChildren  :: Maybe (NgramsTerm -> Array NgramsTerm)
   --, ngramsLocalPatch  :: T.Box NgramsTablePatch
-  , onCancelRef       :: NgramsActionRef
-  , onNgramsClickRef  :: R.Ref (Maybe NgramsClick)
-  , onSaveRef         :: NgramsActionRef
+  , onCancelRef           :: NgramsActionRef
+  , onNgramsClickRef      :: R.Ref (Maybe NgramsClick)
+  , onSaveRef             :: NgramsActionRef
   )
 
 ngramsTreeEdit :: R2.Leaf NgramsTreeEditProps
@@ -880,6 +883,7 @@ ngramsTreeEditReal = R2.leaf ngramsTreeEditRealCpt
 ngramsTreeEditRealCpt :: R.Component NgramsTreeEditRealProps
 ngramsTreeEditRealCpt = here.component "ngramsTreeEditReal" cpt where
   cpt { box
+      , getNgramsChildrenAff
       , getNgramsChildren
       , ngramsParent'
       , onCancelRef
@@ -938,7 +942,8 @@ ngramsTreeEditRealCpt = here.component "ngramsTreeEditReal" cpt where
         { className: "card-body" }
         [
           renderNgramsTree
-          { getNgramsChildren: gnc
+          { getNgramsChildrenAff: Just gnc
+          , getNgramsChildren: Nothing
           , ngramsClick
           , ngramsDepth
           , ngramsEdit

@@ -161,7 +161,8 @@ ngramsViewCpt = here.component "ngramsView" cpt
         , tabNgramType
         , tabType
         , treeEdit: { box: treeEditBox
-                    , getNgramsChildren: \_ -> pure []
+                    , getNgramsChildrenAff: Nothing
+                    , getNgramsChildren: Nothing
                     , onCancelRef
                     , onNgramsClickRef
                     , onSaveRef }
