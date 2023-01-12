@@ -11,6 +11,7 @@ import Data.Maybe (Maybe(..), fromJust)
 import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
 import Data.Set as Set
+import Data.Traversable (traverse_)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Gargantext.Components.App.Store as AppStore
@@ -26,11 +27,14 @@ import Gargantext.Components.GraphExplorer.Types (GraphSideDoc)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.GraphExplorer.Utils as GEU
 import Gargantext.Config (defaultFrontends)
-import Gargantext.Data.Louvain as Louvain
+import Gargantext.Data.Louvain as DLouvain
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
+import Gargantext.Hooks.Sigmax.Graphology as Graphology
+import Gargantext.Hooks.Sigmax.Louvain as Louvain
 import Gargantext.Hooks.Sigmax.Noverlap as Noverlap
 import Gargantext.Hooks.Sigmax as Sigmax
+import Gargantext.Hooks.Sigmax.Sigma as SigmaxS
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Types as GT
 import Gargantext.Types as Types
@@ -241,7 +245,6 @@ graphViewCpt = R.memo' $ here.component "graphView" cpt where
     , removedNodeIds
     , selectedNodeIds
     , showEdges
-    , showLouvain
     , graph
     } <- GraphStore.use
 
@@ -251,27 +254,39 @@ graphViewCpt = R.memo' $ here.component "graphView" cpt where
     removedNodeIds'     <- R2.useLive' removedNodeIds
     selectedNodeIds'    <- R2.useLive' selectedNodeIds
     showEdges'          <- R2.useLive' showEdges
-    showLouvain'        <- R2.useLive' showLouvain
     graph'              <- R2.useLive' graph
 
     -- | Computed
     -- |
 
-    -- TODO Cache this?
-    let louvainGraph =
-          if showLouvain' then
-            let louvain = Louvain.louvain unit in
-            let cluster = Louvain.init louvain (SigmaxT.louvainNodes graph') (SigmaxT.louvainEdges graph') in
-            SigmaxT.louvainGraph graph' cluster
-          else
-            graph'
+    let transformParams = { edgeConfluence'
+                          , edgeWeight'
+                          , nodeSize'
+                          , removedNodeIds'
+                          , selectedNodeIds'
+                          , showEdges' }
+    -- let transformedGraph = transformGraph graph' transformParams
+    transformedGraphS <- T.useBox $ transformGraph graph' transformParams
 
-    let transformedGraph = transformGraph louvainGraph { edgeConfluence'
-                                                        , edgeWeight'
-                                                        , nodeSize'
-                                                        , removedNodeIds'
-                                                        , selectedNodeIds'
-                                                        , showEdges' }
+    -- todo Cache this?
+    R.useEffect' $ do
+      --let louvain = Louvain.louvain unit in
+      --let cluster = Louvain.init louvain (SigmaxT.louvainNodes graph') (SigmaxT.louvainEdges graph') in
+      --SigmaxT.louvainGraph graph' cluster
+      Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphView (louvainGraph)] no sigma" $ \sigma -> do
+        newGraph <- Louvain.assignVisible (SigmaxS.graph sigma) {}
+        -- here.log2 "[graphView] newGraph" newGraph
+        -- here.log2 "[graphView] nodes" $ A.fromFoldable $ Graphology.nodes newGraph
+        let cluster = Louvain.cluster newGraph :: DLouvain.LouvainCluster
+        let lgraph = SigmaxT.louvainGraph graph' cluster :: SigmaxT.SGraph
+        --T.write_ (transformGraph lgraph transformParams) transformedGraphS
+        -- apply colors
+        -- traverse_ (\{ id, color } ->
+        --   Graphology.mergeNodeAttributes (SigmaxS.graph sigma) id { color }
+        -- ) (SigmaxT.graphNodes lgraph)
+        T.write_ lgraph transformedGraphS
+
+    transformedGraph <- R2.useLive' transformedGraphS
 
     -- R.useEffect' $ do
     --   let (SigmaxT.Graph { edges: e }) = transformedGraph
@@ -303,10 +318,12 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
     nodes = foldMapWithIndex nodeFn normalizedNodes
     nodeFn :: Int -> GEGT.Node -> Seq.Seq (Record SigmaxT.Node)
     nodeFn _i nn@(GEGT.Node n) =
+      let (GEGT.Cluster { clustDefault }) = n.attributes in
       Seq.singleton {
           borderColor: color
         , children: n.children
         , color : color
+        , community : clustDefault  -- for the communities-louvain graphology plugin
         , equilateral: { numPoints: 3 }
         , gargType
         , hidden : false

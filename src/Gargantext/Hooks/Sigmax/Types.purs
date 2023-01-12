@@ -42,6 +42,7 @@ type Node = (
     borderColor :: String
   , children    :: Array String
   , color       :: String
+  , community   :: Int  -- this is filled in by the communities-louvain graphology plugin
   , equilateral :: { numPoints :: Int }
   , gargType    :: GT.Mode
   , hidden      :: Boolean
@@ -255,16 +256,14 @@ louvainNodes :: SGraph -> Array Louvain.Node
 louvainNodes g = Seq.toUnfoldable $ Seq.map _.id (graphNodes g)
 
 louvainGraph :: SGraph -> Louvain.LouvainCluster -> SGraph
-louvainGraph g cluster = Graph {nodes: newNodes, edges: newEdges}
+louvainGraph g cluster = Graph {nodes: newNodes, edges: graphEdges g}
   where
-    nodes = graphNodes g
-    edges = graphEdges g
-
-    newNodes = (nodeClusterColor cluster) <$> nodes
+    newNodes = (nodeClusterColor cluster) <$> (graphNodes g)
     nm = nodesMap newNodes
-    newEdges = (edgeClusterColor cluster nm) <$> edges
+    newEdges = (edgeClusterColor cluster nm) <$> (graphEdges g)
 
-edgeClusterColor cluster nm e = e { color = sourceNode.color, sourceNode = sourceNode, targetNode = targetNode }
+--edgeClusterColor _cluster nm e = e { color = sourceNode.color, sourceNode = sourceNode, targetNode = targetNode }
+edgeClusterColor _cluster nm e = e { color = sourceNode.color }
   where
     sourceNode = case Map.lookup e.source nm of
       Just sn -> sn

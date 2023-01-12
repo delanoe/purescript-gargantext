@@ -50,7 +50,7 @@ type Store =
   , nodeSize                   :: T.Box Range.NumberRange
   , nodeSizeRange              :: T.Box Range.NumberRange
   , showEdges                  :: T.Box SigmaxT.ShowEdgesState
-  , showLouvain                :: T.Box Boolean
+  --, showLouvain                :: T.Box Boolean
   , labelSize                  :: T.Box Number
   , labelRenderedSizeThreshold :: T.Box Number
   , mouseSelectorSize          :: T.Box Number
@@ -84,7 +84,7 @@ type State =
   , nodeSize                   :: Range.NumberRange
   , nodeSizeRange              :: Range.NumberRange
   , showEdges                  :: SigmaxT.ShowEdgesState
-  , showLouvain                :: Boolean
+  --, showLouvain                :: Boolean
   , labelSize                  :: Number
   , labelRenderedSizeThreshold :: Number
   , mouseSelectorSize          :: Number
@@ -110,7 +110,7 @@ options ::
   , edgeConfluence             :: Range.NumberRange
   , graphStage                 :: GET.Stage
   , nodeSize                   :: Range.NumberRange
-  , showLouvain                :: Boolean
+  --, showLouvain                :: Boolean
   , showEdges                  :: SigmaxT.ShowEdgesState
   -- Terms update
   , removedNodeIds             :: SigmaxT.NodeIds
@@ -132,7 +132,7 @@ options =
   , edgeConfluence             : Range.Closed { min: 0.0, max: 1.0 }
   , graphStage                 : GET.Init
   , nodeSize                   : Range.Closed { min: 0.0, max: 100.0 }
-  , showLouvain                : false
+  --, showLouvain                : false
   , showEdges                  : SigmaxT.EShow
   -- Terms update
   , removedNodeIds             : Set.empty

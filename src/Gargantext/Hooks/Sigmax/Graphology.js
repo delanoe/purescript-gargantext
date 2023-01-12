@@ -74,3 +74,7 @@ export function _filterEdges(g, fn) {
     return fn(attrs);
   })
 }
+
+export function _copy(g) {
+  return g.copy();
+}

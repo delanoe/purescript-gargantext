@@ -11,7 +11,7 @@ import Effect.Timer (setTimeout)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.GraphExplorer.Resources as Graph
 import Gargantext.Components.GraphExplorer.Store as GraphStore
-import Gargantext.Components.GraphExplorer.Toolbar.Buttons (centerButton, edgesToggleButton, louvainToggleButton, pauseForceAtlasButton, pauseNoverlapButton, multiSelectEnabledButton)
+import Gargantext.Components.GraphExplorer.Toolbar.Buttons (centerButton, edgesToggleButton, louvainButton, pauseForceAtlasButton, pauseNoverlapButton, multiSelectEnabledButton)
 import Gargantext.Components.GraphExplorer.Toolbar.RangeControl (edgeConfluenceControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.Toolbar.SlideButton (labelSizeButton, labelRenderedSizeThresholdButton, mouseSelectorSizeSlider)
 import Gargantext.Components.GraphExplorer.Types as GET
@@ -63,7 +63,6 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     , nodeSizeRange
     , selectedNodeIds
     , showEdges
-    , showLouvain
     , showSidebar
     , sideTab
     } <- GraphStore.use
@@ -200,8 +199,9 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             ,
               gap
             ,
-              louvainToggleButton { forceAtlasState
-                                  , state: showLouvain }
+              louvainButton { forceAtlasState
+                            , graph
+                            , sigmaRef }
             ]
           ]
         ,

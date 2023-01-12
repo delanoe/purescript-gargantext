@@ -2,7 +2,7 @@ module Gargantext.Components.GraphExplorer.Toolbar.Buttons
   ( centerButton
   , cameraButton
   , edgesToggleButton
-  , louvainToggleButton
+  , louvainButton
   , pauseForceAtlasButton
   , pauseNoverlapButton
   , resetForceAtlasButton
@@ -157,27 +157,28 @@ edgesToggleButtonCpt = here.component "edgesToggleButton" cpt
 
 ------------------------------------------------------
 
-type LouvainToggleButtonProps =
+type LouvainButtonProps =
   ( forceAtlasState :: T.Box SigmaxTypes.ForceAtlasState
-  , state           :: T.Box Boolean
+  , graph           :: T.Box SigmaxTypes.SGraph
+  , sigmaRef        :: R.Ref Sigmax.Sigma
   )
 
-louvainToggleButton :: R2.Leaf LouvainToggleButtonProps
-louvainToggleButton = R2.leaf louvainToggleButtonCpt
-louvainToggleButtonCpt :: R.Component LouvainToggleButtonProps
-louvainToggleButtonCpt = here.component "louvainToggleButton" cpt
+louvainButton :: R2.Leaf LouvainButtonProps
+louvainButton = R2.leaf louvainButtonCpt
+louvainButtonCpt :: R.Component LouvainButtonProps
+louvainButtonCpt = here.component "louvainButton" cpt
   where
-    cpt { forceAtlasState, state } _ = do
-      state' <- R2.useLive' state
+    cpt { forceAtlasState, graph, sigmaRef } _ = do
+      graph' <- R2.useLive' graph
       forceAtlasState' <- R2.useLive' forceAtlasState
 
       pure $
         B.button
-        { callback: \_ -> T.modify_ (not) state
+        { callback: \_ -> do
+             pure unit
+
         , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState'
-        , variant: state' ?
-            ButtonVariant Secondary $
-            OutlinedButtonVariant Secondary
+        , variant: OutlinedButtonVariant Secondary
         }
         [ H.text "Louvain" ]
 
