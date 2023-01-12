@@ -14,7 +14,7 @@ import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (Variant(..))
 import Gargantext.Components.Category.Types (Category(..), Star(..), cat2score, categories, clickAgain, decodeStar, star2score, stars)
 import Gargantext.Components.DocsTable.Types (DocumentsView(..), LocalCategories, LocalUserScore)
-import Gargantext.Components.GraphQL.Context (NodeContext, NodeContext')
+import Gargantext.Components.GraphQL.Context (NodeContext)
 import Gargantext.Components.GraphQL.Endpoints (getNodeContext, updateNodeContextCategory)
 import Gargantext.Config.REST (AffRESTError, RESTError(..))
 import Gargantext.Hooks.Loader (useLoader)
@@ -52,34 +52,39 @@ ratingCpt = here.component "rating" cpt where
       , session
       , setLocalCategories
       } _ = do
-    -- | Behaviors
-    -- |
-    let
-      onClick c _ = do
-        let c' = score == c ? clickAgain c $ c
+    pure $ renderRatingSimple { docId: nodeId
+                              , corpusId: r._id
+                              , category: star2score score
+                              , session } []
 
-        setLocalCategories $ Map.insert r._id c'
-        launchAff_ do
-          _ <- putRating session nodeId $ RatingQuery
-            { nodeIds: [r._id]
-            , rating: c'
-            }
-          liftEffect $ T2.reload chartReload
+    -- -- | Behaviors
+    -- -- |
+    -- let
+    --   onClick c _ = do
+    --     let c' = score == c ? clickAgain c $ c
 
-    -- | Render
-    -- |
-    pure $
+    --     setLocalCategories $ Map.insert r._id c'
+    --     launchAff_ do
+    --       _ <- putRating session nodeId $ RatingQuery
+    --         { nodeIds: [r._id]
+    --         , rating: c'
+    --         }
+    --       liftEffect $ T2.reload chartReload
 
-      H.div
-      { className: "rating-group" } $
-      stars <#> \s ->
-        B.iconButton
-        { name: ratingIcon score s
-        , callback: onClick s
-        , overlay: false
-        , variant: ratingVariant score s
-        , className: ratingClassName score s
-        }
+    -- -- | Render
+    -- -- |
+    -- pure $
+
+    --   H.div
+    --   { className: "rating-group" } $
+    --   stars <#> \s ->
+    --     B.iconButton
+    --     { name: ratingIcon score s
+    --     , callback: onClick s
+    --     , overlay: false
+    --     , variant: ratingVariant score s
+    --     , className: ratingClassName score s
+    --     }
 
 ratingIcon Star_0 Star_0  = "times-circle"
 ratingIcon _      Star_0  = "times"
@@ -113,10 +118,10 @@ ratingSimpleLoaderCpt = here.component "ratingSimpleLoader" cpt where
     useLoader { errorHandler
               , loader: loadDocumentContext session
               , path: { docId, corpusId }
-              , render: \nc -> renderRatingSimple { docId
-                                                  , corpusId
-                                                  , context: nc
-                                                  , session } [] }
+              , render: \{ nc_category } -> renderRatingSimple { docId
+                                                               , corpusId
+                                                               , category: fromMaybe 0 nc_category
+                                                               , session } [] }
     where
       errorHandler err = do
         here.warn2 "[pageLayout] RESTError" err
@@ -134,7 +139,7 @@ loadDocumentContext session { docId, corpusId } = getNodeContext session docId c
 type RenderRatingSimpleProps =
   ( docId    :: NodeID
   , corpusId :: NodeID
-  , context  :: NodeContext
+  , category :: Int
   , session  :: Session )
 
 renderRatingSimple :: R2.Component RenderRatingSimpleProps
@@ -143,18 +148,15 @@ renderRatingSimpleCpt :: R.Component RenderRatingSimpleProps
 renderRatingSimpleCpt = here.component "renderRatingSimple" cpt where
   cpt { docId
       , corpusId
-      , context: { nc_category }
+      , category
       , session
       } _ = do
-    score <- T.useBox $ decodeStar $ fromMaybe 0 nc_category
+    score <- T.useBox $ decodeStar category
 
-    pure $ case nc_category of
-      Nothing -> H.div {} []
-      Just category -> do
-        ratingSimple { docId
-                     , corpusId
-                     , score
-                     , session } []
+    pure $ ratingSimple { docId
+                        , corpusId
+                        , score
+                        , session } []
 
 type RatingSimpleProps =
   ( docId    :: NodeID

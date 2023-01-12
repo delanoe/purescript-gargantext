@@ -44,6 +44,7 @@ to generate this file without the comments in this block.
   , "formula"
   , "functions"
   , "graphql-client"
+  , "heterogeneous"
   , "http-methods"
   , "integers"
   , "js-timers"

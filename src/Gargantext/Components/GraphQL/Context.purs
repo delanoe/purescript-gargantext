@@ -1,6 +1,6 @@
 module Gargantext.Components.GraphQL.Context
   ( NodeContext
-  , NodeContext'
+  , NodeContext_
   , nodeContextQuery
   , NodeContextCategoryM
   ) where
@@ -11,17 +11,19 @@ import Data.Lens (Lens', lens)
 import Data.Maybe (Maybe(..), fromMaybe)
 import GraphQL.Client.Args (Args, NotNull, (=>>))
 import GraphQL.Client.Variable (Var(..))
+import Gargantext.Utils.GraphQL as GGQL
+import Type.Proxy (Proxy(..))
 
 import Data.Array as A
 
-type NodeContext'
+type NodeContext_
   = ( nc_id         :: Maybe Int
     , nc_node_id    :: Int
     , nc_context_id :: Int
     , nc_score      :: Maybe Number
     , nc_category   :: Maybe Int
     )
-type NodeContext = Record NodeContext'
+type NodeContext = Record NodeContext_
 
 type NodeContextQuery
   = { contexts   :: Args
@@ -39,12 +41,7 @@ nodeContextQuery
   = { contexts:
       { context_id: Var :: _ "context_id" Int
       , node_id: Var :: _ "node_id" Int } =>>
-        { nc_id: unit
-        , nc_node_id: unit
-        , nc_context_id: unit
-        , nc_score: unit
-        , nc_category: unit
-        }
+      GGQL.getFieldsStandard (Proxy :: _ NodeContext)
     }
 
 ------------------------------------------------------------------------
