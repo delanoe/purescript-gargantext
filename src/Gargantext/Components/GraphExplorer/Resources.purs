@@ -154,19 +154,20 @@ drawGraphCpt = here.component "drawGraph" cpt where
                                                    , showEdges: showEdges' }
 
                 -- here.log2 "[graph] startForceAtlas" startForceAtlas
-                if startForceAtlas' then
-                  case R.readRef fa2Ref of
-                    Nothing -> do
-                      fa2 <- ForceAtlas2.init (Sigma.graph sig) fa2Settings
+                case R.readRef fa2Ref of
+                  Nothing -> do
+                    fa2 <- ForceAtlas2.init (Sigma.graph sig) fa2Settings
+                    R.setRef fa2Ref (Just fa2)
+                    if startForceAtlas' then do
                       ForceAtlas2.start fa2
-                      R.setRef fa2Ref (Just fa2)
-                    Just _fa2 -> do
-                      -- TODO Kill and restart? Maybe check fa2.graph first? Should be equal to sigma.graph
+                    else do
                       pure unit
-                else
-                  case R.readRef fa2Ref of
-                    Nothing -> pure unit
-                    Just fa2 -> ForceAtlas2.stop fa2
+                  Just fa2 -> do
+                    -- TODO Kill and restart? Maybe check fa2.graph first? Should be equal to sigma.graph
+                    if startForceAtlas' then
+                      pure unit
+                    else
+                      ForceAtlas2.stop fa2
 
                 case R.readRef noverlapRef of
                   Nothing -> do
@@ -228,6 +229,8 @@ drawGraphCpt = here.component "drawGraph" cpt where
       case Tuple forceAtlasState' graphStage' of
 
         --Tuple SigmaxTypes.InitialLoading GET.Ready -> updateGraph
+        -- forceatlas can be stopped initially for eg graph snapshots
+        Tuple SigmaxTypes.InitialStopped GET.Ready -> updateGraph
         Tuple SigmaxTypes.InitialRunning GET.Ready -> updateGraph
         Tuple SigmaxTypes.Paused GET.Ready -> updateGraph
 
