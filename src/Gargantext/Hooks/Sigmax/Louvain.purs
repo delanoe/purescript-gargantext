@@ -16,6 +16,7 @@ import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, EffectFn4, runEffectFn
 import FFI.Simple ((..), (...), (.=))
 import Gargantext.Data.Louvain as DLouvain
 import Gargantext.Hooks.Sigmax.Graphology as Graphology
+import Gargantext.Hooks.Sigmax.Operators as Operators
 import Gargantext.Hooks.Sigmax.Types as Types
 import Record as Record
 
@@ -34,7 +35,7 @@ assignVisible :: forall settings. Graphology.Graph -> settings -> Effect Graphol
 assignVisible g s = do
   n <- Graphology.copy g
   Graphology.updateGraphOnlyVisible n
-  assign n s
+  assign (Operators.toUndirected n) s
 
 -- \[{ id, community }] -> { id: community }
 cluster :: Graphology.Graph -> DLouvain.LouvainCluster

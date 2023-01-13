@@ -11,7 +11,7 @@ import Effect.Timer (setTimeout)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.GraphExplorer.Resources as Graph
 import Gargantext.Components.GraphExplorer.Store as GraphStore
-import Gargantext.Components.GraphExplorer.Toolbar.Buttons (centerButton, edgesToggleButton, louvainButton, pauseForceAtlasButton, pauseNoverlapButton, multiSelectEnabledButton)
+import Gargantext.Components.GraphExplorer.Toolbar.Buttons (cameraButton, centerButton, edgesToggleButton, louvainButton, pauseForceAtlasButton, pauseNoverlapButton, multiSelectEnabledButton)
 import Gargantext.Components.GraphExplorer.Toolbar.RangeControl (edgeConfluenceControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.Toolbar.SlideButton (labelSizeButton, labelRenderedSizeThresholdButton, mouseSelectorSizeSlider)
 import Gargantext.Components.GraphExplorer.Types as GET
@@ -20,6 +20,7 @@ import Gargantext.Hooks.Sigmax.Noverlap as Noverlap
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
+import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
@@ -34,6 +35,7 @@ type Controls =
   ( fa2Ref       :: R.Ref (Maybe ForceAtlas.FA2Layout)
   , noverlapRef  :: R.Ref (Maybe Noverlap.NoverlapLayout)
   , reloadForest :: T2.ReloadS
+  , session      :: Session
   , sigmaRef     :: R.Ref Sigmax.Sigma
   )
 
@@ -43,7 +45,8 @@ controlsCpt :: R.Memo Controls
 controlsCpt = R.memo' $ here.component "controls" cpt where
   cpt { fa2Ref
       , noverlapRef
-      -- , reloadForest
+      , reloadForest
+      , session
       , sigmaRef
       } _ = do
     -- | States
@@ -54,7 +57,9 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     , forceAtlasState
     , noverlapState
     , graph
+    , graphId
     , graphStage
+    , hyperdataGraph
     , labelRenderedSizeThreshold
     , labelSize
     , mouseSelectorSize
@@ -67,6 +72,8 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     , sideTab
     } <- GraphStore.use
 
+    graphId'              <- R2.useLive' graphId
+    hyperdataGraph'       <- R2.useLive' hyperdataGraph
     forceAtlasState'      <- R2.useLive' forceAtlasState
     noverlapState'        <- R2.useLive' noverlapState
     graphStage'           <- R2.useLive' graphStage
@@ -169,16 +176,15 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             , pauseNoverlapButton { state: noverlapState }
             ,
               gap
-{-            ,
+            ,
               cameraButton
               { id: graphId'
               , forceAtlasState
               , hyperdataGraph: hyperdataGraph'
               , reloadForest
-              , session: session
+              , session
               , sigmaRef: sigmaRef
               }
--}
             ]
           ,
             -- View Settings
