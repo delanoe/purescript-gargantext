@@ -34,6 +34,7 @@ import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Hooks.LinkHandler (useLinkHandler)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Hooks.Session (useSession)
 import Gargantext.Routes (AppRoute(Home), appPath, nodeTypeAppRoute)
 import Gargantext.Sessions (Session(..), sessionId)
 import Gargantext.Types (NodeType(..), SessionId)
@@ -48,8 +49,8 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.FolderView"
 
 type Props =
-  ( nodeId     :: Int
-  , session    :: Session
+  ( nodeId  :: Int
+  , session :: Session
   )
 
 data FolderStyle = FolderUp | FolderChild
@@ -67,7 +68,6 @@ folderViewCpt = here.component "folderViewCpt" cpt where
               , render: \folders -> folderViewMain { folders
                                                    , nodeId
                                                    , reload
-                                                   , session
                                                    } [] }
     where
       errorHandler = logRESTError here "[folderView]"
@@ -76,7 +76,6 @@ type FolderViewProps =
   ( folders       :: TreeFirstLevel
   , nodeId        :: Int
   , reload        :: T.Box T2.Reload
-  , session       :: Session
   )
 
 folderViewMain :: R2.Component FolderViewProps
@@ -103,7 +102,6 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
                                         , linkNodeType: node.node_type
                                         , parentId: props.nodeId
                                         , reload: props.reload
-                                        , session: props.session
                                         , style: FolderChild
                                         , text: node.name
                                         , disabled: false
@@ -119,7 +117,6 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
       , nodeType: root.node_type
       , parentId: parent.id
       , reload: props.reload
-      , session: props.session
       , style: FolderUp
       , text: "..."
       , disabled: disabled parent
@@ -139,7 +136,6 @@ type FolderProps =
   , nodeId        :: Int
   , linkNodeType  :: GT.NodeType
   , linkId        :: Int
-  , session       :: Session
   , parentId      :: Int
   , reload        :: T.Box T2.Reload
   , disabled      :: Boolean
@@ -155,11 +151,11 @@ folderCpt = here.component "folderCpt" cpt where
             , linkNodeType
             , parentId
             , reload
-            , session
             , style
             , text
             , disabled
             } _ = do
+    session <- useSession
     -- | States
     -- |
 
@@ -229,7 +225,6 @@ folderCpt = here.component "folderCpt" cpt where
           , id: props.nodeId
           , nodeType: props.nodeType
           , name: props.text
-          , session: props.session
           , closeCallback: \_ -> T.write_ false isBoxVisible
           }
         ]
@@ -262,28 +257,35 @@ backButtonCpt = here.component "backButton" cpt where
         H.i { className: "fa fa-arrow-left", title: "Previous view"} []
       ]
 
-backButtonSmart :: R2.Component (nodeId :: Int, session :: Session)
-backButtonSmart = R.createElement backButtonSmartCpt
+type BackButtonSmartProps =
+  ( nodeId :: Int )
 
-backButtonSmartCpt :: R.Component (nodeId :: Int, session :: Session)
+backButtonSmart :: R2.Component BackButtonSmartProps
+backButtonSmart = R.createElement backButtonSmartCpt
+backButtonSmartCpt :: R.Component BackButtonSmartProps
 backButtonSmartCpt = here.component "backButtonSmart" cpt where
-  cpt {nodeId, session} _ = do
+  cpt {nodeId} _ = do
+    session <- useSession
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
     useLoader { errorHandler
               , loader: loadNode
               , path: { nodeId, session, reload: reload' }
-              , render: \node -> backButtonSmartMain { node, session } []
+              , render: \node -> backButtonSmartMain { node } []
     }
     where
       errorHandler = logRESTError here "[folderView]"
 
-backButtonSmartMain :: R2.Component (node :: Node, session :: Session)
-backButtonSmartMain = R.createElement backButtonSmartMainCpt
+type BackButtonSmartMainProps =
+  ( node :: Node )
 
-backButtonSmartMainCpt :: R.Component (node :: Node, session :: Session)
+backButtonSmartMain :: R2.Component BackButtonSmartMainProps
+backButtonSmartMain = R.createElement backButtonSmartMainCpt
+backButtonSmartMainCpt :: R.Component BackButtonSmartMainProps
 backButtonSmartMainCpt = here.component "backButtonSmartMain" cpt where
-  cpt { node, session } _ = do
+  cpt { node } _ = do
+    session <- useSession
+
     handlers <- useLinkHandler
     let rootId = treeId session
 

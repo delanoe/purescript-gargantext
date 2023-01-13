@@ -15,6 +15,7 @@ import Gargantext.Components.GraphExplorer.Toolbar.Buttons (cameraButton, center
 import Gargantext.Components.GraphExplorer.Toolbar.RangeControl (edgeConfluenceControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.Toolbar.SlideButton (labelSizeButton, labelRenderedSizeThresholdButton, mouseSelectorSizeSlider)
 import Gargantext.Components.GraphExplorer.Types as GET
+import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
 import Gargantext.Hooks.Sigmax.Noverlap as Noverlap
 import Gargantext.Hooks.Sigmax as Sigmax
@@ -35,7 +36,6 @@ type Controls =
   ( fa2Ref       :: R.Ref (Maybe ForceAtlas.FA2Layout)
   , noverlapRef  :: R.Ref (Maybe Noverlap.NoverlapLayout)
   , reloadForest :: T2.ReloadS
-  , session      :: Session
   , sigmaRef     :: R.Ref Sigmax.Sigma
   )
 
@@ -46,7 +46,6 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
   cpt { fa2Ref
       , noverlapRef
       , reloadForest
-      , session
       , sigmaRef
       } _ = do
     -- | States
@@ -81,8 +80,6 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     showSidebar'          <- R2.useLive' showSidebar
     edgeConfluenceRange'  <- R2.useLive' edgeConfluenceRange
     nodeSizeRange'        <- R2.useLive' nodeSizeRange
-
-    -- session <- useSession
 
     -- ref to track automatic FA pausing
     -- If user pauses FA before auto is triggered, clear the timeoutId
@@ -182,7 +179,6 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
               , forceAtlasState
               , hyperdataGraph: hyperdataGraph'
               , reloadForest
-              , session
               , sigmaRef: sigmaRef
               }
             ]

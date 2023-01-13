@@ -23,14 +23,13 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.WriteNodesDocument
 type ActionWriteNodesDocuments =
   ( boxes    :: Boxes
   , dispatch :: Action -> Aff Unit
-  , id       :: GT.ID
-  , session  :: Session )
+  , id       :: GT.ID )
 
 actionWriteNodesDocuments :: R2.Component ActionWriteNodesDocuments
 actionWriteNodesDocuments = R.createElement actionWriteNodesDocumentsCpt
 actionWriteNodesDocumentsCpt :: R.Component ActionWriteNodesDocuments
 actionWriteNodesDocumentsCpt = here.component "actionWriteNodesDocuments" cpt where
-  cpt { boxes, dispatch, id, session } _ = do
+  cpt { boxes, dispatch, id } _ = do
     let bodies =
           [ R2.row
             [ H.div { className: "col-12 flex-space-around" }

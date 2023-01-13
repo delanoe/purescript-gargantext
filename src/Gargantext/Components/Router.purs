@@ -215,7 +215,6 @@ mainPageCpt = here.component "mainPage" cpt where
 
 forest :: R2.Leaf Props
 forest = R2.leaf forestCpt
-
 forestCpt :: R.Memo Props
 forestCpt = R.memo' $ here.component "forest" cpt where
   cpt { boxes } _ = do

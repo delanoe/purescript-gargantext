@@ -25,6 +25,7 @@ import Gargantext.Components.ListSelection.Types as ListSelection
 import Gargantext.Config.REST (logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Hooks.Session (useSession)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (FrontendError)
 import Gargantext.Types as GT
@@ -54,7 +55,6 @@ type Props =
   -- State hook for a search, how we get data in and out
   , onSearch  :: GT.AsyncTaskWithType -> Effect Unit
   , search    :: T.Box Search
-  , session   :: Session
   )
 
 searchField :: R2.Component Props
@@ -62,7 +62,7 @@ searchField = R.createElement searchFieldCpt
 searchFieldCpt :: R.Component Props
 searchFieldCpt = here.component "searchField" cpt
   where
-    cpt { databases, errors, langs, onSearch, search, session } _ = do
+    cpt { databases, errors, langs, onSearch, search } _ = do
       selection <- T.useBox ListSelection.MyListsFirst
 
       pure $
@@ -72,9 +72,9 @@ searchFieldCpt = here.component "searchField" cpt
           --   then
           --     H.div {}[]
           --   else
-        , datafieldInput { databases, langs, search, session } []
-        , ListSelection.selection { selection, session } []
-        , submitButton { errors, onSearch, search, selection, session } []
+        , datafieldInput { databases, langs, search } []
+        , ListSelection.selection { selection } []
+        , submitButton { errors, onSearch, search, selection } []
         ]
       --pure $ panel params button
 
@@ -118,14 +118,15 @@ componentYearsCpt = here.component "componentYears" cpt where
                      , on: { click: clickRemove idx search } } [] ]
 
 type ComponentIMTProps =
-  ( session :: Session
-  | ComponentProps )
+  ( | ComponentProps )
 
 componentIMT :: R2.Component ComponentIMTProps
 componentIMT = R.createElement componentIMTCpt
 componentIMTCpt :: R.Component ComponentIMTProps
 componentIMTCpt = here.component "componentIMT" cpt where
-  cpt { search, session } _  = do
+  cpt { search } _  = do
+    session <- useSession
+
     useLoader { errorHandler
               , loader: \_ -> getIMTSchools session
               , path: unit
@@ -143,7 +144,7 @@ componentWithIMTOrgsCpt :: R.Component ComponentWithIMTOrgsProps
 componentWithIMTOrgsCpt = here.component "componentWithIMTOrgs" cpt where
   cpt { schools, search } _ = do
     search' <- T.useLive T.unequal search
-  
+
     let allIMTOrgs = [All_IMT] <> (IMT_org <$> schools)
         liCpt org =
           H.li {}
@@ -156,7 +157,7 @@ componentWithIMTOrgsCpt = here.component "componentWithIMTOrgs" cpt where
                All_IMT -> H.i {} [H.text  $ " " <> show org]
                (IMT_org { school_shortName }) -> H.text $ " " <> school_shortName
           ]
-    
+
     pure $ R.fragment
       [ H.ul {} $ map liCpt $ allIMTOrgs
         --, filterInput fi
@@ -428,44 +429,43 @@ filterInput (term /\ setTerm) =
 type DatafieldInputProps =
   ( databases :: Array Database
   , langs :: Array Lang
-  , search :: T.Box Search
-  , session :: Session )
+  , search :: T.Box Search )
 
 datafieldInput :: R2.Component DatafieldInputProps
 datafieldInput = R.createElement datafieldInputCpt
 datafieldInputCpt :: R.Component DatafieldInputProps
 datafieldInputCpt = here.component "datafieldInput" cpt where
-  cpt { databases, langs, search, session} _ = do
+  cpt { databases, langs, search} _ = do
     search' <- T.useLive T.unequal search
     iframeRef <- R.useRef null
-    
+
     pure $ H.div {}
       [ dataFieldNav { search } []
-        
+
       , if isExternal search'.datafield
         then databaseInput { databases, search } []
         else H.div {} []
-             
+
       , if isHAL search'.datafield
         then orgInput { orgs: allOrgs, search } []
         else H.div {} []
-             
+
       , if isIMT search'.datafield
-        then componentIMT { search, session } []
+        then componentIMT { search } []
         else H.div {} []
 
       , if isHAL search'.datafield
         then componentYears { search } []
         else H.div {} []
-             
+
       , if isCNRS search'.datafield
         then componentCNRS { search } []
         else H.div {} []
-             
+
       , if needsLang search'.datafield
         then langNav { langs, search } []
         else H.div {} []
-             
+
       , H.div {} [ searchIframes { iframeRef, search } [] ]
       ]
 
@@ -518,7 +518,6 @@ type SubmitButtonProps =
   , onSearch  :: GT.AsyncTaskWithType -> Effect Unit
   , search    :: T.Box Search
   , selection :: T.Box ListSelection.Selection
-  , session   :: Session
   )
 
 submitButton :: R2.Component SubmitButtonProps
@@ -526,7 +525,9 @@ submitButton = R.createElement submitButtonComponent
 submitButtonComponent :: R.Component SubmitButtonProps
 submitButtonComponent = here.component "submitButton" cpt
   where
-    cpt { errors, onSearch, search, selection, session } _ = do
+    cpt { errors, onSearch, search, selection } _ = do
+      session <- useSession
+
       search' <- T.useLive T.unequal search
       selection' <- T.useLive T.unequal selection
 

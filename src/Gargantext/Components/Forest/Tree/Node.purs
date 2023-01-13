@@ -30,6 +30,7 @@ import Gargantext.Config.REST (logRESTError)
 import Gargantext.Context.Progress (asyncContext, asyncProgress)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoaderEffect)
+import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Version (Version, useVersion)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId)
@@ -63,8 +64,8 @@ type NodeSpanProps =
   , nodeType      :: GT.NodeType
   , reload        :: T2.ReloadS
   , root          :: ID
-  , session       :: Session
   , isBoxVisible  :: T.Box Boolean
+  , session       :: Session
   )
 
 type IsLeaf = Boolean
@@ -87,10 +88,10 @@ nodeSpanCpt = here.component "nodeSpan" cpt
               , isLeaf
               , nodeType
               , reload
-              , session
               , isBoxVisible
+              , session
               } _ = do
-    -- States
+      -- States
 
       route' <- T.useLive T.unequal route
       -- only 1 popup at a time is allowed to be opened
@@ -323,7 +324,6 @@ nodeSpanCpt = here.component "nodeSpan" cpt
               , errors
               , nodeId: id
               , onFinish: onTaskFinish id task
-              , session
               }
               [
                 taskProgress
@@ -347,7 +347,6 @@ nodeSpanCpt = here.component "nodeSpan" cpt
               , name
               , nodeType
               , closeCallback: \_ -> T.write_ false isBoxVisible
-              , session
               }
             ]
           ]
@@ -555,7 +554,6 @@ type NodeActionsProps = ( nodeType :: GT.NodeType | NodeActionsCommon )
 
 nodeActions :: R2.Component NodeActionsProps
 nodeActions = R.createElement nodeActionsCpt
-
 nodeActionsCpt :: R.Component NodeActionsProps
 nodeActionsCpt = here.component "nodeActions" cpt where
   cpt props _ = pure (child props.nodeType)
@@ -572,7 +570,7 @@ graphNodeActions :: R2.Leaf NodeActionsCommon
 graphNodeActions = R2.leafComponent graphNodeActionsCpt
 graphNodeActionsCpt :: R.Component NodeActionsCommon
 graphNodeActionsCpt = here.component "graphNodeActions" cpt where
-  cpt { id, session, refresh } _ = do
+  cpt { id, refresh, session } _ = do
     -- States
     state /\ stateBox <- R2.useBox' Nothing
 
@@ -588,7 +586,7 @@ graphNodeActionsCpt = here.component "graphNodeActions" cpt where
     pure $ R2.fromMaybe state \gv ->
 
       nodeActionsGraph
-      { graphVersions: gv, session, id, refresh }
+      { graphVersions: gv, id, refresh, session }
       []
 
   graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
@@ -599,7 +597,7 @@ listNodeActions :: R2.Leaf NodeActionsCommon
 listNodeActions = R2.leafComponent listNodeActionsCpt
 listNodeActionsCpt :: R.Component NodeActionsCommon
 listNodeActionsCpt = here.component "listNodeActions" cpt where
-  cpt { id, session, refresh } _ = do
+  cpt { id, refresh, session } _ = do
     -- States
     state /\ stateBox <- R2.useBox' Nothing
 
@@ -617,7 +615,6 @@ listNodeActionsCpt = here.component "listNodeActions" cpt where
       nodeActionsNodeList
       { listId: id
       , nodeId: corpusId
-      , session
       , refresh: refresh
       , nodeType: GT.TabNgramType GT.CTabTerms
       }

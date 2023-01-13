@@ -30,7 +30,7 @@ moveNode = R.createElement moveNodeCpt
 moveNodeCpt :: R.Component SubTreeParamsIn
 moveNodeCpt = here.component "moveNode" cpt
   where
-    cpt { boxes, dispatch, id, nodeType, session, subTreeParams } _ = do
+    cpt { boxes, dispatch, id, nodeType, subTreeParams } _ = do
       action :: T.Box Action <- T.useBox (MoveNode {params: Nothing})
 
       pure $
@@ -40,7 +40,6 @@ moveNodeCpt = here.component "moveNode" cpt
             , dispatch
             , id
             , nodeType
-            , session
             , subTreeParams
             } []
 
@@ -54,7 +53,7 @@ moveNode' :: R2.Component Props
 moveNode' = R.createElement moveNodeCpt'
 moveNodeCpt' :: R.Component Props
 moveNodeCpt' = here.component "__clone__" cpt where
-  cpt { boxes, dispatch, id, nodeType, session, subTreeParams, action } _ = do
+  cpt { boxes, dispatch, id, nodeType, subTreeParams, action } _ = do
 
     action' <- T.useLive T.unequal action
 
@@ -72,7 +71,6 @@ moveNodeCpt' = here.component "__clone__" cpt where
                       , dispatch
                       , id
                       , nodeType
-                      , session
                       , subTreeParams
                       } []
       ] button

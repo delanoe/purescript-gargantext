@@ -28,7 +28,6 @@ import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.GraphExplorer.Utils as GEU
 import Gargantext.Config (defaultFrontends)
 import Gargantext.Data.Louvain as DLouvain
-import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
 import Gargantext.Hooks.Sigmax.Graphology as Graphology
 import Gargantext.Hooks.Sigmax.Louvain as Louvain
@@ -74,8 +73,6 @@ layoutCpt = here.component "layout" cpt where
     , showControls
     , graphId
     } <- GraphStore.use
-
-    session <- useSession
 
     showSidebar'  <- R2.useLive' showSidebar
     showDoc'      <- R2.useLive' showDoc
@@ -152,8 +149,7 @@ layoutCpt = here.component "layout" cpt where
               { className: "graph-layout__focus__inner" }
               [
                 docFocus
-                { session
-                , graphSideDoc
+                { graphSideDoc
                 , closeCallback: closeDoc
                 , key: show $ getter _.docId graphSideDoc
                 }
@@ -182,7 +178,6 @@ layoutCpt = here.component "layout" cpt where
                   GES.sidebar
                   { frontends: defaultFrontends
                   , metaData
-                  , session
                   }
             ]
           ]
@@ -200,7 +195,6 @@ layoutCpt = here.component "layout" cpt where
           { fa2Ref
           , noverlapRef
           , reloadForest: reloadForest
-          , session
           , sigmaRef
           }
         ]

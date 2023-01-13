@@ -31,6 +31,7 @@ import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoaderEffect)
+import Gargantext.Hooks.Session (useSession)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, get, mkNodeId)
 import Gargantext.Sessions.Types (useOpenNodesMemberBox, openNodesInsert, openNodesDelete)
@@ -63,11 +64,11 @@ type LoaderProps =
 
 type NodeProps =
  ( reloadTree :: T2.ReloadS
- , session :: Session
  | Common )
 
 type TreeProps =
  ( root :: ID
+ , session :: Session
  , tree :: FTree
  | NodeProps )
 
@@ -81,15 +82,13 @@ type ChildrenTreeProps =
 type PACommon =
   ( boxes      :: Boxes
   , reloadTree :: T2.ReloadS
-  , session    :: Session
   , tree       :: FTree
   )
 
 -- The properties tree shares in common with nodeSpan
 type NSCommon =
   ( frontends :: Frontends
-  , handed    :: Handed
-  , session   :: Session  )
+  , handed    :: Handed  )
 
 -- The annoying 'render' here is busting a cycle in the low tech
 -- way. This function is only called by functions in this module, so
@@ -98,18 +97,19 @@ type ChildLoaderProps =
   ( id     :: ID
   , render :: R2.Leaf TreeProps
   , root   :: ID
+  , session :: Session
   | NodeProps
   )
 
 type PerformActionProps =
   ( isBoxVisible :: T.Box Boolean
+  , session      :: Session
   | PACommon
   )
 
 -- | Loads and renders the tree starting at the given root node id.
 treeLoader :: R2.Leaf ( key :: String | LoaderProps )
 treeLoader = R2.leaf treeLoaderCpt
-
 treeLoaderCpt :: R.Component ( key :: String | LoaderProps )
 treeLoaderCpt = here.component "treeLoader" cpt where
 -- treeLoaderCpt :: R.Memo LoaderProps
@@ -163,6 +163,7 @@ treeCpt = here.component "tree" cpt where
         , root
         , session
         , tree: NTree (LNode { id, name, nodeType }) children } _ = do
+    let nodeId = mkNodeId session id
 
     isBoxVisible  <- T.useBox false
     folderOpen    <- useOpenNodesMemberBox nodeId forestOpen
@@ -184,7 +185,7 @@ treeCpt = here.component "tree" cpt where
         [
           nodeSpan
           { boxes
-          , dispatch: dispatch' isBoxVisible
+          , dispatch: dispatch' isBoxVisible session
           , folderOpen
           , frontends
           , id
@@ -193,8 +194,8 @@ treeCpt = here.component "tree" cpt where
           , nodeType
           , reload
           , root
-          , session
           , isBoxVisible
+          , session
           }
         <>
           R2.when (folderOpen')
@@ -211,12 +212,11 @@ treeCpt = here.component "tree" cpt where
       ]
     where
       isLeaf = A.null children
-      nodeId = mkNodeId session id
       children' = A.sortWith fTreeID pubChildren
       pubChildren = if isPublic nodeType then map (map pub) children else children
-      dispatch' isBoxVisible a = performAction a (Record.merge common' extra) where
+      dispatch' isBoxVisible session a = performAction a (Record.merge common' extra) where
         common' = RecordE.pick p :: Record PACommon
-        extra = { isBoxVisible }
+        extra = { isBoxVisible, session }
   pub (LNode n@{ nodeType: t }) = LNode (n { nodeType = publicize t })
 
 
@@ -245,13 +245,14 @@ renderTreeChildrenCpt :: R.Component ChildrenTreeProps
 renderTreeChildrenCpt = here.component "renderTreeChildren" cpt where
   cpt p@{ childProps: { children'
                       , render }
-        , root } _ = do
+        , root
+        , session } _ = do
     pure $ R.fragment (map renderChild children')
 
     where
       nodeProps = RecordE.pick p :: Record NodeProps
       renderChild (NTree (LNode {id: cId}) _) = childLoader props [] where
-        props = Record.merge nodeProps { id: cId, render, root }
+        props = Record.merge nodeProps { id: cId, render, root, session }
 
 
 childLoader :: R2.Component ChildLoaderProps
@@ -261,7 +262,10 @@ childLoaderCpt = here.component "childLoader" cpt where
   cpt p@{ boxes: { reloadRoot }
         , reloadTree
         , render
-        , root } _ = do
+        , root
+        , session } _ = do
+    let fetch _ = getNodeTreeFirstLevel session p.id
+
     -- States
     reload <- T.useBox T2.newReload
     state /\ stateBox <- R2.useBox' Nothing
@@ -290,10 +294,9 @@ childLoaderCpt = here.component "childLoader" cpt where
 
     where
       errorHandler = logRESTError here "[childLoader]"
-      fetch _ = getNodeTreeFirstLevel p.session p.id
       paint reload tree' = render (Record.merge base extra) where
         base = nodeProps { reload = reload }
-        extra = { root, tree: tree' }
+        extra = { root, session, tree: tree' }
         nodeProps = RecordE.pick p :: Record NodeProps
 
 closeBox { isBoxVisible } =

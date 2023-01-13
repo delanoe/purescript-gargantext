@@ -22,7 +22,6 @@ import Gargantext.Components.PhyloExplorer.ToolBar (toolBar)
 import Gargantext.Components.PhyloExplorer.TopBar (topBar)
 import Gargantext.Components.PhyloExplorer.Types (DisplayView, ExtractedCount, FrameDoc, PhyloData(..), TabView(..), Term, sortSources)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
-import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.UpdateEffect (useUpdateEffect1', useUpdateEffect3')
 import Gargantext.Types (SidePanelState(..))
 import Gargantext.Utils (getter, (?))
@@ -78,8 +77,6 @@ layoutCpt = here.component "layout" cpt where
     selectedBranch'     <- R2.useLive' selectedBranch
     selectedSource'     <- R2.useLive' selectedSource
     frameDoc'           <- R2.useLive' frameDoc
-
-    session <- useSession
 
     -- | Hooks
     -- |
@@ -272,8 +269,7 @@ layoutCpt = here.component "layout" cpt where
               { className: "phylo__focus__inner" }
               [
                 docFocus
-                { session
-                , frameDoc: frameDoc_
+                { frameDoc: frameDoc_
                 , closeCallback: closeDocCallback
                 , key: show $ getter _.docId frameDoc_
                 }

@@ -37,6 +37,7 @@ import Gargantext.Core.NgramsTable.Types as CNT
 import Gargantext.Data.Array (mapMaybe)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
+import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType, FrontendError(..), NodeID, TabSubType(..), TabType(..), TermList(..), modeTabType)
@@ -54,7 +55,6 @@ here = R2.here "Gargantext.Components.GraphExplorer.Sidebar"
 
 type Props =
   ( metaData        :: GET.MetaData
-  , session         :: Session
   , frontends       :: Frontends
   )
 
@@ -626,7 +626,6 @@ updateTermButtonCpt = here.component "updateTermButton" cpt where
       , metaData
       , nodesMap
       , rType
-      , session
       } children = do
     -- States
     { errors
@@ -641,6 +640,8 @@ updateTermButtonCpt = here.component "updateTermButton" cpt where
     selectedNodeIds' <- R2.useLive' selectedNodeIds
     graphId'         <- R2.useLive' graphId
 
+    session <- useSession
+
     -- Behaviors
     let
       callback _ = do
@@ -650,7 +651,7 @@ updateTermButtonCpt = here.component "updateTermButton" cpt where
                     , graphId: graphId'
                     , metaData: metaData
                     , nodes
-                    , session: session
+                    , session
                     , termList: rType
                     , reloadForest
                     }

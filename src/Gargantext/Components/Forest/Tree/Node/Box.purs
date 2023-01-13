@@ -43,7 +43,6 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node.Box"
 
 type CommonProps =
   ( dispatch  :: Action -> Aff Unit
-  , session   :: Session
   )
 
 nodePopupView :: R2.Leaf NodePopupProps
@@ -170,14 +169,13 @@ nodePopupViewCpt = here.component "nodePopupView" cpt where
 
   mPanelAction :: Record NodePopupS -> Record NodePopupProps -> R.Element
   mPanelAction { action: Just action }
-               { boxes, dispatch, id, name, nodeType, session } =
+               { boxes, dispatch, id, name, nodeType } =
     panelAction { action
                 , boxes
                 , dispatch
                 , id
                 , name
                 , nodeType
-                , session
                 }
   mPanelAction { action: Nothing } _ =
     H.div
@@ -324,7 +322,6 @@ type PanelActionProps =
   , dispatch  :: Action -> Aff Unit
   , name      :: Name
   , nodeType  :: GT.NodeType
-  , session   :: Session
   )
 
 panelAction :: R2.Leaf PanelActionProps
@@ -333,28 +330,28 @@ panelActionCpt :: R.Component PanelActionProps
 panelActionCpt = here.component "panelAction" cpt
   where
     cpt { action: Documentation nodeType}                  _ = pure $ actionDoc { nodeType } []
-    cpt { action: Download, id, nodeType, session}         _ = pure $ actionDownload { id, nodeType, session } []
-    cpt { action: Upload, dispatch, id, nodeType, session} _ = pure $ actionUpload { dispatch, id, nodeType, session } []
+    cpt { action: Download, id, nodeType}         _ = pure $ actionDownload { id, nodeType } []
+    cpt { action: Upload, dispatch, id, nodeType} _ = pure $ actionUpload { dispatch, id, nodeType } []
     cpt { action: Delete, nodeType, dispatch}              _ = pure $ actionDelete { dispatch, nodeType } []
-    cpt { action: ManageTeam, nodeType, id, session}       _ = pure $ actionManageTeam { id, nodeType, session } []
+    cpt { action: ManageTeam, nodeType, id}       _ = pure $ actionManageTeam { id, nodeType } []
     cpt { action: Add xs, dispatch, id, name, nodeType} _ =
       pure $ addNodeView {dispatch, id, name, nodeType, nodeTypes: xs} []
     cpt { action: Refresh , dispatch, nodeType } _ = pure $ update { dispatch, nodeType } []
     cpt { action: Config, nodeType } _ =
       pure $ fragmentPT $ "Config " <> show nodeType
     -- Functions using SubTree
-    cpt { action: Merge {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
-      pure $ mergeNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
-    cpt { action: Move {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
-      pure $ moveNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
-    cpt { action: Link {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
-      pure $ linkNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
+    cpt { action: Merge {subTreeParams}, boxes, dispatch, id, nodeType } _ =
+      pure $ mergeNode { boxes, dispatch, id, nodeType, subTreeParams } []
+    cpt { action: Move {subTreeParams}, boxes, dispatch, id, nodeType } _ =
+      pure $ moveNode { boxes, dispatch, id, nodeType, subTreeParams } []
+    cpt { action: Link {subTreeParams}, boxes, dispatch, id, nodeType } _ =
+      pure $ linkNode { boxes, dispatch, id, nodeType, subTreeParams } []
     cpt { action : Share, dispatch, id } _ = pure $ Share.shareNode { dispatch, id } []
     cpt { action : AddingContact, dispatch, id } _ = pure $ Contact.actionAddContact { dispatch, id } []
-    cpt { action : Publish {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
-      pure $ Share.publishNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
-    cpt { action: SearchBox, boxes, dispatch, id, session } _ =
-      pure $ actionSearch { boxes, dispatch, id: Just id, session } []
-    cpt { action: WriteNodesDocuments, boxes, dispatch, id, session } _ =
-      pure $ actionWriteNodesDocuments { boxes, dispatch, id, session } []
+    cpt { action : Publish {subTreeParams}, boxes, dispatch, id, nodeType } _ =
+      pure $ Share.publishNode { boxes, dispatch, id, nodeType, subTreeParams } []
+    cpt { action: SearchBox, boxes, dispatch, id } _ =
+      pure $ actionSearch { boxes, dispatch, id: Just id } []
+    cpt { action: WriteNodesDocuments, boxes, dispatch, id } _ =
+      pure $ actionWriteNodesDocuments { boxes, dispatch, id } []
     cpt _ _ = pure $ H.div {} []

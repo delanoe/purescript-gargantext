@@ -13,7 +13,6 @@ import Gargantext.Types as GT
 
 type CommonProps =
   ( dispatch :: Action -> Aff Unit
-  , session  :: Session
   )
 
 type NodePopupProps =

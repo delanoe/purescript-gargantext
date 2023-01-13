@@ -10,7 +10,6 @@ import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar (searchBar
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (defaultSearch)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Lang (allLangs)
-import Gargantext.Sessions (Session)
 import Gargantext.Types (ID)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
@@ -25,8 +24,7 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Search"
 type Props =
   ( boxes     :: Boxes
   , dispatch  :: Action -> Aff Unit
-  , id        :: Maybe ID
-  , session   :: Session )
+  , id        :: Maybe ID )
 
 -- | Action : Search
 actionSearch :: R2.Component Props
@@ -34,7 +32,7 @@ actionSearch = R.createElement actionSearchCpt
 actionSearchCpt :: R.Component Props
 actionSearchCpt = here.component "actionSearch" cpt
   where
-    cpt { boxes: { errors }, dispatch, id, session } _ = do
+    cpt { boxes: { errors }, dispatch, id } _ = do
       search <- T.useBox $ defaultSearch { node_id = id }
       pure $ R.fragment
         [ H.p { className: "action-search m-1" }
@@ -44,7 +42,6 @@ actionSearchCpt = here.component "actionSearch" cpt
                     , langs: allLangs
                     , onSearch: searchOn dispatch
                     , search
-                    , session
                     } []
         ]
         where

@@ -20,7 +20,6 @@ import Gargantext.Utils.SimpleJSON as GUSJ
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
-import Simple.JSON.Generics as JSONG
 import Toestand as T
 
 here :: R2.Here
@@ -74,7 +73,7 @@ publishNode = R.createElement publishNodeCpt
 publishNodeCpt :: R.Component SubTreeParamsIn
 publishNodeCpt = here.component "publishNode" cpt
   where
-    cpt { boxes, dispatch, id, nodeType, session, subTreeParams } _ = do
+    cpt { boxes, dispatch, id, nodeType, subTreeParams } _ = do
       action <- T.useBox (Action.SharePublic { params: Nothing })
       action' <- T.useLive T.unequal action
 
@@ -90,7 +89,6 @@ publishNodeCpt = here.component "publishNode" cpt
                       , dispatch
                       , id
                       , nodeType
-                      , session
                       , subTreeParams
                       } []
         ] button
