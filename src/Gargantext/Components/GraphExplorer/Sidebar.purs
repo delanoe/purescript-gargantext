@@ -23,7 +23,7 @@ import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
+import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Elevation(..), Variant(..))
 import Gargantext.Components.GraphExplorer.Sidebar.ContactList (contactListWrapper)
 import Gargantext.Components.GraphExplorer.Sidebar.DocList (docListWrapper)
 import Gargantext.Components.GraphExplorer.Sidebar.Legend as Legend
@@ -39,7 +39,7 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType, FrontendError(..), NodeID, TabSubType(..), TabType(..), TermList(..), modeTabType)
+import Gargantext.Types (CTabNgramType, FrontendError(..), NodeID, SidePanelState(..), TabSubType(..), TabType(..), TermList(..), modeTabType)
 import Gargantext.Utils (getter, nbsp, setter, (?))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
@@ -63,13 +63,16 @@ sidebar = R2.leaf sidebarCpt
 sidebarCpt :: R.Component Props
 sidebarCpt = here.component "sidebar" cpt where
   cpt props _ = do
-    -- States
+    -- | States
+    -- |
     { sideTab
+    , showSidebar
     } <- GraphStore.use
 
-    sideTab'  <- R2.useLive' sideTab
+    sideTab'      <- R2.useLive' sideTab
 
-    -- Computed
+    -- | Computed
+    -- |
     let
       sideTabs =
         [ GET.SideTabLegend
@@ -77,12 +80,27 @@ sidebarCpt = here.component "sidebar" cpt where
         , GET.SideTabCommunity
         ]
 
-    -- Render
+    -- | Behaviors
+    -- |
+    let
+      closeCallback :: Unit -> Effect Unit
+      closeCallback _ = T.write_ Closed showSidebar
+
+    -- | Render
+    -- |
     pure $
 
       H.div
       { className: "graph-sidebar" }
       [
+        -- Close CTA
+        B.iconButton
+        { name: "times"
+        , elevation: Level2
+        , callback: closeCallback
+        , className: "graph-sidebar__close"
+        }
+      ,
         -- Menu
         B.tabs
         { value: sideTab'
