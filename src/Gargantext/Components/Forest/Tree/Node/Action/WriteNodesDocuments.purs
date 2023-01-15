@@ -119,11 +119,18 @@ actionWriteNodesDocumentsCpt = here.component "actionWriteNodesDocuments" cpt wh
       ]
     ]
 
-    pure $ panel bodies (submitButton (DocumentsFromWriteNodes { id }) dispatch)
+    pure $ panel bodies (submitButton (DocumentsFromWriteNodes { id, lang: lang', selection: selection', paragraphs: paragraphs' }) dispatch)
 
 
-documentsFromWriteNodesReq :: Session -> GT.ID -> AffRESTError GT.AsyncTaskWithType
-documentsFromWriteNodesReq session id = do
+type Params =
+  ( id         :: GT.ID
+  , selection  :: ListSelection.Selection
+  , lang       :: Lang
+  , paragraphs :: String
+  )
+
+documentsFromWriteNodesReq :: Session -> Record Params -> AffRESTError GT.AsyncTaskWithType
+documentsFromWriteNodesReq session params@{ id } = do
   eTask :: Either RESTError GT.AsyncTask <-
-    post session (NodeAPI GT.Node (Just id) "documents-from-write-nodes") { id }
+    post session (NodeAPI GT.Node (Just id) "documents-from-write-nodes") params
   pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.UpdateNode }) <$> eTask

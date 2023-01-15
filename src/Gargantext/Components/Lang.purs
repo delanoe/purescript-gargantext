@@ -4,10 +4,14 @@ import Gargantext.Prelude
 
 import Data.Argonaut (class EncodeJson, encodeJson)
 import Data.Array as A
+import Data.Generic.Rep (class Generic)
+import Data.Lens.Lens.Product (_1)
 import Data.Maybe (Maybe(..))
+import Data.Newtype (class Newtype)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
 import Toestand as T
 
 here :: R2.Here
@@ -41,6 +45,9 @@ instance Read Lang where
 
 instance EncodeJson Lang where
   encodeJson a = encodeJson (show a)
+
+instance JSON.WriteForeign Lang where
+  writeImpl l = JSON.writeImpl $ show l
 
 -- Language used for the landing page
 data LandingLang = LL_EN | LL_FR

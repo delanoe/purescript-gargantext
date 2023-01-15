@@ -30,7 +30,7 @@ data Action = AddNode     String GT.NodeType
             | MergeNode   {params :: Maybe SubTreeOut}
             | LinkNode    {nodeType :: Maybe GT.NodeType, params :: Maybe SubTreeOut}
 
-            | DocumentsFromWriteNodes { id :: GT.ID }
+            | DocumentsFromWriteNodes { id :: GT.ID, lang :: Lang, selection :: Selection, paragraphs :: String }
 
             | NoAction
 
