@@ -74,6 +74,7 @@ queryGql session name q = do
 type Schema
   = { imt_schools :: {} ==> Array GQLIMT.School
     , contexts :: { context_id :: Int, node_id :: Int } ==> Array GQLCTX.NodeContext
+    , contexts_for_ngrams :: { corpus_id :: Int, ngrams_ids :: Array Int } ==> Array GQLCTX.Context
     , nodes :: { node_id :: Int } ==> Array Node
     , node_parent :: { node_id :: Int, parent_type :: String } ==> Array Node  -- TODO: parent_type :: NodeType
     , user_infos :: { user_id :: Int } ==> Array UserInfo
