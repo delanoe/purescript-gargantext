@@ -3,7 +3,6 @@ module Gargantext.Components.NgramsTable.Tree where
 import Gargantext.Prelude
 
 import Data.Array as A
-import Data.Either (Either(..))
 import Data.Lens ((^..), (^.), view)
 import Data.Lens.Fold (folded)
 import Data.Lens.Index (ix)
@@ -12,16 +11,16 @@ import Data.List as L
 import Data.Maybe (Maybe(..), maybe)
 import Data.Set (Set)
 import Data.Set as Set
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, launchAff_)
+import Effect.Class (liftEffect)
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Variant(..))
+import Gargantext.Components.Bootstrap.Types (Variant(..))
 import Gargantext.Components.Table as Tbl
-import Gargantext.Config.REST (logRESTError)
 import Gargantext.Core.NgramsTable.Functions (applyNgramsPatches, setTermListA, tablePatchHasNgrams)
 import Gargantext.Core.NgramsTable.Types (Action(..), NgramsClick, NgramsDepth, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm, _NgramsElement, _NgramsRepoElement, _children, _list, _ngrams, _occurrences, ngramsTermText, replace)
-import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Prelude (Unit, bind, const, map, mempty, not, otherwise, pure, show, unit, ($), (+), (<<<), (<>), (==), (>), (||))
+import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Types as GT
 import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
@@ -38,7 +37,8 @@ here = R2.here "Gargantext.Components.NgramsTable.Tree"
 
 
 type RenderNgramsTree =
-  ( getNgramsChildren :: NgramsTerm -> Aff (Array NgramsTerm)
+  ( getNgramsChildrenAff :: Maybe (NgramsTerm -> Aff (Array NgramsTerm))
+  , getNgramsChildren :: Maybe (NgramsTerm -> Array NgramsTerm)
   --, ngramsChildren    :: List NgramsTerm
   , ngramsClick       :: NgramsClick
   , ngramsDepth       :: NgramsDepth
@@ -53,13 +53,20 @@ renderNgramsTree p = R.createElement renderNgramsTreeCpt p []
 renderNgramsTreeCpt :: R.Component RenderNgramsTree
 renderNgramsTreeCpt = here.component "renderNgramsTree" cpt
   where
-    cpt { getNgramsChildren, ngramsClick, ngramsDepth, ngramsEdit, ngramsStyle } _ = do
+    cpt { getNgramsChildrenAff
+        , getNgramsChildren
+        , ngramsClick
+        , ngramsDepth
+        , ngramsEdit
+        , ngramsStyle
+        } _ = do
       pure $
         H.ul
         { className: "render-ngrams-tree" }
         [ H.span { className: "tree" }
           [ H.span { className: "righthanded" }
             [ tree { getNgramsChildren
+                   , getNgramsChildrenAff
                      --, ngramsChildren
                    , ngramsClick
                    , ngramsDepth
@@ -88,28 +95,61 @@ tag tagProps =
 -}
 
 type TreeProps =
-  ( getNgramsChildren :: NgramsTerm -> Aff (Array NgramsTerm)
-  , ngramsEdit        :: NgramsClick
+  ( getNgramsChildrenAff :: Maybe (NgramsTerm -> Aff (Array NgramsTerm))
+  , getNgramsChildren :: Maybe (NgramsTerm -> Array NgramsTerm)
+  , ngramsEdit           :: NgramsClick
   --, ngramsTable :: NgramsTable
   | TagProps
   )
 
+-- | /!\ Multiple issues to deal in this specific component:
+-- |     - stack of patch surgery: monolitic use of the <doctable> +
+-- |       design choice of rendering ngrams children on the fly +
+-- |       setting up a facade for the `getNgramsChildren` thunk ALWAYS as an
+-- |       `Aff` even if not necessary
+-- |     - ReactJS re-rendering flaw causing flickering UI effect
+-- |     - PureScript pattern matching recursive limitation
+-- |
+-- |      ↳ workaround: employ a delegation pattern with the an input bearing
+-- |        both the `Aff` thunk and a pure one. Note that we could create a
+-- |        Typing way, due to the PureScript limitation (see above)
 tree :: Record TreeProps -> R.Element
 tree p = R.createElement treeCpt p []
 treeCpt :: R.Component TreeProps
 treeCpt = here.component "tree" cpt where
-  cpt props@{ getNgramsChildren, ngramsDepth } _ = do
-    let loader p = do
-          res <- getNgramsChildren p
-          pure $ Right res
-    let render nc = treeLoaded (Record.merge props { ngramsChildren: L.fromFoldable nc })
+  cpt props@{ getNgramsChildrenAff
+            , getNgramsChildren
+            , ngramsDepth
+            } _ = do
+    -- | States
+    -- |
+    defaultNgramsChildren <- R.useMemo $ const $
+      maybe
+        (mempty :: List NgramsTerm)
+        (\thunk -> L.fromFoldable $ thunk ngramsDepth.ngrams)
+        getNgramsChildren
 
-    useLoader { errorHandler
-              , loader
-              , path: ngramsDepth.ngrams
-              , render }
-    where
-      errorHandler = logRESTError here "[tree]"
+    ngramsChildren /\ ngramsChildren' <-
+      R2.useBox' (defaultNgramsChildren :: List NgramsTerm)
+
+    -- | Hooks
+    -- |
+    useFirstEffect' $ maybe
+      (R.nothing)
+      (\aff -> launchAff_ do
+        res <- aff ngramsDepth.ngrams
+        liftEffect $
+          flip T.write_ ngramsChildren' $ L.fromFoldable res
+      )
+      (getNgramsChildrenAff)
+
+    -- | Render
+    -- |
+    pure $
+
+      treeLoaded (Record.merge props { ngramsChildren })
+
+
 
 type TreeLoaded =
   ( ngramsChildren    :: List NgramsTerm
@@ -183,8 +223,9 @@ treeLoadedCpt = here.component "treeLoaded" cpt where
           H.ul {} <<< map (\ngrams -> tree ((Record.delete (Proxy :: Proxy "ngramsChildren") params) { ngramsDepth = {depth, ngrams} })) <<< L.toUnfoldable
 
 type RenderNgramsItem =
-  ( dispatch          :: Action -> Effect Unit
-  , getNgramsChildren :: NgramsTerm -> Aff (Array NgramsTerm)
+  ( dispatch             :: Action -> Effect Unit
+  , getNgramsChildrenAff :: Maybe (NgramsTerm -> Aff (Array NgramsTerm))
+  , getNgramsChildren :: Maybe (NgramsTerm -> Array NgramsTerm)
   , isEditing         :: T.Box Boolean
   , ngrams            :: NgramsTerm
   , ngramsElement     :: NgramsElement
@@ -213,6 +254,10 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         [
           selected
         ,
+          B.wad'
+          [ "pl-3" ] $
+          show $ A.length $ A.fromFoldable (ngramsElement ^. _NgramsElement <<< _occurrences)
+        ,
           H.div {}
           ( if isEditing'
             then
@@ -231,7 +276,8 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
             else
               [
                 renderNgramsTree
-                { getNgramsChildren: getNgramsChildren'
+                { getNgramsChildrenAff: Nothing
+                , getNgramsChildren: Just $ getNgramsChildren'
                 , ngramsClick
                 , ngramsDepth
                 , ngramsEdit
@@ -240,10 +286,6 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
                 }
               ]
           )
-        ,
-          B.wad'
-          [ "pl-3" ] $
-          show $ A.length $ A.fromFoldable (ngramsElement ^. _NgramsElement <<< _occurrences)
       ]
       where
         ngramsDepth = { ngrams, depth: 0 }
@@ -261,8 +303,8 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
                                  , ngramsStagePatch: mempty
                                  , ngramsValidPatch: mempty
                                  , ngramsVersion: 0 } ngramsTable
-        getNgramsChildren' :: NgramsTerm -> Aff (Array NgramsTerm)
-        getNgramsChildren' n = pure $ A.fromFoldable $ ngramsChildren n
+        getNgramsChildren' :: NgramsTerm -> Array NgramsTerm
+        getNgramsChildren' n = A.fromFoldable $ ngramsChildren n
         ngramsChildren n = tbl ^.. ix n <<< _NgramsRepoElement <<< _children <<< folded
         ngramsClick =
           Just <<< dispatch <<< CoreAction <<< cycleTermListItem <<< view _ngrams
