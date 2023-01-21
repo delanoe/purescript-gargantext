@@ -52,8 +52,8 @@ ratingCpt = here.component "rating" cpt where
       , session
       , setLocalCategories
       } _ = do
-    pure $ renderRatingSimple { docId: nodeId
-                              , corpusId: r._id
+    pure $ renderRatingSimple { docId: r._id
+                              , corpusId: nodeId
                               , category: star2score score
                               , session } []
 
