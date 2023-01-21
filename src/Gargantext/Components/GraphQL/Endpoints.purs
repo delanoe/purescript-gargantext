@@ -108,11 +108,11 @@ getNodeContext session context_id node_id = do
     Nothing -> pure $ Left $ CustomError "no node context found"
     Just context -> pure $ Right context -- TODO: error handling
 
-getContextsForNgrams :: Session -> Int -> Array Int -> AffRESTError (Array GQLCTX.Context)
-getContextsForNgrams session corpus_id ngrams_ids = do
-  { contexts_for_ngrams } <- queryGql session "get contexts for ngrams" $
-                             GQLCTX.contextsForNgramsQuery `withVars` { corpus_id, ngrams_ids }
-  pure $ Right contexts_for_ngrams
+-- getContextsForNgrams :: Session -> Int -> Array Int -> AffRESTError (Array GQLCTX.Context)
+-- getContextsForNgrams session corpus_id ngrams_ids = do
+--   { contexts_for_ngrams } <- queryGql session "get contexts for ngrams" $
+--                              GQLCTX.contextsForNgramsQuery `withVars` { corpus_id, ngrams_ids }
+--   pure $ Right contexts_for_ngrams
 
 updateNodeContextCategory :: Session -> Int -> Int -> Int -> AffRESTError Int
 updateNodeContextCategory session context_id node_id category = do

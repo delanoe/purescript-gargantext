@@ -86,7 +86,7 @@ nodeContextQuery
 type ContextsForNgramsQuery
   = { contexts_for_ngrams :: Args
       { corpus_id :: Var "corpus_id" Int
-      , ngrams_ids :: Var "ngrams_ids" (Array Int)}
+      , ngrams_ids :: Var "ngrams_ids" (Array Int) }
       { c_id                        :: Unit
       , c_name                      :: Unit
       , c_typename                  :: Unit

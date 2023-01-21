@@ -265,7 +265,7 @@ graphViewCpt = R.memo' $ here.component "graphView" cpt where
 
     -- todo Cache this?
     R.useEffect' $ do
-      here.log2 "[graphView] transformedGraph" $ transformGraph graph' transformParams
+      --here.log2 "[graphView] transformedGraph" $ transformGraph graph' transformParams
 
       --let louvain = Louvain.louvain unit in
       --let cluster = Louvain.init louvain (SigmaxT.louvainNodes graph') (SigmaxT.louvainEdges graph') in

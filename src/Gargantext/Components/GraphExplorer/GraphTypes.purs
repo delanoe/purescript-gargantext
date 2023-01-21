@@ -80,10 +80,11 @@ instance JSON.WriteForeign Node where
 
 newtype Edge = Edge {
     confluence :: Number
-  , id_ :: String
-  , source :: String
-  , target :: String
-  , weight :: Number
+  , hidden     :: Maybe Boolean
+  , id_        :: String
+  , source     :: String
+  , target     :: String
+  , weight     :: Number
   }
 
 

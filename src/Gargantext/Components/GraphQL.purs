@@ -72,16 +72,16 @@ queryGql session name q = do
 
 -- Schema
 type Schema
-  = { imt_schools :: {} ==> Array GQLIMT.School
+  = { annuaire_contacts :: { contact_id :: Int } ==> Array AnnuaireContact
     , contexts :: { context_id :: Int, node_id :: Int } ==> Array GQLCTX.NodeContext
     , contexts_for_ngrams :: { corpus_id :: Int, ngrams_ids :: Array Int } ==> Array GQLCTX.Context
-    , nodes :: { node_id :: Int } ==> Array Node
+    , imt_schools :: {} ==> Array GQLIMT.School
     , node_parent :: { node_id :: Int, parent_type :: String } ==> Array Node  -- TODO: parent_type :: NodeType
+    , nodes :: { node_id :: Int } ==> Array Node
     , user_infos :: { user_id :: Int } ==> Array UserInfo
     , users :: { user_id :: Int } ==> Array User
-    , tree :: { root_id :: Int } ==> TreeFirstLevel
-    , annuaire_contacts :: { contact_id :: Int } ==> Array AnnuaireContact
     , team :: { team_node_id :: Int } ==> Team
+    , tree :: { root_id :: Int } ==> TreeFirstLevel
     }
 
 type Mutation
