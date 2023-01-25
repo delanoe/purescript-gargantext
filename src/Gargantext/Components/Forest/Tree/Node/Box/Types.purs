@@ -17,10 +17,11 @@ type CommonProps =
 
 type NodePopupProps =
   ( boxes           :: Boxes
+  , closeCallback   :: Unit -> Effect Unit
   , id              :: ID
   , name            :: Name
   , nodeType        :: GT.NodeType
-  , closeCallback   :: Unit -> Effect Unit
+  , session         :: Session
   | CommonProps
   )
 

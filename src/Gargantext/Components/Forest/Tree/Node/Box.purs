@@ -169,13 +169,14 @@ nodePopupViewCpt = here.component "nodePopupView" cpt where
 
   mPanelAction :: Record NodePopupS -> Record NodePopupProps -> R.Element
   mPanelAction { action: Just action }
-               { boxes, dispatch, id, name, nodeType } =
+               { boxes, dispatch, id, name, nodeType, session } =
     panelAction { action
                 , boxes
                 , dispatch
                 , id
                 , name
                 , nodeType
+                , session
                 }
   mPanelAction { action: Nothing } _ =
     H.div
@@ -322,6 +323,7 @@ type PanelActionProps =
   , dispatch  :: Action -> Aff Unit
   , name      :: Name
   , nodeType  :: GT.NodeType
+  , session   :: Session
   )
 
 panelAction :: R2.Leaf PanelActionProps
@@ -348,10 +350,10 @@ panelActionCpt = here.component "panelAction" cpt
       pure $ linkNode { boxes, dispatch, id, nodeType, subTreeParams } []
     cpt { action : Share, dispatch, id } _ = pure $ Share.shareNode { dispatch, id } []
     cpt { action : AddingContact, dispatch, id } _ = pure $ Contact.actionAddContact { dispatch, id } []
-    cpt { action : Publish {subTreeParams}, boxes, dispatch, id, nodeType } _ =
+    cpt { action : Publish {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
       pure $ Share.publishNode { boxes, dispatch, id, nodeType, subTreeParams } []
-    cpt { action: SearchBox, boxes, dispatch, id } _ =
-      pure $ actionSearch { boxes, dispatch, id: Just id } []
+    cpt { action: SearchBox, boxes, dispatch, id, session } _ =
+      pure $ actionSearch { boxes, dispatch, id: Just id, session } []
     cpt { action: WriteNodesDocuments, boxes, dispatch, id } _ =
       pure $ actionWriteNodesDocuments { boxes, dispatch, id } []
     cpt _ _ = pure $ H.div {} []

@@ -7,7 +7,6 @@ import Effect (Effect)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (searchField)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (Search, allDatabases)
 import Gargantext.Components.Lang (Lang)
-import Gargantext.Hooks.Session (useSession)
 import Gargantext.Prelude (Unit, pure, ($))
 import Gargantext.Sessions (Session)
 import Gargantext.Types (FrontendError)
@@ -24,6 +23,7 @@ type Props = ( errors    :: T.Box (Array FrontendError)
              , langs     :: Array Lang
              , onSearch  :: GT.AsyncTaskWithType -> Effect Unit
              , search    :: T.Box Search
+             , session   :: Session
              )
 
 searchBar :: R2.Component Props
@@ -31,7 +31,7 @@ searchBar = R.createElement searchBarCpt
 searchBarCpt :: R.Component Props
 searchBarCpt = here.component "searchBar" cpt
   where
-    cpt { errors, langs, onSearch, search } _ = do
+    cpt { errors, langs, onSearch, search, session } _ = do
       --onSearchChange session s
       pure $ H.div { className: "search-bar m-1" }
         [ searchField { databases: allDatabases
@@ -39,5 +39,6 @@ searchBarCpt = here.component "searchBar" cpt
                       , langs
                       , onSearch
                       , search
+                      , session
                       } []
         ]

@@ -25,7 +25,6 @@ import Gargantext.Components.ListSelection.Types as ListSelection
 import Gargantext.Config.REST (logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Hooks.Session (useSession)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (FrontendError)
 import Gargantext.Types as GT
@@ -55,6 +54,7 @@ type Props =
   -- State hook for a search, how we get data in and out
   , onSearch  :: GT.AsyncTaskWithType -> Effect Unit
   , search    :: T.Box Search
+  , session   :: Session
   )
 
 searchField :: R2.Component Props
@@ -62,7 +62,7 @@ searchField = R.createElement searchFieldCpt
 searchFieldCpt :: R.Component Props
 searchFieldCpt = here.component "searchField" cpt
   where
-    cpt { databases, errors, langs, onSearch, search } _ = do
+    cpt { databases, errors, langs, onSearch, search, session } _ = do
       selection <- T.useBox ListSelection.MyListsFirst
 
       pure $
@@ -72,9 +72,9 @@ searchFieldCpt = here.component "searchField" cpt
           --   then
           --     H.div {}[]
           --   else
-        , datafieldInput { databases, langs, search } []
+        , datafieldInput { databases, langs, search, session } []
         , ListSelection.selection { selection } []
-        , submitButton { errors, onSearch, search, selection } []
+        , submitButton { errors, onSearch, search, selection, session } []
         ]
       --pure $ panel params button
 
@@ -118,15 +118,14 @@ componentYearsCpt = here.component "componentYears" cpt where
                      , on: { click: clickRemove idx search } } [] ]
 
 type ComponentIMTProps =
-  ( | ComponentProps )
+  ( session :: Session
+  | ComponentProps )
 
 componentIMT :: R2.Component ComponentIMTProps
 componentIMT = R.createElement componentIMTCpt
 componentIMTCpt :: R.Component ComponentIMTProps
 componentIMTCpt = here.component "componentIMT" cpt where
-  cpt { search } _  = do
-    session <- useSession
-
+  cpt { search, session } _  = do
     useLoader { errorHandler
               , loader: \_ -> getIMTSchools session
               , path: unit
@@ -428,14 +427,15 @@ filterInput (term /\ setTerm) =
 
 type DatafieldInputProps =
   ( databases :: Array Database
-  , langs :: Array Lang
-  , search :: T.Box Search )
+  , langs     :: Array Lang
+  , search    :: T.Box Search
+  , session   :: Session )
 
 datafieldInput :: R2.Component DatafieldInputProps
 datafieldInput = R.createElement datafieldInputCpt
 datafieldInputCpt :: R.Component DatafieldInputProps
 datafieldInputCpt = here.component "datafieldInput" cpt where
-  cpt { databases, langs, search} _ = do
+  cpt { databases, langs, search, session } _ = do
     search' <- T.useLive T.unequal search
     iframeRef <- R.useRef null
 
@@ -451,7 +451,7 @@ datafieldInputCpt = here.component "datafieldInput" cpt where
         else H.div {} []
 
       , if isIMT search'.datafield
-        then componentIMT { search } []
+        then componentIMT { search, session } []
         else H.div {} []
 
       , if isHAL search'.datafield
@@ -518,6 +518,7 @@ type SubmitButtonProps =
   , onSearch  :: GT.AsyncTaskWithType -> Effect Unit
   , search    :: T.Box Search
   , selection :: T.Box ListSelection.Selection
+  , session   :: Session
   )
 
 submitButton :: R2.Component SubmitButtonProps
@@ -525,8 +526,7 @@ submitButton = R.createElement submitButtonComponent
 submitButtonComponent :: R.Component SubmitButtonProps
 submitButtonComponent = here.component "submitButton" cpt
   where
-    cpt { errors, onSearch, search, selection } _ = do
-      session <- useSession
+    cpt { errors, onSearch, search, selection, session } _ = do
 
       search' <- T.useLive T.unequal search
       selection' <- T.useLive T.unequal selection

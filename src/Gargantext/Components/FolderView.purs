@@ -68,6 +68,7 @@ folderViewCpt = here.component "folderViewCpt" cpt where
               , render: \folders -> folderViewMain { folders
                                                    , nodeId
                                                    , reload
+                                                   , session
                                                    } [] }
     where
       errorHandler = logRESTError here "[folderView]"
@@ -76,6 +77,7 @@ type FolderViewProps =
   ( folders       :: TreeFirstLevel
   , nodeId        :: Int
   , reload        :: T.Box T2.Reload
+  , session       :: Session
   )
 
 folderViewMain :: R2.Component FolderViewProps
@@ -102,6 +104,7 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
                                         , linkNodeType: node.node_type
                                         , parentId: props.nodeId
                                         , reload: props.reload
+                                        , session: props.session
                                         , style: FolderChild
                                         , text: node.name
                                         , disabled: false
@@ -111,15 +114,16 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
   makeParentFolder root (Just parent) props =
     [
       folder
-      { nodeId: root.id
+      { disabled: disabled parent
       , linkId: parent.id
       , linkNodeType: parent.node_type
+      , nodeId: root.id
       , nodeType: root.node_type
       , parentId: parent.id
       , reload: props.reload
+      , session: props.session
       , style: FolderUp
       , text: "..."
-      , disabled: disabled parent
       }
     ]
     where
@@ -130,32 +134,33 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
   sortFolders a b = compare a.id b.id
 
 type FolderProps =
-  ( style         :: FolderStyle
-  , text          :: String
-  , nodeType      :: GT.NodeType
-  , nodeId        :: Int
+  ( disabled      :: Boolean
   , linkNodeType  :: GT.NodeType
   , linkId        :: Int
+  , nodeType      :: GT.NodeType
+  , nodeId        :: Int
   , parentId      :: Int
   , reload        :: T.Box T2.Reload
-  , disabled      :: Boolean
+  , session       :: Session
+  , style         :: FolderStyle
+  , text          :: String
   )
 
 folder :: R2.Leaf FolderProps
 folder = R2.leaf folderCpt
 folderCpt :: R.Component FolderProps
 folderCpt = here.component "folderCpt" cpt where
-  cpt props@{ nodeId
-            , nodeType
+  cpt props@{ disabled
             , linkId
             , linkNodeType
+            , nodeId
+            , nodeType
             , parentId
             , reload
+            , session
             , style
             , text
-            , disabled
             } _ = do
-    session <- useSession
     -- | States
     -- |
 
@@ -221,11 +226,12 @@ folderCpt = here.component "folderCpt" cpt where
         [
           nodePopupView
           { boxes
+          , closeCallback: \_ -> T.write_ false isBoxVisible
           , dispatch: dispatch
           , id: props.nodeId
           , nodeType: props.nodeType
           , name: props.text
-          , closeCallback: \_ -> T.write_ false isBoxVisible
+          , session
           }
         ]
       ]

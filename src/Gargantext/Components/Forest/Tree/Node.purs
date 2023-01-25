@@ -342,11 +342,12 @@ nodeSpanCpt = here.component "nodeSpan" cpt
             [
               nodePopupView
               { boxes
+              , closeCallback: \_ -> T.write_ false isBoxVisible
               , dispatch
               , id
               , name
               , nodeType
-              , closeCallback: \_ -> T.write_ false isBoxVisible
+              , session
               }
             ]
           ]
