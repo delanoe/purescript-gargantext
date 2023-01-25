@@ -384,8 +384,8 @@ linkNode nodeType params p@{ boxes: { errors }, session } = traverse_ f params w
     handleRESTError errors eTask $ \_task -> pure unit
     refreshTree p
 
-documentsFromWriteNodes id p@{ boxes: { errors }, session } = do
-  eTask <- documentsFromWriteNodesReq session id
+documentsFromWriteNodes params p@{ boxes: { errors }, session } = do
+  eTask <- documentsFromWriteNodesReq session params
   handleRESTError errors eTask $ \_task -> pure unit
   refreshTree p
 
@@ -411,5 +411,5 @@ performAction (MergeNode {params}) p                          = mergeNode params
 performAction (LinkNode { nodeType, params }) p               = linkNode nodeType params p
 performAction RefreshTree p                                   = refreshTree p
 performAction CloseBox p                                      = closeBox p
-performAction (DocumentsFromWriteNodes { id }) p              = documentsFromWriteNodes id p
+performAction (DocumentsFromWriteNodes params) p              = documentsFromWriteNodes params p
 performAction NoAction _                                      = liftEffect $ here.log "[performAction] NoAction"
