@@ -11,7 +11,6 @@ import Data.Maybe (Maybe(..), fromJust)
 import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
 import Data.Set as Set
-import Data.Traversable (traverse_)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Gargantext.Components.App.Store as AppStore
@@ -29,7 +28,6 @@ import Gargantext.Components.GraphExplorer.Utils as GEU
 import Gargantext.Config (defaultFrontends)
 import Gargantext.Data.Louvain as DLouvain
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
-import Gargantext.Hooks.Sigmax.Graphology as Graphology
 import Gargantext.Hooks.Sigmax.Louvain as Louvain
 import Gargantext.Hooks.Sigmax.Noverlap as Noverlap
 import Gargantext.Hooks.Sigmax as Sigmax

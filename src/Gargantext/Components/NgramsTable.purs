@@ -101,8 +101,8 @@ initialState =
   , ngramsVersion:    0
   }
 
-initialStateWithVersion :: VersionedNgramsTable -> State
-initialStateWithVersion (Versioned { version }) = initialState { ngramsVersion = version }
+-- initialStateWithVersion :: VersionedNgramsTable -> State
+-- initialStateWithVersion (Versioned { version }) = initialState { ngramsVersion = version }
 
 setTermListSetA :: NgramsTable -> Set NgramsTerm -> TermList -> Action
 setTermListSetA ngramsTable ns new_list =
@@ -813,7 +813,7 @@ mainNgramsTable = R.createElement mainNgramsTableCpt
 mainNgramsTableCpt :: R.Component MainNgramsTableProps
 mainNgramsTableCpt = here.component "mainNgramsTable" cpt
   where
-    cpt props@{ cacheState, path, treeEdit } _ = do
+    cpt props@{ cacheState, path } _ = do
       searchQuery <- T.useFocused (_.searchQuery) (\a b -> b { searchQuery = a }) path
       params <- T.useFocused (_.params) (\a b -> b { params = a }) path
       cacheState' <- T.useLive T.unequal cacheState

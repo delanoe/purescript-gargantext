@@ -147,14 +147,8 @@ sessionPath (R.NodeAPI nt i p) = nodeTypePath nt
                               <> (if p == "" then "" else "/" <> p)
 sessionPath (R.TreeFirstLevel nId p) = nodeTypePath Tree
                                     <> (maybe "" (\nId' -> "/" <> show nId') nId) <> "/first-level" <> p
-sessionPath (R.Search {listId, limit, offset, orderBy} Nothing) =
-  sessionPath $ R.NodeAPI Corpus Nothing
-     $ "search?list_id=" <> show listId
-    <> offsetUrl offset
-    <> limitUrl limit
-    <> orderUrl orderBy
-sessionPath (R.Search {listId, limit, offset, orderBy} (Just corpusId)) =
-  sessionPath $ R.NodeAPI Corpus (Just corpusId)
+sessionPath (R.Search {listId, limit, offset, orderBy} mCorpusId) =
+  sessionPath $ R.NodeAPI Corpus mCorpusId
      $ "search?list_id=" <> show listId
     <> offsetUrl offset
     <> limitUrl limit
