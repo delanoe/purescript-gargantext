@@ -14,7 +14,6 @@ import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTr
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..), SubTreeOut(..))
 import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Hooks.Session (useSession)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
 import Gargantext.Types as GT
@@ -50,10 +49,9 @@ subTreeViewCpt = here.component "subTreeView" cpt
         , dispatch
         , id
         , nodeType
+        , session
         , subTreeParams
         } _ = do
-      session <- useSession
-
       let
         SubTreeParams {showtypes} = subTreeParams
       --  (valAction /\ setAction)  = action
@@ -68,6 +66,7 @@ subTreeViewCpt = here.component "subTreeView" cpt
                                       , dispatch
                                       , id
                                       , nodeType
+                                      , session
                                       , subTreeParams
                                       , tree
                                       } []  }

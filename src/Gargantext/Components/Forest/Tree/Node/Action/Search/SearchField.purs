@@ -73,7 +73,7 @@ searchFieldCpt = here.component "searchField" cpt
           --     H.div {}[]
           --   else
         , datafieldInput { databases, langs, search, session } []
-        , ListSelection.selection { selection } []
+        , ListSelection.selection { selection, session } []
         , submitButton { errors, onSearch, search, selection, session } []
         ]
       --pure $ panel params button
@@ -527,7 +527,6 @@ submitButtonComponent :: R.Component SubmitButtonProps
 submitButtonComponent = here.component "submitButton" cpt
   where
     cpt { errors, onSearch, search, selection, session } _ = do
-
       search' <- T.useLive T.unequal search
       selection' <- T.useLive T.unequal selection
 

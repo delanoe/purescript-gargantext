@@ -15,7 +15,7 @@ import Gargantext.Components.Document.Types (LoadedData, DocPath)
 import Gargantext.Components.PhyloExplorer.Types (FrameDoc(..))
 import Gargantext.Config.REST (logRESTError)
 import Gargantext.Hooks.Loader (useLoaderEffect)
-import Gargantext.Hooks.Session (useSession)
+import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType(..), TabSubType(..), TabType(..))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -27,6 +27,7 @@ here = R2.here "Gargantext.Components.PhyloExplorer.Frame.DocFocus"
 
 type Props =
   ( frameDoc  :: FrameDoc
+  , session       :: Session
   , closeCallback :: Unit -> Effect Unit
   )
 
@@ -36,9 +37,9 @@ docFocus = R2.leaf docFocusCpt
 docFocusCpt :: R.Component ( key :: String | Props )
 docFocusCpt = here.component "main" cpt where
   cpt { frameDoc: FrameDoc { docId, listId, corpusId }
+      , session
       , closeCallback
       } _ = do
-    session <- useSession
     -- | States
     -- |
     state' /\ state <- R2.useBox' (Nothing :: Maybe LoadedData)

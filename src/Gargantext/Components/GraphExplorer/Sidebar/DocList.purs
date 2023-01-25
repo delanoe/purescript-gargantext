@@ -46,8 +46,9 @@ type Props =
 
 docListWrapper :: R2.Leaf Props
 docListWrapper = R2.leaf docListWrapperCpt
+
 docListWrapperCpt :: R.Component Props
-docListWrapperCpt = here.component "docListWrapper" cpt where
+docListWrapperCpt = here.component "wrapper" cpt where
   cpt { metaData: GET.MetaData metaData
       } _ = do
     -- | States
@@ -114,8 +115,9 @@ type ListProps =
 
 docList :: R2.Leaf ListProps
 docList = R2.leaf docListCpt
+
 docListCpt :: R.Component ListProps
-docListCpt = here.component "docList" cpt where
+docListCpt = here.component "main" cpt where
   -- | Helpers
   -- |
   errorHandler err = do
@@ -271,6 +273,7 @@ type ItemProps =
 
 item :: R2.Leaf ItemProps
 item = R2.leaf itemCpt
+
 itemCpt :: R.Component ItemProps
 itemCpt = here.component "item" cpt where
   cpt { documentView: dv@(DocumentsView { id, title, source })

@@ -8,12 +8,14 @@ import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Settings (NodeAction(..), glyphiconNodeAction)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (ID)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut, SubTreeParams(..))
+import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
 
 type Props =
   ( dispatch :: Action -> Aff Unit
   , id       :: ID
   , nodeType :: GT.NodeType
+  , session  :: Session
   )
 
 subTreeOut :: Action -> Maybe SubTreeOut

@@ -34,7 +34,6 @@ import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Hooks.LinkHandler (useLinkHandler)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Hooks.Session (useSession)
 import Gargantext.Routes (AppRoute(Home), appPath, nodeTypeAppRoute)
 import Gargantext.Sessions (Session(..), sessionId)
 import Gargantext.Types (NodeType(..), SessionId)
@@ -49,8 +48,8 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.FolderView"
 
 type Props =
-  ( nodeId  :: Int
-  , session :: Session
+  ( nodeId     :: Int
+  , session    :: Session
   )
 
 data FolderStyle = FolderUp | FolderChild
@@ -263,35 +262,28 @@ backButtonCpt = here.component "backButton" cpt where
         H.i { className: "fa fa-arrow-left", title: "Previous view"} []
       ]
 
-type BackButtonSmartProps =
-  ( nodeId :: Int )
-
-backButtonSmart :: R2.Component BackButtonSmartProps
+backButtonSmart :: R2.Component (nodeId :: Int, session :: Session)
 backButtonSmart = R.createElement backButtonSmartCpt
-backButtonSmartCpt :: R.Component BackButtonSmartProps
+
+backButtonSmartCpt :: R.Component (nodeId :: Int, session :: Session)
 backButtonSmartCpt = here.component "backButtonSmart" cpt where
-  cpt {nodeId} _ = do
-    session <- useSession
+  cpt {nodeId, session} _ = do
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
     useLoader { errorHandler
               , loader: loadNode
               , path: { nodeId, session, reload: reload' }
-              , render: \node -> backButtonSmartMain { node } []
+              , render: \node -> backButtonSmartMain { node, session } []
     }
     where
       errorHandler = logRESTError here "[folderView]"
 
-type BackButtonSmartMainProps =
-  ( node :: Node )
-
-backButtonSmartMain :: R2.Component BackButtonSmartMainProps
+backButtonSmartMain :: R2.Component (node :: Node, session :: Session)
 backButtonSmartMain = R.createElement backButtonSmartMainCpt
-backButtonSmartMainCpt :: R.Component BackButtonSmartMainProps
-backButtonSmartMainCpt = here.component "backButtonSmartMain" cpt where
-  cpt { node } _ = do
-    session <- useSession
 
+backButtonSmartMainCpt :: R.Component (node :: Node, session :: Session)
+backButtonSmartMainCpt = here.component "backButtonSmartMain" cpt where
+  cpt { node, session } _ = do
     handlers <- useLinkHandler
     let rootId = treeId session
 

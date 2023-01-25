@@ -10,7 +10,6 @@ import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe)
 import Gargantext.Components.ListSelection.Types (NodeSimple(..), Selection(..), selectedListIds)
 import Gargantext.Config.REST (RESTError(..), AffRESTError)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Hooks.Session (useSession)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session(..), get)
 import Gargantext.Types (ID, NodeType(..), fldr)
@@ -24,13 +23,14 @@ here = R2.here "Gargantext.Components.ListSelection"
 
 type Props =
   ( selection :: T.Box Selection
+  , session   :: Session
   )
 
 selection :: R2.Component Props
 selection = R.createElement selectionCpt
 selectionCpt :: R.Component Props
 selectionCpt = here.component "selection" cpt where
-  cpt { selection } _ = do
+  cpt { selection, session } _ = do
     selection' <- R2.useLive' selection
     pure $ H.div { className: "list-selection" }
       [
@@ -44,33 +44,33 @@ selectionCpt = here.component "selection" cpt where
                 ]
         }
         []
-      , selectedIds { selection } []
+      , selectedIds { selection, session } []
       ]
 
 selectedIds :: R2.Component Props
 selectedIds = R.createElement selectedIdsCpt
 selectedIdsCpt :: R.Component Props
 selectedIdsCpt = here.component "selectedIds" cpt where
-  cpt { selection } _ = do
+  cpt { selection, session } _ = do
     selection' <- T.useLive T.unequal selection
 
     pure $ case selection' of
-      SelectedLists ids -> H.div {} [ idsSelector { selection } [] ]
+      SelectedLists ids -> H.div {} [ idsSelector { selection, session } [] ]
       _ -> H.div {} []
 
 type IdsSelectorProps =
-  ( selection :: T.Box Selection )
+  ( selection :: T.Box Selection
+  , session   :: Session )
 
 idsSelector :: R2.Component IdsSelectorProps
 idsSelector = R.createElement idsSelectorCpt
 idsSelectorCpt :: R.Component IdsSelectorProps
 idsSelectorCpt = here.component "idsSelector" cpt where
-  cpt { selection } _ = do
-    session <- useSession
-    let Session { treeId: root } = session
+  cpt { selection, session } _ = do
     pure $ H.div { className: "ids-selector" }
-      [ listTree { name: "", nodeType: NodeUser, root, selection } ] -- $ map checkbox [1, 2, 3, 4]
-
+      [ listTree { name: "", nodeType: NodeUser, root, selection, session } ] -- $ map checkbox [1, 2, 3, 4]
+    where
+      Session { treeId: root } = session
 
 listIdsRoute :: ID -> SessionRoute
 listIdsRoute = Children NodeList 0 1 Nothing <<< Just
@@ -88,20 +88,22 @@ type ListTreeProps =
   , nodeType  :: NodeType
   , root      :: ID
   , selection :: T.Box Selection
+  , session   :: Session
   )
 
 listTree :: R2.Leaf ListTreeProps
 listTree props = R.createElement listTreeCpt props []
 listTreeCpt :: R.Component ListTreeProps
 listTreeCpt = here.component "listTree" cpt where
-  cpt { name, nodeType, root, selection } _ = do
+  cpt { name, nodeType, root, selection, session } _ = do
     pure $ H.div { className: "tree" }
       [ H.div { className: "root" }
         [ H.i { className: fldr nodeType true } []
         , H.text $ "[" <> show root <> "] " <> name ]
       , listTreeChildren { render: listTree
                          , root
-                         , selection } []
+                         , selection
+                         , session } []
       ]
 
 type Render = Record ListTreeProps -> R.Element
@@ -109,14 +111,14 @@ type ListTreeChildrenProps =
   ( render    :: Render
   , root      :: ID
   , selection :: T.Box Selection
+  , session   :: Session
   )
 
 listTreeChildren :: R2.Component ListTreeChildrenProps
 listTreeChildren = R.createElement listTreeChildrenCpt
 listTreeChildrenCpt :: R.Component ListTreeChildrenProps
 listTreeChildrenCpt = here.component "listTreeChildren" cpt where
-  cpt { render, root, selection } _ = do
-    session <- useSession
+  cpt { render, root, selection, session } _ = do
     useLoader { errorHandler
               , loader: loadTreeChildren
               , path: { root, session }
@@ -124,7 +126,8 @@ listTreeChildrenCpt = here.component "listTreeChildren" cpt where
                   listTreeChildrenLoaded { loaded
                                          , render
                                          , root
-                                         , selection } [] }
+                                         , selection
+                                         , session } [] }
     where
       errorHandler err = case err of
         ReadJSONError err' -> here.warn2 "[listTreeChildren] ReadJSONError" $ show err'
@@ -134,29 +137,30 @@ type ListTreeChildrenLoadedProps =
   ( loaded    :: Array NodeSimple
   , render    :: Render
   , root      :: ID
-  , selection :: T.Box Selection )
+  , selection :: T.Box Selection
+  , session   :: Session )
 
 listTreeChildrenLoaded :: R2.Component ListTreeChildrenLoadedProps
 listTreeChildrenLoaded = R.createElement listTreeChildrenLoadedCpt
 listTreeChildrenLoadedCpt :: R.Component ListTreeChildrenLoadedProps
 listTreeChildrenLoadedCpt = here.component "listTreeChildrenLoaded" cpt where
-  cpt { loaded, render, root, selection } _  = do
+  cpt { loaded, render, root, selection, session } _  = do
     pure $ H.div { className: "children" } (element <$> loaded)
     where
       element (NodeSimple { id, name, nodeType: nodeType@Corpus }) =
-        render { root: id, name, nodeType, selection }
+        render { root: id, name, nodeType, selection, session }
       element (NodeSimple { id, name, nodeType: nodeType@Folder }) =
-        render { root: id, name, nodeType, selection }
+        render { root: id, name, nodeType, selection, session }
       element (NodeSimple { id, name, nodeType: nodeType@FolderPrivate }) =
-        render { root: id, name, nodeType, selection }
+        render { root: id, name, nodeType, selection, session }
       element (NodeSimple { id, name, nodeType: nodeType@FolderPublic }) =
-        render { root: id, name, nodeType, selection }
+        render { root: id, name, nodeType, selection, session }
       element (NodeSimple { id, name, nodeType: nodeType@FolderShared }) =
-        render { root: id, name, nodeType, selection }
+        render { root: id, name, nodeType, selection, session }
       element (NodeSimple { id, name, nodeType: NodeList}) =
         renderListElement { id, name, selection }
       element (NodeSimple { id, name, nodeType: nodeType@Team }) =
-        render { root: id, name, nodeType, selection }
+        render { root: id, name, nodeType, selection, session }
       element _ = H.div {} []
 
 type RenderListElementProps =

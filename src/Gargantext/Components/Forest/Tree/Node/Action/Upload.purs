@@ -28,7 +28,6 @@ import Gargantext.Components.ListSelection as ListSelection
 import Gargantext.Components.ListSelection.Types (Selection(..))
 import Gargantext.Components.ListSelection.Types as ListSelection
 import Gargantext.Config.REST (AffRESTError, RESTError)
-import Gargantext.Hooks.Session (useSession)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, postWwwUrlencoded, post)
 import Gargantext.Types (ID, NodeType(..))
@@ -51,22 +50,23 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Upload"
 type ActionUpload =
   ( dispatch :: Action -> Aff Unit
   , id       :: ID
-  , nodeType :: NodeType )
+  , nodeType :: NodeType
+  , session  :: Session )
 
 actionUpload :: R2.Component ActionUpload
 actionUpload = R.createElement actionUploadCpt
 actionUploadCpt :: R.Component ActionUpload
 actionUploadCpt = here.component "actionUpload" cpt where
-  cpt { nodeType: Corpus, dispatch, id } _ =
-    pure $ uploadFileView { dispatch, id, nodeType: GT.Corpus }
+  cpt { nodeType: Corpus, dispatch, id, session } _ =
+    pure $ uploadFileView { dispatch, id, nodeType: GT.Corpus, session }
 
-  cpt { nodeType: NodeList, dispatch, id } _ =
-    pure $ uploadTermListView { dispatch, id, nodeType: GT.NodeList } []
+  cpt { nodeType: NodeList, dispatch, id, session } _ =
+    pure $ uploadTermListView { dispatch, id, nodeType: GT.NodeList, session } []
 
   cpt props@{ nodeType: NodeFrameCalc } _ = pure $ uploadFrameCalcView props []
 
-  cpt props@{ nodeType: Annuaire, dispatch, id } _ =
-    pure $ uploadListView { dispatch, id, nodeType: GT.Annuaire }
+  cpt props@{ nodeType: Annuaire, dispatch, id, session } _ =
+    pure $ uploadListView { dispatch, id, nodeType: GT.Annuaire, session }
 
   cpt props@{ nodeType: _ } _ = pure $ actionUploadOther props []
 
@@ -105,7 +105,7 @@ uploadFileView = R2.leafComponent uploadFileViewCpt
 uploadFileViewCpt :: R.Component Props
 uploadFileViewCpt = here.component "uploadFileView" cpt
   where
-    cpt { dispatch, id, nodeType } _ = do
+    cpt { dispatch, id, nodeType, session } _ = do
       -- mFile    :: R.State (Maybe UploadFile) <- R.useState' Nothing
       mFile       <- T.useBox (Nothing :: Maybe UploadFile)
       fileType    <- T.useBox CSV
@@ -158,7 +158,7 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
               ]
             , R2.row
               [ H.div { className: "col-6 flex-space-around" }
-                [ ListSelection.selection { selection } [] ]
+                [ ListSelection.selection { selection, session } [] ]
               ]
             ]
 
@@ -200,6 +200,7 @@ type UploadButtonProps =
 
 uploadButton :: R2.Component UploadButtonProps
 uploadButton = R.createElement uploadButtonCpt
+
 uploadButtonCpt :: R.Component UploadButtonProps
 uploadButtonCpt = here.component "uploadButton" cpt
   where
@@ -278,7 +279,7 @@ uploadListView :: R2.Leaf Props
 uploadListView = R2.leafComponent uploadListViewCpt
 uploadListViewCpt :: R.Component Props
 uploadListViewCpt = here.component "uploadListView" cpt where
-  cpt { dispatch } _ = do
+  cpt { dispatch, session } _ = do
   -- States
     mFile
       <- T.useBox (Nothing :: Maybe UploadFile)
@@ -395,6 +396,7 @@ uploadListViewCpt = here.component "uploadListView" cpt where
           [
             ListSelection.selection
             { selection
+            , session
             } []
           ]
         ]
@@ -711,7 +713,7 @@ uploadFrameCalcView = R.createElement uploadFrameCalcViewCpt
 uploadFrameCalcViewCpt :: R.Component Props
 uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt
   where
-    cpt { dispatch } _ = do
+    cpt { dispatch, session } _ = do
       lang' /\ langBox
         <- R2.useBox' EN
       selection' /\ selectionBox
@@ -763,6 +765,7 @@ uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt
           [
             ListSelection.selection
             { selection: selectionBox
+            , session
             } []
           ]
         ]

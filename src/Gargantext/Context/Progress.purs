@@ -15,12 +15,11 @@ import Effect.Timer (IntervalId, clearInterval, setInterval)
 import Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar (QueryProgressData, queryProgress)
 import Gargantext.Config.Utils (handleErrorInAsyncProgress, handleRESTError)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
-import Gargantext.Hooks.Session (useSession)
+import Gargantext.Sessions (Session)
 import Gargantext.Types (AsyncProgress, FrontendError)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
-import Record as Record
 import Record.Extra as RX
 import Toestand as T
 
@@ -29,6 +28,7 @@ type AsyncProps =
   , errors    :: T.Box (Array FrontendError)
   , nodeId    :: GT.ID
   , onFinish  :: Unit -> Effect Unit
+  , session   :: Session
   )
 
 asyncProgress :: R2.Component AsyncProps
@@ -39,7 +39,6 @@ component = R.hooksComponent "asyncProgressContext" cpt where
   cpt props@{ errors
             , onFinish
             } children = do
-    session <- useSession
     -- States
     progress /\ progressBox <- R2.useBox' 0.0
     intervalIdRef <- R.useRef (Nothing :: Maybe IntervalId)
@@ -48,8 +47,7 @@ component = R.hooksComponent "asyncProgressContext" cpt where
     let
       exec :: Unit -> Effect Unit
       exec _ = launchAff_ do
-        let rdata = (Record.merge (RX.pick props :: { asyncTask :: GT.AsyncTaskWithType
-                                                    , nodeId    :: GT.ID }) { session })
+        let rdata = (RX.pick props :: Record QueryProgressData)
 
         eAsyncProgress <- queryProgress rdata
         handleRESTError errors eAsyncProgress onProgress

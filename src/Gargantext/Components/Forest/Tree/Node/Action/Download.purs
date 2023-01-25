@@ -7,7 +7,6 @@ import Data.String.Common (toLower)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(DownloadNode))
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, panel, submitButtonHref)
 import Gargantext.Ends (url)
-import Gargantext.Hooks.Session (useSession)
 import Gargantext.Prelude
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session)
@@ -24,7 +23,8 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Download"
 -- | Action : Download
 type ActionDownload =
   ( id       :: ID
-  , nodeType :: GT.NodeType )
+  , nodeType :: GT.NodeType
+  , session  :: Session )
 
 actionDownload :: R2.Component ActionDownload
 actionDownload = R.createElement actionDownloadCpt
@@ -40,24 +40,22 @@ actionDownloadCorpus :: R2.Component ActionDownload
 actionDownloadCorpus = R.createElement actionDownloadCorpusCpt
 actionDownloadCorpusCpt :: R.Component ActionDownload
 actionDownloadCorpusCpt = here.component "actionDownloadCorpus" cpt where
-  cpt { id } _ = do
-    session <- useSession
+  cpt { id, session } _ = do
     pure $ panel [H.div {} [H.text info]]
-      (submitButtonHref DownloadNode (href session))
+      (submitButtonHref DownloadNode href)
     where
-      href session = url session $ Routes.NodeAPI GT.Corpus (Just id) "export"
+      href  = url session $ Routes.NodeAPI GT.Corpus (Just id) "export"
       info  = "Download as JSON"
 
 actionDownloadGraph :: R2.Component ActionDownload
 actionDownloadGraph = R.createElement actionDownloadGraphCpt
 actionDownloadGraphCpt :: R.Component ActionDownload
 actionDownloadGraphCpt = here.component "actionDownloadGraph" cpt where
-  cpt { id } _ = do
-    session <- useSession
+  cpt { id, session } _ = do
     pure $ panel [H.div {} [H.text info]]
-      (submitButtonHref DownloadNode (href session))
+      (submitButtonHref DownloadNode href)
     where
-      href session = url session $ Routes.NodeAPI GT.Graph (Just id) "gexf"
+      href  = url session $ Routes.NodeAPI GT.Graph (Just id) "gexf"
       info  = "Info about the Graph as GEXF format"
 
 data NodeListDownloadFormat = NL_CSV | NL_JSON
@@ -77,9 +75,7 @@ actionDownloadNodeList :: R2.Component ActionDownload
 actionDownloadNodeList = R.createElement actionDownloadNodeListCpt
 actionDownloadNodeListCpt :: R.Component ActionDownload
 actionDownloadNodeListCpt = here.component "actionDownloadNodeList" cpt where
-  cpt { id } _ = do
-    session <- useSession
-
+  cpt { id, session } _ = do
     downloadFormat <- T.useBox NL_JSON
     downloadFormat' <- T.useLive T.unequal downloadFormat
 
@@ -91,14 +87,14 @@ actionDownloadNodeListCpt = here.component "actionDownloadNodeList" cpt where
         , opt NL_JSON downloadFormat ]
       , H.div {} [ H.text $ info downloadFormat' ]
       ]
-      (submitButtonHref DownloadNode $ href downloadFormat' session)
+      (submitButtonHref DownloadNode $ href downloadFormat')
     where
       opt t downloadFormat = H.option { value: show t } [ H.text $ show t ]
         where
           onClick _ = T.write_ t downloadFormat
       onChange downloadFormat e = T.write_ (readNodeListDownloadFormat $ R.unsafeEventValue e) downloadFormat
-      href :: NodeListDownloadFormat -> Session -> String
-      href t session = url session $ Routes.NodeAPI GT.NodeList (Just id) (toLower $ show t)
+      href :: NodeListDownloadFormat -> String
+      href t = url session $ Routes.NodeAPI GT.NodeList (Just id) (toLower $ show t)
       info :: NodeListDownloadFormat -> String
       info t = "Info about the Documents as " <> show t <> " format"
 
@@ -122,9 +118,7 @@ actionDownloadNodeTexts :: R2.Component ActionDownload
 actionDownloadNodeTexts = R.createElement actionDownloadNodeTextsCpt
 actionDownloadNodeTextsCpt :: R.Component ActionDownload
 actionDownloadNodeTextsCpt = here.component "actionDownloadNodeTexts" cpt where
-  cpt { id } _ = do
-    session <- useSession
-
+  cpt { id, session } _ = do
     downloadFormat <- T.useBox NT_JSON
     downloadFormat' <- T.useLive T.unequal downloadFormat
 
@@ -136,14 +130,14 @@ actionDownloadNodeTextsCpt = here.component "actionDownloadNodeTexts" cpt where
         , opt NT_JSON downloadFormat ]
       , H.div {} [ H.text $ info downloadFormat' ]
       ]
-      (submitButtonHref DownloadNode $ href downloadFormat' session)
+      (submitButtonHref DownloadNode $ href downloadFormat')
     where
       opt t downloadFormat = H.option { value: show t } [ H.text $ show t ]
         where
           onClick _ = T.write_ t downloadFormat
       onChange downloadFormat e = T.write_ (readNodeTextsDownloadFormat $ R.unsafeEventValue e) downloadFormat
-      href :: NodeTextsDownloadFormat -> Session -> String
-      href t session = url session $ Routes.NodeAPI GT.NodeTexts (Just id) ("export/" <> urlNodeTextsDownloadFormat t)
+      href :: NodeTextsDownloadFormat -> String
+      href t  = url session $ Routes.NodeAPI GT.NodeTexts (Just id) ("export/" <> urlNodeTextsDownloadFormat t)
       info :: NodeTextsDownloadFormat -> String
       info t  = "Info about the Documents as " <> show t <> " format"
 

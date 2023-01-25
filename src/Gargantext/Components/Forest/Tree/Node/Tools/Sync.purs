@@ -8,7 +8,6 @@ import Effect.Class (liftEffect)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Elevation(..), Variant(..))
 import Gargantext.Components.GraphExplorer.API as GraphAPI
-import Gargantext.Hooks.Session (useSession)
 import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
 import Gargantext.Utils ((?))
@@ -25,27 +24,27 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools.Sync"
 type NodeActionsGraphProps =
   ( id             :: GT.ID
   , graphVersions  :: Record GraphAPI.GraphVersions
+  , session        :: Session
   , refresh :: Unit -> Aff Unit
-  , session :: Session
   )
 
 nodeActionsGraph :: R2.Component NodeActionsGraphProps
 nodeActionsGraph = R.createElement nodeActionsGraphCpt
 nodeActionsGraphCpt :: R.Component NodeActionsGraphProps
 nodeActionsGraphCpt = here.component "nodeActionsGraph" cpt where
-  cpt { id, graphVersions, refresh, session } _ =
+  cpt { id, graphVersions, session, refresh } _ =
     let sameVersions = (graphVersions.gv_graph == Just graphVersions.gv_repo)
     in pure $
 
       R2.when (not sameVersions) $
 
-        graphUpdateButton { id, refresh, session }
+        graphUpdateButton { id, session, refresh }
 
 
 type GraphUpdateButtonProps =
   ( id :: GT.ID
-  , refresh :: Unit -> Aff Unit
   , session :: Session
+  , refresh :: Unit -> Aff Unit
   )
 
 graphUpdateButton :: Record GraphUpdateButtonProps -> R.Element
@@ -53,7 +52,7 @@ graphUpdateButton p = R.createElement graphUpdateButtonCpt p []
 graphUpdateButtonCpt :: R.Component GraphUpdateButtonProps
 graphUpdateButtonCpt = here.component "graphUpdateButton" cpt
   where
-    cpt { id, refresh, session } _ = do
+    cpt { id, session, refresh } _ = do
       enabled <- T.useBox true
       enabled' <- T.useLive T.unequal enabled
 
@@ -64,7 +63,7 @@ graphUpdateButtonCpt = here.component "graphUpdateButton" cpt
         , variant: Secondary
         , elevation: Level1
         , status: enabled' ? Enabled $ Disabled
-        , callback: const $ onClick enabled' enabled session
+        , callback: const $ onClick enabled' enabled
         , name: "refresh"
         }
 
@@ -76,8 +75,8 @@ graphUpdateButtonCpt = here.component "graphUpdateButton" cpt
         --              , on: { click: onClick enabled' enabled } } []
         --              ]
       where
-        onClick false _ _ = pure unit
-        onClick true enabled session = do
+        onClick false _ = pure unit
+        onClick true enabled = do
           launchAff_ $ do
             liftEffect $ T.write_ false enabled
             _g <- GraphAPI.updateGraphVersions { graphId: id, session }
@@ -92,6 +91,7 @@ type NodeActionsNodeListProps =
     listId :: GT.ListId
   , nodeId :: GT.ID
   , nodeType :: GT.TabSubType GT.CTabNgramType
+  , session :: Session
   , refresh :: Unit -> Aff Unit
   )
 
@@ -106,6 +106,7 @@ type NodeListUpdateButtonProps =
   ( listId :: GT.ListId
   , nodeId :: GT.ID
   , nodeType :: GT.TabSubType GT.CTabNgramType
+  , session :: Session
   , refresh :: Unit -> Aff Unit
   )
 
