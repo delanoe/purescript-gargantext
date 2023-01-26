@@ -5,13 +5,12 @@ import Gargantext.Prelude hiding (max, min)
 import DOM.Simple.Types (Element)
 import Data.Array as A
 import Data.FoldableWithIndex (foldMapWithIndex)
-import Data.Int (toNumber)
+import Data.Int (floor, toNumber)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Nullable (null, Nullable)
 import Data.Sequence as Seq
 import Data.Set as Set
-import Data.Traversable (traverse_)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Gargantext.Components.App.Store as AppStore
@@ -30,7 +29,6 @@ import Gargantext.Config (defaultFrontends)
 import Gargantext.Data.Louvain as DLouvain
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
-import Gargantext.Hooks.Sigmax.Graphology as Graphology
 import Gargantext.Hooks.Sigmax.Louvain as Louvain
 import Gargantext.Hooks.Sigmax.Noverlap as Noverlap
 import Gargantext.Hooks.Sigmax as Sigmax
@@ -200,6 +198,7 @@ layoutCpt = here.component "layout" cpt where
           { fa2Ref
           , noverlapRef
           , reloadForest: reloadForest
+          , session
           , sigmaRef
           }
         ]
@@ -270,6 +269,8 @@ graphViewCpt = R.memo' $ here.component "graphView" cpt where
 
     -- todo Cache this?
     R.useEffect' $ do
+      --here.log2 "[graphView] transformedGraph" $ transformGraph graph' transformParams
+
       --let louvain = Louvain.louvain unit in
       --let cluster = Louvain.init louvain (SigmaxT.louvainNodes graph') (SigmaxT.louvainEdges graph') in
       --SigmaxT.louvainGraph graph' cluster
@@ -313,7 +314,8 @@ convert :: GET.GraphData -> Tuple (Maybe GET.MetaData) SigmaxT.SGraph
 convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
   where
     normalizedNodes :: Array GEGT.Node
-    normalizedNodes = GEGT.Node <$> (GEU.normalizeNodeSizeDefault $ (\(GEGT.Node n) -> n) <$> r.nodes)
+    normalizedNodes = (\n -> GEGT.Node (n { size = floor n.size })) <$>
+                      (GEU.normalizeNodeSizeDefault $ (\(GEGT.Node n) -> n { size = toNumber n.size }) <$> r.nodes)
     nodes :: Seq.Seq (Record SigmaxT.Node)
     nodes = foldMapWithIndex nodeFn normalizedNodes
     nodeFn :: Int -> GEGT.Node -> Seq.Seq (Record SigmaxT.Node)
@@ -330,7 +332,7 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
         , highlighted: false
         , id    : n.id_
         , label : n.label
-        , size  : n.size
+        , size  : toNumber n.size
         --, size: toNumber n.size
         , type  : modeGraphType gargType
         , x     : n.x -- cos (toNumber i)

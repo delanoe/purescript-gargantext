@@ -21,6 +21,8 @@ import Effect.Aff (launchAff_)
 import Gargantext.Components.Category (CategoryQuery(..), putCategories)
 import Gargantext.Components.Category.Types (Category(..), decodeCategory, favCategory)
 import Gargantext.Components.DocsTable.Types (showSource)
+import Gargantext.Components.GraphQL.Context as GQLCTX
+import Gargantext.Components.GraphQL.Endpoints as GQLE
 import Gargantext.Components.Search (Contact(..), Document(..), HyperdataRowContact(..), HyperdataRowDocument(..), SearchQuery, SearchResult(..), SearchResultTypes(..))
 import Gargantext.Components.Table as T
 import Gargantext.Components.Table.Types as T
@@ -90,6 +92,21 @@ newtype DocumentsView =
 derive instance Generic DocumentsView _
 instance Eq DocumentsView where eq = genericEq
 instance Show DocumentsView where show = genericShow
+
+gqlContextToDocumentsView :: GQLCTX.Context -> DocumentsView
+gqlContextToDocumentsView ctx@{ c_hyperdata: h } =
+  DocumentsView { id: ctx.c_id
+                , date: ctx.c_date
+                , title: ctx.c_name
+                , source: showSource (_.hrd_source <$> h)
+                , score: fromMaybe 0 ctx.c_score
+                , authors: fromMaybe "Authors" (_.hrd_authors <$> h)
+                , category: decodeCategory $ fromMaybe 0 ctx.c_category
+                , pairs: []
+                , delete: false
+                , publication_year: _.hrd_publication_year <$> h
+                , publication_month: _.hrd_publication_month <$> h
+                , publication_day: _.hrd_publication_day <$> h }
 
 ----------------------------------------------------------------------
 newtype ContactsView =
@@ -218,7 +235,6 @@ loadPage { session, nodeId, listId, query, params: {limit, offset, orderBy } } =
     convOrderBy (T.ASC  (T.ColumnName "Source")) = SourceAsc
     convOrderBy (T.DESC (T.ColumnName "Source")) = SourceDesc
     convOrderBy _ = DateAsc -- TODO
-
     p = Search { listId, offset, limit, orderBy: convOrderBy <$> orderBy } (Just nodeId)
 
   --SearchResult {result} <- post session p $ SearchQuery {query: concat query, expected:searchType}
@@ -232,6 +248,28 @@ loadPage { session, nodeId, listId, query, params: {limit, offset, orderBy } } =
               SearchResultDoc     {docs}     -> Docs     {docs: doc2view     <$> Seq.fromFoldable docs}
               SearchResultContact {contacts} -> Contacts {contacts: contact2view <$> Seq.fromFoldable contacts}
               errMessage                     -> Docs     {docs: Seq.fromFoldable [err2view errMessage]} -- TODO better error view
+
+type PageGQLParams =
+   ( corpusId    :: Int
+   , params      :: T.Params
+   , ngramsTerms :: Array String
+   , session     :: Session )
+
+initialPageGQL :: { corpusId :: Int, ngramsTerms :: Array String, session :: Session }
+               -> Record PageGQLParams
+initialPageGQL { corpusId, ngramsTerms, session } =
+  { corpusId, ngramsTerms, params: T.initialParams, session }
+
+
+loadPageGQL :: Record PageGQLParams -> AffRESTError Rows
+loadPageGQL { corpusId
+            , params: { limit, offset, orderBy }
+            , ngramsTerms
+            , session } = do
+
+  eResult <- GQLE.getContextsForNgrams session corpusId ngramsTerms
+
+  pure $ (\res -> Docs { docs: gqlContextToDocumentsView <$> Seq.fromFoldable res }) <$> eResult
 
 doc2view :: Document -> DocumentsView
 doc2view ( Document { id

@@ -6,10 +6,9 @@ import Gargantext.Prelude
 
 import Data.Array as A
 import Data.Int as I
-import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
+import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.Sequence as Seq
 import Data.Tuple (Tuple(..))
-import Data.Tuple.Nested ((/\))
 import DOM.Simple (document, querySelector)
 import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Bootstrap as B
@@ -29,7 +28,6 @@ import Gargantext.Utils (getter)
 import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
-import Reactix.DOM.HTML as H
 import Record as Record
 import Toestand as T
 
@@ -176,10 +174,10 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
     --let edgeWeightMin = maybe 0.0 _.weight $ A.head edgesWeightSorted
     --let edgeWeightMax = maybe 100.0 _.weight $ A.last edgesWeightSorted
     --let edgeWeightRange = Range.Closed { min: edgeWeightMin, max: edgeWeightMax }
-    let edgeWeightRange = Range.Closed {
-          min: 0.0
-        , max: I.toNumber $ Seq.length $ SigmaxT.graphEdges graph
-        }
+    -- let edgeWeightRange = Range.Closed {
+    --       min: 0.0
+    --     , max: I.toNumber $ Seq.length $ SigmaxT.graphEdges graph
+    --     }
 
     let nodesSorted = A.sortWith (_.size) $ Seq.toUnfoldable $ SigmaxT.graphNodes graph
     let nodeSizeMin = maybe 0.0 _.size $ A.head nodesSorted

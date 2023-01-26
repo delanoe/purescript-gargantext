@@ -39,7 +39,7 @@ newtype Node = Node {
   , children   :: Array String
   , id_        :: String
   , label      :: String
-  , size       :: Number
+  , size       :: Int
   , type_      :: String
   , x          :: Number
   , y          :: Number
@@ -80,10 +80,11 @@ instance JSON.WriteForeign Node where
 
 newtype Edge = Edge {
     confluence :: Number
-  , id_ :: String
-  , source :: String
-  , target :: String
-  , weight :: Number
+  , hidden     :: Maybe Boolean
+  , id_        :: String
+  , source     :: String
+  , target     :: String
+  , weight     :: Number
   }
 
 

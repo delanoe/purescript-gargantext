@@ -38,6 +38,8 @@ type Renderer = { "type" :: String, container :: Element }
 type NodeId = String
 type EdgeId = String
 
+type Label = String
+
 type Node = (
     borderColor :: String
   , children    :: Array String
@@ -48,7 +50,7 @@ type Node = (
   , hidden      :: Boolean
   , highlighted :: Boolean
   , id          :: NodeId
-  , label       :: String
+  , label       :: Label
   , size        :: Number
   , type        :: String  -- available types: circle, cross, def, diamond, equilateral, pacman, square, star
   , x           :: Number

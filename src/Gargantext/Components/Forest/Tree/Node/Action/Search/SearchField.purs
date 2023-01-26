@@ -143,7 +143,7 @@ componentWithIMTOrgsCpt :: R.Component ComponentWithIMTOrgsProps
 componentWithIMTOrgsCpt = here.component "componentWithIMTOrgs" cpt where
   cpt { schools, search } _ = do
     search' <- T.useLive T.unequal search
-  
+
     let allIMTOrgs = [All_IMT] <> (IMT_org <$> schools)
         liCpt org =
           H.li {}
@@ -156,7 +156,7 @@ componentWithIMTOrgsCpt = here.component "componentWithIMTOrgs" cpt where
                All_IMT -> H.i {} [H.text  $ " " <> show org]
                (IMT_org { school_shortName }) -> H.text $ " " <> school_shortName
           ]
-    
+
     pure $ R.fragment
       [ H.ul {} $ map liCpt $ allIMTOrgs
         --, filterInput fi
@@ -427,29 +427,29 @@ filterInput (term /\ setTerm) =
 
 type DatafieldInputProps =
   ( databases :: Array Database
-  , langs :: Array Lang
-  , search :: T.Box Search
-  , session :: Session )
+  , langs     :: Array Lang
+  , search    :: T.Box Search
+  , session   :: Session )
 
 datafieldInput :: R2.Component DatafieldInputProps
 datafieldInput = R.createElement datafieldInputCpt
 datafieldInputCpt :: R.Component DatafieldInputProps
 datafieldInputCpt = here.component "datafieldInput" cpt where
-  cpt { databases, langs, search, session} _ = do
+  cpt { databases, langs, search, session } _ = do
     search' <- T.useLive T.unequal search
     iframeRef <- R.useRef null
-    
+
     pure $ H.div {}
       [ dataFieldNav { search } []
-        
+
       , if isExternal search'.datafield
         then databaseInput { databases, search } []
         else H.div {} []
-             
+
       , if isHAL search'.datafield
         then orgInput { orgs: allOrgs, search } []
         else H.div {} []
-             
+
       , if isIMT search'.datafield
         then componentIMT { search, session } []
         else H.div {} []
@@ -457,15 +457,15 @@ datafieldInputCpt = here.component "datafieldInput" cpt where
       , if isHAL search'.datafield
         then componentYears { search } []
         else H.div {} []
-             
+
       , if isCNRS search'.datafield
         then componentCNRS { search } []
         else H.div {} []
-             
+
       , if needsLang search'.datafield
         then langNav { langs, search } []
         else H.div {} []
-             
+
       , H.div {} [ searchIframes { iframeRef, search } [] ]
       ]
 

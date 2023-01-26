@@ -101,11 +101,22 @@ deleteTeamMembership session sharedFolderId teamNodeId = do
 
 getNodeContext :: Session -> Int -> Int -> AffRESTError GQLCTX.NodeContext
 getNodeContext session context_id node_id = do
-  { contexts } <- queryGql session "get node context" $ GQLCTX.nodeContextQuery `withVars` { context_id, node_id }
+  let query = GQLCTX.nodeContextQuery `withVars` { context_id, node_id }
+  { contexts } <- queryGql session "get node context" query
   --liftEffect $ here.log2 "[getNodeContext] node context" contexts
   case A.head contexts of
     Nothing -> pure $ Left $ CustomError "no node context found"
     Just context -> pure $ Right context -- TODO: error handling
+
+type ContextsForNgramsGQL = { contexts_for_ngrams :: Array GQLCTX.Context }
+getContextsForNgrams :: Session -> Int -> Array String -> AffRESTError (Array GQLCTX.Context)
+getContextsForNgrams session corpus_id ngrams_terms = do
+  let query = GQLCTX.contextsForNgramsQuery `withVars` { corpus_id
+                                                       , ngrams_terms: GQLCTX.NgramsTerms ngrams_terms }
+  { contexts_for_ngrams } <- queryGql session "get contexts for ngrams" query
+
+  pure $ Right contexts_for_ngrams
+  --pure $ Right contexts_for_ngrams
 
 updateNodeContextCategory :: Session -> Int -> Int -> Int -> AffRESTError Int
 updateNodeContextCategory session context_id node_id category = do

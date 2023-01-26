@@ -297,9 +297,6 @@ useReductor f i j =
 useReductor' :: forall s a. Actor s a -> s -> R.Hooks (Reductor s a)
 useReductor' r = useReductor r pure
 
-render :: R.Element -> DOM.Element -> Effect Unit
-render e d = delay unit $ \_ -> pure $ R.reactDOM ... "render" $ args2 e d
-
 addRootElement :: DOM.Element -> Effect Unit
 addRootElement = runEffectFn1 _addRootElement
 

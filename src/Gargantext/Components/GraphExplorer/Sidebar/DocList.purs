@@ -4,7 +4,8 @@ module Gargantext.Components.GraphExplorer.Sidebar.DocList
 
 import Gargantext.Prelude
 
-import Data.Array (concat, head)
+import Data.Array (catMaybes, concat, head)
+import Data.Array as A
 import Data.Foldable (intercalate)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
@@ -14,7 +15,7 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (Variant(..))
-import Gargantext.Components.FacetsTable (DocumentsView(..), Rows(..), initialPagePath, loadPage, publicationDate)
+import Gargantext.Components.FacetsTable (DocumentsView(..), Rows(..), initialPagePath, initialPageGQL, loadPage, loadPageGQL, publicationDate)
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types (CorpusId, DocId, GraphSideDoc(..), ListId)
 import Gargantext.Components.GraphExplorer.Types as GET
@@ -62,26 +63,17 @@ docListWrapperCpt = here.component "wrapper" cpt where
     graph'            <- R2.useLive' graph
     selectedNodeIds'  <- R2.useLive' selectedNodeIds
 
-    query' /\ query <- R2.useBox' Nothing
+    selectedNgramsTerms <- T.useBox []
 
     -- | Helpers
     -- |
     let
       nodesMap = SigmaxT.nodesGraphMap graph'
 
-      toSearchQuery ids = SearchQuery
-        { expected: SearchDoc
-        , query: concat $ toQuery <$> Set.toUnfoldable ids
-        }
-
-      toQuery id = case Map.lookup id nodesMap of
-        Nothing -> []
-        Just n -> words n.label
-
     -- | Hooks
     -- |
     R.useEffect1' selectedNodeIds' $ do
-      T.write_ (Just $ toSearchQuery selectedNodeIds') query
+      T.write_ (catMaybes $ (\id -> _.label <$> Map.lookup id nodesMap) <$> Set.toUnfoldable selectedNodeIds') selectedNgramsTerms
 
     -- | Render
     -- |
@@ -89,16 +81,16 @@ docListWrapperCpt = here.component "wrapper" cpt where
 
       R.fragment
       [
-        case (head metaData.corpusId) /\ query' of
+        case (head metaData.corpusId) /\ (Set.isEmpty selectedNodeIds') of
 
-          (Just corpusId) /\ (Just q') ->
+          (Just corpusId) /\ false ->
             docList
-            { query: q'
-            , session
-            , corpusId
-            , listId: metaData.list.listId
-            , showDoc
+            { corpusId
             , frontends: defaultFrontends
+            , listId: metaData.list.listId
+            , selectedNgramsTerms
+            , session
+            , showDoc
             }
 
           _ /\ _ ->
@@ -113,12 +105,12 @@ docListWrapperCpt = here.component "wrapper" cpt where
 -------------------------------------------------------------------
 
 type ListProps =
-  ( query           :: SearchQuery
-  , corpusId        :: CorpusId
-  , listId          :: ListId
-  , session         :: Session
-  , showDoc         :: T.Box (Maybe GraphSideDoc)
-  , frontends       :: Frontends
+  ( corpusId            :: CorpusId
+  , frontends           :: Frontends
+  , listId              :: ListId
+  , selectedNgramsTerms :: T.Box (Array SigmaxT.Label)
+  , session             :: Session
+  , showDoc             :: T.Box (Maybe GraphSideDoc)
   )
 
 docList :: R2.Leaf ListProps
@@ -136,18 +128,25 @@ docListCpt = here.component "main" cpt where
       _ -> pure unit
   -- | Component
   -- |
-  cpt { query
-      , session
-      , corpusId: nodeId
-      , listId
-      , showDoc
+  cpt { corpusId: nodeId
       , frontends
+      , listId
+      , selectedNgramsTerms
+      , session
+      , showDoc
       } _ = do
     -- | States
     -- |
 
+    -- path' /\ path
+    --   <- R2.useBox' $ initialPagePath { nodeId, listId, query, session }
+
+    selectedNgramsTerms' <- T.useLive T.unequal selectedNgramsTerms
+
     path' /\ path
-      <- R2.useBox' $ initialPagePath { nodeId, listId, query, session }
+      <- R2.useBox' $ initialPageGQL { corpusId: nodeId
+                                     , ngramsTerms: A.fromFoldable selectedNgramsTerms'
+                                     , session }
 
     state' /\ state <-
       R2.useBox' Nothing
@@ -163,24 +162,30 @@ docListCpt = here.component "main" cpt where
 
     useLoaderEffect
       { errorHandler
-      , state
-      , loader: loadPage
+      , loader: loadPageGQL
       , path: path'
+      , state
       }
 
     -- | Effects
     -- |
 
     -- (on query change, reload fetched docs)
-    useUpdateEffect1' query $
-      flip T.write_ path $ initialPagePath { nodeId, listId, query, session }
+    --useUpdateEffect1' query $
+      --flip T.write_ path $ initialPagePath { nodeId, listId, query, session }
+    useUpdateEffect1' selectedNgramsTerms' $
+      flip T.write_ path $ initialPageGQL { corpusId: nodeId
+                                          , ngramsTerms: A.fromFoldable selectedNgramsTerms'
+                                          , session }
 
     -- (on fetch success, extract existing docs)
-    useUpdateEffect1' state' case state' of
-      Nothing -> T.write_ (Just Seq.empty) rows
-      Just r -> case r of
-        Docs { docs } -> T.write_ (Just docs) rows
-        _             -> T.write_ (Just Seq.empty) rows
+    useUpdateEffect1' state' do
+      here.log2 "[docList] state'" state'
+      case state' of
+        Nothing -> T.write_ (Just Seq.empty) rows
+        Just r -> case r of
+          Docs { docs } -> T.write_ (Just docs) rows
+          _             -> T.write_ (Just Seq.empty) rows
 
     -- | Computed
     -- |
