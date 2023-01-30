@@ -450,14 +450,14 @@ license =
     B.icon
     { name: "registered" }
   ,
-    H.text " is made by "
+    H.text " is made by the "
   ,
     H.a
     { href: "https://iscpif.fr"
     , target: "_blank"
     }
     [
-      H.text "CNRS/ISCPIF"
+      H.text "French Research Agency (FRA), Complex Systems Lab"
     ]
   ,
     H.a
@@ -466,18 +466,18 @@ license =
     , title: "Legal instructions of the project."
     }
     [
-      H.text ", with licences aGPLV3 and CECILL variant Affero compliant, "
+      H.text ", with aGPLV3 and CECILL variant Affero compliant licences, "
     ]
   ,
     B.icon
-    { name: "copyright" }
+    { name: "copyrights" }
   ,
     H.a
     { href: "https://cnrs.fr"
     , target: "_blank"
     }
     [
-      H.text " CNRS 2017-Present "
+      H.text "CNRS-ISCPIF/UAR-3611_2017-Present"
     ]
   ,
     H.text "."
