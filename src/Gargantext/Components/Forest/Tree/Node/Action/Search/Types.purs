@@ -108,7 +108,7 @@ allDatabases = [ Empty
                , HAL Nothing
                , IsTex
                , IsTex_Advanced
-               , Isidore
+               -- , Isidore
                --, Web
                --, News
                --, SocialNetworks
