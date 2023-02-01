@@ -457,7 +457,7 @@ license =
     , target: "_blank"
     }
     [
-      H.text "French Research Agency (FRA), Complex Systems Lab"
+      H.text "French Research Agency (FRA), Complex Systems Institute of Paris-Île de France"
     ]
   ,
     H.a
