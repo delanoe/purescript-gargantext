@@ -109,6 +109,61 @@ textInputBoxCpt = here.component "textInputBox" cpt where
         launchAff_ $ dispatch (boxAction $ R.readRef ref)
         T.write_ false isOpen
 
+type InviteInputBoxProps =
+  ( id       :: GT.ID
+  , dispatch :: Action -> Aff Unit
+  , text     :: String
+  , boxName  :: String
+  , boxAction :: String -> Action
+  , username :: T.Box String
+  )
+
+inviteInputBox :: R2.Component InviteInputBoxProps
+inviteInputBox = R.createElement inviteInputBoxCpt
+inviteInputBoxCpt :: R.Component InviteInputBoxProps
+inviteInputBoxCpt = here.component "textInputBox" cpt where
+  cpt { boxAction, boxName, dispatch, text, username } _ =
+    content <$> R.useRef text
+    where
+      content renameNodeNameRef =
+        H.div
+        { className: "d-flex align-items-center" }
+        [
+          textInput renameNodeNameRef
+        ,
+          B.wad_ [ "d-inline-block", "w-3" ]
+        ,
+          submitBtn renameNodeNameRef
+        ]
+
+      textInput renameNodeNameRef =
+        H.div
+        {}
+        [
+          inputWithEnter
+          { autoFocus: true
+          , className: "form-control"
+          , defaultValue: text
+          , onBlur: R.setRef renameNodeNameRef
+          , onEnter: submit renameNodeNameRef
+          , onValueChanged: R.setRef renameNodeNameRef
+          , placeholder: (boxName <> " Node")
+          , type: "text"
+          }
+        ]
+
+      submitBtn renameNodeNameRef =
+        B.iconButton
+        { callback: submit renameNodeNameRef
+        , title: "Submit"
+        , name: "plus"
+        , elevation: Level1
+        }
+
+      submit ref _ = do
+        T.write_ ("Invited " <> R.readRef ref <> " to the team") username
+        launchAff_ $ dispatch (boxAction $ R.readRef ref)
+
 type DefaultText = String
 
 formEdit :: forall prev next

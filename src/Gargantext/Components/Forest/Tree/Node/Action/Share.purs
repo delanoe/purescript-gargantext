@@ -5,6 +5,7 @@ import Gargantext.Prelude
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
+import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
 import Gargantext.Components.Forest.Tree.Node.Action.Types as Action
@@ -16,11 +17,11 @@ import Gargantext.Sessions (Session, post)
 import Gargantext.Types (ID)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.SimpleJSON as GUSJ
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
-import Simple.JSON.Generics as JSONG
 import Toestand as T
 
 here :: R2.Here
@@ -59,15 +60,16 @@ shareNodeCpt :: R.Component ShareNode
 shareNodeCpt = here.component "shareNode" cpt
   where
     cpt { dispatch, id } _ = do
-      isOpen <- T.useBox true
+      username' /\ username <- R2.useBox' ""
+
       pure $ Tools.panel
-                [ Tools.textInputBox { boxAction: shareAction
-                                     , boxName: "Share"
-                                     , dispatch
-                                     , id
-                                     , isOpen
-                                     , text: "username" } []
-                ] (H.div {} [])
+                [ Tools.inviteInputBox { boxAction: shareAction
+                                        , boxName: "Share"
+                                        , dispatch
+                                        , id
+                                        , text: "username"
+                                        , username } []
+                ] (H.div {} [H.text username'])
 ------------------------------------------------------------------------
 publishNode :: R2.Component SubTreeParamsIn
 publishNode = R.createElement publishNodeCpt
