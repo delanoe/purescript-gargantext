@@ -64,7 +64,7 @@ type SessionNodeProps = ( nodeId :: NodeID | SessionProps )
 type Props' = ( backend :: Backend, route' :: AppRoute | Props )
 
 router :: R2.Leaf Props
-router = R2.leafComponent routerCpt
+router = R2.leaf routerCpt
 routerCpt :: R.Component Props
 routerCpt = here.component "router" cpt where
   cpt { boxes: boxes@{ handed } } _ = do
@@ -121,7 +121,7 @@ routerCpt = here.component "router" cpt where
 --------------------------------------------------------------
 
 mainPage :: R2.Leaf Props
-mainPage = R2.leafComponent mainPageCpt
+mainPage = R2.leaf mainPageCpt
 mainPageCpt :: R.Component Props
 mainPageCpt = here.component "mainPage" cpt where
   cpt { boxes } _ = do
@@ -266,7 +266,7 @@ forestCpt = R.memo' $ here.component "forest" cpt where
 --------------------------------------------------------------
 
 sidePanel :: R2.Leaf Props
-sidePanel = R2.leafComponent sidePanelCpt
+sidePanel = R2.leaf sidePanelCpt
 sidePanelCpt :: R.Component Props
 sidePanelCpt = here.component "sidePanel" cpt where
   cpt props@{ boxes: { session

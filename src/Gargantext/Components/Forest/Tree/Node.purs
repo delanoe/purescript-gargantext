@@ -569,7 +569,7 @@ nodeActionsCpt = here.component "nodeActions" cpt where
       child _           = mempty
 
 graphNodeActions :: R2.Leaf NodeActionsCommon
-graphNodeActions = R2.leafComponent graphNodeActionsCpt
+graphNodeActions = R2.leaf graphNodeActionsCpt
 graphNodeActionsCpt :: R.Component NodeActionsCommon
 graphNodeActionsCpt = here.component "graphNodeActions" cpt where
   cpt { id, session, refresh } _ = do
@@ -596,7 +596,7 @@ graphNodeActionsCpt = here.component "graphNodeActions" cpt where
 
 
 listNodeActions :: R2.Leaf NodeActionsCommon
-listNodeActions = R2.leafComponent listNodeActionsCpt
+listNodeActions = R2.leaf listNodeActionsCpt
 listNodeActionsCpt :: R.Component NodeActionsCommon
 listNodeActionsCpt = here.component "listNodeActions" cpt where
   cpt { id, session, refresh } _ = do

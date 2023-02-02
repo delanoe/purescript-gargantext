@@ -83,7 +83,7 @@ type HomeProps =
   ( boxes     :: Boxes )
 
 homeLayout :: R2.Leaf HomeProps
-homeLayout = R2.leafComponent homeLayoutCpt
+homeLayout = R2.leaf homeLayoutCpt
 homeLayoutCpt :: R.Component HomeProps
 homeLayoutCpt = here.component "homeLayout" cpt
   where
@@ -223,7 +223,7 @@ type TutorialProps =
   , sessions :: Array Session )
 
 tutorial :: R2.Leaf TutorialProps
-tutorial = R2.leafComponent tutorialCpt
+tutorial = R2.leaf tutorialCpt
 tutorialCpt :: R.Component TutorialProps
 tutorialCpt = here.component "tutorial" cpt where
   cpt { sessions } _ = do

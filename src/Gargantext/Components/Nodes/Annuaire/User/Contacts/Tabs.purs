@@ -58,7 +58,7 @@ type TabsProps =
   )
 
 tabs :: R2.Leaf TabsProps
-tabs = R2.leafComponent tabsCpt
+tabs = R2.leaf tabsCpt
 tabsCpt :: R.Component TabsProps
 tabsCpt = here.component "tabs" cpt
   where

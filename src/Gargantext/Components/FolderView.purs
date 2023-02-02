@@ -55,7 +55,7 @@ type Props =
 data FolderStyle = FolderUp | FolderChild
 
 folderView :: R2.Leaf Props
-folderView = R2.leafComponent folderViewCpt
+folderView = R2.leaf folderViewCpt
 folderViewCpt :: R.Component Props
 folderViewCpt = here.component "folderViewCpt" cpt where
   cpt { nodeId, session } _ = do

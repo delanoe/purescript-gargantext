@@ -169,7 +169,7 @@ type RenderListElementProps =
   , selection :: T.Box Selection )
 
 renderListElement :: R2.Leaf RenderListElementProps
-renderListElement = R2.leafComponent renderListElementCpt
+renderListElement = R2.leaf renderListElementCpt
 renderListElementCpt :: R.Component RenderListElementProps
 renderListElementCpt = here.component "renderListElement" cpt where
   cpt { id, name, selection } _ = do

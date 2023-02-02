@@ -91,7 +91,7 @@ userLayoutCpt = here.component "userLayout" cpt
       pure $ userLayoutWithKey $ Record.merge props { key: show sid <> "-" <> show nodeId }
 
 userLayoutWithKey :: R2.Leaf ( key :: String | LayoutProps )
-userLayoutWithKey = R2.leafComponent userLayoutWithKeyCpt
+userLayoutWithKey = R2.leaf userLayoutWithKeyCpt
 userLayoutWithKeyCpt :: R.Component ( key :: String | LayoutProps )
 userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
   cpt { boxes: boxes@{ sidePanelTexts }
@@ -184,7 +184,7 @@ type ContactInfoItemProps =
   )
 
 contactInfoItem :: R2.Leaf ContactInfoItemProps
-contactInfoItem = R2.leafComponent contactInfoItemCpt
+contactInfoItem = R2.leaf contactInfoItemCpt
 contactInfoItemCpt :: R.Component ContactInfoItemProps
 contactInfoItemCpt = here.component "contactInfoItem" cpt
   where
@@ -216,7 +216,7 @@ type ItemProps =
   )
 
 itemNotEditing :: R2.Leaf ItemProps
-itemNotEditing = R2.leafComponent itemNotEditingCpt
+itemNotEditing = R2.leaf itemNotEditingCpt
 itemNotEditingCpt :: R.Component ItemProps
 itemNotEditingCpt = here.component "itemEditing" cpt where
   cpt { isEditing, valueBox } _ = do
@@ -233,7 +233,7 @@ itemNotEditingCpt = here.component "itemEditing" cpt where
         click _ = T.write_ true isEditing
 
 itemEditing :: R2.Leaf ItemProps
-itemEditing = R2.leafComponent itemEditingCpt
+itemEditing = R2.leaf itemEditingCpt
 itemEditingCpt :: R.Component ItemProps
 itemEditingCpt = here.component "itemNotEditing" cpt where
   cpt { defaultVal, isEditing, lens, onUpdateUserInfo, userInfo, valueBox } _ = do

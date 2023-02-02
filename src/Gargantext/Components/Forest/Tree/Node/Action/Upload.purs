@@ -101,7 +101,7 @@ type UploadFile =
 
 
 uploadFileView :: R2.Leaf Props
-uploadFileView = R2.leafComponent uploadFileViewCpt
+uploadFileView = R2.leaf uploadFileViewCpt
 uploadFileViewCpt :: R.Component Props
 uploadFileViewCpt = here.component "uploadFileView" cpt
   where
@@ -276,7 +276,7 @@ uploadButtonCpt = here.component "uploadButton" cpt
             dispatch CloseBox
 
 uploadListView :: R2.Leaf Props
-uploadListView = R2.leafComponent uploadListViewCpt
+uploadListView = R2.leaf uploadListViewCpt
 uploadListViewCpt :: R.Component Props
 uploadListViewCpt = here.component "uploadListView" cpt where
   cpt { dispatch, session } _ = do
@@ -676,7 +676,7 @@ type UploadTermButtonProps =
   )
 
 uploadTermButton :: R2.Leaf UploadTermButtonProps
-uploadTermButton = R2.leafComponent uploadTermButtonCpt
+uploadTermButton = R2.leaf uploadTermButtonCpt
 uploadTermButtonCpt :: R.Component UploadTermButtonProps
 uploadTermButtonCpt = here.component "uploadTermButton" cpt
   where

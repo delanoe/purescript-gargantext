@@ -280,7 +280,7 @@ type CheckboxProps =
   ( value :: T.Box Boolean )
 
 checkbox :: R2.Leaf CheckboxProps
-checkbox = R2.leafComponent checkboxCpt
+checkbox = R2.leaf checkboxCpt
 checkboxCpt :: R.Component CheckboxProps
 checkboxCpt = here.component "checkbox" cpt
   where

@@ -66,7 +66,7 @@ loadPublicData _l = do
 -}
 
 renderPublic :: R2.Leaf ()
-renderPublic = R2.leafComponent renderPublicCpt
+renderPublic = R2.leaf renderPublicCpt
 renderPublicCpt :: R.Component ()
 renderPublicCpt = here.component "renderPublic" cpt where
   cpt _ _ = do

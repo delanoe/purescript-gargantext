@@ -23,7 +23,7 @@ type Props =
   )
 
 inputWithEnterWithKey :: R2.Leaf ( key :: String | Props )
-inputWithEnterWithKey = R2.leafComponent inputWithEnterWithKeyCpt
+inputWithEnterWithKey = R2.leaf inputWithEnterWithKeyCpt
 inputWithEnterWithKeyCpt :: R.Component ( key :: String | Props )
 inputWithEnterWithKeyCpt = here.component "inputWithEnterWithKey" cpt where
   cpt { onBlur, onEnter, onValueChanged, autoFocus, className, defaultValue, placeholder, type: t } _ = do
@@ -37,7 +37,7 @@ inputWithEnterWithKeyCpt = here.component "inputWithEnterWithKey" cpt where
                           , type: t }
 
 inputWithEnter :: R2.Leaf Props
-inputWithEnter = R2.leafComponent inputWithEnterCpt
+inputWithEnter = R2.leaf inputWithEnterCpt
 inputWithEnterCpt :: R.Component Props
 inputWithEnterCpt = here.component "inputWithEnter" cpt
   where

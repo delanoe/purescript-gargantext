@@ -51,9 +51,6 @@ type Component p = Record p -> Array R.Element -> R.Element
 -- | UI Component type with only required props and no child
 type Leaf p = Record p -> R.Element
 
-leafComponent :: forall p. (R.Component p) -> Record p -> R.Element
-leafComponent cpt p = R.createElement cpt p []
-
 -- | UI Component type containing optional props and children
 type OptComponent options props provided = CO.Defaults (Record options) (Record provided) (Record props)
   => Record provided -> Array R.Element -> R.Element

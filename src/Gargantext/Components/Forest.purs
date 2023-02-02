@@ -75,7 +75,7 @@ forestLayoutCpt = here.component "forest" cpt where
 type Plus = ( boxes :: Boxes )
 
 plus :: R2.Leaf Plus
-plus = R2.leafComponent plusCpt
+plus = R2.leaf plusCpt
 plusCpt :: R.Component Plus
 plusCpt = here.component "plus" cpt where
   cpt { boxes: { backend, showLogin } } _ = do

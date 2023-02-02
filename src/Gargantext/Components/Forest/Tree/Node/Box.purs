@@ -47,7 +47,7 @@ type CommonProps =
   )
 
 nodePopupView :: R2.Leaf NodePopupProps
-nodePopupView = R2.leafComponent nodePopupViewCpt
+nodePopupView = R2.leaf nodePopupViewCpt
 nodePopupViewCpt :: R.Component NodePopupProps
 nodePopupViewCpt = here.component "nodePopupView" cpt where
   cpt p@{ id, name, nodeType }  _ = do
@@ -328,7 +328,7 @@ type PanelActionProps =
   )
 
 panelAction :: R2.Leaf PanelActionProps
-panelAction = R2.leafComponent panelActionCpt
+panelAction = R2.leaf panelActionCpt
 panelActionCpt :: R.Component PanelActionProps
 panelActionCpt = here.component "panelAction" cpt
   where

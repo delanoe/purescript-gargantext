@@ -25,7 +25,7 @@ type SearchInputProps =
 
 -- "key": to prevent refreshing & losing input
 searchInput :: R2.Leaf ( key :: String | SearchInputProps )
-searchInput = R2.leafComponent searchInputCpt
+searchInput = R2.leaf searchInputCpt
 searchInputCpt :: R.Component ( key :: String | SearchInputProps )
 searchInputCpt = here.component "searchInput" cpt
   where

@@ -70,7 +70,7 @@ type InnerProps =
   )
 
 annotatedFieldInner :: R2.Leaf InnerProps
-annotatedFieldInner = R2.leafComponent annotatedFieldInnerCpt
+annotatedFieldInner = R2.leaf annotatedFieldInnerCpt
 
 annotatedFieldInnerCpt :: R.Component InnerProps
 annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
