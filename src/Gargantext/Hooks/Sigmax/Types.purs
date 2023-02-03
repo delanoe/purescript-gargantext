@@ -4,6 +4,7 @@ import DOM.Simple.Types (Element)
 import Data.Array as A
 import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
+import Data.Hashable (hash)
 import Data.Show.Generic (genericShow)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
@@ -11,8 +12,10 @@ import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Traversable (class Traversable)
 import Data.Tuple (Tuple(..))
+import Effect (Effect)
 import Partial.Unsafe (unsafePartial)
-import Prelude (class Eq, class Show, map, ($), (&&), (==), (||), (<$>), (<), mod, not)
+import Prelude (class Eq, class Show, map, ($), (&&), (==), (||), (<$>), (<), mod, not, pure)
+import Record.Unsafe (unsafeGet)
 
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..))
 import Gargantext.Components.GraphExplorer.GraphTypes as GEGT
@@ -24,14 +27,24 @@ newtype Graph n e = Graph { edges :: Seq.Seq {|e}, nodes :: Seq.Seq {|n} }
 
 derive instance Generic (Graph n e) _
 
-instance (Eq (Record n), Eq (Record e)) => Eq (Graph n e) where
+instance ( Eq (Record n)
+         , Eq (Record e)
+         , GT.Optional HashableNodeFields n
+         , GT.Optional HashableEdgeFields e) => Eq (Graph n e) where
   --eq = genericEq
-  eq (Graph { edges: e1, nodes: n1 }) (Graph { edges: e2, nodes: n2 }) =
-    (Seq.length e1 == Seq.length e2) && (Seq.length n1 == Seq.length n2)
+  eq g1@(Graph { edges: e1, nodes: n1 }) g2@(Graph { edges: e2, nodes: n2 }) =
+    -- (Seq.length e1 == Seq.length e2) && (Seq.length n1 == Seq.length n2)
+    compareGraphEdges g1 g2 &&
+    compareGraphNodes g1 g2
 
---instance Eq Graph where
---  eq (Graph {nodes: n1, edges: e1}) (Graph {nodes: n2, edges: e2}) = n1 == n2 && e1 == e2
 
+compareGraphNodes :: forall n e. GT.Optional HashableNodeFields n => Graph n e -> Graph n e -> Boolean
+compareGraphNodes (Graph { nodes: n1 }) (Graph { nodes: n2 }) =
+  (Set.fromFoldable $ Seq.map hashNode n1) == (Set.fromFoldable $ Seq.map hashNode n2)
+
+compareGraphEdges :: forall n e. GT.Optional HashableEdgeFields e => Graph n e -> Graph n e -> Boolean
+compareGraphEdges (Graph { edges: e1 }) (Graph { edges: e2 }) =
+  (Set.fromFoldable $ Seq.map hashEdge e1) == (Set.fromFoldable $ Seq.map hashEdge e2)
 
 type Renderer = { "type" :: String, container :: Element }
 
@@ -78,17 +91,51 @@ type EdgeIds = Set.Set EdgeId
 type EdgesMap = Map.Map String (Record Edge)
 type NodesMap = Map.Map String (Record Node)
 
+type HashableNodeFields =
+  ( id          :: NodeId
+  , borderColor :: String
+  , color       :: String
+  , equilateral :: { numPoints :: Int }
+  , hidden      :: Boolean
+  , highlighted :: Boolean )
+
+hashNode :: forall n. GT.Optional HashableNodeFields n => {|n} -> Int
+hashNode n = hash rec
+  where
+    rec = { id          : unsafeGet "id" n
+          , borderColor : unsafeGet "borderColor" n
+          , color       : unsafeGet "color" n
+          , equilateral : unsafeGet "equilateral" n
+          , hidden      : unsafeGet "hidden" n
+          , highlighted : unsafeGet "highlighted" n } :: Record HashableNodeFields
+
 -- | When comparing nodes, we don't want to compare all fields. Only
 -- | some are relevant (when updating sigma graph).
 -- NOTE For some reason, `Graphology.updateNode` throws error if `type` is set
 compareNodes :: Record Node -> Record Node -> Boolean
-compareNodes n1 n2 = n1.borderColor == n2.borderColor &&
+compareNodes n1 n2 = n1.id == n2.id &&
+                     n1.borderColor == n2.borderColor &&
                      n1.color == n2.color &&
                      n1.equilateral == n2.equilateral &&
                      n1.hidden == n2.hidden &&
                      n1.highlighted == n2.highlighted
 
 -- TODO For edges, see `Sigmax.updateEdges` (`color` and `hidden`)
+type HashableEdgeFields =
+  ( id     :: NodeId
+  , source :: NodeId
+  , target :: NodeId
+  , hidden :: Boolean )
+
+hashEdge :: forall e. GT.Optional HashableEdgeFields e => {|e} -> Int
+hashEdge e = hash rec
+  where
+    rec = { id     : unsafeGet "id" e
+          , source : unsafeGet "source" e
+          , target : unsafeGet "target" e
+          , hidden : unsafeGet "hidden" e } :: Record HashableEdgeFields
+
+
 
 emptyEdgeIds :: EdgeIds
 emptyEdgeIds = Set.empty
@@ -96,6 +143,7 @@ emptyNodeIds :: NodeIds
 emptyNodeIds = Set.empty
 
 type SGraph = Graph Node Edge
+
 
 -- Diff graph structure
 -- NOTE: "add" is NOT a graph. There can be edges which join nodes that are not

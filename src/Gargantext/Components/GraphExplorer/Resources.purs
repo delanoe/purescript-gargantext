@@ -46,7 +46,6 @@ type Props sigma forceatlas2 =
   , forceAtlas2Settings   :: forceatlas2
   , sigmaRef              :: R.Ref Sigmax.Sigma
   , sigmaSettings         :: sigma
-  , transformedGraph      :: SigmaxTypes.SGraph
   )
 
 drawGraph :: forall s fa2. R2.Leaf (Props s fa2)
@@ -62,30 +61,32 @@ drawGraphCpt = here.component "drawGraph" cpt where
       , noverlapRef
       , sigmaRef
       , forceAtlas2Settings: fa2Settings
-      , transformedGraph
       } _ = do
 
     boxes <- AppStore.use
 
-    { showEdges
-    , edgeConfluence
+    { edgeConfluence
     , edgeWeight
     , forceAtlasState
     , graphStage
     , hyperdataGraph
     , mouseSelectorSize
     , multiSelectEnabled
+    , nodeSize
     , selectedNodeIds
+    , showEdges
     , startForceAtlas
+    , transformedGraph
     } <- GraphStore.use
 
-    showEdges'        <- R2.useLive' showEdges
     edgeConfluence'   <- R2.useLive' edgeConfluence
     edgeWeight'       <- R2.useLive' edgeWeight
     forceAtlasState'  <- R2.useLive' forceAtlasState
     graphStage'       <- R2.useLive' graphStage
+    nodeSize'         <- R2.useLive' nodeSize
+    showEdges'        <- R2.useLive' showEdges
     startForceAtlas'  <- R2.useLive' startForceAtlas
-    --hyperdataGraph'   <- R2.useLive' hyperdataGraph
+    transformedGraph' <- R2.useLive' transformedGraph
 
     -- | Hooks
     -- |
@@ -206,12 +207,12 @@ drawGraphCpt = here.component "drawGraph" cpt where
     --       etc) // drawback: don't forget to modify the effect white-list
     R.useEffect' $ do
       let updateGraph = do
-              let tEdgesMap = SigmaxTypes.edgesGraphMap transformedGraph
-              let tNodesMap = SigmaxTypes.nodesGraphMap transformedGraph
+              let tEdgesMap = SigmaxTypes.edgesGraphMap transformedGraph'
+              let tNodesMap = SigmaxTypes.nodesGraphMap transformedGraph'
 
               let updateSigma _ = do
                     Sigmax.dependOnSigma (R.readRef sigmaRef) "[drawGraph (Ready)] no sigma" $ \sigma -> do
-                      Sigmax.performDiff sigma transformedGraph
+                      Sigmax.performDiff sigma transformedGraph'
                       -- Sigmax.updateEdges sigma tEdgesMap
                       -- Sigmax.updateNodes sigma tNodesMap
                       let edgesState = not $ SigmaxTypes.edgeStateHidden showEdges'

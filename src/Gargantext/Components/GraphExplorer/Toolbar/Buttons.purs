@@ -29,9 +29,11 @@ import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileFormat(..
 import Gargantext.Components.GraphExplorer.API (cloneGraph)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.GraphExplorer.Utils as GEU
+import Gargantext.Data.Louvain as DLouvain
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Camera as Camera
 import Gargantext.Hooks.Sigmax.Graphology as Graphology
+import Gargantext.Hooks.Sigmax.Louvain as Louvain
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Sessions (Session)
@@ -158,9 +160,10 @@ edgesToggleButtonCpt = here.component "edgesToggleButton" cpt
 ------------------------------------------------------
 
 type LouvainButtonProps =
-  ( forceAtlasState :: T.Box SigmaxTypes.ForceAtlasState
-  , graph           :: T.Box SigmaxTypes.SGraph
-  , sigmaRef        :: R.Ref Sigmax.Sigma
+  ( forceAtlasState   :: T.Box SigmaxTypes.ForceAtlasState
+  , graph             :: T.Box SigmaxTypes.SGraph
+  , sigmaRef          :: R.Ref Sigmax.Sigma
+  , transformedGraph  :: T.Box SigmaxTypes.SGraph
   )
 
 louvainButton :: R2.Leaf LouvainButtonProps
@@ -168,13 +171,18 @@ louvainButton = R2.leaf louvainButtonCpt
 louvainButtonCpt :: R.Component LouvainButtonProps
 louvainButtonCpt = here.component "louvainButton" cpt
   where
-    cpt { forceAtlasState, graph, sigmaRef } _ = do
+    cpt { forceAtlasState, graph, sigmaRef, transformedGraph } _ = do
       graph' <- R2.useLive' graph
       forceAtlasState' <- R2.useLive' forceAtlasState
 
       pure $
         B.button
         { callback: \_ -> do
+             Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphView (louvainGraph)] no sigma" $ \sigma -> do
+               newGraph <- Louvain.assignVisible (Sigma.graph sigma) {}
+               let cluster = Louvain.cluster newGraph :: DLouvain.LouvainCluster
+               let lgraph = SigmaxTypes.louvainGraph graph' cluster :: SigmaxTypes.SGraph
+               T.write_ lgraph transformedGraph
              pure unit
 
         , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState'

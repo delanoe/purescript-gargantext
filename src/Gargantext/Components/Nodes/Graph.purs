@@ -13,7 +13,7 @@ import DOM.Simple (document, querySelector)
 import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.GraphExplorer.API as GraphAPI
-import Gargantext.Components.GraphExplorer.Layout (convert, layout)
+import Gargantext.Components.GraphExplorer.Layout (convert, layout, transformGraph)
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Config.REST (logRESTError)
@@ -184,6 +184,17 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
     let nodeSizeMax = maybe 100.0 _.size $ A.last nodesSorted
     let nodeSizeRange = Range.Closed { min: nodeSizeMin, max: nodeSizeMax }
 
+    let edgeWeight = Range.Closed
+          { min: 0.0
+          , max: I.toNumber $ Seq.length $ SigmaxT.graphEdges graph
+          }
+
+    let transformedGraph = transformGraph graph { edgeConfluence': GraphStore.options.edgeConfluence
+                                                , edgeWeight': edgeWeight
+                                                , nodeSize': GraphStore.options.nodeSize
+                                                , removedNodeIds': GraphStore.options.removedNodeIds
+                                                , selectedNodeIds': GraphStore.options.selectedNodeIds
+                                                , showEdges': GraphStore.options.showEdges }
 
     -- Hydrate GraphStore
     (state :: Record GraphStore.State) <- pure $
@@ -192,14 +203,12 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
       , graphId
       , mMetaData
       , hyperdataGraph
+      , transformedGraph
       -- Controls
       , startForceAtlas
       , forceAtlasState
       , noverlapState: SigmaxT.NoverlapPaused
-      , edgeWeight:  Range.Closed
-          { min: 0.0
-          , max: I.toNumber $ Seq.length $ SigmaxT.graphEdges graph
-          }
+      , edgeWeight
       , edgeConfluenceRange
       , nodeSizeRange
       -- (cache options)

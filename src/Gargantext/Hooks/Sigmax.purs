@@ -229,6 +229,7 @@ performDiff sigma g = do
   -- console.log2 "[performDiff] addEdges" $ A.fromFoldable addEdges
   -- console.log2 "[performDiff] removeNodes" removeNodes
   -- console.log2 "[performDiff] removeEdges" removeEdges
+  -- console.log2 "[performDiff] updateNodes length" $ A.length $ A.fromFoldable updateNodes
   traverse_ (Graphology.addNode sigmaGraph) addNodes
   --traverse_ (Graphology.addEdge sigmaGraph) addEdges
   -- insert edges in batches, otherwise a maximum recursion error is thrown

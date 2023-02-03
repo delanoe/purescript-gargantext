@@ -87,6 +87,7 @@ to generate this file without the comments in this block.
   , "typelevel-prelude"
   , "uint"
   , "unfoldable"
+  , "unordered-collections"
   , "unsafe-coerce"
   , "uri"
   , "uuid"

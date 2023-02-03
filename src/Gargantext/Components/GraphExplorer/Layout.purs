@@ -26,13 +26,10 @@ import Gargantext.Components.GraphExplorer.Types (GraphSideDoc)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.GraphExplorer.Utils as GEU
 import Gargantext.Config (defaultFrontends)
-import Gargantext.Data.Louvain as DLouvain
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
-import Gargantext.Hooks.Sigmax.Louvain as Louvain
 import Gargantext.Hooks.Sigmax.Noverlap as Noverlap
 import Gargantext.Hooks.Sigmax as Sigmax
-import Gargantext.Hooks.Sigmax.Sigma as SigmaxS
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Types as GT
 import Gargantext.Types as Types
@@ -240,54 +237,55 @@ graphViewCpt = R.memo' $ here.component "graphView" cpt where
     -- |
     { edgeConfluence
     , edgeWeight
+    , graph
     , nodeSize
     , removedNodeIds
     , selectedNodeIds
     , showEdges
-    , graph
+    , transformedGraph
     } <- GraphStore.use
 
-    edgeConfluence'     <- R2.useLive' edgeConfluence
-    edgeWeight'         <- R2.useLive' edgeWeight
-    nodeSize'           <- R2.useLive' nodeSize
-    removedNodeIds'     <- R2.useLive' removedNodeIds
-    selectedNodeIds'    <- R2.useLive' selectedNodeIds
-    showEdges'          <- R2.useLive' showEdges
-    graph'              <- R2.useLive' graph
+    -- edgeConfluence'     <- R2.useLive' edgeConfluence
+    -- edgeWeight'         <- R2.useLive' edgeWeight
+    -- nodeSize'           <- R2.useLive' nodeSize
+    -- removedNodeIds'     <- R2.useLive' removedNodeIds
+    -- selectedNodeIds'    <- R2.useLive' selectedNodeIds
+    -- showEdges'          <- R2.useLive' showEdges
+    -- graph'              <- R2.useLive' graph
 
     -- | Computed
     -- |
 
-    let transformParams = { edgeConfluence'
-                          , edgeWeight'
-                          , nodeSize'
-                          , removedNodeIds'
-                          , selectedNodeIds'
-                          , showEdges' }
-    -- let transformedGraph = transformGraph graph' transformParams
-    transformedGraphS <- T.useBox $ transformGraph graph' transformParams
+    -- let transformParams = { edgeConfluence'
+    --                       , edgeWeight'
+    --                       , nodeSize'
+    --                       , removedNodeIds'
+    --                       , selectedNodeIds'
+    --                       , showEdges' }
+    -- -- let transformedGraph = transformGraph graph' transformParams
+    -- transformedGraphS <- T.useBox $ transformGraph graph' transformParams
 
     -- todo Cache this?
-    R.useEffect' $ do
-      --here.log2 "[graphView] transformedGraph" $ transformGraph graph' transformParams
+    -- R.useEffect' $ do
+    --   --here.log2 "[graphView] transformedGraph" $ transformGraph graph' transformParams
 
-      --let louvain = Louvain.louvain unit in
-      --let cluster = Louvain.init louvain (SigmaxT.louvainNodes graph') (SigmaxT.louvainEdges graph') in
-      --SigmaxT.louvainGraph graph' cluster
-      Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphView (louvainGraph)] no sigma" $ \sigma -> do
-        newGraph <- Louvain.assignVisible (SigmaxS.graph sigma) {}
-        -- here.log2 "[graphView] newGraph" newGraph
-        -- here.log2 "[graphView] nodes" $ A.fromFoldable $ Graphology.nodes newGraph
-        let cluster = Louvain.cluster newGraph :: DLouvain.LouvainCluster
-        let lgraph = SigmaxT.louvainGraph graph' cluster :: SigmaxT.SGraph
-        --T.write_ (transformGraph lgraph transformParams) transformedGraphS
-        -- apply colors
-        -- traverse_ (\{ id, color } ->
-        --   Graphology.mergeNodeAttributes (SigmaxS.graph sigma) id { color }
-        -- ) (SigmaxT.graphNodes lgraph)
-        T.write_ lgraph transformedGraphS
+    --   --let louvain = Louvain.louvain unit in
+    --   --let cluster = Louvain.init louvain (SigmaxT.louvainNodes graph') (SigmaxT.louvainEdges graph') in
+    --   --SigmaxT.louvainGraph graph' cluster
+    --   Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphView (louvainGraph)] no sigma" $ \sigma -> do
+    --     newGraph <- Louvain.assignVisible (SigmaxS.graph sigma) {}
+    --     -- here.log2 "[graphView] newGraph" newGraph
+    --     -- here.log2 "[graphView] nodes" $ A.fromFoldable $ Graphology.nodes newGraph
+    --     let cluster = Louvain.cluster newGraph :: DLouvain.LouvainCluster
+    --     let lgraph = SigmaxT.louvainGraph graph' cluster :: SigmaxT.SGraph
+    --     --T.write_ (transformGraph lgraph transformParams) transformedGraphS
+    --     -- apply colors
+    --     -- traverse_ (\{ id, color } ->
+    --     --   Graphology.mergeNodeAttributes (SigmaxS.graph sigma) id { color }
+    --     -- ) (SigmaxT.graphNodes lgraph)
+    --     T.write_ lgraph transformedGraphS
 
-    transformedGraph <- R2.useLive' transformedGraphS
+    -- transformedGraph <- R2.useLive' transformedGraphS
 
     -- R.useEffect' $ do
     --   let (SigmaxT.Graph { edges: e }) = transformedGraph
@@ -305,7 +303,6 @@ graphViewCpt = R.memo' $ here.component "graphView" cpt where
       , forceAtlas2Settings: Graph.forceAtlas2Settings
       , sigmaRef
       , sigmaSettings: Graph.sigmaSettings
-      , transformedGraph
       }
 
 --------------------------------------------------------

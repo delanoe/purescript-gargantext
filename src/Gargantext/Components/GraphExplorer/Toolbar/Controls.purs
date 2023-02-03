@@ -70,6 +70,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     , showEdges
     , showSidebar
     , sideTab
+    , transformedGraph
     } <- GraphStore.use
 
     graphId'              <- R2.useLive' graphId
@@ -207,7 +208,8 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             ,
               louvainButton { forceAtlasState
                             , graph
-                            , sigmaRef }
+                            , sigmaRef
+                            , transformedGraph }
             ]
           ]
         ,

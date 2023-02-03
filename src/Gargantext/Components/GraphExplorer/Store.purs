@@ -32,6 +32,7 @@ type Store =
   , graphId                    :: T.Box GET.GraphId
   , mMetaData                  :: T.Box (Maybe GET.MetaData)
   , hyperdataGraph             :: T.Box GET.HyperdataGraph
+  , transformedGraph           :: T.Box SigmaxT.SGraph
   -- Layout
   , showControls               :: T.Box Boolean
   , sideTab                    :: T.Box GET.SideTab
@@ -66,6 +67,7 @@ type State =
   , graphId                    :: GET.GraphId
   , mMetaData                  :: Maybe GET.MetaData
   , hyperdataGraph             :: GET.HyperdataGraph
+  , transformedGraph           :: SigmaxT.SGraph
   -- Layout
   , showControls               :: Boolean
   , sideTab                    :: GET.SideTab
