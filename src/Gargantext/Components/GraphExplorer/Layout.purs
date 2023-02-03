@@ -5,6 +5,8 @@ import Gargantext.Prelude hiding (max, min)
 import DOM.Simple.Types (Element)
 import Data.Array as A
 import Data.FoldableWithIndex (foldMapWithIndex)
+import Data.Hashable as Hashable
+import Data.HashSet as HashSet
 import Data.Int (floor, toNumber)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
@@ -292,6 +294,8 @@ graphViewCpt = R.memo' $ here.component "graphView" cpt where
     --   here.log2 "[graphView] transformedGraph edges" $ A.fromFoldable e
     --   here.log2 "[graphView] hidden edges" $ A.filter(_.hidden) $ A.fromFoldable e
 
+    hooksTransformGraph
+
     -- | Render
     -- |
     pure $
@@ -384,6 +388,42 @@ type LiveProps = (
   , selectedNodeIds' :: SigmaxT.NodeIds
   , showEdges'       :: SigmaxT.ShowEdgesState
   )
+
+hashLiveProps :: Record LiveProps -> Int
+hashLiveProps p = Hashable.hash { edgeConfluence': p.edgeConfluence'
+                                , edgeWeight': p.edgeWeight'
+                                , nodeSize: p.nodeSize'
+                                , removedNodeIds': HashSet.fromFoldable p.removedNodeIds'
+                                , selectedNodeIds': HashSet.fromFoldable p.selectedNodeIds'
+                                , showEdges': p.showEdges' }
+
+transformGraphStoreParams :: R.Hooks (Record LiveProps)
+transformGraphStoreParams = do
+  store <- GraphStore.use
+
+  edgeConfluence' <- R2.useLive' store.edgeConfluence
+  edgeWeight' <- R2.useLive' store.edgeWeight
+  nodeSize' <- R2.useLive' store.nodeSize
+  removedNodeIds' <- R2.useLive' store.removedNodeIds
+  selectedNodeIds' <- R2.useLive' store.selectedNodeIds
+  showEdges' <- R2.useLive' store.showEdges
+
+  pure { edgeConfluence'
+       , edgeWeight'
+       , nodeSize'
+       , removedNodeIds'
+       , selectedNodeIds'
+       , showEdges' }
+
+hooksTransformGraph :: R.Hooks Unit
+hooksTransformGraph = do
+  store <- GraphStore.use
+
+  params <- transformGraphStoreParams
+  graph' <- R2.useLive' store.graph
+
+  R.useEffect2' (hashLiveProps params) graph' $ do
+    T.write_ (transformGraph graph' params) store.transformedGraph
 
 transformGraph :: SigmaxT.SGraph -> Record LiveProps -> SigmaxT.SGraph
 transformGraph graph { edgeConfluence'

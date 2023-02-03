@@ -104,7 +104,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     R.useEffect' $ Sigmax.handleForceAtlas2Pause fa2Ref forceAtlasState mFAPauseRef Graph.forceAtlas2Settings
 
     R.useEffect' do
-      here.log2 "[controls] noverlapState'" noverlapState'
+      -- here.log2 "[controls] noverlapState'" noverlapState'
       case R.readRef noverlapRef of
         Nothing -> pure unit
         Just noverlap -> do

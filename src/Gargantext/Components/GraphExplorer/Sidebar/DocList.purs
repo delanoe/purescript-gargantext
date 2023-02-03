@@ -180,7 +180,7 @@ docListCpt = here.component "main" cpt where
 
     -- (on fetch success, extract existing docs)
     useUpdateEffect1' state' do
-      here.log2 "[docList] state'" state'
+      -- here.log2 "[docList] state'" state'
       case state' of
         Nothing -> T.write_ (Just Seq.empty) rows
         Just r -> case r of

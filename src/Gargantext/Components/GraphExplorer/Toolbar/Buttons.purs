@@ -16,8 +16,10 @@ import Data.Array as A
 import Data.Either (Either(..))
 import Data.Foldable (intercalate)
 import Data.Formatter.DateTime as DFDT
+import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
+import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
@@ -182,6 +184,10 @@ louvainButtonCpt = here.component "louvainButton" cpt
                newGraph <- Louvain.assignVisible (Sigma.graph sigma) {}
                let cluster = Louvain.cluster newGraph :: DLouvain.LouvainCluster
                let lgraph = SigmaxTypes.louvainGraph graph' cluster :: SigmaxTypes.SGraph
+               T.modify_ (SigmaxTypes.updateColors
+                          (Map.fromFoldable $ (\{ id, color } -> Tuple id color) <$> SigmaxTypes.graphNodes
+                           lgraph))
+                 graph
                T.write_ lgraph transformedGraph
              pure unit
 

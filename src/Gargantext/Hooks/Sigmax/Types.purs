@@ -4,7 +4,7 @@ import DOM.Simple.Types (Element)
 import Data.Array as A
 import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
-import Data.Hashable (hash)
+import Data.Hashable (class Hashable, hash)
 import Data.Show.Generic (genericShow)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
@@ -15,7 +15,7 @@ import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Partial.Unsafe (unsafePartial)
 import Prelude (class Eq, class Show, map, ($), (&&), (==), (||), (<$>), (<), mod, not, pure)
-import Record.Unsafe (unsafeGet)
+import Record.Unsafe (unsafeGet, unsafeSet)
 
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..))
 import Gargantext.Components.GraphExplorer.GraphTypes as GEGT
@@ -52,11 +52,12 @@ type NodeId = String
 type EdgeId = String
 
 type Label = String
+type Color = String
 
 type Node = (
-    borderColor :: String
+    borderColor :: Color
   , children    :: Array String
-  , color       :: String
+  , color       :: Color
   , community   :: Int  -- this is filled in by the communities-louvain graphology plugin
   , equilateral :: { numPoints :: Int }
   , gargType    :: GT.Mode
@@ -72,7 +73,7 @@ type Node = (
   )
 
 type Edge = (
-    color            :: String
+    color            :: Color
   , confluence       :: Number
   , id               :: EdgeId
   , hidden           :: Boolean
@@ -93,11 +94,12 @@ type NodesMap = Map.Map String (Record Node)
 
 type HashableNodeFields =
   ( id          :: NodeId
-  , borderColor :: String
-  , color       :: String
+  , borderColor :: Color
+  , color       :: Color
   , equilateral :: { numPoints :: Int }
   , hidden      :: Boolean
-  , highlighted :: Boolean )
+  , highlighted :: Boolean
+  , type        :: String )
 
 hashNode :: forall n. GT.Optional HashableNodeFields n => {|n} -> Int
 hashNode n = hash rec
@@ -107,18 +109,14 @@ hashNode n = hash rec
           , color       : unsafeGet "color" n
           , equilateral : unsafeGet "equilateral" n
           , hidden      : unsafeGet "hidden" n
-          , highlighted : unsafeGet "highlighted" n } :: Record HashableNodeFields
+          , highlighted : unsafeGet "highlighted" n
+          , type        : unsafeGet "type" n } :: Record HashableNodeFields
 
 -- | When comparing nodes, we don't want to compare all fields. Only
 -- | some are relevant (when updating sigma graph).
 -- NOTE For some reason, `Graphology.updateNode` throws error if `type` is set
-compareNodes :: Record Node -> Record Node -> Boolean
-compareNodes n1 n2 = n1.id == n2.id &&
-                     n1.borderColor == n2.borderColor &&
-                     n1.color == n2.color &&
-                     n1.equilateral == n2.equilateral &&
-                     n1.hidden == n2.hidden &&
-                     n1.highlighted == n2.highlighted
+compareNodes :: forall n. GT.Optional HashableNodeFields n => {|n} -> {|n} -> Boolean
+compareNodes n1 n2 = hashNode n1 == hashNode n2
 
 -- TODO For edges, see `Sigmax.updateEdges` (`color` and `hidden`)
 type HashableEdgeFields =
@@ -144,6 +142,18 @@ emptyNodeIds = Set.empty
 
 type SGraph = Graph Node Edge
 
+type NodeWithColor =
+  ( color :: String
+  , id    :: NodeId )
+
+-- | Return a graph where node colors are taken from the first one and
+-- | the rest is taken from second graph.
+updateColors :: forall n e. GT.Optional NodeWithColor n => Map.Map NodeId Color -> Graph n e -> Graph n e
+updateColors colorMap (Graph { nodes, edges }) = Graph { nodes: Seq.map updateColor nodes, edges }
+  where
+    updateColor n = case Map.lookup (unsafeGet "id" n) colorMap of
+      Nothing -> n
+      Just c  -> unsafeSet "color" c n
 
 -- Diff graph structure
 -- NOTE: "add" is NOT a graph. There can be edges which join nodes that are not
@@ -258,6 +268,10 @@ instance Eq ShowEdgesState where
   eq = genericEq
 instance Show ShowEdgesState where
   show = genericShow
+instance Hashable ShowEdgesState where
+  hash EShow = 0
+  hash EHide = 1
+  hash ETempHiddenThenShow = 2
 
 -- | Whether the edges are hidden now (temp or "stable").
 edgeStateHidden :: ShowEdgesState -> Boolean
