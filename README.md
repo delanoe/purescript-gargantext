@@ -33,13 +33,13 @@ sh < (curl -L https://nixos.org/nix/install) --daemon
 
 Verify the installation is complete
 ```shell
-$ nix-env
-nix-env (Nix) 2.3.12
+$ nix-env --version
+nix-env (Nix) 2.11.0
 ```
 
-To build the frontend just do:
+To build the frontend just execute the install script at the root at the project:
 ```
-nix-shell --run build
+./install
 ```
 Just serve dist/index.html with any server and you are ready to be
 connected to any backend.
