@@ -20,18 +20,19 @@ frontend for the backend server built by
 ## Getting set up
 
 There are two approaches to working with the build:
-1. Use our Nix or Docker setup
-2. Install our dependencies yourself
+
+1. Use Nix setup
+2. Use Docker setup
 
 ### With Nix setup
 
-First install [nix](https://nixos.org/guides/install-nix.html): 
+First install [Nix](https://nixos.org/download.html): 
 
 ```shell
-sh < (curl -L https://nixos.org/nix/install) --daemon
+sh <(curl -L https://nixos.org/nix/install) --daemon
 ```
 
-Verify the installation is complete
+Verify the installation is complete (**Note:** close the current terminal session and open en new session to get nix working)
 ```shell
 $ nix-env --version
 nix-env (Nix) 2.11.0
@@ -47,6 +48,8 @@ connected to any backend. For instance you can serve it :
 ```
 cd dist/ && python3 -mhttp.server
 ```
+
+**Local instance is ready!** (Example: http://localhost:8000/)
 
 
 ### With Docker setup
@@ -66,7 +69,7 @@ root and you'll need root powers to get ownership back!
 Now build the docker image:
 
 ```shell
-docker-compose build frontend
+docker compose build frontend
 ```
 
 That's it, skip ahead to "Development".
