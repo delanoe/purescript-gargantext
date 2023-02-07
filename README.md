@@ -24,7 +24,7 @@ There are two approaches to working with the build:
 1. Use Nix setup
 2. Use Docker setup
 
-### With Nix setup
+### 1. Use Nix setup
 
 First install [Nix](https://nixos.org/download.html): 
 
@@ -52,7 +52,7 @@ cd dist/ && python3 -mhttp.server
 **Local instance is ready!** (Example: http://localhost:8000/)
 
 
-### With Docker setup
+### 2. Use Docker setup
 
 You will need docker and docker-compose installed.
 
