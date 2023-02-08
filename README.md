@@ -1,4 +1,12 @@
+<div align="center"><img height="180" src="./dist/images/logo.png"></div>
+
+&nbsp;
 # Gargantext with Purescript (FrontEnd instance)
+
+
+![](https://img.shields.io/badge/Code-Purescript-informational?style=flat&logo=purescript&color=1d222d)&nbsp;&nbsp;![](https://img.shields.io/badge/Tools-npm-informational?style=flat&logo=npm&color=red)&nbsp;&nbsp;![](https://img.shields.io/badge/Tools-Yarn-informational?style=flat&logo=yarn&color=2188b6)&nbsp;&nbsp;![](https://img.shields.io/badge/Code-React-informational?style=flat&logo=react&color=61DAFB)&nbsp;&nbsp;![](https://img.shields.io/badge/Code-HTML-informational?style=flat&logo=html5&color=E44D26)&nbsp;&nbsp;![](https://img.shields.io/badge/Style-CSS-informational?style=flat&logo=css3&color=264EE4)&nbsp;&nbsp;![](https://img.shields.io/badge/Style-Bootstrap-informational?style=flat&logo=bootstrap&color=6528e0)&nbsp;&nbsp;![](https://img.shields.io/badge/Tools-Sass-informational?style=flat&logo=sass&color=bf4080)&nbsp;&nbsp;![](https://img.shields.io/badge/Tools-Python-informational?style=flat&logo=python&color=ffd343)&nbsp;&nbsp;![](https://img.shields.io/badge/Package%20manager-NixOs-informational?style=flat&logo=debian&color=6586c8)&nbsp;&nbsp;![](https://img.shields.io/badge/Tools-Docker-informational?style=flat&logo=docker&color=003f8c)
+
+
 
 ## About the project
 
