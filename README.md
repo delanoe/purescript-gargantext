@@ -27,6 +27,8 @@ frontend for the backend server built by
 
 ## Getting set up
 
+**Prerequisite:**  clone the project.
+
 There are two approaches to working with the build:
 
 1. Use Nix setup (recommended)
