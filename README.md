@@ -1,4 +1,4 @@
-<div align="center"><img height="180" src="./dist/images/logo.png"></div>
+<div align="center"><img height="180" src="https://gitlab.iscpif.fr/gargantext/main/images/logo.png"></div>
 
 &nbsp;
 # Gargantext with Purescript (FrontEnd instance)
@@ -27,12 +27,14 @@ frontend for the backend server built by
 
 ## Getting set up
 
+**Prerequisite:**  clone the project.
+
 There are two approaches to working with the build:
 
-1. Use Nix setup
+1. Use Nix setup (recommended)
 2. Use Docker setup
 
-### 1. Use Nix setup
+### 1. Use Nix setup (recommended)
 
 First install [Nix](https://nixos.org/download.html): 
 
@@ -49,12 +51,6 @@ nix-env (Nix) 2.11.0
 To build the frontend just execute the install script at the root at the project:
 ```
 ./install
-```
-Just serve dist/index.html with any server and you are ready to be
-connected to any backend. For instance you can serve it :
-
-```
-cd dist/ && python3 -mhttp.server
 ```
 
 **Local instance is ready!** (Example: http://localhost:8000/)
@@ -82,3 +78,13 @@ docker compose build frontend
 
 That's it, skip ahead to "Development".
 
+## Development
+
+Just serve dist/index.html with any server and you are ready to be
+connected to any backend. 
+
+For instance you can serve it:
+
+```
+cd dist/ && python3 -mhttp.server
+```
