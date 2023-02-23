@@ -11,12 +11,12 @@ import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
 import Gargantext.Components.Forest.Tree.Node.Action.Types as Action
 import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
+import Gargantext.Components.InputWithAutocomplete (inputWithAutocomplete')
 import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types (ID)
 import Gargantext.Types as GT
-import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.SimpleJSON as GUSJ
 import Reactix as R
@@ -59,17 +59,23 @@ shareNode = R.createElement shareNodeCpt
 shareNodeCpt :: R.Component ShareNode
 shareNodeCpt = here.component "shareNode" cpt
   where
-    cpt { dispatch, id } _ = do
-      username' /\ username <- R2.useBox' ""
+    cpt { dispatch } _ = do
+      state <- T.useBox "username"
+      text' /\ text <- R2.useBox' ""
 
       pure $ Tools.panel
-                [ Tools.inviteInputBox { boxAction: shareAction
-                                        , boxName: "Share"
-                                        , dispatch
-                                        , id
-                                        , text: "username"
-                                        , username } []
-                ] (H.div {} [H.text username'])
+                [ inputWithAutocomplete' { boxAction: shareAction
+                                         , dispatch
+                                         , state
+                                         , classes: ""
+                                         , autocompleteSearch
+                                         , onAutocompleteClick
+                                         , text }
+                ] (H.div {} [H.text text'])
+      where
+        -- TODO: This will be fetched from API
+        autocompleteSearch _ = ["test1", "test2", "test3"]
+        onAutocompleteClick _ = pure unit
 ------------------------------------------------------------------------
 publishNode :: R2.Component SubTreeParamsIn
 publishNode = R.createElement publishNodeCpt
