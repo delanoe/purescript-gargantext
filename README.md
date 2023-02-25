@@ -1,14 +1,18 @@
-<div align="center"><img height="180" src="https://gitlab.iscpif.fr/gargantext/main/images/logo.png"></div>
+<div align="center"><img height="180" src="https://gitlab.iscpif.fr/gargantext/main/raw/master/images/logo.png"></div>
 
 &nbsp;
 # Gargantext with Purescript (FrontEnd instance)
 
 
-![Purescript](https://img.shields.io/badge/Code-Purescript-informational?style=flat&logo=purescript&color=1d222d)&nbsp;&nbsp;![NPM](https://img.shields.io/badge/Tools-npm-informational?style=flat&logo=npm&color=red)&nbsp;&nbsp;![Yarn](https://img.shields.io/badge/Tools-Yarn-informational?style=flat&logo=yarn&color=2188b6)&nbsp;&nbsp;![React](https://img.shields.io/badge/Code-React-informational?style=flat&logo=react&color=61DAFB)&nbsp;&nbsp;![HTML](https://img.shields.io/badge/Code-HTML-informational?style=flat&logo=html5&color=E44D26)&nbsp;&nbsp;![CSS](https://img.shields.io/badge/Style-CSS-informational?style=flat&logo=css3&color=264EE4)&nbsp;&nbsp;![Bootstrap](https://img.shields.io/badge/Style-Bootstrap-informational?style=flat&logo=bootstrap&color=6528e0)&nbsp;&nbsp;![Sass](https://img.shields.io/badge/Tools-Sass-informational?style=flat&logo=sass&color=bf4080)&nbsp;&nbsp;![Python](https://img.shields.io/badge/Tools-Python-informational?style=flat&logo=python&color=ffd343)&nbsp;&nbsp;![NixOs](https://img.shields.io/badge/Package%20manager-NixOs-informational?style=flat&logo=debian&color=6586c8)&nbsp;&nbsp;![Docker](https://img.shields.io/badge/Tools-Docker-informational?style=flat&logo=docker&color=003f8c)
+![Purescript](https://img.shields.io/badge/Code-Purescript-informational?style=flat&logo=purescript&color=1d222d)&nbsp;&nbsp;![Nix](https://img.shields.io/badge/Package%20manager-Nix-informational?style=flat&logo=debian&color=6586c8)&nbsp;&nbsp;![NPM](https://img.shields.io/badge/Tools-npm-informational?style=flat&logo=npm&color=red)&nbsp;&nbsp;![Yarn](https://img.shields.io/badge/Tools-Yarn-informational?style=flat&logo=yarn&color=2188b6)&nbsp;&nbsp;![React](https://img.shields.io/badge/Code-React-informational?style=flat&logo=react&color=61DAFB)&nbsp;&nbsp;![HTML](https://img.shields.io/badge/Code-HTML-informational?style=flat&logo=html5&color=E44D26)&nbsp;&nbsp;![CSS](https://img.shields.io/badge/Style-CSS-informational?style=flat&logo=css3&color=264EE4)&nbsp;&nbsp;![Bootstrap](https://img.shields.io/badge/Style-Bootstrap-informational?style=flat&logo=bootstrap&color=6528e0)&nbsp;&nbsp;![Sass](https://img.shields.io/badge/Tools-Sass-informational?style=flat&logo=sass&color=bf4080)&nbsp;&nbsp;![Python](https://img.shields.io/badge/Tools-Python-informational?style=flat&logo=python&color=ffd343)&nbsp;&nbsp;![Docker](https://img.shields.io/badge/Tools-Docker-informational?style=flat&logo=docker&color=003f8c)
+
+#### Table of Contents
+1. [About the project](#about)
+2. [Getting set up](#setup)
+3. [Develoment](#dev)
 
 
-
-## About the project
+## About the project <a name="about"></a>
 
 GarganText is a collaborative web-decentralized-based macro-service
 platform for the exploration of unstructured texts. It combines tools
@@ -25,7 +29,7 @@ frontend for the backend server built by
 [backend](https://gitlab.iscpif.fr/gargantext/haskell-gargantext).
 
 
-## Getting set up
+## Getting set up <a name="setup"></a>
 
 **Prerequisite:**  clone the project.
 
@@ -78,13 +82,25 @@ docker compose build frontend
 
 That's it, skip ahead to "Development".
 
-## Development
+## Development <a name="dev"></a>
 
+#### Server 
 Just serve dist/index.html with any server and you are ready to be
-connected to any backend. 
+connected to any backend.
 
 For instance you can serve it:
-
 ```
 cd dist/ && python3 -mhttp.server
 ```
+
+#### Frontend compilation
+To see Purescript updates, we have to rebuild:
+```shell
+nix-shell --run build
+```
+
+To compile CSS (Sass):
+```shell
+nix-shell --run "yarn css"
+```
+
