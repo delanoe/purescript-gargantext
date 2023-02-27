@@ -10051,6 +10051,12 @@ input[type=range]:-moz-focusring {
   height: 8px;
   background-color: #FFFFFF;
 }
+.mainleaf__progress-bar .b-progress-bar .progress-text {
+  color: #17a2b8;
+  font-size: 10px;
+  line-height: 8px;
+  position: absolute;
+}
 .right-handed .mainleaf__progress-bar {
   margin-left: 16px;
 }

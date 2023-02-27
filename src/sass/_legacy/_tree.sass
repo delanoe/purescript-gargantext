@@ -266,6 +266,12 @@ $node-popup-width: 544px
       height: $progress-bar-height
       background-color: $white
 
+      .progress-text
+        color: $info
+        font-size: 10px
+        line-height: 8px
+        position: absolute
+
     @include right-handed
       margin-left: space-x(2)
     @include left-handed
@@ -284,7 +290,7 @@ $node-popup-width: 544px
   //----------------------------
 
   &--selected &
-
+    
     &__node-link::before
       content: ""
       background-color: $gray-100
