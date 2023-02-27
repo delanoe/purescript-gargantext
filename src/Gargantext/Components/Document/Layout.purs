@@ -186,7 +186,7 @@ layoutCpt = here.component "layout" cpt where
               B.wad
               [ "color-warning", "font-size-100", "mx-2", "inline-block" ]
               [
-                H.text $ "limited term feature due to abstract length: (" <> show textSizeLimit <> ")"
+                H.text $ "limited term feature due to abstract length: (" <> show textSizeLimit <> " chars)"
               ]
           ,
             R2.when withAutoUpdate $
