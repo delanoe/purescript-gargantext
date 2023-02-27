@@ -30,6 +30,15 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
+-------------------------------------------------------------------------
+
+textSizeLimit :: Int
+textSizeLimit = 4500
+
+-------------------------------------------------------------------------
+
+
+
 type Props =
   ( loaded   :: LoadedData
   , path     :: DocPath
@@ -111,7 +120,7 @@ layoutCpt = here.component "layout" cpt where
     --     see #423
     useFirstEffect' do
       let len = maybe 0 (length) doc.abstract
-      if (len `greaterThan` 4500)
+      if (len `greaterThan` textSizeLimit)
       then
             T.write_ true forceAdditionMode
         *>  T.write_ AFT.AdditionMode mode
@@ -177,7 +186,7 @@ layoutCpt = here.component "layout" cpt where
               B.wad
               [ "color-warning", "font-size-100", "mx-2", "inline-block" ]
               [
-                H.text "limited term feature due to abstract length"
+                H.text $ "limited term feature due to abstract length: (" <> show textSizeLimit <> ")"
               ]
           ,
             R2.when withAutoUpdate $
