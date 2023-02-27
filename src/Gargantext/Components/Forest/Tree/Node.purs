@@ -702,5 +702,6 @@ taskProgressCpt = here.component "progress" cpt where
         B.progressBar
         { value: asyncProgressContext
         , variant: Info
+        , waitingTextClass: if asyncProgressContext > 0.0 then "d-none" else "d-block"
         }
       ]
