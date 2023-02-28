@@ -24,6 +24,7 @@ module Gargantext.Utils.KarpRabin ( -- * Overview
 
 
 import Data.Array as A
+import Data.Array ((..))
 import Data.Enum (fromEnum)
 import Data.Foldable (class Foldable, minimum, foldl)
 import Data.FunctorWithIndex (mapWithIndex)
@@ -33,10 +34,11 @@ import Data.Map as M
 import Data.Maybe (Maybe(..), isJust)
 import Data.String as S
 import Data.String (CodePoint)
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple(..), snd)
 import Data.UInt (UInt, shl, fromInt)
 import Partial.Unsafe (unsafePartial)
 
+import Gargantext.Data.Array as GDA
 import Prelude
 
 fromCodePoint :: CodePoint -> UInt
@@ -118,6 +120,7 @@ minimum1 a fa =
     Nothing -> a
     Just b  -> min a b
 
+type GoAcc = Tuple UInt (Array (Maybe (Tuple Int (Array Int))))
 strictMatcher :: Array String -> String -> Array (Tuple Int (Array Int))
 strictMatcher pats = unsafePartial search
   where
@@ -138,31 +141,68 @@ strictMatcher pats = unsafePartial search
     hash = foldl (\h w -> (h `shl` fromInt shDi) + fromCodePoint w) (fromInt 0)
         <<< S.toCodePointArray
         <<< S.take hLen
+    hashMap :: M.Map UInt (Array Int)
     hashMap =
       M.fromFoldableWith (flip (<>))
                          (mapWithIndex (\i a -> Tuple (hash a) [i]) pats)
     search :: Partial => String -> Array (Tuple Int (Array Int))
     search str = if strLen < hLen then []
-                                  else A.fromFoldable (go 0 shash)
+                 else A.catMaybes $ snd <$> foldl go' (Tuple shash []) $ A.zip (0 .. maxIdx) (GDA.slidingWindow arr hLen)
+                 -- else A.fromFoldable (go 0 shash)
           where
             strLen = S.length str
             maxIdx = strLen - hLen
             arr = S.toCodePointArray str
             strAt i = A.unsafeIndex arr i
+            shash :: UInt
             shash = hash str
-            go sI h =
-              case M.lookup h hashMap of
-                Nothing ->
-                  if sI == maxIdx
-                    then L.Nil
-                    else go (sI + 1) (rehash h (strAt sI) (strAt (sI + hLen)))
-                Just ps ->
-                  let rst = S.drop sI str
-                      hd  = strAt sI
-                      more = if sI == maxIdx then L.Nil else
-                                go (sI + 1) (rehash h hd (strAt (sI + hLen)))
-                      okay bs =
-                        isJust (S.stripPrefix (S.Pattern bs) rst)
-                  in case A.filter (\x -> okay (A.unsafeIndex pats x)) ps of
-                           [] -> more
-                           qs -> Tuple sI qs L.: more
+            -- NOTE: A new function, with a map over the range [0..maxIdx]
+            go' :: GoAcc -> Tuple Int (Array CodePoint) -> GoAcc
+            go' (Tuple h acc) (Tuple idx arr') =
+              let rehashed = rehash h (A.unsafeIndex arr' 0) (A.unsafeIndex arr' (-1))
+                  str' = S.fromCodePointArray arr'
+                  okay bs = isJust (S.stripPrefix (S.Pattern bs) str')
+                  mPs = M.lookup h hashMap
+                  acc' = case mPs of
+                    Nothing -> Nothing
+                    Just ps ->
+                      case A.filter (\x -> okay (A.unsafeIndex pats x)) ps of
+                        [] -> Nothing
+                        qs -> Just (Tuple idx qs)
+              in
+               Tuple rehashed (A.snoc acc acc')
+
+            -- go :: Int -> UInt -> L.List (Tuple Int (Array Int))
+            -- go sI h =
+            --   let rehashed = rehash h (strAt sI) (strAt (sI + hLen))
+            --   in
+            --    if sI == maxIdx then
+            --      L.Nil
+            --    else
+            --      case M.lookup h hashMap of
+            --        Nothing ->
+            --          go (sI + 1) rehashed
+            --        Just ps ->
+            --          let rst = S.drop sI str
+            --              okay bs =
+            --                isJust (S.stripPrefix (S.Pattern bs) rst)
+            --          in case A.filter (\x -> okay (A.unsafeIndex pats x)) ps of
+            --            [] -> go (sI + 1) rehashed
+            --            qs -> Tuple sI qs L.: (go (sI + 1) rehashed)
+
+
+              -- case M.lookup h hashMap of
+              --   Nothing ->
+              --     if sI == maxIdx
+              --       then L.Nil
+              --       else go (sI + 1) (rehash h (strAt sI) (strAt (sI + hLen)))
+              --   Just ps ->
+              --     let rst = S.drop sI str
+              --         hd  = strAt sI
+              --         more = if sI == maxIdx then L.Nil else
+              --                   go (sI + 1) (rehash h hd (strAt (sI + hLen)))
+              --         okay bs =
+              --           isJust (S.stripPrefix (S.Pattern bs) rst)
+              --     in case A.filter (\x -> okay (A.unsafeIndex pats x)) ps of
+              --              [] -> more
+              --              qs -> Tuple sI qs L.: more
