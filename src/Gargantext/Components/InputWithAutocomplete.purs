@@ -10,6 +10,8 @@ import Data.Nullable (Nullable, null, toMaybe)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import FFI.Simple ((..))
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (Elevation(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -173,6 +175,12 @@ inputWithAutocompleteCpt' = here.component "inputWithAutocomplete" cpt
                         , blur: onBlur completions containerRef
                         }
                   }
+        , B.iconButton
+            { callback: submit state'
+            , title: "Submit"
+            , name: "plus"
+            , elevation: Level1
+            }
         ]
 
       -- Helpers
@@ -230,6 +238,10 @@ inputWithAutocompleteCpt' = here.component "inputWithAutocomplete" cpt
                 pure false
           else
             pure $ false
+
+        submit val _ = do
+          T.write_ ("Invited " <> val <> " to the team") text
+          launchAff_ $ dispatch (boxAction val)
 
 ---------------------------------------------------------
 

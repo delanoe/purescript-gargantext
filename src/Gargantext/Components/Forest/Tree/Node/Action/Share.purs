@@ -2,9 +2,11 @@ module Gargantext.Components.Forest.Tree.Node.Action.Share where
 
 import Gargantext.Prelude
 
+import Data.Array (filter, nub)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
+import Data.String (Pattern(..), contains)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
@@ -12,9 +14,10 @@ import Gargantext.Components.Forest.Tree.Node.Action.Types as Action
 import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
 import Gargantext.Components.InputWithAutocomplete (inputWithAutocomplete')
-import Gargantext.Config.REST (AffRESTError)
+import Gargantext.Config.REST (AffRESTError, logRESTError)
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR
-import Gargantext.Sessions (Session, post)
+import Gargantext.Sessions (Session, get, post)
 import Gargantext.Types (ID)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
@@ -31,6 +34,10 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Share"
 shareReq :: Session -> ID -> ShareNodeParams -> AffRESTError ID
 shareReq session nodeId =
   post session $ GR.NodeAPI GT.Node (Just nodeId) "share"
+
+getCompletionsReq :: { session :: Session } -> AffRESTError (Array String)
+getCompletionsReq { session }  =
+  get session GR.Members
 
 shareAction :: String -> Action
 shareAction username = Action.ShareTeam username
@@ -52,14 +59,35 @@ instance Show ShareNodeParams where show = genericShow
 ------------------------------------------------------------------------
 type ShareNode =
   ( id :: ID
-  , dispatch :: Action -> Aff Unit )
+  , dispatch :: Action -> Aff Unit 
+  , session :: Session)
 
 shareNode :: R2.Component ShareNode
 shareNode = R.createElement shareNodeCpt
 shareNodeCpt :: R.Component ShareNode
 shareNodeCpt = here.component "shareNode" cpt
   where
-    cpt { dispatch } _ = do
+    cpt {session, dispatch} _ = do
+      useLoader {
+        loader: getCompletionsReq
+      , path: { session }
+      , render: \completions -> shareNodeInner {completions, dispatch} []
+      , errorHandler
+      }
+      where
+        errorHandler = logRESTError here "[shareNode]"
+
+type ShareNodeInner =
+  ( dispatch :: Action -> Aff Unit
+  , completions :: Array String
+  )
+
+shareNodeInner :: R2.Component ShareNodeInner
+shareNodeInner = R.createElement shareNodeInnerCpt
+shareNodeInnerCpt :: R.Component ShareNodeInner
+shareNodeInnerCpt = here.component "shareNodeInner" cpt
+  where
+    cpt { dispatch, completions } _ = do
       state <- T.useBox "username"
       text' /\ text <- R2.useBox' ""
 
@@ -67,14 +95,13 @@ shareNodeCpt = here.component "shareNode" cpt
                 [ inputWithAutocomplete' { boxAction: shareAction
                                          , dispatch
                                          , state
-                                         , classes: ""
+                                         , classes: "d-flex align-items-center"
                                          , autocompleteSearch
                                          , onAutocompleteClick
                                          , text }
                 ] (H.div {} [H.text text'])
       where
-        -- TODO: This will be fetched from API
-        autocompleteSearch _ = ["test1", "test2", "test3"]
+        autocompleteSearch input = nub $ filter (contains (Pattern input)) completions
         onAutocompleteClick _ = pure unit
 ------------------------------------------------------------------------
 publishNode :: R2.Component SubTreeParamsIn
