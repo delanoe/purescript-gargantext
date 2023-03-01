@@ -32,11 +32,6 @@ import Toestand as T
 
 -------------------------------------------------------------------------
 
-textSizeLimit :: Int
-textSizeLimit = 4500
-
--------------------------------------------------------------------------
-
 
 
 type Props =
@@ -78,9 +73,7 @@ layoutCpt = here.component "layout" cpt where
     state'@{ ngramsLocalPatch } /\ state <-
       R2.useBox' $ initialState { loaded }
 
-    mode' /\ mode <- R2.useBox' AFT.AdditionMode
-
-    forceAdditionMode' /\ forceAdditionMode <- R2.useBox' false
+    mode' /\ mode <- R2.useBox' AFT.EditionMode
 
     let dispatch = coreDispatch path state
     { onPending, result } <- useAutoSync { state, action: dispatch }
@@ -116,17 +109,6 @@ layoutCpt = here.component "layout" cpt where
     -- | Hooks
     -- |
 
-    -- (?) Limit large document feature with empirical length value
-    --     see #423
-    useFirstEffect' do
-      let len = maybe 0 (length) doc.abstract
-      if (len `greaterThan` textSizeLimit)
-      then
-            T.write_ true forceAdditionMode
-        *>  T.write_ AFT.AdditionMode mode
-      else
-            T.write_ false forceAdditionMode
-        *>  T.write_ AFT.EditionMode mode
 
     -- | Behaviors
     -- |
@@ -166,9 +148,7 @@ layoutCpt = here.component "layout" cpt where
               B.formSelect
               { value: show mode'
               , callback: onModeChange
-              , status: forceAdditionMode' ?
-                  Idled $
-                  Enabled
+              , status: Enabled
               }
               [
                 H.option
@@ -180,14 +160,6 @@ layoutCpt = here.component "layout" cpt where
                 [ H.text "Add and edit terms" ]
               ]
             ]
-          ,
-            R2.when forceAdditionMode' $
-
-              B.wad
-              [ "color-warning", "font-size-100", "mx-2", "inline-block" ]
-              [
-                H.text $ "limited term feature due to abstract length: (" <> show textSizeLimit <> " chars)"
-              ]
           ,
             R2.when withAutoUpdate $
               -- (?) purpose? would still working with current code?
