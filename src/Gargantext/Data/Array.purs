@@ -7,7 +7,7 @@ import Data.List as List
 import Data.Maybe
 import Data.Sequence as Seq
 import Data.Tuple (Tuple(..))
-import Prelude (bind, flip, identity, (<<<), ($), (<), (-), (<$>))
+import Prelude
 
 ----------------------------------------------------------------------
 -- | Split arrays tools
@@ -72,9 +72,4 @@ slidingWindow lst len =
   let diff = DA.length lst - len
   in
    if diff < 0 then []
-   else (\idx -> DA.take len $ DA.drop idx lst) <$> 0 .. diff
--- slidingWindow lst len = DA.fromFoldable $ go lst
---   where
---     go l =
---       if (DA.length l) < len then List.Nil
---       else (DA.take len l) List.: (go $ DA.drop 1 l)
+   else (\idx -> DA.slice idx (idx + len) lst) <$> 0 .. diff

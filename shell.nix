@@ -97,10 +97,10 @@ let
 
     echo "Compiling"
     yarn
-    spago build
+    #spago build
     #build-purs
     echo "Testing"
-    spago test
+    spago -x test.dhall test --main Test.Main
     # pulp browserify --skip-compile -t dist/bundle.js --src-path output
     # pulp test --src-path output --test-path output
     #NODE_PATH=output node -e "require('Test.Main').main();"

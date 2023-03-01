@@ -23,6 +23,7 @@ import Data.String as S
 import Data.String.Common as DSC
 import Data.String.Regex (Regex, regex, replace) as R
 import Data.String.Regex.Flags (global, multiline) as R
+import Data.String.Search.KarpRabin as SSKR
 import Data.String.Utils as SU
 import Data.These (These(..))
 import Data.Traversable (for, traverse_, traverse)
@@ -42,7 +43,7 @@ import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, post, put)
 import Gargantext.Types (AsyncTask, AsyncTaskType(..), AsyncTaskWithType(..), CTabNgramType(..), FrontendError, OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize(..))
 import Gargantext.Utils.Either (eitherMap)
-import Gargantext.Utils.KarpRabin (indicesOfAny)
+--import Gargantext.Utils.KarpRabin (indicesOfAny)
 import Gargantext.Utils.Reactix as R2
 import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
@@ -138,7 +139,8 @@ highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
     undb = R.replace wordBoundaryReg2 "$1"
     input = spR input0
     pats = A.fromFoldable (Map.keys elts)
-    ixs = indicesOfAny (sp <<< ngramsTermText <$> pats) (normNgramInternal ntype input)
+    hashStruct = SSKR.hashStruct (sp <<< ngramsTermText <$> pats)
+    ixs = SSKR.indicesOfAnyHashStruct hashStruct (normNgramInternal ntype input)
 
     splitAcc :: Partial => Int -> HighlightAccumulator
              -> Tuple HighlightAccumulator HighlightAccumulator

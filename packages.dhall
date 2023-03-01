@@ -136,6 +136,24 @@ let additions =
         , repo = "https://github.com/purescript-spec/purescript-spec-quickcheck"
         , version = "v3.1.0"
         }
+      , string-search =
+        { dependencies =
+          [ "arrays"
+          , "enums"
+          , "foldable-traversable"
+          , "integers"
+          , "lists"
+          , "maybe"
+          , "ordered-collections"
+          , "partial"
+          , "prelude"
+          , "strings"
+          , "tuples"
+          , "uint"
+          ]
+        , repo = "https://git.sr.ht/~cgenie/purescript-string-search"
+        , version = "v0.1.3"
+        }
       , dom-filereader =
         { dependencies = [ "aff", "arraybuffer-types", "web-file", "web-html" ]
         , repo = "https://github.com/nwolverson/purescript-dom-filereader"
