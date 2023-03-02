@@ -349,7 +349,7 @@ panelActionCpt = here.component "panelAction" cpt
       pure $ moveNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
     cpt { action: Link {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
       pure $ linkNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
-    cpt { action : Share, dispatch, id } _ = pure $ Share.shareNode { dispatch, id } []
+    cpt { action : Share, dispatch, id, session } _ = pure $ Share.shareNode { dispatch, id, session } []
     cpt { action : AddingContact, dispatch, id } _ = pure $ Contact.actionAddContact { dispatch, id } []
     cpt { action : Publish {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
       pure $ Share.publishNode { boxes, dispatch, id, nodeType, session, subTreeParams } []

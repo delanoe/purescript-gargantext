@@ -189,6 +189,7 @@ sessionPath (R.ChartHash { chartType, listId, tabType } i) =
     <> defaultListAddMaybe listId
 -- sessionPath (R.NodeAPI (NodeContact s a i) i) = sessionPath $ "annuaire/" <> show a <> "/contact/" <> show i
 sessionPath (R.PhyloAPI nId) = "node/" <> show nId <> "/phylo"
+sessionPath R.Members = "members"
 
 ------- misc routing stuff
 
