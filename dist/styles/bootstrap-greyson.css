@@ -9835,7 +9835,8 @@ input[type=range]:-moz-focusring {
   list-style-type: disc;
   line-height: 1.4;
 }
-.mainleaf--selected {
+.mainleaf--selected .mainleaf__node-link::before {
+  content: "";
   background-color: #F8F9FA;
 }
 .mainleaf--selected .mainleaf__node-link a {
