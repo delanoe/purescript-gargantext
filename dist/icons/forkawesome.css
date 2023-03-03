@@ -1207,6 +1207,10 @@ color:#fff}
 .fa-flask:before { content: "\f0c3"; }
 .fa-flickr:before { content: "\f16e"; }
 .fa-floppy-o:before { content: "\f0c7"; }
+.fa-flower:before { content: "\e902"; font-size: 0.8em; }
+.fa-flower-2:before { content: "\e900"; font-size: 0.8em; }
+.fa-flower-3:before { content: "\e901"; font-size: 0.9em; }
+.fa-flower-7:before { content: "\e903"; }
 .fa-folder:before { content: "\f07b"; }
 .fa-folder-o:before { content: "\f114"; }
 .fa-folder-open:before { content: "\f07c"; }

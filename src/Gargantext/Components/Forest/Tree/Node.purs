@@ -306,7 +306,7 @@ nodeSpanCpt = here.component "nodeSpan" cpt
             R2.when (showBox) $
 
               B.iconButton
-              { name: "cog"
+              { name: "flower-7"
               , className: "mainleaf__settings-icon"
               , callback: \_ -> T.write_ true isBoxVisible
               , title:

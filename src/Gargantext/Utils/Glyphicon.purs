@@ -308,6 +308,10 @@ glyphiconToCharCode = _toString <<< case _ of
   "flag-o" -> 0xf11d
   "flask" -> 0xf0c3
   "flickr" -> 0xf16e
+  "flower" -> 0xe902
+  "flower-2" -> 0xe900
+  "flower-3" -> 0xe901
+  "flower-7" -> 0xe903
   "floppy-o" -> 0xf0c7
   "folder" -> 0xf07b
   "folder-o" -> 0xf114

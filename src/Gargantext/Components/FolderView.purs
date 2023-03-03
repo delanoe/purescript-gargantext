@@ -203,7 +203,7 @@ folderCpt = here.component "folderCpt" cpt where
         { className: "folder-view-item__settings" }
         [
           B.iconButton
-          { name: "cog"
+          { name: "flower-7"
           , callback: \_ -> T.write_ true isBoxVisible
           , title:
                 "Each node of the Tree can perform some actions.\n"
