@@ -45,7 +45,7 @@ actionWriteNodesDocumentsCpt = here.component "actionWriteNodesDocuments" cpt wh
         <- R2.useBox' ListSelection.MyListsFirst
     paragraphs' /\ paragraphBox
         <- R2.useBox' "7"
-    
+
     let bodies = [
       H.div
       { className: "col-12 flex-space-around" }
@@ -90,7 +90,7 @@ actionWriteNodesDocumentsCpt = here.component "actionWriteNodesDocuments" cpt wh
         H.div
         { className: "form-group__field" }
         [
-          B.formInput 
+          B.formInput
           { callback: flip T.write_ paragraphBox
           , value: paragraphs'
           }

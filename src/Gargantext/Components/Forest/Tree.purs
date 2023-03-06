@@ -384,9 +384,11 @@ linkNode nodeType params p@{ boxes: { errors }, session } = traverse_ f params w
     handleRESTError errors eTask $ \_task -> pure unit
     refreshTree p
 
-documentsFromWriteNodes params p@{ boxes: { errors }, session } = do
+documentsFromWriteNodes params p@{ boxes: { errors, tasks }, session, tree: NTree (LNode { id }) _ } = do
   eTask <- documentsFromWriteNodesReq session params
-  handleRESTError errors eTask $ \_task -> pure unit
+  handleRESTError errors eTask $ \task -> liftEffect $ do
+    GAT.insert id task tasks
+    pure unit
   refreshTree p
 
 -- | This thing is basically a hangover from when garg was a thermite
