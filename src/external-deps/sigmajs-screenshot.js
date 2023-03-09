@@ -62,137 +62,21 @@ vec4 or_transparent(vec4 from_, vec4 to_) {
 }
 
 void main() {
-     // Look up a pixel from edges canvas
-     vec4 e_color = texture2D(u_edges, v_texCoord);
-     vec4 el_color = texture2D(u_edgeLabels, v_texCoord);
-     vec4 n_color = texture2D(u_nodes, v_texCoord);
-     vec4 l_color = texture2D(u_labels, v_texCoord);
-     vec4 h_color = texture2D(u_hovers, v_texCoord);
-     vec4 hn_color = texture2D(u_hoverNodes, v_texCoord);
-     vec4 m_color = texture2D(u_mouse, v_texCoord);
-
-     // return overlay in this order: m_color, hn_color, h_color,
-     // l_color, n_color, el_color, e_color
+     // Return overlay in this order: mouse, hoverNodes, hovers,
+     // labels, nodes, edgeLabels, edges.
      // Ordering here should be the reverse of <canvas> layers on the
-     // sigmajs side
-     vec4 tmp_color = or_transparent(m_color, hn_color);
-     tmp_color = or_transparent(tmp_color, h_color);
-     tmp_color = or_transparent(tmp_color, l_color);
-     tmp_color = or_transparent(tmp_color, n_color);
-     tmp_color = or_transparent(tmp_color, el_color);
-     tmp_color = or_transparent(tmp_color, e_color);
+     // sigmajs side.
+     vec4 tmp_color = texture2D(u_mouse, v_texCoord);  // Look up a pixel from edges canvas.
+     tmp_color      = or_transparent(tmp_color, texture2D(u_hoverNodes, v_texCoord));
+     tmp_color      = or_transparent(tmp_color, texture2D(u_hovers, v_texCoord));
+     tmp_color      = or_transparent(tmp_color, texture2D(u_labels, v_texCoord));
+     tmp_color      = or_transparent(tmp_color, texture2D(u_nodes, v_texCoord));
+     tmp_color      = or_transparent(tmp_color, texture2D(u_edgeLabels, v_texCoord));
+     tmp_color      = or_transparent(tmp_color, texture2D(u_edges, v_texCoord));
 
      gl_FragColor = tmp_color;
 }
 `;
-
-
-const vertexShader1 = `
-attribute vec2 a_position;
-attribute vec2 a_texCoord;
-
-uniform vec2 u_resolution;
-
-varying vec2 v_texCoord;
-
-void main() {
-   // convert the rectangle from pixels to 0.0 to 1.0
-   vec2 zeroToOne = a_position / u_resolution;
-
-   // convert from 0->1 to 0->2
-   vec2 zeroToTwo = zeroToOne * 2.0;
-
-   // convert from 0->2 to -1->+1 (clipspace)
-   vec2 clipSpace = zeroToTwo - 1.0;
-
-   gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
-
-   // pass the texCoord to the fragment shader
-   // The GPU will interpolate this value between points.
-   v_texCoord = a_texCoord;
-}
-`;
-
-const fragmentShader1 = `
-precision mediump float;
-
-    // our 3 canvases
-    uniform sampler2D u_nodes;
-    uniform sampler2D u_edges;
-    uniform sampler2D u_labels;
-
-    // the texCoords passed in from the vertex shader.
-    // note: we're only using 1 set of texCoords which means
-    //   we're assuming the canvases are the same size.
-    varying vec2 v_texCoord;
-
-    void main() {
-         vec3 white = vec3(1);
-
-         // Look up a pixel from nodes canvas
-         vec4 n_color = texture2D(u_nodes, v_texCoord);
-
-         // Look up a pixel from edges canvas
-         vec4 e_color = texture2D(u_edges, v_texCoord);
-
-         // Look up a pixel from labels canvas
-         vec4 l_color = texture2D(u_labels, v_texCoord);
-
-         // return overlay of l_color on n_color on e_color
-         vec4 tmp_color = n_color;
-
-         // if(tmp_color.a > 0.5) {  // l_color is transparent (i.e. no text here), use n_color
-         //   tmp_color = e_color;
-         // }
-
-//         if(all(equal(tmp_color.rgb, white))) {  // l_color is white, use n_color
-//           tmp_color = n_color;
-//         }
-//         if(all(equal(tmp_color.rgb, white))) {  // n_color is white, use e_color
-//           tmp_color = e_color;
-//         }
-//         if(all(equal(tmp_color.rgb, white))) {  // e_color is white, set transparent
-//           //tmp_color = vec4(tmp_color.rgb, 1);
-//         }
-
-         // gl_FragColor = e_color;  // returns edges
-         gl_FragColor = l_color;  // returns labels
-         // gl_FragColor = n_color;  // returns empty
-
-//         if(all(equal(n_color.rgb, white))) {  // n_color is white, use e_color
-//             gl_FragColor = e_color;
-//         } else {
-//             if(all(equal(e_color.rgb, white))) {  // e_color is white, set transparent
-//                 gl_FragColor = vec4(e_color.rgb, 1);
-//             } else {
-//                 gl_FragColor = n_color;
-//             }
-//         }
-    }
-`;
-
-
-
-function setupTexture(gl, canvas, textureUnit, program, uniformName) {
-  let tex = gl.createTexture();
-
-  updateTextureFromCanvas(gl, tex, canvas, textureUnit);
-
-  // Set the parameters so we can render any size image.
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-
-  let location = gl.getUniformLocation(program, uniformName);
-  gl.uniform1i(location, textureUnit);
-}
-
-function updateTextureFromCanvas(gl, tex, canvas, textureUnit) {
-  gl.activeTexture(gl.TEXTURE0 + textureUnit);
-  gl.bindTexture(gl.TEXTURE_2D, tex);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
-}
 
 function debugSnapshot(data) {
   // let consoleS = `font-size: 1px;
@@ -320,6 +204,118 @@ export function takeScreenshot(sigma) {
   // throw new Error('debugging');
 
   return ret;
+}
+
+
+
+// DEPRECATED
+
+
+const vertexShader1 = `
+attribute vec2 a_position;
+attribute vec2 a_texCoord;
+
+uniform vec2 u_resolution;
+
+varying vec2 v_texCoord;
+
+void main() {
+   // convert the rectangle from pixels to 0.0 to 1.0
+   vec2 zeroToOne = a_position / u_resolution;
+
+   // convert from 0->1 to 0->2
+   vec2 zeroToTwo = zeroToOne * 2.0;
+
+   // convert from 0->2 to -1->+1 (clipspace)
+   vec2 clipSpace = zeroToTwo - 1.0;
+
+   gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+
+   // pass the texCoord to the fragment shader
+   // The GPU will interpolate this value between points.
+   v_texCoord = a_texCoord;
+}
+`;
+
+const fragmentShader1 = `
+precision mediump float;
+
+    // our 3 canvases
+    uniform sampler2D u_nodes;
+    uniform sampler2D u_edges;
+    uniform sampler2D u_labels;
+
+    // the texCoords passed in from the vertex shader.
+    // note: we're only using 1 set of texCoords which means
+    //   we're assuming the canvases are the same size.
+    varying vec2 v_texCoord;
+
+    void main() {
+         vec3 white = vec3(1);
+
+         // Look up a pixel from nodes canvas
+         vec4 n_color = texture2D(u_nodes, v_texCoord);
+
+         // Look up a pixel from edges canvas
+         vec4 e_color = texture2D(u_edges, v_texCoord);
+
+         // Look up a pixel from labels canvas
+         vec4 l_color = texture2D(u_labels, v_texCoord);
+
+         // return overlay of l_color on n_color on e_color
+         vec4 tmp_color = n_color;
+
+         // if(tmp_color.a > 0.5) {  // l_color is transparent (i.e. no text here), use n_color
+         //   tmp_color = e_color;
+         // }
+
+//         if(all(equal(tmp_color.rgb, white))) {  // l_color is white, use n_color
+//           tmp_color = n_color;
+//         }
+//         if(all(equal(tmp_color.rgb, white))) {  // n_color is white, use e_color
+//           tmp_color = e_color;
+//         }
+//         if(all(equal(tmp_color.rgb, white))) {  // e_color is white, set transparent
+//           //tmp_color = vec4(tmp_color.rgb, 1);
+//         }
+
+         // gl_FragColor = e_color;  // returns edges
+         gl_FragColor = l_color;  // returns labels
+         // gl_FragColor = n_color;  // returns empty
+
+//         if(all(equal(n_color.rgb, white))) {  // n_color is white, use e_color
+//             gl_FragColor = e_color;
+//         } else {
+//             if(all(equal(e_color.rgb, white))) {  // e_color is white, set transparent
+//                 gl_FragColor = vec4(e_color.rgb, 1);
+//             } else {
+//                 gl_FragColor = n_color;
+//             }
+//         }
+    }
+`;
+
+
+
+function setupTexture(gl, canvas, textureUnit, program, uniformName) {
+  let tex = gl.createTexture();
+
+  updateTextureFromCanvas(gl, tex, canvas, textureUnit);
+
+  // Set the parameters so we can render any size image.
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+  let location = gl.getUniformLocation(program, uniformName);
+  gl.uniform1i(location, textureUnit);
+}
+
+function updateTextureFromCanvas(gl, tex, canvas, textureUnit) {
+  gl.activeTexture(gl.TEXTURE0 + textureUnit);
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, canvas);
 }
 
 
