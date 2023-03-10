@@ -77,7 +77,7 @@ void main(void) {
 }
 `;
 
-const POINTS = 3;
+const POINTS = 6;
 const ATTRIBUTES = 5;
 
 const ANGLE_1 = - (0.5 * Math.PI) / 3;
@@ -161,8 +161,31 @@ export default class NodeProgram extends AbstractProgram {
       return;
     }
 
+    // first the contour
+    const gray = floatColor('#aaa')
+    const size = data.size / 2.3;  // experimental...
+    const contourSize = size + 0.8;  // experimental...
+
+    array[i++] = data.x;
+    array[i++] = data.y;
+    array[i++] = contourSize;
+    array[i++] = gray;
+    array[i++] = ANGLE_1;
+
+    array[i++] = data.x;
+    array[i++] = data.y;
+    array[i++] = contourSize;
+    array[i++] = gray;
+    array[i++] = ANGLE_2;
+
+    array[i++] = data.x;
+    array[i++] = data.y;
+    array[i++] = contourSize;
+    array[i++] = gray;
+    array[i++] = ANGLE_3;
+
+    // now the inside triangle
     const color = floatColor(data.color);
-    const size = data.size / 1.7;  // experimental...
 
     array[i++] = data.x;
     array[i++] = data.y;
