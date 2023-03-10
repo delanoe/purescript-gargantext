@@ -5,6 +5,10 @@ import Sigma from 'sigma';
 import { takeScreenshot } from '../../src/external-deps/sigmajs-screenshot.js';
 import CircleNodeProgram from 'sigma/rendering/webgl/programs/node.fast';
 import ContourCircleNodeProgram from '../../src/external-deps/sigmajs-circle-with-contour.js';
+import TriangleNodeProgram from '../../src/external-deps/sigmajs-triangle.js';
+import ContourTriangleNodeProgram from '../../src/external-deps/sigmajs-triangle-with-contour.js';
+import SquareNodeProgram from '../../src/external-deps/sigmajs-square.js';
+import ContourSquareNodeProgram from '../../src/external-deps/sigmajs-square-with-contour.js';
 
 let sigma = Sigma.Sigma;
 console.log('imported sigma', Sigma);
@@ -192,7 +196,11 @@ function _sigma(left, right, el, opts) {
       labelRenderer: drawLabel,
       nodeProgramClasses: {
         circle: CircleNodeProgram.default,  // TODO why default? It seems that import should be fixed
-        ccircle: ContourCircleNodeProgram
+        ccircle: ContourCircleNodeProgram,
+        triangle: TriangleNodeProgram,
+        ctriangle: ContourTriangleNodeProgram,
+        square: SquareNodeProgram,
+        csquare: ContourSquareNodeProgram
       },
       ...opts.settings
     };
