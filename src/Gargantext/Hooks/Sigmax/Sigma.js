@@ -5,6 +5,7 @@ import Sigma from 'sigma';
 import { takeScreenshot } from '../../src/external-deps/sigmajs-screenshot.js';
 import CircleNodeProgram from 'sigma/rendering/webgl/programs/node.fast';
 import ContourCircleNodeProgram from '../../src/external-deps/sigmajs-circle-with-contour.js';
+import TriangleNodeProgram from '../../src/external-deps/sigmajs-triangle.js';
 
 let sigma = Sigma.Sigma;
 console.log('imported sigma', Sigma);
