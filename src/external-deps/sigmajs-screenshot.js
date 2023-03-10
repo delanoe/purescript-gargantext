@@ -116,13 +116,13 @@ function debugSnapshot(data) {
 
 export function takeScreenshot(sigma) {
   let c = sigma.container;
-  let edges = c.getElementsByClassName('sigma-edges')[0];
+  let edges      = c.getElementsByClassName('sigma-edges')[0];
   let edgeLabels = c.getElementsByClassName('sigma-edgeLabels')[0];
-  let nodes = c.getElementsByClassName('sigma-nodes')[0];
-  let labels = c.getElementsByClassName('sigma-labels')[0];
-  let hovers = c.getElementsByClassName('sigma-hovers')[0];
+  let nodes      = c.getElementsByClassName('sigma-nodes')[0];
+  let labels     = c.getElementsByClassName('sigma-labels')[0];
+  let hovers     = c.getElementsByClassName('sigma-hovers')[0];
   let hoverNodes = c.getElementsByClassName('sigma-hoverNodes')[0];
-  let mouse = c.getElementsByClassName('sigma-mouse')[0];
+  let mouse      = c.getElementsByClassName('sigma-mouse')[0];
 
   // temporary canvas element onto which we will draw
   let tmp = document.createElement('canvas');
@@ -172,14 +172,14 @@ export function takeScreenshot(sigma) {
              src };
     };
   const uniforms = {
-    u_edges: twgl.createTexture(gl, texParams(edges)),
-    u_edgeLabels: twgl.createTexture(gl, texParams(edgeLabels)),
-    u_nodes: twgl.createTexture(gl, texParams(nodes)),
-    u_labels: twgl.createTexture(gl, texParams(labels)),
-    u_hovers: twgl.createTexture(gl, texParams(hovers)),
-    u_hoverNodes: twgl.createTexture(gl, texParams(hoverNodes)),
-    u_mouse: twgl.createTexture(gl, texParams(mouse)),
-    u_resolution: [gl.canvas.width, gl.canvas.height]
+    u_edges      : twgl.createTexture(gl, texParams(edges)),
+    u_edgeLabels : twgl.createTexture(gl, texParams(edgeLabels)),
+    u_nodes      : twgl.createTexture(gl, texParams(nodes)),
+    u_labels     : twgl.createTexture(gl, texParams(labels)),
+    u_hovers     : twgl.createTexture(gl, texParams(hovers)),
+    u_hoverNodes : twgl.createTexture(gl, texParams(hoverNodes)),
+    u_mouse      : twgl.createTexture(gl, texParams(mouse)),
+    u_resolution : [gl.canvas.width, gl.canvas.height]
   };
 
   gl.useProgram(programInfo.program);
