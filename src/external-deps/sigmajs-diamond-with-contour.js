@@ -15,12 +15,12 @@ import TriangleProgram from "./sigmajs-triangle-abstract";
 const POINTS = 12;
 const ATTRIBUTES = 5;
 
-const ANGLE_1_1 = - (1 * Math.PI) / 4;
-const ANGLE_1_2 =   (1 * Math.PI) / 4;
-const ANGLE_1_3 =   (3 * Math.PI) / 4;
-const ANGLE_2_1 =   (3 * Math.PI) / 4;
-const ANGLE_2_2 =   (5 * Math.PI) / 4;
-const ANGLE_2_3 =   (7 * Math.PI) / 4;
+const ANGLE_1_1 = (0 * Math.PI) / 4;
+const ANGLE_1_2 = (2 * Math.PI) / 4;
+const ANGLE_1_3 = (4 * Math.PI) / 4;
+const ANGLE_2_1 = (4 * Math.PI) / 4;
+const ANGLE_2_2 = (6 * Math.PI) / 4;
+const ANGLE_2_3 = (8 * Math.PI) / 4;
 
 export default class NodeProgram extends TriangleProgram {
   constructor(gl) {

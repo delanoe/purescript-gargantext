@@ -9,6 +9,8 @@ import TriangleNodeProgram from '../../src/external-deps/sigmajs-triangle.js';
 import ContourTriangleNodeProgram from '../../src/external-deps/sigmajs-triangle-with-contour.js';
 import SquareNodeProgram from '../../src/external-deps/sigmajs-square.js';
 import ContourSquareNodeProgram from '../../src/external-deps/sigmajs-square-with-contour.js';
+import DiamondNodeProgram from '../../src/external-deps/sigmajs-diamond.js';
+import ContourDiamondNodeProgram from '../../src/external-deps/sigmajs-diamond-with-contour.js';
 
 let sigma = Sigma.Sigma;
 console.log('imported sigma', Sigma);
@@ -200,7 +202,9 @@ function _sigma(left, right, el, opts) {
         triangle: TriangleNodeProgram,
         ctriangle: ContourTriangleNodeProgram,
         square: SquareNodeProgram,
-        csquare: ContourSquareNodeProgram
+        csquare: ContourSquareNodeProgram,
+        diamond: DiamondNodeProgram,
+        cdiamond: ContourDiamondNodeProgram
       },
       ...opts.settings
     };
