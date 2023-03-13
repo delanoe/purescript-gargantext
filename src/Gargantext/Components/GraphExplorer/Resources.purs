@@ -447,7 +447,7 @@ forceAtlas2Settings =
   , batchEdgesDrawing              : true
   , edgeWeightInfluence            : 1.0
     -- fixedY                      : false
-  , gravity                        : 0.01
+  , gravity                        : 0.0001
   , hideEdgesOnMove                : true
   , includeHiddenEdges             : false
   , includeHiddenNodes             : true
