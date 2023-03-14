@@ -103,11 +103,7 @@ settingsBox NodeUser =
   SettingsBox { show : true
               , edit : false
               , doc  : Documentation NodeUser
-              , buttons : [ Add [ FolderPrivate
-                                , FolderShared
-                                , FolderPublic
-                                ]
-                          , Delete
+              , buttons : [ Delete
                           ]
               }
 
@@ -122,7 +118,6 @@ settingsBox FolderPrivate =
                                 , NodeFrameCalc
                                 , NodeFrameNotebook
                                 ]
-                          , Delete
                           ]
               }
 
@@ -151,7 +146,6 @@ settingsBox FolderShared =
               , edit : true
               , doc  : Documentation FolderShared
               , buttons : [ Add [Team, FolderShared]
-                          , Delete
                           ]
               }
 
@@ -160,7 +154,6 @@ settingsBox FolderPublic =
               , edit : true
               , doc  : Documentation FolderPublic
               , buttons : [ Add [ FolderPublic ]
-                          , Delete
                           ]
               }
 
