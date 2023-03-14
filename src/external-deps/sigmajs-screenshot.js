@@ -1,5 +1,8 @@
 import * as twgl from 'twgl.js';
 
+// NOTE This doesn't work on Firefox for some reason. See
+// ./sigmajs-screenshot-with-canvas.js
+
 
 const vertexShader = `
 // a_position describes the canvas.
@@ -164,21 +167,21 @@ export function takeScreenshot(sigma) {
   twgl.resizeCanvasToDisplaySize(gl.canvas);
   //gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-  let texParams = function(src) {
-    return { //wrapS: gl.CLAMP_TO_EDGE,
-             //wrapT: gl.CLAMP_TO_EDGE,
-             //min: gl.NEAREST,
-             //mag: gl.NEAREST,
-             src };
+  let createTexture = function(src) {
+    return twgl.createTexture(gl, { //wrapS: gl.CLAMP_TO_EDGE,
+                                    //wrapT: gl.CLAMP_TO_EDGE,
+                                    //min: gl.NEAREST,
+                                    //mag: gl.NEAREST,
+                                    src });
     };
   const uniforms = {
-    u_edges      : twgl.createTexture(gl, texParams(edges)),
-    u_edgeLabels : twgl.createTexture(gl, texParams(edgeLabels)),
-    u_nodes      : twgl.createTexture(gl, texParams(nodes)),
-    u_labels     : twgl.createTexture(gl, texParams(labels)),
-    u_hovers     : twgl.createTexture(gl, texParams(hovers)),
-    u_hoverNodes : twgl.createTexture(gl, texParams(hoverNodes)),
-    u_mouse      : twgl.createTexture(gl, texParams(mouse)),
+    u_edges      : createTexture(edges),
+    u_edgeLabels : createTexture(edgeLabels),
+    u_nodes      : createTexture(nodes),
+    u_labels     : createTexture(labels),
+    u_hovers     : createTexture(hovers),
+    u_hoverNodes : createTexture(hoverNodes),
+    u_mouse      : createTexture(mouse),
     u_resolution : [gl.canvas.width, gl.canvas.height]
   };
 
