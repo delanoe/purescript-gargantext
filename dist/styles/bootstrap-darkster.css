@@ -6447,6 +6447,9 @@ a:hover {
     top: 90px;
   }
 }
+.input-with-autocomplete .b-icon-button {
+  margin-left: 10px;
+}
 
 .with-icon-font {
   font-family: ForkAwesome, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
