@@ -18,6 +18,12 @@ $node-popup-width: 544px
 
   &__node
     margin-bottom: space-x(0.25)
+    min-width: 0
+
+    a:hover,
+    a:focus
+      text-decoration: none
+      border-bottom: 1px dashed currentColor
 
   @include right-handed
     &__node
@@ -65,26 +71,31 @@ $node-popup-width: 544px
 
 .mainleaf
   $self: &
-  $leaf-margin-bottom: 3px
 
   display: flex
   align-items: center
-  margin-bottom: $leaf-margin-bottom
+  padding-top: 2px
+  padding-bottom: 2px
   // forcing inline width to overflow its container width
   // this is mainly due to the multi-level of nested folders that keeps
   // increasing the mainleaf width
   // (as a "min-width" rule instead of "width" to allow the relative stacking
   // context used for the selected UI border)
-  min-width: max-content
+  min-width: 0
   position: relative
+
+  &:hover
+    background-color: $gray-100
 
   @include right-handed
     flex-direction: row
     padding-right: space-x(2)
+    padding-left: space-x(.5)
 
   @include left-handed
     flex-direction: row-reverse
     padding-left: space-x(2)
+    padding-right: space-x(.5)
 
   //----------------------------
 
@@ -178,6 +189,7 @@ $node-popup-width: 544px
   &__node-link
     position: relative
     font-size: 15px
+    min-width: 0
 
     @include right-handed
       margin-right: space-x(1)
@@ -208,42 +220,61 @@ $node-popup-width: 544px
     // creating a new stacking context due to the "::before" overlay
     & a
       position: relative
+      span
+        $span-padding: space-x(3)
+        
+        overflow: hidden
+        text-overflow: ellipsis
+        white-space: nowrap
+        display: block
+        
+        @include right-handed
+          padding-right: $span-padding
+
+        @include left-handed
+          padding-left: $span-padding
 
   //----------------------------
-  $icon-button-margin: space-x(2.25)
+  $icon-button-margin: space-x(1.75)
 
   &__settings-icon
     visibility: hidden
+    position: absolute
 
   &:hover &__settings-icon
     visibility: visible
 
     @include right-handed
       margin-left: $icon-button-margin
+      right: space-x(2)
     @include left-handed
       margin-right: $icon-button-margin
+      left: space-x(2)
 
   &__update-icon
+    position: absolute
 
     @include right-handed
       margin-left: $icon-button-margin
+      right: space-x(5)
     @include left-handed
       margin-right: $icon-button-margin
+      left: space-x(5)
 
   //----------------------------
 
-  &__update-icon,
-  &__settings-icon
+  // &__update-icon,
+  // &__settings-icon
     // altering component overlay offset to fit it with the ".mainleaf" overlay
     // dimension
-    $aside-icon-offset-y: -5px
-    $aside-icon-offset-x: -6px
+    // $aside-icon-offset-y: -5px
+    // $aside-icon-offset-x: -6px
 
-    &.b-icon-button::before
-      top: $aside-icon-offset-y
-      bottom: $aside-icon-offset-y
-      left: $aside-icon-offset-x
-      right: $aside-icon-offset-x
+    // &.b-icon-button::before
+    //   top: $aside-icon-offset-y
+    //   bottom: $aside-icon-offset-y
+    //   left: $aside-icon-offset-x
+    //   right: $aside-icon-offset-x
 
   //----------------------------
 
@@ -289,11 +320,14 @@ $node-popup-width: 544px
 
   //----------------------------
 
+  &--selected
+    background-color: $gray-100
+
   &--selected &
-    
-    &__node-link::before
-      content: ""
-      background-color: $gray-100
+
+    // &__node-link::before
+    //   content: ""
+    //   background-color: $gray-100
 
     &__node-link a
       color: $primary
@@ -338,13 +372,13 @@ $node-popup-width: 544px
   // "mainleaf" one
   @include virtual-space
   height: fit-content
+  padding: space-x(.25) 0
 
   top: 0
   right: 0
-  width: 4px
+  width: 3px
   background-color: $primary
   position: absolute
-  box-shadow: 0 0 0 4px $white
 
   // z-index macro-management due to "node__link::before" overlay
   z-index: z-index("tree", "content")
@@ -473,6 +507,16 @@ $node-popup-width: 544px
     display: flex
     flex-direction: column
 
+    &__header
+      .b-wad
+        .fa-pencil
+          visibility: hidden
+
+        &:hover
+          .fa-pencil
+            visibility: visible
+
+
     &__body
       display: flex
       justify-content: center
@@ -539,6 +583,7 @@ $node-popup-width: 544px
 
       &__button
         margin-right: space-x(2)
+        white-space: nowrap
 
     @include left-handed
       flex-direction: row-reverse
@@ -566,9 +611,9 @@ $node-popup-width: 544px
     // remove horizontal offset for first entry only (see ".maintree")
     & > .maintree > .maintree__node
       @include right-handed
-        margin-left: space-x(2)
+        margin-left: space-x(1.5)
       @include left-handed
-        margin-right: space-x(2)
+        margin-right: space-x(1.5)
 
 /////////////////////////////////////////
 

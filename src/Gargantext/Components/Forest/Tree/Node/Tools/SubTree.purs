@@ -167,7 +167,8 @@ subTreeTreeViewCpt = here.ntComponent "subTreeTreeView" cpt where
             , className: "subtree__node__text"
             }
             [
-              H.text $ textEllipsisBreak 15 name
+              -- H.text $ textEllipsisBreak 15 name
+              H.text $ name
             ]
           ]
       ,

@@ -130,8 +130,8 @@
 
 .b-icon-button {
   $self: &;
-  $overlay-offset-y: -6px;
-  $overlay-offset-x: -10px;
+  // $overlay-offset-y: -6px;
+  // $overlay-offset-x: -10px;
 
   transition: color 0.2s;
   position: relative;
@@ -145,14 +145,14 @@
 
   // overlay preparation
   &::before {
-    left: $overlay-offset-x;
-    right: $overlay-offset-x;
-    top: $overlay-offset-y;
-    bottom: $overlay-offset-y;
-    border-radius: $overlay-radius;
+    // left: $overlay-offset-x;
+    // right: $overlay-offset-x;
+    // top: $overlay-offset-y;
+    // bottom: $overlay-offset-y;
+    // border-radius: $overlay-radius;
     position: absolute;
     transition:
-      background-color 150ms ease-in-out,
+      // background-color 150ms ease-in-out,
       box-shadow 150ms ease-in-out;
   }
 
@@ -178,24 +178,24 @@
   &--idled {
     @include clickable;
 
-    &#{ $self }--warning    { color: $warning; }
-    &#{ $self }--success    { color: $success; }
-    &#{ $self }--danger     { color: $danger; }
-    &#{ $self }--info       { color: $info; }
-    &#{ $self }--primary    { color: $primary; }
-    &#{ $self }--secondary  { color: $secondary; }
-    &#{ $self }--dark       { color: $body-color; }
+    &#{ $self }--warning    { color: darken($warning, 10%); }
+    &#{ $self }--success    { color: darken($success, 10%); }
+    &#{ $self }--danger     { color: darken($danger, 10%); }
+    &#{ $self }--info       { color: darken($info, 10%); }
+    &#{ $self }--primary    { color: darken($primary, 10%); }
+    &#{ $self }--secondary  { color: darken($secondary, 10%); }
+    &#{ $self }--dark       { color: darken($body-color, 10%); }
   }
 
   &--enabled,
   &--muted {
-    &#{ $self }--warning:hover    { color: darken($warning, 10%); }
-    &#{ $self }--success:hover    { color: darken($success, 10%); }
-    &#{ $self }--danger:hover     { color: darken($danger, 10%); }
-    &#{ $self }--info:hover       { color: darken($info, 10%); }
-    &#{ $self }--primary:hover    { color: darken($primary, 10%); }
-    &#{ $self }--secondary:hover  { color: darken($secondary, 10%); }
-    &#{ $self }--dark:hover       { color: darken($body-color, 10%); }
+    &#{ $self }--warning:hover    { color: $warning; }
+    &#{ $self }--success:hover    { color: $success; }
+    &#{ $self }--danger:hover     { color: $danger; }
+    &#{ $self }--info:hover       { color: $info; }
+    &#{ $self }--primary:hover    { color: $primary; }
+    &#{ $self }--secondary:hover  { color: $secondary; }
+    &#{ $self }--dark:hover       { color: $body-color; }
   }
 
   &--enabled#{ $self }--focus-ring,
