@@ -61,7 +61,7 @@ nodePopupViewCpt = here.component "nodePopupView" cpt where
 
       H.div
       { className: "node-popup-tooltip"
-      , title: "Node settings"
+      , title: "Type: " <> prettyNodeType nodeType
       }
       [
         H.div
@@ -83,16 +83,16 @@ nodePopupViewCpt = here.component "nodePopupView" cpt where
       [ "d-flex", "align-items-center" ]
       [
         B.wad
-        [ "w-3/12" ]
+        [ "w-2/12" ]
         [
           H.span
           { className: GT.fldr nodeType true} [] -- TODO fix names
-        ,
-          B.span' { className: "ml-1 h5" } $ prettyNodeType nodeType
+        -- ,
+        --   B.span' { className: "small" } $ prettyNodeType nodeType
         ]
       ,
         B.wad
-        [ "w-7/12", "pl-1" ]
+        [ "w-8/12 text-center" ]
         [
           if open then
             textInputBox

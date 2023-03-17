@@ -60,22 +60,18 @@ textInputBoxCpt = here.component "textInputBox" cpt where
       content false _ = (R.fragment [])
       content true renameNodeNameRef =
         H.div
-        { className: "d-flex align-items-center" }
+        { className: "d-flex align-items-center justify-content-space-between" }
         [
           textInput renameNodeNameRef
         ,
-          B.wad_ [ "d-inline-block", "w-3" ]
-        ,
           submitBtn renameNodeNameRef
-        ,
-          B.wad_ [ "d-inline-block", "w-3" ]
         ,
           cancelBtn
         ]
 
       textInput renameNodeNameRef =
         H.div
-        {}
+        { className: "w-10/12" }
         [
           inputWithEnter
           { autoFocus: true

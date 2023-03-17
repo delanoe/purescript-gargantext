@@ -80,11 +80,12 @@ select.form-control
   &__aside
     // @TODO: topbar width
     $offset-y: 56px
-    $min-width: 280px
+    $min-width: 200px
+    $default-width: 280px
 
     flex-grow: 0
     flex-shrink: 0
-    width: $min-width
+    width: $default-width
     min-width: $min-width
     height: calc(100vh - #{ $offset-y })
     z-index: z-index('main', 'sidebar')

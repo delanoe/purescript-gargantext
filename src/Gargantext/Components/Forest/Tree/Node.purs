@@ -395,7 +395,7 @@ nodeIconCpt = here.component "nodeIcon" cpt where
         { name: GT.getIcon nodeType true
         , callback
         , status: isLeaf ? Idled $ Enabled
-        , variant: isSelected ? Primary $ Dark
+        , variant: isSelected ? Primary $ Secondary
         , overlay: false
         }
       ]
@@ -478,7 +478,8 @@ nodeLinkCpt = here.component "nodeLink" cpt where
 nodeLinkText :: GT.NodeType -> String -> String
 nodeLinkText GT.NodeUser s = s # (truncateNodeUser)
                          >>> maybe s identity
-nodeLinkText _           s = textEllipsisBreak 15 s
+-- nodeLinkText _           s = textEllipsisBreak 15 s
+nodeLinkText _           s = s
 
 truncateNodeUser :: String -> Maybe String
 truncateNodeUser = Regex.match (nodeUserRegexp) >=> flip NArray.index 1 >>> join
