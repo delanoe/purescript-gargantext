@@ -304,17 +304,27 @@ nodeSpanCpt = here.component "nodeSpan" cpt
             } []
           ,
             R2.when (showBox) $
-
-              B.iconButton
-              { name: "flower-7"
-              , className: "mainleaf__settings-icon"
-              , callback: \_ -> T.write_ true isBoxVisible
-              , title:
-                    "Each node of the Tree can perform some actions.\n"
-                  <> "Click here to execute one of them."
-              , variant: Secondary
-              , elevation: Level1
-              }
+              R.fragment [
+                B.iconButton
+                { name: "flower-7"
+                , className: "mainleaf__settings-icon"
+                , callback: \_ -> T.write_ true isBoxVisible
+                , title:
+                      "Each node of the Tree can perform some actions.\n"
+                    <> "Click here to execute one of them."
+                , variant: Secondary
+                , elevation: Level1
+                }
+              ,
+                B.iconButton
+                { name: "anchor"
+                , className: "mainleaf__settings-icon"
+                , callback: \_ -> pure unit
+                , title: "Pin the tree to this node"
+                , variant: Secondary
+                , elevation: Level1
+                }
+              ]
           ,
             R.fragment $ flip map currentTasks' \task ->
 
