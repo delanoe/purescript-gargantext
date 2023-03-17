@@ -88,7 +88,7 @@ shareNodeInnerCpt :: R.Component ShareNodeInner
 shareNodeInnerCpt = here.component "shareNodeInner" cpt
   where
     cpt { dispatch, completions } _ = do
-      state <- T.useBox "username"
+      state <- T.useBox ""
       text' /\ text <- R2.useBox' ""
 
       pure $ Tools.panel
@@ -98,7 +98,8 @@ shareNodeInnerCpt = here.component "shareNodeInner" cpt
                                          , classes: "d-flex align-items-center"
                                          , autocompleteSearch
                                          , onAutocompleteClick
-                                         , text }
+                                         , text 
+                                         , placeHolder: "username or email"}
                 ] (H.div {} [H.text text'])
       where
         autocompleteSearch input = nub $ filter (contains (Pattern input)) completions

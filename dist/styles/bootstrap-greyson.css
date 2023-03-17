@@ -6156,6 +6156,9 @@ a:hover {
     top: 90px;
   }
 }
+.input-with-autocomplete .b-icon-button {
+  margin-left: 10px;
+}
 
 .with-icon-font {
   font-family: ForkAwesome, "Muli";
