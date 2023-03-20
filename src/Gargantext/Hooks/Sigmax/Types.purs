@@ -14,7 +14,7 @@ import Data.Traversable (class Traversable)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Partial.Unsafe (unsafePartial)
-import Prelude (class Eq, class Show, map, ($), (&&), (==), (||), (<$>), (<), mod, not, pure)
+import Prelude (class Eq, class Show, map, ($), (&&), (==), (||), (<$>), (<), mod, not, pure, (<=))
 import Record.Unsafe (unsafeGet, unsafeSet)
 
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..))
@@ -171,7 +171,8 @@ graphEdges (Graph {edges}) = edges
 graphNodes :: SGraph -> Seq.Seq (Record Node)
 graphNodes (Graph {nodes}) = nodes
 
-idMap :: forall r t. Traversable t => t { id :: String | r } -> Map.Map String { id :: String | r }
+idMap :: forall r t. Traversable t
+      => t { id :: String | r } -> Map.Map String { id :: String | r }
 idMap xs = Map.fromFoldable $ (\x@{ id } -> Tuple id x) <$> xs
 
 edgesGraphMap :: SGraph -> EdgesMap
@@ -204,16 +205,16 @@ sub graph (Graph {nodes, edges}) = newGraph
     filteredEdges = edgesFilter edgeFilterFunc graph
     newGraph = nodesFilter (\n -> not (Set.member n.id nodeIds)) filteredEdges
 
-neighbours :: SGraph -> Seq.Seq (Record Node) -> Seq.Seq (Record Node)
-neighbours g nodes = Seq.fromFoldable $ Set.unions [Set.fromFoldable nodes, sources, targets]
+neighbors :: SGraph -> Seq.Seq (Record Node) -> Seq.Seq (Record Node)
+neighbors g nodes = Seq.fromFoldable $ Set.unions [if Set.size sources <= 1 then targets else sources]
   where
     nodeIds = Set.fromFoldable $ Seq.map _.id nodes
-    selectedEdges = neighbouringEdges g nodeIds
+    selectedEdges = neighboringEdges g nodeIds
     sources = Set.fromFoldable $ graphNodes $ nodesById g $ Set.fromFoldable $ Seq.map _.source selectedEdges
     targets = Set.fromFoldable $ graphNodes $ nodesById g $ Set.fromFoldable $ Seq.map _.target selectedEdges
 
-neighbouringEdges :: SGraph -> NodeIds -> Seq.Seq (Record Edge)
-neighbouringEdges g nodeIds = Seq.filter condition $ graphEdges g
+neighboringEdges :: SGraph -> NodeIds -> Seq.Seq (Record Edge)
+neighboringEdges g nodeIds = Seq.filter condition $ graphEdges g
   where
     condition {source, target} = (Set.member source nodeIds) || (Set.member target nodeIds)
 

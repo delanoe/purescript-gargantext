@@ -370,12 +370,12 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
 
 -- | See sigmajs/plugins/sigma.renderers.customShapes/shape-library.js
 modeGraphType :: Types.Mode -> String
-modeGraphType Types.Authors     = "square"
-modeGraphType Types.Institutes  = "equilateral"
-modeGraphType Types.Sources     = "star"
+modeGraphType Types.Authors     = "ccircle"
+modeGraphType Types.Institutes  = "square"
+modeGraphType Types.Sources     = "diamond"
 --modeGraphType Types.Terms       = "def"
 --modeGraphType Types.Terms       = "circle"
-modeGraphType Types.Terms       = "ccircle"
+modeGraphType Types.Terms       = "triangle"
 
 --------------------------------------------------------------
 
@@ -437,7 +437,7 @@ transformGraph graph { edgeConfluence'
     selectedEdgeIds =
       Set.fromFoldable
         $ Seq.map _.id
-        $ SigmaxT.neighbouringEdges graph selectedNodeIds'
+        $ SigmaxT.neighboringEdges graph selectedNodeIds'
     hasSelection = not $ Set.isEmpty selectedNodeIds'
 
     newEdges' = Seq.filter edgeFilter $ Seq.map (

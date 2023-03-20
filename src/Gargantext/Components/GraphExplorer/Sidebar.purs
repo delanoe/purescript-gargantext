@@ -529,7 +529,7 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
       let refreshed = neighbourBadges graph' selectedNodeIds'
       let count     = Seq.length refreshed
       let ordered   = A.sortWith (\n -> -n.size) $ Seq.toUnfoldable refreshed
-      T.write_ count   termCountBox
+      T.write_ (count-1)   termCountBox
       T.write_ ordered termListBox
       T.write_ false showMoreBox
 
@@ -704,8 +704,9 @@ badges :: SigmaxT.SGraph -> SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
 badges graph selectedNodeIds = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
 
 neighbourBadges :: SigmaxT.SGraph -> SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
-neighbourBadges graph selectedNodeIds = SigmaxT.neighbours graph selectedNodes' where
-  selectedNodes' = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
+neighbourBadges graph selectedNodeIds = SigmaxT.neighbors graph selectedNodes'
+  where
+    selectedNodes' = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
 
 ---------------------------------------------------------
 
