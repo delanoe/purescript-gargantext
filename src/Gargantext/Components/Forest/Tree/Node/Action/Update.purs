@@ -104,6 +104,7 @@ updateGraphCpt = here.component "updateGraph" cpt where
                                  , print: show } []
 
 
+{-
 
                  , H.text "Bridgness Method : Basic is ok, Advanced in Development"
                  , formChoiceSafe { items: [BridgenessMethod_Basic, BridgenessMethod_Advanced]
@@ -111,7 +112,6 @@ updateGraphCpt = here.component "updateGraph" cpt where
                                  , callback: \val -> T.write_ val methodGraphBridgeness
                                  , print: show } []
 
-{-
 
                  , H.text "NodeType 1 ?"
                  , formChoiceSafe { items: [GT.CTabTerms, GT.CTabSources, GT.CTabAuthors, GT.CTabInstitutes]
@@ -124,7 +124,6 @@ updateGraphCpt = here.component "updateGraph" cpt where
                                  , default: methodGraphNodeType2'
                                  , callback: \val -> T.write_ val methodGraphNodeType2
                                  , print: show } []
-                                 -}
 
                  , H.text "Show Strong (expected) links or weak (maybe unexpected) links?"
                  , formChoiceSafe { items: [Strong, Weak]
@@ -132,7 +131,6 @@ updateGraphCpt = here.component "updateGraph" cpt where
                                  , callback: \val -> T.write_ val methodGraphEdgesStrength
                                  , print: show } []
 
-{-
                  , formChoiceSafe { items: [Spinglass, Infomap, Confluence]
                                  , default: methodGraphClustering'
                                  , callback: \val -> T.write_ val methodGraphClustering
