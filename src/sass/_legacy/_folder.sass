@@ -11,12 +11,19 @@
   $icon-size: 30px
   $text-size: 17px
 
+  transition: $transition-base
   display: flex
   align-items: stretch
   width: $body-size
   flex-grow: 0
   flex-shrink: 0
   position: relative
+
+  &:hover,
+  &:active,
+  &:focus
+    .folder-view-item__settings
+      display: block
 
   &__body
     @include clickable
@@ -35,6 +42,7 @@
     &:active,
     &:focus
       background-color: $gray-200
+      text-decoration: none
 
   &__icon
     font-size: $icon-size
@@ -46,6 +54,9 @@
     font-size: $text-size
 
   &__settings
+    transition: $transition-base
+    display: none
+
     // best alignment to fit <icon-button> hovering block
     $offset-y: 6px
     $offset-x: 11px

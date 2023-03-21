@@ -192,7 +192,13 @@ divDropdownLeftCpt = here.component "divDropdownLeft" cpt
               }
       ]
       ,------------------------------------------------------------
-      [ LiNav { title : "Code documentation"
+
+      [ LiNav { title : "Changelog"
+              , href  : "https://gitlab.iscpif.fr/gargantext/main/blob/master/CHANGELOG.md"
+              , icon  : "fa fa-clock-o"
+              , text  : "Versions change"
+              }
+      , LiNav { title : "Code documentation"
               , href  : "https://doc.gargantext.org"
               , icon  : "fa fa-book"
               , text  : "Source Code Documentation"

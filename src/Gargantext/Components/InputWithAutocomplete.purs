@@ -135,6 +135,7 @@ type Props' =
   , boxAction           :: String -> Action
   , state               :: T.Box String
   , text                :: T.Box String
+  , placeHolder         :: String
   )
 
 inputWithAutocomplete' :: R2.Leaf Props'
@@ -148,7 +149,8 @@ inputWithAutocompleteCpt' = here.component "inputWithAutocomplete" cpt
         , dispatch
         , boxAction
         , state
-        , text } _ = do
+        , text
+        , placeHolder } _ = do
       -- States
       state'        <- T.useLive T.unequal state
       containerRef  <- R.useRef null
@@ -168,6 +170,7 @@ inputWithAutocompleteCpt' = here.component "inputWithAutocomplete" cpt
                   , ref: inputRef
                   , className: "form-control"
                   , value: state'
+                  , placeHolder: placeHolder
                   , on: { focus: onFocus completions state'
                         , input: onInput completions
                         , change: onInput completions
@@ -178,7 +181,7 @@ inputWithAutocompleteCpt' = here.component "inputWithAutocomplete" cpt
         , B.iconButton
             { callback: submit state'
             , title: "Submit"
-            , name: "plus"
+            , name: "send"
             , elevation: Level1
             }
         ]

@@ -186,7 +186,7 @@ folderCpt = here.component "folderCpt" cpt where
         }
         [
           B.ripple
-          { variant: Dark }
+          { variant: Secondary }
           [
             B.icon
             { className: "folder-view-item__icon"
