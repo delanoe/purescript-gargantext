@@ -14,8 +14,11 @@ import Gargantext.Prelude
 
 import Data.Maybe (Maybe(..))
 import Data.Set as Set
+import Data.Map (Map)
+import Data.Map as Map
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Lang as Lang
+import Gargantext.Components.Login.Types (TreeId)
 import Gargantext.Components.Nodes.Lists.Types as ListsT
 import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Themes as Themes
@@ -59,6 +62,7 @@ type Store =
   , theme               :: T.Box Themes.Theme
   , tileAxisXList       :: T.Box (Array (Record Tile))
   , tileAxisYList       :: T.Box (Array (Record Tile))
+  , pinnedTreeId        :: T.Box (Map String Int)
   )
 
 type State =
@@ -85,6 +89,7 @@ type State =
   , theme               :: Themes.Theme
   , tileAxisXList       :: Array (Record Tile)
   , tileAxisYList       :: Array (Record Tile)
+  , pinnedTreeId        :: Map String Int
   )
 
 options :: Record State
@@ -112,6 +117,7 @@ options =
   , theme               : Themes.defaultTheme
   , tileAxisXList       : mempty
   , tileAxisYList       : mempty
+  , pinnedTreeId        : Map.empty
   }
 
 context :: R.Context (Record Store)

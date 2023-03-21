@@ -251,6 +251,20 @@ $node-popup-width: 544px
       margin-right: $icon-button-margin
       left: space-x(2)
 
+  &__pin-icon
+    visibility: hidden
+    position: absolute
+
+  &:hover &__pin-icon
+    visibility: visible
+
+    @include right-handed
+      margin-left: $icon-button-margin
+      right: space-x(8)
+    @include left-handed
+      margin-right: $icon-button-margin
+      left: space-x(8)
+
   &__update-icon
     position: absolute
 

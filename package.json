@@ -12,6 +12,8 @@
         "css-greyson-theme": "sass src/sass/themes/greyson.scss:dist/styles/bootstrap-greyson.css",
         "css-herbie-theme": "sass src/sass/themes/herbie.scss:dist/styles/bootstrap-herbie.css",
         "css-monotony-theme": "sass src/sass/themes/monotony.scss:dist/styles/bootstrap-monotony.css",
+        "css-npm": "npm run css-themes-npm",
+        "css-themes-npm": "npm run css-default-theme && npm run css-dark-theme && npm run css-darkster-theme && npm run css-greyson-theme && npm run css-herbie-theme && npm run css-monotony-theme",
         "docs": "pulp docs -- --format html",
         "repl": "pulp repl",
         "clean": "rm -Rf output node_modules",
