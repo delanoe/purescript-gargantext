@@ -39,7 +39,8 @@ get session nodeId = request >>= (_ <#> parseToPhyloSet) >>> pure
 ----------------------------------------------------------
 
 newtype UpdateData = UpdateData
-  { proximity     :: Number
+  { defaultMode   :: Boolean
+  , proximity     :: Number
   , synchrony     :: Number
   , quality       :: Number
   , timeUnit      :: TimeUnit
@@ -57,6 +58,9 @@ instance JSON.WriteForeign UpdateData where
     where
       rename
           = Record.rename
+            (Proxy :: Proxy "defaultMode")
+            (Proxy :: Proxy "_sc_defaultMode")
+        >>> Record.rename
             (Proxy :: Proxy "proximity")
             (Proxy :: Proxy "_sc_phyloProximity")
         >>> Record.rename

@@ -116,7 +116,7 @@ settingsBox FolderPrivate =
                                 , Annuaire
                                 , NodeFrameWrite
                                 , NodeFrameCalc
-                                , NodeFrameNotebook
+                                -- , NodeFrameNotebook
                                 ]
                           ]
               }
@@ -130,7 +130,7 @@ settingsBox Team =
                                 , Annuaire
                                 , NodeFrameWrite
                                 , NodeFrameCalc
-                                , NodeFrameNotebook
+                                -- , NodeFrameNotebook
                                 , Team
                                 , FolderShared
                                 , NodeFrameVisio
@@ -166,7 +166,7 @@ settingsBox Folder =
                                 , Annuaire
                                 , NodeFrameWrite
                                 , NodeFrameCalc
-                                , NodeFrameNotebook
+                                -- , NodeFrameNotebook
                                 ]
                           , Move moveParameters
                           , Delete
@@ -188,7 +188,7 @@ settingsBox Corpus =
                                 , NodeFrameWrite
                                 , NodeFrameCalc
                                 , Phylo
-                                , NodeFrameNotebook
+                                -- , NodeFrameNotebook
                                 ]
                           , Link (linkParams Annuaire)
                           , Move moveParameters
@@ -348,7 +348,7 @@ settingsBox NodeFrameNotebook =
               , doc  : Documentation NodeFrameNotebook
               , buttons : [ Add [ NodeFrameCalc
                                 , NodeFrameWrite
-                                , NodeFrameNotebook
+                                -- , NodeFrameNotebook
                                 ]
                           , Move moveFrameParameters
                           , Delete

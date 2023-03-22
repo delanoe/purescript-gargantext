@@ -10,7 +10,7 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Number as Number
 import Gargantext.Components.PhyloExplorer.API (Clique(..), CliqueFilter, ReflexiveClique(..), ReflexiveTimeUnit, TimeUnitCriteria(..), UpdateData(..), extractCriteria, fromReflexiveTimeUnit, toReflexiveTimeUnit)
-import Gargantext.Components.PhyloExplorer.ConfigForm (FormData)
+import Gargantext.Components.PhyloExplorer.Config.ConfigForm (FormData)
 import Gargantext.Types (FrontendError(..))
 import Gargantext.Utils (getter)
 import Reactix as R
@@ -49,7 +49,8 @@ toFormData :: UpdateData -> Record ()
 toFormData nt =
   let r = unwrap nt
   in unsafeCoerce $
-    { proximity:
+    { defaultMode : show r.defaultMode
+    , proximity:
         show r.proximity
     , synchrony:
         show r.synchrony
@@ -85,6 +86,9 @@ toFormData nt =
 fromFormData :: Record FormData -> Either String UpdateData
 fromFormData r = do
   -- Common params
+  defaultMode <-
+    read r.defaultMode `orDie` "Invalid defaultMode"
+
   proximity <-
     Number.fromString r.proximity `orDie` "Invalid proximity"
   synchrony <-
@@ -118,7 +122,8 @@ fromFormData r = do
 
   -- Constructor
   pure $ UpdateData
-    { proximity
+    { defaultMode
+    , proximity
     , synchrony
     , quality
     , exportFilter

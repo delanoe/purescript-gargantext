@@ -7,6 +7,7 @@ import Effect.Console (log)
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Exception (catchException, throwException)
 import Effect.Unsafe (unsafePerformEffect)
+import Data.Maybe (Maybe(..))
 
 -- | JL: Astonishingly, not in the prelude
 --   AD: recent Preludes in Haskell much prefer identity
@@ -18,6 +19,12 @@ id a = a
 
 class Read a where
   read :: String -> Maybe a
+
+instance Read Boolean where
+  read :: String -> Maybe Boolean
+  read "true"  = Just true
+  read "false" = Just false
+  read _       = Nothing
 
 logs:: forall message effect.
        (MonadEffect effect)
