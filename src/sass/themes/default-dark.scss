@@ -1,0 +1,73 @@
+/*! Bootstrap `Default` https://getbootstrap.com/docs/4.6 */
+
+@use 'sass:map';
+
+
+///==========================================
+///   Theme variable overrides
+///==========================================
+
+@import "./abstract";
+
+// Colors
+$primary: #005a9a;
+$secondary: $blue;
+
+// Palettes
+$theme-colors: map.merge(
+  $theme-colors,
+  (
+    "primary":    $primary,
+    "secondary":  $secondary,
+  )
+);
+$palette-semantic: $theme-colors;
+
+$palette-gray: (
+  '0':    $white,
+  '50':   $gray-50,
+  '100':  $gray-100,
+  '150':  $gray-150,
+  '175':  $gray-175,
+  '200':  $gray-200,
+  '300':  $gray-300,
+  '400':  $gray-400,
+  '500':  $gray-500,
+  '600':  $gray-600,
+  '700':  $gray-700,
+  '800':  $gray-800,
+  '900':  $gray-900,
+  '1000': $black
+);
+
+$palette-pastel: (
+  'green':  $pastel-green,
+  'blue':   $pastel-blue,
+  'yellow': $pastel-yellow,
+  'red':    $pastel-red,
+  'orange': $pastel-orange,
+  'purple': $pastel-purple
+);
+
+
+///==========================================
+///   Custom styles specific to the theme
+///==========================================
+
+@import './_base';
+
+// Rectify "secondary" button tonal contrast
+.btn-secondary,
+.btn-secondary:hover,
+.btn-outline-secondary:not(:disabled):not(.disabled):hover,
+.btn-outline-secondary:not(:disabled):not(.disabled):active,
+.btn-outline-secondary:not(:disabled):not(.disabled).active,
+.show > .btn-outline-secondary.dropdown-toggle {
+  color: $white;
+}
+
+// Alter <b-alert> light variant for better contrast
+.alert.alert-light {
+  border-color: $gray-150;
+  color: $gray-600;
+}

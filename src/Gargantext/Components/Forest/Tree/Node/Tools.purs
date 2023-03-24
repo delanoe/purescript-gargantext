@@ -257,13 +257,14 @@ submitButton action dispatch =
            , title: show action
            , on: {click: \_ -> launchAff $ dispatch action}
            }
-           [ H.text $ " " <> text action]
+  [ H.span {className: "font-family-theme mx-1"} [ H.text $ " " <> text action] ]
 
 type Href  = String
 
 submitButtonHref :: Action -> Href -> R.Element
 submitButtonHref action href =
-  H.a { className, href, target: "_blank" } [ H.text $ " " <> text action ]
+  H.a { className, href, target: "_blank" } 
+  [ H.span {className: "font-family-theme mx-1"} [ H.text $ " " <> text action ] ]
   where
     className = "btn btn-primary fa fa-" <> icon action
 
