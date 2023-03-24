@@ -370,12 +370,12 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
 
 -- | See sigmajs/plugins/sigma.renderers.customShapes/shape-library.js
 modeGraphType :: Types.Mode -> String
-modeGraphType Types.Authors     = "ccircle"
+modeGraphType Types.Authors     = "triangle"
 modeGraphType Types.Institutes  = "square"
 modeGraphType Types.Sources     = "diamond"
 --modeGraphType Types.Terms       = "def"
 --modeGraphType Types.Terms       = "circle"
-modeGraphType Types.Terms       = "triangle"
+modeGraphType Types.Terms       = "ccircle"
 
 --------------------------------------------------------------
 
