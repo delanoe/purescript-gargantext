@@ -88,7 +88,6 @@
 /// Button
 ///-----------------------------------------------------------------------------
 
-
 .b-button {
   $spinner-size: 20px;
   $self: &;
@@ -236,6 +235,38 @@
     background-color: lighten($gray-100, 15%);
   }
 }
+
+/// Simple icons (in Forest action buttons or not clickable or in modal, etc.)
+/// ----------------------------------------------------------------------------
+
+.b-icon, .fa {
+  &:not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times) {
+    &:before {
+        color: $primary;
+    }
+    &:hover:before {
+      color: inherit;
+    }
+  }
+}
+
+.main-topbar .nav-item > a .fa,
+.popup-container .card-footer .btn-primary {
+  color: $light !important;
+  &:before {
+    color: $light !important;
+  }
+}
+
+
+/// Table headings with bg color
+/// ----------------------------------------------------------------------------
+
+.table .thead-dark th {
+  background-color: $primary;
+  border-color: darken($primary, 10%);
+}
+
 
 /// Fieldset
 ///-----------------------------------------------------------------------------
