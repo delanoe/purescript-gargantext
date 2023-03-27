@@ -124,6 +124,13 @@
   }
 }
 
+.table-header-rename .btn {
+  .fa::before {
+    color: $light !important;
+  }
+}
+
+
 /// Icon Button
 ///-----------------------------------------------------------------------------
 
@@ -247,6 +254,11 @@
     &:hover:before {
       color: inherit;
     }
+  }
+}
+.mainleaf__folder-icon:not(.b-icon-button--enabled) {
+  &::before {
+    color: inherit !important;
   }
 }
 

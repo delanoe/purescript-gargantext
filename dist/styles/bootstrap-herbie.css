@@ -5968,6 +5968,10 @@ h3 {
   line-height: 1.5;
 }
 
+.table-header-rename .btn .fa::before {
+  color: #F2F2F0 !important;
+}
+
 .b-icon-button {
   transition: color 0.2s;
   position: relative;
@@ -6089,6 +6093,10 @@ h3 {
 }
 .b-icon:not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before, .fa:not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before {
   color: inherit;
+}
+
+.mainleaf__folder-icon:not(.b-icon-button--enabled)::before {
+  color: inherit !important;
 }
 
 .main-topbar .nav-item > a .fa,
