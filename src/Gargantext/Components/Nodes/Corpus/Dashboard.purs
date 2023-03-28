@@ -123,7 +123,7 @@ dashboardLayoutLoadedCpt = here.component "dashboardLayoutLoaded" cpt
         ]
       where
 
-        addNew = H.div { className: "row" } [
+        addNew = H.div { className: "row mx-0 my-1" } [
           H.span { className: "btn btn-primary"
                  , on: { click: onClickAddChart }} [ H.span { className: "fa fa-plus" } [] ]
           ]
@@ -173,7 +173,7 @@ dashboardCodeEditorCpt = here.component "dashboardCodeEditor" cpt
           T.write_ fieldsWithIndex fieldsS
 
       pure $ R.fragment
-        [ H.div { className: "row" }
+        [ H.div { className: "row mx-0 my-1" }
           [ H.div { className: "btn btn-primary " <> (saveEnabled fieldsWithIndex fields')
                   , on: { click: onClickSave fields' }
                   }
@@ -187,7 +187,7 @@ dashboardCodeEditorCpt = here.component "dashboardCodeEditor" cpt
                                , session } []
             ]
           ]
-        , H.div { className: "row" }
+        , H.div { className: "row mx-0 my-1" }
           [ H.div { className: "btn btn-primary"
                   , on: { click: onClickAddField fieldsS }
                   }
@@ -230,7 +230,7 @@ renderChartCpt = here.component "renderChart" cpt
         , onChange
         , onRemove
         , session } _ = do
-      pure $ H.div { className: "row chart card" }
+      pure $ H.div { className: "chart card" }
         [ H.div { className: "card-header" }
           [ H.div { className: "row" }
             [ H.div { className: "col-2" }
