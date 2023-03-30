@@ -735,5 +735,6 @@ uploadFrameCalc :: Session
 uploadFrameCalc session id = do
   let p = GR.NodeAPI GT.Node (Just id) $ GT.asyncTaskTypePath GT.UploadFrameCalc
 
-  eTask <- post session p ([] :: Array String)
+  eTask <- post session p { _wf_lang: Just lang
+                          , _wf_selection: selection }
   pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.UploadFrameCalc }) <$> eTask
