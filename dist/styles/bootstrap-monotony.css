@@ -6101,11 +6101,15 @@ h3 {
 }
 
 .main-topbar .nav-item > a .fa,
-.popup-container .card-footer .btn-primary {
+.popup-container .card-footer .btn-primary,
+.login-modal-form .btn .fa,
+.corpus-layout__code-section .b-button .fa {
   color: #eceeec !important;
 }
 .main-topbar .nav-item > a .fa:before,
-.popup-container .card-footer .btn-primary:before {
+.popup-container .card-footer .btn-primary:before,
+.login-modal-form .btn .fa:before,
+.corpus-layout__code-section .b-button .fa:before {
   color: #eceeec !important;
 }
 
