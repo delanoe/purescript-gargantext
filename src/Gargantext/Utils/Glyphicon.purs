@@ -348,8 +348,6 @@ glyphiconToCharCode = _toString <<< case _ of
   "glide" -> 0xf2a5
   "glide-g" -> 0xf2a6
   "globe" -> 0xf0ac
-  "globe-circle" -> 0xf33f
-  "globe-closed" -> 0xf33a
   "globe-e" -> 0xf304
   "globe-w" -> 0xf305
   "gnu-social" -> 0xf2e7

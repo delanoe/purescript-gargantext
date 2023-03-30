@@ -694,6 +694,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 .fa-globe:before {
   content: "\f0ac";
 }
+.fa-globe-circle:before {
+  content: "\f33f";
+}
+.fa-globe-closed:before {
+  content: "\f33a";
+}
 .fa-globe-e:before {
   content: "\f304";
 }

@@ -322,7 +322,7 @@ getIcon FolderShared  false = "share-circle"
 getIcon Team  true   = "users"
 getIcon Team  false  = "users-closed"
 
-getIcon FolderPublic true  = "globe-circle"
+getIcon FolderPublic true  = "globe"
 getIcon FolderPublic false = "globe"
 ------------------------------------------------------
 

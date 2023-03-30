@@ -6089,10 +6089,10 @@ h3 {
   background-color: white;
 }
 
-.b-icon:not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before, .fa:not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before {
+.b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before, .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before {
   color: #222222;
 }
-.b-icon:not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before, .fa:not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before {
+.b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before, .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before {
   color: inherit;
 }
 

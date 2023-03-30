@@ -247,7 +247,7 @@
 /// ----------------------------------------------------------------------------
 
 .b-icon, .fa {
-  &:not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times) {
+  &:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times) {
     &:before {
         color: $primary;
     }
