@@ -6089,10 +6089,10 @@ h3 {
   background-color: white;
 }
 
-.b-icon:not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before, .fa:not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before {
+.b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before, .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before {
   color: #222222;
 }
-.b-icon:not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before, .fa:not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before {
+.b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before, .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before {
   color: inherit;
 }
 
@@ -6101,11 +6101,15 @@ h3 {
 }
 
 .main-topbar .nav-item > a .fa,
-.popup-container .card-footer .btn-primary {
+.popup-container .card-footer .btn-primary,
+.login-modal-form .btn .fa,
+.corpus-layout__code-section .b-button .fa {
   color: #eceeec !important;
 }
 .main-topbar .nav-item > a .fa:before,
-.popup-container .card-footer .btn-primary:before {
+.popup-container .card-footer .btn-primary:before,
+.login-modal-form .btn .fa:before,
+.corpus-layout__code-section .b-button .fa:before {
   color: #eceeec !important;
 }
 

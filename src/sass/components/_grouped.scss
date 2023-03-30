@@ -247,7 +247,7 @@
 /// ----------------------------------------------------------------------------
 
 .b-icon, .fa {
-  &:not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times) {
+  &:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times) {
     &:before {
         color: $primary;
     }
@@ -263,7 +263,9 @@
 }
 
 .main-topbar .nav-item > a .fa,
-.popup-container .card-footer .btn-primary {
+.popup-container .card-footer .btn-primary,
+.login-modal-form .btn .fa,
+.corpus-layout__code-section .b-button .fa {
   color: $light !important;
   &:before {
     color: $light !important;
