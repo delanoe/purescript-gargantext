@@ -134,8 +134,6 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
                 [ formChoiceSafe { items: [ CSV
                                           , CSV_HAL
                                           , WOS
-                                          , PresseRIS
-                                          , Arbitrary
                                           ]
                                  , default: CSV
                                  , callback: setFileType'
@@ -149,7 +147,7 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
               ]
             , R2.row
               [ H.div {className:"col-6 flex-space-around"}
-                [ formChoiceSafe { items: [EN, FR, No_extraction, Universal]
+                [ formChoiceSafe { items: [EN, FR, No_extraction]
                                  , default: EN
                                  , callback: setLang'
                                  , print: show
