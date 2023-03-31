@@ -6097,12 +6097,14 @@ h3 {
 }
 
 .main-topbar .nav-item > a .fa,
+.main-page__main-route .btn .fa,
 .popup-container .card-footer .btn-primary,
 .login-modal-form .btn .fa,
 .corpus-layout__code-section .b-button .fa {
   color: #f8f9fa !important;
 }
 .main-topbar .nav-item > a .fa:before,
+.main-page__main-route .btn .fa:before,
 .popup-container .card-footer .btn-primary:before,
 .login-modal-form .btn .fa:before,
 .corpus-layout__code-section .b-button .fa:before {
