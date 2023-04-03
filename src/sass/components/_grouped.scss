@@ -263,7 +263,9 @@
 }
 
 .main-topbar .nav-item > a .fa,
-.popup-container .card-footer .btn-primary,
+.main-page__main-route .btn:not(.btn-light) .fa,
+.popup-container .card-footer .btn-primary,,
+.popup-container .search-bar .btn.fa,
 .login-modal-form .btn .fa,
 .corpus-layout__code-section .b-button .fa {
   color: $light !important;

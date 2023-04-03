@@ -130,7 +130,6 @@ $node-popup-width: 544px
     .fa-newspaper-o
       font-size: 14px
     .fa-share-alt,
-    .fa-globe-circle,
     .fa-folder-open-o,
     .fa-file-code-o,
     .fa-list,
@@ -299,14 +298,19 @@ $node-popup-width: 544px
 
       .progress-text
         color: $info
-        font-size: 10px
-        line-height: 8px
-        position: absolute
+        font-size: 0.55rem
+        line-height: 0.55rem
+        white-space: nowrap
+        overflow: hidden
 
     @include right-handed
       margin-left: space-x(2)
+      &:last-child
+        margin-right: space-x(3)
     @include left-handed
       margin-right: space-x(2)
+      &:last-child
+        margin-left: space-x(3)
 
   //----------------------------
 

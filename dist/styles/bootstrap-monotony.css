@@ -6101,13 +6101,17 @@ h3 {
 }
 
 .main-topbar .nav-item > a .fa,
+.main-page__main-route .btn:not(.btn-light) .fa,
 .popup-container .card-footer .btn-primary,
+.popup-container .search-bar .btn.fa,
 .login-modal-form .btn .fa,
 .corpus-layout__code-section .b-button .fa {
   color: #eceeec !important;
 }
 .main-topbar .nav-item > a .fa:before,
+.main-page__main-route .btn:not(.btn-light) .fa:before,
 .popup-container .card-footer .btn-primary:before,
+.popup-container .search-bar .btn.fa:before,
 .login-modal-form .btn .fa:before,
 .corpus-layout__code-section .b-button .fa:before {
   color: #eceeec !important;
@@ -9995,7 +9999,6 @@ input[type=range]:-moz-focusring {
   font-size: 14px;
 }
 .mainleaf__node-icon .fa-share-alt,
-.mainleaf__node-icon .fa-globe-circle,
 .mainleaf__node-icon .fa-folder-open-o,
 .mainleaf__node-icon .fa-file-code-o,
 .mainleaf__node-icon .fa-list,
@@ -10136,16 +10139,23 @@ input[type=range]:-moz-focusring {
 }
 .mainleaf__progress-bar .b-progress-bar .progress-text {
   color: #515151;
-  font-size: 10px;
-  line-height: 8px;
-  position: absolute;
+  font-size: 0.55rem;
+  line-height: 0.55rem;
+  white-space: nowrap;
+  overflow: hidden;
 }
 .right-handed .mainleaf__progress-bar {
   margin-left: 16px;
 }
+.right-handed .mainleaf__progress-bar:last-child {
+  margin-right: 24px;
+}
 
 .left-handed .mainleaf__progress-bar {
   margin-right: 16px;
+}
+.left-handed .mainleaf__progress-bar:last-child {
+  margin-left: 24px;
 }
 
 .mainleaf__version-comparator {
