@@ -5,10 +5,11 @@ module Gargantext.Components.Forest.Tree.Node
 
 import Gargantext.Prelude
 
+import DOM.Simple.Console (log2)
 import Data.Array.NonEmpty as NArray
 import Data.Foldable (intercalate)
-import Data.Maybe (Maybe(..), maybe)
 import Data.Map as Map
+import Data.Maybe (Maybe(..), maybe)
 import Data.String.Regex as Regex
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
@@ -305,7 +306,9 @@ nodeSpanCpt = here.component "nodeSpan" cpt
                 B.iconButton
                 { name: "anchor"
                 , className: "mainleaf__pin-icon"
-                , callback: \_ -> T.modify_ (Map.insert (show session) id) boxes.pinnedTreeId
+                , callback: \_ -> do 
+                log2 "[Pinning tree ID]" id
+                T.modify_ (Map.insert (show session) id) boxes.pinnedTreeId
                 , title: "Pin the tree to this node"
                 , variant: Secondary
                 , elevation: Level1
