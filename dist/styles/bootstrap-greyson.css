@@ -5840,10 +5840,24 @@ h3 {
   background-color: white;
 }
 
-.b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before, .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before {
+.main-topbar .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
+.main-topbar .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
+.router__aside .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
+.router__aside .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
+.router__body .texts-layout .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
+.router__body .texts-layout .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
+.modal-dialog .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
+.modal-dialog .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before {
   color: #2f3c48;
 }
-.b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before, .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before {
+.main-topbar .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
+.main-topbar .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
+.router__aside .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
+.router__aside .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
+.router__body .texts-layout .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
+.router__body .texts-layout .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
+.modal-dialog .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
+.modal-dialog .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before {
   color: inherit;
 }
 
@@ -5852,7 +5866,6 @@ h3 {
 }
 
 .main-topbar .nav-item > a .fa,
-.main-page__main-route .btn:not(.btn-light) .fa,
 .popup-container .card-footer .btn-primary,
 .popup-container .search-bar .btn.fa,
 .login-modal-form .btn .fa,
@@ -5860,7 +5873,6 @@ h3 {
   color: #eceeec !important;
 }
 .main-topbar .nav-item > a .fa:before,
-.main-page__main-route .btn:not(.btn-light) .fa:before,
 .popup-container .card-footer .btn-primary:before,
 .popup-container .search-bar .btn.fa:before,
 .login-modal-form .btn .fa:before,

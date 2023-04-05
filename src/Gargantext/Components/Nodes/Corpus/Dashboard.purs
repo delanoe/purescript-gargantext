@@ -109,7 +109,7 @@ dashboardLayoutLoadedCpt = here.component "dashboardLayoutLoaded" cpt
         , nodeId
         , onChange
         , session } _ = do
-      pure $ H.div {}
+      pure $ H.div { className: "dashboard-layout" }
         [ dashboardCodeEditor { fields
                               , nodeId
                               , onChange: \fs -> onChange { charts, fields: fs }

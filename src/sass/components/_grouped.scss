@@ -246,7 +246,15 @@
 /// Simple icons (in Forest action buttons or not clickable or in modal, etc.)
 /// ----------------------------------------------------------------------------
 
-.b-icon, .fa {
+.main-topbar .b-icon, 
+.main-topbar .fa,
+.router__aside .b-icon, 
+.router__aside .fa,
+.router__body .texts-layout .b-icon,
+.router__body .texts-layout .fa,
+.modal-dialog .b-icon, 
+.modal-dialog .fa
+{
   &:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times) {
     &:before {
         color: $primary;
@@ -263,8 +271,7 @@
 }
 
 .main-topbar .nav-item > a .fa,
-.main-page__main-route .btn:not(.btn-light) .fa,
-.popup-container .card-footer .btn-primary,,
+.popup-container .card-footer .btn-primary,
 .popup-container .search-bar .btn.fa,
 .login-modal-form .btn .fa,
 .corpus-layout__code-section .b-button .fa {
