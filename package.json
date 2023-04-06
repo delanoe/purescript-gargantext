@@ -1,6 +1,6 @@
 {
     "name": "Gargantext",
-    "version": "0.0.6.9.8.4",
+    "version": "0.0.6.9.8.5",
     "scripts": {
         "generate-purs-packages-nix": "./nix/generate-purs-packages.nix",
         "generate-psc-packages-nix": "./nix/generate-packages-json.bash",
