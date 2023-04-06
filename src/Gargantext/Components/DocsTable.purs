@@ -319,7 +319,7 @@ searchBarCpt = here.component "searchBar" cpt
         pure unit
 
     searchButton query queryText' =
-      H.button { className: "btn btn-primary"
+      H.button { className: "btn btn-light"
                , on: { click: \_ -> T.write_ queryText' query }
                , type: "submit" }
         [ H.span {className: "fa fa-search"} [] ]

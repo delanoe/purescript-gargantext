@@ -8,6 +8,8 @@ import Data.Lens (Lens', lens)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import GraphQL.Client.Args (NotNull, (=>>))
 import GraphQL.Client.Variable (Var(..))
+import Gargantext.Utils.GraphQL as GGQL
+import Type.Proxy (Proxy(..))
 
 
 type School
@@ -16,9 +18,13 @@ type School
     , school_shortName :: String
     }
 
-schoolsQuery = { imt_schools:
-                  { school_id: unit
-                  , school_longName: unit
-                  , school_shortName: unit}
-                }
+type SchoolsQuery
+  = { imt_schools ::
+         { school_id :: Unit
+         , school_longName :: Unit
+         , school_shortName :: Unit } }
 
+schoolsQuery :: SchoolsQuery
+schoolsQuery = { imt_schools:
+                 GGQL.getFieldsStandard (Proxy :: _ School)
+                }

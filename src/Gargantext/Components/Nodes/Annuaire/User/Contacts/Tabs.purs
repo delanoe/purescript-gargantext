@@ -58,7 +58,7 @@ type TabsProps =
   )
 
 tabs :: R2.Leaf TabsProps
-tabs = R2.leafComponent tabsCpt
+tabs = R2.leaf tabsCpt
 tabsCpt :: R.Component TabsProps
 tabsCpt = here.component "tabs" cpt
   where
@@ -161,7 +161,8 @@ ngramsViewCpt = here.component "ngramsView" cpt
         , tabNgramType
         , tabType
         , treeEdit: { box: treeEditBox
-                    , getNgramsChildren: \_ -> pure []
+                    , getNgramsChildrenAff: Nothing
+                    , getNgramsChildren: Nothing
                     , onCancelRef
                     , onNgramsClickRef
                     , onSaveRef }

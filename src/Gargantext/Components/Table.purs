@@ -731,7 +731,7 @@ tableHeaderLayoutCpt = here.component "tableHeaderLayout" cpt
     cacheStateToggle NT.CacheOff = NT.CacheOn
 
 table :: R2.Leaf Props
-table = R2.leafComponent tableCpt
+table = R2.leaf tableCpt
 tableCpt :: R.Component Props
 tableCpt = here.component "table" cpt
   where
@@ -741,7 +741,8 @@ tableCpt = here.component "table" cpt
         , rows
         , syncResetButton
         , totalRecords
-        , wrapColElts } _ = do
+        , wrapColElts
+        } _ = do
       params' <- T.useLive T.unequal params
 
       let
@@ -832,7 +833,7 @@ sizeDDCpt = here.component "sizeDD" cpt
         R2.select { className, defaultValue: show pageSize, on: {change} } sizes
       ]
       where
-        className = "form-control"
+        className = "form-control form-control-sm"
         change e = do
           let ps = string2PageSize $ R.unsafeEventValue e
           _ <- T.modify (\p -> stateParams $ (paramsState p) { pageSize = ps }) params
@@ -859,7 +860,7 @@ type PaginationProps =
   , totalPages :: Int )
 
 pagination :: R2.Leaf PaginationProps
-pagination = R2.leafComponent paginationCpt
+pagination = R2.leaf paginationCpt
 paginationCpt :: R.Component PaginationProps
 paginationCpt = here.component "pagination" cpt
   where

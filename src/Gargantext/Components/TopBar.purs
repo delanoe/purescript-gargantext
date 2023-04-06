@@ -1,15 +1,16 @@
-module Gargantext.Components.TopBar where
+module Gargantext.Components.TopBar (component) where
 
 import Gargantext.Prelude
 
 import Data.Foldable (intercalate)
-import Gargantext.Components.App.Store (Boxes)
+import Effect (Effect)
+import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
 import Gargantext.Components.Lang (langSwitcher, allFeLangs)
 import Gargantext.Components.Themes (themeSwitcher, allThemes)
-import Gargantext.Types (Handed(..))
-import Gargantext.Utils ((?))
+import Gargantext.Types (Handed(..), defaultCacheParams)
+import Gargantext.Utils (setter, (?))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -18,93 +19,116 @@ import Toestand as T
 here :: R2.Here
 here = R2.here "Gargantext.Components.TopBar"
 
-type TopBarProps =
-  ( boxes :: Boxes )
+component :: R2.Leaf ()
+component = R2.leaf componentCpt
+componentCpt :: R.Component ()
+componentCpt = here.component "main" cpt where
+  cpt _ _ = do
+    -- | States
+    -- |
+    { lang
+    , showTree
+    , theme
+    } <- AppStore.use
 
-topBar :: R2.Leaf TopBarProps
-topBar = R2.leaf topBarCpt
-topBarCpt :: R.Component TopBarProps
-topBarCpt = here.component "topBar" cpt
-  where
-    cpt { boxes: { handed, lang, showTree, theme } } children = do
+    showTree' <- R2.useLive' showTree
 
-      showTree' <- R2.useLive' showTree
+    -- | Effects
+    -- |
 
-      pure $
+    -- | Behaviors
+    -- |
+    let
+      onTreeToggleClick _ = do
+        let new = not showTree'
+        T.write_ new showTree
+        -- transfer local Component change to Local Storage
+        onTreeToggleChange new
 
-        H.div
-        { className: "main-topbar navbar navbar-expand-lg navbar-dark bg-dark"
-        , id: "dafixedtop"
-        , role: "navigation"
-        } $
+    -- | Render
+    -- |
+    pure $
+
+      H.div
+      { className: "main-topbar navbar navbar-expand-lg navbar-dark bg-dark"
+      , id: "dafixedtop"
+      , role: "navigation"
+      }
+      [
+        logo
+      ,
+        divDropdownLeft {} []
+      ,
+        H.li
+        { title: "If you are Left Handed you can change\n"
+              <> "the interface by clicking on me. Click\n"
+              <> "again to come back to previous state."
+        , className: "nav-item main-topbar__hand-button"
+        }
         [
-          logo
-        ,
-          divDropdownLeft {} []
-        ,
-          handButton
-        ,
-          smiley
-        ,
-          H.li
-          { className: "nav-item main-topbar__theme-switcher" }
-          [
-            themeSwitcher
-            { theme
-            , themes: allThemes
-            } []
-          ]
-        ,
-          H.li
-          { className: "nav-item main-topbar__lang-switcher" }
-          [
-            langSwitcher
-            { lang
-            , langs: allFeLangs
-            } []
-          ]
-        ,
-          B.button
-          { variant: showTree' ?
-              ButtonVariant Light $
-              OutlinedButtonVariant Light
-          , callback: const $ T.modify_ (not) showTree
-          , className: "main-topbar__tree-switcher"
-          }
-          [
-            if showTree'
-            then H.text "Hide Tree"
-            else H.text "Show Tree"
-          ]
-        ,
-          H.div
-          { id: "portal-topbar" } []
+          handedChooser
+          {}
         ]
-          <> children
+      ,
+        H.li
+        { title: "Hello! Looking for the tree ?\n"
+              <> "Just watch on the other side!\n"
+              <> "Click on the hand again to see it back."
+        , className : "nav-item main-topbar__help-button"
+        }
+        [
+          H.a
+          { className: "nav-link navbar-text" }
+          [
+            H.span
+            { className: "fa fa-question-circle-o" } []
+          ]
+        ]
+      ,
+        H.li
+        { className: "nav-item main-topbar__theme-switcher" }
+        [
+          themeSwitcher
+          { theme
+          , themes: allThemes
+          } []
+        ]
+      ,
+        H.li
+        { className: "nav-item main-topbar__lang-switcher" }
+        [
+          langSwitcher
+          { lang
+          , langs: allFeLangs
+          } []
+        ]
+      ,
+        B.button
+        { variant: showTree' ?
+            ButtonVariant Light $
+            OutlinedButtonVariant Light
+        , callback: onTreeToggleClick
+        , className: "main-topbar__tree-switcher"
+        }
+        [
+          if showTree'
+          then H.text "Hide Tree"
+          else H.text "Show Tree"
+        ]
+      ,
+        H.div
+        { id: "portal-topbar" } []
+      ]
 
-        where
-          handButton = H.li { title: "If you are Left Handed you can change\n"
-                              <> "the interface by clicking on me. Click\n"
-                              <> "again to come back to previous state."
-                            , className: "nav-item main-topbar__hand-button"
-                            } [handedChooser { handed } []]
+      -- SB.searchBar {session, databases: allDatabases}
 
-          smiley = H.li { title: "Hello! Looking for the tree ?\n"
-                              <> "Just watch on the other side!\n"
-                              <> "Click on the hand again to see it back."
-                        , className : "nav-item main-topbar__help-button"
-                        }
-                        [ H.a { className: "nav-link navbar-text" } [H.span {className: "fa fa-question-circle-o"} [] ]]
+onTreeToggleChange :: Boolean -> Effect Unit
+onTreeToggleChange new = do
+  cache <- R2.loadLocalStorageState' R2.appParamsKey defaultCacheParams
+  let update = setter (_ { showTree = new }) cache
+  R2.setLocalStorageState R2.appParamsKey update
 
-                      {-, H.ul { title: "Dark Mode soon here"
-                              , className : "nav navbar-nav"
-                              } [ H.li {} [ H.a {} [ H.span {className : "fa fa-moon"}[]
-                                                        ]
-                                              ]
-                                    ]
-                            -}
-
-          -- SB.searchBar {session, databases: allDatabases}
+----------------------------------------------------------
 
 logo :: R.Element
 logo =
@@ -168,7 +192,13 @@ divDropdownLeftCpt = here.component "divDropdownLeft" cpt
               }
       ]
       ,------------------------------------------------------------
-      [ LiNav { title : "Code documentation"
+
+      [ LiNav { title : "Changelog"
+              , href  : "https://gitlab.iscpif.fr/gargantext/main/blob/master/CHANGELOG.md"
+              , icon  : "fa fa-clock-o"
+              , text  : "Versions change"
+              }
+      , LiNav { title : "Code documentation"
               , href  : "https://doc.gargantext.org"
               , icon  : "fa fa-book"
               , text  : "Source Code Documentation"
@@ -267,28 +297,43 @@ liNav (LiNav { title : title'
                   ]
             ]
 
+------------------------------------------------------
 
-type HandedChooserProps = (
-  handed :: T.Box Handed
-  )
+handedChooser :: R2.Leaf ()
+handedChooser = R2.leaf handedChooserCpt
+handedChooserCpt :: R.Component ()
+handedChooserCpt = here.component "handedChooser" cpt where
+  cpt _ _ = do
+    -- | States
+    -- |
+    { handed
+    } <- AppStore.use
 
-handedChooser :: R2.Component HandedChooserProps
-handedChooser = R.createElement handedChooserCpt
+    handed' <- R2.useLive' handed
 
-handedChooserCpt :: R.Component HandedChooserProps
-handedChooserCpt = here.component "handedChooser" cpt
-  where
-    cpt { handed } _ = do
-      handed' <- T.useLive T.unequal handed
+    -- | Computed
+    -- |
+    let
+      handedClass LeftHanded = "fa fa-hand-o-left"
+      handedClass RightHanded = "fa fa-hand-o-right"
 
-      pure $ H.a { className: "nav-link navbar-text" } [
-        H.span { className: handedClass handed'
-               , on: { click: onClick handed } } []
-        ]
+    -- | Behaviors
+    -- |
+    let
+      onClick :: Unit -> Effect Unit
+      onClick _ = flip T.modify_ handed case _ of
+        LeftHanded  -> RightHanded
+        RightHanded -> LeftHanded
 
-    handedClass LeftHanded = "fa fa-hand-o-left"
-    handedClass RightHanded = "fa fa-hand-o-right"
+    -- | Render
+    -- |
+    pure $
 
-    onClick handed = T.modify_ (\h -> case h of
-      LeftHanded  -> RightHanded
-      RightHanded -> LeftHanded) handed
+      H.a
+      { className: "nav-link navbar-text" }
+      [
+        H.span
+        { className: handedClass handed'
+        , on: { click: onClick }
+        } []
+      ]

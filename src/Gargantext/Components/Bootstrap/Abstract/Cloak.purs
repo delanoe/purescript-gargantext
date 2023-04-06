@@ -33,6 +33,9 @@ options =
   , sustainingPhaseDuration : Nothing
   }
 
+cname :: String
+cname = "b-cloak"
+
 -- |  Abstract component type easing the transition display between a content
 -- |  component and transitional (or cloak) component
 -- |
@@ -108,10 +111,6 @@ options =
 -- |    ```
 cloak :: forall r. R2.OptLeaf Options Props r
 cloak = R2.optLeaf component options
-
-cname :: String
-cname = "b-cloak"
-
 component :: R.Component Props
 component = R.hooksComponent cname cpt where
   cpt props _ = do

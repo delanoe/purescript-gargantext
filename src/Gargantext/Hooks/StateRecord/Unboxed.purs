@@ -13,6 +13,10 @@ import Prim.RowList (class RowToList)
 import Reactix as R
 import Toestand as T
 
+-- @XXX StateRecord with distinct value types → eg. conflicts when "string" and
+--      "boolean" are coexisting as value on the same hook
+--        ↳ workaround is to manually bind the input (copying `setStateKey`
+--          method)
 
 type Methods r a =
   -- | Every provided props will be available within the `formFields` proxy

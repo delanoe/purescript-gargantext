@@ -549,6 +549,12 @@ $decreasing-color: #11638F;
 
 .phylo-sidebar {
   @include term-window;
+
+  &__close {
+    position: absolute;
+    right: 0;
+    margin-right: space-x(3);
+  }
 }
 
 .phylo-details-tab {

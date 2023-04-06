@@ -34,7 +34,7 @@ options =
   , title     : ""
   , overlay   : true
   , elevation : Level0
-  , variant   : Dark
+  , variant   : Secondary
   , focusRing : true
   }
 

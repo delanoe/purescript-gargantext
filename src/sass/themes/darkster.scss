@@ -10,18 +10,165 @@
 @import "./abstract";
 
 // Fonts
-@import url(https://fonts.googleapis.com/css?family=Comfortaa:200,300,400,700);
+// @import url(https://fonts.googleapis.com/css?family=Comfortaa:200,300,400,700);
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Comfortaa';
+  font-style: normal;
+  font-weight: 300;
+  src: url(/fonts/comfortaa/1Ptsg8LJRfWJmhDAuUs4QIFqPfE.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Comfortaa';
+  font-style: normal;
+  font-weight: 300;
+  src: url(/fonts/comfortaa/1Ptsg8LJRfWJmhDAuUs4SYFqPfE.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'Comfortaa';
+  font-style: normal;
+  font-weight: 300;
+  src: url(/fonts/comfortaa/1Ptsg8LJRfWJmhDAuUs4ToFqPfE.woff2) format('woff2');
+  unicode-range: U+0370-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Comfortaa';
+  font-style: normal;
+  font-weight: 300;
+  src: url(/fonts/comfortaa/1Ptsg8LJRfWJmhDAuUs4QoFqPfE.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Comfortaa';
+  font-style: normal;
+  font-weight: 300;
+  src: url(/fonts/comfortaa/1Ptsg8LJRfWJmhDAuUs4Q4FqPfE.woff2) format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Comfortaa';
+  font-style: normal;
+  font-weight: 300;
+  src: url(/fonts/comfortaa/1Ptsg8LJRfWJmhDAuUs4TYFq.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Comfortaa';
+  font-style: normal;
+  font-weight: 400;
+  src: url(/fonts/comfortaa/1Ptsg8LJRfWJmhDAuUs4QIFqPfE.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Comfortaa';
+  font-style: normal;
+  font-weight: 400;
+  src: url(/fonts/comfortaa/1Ptsg8LJRfWJmhDAuUs4SYFqPfE.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'Comfortaa';
+  font-style: normal;
+  font-weight: 400;
+  src: url(/fonts/comfortaa/1Ptsg8LJRfWJmhDAuUs4ToFqPfE.woff2) format('woff2');
+  unicode-range: U+0370-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Comfortaa';
+  font-style: normal;
+  font-weight: 400;
+  src: url(/fonts/comfortaa/1Ptsg8LJRfWJmhDAuUs4QoFqPfE.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Comfortaa';
+  font-style: normal;
+  font-weight: 400;
+  src: url(/fonts/comfortaa/1Ptsg8LJRfWJmhDAuUs4Q4FqPfE.woff2) format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Comfortaa';
+  font-style: normal;
+  font-weight: 400;
+  src: url(/fonts/comfortaa/1Ptsg8LJRfWJmhDAuUs4TYFq.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Comfortaa';
+  font-style: normal;
+  font-weight: 700;
+  src: url(/fonts/comfortaa/1Ptsg8LJRfWJmhDAuUs4QIFqPfE.woff2) format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C88, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Comfortaa';
+  font-style: normal;
+  font-weight: 700;
+  src: url(/fonts/comfortaa/1Ptsg8LJRfWJmhDAuUs4SYFqPfE.woff2) format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'Comfortaa';
+  font-style: normal;
+  font-weight: 700;
+  src: url(/fonts/comfortaa/1Ptsg8LJRfWJmhDAuUs4ToFqPfE.woff2) format('woff2');
+  unicode-range: U+0370-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Comfortaa';
+  font-style: normal;
+  font-weight: 700;
+  src: url(/fonts/comfortaa/1Ptsg8LJRfWJmhDAuUs4QoFqPfE.woff2) format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Comfortaa';
+  font-style: normal;
+  font-weight: 700;
+  src: url(/fonts/comfortaa/1Ptsg8LJRfWJmhDAuUs4Q4FqPfE.woff2) format('woff2');
+  unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Comfortaa';
+  font-style: normal;
+  font-weight: 700;
+  src: url(/fonts/comfortaa/1Ptsg8LJRfWJmhDAuUs4TYFq.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 $headings-font-family: "Comfortaa";
 
 // Colors
-$primary    :#FF550B;
-$secondary  :#303030;
+$primary    :#33A2FF;
+$secondary  :#52B0FF;
 $success    :#015668;
 $danger     :#FF304F;
 $info       :#0F81C7;
 $warning    :#0DE2EA;
-$light      :#e8e8e8;
-$dark       :#000000;
+$light      :#D1CDC7;
+$dark       :#2C2F31;
+
+$light-secondary: #B5AFA6;
+$dark-secondary: #383D3F;
 
 $gray-50 : #121212; // (+)
 $gray-100: #212529;
@@ -85,7 +232,7 @@ $annotation-field-base-alpha: 15%;
 
 // (overriding bootstrap "_variable.scss")
 $enable-shadows:true;
-$body-bg:$black;
+$body-bg:#181A1B;
 $body-color:#cccccc;
 $link-color:#f0f0f0;
 $font-size-base:1.1rem;
@@ -158,23 +305,73 @@ $input-disabled-bg: $gray-100;
 
 @import './_base';
 
+.dropdown-menu {
+  a {
+    color: $light;
+  }
+  background-color: $body-bg;
+  .dropdown-item:hover, .dropdown-item:focus {
+    background-color: $dark-secondary;
+  }
+  .dropdown-divider {
+    border-top: 1px solid $dark-secondary;
+  }
+}
 
-.navbar-dark.bg-primary {background-color:#111111 !important;}
-.table.able {color:#ccccc5}
-#sp-container .table tr td a { color: #005a9aff; }
+.forest-layout {
+  border-right: 2px solid $dark-secondary !important;
+}
 
-.nav-tabs .nav-link.active, .nav-tabs .nav-item.show .nav-link {
-  background-color: $gray-300;
-  color: $gray-700
+.forest-layout__action {
+  .btn-light {
+    color: $light;
+    background-color: $dark;
+    border-color: $dark-secondary;
+  }
+}
+
+.navbar-dark.bg-primary {
+  background-color:#111111 !important;
+}
+
+.table {
+  &.able {
+    color:#ccccc5;
+  }
+  th, td {
+    border-top: 1px solid $dark-secondary;
+  }
+  thead th {
+    border-bottom: 2px solid $dark-secondary;
+  }
+}
+
+.nav-tabs {
+  border-bottom: 1px solid $dark-secondary;
+  & .nav-link.active, 
+  & .nav-item.show .nav-link {
+    background-color: $dark;
+    color: $light-secondary;
+    border-color: $dark-secondary;
+  }
 }
 .nav.nav-tabs li a.nav-link.active:hover {
-  color: $gray-900;
+  color: $dark;
 }
 .form-control,
 .form-control:focus{
-  background-color: $gray-300;
+  background-color: $body-bg;
   color: $gray-700;
+  border-color: $dark-secondary;
 }
-.card-header {
-  background-color: $gray-400;
+.card-header,
+.card-footer {
+  background-color: $dark;
 }
+.mainleaf {
+  &__version-badge {
+    background-color: $dark;
+    border: 1px solid $dark-secondary;
+  }
+}
+

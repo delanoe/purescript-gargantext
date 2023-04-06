@@ -31,7 +31,6 @@ type Props =
 
 legend :: R2.Leaf Props
 legend = R2.leaf legendCpt
-
 legendCpt :: R.Component Props
 legendCpt = here.component "legend" cpt where
   cpt { legendSeq

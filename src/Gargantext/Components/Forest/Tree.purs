@@ -359,8 +359,8 @@ uploadArbitraryFile' fileFormat mName blob p@{ boxes: { errors, tasks }, session
     GAT.insert id task tasks
     here.log2 "[uploadArbitraryFile'] UploadArbitraryFile, uploaded, task:" task
 
-uploadFrameCalc' p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } = do
-  eTask <- uploadFrameCalc session id
+uploadFrameCalc' lang p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
+  eTask <- uploadFrameCalc session id lang selection
   handleRESTError errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
     here.log2 "[performAction] UploadFrameCalc, uploaded, task:" task
@@ -384,9 +384,11 @@ linkNode nodeType params p@{ boxes: { errors }, session } = traverse_ f params w
     handleRESTError errors eTask $ \_task -> pure unit
     refreshTree p
 
-documentsFromWriteNodes id p@{ boxes: { errors }, session } = do
-  eTask <- documentsFromWriteNodesReq session id
-  handleRESTError errors eTask $ \_task -> pure unit
+documentsFromWriteNodes params p@{ boxes: { errors, tasks }, session, tree: NTree (LNode { id }) _ } = do
+  eTask <- documentsFromWriteNodesReq session params
+  handleRESTError errors eTask $ \task -> liftEffect $ do
+    GAT.insert id task tasks
+    pure unit
   refreshTree p
 
 -- | This thing is basically a hangover from when garg was a thermite
@@ -400,7 +402,7 @@ performAction (ShareTeam username) p                          = shareTeam userna
 performAction (SharePublic { params }) p                      = sharePublic params p
 performAction (AddContact params) p                           = addContact params p
 performAction (AddNode name nodeType) p                       = addNode' name nodeType p
-performAction UploadFrameCalc p                               = uploadFrameCalc' p
+performAction (UploadFrameCalc lang selection) p              = uploadFrameCalc' lang p selection
 performAction (UploadFile nodeType fileType fileFormat lang mName contents selection) p =
   uploadFile' nodeType fileType fileFormat lang mName contents p selection
 performAction (UploadArbitraryFile fileFormat mName blob selection) p              =
@@ -411,5 +413,5 @@ performAction (MergeNode {params}) p                          = mergeNode params
 performAction (LinkNode { nodeType, params }) p               = linkNode nodeType params p
 performAction RefreshTree p                                   = refreshTree p
 performAction CloseBox p                                      = closeBox p
-performAction (DocumentsFromWriteNodes { id }) p              = documentsFromWriteNodes id p
+performAction (DocumentsFromWriteNodes params) p              = documentsFromWriteNodes params p
 performAction NoAction _                                      = liftEffect $ here.log "[performAction] NoAction"

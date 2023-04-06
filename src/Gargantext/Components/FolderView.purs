@@ -55,7 +55,7 @@ type Props =
 data FolderStyle = FolderUp | FolderChild
 
 folderView :: R2.Leaf Props
-folderView = R2.leafComponent folderViewCpt
+folderView = R2.leaf folderViewCpt
 folderViewCpt :: R.Component Props
 folderViewCpt = here.component "folderViewCpt" cpt where
   cpt { nodeId, session } _ = do
@@ -113,16 +113,16 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
   makeParentFolder root (Just parent) props =
     [
       folder
-      { nodeId: root.id
+      { disabled: disabled parent
       , linkId: parent.id
       , linkNodeType: parent.node_type
+      , nodeId: root.id
       , nodeType: root.node_type
       , parentId: parent.id
       , reload: props.reload
       , session: props.session
       , style: FolderUp
       , text: "..."
-      , disabled: disabled parent
       }
     ]
     where
@@ -133,32 +133,32 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
   sortFolders a b = compare a.id b.id
 
 type FolderProps =
-  ( style         :: FolderStyle
-  , text          :: String
-  , nodeType      :: GT.NodeType
-  , nodeId        :: Int
+  ( disabled      :: Boolean
   , linkNodeType  :: GT.NodeType
   , linkId        :: Int
-  , session       :: Session
+  , nodeType      :: GT.NodeType
+  , nodeId        :: Int
   , parentId      :: Int
   , reload        :: T.Box T2.Reload
-  , disabled      :: Boolean
+  , session       :: Session
+  , style         :: FolderStyle
+  , text          :: String
   )
 
 folder :: R2.Leaf FolderProps
 folder = R2.leaf folderCpt
 folderCpt :: R.Component FolderProps
 folderCpt = here.component "folderCpt" cpt where
-  cpt props@{ nodeId
-            , nodeType
+  cpt props@{ disabled
             , linkId
             , linkNodeType
+            , nodeId
+            , nodeType
             , parentId
             , reload
             , session
             , style
             , text
-            , disabled
             } _ = do
     -- | States
     -- |
@@ -186,7 +186,7 @@ folderCpt = here.component "folderCpt" cpt where
         }
         [
           B.ripple
-          { variant: Dark }
+          { variant: Secondary }
           [
             B.icon
             { className: "folder-view-item__icon"
@@ -203,7 +203,7 @@ folderCpt = here.component "folderCpt" cpt where
         { className: "folder-view-item__settings" }
         [
           B.iconButton
-          { name: "cog"
+          { name: "flower-7"
           , callback: \_ -> T.write_ true isBoxVisible
           , title:
                 "Each node of the Tree can perform some actions.\n"
@@ -225,12 +225,12 @@ folderCpt = here.component "folderCpt" cpt where
         [
           nodePopupView
           { boxes
+          , closeCallback: \_ -> T.write_ false isBoxVisible
           , dispatch: dispatch
           , id: props.nodeId
           , nodeType: props.nodeType
           , name: props.text
-          , session: props.session
-          , closeCallback: \_ -> T.write_ false isBoxVisible
+          , session
           }
         ]
       ]

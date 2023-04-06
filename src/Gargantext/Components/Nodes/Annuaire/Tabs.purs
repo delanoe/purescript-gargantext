@@ -60,7 +60,7 @@ type TabsProps =
   )
 
 tabs :: R2.Leaf TabsProps
-tabs = R2.leafComponent tabsCpt
+tabs = R2.leaf tabsCpt
 tabsCpt :: R.Component TabsProps
 tabsCpt = here.component "tabs" cpt where
   cpt props _ = do
@@ -110,7 +110,7 @@ type NgramsViewTabsProps =
   | TabsProps )
 
 ngramsView :: R2.Leaf NgramsViewTabsProps
-ngramsView = R2.leafComponent ngramsViewCpt
+ngramsView = R2.leaf ngramsViewCpt
 ngramsViewCpt :: R.Component NgramsViewTabsProps
 ngramsViewCpt = here.component "ngramsView" cpt where
   cpt props@{ defaultListId, mode, nodeId, session } _ = do
@@ -131,7 +131,8 @@ ngramsViewCpt = here.component "ngramsView" cpt where
            , tabType:        TabPairing (TabNgramType $ modeTabType mode)
            , tabNgramType:   modeTabType' mode
            , treeEdit: { box: treeEditBox
-                       , getNgramsChildren: \_ -> pure []
+                       , getNgramsChildrenAff: Nothing
+                       , getNgramsChildren: Nothing
                        , onCancelRef
                        , onNgramsClickRef
                        , onSaveRef }

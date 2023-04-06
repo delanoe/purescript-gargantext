@@ -1,6 +1,6 @@
 {
     "name": "Gargantext",
-    "version": "0.0.6.8.5",
+    "version": "0.0.6.9.8.4",
     "scripts": {
         "generate-purs-packages-nix": "./nix/generate-purs-packages.nix",
         "generate-psc-packages-nix": "./nix/generate-packages-json.bash",
@@ -35,14 +35,17 @@
         "base-x": "^3.0.2",
         "bootstrap": "^4.6.0",
         "bootstrap-dark": "^1.0.3",
+        "buffer": "^6.0.3",
         "create-react-class": "^15.6.3",
         "crypto": "^1.0.1",
         "d3": "^7.6.1",
         "echarts": "^5.1.2",
         "echarts-for-react": "^3.0.1",
         "esbuild": "^0.15.7",
-        "graphology": "^0.24.1",
+        "graphology": "^0.25.1",
+        "graphology-communities-louvain": "^2.0.1",
         "graphology-layout-forceatlas2": "^0.9.2",
+        "graphology-layout-noverlap": "^0.4.2",
         "graphology-operators": "^1.6.0",
         "graphql": "^15.6.1",
         "graphql-ws": "^5.5.0",
@@ -52,13 +55,12 @@
         "markdown-it": "^13.0.1",
         "prop-types": "^15.6.2",
         "pullstate": "^1.20.6",
-        "react": "^17.0.2",
         "react-awesome-popover": "^6.1.1",
         "react-bootstrap": "^1.5.2",
         "react-dom": "^17.0.2",
         "react-tooltip": "^4.2.8",
         "secp256k1": "^4.0.2",
-        "sigma": "^2.3.1",
+        "sigma": "^2.4.0",
         "twgl.js": "^5.0.4"
     },
     "devDependencies": {
@@ -66,7 +68,7 @@
         "@babel/preset-env": "^7.15.6",
         "@babel/preset-react": "^7.12.7",
         "@getgauge/cli": "^1.4.0",
-        "parcel": "^2.0.0-rc.0",
+        "parcel": "^2.8.2",
         "react-testing-library": "^8.0.1",
         "sass": "^1.35.2",
         "serve": "^12.0.0",
@@ -77,6 +79,6 @@
         "xhr2": "^0.2.1"
     },
     "optionalDependencies": {
-        "purescript-language-server": "^0.15.2"
+        "purescript-language-server": "^0.17.1"
     }
 }

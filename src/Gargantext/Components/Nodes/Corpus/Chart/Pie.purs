@@ -97,7 +97,7 @@ mkRequest :: Session -> ReloadPath -> GUC.Request
 mkRequest session (_ /\ path) = GUC.makeGetRequest session $ chartUrl path
 
 pie :: R2.Leaf Props
-pie = R2.leafComponent pieCpt
+pie = R2.leaf pieCpt
 pieCpt :: R.Component Props
 pieCpt = here.component "pie" cpt
   where

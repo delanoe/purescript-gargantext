@@ -1,7 +1,8 @@
 module Gargantext.Utils.Range where
 
-import Prelude hiding (clamp)
+import Data.Hashable (class Hashable, hash)
 import Data.Newtype (class Newtype)
+import Prelude hiding (clamp)
 
 class Range r v where
   clamp :: r -> v -> v
@@ -9,15 +10,14 @@ class Range r v where
 
 -- | A Closed Interval, in math speak
 newtype Closed t = Closed { min :: t, max :: t }
-
 derive instance Newtype (Closed t) _
-
 instance Ord t => Range (Closed t) t where
   clamp (Closed r) = max r.min <<< min r.max
   within (Closed r) v = (r.min <= v) && (v <= r.max)
-
 instance Eq t => Eq (Closed t) where
   eq (Closed r1) (Closed r2) = (r1.min == r2.min) && (r1.max == r2.max)
+instance Hashable t => Hashable (Closed t) where
+  hash (Closed { min, max }) = hash { min, max }
 
 type NumberRange = Closed Number
 

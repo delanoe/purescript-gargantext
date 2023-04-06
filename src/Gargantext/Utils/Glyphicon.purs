@@ -308,6 +308,7 @@ glyphiconToCharCode = _toString <<< case _ of
   "flag-o" -> 0xf11d
   "flask" -> 0xf0c3
   "flickr" -> 0xf16e
+  "flower-7" -> 0xe900
   "floppy-o" -> 0xf0c7
   "folder" -> 0xf07b
   "folder-o" -> 0xf114
@@ -347,8 +348,6 @@ glyphiconToCharCode = _toString <<< case _ of
   "glide" -> 0xf2a5
   "glide-g" -> 0xf2a6
   "globe" -> 0xf0ac
-  "globe-circle" -> 0xf33f
-  "globe-closed" -> 0xf33a
   "globe-e" -> 0xf304
   "globe-w" -> 0xf305
   "gnu-social" -> 0xf2e7

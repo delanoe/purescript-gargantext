@@ -2,13 +2,14 @@ module Gargantext.Utils where
 
 import Prelude
 
+import Data.Array as A
 import Data.Char (fromCharCode)
 import Data.Either (Either(..))
 import Data.Foldable (class Foldable, foldr)
 import Data.Lens (Lens', lens)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype, unwrap, wrap)
-import Data.Sequence.Ordered as OSeq
+--import Data.Sequence.Ordered as OSeq
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as S
@@ -100,7 +101,8 @@ sortWith :: forall a b f. Functor f =>
                           Unfoldable f =>
                           Ord b =>
                           (a -> b) -> f a -> f a
-sortWith f = map (\(On _ y) -> y) <<< OSeq.toUnfoldable <<< foldr (\x -> OSeq.insert (On (f x) x)) OSeq.empty
+--sortWith f = map (\(On _ y) -> y) <<< OSeq.toUnfoldable <<< foldr (\x -> OSeq.insert (On (f x) x)) OSeq.empty
+sortWith f xs = A.toUnfoldable $ A.sortWith f (A.fromFoldable xs)
 
 
 href :: Effect String

@@ -47,9 +47,9 @@ type CommonProps =
   )
 
 nodePopupView :: R2.Leaf NodePopupProps
-nodePopupView = R2.leafComponent nodePopupCpt
-nodePopupCpt :: R.Component NodePopupProps
-nodePopupCpt = here.component "nodePopupView" cpt where
+nodePopupView = R2.leaf nodePopupViewCpt
+nodePopupViewCpt :: R.Component NodePopupProps
+nodePopupViewCpt = here.component "nodePopupView" cpt where
   cpt p@{ id, name, nodeType }  _ = do
     renameIsOpen <- T.useBox false
     open <- T.useLive T.unequal renameIsOpen
@@ -61,7 +61,7 @@ nodePopupCpt = here.component "nodePopupView" cpt where
 
       H.div
       { className: "node-popup-tooltip"
-      , title: "Node settings"
+      , title: "Type: " <> prettyNodeType nodeType
       }
       [
         H.div
@@ -83,16 +83,16 @@ nodePopupCpt = here.component "nodePopupView" cpt where
       [ "d-flex", "align-items-center" ]
       [
         B.wad
-        [ "w-3/12" ]
+        [ "w-2/12" ]
         [
           H.span
           { className: GT.fldr nodeType true} [] -- TODO fix names
-        ,
-          B.span' { className: "ml-1 h5" } $ prettyNodeType nodeType
+        -- ,
+        --   B.span' { className: "small" } $ prettyNodeType nodeType
         ]
       ,
         B.wad
-        [ "w-7/12", "pl-1" ]
+        [ "w-8/12 text-center" ]
         [
           if open then
             textInputBox
@@ -328,7 +328,7 @@ type PanelActionProps =
   )
 
 panelAction :: R2.Leaf PanelActionProps
-panelAction = R2.leafComponent panelActionCpt
+panelAction = R2.leaf panelActionCpt
 panelActionCpt :: R.Component PanelActionProps
 panelActionCpt = here.component "panelAction" cpt
   where
@@ -349,7 +349,7 @@ panelActionCpt = here.component "panelAction" cpt
       pure $ moveNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
     cpt { action: Link {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
       pure $ linkNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
-    cpt { action : Share, dispatch, id } _ = pure $ Share.shareNode { dispatch, id } []
+    cpt { action : Share, dispatch, id, session } _ = pure $ Share.shareNode { dispatch, id, session } []
     cpt { action : AddingContact, dispatch, id } _ = pure $ Contact.actionAddContact { dispatch, id } []
     cpt { action : Publish {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
       pure $ Share.publishNode { boxes, dispatch, id, nodeType, session, subTreeParams } []

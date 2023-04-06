@@ -121,7 +121,8 @@ ngramsViewCpt = here.component "ngramsView" cpt where
           , tabNgramType
           , tabType
           , treeEdit: { box: treeEditBox
-                      , getNgramsChildren: NT.getNgramsChildrenAff session nodeId listIds tabType
+                      , getNgramsChildrenAff: Just $ NT.getNgramsChildrenAffRequest session nodeId listIds tabType
+                      , getNgramsChildren: Nothing
                       , onCancelRef
                       , onNgramsClickRef
                       , onSaveRef }

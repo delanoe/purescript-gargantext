@@ -1,4 +1,4 @@
-module Gargnatext.Components.GraphQL.Contact
+module Gargantext.Components.GraphQL.Contact
   ( AnnuaireContact
   , annuaireContactQuery
   -- Lenses
@@ -25,6 +25,8 @@ import Data.Lens (Lens', lens)
 import Data.Maybe (Maybe(..), fromMaybe)
 import GraphQL.Client.Args (Args, (=>>))
 import GraphQL.Client.Variable (Var(..))
+import Gargantext.Utils.GraphQL as GGQL
+import Type.Proxy (Proxy(..))
 
 import Data.Array as A
 
@@ -68,21 +70,7 @@ annuaireContactQuery :: AnnuaireContactQuery
 annuaireContactQuery
   = { annuaire_contacts:
       { contact_id: Var :: _ "id" Int } =>>
-        { ac_title: unit
-        , ac_source: unit
-        , ac_id: unit
-        , ac_firstName: unit
-        , ac_lastName: unit
-        , ac_labTeamDepts: unit
-        , ac_organization: unit
-        , ac_role: unit
-        , ac_office: unit
-        , ac_country: unit
-        , ac_city: unit
-        , ac_touchMail: unit
-        , ac_touchPhone: unit
-        , ac_touchUrl: unit
-        }
+      GGQL.getFieldsStandard (Proxy :: _ AnnuaireContact)
     }
 
 ------------------------------------------------------------------------

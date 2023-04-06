@@ -67,14 +67,14 @@ type TeamRowProps =
   ( nodeId               :: ID
   , session              :: Session
   , team                 :: T.Box (Array TeamMember)
-  , error                :: T.Box String 
+  , error                :: T.Box String
   , team'                :: Array TeamMember
   , error'               :: String
   , team_owner_username :: String
   )
 
 teamLayoutRows :: R2.Leaf TeamRowProps
-teamLayoutRows = R2.leafComponent teamLayoutRowsCpt
+teamLayoutRows = R2.leaf teamLayoutRowsCpt
 
 teamLayoutRowsCpt :: R.Component TeamRowProps
 teamLayoutRowsCpt = here.component "teamLayoutRows" cpt where
@@ -94,8 +94,8 @@ teamLayoutRowsCpt = here.component "teamLayoutRows" cpt where
                                                                                           , on: {click: submit shared_folder_id }
                                                                                           } []
                                                                                     ]
-      
-      makeLeader username = H.div {className: "from-group row"} [ H.div { className: "col-8"} [ H.text username ] 
+
+      makeLeader username = H.div {className: "from-group row"} [ H.div { className: "col-8"} [ H.text username ]
                                                                 , H.p { className: "col-2"} [ H.text "owner"]
                                                                 ]
 

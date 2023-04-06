@@ -1,6 +1,6 @@
 let upstream =
-      https://github.com/garganscript/package-sets/releases/download/v0.1.4/release.dhall
-        sha256:e03eafe0c7ea0ac143d07ec6d9f20c804bd6b6f95a8d89bf287c279e770584c8
+      https://github.com/garganscript/package-sets/releases/download/v0.1.7/release.dhall
+        sha256:52886309e1f0158a85427f80c1e3d47ce747c5f14fcec671a81fe5c2c711a6db
 
 let overrides =
       { graphql-client =
@@ -61,8 +61,7 @@ let overrides =
         , version = "v9.2.2"
         }
       , jest =
-        { -- markdown-it dependency
-          dependencies =
+        { dependencies =
           [ "aff"
           , "aff-promise"
           , "effect"
@@ -100,7 +99,7 @@ let overrides =
           , "typelevel-prelude"
           ]
         , repo = "https://github.com/justinwoo/purescript-record-extra"
-        , version = "0.15.0-starter-kit"
+        , version = "v5.0.1"
         }
       }
 
@@ -125,7 +124,7 @@ let additions =
           , "unsafe-coerce"
           ]
         , repo = "https://github.com/garganscript/purescript-sequences.git"
-        , version = "7ad61fde5239fbf66ceeefc0b7608aa9cbc53701"
+        , version = "recursion-fix"
         }
       , spec-discovery =
         { dependencies = [ "prelude", "effect", "arrays", "spec", "node-fs" ]
@@ -136,6 +135,24 @@ let additions =
         { dependencies = [ "prelude", "aff", "random", "quickcheck", "spec" ]
         , repo = "https://github.com/purescript-spec/purescript-spec-quickcheck"
         , version = "v3.1.0"
+        }
+      , string-search =
+        { dependencies =
+          [ "arrays"
+          , "enums"
+          , "foldable-traversable"
+          , "integers"
+          , "lists"
+          , "maybe"
+          , "ordered-collections"
+          , "partial"
+          , "prelude"
+          , "strings"
+          , "tuples"
+          , "uint"
+          ]
+        , repo = "https://git.sr.ht/~cgenie/purescript-string-search"
+        , version = "v0.1.3"
         }
       , dom-filereader =
         { dependencies = [ "aff", "arraybuffer-types", "web-file", "web-html" ]

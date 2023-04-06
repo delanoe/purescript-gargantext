@@ -23,7 +23,6 @@ here = R2.here "Gargantext.Components.App"
 
 app :: R2.Leaf ()
 app = R2.leaf appCpt
-
 appCpt :: R.Component ()
 appCpt = here.component "container" cpt where
   cpt _ _ = do
@@ -55,7 +54,6 @@ type HydrateStoreProps =
 
 hydrateStore :: R2.Leaf HydrateStoreProps
 hydrateStore = R2.leaf hydrateStoreCpt
-
 hydrateStoreCpt :: R.Component HydrateStoreProps
 hydrateStoreCpt = here.component "hydrateStore" cpt where
   cpt { cacheParams
@@ -65,6 +63,7 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
     (state :: Record AppStore.State) <- pure $
       -- (cache options)
       { expandTableEdition: getter _.expandTableEdition cacheParams
+      , showTree: getter _.showTree cacheParams
       -- (default options)
       } `Record.merge` AppStore.options
 

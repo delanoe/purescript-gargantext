@@ -21,7 +21,7 @@ ne :: String -> TermList -> CTabNgramType -> NgramsElement
 ne ngrams list ngramType = NgramsElement { ngrams: normed
                                          , size: 1  -- TODO
                                          , list
-                                         , occurrences: 0
+                                         , occurrences: Set.singleton 0
                                          , parent:   Nothing
                                          , root:     Nothing
                                          , children: Set.empty

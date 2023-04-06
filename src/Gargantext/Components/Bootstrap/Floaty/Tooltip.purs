@@ -43,14 +43,18 @@ options =
   }
 
 
--- | Adapter Component for React Tooltip
+-- | Adapter Component for React Tooltip [1]
 -- |
 -- |
 -- | @XXX: tooltip position not working
 -- | @link https://github.com/wwayne/react-tooltip/issues/747
 -- |
 -- |
--- | https://github.com/wwayne/react-tooltip
+-- | @XXX: tooltip clickable not working
+-- | @link https://github.com/ReactTooltip/react-tooltip/issues/499
+-- |
+-- |
+-- |  https://github.com/wwayne/react-tooltip [1]
 tooltip :: forall provided.
      CO.Defaults (Record Options) (Record provided) (Record Props)
   => Record provided

@@ -1,116 +1,141 @@
-//.logoSmall
-//  line-height: 15px
-  // height: 10px
-  // padding: 10px 10px
+.login-modal
+
+  // making ".thead" small, but not its affiliated ".tbody"
+  thead th
+    padding: $table-cell-padding-sm
+
+  &__active-places
+
+    &__actions
+      display: flex
+      gap: space-x(3.5)
+
+//////////////////////////////////:
+
+.login-modal-form
+  $cta-width: 200px
+  $form-width: 520px
+
+  &__title
+    position: relative
+    background-color: $border-color
+    padding: $card-spacer-y $card-spacer-x
+    text-align: center
+    // (?) dirty negative margins to overlap the ".modal-body" paddings
+    margin-top: - $modal-inner-padding
+    margin-left: - $modal-inner-padding
+    margin-right: - $modal-inner-padding
+
+    &__return
+      @include centered
+      position: absolute
+      left: space-x(3.5)
+
+    &__text
+      font-family: $font-family-monospace
+      font-size: 20px
+      font-weight: bold
 
 
-#user-page-header
-  border-bottom : 1px solid black
+  &__separator
+    padding: $card-spacer-y calc(2* #{ $card-spacer-x })
+    position: relative
 
-#user-page-info
-  margin-top : 38px
+    &__text
+      @include centered
+      position: absolute
+      display: inline-block
+      padding-left: space-x(4)
+      padding-right: space-x(4)
+      font-family: $headings-font-family
+      font-size: 24px
+      background-color: $modal-content-bg
 
-.tableHeader
-  color: white
+  &__request-access
+    margin-top: calc(3 * #{ $card-spacer-y})
+    margin-left: auto
+    margin-right: auto
+    margin-bottom: $card-spacer-y
+    padding: $btn-padding-y-lg $btn-padding-x-lg
+    width: $cta-width
+    display: block
+    font-weight: bold
 
+  &__log-in
+    padding: $btn-padding-y-lg $btn-padding-x-lg
+    width: $cta-width
+    margin-bottom: calc(2 * #{ $card-spacer-y})
+    margin-left: auto
+    margin-right: auto
+    margin-top: $card-spacer-y
+    display: block
+    font-weight: bold
 
-#toolbar
-  display: inline
-  ul
-    li
-      display: inline
-      margin-right : 19px
-      form
-        display: inline
+  &__form
+    margin: 0 auto
+    width: $form-width
 
-#horizontal-checkbox
-  ul
-    li
-      display : inline
-      float : left
-      margin-top: 12px
-      margin-right : 21px
+  &__error
+    margin-bottom: $form-group-margin-bottom
+    color: $danger
+    text-align: center
 
+//////////////////////////////////////////////////////////
 
-
-li#rename
-  #rename-a
-    display: none
-    position: absolute
-    left: 125px
-
-#create-node-tooltip
-  position: absolute
-  left: 96px
-  top: -64px
-  background-color: white
-  z-index: z-index('main', 'floaty')
-
-  .card-body
-    input
-      min-width: 200px
-
-#file-type-tooltip
-  @include centered
-
-  position: absolute
-  background-color: white
-  z-index: z-index('main', 'floaty')
-
-.glyphitem
-  top: 0
-  display: inline-block
-  float: right
-  opacity: 0.6
-  padding-right: 5px
-  cursor: pointer
-  transition: transform 0.1s ease-out 0s
-  font-size: 15px
-  text-align: center
-
-  &:hover
-    display: inline-block
-    opacity: 1
-    transform: scale(1.4)
-
-#sp-container
-  -webkit-transition: width 2s  // For Safari 3.1 to 6.0
-  transition: width 2s
+.forgot-password-form
+  $cta-width: 200px
+  $form-width: 520px
 
 
-.nooverflow
-  max-width: 300px
-  height : 24px
-  overflow: hidden
-  text-overflow: ellipsis
-  &:hover
-    overflow: visible
-    height: auto
+  &__title
+    position: relative
+    background-color: $border-color
+    padding: $card-spacer-y $card-spacer-x
+    text-align: center
+    // (?) dirty negative margins to overlap the ".modal-body" paddings
+    margin-top: - $modal-inner-padding
+    margin-left: - $modal-inner-padding
+    margin-right: - $modal-inner-padding
 
+    &__return
+      @include centered
+      position: absolute
+      left: space-x(3.5)
 
-.nopadding
-    padding: 0 !important
-    margin: 0 !important
+    &__text
+      font-family: $font-family-monospace
+      font-size: 20px
+      font-weight: bold
 
-.tab-pane
-  .reload-btn
-    padding-right: 6px
+  &__subtitle
+    padding-top: calc(2 * #{ $card-spacer-y})
+    padding-left: calc(2* #{ $card-spacer-x })
+    padding-right: calc(2* #{ $card-spacer-x })
+    padding-bottom: $card-spacer-y
+    text-align: center
+    font-family: $headings-font-family
+    font-size: 24px
 
-.flex
-  display: flex
+  &__submit
+    padding: $btn-padding-y-lg $btn-padding-x-lg
+    width: $cta-width
+    margin-bottom: calc(2 * #{ $card-spacer-y})
+    margin-left: auto
+    margin-right: auto
+    margin-top: $card-spacer-y
+    display: block
+    font-weight: bold
 
-.flex-end
-  display: flex
-  justify-content: flex-end
+  &__form
+    margin: 0 auto
+    width: $form-width
 
-.flex-center
-  display: flex
-  flew-wrap: wrap
-  justify-content: center
+  &__error
+    margin-bottom: $form-group-margin-bottom
+    color: $danger
+    text-align: center
 
-.flex-space-between,.flex-center
-  display: flex
-  justify-content: space-between
-
-a:focus, a:hover
-  cursor: pointer
+  &__success
+    margin-bottom: $form-group-margin-bottom
+    color: $success
+    text-align: center

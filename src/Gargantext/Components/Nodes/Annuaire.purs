@@ -54,7 +54,7 @@ type LayoutProps =
   )
 
 annuaireLayout :: R2.Leaf LayoutProps
-annuaireLayout = R2.leafComponent annuaireLayoutCpt
+annuaireLayout = R2.leaf annuaireLayoutCpt
 annuaireLayoutCpt :: R.Component LayoutProps
 annuaireLayoutCpt = here.component "annuaireLayout" cpt where
   cpt { frontends, nodeId, session } _ = do
@@ -68,7 +68,7 @@ type KeyLayoutProps =
   )
 
 annuaireLayoutWithKey :: R2.Leaf KeyLayoutProps
-annuaireLayoutWithKey = R2.leafComponent annuaireLayoutWithKeyCpt
+annuaireLayoutWithKey = R2.leaf annuaireLayoutWithKeyCpt
 
 annuaireLayoutWithKeyCpt :: R.Component KeyLayoutProps
 annuaireLayoutWithKeyCpt = here.component "annuaireLayoutWithKey" cpt where
@@ -92,7 +92,7 @@ type AnnuaireProps =
 
 -- | Renders a basic table and the page loader
 annuaire :: R2.Leaf AnnuaireProps
-annuaire = R2.leafComponent annuaireCpt
+annuaire = R2.leaf annuaireCpt
 
 -- Abuses closure to work around the Loader
 annuaireCpt :: R.Component AnnuaireProps
@@ -170,14 +170,21 @@ pageCpt = here.component "page" cpt
       pagePath' <- T.useLive T.unequal pagePath
       params <- T.useFocused (_.params) (\a b -> b { params = a }) pagePath
 
-      pure $ TT.table { colNames
-                      , container
-                      , params
-                      , rows: rows pagePath'
-                      , syncResetButton : [ H.div {} [] ]
-                      , totalRecords
-                      , wrapColElts
-                      }
+      pure $
+
+        H.div
+        { className: "page-annuaire" }
+        [
+          TT.table
+          { colNames
+          , container
+          , params
+          , rows: rows pagePath'
+          , syncResetButton : [ H.div {} [] ]
+          , totalRecords
+          , wrapColElts
+          }
+        ]
       where
         rows pagePath' = (row pagePath') <$> Seq.fromFoldable docs
         row { nodeId } contact = { row: contactCells { annuaireId: nodeId, frontends, contact, session }
@@ -207,7 +214,7 @@ contactCellsCpt = here.component "contactCells" cpt where
       --, H.a { href, target: "blank" } [ H.text $ fromMaybe "name" contact.title ]
     , H.text "No ContactWhere"
     , H.text "No ContactWhereDept"
-    , H.div { className: "nooverflow" }
+    , H.div { className: "page-annuaire__nooverflow" }
       [ H.text "No ContactWhereRole" ]
     ]
   cpt { annuaireId, frontends, session

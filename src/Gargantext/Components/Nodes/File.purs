@@ -48,7 +48,7 @@ instance Eq File where
 type FileLayoutProps = ( nodeId :: NodeID, session :: Session )
 
 fileLayout :: R2.Leaf FileLayoutProps
-fileLayout = R2.leafComponent fileLayoutCpt
+fileLayout = R2.leaf fileLayoutCpt
 fileLayoutCpt :: R.Component FileLayoutProps
 fileLayoutCpt = here.component "fileLayout" cpt where
   cpt { nodeId, session } _ = do

@@ -30,7 +30,10 @@ actionDocCpt = here.component "actionDoc" cpt where
       infoTitle :: NodeType -> R.Element
       infoTitle nt = H.div { style: {margin: "10px"}}
                         [ H.h3 {} [H.text "Documentation about " ]
-                        , H.h3 {className: GT.fldr nt true} [ H.text $ show nt ]
+                        , H.h3 {className: GT.fldr nt true} 
+                          [ H.span {className: "font-family-theme mx-1"} 
+                            [ H.text $ show nt ] 
+                          ]
                         ]
 
 -- | TODO add documentation of all NodeType

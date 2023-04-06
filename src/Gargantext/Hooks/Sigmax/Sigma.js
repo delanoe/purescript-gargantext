@@ -2,9 +2,16 @@
 
 import Graph from 'graphology';
 import Sigma from 'sigma';
-import { takeScreenshot } from '../../src/external-deps/sigmajs-screenshot.js';
+//import { takeScreenshot } from '../../src/external-deps/sigmajs-screenshot.js';
+import takeScreenshot from '../../src/external-deps/sigmajs-screenshot-with-canvas.js';
 import CircleNodeProgram from 'sigma/rendering/webgl/programs/node.fast';
 import ContourCircleNodeProgram from '../../src/external-deps/sigmajs-circle-with-contour.js';
+import TriangleNodeProgram from '../../src/external-deps/sigmajs-triangle.js';
+import ContourTriangleNodeProgram from '../../src/external-deps/sigmajs-triangle-with-contour.js';
+import SquareNodeProgram from '../../src/external-deps/sigmajs-square.js';
+import ContourSquareNodeProgram from '../../src/external-deps/sigmajs-square-with-contour.js';
+import DiamondNodeProgram from '../../src/external-deps/sigmajs-diamond.js';
+import ContourDiamondNodeProgram from '../../src/external-deps/sigmajs-diamond-with-contour.js';
 
 let sigma = Sigma.Sigma;
 console.log('imported sigma', Sigma);
@@ -163,13 +170,42 @@ let sigmaMouseSelector = function(sigma, options) {
 
 //sigmaMouseSelector(sigma);
 
+
+function drawLabel(
+  context,
+  data,
+  settings
+) {
+  if (!data.label) return;
+
+  const size = data.size, //settings.labelSize,
+    font = settings.labelFont,
+    weight = settings.labelWeight,
+    color = settings.labelColor.attribute
+      ? data[settings.labelColor.attribute] || settings.labelColor.color || "#000"
+      : settings.labelColor.color;
+
+  context.fillStyle = color;
+  context.font = `${weight} ${size}px ${font}`;
+
+  context.fillText(data.label, data.x, data.y + size / 3);
+}
+
+
 function _sigma(left, right, el, opts) {
   try {
     let graph = new Graph();
     const settings = {
+      labelRenderer: drawLabel,
       nodeProgramClasses: {
         circle: CircleNodeProgram.default,  // TODO why default? It seems that import should be fixed
-        ccircle: ContourCircleNodeProgram
+        ccircle: ContourCircleNodeProgram,
+        triangle: TriangleNodeProgram,
+        ctriangle: ContourTriangleNodeProgram,
+        square: SquareNodeProgram,
+        csquare: ContourSquareNodeProgram,
+        diamond: DiamondNodeProgram,
+        cdiamond: ContourDiamondNodeProgram
       },
       ...opts.settings
     };

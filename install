@@ -3,6 +3,6 @@
 # To get infos
 # nix-shell -p nix-info --run "nix-info -m"
 
-nix-channel --update 
+nix-channel --update
 nix-env -iA nixpkgs.nix nixpkgs.cacert
 nix-shell --show-trace --option build-fallback true --run build

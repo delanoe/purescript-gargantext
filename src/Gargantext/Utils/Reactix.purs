@@ -51,9 +51,6 @@ type Component p = Record p -> Array R.Element -> R.Element
 -- | UI Component type with only required props and no child
 type Leaf p = Record p -> R.Element
 
-leafComponent :: forall p. (R.Component p) -> Record p -> R.Element
-leafComponent cpt p = R.createElement cpt p []
-
 -- | UI Component type containing optional props and children
 type OptComponent options props provided = CO.Defaults (Record options) (Record provided) (Record props)
   => Record provided -> Array R.Element -> R.Element
@@ -296,9 +293,6 @@ useReductor f i j =
 -- | initialiser function and argument
 useReductor' :: forall s a. Actor s a -> s -> R.Hooks (Reductor s a)
 useReductor' r = useReductor r pure
-
-render :: R.Element -> DOM.Element -> Effect Unit
-render e d = delay unit $ \_ -> pure $ R.reactDOM ... "render" $ args2 e d
 
 addRootElement :: DOM.Element -> Effect Unit
 addRootElement = runEffectFn1 _addRootElement

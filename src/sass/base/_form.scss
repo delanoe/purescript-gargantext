@@ -45,7 +45,6 @@
   label { color: $danger; }
 
   .b-form-input { @include inputError; }
-
 }
 
 .form-group {
@@ -96,6 +95,12 @@
     max-height: 300px;
     overflow-y: scroll;
     width: 300px;
-    top: 50px;
+    top: 60px;
+    @media(max-width: 991px) {
+      top: 90px;
+    }
+  }
+  .b-icon-button {
+    margin-left: 10px;
   }
 }

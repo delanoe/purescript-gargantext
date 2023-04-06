@@ -8,6 +8,8 @@ import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.Components.GraphQL (getClient, queryGql)
+import Gargantext.Components.GraphQL.Contact (AnnuaireContact, annuaireContactQuery)
+import Gargantext.Components.GraphQL.Context as GQLCTX
 import Gargantext.Components.GraphQL.IMT as GQLIMT
 import Gargantext.Components.GraphQL.Node (Node, nodeParentQuery, nodesQuery)
 import Gargantext.Components.GraphQL.Team (Team, teamQuery)
@@ -17,7 +19,6 @@ import Gargantext.Config.REST (RESTError(..), AffRESTError)
 import Gargantext.Sessions (Session(..))
 import Gargantext.Types (NodeType)
 import Gargantext.Utils.Reactix as R2
-import Gargnatext.Components.GraphQL.Contact (AnnuaireContact, annuaireContactQuery)
 import GraphQL.Client.Args (onlyArgs)
 import GraphQL.Client.Query (mutation)
 import GraphQL.Client.Variables (withVars)
@@ -97,3 +98,35 @@ deleteTeamMembership session sharedFolderId teamNodeId = do
     Just _ -> Right sharedFolderId
   where
     getToken (Session { token }) = token
+
+getNodeContext :: Session -> Int -> Int -> AffRESTError GQLCTX.NodeContext
+getNodeContext session context_id node_id = do
+  let query = GQLCTX.nodeContextQuery `withVars` { context_id, node_id }
+  { contexts } <- queryGql session "get node context" query
+  --liftEffect $ here.log2 "[getNodeContext] node context" contexts
+  case A.head contexts of
+    Nothing -> pure $ Left $ CustomError "no node context found"
+    Just context -> pure $ Right context -- TODO: error handling
+
+type ContextsForNgramsGQL = { contexts_for_ngrams :: Array GQLCTX.Context }
+getContextsForNgrams :: Session -> Int -> Array String -> AffRESTError (Array GQLCTX.Context)
+getContextsForNgrams session corpus_id ngrams_terms = do
+  let query = GQLCTX.contextsForNgramsQuery `withVars` { corpus_id
+                                                       , ngrams_terms: GQLCTX.NgramsTerms ngrams_terms }
+  { contexts_for_ngrams } <- queryGql session "get contexts for ngrams" query
+
+  pure $ Right contexts_for_ngrams
+  --pure $ Right contexts_for_ngrams
+
+updateNodeContextCategory :: Session -> Int -> Int -> Int -> AffRESTError Int
+updateNodeContextCategory session context_id node_id category = do
+  client <- liftEffect $ getClient session
+  { update_node_context_category } <- mutation
+    client
+    "update_node_context_category"
+    { update_node_context_category: onlyArgs { context_id
+                                             , node_id
+                                             , category } }
+  pure $ case A.head update_node_context_category of
+    Nothing -> Left (CustomError $ "Failed to update node category")
+    Just _ -> Right context_id

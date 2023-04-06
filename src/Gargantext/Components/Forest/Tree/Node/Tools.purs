@@ -60,22 +60,18 @@ textInputBoxCpt = here.component "textInputBox" cpt where
       content false _ = (R.fragment [])
       content true renameNodeNameRef =
         H.div
-        { className: "d-flex align-items-center" }
+        { className: "d-flex align-items-center justify-content-space-between" }
         [
           textInput renameNodeNameRef
         ,
-          B.wad_ [ "d-inline-block", "w-3" ]
-        ,
           submitBtn renameNodeNameRef
-        ,
-          B.wad_ [ "d-inline-block", "w-3" ]
         ,
           cancelBtn
         ]
 
       textInput renameNodeNameRef =
         H.div
-        {}
+        { className: "w-10/12" }
         [
           inputWithEnter
           { autoFocus: true
@@ -108,6 +104,61 @@ textInputBoxCpt = here.component "textInputBox" cpt where
       submit ref _ = do
         launchAff_ $ dispatch (boxAction $ R.readRef ref)
         T.write_ false isOpen
+
+type InviteInputBoxProps =
+  ( id       :: GT.ID
+  , dispatch :: Action -> Aff Unit
+  , text     :: String
+  , boxName  :: String
+  , boxAction :: String -> Action
+  , username :: T.Box String
+  )
+
+inviteInputBox :: R2.Component InviteInputBoxProps
+inviteInputBox = R.createElement inviteInputBoxCpt
+inviteInputBoxCpt :: R.Component InviteInputBoxProps
+inviteInputBoxCpt = here.component "textInputBox" cpt where
+  cpt { boxAction, boxName, dispatch, text, username } _ =
+    content <$> R.useRef text
+    where
+      content renameNodeNameRef =
+        H.div
+        { className: "d-flex align-items-center" }
+        [
+          textInput renameNodeNameRef
+        ,
+          B.wad_ [ "d-inline-block", "w-3" ]
+        ,
+          submitBtn renameNodeNameRef
+        ]
+
+      textInput renameNodeNameRef =
+        H.div
+        {}
+        [
+          inputWithEnter
+          { autoFocus: true
+          , className: "form-control"
+          , defaultValue: text
+          , onBlur: R.setRef renameNodeNameRef
+          , onEnter: submit renameNodeNameRef
+          , onValueChanged: R.setRef renameNodeNameRef
+          , placeholder: (boxName <> " Node")
+          , type: "text"
+          }
+        ]
+
+      submitBtn renameNodeNameRef =
+        B.iconButton
+        { callback: submit renameNodeNameRef
+        , title: "Submit"
+        , name: "plus"
+        , elevation: Level1
+        }
+
+      submit ref _ = do
+        T.write_ ("Invited " <> R.readRef ref <> " to the team") username
+        launchAff_ $ dispatch (boxAction $ R.readRef ref)
 
 type DefaultText = String
 
@@ -206,13 +257,15 @@ submitButton action dispatch =
            , title: show action
            , on: {click: \_ -> launchAff $ dispatch action}
            }
-           [ H.text $ " " <> text action]
+  [ H.span {className: "font-family-theme mx-1"} [ H.text $ " " <> text action] ]
 
 type Href  = String
 
 submitButtonHref :: Action -> Href -> R.Element
 submitButtonHref action href =
-  H.a { className, href, target: "_blank" } [ H.text $ " " <> text action ] where
+  H.a { className, href, target: "_blank" } 
+  [ H.span {className: "font-family-theme mx-1"} [ H.text $ " " <> text action ] ]
+  where
     className = "btn btn-primary fa fa-" <> icon action
 
 ------------------------------------------------------------------------
@@ -224,7 +277,7 @@ type CheckboxProps =
   ( value :: T.Box Boolean )
 
 checkbox :: R2.Leaf CheckboxProps
-checkbox = R2.leafComponent checkboxCpt
+checkbox = R2.leaf checkboxCpt
 checkboxCpt :: R.Component CheckboxProps
 checkboxCpt = here.component "checkbox" cpt
   where

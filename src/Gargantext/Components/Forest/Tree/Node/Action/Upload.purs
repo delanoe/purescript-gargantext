@@ -101,7 +101,7 @@ type UploadFile =
 
 
 uploadFileView :: R2.Leaf Props
-uploadFileView = R2.leafComponent uploadFileViewCpt
+uploadFileView = R2.leaf uploadFileViewCpt
 uploadFileViewCpt :: R.Component Props
 uploadFileViewCpt = here.component "uploadFileView" cpt
   where
@@ -134,8 +134,6 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
                 [ formChoiceSafe { items: [ CSV
                                           , CSV_HAL
                                           , WOS
-                                          , PresseRIS
-                                          , Arbitrary
                                           ]
                                  , default: CSV
                                  , callback: setFileType'
@@ -149,7 +147,7 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
               ]
             , R2.row
               [ H.div {className:"col-6 flex-space-around"}
-                [ formChoiceSafe { items: [EN, FR, No_extraction, Universal]
+                [ formChoiceSafe { items: [EN, FR, No_extraction]
                                  , default: EN
                                  , callback: setLang'
                                  , print: show
@@ -265,7 +263,7 @@ uploadButtonCpt = here.component "uploadButton" cpt
               _ -> do
                 contents <- case fileFormat' of
                   Plain -> readUFBAsText blob
-                  ZIP -> readUFBAsBase64 blob
+                  ZIP   -> readUFBAsBase64 blob
                 dispatch $ UploadFile nodeType fileType' fileFormat' lang' (Just name) contents selection'
             liftEffect $ do
               T.write_ Nothing mFile
@@ -276,7 +274,7 @@ uploadButtonCpt = here.component "uploadButton" cpt
             dispatch CloseBox
 
 uploadListView :: R2.Leaf Props
-uploadListView = R2.leafComponent uploadListViewCpt
+uploadListView = R2.leaf uploadListViewCpt
 uploadListViewCpt :: R.Component Props
 uploadListViewCpt = here.component "uploadListView" cpt where
   cpt { dispatch, session } _ = do
@@ -546,7 +544,7 @@ uploadFile session NodeList id JSON { mName, contents } = do
   task <- post session url body
   pure $ GT.AsyncTaskWithType { task, typ: GT.Form }
   -}
-uploadFile { contents, fileFormat, lang, fileType, id, nodeType, mName, session } = do
+uploadFile { contents, fileFormat, lang, fileType, id, nodeType, mName, selection, session } = do
   -- contents <- readAsText blob
   eTask :: Either RESTError GT.AsyncTask <- postWwwUrlencoded session p body
   pure $ (\task -> GT.AsyncTaskWithType { task, typ }) <$> eTask
@@ -557,19 +555,25 @@ uploadFile { contents, fileFormat, lang, fileType, id, nodeType, mName, session 
                  , Tuple "_wf_fileformat" (Just $ show fileFormat)
                  , Tuple "_wf_lang"       (Just $ show lang)
                  , Tuple "_wf_name"       mName
+                 , Tuple "_wf_selection"  (Just $ show selection)
+                 ]
+    jsonBodyParams = [ Tuple "_wjf_data"       (Just contents)
+                     , Tuple "_wjf_filetype"   (Just $ show fileType)
+                     , Tuple "_wjf_name"       mName
                  ]
     csvBodyParams = [ Tuple "_wtf_data"       (Just contents)
                     , Tuple "_wtf_filetype"   (Just $ show NodeList)
                     , Tuple "_wtf_fileformat" (Just $ show fileFormat)
                     , Tuple "_wf_lang"        (Just $ show lang)
                     , Tuple "_wtf_name" mName
+                    , Tuple "_wtf_selection"  (Just $ show selection)
                     ]
 
     (typ /\ p /\ body) = case nodeType of
       Corpus   -> GT.CorpusFormUpload /\ (GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.CorpusFormUpload) /\ bodyParams
       Annuaire -> GT.UploadFile /\ (GR.NodeAPI nodeType (Just id) "annuaire") /\ bodyParams
       NodeList -> case fileType of
-        JSON -> GT.ListUpload /\ (GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.ListUpload) /\ bodyParams
+        JSON -> GT.ListUpload /\ (GR.NodeAPI nodeType (Just id) $ GT.asyncTaskTypePath GT.ListUpload) /\ jsonBodyParams
         CSV  -> GT.ListCSVUpload /\ (GR.NodeAPI NodeList (Just id) $ GT.asyncTaskTypePath GT.ListCSVUpload) /\ csvBodyParams
         _    -> GT.UploadFile /\ (GR.NodeAPI nodeType (Just id) "") /\ bodyParams
       _        -> GT.UploadFile /\ (GR.NodeAPI nodeType (Just id) "") /\ bodyParams
@@ -670,7 +674,7 @@ type UploadTermButtonProps =
   )
 
 uploadTermButton :: R2.Leaf UploadTermButtonProps
-uploadTermButton = R2.leafComponent uploadTermButtonCpt
+uploadTermButton = R2.leaf uploadTermButtonCpt
 uploadTermButtonCpt :: R.Component UploadTermButtonProps
 uploadTermButtonCpt = here.component "uploadTermButton" cpt
   where
@@ -707,32 +711,83 @@ uploadFrameCalcView = R.createElement uploadFrameCalcViewCpt
 uploadFrameCalcViewCpt :: R.Component Props
 uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt
   where
-    cpt { dispatch } _ = do
-      let bodies =
-            [ R2.row
-              [ H.div { className: "col-12 flex-space-around" }
-                [ H.h4 {}
-                  [ H.text "This will upload current calc as Corpus CSV" ]
-                ]
-              ]
-            ]
+    cpt { dispatch, session } _ = do
+      lang' /\ langBox
+        <- R2.useBox' EN
+      selection' /\ selectionBox
+        <- R2.useBox' ListSelection.MyListsFirst
+
+      let bodies = [
+        H.div
+        { className: "col-12 flex-space-around" }
+        [ H.h4 {}
+          [ H.text "This will upload current calc as Corpus CSV" ]
+        ]
+      ,
+        -- Lang
+        H.div
+        { className: "form-group" }
+        [
+          H.div
+          { className: "form-group__label" }
+          [
+            B.label_ $
+            "File lang"
+          ]
+        ,
+          H.div
+          { className: "form-group__field" }
+          [
+            B.formSelect'
+            { callback: flip T.write_ langBox
+            , value: lang'
+            , list: [ EN, FR, No_extraction, Universal ]
+            }
+            []
+          ]
+        ]
+      ,
+        -- List selection
+        H.div
+        { className: "form-group" }
+        [
+          H.div
+          { className: "form-group__label" }
+          [
+            B.label_ $
+              "List selection"
+          ]
+        ,
+          H.div
+          { className: "form-group__field" }
+          [
+            ListSelection.selection
+            { selection: selectionBox
+            , session
+            } []
+          ]
+        ]
+      ]
+
       let footer = H.div {}
                    [ H.button { className: "btn btn-primary"
-                              , on: { click: onClick } }
+                              , on: { click: onClick lang' selection' } }
                      [ H.text "Upload!" ]
                    ]
 
       pure $ panel bodies footer
 
       where
-        onClick _ = do
+        onClick lang' selection' _ = do
           void $ launchAff do
-            dispatch UploadFrameCalc
+            dispatch $ UploadFrameCalc lang' selection'
 
 uploadFrameCalc :: Session
                     -> ID
+                    -> Lang
+                    -> ListSelection.Selection
                     -> AffRESTError GT.AsyncTaskWithType
-uploadFrameCalc session id = do
+uploadFrameCalc session id lang selection = do
   let p = GR.NodeAPI GT.Node (Just id) $ GT.asyncTaskTypePath GT.UploadFrameCalc
 
   eTask <- post session p { _wf_lang: Just lang

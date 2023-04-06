@@ -108,7 +108,7 @@ allDatabases = [ Empty
                , HAL Nothing
                , IsTex
                , IsTex_Advanced
-               , Isidore
+               -- , Isidore
                --, Web
                --, News
                --, SocialNetworks
@@ -280,7 +280,7 @@ defaultSearchQuery = SearchQuery
   , node_id   : Nothing
   , offset    : Nothing
   , order     : Nothing
-  , selection : ListSelection.MyListsFirst
+  , selection : ListSelection.NoList -- MyListsFirst
   }
 
 performSearch :: Session -> Int -> SearchQuery -> AffRESTError GT.AsyncTaskWithType

@@ -4,6 +4,7 @@ module Gargantext.Components.Document.Layout
 
 import Gargantext.Prelude
 
+import Data.Array as A
 import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
 import Data.Ord (greaterThan)
 import Data.String (length)
@@ -14,6 +15,8 @@ import Gargantext.Components.Annotation.Types as AFT
 import Gargantext.Components.AutoUpdate (autoUpdate)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), SpinnerTheme(..))
+import Gargantext.Components.Category (ratingSimpleLoader)
+import Gargantext.Components.Category.Types (decodeStar)
 import Gargantext.Components.Document.Types (DocPath, Document(..), LoadedData, initialState)
 import Gargantext.Components.NgramsTable.AutoSync (useAutoSync)
 import Gargantext.Components.Node (NodePoly(..))
@@ -26,6 +29,10 @@ import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
+
+-------------------------------------------------------------------------
+
+
 
 type Props =
   ( loaded   :: LoadedData
@@ -43,13 +50,12 @@ options =
   }
 
 here :: R2.Here
-here = R2.here "Gargantext.Components.Document.layout"
+here = R2.here "Gargantext.Components.Document.Layout"
 
 layout :: forall r. R2.OptLeaf Options Props r
 layout = R2.optLeaf layoutCpt options
-
 layoutCpt :: R.Component Props
-layoutCpt = here.component "main" cpt where
+layoutCpt = here.component "layout" cpt where
   -- Component
   cpt { path
       , loaded:
@@ -67,9 +73,7 @@ layoutCpt = here.component "main" cpt where
     state'@{ ngramsLocalPatch } /\ state <-
       R2.useBox' $ initialState { loaded }
 
-    mode' /\ mode <- R2.useBox' AFT.AdditionMode
-
-    forceAdditionMode' /\ forceAdditionMode <- R2.useBox' false
+    mode' /\ mode <- R2.useBox' AFT.EditionMode
 
     let dispatch = coreDispatch path state
     { onPending, result } <- useAutoSync { state, action: dispatch }
@@ -105,17 +109,6 @@ layoutCpt = here.component "main" cpt where
     -- | Hooks
     -- |
 
-    -- (?) Limit large document feature with empirical length value
-    --     see #423
-    useFirstEffect' do
-      let len = maybe 0 (length) doc.abstract
-      if (len `greaterThan` 4500)
-      then
-            T.write_ true forceAdditionMode
-        *>  T.write_ AFT.AdditionMode mode
-      else
-            T.write_ false forceAdditionMode
-        *>  T.write_ AFT.EditionMode mode
 
     -- | Behaviors
     -- |
@@ -155,9 +148,7 @@ layoutCpt = here.component "main" cpt where
               B.formSelect
               { value: show mode'
               , callback: onModeChange
-              , status: forceAdditionMode' ?
-                  Idled $
-                  Enabled
+              , status: Enabled
               }
               [
                 H.option
@@ -169,14 +160,6 @@ layoutCpt = here.component "main" cpt where
                 [ H.text "Add and edit terms" ]
               ]
             ]
-          ,
-            R2.when forceAdditionMode' $
-
-              B.wad
-              [ "color-warning", "font-size-100", "mx-2", "inline-block" ]
-              [
-                H.text "limited term feature due to abstract length"
-              ]
           ,
             R2.when withAutoUpdate $
               -- (?) purpose? would still working with current code?
@@ -226,10 +209,6 @@ layoutCpt = here.component "main" cpt where
         H.div
         { className: "document-layout__body" }
         [
-          B.div'
-          { className: "document-layout__separator-label" }
-          "Title"
-        ,
           H.div
           { className: "document-layout__title" }
           [
@@ -278,6 +257,11 @@ layoutCpt = here.component "main" cpt where
               { className: "document-layout__date__content" }
               (publicationDate $ Document doc)
             ]
+        , case path.mCorpusId of
+            Nothing -> H.div {} []
+            Just corpusId -> ratingSimpleLoader { docId: path.nodeId
+                                                , corpusId
+                                                , session: path.session  } []
         ,
           R2.when hasAbstract $
 

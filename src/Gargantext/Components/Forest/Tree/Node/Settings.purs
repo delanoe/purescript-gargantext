@@ -103,11 +103,7 @@ settingsBox NodeUser =
   SettingsBox { show : true
               , edit : false
               , doc  : Documentation NodeUser
-              , buttons : [ Add [ FolderPrivate
-                                , FolderShared
-                                , FolderPublic
-                                ]
-                          , Delete
+              , buttons : [ Delete
                           ]
               }
 
@@ -120,9 +116,8 @@ settingsBox FolderPrivate =
                                 , Annuaire
                                 , NodeFrameWrite
                                 , NodeFrameCalc
-                                , NodeFrameNotebook
+                                -- , NodeFrameNotebook
                                 ]
-                          , Delete
                           ]
               }
 
@@ -135,7 +130,7 @@ settingsBox Team =
                                 , Annuaire
                                 , NodeFrameWrite
                                 , NodeFrameCalc
-                                , NodeFrameNotebook
+                                -- , NodeFrameNotebook
                                 , Team
                                 , FolderShared
                                 , NodeFrameVisio
@@ -151,7 +146,6 @@ settingsBox FolderShared =
               , edit : true
               , doc  : Documentation FolderShared
               , buttons : [ Add [Team, FolderShared]
-                          , Delete
                           ]
               }
 
@@ -160,7 +154,6 @@ settingsBox FolderPublic =
               , edit : true
               , doc  : Documentation FolderPublic
               , buttons : [ Add [ FolderPublic ]
-                          , Delete
                           ]
               }
 
@@ -173,7 +166,7 @@ settingsBox Folder =
                                 , Annuaire
                                 , NodeFrameWrite
                                 , NodeFrameCalc
-                                , NodeFrameNotebook
+                                -- , NodeFrameNotebook
                                 ]
                           , Move moveParameters
                           , Delete
@@ -195,7 +188,7 @@ settingsBox Corpus =
                                 , NodeFrameWrite
                                 , NodeFrameCalc
                                 , Phylo
-                                , NodeFrameNotebook
+                                -- , NodeFrameNotebook
                                 ]
                           , Link (linkParams Annuaire)
                           , Move moveParameters
@@ -327,6 +320,8 @@ settingsBox NodeFrameWrite =
               , doc  : Documentation NodeFrameWrite
               , buttons : [ Add [ NodeFrameWrite
                                 , NodeFrameCalc
+                                , Folder
+                                , Corpus
                                 ]
                           , Move moveFrameParameters
                           , Delete
@@ -353,7 +348,7 @@ settingsBox NodeFrameNotebook =
               , doc  : Documentation NodeFrameNotebook
               , buttons : [ Add [ NodeFrameCalc
                                 , NodeFrameWrite
-                                , NodeFrameNotebook
+                                -- , NodeFrameNotebook
                                 ]
                           , Move moveFrameParameters
                           , Delete
@@ -398,11 +393,15 @@ moveParameters = { subTreeParams : SubTreeParams
                                               , Team
                                               , FolderPublic
                                               , Folder
+                                              , NodeFrameWrite
+                                              , Corpus
                                               ]
                                  , valitypes: [ FolderPrivate
                                               , Team
                                               -- , FolderPublic
                                               , Folder
+                                              , NodeFrameWrite
+                                              , Corpus
                                               ]
                                  }
                   }

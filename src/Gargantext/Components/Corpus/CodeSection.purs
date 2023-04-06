@@ -68,6 +68,7 @@ fieldsCodeEditorCpt = here.component "fieldsCodeEditorCpt" cpt
           , onRename: onRename idx
           , idx
           , nodeId
+          , initiallyOpened: idx == 0
           }
 
       pure $
@@ -82,9 +83,11 @@ fieldsCodeEditorCpt = here.component "fieldsCodeEditorCpt" cpt
       where
         onChange :: Index -> FieldType -> Effect Unit
         onChange idx typ = do
-          T.modify_ (\(FTFieldsWithIndex fs) ->
-            FTFieldsWithIndex $ fromMaybe fs $
-              List.modifyAt idx (\{ ftField: Field f} -> { idx, ftField: Field $ f { typ = typ } }) fs) fields
+          T.modify_ (
+            (\(FTFieldsWithIndex fs) ->
+              FTFieldsWithIndex $ fromMaybe fs $
+                List.modifyAt idx (\{ ftField: Field f} -> { idx, ftField: Field $ f { typ = typ } }) fs))
+            fields
 
         onMoveDown :: T2.ReloadS -> Index -> Unit -> Effect Unit
         onMoveDown masterKey idx _ = do
@@ -113,17 +116,18 @@ hash :: FTFieldWithIndex -> Hash
 hash { idx, ftField } = Crypto.hash $ "--idx--" <> (show idx) <> "--field--" <> (show ftField)
 
 type FieldCodeEditorProps =
-  ( idx         :: Int
-  , nodeId      :: ID
-  , canMoveDown :: Boolean
-  , canMoveUp   :: Boolean
-  , field       :: FTField
-  , key         :: String
-  , onChange    :: FieldType -> Effect Unit
-  , onMoveDown  :: Unit -> Effect Unit
-  , onMoveUp    :: Unit -> Effect Unit
-  , onRemove    :: Unit -> Effect Unit
-  , onRename    :: String -> Effect Unit
+  ( idx             :: Int
+  , nodeId          :: ID
+  , canMoveDown     :: Boolean
+  , canMoveUp       :: Boolean
+  , field           :: FTField
+  , key             :: String
+  , onChange        :: FieldType -> Effect Unit
+  , onMoveDown      :: Unit -> Effect Unit
+  , onMoveUp        :: Unit -> Effect Unit
+  , onRemove        :: Unit -> Effect Unit
+  , onRename        :: String -> Effect Unit
+  , initiallyOpened :: Boolean
   )
 
 fieldCodeEditorWrapper :: Record FieldCodeEditorProps -> R.Element
@@ -139,6 +143,7 @@ fieldCodeEditorWrapperCpt = here.component "fieldCodeEditorWrapperCpt" cpt where
             , onRename
             , idx
             , nodeId
+            , initiallyOpened
             } _ = do
     -- | Computed
     -- |
@@ -227,9 +232,12 @@ fieldCodeEditorWrapperCpt = here.component "fieldCodeEditorWrapperCpt" cpt where
       ,
         H.div
         { id: bodyId
-        , className: "collapse card-body"
+        , className: intercalate " "
+            [ "collapse card-body"
+            , initiallyOpened ? "show" $ ""
+            ]
         , aria:
-            { labelledBy: headerId
+            { labelledby: headerId
             }
         }
         [
@@ -352,7 +360,7 @@ changeCode onc (Python {python}) CE.Markdown _ = onc $ Markdown $ defaultMarkdow
 
 changeCode onc (Markdown _)  CE.Haskell  c = onc $ Haskell  $ defaultHaskell'  { haskell = c }
 changeCode onc (Markdown _)  CE.Python   c = onc $ Python   $ defaultPython'   { python  = c }
-changeCode onc (Markdown _)  CE.JSON     c = onc $ Markdown $ defaultMarkdown' { text    = c }
+changeCode onc (Markdown _)  CE.JSON     c = onc $ JSON     $ defaultJSON'     { desc    = c }
 changeCode onc (Markdown md) CE.Markdown c = onc $ Markdown $ md               { text    = c }
 
 changeCode onc (JSON j) CE.Haskell _ = onc $ Haskell $ defaultHaskell' { haskell = haskell }

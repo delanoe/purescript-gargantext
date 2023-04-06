@@ -80,11 +80,12 @@ select.form-control
   &__aside
     // @TODO: topbar width
     $offset-y: 56px
-    $min-width: 280px
+    $min-width: 200px
+    $default-width: 280px
 
     flex-grow: 0
     flex-shrink: 0
-    width: $min-width
+    width: $default-width
     min-width: $min-width
     height: calc(100vh - #{ $offset-y })
     z-index: z-index('main', 'sidebar')
@@ -124,7 +125,6 @@ select.form-control
 .main-page
   $self: &
   $page-padding: space-x(3) space-x(4)
-  $topbar-height: 56px // ~ unworthy empirical value (@TODO topbar height calculation)
 
   position: relative
 
@@ -303,3 +303,19 @@ select.form-control
     font-size: 12px
 
 /////////////////////////////////////////////
+
+.glyphitem
+  top: 0
+  display: inline-block
+  float: right
+  opacity: 0.6
+  padding-right: 5px
+  cursor: pointer
+  transition: transform 0.1s ease-out 0s
+  font-size: 15px
+  text-align: center
+
+  &:hover
+    display: inline-block
+    opacity: 1
+    transform: scale(1.4)

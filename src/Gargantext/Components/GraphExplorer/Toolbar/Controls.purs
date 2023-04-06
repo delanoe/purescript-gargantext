@@ -4,27 +4,24 @@ module Gargantext.Components.GraphExplorer.Toolbar.Controls
 
 import Prelude
 
-import Data.Array as A
 import Data.Foldable (intercalate)
-import Data.Int as I
-import Data.Maybe (Maybe(..), maybe)
-import Data.Sequence as Seq
+import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Effect.Timer (setTimeout)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.GraphExplorer.Resources as Graph
 import Gargantext.Components.GraphExplorer.Store as GraphStore
-import Gargantext.Components.GraphExplorer.Toolbar.Buttons (centerButton, cameraButton, edgesToggleButton, louvainToggleButton, pauseForceAtlasButton, multiSelectEnabledButton)
-import Gargantext.Components.GraphExplorer.Toolbar.RangeControl (edgeConfluenceControl, edgeWeightControl, nodeSizeControl)
+import Gargantext.Components.GraphExplorer.Toolbar.Buttons (cameraButton, centerButton, edgesToggleButton, louvainButton, pauseForceAtlasButton, pauseNoverlapButton, multiSelectEnabledButton)
+import Gargantext.Components.GraphExplorer.Toolbar.RangeControl (edgeConfluenceControl, nodeSizeControl)
 import Gargantext.Components.GraphExplorer.Toolbar.SlideButton (labelSizeButton, labelRenderedSizeThresholdButton, mouseSelectorSizeSlider)
 import Gargantext.Components.GraphExplorer.Types as GET
-import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
+import Gargantext.Hooks.Sigmax.Noverlap as Noverlap
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
+import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
-import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
@@ -36,7 +33,9 @@ here = R2.here "Gargantext.Components.GraphExplorer.Toolbar.Controls"
 
 type Controls =
   ( fa2Ref       :: R.Ref (Maybe ForceAtlas.FA2Layout)
+  , noverlapRef  :: R.Ref (Maybe Noverlap.NoverlapLayout)
   , reloadForest :: T2.ReloadS
+  , session      :: Session
   , sigmaRef     :: R.Ref Sigmax.Sigma
   )
 
@@ -45,14 +44,18 @@ controls = R2.leaf controlsCpt
 controlsCpt :: R.Memo Controls
 controlsCpt = R.memo' $ here.component "controls" cpt where
   cpt { fa2Ref
+      , noverlapRef
       , reloadForest
+      , session
       , sigmaRef
       } _ = do
     -- | States
     -- |
     { edgeConfluence
-    , edgeWeight
+    , edgeConfluenceRange
+    -- , edgeWeight
     , forceAtlasState
+    , noverlapState
     , graph
     , graphId
     , graphStage
@@ -62,22 +65,25 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     , mouseSelectorSize
     , multiSelectEnabled
     , nodeSize
+    , nodeSizeRange
     , selectedNodeIds
     , showEdges
-    , showLouvain
     , showSidebar
     , sideTab
+    , transformedGraph
     } <- GraphStore.use
 
-    forceAtlasState'    <- R2.useLive' forceAtlasState
-    graph'              <- R2.useLive' graph
-    graphId'            <- R2.useLive' graphId
-    graphStage'         <- R2.useLive' graphStage
-    hyperdataGraph'     <- R2.useLive' hyperdataGraph
-    selectedNodeIds'    <- R2.useLive' selectedNodeIds
-    showSidebar'        <- R2.useLive' showSidebar
+    graphId'              <- R2.useLive' graphId
+    hyperdataGraph'       <- R2.useLive' hyperdataGraph
+    forceAtlasState'      <- R2.useLive' forceAtlasState
+    noverlapState'        <- R2.useLive' noverlapState
+    graphStage'           <- R2.useLive' graphStage
+    selectedNodeIds'      <- R2.useLive' selectedNodeIds
+    showSidebar'          <- R2.useLive' showSidebar
+    edgeConfluenceRange'  <- R2.useLive' edgeConfluenceRange
+    nodeSizeRange'        <- R2.useLive' nodeSizeRange
 
-    session <- useSession
+    -- session <- useSession
 
     -- ref to track automatic FA pausing
     -- If user pauses FA before auto is triggered, clear the timeoutId
@@ -89,13 +95,24 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
 
     -- When graph is changed, cleanup the mFAPauseRef so that forceAtlas
     -- timeout is retriggered.
-    R.useEffect' $ do
+    R.useEffect1' graphStage' $ do
       case graphStage' of
         GET.Init -> R.setRef mFAPauseRef Nothing
         _          -> pure unit
 
     -- Handle case when FA is paused from outside events, eg. the automatic timer.
     R.useEffect' $ Sigmax.handleForceAtlas2Pause fa2Ref forceAtlasState mFAPauseRef Graph.forceAtlas2Settings
+
+    R.useEffect' do
+      -- here.log2 "[controls] noverlapState'" noverlapState'
+      case R.readRef noverlapRef of
+        Nothing -> pure unit
+        Just noverlap -> do
+          case noverlapState' of
+            SigmaxT.NoverlapRunning -> do
+              Noverlap.start noverlap
+            SigmaxT.NoverlapPaused -> do
+              Noverlap.stop noverlap
 
     -- Handle automatic edge hiding when FA is running (to prevent flickering).
     -- TODO Commented temporarily: this breaks forceatlas rendering after reset
@@ -120,40 +137,18 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     -- Timer to turn off the initial FA. This is because FA eats up lot of
     -- CPU, has memory leaks etc.
     R.useEffect1' forceAtlasState' $ do
-      if forceAtlasState' == SigmaxT.InitialRunning then do
-        timeoutId <- setTimeout 9000 $ do
-          case forceAtlasState' of
-            SigmaxT.InitialRunning ->
-              T.write_ SigmaxT.Paused forceAtlasState
-            _ -> pure unit
-          R.setRef mFAPauseRef Nothing
-        R.setRef mFAPauseRef $ Just timeoutId
-        pure unit
-        else
+      case forceAtlasState' of
+        SigmaxT.InitialRunning -> do
+          timeoutId <- setTimeout 9000 $ do
+            case forceAtlasState' of
+              SigmaxT.InitialRunning ->
+                T.write_ SigmaxT.Paused forceAtlasState
+              _ -> pure unit
+            R.setRef mFAPauseRef Nothing
+          R.setRef mFAPauseRef $ Just timeoutId
           pure unit
+        _ -> pure unit
 
-
-    -- | Computed
-    -- |
-
-    let edgesConfluenceSorted = A.sortWith (_.confluence) $ Seq.toUnfoldable $ SigmaxT.graphEdges graph'
-    let edgeConfluenceMin = maybe 0.0 _.confluence $ A.head edgesConfluenceSorted
-    let edgeConfluenceMax = maybe 100.0 _.confluence $ A.last edgesConfluenceSorted
-    let edgeConfluenceRange = Range.Closed { min: edgeConfluenceMin, max: edgeConfluenceMax }
-
-    --let edgesWeightSorted = A.sortWith (_.weight) $ Seq.toUnfoldable $ SigmaxT.graphEdges graph
-    --let edgeWeightMin = maybe 0.0 _.weight $ A.head edgesWeightSorted
-    --let edgeWeightMax = maybe 100.0 _.weight $ A.last edgesWeightSorted
-    --let edgeWeightRange = Range.Closed { min: edgeWeightMin, max: edgeWeightMax }
-    let edgeWeightRange = Range.Closed {
-          min: 0.0
-        , max: I.toNumber $ Seq.length $ SigmaxT.graphEdges graph'
-        }
-
-    let nodesSorted = A.sortWith (_.size) $ Seq.toUnfoldable $ SigmaxT.graphNodes graph'
-    let nodeSizeMin = maybe 0.0 _.size $ A.head nodesSorted
-    let nodeSizeMax = maybe 100.0 _.size $ A.last nodesSorted
-    let nodeSizeRange = Range.Closed { min: nodeSizeMin, max: nodeSizeMax }
 
     let gap = H.span { className: "graph-toolbar__gap" } []
 
@@ -179,18 +174,18 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             [
               -- resetForceAtlasButton { forceAtlasState, sigmaRef }
               pauseForceAtlasButton { state: forceAtlasState }
+            , pauseNoverlapButton { state: noverlapState }
             ,
               gap
-{-            ,
+            ,
               cameraButton
               { id: graphId'
               , forceAtlasState
               , hyperdataGraph: hyperdataGraph'
               , reloadForest
-              , session: session
+              , session
               , sigmaRef: sigmaRef
               }
--}
             ]
           ,
             -- View Settings
@@ -211,8 +206,10 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             ,
               gap
             ,
-              louvainToggleButton { forceAtlasState
-                                  , state: showLouvain }
+              louvainButton { forceAtlasState
+                            , graph
+                            , sigmaRef
+                            , transformedGraph }
             ]
           ]
         ,
@@ -249,66 +246,52 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
         , titleSlot: H.text "Controls"
         }
         [
-          H.div
-          { className: "d-flex justify-content-between mb-3" }
+          B.wad
+          [ "d-flex",  "gap-6", "px-1" ]
           [
-            edgeConfluenceControl
-            { forceAtlasState
-            , range: edgeConfluenceRange
-            , state: edgeConfluence }
-          {- ,
-            edgeWeightControl
-            { forceAtlasState
-            , range: edgeWeightRange
-            , state: edgeWeight }
-          -}
+            B.wad
+            [ "d-flex", "flex-column", "flex-grow-1", "pt-1", "gap-4" ]
+            [
+              edgeConfluenceControl
+              { forceAtlasState
+              , range: edgeConfluenceRange'
+              , state: edgeConfluence }
+            {- ,
+              edgeWeightControl
+              { forceAtlasState
+              , range: edgeWeightRange
+              , state: edgeWeight }
+            -}
+            ,
+              nodeSizeControl
+              { forceAtlasState
+              , range: nodeSizeRange'
+              , state: nodeSize
+              }
+            ]
+          ,
+            B.wad
+            [ "d-flex", "flex-column", "flex-grow-1", "pt-1", "gap-4" ]
+            [
+              labelSizeButton
+              { forceAtlasState
+              , graph
+              , sigmaRef
+              , state: labelSize
+              }
+            ,
+              labelRenderedSizeThresholdButton
+              { forceAtlasState
+              , sigmaRef
+              , state: labelRenderedSizeThreshold
+              }
+              -- ,
+              --   nodeSizeControl
+              --   { range: nodeSizeRange
+              --   , state: nodeSize
+              --   }
+            ]
           ]
-        ,
-          H.div
-          { className: "d-flex justify-content-between" }
-          [
-            -- change level
-            -- file upload
-            -- run demo
-            -- search button
-            -- search topics
-            labelSizeButton { forceAtlasState
-                            , graph
-                            , sigmaRef
-                            , state: labelSize }
-          ]
-
-        ,
-          H.div
-          { className: "d-flex justify-content-between" }
-          [
-            -- labels size: 1-4
-            nodeSizeControl
-            { forceAtlasState
-            , range: nodeSizeRange
-            , state: nodeSize }
-
-          ]
-        ,
-          H.div
-          { className: "d-flex justify-content-between" }
-          [
-            -- change level
-            -- file upload
-            -- run demo
-            -- search button
-            -- search topics
-            labelRenderedSizeThresholdButton { forceAtlasState
-                                             , sigmaRef
-                                             , state: labelRenderedSizeThreshold }
-          -- ,
-          --   -- labels size: 1-4
-          --   nodeSizeControl
-          --   { range: nodeSizeRange
-          --   , state: nodeSize }
-
-          ]
-
         ]
       ]
 

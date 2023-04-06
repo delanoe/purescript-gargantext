@@ -1,37 +1,37 @@
 // Most simple reset ever found
 // @link https://meiert.com/en/blog/stop-using-resets/#comment-240548
-html{
+html {
   box-sizing: border-box;
-  height: 100%
+  height: 100%;
 }
 
 *,
 :after,
-:before{
+:before {
   margin: 0;
   padding: 0;
   border: 0;
   outline: 0;
-  box-sizing: inherit
+  box-sizing: inherit;
 }
 
-::-moz-focus-inner{
+::-moz-focus-inner {
   border: 0;
 }
 
-body{
+body {
   position:relative;
 }
 
-a{
+a {
   text-decoration: none;
-  color: inherit
+  color: inherit;
 }
 
-a:focus{
+a:focus {
   outline: 0;
 }
 
-ul{
+ul {
   list-style:none;
 }

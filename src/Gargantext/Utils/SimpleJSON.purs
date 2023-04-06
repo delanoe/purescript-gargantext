@@ -3,9 +3,12 @@ module Gargantext.Utils.SimpleJSON where
 import Prelude
 
 import Control.Alt ((<|>))
-import Control.Monad.Except (withExcept)
+import Control.Monad.Except (throwError, withExcept)
 import Data.Generic.Rep as GR
+import Data.List as L
+import Data.List.Types (NonEmptyList(..))
 import Data.Maybe (Maybe(..))
+import Data.NonEmpty (NonEmpty(..))
 import Data.Tuple (Tuple(..))
 import Foreign (Foreign, ForeignError(..), fail)
 import Foreign as Foreign
@@ -86,3 +89,8 @@ instance untaggedSumRepArgument ::
   ( JSON.ReadForeign a
   ) => UntaggedSumRep (GR.Argument a) where
   untaggedSumRep f = GR.Argument <$> JSON.readImpl f
+
+
+throwJSONError :: forall a. Foreign.ForeignError -> Foreign.F a
+throwJSONError err =
+  throwError $ NonEmptyList $ NonEmpty err L.Nil

@@ -13,10 +13,10 @@ import Data.Lens.Index (class Index, ix)
 import Data.Lens.Iso.Newtype (_Newtype)
 import Data.Lens.Record (prop)
 import Data.List (List)
+import Data.List.Types (NonEmptyList(..))
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), isJust)
-import Data.Monoid.Additive (Additive(..))
+import Data.Maybe (Maybe(..), fromJust, isJust)
 import Data.Newtype (class Newtype)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
@@ -33,6 +33,7 @@ import Gargantext.Components.Table.Types as T
 import Gargantext.Prelude
 import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
+import Gargantext.Utils.SimpleJSON as USJ
 import Simple.JSON as JSON
 import Reactix as R
 import Type.Proxy (Proxy(..))
@@ -193,7 +194,7 @@ instance Monoid NgramsPatch where
   mempty = NgramsPatch { patch_children: mempty, patch_list: mempty }
 instance Semigroup NgramsPatch where
   append (NgramsReplace p) (NgramsReplace q)
-    | p.patch_old /= q.patch_new = unsafeThrow "append/NgramsPatch: old != new"
+    | p.patch_old /= q.patch_new = unsafeThrow $ "append/NgramsPatch: old != new: " <> show p.patch_old <> " != " <> show q.patch_new
     | otherwise                  = ngramsReplace q.patch_old p.patch_new
   append (NgramsPatch p)   (NgramsPatch q) = NgramsPatch
     { patch_children: p.patch_children <> q.patch_children
@@ -208,14 +209,17 @@ instance JSON.ReadForeign NgramsPatch where
   readImpl f = do
     inst :: { patch_old :: Maybe NgramsRepoElement
             , patch_new :: Maybe NgramsRepoElement
-            , patch_children :: PatchSet NgramsTerm
-            , patch_list :: Replace GT.TermList } <- JSON.readImpl f
+            , patch_children :: Maybe (PatchSet NgramsTerm)
+            , patch_list :: Maybe (Replace GT.TermList) } <- JSON.readImpl f
     -- TODO handle empty fields
     -- TODO handle patch_new
     if isJust inst.patch_new || isJust inst.patch_old then
-      pure $ NgramsReplace { patch_old: inst.patch_old, patch_new: inst.patch_new }
-    else do
-      pure $ NgramsPatch { patch_list: inst.patch_list, patch_children: inst.patch_children }
+      pure $ NgramsReplace { patch_old: inst.patch_old
+                           , patch_new: inst.patch_new }
+    else case (Tuple inst.patch_children inst.patch_list) of
+      Tuple (Just patch_children) (Just patch_list) ->
+        pure $ NgramsPatch { patch_list, patch_children }
+      _ -> USJ.throwJSONError $ F.ForeignError "[readForeign NgramsPatch] patch_children or patch_list undefined"
 
 -----------------------------------------------------
 newtype NgramsTerm = NormNgramsTerm String
@@ -255,7 +259,7 @@ newtype NgramsElement = NgramsElement
   , root        :: Maybe NgramsTerm -- ok
   , parent      :: Maybe NgramsTerm -- ok
   , children    :: Set NgramsTerm -- ok
-  , occurrences :: Int -- HERE
+  , occurrences :: Set Int -- HERE
   }
 derive instance Eq NgramsElement
 derive instance Newtype NgramsElement _
@@ -267,13 +271,15 @@ instance JSON.ReadForeign NgramsElement where
             , size :: Int
             , list :: GT.TermList
             , ngrams :: NgramsTerm
-            , occurrences :: Int
+            , occurrences :: Array Int
             , parent :: Maybe NgramsTerm
-            , root :: Maybe NgramsTerm }<- JSON.readImpl f
-    pure $ NgramsElement $ inst { children = Set.fromFoldable inst.children }
+            , root :: Maybe NgramsTerm } <- JSON.readImpl f
+    pure $ NgramsElement $ inst { children = Set.fromFoldable inst.children
+                                , occurrences = Set.fromFoldable inst.occurrences }
 instance JSON.WriteForeign NgramsElement where
   writeImpl (NgramsElement ne) =
-    JSON.writeImpl $ ne { children = Set.toUnfoldable ne.children :: Array _ }
+    JSON.writeImpl $ ne { children = Set.toUnfoldable ne.children :: Array _
+                        , occurrences = Set.toUnfoldable ne.occurrences :: Array _ }
 
 _parent :: forall parent row. Lens' { parent :: parent | row } parent
 _parent = prop (Proxy :: Proxy "parent")
@@ -287,7 +293,7 @@ _ngrams = prop (Proxy :: Proxy "ngrams")
 _children :: forall row. Lens' { children :: Set NgramsTerm | row } (Set NgramsTerm)
 _children = prop (Proxy :: Proxy "children")
 
-_occurrences :: forall row. Lens' { occurrences :: Int | row } Int
+_occurrences :: forall row. Lens' { occurrences :: Set Int | row } (Set Int)
 _occurrences = prop (Proxy :: Proxy "occurrences")
 
 _list :: forall a row. Lens' { list :: a | row } a
@@ -304,7 +310,7 @@ _NgramsElement  :: Iso' NgramsElement {
   , size        :: Int
   , list        :: GT.TermList
   , ngrams      :: NgramsTerm
-  , occurrences :: Int
+  , occurrences :: Set Int
   , parent      :: Maybe NgramsTerm
   , root        :: Maybe NgramsTerm
   }
@@ -356,7 +362,7 @@ _NgramsRepoElement = _Newtype
 -}
 newtype NgramsTable = NgramsTable
   { ngrams_repo_elements :: Map NgramsTerm NgramsRepoElement
-  , ngrams_scores        :: Map NgramsTerm (Additive Int)
+  , ngrams_scores        :: Map NgramsTerm (Set Int)
   }
 derive instance Newtype NgramsTable _
 derive instance Generic NgramsTable _
@@ -372,11 +378,11 @@ instance JSON.ReadForeign NgramsTable where
     where
       f (NgramsElement {ngrams, size, list, root, parent, children}) =
         Tuple ngrams (NgramsRepoElement {size, list, root, parent, children})
-      g (NgramsElement e) = Tuple e.ngrams (Additive e.occurrences)
+      g (NgramsElement e) = Tuple e.ngrams e.occurrences
 
 _NgramsTable :: Iso' NgramsTable
                      { ngrams_repo_elements :: Map NgramsTerm NgramsRepoElement
-                     , ngrams_scores        :: Map NgramsTerm (Additive Int)
+                     , ngrams_scores        :: Map NgramsTerm (Set Int)
                      }
 _NgramsTable = _Newtype
 

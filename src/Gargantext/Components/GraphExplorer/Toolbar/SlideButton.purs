@@ -6,7 +6,6 @@ module Gargantext.Components.GraphExplorer.Toolbar.SlideButton
   , mouseSelectorSizeSlider
   ) where
 
-import Data.Array as A
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Number as DN
@@ -17,8 +16,6 @@ import Reactix.DOM.HTML as H
 import Toestand as T
 
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(Disabled))
-import Gargantext.Components.GraphExplorer.Types as GET
-import Gargantext.Components.GraphExplorer.Utils as GEU
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Graphology as Graphology
 import Gargantext.Hooks.Sigmax.Sigma as Sigma

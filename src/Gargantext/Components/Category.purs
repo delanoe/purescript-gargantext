@@ -6,14 +6,18 @@ import Gargantext.Prelude
 import Data.Array as A
 import Data.Generic.Rep (class Generic)
 import Data.Map as Map
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Tuple.Nested ((/\))
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (Variant(..))
-import Gargantext.Components.Category.Types (Category(..), Star(..), cat2score, categories, clickAgain, star2score, stars)
+import Gargantext.Components.Category.Types (Category(..), Star(..), cat2score, categories, clickAgain, decodeStar, star2score, stars)
 import Gargantext.Components.DocsTable.Types (DocumentsView(..), LocalCategories, LocalUserScore)
-import Gargantext.Config.REST (AffRESTError)
+import Gargantext.Components.GraphQL.Context (NodeContext)
+import Gargantext.Components.GraphQL.Endpoints (getNodeContext, updateNodeContextCategory)
+import Gargantext.Config.REST (AffRESTError, RESTError(..))
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, put)
 import Gargantext.Types (NodeID, NodeType(..))
@@ -23,6 +27,7 @@ import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
+import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Category"
@@ -47,48 +52,149 @@ ratingCpt = here.component "rating" cpt where
       , session
       , setLocalCategories
       } _ = do
-    -- | Computed
-    -- |
-    let
-      icon' Star_0 Star_0  = "times-circle"
-      icon' _      Star_0  = "times"
-      icon' c      s       = star2score c < star2score s ? "star-o" $ "star"
+    pure $ renderRatingSimple { docId: r._id
+                              , corpusId: nodeId
+                              , category: star2score score
+                              , session } []
 
-      variant' Star_0 Star_0 = Dark
-      variant' _      Star_0 = Dark
-      variant' _      _      = Dark
+    -- -- | Behaviors
+    -- -- |
+    -- let
+    --   onClick c _ = do
+    --     let c' = score == c ? clickAgain c $ c
 
-      className' Star_0 Star_0 = "rating-group__action"
-      className' _      Star_0 = "rating-group__action"
-      className' _      _      = "rating-group__star"
+    --     setLocalCategories $ Map.insert r._id c'
+    --     launchAff_ do
+    --       _ <- putRating session nodeId $ RatingQuery
+    --         { nodeIds: [r._id]
+    --         , rating: c'
+    --         }
+    --       liftEffect $ T2.reload chartReload
 
-    -- | Behaviors
-    -- |
+    -- -- | Render
+    -- -- |
+    -- pure $
+
+    --   H.div
+    --   { className: "rating-group" } $
+    --   stars <#> \s ->
+    --     B.iconButton
+    --     { name: ratingIcon score s
+    --     , callback: onClick s
+    --     , overlay: false
+    --     , variant: ratingVariant score s
+    --     , className: ratingClassName score s
+    --     }
+
+ratingIcon Star_0 Star_0  = "times-circle"
+ratingIcon _      Star_0  = "times"
+ratingIcon c      s       = star2score c < star2score s ? "star-o" $ "star"
+
+ratingVariant Star_0 Star_0 = Dark
+ratingVariant _      Star_0 = Dark
+ratingVariant _      _      = Dark
+
+ratingClassName Star_0 Star_0 = "rating-group__action"
+ratingClassName _      Star_0 = "rating-group__action"
+ratingClassName _      _      = "rating-group__star"
+
+
+------------------------------------------------
+
+type RatingSimpleLoaderProps =
+  ( docId    :: NodeID
+  , corpusId :: NodeID
+  , session  :: Session
+)
+
+ratingSimpleLoader :: R2.Component RatingSimpleLoaderProps
+ratingSimpleLoader = R.createElement ratingSimpleLoaderCpt
+ratingSimpleLoaderCpt :: R.Component RatingSimpleLoaderProps
+ratingSimpleLoaderCpt = here.component "ratingSimpleLoader" cpt where
+  cpt { docId
+      , corpusId
+      , session
+      } _ = do
+    useLoader { errorHandler
+              , loader: loadDocumentContext session
+              , path: { docId, corpusId }
+              , render: \{ nc_category } -> renderRatingSimple { docId
+                                                               , corpusId
+                                                               , category: fromMaybe 0 nc_category
+                                                               , session } [] }
+    where
+      errorHandler err = do
+        here.warn2 "[pageLayout] RESTError" err
+        case err of
+          ReadJSONError err' -> here.warn2 "[pageLayout] ReadJSONError" $ show err'
+          _ -> pure unit
+
+type ContextParams =
+  ( docId    :: NodeID
+  , corpusId :: NodeID )
+
+loadDocumentContext :: Session -> Record ContextParams -> AffRESTError NodeContext
+loadDocumentContext session { docId, corpusId } = getNodeContext session docId corpusId
+
+type RenderRatingSimpleProps =
+  ( docId    :: NodeID
+  , corpusId :: NodeID
+  , category :: Int
+  , session  :: Session )
+
+renderRatingSimple :: R2.Component RenderRatingSimpleProps
+renderRatingSimple = R.createElement renderRatingSimpleCpt
+renderRatingSimpleCpt :: R.Component RenderRatingSimpleProps
+renderRatingSimpleCpt = here.component "renderRatingSimple" cpt where
+  cpt { docId
+      , corpusId
+      , category
+      , session
+      } _ = do
+    score <- T.useBox $ decodeStar category
+
+    pure $ ratingSimple { docId
+                        , corpusId
+                        , score
+                        , session } []
+
+type RatingSimpleProps =
+  ( docId    :: NodeID
+  , corpusId :: NodeID
+  , score    :: T.Box Star
+  , session  :: Session )
+
+ratingSimple :: R2.Component RatingSimpleProps
+ratingSimple = R.createElement ratingSimpleCpt
+ratingSimpleCpt :: R.Component RatingSimpleProps
+ratingSimpleCpt = here.component "ratingSimple" cpt where
+  cpt { docId
+      , corpusId
+      , score
+      , session
+      } _ = do
+    score' <- T.useLive T.unequal score
+
     let
       onClick c _ = do
-        let c' = score == c ? clickAgain c $ c
+        let c' = score' == c ? clickAgain c $ c
 
-        setLocalCategories $ Map.insert r._id c'
+        -- setLocalCategories $ Map.insert r._id c'
         launchAff_ do
-          _ <- putRating session nodeId $ RatingQuery
-            { nodeIds: [r._id]
-            , rating: c'
-            }
-          liftEffect $ T2.reload chartReload
+          _ <- updateNodeContextCategory session docId corpusId $ star2score c'
+          liftEffect $ T.write_ c' score
+          pure unit
 
-    -- | Render
-    -- |
     pure $
-
       H.div
       { className: "rating-group" } $
       stars <#> \s ->
         B.iconButton
-        { name: icon' score s
+        { name: ratingIcon score' s
         , callback: onClick s
         , overlay: false
-        , variant: variant' score s
-        , className: className' score s
+        , variant: ratingVariant score' s
+        , className: ratingClassName score' s
         }
 
 
@@ -120,7 +226,7 @@ carousselCpt :: R.Component CarousselProps
 carousselCpt = here.component "caroussel" cpt
   where
     cpt { category, nodeId, row: DocumentsView r, session, setLocalCategories } _ = do
-      pure $ H.div {className:"flex"} divs
+      pure $ H.div {className:"d-flex"} divs
       where
         divs = map (\c -> if category == c
                             then

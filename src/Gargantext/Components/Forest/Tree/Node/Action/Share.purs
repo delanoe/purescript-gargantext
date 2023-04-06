@@ -2,17 +2,22 @@ module Gargantext.Components.Forest.Tree.Node.Action.Share where
 
 import Gargantext.Prelude
 
+import Data.Array (filter, nub)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
+import Data.String (Pattern(..), contains)
+import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
 import Gargantext.Components.Forest.Tree.Node.Action.Types as Action
 import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
-import Gargantext.Config.REST (AffRESTError)
+import Gargantext.Components.InputWithAutocomplete (inputWithAutocomplete')
+import Gargantext.Config.REST (AffRESTError, logRESTError)
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR
-import Gargantext.Sessions (Session, post)
+import Gargantext.Sessions (Session, get, post)
 import Gargantext.Types (ID)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
@@ -20,7 +25,6 @@ import Gargantext.Utils.SimpleJSON as GUSJ
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
-import Simple.JSON.Generics as JSONG
 import Toestand as T
 
 here :: R2.Here
@@ -30,6 +34,10 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Share"
 shareReq :: Session -> ID -> ShareNodeParams -> AffRESTError ID
 shareReq session nodeId =
   post session $ GR.NodeAPI GT.Node (Just nodeId) "share"
+
+getCompletionsReq :: { session :: Session } -> AffRESTError (Array String)
+getCompletionsReq { session }  =
+  get session GR.Members
 
 shareAction :: String -> Action
 shareAction username = Action.ShareTeam username
@@ -51,23 +59,51 @@ instance Show ShareNodeParams where show = genericShow
 ------------------------------------------------------------------------
 type ShareNode =
   ( id :: ID
-  , dispatch :: Action -> Aff Unit )
+  , dispatch :: Action -> Aff Unit 
+  , session :: Session)
 
 shareNode :: R2.Component ShareNode
 shareNode = R.createElement shareNodeCpt
 shareNodeCpt :: R.Component ShareNode
 shareNodeCpt = here.component "shareNode" cpt
   where
-    cpt { dispatch, id } _ = do
-      isOpen <- T.useBox true
+    cpt {session, dispatch} _ = do
+      useLoader {
+        loader: getCompletionsReq
+      , path: { session }
+      , render: \completions -> shareNodeInner {completions, dispatch} []
+      , errorHandler
+      }
+      where
+        errorHandler = logRESTError here "[shareNode]"
+
+type ShareNodeInner =
+  ( dispatch :: Action -> Aff Unit
+  , completions :: Array String
+  )
+
+shareNodeInner :: R2.Component ShareNodeInner
+shareNodeInner = R.createElement shareNodeInnerCpt
+shareNodeInnerCpt :: R.Component ShareNodeInner
+shareNodeInnerCpt = here.component "shareNodeInner" cpt
+  where
+    cpt { dispatch, completions } _ = do
+      state <- T.useBox ""
+      text' /\ text <- R2.useBox' ""
+
       pure $ Tools.panel
-                [ Tools.textInputBox { boxAction: shareAction
-                                     , boxName: "Share"
-                                     , dispatch
-                                     , id
-                                     , isOpen
-                                     , text: "username" } []
-                ] (H.div {} [])
+                [ inputWithAutocomplete' { boxAction: shareAction
+                                         , dispatch
+                                         , state
+                                         , classes: "d-flex align-items-center"
+                                         , autocompleteSearch
+                                         , onAutocompleteClick
+                                         , text 
+                                         , placeHolder: "username or email"}
+                ] (H.div {} [H.text text'])
+      where
+        autocompleteSearch input = nub $ filter (contains (Pattern input)) completions
+        onAutocompleteClick _ = pure unit
 ------------------------------------------------------------------------
 publishNode :: R2.Component SubTreeParamsIn
 publishNode = R.createElement publishNodeCpt

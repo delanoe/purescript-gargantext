@@ -12,7 +12,7 @@ import Data.UUID (UUID)
 import Data.UUID as UUID
 import Effect (Effect)
 import Gargantext.Components.App.Store (Boxes)
-import Gargantext.Components.ErrorsView (errorsView)
+import Gargantext.Components.ErrorsView as ErrorsView
 import Gargantext.Components.Forest (forestLayout)
 import Gargantext.Components.ForgotPassword (forgotPasswordLayout)
 import Gargantext.Components.Login (login)
@@ -23,8 +23,8 @@ import Gargantext.Components.Nodes.Corpus as Corpus
 import Gargantext.Components.Nodes.Corpus.Code (corpusCodeLayout)
 import Gargantext.Components.Nodes.Corpus.Dashboard (dashboardLayout)
 import Gargantext.Components.Nodes.Corpus.Document as Document
-import Gargantext.Components.Nodes.Corpus.Graph as Graph
 import Gargantext.Components.Nodes.Corpus.Phylo as Phylo
+import Gargantext.Components.Nodes.Graph as Graph
 import Gargantext.Components.Nodes.File (fileLayout)
 import Gargantext.Components.Nodes.Frame as Frame
 import Gargantext.Components.Nodes.Home (homeLayout)
@@ -64,7 +64,7 @@ type SessionNodeProps = ( nodeId :: NodeID | SessionProps )
 type Props' = ( backend :: Backend, route' :: AppRoute | Props )
 
 router :: R2.Leaf Props
-router = R2.leafComponent routerCpt
+router = R2.leaf routerCpt
 routerCpt :: R.Component Props
 routerCpt = here.component "router" cpt where
   cpt { boxes: boxes@{ handed } } _ = do
@@ -100,22 +100,28 @@ routerCpt = here.component "router" cpt where
       { className: "router" }
       [
         login' boxes
-       , TopBar.topBar { boxes }
-       , errorsView { errors: boxes.errors } []
-       , H.div { className: "router__inner" }
-         [
+      ,
+        TopBar.component
+        {}
+      ,
+        ErrorsView.component
+        {}
+      ,
+        H.div
+        { className: "router__inner" }
+        [
           forest { boxes }
-         ,
+        ,
           mainPage { boxes }
-         ,
+        ,
           sidePanel { boxes }
-         ]
-       ]
+        ]
+      ]
 
 --------------------------------------------------------------
 
 mainPage :: R2.Leaf Props
-mainPage = R2.leafComponent mainPageCpt
+mainPage = R2.leaf mainPageCpt
 mainPageCpt :: R.Component Props
 mainPageCpt = here.component "mainPage" cpt where
   cpt { boxes } _ = do
@@ -260,7 +266,7 @@ forestCpt = R.memo' $ here.component "forest" cpt where
 --------------------------------------------------------------
 
 sidePanel :: R2.Leaf Props
-sidePanel = R2.leafComponent sidePanelCpt
+sidePanel = R2.leaf sidePanelCpt
 sidePanelCpt :: R.Component Props
 sidePanelCpt = here.component "sidePanel" cpt where
   cpt props@{ boxes: { session

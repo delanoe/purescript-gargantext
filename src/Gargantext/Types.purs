@@ -322,7 +322,7 @@ getIcon FolderShared  false = "share-circle"
 getIcon Team  true   = "users"
 getIcon Team  false  = "users-closed"
 
-getIcon FolderPublic true  = "globe-circle"
+getIcon FolderPublic true  = "globe"
 getIcon FolderPublic false = "globe"
 ------------------------------------------------------
 
@@ -819,6 +819,7 @@ instance Eq FrontendError where eq = genericEq
 
 newtype CacheParams = CacheParams
   { expandTableEdition    :: Boolean
+  , showTree              :: Boolean
   }
 
 derive instance Newtype CacheParams _
@@ -834,4 +835,5 @@ derive newtype instance JSON.WriteForeign CacheParams
 defaultCacheParams :: CacheParams
 defaultCacheParams = CacheParams
   { expandTableEdition    : false
+  , showTree              : true
   }

@@ -5,7 +5,9 @@ import Gargantext.Prelude hiding (max, min)
 import DOM.Simple.Types (Element)
 import Data.Array as A
 import Data.FoldableWithIndex (foldMapWithIndex)
-import Data.Int (toNumber)
+import Data.Hashable as Hashable
+import Data.HashSet as HashSet
+import Data.Int (floor, toNumber)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Nullable (null, Nullable)
@@ -26,9 +28,9 @@ import Gargantext.Components.GraphExplorer.Types (GraphSideDoc)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.GraphExplorer.Utils as GEU
 import Gargantext.Config (defaultFrontends)
-import Gargantext.Data.Louvain as Louvain
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
+import Gargantext.Hooks.Sigmax.Noverlap as Noverlap
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Types as GT
@@ -46,14 +48,16 @@ here = R2.here "Gargantext.Components.GraphExplorer.Layout"
 
 type Props =
   ( fa2Ref   :: R.Ref (Maybe ForceAtlas.FA2Layout)
+  , noverlapRef :: R.Ref (Maybe Noverlap.NoverlapLayout)
   , sigmaRef :: R.Ref Sigmax.Sigma
   )
 
 layout :: R2.Leaf Props
 layout = R2.leaf layoutCpt
-layoutCpt :: R.Memo Props
-layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
+layoutCpt :: R.Component Props
+layoutCpt = here.component "layout" cpt where
   cpt { fa2Ref
+      , noverlapRef
       , sigmaRef
       } _ = do
     -- | States
@@ -191,7 +195,9 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
         [
           Controls.controls
           { fa2Ref
+          , noverlapRef
           , reloadForest: reloadForest
+          , session
           , sigmaRef
           }
         ]
@@ -205,6 +211,7 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
           graphView
           { elRef: graphRef
           , fa2Ref
+          , noverlapRef
           , sigmaRef
           }
         ]
@@ -215,6 +222,7 @@ layoutCpt = R.memo' $ here.component "explorerWriteGraph" cpt where
 type GraphProps =
   ( elRef    :: R.Ref (Nullable Element)
   , fa2Ref   :: R.Ref (Maybe ForceAtlas.FA2Layout)
+  , noverlapRef :: R.Ref (Maybe Noverlap.NoverlapLayout)
   , sigmaRef :: R.Ref Sigmax.Sigma
   )
 
@@ -224,52 +232,69 @@ graphViewCpt :: R.Memo GraphProps
 graphViewCpt = R.memo' $ here.component "graphView" cpt where
   cpt { elRef
       , fa2Ref
+      , noverlapRef
       , sigmaRef
       } _ = do
     -- | States
     -- |
     { edgeConfluence
     , edgeWeight
+    , graph
     , nodeSize
     , removedNodeIds
     , selectedNodeIds
     , showEdges
-    , showLouvain
-    , graph
+    , transformedGraph
     } <- GraphStore.use
 
-    edgeConfluence'     <- R2.useLive' edgeConfluence
-    edgeWeight'         <- R2.useLive' edgeWeight
-    nodeSize'           <- R2.useLive' nodeSize
-    removedNodeIds'     <- R2.useLive' removedNodeIds
-    selectedNodeIds'    <- R2.useLive' selectedNodeIds
-    showEdges'          <- R2.useLive' showEdges
-    showLouvain'        <- R2.useLive' showLouvain
-    graph'              <- R2.useLive' graph
+    -- edgeConfluence'     <- R2.useLive' edgeConfluence
+    -- edgeWeight'         <- R2.useLive' edgeWeight
+    -- nodeSize'           <- R2.useLive' nodeSize
+    -- removedNodeIds'     <- R2.useLive' removedNodeIds
+    -- selectedNodeIds'    <- R2.useLive' selectedNodeIds
+    -- showEdges'          <- R2.useLive' showEdges
+    -- graph'              <- R2.useLive' graph
 
     -- | Computed
     -- |
 
-    -- TODO Cache this?
-    let louvainGraph =
-          if showLouvain' then
-            let louvain = Louvain.louvain unit in
-            let cluster = Louvain.init louvain (SigmaxT.louvainNodes graph') (SigmaxT.louvainEdges graph') in
-            SigmaxT.louvainGraph graph' cluster
-          else
-            graph'
+    -- let transformParams = { edgeConfluence'
+    --                       , edgeWeight'
+    --                       , nodeSize'
+    --                       , removedNodeIds'
+    --                       , selectedNodeIds'
+    --                       , showEdges' }
+    -- -- let transformedGraph = transformGraph graph' transformParams
+    -- transformedGraphS <- T.useBox $ transformGraph graph' transformParams
 
-    let transformedGraph = transformGraph louvainGraph { edgeConfluence'
-                                                        , edgeWeight'
-                                                        , nodeSize'
-                                                        , removedNodeIds'
-                                                        , selectedNodeIds'
-                                                        , showEdges' }
+    -- todo Cache this?
+    -- R.useEffect' $ do
+    --   --here.log2 "[graphView] transformedGraph" $ transformGraph graph' transformParams
+
+    --   --let louvain = Louvain.louvain unit in
+    --   --let cluster = Louvain.init louvain (SigmaxT.louvainNodes graph') (SigmaxT.louvainEdges graph') in
+    --   --SigmaxT.louvainGraph graph' cluster
+    --   Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphView (louvainGraph)] no sigma" $ \sigma -> do
+    --     newGraph <- Louvain.assignVisible (SigmaxS.graph sigma) {}
+    --     -- here.log2 "[graphView] newGraph" newGraph
+    --     -- here.log2 "[graphView] nodes" $ A.fromFoldable $ Graphology.nodes newGraph
+    --     let cluster = Louvain.cluster newGraph :: DLouvain.LouvainCluster
+    --     let lgraph = SigmaxT.louvainGraph graph' cluster :: SigmaxT.SGraph
+    --     --T.write_ (transformGraph lgraph transformParams) transformedGraphS
+    --     -- apply colors
+    --     -- traverse_ (\{ id, color } ->
+    --     --   Graphology.mergeNodeAttributes (SigmaxS.graph sigma) id { color }
+    --     -- ) (SigmaxT.graphNodes lgraph)
+    --     T.write_ lgraph transformedGraphS
+
+    -- transformedGraph <- R2.useLive' transformedGraphS
 
     -- R.useEffect' $ do
     --   let (SigmaxT.Graph { edges: e }) = transformedGraph
     --   here.log2 "[graphView] transformedGraph edges" $ A.fromFoldable e
     --   here.log2 "[graphView] hidden edges" $ A.filter(_.hidden) $ A.fromFoldable e
+
+    hooksTransformGraph
 
     -- | Render
     -- |
@@ -278,10 +303,10 @@ graphViewCpt = R.memo' $ here.component "graphView" cpt where
       Graph.drawGraph
       { elRef
       , fa2Ref
+      , noverlapRef
       , forceAtlas2Settings: Graph.forceAtlas2Settings
       , sigmaRef
       , sigmaSettings: Graph.sigmaSettings
-      , transformedGraph
       }
 
 --------------------------------------------------------
@@ -290,22 +315,25 @@ convert :: GET.GraphData -> Tuple (Maybe GET.MetaData) SigmaxT.SGraph
 convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
   where
     normalizedNodes :: Array GEGT.Node
-    normalizedNodes = GEGT.Node <$> (GEU.normalizeNodeSizeDefault $ (\(GEGT.Node n) -> n) <$> r.nodes)
+    normalizedNodes = (\n -> GEGT.Node (n { size = floor n.size })) <$>
+                      (GEU.normalizeNodeSizeDefault $ (\(GEGT.Node n) -> n { size = toNumber n.size }) <$> r.nodes)
     nodes :: Seq.Seq (Record SigmaxT.Node)
     nodes = foldMapWithIndex nodeFn normalizedNodes
     nodeFn :: Int -> GEGT.Node -> Seq.Seq (Record SigmaxT.Node)
     nodeFn _i nn@(GEGT.Node n) =
+      let (GEGT.Cluster { clustDefault }) = n.attributes in
       Seq.singleton {
           borderColor: color
         , children: n.children
         , color : color
+        , community : clustDefault  -- for the communities-louvain graphology plugin
         , equilateral: { numPoints: 3 }
         , gargType
         , hidden : false
         , highlighted: false
         , id    : n.id_
         , label : n.label
-        , size  : n.size
+        , size  : toNumber n.size
         --, size: toNumber n.size
         , type  : modeGraphType gargType
         , x     : n.x -- cos (toNumber i)
@@ -342,9 +370,9 @@ convert (GET.GraphData r) = Tuple r.metaData $ SigmaxT.Graph {nodes, edges}
 
 -- | See sigmajs/plugins/sigma.renderers.customShapes/shape-library.js
 modeGraphType :: Types.Mode -> String
-modeGraphType Types.Authors     = "square"
-modeGraphType Types.Institutes  = "equilateral"
-modeGraphType Types.Sources     = "star"
+modeGraphType Types.Authors     = "triangle"
+modeGraphType Types.Institutes  = "square"
+modeGraphType Types.Sources     = "diamond"
 --modeGraphType Types.Terms       = "def"
 --modeGraphType Types.Terms       = "circle"
 modeGraphType Types.Terms       = "ccircle"
@@ -361,6 +389,42 @@ type LiveProps = (
   , showEdges'       :: SigmaxT.ShowEdgesState
   )
 
+hashLiveProps :: Record LiveProps -> Int
+hashLiveProps p = Hashable.hash { edgeConfluence': p.edgeConfluence'
+                                , edgeWeight': p.edgeWeight'
+                                , nodeSize: p.nodeSize'
+                                , removedNodeIds': HashSet.fromFoldable p.removedNodeIds'
+                                , selectedNodeIds': HashSet.fromFoldable p.selectedNodeIds'
+                                , showEdges': p.showEdges' }
+
+transformGraphStoreParams :: R.Hooks (Record LiveProps)
+transformGraphStoreParams = do
+  store <- GraphStore.use
+
+  edgeConfluence' <- R2.useLive' store.edgeConfluence
+  edgeWeight' <- R2.useLive' store.edgeWeight
+  nodeSize' <- R2.useLive' store.nodeSize
+  removedNodeIds' <- R2.useLive' store.removedNodeIds
+  selectedNodeIds' <- R2.useLive' store.selectedNodeIds
+  showEdges' <- R2.useLive' store.showEdges
+
+  pure { edgeConfluence'
+       , edgeWeight'
+       , nodeSize'
+       , removedNodeIds'
+       , selectedNodeIds'
+       , showEdges' }
+
+hooksTransformGraph :: R.Hooks Unit
+hooksTransformGraph = do
+  store <- GraphStore.use
+
+  params <- transformGraphStoreParams
+  graph' <- R2.useLive' store.graph
+
+  R.useEffect2' (hashLiveProps params) graph' $ do
+    T.write_ (transformGraph graph' params) store.transformedGraph
+
 transformGraph :: SigmaxT.SGraph -> Record LiveProps -> SigmaxT.SGraph
 transformGraph graph { edgeConfluence'
                      , edgeWeight'
@@ -373,7 +437,7 @@ transformGraph graph { edgeConfluence'
     selectedEdgeIds =
       Set.fromFoldable
         $ Seq.map _.id
-        $ SigmaxT.neighbouringEdges graph selectedNodeIds'
+        $ SigmaxT.neighboringEdges graph selectedNodeIds'
     hasSelection = not $ Set.isEmpty selectedNodeIds'
 
     newEdges' = Seq.filter edgeFilter $ Seq.map (

@@ -2,8 +2,9 @@ module Gargantext.Components.GraphExplorer.Toolbar.Buttons
   ( centerButton
   , cameraButton
   , edgesToggleButton
-  , louvainToggleButton
+  , louvainButton
   , pauseForceAtlasButton
+  , pauseNoverlapButton
   , resetForceAtlasButton
   , multiSelectEnabledButton
   ) where
@@ -15,8 +16,10 @@ import Data.Array as A
 import Data.Either (Either(..))
 import Data.Foldable (intercalate)
 import Data.Formatter.DateTime as DFDT
+import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
+import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
@@ -28,9 +31,11 @@ import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileFormat(..
 import Gargantext.Components.GraphExplorer.API (cloneGraph)
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Components.GraphExplorer.Utils as GEU
+import Gargantext.Data.Louvain as DLouvain
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Camera as Camera
 import Gargantext.Hooks.Sigmax.Graphology as Graphology
+import Gargantext.Hooks.Sigmax.Louvain as Louvain
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Sessions (Session)
@@ -156,27 +161,38 @@ edgesToggleButtonCpt = here.component "edgesToggleButton" cpt
 
 ------------------------------------------------------
 
-type LouvainToggleButtonProps =
-  ( forceAtlasState :: T.Box SigmaxTypes.ForceAtlasState
-  , state           :: T.Box Boolean
+type LouvainButtonProps =
+  ( forceAtlasState   :: T.Box SigmaxTypes.ForceAtlasState
+  , graph             :: T.Box SigmaxTypes.SGraph
+  , sigmaRef          :: R.Ref Sigmax.Sigma
+  , transformedGraph  :: T.Box SigmaxTypes.SGraph
   )
 
-louvainToggleButton :: R2.Leaf LouvainToggleButtonProps
-louvainToggleButton = R2.leaf louvainToggleButtonCpt
-louvainToggleButtonCpt :: R.Component LouvainToggleButtonProps
-louvainToggleButtonCpt = here.component "louvainToggleButton" cpt
+louvainButton :: R2.Leaf LouvainButtonProps
+louvainButton = R2.leaf louvainButtonCpt
+louvainButtonCpt :: R.Component LouvainButtonProps
+louvainButtonCpt = here.component "louvainButton" cpt
   where
-    cpt { forceAtlasState, state } _ = do
-      state' <- R2.useLive' state
+    cpt { forceAtlasState, graph, sigmaRef, transformedGraph } _ = do
+      graph' <- R2.useLive' graph
       forceAtlasState' <- R2.useLive' forceAtlasState
 
       pure $
         B.button
-        { callback: \_ -> T.modify_ (not) state
+        { callback: \_ -> do
+             Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphView (louvainGraph)] no sigma" $ \sigma -> do
+               newGraph <- Louvain.assignVisible (Sigma.graph sigma) {}
+               let cluster = Louvain.cluster newGraph :: DLouvain.LouvainCluster
+               let lgraph = SigmaxTypes.louvainGraph graph' cluster :: SigmaxTypes.SGraph
+               T.modify_ (SigmaxTypes.updateColors
+                          (Map.fromFoldable $ (\{ id, color } -> Tuple id color) <$> SigmaxTypes.graphNodes
+                           lgraph))
+                 graph
+               T.write_ lgraph transformedGraph
+             pure unit
+
         , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState'
-        , variant: state' ?
-            ButtonVariant Secondary $
-            OutlinedButtonVariant Secondary
+        , variant: OutlinedButtonVariant Secondary
         }
         [ H.text "Louvain" ]
 
@@ -205,6 +221,7 @@ pauseForceAtlasButtonCpt = here.component "pauseForceAtlasButtonButton" cpt
         vrt SigmaxTypes.Running         = ButtonVariant Secondary
         vrt _                           = OutlinedButtonVariant Secondary
 
+        --icn SigmaxTypes.InitialLoading  = "pause"
         icn SigmaxTypes.InitialRunning  = "pause"
         icn SigmaxTypes.InitialStopped  = "play"
         icn SigmaxTypes.Running         = "pause"
@@ -226,6 +243,45 @@ pauseForceAtlasButtonCpt = here.component "pauseForceAtlasButtonButton" cpt
           B.icon
           { name: icn state'}
         ]
+
+
+
+type NoverlapButtonProps =
+  ( state :: T.Box SigmaxTypes.NoverlapState
+  )
+
+pauseNoverlapButton :: R2.Leaf NoverlapButtonProps
+pauseNoverlapButton = R2.leaf pauseNoverlapButtonCpt
+pauseNoverlapButtonCpt :: R.Component NoverlapButtonProps
+pauseNoverlapButtonCpt = here.component "pauseNoverlapButton" cpt
+  where
+    cpt { state } _ = do
+      -- States
+      state' <- R2.useLive' state
+
+      -- Computed
+      let
+        vrt SigmaxTypes.NoverlapRunning = ButtonVariant Secondary
+        vrt _                           = OutlinedButtonVariant Secondary
+
+        icn SigmaxTypes.NoverlapRunning = "object-ungroup"
+        icn SigmaxTypes.NoverlapPaused  = "object-ungroup"
+
+      -- Render
+      pure $
+
+        B.button
+        { variant: vrt state'
+        , className: intercalate " "
+            [ "toolbar-atlas-button"
+            ]
+        , callback: \_ -> T.modify_ SigmaxTypes.toggleNoverlapState state
+        }
+        [
+          B.icon
+          { name: icn state'}
+        ]
+
 
 --------------------------------------------------------
 

@@ -10,6 +10,7 @@ export function _init(graph, settings) {
   // console.log('[init] graph', graph, 'settings', settings);
   return new FA2Layout(graph, {
     settings,
+    iterations: 1,
     getEdgeWeight: 'weight'
   })
 }

@@ -21,6 +21,15 @@ export default class NodeContourFastProgram extends AbstractNodeProgram {
 */
 
 export default class NodeContourFastProgram extends CircleNodeProgram {
+  constructor(gl) {
+    super(gl, vertexShaderSource, fragmentShaderSource, POINTS, ATTRIBUTES);
+    // NOTE super method above will set POINTS = 1 from CircleNodeProgram
+    // We need to overwrite this
+    // https://gitlab.iscpif.fr/gargantext/purescript-gargantext/issues/471
+    this.points = POINTS;
+    this.bind();
+  }
+
   //process(data: NodeDisplayData, hidden: boolean, offset: number): void {
   process(data, hidden, offset) {
     const array = this.array;
@@ -43,13 +52,15 @@ export default class NodeContourFastProgram extends CircleNodeProgram {
     }
 
     const color = floatColor(data.color);
-    const black = floatColor('black');
+    //const black = floatColor('black');
+    const gray = floatColor('#aaa')
 
     // contour
     array[i++] = data.x;
     array[i++] = data.y;
     array[i++] = data.size + 1;
-    array[i++] = black;
+    //array[i++] = black;
+    array[i++] = gray;
 
     // circle
     array[i++] = data.x;

@@ -1,19 +1,19 @@
-module Gargantext.Components.Nodes.Corpus.Graph
+module Gargantext.Components.Nodes.Graph
   ( node
   ) where
 
 import Gargantext.Prelude
 
-import DOM.Simple (document, querySelector)
+import Data.Array as A
 import Data.Int as I
 import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.Sequence as Seq
 import Data.Tuple (Tuple(..))
-import Data.Tuple.Nested ((/\))
+import DOM.Simple (document, querySelector)
 import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.GraphExplorer.API as GraphAPI
-import Gargantext.Components.GraphExplorer.Layout (convert, layout)
+import Gargantext.Components.GraphExplorer.Layout (convert, layout, transformGraph)
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Config.REST (logRESTError)
@@ -21,6 +21,7 @@ import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
+import Gargantext.Hooks.Sigmax.Noverlap as Noverlap
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Utils (getter)
@@ -28,13 +29,14 @@ import Gargantext.Utils.Range as Range
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Record as Record
+import Toestand as T
 
 type Props =
   ( graphId :: GET.GraphId
   )
 
 here :: R2.Here
-here = R2.here "Gargantext.Components.Nodes.Corpus.Graph"
+here = R2.here "Gargantext.Components.Nodes.Graph"
 
 node :: R2.Leaf ( key :: String | Props )
 node = R2.leaf nodeCpt
@@ -49,12 +51,12 @@ nodeCpt = here.component "node" cpt where
     session <- useSession
 
     graphVersion'   <- R2.useLive' graphVersion
-    state' /\ state <- R2.useBox' Nothing
-    cache' /\ cache <- R2.useBox' (GET.defaultCacheParams :: GET.CacheParams)
+    state <- T.useBox Nothing
+    cache <- T.useBox (GET.defaultCacheParams :: GET.CacheParams)
 
     -- | Computed
     -- |
-    let errorHandler = logRESTError here "[explorerLayout]"
+    let errorHandler = logRESTError here "[node]"
 
     -- | Hooks
     -- |
@@ -82,8 +84,23 @@ nodeCpt = here.component "node" cpt where
 
     -- | Render
     -- |
-    pure $
+    pure $ renderNode { cache, graphId, state }
 
+type RenderNodeProps = (
+  cache   :: T.Box GET.CacheParams,
+  graphId :: GET.GraphId,
+  state   :: T.Box (Maybe GET.HyperdataGraph)
+)
+
+renderNode :: R2.Leaf RenderNodeProps
+renderNode = R2.leaf renderNodeCpt
+renderNodeCpt :: R.Component RenderNodeProps
+renderNodeCpt = here.component "renderNode" cpt where
+  cpt { cache, graphId, state } _ = do
+    cache' <- T.useLive T.unequal cache
+    state' <- T.useLive T.unequal state
+
+    pure $
       B.cloak
       { isDisplayed: isJust state'
       , idlingPhaseDuration: Just 150
@@ -134,6 +151,7 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
 
       forceAtlasState
         = if startForceAtlas
+          --then SigmaxT.InitialLoading
           then SigmaxT.InitialRunning
           else SigmaxT.InitialStopped
 
@@ -142,6 +160,41 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
 
     sigmaRef <- Sigmax.initSigma >>= R.useRef
     fa2Ref <- R.useRef (Nothing :: Maybe ForceAtlas.FA2Layout)
+    noverlapRef <- R.useRef (Nothing :: Maybe Noverlap.NoverlapLayout)
+
+    -- | Precompute some values
+    -- |
+
+    let edgesConfluenceSorted = A.sortWith (_.confluence) $ Seq.toUnfoldable $ SigmaxT.graphEdges graph
+    let edgeConfluenceMin = maybe 0.0 _.confluence $ A.head edgesConfluenceSorted
+    let edgeConfluenceMax = maybe 100.0 _.confluence $ A.last edgesConfluenceSorted
+    let edgeConfluenceRange = Range.Closed { min: edgeConfluenceMin, max: edgeConfluenceMax }
+
+    --let edgesWeightSorted = A.sortWith (_.weight) $ Seq.toUnfoldable $ SigmaxT.graphEdges graph
+    --let edgeWeightMin = maybe 0.0 _.weight $ A.head edgesWeightSorted
+    --let edgeWeightMax = maybe 100.0 _.weight $ A.last edgesWeightSorted
+    --let edgeWeightRange = Range.Closed { min: edgeWeightMin, max: edgeWeightMax }
+    -- let edgeWeightRange = Range.Closed {
+    --       min: 0.0
+    --     , max: I.toNumber $ Seq.length $ SigmaxT.graphEdges graph
+    --     }
+
+    let nodesSorted = A.sortWith (_.size) $ Seq.toUnfoldable $ SigmaxT.graphNodes graph
+    let nodeSizeMin = maybe 0.0 _.size $ A.head nodesSorted
+    let nodeSizeMax = maybe 100.0 _.size $ A.last nodesSorted
+    let nodeSizeRange = Range.Closed { min: nodeSizeMin, max: nodeSizeMax }
+
+    let edgeWeight = Range.Closed
+          { min: 0.0
+          , max: I.toNumber $ Seq.length $ SigmaxT.graphEdges graph
+          }
+
+    let transformedGraph = transformGraph graph { edgeConfluence': GraphStore.options.edgeConfluence
+                                                , edgeWeight': edgeWeight
+                                                , nodeSize': GraphStore.options.nodeSize
+                                                , removedNodeIds': GraphStore.options.removedNodeIds
+                                                , selectedNodeIds': GraphStore.options.selectedNodeIds
+                                                , showEdges': GraphStore.options.showEdges }
 
     -- Hydrate GraphStore
     (state :: Record GraphStore.State) <- pure $
@@ -150,13 +203,14 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
       , graphId
       , mMetaData
       , hyperdataGraph
+      , transformedGraph
       -- Controls
       , startForceAtlas
       , forceAtlasState
-      , edgeWeight:  Range.Closed
-          { min: 0.0
-          , max: I.toNumber $ Seq.length $ SigmaxT.graphEdges graph
-          }
+      , noverlapState: SigmaxT.NoverlapPaused
+      , edgeWeight
+      , edgeConfluenceRange
+      , nodeSizeRange
       -- (cache options)
       , expandSelection: getter _.expandSelection cacheParams
       , expandNeighborhood: getter _.expandNeighborhood cacheParams
@@ -167,10 +221,12 @@ hydrateStoreCpt = here.component "hydrateStore" cpt where
     -- |
     pure $
 
+
       GraphStore.provide
       state
       [
         layout
         { fa2Ref
+        , noverlapRef
         , sigmaRef }
       ]

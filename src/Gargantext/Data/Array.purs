@@ -2,11 +2,12 @@ module Gargantext.Data.Array
   where
 
 import Data.Array as DA
+import Data.Array ((..))
 import Data.List as List
 import Data.Maybe
 import Data.Sequence as Seq
 import Data.Tuple (Tuple(..))
-import Prelude (bind, flip, identity, (<<<), ($))
+import Prelude
 
 ----------------------------------------------------------------------
 -- | Split arrays tools
@@ -65,3 +66,10 @@ swapList i j seq = List.fromFoldable $ swap i j $ List.toUnfoldable seq
 
 swapSeq :: forall a. Int -> Int -> Seq.Seq a -> Seq.Seq a
 swapSeq i j seq = Seq.fromFoldable $ swap i j $ Seq.toUnfoldable seq
+
+slidingWindow :: forall a. Array a -> Int -> Array (Array a)
+slidingWindow lst len =
+  let diff = DA.length lst - len
+  in
+   if diff < 0 then []
+   else (\idx -> DA.slice idx (idx + len) lst) <$> 0 .. diff

@@ -46,7 +46,7 @@ type ViewProps =
   )
 
 corpusCodeLayout :: R2.Leaf Props
-corpusCodeLayout = R2.leafComponent corpusCodeLayoutCpt
+corpusCodeLayout = R2.leaf corpusCodeLayoutCpt
 corpusCodeLayoutCpt :: R.Component Props
 corpusCodeLayoutCpt = here.component "corpusCodeLayout" cpt where
   cpt { nodeId, session, boxes } _ = do

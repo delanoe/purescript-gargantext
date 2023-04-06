@@ -37,19 +37,18 @@ foreign import _updateEachEdgeAttributes :: EffectFn2 Graph (Record Types.Edge -
 foreign import _mapEdges :: forall a. Fn2 Graph (Record Types.Edge -> a) (Array a)
 foreign import _filterEdges :: Fn2 Graph (Record Types.Edge -> Boolean) (Array Types.EdgeId)
 
+foreign import _copy :: EffectFn1 Graph Graph
+
 
 newGraph :: Unit -> Effect Graph
 newGraph = runEffectFn1 _newGraph
 
-graphFromSigmaxGraph :: Types.Graph Types.Node Types.Edge -> Effect Graph
-graphFromSigmaxGraph (Types.Graph g) = do
+graphFromSigmaxGraph :: Types.SGraph -> Effect Graph
+graphFromSigmaxGraph g = do
   graph <- newGraph unit
-  _ <- traverse (addNode graph) nodes
-  _ <- traverse (addEdge graph) edges
+  _ <- traverse (addNode graph) $ Types.graphNodes g
+  _ <- traverse (addEdge graph) $ Types.graphEdges g
   pure graph
-  where
-    nodes = A.fromFoldable g.nodes
-    edges = A.fromFoldable g.edges
 
 addNode :: Graph -> Record Types.Node -> Effect String
 addNode g node@{ id } = runEffectFn3 _addNode g id node
@@ -88,6 +87,9 @@ updateEachEdgeAttributes :: Graph -> (Record Types.Edge -> Record Types.Edge) ->
 updateEachEdgeAttributes = runEffectFn2 _updateEachEdgeAttributes
 filterEdges :: Graph -> (Record Types.Edge -> Boolean) -> Array Types.EdgeId
 filterEdges = runFn2 _filterEdges
+
+copy :: Graph -> Effect Graph
+copy = runEffectFn1 _copy
 
 -- TODO Maybe our use of this function (`updateWithGraph`) in code is
 -- too much. We convert Types.Graph into Graphology.Graph and then

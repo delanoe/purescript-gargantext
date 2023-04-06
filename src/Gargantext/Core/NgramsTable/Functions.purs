@@ -23,6 +23,7 @@ import Data.String as S
 import Data.String.Common as DSC
 import Data.String.Regex (Regex, regex, replace) as R
 import Data.String.Regex.Flags (global, multiline) as R
+import Data.String.Search.KarpRabin as SSKR
 import Data.String.Utils as SU
 import Data.These (These(..))
 import Data.Traversable (for, traverse_, traverse)
@@ -35,14 +36,14 @@ import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Table as T
 import Gargantext.Components.Table.Types as T
-import Gargantext.Config.REST (AffRESTError, RESTError)
+import Gargantext.Config.REST (AffRESTError, RESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Core.NgramsTable.Types
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get, post, put)
 import Gargantext.Types (AsyncTask, AsyncTaskType(..), AsyncTaskWithType(..), CTabNgramType(..), FrontendError, OrderBy(..), ScoreType(..), TabSubType(..), TabType(..), TermList(..), TermSize(..))
 import Gargantext.Utils.Either (eitherMap)
-import Gargantext.Utils.KarpRabin (indicesOfAny)
+--import Gargantext.Utils.KarpRabin (indicesOfAny)
 import Gargantext.Utils.Reactix as R2
 import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
@@ -87,7 +88,7 @@ normNgramWithTrim nt = DSC.trim <<< normNgramInternal nt
 normNgram :: CTabNgramType -> String -> NgramsTerm
 normNgram tabType = NormNgramsTerm <<< normNgramWithTrim tabType
 
-ngramsRepoElementToNgramsElement :: NgramsTerm -> Int -> NgramsRepoElement -> NgramsElement
+ngramsRepoElementToNgramsElement :: NgramsTerm -> Set Int -> NgramsRepoElement -> NgramsElement
 ngramsRepoElementToNgramsElement ngrams occurrences (NgramsRepoElement { children, list, parent, root, size }) =
   NgramsElement
   { children
@@ -138,7 +139,8 @@ highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
     undb = R.replace wordBoundaryReg2 "$1"
     input = spR input0
     pats = A.fromFoldable (Map.keys elts)
-    ixs = indicesOfAny (sp <<< ngramsTermText <$> pats) (normNgramInternal ntype input)
+    hashStruct = SSKR.hashStruct (sp <<< ngramsTermText <$> pats)
+    ixs = SSKR.indicesOfAnyHashStruct hashStruct (normNgramInternal ntype input)
 
     splitAcc :: Partial => Int -> HighlightAccumulator
              -> Tuple HighlightAccumulator HighlightAccumulator
@@ -375,7 +377,7 @@ syncPatches props state callback = do
     launchAff_ $ do
       ePatches <- putNgramsPatches props pt
       case ePatches of
-        Left err -> liftEffect $ here.warn2 "[syncPatches] RESTError" err
+        Left err -> liftEffect $ logRESTError here "[syncPatches]" err
         Right (Versioned { data: newPatch, version: newVersion }) -> do
           callback unit
           liftEffect $ do

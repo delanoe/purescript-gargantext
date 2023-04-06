@@ -74,5 +74,5 @@ syncResetButtonsCpt = here.component "syncResetButtons" cpt
           , callback: synchronizeClick
           , status: statusSync hasChanges synchronizing'
           }
-          [ H.text "Sync" ]
+          [ H.text "Save (Sync)" ]
         ]

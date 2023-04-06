@@ -161,4 +161,3 @@ nodeShape =
   , circle : NodeShape "circle"
   , square : NodeShape "square"
   }
-

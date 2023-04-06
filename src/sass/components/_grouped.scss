@@ -22,6 +22,19 @@
   }
 }
 
+/// Checkbox
+///-----------------------------------------------------------------------------
+
+.b-form-checkbox {
+  @include clickable();
+
+  &--disabled,
+  &--deferred,
+  &--idled {
+    @include unclickable();
+  }
+}
+
 /// Modal
 ///-----------------------------------------------------------------------------
 
@@ -37,10 +50,17 @@
 
   &__header {
     background-color: $card-cap-bg;
+    align-items: center;
 
     &__title {
       color: $primary;
       font-size: 21px;
+    }
+
+    &__close {
+      // better positioning due to button overlay
+      $offset-x: 8px;
+      margin-right: $offset-x;
     }
   }
 
@@ -67,7 +87,6 @@
 
 /// Button
 ///-----------------------------------------------------------------------------
-
 
 .b-button {
   $spinner-size: 20px;
@@ -105,13 +124,20 @@
   }
 }
 
+.table-header-rename .btn {
+  .fa::before {
+    color: $light !important;
+  }
+}
+
+
 /// Icon Button
 ///-----------------------------------------------------------------------------
 
 .b-icon-button {
   $self: &;
-  $overlay-offset-y: -6px;
-  $overlay-offset-x: -10px;
+  // $overlay-offset-y: -6px;
+  // $overlay-offset-x: -10px;
 
   transition: color 0.2s;
   position: relative;
@@ -125,14 +151,14 @@
 
   // overlay preparation
   &::before {
-    left: $overlay-offset-x;
-    right: $overlay-offset-x;
-    top: $overlay-offset-y;
-    bottom: $overlay-offset-y;
-    border-radius: $overlay-radius;
+    // left: $overlay-offset-x;
+    // right: $overlay-offset-x;
+    // top: $overlay-offset-y;
+    // bottom: $overlay-offset-y;
+    // border-radius: $overlay-radius;
     position: absolute;
     transition:
-      background-color 150ms ease-in-out,
+      // background-color 150ms ease-in-out,
       box-shadow 150ms ease-in-out;
   }
 
@@ -158,24 +184,24 @@
   &--idled {
     @include clickable;
 
-    &#{ $self }--warning    { color: $warning; }
-    &#{ $self }--success    { color: $success; }
-    &#{ $self }--danger     { color: $danger; }
-    &#{ $self }--info       { color: $info; }
-    &#{ $self }--primary    { color: $primary; }
-    &#{ $self }--secondary  { color: $secondary; }
-    &#{ $self }--dark       { color: $body-color; }
+    &#{ $self }--warning    { color: darken($warning, 10%); }
+    &#{ $self }--success    { color: darken($success, 10%); }
+    &#{ $self }--danger     { color: darken($danger, 10%); }
+    &#{ $self }--info       { color: darken($info, 10%); }
+    &#{ $self }--primary    { color: darken($primary, 10%); }
+    &#{ $self }--secondary  { color: darken($secondary, 10%); }
+    &#{ $self }--dark       { color: darken($body-color, 10%); }
   }
 
   &--enabled,
   &--muted {
-    &#{ $self }--warning:hover    { color: darken($warning, 10%); }
-    &#{ $self }--success:hover    { color: darken($success, 10%); }
-    &#{ $self }--danger:hover     { color: darken($danger, 10%); }
-    &#{ $self }--info:hover       { color: darken($info, 10%); }
-    &#{ $self }--primary:hover    { color: darken($primary, 10%); }
-    &#{ $self }--secondary:hover  { color: darken($secondary, 10%); }
-    &#{ $self }--dark:hover       { color: darken($body-color, 10%); }
+    &#{ $self }--warning:hover    { color: $warning; }
+    &#{ $self }--success:hover    { color: $success; }
+    &#{ $self }--danger:hover     { color: $danger; }
+    &#{ $self }--info:hover       { color: $info; }
+    &#{ $self }--primary:hover    { color: $primary; }
+    &#{ $self }--secondary:hover  { color: $secondary; }
+    &#{ $self }--dark:hover       { color: $body-color; }
   }
 
   &--enabled#{ $self }--focus-ring,
@@ -205,7 +231,65 @@
     &#{ $self }--secondary  { color: lighten($secondary, 15%); }
     &#{ $self }--dark       { color: lighten($body-color, 15%); }
   }
+  &--disabled#{$self}--level-1:hover::before,
+  &--deferred#{$self}--level-2:hover::before {
+    background-color: initial;
+  }
+  &--disabled#{$self}--level-2::before,
+  &--disabled#{$self}--level-2:hover::before,
+  &--deferred#{$self}--level-2::before,
+  &--deferred#{$self}--level-2:hover::before {
+    background-color: lighten($gray-100, 15%);
+  }
 }
+
+/// Simple icons (in Forest action buttons or not clickable or in modal, etc.)
+/// ----------------------------------------------------------------------------
+
+.main-topbar .b-icon, 
+.main-topbar .fa,
+.router__aside .b-icon, 
+.router__aside .fa,
+.router__body .texts-layout .b-icon,
+.router__body .texts-layout .fa,
+.modal-dialog .b-icon, 
+.modal-dialog .fa
+{
+  &:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times) {
+    &:before {
+        color: $primary;
+    }
+    &:hover:before {
+      color: inherit;
+    }
+  }
+}
+.mainleaf__folder-icon:not(.b-icon-button--enabled) {
+  &::before {
+    color: inherit !important;
+  }
+}
+
+.main-topbar .nav-item > a .fa,
+.popup-container .card-footer .btn-primary,
+.popup-container .search-bar .btn.fa,
+.login-modal-form .btn .fa,
+.corpus-layout__code-section .b-button .fa {
+  color: $light !important;
+  &:before {
+    color: $light !important;
+  }
+}
+
+
+/// Table headings with bg color
+/// ----------------------------------------------------------------------------
+
+.table .thead-dark th {
+  background-color: $primary;
+  border-color: darken($primary, 10%);
+}
+
 
 /// Fieldset
 ///-----------------------------------------------------------------------------

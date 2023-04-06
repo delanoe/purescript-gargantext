@@ -23,7 +23,7 @@ import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
+import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Elevation(..), Variant(..))
 import Gargantext.Components.GraphExplorer.Sidebar.ContactList (contactListWrapper)
 import Gargantext.Components.GraphExplorer.Sidebar.DocList (docListWrapper)
 import Gargantext.Components.GraphExplorer.Sidebar.Legend as Legend
@@ -39,7 +39,7 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
 import Gargantext.Sessions (Session)
-import Gargantext.Types (CTabNgramType, FrontendError(..), NodeID, TabSubType(..), TabType(..), TermList(..), modeTabType)
+import Gargantext.Types (CTabNgramType, FrontendError(..), NodeID, SidePanelState(..), TabSubType(..), TabType(..), TermList(..), modeTabType)
 import Gargantext.Utils (getter, nbsp, setter, (?))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
@@ -60,17 +60,19 @@ type Props =
 
 sidebar :: R2.Leaf Props
 sidebar = R2.leaf sidebarCpt
-
 sidebarCpt :: R.Component Props
 sidebarCpt = here.component "sidebar" cpt where
   cpt props _ = do
-    -- States
+    -- | States
+    -- |
     { sideTab
+    , showSidebar
     } <- GraphStore.use
 
-    sideTab'  <- R2.useLive' sideTab
+    sideTab'      <- R2.useLive' sideTab
 
-    -- Computed
+    -- | Computed
+    -- |
     let
       sideTabs =
         [ GET.SideTabLegend
@@ -78,12 +80,27 @@ sidebarCpt = here.component "sidebar" cpt where
         , GET.SideTabCommunity
         ]
 
-    -- Render
+    -- | Behaviors
+    -- |
+    let
+      closeCallback :: Unit -> Effect Unit
+      closeCallback _ = T.write_ Closed showSidebar
+
+    -- | Render
+    -- |
     pure $
 
       H.div
       { className: "graph-sidebar" }
       [
+        -- Close CTA
+        B.iconButton
+        { name: "times"
+        , elevation: Level2
+        , callback: closeCallback
+        , className: "graph-sidebar__close"
+        }
+      ,
         -- Menu
         B.tabs
         { value: sideTab'
@@ -101,7 +118,6 @@ sidebarCpt = here.component "sidebar" cpt where
 
 sideTabLegend :: R2.Leaf Props
 sideTabLegend = R2.leaf sideTabLegendCpt
-
 sideTabLegendCpt :: R.Component Props
 sideTabLegendCpt = here.component "sideTabLegend" cpt where
   cpt { metaData: GET.MetaData { legend } } _ = do
@@ -160,17 +176,14 @@ sideTabLegendCpt = here.component "sideTabLegend" cpt where
 
 sideTabData :: R2.Leaf Props
 sideTabData = R2.leaf sideTabDataCpt
-
 sideTabDataCpt :: R.Component Props
 sideTabDataCpt = here.component "sideTabData" cpt where
   cpt props _ = do
     -- States
     { selectedNodeIds
-    , graph
     } <- GraphStore.use
 
     selectedNodeIds'  <- R2.useLive' selectedNodeIds
-    graph'            <- R2.useLive' graph
 
     -- Computed
     let
@@ -187,49 +200,65 @@ sideTabDataCpt = here.component "sideTabData" cpt where
           -- No result
           false ->
 
-            B.caveat
-            {}
-            [
-              H.text "Select one or more nodes to get their informations"
-            ]
-
+            sideTabDataNoSelection {}
           -- Nodes have been selected
           true ->
-
-            R.fragment
-            [
-              selectedNodes $
-              { nodesMap: SigmaxT.nodesGraphMap graph'
-              } `Record.merge` props
-            ,
-              sideBarTabSeparator
-            ,
-              neighborhood
-              {}
-            ,
-              sideBarTabSeparator
-            ,
-              docListWrapper
-              { metaData: props.metaData
-              }
-            ]
+            sideTabDataWithSelection props
       ]
+
+
+sideTabDataNoSelection :: R2.Leaf ()
+sideTabDataNoSelection = R2.leaf sideTabDataNoSelectionCpt
+sideTabDataNoSelectionCpt :: R.Component ()
+sideTabDataNoSelectionCpt = here.component "sideTabDataNoSelection" cpt where
+  cpt {} _ = do
+    pure $ B.caveat
+      {}
+      [
+        H.text "Select one or more nodes to get their informations"
+      ]
+
+sideTabDataWithSelection :: R2.Leaf Props
+sideTabDataWithSelection = R2.leaf sideTabDataWithSelectionCpt
+sideTabDataWithSelectionCpt :: R.Component Props
+sideTabDataWithSelectionCpt = here.component "sideTabDataWithSelection" cpt where
+  cpt props _ = do
+    -- States
+    { graph
+    } <- GraphStore.use
+
+    graph'  <- R2.useLive' graph
+
+    pure $
+      R.fragment [
+        selectedNodes $
+        { nodesMap: SigmaxT.nodesGraphMap graph'
+        } `Record.merge` props
+        ,
+        sideBarTabSeparator
+        ,
+        neighborhood
+        {}
+        ,
+        sideBarTabSeparator
+        ,
+        docListWrapper
+        { metaData: props.metaData
+        }
+        ]
 
 ------------------------------------------------------------
 
 sideTabCommunity :: R2.Leaf Props
 sideTabCommunity = R2.leaf sideTabCommunityCpt
-
 sideTabCommunityCpt :: R.Component Props
 sideTabCommunityCpt = here.component "sideTabCommunity" cpt where
   cpt props _ = do
     -- States
     { selectedNodeIds
-    , graph
     } <- GraphStore.use
 
     selectedNodeIds'  <- R2.useLive' selectedNodeIds
-    graph'            <- R2.useLive' graph
 
     -- Computed
     let
@@ -245,33 +274,52 @@ sideTabCommunityCpt = here.component "sideTabCommunity" cpt where
 
           -- No result
           false ->
-
-            B.caveat
-            {}
-            [
-              H.text "Select one or more nodes to get their informations"
-            ]
+            sideTabCommunityNoSelection {}
 
           -- Nodes have been selection
           true ->
+            sideTabCommunityWithSelection props
+      ]
 
-            R.fragment
-            [
-              selectedNodes $
-              { nodesMap: SigmaxT.nodesGraphMap graph'
-              } `Record.merge` props
-            ,
-              sideBarTabSeparator
-            ,
-              neighborhood
-              {}
-            ,
-              sideBarTabSeparator
-            ,
-              contactListWrapper
-              { metaData: props.metaData
-              }
-            ]
+sideTabCommunityNoSelection :: R2.Leaf ()
+sideTabCommunityNoSelection = R2.leaf sideTabCommunityNoSelectionCpt
+sideTabCommunityNoSelectionCpt :: R.Component ()
+sideTabCommunityNoSelectionCpt = here.component "sideTabCommunityNoSelection" cpt where
+  cpt {} _ = do
+    pure $ B.caveat
+      {}
+      [
+        H.text "Select one or more nodes to get their informations"
+      ]
+
+
+sideTabCommunityWithSelection :: R2.Leaf Props
+sideTabCommunityWithSelection = R2.leaf sideTabCommunityWithSelectionCpt
+sideTabCommunityWithSelectionCpt :: R.Component Props
+sideTabCommunityWithSelectionCpt = here.component "sideTabCommunityWithSelection" cpt where
+  cpt props _ = do
+    { graph
+    } <- GraphStore.use
+
+    graph'  <- R2.useLive' graph
+
+    pure $
+      R.fragment
+      [
+        selectedNodes $
+        { nodesMap: SigmaxT.nodesGraphMap graph'
+        } `Record.merge` props
+      ,
+        sideBarTabSeparator
+      ,
+        neighborhood
+        {}
+      ,
+        sideBarTabSeparator
+      ,
+        contactListWrapper
+        { metaData: props.metaData
+        }
       ]
 
 -------------------------------------------
@@ -296,7 +344,6 @@ type SelectedNodesProps =
 
 selectedNodes :: R2.Leaf SelectedNodesProps
 selectedNodes = R2.leaf selectedNodesCpt
-
 selectedNodesCpt :: R.Component SelectedNodesProps
 selectedNodesCpt = here.component "selectedNodes" cpt where
   cpt props _ = do
@@ -340,7 +387,7 @@ selectedNodesCpt = here.component "selectedNodes" cpt where
         { className: "list-group-item" }
         [
           H.ul
-          {} $
+          { className: "graph-selected-nodes__list" } $
 
           Seq.toUnfoldable $
             flip Seq.map (badges graph' selectedNodeIds') \node ->
@@ -482,7 +529,7 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
       let refreshed = neighbourBadges graph' selectedNodeIds'
       let count     = Seq.length refreshed
       let ordered   = A.sortWith (\n -> -n.size) $ Seq.toUnfoldable refreshed
-      T.write_ count   termCountBox
+      T.write_ (count-1)   termCountBox
       T.write_ ordered termListBox
       T.write_ false showMoreBox
 
@@ -529,7 +576,7 @@ neighborhoodCpt = R.memo' $ here.component "neighborhood" cpt where
           { className: "list-group-item"}
           [
             H.ul
-            {} $
+            { className: "graph-neighborhood__parent" } $
             flip mapWithIndex termList \index node ->
 
               R2.when
@@ -643,12 +690,11 @@ updateTermButtonCpt = here.component "updateTermButton" cpt where
 badgeSize :: Number -> Number -> Number -> String
 badgeSize minSize maxSize size =
   let
-    minFontSize = 7.0
-    maxFontSize = 28.0
+    minFontSize = 8.0
+    maxFontSize = 26.0
     sizeScaled = (size - minSize) / (maxSize - minSize)  -- in [0; 1] range
-    --scale' = DN.log (sizeScaled + 1.0) / (DN.log 2.0)  -- in [0; 1] range
-    --scale = minFontSize + scale' * (maxFontSize - minFontSize)
-    scale = minFontSize + sizeScaled * (maxFontSize - minFontSize)
+    scale' = DN.log (sizeScaled + 1.0) / (DN.log 2.0)  -- in [0; 1] range
+    scale = minFontSize + scale' * (maxFontSize - minFontSize)
 
   in
     show scale <> "px"
@@ -658,8 +704,9 @@ badges :: SigmaxT.SGraph -> SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
 badges graph selectedNodeIds = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
 
 neighbourBadges :: SigmaxT.SGraph -> SigmaxT.NodeIds -> Seq.Seq (Record SigmaxT.Node)
-neighbourBadges graph selectedNodeIds = SigmaxT.neighbours graph selectedNodes' where
-  selectedNodes' = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
+neighbourBadges graph selectedNodeIds = SigmaxT.neighbors graph selectedNodes'
+  where
+    selectedNodes' = SigmaxT.graphNodes $ SigmaxT.nodesById graph selectedNodeIds
 
 ---------------------------------------------------------
 
@@ -726,19 +773,7 @@ sendPatch termList session (GET.MetaData metaData) node = do
 
 
 
-------------------------------------------------------------------------
-
-            {-, H.div { className: "col-md-12", id: "horizontal-checkbox" }
-              [ H.ul {}
-                [ checkbox "Pubs"
-                , checkbox "Projects"
-                , checkbox "Patents"
-                , checkbox "Others"
-                ]
-              ]
-              -}
---------------------------------------------------------------------------
-
+-----------------------------------------------------
 documentation :: Lang -> R.Element
 documentation _ =
 

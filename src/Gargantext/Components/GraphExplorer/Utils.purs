@@ -25,7 +25,7 @@ import Gargantext.Utils.Lens as GUL
 import Gargantext.Utils.Seq as GUS
 
 stEdgeToGET :: Record ST.Edge -> GEGT.Edge
-stEdgeToGET { _original } = _original
+stEdgeToGET { _original: GEGT.Edge original, hidden } = GEGT.Edge $ original { hidden = Just hidden }
 
 stNodeToGET :: Record ST.Node -> GEGT.Node
 stNodeToGET { id, label, x, y, _original: GEGT.Node { attributes, size, type_ } } = GEGT.Node {

@@ -10,10 +10,14 @@ import Gargantext.Prelude
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
-import Data.Tuple (Tuple(..))
+import Data.Sequence as Seq
+import Data.Set as Set
+import Data.Traversable (traverse_)
+import Data.Tuple (Tuple(..), fst, snd)
 import DOM.Simple (window)
 import DOM.Simple.Types (Element)
 import Effect.Class.Console as ECC
+import Effect.Timer (setTimeout)
 import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types as GET
@@ -23,6 +27,7 @@ import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Camera as Camera
 import Gargantext.Hooks.Sigmax.Graphology as Graphology
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas2
+import Gargantext.Hooks.Sigmax.Noverlap as Noverlap
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
 import Gargantext.Utils (getter)
@@ -37,50 +42,51 @@ here = R2.here "Gargantext.Components.GraphExplorer.Resources"
 type Props sigma forceatlas2 =
   ( elRef                 :: R.Ref (Nullable Element)
   , fa2Ref                :: R.Ref (Maybe ForceAtlas2.FA2Layout)
+  , noverlapRef           :: R.Ref (Maybe Noverlap.NoverlapLayout)
   , forceAtlas2Settings   :: forceatlas2
   , sigmaRef              :: R.Ref Sigmax.Sigma
   , sigmaSettings         :: sigma
-  , transformedGraph      :: SigmaxTypes.SGraph
   )
 
 drawGraph :: forall s fa2. R2.Leaf (Props s fa2)
 drawGraph = R2.leaf drawGraphCpt
-drawGraphCpt :: forall s fa2. R.Memo (Props s fa2)
-drawGraphCpt = R.memo' $ here.component "graph" cpt where
--- drawGraphCpt :: forall s fa2. R.Component (Props s fa2)
--- drawGraphCpt = here.component "graph" cpt where
+-- drawGraphCpt :: forall s fa2. R.Memo (Props s fa2)
+-- drawGraphCpt = R.memo' $ here.component "drawGraph" cpt where
+drawGraphCpt :: forall s fa2. R.Component (Props s fa2)
+drawGraphCpt = here.component "drawGraph" cpt where
   -- | Component
   -- |
   cpt { elRef
       , fa2Ref
+      , noverlapRef
       , sigmaRef
       , forceAtlas2Settings: fa2Settings
-      , transformedGraph
       } _ = do
 
     boxes <- AppStore.use
 
-    { showEdges
-    , edgeConfluence
+    { edgeConfluence
     , edgeWeight
     , forceAtlasState
-    , graph
     , graphStage
     , hyperdataGraph
     , mouseSelectorSize
     , multiSelectEnabled
+    , nodeSize
     , selectedNodeIds
+    , showEdges
     , startForceAtlas
+    , transformedGraph
     } <- GraphStore.use
 
-    showEdges'        <- R2.useLive' showEdges
     edgeConfluence'   <- R2.useLive' edgeConfluence
     edgeWeight'       <- R2.useLive' edgeWeight
-    forceAtlasState' <- R2.useLive' forceAtlasState
+    forceAtlasState'  <- R2.useLive' forceAtlasState
     graphStage'       <- R2.useLive' graphStage
-    graph'            <- R2.useLive' graph
+    nodeSize'         <- R2.useLive' nodeSize
+    showEdges'        <- R2.useLive' showEdges
     startForceAtlas'  <- R2.useLive' startForceAtlas
-    hyperdataGraph'   <- R2.useLive' hyperdataGraph
+    transformedGraph' <- R2.useLive' transformedGraph
 
     -- | Hooks
     -- |
@@ -104,6 +110,7 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
     R.useEffect1' graphStage' $ case graphStage' of
 
       GET.Init -> do
+        hyperdataGraph' <- T.read hyperdataGraph
         let mCamera = getter _.mCamera hyperdataGraph'
         let rSigma = R.readRef sigmaRef
 
@@ -148,19 +155,27 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
                                                    , showEdges: showEdges' }
 
                 -- here.log2 "[graph] startForceAtlas" startForceAtlas
-                if startForceAtlas' then
-                  case R.readRef fa2Ref of
-                    Nothing -> do
-                      fa2 <- ForceAtlas2.init (Sigma.graph sig) fa2Settings
+                case R.readRef fa2Ref of
+                  Nothing -> do
+                    fa2 <- ForceAtlas2.init (Sigma.graph sig) fa2Settings
+                    R.setRef fa2Ref (Just fa2)
+                    if startForceAtlas' then do
                       ForceAtlas2.start fa2
-                      R.setRef fa2Ref (Just fa2)
-                    Just fa2 -> do
-                      -- TODO Kill and restart? Maybe check fa2.graph first? Should be equal to sigma.graph
+                    else do
                       pure unit
-                else
-                  case R.readRef fa2Ref of
-                    Nothing -> pure unit
-                    Just fa2 -> ForceAtlas2.stop fa2
+                  Just fa2 -> do
+                    -- TODO Kill and restart? Maybe check fa2.graph first? Should be equal to sigma.graph
+                    if startForceAtlas' then
+                      pure unit
+                    else
+                      ForceAtlas2.stop fa2
+
+                case R.readRef noverlapRef of
+                  Nothing -> do
+                    noverlap <- Noverlap.init (Sigma.graph sig) {}
+                    R.setRef noverlapRef (Just noverlap)
+                  Just _noverlap -> do
+                    pure unit
 
                 case mCamera of
                   Just cam -> do
@@ -192,21 +207,31 @@ drawGraphCpt = R.memo' $ here.component "graph" cpt where
     --       etc) // drawback: don't forget to modify the effect white-list
     R.useEffect' $ do
       let updateGraph = do
-              let tEdgesMap = SigmaxTypes.edgesGraphMap transformedGraph
-              let tNodesMap = SigmaxTypes.nodesGraphMap transformedGraph
+              let tEdgesMap = SigmaxTypes.edgesGraphMap transformedGraph'
+              let tNodesMap = SigmaxTypes.nodesGraphMap transformedGraph'
 
-              Sigmax.dependOnSigma (R.readRef sigmaRef) "[drawGraph (Ready)] no sigma" $ \sigma -> do
-                Sigmax.performDiff sigma transformedGraph
-                -- Sigmax.updateEdges sigma tEdgesMap
-                -- Sigmax.updateNodes sigma tNodesMap
-                let edgesState = not $ SigmaxTypes.edgeStateHidden showEdges'
-                -- here.log2 "[graphCpt] edgesState" edgesState
-                Sigmax.setSigmaEdgesVisibility sigma { edgeConfluence: edgeConfluence'
-                                                     , edgeWeight: edgeWeight'
-                                                     , showEdges: showEdges' }
+              let updateSigma _ = do
+                    Sigmax.dependOnSigma (R.readRef sigmaRef) "[drawGraph (Ready)] no sigma" $ \sigma -> do
+                      Sigmax.performDiff sigma transformedGraph'
+                      -- Sigmax.updateEdges sigma tEdgesMap
+                      -- Sigmax.updateNodes sigma tNodesMap
+                      let edgesState = not $ SigmaxTypes.edgeStateHidden showEdges'
+                      -- here.log2 "[graphCpt] edgesState" edgesState
+                      Sigmax.setSigmaEdgesVisibility sigma { edgeConfluence: edgeConfluence'
+                                                           , edgeWeight: edgeWeight'
+                                                           , showEdges: showEdges' }
+
+              -- TODO This is a temporary solution that seems to fix
+              -- blank page of graph when there are too many edges. It
+              -- still throws error though, just in another thread.
+              _ <- setTimeout 100 $ updateSigma unit
+              pure unit
 
       case Tuple forceAtlasState' graphStage' of
 
+        --Tuple SigmaxTypes.InitialLoading GET.Ready -> updateGraph
+        -- forceatlas can be stopped initially for eg graph snapshots
+        Tuple SigmaxTypes.InitialStopped GET.Ready -> updateGraph
         Tuple SigmaxTypes.InitialRunning GET.Ready -> updateGraph
         Tuple SigmaxTypes.Paused GET.Ready -> updateGraph
 
@@ -422,7 +447,7 @@ forceAtlas2Settings =
   , batchEdgesDrawing              : true
   , edgeWeightInfluence            : 1.0
     -- fixedY                      : false
-  , gravity                        : 1.0
+  , gravity                        : 0.0001
   , hideEdgesOnMove                : true
   , includeHiddenEdges             : false
   , includeHiddenNodes             : true
@@ -433,5 +458,5 @@ forceAtlas2Settings =
   , skipHidden                     : false
   , slowDown                       : 0.2
   , startingIterations             : 10.0
-  , strongGravityMode              : false
+  , strongGravityMode              : true
   }

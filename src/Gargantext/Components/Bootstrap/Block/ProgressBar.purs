@@ -10,6 +10,7 @@ import Reactix.DOM.HTML as H
 
 type Props   =
   ( value     :: Number
+  , waitingTextClass :: String
   | Options
   )
 
@@ -67,4 +68,12 @@ component = R.hooksComponent componentName cpt where
         , "aria-valuemax": "100"
         }
         []
+      ,
+        H.div
+        { className: intercalate " "
+          [ "progress-text" 
+          , props.waitingTextClass
+          ]
+        } 
+        [ H.text "Waiting task..." ]
       ]

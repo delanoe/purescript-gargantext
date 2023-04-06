@@ -13,7 +13,7 @@ import Gargantext.Components.Bootstrap.Types (ComponentStatus(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, submitButton, panel)
 import Gargantext.Components.PhyloExplorer.API as Phylo
-import Gargantext.Components.PhyloExplorer.ConfigForm as PhyloForm
+import Gargantext.Components.PhyloExplorer.Config.ConfigForm as PhyloForm
 import Gargantext.Components.PhyloExplorer.ConfigFormParser as PhyloHook
 import Gargantext.Config.REST (RESTError, AffRESTError)
 import Gargantext.Routes as GR
@@ -104,6 +104,7 @@ updateGraphCpt = here.component "updateGraph" cpt where
                                  , print: show } []
 
 
+{-
 
                  , H.text "Bridgness Method : Basic is ok, Advanced in Development"
                  , formChoiceSafe { items: [BridgenessMethod_Basic, BridgenessMethod_Advanced]
@@ -111,7 +112,6 @@ updateGraphCpt = here.component "updateGraph" cpt where
                                  , callback: \val -> T.write_ val methodGraphBridgeness
                                  , print: show } []
 
-{-
 
                  , H.text "NodeType 1 ?"
                  , formChoiceSafe { items: [GT.CTabTerms, GT.CTabSources, GT.CTabAuthors, GT.CTabInstitutes]
@@ -119,20 +119,20 @@ updateGraphCpt = here.component "updateGraph" cpt where
                                  , callback: \val -> T.write_ val methodGraphNodeType1
                                  , print: show } []
 
-                 , H.text "NodeType 2 ?"
+                 , H.text "Ngrams ?"
                  , formChoiceSafe { items: [GT.CTabTerms, GT.CTabSources, GT.CTabAuthors, GT.CTabInstitutes]
                                  , default: methodGraphNodeType2'
                                  , callback: \val -> T.write_ val methodGraphNodeType2
                                  , print: show } []
-                                 -}
+ --}
 
+{-
                  , H.text "Show Strong (expected) links or weak (maybe unexpected) links?"
                  , formChoiceSafe { items: [Strong, Weak]
                                  , default: methodGraphEdgesStrength'
                                  , callback: \val -> T.write_ val methodGraphEdgesStrength
                                  , print: show } []
 
-{-
                  , formChoiceSafe { items: [Spinglass, Infomap, Confluence]
                                  , default: methodGraphClustering'
                                  , callback: \val -> T.write_ val methodGraphClustering
@@ -164,7 +164,8 @@ updatePhyloCpt = here.component "updatePhylo" cpt where
       -- @NOTE #219: use a config property returned by GET phylo route
       defaultData :: Phylo.UpdateData
       defaultData = Phylo.UpdateData
-        { proximity: 0.5
+        { defaultMode: true
+        , proximity: 0.5
         , synchrony: 0.5
         , quality: 0.8
         , exportFilter: 3.0

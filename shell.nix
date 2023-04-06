@@ -97,10 +97,10 @@ let
 
     echo "Compiling"
     yarn
-    spago build
+    #spago build
     #build-purs
     echo "Testing"
-    spago test
+    spago -x test.dhall test --main Test.Main
     # pulp browserify --skip-compile -t dist/bundle.js --src-path output
     # pulp test --src-path output --test-path output
     #NODE_PATH=output node -e "require('Test.Main').main();"
@@ -108,7 +108,7 @@ let
 in
 pkgs.mkShell {
   buildInputs = [
-    easy-ps.purs-0_15_4
+    easy-ps.purs-0_15_7
     easy-ps.psc-package
     easy-ps.dhall-json-simple
     easy-ps.zephyr
@@ -124,6 +124,7 @@ pkgs.mkShell {
     pkgs.esbuild
     pkgs.minify
     pkgs.nodejs
+    #pkgs.nodePackages.purescript-language-server
     pkgs.python  # needed for msgpack etc
     repl
     serve

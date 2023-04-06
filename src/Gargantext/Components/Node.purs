@@ -1,4 +1,4 @@
-module Gargantext.Components.Node 
+module Gargantext.Components.Node
   where
 
 import Gargantext.Prelude

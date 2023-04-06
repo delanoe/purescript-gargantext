@@ -143,7 +143,7 @@ componentWithIMTOrgsCpt :: R.Component ComponentWithIMTOrgsProps
 componentWithIMTOrgsCpt = here.component "componentWithIMTOrgs" cpt where
   cpt { schools, search } _ = do
     search' <- T.useLive T.unequal search
-  
+
     let allIMTOrgs = [All_IMT] <> (IMT_org <$> schools)
         liCpt org =
           H.li {}
@@ -156,7 +156,7 @@ componentWithIMTOrgsCpt = here.component "componentWithIMTOrgs" cpt where
                All_IMT -> H.i {} [H.text  $ " " <> show org]
                (IMT_org { school_shortName }) -> H.text $ " " <> school_shortName
           ]
-    
+
     pure $ R.fragment
       [ H.ul {} $ map liCpt $ allIMTOrgs
         --, filterInput fi
@@ -427,29 +427,29 @@ filterInput (term /\ setTerm) =
 
 type DatafieldInputProps =
   ( databases :: Array Database
-  , langs :: Array Lang
-  , search :: T.Box Search
-  , session :: Session )
+  , langs     :: Array Lang
+  , search    :: T.Box Search
+  , session   :: Session )
 
 datafieldInput :: R2.Component DatafieldInputProps
 datafieldInput = R.createElement datafieldInputCpt
 datafieldInputCpt :: R.Component DatafieldInputProps
 datafieldInputCpt = here.component "datafieldInput" cpt where
-  cpt { databases, langs, search, session} _ = do
+  cpt { databases, langs, search, session } _ = do
     search' <- T.useLive T.unequal search
     iframeRef <- R.useRef null
-    
+
     pure $ H.div {}
       [ dataFieldNav { search } []
-        
+
       , if isExternal search'.datafield
         then databaseInput { databases, search } []
         else H.div {} []
-             
+
       , if isHAL search'.datafield
         then orgInput { orgs: allOrgs, search } []
         else H.div {} []
-             
+
       , if isIMT search'.datafield
         then componentIMT { search, session } []
         else H.div {} []
@@ -457,15 +457,15 @@ datafieldInputCpt = here.component "datafieldInput" cpt where
       , if isHAL search'.datafield
         then componentYears { search } []
         else H.div {} []
-             
+
       , if isCNRS search'.datafield
         then componentCNRS { search } []
         else H.div {} []
-             
+
       , if needsLang search'.datafield
         then langNav { langs, search } []
         else H.div {} []
-             
+
       , H.div {} [ searchIframes { iframeRef, search } [] ]
       ]
 
@@ -583,43 +583,42 @@ triggerSearch { onSearch, errors, session, selection, search } =
 
 searchQuery :: ListSelection.Selection -> Search -> SearchQuery
 searchQuery selection { datafield: Nothing, term } =
-  over SearchQuery (_ { query = term
-                      , selection = selection }) defaultSearchQuery
+                      over SearchQuery (_ { query = term
+                                          , selection = selection }) defaultSearchQuery
 -- TODO Simplify both HAL Nothing and HAL (Just IMT) cases
 searchQuery selection { databases
                       , datafield: datafield@(Just (External (Just (HAL Nothing))))
                       , lang
                       , term
                       , node_id
-                      , years } =
-  over SearchQuery (_ { databases = databases
-                      , datafield = datafield
-                      , lang      = lang
-                      , node_id   = node_id
-                      , query     = queryHAL term Nothing lang years
-                      , selection = selection
-                      }) defaultSearchQuery
+                      , years } = over SearchQuery (_ { databases = databases
+                                                      , datafield = datafield
+                                                      , lang      = lang
+                                                      , node_id   = node_id
+                                                      , query     = queryHAL term Nothing lang years
+                                                      , selection = selection
+                                                      }) defaultSearchQuery
 searchQuery selection { databases
                       , datafield: datafield@(Just (External (Just (HAL (Just (IMT imtOrgs))))))
                       , lang
                       , term
                       , node_id
-                      , years } =
-  over SearchQuery (_ { databases = databases
-                      , datafield = datafield
-                      , lang      = lang
-                      , node_id   = node_id
-                      , query     = queryHAL term (Just imtOrgs) lang years
-                      , selection = selection
-                      }) defaultSearchQuery
+                      , years } = over SearchQuery (_ { databases = databases
+                                , datafield = datafield
+                                , lang      = lang
+                                , node_id   = node_id
+                                , query     = queryHAL term (Just imtOrgs) lang years
+                                , selection = selection
+                                }) defaultSearchQuery
+
 searchQuery selection { databases, datafield, lang, term, node_id } =
-  over SearchQuery (_ { databases = databases
-                      , datafield = datafield
-                      , lang      = lang
-                      , node_id   = node_id
-                      , query     = term
-                      , selection = selection
-                      }) defaultSearchQuery
+                                    over SearchQuery (_ { databases = databases
+                                                        , datafield = datafield
+                                                        , lang      = lang
+                                                        , node_id   = node_id
+                                                        , query     = term
+                                                        , selection = selection
+                                                        }) defaultSearchQuery
 
 queryHAL :: String -> Maybe (Set.Set IMT_org) -> Maybe Lang -> Array String -> String
 queryHAL term mIMTOrgs lang years =
