@@ -548,6 +548,7 @@ glyphiconToCharCode = _toString <<< case _ of
   "plug" -> 0xf1e6
   "plus" -> 0xf067
   "plus-circle" -> 0xf055
+  "plus-minus" -> 0xe901
   "plus-square" -> 0xf0fe
   "plus-square-o" -> 0xf196
   "podcast" -> 0xf2ce
