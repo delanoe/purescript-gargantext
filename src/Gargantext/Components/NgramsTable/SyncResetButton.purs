@@ -65,7 +65,11 @@ syncResetButtonsCpt = here.component "syncResetButtons" cpt
           , callback: resetClick
           , status: statusReset hasChanges synchronizing'
           }
-          [ H.text "Reset" ]
+          [ H.span { className: "fa fa-repeat" } []
+          , H.span { className: "mx-1" } [
+              H.text "Reset changes"
+            ]
+          ]
         ,
           B.wad_ [ "mr-1", "d-inline-block" ]
         ,
@@ -74,5 +78,10 @@ syncResetButtonsCpt = here.component "syncResetButtons" cpt
           , callback: synchronizeClick
           , status: statusSync hasChanges synchronizing'
           }
-          [ H.text "Save (Sync)" ]
+          [ H.span { className: "fa fa-floppy-o" } []
+          , H.span { className: "mx-1" } [
+              H.text "Save changes (sync)"
+            ]
+          ]
+          
         ]

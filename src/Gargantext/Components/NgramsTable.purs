@@ -929,7 +929,7 @@ ngramsTreeEditRealCpt = here.component "ngramsTreeEditReal" cpt where
         { className: "card-header" }
         [
           B.icon
-          { name: "pencil-square-o"
+          { name: "plus-minus"
           }
         ,
           B.wad_
@@ -961,15 +961,33 @@ ngramsTreeEditRealCpt = here.component "ngramsTreeEditReal" cpt where
             , callback: onCancelClick --(const $ dispatch ClearTreeEdit)}
             , size: SmallSize
             }
-            [ H.text "Cancel" ]
+            [ H.span { className: "fa fa-ban" } []
+            , H.span { className: "mx-1" } [
+                H.text "Cancel"
+              ]
+            ]
           ,
             B.button
             { variant: ButtonVariant Primary
             , callback: onSaveClick --(const $ dispatch AddTermChildren)}
             , size: SmallSize
             }
-            [ H.text "Save" ]
+            [ H.span { className: "fa fa-stack-overflow" } []
+            , H.span { className: "mx-1" } [
+                H.text "Add changes"
+              ]
+            ]
           ]
+        ,
+          H.div { className: "text-small mt-1" }
+          [
+            H.p { className: "text-info text-small" }
+            [
+              H.div { className: "font-weight-bold" } [ H.text "Note:" ]
+            , H.text "don't forget to save changes (sync) on the list page"
+            ]
+          ]
+
         ]
       ]
       -- | Helpers
