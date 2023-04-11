@@ -154,6 +154,7 @@ tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxed
           -- [To Topbar portal]
           -- @NOTE #446: UI flicker artfact when user toggle the CTA
           --             This is due to a re-render + portal input focus --             lost
+{-
           R2.createPortal' mTopBarHost
           [
             R2.fragmentWithKey topBarPortalKey
@@ -171,6 +172,7 @@ tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxed
             ]
           ]
         ,
+-}
           H.div
           { className: "table-header-rename__title" }
           [
@@ -211,7 +213,7 @@ tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxed
     cacheText NT.CacheOn = "Cache On"
     cacheText NT.CacheOff = "Cache Off"
 
-    cacheClick cacheState _ = T.modify_ cacheStateToggle cacheState
+--    cacheClick cacheState _ = T.modify_ cacheStateToggle cacheState
 
     cacheStateToggle NT.CacheOn = NT.CacheOff
     cacheStateToggle NT.CacheOff = NT.CacheOn
