@@ -53,7 +53,9 @@ here = R2.here "Gargantext.Components.GraphExplorer.Toolbar.Button"
 
 type CenterButtonProps =
   ( forceAtlasState :: T.Box SigmaxTypes.ForceAtlasState
-  , sigmaRef        :: R.Ref Sigmax.Sigma )
+  , sigmaRef        :: R.Ref Sigmax.Sigma
+  , title           :: String
+  )
 
 centerButton :: R2.Leaf CenterButtonProps
 centerButton = R2.leaf centerButtonCpt
@@ -61,7 +63,8 @@ centerButtonCpt :: R.Component CenterButtonProps
 centerButtonCpt = here.component "centerButton" cpt
   where
     cpt { forceAtlasState
-        , sigmaRef } _ = do
+        , sigmaRef
+        , title } _ = do
       forceAtlasState' <- R2.useLive' forceAtlasState
 
       pure $ B.button
@@ -70,6 +73,7 @@ centerButtonCpt = here.component "centerButton" cpt
             Camera.updateCamera (Camera.camera s) Camera.defaultCamera
         , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState'
         , variant: OutlinedButtonVariant Secondary
+        , title: title
         }
         [ H.text "Center" ]
 
@@ -82,6 +86,7 @@ type CameraButtonProps =
   , reloadForest    :: T2.ReloadS
   , session         :: Session
   , sigmaRef        :: R.Ref Sigmax.Sigma
+  , title           :: String
   )
 
 screenshotFilename :: Effect String
@@ -101,7 +106,8 @@ cameraButtonCpt = here.component "cameraButton" cpt
         , hyperdataGraph: GET.HyperdataGraph { graph: GET.GraphData graphData' }
         , reloadForest
         , session
-        , sigmaRef } _ = do
+        , sigmaRef
+        , title } _ = do
       forceAtlasState' <- R2.useLive' forceAtlasState
 
       pure $ B.button
@@ -128,13 +134,15 @@ cameraButtonCpt = here.component "cameraButton" cpt
                          liftEffect $ T2.reload reloadForest
         , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState'
         , variant: OutlinedButtonVariant Secondary
-        } [ H.text "Screenshot" ]
+        , title: title
+        } [ H.text "Snapshot" ]
 
 ------------------------------------------------------
 
 type EdgesButtonProps =
   ( state       :: T.Box SigmaxTypes.ShowEdgesState
   , stateAtlas  :: T.Box SigmaxTypes.ForceAtlasState
+  , title       :: String
   )
 
 edgesToggleButton :: R2.Leaf EdgesButtonProps
@@ -142,7 +150,7 @@ edgesToggleButton = R2.leaf edgesToggleButtonCpt
 edgesToggleButtonCpt :: R.Component EdgesButtonProps
 edgesToggleButtonCpt = here.component "edgesToggleButton" cpt
   where
-    cpt { state, stateAtlas } _ = do
+    cpt { state, stateAtlas, title } _ = do
       -- States
       state'      <- R2.useLive' state
       stateAtlas' <- R2.useLive' stateAtlas
@@ -156,6 +164,7 @@ edgesToggleButtonCpt = here.component "edgesToggleButton" cpt
         , variant: state' == SigmaxTypes.EShow ?
             ButtonVariant Secondary $
             OutlinedButtonVariant Secondary
+        , title: title
         }
         [ H.text "Edges" ]
 
@@ -166,6 +175,7 @@ type LouvainButtonProps =
   , graph             :: T.Box SigmaxTypes.SGraph
   , sigmaRef          :: R.Ref Sigmax.Sigma
   , transformedGraph  :: T.Box SigmaxTypes.SGraph
+  , title             :: String
   )
 
 louvainButton :: R2.Leaf LouvainButtonProps
@@ -173,7 +183,7 @@ louvainButton = R2.leaf louvainButtonCpt
 louvainButtonCpt :: R.Component LouvainButtonProps
 louvainButtonCpt = here.component "louvainButton" cpt
   where
-    cpt { forceAtlasState, graph, sigmaRef, transformedGraph } _ = do
+    cpt { forceAtlasState, graph, sigmaRef, transformedGraph, title } _ = do
       graph' <- R2.useLive' graph
       forceAtlasState' <- R2.useLive' forceAtlasState
 
@@ -193,6 +203,7 @@ louvainButtonCpt = here.component "louvainButton" cpt
 
         , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState'
         , variant: OutlinedButtonVariant Secondary
+        , title: title
         }
         [ H.text "Louvain" ]
 
@@ -200,6 +211,7 @@ louvainButtonCpt = here.component "louvainButton" cpt
 
 type ForceAtlasProps =
   ( state :: T.Box SigmaxTypes.ForceAtlasState
+  , title :: String
   )
 
 pauseForceAtlasButton :: R2.Leaf ForceAtlasProps
@@ -207,7 +219,7 @@ pauseForceAtlasButton = R2.leaf pauseForceAtlasButtonCpt
 pauseForceAtlasButtonCpt :: R.Component ForceAtlasProps
 pauseForceAtlasButtonCpt = here.component "pauseForceAtlasButtonButton" cpt
   where
-    cpt { state } _ = do
+    cpt { state, title } _ = do
       -- States
       state' <- R2.useLive' state
 
@@ -238,6 +250,7 @@ pauseForceAtlasButtonCpt = here.component "pauseForceAtlasButtonButton" cpt
             , "toolbar-atlas-button"
             ]
         , callback: \_ -> T.modify_ SigmaxTypes.toggleForceAtlasState state
+        , title: title
         }
         [
           B.icon
@@ -248,6 +261,7 @@ pauseForceAtlasButtonCpt = here.component "pauseForceAtlasButtonButton" cpt
 
 type NoverlapButtonProps =
   ( state :: T.Box SigmaxTypes.NoverlapState
+  , title :: String
   )
 
 pauseNoverlapButton :: R2.Leaf NoverlapButtonProps
@@ -255,7 +269,7 @@ pauseNoverlapButton = R2.leaf pauseNoverlapButtonCpt
 pauseNoverlapButtonCpt :: R.Component NoverlapButtonProps
 pauseNoverlapButtonCpt = here.component "pauseNoverlapButton" cpt
   where
-    cpt { state } _ = do
+    cpt { state, title } _ = do
       -- States
       state' <- R2.useLive' state
 
@@ -276,6 +290,7 @@ pauseNoverlapButtonCpt = here.component "pauseNoverlapButton" cpt
             [ "toolbar-atlas-button"
             ]
         , callback: \_ -> T.modify_ SigmaxTypes.toggleNoverlapState state
+        , title: title
         }
         [
           B.icon

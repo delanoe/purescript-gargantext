@@ -99,7 +99,7 @@ shareNodeInnerCpt = here.component "shareNodeInner" cpt
                                          , autocompleteSearch
                                          , onAutocompleteClick
                                          , text 
-                                         , placeHolder: "username or email"}
+                                         , placeholder: "username or email"}
                 ] (H.div {} [H.text text'])
       where
         autocompleteSearch input = nub $ filter (contains (Pattern input)) completions

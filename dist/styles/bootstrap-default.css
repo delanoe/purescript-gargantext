@@ -6441,12 +6441,19 @@ a:hover {
   max-height: 300px;
   overflow-y: scroll;
   width: 300px;
-  top: 60px;
+  top: 45px;
 }
 @media (max-width: 991px) {
   .input-with-autocomplete .completions {
     top: 90px;
   }
+}
+.input-with-autocomplete .completions button {
+  text-align: left;
+  cursor: pointer;
+}
+.input-with-autocomplete .completions button:hover {
+  background-color: #F8F9FA;
 }
 .input-with-autocomplete .b-icon-button {
   margin-left: 10px;

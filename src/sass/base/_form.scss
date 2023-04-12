@@ -95,9 +95,16 @@
     max-height: 300px;
     overflow-y: scroll;
     width: 300px;
-    top: 60px;
+    top: 45px;
     @media(max-width: 991px) {
       top: 90px;
+    }
+    button {
+      text-align: left;
+      cursor: pointer;
+      &:hover {
+        background-color: $gray-100;
+      }
     }
   }
   .b-icon-button {

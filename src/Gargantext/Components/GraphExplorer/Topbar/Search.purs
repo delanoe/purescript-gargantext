@@ -66,6 +66,7 @@ nodeSearchControlCpt = here.component "nodeSearchControl" cpt
           , onEnterPress: doSearch
           , classes: ""
           , state: search
+          , placeholder: "filter and select terms here..."
           }
         ,
           B.button

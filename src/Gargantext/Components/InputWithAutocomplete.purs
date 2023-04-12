@@ -31,6 +31,7 @@ type Props =
   , onAutocompleteClick :: String -> Effect Unit
   , onEnterPress        :: String -> Effect Unit
   , state               :: T.Box String
+  , placeholder         :: String
   )
 
 inputWithAutocomplete :: R2.Leaf Props
@@ -42,7 +43,8 @@ inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
         , classes
         , onAutocompleteClick
         , onEnterPress
-        , state } _ = do
+        , state
+        , placeholder } _ = do
       -- States
       state'        <- T.useLive T.unequal state
       containerRef  <- R.useRef null
@@ -62,6 +64,7 @@ inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
                   , ref: inputRef
                   , className: "form-control"
                   , value: state'
+                  , placeholder: placeholder
                   , on: { focus: onFocus completions state'
                         , input: onInput completions
                         , change: onInput completions
@@ -135,7 +138,7 @@ type Props' =
   , boxAction           :: String -> Action
   , state               :: T.Box String
   , text                :: T.Box String
-  , placeHolder         :: String
+  , placeholder         :: String
   )
 
 inputWithAutocomplete' :: R2.Leaf Props'
@@ -150,7 +153,7 @@ inputWithAutocompleteCpt' = here.component "inputWithAutocomplete" cpt
         , boxAction
         , state
         , text
-        , placeHolder } _ = do
+        , placeholder } _ = do
       -- States
       state'        <- T.useLive T.unequal state
       containerRef  <- R.useRef null
@@ -170,7 +173,7 @@ inputWithAutocompleteCpt' = here.component "inputWithAutocomplete" cpt
                   , ref: inputRef
                   , className: "form-control"
                   , value: state'
-                  , placeHolder: placeHolder
+                  , placeholder: placeholder
                   , on: { focus: onFocus completions state'
                         , input: onInput completions
                         , change: onInput completions
