@@ -33,7 +33,6 @@ type AsyncProps =
 
 asyncProgress :: R2.Component AsyncProps
 asyncProgress = R2.component component
-
 component :: R.Component AsyncProps
 component = R.hooksComponent "asyncProgressContext" cpt where
   cpt props@{ errors

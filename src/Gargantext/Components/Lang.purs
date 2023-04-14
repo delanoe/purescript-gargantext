@@ -8,7 +8,9 @@ import Data.Generic.Rep (class Generic)
 import Data.Lens.Lens.Product (_1)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
+import Data.Show.Generic (genericShow)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Show as GUS
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
@@ -21,27 +23,27 @@ here = R2.here "Gargantext.Components.Lang"
 allLangs :: Array Lang
 allLangs = [ EN
            , FR
+           , DE
+           , ES
+           , IT
+           , PL
+           , CN
            , Universal
            , No_extraction
            ]
 
-data Lang = FR | EN | Universal | No_extraction
+data Lang = FR | EN | DE | ES | IT | PL | CN | Universal | No_extraction
+derive instance Generic Lang _
 
 instance Show Lang where
-  show FR            = "FR"
-  show EN            = "EN"
   show Universal     = "All"
   show No_extraction = "Nothing"
+  show s             = genericShow s
+
+langReader :: String -> Maybe Lang
+langReader = GUS.reader allLangs
 
 derive instance Eq Lang
-
-instance Read Lang where
-  read "FR"      = Just FR
-  read "EN"      = Just EN
-  read "All"     = Just Universal
-  read "Nothing" = Just No_extraction
-  read _         = Nothing
-
 
 instance EncodeJson Lang where
   encodeJson a = encodeJson (show a)

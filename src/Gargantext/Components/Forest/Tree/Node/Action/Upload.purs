@@ -23,7 +23,7 @@ import Gargantext.Components.Forest.Tree.Node.Action (Props)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileFormat(..), FileType(..), UploadFileBlob(..), readUFBAsBase64, readUFBAsText)
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe, panel)
-import Gargantext.Components.Lang (Lang(..))
+import Gargantext.Components.Lang (Lang(..), langReader)
 import Gargantext.Components.ListSelection as ListSelection
 import Gargantext.Components.ListSelection.Types (Selection(..))
 import Gargantext.Components.ListSelection.Types as ListSelection
@@ -147,7 +147,7 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
               ]
             , R2.row
               [ H.div {className:"col-6 flex-space-around"}
-                [ formChoiceSafe { items: [EN, FR, No_extraction]
+                [ formChoiceSafe { items: [EN, FR, DE, ES, IT, PL, CN, No_extraction]
                                  , default: EN
                                  , callback: setLang'
                                  , print: show
@@ -487,7 +487,7 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
             onChange e l =
               T.write_ (Just $ DroppedFile $ { blob
                                              , fileType: read $ R.unsafeEventValue e
-                                             , lang    : fromMaybe EN $ read $ R.unsafeEventValue l
+                                             , lang    : fromMaybe EN $ langReader $ R.unsafeEventValue l
                                              }) droppedFile
             renderOption opt = H.option {} [ H.text $ show opt ]
 

@@ -16,6 +16,7 @@ import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Types as GT
 import Gargantext.Utils (toggleSet)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Show as GUS
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
@@ -179,11 +180,10 @@ type FormChoiceSafeProps item m =
 -- | Form Choice input
 -- if the list of options is not big enough, a button is used instead
 formChoiceSafe :: forall item m
-  .  Read item
-  => Show item
+  .  Show item
   => R2.Component (FormChoiceSafeProps item m)
 formChoiceSafe = R.createElement formChoiceSafeCpt
-formChoiceSafeCpt :: forall item m. Read item => Show item => R.Component (FormChoiceSafeProps item m)
+formChoiceSafeCpt :: forall item m. Show item => R.Component (FormChoiceSafeProps item m)
 formChoiceSafeCpt = here.component "formChoiceSafe" cpt where
   cpt { items, default, callback, print } _ = do
     pure $ case items of
@@ -199,11 +199,10 @@ type FormChoiceProps item m =
 
 -- | List Form
 formChoice :: forall item m
-  .  Read item
-  => Show item
+  .  Show item
   => R2.Component (FormChoiceProps item m)
 formChoice = R.createElement formChoiceCpt
-formChoiceCpt :: forall item m. Read item => Show item => R.Component (FormChoiceProps item m)
+formChoiceCpt :: forall item m. Show item => R.Component (FormChoiceProps item m)
 formChoiceCpt = here.component "formChoice" cpt where
   cpt { items, callback, default, print } _ = do
     pure $ H.div { className: "form-group"}
@@ -216,9 +215,11 @@ formChoiceCpt = here.component "formChoice" cpt where
       ]
 
     where
-      change e = callback $ fromMaybe default $ read $ R.unsafeEventValue e
+      change e = callback $ fromMaybe default $ reader $ R.unsafeEventValue e
 
       option opt = H.option { value: show opt } [ H.text $ print opt ]
+
+      reader = GUS.reader items
 
 type FormButtonProps item m =
   ( item     :: item
@@ -263,7 +264,7 @@ type Href  = String
 
 submitButtonHref :: Action -> Href -> R.Element
 submitButtonHref action href =
-  H.a { className, href, target: "_blank" } 
+  H.a { className, href, target: "_blank" }
   [ H.span {className: "font-family-theme mx-1"} [ H.text $ " " <> text action ] ]
   where
     className = "btn btn-primary fa fa-" <> icon action
