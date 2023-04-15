@@ -6,6 +6,7 @@ module Gargantext.Components.Forest
 import Gargantext.Prelude
 
 import Data.Array as A
+import Data.Map (empty)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe)
 import Gargantext.Components.App.Store (Boxes)
@@ -83,7 +84,7 @@ plus :: R2.Leaf Plus
 plus = R2.leaf plusCpt
 plusCpt :: R.Component Plus
 plusCpt = here.component "plus" cpt where
-  cpt { boxes: { backend, showLogin } } _ = do
+  cpt { boxes: { backend, showLogin, pinnedTreeId} } _ = do
     -- Hooks
     { goToRoute } <- useLinkHandler
 
@@ -102,7 +103,7 @@ plusCpt = here.component "plus" cpt where
       [
         B.tooltipContainer
         { delayShow: 600
-        , position: TooltipPosition Top
+        , position: TooltipPosition Right
         , tooltipSlot:
             B.span_ "Back to home"
         , defaultSlot:
@@ -118,7 +119,23 @@ plusCpt = here.component "plus" cpt where
       ,
         B.tooltipContainer
         { delayShow: 600
-        , position: TooltipPosition Top
+        , position: TooltipPosition Right
+        , tooltipSlot:
+          B.span_ "Reset pins"
+        , defaultSlot:
+          B.button
+          { className: "forest-layout__action__button"
+          , callback: \_ -> T.write_ empty pinnedTreeId
+          , variant: ButtonVariant Light
+          }
+          [
+            B.icon { name: "refresh" }
+          ]
+        }
+      ,
+        B.tooltipContainer
+        { delayShow: 600
+        , position: TooltipPosition Right
         , tooltipSlot:
             B.span_ "Add or remove connection to the server(s)"
         , defaultSlot:
