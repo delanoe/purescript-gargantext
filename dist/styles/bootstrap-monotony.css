@@ -10133,6 +10133,23 @@ input[type=range]:-moz-focusring {
   left: 16px;
 }
 
+.mainleaf__pin-icon {
+  visibility: hidden;
+  position: absolute;
+}
+.mainleaf:hover .mainleaf__pin-icon {
+  visibility: visible;
+}
+.right-handed .mainleaf:hover .mainleaf__pin-icon {
+  margin-left: 14px;
+  right: 64px;
+}
+
+.left-handed .mainleaf:hover .mainleaf__pin-icon {
+  margin-right: 14px;
+  left: 64px;
+}
+
 .mainleaf__update-icon {
   position: absolute;
 }
