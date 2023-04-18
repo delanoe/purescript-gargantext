@@ -91,6 +91,8 @@ instance untaggedSumRepArgument ::
   untaggedSumRep f = GR.Argument <$> JSON.readImpl f
 
 
+-- | A helper function to wrap the complexities of throwing an error
+-- | from a custom JSON reader.
 throwJSONError :: forall a. Foreign.ForeignError -> Foreign.F a
 throwJSONError err =
   throwError $ NonEmptyList $ NonEmpty err L.Nil

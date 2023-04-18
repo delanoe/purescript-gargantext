@@ -6,8 +6,6 @@ import Affjax.RequestBody (RequestBody(..))
 import Data.Array as A
 import Data.Lens (Lens', lens)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
-import GraphQL.Client.Args (NotNull, (=>>))
-import GraphQL.Client.Variable (Var(..))
 import Gargantext.Utils.GraphQL as GGQL
 import Type.Proxy (Proxy(..))
 

@@ -9,8 +9,10 @@ import Data.Lens.Lens.Product (_1)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.Show.Generic (genericShow)
+import Foreign as F
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Show as GUS
+import Gargantext.Utils.SimpleJSON as GJSON
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
@@ -34,6 +36,7 @@ allLangs = [ EN
 
 data Lang = FR | EN | DE | ES | IT | PL | CN | Universal | No_extraction
 derive instance Generic Lang _
+derive instance Ord Lang
 
 instance Show Lang where
   show Universal     = "All"
@@ -45,11 +48,32 @@ langReader = GUS.reader allLangs
 
 derive instance Eq Lang
 
-instance EncodeJson Lang where
-  encodeJson a = encodeJson (show a)
+-- instance EncodeJson Lang where
+--   encodeJson a = encodeJson (show a)
 
+instance JSON.ReadForeign Lang where
+  readImpl f = do
+    f' <- JSON.readImpl f
+    case langReader f' of
+      Nothing -> GJSON.throwJSONError $ F.ForeignError $ "Unknown language: " <> f'
+      Just l  -> pure l
 instance JSON.WriteForeign Lang where
   writeImpl l = JSON.writeImpl $ show l
+
+
+data ServerType = CoreNLP | Spacy | JohnSnow
+derive instance Generic ServerType _
+instance Show ServerType where
+  show = genericShow
+instance JSON.ReadForeign ServerType where
+  readImpl f = do
+    f' <- JSON.readImpl f
+    case f' of
+      "CoreNLP"        -> pure CoreNLP
+      "Spacy"          -> pure Spacy
+      "JohnSnowServer" -> pure JohnSnow
+      _                -> GJSON.throwJSONError $ F.ForeignError $ "Unknown server: " <> f'
+
 
 -- Language used for the landing page
 data LandingLang = LL_EN | LL_FR
