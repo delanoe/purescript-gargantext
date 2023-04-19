@@ -3,7 +3,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 import Gargantext.Prelude
 
 import Affjax.RequestBody (blob)
-import Data.Array (singleton)
+import Data.Array as A
 import Data.Either (Either, fromRight')
 import Data.Eq.Generic (genericEq)
 import Data.Foldable (intercalate)
@@ -731,11 +731,26 @@ uploadTermButtonCpt = here.component "uploadTermButton" cpt
 uploadFrameCalcView :: R2.Component Props
 uploadFrameCalcView = R.createElement uploadFrameCalcViewCpt
 uploadFrameCalcViewCpt :: R.Component Props
-uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt
+uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt where
+  cpt props@({ session }) _ = do
+    useLoader { errorHandler
+              , loader: loadLanguages
+              , path: { session }
+              , render: \langs ->
+              uploadFileViewWithLangs (Record.merge props { langs }) }
+    where
+      errorHandler err = case err of
+        ReadJSONError err' -> here.warn2 "[uploadFileView] ReadJSONError" $ show err'
+        _                  -> here.warn2 "[uploadFileView] RESTError" err
+
+uploadFrameCalcViewWithLangs :: R2.Component PropsWithLangs
+uploadFrameCalcViewWithLangs = R.createElement uploadFrameCalcViewWithLangsCpt
+uploadFrameCalcViewWithLangsCpt :: R.Component PropsWithLangs
+uploadFrameCalcViewWithLangsCpt = here.component "uploadFrameCalcViewWithLangs" cpt
   where
-    cpt { dispatch, session } _ = do
+    cpt { dispatch, langs, session } _ = do
       lang' /\ langBox
-        <- R2.useBox' EN
+        <- R2.useBox' $ fromMaybe Universal $ A.head langs
       selection' /\ selectionBox
         <- R2.useBox' ListSelection.MyListsFirst
 
@@ -763,7 +778,7 @@ uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt
             B.formSelect'
             { callback: flip T.write_ langBox
             , value: lang'
-            , list: [ EN, FR, No_extraction, Universal ]
+            , list: langs <> [ No_extraction, Universal ]
             }
             []
           ]
