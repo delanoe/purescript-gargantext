@@ -2724,6 +2724,16 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 .fa-plus-minus:before {
   content: "\e901";
 }
+.fa-thumb-tack-inclined-cancel:before {
+  content: "\e902";
+}
+.fa-thumb-tack-inclined:before {
+  content: "\e903";
+}
+.fa-thumb-tack-cancel:before {
+  content: "\e904";
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

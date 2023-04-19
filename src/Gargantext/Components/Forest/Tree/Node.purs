@@ -304,7 +304,7 @@ nodeSpanCpt = here.component "nodeSpan" cpt
             R2.when (showBox) $
               R.fragment [
                 B.iconButton
-                { name: "anchor"
+                { name: "thumb-tack-inclined"
                 , className: "mainleaf__pin-icon"
                 , callback: \_ -> do 
                 log2 "[Pinning tree ID]" id

@@ -129,7 +129,7 @@ plusCpt = here.component "plus" cpt where
           , variant: ButtonVariant Light
           }
           [
-            B.icon { name: "refresh" }
+            B.icon { name: "thumb-tack-inclined-cancel" }
           ]
         }
       ,

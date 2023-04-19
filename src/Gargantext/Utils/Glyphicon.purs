@@ -698,6 +698,9 @@ glyphiconToCharCode = _toString <<< case _ of
   "thermometer-quarter" -> 0xf2ca
   "thermometer-three-quarters" -> 0xf2c8
   "thumb-tack" -> 0xf08d
+  "thumb-tack-cancel" -> 0xe904
+  "thumb-tack-inclined" -> 0xe903
+  "thumb-tack-inclined-cancel" -> 0xe902
   "thumbs-down" -> 0xf165
   "thumbs-o-down" -> 0xf088
   "thumbs-o-up" -> 0xf087
