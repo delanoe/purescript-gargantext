@@ -16,4 +16,4 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Utils"
 loadLanguages :: { session :: Session } -> AffRESTError (Array Lang)
 loadLanguages { session } = do
   eLangsMap <- getLanguages session
-  pure $ A.fromFoldable <$> Map.keys <$> eLangsMap
+  pure $ A.sort <$> A.fromFoldable <$> Map.keys <$> eLangsMap

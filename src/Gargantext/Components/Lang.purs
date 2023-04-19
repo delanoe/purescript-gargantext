@@ -34,7 +34,7 @@ allLangs = [ EN
            , No_extraction
            ]
 
-data Lang = FR | EN | DE | ES | IT | PL | CN | Universal | No_extraction
+data Lang = CN | DE | EN | ES | FR | IT | PL | Universal | No_extraction
 derive instance Generic Lang _
 derive instance Ord Lang
 
