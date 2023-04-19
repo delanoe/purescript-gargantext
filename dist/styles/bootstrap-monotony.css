@@ -6309,6 +6309,10 @@ h3 {
   margin-right: calc( 2px / 2 );
 }
 
+.btn.disabled, .btn:disabled {
+  opacity: 0.45;
+}
+
 .echarts-for-react {
   height: 300px;
 }
