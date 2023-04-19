@@ -3,7 +3,6 @@ module Gargantext.Components.Forest.Tree.Node.Action.Search where
 import Gargantext.Prelude
 
 import Data.Array as A
-import Data.Map as Map
 import Data.Maybe (Maybe)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
@@ -11,7 +10,7 @@ import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar (searchBar)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (defaultSearch)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
-import Gargantext.Components.GraphQL.Endpoints (getLanguages)
+import Gargantext.Components.Forest.Tree.Node.Action.Utils (loadLanguages)
 import Gargantext.Components.Lang (allLangs, Lang)
 import Gargantext.Config.REST (RESTError(..), AffRESTError)
 import Gargantext.Hooks.Loader (useLoader)
@@ -47,20 +46,12 @@ actionSearchCpt = here.component "actionSearch" cpt where
                  actionSearchWithLangs (Record.merge props { langs }) [] }
     where
       errorHandler err = case err of
-        ReadJSONError err' -> here.warn2 "[listTreeChildren] ReadJSONError" $ show err'
-        _                  -> here.warn2 "[listTreeChildren] RESTError" err
-
-loadLanguages :: { session :: Session } -> AffRESTError (Array Lang)
-loadLanguages { session } = do
-  eLangsMap <- getLanguages session
-  pure $ A.fromFoldable <$> Map.keys <$> eLangsMap
+        ReadJSONError err' -> here.warn2 "[actionSearch] ReadJSONError" $ show err'
+        _                  -> here.warn2 "[actionSearch] RESTError" err
 
 type PropsWithLangs =
-  ( boxes     :: Boxes
-  , dispatch  :: Action -> Aff Unit
-  , id        :: Maybe ID
-  , langs     :: Array Lang
-  , session   :: Session )
+  ( langs :: Array Lang
+  | Props )
 
 -- | Action : Search
 actionSearchWithLangs :: R2.Component PropsWithLangs

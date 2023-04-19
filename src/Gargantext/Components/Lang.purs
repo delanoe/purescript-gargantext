@@ -98,7 +98,6 @@ type LangSwitcherProps = (
 
 langSwitcher :: R2.Component LangSwitcherProps
 langSwitcher = R.createElement langSwitcherCpt
-
 langSwitcherCpt :: R.Component LangSwitcherProps
 langSwitcherCpt = here.component "langSwitcher" cpt
   where
