@@ -23,18 +23,33 @@ here = R2.here "Gargantext.Components.Lang"
 
 -- Language used for search
 allLangs :: Array Lang
-allLangs = [ EN
-           , FR
+allLangs = [ Universal
+           , No_extraction
            , DE
+           , EL
+           , EN
            , ES
+           , FR
            , IT
            , PL
-           , CN
-           , Universal
-           , No_extraction
+           , PT
+           , RU
+           , UK
+           , ZH
            ]
 
-data Lang = CN | DE | EN | ES | FR | IT | PL | Universal | No_extraction
+data Lang = Universal | No_extraction
+          | DE
+          | EL
+          | EN
+          | ES
+          | FR
+          | IT
+          | PL
+          | PT
+          | RU
+          | UK
+          | ZH
 derive instance Generic Lang _
 derive instance Ord Lang
 
