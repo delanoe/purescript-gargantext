@@ -50,8 +50,8 @@ class Doc a where
 -- | DataField search specifications
 
 dataFields :: Array DataField
-dataFields = [ Gargantext
-             , External Nothing
+dataFields = [ {- Gargantext
+             , -} External Nothing
              , Web
              -- , Files
              ]
