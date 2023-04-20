@@ -3,7 +3,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 import Gargantext.Prelude
 
 import Affjax.RequestBody (blob)
-import Data.Array (singleton)
+import Data.Array as A
 import Data.Either (Either, fromRight')
 import Data.Eq.Generic (genericEq)
 import Data.Foldable (intercalate)
@@ -22,12 +22,14 @@ import Gargantext.Components.Bootstrap.Types (ComponentStatus(..))
 import Gargantext.Components.Forest.Tree.Node.Action (Props)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileFormat(..), FileType(..), UploadFileBlob(..), readUFBAsBase64, readUFBAsText)
+import Gargantext.Components.Forest.Tree.Node.Action.Utils (loadLanguages)
 import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe, panel)
 import Gargantext.Components.Lang (Lang(..), langReader)
 import Gargantext.Components.ListSelection as ListSelection
 import Gargantext.Components.ListSelection.Types (Selection(..))
 import Gargantext.Components.ListSelection.Types as ListSelection
-import Gargantext.Config.REST (AffRESTError, RESTError)
+import Gargantext.Config.REST (AffRESTError, RESTError(..))
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, postWwwUrlencoded, post)
 import Gargantext.Types (ID, NodeType(..))
@@ -37,6 +39,7 @@ import Partial.Unsafe (unsafePartial, unsafeCrashWith)
 import React.SyntheticEvent as E
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record as Record
 import Toestand as T
 import URI.Extra.QueryPairs as QP
 import Web.File.FileReader.Aff (readAsDataURL)
@@ -103,9 +106,28 @@ type UploadFile =
 uploadFileView :: R2.Leaf Props
 uploadFileView = R2.leaf uploadFileViewCpt
 uploadFileViewCpt :: R.Component Props
-uploadFileViewCpt = here.component "uploadFileView" cpt
+uploadFileViewCpt = here.component "uploadFileView" cpt where
+  cpt props@({ session }) _ = do
+    useLoader { errorHandler
+              , loader: loadLanguages
+              , path: { session }
+              , render: \langs ->
+              uploadFileViewWithLangs (Record.merge props { langs }) }
+    where
+      errorHandler err = case err of
+        ReadJSONError err' -> here.warn2 "[uploadFileView] ReadJSONError" $ show err'
+        _                  -> here.warn2 "[uploadFileView] RESTError" err
+
+type PropsWithLangs =
+  ( langs :: Array Lang
+  | Props )
+
+uploadFileViewWithLangs :: R2.Leaf PropsWithLangs
+uploadFileViewWithLangs = R2.leaf uploadFileViewWithLangsCpt
+uploadFileViewWithLangsCpt :: R.Component PropsWithLangs
+uploadFileViewWithLangsCpt = here.component "uploadFileViewWithLangs" cpt
   where
-    cpt { dispatch, id, nodeType, session } _ = do
+    cpt { dispatch, id, langs, nodeType, session } _ = do
       -- mFile    :: R.State (Maybe UploadFile) <- R.useState' Nothing
       mFile       <- T.useBox (Nothing :: Maybe UploadFile)
       fileType    <- T.useBox CSV
@@ -147,7 +169,7 @@ uploadFileViewCpt = here.component "uploadFileView" cpt
               ]
             , R2.row
               [ H.div {className:"col-6 flex-space-around"}
-                [ formChoiceSafe { items: [EN, FR, DE, ES, IT, PL, CN, No_extraction]
+                [ formChoiceSafe { items: langs <> [No_extraction]
                                  , default: EN
                                  , callback: setLang'
                                  , print: show
@@ -709,11 +731,26 @@ uploadTermButtonCpt = here.component "uploadTermButton" cpt
 uploadFrameCalcView :: R2.Component Props
 uploadFrameCalcView = R.createElement uploadFrameCalcViewCpt
 uploadFrameCalcViewCpt :: R.Component Props
-uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt
+uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt where
+  cpt props@({ session }) _ = do
+    useLoader { errorHandler
+              , loader: loadLanguages
+              , path: { session }
+              , render: \langs ->
+              uploadFileViewWithLangs (Record.merge props { langs }) }
+    where
+      errorHandler err = case err of
+        ReadJSONError err' -> here.warn2 "[uploadFileView] ReadJSONError" $ show err'
+        _                  -> here.warn2 "[uploadFileView] RESTError" err
+
+uploadFrameCalcViewWithLangs :: R2.Component PropsWithLangs
+uploadFrameCalcViewWithLangs = R.createElement uploadFrameCalcViewWithLangsCpt
+uploadFrameCalcViewWithLangsCpt :: R.Component PropsWithLangs
+uploadFrameCalcViewWithLangsCpt = here.component "uploadFrameCalcViewWithLangs" cpt
   where
-    cpt { dispatch, session } _ = do
+    cpt { dispatch, langs, session } _ = do
       lang' /\ langBox
-        <- R2.useBox' EN
+        <- R2.useBox' $ fromMaybe Universal $ A.head langs
       selection' /\ selectionBox
         <- R2.useBox' ListSelection.MyListsFirst
 
@@ -741,7 +778,7 @@ uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt
             B.formSelect'
             { callback: flip T.write_ langBox
             , value: lang'
-            , list: [ EN, FR, No_extraction, Universal ]
+            , list: langs <> [ No_extraction, Universal ]
             }
             []
           ]

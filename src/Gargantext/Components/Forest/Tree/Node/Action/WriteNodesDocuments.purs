@@ -2,24 +2,28 @@ module Gargantext.Components.Forest.Tree.Node.Action.WriteNodesDocuments where
 
 import Gargantext.Prelude
 
+import Data.Array as A
 import Data.Either (Either)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
+import Gargantext.Components.Forest.Tree.Node.Action.Utils (loadLanguages)
 import Gargantext.Components.Forest.Tree.Node.Tools (panel, submitButton)
 import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Components.ListSelection as ListSelection
 import Gargantext.Components.ListSelection.Types as ListSelection
-import Gargantext.Config.REST (AffRESTError, RESTError)
+import Gargantext.Config.REST (AffRESTError, RESTError(..))
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record as Record
 import Toestand as T
 
 
@@ -37,10 +41,29 @@ actionWriteNodesDocuments :: R2.Component ActionWriteNodesDocuments
 actionWriteNodesDocuments = R.createElement actionWriteNodesDocumentsCpt
 actionWriteNodesDocumentsCpt :: R.Component ActionWriteNodesDocuments
 actionWriteNodesDocumentsCpt = here.component "actionWriteNodesDocuments" cpt where
-  cpt { boxes, dispatch, id, session } _ = do
+  cpt props@({ session }) _ = do
+    useLoader { errorHandler
+              , loader: loadLanguages
+              , path: { session }
+              , render: \langs ->
+              actionWriteNodesDocumentsWithLangs (Record.merge props { langs }) [] }
+    where
+      errorHandler err = case err of
+        ReadJSONError err' -> here.warn2 "[actionSearch] ReadJSONError" $ show err'
+        _                  -> here.warn2 "[actionSearch] RESTError" err
+
+type ActionWriteNodesDocumentsWithLangs =
+  ( langs :: Array Lang
+  | ActionWriteNodesDocuments )
+
+actionWriteNodesDocumentsWithLangs :: R2.Component ActionWriteNodesDocumentsWithLangs
+actionWriteNodesDocumentsWithLangs = R.createElement actionWriteNodesDocumentsWithLangsCpt
+actionWriteNodesDocumentsWithLangsCpt :: R.Component ActionWriteNodesDocumentsWithLangs
+actionWriteNodesDocumentsWithLangsCpt = here.component "actionWriteNodesDocumentsWithLangs" cpt where
+  cpt { dispatch, id, langs, session } _ = do
 
     lang' /\ langBox
-        <- R2.useBox' EN
+        <- R2.useBox' $ fromMaybe Universal $ A.head langs
     selection' /\ selectionBox
         <- R2.useBox' ListSelection.MyListsFirst
     paragraphs' /\ paragraphBox
@@ -70,7 +93,7 @@ actionWriteNodesDocumentsCpt = here.component "actionWriteNodesDocuments" cpt wh
           B.formSelect'
           { callback: flip T.write_ langBox
           , value: lang'
-          , list: [ EN, FR, No_extraction, Universal ]
+          , list: langs <> [ No_extraction, Universal ]
           }
           []
         ]
