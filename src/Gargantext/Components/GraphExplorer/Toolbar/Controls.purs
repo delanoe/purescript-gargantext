@@ -173,8 +173,14 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             }
             [
               -- resetForceAtlasButton { forceAtlasState, sigmaRef }
-              pauseForceAtlasButton { state: forceAtlasState }
-            , pauseNoverlapButton { state: noverlapState }
+              pauseForceAtlasButton { 
+                state: forceAtlasState
+              , title: "Play/pause spatialization"  
+              }
+            , pauseNoverlapButton { 
+                state: noverlapState
+              , title: "No node overlap"
+              }
             ,
               gap
             ,
@@ -185,6 +191,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
               , reloadForest
               , session
               , sigmaRef: sigmaRef
+              , title: "Save this graph"
               }
             ]
           ,
@@ -194,14 +201,18 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
             , titleSlot: H.text "View settings"
             }
             [
-              centerButton { forceAtlasState
-                           , sigmaRef }
+              centerButton { 
+                forceAtlasState
+              , sigmaRef
+              , title: "Recenter graph"
+              }
             ,
               gap
             ,
               edgesToggleButton
               { state: showEdges
               , stateAtlas: forceAtlasState
+              , title: "Show/hide node links"
               }
             ,
               gap
@@ -209,7 +220,8 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
               louvainButton { forceAtlasState
                             , graph
                             , sigmaRef
-                            , transformedGraph }
+                            , transformedGraph
+                            , title: "" }
             ]
           ]
         ,
@@ -219,7 +231,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
               [ "graph-toolbar__section"
               , "graph-toolbar__section--selection"
               ]
-          , titleSlot: H.text "Selection settings"
+          , titleSlot: H.text "Nodes (terms) selection settings"
           }
           [
             -- zoom: 0 -100 - calculate ratio

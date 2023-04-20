@@ -71,9 +71,9 @@ component = R.hooksComponent componentName cpt where
       ,
         H.div
         { className: intercalate " "
-          [ "progress-text" 
+          [ "progress-text"
           , props.waitingTextClass
           ]
-        } 
+        }
         [ H.text "Waiting task..." ]
       ]

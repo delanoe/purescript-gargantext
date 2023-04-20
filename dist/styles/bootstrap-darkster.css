@@ -6278,6 +6278,8 @@ h3 {
 .main-topbar .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
 .router__aside .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
 .router__aside .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
+.router__body .corpus-layout .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
+.router__body .corpus-layout .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
 .router__body .texts-layout .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
 .router__body .texts-layout .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
 .modal-dialog .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
@@ -6288,6 +6290,8 @@ h3 {
 .main-topbar .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
 .router__aside .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
 .router__aside .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
+.router__body .corpus-layout .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
+.router__body .corpus-layout .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
 .router__body .texts-layout .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
 .router__body .texts-layout .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
 .modal-dialog .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
@@ -6490,6 +6494,10 @@ h3 {
   margin-right: calc( 2px / 2 );
 }
 
+.btn.disabled, .btn:disabled {
+  opacity: 0.45;
+}
+
 .echarts-for-react {
   height: 300px;
 }
@@ -6627,12 +6635,19 @@ a:hover {
   max-height: 300px;
   overflow-y: scroll;
   width: 300px;
-  top: 60px;
+  top: 45px;
 }
 @media (max-width: 991px) {
   .input-with-autocomplete .completions {
     top: 90px;
   }
+}
+.input-with-autocomplete .completions button {
+  text-align: left;
+  cursor: pointer;
+}
+.input-with-autocomplete .completions button:hover {
+  background-color: #212529;
 }
 .input-with-autocomplete .b-icon-button {
   margin-left: 10px;
@@ -6683,6 +6698,10 @@ a:hover,
 a:active,
 a:focus {
   text-decoration: underline;
+}
+
+.text-small {
+  font-size: smaller;
 }
 
 @keyframes fade-in {
@@ -10303,6 +10322,23 @@ input[type=range]:-moz-focusring {
   left: 16px;
 }
 
+.mainleaf__pin-icon {
+  visibility: hidden;
+  position: absolute;
+}
+.mainleaf:hover .mainleaf__pin-icon {
+  visibility: visible;
+}
+.right-handed .mainleaf:hover .mainleaf__pin-icon {
+  margin-left: 14px;
+  right: 64px;
+}
+
+.left-handed .mainleaf:hover .mainleaf__pin-icon {
+  margin-right: 14px;
+  left: 64px;
+}
+
 .mainleaf__update-icon {
   position: absolute;
 }
@@ -11245,6 +11281,10 @@ select.form-control {
   position: relative;
   top: 1px;
   margin-left: 8px;
+}
+.ngrams-table-container__table td:nth-child(3) .tree-loaded-plus .fa-plus-minus:before {
+  font-size: 0.85rem;
+  line-height: 0.85rem;
 }
 .ngrams-table-container__table tr:hover .tree-loaded-plus {
   visibility: unset;

@@ -201,11 +201,12 @@ treeLoadedCpt = here.component "treeLoaded" cpt where
       edit effect =
         [
           B.iconButton
-          { name: "plus"
+          { name: "plus-minus"
           , className: "tree-loaded-plus"
           , variant: Secondary
           , callback: const effect
           , overlay: false
+          , title: "Combine and separate"
           }
         ]
       leaf = L.null ngramsChildren

@@ -5,8 +5,10 @@ module Gargantext.Components.Forest.Tree.Node
 
 import Gargantext.Prelude
 
+import DOM.Simple.Console (log2)
 import Data.Array.NonEmpty as NArray
 import Data.Foldable (intercalate)
+import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
 import Data.String.Regex as Regex
 import Data.Tuple.Nested ((/\))
@@ -75,11 +77,7 @@ nodeSpan = R2.leaf nodeSpanCpt
 nodeSpanCpt :: R.Component NodeSpanProps
 nodeSpanCpt = here.component "nodeSpan" cpt
   where
-    cpt props@{ boxes: boxes@{ errors
-                             , reloadMainPage
-                             , reloadRoot
-                             , route
-                             , tasks }
+    cpt props@{ boxes
               , dispatch
               , folderOpen
               , frontends
@@ -92,14 +90,14 @@ nodeSpanCpt = here.component "nodeSpan" cpt
               } _ = do
     -- States
 
-      route' <- T.useLive T.unequal route
+      route' <- T.useLive T.unequal boxes.route
       -- only 1 popup at a time is allowed to be opened
       droppedFile   <- T.useBox (Nothing :: Maybe DroppedFile)
       droppedFile'  <- T.useLive T.unequal droppedFile
       isDragOver    <- T.useBox false
       isDragOver'   <- T.useLive T.unequal isDragOver
 
-      currentTasks  <- GAT.focus id tasks
+      currentTasks  <- GAT.focus id boxes.tasks
       currentTasks' <- T.useLive T.unequal currentTasks
 
       folderOpen' <- R2.useLive' folderOpen
@@ -168,10 +166,10 @@ nodeSpanCpt = here.component "nodeSpan" cpt
           -> Unit
           -> Effect Unit
         onTaskFinish id' t _ = do
-          GAT.finish id' t tasks
+          GAT.finish id' t boxes.tasks
           if GAT.asyncTaskTTriggersAppReload t then do
             here.log2 "reloading root for task" t
-            T2.reload reloadRoot
+            T2.reload boxes.reloadRoot
           else do
             if GAT.asyncTaskTTriggersTreeReload t then do
               here.log2 "reloading tree for task" t
@@ -181,7 +179,7 @@ nodeSpanCpt = here.component "nodeSpan" cpt
               pure unit
             if GAT.asyncTaskTTriggersMainPageReload t then do
               here.log2 "reloading main page for task" t
-              T2.reload reloadMainPage
+              T2.reload boxes.reloadMainPage
             else do
               here.log2 "task doesn't trigger a main page reload" t
               pure unit
@@ -304,23 +302,35 @@ nodeSpanCpt = here.component "nodeSpan" cpt
             } []
           ,
             R2.when (showBox) $
-
-              B.iconButton
-              { name: "flower-7"
-              , className: "mainleaf__settings-icon"
-              , callback: \_ -> T.write_ true isBoxVisible
-              , title:
-                    "Each node of the Tree can perform some actions.\n"
-                  <> "Click here to execute one of them."
-              , variant: Secondary
-              , elevation: Level1
-              }
+              R.fragment [
+                B.iconButton
+                { name: "thumb-tack-inclined"
+                , className: "mainleaf__pin-icon"
+                , callback: \_ -> do 
+                log2 "[Pinning tree ID]" id
+                T.modify_ (Map.insert (show session) id) boxes.pinnedTreeId
+                , title: "Pin the tree to this node"
+                , variant: Secondary
+                , elevation: Level1
+                }
+              ,
+                B.iconButton
+                { name: "flower-7"
+                , className: "mainleaf__settings-icon"
+                , callback: \_ -> T.write_ true isBoxVisible
+                , title:
+                      "Each node of the Tree can perform some actions.\n"
+                    <> "Click here to execute one of them."
+                , variant: Secondary
+                , elevation: Level1
+                }
+              ]
           ,
             R.fragment $ flip map currentTasks' \task ->
 
               asyncProgress
               { asyncTask: task
-              , errors
+              , errors: boxes.errors
               , nodeId: id
               , onFinish: onTaskFinish id task
               , session

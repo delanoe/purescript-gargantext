@@ -93,31 +93,27 @@ componentCpt = here.component "main" cpt where
           , themes: allThemes
           } []
         ]
-      ,
-        H.li
-        { className: "nav-item main-topbar__lang-switcher" }
-        [
-          langSwitcher
-          { lang
-          , langs: allFeLangs
-          } []
-        ]
-      ,
-        B.button
-        { variant: showTree' ?
-            ButtonVariant Light $
-            OutlinedButtonVariant Light
-        , callback: onTreeToggleClick
-        , className: "main-topbar__tree-switcher"
-        }
-        [
-          if showTree'
-          then H.text "Hide Tree"
-          else H.text "Show Tree"
-        ]
-      ,
-        H.div
-        { id: "portal-topbar" } []
+
+{-      ,
+        H.li { className: "nav-item main-topbar__lang-switcher" }
+          [ langSwitcher
+            { lang
+            , langs: allFeLangs
+            } []
+          ]-}
+        , B.button
+          { variant: showTree' ?
+              ButtonVariant Light $
+              OutlinedButtonVariant Light
+          , callback: onTreeToggleClick
+          , className: "main-topbar__tree-switcher"
+          }
+          [
+            if showTree'
+            then H.text "Hide Tree"
+            else H.text "Show Tree"
+          ]
+        , H.div { id: "portal-topbar" } []
       ]
 
       -- SB.searchBar {session, databases: allDatabases}

@@ -6,7 +6,9 @@ module Gargantext.Components.Forest
 import Gargantext.Prelude
 
 import Data.Array as A
-import Data.Maybe (Maybe(..))
+import Data.Map (empty)
+import Data.Map as Map
+import Data.Maybe (Maybe(..), fromMaybe)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Position(..), TooltipPosition(..), Variant(..))
@@ -36,7 +38,8 @@ forestLayoutCpt :: R.Component Props
 forestLayoutCpt = here.component "forest" cpt where
   cpt { boxes: boxes@{ handed
                      , reloadForest
-                     , sessions }
+                     , sessions
+                     , pinnedTreeId }
       , frontends } _ = do
     -- TODO Fix this. I think tasks shouldn't be a Box but only a Reductor
     -- tasks'        <- GAT.useTasks reloadRoot reloadForest
@@ -44,6 +47,7 @@ forestLayoutCpt = here.component "forest" cpt where
     --   T.write_ (Just tasks') tasks
     handed'       <- T.useLive T.unequal handed
     sessions'     <- T.useLive T.unequal sessions
+    pinnedTreeId' <- T.useLive T.unequal pinnedTreeId
     -- forestOpen'   <- T.useLive T.unequal forestOpen
     -- reloadRoot'   <- T.useLive T.unequal reloadRoot
     -- route'        <- T.useLive T.unequal route
@@ -54,10 +58,10 @@ forestLayoutCpt = here.component "forest" cpt where
 
       H.div
       { className: "forest-layout" }
-      (A.cons (plus { boxes }) (trees handed' sessions'))
+      (A.cons (plus { boxes }) (trees handed' pinnedTreeId' sessions'))
     where
-      trees handed' sessions' = (tree handed') <$> unSessions sessions'
-      tree handed' s@(Session { treeId }) =
+      trees handed' pinnedTreeId' sessions' = (tree handed' pinnedTreeId') <$> unSessions sessions'
+      tree handed' pinnedTreeId' s@(Session { treeId }) =
         H.div
         { className: "forest-layout__tree" }
         [
@@ -66,11 +70,13 @@ forestLayoutCpt = here.component "forest" cpt where
           , frontends
           , handed: handed'
           , reload: reloadForest
-          , root: treeId
+          , root: r
           , session: s
           , key: "tree-" <> (show treeId)
           }
         ]
+        where
+          r = fromMaybe treeId (Map.lookup (show s) pinnedTreeId')
 
 type Plus = ( boxes :: Boxes )
 
@@ -78,7 +84,7 @@ plus :: R2.Leaf Plus
 plus = R2.leaf plusCpt
 plusCpt :: R.Component Plus
 plusCpt = here.component "plus" cpt where
-  cpt { boxes: { backend, showLogin } } _ = do
+  cpt { boxes: { backend, showLogin, pinnedTreeId} } _ = do
     -- Hooks
     { goToRoute } <- useLinkHandler
 
@@ -97,7 +103,7 @@ plusCpt = here.component "plus" cpt where
       [
         B.tooltipContainer
         { delayShow: 600
-        , position: TooltipPosition Top
+        , position: TooltipPosition Right
         , tooltipSlot:
             B.span_ "Back to home"
         , defaultSlot:
@@ -113,7 +119,23 @@ plusCpt = here.component "plus" cpt where
       ,
         B.tooltipContainer
         { delayShow: 600
-        , position: TooltipPosition Top
+        , position: TooltipPosition Right
+        , tooltipSlot:
+          B.span_ "Reset pins"
+        , defaultSlot:
+          B.button
+          { className: "forest-layout__action__button"
+          , callback: \_ -> T.write_ empty pinnedTreeId
+          , variant: ButtonVariant Light
+          }
+          [
+            B.icon { name: "thumb-tack-inclined-cancel" }
+          ]
+        }
+      ,
+        B.tooltipContainer
+        { delayShow: 600
+        , position: TooltipPosition Right
         , tooltipSlot:
             B.span_ "Add or remove connection to the server(s)"
         , defaultSlot:

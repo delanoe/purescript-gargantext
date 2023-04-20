@@ -250,6 +250,8 @@
 .main-topbar .fa,
 .router__aside .b-icon, 
 .router__aside .fa,
+.router__body .corpus-layout .b-icon,
+.router__body .corpus-layout .fa,
 .router__body .texts-layout .b-icon,
 .router__body .texts-layout .fa,
 .modal-dialog .b-icon, 
@@ -509,4 +511,13 @@
       margin-right: calc( #{ $gutter } / 2 );
     }
   }
+}
+
+
+
+/// Buttons global
+///-----------------------------------------------------------------------------
+
+.btn.disabled, .btn:disabled {
+  opacity: .45;
 }

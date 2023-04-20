@@ -6,10 +6,13 @@ module Gargantext.Components.Bootstrap.FormSelect
 import Gargantext.Prelude
 
 import Data.Foldable (elem, intercalate)
+import Data.Map as Map
 import Data.Maybe (Maybe(..))
+import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Sizing(..))
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Show as GUS
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Unsafe.Coerce (unsafeCoerce)
@@ -140,14 +143,12 @@ type AnyTypeProps a =
 -- |      to the provided `list` prop. You can add additional HTML option within
 -- |      the `children` prop
 formSelect' :: forall r a.
-     Read a
-  => Show a
+     Show a
   => R2.OptComponent Options (AnyTypeProps a) r
 formSelect' = R2.optComponent component' options
 
 component' :: forall a.
-     Read a
-  => Show a
+     Show a
   => R.Component (AnyTypeProps a)
 component' = R.hooksComponent (componentName <> "__helper") cpt where
   cpt props@{ callback
@@ -170,7 +171,7 @@ component' = R.hooksComponent (componentName <> "__helper") cpt where
 
     -- Behaviors
     let
-      change = onChange' status callback
+      change = onChange' status reader callback
 
     -- Render
     pure $
@@ -190,21 +191,23 @@ component' = R.hooksComponent (componentName <> "__helper") cpt where
           { value: show raw }
           [ H.text $ show raw ]
       )
+    where
+      reader = GUS.reader list
 
 -- | * Change event will effectively be triggered according to the
 -- | component status props
 -- | * Also directly returns the newly input value
 -- | (usage not so different from `targetValue` of ReactBasic)
 onChange' :: forall event a.
-     Read a
-  => Show a
+     Show a
   => ComponentStatus
+  -> (String -> Maybe a)
   -> (a -> Effect Unit)
   -> event
   -> Effect Unit
-onChange' status callback event = do
+onChange' status reader callback event = do
   if   status == Enabled
-  then event # unsafeCoerce >>> _.target.value >>> read >>> case _ of
+  then event # unsafeCoerce >>> _.target.value >>> reader >>> case _ of
     Nothing -> R.nothing
     Just v  -> callback v
   else R.nothing
