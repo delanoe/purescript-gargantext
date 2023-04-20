@@ -12,6 +12,7 @@ import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, template
 import Gargantext.Components.Charts.Options.Series (seriesBarD1)
 import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types (MetricsProps, Path, Props, ReloadPath)
+import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Hooks.Loader (HashedResponse(..))
 import Gargantext.Prelude (class Eq, bind, map, pure, ($), (==))
@@ -113,9 +114,8 @@ histoCpt = here.component "histo" cpt
 
 loaded :: Record MetricsProps -> HistoMetrics -> R.Element
 loaded p l =
-  H.div {} [
-  {-  U.reloadButton reload
-  , U.chartUpdateButton { chartType: Histo, path, reload, session }
-  , -} chart $ chartOptions p l
-  ]
+  H.div {} [ U.reloadButton p.reload
+           , U.chartUpdateButton { chartType: Histo, path:p.path, reload:p.reload, session:p.session }
+           , chart $ chartOptions p l
+           ]
   -- TODO: parametrize ngramsType above
