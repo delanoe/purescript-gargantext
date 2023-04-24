@@ -47,7 +47,7 @@ import Gargantext.Components.Table.Types (Params, orderByToGTOrderBy)
 import Gargantext.Components.Table.Types as TT
 import Gargantext.Config.REST (AffRESTError, RESTError, logRESTError)
 import Gargantext.Core.NgramsTable.Functions (addNewNgramA, applyNgramsPatches, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, ngramsRepoElementToNgramsElement, normNgram, patchSetFromMap, singletonNgramsTablePatch, tablePatchHasNgrams, toVersioned)
-import Gargantext.Core.NgramsTable.Types (Action(..), CoreAction(..), CoreState, Dispatch, NgramsActionRef, NgramsClick, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch(..), NgramsTerm(..), PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, VersionedWithCountNgramsTable, _NgramsElement, _NgramsRepoElement, _NgramsTable, _children, _list, _ngrams, _ngrams_repo_elements, _ngrams_scores, _occurrences, _root, applyPatchSet, ngramsTermText, replace)
+import Gargantext.Core.NgramsTable.Types (Action(..), CoreAction(..), State, Dispatch, NgramsActionRef, NgramsClick, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch(..), NgramsTerm(..), PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, VersionedWithCountNgramsTable, _NgramsElement, _NgramsRepoElement, _NgramsTable, _children, _list, _ngrams, _ngrams_repo_elements, _ngrams_scores, _occurrences, _root, applyPatchSet, ngramsTermText, replace)
 import Gargantext.Hooks.Loader (useLoaderBox)
 import Gargantext.Routes (SessionRoute(..)) as Routes
 import Gargantext.Sessions (Session, get)
@@ -78,12 +78,6 @@ type TreeEdit =
                        --   be removed.
   , ngramsParent       :: Maybe NgramsTerm -- Nothing means we are not currently grouping terms
   }
-
-type State =
-  CoreState (
-    ngramsSelection  :: Set NgramsTerm
-                     -- ^ The set of selected checkboxes of the first column.
-  )
 
 initialTreeEdit :: TreeEdit
 initialTreeEdit =
