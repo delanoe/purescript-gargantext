@@ -5884,6 +5884,10 @@ h3 {
   color: #eceeec !important;
 }
 
+.alert .fa-lightbulb-o {
+  font-size: 20px;
+}
+
 .table .thead-dark th {
   background-color: #2f3c48;
   border-color: #1b2229;
@@ -6062,6 +6066,10 @@ h3 {
 
 .btn.disabled, .btn:disabled {
   opacity: 0.45;
+}
+
+.border-grey {
+  border: 1px solid #CED4DA;
 }
 
 .echarts-for-react {
@@ -10402,6 +10410,7 @@ input[type=range]:-moz-focusring {
   width: 28%;
   top: 3.7em;
   position: fixed;
+  z-index: 1;
 }
 .side-panel .list-group .list-group-item-heading {
   display: inline-block;
@@ -10719,11 +10728,12 @@ select.form-control {
   padding-top: 3px;
   text-align: center;
 }
-.table .rating-group {
+
+.rating-group {
   display: flex;
   padding-top: 3px;
 }
-.table .rating-group__action {
+.rating-group__action {
   width: 14px;
   margin-right: 8px;
 }
@@ -10969,19 +10979,15 @@ select.form-control {
 
 .b-icon.graph-term {
   color: #11AA11;
-  text-shadow: 0 0 4px;
 }
 .b-icon.candidate-term {
   color: #5A90B6;
-  text-shadow: 0 0 4px;
 }
 .b-icon.stop-term {
   color: #EE3311;
-  text-shadow: 0 0 4px;
 }
 .b-icon.disabled-term {
   color: rgba(108, 117, 125, 0.2);
-  text-shadow: 0 0 4px;
 }
 
 /* Grid constants */

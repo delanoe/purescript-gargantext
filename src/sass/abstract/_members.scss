@@ -116,7 +116,7 @@
 
 @mixin light-bulb($color) {
   color: $color;
-  text-shadow: 0 0 4px;
+  // text-shadow: 0 0 4px;
 }
 
 /// Extend element to fit all four positions

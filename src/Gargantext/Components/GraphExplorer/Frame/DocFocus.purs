@@ -94,7 +94,7 @@ docFocusCpt = here.component "main" cpt where
                   { className: "graph-doc-focus__header" }
                   [
                     B.iconButton
-                    { name: "times"
+                    { name: "trash"
                     , elevation: Level2
                     , callback: closeCallback
                     }

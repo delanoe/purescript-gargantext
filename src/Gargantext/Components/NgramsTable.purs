@@ -220,24 +220,22 @@ tableContainerCpt { addCallback
               R2.when showAddNewTerm $
 
                 H.div
-                { className: "ngrams-table-container__add-term" }
+                { className: "ngrams-table-container__add-term alert alert-warning" }
                 [
                   B.wad
                   []
                   [
-                    H.text "adding"
-                  ,
-                    H.text $ nbsp 1
-                  ,
-                    B.b_ $ "« " <> searchQuery <> " »"
-                  ,
-                    H.text $ nbsp 1
-                  ,
-                    H.text "to"
+                    H.i { className: "fa fa-lightbulb-o mr-2" } []
+                  , H.text "adding"
+                  , H.text $ nbsp 1
+                  , B.b_ $ "« " <> searchQuery <> " »"
+                  , H.text $ nbsp 1
+                  , H.text "to"
                   ]
                 ,
                   B.button
-                  { variant: ButtonVariant Light
+                  { className: "text-primary border-grey"
+                  , variant: ButtonVariant Light
                   , callback: const $ addCallback searchQuery
                   , size: SmallSize
                   }
@@ -348,16 +346,11 @@ tableContainerCpt { addCallback
     [
       B.wad
       []
-      [
-        H.text $ show count
-      ,
-        H.text $ nbsp 1
-      ,
-        H.text (count > 1 ? "terms" $ "term")
-      ,
-        H.text $ nbsp 1
-      ,
-        H.text "selected"
+      [ H.text $ show count
+      , H.text $ nbsp 1
+      , H.text (count > 1 ? "terms" $ "term")
+      , H.text $ nbsp 1
+      , H.text "selected"
       ]
     ,
       B.buttonGroup
@@ -366,7 +359,8 @@ tableContainerCpt { addCallback
       }
       [
         B.button
-        { variant: ButtonVariant Light
+        { className: "text-primary border-grey"
+        , variant: ButtonVariant Light
         , callback: const $ setSelection MapTerm
         , size: SmallSize
         }
@@ -380,7 +374,8 @@ tableContainerCpt { addCallback
         ]
       ,
         B.button
-        { variant: ButtonVariant Light
+        { className: "text-primary border-grey"
+        , variant: ButtonVariant Light
         , callback: const $ setSelection CandidateTerm
         , size: SmallSize
         }
@@ -394,7 +389,8 @@ tableContainerCpt { addCallback
         ]
       ,
         B.button
-        { variant: ButtonVariant Light
+        { className: "text-primary border-grey"
+        , variant: ButtonVariant Light
         , callback: const $ setSelection StopTerm
         , size: SmallSize
         }

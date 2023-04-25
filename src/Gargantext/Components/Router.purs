@@ -374,7 +374,7 @@ openedSidePanelCpt = here.component "openedSidePanel" cpt where
 
     route' <- T.useLive T.unequal route
 
-    let wrapper = H.div { className: "side-panel" }
+    let wrapper = H.div { className: "side-panel shadow" }
 
     case route' of
       GR.Lists _s _n -> do

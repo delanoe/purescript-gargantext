@@ -790,11 +790,16 @@ filterRows { params: { limit, offset } } rs = newRs
 defaultContainer :: Record TableContainerProps -> R.Element
 defaultContainer props = R.fragment $ props.syncResetButton <> controls
   where
-    controls = [ H.div
-                 { className: "d-flex align-items-center mb-2" }
-                 [ H.div {className: "col-md-4"} [ props.pageSizeDescription ]
-                 , H.div {className: "col-md-4"} [ props.paginationLinks ]
-                 , H.div {className: "col-md-4"} [ props.pageSizeControl ]
+    controls = [ H.div { className: "d-flex align-items-center mb-2" }
+                  [ H.div {className: "col-md-4"} [ props.pageSizeDescription ]
+                  , H.div {className: "col-md-4"} [ props.paginationLinks ]
+                  , H.div {className: "col-md-4"} 
+                    [ B.wad [ "d-flex", "align-items-center", "justify-content-end" ]
+                        [ B.label_ "per page"
+                        , B.wad_ [ "virtual-space", "w-1" ]
+                        , props.pageSizeControl
+                        ]
+                    ]
                  ]
                , R2.row [
                    H.table {className: "col-md-12 table"}
@@ -835,7 +840,7 @@ sizeDDCpt = here.component "sizeDD" cpt
         R2.select { className, defaultValue: show pageSize, on: {change} } sizes
       ]
       where
-        className = "form-control form-control-sm"
+        className = "form-control form-control-sm custom-select"
         change e = do
           let ps = string2PageSize $ R.unsafeEventValue e
           _ <- T.modify (\p -> stateParams $ (paramsState p) { pageSize = ps }) params

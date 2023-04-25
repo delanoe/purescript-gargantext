@@ -41,19 +41,22 @@
 
   ///////////////////////
 
-  .rating-group
-    $offset-top: 3px // flex alignment won't work, hence empirical value
-
-    display: flex
-    padding-top: $offset-top
-
-    &__action
-      // @XXX Glyphicon icons lack of homogeneous width
-      width: 14px
-      margin-right: space-x(1)
 
 ///////////////////////////////////////////////////:
 
+.rating-group
+  $offset-top: 3px // flex alignment won't work, hence empirical value
+
+  display: flex
+  padding-top: $offset-top
+  
+  &__action
+    // @XXX Glyphicon icons lack of homogeneous width
+    width: 14px
+    margin-right: space-x(1)
+
+///////////////////////////////////////////////////:
+ 
 .loaded-ngrams-table-header
   display: flex
   margin-top: space-x(4)
