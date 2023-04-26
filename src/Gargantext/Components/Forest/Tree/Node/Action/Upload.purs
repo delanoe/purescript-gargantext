@@ -156,6 +156,7 @@ uploadFileViewWithLangsCpt = here.component "uploadFileViewWithLangs" cpt
                 [ formChoiceSafe { items: [ CSV
                                           , CSV_HAL
                                           , WOS
+                                          -- , Iramuteq
                                           ]
                                  , default: CSV
                                  , callback: setFileType'
@@ -503,7 +504,7 @@ fileTypeViewCpt = here.component "fileTypeView" cpt
           [ R2.select {className: "col-md-12 form-control"
                       , on: {change: onChange}
                       }
-                      (map renderOption [CSV, CSV_HAL, WOS])
+                      (map renderOption [CSV, CSV_HAL, WOS, Iramuteq])
           ]
           where
             onChange e l =
