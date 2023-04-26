@@ -18,16 +18,18 @@ import Gargantext.Utils.Toestand as T2
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Utils"
 
-reloadButtonWrap :: T2.ReloadS -> R.Element -> R.Element
-reloadButtonWrap setReload el = H.div {} [
-    reloadButton setReload
-  , el
-  ]
+type ReloadButtonProps =
+  ( reload :: T2.ReloadS )
 
-reloadButton :: T2.ReloadS -> R.Element
-reloadButton reloadS = H.a { className, on: { click }, title: "Reload" } [] where
-  className = "pr-1 fa fa-refresh"
-  click _ = T2.reload reloadS
+reloadButton :: R2.Leaf ReloadButtonProps
+reloadButton = R2.leaf reloadButtonCpt
+reloadButtonCpt :: R.Component ReloadButtonProps
+reloadButtonCpt = here.component "reloadButton" cpt where
+  cpt { reload } _ = do
+    pure $ H.a { className, on: { click }, title: "Reload" } []
+    where
+      className = "pr-1 fa fa-refresh"
+      click _ = T2.reload reload
 
 
 mNgramsTypeFromTabType :: T.TabType -> Maybe T.CTabNgramType
@@ -43,9 +45,8 @@ type ChartUpdateButtonProps =
   , session   :: Session
   )
 
-chartUpdateButton :: Record ChartUpdateButtonProps -> R.Element
-chartUpdateButton p = R.createElement chartUpdateButtonCpt p []
-
+chartUpdateButton :: R2.Leaf ChartUpdateButtonProps
+chartUpdateButton = R2.leaf chartUpdateButtonCpt
 chartUpdateButtonCpt :: R.Component ChartUpdateButtonProps
 chartUpdateButtonCpt = here.component "chartUpdateButton" cpt where
   cpt {  path: { corpusId, listId, tabType }

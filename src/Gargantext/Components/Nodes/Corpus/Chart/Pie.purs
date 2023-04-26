@@ -52,8 +52,14 @@ derive newtype instance JSON.WriteForeign HistoMetrics
 
 type Loaded = HistoMetrics
 
-chartOptionsBar :: Record MetricsProps -> HistoMetrics -> Options
-chartOptionsBar { onClick, onInit } (HistoMetrics { dates: dates', count: count'}) = Options
+type LoadedProps =
+  ( metrics :: HistoMetrics
+  | MetricsProps )
+
+chartOptionsBar :: Record LoadedProps -> Options
+chartOptionsBar { onClick
+                , onInit
+                , metrics: HistoMetrics { dates: dates', count: count'} } = Options
   { mainTitle : "Bar"
   , subTitle  : "Count of MapTerm"
   , xAxis     : xAxis' $ map (\t -> joinWith " " $ map (take 3) $ A.take 3 $ filter (\s -> length s > 3) $ split (Pattern " ") t) dates'
@@ -65,8 +71,10 @@ chartOptionsBar { onClick, onInit } (HistoMetrics { dates: dates', count: count'
   , onInit
   }
 
-chartOptionsPie :: Record MetricsProps -> HistoMetrics -> Options
-chartOptionsPie { onClick, onInit } (HistoMetrics { dates: dates', count: count'}) = Options
+chartOptionsPie :: Record LoadedProps -> Options
+chartOptionsPie { onClick
+                , onInit
+                , metrics: HistoMetrics { dates: dates', count: count'} } = Options
   { mainTitle : "Pie"
   , subTitle  : "Distribution by MapTerm"
   , xAxis     : xAxis' []
@@ -117,13 +125,18 @@ pieCpt = here.component "pie" cpt
         , onInit
         }
 
-loadedPie :: Record MetricsProps -> HistoMetrics -> R.Element
-loadedPie p loaded =
-  H.div {} [
-  {-  U.reloadButton reload
+loadedPie :: R2.Leaf LoadedProps
+loadedPie = R2.leaf loadedPieCpt
+loadedPieCpt :: R.Component LoadedProps
+loadedPieCpt = here.component "loadedPie" cpt where
+  cpt p@{ path
+        , reload
+        , session } _ = do
+    pure $ H.div {} [
+      {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: ChartPie, path, reload, session }
-  , -} chart $ chartOptionsPie p loaded
-  ]
+  , -} chart $ chartOptionsPie p
+       ]
 
 
 bar :: Record Props -> R.Element
@@ -147,10 +160,15 @@ barCpt = here.component "bar" cpt
          , onInit
          }
 
-loadedBar :: Record MetricsProps -> Loaded -> R.Element
-loadedBar p loaded =
-  H.div {} [
-  {-  U.reloadButton reload
+loadedBar :: R2.Leaf LoadedProps
+loadedBar = R2.leaf loadedBarCpt
+loadedBarCpt :: R.Component LoadedProps
+loadedBarCpt = here.component "loadedBar" cpt where
+  cpt p@{ path
+        , reload
+        , session } _ = do
+    pure $ H.div {} [
+      {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: ChartBar, path, reload, session }
-  , -} chart $ chartOptionsBar p loaded
-  ]
+  , -} chart $ chartOptionsBar p
+       ]
