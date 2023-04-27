@@ -95,7 +95,7 @@ shareNodeInnerCpt = here.component "shareNodeInner" cpt
                 [ inputWithAutocomplete' { boxAction: shareAction
                                          , dispatch
                                          , state
-                                         , classes: "d-flex align-items-center"
+                                         , classes: "share-users-completions d-flex align-items-center"
                                          , autocompleteSearch
                                          , onAutocompleteClick
                                          , text 

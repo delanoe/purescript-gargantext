@@ -6639,7 +6639,7 @@ a:hover {
 }
 
 .input-with-autocomplete .completions {
-  position: fixed;
+  position: absolute;
   max-height: 300px;
   overflow-y: scroll;
   width: 300px;
@@ -6656,6 +6656,11 @@ a:hover {
 }
 .input-with-autocomplete .completions button:hover {
   background-color: #212529;
+}
+.input-with-autocomplete.share-users-completions .completions {
+  top: 37px;
+  max-height: 200px;
+  width: 420px;
 }
 .input-with-autocomplete .b-icon-button {
   margin-left: 10px;
@@ -11221,7 +11226,7 @@ select.form-control {
 .ngrams-table-container__table-wrapper {
   margin-left: -16px;
   margin-right: -16px;
-  margin-bottom: -32px;
+  margin-bottom: -16px;
 }
 .ngrams-table-container__actions {
   display: flex;
