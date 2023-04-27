@@ -225,10 +225,10 @@ tableContainerCpt { addCallback
                   B.wad
                   []
                   [
-                    H.i { className: "fa fa-lightbulb-o mr-2" } []
+                    H.i { className: "fa fa-lightbulb-o mr-1" } []
                   , H.text "adding"
                   , H.text $ nbsp 1
-                  , B.b_ $ "« " <> searchQuery <> " »"
+                  , H.span { className: "text-primary" } [ B.b_ $ "« " <>  searchQuery <> " »" ]
                   , H.text $ nbsp 1
                   , H.text "to"
                   ]
@@ -252,29 +252,11 @@ tableContainerCpt { addCallback
           ]
         ]
       ,
-
-        H.div
-        { className: "ngrams-table-container__navigation" }
-        [
-          props.pageSizeDescription
-        ,
-          props.paginationLinks
-        ,
-          B.wad
-          [ "d-flex", "align-items-center" ]
-          [
-            B.label_ "per page"
-          ,
-            B.wad_ [ "virtual-space", "w-1" ]
-          ,
-            props.pageSizeControl
-          ]
-        ]
+        ngrams_controls
       ,
         H.div
         { className: "ngrams-table-container__table-wrapper" }
         [
-
           H.div
           { className: intercalate " "
               [ "ngrams-table-container__actions"
@@ -317,7 +299,21 @@ tableContainerCpt { addCallback
             ngramsTreeEdit (treeEdit)
           ]
         ]
+      ,
+        ngrams_controls
       ]
+    where
+      ngrams_controls = H.div { className: "ngrams-table-container__navigation" }
+                        [ props.pageSizeDescription
+                        , props.paginationLinks
+                        , B.wad
+                          [ "d-flex", "align-items-center" ]
+                          [ B.label_ "per page"
+                          , B.wad_ [ "virtual-space", "w-1" ]
+                          , props.pageSizeControl
+                          ]
+                        ]
+
 
   -- WHY setPath     f = origSetPageParams (const $ f path)
   setTermListFilter x = T.modify (_ { termListFilter = x }) path
