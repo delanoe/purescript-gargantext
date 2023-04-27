@@ -14,7 +14,7 @@ import Gargantext.Components.GraphQL.Contact (AnnuaireContact)
 import Gargantext.Components.GraphQL.Context as GQLCTX
 import Gargantext.Components.GraphQL.IMT as GQLIMT
 import Gargantext.Components.GraphQL.NLP as GQLNLP
-import Gargantext.Components.GraphQL.Node (Node)
+import Gargantext.Components.GraphQL.Node as GQLNode
 import Gargantext.Components.GraphQL.Tree (TreeFirstLevel)
 import Gargantext.Components.GraphQL.User (User, UserInfo, UserInfoM)
 import Gargantext.Components.GraphQL.Team (Team, TeamDeleteM)
@@ -78,8 +78,9 @@ type Schema
     , contexts_for_ngrams :: { corpus_id :: Int, ngrams_terms :: Array String } ==> Array GQLCTX.Context
     , imt_schools :: {} ==> Array GQLIMT.School
     , languages :: {} ==> Array GQLNLP.Language
-    , node_parent :: { node_id :: Int, parent_type :: String } ==> Array Node  -- TODO: parent_type :: NodeType
-    , nodes :: { node_id :: Int } ==> Array Node
+    , node_parent :: { node_id :: Int, parent_type :: String } ==> Array GQLNode.Node  -- TODO: parent_type :: NodeType
+    , nodes :: { node_id :: Int } ==> Array GQLNode.Node
+    , nodes_corpus :: { corpus_id :: Int } ==> Array GQLNode.Corpus
     , user_infos :: { user_id :: Int } ==> Array UserInfo
     , users :: { user_id :: Int } ==> Array User
     , team :: { team_node_id :: Int } ==> Team
