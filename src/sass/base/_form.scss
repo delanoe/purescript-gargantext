@@ -91,7 +91,7 @@
 // Custom autocomplete (need UI/UX rework)
 .input-with-autocomplete {
   .completions {
-    position: fixed;
+    position: absolute;
     max-height: 300px;
     overflow-y: scroll;
     width: 300px;
@@ -105,6 +105,13 @@
       &:hover {
         background-color: $gray-100;
       }
+    }
+  }
+  &.share-users-completions {
+    .completions {
+      top: 37px;
+      max-height: 200px;
+      width: 420px;
     }
   }
   .b-icon-button {
