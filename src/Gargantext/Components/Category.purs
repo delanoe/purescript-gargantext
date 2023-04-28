@@ -86,8 +86,8 @@ ratingCpt = here.component "rating" cpt where
     --     , className: ratingClassName score s
     --     }
 
-ratingIcon Star_0 Star_0  = "times-circle"
-ratingIcon _      Star_0  = "times"
+ratingIcon Star_0 Star_0  = "recycle"
+ratingIcon _      Star_0  = "trash"
 ratingIcon c      s       = star2score c < star2score s ? "star-o" $ "star"
 
 ratingVariant Star_0 Star_0 = Dark

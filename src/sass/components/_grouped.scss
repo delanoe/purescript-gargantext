@@ -283,6 +283,11 @@
   }
 }
 
+.alert {
+  .fa-lightbulb-o {
+    font-size: 20px;
+  }
+}
 
 /// Table headings with bg color
 /// ----------------------------------------------------------------------------
@@ -520,4 +525,8 @@
 
 .btn.disabled, .btn:disabled {
   opacity: .45;
+}
+
+.border-grey {
+  border: 1px solid $gray-400;
 }

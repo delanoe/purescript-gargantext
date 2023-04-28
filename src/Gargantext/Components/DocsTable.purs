@@ -188,22 +188,24 @@ docViewCpt = here.component "docView" cpt where
       [
         H.div { className: "doc-table-doc-view" }
         [ R2.row
-          [ chart
-          , if showSearch then searchBar { query } [] else H.div {} []
-          , H.div
-            { className: "col-md-12 row mb-3" }
-            [
-              H.div { className: "col-md-4" } []
-            ,
-              H.button
-              { className: "btn btn-light col-md-3"
-              , on: { click: toggleModal }
-              }
-              [
-                H.text "Add a document"
+          [ chart ]
+
+        , H.div { className: "col d-flex mt-5 mb-2" }
+          [ H.div { className: "doc-add-action" }
+            [ H.button 
+              { className: "btn btn-light text-primary border-primary"
+              , on: { click: toggleModal } }
+              [ H.i { className: "fa fa-plus mr-1" } []
+              , H.text "Add a document"
+              , H.i { className: "fa fa-newspaper-o ml-1"} []
               ]
             ]
-          , H.div {className: "col-md-12"}
+          , H.div { className: "form-group" }
+            [ if showSearch then searchBar { query } [] else H.div {} [] ]
+          ]
+
+        , R2.row
+          [ H.div {className: "col-md-12"}
             [ pageLayout { boxes
                          , cacheState
                          , chartReload
@@ -293,18 +295,26 @@ searchBarCpt = here.component "searchBar" cpt
       queryText <- T.useBox query'
       queryText' <- T.useLive T.unequal queryText
 
-      pure $ H.div {className: "col-md-12 row"}
-        [ H.div {className: "col-md-3"} []
-        , H.div {className: "col-md-1"} [if query' /= "" then (clearButton query) else H.div {} []]
-        , H.div {className: "col-md-3 form-group"}
-          [ H.input { className: "form-control"
+      pure $ H.div {className: "input-group px-5"}
+        [ H.input { className: "form-control"
+                    , id: "docs-input-search"
                     , defaultValue: query'
                     , on: { change: onSearchChange queryText
                           , keyUp: onSearchKeyup query queryText' }
-                    , placeholder: query'
+                    , placeholder: "Search in documents"
                     , type: "text" }
+        , H.div {className: "input-group-append"}
+          [ 
+            if query' /= "" 
+            then 
+              R.fragment
+                [ clearButton query
+                , searchButton query queryText'
+                ]
+            else
+              searchButton query queryText'
           ]
-        , H.div {className: "col-md-1"} [ searchButton query queryText' ]
+        -- , H.div {className: "col-md-1"} [ searchButton query queryText' ]
         ]
 
     onSearchChange :: forall e. T.Box Query -> e -> Effect Unit
@@ -319,15 +329,15 @@ searchBarCpt = here.component "searchBar" cpt
         pure unit
 
     searchButton query queryText' =
-      H.button { className: "btn btn-light"
+      H.button { className: "input-group-text btn btn-light text-secondary"
                , on: { click: \_ -> T.write_ queryText' query }
                , type: "submit" }
         [ H.span {className: "fa fa-search"} [] ]
 
     clearButton query =
-      H.button { className: "btn btn-danger"
+      H.button { className: "input-group-text btn btn-light"
                , on: { click: \_ -> T.write_ "" query } }
-        [ H.span {className: "fa fa-times"} [] ]
+        [ H.span {className: "text-danger fa fa-times"} [] ]
 
 mock :: Boolean
 mock = false
@@ -601,7 +611,9 @@ pagePaintRawCpt = here.component "pagePaintRaw" cpt where
                     , target: "_blank"
                     , className: "text-primary"
                     }
-                    [ H.text r.title ]
+                    [ H.text r.title
+                    , H.i { className: "fa fa-external-link mx-1 small" } []
+                    ]
                   ]
                 , H.div { className: tClassName } [ H.text $ showSource r.source ]
                 , H.div {} [ H.text $ maybe "-" show r.ngramCount ]

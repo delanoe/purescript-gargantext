@@ -500,6 +500,12 @@ type CoreState s =
   | s
   }
 
+type State =
+  CoreState (
+    ngramsSelection  :: Set NgramsTerm
+                     -- ^ The set of selected checkboxes of the first column.
+  )
+
 type NgramsListByTabType = Map GT.TabType VersionedNgramsTable
 
 data CoreAction
@@ -524,7 +530,6 @@ data Action
 
 type CoreDispatch = CoreAction -> Effect Unit
 type Dispatch = Action -> Effect Unit
-
 
 
 type NgramsDepth = { ngrams :: NgramsTerm, depth :: Int }

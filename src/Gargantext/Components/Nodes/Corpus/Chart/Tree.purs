@@ -37,8 +37,12 @@ derive newtype instance JSON.WriteForeign Metrics
 
 type Loaded  = Array TreeNode
 
-scatterOptions :: Record MetricsProps -> Array TreeNode -> Options
-scatterOptions { onClick, onInit } nodes = Options
+type LoadedProps =
+  ( metrics :: Array TreeNode
+  | MetricsProps )
+
+scatterOptions :: Record LoadedProps -> Options
+scatterOptions { onClick, onInit, metrics: nodes } = Options
   { mainTitle : "Tree"
   , subTitle  : "Tree Sub Title"
   , xAxis     : xAxis' []
@@ -91,10 +95,15 @@ treeCpt = here.component "tree" cpt
         , onInit
         }
 
-loaded :: Record MetricsProps -> Loaded -> R.Element
-loaded p loaded' =
-  H.div {} [
-  {-  U.reloadButton reload
+loaded :: R2.Leaf LoadedProps
+loaded = R2.leaf loadedCpt
+loadedCpt :: R.Component LoadedProps
+loadedCpt = here.component "loaded" cpt where
+  cpt p@{ path
+        , reload
+        , session } _ = do
+    pure $ H.div {} [
+      {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: ChartTree, path, reload, session }
-  , -} chart (scatterOptions p loaded')
-  ]
+  , -} chart $ scatterOptions p
+       ]

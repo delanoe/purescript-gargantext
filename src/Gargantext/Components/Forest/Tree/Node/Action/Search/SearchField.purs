@@ -429,7 +429,8 @@ type DatafieldInputProps =
   ( databases :: Array Database
   , langs     :: Array Lang
   , search    :: T.Box Search
-  , session   :: Session )
+  , session   :: Session
+  )
 
 datafieldInput :: R2.Component DatafieldInputProps
 datafieldInput = R.createElement datafieldInputCpt
@@ -463,8 +464,14 @@ datafieldInputCpt = here.component "datafieldInput" cpt where
         else H.div {} []
 
       , if needsLang search'.datafield
-        then langNav { langs, search } []
-        else H.div {} []
+        then
+          if search'.datafield == Just Web
+             then
+               langNav { langs:A.filter (\lang -> lang == FR) langs, search } []
+             else
+               langNav { langs, search } []
+        else
+          H.div {} []
 
       , H.div {} [ searchIframes { iframeRef, search } [] ]
       ]

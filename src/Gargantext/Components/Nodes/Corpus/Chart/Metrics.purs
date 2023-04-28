@@ -54,8 +54,12 @@ derive newtype instance JSON.ReadForeign Metrics
 
 type Loaded  = Array Metric
 
-scatterOptions :: Record MetricsProps -> Array Metric -> Options
-scatterOptions { onClick, onInit } metrics' = Options
+type LoadedProps =
+  ( metrics :: Array Metric
+  | MetricsProps )
+
+scatterOptions :: Record LoadedProps -> Options
+scatterOptions { onClick, onInit, metrics: metrics' } = Options
   { mainTitle : "Ngrams Selection Metrics"
   , subTitle  : "Local metrics (Inc/Exc, Spe/Gen), Global metrics (TFICF maillage)"
   , xAxis     : xAxis { min: -1 }
@@ -125,10 +129,15 @@ metricsCpt = here.component "etrics" cpt
         }
 
 
-loaded :: Record MetricsProps -> Loaded -> R.Element
-loaded p loaded' =
-  H.div {} [
-  {-  U.reloadButton reload
-  , U.chartUpdateButton { chartType: Scatter, path, reload, session }
-  , -} chart $ scatterOptions p loaded'
-  ]
+loaded :: R2.Leaf LoadedProps
+loaded = R2.leaf loadedCpt
+loadedCpt :: R.Component LoadedProps
+loadedCpt = here.component "loaded" cpt where
+  cpt p@{ path
+        , reload
+        , session } _ = do
+    pure $ H.div {} [
+      {-  U.reloadButton reload
+      , U.chartUpdateButton { chartType: Scatter, path, reload, session }
+      , -} chart $ scatterOptions p
+      ]

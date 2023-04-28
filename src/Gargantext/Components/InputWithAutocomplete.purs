@@ -267,7 +267,7 @@ completionsCptCpt = here.component "completionsCpt" cpt
       -- State
       completions' <- T.useLive T.unequal completions
 
-      let className = "completions " <> (if completions' == [] then "d-none" else "")
+      let className = "completions shadow" <> (if completions' == [] then "d-none" else "")
 
       -- Render
       pure $

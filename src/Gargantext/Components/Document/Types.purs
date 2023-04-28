@@ -1,18 +1,16 @@
 module Gargantext.Components.Document.Types where
 
-import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
+import Data.Generic.Rep (class Generic)
+import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.Show.Generic (genericShow)
-import Data.Maybe (Maybe(..))
-import Simple.JSON as JSON
-
-import Gargantext.Prelude
-
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Core.NgramsTable.Types (CoreState, Versioned(..) , VersionedNgramsTable)
+import Gargantext.Core.NgramsTable.Types (State, Versioned(..) , VersionedNgramsTable)
+import Gargantext.Prelude
 import Gargantext.Sessions (Session)
 import Gargantext.Types (ListId, NodeID, TabType)
+import Simple.JSON as JSON
 
 type DocPath = {
     listIds   :: Array ListId
@@ -29,9 +27,6 @@ type LoadedData =
   , ngramsTable :: VersionedNgramsTable
   }
 
--- This is a subpart of NgramsTable.State.
-type State = CoreState ()
-
 initialState
   :: forall props others
   .  { loaded :: { ngramsTable :: VersionedNgramsTable | others }
@@ -41,6 +36,7 @@ initialState {loaded: {ngramsTable: Versioned {version}}} =
   { ngramsLocalPatch: mempty
   , ngramsStagePatch: mempty
   , ngramsValidPatch: mempty
+  , ngramsSelection : mempty
   , ngramsVersion:    version
   }
 

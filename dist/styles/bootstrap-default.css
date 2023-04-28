@@ -6129,6 +6129,10 @@ h3 {
   color: #f8f9fa !important;
 }
 
+.alert .fa-lightbulb-o {
+  font-size: 20px;
+}
+
 .table .thead-dark th {
   background-color: #005a9a;
   border-color: #003c67;
@@ -6308,6 +6312,10 @@ h3 {
   opacity: 0.45;
 }
 
+.border-grey {
+  border: 1px solid #CED4DA;
+}
+
 .echarts-for-react {
   height: 300px;
 }
@@ -6441,7 +6449,7 @@ a:hover {
 }
 
 .input-with-autocomplete .completions {
-  position: fixed;
+  position: absolute;
   max-height: 300px;
   overflow-y: scroll;
   width: 300px;
@@ -6458,6 +6466,11 @@ a:hover {
 }
 .input-with-autocomplete .completions button:hover {
   background-color: #F8F9FA;
+}
+.input-with-autocomplete.share-users-completions .completions {
+  top: 37px;
+  max-height: 200px;
+  width: 420px;
 }
 .input-with-autocomplete .b-icon-button {
   margin-left: 10px;
@@ -10640,6 +10653,7 @@ input[type=range]:-moz-focusring {
   width: 28%;
   top: 3.7em;
   position: fixed;
+  z-index: 1;
 }
 .side-panel .list-group .list-group-item-heading {
   display: inline-block;
@@ -10957,11 +10971,12 @@ select.form-control {
   padding-top: 3px;
   text-align: center;
 }
-.table .rating-group {
+
+.rating-group {
   display: flex;
   padding-top: 3px;
 }
-.table .rating-group__action {
+.rating-group__action {
   width: 14px;
   margin-right: 8px;
 }
@@ -11015,7 +11030,7 @@ select.form-control {
 .ngrams-table-container__table-wrapper {
   margin-left: -16px;
   margin-right: -16px;
-  margin-bottom: -32px;
+  margin-bottom: -16px;
 }
 .ngrams-table-container__actions {
   display: flex;
@@ -11206,19 +11221,15 @@ select.form-control {
 
 .b-icon.graph-term {
   color: #11AA11;
-  text-shadow: 0 0 4px;
 }
 .b-icon.candidate-term {
   color: #5A90B6;
-  text-shadow: 0 0 4px;
 }
 .b-icon.stop-term {
   color: #EE3311;
-  text-shadow: 0 0 4px;
 }
 .b-icon.disabled-term {
   color: rgba(108, 117, 125, 0.2);
-  text-shadow: 0 0 4px;
 }
 
 /* Grid constants */

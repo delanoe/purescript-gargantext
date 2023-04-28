@@ -12,6 +12,7 @@ import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, template
 import Gargantext.Components.Charts.Options.Series (seriesBarD1)
 import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types (MetricsProps, Path, Props, ReloadPath)
+import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Hooks.Loader (HashedResponse(..))
 import Gargantext.Prelude (class Eq, bind, map, pure, ($), (==))
@@ -23,6 +24,7 @@ import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record.Extra as RX
 import Simple.JSON as JSON
 import Toestand as T
 
@@ -46,8 +48,14 @@ derive newtype instance JSON.WriteForeign HistoMetrics
 
 type Loaded = HistoMetrics
 
-chartOptions :: Record MetricsProps -> HistoMetrics -> Options
-chartOptions { onClick, onInit } (HistoMetrics { dates: dates', count: count'}) = Options
+type LoadedProps =
+  ( metrics :: HistoMetrics
+  | MetricsProps )
+
+chartOptions :: Record LoadedProps -> Options
+chartOptions { onClick
+             , onInit
+             , metrics: HistoMetrics { dates: dates', count: count'} } = Options
   { mainTitle : "Histogram"
   , subTitle  : "Distribution of publications over time"
   , xAxis     : xAxis' dates'
@@ -111,11 +119,15 @@ histoCpt = here.component "histo" cpt
         , onInit
         }
 
-loaded :: Record MetricsProps -> HistoMetrics -> R.Element
-loaded p l =
-  H.div {} [
-  {-  U.reloadButton reload
-  , U.chartUpdateButton { chartType: Histo, path, reload, session }
-  , -} chart $ chartOptions p l
-  ]
+loaded :: R2.Leaf LoadedProps
+loaded = R2.leaf loadedCpt
+loadedCpt :: R.Component LoadedProps
+loadedCpt = here.component "loaded" cpt where
+  cpt p@{ path
+        , reload
+        , session } _ = do
+    pure $ H.div {} [ U.reloadButton { reload }
+                    , U.chartUpdateButton { chartType: Histo, path, reload, session }
+                    , chart $ chartOptions p
+                    ]
   -- TODO: parametrize ngramsType above

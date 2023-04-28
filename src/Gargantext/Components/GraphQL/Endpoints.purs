@@ -5,16 +5,20 @@ import Gargantext.Prelude
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
+import Data.Map as Map
+import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.Components.GraphQL (getClient, queryGql)
 import Gargantext.Components.GraphQL.Contact (AnnuaireContact, annuaireContactQuery)
 import Gargantext.Components.GraphQL.Context as GQLCTX
 import Gargantext.Components.GraphQL.IMT as GQLIMT
+import Gargantext.Components.GraphQL.NLP as GQLNLP
 import Gargantext.Components.GraphQL.Node (Node, nodeParentQuery, nodesQuery)
 import Gargantext.Components.GraphQL.Team (Team, teamQuery)
 import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, treeFirstLevelQuery)
 import Gargantext.Components.GraphQL.User (UserInfo, userInfoQuery)
+import Gargantext.Components.Lang (Lang)
 import Gargantext.Config.REST (RESTError(..), AffRESTError)
 import Gargantext.Sessions (Session(..))
 import Gargantext.Types (NodeType)
@@ -130,3 +134,12 @@ updateNodeContextCategory session context_id node_id category = do
   pure $ case A.head update_node_context_category of
     Nothing -> Left (CustomError $ "Failed to update node category")
     Just _ -> Right context_id
+
+getLanguages :: Session -> AffRESTError (Map.Map Lang GQLNLP.LanguageProperties)
+getLanguages session = do
+  let query = GQLNLP.nlpQuery
+  { languages } <- queryGql session "get languages" query
+
+  liftEffect $ here.log2 "[getLanguages] languages" languages
+
+  pure $ Right $ Map.fromFoldable $ (\{ key, value } -> Tuple key value) <$> languages

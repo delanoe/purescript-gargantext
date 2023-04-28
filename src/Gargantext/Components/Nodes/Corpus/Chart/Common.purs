@@ -56,7 +56,8 @@ metricsLoadViewCpt = here.component "metricsLoadView" cpt
 type MetricsWithCacheLoadViewProps res ret =
   ( getMetricsHash :: Session -> ReloadPath -> AffRESTError Hash
   , handleResponse :: HashedResponse res -> ret
-  , loaded         :: Record MetricsProps -> ret -> R.Element
+  -- , loaded         :: Record MetricsProps -> ret -> R.Element
+  , loaded         :: Record (metrics :: ret | MetricsProps) -> R.Element
   , mkRequest      :: ReloadPath -> GUC.Request
   | MetricsProps
   )
@@ -87,5 +88,5 @@ metricsWithCacheLoadViewCpt = here.component "metricsWithCacheLoadView" cpt
                             , handleResponse
                             , mkRequest
                             , path: (reload' /\ path)
-                            , renderer: loaded { boxes, path, reload, session, onClick, onInit }
+                            , renderer: \metrics -> loaded { boxes, path, reload, session, onClick, onInit, metrics }
                             , spinnerClass: Just "echarts-for-react-spinner" }

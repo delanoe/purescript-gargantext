@@ -788,21 +788,30 @@ filterRows { params: { limit, offset } } rs = newRs
     newRs = Seq.take limit $ Seq.drop offset $ rs
 
 defaultContainer :: Record TableContainerProps -> R.Element
-defaultContainer props = R.fragment $ props.syncResetButton <> controls
+defaultContainer props = R.fragment $ props.syncResetButton <> table_data
   where
-    controls = [ H.div
-                 { className: "d-flex align-items-center mb-2" }
-                 [ H.div {className: "col-md-4"} [ props.pageSizeDescription ]
-                 , H.div {className: "col-md-4"} [ props.paginationLinks ]
-                 , H.div {className: "col-md-4"} [ props.pageSizeControl ]
+    table_data = [
+                    controls
+                  , R2.row [
+                      H.table {className: "col-md-12 table"}
+                      [ H.thead {className: ""} [ props.tableHead ]
+                      , H.tbody {} props.tableBody
+                      ]
+                    ]
+                  , controls
                  ]
-               , R2.row [
-                   H.table {className: "col-md-12 table"}
-                   [ H.thead {className: ""} [ props.tableHead ]
-                   , H.tbody {} props.tableBody
-                   ]
-                 ]
-               ]
+      where
+        controls = H.div { className: "table-container__navigation d-flex align-items-center mb-2" }
+                    [ H.div {className: "col-md-4"} [ props.pageSizeDescription ]
+                    , H.div {className: "col-md-4"} [ props.paginationLinks ]
+                    , H.div {className: "col-md-4"} 
+                      [ B.wad [ "d-flex", "align-items-center", "justify-content-end" ]
+                          [ B.label_ "per page"
+                          , B.wad_ [ "virtual-space", "w-1" ]
+                          , props.pageSizeControl
+                          ]
+                      ]
+                    ]
 
 -- TODO: this needs to be in Gargantext.Pages.Corpus.Graph.Tabs
 graphContainer :: Record TableContainerProps -> R.Element
@@ -835,7 +844,7 @@ sizeDDCpt = here.component "sizeDD" cpt
         R2.select { className, defaultValue: show pageSize, on: {change} } sizes
       ]
       where
-        className = "form-control form-control-sm"
+        className = "form-control form-control-sm custom-select"
         change e = do
           let ps = string2PageSize $ R.unsafeEventValue e
           _ <- T.modify (\p -> stateParams $ (paramsState p) { pageSize = ps }) params

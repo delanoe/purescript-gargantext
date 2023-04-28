@@ -47,7 +47,7 @@ import Gargantext.Components.Table.Types (Params, orderByToGTOrderBy)
 import Gargantext.Components.Table.Types as TT
 import Gargantext.Config.REST (AffRESTError, RESTError, logRESTError)
 import Gargantext.Core.NgramsTable.Functions (addNewNgramA, applyNgramsPatches, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, ngramsRepoElementToNgramsElement, normNgram, patchSetFromMap, singletonNgramsTablePatch, tablePatchHasNgrams, toVersioned)
-import Gargantext.Core.NgramsTable.Types (Action(..), CoreAction(..), CoreState, Dispatch, NgramsActionRef, NgramsClick, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch(..), NgramsTerm(..), PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, VersionedWithCountNgramsTable, _NgramsElement, _NgramsRepoElement, _NgramsTable, _children, _list, _ngrams, _ngrams_repo_elements, _ngrams_scores, _occurrences, _root, applyPatchSet, ngramsTermText, replace)
+import Gargantext.Core.NgramsTable.Types (Action(..), CoreAction(..), State, Dispatch, NgramsActionRef, NgramsClick, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch(..), NgramsTerm(..), PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, VersionedWithCountNgramsTable, _NgramsElement, _NgramsRepoElement, _NgramsTable, _children, _list, _ngrams, _ngrams_repo_elements, _ngrams_scores, _occurrences, _root, applyPatchSet, ngramsTermText, replace)
 import Gargantext.Hooks.Loader (useLoaderBox)
 import Gargantext.Routes (SessionRoute(..)) as Routes
 import Gargantext.Sessions (Session, get)
@@ -78,12 +78,6 @@ type TreeEdit =
                        --   be removed.
   , ngramsParent       :: Maybe NgramsTerm -- Nothing means we are not currently grouping terms
   }
-
-type State =
-  CoreState (
-    ngramsSelection  :: Set NgramsTerm
-                     -- ^ The set of selected checkboxes of the first column.
-  )
 
 initialTreeEdit :: TreeEdit
 initialTreeEdit =
@@ -226,24 +220,22 @@ tableContainerCpt { addCallback
               R2.when showAddNewTerm $
 
                 H.div
-                { className: "ngrams-table-container__add-term" }
+                { className: "ngrams-table-container__add-term alert alert-warning" }
                 [
                   B.wad
                   []
                   [
-                    H.text "adding"
-                  ,
-                    H.text $ nbsp 1
-                  ,
-                    B.b_ $ "« " <> searchQuery <> " »"
-                  ,
-                    H.text $ nbsp 1
-                  ,
-                    H.text "to"
+                    H.i { className: "fa fa-lightbulb-o mr-1" } []
+                  , H.text "adding"
+                  , H.text $ nbsp 1
+                  , H.span { className: "text-primary" } [ B.b_ $ "« " <>  searchQuery <> " »" ]
+                  , H.text $ nbsp 1
+                  , H.text "to"
                   ]
                 ,
                   B.button
-                  { variant: ButtonVariant Light
+                  { className: "text-primary border-grey"
+                  , variant: ButtonVariant Light
                   , callback: const $ addCallback searchQuery
                   , size: SmallSize
                   }
@@ -260,29 +252,11 @@ tableContainerCpt { addCallback
           ]
         ]
       ,
-
-        H.div
-        { className: "ngrams-table-container__navigation" }
-        [
-          props.pageSizeDescription
-        ,
-          props.paginationLinks
-        ,
-          B.wad
-          [ "d-flex", "align-items-center" ]
-          [
-            B.label_ "per page"
-          ,
-            B.wad_ [ "virtual-space", "w-1" ]
-          ,
-            props.pageSizeControl
-          ]
-        ]
+        ngrams_controls
       ,
         H.div
         { className: "ngrams-table-container__table-wrapper" }
         [
-
           H.div
           { className: intercalate " "
               [ "ngrams-table-container__actions"
@@ -325,7 +299,21 @@ tableContainerCpt { addCallback
             ngramsTreeEdit (treeEdit)
           ]
         ]
+      ,
+        ngrams_controls
       ]
+    where
+      ngrams_controls = H.div { className: "ngrams-table-container__navigation" }
+                        [ props.pageSizeDescription
+                        , props.paginationLinks
+                        , B.wad
+                          [ "d-flex", "align-items-center" ]
+                          [ B.label_ "per page"
+                          , B.wad_ [ "virtual-space", "w-1" ]
+                          , props.pageSizeControl
+                          ]
+                        ]
+
 
   -- WHY setPath     f = origSetPageParams (const $ f path)
   setTermListFilter x = T.modify (_ { termListFilter = x }) path
@@ -354,16 +342,11 @@ tableContainerCpt { addCallback
     [
       B.wad
       []
-      [
-        H.text $ show count
-      ,
-        H.text $ nbsp 1
-      ,
-        H.text (count > 1 ? "terms" $ "term")
-      ,
-        H.text $ nbsp 1
-      ,
-        H.text "selected"
+      [ H.text $ show count
+      , H.text $ nbsp 1
+      , H.text (count > 1 ? "terms" $ "term")
+      , H.text $ nbsp 1
+      , H.text "selected"
       ]
     ,
       B.buttonGroup
@@ -372,7 +355,8 @@ tableContainerCpt { addCallback
       }
       [
         B.button
-        { variant: ButtonVariant Light
+        { className: "text-primary border-grey"
+        , variant: ButtonVariant Light
         , callback: const $ setSelection MapTerm
         , size: SmallSize
         }
@@ -386,7 +370,8 @@ tableContainerCpt { addCallback
         ]
       ,
         B.button
-        { variant: ButtonVariant Light
+        { className: "text-primary border-grey"
+        , variant: ButtonVariant Light
         , callback: const $ setSelection CandidateTerm
         , size: SmallSize
         }
@@ -400,7 +385,8 @@ tableContainerCpt { addCallback
         ]
       ,
         B.button
-        { variant: ButtonVariant Light
+        { className: "text-primary border-grey"
+        , variant: ButtonVariant Light
         , callback: const $ setSelection StopTerm
         , size: SmallSize
         }

@@ -13,6 +13,7 @@ import Foreign (unsafeToForeign, ForeignError)
 import Gargantext.Components.GraphQL.Contact (AnnuaireContact)
 import Gargantext.Components.GraphQL.Context as GQLCTX
 import Gargantext.Components.GraphQL.IMT as GQLIMT
+import Gargantext.Components.GraphQL.NLP as GQLNLP
 import Gargantext.Components.GraphQL.Node (Node)
 import Gargantext.Components.GraphQL.Tree (TreeFirstLevel)
 import Gargantext.Components.GraphQL.User (User, UserInfo, UserInfoM)
@@ -76,6 +77,7 @@ type Schema
     , contexts :: { context_id :: Int, node_id :: Int } ==> Array GQLCTX.NodeContext
     , contexts_for_ngrams :: { corpus_id :: Int, ngrams_terms :: Array String } ==> Array GQLCTX.Context
     , imt_schools :: {} ==> Array GQLIMT.School
+    , languages :: {} ==> Array GQLNLP.Language
     , node_parent :: { node_id :: Int, parent_type :: String } ==> Array Node  -- TODO: parent_type :: NodeType
     , nodes :: { node_id :: Int } ==> Array Node
     , user_infos :: { user_id :: Int } ==> Array UserInfo

@@ -470,13 +470,15 @@ convOrderBy (T.DESC (T.ColumnName "Score")) = ScoreDesc
 convOrderBy (T.ASC  _) = TermAsc
 convOrderBy (T.DESC _) = TermDesc
 
-coreDispatch :: forall p s. CoreParams p -> T.Box (CoreState s) -> CoreDispatch
+coreDispatch :: forall p s. CoreParams p -> T.Box State -> CoreDispatch
 coreDispatch path state (Synchronize { afterSync }) =
   syncPatches path state afterSync
 coreDispatch _ state (CommitPatch pt) =
   commitPatch pt state
 coreDispatch _ state ResetPatches =
-  T.modify_ (_ { ngramsLocalPatch = mempty :: NgramsTablePatch }) state
+  T.modify_ (_ { ngramsLocalPatch = mempty :: NgramsTablePatch
+               , ngramsSelection  = mempty :: Set NgramsTerm
+               }) state
 
 isSingleNgramsTerm :: NgramsTerm -> Boolean
 isSingleNgramsTerm nt = isSingleTerm $ ngramsTermText nt

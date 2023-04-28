@@ -50,6 +50,7 @@ syncResetButtonsCpt = here.component "syncResetButtons" cpt
         synchronizeClick _ = delay unit $ \_ -> do
           T.write_ true synchronizing
           performAction $ Synchronize { afterSync: newAfterSync }
+          performAction ResetPatches
 
         newAfterSync x = do
           afterSync x
