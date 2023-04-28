@@ -14,7 +14,7 @@ import Gargantext.Components.GraphQL.Contact (AnnuaireContact, annuaireContactQu
 import Gargantext.Components.GraphQL.Context as GQLCTX
 import Gargantext.Components.GraphQL.IMT as GQLIMT
 import Gargantext.Components.GraphQL.NLP as GQLNLP
-import Gargantext.Components.GraphQL.Node (Node, nodeParentQuery, nodesQuery)
+import Gargantext.Components.GraphQL.Node (Corpus, Node, nodeParentQuery, nodesQuery, nodesCorpusQuery)
 import Gargantext.Components.GraphQL.Team (Team, teamQuery)
 import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, treeFirstLevelQuery)
 import Gargantext.Components.GraphQL.User (UserInfo, userInfoQuery)
@@ -45,6 +45,15 @@ getNode session nodeId = do
   pure $ case A.head nodes of
     Nothing -> Left (CustomError $ "node with id" <> show nodeId <>" not found")
     Just node -> Right node
+
+getNodeCorpus :: Session -> Int -> AffRESTError Corpus
+getNodeCorpus session corpusId = do
+  { nodes_corpus } <- queryGql session "get nodes corpus" $
+                      nodesCorpusQuery `withVars` { id: corpusId }
+  liftEffect $ here.log2 "[getNodesCorpus] nodes_corpus" nodes_corpus
+  pure $ case A.head nodes_corpus of
+    Nothing -> Left (CustomError $ "corpus with id" <> show corpusId <>" not found")
+    Just corpus -> Right corpus
 
 getNodeParent :: Session -> Int -> NodeType -> Aff (Array Node)
 getNodeParent session nodeId parentType = do
