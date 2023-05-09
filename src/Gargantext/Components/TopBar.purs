@@ -177,7 +177,7 @@ divDropdownLeftCpt = here.component "divDropdownLeft" cpt
       ]
       , -----------------------------------------------------------
       [ LiNav { title : "Chat"
-              , href  : "https://chat.iscpif.fr/channel/gargantext"
+              , href  : "https://webchat.oftc.net/?channels=#gargantext"
               , icon  : "fa fa-rocket"
               , text  : "Chat"
               }
