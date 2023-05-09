@@ -100,10 +100,10 @@ datafield2database _            = Empty
 allDatabases :: Array Database
 allDatabases = [ Empty
                , PubMed { api_key: Nothing }
-               , Arxiv
+               -- , Arxiv
                , HAL Nothing
                , IsTex
-               , IsTex_Advanced
+               -- , IsTex_Advanced
                -- , Isidore
                --, Web
                --, News
