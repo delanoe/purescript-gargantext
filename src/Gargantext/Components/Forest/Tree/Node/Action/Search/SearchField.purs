@@ -39,7 +39,7 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField
 
 defaultSearch :: Search
 defaultSearch = { databases    : Empty
-                , datafield    : Nothing
+                , datafield    : Just (External Empty)
                 , node_id      : Nothing
                 , lang         : Nothing
                 , term         : ""
@@ -350,6 +350,8 @@ databaseInputCpt = here.component "databaseInput" cpt
             (Just (External x)) -> Just x
             _                   -> Nothing
 
+          dbInputValue = fromMaybe "" $ dbToInputValue <$> db
+
           liItem :: Database -> R.Element
           liItem  db' = H.option { className : "text-primary center"
                                  , value: dbToInputValue db' } [ H.text (show db') ]
@@ -377,13 +379,11 @@ databaseInputCpt = here.component "databaseInput" cpt
         H.div { className: "form-group" }
         [ H.div {className: "text-primary center"} [ H.text "in database" ]
         , R2.select { className: "form-control"
-                    , defaultValue: defaultValue search'.datafield
+                    , defaultValue: dbInputValue
                     , on: { change }
                     } (liItem <$> databases)
         , H.div {className:"center"} [ H.text $ maybe "" doc db ]
         ]
-
-    defaultValue datafield = show $ maybe Empty datafield2database datafield
 
 
 type PubmedInputProps = (
