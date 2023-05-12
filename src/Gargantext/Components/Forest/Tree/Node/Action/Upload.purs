@@ -586,7 +586,7 @@ uploadFile { contents, fileFormat, lang, fileType, id, nodeType, mName, selectio
                      , Tuple "_wjf_name"       mName
                  ]
     csvBodyParams = [ Tuple "_wtf_data"       (Just contents)
-                    , Tuple "_wtf_filetype"   (Just $ show NodeList)
+                    , Tuple "_wtf_filetype"   (Just $ show fileType)
                     , Tuple "_wtf_fileformat" (Just $ show fileFormat)
                     , Tuple "_wf_lang"        (Just $ show lang)
                     , Tuple "_wtf_name" mName
