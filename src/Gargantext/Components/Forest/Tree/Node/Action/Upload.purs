@@ -156,6 +156,7 @@ uploadFileViewWithLangsCpt = here.component "uploadFileViewWithLangs" cpt
                 [ formChoiceSafe { items: [ CSV
                                           , CSV_HAL
                                           , WOS
+                                          , JSON
                                           -- , Iramuteq
                                           ]
                                  , default: CSV
