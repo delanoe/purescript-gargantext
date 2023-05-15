@@ -26,10 +26,10 @@ import Effect.Timer (setTimeout)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), ModalSizing(..), Variant(..))
-import Gargantext.Components.Category (rating)
-import Gargantext.Components.Category.Types (Star(..))
+import Gargantext.Components.Category (rating, ratingSimple)
+import Gargantext.Components.Category.Types (Category(..), Star(..))
 import Gargantext.Components.DocsTable.DocumentFormCreation as DFC
-import Gargantext.Components.DocsTable.Types (DocumentsView(..), Hyperdata(..), LocalUserScore, Query, Response(..), Year, sampleData, showSource)
+import Gargantext.Components.DocsTable.Types (DocumentsView(..), Hyperdata(..), LocalCategories, Query, Response(..), Year, sampleData, showSource)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Reload (textsReloadContext)
@@ -192,7 +192,7 @@ docViewCpt = here.component "docView" cpt where
 
         , H.div { className: "col d-flex mt-5 mb-2" }
           [ H.div { className: "doc-add-action" }
-            [ H.button 
+            [ H.button
               { className: "btn btn-light text-primary border-primary"
               , on: { click: toggleModal } }
               [ H.i { className: "fa fa-plus mr-1" } []
@@ -304,9 +304,9 @@ searchBarCpt = here.component "searchBar" cpt
                     , placeholder: "Search in documents"
                     , type: "text" }
         , H.div {className: "input-group-append"}
-          [ 
-            if query' /= "" 
-            then 
+          [
+            if query' /= ""
+            then
               R.fragment
                 [ clearButton query
                 , searchButton query queryText'
@@ -450,7 +450,7 @@ pageLayoutCpt = here.component "pageLayout" cpt where
           , spinnerClass: Nothing
           }
       NT.CacheOff -> do
-        localCategories <- T.useBox (Map.empty :: LocalUserScore)
+        localCategories <- T.useBox (Map.empty :: LocalCategories)
         paramsS <- T.useBox params
         paramsS' <- T.useLive T.unequal paramsS
         let loader p = do
@@ -501,7 +501,7 @@ pagePaintCpt = here.component "pagePaintCpt" cpt
     cpt { documents, layout, params } _ = do
       params' <- T.useLive T.unequal params
 
-      localCategories <- T.useBox (Map.empty :: LocalUserScore)
+      localCategories <- T.useBox (Map.empty :: LocalCategories)
       pure $ pagePaintRaw { documents: A.fromFoldable (filteredRows params')
                           , layout
                           , localCategories
@@ -522,7 +522,7 @@ pagePaintCpt = here.component "pagePaintCpt" cpt
 type PagePaintRawProps =
   ( documents       :: Array DocumentsView
   , layout          :: Record PageLayoutProps
-  , localCategories :: T.Box LocalUserScore
+  , localCategories :: T.Box LocalCategories
   , params          :: T.Box TT.Params
   )
 
@@ -557,73 +557,141 @@ pagePaintRawCpt = here.component "pagePaintRaw" cpt where
       { colNames
       , container: TT.defaultContainer
       , params
-      , rows: rows reload chartReload localCategories' mCurrentDocId'
+      , rows: rows { boxes
+                   , reload
+                   , chartReload
+                   , frontends
+                   , listId
+                   , localCategories: localCategories'
+                   , mCorpusId
+                   , mCurrentDocId
+                   , nodeId
+                   , session
+                   , sidePanel }
       , syncResetButton : [ H.div {} [] ]
       , totalRecords
       , wrapColElts
       }
       where
+        colNames = TT.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source", "Score" ]
+        wrapColElts = const identity
+        rows { boxes
+             , chartReload
+             , frontends
+             , listId
+             , localCategories
+             , mCorpusId
+             , mCurrentDocId
+             , nodeId
+             , reload
+             , session
+             , sidePanel } =
+          (\documentsView -> { row: tableRow { boxes
+                                             , chartReload
+                                             , documentsView
+                                             , frontends
+                                             , listId
+                                             , localCategories
+                                             , mCorpusId
+                                             , mCurrentDocId
+                                             , nodeId
+                                             , session
+                                             , sidePanel } []
+                              , delete: true } ) <$> A.toUnfoldable documents
+
+trashClassName :: Category -> Boolean -> String
+trashClassName Trash _ = "page-paint-row page-paint-row--trash"
+trashClassName _ true  = "page-paint-row page-paint-row--active"
+trashClassName _ false = ""
+
+type TableRowProps =
+  ( boxes           :: Boxes
+  , chartReload     :: T2.ReloadS
+  , documentsView   :: DocumentsView
+  , frontends       :: Frontends
+  , listId          :: Int
+  , localCategories :: LocalCategories
+  , mCorpusId       :: Maybe Int
+  , mCurrentDocId   :: T.Box (Maybe Int)
+  , nodeId          :: Int
+  , session         :: Session
+  , sidePanel       :: T.Box (Maybe (Record TextsT.SidePanel)) )
+
+tableRow :: R2.Component TableRowProps
+tableRow = R.createElement tableRowCpt
+tableRowCpt :: R.Component TableRowProps
+tableRowCpt = here.component "tableRow" cpt where
+  cpt { boxes
+      , chartReload
+      , documentsView: dv@(DocumentsView r@{ _id, category })
+      , frontends
+      , listId
+      , localCategories
+      , mCorpusId
+      , mCurrentDocId
+      , nodeId
+      , session
+      , sidePanel } _ = do
+    mCurrentDocId' <- T.useLive T.unequal mCurrentDocId
+
+    let cat :: Category
+        cat         = fromMaybe category (localCategories ^. at _id)
+        -- checked    = Star_1 == cat
+        selected   = mCurrentDocId' == Just r._id
         sid = sessionId session
-        trashClassName Star_0 _ = "page-paint-row page-paint-row--trash"
-        trashClassName _ true   = "page-paint-row page-paint-row--active"
-        trashClassName _ false  = ""
         corpusDocument
           | Just cid <- mCorpusId = Routes.CorpusDocument sid cid listId
           | otherwise = Routes.Document sid listId
-        colNames = TT.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source", "Score" ]
-        wrapColElts = const identity
-        rows reload chartReload localCategories' mCurrentDocId' = row <$> A.toUnfoldable documents
-          where
-            row dv@(DocumentsView r@{ _id, category }) =
-              { row:
-                TT.makeRow'
-                { className: "page-paint-raw " <>
-                    (selected ?
-                      "page-paint-raw--selected" $
-                      ""
-                    )
-                }
-                [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
-                            H.div { className: "" }
-                                  [ docChooser { boxes
-                                               , listId
-                                               , mCorpusId
-                                               , nodeId: r._id
-                                               , sidePanel } []
-                                  ]
-                          --, H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
-                          , H.div { className: "column-tag flex" }
-                                  [ rating { chartReload
-                                           , nodeId
-                                           , row: dv
-                                           , score: cat
-                                           , setLocalCategories: \lc -> T.modify_ lc localCategories
-                                           , session } [] ]
-                --, H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
-                -- TODO show date: Year-Month-Day only
-                , H.div { className: tClassName } [ R2.showText r.date ]
-                ,
-                  H.div
-                  { className: tClassName }
-                  [
-                    H.a
-                    { href: url frontends $ corpusDocument r._id
-                    , target: "_blank"
-                    , className: "text-primary"
-                    }
-                    [ H.text r.title
-                    , H.i { className: "fa fa-external-link mx-1 small" } []
-                    ]
-                  ]
-                , H.div { className: tClassName } [ H.text $ showSource r.source ]
-                , H.div {} [ H.text $ maybe "-" show r.ngramCount ]
-                ]
-              , delete: true }
-              where
-                cat         = fromMaybe category (localCategories' ^. at _id)
-                -- checked    = Star_1 == cat
-                selected   = mCurrentDocId' == Just r._id
-                tClassName = trashClassName cat selected
+
+    categoryS <- T.useBox cat
+    categoryS' <- T.useLive T.unequal categoryS
+
+    let tClassName = trashClassName categoryS' selected
+
+    pure $ TT.makeRow' { className: "page-paint-raw " <>
+                         (selected ?
+                          "page-paint-raw--selected" $
+                          ""
+                         )
+                       }
+      [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
+        H.div { className: "" }
+        [ docChooser { boxes
+                     , listId
+                     , mCorpusId
+                     , nodeId: r._id
+                     , sidePanel } []
+        ]
+        --, H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
+      , H.div { className: "column-tag flex" }
+        [ ratingSimple { -- chartReload
+                         docId: _id
+                       , category: categoryS
+                       , corpusId: nodeId
+                       -- , row: dv
+                       , session
+                       -- , setLocalCategories: \lc -> T.modify_ lc localCategories
+                       } [] ]
+        --, H.input { type: "checkbox", defaultValue: checked, on: {click: click Trash} }
+        -- TODO show date: Year-Month-Day only
+      , H.div { className: tClassName } [ R2.showText r.date ]
+      ,
+        H.div
+        { className: tClassName }
+        [
+          H.a
+          { href: url frontends $ corpusDocument r._id
+          , target: "_blank"
+          , className: "text-primary"
+          }
+          [ H.text r.title
+          , H.i { className: "fa fa-external-link mx-1 small" } []
+          ]
+        ]
+      , H.div { className: tClassName } [ H.text $ showSource r.source ]
+      , H.div {} [ H.text $ maybe "-" show r.ngramCount ]
+      ]
+
 
 type DocChooser = (
     boxes :: Boxes

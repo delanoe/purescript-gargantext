@@ -16,7 +16,6 @@ import Gargantext.Components.AutoUpdate (autoUpdate)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), SpinnerTheme(..))
 import Gargantext.Components.Category (ratingSimpleLoader)
-import Gargantext.Components.Category.Types (decodeStar)
 import Gargantext.Components.Document.Types (DocPath, Document(..), LoadedData, initialState)
 import Gargantext.Components.NgramsTable.AutoSync (useAutoSync)
 import Gargantext.Components.Node (NodePoly(..))
