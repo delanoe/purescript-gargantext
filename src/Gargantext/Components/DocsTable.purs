@@ -27,9 +27,10 @@ import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), ModalSizing(..), Variant(..))
 import Gargantext.Components.Category (rating, ratingSimple)
-import Gargantext.Components.Category.Types (Category(..), Star(..))
+import Gargantext.Components.Category.Types (Category(..), Star(..), cat2score, markCategoryChecked)
 import Gargantext.Components.DocsTable.DocumentFormCreation as DFC
 import Gargantext.Components.DocsTable.Types (DocumentsView(..), Hyperdata(..), LocalCategories, Query, Response(..), Year, sampleData, showSource)
+import Gargantext.Components.GraphQL.Endpoints (updateNodeContextCategory)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Reload (textsReloadContext)
@@ -636,7 +637,6 @@ tableRowCpt = here.component "tableRow" cpt where
 
     let cat :: Category
         cat         = fromMaybe category (localCategories ^. at _id)
-        -- checked    = Star_1 == cat
         selected   = mCurrentDocId' == Just r._id
         sid = sessionId session
         corpusDocument
@@ -657,9 +657,12 @@ tableRowCpt = here.component "tableRow" cpt where
       [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
         H.div { className: "" }
         [ docChooser { boxes
+                     , category: categoryS
+                     , docId: r._id
                      , listId
                      , mCorpusId
                      , nodeId: r._id
+                     , session
                      , sidePanel } []
         ]
         --, H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
@@ -694,11 +697,14 @@ tableRowCpt = here.component "tableRow" cpt where
 
 
 type DocChooser = (
-    boxes :: Boxes
-  , listId         :: ListId
-  , mCorpusId      :: Maybe NodeID
-  , nodeId         :: NodeID
-  , sidePanel      :: T.Box (Maybe (Record TextsT.SidePanel))
+    boxes     :: Boxes
+  , category  :: T.Box Category
+  , docId     :: Int
+  , listId    :: ListId
+  , mCorpusId :: Maybe NodeID
+  , nodeId    :: NodeID
+  , session   :: Session
+  , sidePanel :: T.Box (Maybe (Record TextsT.SidePanel))
   )
 
 docChooser :: R2.Component DocChooser
@@ -710,18 +716,44 @@ docChooserCpt = here.component "docChooser" cpt
       pure $ H.div {} []
 
     cpt { boxes: { sidePanelState }
+        , category
+        , docId
         , listId
         , mCorpusId: Just corpusId
         , nodeId
+        , session
         , sidePanel } _ = do
       mCurrentDocId <- T.useFocused
             (maybe Nothing _.mCurrentDocId)
             (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentDocId = val })) sidePanel
       mCurrentDocId' <- T.useLive T.unequal mCurrentDocId
+      category' <- T.useLive T.unequal category
 
       let selected = mCurrentDocId' == Just nodeId
           eyeClass = selected ? "eye" $ "eye-slash"
           variant = selected ? Info $ Dark
+
+          onClick selected _ = do
+            -- here.log2 "[docChooser] onClick, listId" listId
+            -- here.log2 "[docChooser] onClick, corpusId" corpusId
+            -- here.log2 "[docChooser] onClick, nodeId" nodeId
+            -- R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
+            -- T2.reload tableReload
+            if selected then do
+              T.write_ Nothing sidePanel
+              T.write_ Closed sidePanelState
+            else do
+              T.write_ (Just { corpusId: corpusId
+                             , listId: listId
+                             , mCurrentDocId: Just nodeId
+                             , nodeId: nodeId }) sidePanel
+              T.write_ Opened sidePanelState
+              let categoryMarked = markCategoryChecked category'
+              launchAff_ $ do
+                _ <- updateNodeContextCategory session docId corpusId $ cat2score categoryMarked
+                pure unit
+              T.write_ categoryMarked category
+              -- here.log2 "[docChooser] sidePanel opened" sidePanelState
 
       pure $
         H.div
@@ -734,23 +766,6 @@ docChooserCpt = here.component "docChooser" cpt
           , callback: onClick selected
           }
       ]
-      where
-        onClick selected _ = do
-          -- here.log2 "[docChooser] onClick, listId" listId
-          -- here.log2 "[docChooser] onClick, corpusId" corpusId
-          -- here.log2 "[docChooser] onClick, nodeId" nodeId
-          -- R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
-          -- T2.reload tableReload
-          if selected then do
-            T.write_ Nothing sidePanel
-            T.write_ Closed sidePanelState
-          else do
-            T.write_ (Just { corpusId: corpusId
-                          , listId: listId
-                          , mCurrentDocId: Just nodeId
-                          , nodeId: nodeId }) sidePanel
-            T.write_ Opened sidePanelState
-          here.log2 "[docChooser] sidePanel opened" sidePanelState
 
 
 newtype SearchQuery = SearchQuery {

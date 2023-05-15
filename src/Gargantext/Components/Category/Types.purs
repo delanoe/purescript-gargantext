@@ -115,3 +115,7 @@ star2catSimple Star_1 = Checked
 star2catSimple Star_2 = Topic
 star2catSimple Star_3 = Favorite
 star2catSimple Star_4 = ToCite
+
+markCategoryChecked :: Category -> Category
+markCategoryChecked UnRead = Checked
+markCategoryChecked s = s
