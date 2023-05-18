@@ -518,8 +518,10 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
         rows :: PreConversionRows
         rows = ngramsTableOrderWith orderBy (Seq.mapMaybe rowMap nres)
         nres = Map.toUnfoldable (ngramsTable ^. _NgramsTable <<< _ngrams_repo_elements)
+        ngramMatches matcher ng nre =
+          any matcher $ (Set.map ngramsTermText $ Set.insert ng $ nre ^. _NgramsRepoElement <<< _children)
         rootOfMatch (Tuple ng nre) =
-          if queryMatchesLabel searchQuery (ngramsTermText ng)
+          if ngramMatches (queryMatchesLabel searchQuery) ng nre
           then Just (fromMaybe ng (nre ^. _NgramsRepoElement <<< _root))
           else Nothing
         rootsWithMatches = Set.fromFoldable (Seq.mapMaybe rootOfMatch nres)
@@ -529,8 +531,7 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
             -- | Match either ngrams term or its children with the
             -- | `queryExactMatchesLabel` function.
             fltr :: Tuple NgramsTerm NgramsRepoElement -> Boolean
-            fltr (Tuple ng (NgramsRepoElement { children })) =
-              any (queryExactMatchesLabel searchQuery) $ (Set.map ngramsTermText $ Set.insert ng children)
+            fltr (Tuple ng nre) = ngramMatches (queryExactMatchesLabel searchQuery) ng nre
         rowsFilter :: NgramsElement -> Maybe NgramsElement
         rowsFilter ngramsElement =
           if displayRow { ngramsElement
