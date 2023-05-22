@@ -3,6 +3,7 @@ module Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField where
 import Gargantext.Prelude
 
 import Data.Array as A
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Newtype (over)
 import Data.Nullable (null)
@@ -15,8 +16,8 @@ import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Frame (searchIframes)
-import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allOrgs, dataFields, defaultSearchQuery, doc, performSearch, datafield2database, Search)
-import Gargantext.Components.GraphQL.Endpoints (getIMTSchools)
+import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allOrgs, dataFields, defaultSearchQuery, doc, performSearch, datafield2database, Search, dbFromInputValue, dbToInputValue)
+import Gargantext.Components.GraphQL.Endpoints (getIMTSchools, getNodeCorpus)
 import Gargantext.Components.GraphQL.IMT as GQLIMT
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Lang (Lang(..))
@@ -37,13 +38,13 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField"
 
 defaultSearch :: Search
-defaultSearch = { databases: Empty
-                , datafield: Nothing
-                , node_id  : Nothing
-                , lang     : Nothing
-                , term     : ""
-                , url      : ""
-                , years    : []
+defaultSearch = { databases    : Empty
+                , datafield    : Just (External Empty)
+                , node_id      : Nothing
+                , lang         : Nothing
+                , term         : ""
+                , url          : ""
+                , years        : []
                 }
 
 type Props =
@@ -93,8 +94,8 @@ componentYearsCpt = here.component "componentYears" cpt where
       ((yearCpt search <$> yearsZ) <>
       [ H.div {}
         [ H.input { on: { blur: modify newYear
-                      , change: modify newYear
-                      , input: modify newYear } }
+                        , change: modify newYear
+                        , input: modify newYear } }
         , H.span { className: "btn btn-primary fa fa-check"
                  , on: { click: clickAdd newYear search }} []
         ]
@@ -180,28 +181,19 @@ isExternal _ = false
 
 isArxiv :: Maybe DataField -> Boolean
 isArxiv (Just
-        ( External
-          ( Just Arxiv
-          )
-        )
-      )   = true
+         ( External Arxiv )
+        )   = true
 isArxiv _ = false
 
 isHAL :: Maybe DataField -> Boolean
 isHAL (Just
-        ( External
-          ( Just (HAL _ )
-          )
-        )
+       ( External (HAL _ ) )
       ) = true
 isHAL _ = false
 
 isIsTex :: Maybe DataField -> Boolean
 isIsTex ( Just
-          ( External
-            ( Just ( IsTex)
-            )
-          )
+          ( External ( IsTex ) )
         ) = true
 isIsTex _ = false
 
@@ -209,11 +201,8 @@ isIsTex _ = false
 isIMT :: Maybe DataField -> Boolean
 isIMT ( Just
         ( External
-          ( Just
-            ( HAL
-              ( Just ( IMT _)
-              )
-            )
+          ( HAL
+            ( Just ( IMT _) )
           )
         )
       ) = true
@@ -222,24 +211,24 @@ isIMT _ = false
 isCNRS :: Maybe DataField -> Boolean
 isCNRS ( Just
          ( External
-          ( Just
-            ( HAL
-              ( Just ( CNRS _)
-              )
-            )
-          )
-        )
+           ( HAL
+             ( Just ( CNRS _) )
+           )
+         )
       ) = true
 isCNRS _ = false
+
+isPubmed :: Maybe DataField -> Boolean
+isPubmed ( Just
+           ( External ( PubMed _ ) )
+         ) = true
+isPubmed _ = false
 
 needsLang :: Maybe DataField -> Boolean
 needsLang (Just Gargantext) = true
 needsLang (Just Web)        = true
 needsLang ( Just
-            ( External
-              ( Just (HAL _)
-              )
-            )
+            ( External (HAL _) )
           ) = true
 needsLang _                 = false
 
@@ -247,11 +236,9 @@ needsLang _                 = false
 isIn :: IMT_org -> Maybe DataField -> Boolean
 isIn org ( Just
            ( External
-             ( Just
-               ( HAL
-                 ( Just
-                   ( IMT imtOrgs )
-                 )
+             ( HAL
+               ( Just
+                 ( IMT imtOrgs )
                )
              )
            )
@@ -259,8 +246,8 @@ isIn org ( Just
 isIn _ _ = false
 
 updateFilter :: IMT_org -> Array IMT_org -> Maybe DataField -> Maybe DataField
-updateFilter org allIMTorgs (Just (External (Just (HAL (Just (IMT imtOrgs)))))) =
- (Just (External (Just (HAL (Just $ IMT imtOrgs')))))
+updateFilter org allIMTorgs (Just (External (HAL (Just (IMT imtOrgs))))) =
+ Just $ External $ HAL $ Just $ IMT imtOrgs'
   where
     imtOrgs' = if Set.member org imtOrgs
                   then
@@ -272,7 +259,7 @@ updateFilter org allIMTorgs (Just (External (Just (HAL (Just (IMT imtOrgs)))))) 
                        then Set.fromFoldable allIMTorgs
                        else Set.insert org imtOrgs
 
-updateFilter org allIMTorgs _ = (Just (External (Just (HAL (Just (IMT imtOrgs'))))))
+updateFilter org allIMTorgs _ = (Just (External (HAL (Just (IMT imtOrgs')))))
   where
     imtOrgs' = if org == All_IMT
                   then Set.fromFoldable allIMTorgs
@@ -346,6 +333,7 @@ dataFieldNavCpt = here.component "dataFieldNav" cpt
 type DatabaseInputProps = (
     databases :: Array Database
   , search    :: T.Box Search
+  , session   :: Session
   )
 
 databaseInput :: R2.Component DatabaseInputProps
@@ -354,34 +342,82 @@ databaseInputCpt :: R.Component DatabaseInputProps
 databaseInputCpt = here.component "databaseInput" cpt
   where
     cpt { databases
-        , search } _ = do
+        , search
+        , session } _ = do
       search' <- T.useLive T.unequal search
 
       let db = case search'.datafield of
-            (Just (External (Just x))) -> Just x
-            _                          -> Nothing
+            (Just (External x)) -> Just x
+            _                   -> Nothing
+
+          dbInputValue = fromMaybe "" $ dbToInputValue <$> db
 
           liItem :: Database -> R.Element
           liItem  db' = H.option { className : "text-primary center"
-                                 , value: show db' } [ H.text (show db') ]
+                                 , value: dbToInputValue db' } [ H.text (show db') ]
 
           change e = do
-            let value = read $ R.unsafeEventValue e
-            T.modify_ (_ { datafield = Just $ External value
-                         , databases = fromMaybe Empty value
-                         }) search
+            let value = dbFromInputValue $ R.unsafeEventValue e
+            -- TODO Fetch pubmed api key
+            launchAff_ $ do
+              updatedValue <- case value of
+                Just (PubMed _) ->
+                  case search'.node_id of
+                       Just nodeId -> do
+                         eCorpus <- getNodeCorpus session nodeId
+                         case eCorpus of
+                           Left _err -> pure $ PubMed { api_key: Nothing }
+                           Right c   -> pure $ PubMed { api_key: c.pubmedAPIKey }
+                       Nothing -> pure $ PubMed { api_key: Nothing }
+                _ -> pure $ fromMaybe Empty value
+
+              liftEffect $ T.modify_ (_ { datafield = Just $ External updatedValue
+                                        , databases = updatedValue
+                                        }) search
 
       pure $
         H.div { className: "form-group" }
         [ H.div {className: "text-primary center"} [ H.text "in database" ]
         , R2.select { className: "form-control"
-                    , defaultValue: defaultValue search'.datafield
+                    , defaultValue: dbInputValue
                     , on: { change }
                     } (liItem <$> databases)
         , H.div {className:"center"} [ H.text $ maybe "" doc db ]
         ]
 
-    defaultValue datafield = show $ maybe Empty datafield2database datafield
+
+type PubmedInputProps = (
+    search :: T.Box Search
+  , session :: Session
+  )
+
+pubmedInput :: R2.Component PubmedInputProps
+pubmedInput = R.createElement pubmedInputCpt
+pubmedInputCpt :: R.Component PubmedInputProps
+pubmedInputCpt = here.component "pubmedInput" cpt where
+  cpt { search, session } _ = do
+    search' <- T.useLive T.unequal search
+
+    case search'.datafield of
+      Just (External (PubMed p@{ api_key })) ->
+        -- TODO Fetch current API key
+        pure $
+          H.div { className: "form-group" }
+            [ H.div { className: "text-primary center" } [ H.text "Pubmed API key" ]
+            , H.input { className: "form-control"
+                      , defaultValue: fromMaybe "" api_key
+                      , on: { blur: modifyPubmedAPIKey search p
+                            , change: modifyPubmedAPIKey search p
+                            , input: modifyPubmedAPIKey search p } } ]
+      _ -> pure $ H.div {} []
+    where
+      modifyPubmedAPIKey search p e = do
+        let val = R.unsafeEventValue e
+        let mVal = case val of
+              "" -> Nothing
+              s  -> Just s
+        T.modify_ (\s ->
+                    s { datafield = Just (External (PubMed p { api_key = mVal })) }) search
 
 
 type OrgInputProps =
@@ -396,7 +432,7 @@ orgInputCpt = here.component "orgInput" cpt
     cpt { orgs, search } _ = do
       let change e = do
             let value = R.unsafeEventValue e
-            T.modify_ (_ { datafield = Just $ External $ Just $ HAL $ read value }) search
+            T.modify_ (_ { datafield = Just $ External $ HAL $ read value }) search
 
       pure $ H.div { className: "form-group" }
         [ H.div {className: "text-primary center"} [H.text "filter with organization: "]
@@ -438,13 +474,18 @@ datafieldInputCpt :: R.Component DatafieldInputProps
 datafieldInputCpt = here.component "datafieldInput" cpt where
   cpt { databases, langs, search, session } _ = do
     search' <- T.useLive T.unequal search
+    datafield <- T.useFocused (_.datafield) (\a b -> b { datafield = a }) search
     iframeRef <- R.useRef null
 
     pure $ H.div {}
       [ dataFieldNav { search } []
 
       , if isExternal search'.datafield
-        then databaseInput { databases, search } []
+        then databaseInput { databases, search, session } []
+        else H.div {} []
+
+      , if isPubmed search'.datafield
+        then pubmedInput { search, session } []
         else H.div {} []
 
       , if isHAL search'.datafield
@@ -594,38 +635,41 @@ searchQuery selection { datafield: Nothing, term } =
                                           , selection = selection }) defaultSearchQuery
 -- TODO Simplify both HAL Nothing and HAL (Just IMT) cases
 searchQuery selection { databases
-                      , datafield: datafield@(Just (External (Just (HAL Nothing))))
+                      , datafield: datafield@(Just (External (HAL Nothing)))
                       , lang
                       , term
                       , node_id
-                      , years } = over SearchQuery (_ { databases = databases
-                                                      , datafield = datafield
-                                                      , lang      = lang
-                                                      , node_id   = node_id
-                                                      , query     = queryHAL term Nothing lang years
-                                                      , selection = selection
-                                                      }) defaultSearchQuery
+                      , years } =
+  over SearchQuery (_ { databases = databases
+                      , datafield = datafield
+                      , lang      = lang
+                      , node_id   = node_id
+                      , query     = queryHAL term Nothing lang years
+                      , selection = selection
+                      }) defaultSearchQuery
+
 searchQuery selection { databases
-                      , datafield: datafield@(Just (External (Just (HAL (Just (IMT imtOrgs))))))
+                      , datafield: datafield@(Just (External (HAL (Just (IMT imtOrgs)))))
                       , lang
                       , term
                       , node_id
-                      , years } = over SearchQuery (_ { databases = databases
-                                , datafield = datafield
-                                , lang      = lang
-                                , node_id   = node_id
-                                , query     = queryHAL term (Just imtOrgs) lang years
-                                , selection = selection
-                                }) defaultSearchQuery
+                      , years } =
+  over SearchQuery (_ { databases = databases
+                      , datafield = datafield
+                      , lang      = lang
+                      , node_id   = node_id
+                      , query     = queryHAL term (Just imtOrgs) lang years
+                      , selection = selection
+                      }) defaultSearchQuery
 
 searchQuery selection { databases, datafield, lang, term, node_id } =
-                                    over SearchQuery (_ { databases = databases
-                                                        , datafield = datafield
-                                                        , lang      = lang
-                                                        , node_id   = node_id
-                                                        , query     = term
-                                                        , selection = selection
-                                                        }) defaultSearchQuery
+  over SearchQuery (_ { databases = databases
+                      , datafield = datafield
+                      , lang      = lang
+                      , node_id   = node_id
+                      , query     = term
+                      , selection = selection
+                      }) defaultSearchQuery
 
 queryHAL :: String -> Maybe (Set.Set IMT_org) -> Maybe Lang -> Array String -> String
 queryHAL term mIMTOrgs lang years =

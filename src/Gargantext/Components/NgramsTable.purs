@@ -13,6 +13,7 @@ import Gargantext.Prelude
 import Data.Array as A
 import Data.Array as Array
 import Data.Either (Either(..))
+import Data.Foldable (any)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Lens (to, view, (.~), (^.), (^?))
 import Data.Lens.At (at)
@@ -47,7 +48,7 @@ import Gargantext.Components.Table.Types (Params, orderByToGTOrderBy)
 import Gargantext.Components.Table.Types as TT
 import Gargantext.Config.REST (AffRESTError, RESTError, logRESTError)
 import Gargantext.Core.NgramsTable.Functions (addNewNgramA, applyNgramsPatches, chartsAfterSync, commitPatch, convOrderBy, coreDispatch, filterTermSize, ngramsRepoElementToNgramsElement, normNgram, patchSetFromMap, singletonNgramsTablePatch, tablePatchHasNgrams, toVersioned)
-import Gargantext.Core.NgramsTable.Types (Action(..), CoreAction(..), State, Dispatch, NgramsActionRef, NgramsClick, NgramsElement(..), NgramsPatch(..), NgramsTable, NgramsTablePatch(..), NgramsTerm(..), PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, VersionedWithCountNgramsTable, _NgramsElement, _NgramsRepoElement, _NgramsTable, _children, _list, _ngrams, _ngrams_repo_elements, _ngrams_scores, _occurrences, _root, applyPatchSet, ngramsTermText, replace)
+import Gargantext.Core.NgramsTable.Types (Action(..), CoreAction(..), State, Dispatch, NgramsActionRef, NgramsClick, NgramsElement(..), NgramsPatch(..), NgramsRepoElement(..), NgramsTable, NgramsTablePatch(..), NgramsTerm(..), PageParams, PatchMap(..), Versioned(..), VersionedNgramsTable, VersionedWithCountNgramsTable, _NgramsElement, _NgramsRepoElement, _NgramsTable, _children, _list, _ngrams, _ngrams_repo_elements, _ngrams_scores, _occurrences, _root, applyPatchSet, ngramsTermText, replace)
 import Gargantext.Hooks.Loader (useLoaderBox)
 import Gargantext.Routes (SessionRoute(..)) as Routes
 import Gargantext.Sessions (Session, get)
@@ -525,7 +526,11 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
         exactMatches :: Boolean
         exactMatches = not $ Seq.null $ Seq.filter fltr nres
           where
-            fltr (Tuple ng _) = queryExactMatchesLabel searchQuery (ngramsTermText ng)
+            -- | Match either ngrams term or its children with the
+            -- | `queryExactMatchesLabel` function.
+            fltr :: Tuple NgramsTerm NgramsRepoElement -> Boolean
+            fltr (Tuple ng (NgramsRepoElement { children })) =
+              any (queryExactMatchesLabel searchQuery) $ (Set.map ngramsTermText $ Set.insert ng children)
         rowsFilter :: NgramsElement -> Maybe NgramsElement
         rowsFilter ngramsElement =
           if displayRow { ngramsElement

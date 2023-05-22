@@ -395,6 +395,7 @@ pageCpt = here.component "page" cpt
         wrapColElts = const identity
         -- TODO: how to interprete other scores?
         gi Trash = "fa fa-star-empty"
+        gi UnRead = "fa fa-star-empty"
         gi _ = "fa fa-star"
 
         documentUrl id { listId, nodeId } =

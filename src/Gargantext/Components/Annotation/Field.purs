@@ -13,18 +13,18 @@ module Gargantext.Components.Annotation.Field where
 
 import Gargantext.Prelude
 
-import DOM.Simple.Event as DE
 import Data.Array as A
 import Data.List (List(..), (:))
 import Data.Maybe (Maybe(..), maybe)
 import Data.String.Common (joinWith)
 import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ((/\))
+import DOM.Simple.Event as DE
 import Effect (Effect)
 import Gargantext.Components.Annotation.Menu (annotationMenu, AnnotationMenu)
 import Gargantext.Components.Annotation.Types (MenuType(..), ModeType(..), termClass)
 import Gargantext.Core.NgramsTable.Functions (findNgramTermList, highlightNgrams, normNgram)
-import Gargantext.Core.NgramsTable.Types (NgramsTable, NgramsTerm)
+import Gargantext.Core.NgramsTable.Types (NgramsTable, NgramsTerm(..))
 import Gargantext.Types (CTabNgramType(..), TermList)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Selection as Sel
@@ -35,7 +35,7 @@ import Record as Record
 import Toestand as T
 
 here :: R2.Here
-here = R2.here "Gargantext.Components.Annotation.AnnotatedField"
+here = R2.here "Gargantext.Components.Annotation.Field"
 
 -- @NOTE #386: add parameter "type" ("Authors", "Terms")
 type Props =
@@ -52,7 +52,6 @@ type MouseEvent = E.SyntheticEvent DE.MouseEvent
 
 annotatedField :: R2.Leaf Props
 annotatedField = R2.leaf annotatedFieldCpt
-
 annotatedFieldCpt :: R.Component Props
 annotatedFieldCpt = here.component "annotatedField" cpt where
   cpt props _ = do
@@ -71,7 +70,6 @@ type InnerProps =
 
 annotatedFieldInner :: R2.Leaf InnerProps
 annotatedFieldInner = R2.leaf annotatedFieldInnerCpt
-
 annotatedFieldInnerCpt :: R.Component InnerProps
 annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
   cpt { menuRef
@@ -159,16 +157,16 @@ onAnnotationSelect
     s <- Sel.getSelection
     case s of
       Just sel -> do
-        case Sel.selectionToString sel of
-          "" -> hideMenu { menuRef, redrawMenu }
+        case (normNgram CTabTerms $ Sel.selectionToString sel) of
+          NormNgramsTerm "" -> hideMenu { menuRef, redrawMenu }
           sel' -> do
             showMenu { event
-                    , getList: findNgramTermList ngrams
-                    , menuRef
-                    , menuType: NewNgram
-                    , ngram: normNgram CTabTerms sel'
-                    , redrawMenu
-                    , setTermList }
+                     , getList: findNgramTermList ngrams
+                     , menuRef
+                     , menuType: NewNgram
+                     , ngram: sel'  -- normNgram CTabTerms sel'
+                     , redrawMenu
+                     , setTermList }
       Nothing -> hideMenu { menuRef, redrawMenu }
 
 onAnnotationSelect
@@ -241,7 +239,6 @@ type RunProps =
 
 annotateRun :: R2.Leaf RunProps
 annotateRun = R2.leaf annotatedRunCpt
-
 annotatedRunCpt :: R.Component RunProps
 annotatedRunCpt = here.component "annotatedRun" cpt where
   cpt { list, onSelect, text } _ = pure $ case list of

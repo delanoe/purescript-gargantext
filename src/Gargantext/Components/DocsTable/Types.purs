@@ -7,14 +7,14 @@ import Data.Generic.Rep (class Generic)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (Tuple(..))
-import Gargantext.Components.Category.Types (Category, Star(..), decodeStar)
+import Gargantext.Components.Category.Types (Category(..), Star(..), decodeCategory)
 import Simple.JSON as JSON
 
 data Action
   = MarkCategory Int Category
 
 type DocumentsViewT =
-  ( category   :: Star
+  ( category   :: Category
   , date       :: Int
   , ngramCount :: Maybe Int
   , score      :: Maybe Int
@@ -65,8 +65,8 @@ type ResponseT =
   , score :: Maybe Int
   , title :: String )
 newtype Response = Response
-  { cid        :: Int
-  , category :: Star
+  { cid      :: Int
+  , category :: Category
   | ResponseT
   }
 
@@ -74,7 +74,7 @@ instance JSON.ReadForeign Response where
   readImpl f = do
     { category, id, hyperdata, ngramCount, score, title } :: { category :: Int, id :: Int | ResponseT } <- JSON.readImpl f
     --pure $ Response { category: decodeCategory category, cid, hyperdata, ngramCount, score, title }
-    pure $ Response { category: decodeStar category
+    pure $ Response { category: decodeCategory category
                     , cid: id
                     , hyperdata
                     , ngramCount
@@ -110,7 +110,7 @@ sampleData' = DocumentsView { _id : 1
                             , date : 2010
                             , title : "title"
                             , source : Just "source"
-                            , category : Star_1
+                            , category : UnRead
                             , ngramCount : Just 1
                             , score: Just 1 }
 
@@ -121,7 +121,7 @@ sampleData = map (\(Tuple t s) -> DocumentsView { _id : 1
                                                 , date : 2017
                                                 , title: t
                                                 , source: Just s
-                                                , category : Star_1
+                                                , category : UnRead
                                                 , ngramCount : Just 10
                                                 , score: Just 1 }) sampleDocuments
 

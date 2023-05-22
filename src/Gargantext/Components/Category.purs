@@ -4,6 +4,7 @@ module Gargantext.Components.Category where
 import Gargantext.Prelude
 
 import Data.Array as A
+import Data.Enum (fromEnum)
 import Data.Generic.Rep (class Generic)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -12,8 +13,8 @@ import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (Variant(..))
-import Gargantext.Components.Category.Types (Category(..), Star(..), cat2score, categories, clickAgain, decodeStar, star2score, stars)
-import Gargantext.Components.DocsTable.Types (DocumentsView(..), LocalCategories, LocalUserScore)
+import Gargantext.Components.Category.Types (Category(..), Star(..), cat2score, cat2star, categories, categoryNextState, decodeCategory, stars)
+import Gargantext.Components.DocsTable.Types (DocumentsView(..), LocalCategories)
 import Gargantext.Components.GraphQL.Context (NodeContext)
 import Gargantext.Components.GraphQL.Endpoints (getNodeContext, updateNodeContextCategory)
 import Gargantext.Config.REST (AffRESTError, RESTError(..))
@@ -36,9 +37,9 @@ type RatingProps =
   ( chartReload        :: T2.ReloadS
   , nodeId             :: NodeID
   , row                :: DocumentsView
-  , score              :: Star
+  , score              :: Category
   , session            :: Session
-  , setLocalCategories :: R.Setter LocalUserScore
+  -- , setLocalCategories :: R.Setter LocalCategories
   )
 
 rating :: R2.Component RatingProps
@@ -50,11 +51,11 @@ ratingCpt = here.component "rating" cpt where
       , row: DocumentsView r
       , score
       , session
-      , setLocalCategories
+      -- , setLocalCategories
       } _ = do
     pure $ renderRatingSimple { docId: r._id
                               , corpusId: nodeId
-                              , category: star2score score
+                              , category: score
                               , session } []
 
     -- -- | Behaviors
@@ -86,14 +87,17 @@ ratingCpt = here.component "rating" cpt where
     --     , className: ratingClassName score s
     --     }
 
-ratingIcon Star_0 Star_0  = "recycle"
+ratingIcon :: Category -> Star -> String
+ratingIcon Trash  Star_0  = "recycle"
 ratingIcon _      Star_0  = "trash"
-ratingIcon c      s       = star2score c < star2score s ? "star-o" $ "star"
+ratingIcon c      s       = fromEnum (cat2star c) < fromEnum s ? "star-o" $ "star"
 
+ratingVariant :: Star -> Star -> Variant
 ratingVariant Star_0 Star_0 = Dark
 ratingVariant _      Star_0 = Dark
 ratingVariant _      _      = Dark
 
+ratingClassName :: Star -> Star -> String
 ratingClassName Star_0 Star_0 = "rating-group__action"
 ratingClassName _      Star_0 = "rating-group__action"
 ratingClassName _      _      = "rating-group__star"
@@ -118,10 +122,12 @@ ratingSimpleLoaderCpt = here.component "ratingSimpleLoader" cpt where
     useLoader { errorHandler
               , loader: loadDocumentContext session
               , path: { docId, corpusId }
-              , render: \{ nc_category } -> renderRatingSimple { docId
-                                                               , corpusId
-                                                               , category: fromMaybe 0 nc_category
-                                                               , session } [] }
+              , render: \{ nc_category } -> do
+                  let category = fromMaybe UnRead $ decodeCategory <$> nc_category
+                  renderRatingSimple { docId
+                                     , corpusId
+                                     , category
+                                     , session } [] }
     where
       errorHandler err = do
         here.warn2 "[pageLayout] RESTError" err
@@ -139,7 +145,7 @@ loadDocumentContext session { docId, corpusId } = getNodeContext session docId c
 type RenderRatingSimpleProps =
   ( docId    :: NodeID
   , corpusId :: NodeID
-  , category :: Int
+  , category :: Category
   , session  :: Session )
 
 renderRatingSimple :: R2.Component RenderRatingSimpleProps
@@ -151,17 +157,17 @@ renderRatingSimpleCpt = here.component "renderRatingSimple" cpt where
       , category
       , session
       } _ = do
-    score <- T.useBox $ decodeStar category
+    categoryS <- T.useBox category
 
     pure $ ratingSimple { docId
                         , corpusId
-                        , score
+                        , category: categoryS
                         , session } []
 
 type RatingSimpleProps =
   ( docId    :: NodeID
   , corpusId :: NodeID
-  , score    :: T.Box Star
+  , category :: T.Box Category
   , session  :: Session )
 
 ratingSimple :: R2.Component RatingSimpleProps
@@ -170,19 +176,21 @@ ratingSimpleCpt :: R.Component RatingSimpleProps
 ratingSimpleCpt = here.component "ratingSimple" cpt where
   cpt { docId
       , corpusId
-      , score
+      , category
       , session
       } _ = do
-    score' <- T.useLive T.unequal score
+    category' <- T.useLive T.unequal category
+    let star' = cat2star category'
 
     let
       onClick c _ = do
-        let c' = score' == c ? clickAgain c $ c
+        -- let c' = score' == c ? clickAgain c $ c
+        let c' = categoryNextState category' c
 
         -- setLocalCategories $ Map.insert r._id c'
         launchAff_ do
-          _ <- updateNodeContextCategory session docId corpusId $ star2score c'
-          liftEffect $ T.write_ c' score
+          _ <- updateNodeContextCategory session docId corpusId $ cat2score c'
+          liftEffect $ T.write_ c' category
           pure unit
 
     pure $
@@ -190,17 +198,17 @@ ratingSimpleCpt = here.component "ratingSimple" cpt where
       { className: "rating-group" } $
       stars <#> \s ->
         B.iconButton
-        { name: ratingIcon score' s
+        { name: ratingIcon category' s
         , callback: onClick s
         , overlay: false
-        , variant: ratingVariant score' s
-        , className: ratingClassName score' s
+        , variant: ratingVariant star' s
+        , className: ratingClassName star' s
         }
 
 
 newtype RatingQuery =
   RatingQuery { nodeIds :: Array Int
-              , rating  :: Star
+              , rating  :: Category
               }
 derive instance Generic RatingQuery _
 instance JSON.WriteForeign RatingQuery where
@@ -266,6 +274,9 @@ icon cat b = btn b $ "fa fa-" <> (color $ size b $ icon' cat b)
 
     icon' Favorite false = "heart-o"
     icon' Favorite true = "heart"
+
+    icon' ToCite false = "quote-left-o"
+    icon' ToCite true = "quote-left"
 
     size :: Boolean -> String -> String
     size true  s = s <> " btn-lg"

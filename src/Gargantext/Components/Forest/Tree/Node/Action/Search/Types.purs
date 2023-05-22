@@ -8,7 +8,6 @@ import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (class Newtype)
 import Data.Set (Set)
 import Data.Set as Set
-import Data.String as String
 import Data.Tuple (Tuple)
 import Data.Tuple.Nested ((/\))
 import Gargantext.Components.GraphQL.IMT as GQLIMT
@@ -23,21 +22,18 @@ import Simple.JSON as JSON
 import URI.Extra.QueryPairs as QP
 import URI.Query as Q
 
-type Search = { databases :: Database
-              , datafield :: Maybe DataField
-              , url       :: String
-              , lang      :: Maybe Lang
-              , node_id   :: Maybe Int
-              , term      :: String
-              , years     :: Array String
+type Search = { databases    :: Database
+              , datafield    :: Maybe DataField
+              , url          :: String
+              , lang         :: Maybe Lang
+              , node_id      :: Maybe Int
+              , term         :: String
+              , years        :: Array String
               }
 
 isIsTex_Advanced :: Maybe DataField -> Boolean
 isIsTex_Advanced ( Just
-          ( External
-            ( Just ( IsTex_Advanced)
-            )
-          )
+          ( External ( IsTex_Advanced) )
         ) = true
 isIsTex_Advanced _ = false
 
@@ -51,13 +47,13 @@ class Doc a where
 
 dataFields :: Array DataField
 dataFields = [ {- Gargantext
-             , -} External Nothing
+             , -} External Empty
              , Web
              -- , Files
              ]
 
 data DataField = Gargantext
-               | External (Maybe Database)
+               | External Database
                | Web
                | Files
 
@@ -74,9 +70,9 @@ instance Doc DataField where
   doc Files        = "Zip files with formats.."
 derive instance Eq DataField
 instance JSON.WriteForeign DataField where
-  writeImpl (External (Just db)) = JSON.writeImpl $ "External " <> show db
-  writeImpl Web = JSON.writeImpl $ "Web"
-  writeImpl f = JSON.writeImpl $ show f
+  writeImpl (External db) = JSON.writeImpl { tag: "External"
+                                           , contents: JSON.writeImpl db }
+  writeImpl f = JSON.writeImpl $ JSON.writeImpl { tag: show f }
 
 ----------------------------------------
 data DataOriginApi = InternalOrigin { api :: Database }
@@ -91,23 +87,23 @@ instance JSON.WriteForeign DataOriginApi where
   writeImpl (ExternalOrigin { api }) = JSON.writeImpl { api }
 
 datafield2dataOriginApi :: DataField -> DataOriginApi
-datafield2dataOriginApi (External (Just a)) = ExternalOrigin { api : a }
-datafield2dataOriginApi _                   = InternalOrigin { api : IsTex } -- TODO fixme 
+datafield2dataOriginApi (External a) = ExternalOrigin { api : a }
+datafield2dataOriginApi _            = InternalOrigin { api : IsTex } -- TODO fixme
 
 ------------------------------------------------------------------------
 -- | Database search specifications
 
 datafield2database :: DataField -> Database
-datafield2database (External (Just x)) = x
-datafield2database _                   = Empty
+datafield2database (External x) = x
+datafield2database _            = Empty
 
 allDatabases :: Array Database
 allDatabases = [ Empty
-               , PubMed
-               , Arxiv
+               , PubMed { api_key: Nothing }
+               -- , Arxiv
                , HAL Nothing
                , IsTex
-               , IsTex_Advanced
+               -- , IsTex_Advanced
                -- , Isidore
                --, Web
                --, News
@@ -116,7 +112,7 @@ allDatabases = [ Empty
 
 data Database = All_Databases
               | Empty
-              | PubMed
+              | PubMed { api_key :: Maybe String }
               | Arxiv
               | HAL (Maybe Org)
               | IsTex
@@ -127,7 +123,7 @@ data Database = All_Databases
 derive instance Generic Database _
 instance Show Database where
   show All_Databases  = "All Databases"
-  show PubMed         = "PubMed"
+  show (PubMed _)     = "PubMed"
   show Arxiv          = "Arxiv"
   show (HAL _)        = "HAL"
   show IsTex          = "IsTex"
@@ -139,7 +135,7 @@ instance Show Database where
 
 instance Doc Database where
   doc All_Databases  = "All databases"
-  doc PubMed         = "All Medical publications"
+  doc (PubMed _)     = "All Medical publications"
   doc Arxiv          = "Arxiv"
   doc (HAL _)        = "All open science (archives ouvertes)"
   doc IsTex          = "All Elsevier enriched by CNRS/INIST"
@@ -149,22 +145,46 @@ instance Doc Database where
 --  doc News        = "Web filtered by News"
 --  doc SocialNetworks = "Web filtered by MicroBlogs"
 
-instance Read Database where
-  read :: String -> Maybe Database
-  read "All Databases"  = Just All_Databases
-  read "PubMed"         = Just PubMed
-  read "Arxiv"          = Just Arxiv
-  read "HAL"            = Just $ HAL Nothing
-  read "Isidore"        = Just Isidore
-  read "IsTex"          = Just IsTex
-  read "IsTex_Advanced" = Just IsTex_Advanced
-  -- read "Web"    = Just Web
-  -- read "News"   = Just News
-  -- read "Social Networks" = Just SocialNetworks
-  read _        = Nothing
+-- instance Read Database where
+--   read :: String -> Maybe Database
+--   read "All Databases"  = Just All_Databases
+--   read "PubMed"         = Just PubMed
+--   read "Arxiv"          = Just Arxiv
+--   read "HAL"            = Just $ HAL Nothing
+--   read "Isidore"        = Just Isidore
+--   read "IsTex"          = Just IsTex
+--   read "IsTex_Advanced" = Just IsTex_Advanced
+--   -- read "Web"    = Just Web
+--   -- read "News"   = Just News
+--   -- read "Social Networks" = Just SocialNetworks
+--   read _        = Nothing
+
+dbToInputValue :: Database -> String
+dbToInputValue All_Databases  = "all_databases"
+dbToInputValue (PubMed _)     = "pubmed"
+dbToInputValue Arxiv          = "arxiv"
+dbToInputValue (HAL _)        = "hal"
+dbToInputValue IsTex          = "istex"
+dbToInputValue IsTex_Advanced = "istex_advanced"
+dbToInputValue Isidore        = "isidore"
+dbToInputValue Empty          = "empty"
+
+dbFromInputValue :: String -> Maybe Database
+dbFromInputValue "all_databases"  = Just All_Databases
+dbFromInputValue "pubmed"         = Just (PubMed { api_key: Nothing})
+dbFromInputValue "arxiv"          = Just Arxiv
+dbFromInputValue "hal"            = Just (HAL Nothing)
+dbFromInputValue "istex"          = Just IsTex
+dbFromInputValue "istex_advanced" = Just IsTex_Advanced
+dbFromInputValue "isidore"        = Just Isidore
+dbFromInputValue "empty"          = Just Empty
+dbFromInputValue _                = Nothing
 
 derive instance Eq Database
-instance JSON.WriteForeign Database where writeImpl = JSON.writeImpl <<< show
+instance JSON.WriteForeign Database where
+  writeImpl (PubMed { api_key }) = JSON.writeImpl { tag: "PubMed"
+                                                  , _api_key: api_key }
+  writeImpl f = JSON.writeImpl { tag: show f }
 
 ------------------------------------------------------------------------
 -- | Organization specifications
@@ -234,16 +254,17 @@ instance Show SearchOrder where
 ------------------------------------------------------------------------
 
 newtype SearchQuery = SearchQuery
-  { query     :: String
-  , databases :: Database
-  , datafield :: Maybe DataField
-  , files_id  :: Array String
-  , lang      :: Maybe Lang
-  , limit     :: Maybe Int
-  , node_id   :: Maybe Int
-  , offset    :: Maybe Int
-  , order     :: Maybe SearchOrder
-  , selection :: ListSelection.Selection
+  { query        :: String
+  , databases    :: Database
+  , datafield    :: Maybe DataField
+  , files_id     :: Array String
+  , lang         :: Maybe Lang
+  , limit        :: Maybe Int
+  , node_id      :: Maybe Int
+  , offset       :: Maybe Int
+  , order        :: Maybe SearchOrder
+  , pubmedAPIKey :: Maybe String
+  , selection    :: ListSelection.Selection
   }
 derive instance Generic SearchQuery _
 derive instance Newtype SearchQuery _
@@ -260,27 +281,29 @@ instance GT.ToQuery SearchQuery where
           pair k = maybe [] $ \v ->
             [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
 instance JSON.WriteForeign SearchQuery where
-  writeImpl (SearchQuery { databases, datafield, lang, node_id, query, selection }) =
+  writeImpl (SearchQuery { databases, datafield, lang, node_id, pubmedAPIKey, query, selection }) =
     JSON.writeImpl { query: query -- String.replace (String.Pattern "\"") (String.Replacement "\\\"") query
                    , databases
                    , datafield
                    , lang: maybe "EN" show lang
                    , node_id: fromMaybe 0 node_id
                    , flowListWith: selection
+                   , pubmedAPIKey
                    }
 
 defaultSearchQuery :: SearchQuery
 defaultSearchQuery = SearchQuery
-  { query     : ""
-  , databases : Empty
-  , datafield : Nothing
-  , files_id  : []
-  , lang      : Nothing
-  , limit     : Nothing
-  , node_id   : Nothing
-  , offset    : Nothing
-  , order     : Nothing
-  , selection : ListSelection.NoList -- MyListsFirst
+  { query        : ""
+  , databases    : Empty
+  , datafield    : Nothing
+  , files_id     : []
+  , lang         : Nothing
+  , limit        : Nothing
+  , node_id      : Nothing
+  , offset       : Nothing
+  , order        : Nothing
+  , pubmedAPIKey : Nothing
+  , selection    : ListSelection.NoList -- MyListsFirst
   }
 
 performSearch :: Session -> Int -> SearchQuery -> AffRESTError GT.AsyncTaskWithType

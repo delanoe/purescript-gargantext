@@ -33,6 +33,7 @@ to generate this file without the comments in this block.
   , "dom-simple"
   , "effect"
   , "either"
+  , "enums"
   , "exceptions"
   , "ffi-simple"
   , "foldable-traversable"
