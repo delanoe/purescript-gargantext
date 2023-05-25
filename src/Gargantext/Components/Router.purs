@@ -365,6 +365,7 @@ openedSidePanelCpt :: R.Component Props
 openedSidePanelCpt = here.component "openedSidePanel" cpt where
   cpt { boxes:
         { route
+        , sidePanelLists
         , sidePanelState
         }
       } _ = do
@@ -380,7 +381,7 @@ openedSidePanelCpt = here.component "openedSidePanel" cpt where
       GR.Lists _s _n -> do
         pure $ wrapper
           [ Lists.sidePanel { session
-                            , selectedNgrams
+                            , sidePanel: sidePanelLists
                             , sidePanelState } [] ]
       GR.NodeTexts _s _n ->
         pure $ wrapper [ Texts.textsSidePanel {} ]

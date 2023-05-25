@@ -102,8 +102,8 @@ listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
         sessionUpdate $ setCacheState session nodeId cacheState
 
 type SidePanelProps =
-  ( selectedNgrams :: T.Box (Maybe NgramsTerm)
-  , session        :: Session
+  ( session        :: Session
+  , sidePanel      :: T.Box (Maybe (Record SidePanel))
   , sidePanelState :: T.Box GT.SidePanelState
   )
 
@@ -113,7 +113,7 @@ sidePanelCpt :: R.Component SidePanelProps
 sidePanelCpt = here.component "sidePanel" cpt
   where
     cpt { session
-        , selectedNgrams
+        , sidePanel
         , sidePanelState } _ = do
 
       sidePanelState' <- T.useLive T.unequal sidePanelState
@@ -131,19 +131,20 @@ sidePanelCpt = here.component "sidePanel" cpt
             H.span { className: "fa fa-times" } []
           ]
         ]
-      , sidePanelNgramsContextView { selectedNgrams
-                                   , session } []
+      , sidePanelNgramsContextView { session
+                                   , sidePanel } []
       ]
 
 type SidePanelNgramsContextView =
- ( selectedNgrams :: T.Box (Maybe NgramsTerm)
- , session        :: Session )
+ ( session        :: Session
+ , sidePanel      :: T.Box (Maybe (Record SidePanel)) )
 
 sidePanelNgramsContextView :: R2.Component SidePanelNgramsContextView
 sidePanelNgramsContextView = R.createElement sidePanelNgramsContextViewCpt
 sidePanelNgramsContextViewCpt :: R.Component SidePanelNgramsContextView
 sidePanelNgramsContextViewCpt = here.component "sidePanelNgramsContextView" cpt where
-  cpt { selectedNgrams
-      , session } _ = do
-    -- pure $ H.h4 {} [ H.text txt ]
-    pure $ H.div {} [ H.text "Hello ngrams" ]
+  cpt { session
+      , sidePanel } _ = do
+    sidePanel' <- T.useLive T.unequal sidePanel
+
+    pure $ H.div {} [ H.text $ show sidePanel' ]
