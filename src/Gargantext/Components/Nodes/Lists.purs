@@ -2,12 +2,15 @@ module Gargantext.Components.Nodes.Lists where
 
 import Gargantext.Prelude
 
+import Data.Maybe (Maybe)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Core.NgramsTable.Types (NgramsTerm)
 import Gargantext.Components.Corpus.CodeSection (loadCorpusWithChild)
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
+import Gargantext.Components.Nodes.Lists.SidePanel (SidePanel)
 import Gargantext.Components.Nodes.Lists.Tabs as Tabs
 import Gargantext.Components.Nodes.Lists.Types (CacheState(..))
 import Gargantext.Components.Table as Table
@@ -29,6 +32,7 @@ type CommonPropsNoSession =
   ( boxes         :: Boxes
   , nodeId        :: Int
   , sessionUpdate :: Session -> Effect Unit
+  , sidePanel     :: T.Box (Maybe (Record SidePanel))
   )
 
 type Props = WithSession CommonPropsNoSession
@@ -52,7 +56,8 @@ listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
   cpt { boxes
       , nodeId
       , session
-      , sessionUpdate } _ = do
+      , sessionUpdate
+      , sidePanel } _ = do
     activeTab <- T.useBox 0
 
     let path = { nodeId, session }
@@ -87,6 +92,7 @@ listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
                               , corpusId
                               , key: "listsLayoutWithKey-tabs-" <> (show cacheState')
                               , session
+                              , sidePanel
                               }
                             ] }
     where
@@ -96,7 +102,8 @@ listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
         sessionUpdate $ setCacheState session nodeId cacheState
 
 type SidePanelProps =
-  ( session        :: Session
+  ( selectedNgrams :: T.Box (Maybe NgramsTerm)
+  , session        :: Session
   , sidePanelState :: T.Box GT.SidePanelState
   )
 
@@ -106,6 +113,7 @@ sidePanelCpt :: R.Component SidePanelProps
 sidePanelCpt = here.component "sidePanel" cpt
   where
     cpt { session
+        , selectedNgrams
         , sidePanelState } _ = do
 
       sidePanelState' <- T.useLive T.unequal sidePanelState
@@ -123,15 +131,19 @@ sidePanelCpt = here.component "sidePanel" cpt
             H.span { className: "fa fa-times" } []
           ]
         ]
-      , sidePanelDocView { session } []
+      , sidePanelNgramsContextView { selectedNgrams
+                                   , session } []
       ]
 
-type SidePanelDocView = ( session :: Session )
+type SidePanelNgramsContextView =
+ ( selectedNgrams :: T.Box (Maybe NgramsTerm)
+ , session        :: Session )
 
-sidePanelDocView :: R2.Component SidePanelDocView
-sidePanelDocView = R.createElement sidePanelDocViewCpt
-sidePanelDocViewCpt :: R.Component SidePanelDocView
-sidePanelDocViewCpt = here.component "sidePanelDocView" cpt where
-  cpt { } _ = do
+sidePanelNgramsContextView :: R2.Component SidePanelNgramsContextView
+sidePanelNgramsContextView = R.createElement sidePanelNgramsContextViewCpt
+sidePanelNgramsContextViewCpt :: R.Component SidePanelNgramsContextView
+sidePanelNgramsContextViewCpt = here.component "sidePanelNgramsContextView" cpt where
+  cpt { selectedNgrams
+      , session } _ = do
     -- pure $ H.h4 {} [ H.text txt ]
     pure $ H.div {} [ H.text "Hello ngrams" ]

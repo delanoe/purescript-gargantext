@@ -15,12 +15,15 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (Variant(..))
+import Gargantext.Components.Nodes.Lists.SidePanel (SidePanel)
 import Gargantext.Components.Table as Tbl
 import Gargantext.Core.NgramsTable.Functions (applyNgramsPatches, setTermListA, tablePatchHasNgrams)
 import Gargantext.Core.NgramsTable.Types (Action(..), NgramsClick, NgramsDepth, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm, _NgramsElement, _NgramsRepoElement, _children, _list, _ngrams, _occurrences, ngramsTermText, replace)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
+import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
 import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
@@ -224,7 +227,8 @@ treeLoadedCpt = here.component "treeLoaded" cpt where
           H.ul {} <<< map (\ngrams -> tree ((Record.delete (Proxy :: Proxy "ngramsChildren") params) { ngramsDepth = {depth, ngrams} })) <<< L.toUnfoldable
 
 type RenderNgramsItem =
-  ( dispatch             :: Action -> Effect Unit
+  ( boxes             :: Boxes
+  , dispatch             :: Action -> Effect Unit
   , getNgramsChildrenAff :: Maybe (NgramsTerm -> Aff (Array NgramsTerm))
   , getNgramsChildren :: Maybe (NgramsTerm -> Array NgramsTerm)
   , isEditing         :: T.Box Boolean
@@ -233,6 +237,8 @@ type RenderNgramsItem =
   , ngramsLocalPatch  :: NgramsTablePatch
   , ngramsSelection   :: Set NgramsTerm
   , ngramsTable       :: NgramsTable
+  , session           :: Session
+  , sidePanel         :: T.Box (Maybe (Record SidePanel))
   )
 
 renderNgramsItem :: R2.Component RenderNgramsItem
@@ -240,7 +246,8 @@ renderNgramsItem = R.createElement renderNgramsItemCpt
 renderNgramsItemCpt :: R.Component RenderNgramsItem
 renderNgramsItemCpt = here.component "renderNgramsItem" cpt
   where
-    cpt { dispatch
+    cpt { boxes
+        , dispatch
         --, getNgramsChildren
         , isEditing
         , ngrams
@@ -248,11 +255,27 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         , ngramsLocalPatch
         , ngramsSelection
         , ngramsTable
+        , session
+        , sidePanel
         } _ = do
       isEditing' <- T.useLive T.unequal isEditing
 
-      pure $ Tbl.makeRow
+      mCurrentNgrams <-
+        T.useFocused
+        (maybe Nothing _.mCurrentNgrams)
+        (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentNgrams = val })) sidePanel
+      mCurrentNgrams' <- T.useLive T.unequal mCurrentNgrams
+
+      let currentRowSelected = mCurrentNgrams' == Just ngrams
+          className = currentRowSelected ? "page-paint-raw page-paint-raw--selected" $ ""
+
+      pure $ Tbl.makeRow' { className }
         [
+          ngramsContext { boxes
+                        , ngrams
+                        , session
+                        , sidePanel } []
+        ,
           selected
         ,
           B.wad'
@@ -385,3 +408,50 @@ nextTermList :: GT.TermList -> GT.TermList
 nextTermList GT.MapTerm       = GT.StopTerm
 nextTermList GT.StopTerm      = GT.CandidateTerm
 nextTermList GT.CandidateTerm = GT.MapTerm
+
+
+type NgramsContextProps =
+  ( boxes     :: Boxes
+  , ngrams    :: NgramsTerm
+  , session   :: Session
+  , sidePanel :: T.Box (Maybe (Record SidePanel)))
+
+ngramsContext :: R2.Component NgramsContextProps
+ngramsContext = R.createElement ngramsContextCpt
+ngramsContextCpt :: R.Component NgramsContextProps
+ngramsContextCpt = here.component "ngramsContext" cpt where
+  cpt { ngrams
+      , boxes: { sidePanelState }
+      , session
+      , sidePanel } _ = do
+    mCurrentNgrams <-
+      T.useFocused
+      (maybe Nothing _.mCurrentNgrams)
+      (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentNgrams = val })) sidePanel
+    mCurrentNgrams' <- T.useLive T.unequal mCurrentNgrams
+
+    let selected = mCurrentNgrams' == Just ngrams
+        eyeClass = selected ? "eye" $ "eye-slash"
+        variant = selected ? Info $ Dark
+
+        onClick selected _ = do
+          -- here.log2 "[docChooser] onClick, listId" listId
+          -- here.log2 "[docChooser] onClick, corpusId" corpusId
+          -- here.log2 "[docChooser] onClick, nodeId" nodeId
+          -- R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
+          -- T2.reload tableReload
+          if selected then do
+            T.write_ Nothing sidePanel
+            T.write_ GT.Closed sidePanelState
+          else do
+            T.write_ (Just { mCurrentNgrams: Just ngrams }) sidePanel
+            T.write_ GT.Opened sidePanelState
+
+
+    pure $ H.div { className: "doc-chooser"}
+      [ B.iconButton
+        { name: eyeClass
+        , overlay: false
+        , variant
+        , callback: onClick selected }
+      ]
