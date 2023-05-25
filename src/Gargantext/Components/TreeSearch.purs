@@ -10,7 +10,7 @@ import Data.String (Pattern(..), contains, toLower)
 import Effect (Effect)
 import Gargantext.Components.Bootstrap (formSelect')
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Types (ModalSizing(..))
+import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), ModalSizing(..), Position(..), TooltipPosition(..), Variant(..))
 import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Hooks.LinkHandler (useLinkHandler)
 import Gargantext.Hooks.Loader (useLoader)
@@ -70,7 +70,7 @@ treeSearchCpt = here.component "treeSearch" cpt where
       B.baseModal
       { isVisibleBox: visible
       , title: Just "Tree Search"
-      , size: ExtraLargeModalSize
+      , size: MediumModalSize
       , modalClassName: ""
       }
       [  treeSearchState {visible, sessions: sessions'} ]
@@ -153,11 +153,27 @@ treeSearchRenderCpt = here.component "treeSearchRenderCpt" cpt where
       where
         results s = map searchResult s
           where
-            searchResult sd = H.div {} [H.button { className: "mainleaf"
-                                                 , on: { click: do 
-                                                          T.write_ false visible
-                                                          goToRoute $ fromMaybe Home $ nodeTypeAppRoute sd.type (sessionId session) sd.id}} 
-                                                 [B.icon {name: getIcon sd.type true} , H.text sd.name]]
+            searchResult sd = H.div 
+                                { className: "forest-layout__action"} 
+                                [ 
+                                  B.tooltipContainer
+                                  { delayShow: 600
+                                  , position: TooltipPosition Right
+                                  , tooltipSlot: B.span_ $ show $ fromMaybe Home $ nodeTypeAppRoute sd.type (sessionId session) sd.id
+                                  , defaultSlot:
+                                    B.button 
+                                    { className: "forest-layout__action__button"
+                                    , callback: \_ -> do 
+                                      T.write_ false visible
+                                      goToRoute $ fromMaybe Home $ nodeTypeAppRoute sd.type (sessionId session) sd.id 
+                                    , variant: ButtonVariant Light }
+                                    [
+                                      B.icon {name: getIcon sd.type true}
+                                    , B.wad_ [ "d-inline-block", "w-1" ] 
+                                    , H.text sd.name
+                                    ]
+                                  }
+                                ]
         change _ = T.write_ (filter (\val -> contains (Pattern $ toLower $ R2.getInputValue inputRef) (toLower val.name)) searchData) filteredData
 
 type LoadProps = ( session :: Session )
