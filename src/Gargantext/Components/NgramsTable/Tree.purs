@@ -228,6 +228,7 @@ treeLoadedCpt = here.component "treeLoaded" cpt where
 
 type RenderNgramsItem =
   ( boxes             :: Boxes
+  , corpusId          :: GT.CorpusId
   , dispatch             :: Action -> Effect Unit
   , getNgramsChildrenAff :: Maybe (NgramsTerm -> Aff (Array NgramsTerm))
   , getNgramsChildren :: Maybe (NgramsTerm -> Array NgramsTerm)
@@ -247,6 +248,7 @@ renderNgramsItemCpt :: R.Component RenderNgramsItem
 renderNgramsItemCpt = here.component "renderNgramsItem" cpt
   where
     cpt { boxes
+        , corpusId
         , dispatch
         --, getNgramsChildren
         , isEditing
@@ -272,6 +274,7 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
       pure $ Tbl.makeRow' { className }
         [
           ngramsContext { boxes
+                        , corpusId
                         , ngrams
                         , session
                         , sidePanel } []
@@ -412,6 +415,7 @@ nextTermList GT.CandidateTerm = GT.MapTerm
 
 type NgramsContextProps =
   ( boxes     :: Boxes
+  , corpusId  :: GT.CorpusId
   , ngrams    :: NgramsTerm
   , session   :: Session
   , sidePanel :: T.Box (Maybe (Record SidePanel)))
@@ -422,6 +426,7 @@ ngramsContextCpt :: R.Component NgramsContextProps
 ngramsContextCpt = here.component "ngramsContext" cpt where
   cpt { ngrams
       , boxes: { sidePanelState }
+      , corpusId
       , session
       , sidePanel } _ = do
     mCurrentNgrams <-
@@ -444,7 +449,8 @@ ngramsContextCpt = here.component "ngramsContext" cpt where
             T.write_ Nothing sidePanel
             T.write_ GT.Closed sidePanelState
           else do
-            T.write_ (Just { mCurrentNgrams: Just ngrams }) sidePanel
+            T.write_ (Just { mCorpusId: Just corpusId
+                           , mCurrentNgrams: Just ngrams }) sidePanel
             T.write_ GT.Opened sidePanelState
 
 

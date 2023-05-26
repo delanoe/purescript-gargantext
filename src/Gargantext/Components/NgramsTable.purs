@@ -563,6 +563,7 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
 
         convertRow ngramsElement =
           { row: renderNgramsItem { boxes
+                                  , corpusId: path'.nodeId
                                   , dispatch: performAction
                                   , getNgramsChildrenAff
                                   , getNgramsChildren

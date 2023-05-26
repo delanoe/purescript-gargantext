@@ -2,19 +2,21 @@ module Gargantext.Components.Nodes.Lists where
 
 import Gargantext.Prelude
 
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..), maybe)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Gargantext.Components.App.Store (Boxes)
-import Gargantext.Core.NgramsTable.Types (NgramsTerm)
 import Gargantext.Components.Corpus.CodeSection (loadCorpusWithChild)
+import Gargantext.Components.GraphQL.Context as GQLCTX
+import Gargantext.Components.GraphQL.Endpoints (getContextsForNgrams)
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Components.Nodes.Lists.SidePanel (SidePanel)
 import Gargantext.Components.Nodes.Lists.Tabs as Tabs
 import Gargantext.Components.Nodes.Lists.Types (CacheState(..))
 import Gargantext.Components.Table as Table
-import Gargantext.Config.REST (logRESTError)
+import Gargantext.Config.REST (logRESTError, AffRESTError)
+import Gargantext.Core.NgramsTable.Types (NgramsTerm(..))
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (WithSession, WithSessionContext, Session, sessionId, getCacheState, setCacheState)
 import Gargantext.Types as GT
@@ -145,6 +147,85 @@ sidePanelNgramsContextViewCpt :: R.Component SidePanelNgramsContextView
 sidePanelNgramsContextViewCpt = here.component "sidePanelNgramsContextView" cpt where
   cpt { session
       , sidePanel } _ = do
-    sidePanel' <- T.useLive T.unequal sidePanel
+    mSidePanel' <- T.useLive T.unequal sidePanel
 
-    pure $ H.div {} [ H.text $ show sidePanel' ]
+    case mSidePanel' of
+      Nothing -> pure $ H.div {} []
+      Just sidePanel' ->
+        pure $ H.div {} [ H.text $ show sidePanel'
+                        , ngramsDocList { mCorpusId: sidePanel'.mCorpusId
+                                        , mNgrams: sidePanel'.mCurrentNgrams
+                                        , session } [] ]
+
+type NgramsDocListProps =
+  ( mCorpusId :: Maybe GT.CorpusId
+  , mNgrams   :: Maybe NgramsTerm
+  , session   :: Session )
+
+ngramsDocList :: R2.Component NgramsDocListProps
+ngramsDocList = R.createElement ngramsDocListCpt
+ngramsDocListCpt :: R.Component NgramsDocListProps
+ngramsDocListCpt = here.component "ngramsDocList" cpt where
+  cpt { mCorpusId: Nothing } _ = do
+    pure $ H.div {} []
+  cpt { mNgrams: Nothing } _ = do
+    pure $ H.div {} []
+  cpt { mCorpusId: Just corpusId
+      , mNgrams: Just ngrams
+      , session } _ = do
+    useLoader { errorHandler
+              , path: { corpusId, ngrams, session }
+              , loader: loaderNgramsDocList
+              , render: \ctx -> ngramsDocListLoaded { contexts: ctx
+                                                    , corpusId
+                                                    , ngrams
+                                                    , session } []
+              }
+    where
+      errorHandler = logRESTError here "[ngramsDocList]"
+
+type NgramsDocLoadProps =
+  ( corpusId :: GT.CorpusId
+  , ngrams   :: NgramsTerm
+  , session  :: Session )
+
+loaderNgramsDocList :: Record NgramsDocLoadProps -> AffRESTError (Array GQLCTX.Context)
+loaderNgramsDocList { corpusId, ngrams: NormNgramsTerm ngrams, session } =
+  getContextsForNgrams session corpusId [ngrams]
+
+type NgramsDocListLoadedProps =
+  ( contexts :: Array GQLCTX.Context
+  , corpusId :: GT.CorpusId
+  , ngrams   :: NgramsTerm
+  , session  :: Session )
+
+ngramsDocListLoaded :: R2.Component NgramsDocListLoadedProps
+ngramsDocListLoaded = R.createElement ngramsDocListLoadedCpt
+ngramsDocListLoadedCpt :: R.Component NgramsDocListLoadedProps
+ngramsDocListLoadedCpt = here.component "ngramsDocListLoaded" cpt where
+  cpt { contexts
+      , corpusId
+      , ngrams
+      , session } _ = do
+    pure $ H.div { className: "ngrams-doc-list" }
+      [ H.text "contexts"
+      , H.ul { className: "list-group" } ((\item -> contextItem { item } [] ) <$> contexts)
+      ]
+
+type ContextItemProps =
+  ( item :: GQLCTX.Context )
+
+contextItem :: R2.Component ContextItemProps
+contextItem = R.createElement contextItemCpt
+contextItemCpt :: R.Component ContextItemProps
+contextItemCpt = here.component "contextItem" cpt where
+  cpt { item } _ = do
+    pure $ H.a { className: "list-group-item text-decoration-none" }
+      [ H.div { className: "context-item-title" }
+          [ H.text $ maybe "" (_.hrd_title) item.c_hyperdata ]
+      , H.div { className: "context-item-source"}
+          [ H.text $ maybe "" (_.hrd_source) item.c_hyperdata ]
+      , H.div { className: "context-item-date"}
+          [ H.text $ (maybe "" (\h -> show h.hrd_publication_year) item.c_hyperdata) <>
+                     "-" <>
+                     (maybe "" (\h -> show h.hrd_publication_month) item.c_hyperdata) ] ]
