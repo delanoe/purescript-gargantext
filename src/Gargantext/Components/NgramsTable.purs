@@ -568,12 +568,13 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
                                   , getNgramsChildrenAff
                                   , getNgramsChildren
                                   , isEditing
+                                  , mListId: A.head path'.listIds
                                   , ngrams: ngramsElement ^. _NgramsElement <<< _ngrams
                                   , ngramsElement
                                   , ngramsLocalPatch
                                   , ngramsSelection
                                   , ngramsTable
-                                  , session
+                                  , session: path'.session
                                   , sidePanel } []
           , delete: false
           }

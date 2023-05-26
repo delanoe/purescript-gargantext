@@ -2,7 +2,7 @@ module Gargantext.Components.Nodes.Lists where
 
 import Gargantext.Prelude
 
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Gargantext.Components.App.Store (Boxes)
@@ -15,9 +15,12 @@ import Gargantext.Components.Nodes.Lists.SidePanel (SidePanel)
 import Gargantext.Components.Nodes.Lists.Tabs as Tabs
 import Gargantext.Components.Nodes.Lists.Types (CacheState(..))
 import Gargantext.Components.Table as Table
+import Gargantext.Config (defaultFrontends)
 import Gargantext.Config.REST (logRESTError, AffRESTError)
 import Gargantext.Core.NgramsTable.Types (NgramsTerm(..))
+import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Routes as Routes
 import Gargantext.Sessions (WithSession, WithSessionContext, Session, sessionId, getCacheState, setCacheState)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
@@ -151,14 +154,18 @@ sidePanelNgramsContextViewCpt = here.component "sidePanelNgramsContextView" cpt 
 
     case mSidePanel' of
       Nothing -> pure $ H.div {} []
-      Just sidePanel' ->
-        pure $ H.div {} [ H.text $ show sidePanel'
+      Just sidePanel' -> do
+        let ngrams = maybe "" (\(NormNgramsTerm n) -> n) sidePanel'.mCurrentNgrams
+
+        pure $ H.div {} [ H.h3 {} [ H.text ngrams ]
                         , ngramsDocList { mCorpusId: sidePanel'.mCorpusId
+                                        , mListId: sidePanel'.mListId
                                         , mNgrams: sidePanel'.mCurrentNgrams
                                         , session } [] ]
 
 type NgramsDocListProps =
   ( mCorpusId :: Maybe GT.CorpusId
+  , mListId   :: Maybe GT.ListId
   , mNgrams   :: Maybe NgramsTerm
   , session   :: Session )
 
@@ -168,9 +175,12 @@ ngramsDocListCpt :: R.Component NgramsDocListProps
 ngramsDocListCpt = here.component "ngramsDocList" cpt where
   cpt { mCorpusId: Nothing } _ = do
     pure $ H.div {} []
+  cpt { mListId: Nothing } _ = do
+    pure $ H.div {} []
   cpt { mNgrams: Nothing } _ = do
     pure $ H.div {} []
   cpt { mCorpusId: Just corpusId
+      , mListId: Just listId
       , mNgrams: Just ngrams
       , session } _ = do
     useLoader { errorHandler
@@ -178,6 +188,7 @@ ngramsDocListCpt = here.component "ngramsDocList" cpt where
               , loader: loaderNgramsDocList
               , render: \ctx -> ngramsDocListLoaded { contexts: ctx
                                                     , corpusId
+                                                    , listId
                                                     , ngrams
                                                     , session } []
               }
@@ -196,6 +207,7 @@ loaderNgramsDocList { corpusId, ngrams: NormNgramsTerm ngrams, session } =
 type NgramsDocListLoadedProps =
   ( contexts :: Array GQLCTX.Context
   , corpusId :: GT.CorpusId
+  , listId   :: GT.ListId
   , ngrams   :: NgramsTerm
   , session  :: Session )
 
@@ -205,22 +217,37 @@ ngramsDocListLoadedCpt :: R.Component NgramsDocListLoadedProps
 ngramsDocListLoadedCpt = here.component "ngramsDocListLoaded" cpt where
   cpt { contexts
       , corpusId
+      , listId
       , ngrams
       , session } _ = do
     pure $ H.div { className: "ngrams-doc-list" }
-      [ H.text "contexts"
-      , H.ul { className: "list-group" } ((\item -> contextItem { item } [] ) <$> contexts)
+      [ H.ul { className: "list-group" } ((\item -> contextItem { corpusId
+                                                                , item
+                                                                , listId
+                                                                , session } [] ) <$> contexts)
       ]
 
 type ContextItemProps =
-  ( item :: GQLCTX.Context )
+  ( corpusId :: GT.CorpusId
+  , item     :: GQLCTX.Context
+  , listId   :: GT.ListId
+  , session  :: Session )
 
 contextItem :: R2.Component ContextItemProps
 contextItem = R.createElement contextItemCpt
 contextItemCpt :: R.Component ContextItemProps
 contextItemCpt = here.component "contextItem" cpt where
-  cpt { item } _ = do
-    pure $ H.a { className: "list-group-item text-decoration-none" }
+  cpt { corpusId
+      , item
+      , listId
+      , session } _ = do
+
+    let route = Routes.CorpusDocument (sessionId session) corpusId listId item.c_id
+        href = url defaultFrontends route
+
+    pure $ H.a { className: "list-group-item text-decoration-none"
+               , href
+               , target: "_blank" }
       [ H.div { className: "context-item-title" }
           [ H.text $ maybe "" (_.hrd_title) item.c_hyperdata ]
       , H.div { className: "context-item-source"}

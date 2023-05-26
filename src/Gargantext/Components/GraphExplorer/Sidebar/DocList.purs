@@ -273,7 +273,6 @@ type ItemProps =
 
 item :: R2.Leaf ItemProps
 item = R2.leaf itemCpt
-
 itemCpt :: R.Component ItemProps
 itemCpt = here.component "item" cpt where
   cpt { documentView: dv@(DocumentsView { id, title, source })

@@ -233,6 +233,7 @@ type RenderNgramsItem =
   , getNgramsChildrenAff :: Maybe (NgramsTerm -> Aff (Array NgramsTerm))
   , getNgramsChildren :: Maybe (NgramsTerm -> Array NgramsTerm)
   , isEditing         :: T.Box Boolean
+  , mListId           :: Maybe GT.ListId
   , ngrams            :: NgramsTerm
   , ngramsElement     :: NgramsElement
   , ngramsLocalPatch  :: NgramsTablePatch
@@ -252,6 +253,7 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         , dispatch
         --, getNgramsChildren
         , isEditing
+        , mListId
         , ngrams
         , ngramsElement
         , ngramsLocalPatch
@@ -275,6 +277,7 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         [
           ngramsContext { boxes
                         , corpusId
+                        , mListId
                         , ngrams
                         , session
                         , sidePanel } []
@@ -416,6 +419,7 @@ nextTermList GT.CandidateTerm = GT.MapTerm
 type NgramsContextProps =
   ( boxes     :: Boxes
   , corpusId  :: GT.CorpusId
+  , mListId   :: Maybe GT.ListId
   , ngrams    :: NgramsTerm
   , session   :: Session
   , sidePanel :: T.Box (Maybe (Record SidePanel)))
@@ -427,6 +431,7 @@ ngramsContextCpt = here.component "ngramsContext" cpt where
   cpt { ngrams
       , boxes: { sidePanelState }
       , corpusId
+      , mListId
       , session
       , sidePanel } _ = do
     mCurrentNgrams <-
@@ -450,9 +455,9 @@ ngramsContextCpt = here.component "ngramsContext" cpt where
             T.write_ GT.Closed sidePanelState
           else do
             T.write_ (Just { mCorpusId: Just corpusId
+                           , mListId
                            , mCurrentNgrams: Just ngrams }) sidePanel
             T.write_ GT.Opened sidePanelState
-
 
     pure $ H.div { className: "doc-chooser"}
       [ B.iconButton
