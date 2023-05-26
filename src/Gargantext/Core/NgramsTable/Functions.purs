@@ -8,6 +8,7 @@ import Data.Array (head)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
+import Data.FoldableWithIndex (foldlWithIndex)
 import Data.Lens (use, view, (^?), (^.), (?=), (%~), (%=), (.~))
 import Data.Lens.At (at)
 import Data.Lens.Common (_Just)
@@ -19,6 +20,7 @@ import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, fromMaybe', isJust)
 import Data.Set (Set)
+import Data.Set as Set
 import Data.String as S
 import Data.String.Common as DSC
 import Data.String.Regex (Regex, regex, replace) as R
@@ -112,6 +114,19 @@ lookupRootList ngram (NgramsTable {ngrams_repo_elements: elts}) =
         Nothing -> Nothing
         Just (NgramsRepoElement {list}) -> Just list -- assert root == Nothing
 
+lookupRootListWithChildren :: NgramsTerm -> NgramsTable -> Map NgramsTerm NgramsTerm -> Maybe TermList
+lookupRootListWithChildren ngram table@(NgramsTable {ngrams_repo_elements: elts}) parentMap' =
+  case Map.lookup ngram elts of
+    Nothing -> -- try to find in children
+      case Map.lookup ngram parentMap' of
+        Nothing -> Nothing
+        Just parent' -> lookupRootList parent' table
+    Just (NgramsRepoElement {list, root: Nothing}) -> Just list
+    Just (NgramsRepoElement {root: Just root}) ->
+      case Map.lookup root elts of
+        Nothing -> Nothing
+        Just (NgramsRepoElement {list}) -> Just list -- assert root == Nothing
+
 wordBoundaryChars :: String
 wordBoundaryChars = "[ .,;:!?'\\{}()]"
 
@@ -138,7 +153,10 @@ highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
     sp x = " " <> db x <> " "
     undb = R.replace wordBoundaryReg2 "$1"
     input = spR input0
-    pats = A.fromFoldable (Map.keys elts)
+    -- pats = A.fromFoldable (Map.keys elts)
+    pats :: Array NgramsTerm
+    pats = A.fromFoldable $
+             foldlWithIndex (\term acc (NgramsRepoElement nre) -> Set.union acc $ Set.insert term nre.children) Set.empty elts
     hashStruct = SSKR.hashStruct (sp <<< ngramsTermText <$> pats)
     ixs = SSKR.indicesOfAnyHashStruct hashStruct (normNgramInternal ntype input)
 
@@ -167,9 +185,12 @@ highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
 
     addNgramElt ng ne_list (elt /\ elt_lists) = (elt /\ ((ng /\ ne_list) : elt_lists))
 
+    parentMap' :: Map NgramsTerm NgramsTerm
+    parentMap' = parentMap elts
+
     goAcc :: Partial => Int -> HighlightAccumulator -> Tuple NgramsTerm Int -> HighlightAccumulator
     goAcc i acc (pat /\ lpat) =
-      case lookupRootList pat table of
+      case lookupRootListWithChildren pat table parentMap' of
         Nothing ->
           crashWith "highlightNgrams: pattern missing from table"
         Just ne_list ->
