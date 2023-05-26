@@ -13,6 +13,7 @@ import Data.Lens.Index (class Index, ix)
 import Data.Lens.Iso.Newtype (_Newtype)
 import Data.Lens.Record (prop)
 import Data.List (List)
+import Data.List as List
 import Data.List.Types (NonEmptyList(..))
 import Data.Map (Map)
 import Data.Map as Map
@@ -346,6 +347,18 @@ _NgramsRepoElement  :: Iso' NgramsRepoElement {
 --  , occurrences :: Int
   }
 _NgramsRepoElement = _Newtype
+
+-- | Given a `Map NgramsTerm NgramsRepoElement` (e.g. from
+-- | `NgramsTable.ngrams_repo_elements`), produce a map of child ->
+-- | parent mappings.
+parentMap :: Map NgramsTerm NgramsRepoElement -> Map NgramsTerm NgramsTerm
+parentMap m = Map.fromFoldable rev
+  where
+    mf :: Map NgramsTerm (List NgramsTerm)
+    mf = (\(NgramsRepoElement nre) -> List.fromFoldable nre.children) <$> m
+    rev :: List (Tuple NgramsTerm NgramsTerm)
+    rev = foldlWithIndex (\term (acc :: List (Tuple NgramsTerm NgramsTerm)) children ->
+                           acc <> ((\c -> Tuple c term) <$> children)) List.Nil mf
 
 -----------------------------------------------------------------------------------
 {-
