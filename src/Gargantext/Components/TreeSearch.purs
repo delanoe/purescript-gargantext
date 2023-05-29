@@ -2,15 +2,13 @@ module Gargantext.Components.TreeSearch where
 
 import Gargantext.Prelude
 
-import DOM.Simple as DOM
-import Data.Array (filter, head)
+import Data.Array (head)
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Nullable (Nullable, null)
-import Data.String (Pattern(..), contains, toLower)
 import Effect (Effect)
 import Gargantext.Components.Bootstrap (formSelect')
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), ModalSizing(..), Position(..), TooltipPosition(..), Variant(..))
+import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Hooks.LinkHandler (useLinkHandler)
 import Gargantext.Hooks.Loader (useLoader)
@@ -34,23 +32,23 @@ type Props = (
 type StateProps = (
   visible :: T.Box Boolean
 , sessions :: Sessions
+, query :: T.Box String
 )
 
 type WrapperProps = (
   visible :: T.Box Boolean
 , sessions :: Sessions
 , session  :: T.Box (Maybe Session)
+, query :: T.Box String
 )
 
-type ContainerProps = ( visible :: T.Box Boolean, session :: Session )
+type ContainerProps = ( visible :: T.Box Boolean, session :: Session, query :: String)
 
 type RenderContainerProps = ( visible :: T.Box Boolean, session :: Session, searchData :: Array SearchData )
 
 type RenderProps = ( visible        :: T.Box Boolean
                    , session        :: Session
-                   , filteredData   :: T.Box (Array SearchData)
                    , searchData     :: Array SearchData
-                   , inputRef       :: R.Ref (Nullable DOM.Element)
                    , goToRoute      :: AppRoute -> Effect Unit )
 
 type SearchData = { name :: String
@@ -65,6 +63,8 @@ treeSearchCpt :: R.Component Props
 treeSearchCpt = here.component "treeSearch" cpt where
   cpt { sessions, visible } _ = do
     sessions' <- T.useLive T.unequal sessions
+    query <- T.useBox ""
+    inputRef <- R.useRef ""
 
     pure $ 
       B.baseModal
@@ -73,25 +73,37 @@ treeSearchCpt = here.component "treeSearch" cpt where
       , size: MediumModalSize
       , modalClassName: ""
       }
-      [  treeSearchState {visible, sessions: sessions'} ]
+      [ inputWithEnter { className: "form-control"
+                       , autoFocus: true
+                       , onEnter: submit inputRef query
+                       , onValueChanged: R.setRef inputRef
+                       , onBlur: R.setRef inputRef
+                       , type: "value"
+                       , defaultValue: ""
+                       , placeholder: "Search..."
+                       }
+      , treeSearchState {visible, query, sessions: sessions'} ]
+      where
+        submit ref box _ = T.write_ (R.readRef ref) box
 
 treeSearchState :: R2.Leaf StateProps
 treeSearchState = R2.leaf treeSearchStateCpt
 
 treeSearchStateCpt :: R.Component StateProps
 treeSearchStateCpt = here.component "treeSearchState" cpt where
-  cpt { sessions, visible } _ = do
+  cpt { query, sessions, visible } _ = do
     session <- T.useBox $ head $ unSessions sessions
 
-    pure $ treeSearchWrapper { visible, session, sessions}
+    pure $ treeSearchWrapper { query, visible, session, sessions}
 
 treeSearchWrapper :: R2.Leaf WrapperProps
 treeSearchWrapper = R2.leaf treeSearchWrapperCpt
 
 treeSearchWrapperCpt :: R.Component WrapperProps
 treeSearchWrapperCpt = here.component "treeSearchWrapper" cpt where
-  cpt { visible, sessions, session } _ = do
+  cpt { query, visible, sessions, session } _ = do
     session' <- T.useLive T.unequal session
+    query' <- T.useLive T.unequal query
 
     case session' of
       Just s ->
@@ -102,7 +114,10 @@ treeSearchWrapperCpt = here.component "treeSearchWrapper" cpt where
             , value: s
             } []
         , 
-          treeSearchContainer {visible, session: s}
+          if query' == "" then
+            H.div {className: "search-modal__results"} [B.span_ "Enter your search query..."]
+          else
+            treeSearchContainer {query: query', visible, session: s}
         ]
       Nothing -> pure $ H.div {} []
 
@@ -111,10 +126,10 @@ treeSearchContainer = R2.leaf treeSearchContainerCpt
 
 treeSearchContainerCpt :: R.Component ContainerProps
 treeSearchContainerCpt = here.component "treeSearchContainerCpt" cpt where
-  cpt {visible, session } _ = do
+  cpt {query, visible, session } _ = do
 
     useLoader { errorHandler
-              , path: { session }
+              , path: { session, query }
               , loader: loadSearch
               , render: \searchData -> treeSearchRenderContainer { visible, session, searchData }
     }
@@ -128,28 +143,16 @@ treeSearchRenderContainerCpt :: R.Component RenderContainerProps
 treeSearchRenderContainerCpt = here.component "treeSearchRenderContainer" cpt where
   cpt { visible, session, searchData } _ = do
     { goToRoute } <- useLinkHandler
-    filteredData <- T.useBox searchData
-    inputRef <- R.useRef null
-    pure $ treeSearchRender { visible, session, filteredData, searchData, inputRef, goToRoute }
+    pure $ treeSearchRender { visible, session, searchData, goToRoute }
 
 treeSearchRender :: R2.Leaf RenderProps
 treeSearchRender = R2.leaf treeSearchRenderCpt
 
 treeSearchRenderCpt :: R.Component RenderProps
 treeSearchRenderCpt = here.component "treeSearchRenderCpt" cpt where
-  cpt { visible, session, filteredData, searchData, inputRef, goToRoute } _ = do
-    filteredData' <- T.useLive T.unequal filteredData
+  cpt { visible, session, searchData, goToRoute } _ = do
 
-    pure $ H.div {} [
-      H.div {} [H.input { className: "form-control"
-                        , name: "search"
-                        , ref: inputRef
-                        , on: {change: change }
-                        , type: "value"
-                        , placeholder: "Search..."
-                        }]
-    , H.div {} $ results filteredData'
-    ]
+    pure $ H.div {className: "search-modal__results"} (results searchData)
       where
         results s = map searchResult s
           where
@@ -174,10 +177,9 @@ treeSearchRenderCpt = here.component "treeSearchRenderCpt" cpt where
                                     ]
                                   }
                                 ]
-        change _ = T.write_ (filter (\val -> contains (Pattern $ toLower $ R2.getInputValue inputRef) (toLower val.name)) searchData) filteredData
 
-type LoadProps = ( session :: Session )
+type LoadProps = ( session :: Session, query :: String )
 
 loadSearch :: Record LoadProps -> AffRESTError (Array SearchData)
-loadSearch { session: s } = get s $ appPath (TreeFlat (sessionId s) (sessionRoot s))
+loadSearch { session: s, query: q} = get s $ appPath (TreeFlat (sessionId s) (sessionRoot s) q)
   where sessionRoot (Session {treeId}) = treeId

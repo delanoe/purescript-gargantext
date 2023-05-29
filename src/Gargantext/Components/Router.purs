@@ -321,7 +321,7 @@ renderRouteCpt = R.memo' $ here.component "renderRoute" cpt where
         GR.Home                   -> home { boxes } []
         GR.Lists s n              -> lists (sessionNodeProps s n) []
         GR.Login                  -> login' boxes
-        GR.TreeFlat _ _           -> treeSearch' boxes
+        GR.TreeFlat _ _ _         -> treeSearch' boxes
         GR.PGraphExplorer s g     -> graphExplorer (sessionNodeProps s g) []
         GR.PhyloExplorer s g      -> phyloExplorer (sessionNodeProps s g) []
         GR.RouteFile s n          -> routeFile (sessionNodeProps s n) []

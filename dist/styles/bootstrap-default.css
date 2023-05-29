@@ -12047,6 +12047,12 @@ select.form-control {
   height: auto;
 }
 
+.search-modal__results {
+  height: 14em;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
 .btn-secondary,
 .btn-secondary:hover,
 .btn-outline-secondary:not(:disabled):not(.disabled):hover,
