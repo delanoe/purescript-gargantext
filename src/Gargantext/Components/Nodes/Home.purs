@@ -230,7 +230,7 @@ tutorial :: R2.Leaf TutorialProps
 tutorial = R2.leaf tutorialCpt
 tutorialCpt :: R.Component TutorialProps
 tutorialCpt = here.component "tutorial" cpt where
-  cpt { sessions } _ = do
+  cpt { boxes, sessions } _ = do
 
     pure $
 
@@ -253,11 +253,11 @@ tutorialCpt = here.component "tutorial" cpt where
         [ video x.id, H.h4 {} [ H.text x.title ], H.p  {} [ H.text x.text ] ]
       -}
 
-      -- onSignOutClick _ = void $ Sessions.change (Logout session) sessions
-      onSignOutClick _ = do
-        log "Logging sessions:"
+      onSignOutClick session = void $ Sessions.change (Logout session) boxes.sessions
+      -- onSignOutClick _ = do
+        -- log "Logging sessions:"
         -- log show session
-        for_ sessions $ \element -> log (show element)
+        -- for_ sessions $ \element -> log (show element)
 
 
       makeFolders :: Array Session -> Array R.Element
@@ -298,7 +298,7 @@ tutorialCpt = here.component "tutorial" cpt where
                     , defaultSlot:
                         B.iconButton
                         { name: "sign-out"
-                        , callback: onSignOutClick
+                        , callback: \_ -> onSignOutClick session
                         , elevation: Level2
                         , className: "text-light"
                         }
