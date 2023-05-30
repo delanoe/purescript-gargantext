@@ -30,7 +30,7 @@ module Gargantext.Components.Nodes.Home
 
 import Gargantext.Prelude
 
-import Data.Foldable (intercalate, for_)
+import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Effect (Effect)
@@ -254,10 +254,6 @@ tutorialCpt = here.component "tutorial" cpt where
       -}
 
       onSignOutClick session = void $ Sessions.change (Logout session) boxes.sessions
-      -- onSignOutClick _ = do
-        -- log "Logging sessions:"
-        -- log show session
-        -- for_ sessions $ \element -> log (show element)
 
 
       makeFolders :: Array Session -> Array R.Element
