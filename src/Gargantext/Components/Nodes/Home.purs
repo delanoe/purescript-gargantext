@@ -253,10 +253,10 @@ tutorialCpt = here.component "tutorial" cpt where
         [ video x.id, H.h4 {} [ H.text x.title ], H.p  {} [ H.text x.text ] ]
       -}
 
-      -- onSignOutClick _ = void $ Sessions.change (Logout session') sessions
+      -- onSignOutClick _ = void $ Sessions.change (Logout session) sessions
       onSignOutClick _ = do
         log "Logging sessions:"
-        -- log show session'
+        -- log show session
         for_ sessions $ \element -> log (show element)
 
 
