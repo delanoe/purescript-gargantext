@@ -35,33 +35,7 @@ data AppRoute
   | UserPage        SessionId Int
   | ForgotPassword  (M.Map String String)
 
-
 derive instance Eq AppRoute
-
-data SessionRoute
-  = Tab TabType (Maybe Id)
-  | Children NodeType Offset Limit (Maybe OrderBy) (Maybe Id)
-  | GetNgrams NgramsGetOpts (Maybe Id)
-  | GetNgramsTableAll NgramsGetTableAllOpts (Maybe Id)
-  | GetNgramsTableVersion { listId :: ListId, tabType :: TabType } (Maybe Id)
-  | PutNgrams TabType (Maybe ListId) (Maybe TermList) (Maybe Id)
-  | PostNgramsChartsAsync (Maybe Id)
-  -- ^ This name is not good. In particular this URL is used both in PUT and POST.
-  | RecomputeNgrams   (TabSubType CTabNgramType) Id ListId
-  | RecomputeListChart ChartType  CTabNgramType  Id ListId
-  | NodeAPI       NodeType (Maybe Id) String
-  | TreeFirstLevel (Maybe Id) String
-  | GraphAPI      Id String
-  | ListsRoute    ListId
-  | ListDocument (Maybe ListId) (Maybe DocId)
-  | Search        SearchOpts (Maybe Id)
-  | CorpusMetrics CorpusMetricOpts  (Maybe Id)
-  | CorpusMetricsHash { listId :: ListId, tabType :: TabType }  (Maybe Id)
-  | Chart ChartOpts (Maybe Id)
-  | ChartHash { chartType :: ChartType, listId :: Maybe ListId, tabType :: TabType } (Maybe Id)
-  -- | AnnuaireContact AnnuaireId DocId
-  | PhyloAPI Id
-  | Members
 
 instance Show AppRoute where
   show Home                     = "Home"
@@ -138,6 +112,32 @@ nodeTypeAppRoute GT.NodeFrameWrite s i = Just $ RouteFrameWrite s i
 nodeTypeAppRoute GT.NodeFrameCalc  s i = Just $ RouteFrameCalc  s i
 nodeTypeAppRoute GT.NodeFrameVisio s i = Just $ RouteFrameVisio s i
 nodeTypeAppRoute _ _ _                 = Nothing
+
+
+data SessionRoute
+  = Tab TabType (Maybe Id)
+  | Children NodeType Offset Limit (Maybe OrderBy) (Maybe Id)
+  | GetNgrams NgramsGetOpts (Maybe Id)
+  | GetNgramsTableAll NgramsGetTableAllOpts (Maybe Id)
+  | GetNgramsTableVersion { listId :: ListId, tabType :: TabType } (Maybe Id)
+  | PutNgrams TabType (Maybe ListId) (Maybe TermList) (Maybe Id)
+  | PostNgramsChartsAsync (Maybe Id)
+  -- ^ This name is not good. In particular this URL is used both in PUT and POST.
+  | RecomputeNgrams   (TabSubType CTabNgramType) Id ListId
+  | RecomputeListChart ChartType  CTabNgramType  Id ListId
+  | NodeAPI       NodeType (Maybe Id) String
+  | TreeFirstLevel (Maybe Id) String
+  | GraphAPI      Id String
+  | ListsRoute    ListId
+  | ListDocument (Maybe ListId) (Maybe DocId)
+  | Search        SearchOpts (Maybe Id)
+  | CorpusMetrics CorpusMetricOpts  (Maybe Id)
+  | CorpusMetricsHash { listId :: ListId, tabType :: TabType }  (Maybe Id)
+  | Chart ChartOpts (Maybe Id)
+  | ChartHash { chartType :: ChartType, listId :: Maybe ListId, tabType :: TabType } (Maybe Id)
+  -- | AnnuaireContact AnnuaireId DocId
+  | PhyloAPI Id
+  | Members
 
 
 ------------------------------------------------------

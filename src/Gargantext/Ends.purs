@@ -3,16 +3,18 @@ module Gargantext.Ends
   -- ( )
   where
 
-import Prelude (class Eq, class Show, show, ($), (/=), (<<<), (<>), (==))
+import Data.Array (filter)
 import Data.Foldable (foldMap)
 import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Newtype (class Newtype)
+import Prelude (class Eq, class Show,  show, ($), (/=), (<<<), (<>), (==), (<$>))
 import Simple.JSON as JSON
 
 import Gargantext.Routes as R
 import Gargantext.Types (ApiVersion, ChartType(..), Limit, NodePath, NodeType(..), Offset, TabType(..), TermSize(..), nodePath, nodeTypePath, showTabType', TermList(MapTerm))
+import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParam, queryParam, queryParamS)
 
 -- | A means of generating a url to visit, a destination
 class ToUrl conf p where
@@ -90,56 +92,86 @@ staticUrl (Frontends {static}) = frontendUrl static
 
 sessionPath :: R.SessionRoute -> String
 sessionPath (R.Tab t i)             = sessionPath (R.NodeAPI Node i (showTabType' t))
-sessionPath (R.Children n o l s i)  = sessionPath (R.NodeAPI Node i ("children?type=" <> show n <> offsetUrl o <> limitUrl l <> orderUrl s))
-sessionPath (R.RecomputeNgrams nt nId lId)      = "node/" <> (show nId) <> "/ngrams/recompute?" <> (defaultList lId) <> "&ngramsType=" <> (show nt)
-sessionPath (R.RecomputeListChart ChartBar nt nId lId)   = "node/" <> (show nId) <> "/pie?" <> (defaultList lId) <> "&ngramsType=" <> (show nt)
-sessionPath (R.RecomputeListChart ChartPie nt nId lId)   = "node/" <> (show nId) <> "/pie?" <> (defaultList lId) <> "&ngramsType=" <> (show nt)
-sessionPath (R.RecomputeListChart ChartTree nt nId lId)  = "node/" <> (show nId) <> "/tree?" <> (defaultList lId) <> "&ngramsType=" <> (show nt) <> "&listType=" <> show MapTerm
-sessionPath (R.RecomputeListChart Histo nt nId lId)      = "node/" <> (show nId) <> "/chart?" <> (defaultList lId) <> "&ngramsType=" <> (show nt)
-sessionPath (R.RecomputeListChart Scatter nt nId lId)    = "node/" <> (show nId) <> "/metrics?" <> (defaultList lId) <> "&ngramsType=" <> (show nt)
-sessionPath (R.RecomputeListChart _ nt nId lId)          = "node/" <> (show nId) <> "/recompute-chart?" <> (defaultList lId) <> "&ngramsType=" <> (show nt)
+sessionPath (R.Children n o l s i)  = sessionPath (R.NodeAPI Node i ("children" <> qs))
+  where
+    qs = joinQueryStrings [ queryParam "type" n
+                          , queryParam "offset" o
+                          , queryParam "limit" l
+                          , queryParam "order" s ]
+
+sessionPath (R.RecomputeNgrams nt nId lId)      = "node/" <> (show nId) <> "/ngrams/recompute" <> qs
+  where
+    qs = joinQueryStrings [ queryParam "list" lId
+                          , queryParam "ngramsType" nt ]
+sessionPath (R.RecomputeListChart ChartBar nt nId lId)   = "node/" <> (show nId) <> "/pie" <> qs
+  where
+    qs = joinQueryStrings [ queryParam "list" lId
+                          , queryParam "ngramsType" nt ]
+sessionPath (R.RecomputeListChart ChartPie nt nId lId)   = "node/" <> (show nId) <> "/pie" <> qs
+  where
+    qs = joinQueryStrings [ queryParam "list" lId
+                          , queryParam "ngramsType" nt ]
+sessionPath (R.RecomputeListChart ChartTree nt nId lId)  = "node/" <> (show nId) <> "/tree" <> qs
+  where
+    qs = joinQueryStrings [ queryParam "list" lId
+                          , queryParam "ngramsType" nt
+                          , queryParam "listType" MapTerm ]
+sessionPath (R.RecomputeListChart Histo nt nId lId)      = "node/" <> (show nId) <> "/chart" <> qs
+  where
+    qs = joinQueryStrings [ queryParam "list" lId
+                          , queryParam "ngramsType" nt ]
+sessionPath (R.RecomputeListChart Scatter nt nId lId)    = "node/" <> (show nId) <> "/metrics" <> qs
+  where
+    qs = joinQueryStrings [ queryParam "list" lId
+                          , queryParam "ngramsType" nt ]
+sessionPath (R.RecomputeListChart _ nt nId lId)          = "node/" <> (show nId) <> "/recompute-chart" <> qs
+  where
+    qs = joinQueryStrings [ queryParam "list" lId
+                          , queryParam "ngramsType" nt ]
 sessionPath (R.GraphAPI gId p)      = "graph/" <> (show gId) <> "/" <> p
 sessionPath (R.GetNgrams opts i)    =
-  base opts.tabType
-     $ "ngrams?ngramsType=" <> showTabType' opts.tabType
-    <> limitUrl opts.limit
-    <> offset opts.offset
-    <> orderByUrl opts.orderBy
-    <> foldMap (\x -> if x /= 0 then "&list=" <> show x else "") opts.listIds
-    <> foldMap (\x -> "&listType=" <> show x) opts.termListFilter
-    <> foldMap termSizeFilter opts.termSizeFilter
-    <> search opts.searchQuery
+  base opts.tabType $ "ngrams" <> qs
   where
     base (TabCorpus _) = sessionPath <<< R.NodeAPI Node i
     base _             = sessionPath <<< R.NodeAPI Url_Document i
-    offset Nothing = ""
-    offset (Just o) = offsetUrl o
-    termSizeFilter MonoTerm = "&minTermSize=0&maxTermSize=1"
-    termSizeFilter MultiTerm = "&minTermSize=2"
-    search "" = ""
-    search s = "&search=" <> s
+
+    qs = joinQueryStrings ( [ queryParamS "ngramsType" $ showTabType' opts.tabType
+                            , queryParam "limit" opts.limit
+                            , mQueryParam "orderBy" opts.orderBy
+                            , mQueryParam "offset" opts.offset
+                            , mQueryParam "listType" opts.termListFilter ]
+                            <> listIds
+                            <> termSizeFilter opts.termSizeFilter
+                            <> search opts.searchQuery )
+
+    listIds = (queryParam "list") <$> filter (_ /= 0) opts.listIds
+    termSizeFilter Nothing = []
+    termSizeFilter (Just MonoTerm) = [ queryParam "minTermSize" 0, queryParam "maxTermSize" 1 ]
+    termSizeFilter (Just MultiTerm) = [ queryParam "minTermSize" 2 ]
+    search "" = []
+    search s = [ queryParamS "search" s ]
 sessionPath (R.GetNgramsTableAll opts i) =
-  sessionPath $ R.NodeAPI Node i
-     $ "ngrams?ngramsType="
-    <> showTabType' opts.tabType
-    <> foldMap (\x -> "&list=" <> show x) opts.listIds
-    <> limitUrl 100000
+  sessionPath $ R.NodeAPI Node i $ "ngrams" <> qs
+  where
+    qs = joinQueryStrings ([ queryParamS "ngramsType" $ showTabType' opts.tabType
+                           , queryParam "limit" 100000 ] <> list)
+    list = (queryParam "list") <$> opts.listIds
 sessionPath (R.GetNgramsTableVersion opts i) =
-  sessionPath $ R.NodeAPI Node i
-     $ "ngrams/version?ngramsType="
-    <> showTabType' opts.tabType
-    <> "&list=" <> show opts.listId
+  sessionPath $ R.NodeAPI Node i $ "ngrams/version" <> qs
     --  $ "ngrams/version?"
     -- <> "list=" <> show opts.listId
+  where
+    qs = joinQueryStrings [ queryParamS "ngramsType" $ showTabType' opts.tabType
+                          , queryParam "list" opts.listId ]
 sessionPath (R.ListDocument lId dId) =
   sessionPath $ R.NodeAPI NodeList lId ("document/" <> (show $ fromMaybe 0 dId))
 sessionPath (R.ListsRoute lId) = "lists/" <> show lId
 sessionPath (R.PutNgrams t listId termList i) =
-  sessionPath $ R.NodeAPI Node i
-      $ "ngrams?ngramsType="
-     <> showTabType' t
-     <> maybe "" (\x -> "&list=" <> show x) listId
-     <> foldMap (\x -> "&listType=" <> show x) termList
+  sessionPath $ R.NodeAPI Node i $ "ngrams" <> qs
+  where
+    qs = joinQueryStrings [ queryParamS "ngramsType" $ showTabType' t
+                          , mQueryParam "list" listId
+                          , mQueryParam "listType" termList ]
 sessionPath (R.PostNgramsChartsAsync i) =
   sessionPath $ R.NodeAPI Node i $ "ngrams/async/charts/update"
 sessionPath (R.NodeAPI nt i p) = nodeTypePath nt
@@ -148,45 +180,42 @@ sessionPath (R.NodeAPI nt i p) = nodeTypePath nt
 sessionPath (R.TreeFirstLevel nId p) = nodeTypePath Tree
                                     <> (maybe "" (\nId' -> "/" <> show nId') nId) <> "/first-level" <> p
 sessionPath (R.Search {listId, limit, offset, orderBy} mCorpusId) =
-  sessionPath $ R.NodeAPI Corpus mCorpusId
-     $ "search?list_id=" <> show listId
-    <> offsetUrl offset
-    <> limitUrl limit
-    <> orderUrl orderBy
+  sessionPath $ R.NodeAPI Corpus mCorpusId $ "search" <> qs
+  where
+    qs = joinQueryStrings [ queryParam "list_id" listId
+                          , queryParam "offset" offset
+                          , queryParam "limit" limit
+                          , mQueryParam "orderBy" orderBy ]
 -- sessionPath (R.Search {listId, limit, offset, orderBy} (Just corpusId)) =
 --     "search/" <> (show corpusId) <> "/list/" <> (show listId) <> "?"
 --     <> offsetUrl offset
 --     <> limitUrl limit
 --     <> orderUrl orderBy
 sessionPath (R.CorpusMetrics { listId, limit, tabType} i) =
-  sessionPath $ R.NodeAPI Corpus i
-     $ "metrics"
-    <> "?ngrams=" <> show listId
-    <> "&ngramsType=" <> showTabType' tabType
-    <> maybe "" limitUrl limit
+  sessionPath $ R.NodeAPI Corpus i $ "metrics" <> qs
+  where
+    qs = joinQueryStrings [ queryParam "ngrams" listId
+                          , queryParamS "ngramsType" $ showTabType' tabType
+                          , mQueryParam "limit" limit ]
 sessionPath (R.CorpusMetricsHash { listId, tabType} i) =
-  sessionPath $ R.NodeAPI Corpus i
-     $ "metrics/hash"
-    <> "?ngrams=" <> show listId
-    <> "&ngramsType=" <> showTabType' tabType
+  sessionPath $ R.NodeAPI Corpus i $ "metrics/hash" <> qs
+  where
+    qs = joinQueryStrings [ queryParam "ngrams" listId
+                          , queryParamS "ngramsType" $ showTabType' tabType ]
 -- TODO fix this url path
 sessionPath (R.Chart {chartType, limit, listId, tabType} i) =
-  sessionPath $ R.NodeAPI Corpus i
-     $ show chartType
-    <> "?ngramsType=" <> showTabType' tabType
-    <> "&listType=" <> show MapTerm  -- listId
-    <> defaultListAddMaybe listId
+  sessionPath $ R.NodeAPI Corpus i $ show chartType <> qs
     where
-      limitPath = case limit of
-        Just li -> "&limit=" <> show li
-        Nothing -> ""
+      qs = joinQueryStrings [ queryParamS "ngramsType" $ showTabType' tabType
+                            , queryParam "listType" MapTerm
+                            , mQueryParam "list" listId ]
     -- <> maybe "" limitUrl limit
 sessionPath (R.ChartHash { chartType, listId, tabType } i) =
-  sessionPath $ R.NodeAPI Corpus i
-     $ show chartType
-    <> "/hash?ngramsType=" <> showTabType' tabType
-    <> "&listType=" <> show MapTerm -- listId
-    <> defaultListAddMaybe listId
+  sessionPath $ R.NodeAPI Corpus i $ show chartType <> "/hash" <> qs
+  where
+    qs = joinQueryStrings [ queryParamS "ngramsType" $ showTabType' tabType
+                          , queryParam "listType" MapTerm
+                          , mQueryParam "list" listId ]
 -- sessionPath (R.NodeAPI (NodeContact s a i) i) = sessionPath $ "annuaire/" <> show a <> "/contact/" <> show i
 sessionPath (R.PhyloAPI nId) = "node/" <> show nId <> "/phylo"
 sessionPath R.Members = "members"
