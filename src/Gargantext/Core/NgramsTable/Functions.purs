@@ -8,7 +8,7 @@ import Data.Array (head)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
-import Data.FoldableWithIndex (foldlWithIndex)
+import Data.FoldableWithIndex (foldlWithIndex, foldrWithIndex)
 import Data.Lens (use, view, (^?), (^.), (?=), (%~), (%=), (.~))
 import Data.Lens.At (at)
 import Data.Lens.Common (_Just)
@@ -114,11 +114,11 @@ lookupRootList ngram (NgramsTable {ngrams_repo_elements: elts}) =
         Nothing -> Nothing
         Just (NgramsRepoElement {list}) -> Just list -- assert root == Nothing
 
-lookupRootListWithChildren :: NgramsTerm -> NgramsTable -> Map NgramsTerm NgramsTerm -> Maybe TermList
-lookupRootListWithChildren ngram table@(NgramsTable {ngrams_repo_elements: elts}) parentMap' =
+lookupRootListWithChildren :: NgramsTerm -> NgramsTable -> Cache -> Maybe TermList
+lookupRootListWithChildren ngram table@(NgramsTable {ngrams_repo_elements: elts}) { pm, pats } =
   case Map.lookup ngram elts of
     Nothing -> -- try to find in children
-      case Map.lookup ngram parentMap' of
+      case Map.lookup ngram pm of
         Nothing -> Nothing
         Just parent' -> lookupRootList parent' table
     Just (NgramsRepoElement {list, root: Nothing}) -> Just list
@@ -140,10 +140,13 @@ wordBoundaryReg2 = case R.regex ("(" <> wordBoundaryChars <> ")\\1") (R.global <
   Left e  -> unsafePartial $ crashWith e
   Right r -> r
 
+type Cache = { pm :: Map NgramsTerm NgramsTerm
+             , pats :: Array NgramsTerm }
+
 -- TODO: while this function works well with word boundaries,
 --       it inserts too many spaces.
-highlightNgrams :: CTabNgramType -> NgramsTable -> String -> Array HighlightElement
-highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
+highlightNgrams :: CTabNgramType -> NgramsTable -> Cache -> String -> Array HighlightElement
+highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) { pm, pats } input0 =
     -- trace {pats, input0, input, ixs} \_ ->
     A.fromFoldable ((\(s /\ ls)-> undb s /\ ls) <$> unsafePartial (foldl goFold ((input /\ Nil) : Nil) ixs))
   where
@@ -154,9 +157,11 @@ highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
     undb = R.replace wordBoundaryReg2 "$1"
     input = spR input0
     -- pats = A.fromFoldable (Map.keys elts)
-    pats :: Array NgramsTerm
-    pats = A.fromFoldable $
-             foldlWithIndex (\term acc (NgramsRepoElement nre) -> Set.union acc $ Set.insert term nre.children) Set.empty elts
+    -- pats :: Array NgramsTerm
+    -- pats = A.fromFoldable $
+    --        foldrWithIndex (\term (NgramsRepoElement nre) acc -> Set.union acc $ Set.insert term nre.childre
+                                                                -- n) Set.empty elts
+             -- foldlWithIndex (\term acc (NgramsRepoElement nre) -> Set.union acc $ Set.insert term nre.children) Set.empty elts
     hashStruct = SSKR.hashStruct (sp <<< ngramsTermText <$> pats)
     ixs = SSKR.indicesOfAnyHashStruct hashStruct (normNgramInternal ntype input)
 
@@ -185,12 +190,12 @@ highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
 
     addNgramElt ng ne_list (elt /\ elt_lists) = (elt /\ ((ng /\ ne_list) : elt_lists))
 
-    parentMap' :: Map NgramsTerm NgramsTerm
-    parentMap' = parentMap elts
+    -- parentMap' :: Map NgramsTerm NgramsTerm
+    -- parentMap' = parentMap elts
 
     goAcc :: Partial => Int -> HighlightAccumulator -> Tuple NgramsTerm Int -> HighlightAccumulator
     goAcc i acc (pat /\ lpat) =
-      case lookupRootListWithChildren pat table parentMap' of
+      case lookupRootListWithChildren pat table { pm, pats } of
         Nothing ->
           crashWith "highlightNgrams: pattern missing from table"
         Just ne_list ->

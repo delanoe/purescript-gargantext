@@ -14,8 +14,11 @@ module Gargantext.Components.Annotation.Field where
 import Gargantext.Prelude
 
 import Data.Array as A
+import Data.FoldableWithIndex (foldlWithIndex, foldrWithIndex)
 import Data.List (List(..), (:))
+import Data.Map (Map)
 import Data.Maybe (Maybe(..), maybe)
+import Data.Set as Set
 import Data.String.Common (joinWith)
 import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ((/\))
@@ -24,7 +27,7 @@ import Effect (Effect)
 import Gargantext.Components.Annotation.Menu (annotationMenu, AnnotationMenu)
 import Gargantext.Components.Annotation.Types (MenuType(..), ModeType(..), termClass)
 import Gargantext.Core.NgramsTable.Functions (findNgramTermList, highlightNgrams, normNgram)
-import Gargantext.Core.NgramsTable.Types (HighlightElement, NgramsTable, NgramsTerm(..))
+import Gargantext.Core.NgramsTable.Types (HighlightElement, NgramsRepoElement(..), NgramsTable(..), NgramsTerm(..), parentMap)
 import Gargantext.Types (CTabNgramType(..), TermList)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Selection as Sel
@@ -110,7 +113,7 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
 
             H.div
             { className: "annotated-field-runs" }
-            ((\p -> annotateRun p) <$> wrap <$> compile ngrams fieldText)
+            ((\p -> annotateRun p) <$> wrap <$> compileCached ngrams fieldText)
 
 
           AdditionMode ->
@@ -131,11 +134,24 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
 
 -----------------------------------------------------------
 
+compileCached :: NgramsTable
+              -> Maybe String
+              -> Array HighlightElement
+compileCached ngrams = compile ngrams { pm, pats }
+  where
+    NgramsTable { ngrams_repo_elements } = ngrams
+    pm = parentMap ngrams_repo_elements
+
+    pats :: Array NgramsTerm
+    pats = A.fromFoldable $
+           foldrWithIndex (\term (NgramsRepoElement nre) acc -> Set.union acc $ Set.insert term nre.children) Set.empty ngrams_repo_elements
+
 compile ::
      NgramsTable
+  -> { pm :: Map NgramsTerm NgramsTerm, pats :: Array NgramsTerm }
   -> Maybe String
   -> Array HighlightElement
-compile ngrams = maybe [] (highlightNgrams CTabTerms ngrams)
+compile ngrams cache = maybe [] (highlightNgrams CTabTerms ngrams cache)
 
 -- Runs
 
