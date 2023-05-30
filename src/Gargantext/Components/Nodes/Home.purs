@@ -1,5 +1,5 @@
 module Gargantext.Components.Nodes.Home
-  ( Action(..)
+  ( HomeAction(..)
   , HomeProps
   , State(..)
   , Tuto(..)
@@ -18,7 +18,7 @@ module Gargantext.Components.Nodes.Home
   , jumboTitle
   , langLandingData
   , license
-  , performAction
+  , performHomeAction
   , playTutos
   , startTutos
   , summary
@@ -30,19 +30,20 @@ module Gargantext.Components.Nodes.Home
 
 import Gargantext.Prelude
 
-import Data.Foldable (intercalate)
+import Data.Foldable (intercalate, for_)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Effect (Effect)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Elevation(..), ModalSizing(..), Position(..), TooltipPosition(..), Variant(..))
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Lang (LandingLang(..))
 import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
 import Gargantext.Config as Config
-import Gargantext.Sessions (Sessions)
+import Gargantext.Sessions (Session(..), Sessions, Action(Logout), unSessions)
 import Gargantext.Sessions as Sessions
 import Gargantext.Sessions.Types (Session(..), cleanBackendUrl)
 import Gargantext.Utils.Reactix as R2
@@ -50,6 +51,9 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Routing.Hash (setHash)
 import Toestand as T
+
+import Effect.Console (log)
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Home"
@@ -61,17 +65,17 @@ derive instance Newtype State _
 initialState :: State
 initialState = State { userName: "", password: "" }
 
-data Action
+data HomeAction
   = Documentation
   | Enter
   | Login
   | SignUp
 
-performAction :: Action -> Effect Unit
-performAction Documentation = pure unit
-performAction Enter = void $ setHash "/search"
-performAction Login = void $ setHash "/login"
-performAction SignUp = pure unit
+performHomeAction :: HomeAction -> Effect Unit
+performHomeAction Documentation = pure unit
+performHomeAction Enter = void $ setHash "/search"
+performHomeAction Login = void $ setHash "/login"
+performHomeAction SignUp = pure unit
 
 langLandingData :: LandingLang -> LandingData
 langLandingData LL_FR = Fr.landingData
@@ -249,6 +253,13 @@ tutorialCpt = here.component "tutorial" cpt where
         [ video x.id, H.h4 {} [ H.text x.title ], H.p  {} [ H.text x.text ] ]
       -}
 
+      -- onSignOutClick _ = void $ Sessions.change (Logout session') sessions
+      onSignOutClick _ = do
+        log "Logging sessions:"
+        -- log show session'
+        for_ sessions $ \element -> log (show element)
+
+
       makeFolders :: Array Session -> Array R.Element
       makeFolders s = sessionToFolder <$> s
         where
@@ -266,14 +277,33 @@ tutorialCpt = here.component "tutorial" cpt where
                 B.wad
                 [ "d-flex", "align-items-center" ]
                 [
-                  B.icon
-                  { name: "user" }
+                  B.wad
+                  [ "text-left", "w-10/12" ]
+                  [
+                    B.icon
+                    { name: "user", className: "pr-1" }
+                  ,
+                    B.span_ $
+                    username <> "@" <> cleanBackendUrl backend
+                  ]
                 ,
-                  B.wad_
-                  [ "virtual-space", "w-1" ]
-                ,
-                  B.span_ $
-                  username <> "@" <> cleanBackendUrl backend
+                  B.wad
+                  [ "text-right", "w-2/12" ]
+                  [
+                    B.tooltipContainer
+                    { position: TooltipPosition Top
+                    , delayShow: 600
+                    , tooltipSlot:
+                        B.span_ "Log out"
+                    , defaultSlot:
+                        B.iconButton
+                        { name: "sign-out"
+                        , callback: onSignOutClick
+                        , elevation: Level2
+                        , className: "text-light"
+                        }
+                    }
+                  ]
                 ]
               ]
             ,
@@ -286,6 +316,7 @@ tutorialCpt = here.component "tutorial" cpt where
                 }
               ]
             ]
+      
 
 startTutos :: Array Tuto
 startTutos =
