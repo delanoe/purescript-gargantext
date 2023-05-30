@@ -531,7 +531,7 @@ chartsAfterSync :: forall props discard.
   -> Aff Unit
 chartsAfterSync path'@{ nodeId } errors tasks _ = do
   eTask <- postNgramsChartsAsync path'
-  handleRESTError errors eTask $ \task -> liftEffect $ do
+  handleRESTError here errors eTask $ \task -> liftEffect $ do
     here.log2 "[chartsAfterSync] Synchronize task" task
     GAT.insert nodeId task tasks
 

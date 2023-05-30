@@ -621,7 +621,7 @@ triggerSearch { onSearch, errors, session, selection, search } =
       Just id -> do
         liftEffect $ here.log2 "[triggerSearch] searchQuery" $ searchQuery selection search
         eTask <- performSearch session id $ searchQuery selection search
-        handleRESTError errors eTask $ \task -> liftEffect $ do
+        handleRESTError here errors eTask $ \task -> liftEffect $ do
           here.log2 "[triggerSearch] task" task
           onSearch task
 
