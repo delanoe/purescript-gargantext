@@ -37,7 +37,7 @@ type AnnotationMenu =
 annotationMenu :: R2.Leaf Props
 annotationMenu = R2.leaf annotationMenuCpt
 annotationMenuCpt :: R.Component Props
-annotationMenuCpt = here.component "annotationMenu" cpt where
+annotationMenuCpt = here.component "main" cpt where
   cpt { menuRef } _ = do
     -- Render
     pure $
