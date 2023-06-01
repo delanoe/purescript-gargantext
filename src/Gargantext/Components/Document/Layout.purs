@@ -142,11 +142,11 @@ layoutWithContextNgramsCpt = here.component "layoutWithContextNgrams" cpt where
     -- | Hooks
     -- |
 
-    R.useEffect' $ do
-      let NgramsTable { ngrams_repo_elements } = ngrams
-      here.log2 "[layout] length of ngrams" $ Map.size ngrams_repo_elements
-      here.log2 "[layout] length of pats" $ A.length cache.pats
-      here.log2 "[layout] contextNgrams" contextNgrams
+    -- R.useEffect' $ do
+    --   let NgramsTable { ngrams_repo_elements } = ngrams
+    --   here.log2 "[layout] length of ngrams" $ Map.size ngrams_repo_elements
+    --   here.log2 "[layout] length of pats" $ A.length cache.pats
+    --   here.log2 "[layout] contextNgrams" contextNgrams
 
     -- | Behaviors
     -- |
