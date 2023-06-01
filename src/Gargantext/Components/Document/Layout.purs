@@ -5,8 +5,11 @@ module Gargantext.Components.Document.Layout
 import Gargantext.Prelude
 
 import Data.Array as A
+import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
 import Data.Ord (greaterThan)
+import Data.Set (Set)
+import Data.Set as Set
 import Data.String (length)
 import Data.String as String
 import Data.Tuple.Nested ((/\))
@@ -17,16 +20,21 @@ import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), SpinnerTheme(..))
 import Gargantext.Components.Category (ratingSimpleLoader)
 import Gargantext.Components.Document.Types (DocPath, Document(..), LoadedData, initialState)
+import Gargantext.Components.GraphQL.Endpoints (getContextNgrams)
 import Gargantext.Components.NgramsTable.AutoSync (useAutoSync)
 import Gargantext.Components.Node (NodePoly(..))
+import Gargantext.Config.REST (logRESTError)
 import Gargantext.Core.NgramsTable.Functions (addNewNgramA, applyNgramsPatches, coreDispatch, findNgramRoot, setTermListA, computeCache)
-import Gargantext.Core.NgramsTable.Types (CoreAction(..), Versioned(..), replace)
+import Gargantext.Core.NgramsTable.Types (CoreAction(..), NgramsTable(..), NgramsTerm, Versioned(..), replace)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
+import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Sessions (Session)
 import Gargantext.Utils ((?))
 import Gargantext.Utils as U
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record as Record
 import Toestand as T
 
 -------------------------------------------------------------------------
@@ -36,6 +44,7 @@ import Toestand as T
 type Props =
   ( loaded   :: LoadedData
   , path     :: DocPath
+  , session  :: Session
   | Options
   )
 
@@ -55,8 +64,30 @@ layout :: forall r. R2.OptLeaf Options Props r
 layout = R2.optLeaf layoutCpt options
 layoutCpt :: R.Component Props
 layoutCpt = here.component "layout" cpt where
+  cpt props@{ path: path@{ listIds
+                         , nodeId }
+            , session } _ = do
+    case A.head listIds of
+      Nothing -> pure $ H.div {} [ H.text "No list supplied!" ]
+      Just listId ->
+        useLoader { errorHandler
+                  , loader: \p -> getContextNgrams session p.contextId p.listId
+                  , path: { contextId: nodeId, listId }
+                  , render: \contextNgrams -> layoutWithContextNgrams $ Record.merge props { contextNgrams } }
+    where
+      errorHandler = logRESTError here "[layout]"
+
+type WithContextNgramsProps =
+  ( contextNgrams :: Array NgramsTerm
+  | Props )
+
+layoutWithContextNgrams :: forall r. R2.OptLeaf Options WithContextNgramsProps r
+layoutWithContextNgrams = R2.optLeaf layoutWithContextNgramsCpt options
+layoutWithContextNgramsCpt :: R.Component WithContextNgramsProps
+layoutWithContextNgramsCpt = here.component "layoutWithContextNgrams" cpt where
   -- Component
-  cpt { path
+  cpt { contextNgrams
+      , path
       , loaded:
           loaded@{ ngramsTable: Versioned
           { data: initTable }
@@ -88,7 +119,7 @@ layoutCpt = here.component "layout" cpt where
 
       ngrams = applyNgramsPatches state' initTable
 
-      cache = computeCache ngrams
+      cache = computeCache ngrams $ Set.fromFoldable contextNgrams
 
       annotate text = AnnotatedField.annotatedField
         { ngrams
@@ -111,6 +142,11 @@ layoutCpt = here.component "layout" cpt where
     -- | Hooks
     -- |
 
+    R.useEffect' $ do
+      let NgramsTable { ngrams_repo_elements } = ngrams
+      here.log2 "[layout] length of ngrams" $ Map.size ngrams_repo_elements
+      here.log2 "[layout] length of pats" $ A.length cache.pats
+      here.log2 "[layout] contextNgrams" contextNgrams
 
     -- | Behaviors
     -- |

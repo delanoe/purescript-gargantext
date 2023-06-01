@@ -20,6 +20,7 @@ import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, treeFirstLevelQuery)
 import Gargantext.Components.GraphQL.User (UserInfo, userInfoQuery)
 import Gargantext.Components.Lang (Lang)
 import Gargantext.Config.REST (RESTError(..), AffRESTError)
+import Gargantext.Core.NgramsTable.Types (NgramsTerm(..))
 import Gargantext.Sessions (Session(..))
 import Gargantext.Types (NodeType)
 import Gargantext.Utils.Reactix as R2
@@ -152,3 +153,10 @@ getLanguages session = do
   liftEffect $ here.log2 "[getLanguages] languages" languages
 
   pure $ Right $ Map.fromFoldable $ (\{ key, value } -> Tuple key value) <$> languages
+
+getContextNgrams :: Session -> Int -> Int -> AffRESTError (Array NgramsTerm)
+getContextNgrams session context_id list_id = do
+  client <- liftEffect $ getClient session
+  let query = GQLCTX.contextNgramsQuery `withVars` { context_id, list_id }
+  { context_ngrams } <- queryGql session "get context ngrams" query
+  pure $ Right $ NormNgramsTerm <$> context_ngrams

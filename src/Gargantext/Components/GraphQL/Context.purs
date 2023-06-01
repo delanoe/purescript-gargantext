@@ -8,6 +8,7 @@ module Gargantext.Components.GraphQL.Context
   , nodeContextQuery
   , NodeContextCategoryM
   , contextsForNgramsQuery
+  , contextNgramsQuery
   , NgramsTerms(..)
   ) where
 
@@ -131,6 +132,18 @@ contextsForNgramsQuery
       , ngrams_terms: Var :: _ "ngrams_terms" NgramsTerms } =>>
       GGQL.getFieldsStandard (Proxy :: _ Context)
     }
+
+type ContextNgramsQuery
+  = { context_ngrams :: Args
+    { context_id :: Var "context_id" Int
+    , list_id    :: Var "list_id" Int }
+    Unit }
+
+contextNgramsQuery :: ContextNgramsQuery
+contextNgramsQuery
+  = { context_ngrams:
+      { context_id: Var :: _ "context_id" Int
+      , list_id:    Var :: _ "list_id" Int } =>> unit }
 
 ------------------------------------------------------------------------
 
