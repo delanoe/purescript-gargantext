@@ -306,7 +306,7 @@ dataFieldNavCpt = here.component "dataFieldNav" cpt
       search'@{ datafield } <- T.useLive T.unequal search
 
       pure $ R.fragment
-        [ H.div { className: "text-primary center p-1"} [H.text "Search options:"]
+        [ H.div { className: "text-primary text-bold p-1"} [H.text "Search options:"]
         , H.div { className: "nav nav-tabs" } ((liItem search') <$> dataFields)
         , H.div { className: "center p-1" } [ H.text
                                         $ maybe "TODO: add Doc Instance" doc datafield
