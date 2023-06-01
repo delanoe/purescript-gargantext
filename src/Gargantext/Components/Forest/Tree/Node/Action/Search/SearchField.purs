@@ -1,4 +1,5 @@
-module Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField where
+module Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField
+  where
 
 import Gargantext.Prelude
 
@@ -280,8 +281,8 @@ langNavCpt = here.component "langNav" cpt
       search' <- T.useLive T.unequal search
 
       pure $ R.fragment
-        [ H.div {className: "text-primary center"} [H.text "with lang"]
-        , H.div {className: "nav nav-tabs"} ((liItem search') <$> langs)
+        [ H.div {className: "text-primary center p-1"} [H.text "with lang"]
+        , H.div {className: "nav nav-tabs p-1"} ((liItem search') <$> langs)
         ]
         where
           liItem :: Search -> Lang -> R.Element
@@ -305,9 +306,9 @@ dataFieldNavCpt = here.component "dataFieldNav" cpt
       search'@{ datafield } <- T.useLive T.unequal search
 
       pure $ R.fragment
-        [ H.div { className: "text-primary center"} [H.text "with DataField"]
+        [ H.div { className: "text-primary center p-1"} [H.text "Search options:"]
         , H.div { className: "nav nav-tabs" } ((liItem search') <$> dataFields)
-        , H.div { className: "center" } [ H.text
+        , H.div { className: "center p-1" } [ H.text
                                         $ maybe "TODO: add Doc Instance" doc datafield
                                       ]
         ]
@@ -376,13 +377,13 @@ databaseInputCpt = here.component "databaseInput" cpt
                                         }) search
 
       pure $
-        H.div { className: "form-group" }
+        H.div { className: "form-group p-1 mb-0" }
         [ H.div {className: "text-primary center"} [ H.text "in database" ]
         , R2.select { className: "form-control"
                     , defaultValue: dbInputValue
                     , on: { change }
                     } (liItem <$> databases)
-        , H.div {className:"center"} [ H.text $ maybe "" doc db ]
+        , H.div {className:"center p-1"} [ H.text $ maybe "" doc db ]
         ]
 
 
@@ -402,7 +403,7 @@ pubmedInputCpt = here.component "pubmedInput" cpt where
       Just (External (PubMed p@{ api_key })) ->
         -- TODO Fetch current API key
         pure $
-          H.div { className: "form-group" }
+          H.div { className: "form-group p-1 m-0" }
             [ H.div { className: "text-primary center" } [ H.text "Pubmed API key" ]
             , H.input { className: "form-control"
                       , defaultValue: fromMaybe "" api_key
@@ -434,7 +435,7 @@ orgInputCpt = here.component "orgInput" cpt
             let value = R.unsafeEventValue e
             T.modify_ (_ { datafield = Just $ External $ HAL $ read value }) search
 
-      pure $ H.div { className: "form-group" }
+      pure $ H.div { className: "form-group p-1 m-0" }
         [ H.div {className: "text-primary center"} [H.text "filter with organization: "]
         , R2.select { className: "form-control"
                     , on: { change }
@@ -496,9 +497,9 @@ datafieldInputCpt = here.component "datafieldInput" cpt where
         then componentIMT { search, session } []
         else H.div {} []
 
-      , if isHAL search'.datafield
-        then componentYears { search } []
-        else H.div {} []
+      -- , if isHAL search'.datafield
+      --   then componentYears { search } []
+      --   else H.div {} []
 
       , if isCNRS search'.datafield
         then componentCNRS { search } []
@@ -535,11 +536,12 @@ searchInputCpt = here.component "searchInput" cpt
         [ inputWithEnter { onBlur: onBlur valueRef search
                          , onEnter: onEnter valueRef search
                          , onValueChanged: onValueChanged valueRef
-                         , autoFocus: false
+                         , autoFocus: true
                          , className: "form-control"
                          , defaultValue: R.readRef valueRef
                          , placeholder: "Your query here"
-                         , type: "text" }
+                         , type: "text" 
+                         , required: true }
         ]
 
       -- pure $
@@ -580,7 +582,7 @@ submitButtonComponent = here.component "submitButton" cpt
 
       pure $
         H.button { className: "btn btn-primary"
-                 , "type"   : "button"
+                 , "type"   : "submit"
                  , on       : { click: doSearch onSearch errors session selection' search' }
                  , style    : { width: "100%" }
                  }
