@@ -18,7 +18,6 @@ import Data.FoldableWithIndex (foldlWithIndex, foldrWithIndex)
 import Data.List (List(..), (:))
 import Data.Map (Map)
 import Data.Maybe (Maybe(..), maybe)
-import Data.Set as Set
 import Data.String.Common (joinWith)
 import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ((/\))
@@ -26,7 +25,7 @@ import DOM.Simple.Event as DE
 import Effect (Effect)
 import Gargantext.Components.Annotation.Menu (annotationMenu, AnnotationMenu)
 import Gargantext.Components.Annotation.Types (MenuType(..), ModeType(..), termClass)
-import Gargantext.Core.NgramsTable.Functions (findNgramTermList, highlightNgrams, normNgram)
+import Gargantext.Core.NgramsTable.Functions (Cache, findNgramTermList, highlightNgrams, normNgram)
 import Gargantext.Core.NgramsTable.Types (HighlightElement, NgramsRepoElement(..), NgramsTable(..), NgramsTerm(..), parentMap)
 import Gargantext.Types (CTabNgramType(..), TermList)
 import Gargantext.Utils.Reactix as R2
@@ -46,6 +45,7 @@ type Props =
   , setTermList  :: NgramsTerm -> Maybe TermList -> TermList -> Effect Unit
   , text         :: Maybe String
   , mode         :: ModeType
+  , cache        :: Record Cache
   )
 type MouseEvent = E.SyntheticEvent DE.MouseEvent
 
@@ -81,6 +81,7 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
       , setTermList
       , text: fieldText
       , mode
+      , cache
       } _ = do
     -- | States
     -- |
@@ -91,7 +92,7 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
     -- | Computed
     -- |
     let
-      wrap :: HighlightElement -> Record RunProps
+      wrap :: Tuple String (List (Tuple NgramsTerm TermList)) -> Record RunProps
       wrap (text /\ list)
         = { list
           , onSelect: onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList }
@@ -113,7 +114,7 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
 
             H.div
             { className: "annotated-field-runs" }
-            ((\p -> annotateRun p) <$> wrap <$> compileCached ngrams fieldText)
+            ((\p -> annotateRun p) <$> wrap <$> compile cache ngrams fieldText)
 
 
           AdditionMode ->
@@ -134,24 +135,12 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
 
 -----------------------------------------------------------
 
-compileCached :: NgramsTable
-              -> Maybe String
-              -> Array HighlightElement
-compileCached ngrams = compile ngrams { pm, pats }
-  where
-    NgramsTable { ngrams_repo_elements } = ngrams
-    pm = parentMap ngrams_repo_elements
-
-    pats :: Array NgramsTerm
-    pats = A.fromFoldable $
-           foldrWithIndex (\term (NgramsRepoElement nre) acc -> Set.union acc $ Set.insert term nre.children) Set.empty ngrams_repo_elements
-
 compile ::
-     NgramsTable
-  -> { pm :: Map NgramsTerm NgramsTerm, pats :: Array NgramsTerm }
+     Record Cache
+  -> NgramsTable
   -> Maybe String
   -> Array HighlightElement
-compile ngrams cache = maybe [] (highlightNgrams CTabTerms ngrams cache)
+compile cache ngrams = maybe [] (highlightNgrams CTabTerms ngrams cache)
 
 -- Runs
 

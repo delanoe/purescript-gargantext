@@ -114,7 +114,7 @@ lookupRootList ngram (NgramsTable {ngrams_repo_elements: elts}) =
         Nothing -> Nothing
         Just (NgramsRepoElement {list}) -> Just list -- assert root == Nothing
 
-lookupRootListWithChildren :: NgramsTerm -> NgramsTable -> Cache -> Maybe TermList
+lookupRootListWithChildren :: NgramsTerm -> NgramsTable -> Record Cache -> Maybe TermList
 lookupRootListWithChildren ngram table@(NgramsTable {ngrams_repo_elements: elts}) { pm, pats } =
   case Map.lookup ngram elts of
     Nothing -> -- try to find in children
@@ -140,12 +140,23 @@ wordBoundaryReg2 = case R.regex ("(" <> wordBoundaryChars <> ")\\1") (R.global <
   Left e  -> unsafePartial $ crashWith e
   Right r -> r
 
-type Cache = { pm :: Map NgramsTerm NgramsTerm
-             , pats :: Array NgramsTerm }
+type Cache =
+  ( pm :: Map NgramsTerm NgramsTerm
+  , pats :: Array NgramsTerm )
+
+computeCache :: NgramsTable -> Record Cache
+computeCache ngrams = { pm, pats }
+  where
+    NgramsTable { ngrams_repo_elements } = ngrams
+    pm = parentMap ngrams_repo_elements
+
+    pats :: Array NgramsTerm
+    pats = A.fromFoldable $
+           foldrWithIndex (\term (NgramsRepoElement nre) acc -> Set.union acc $ Set.insert term nre.children) Set.empty ngrams_repo_elements
 
 -- TODO: while this function works well with word boundaries,
 --       it inserts too many spaces.
-highlightNgrams :: CTabNgramType -> NgramsTable -> Cache -> String -> Array HighlightElement
+highlightNgrams :: CTabNgramType -> NgramsTable -> Record Cache -> String -> Array HighlightElement
 highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) { pm, pats } input0 =
     -- trace {pats, input0, input, ixs} \_ ->
     A.fromFoldable ((\(s /\ ls)-> undb s /\ ls) <$> unsafePartial (foldl goFold ((input /\ Nil) : Nil) ixs))

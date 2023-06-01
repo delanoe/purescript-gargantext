@@ -11,6 +11,7 @@ import Data.List as L
 import Data.Maybe (Maybe(..), maybe)
 import Data.Set (Set)
 import Data.Set as Set
+import Data.Traversable (traverse_)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
@@ -19,7 +20,7 @@ import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (Variant(..))
 import Gargantext.Components.Table as Tbl
 import Gargantext.Core.NgramsTable.Functions (applyNgramsPatches, setTermListA, tablePatchHasNgrams)
-import Gargantext.Core.NgramsTable.Types (Action(..), NgramsClick, NgramsDepth, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm, _NgramsElement, _NgramsRepoElement, _children, _list, _ngrams, _occurrences, ngramsTermText, replace)
+import Gargantext.Core.NgramsTable.Types (Action(..), CoreAction, NgramsClick, NgramsDepth, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm, _NgramsElement, _NgramsRepoElement, _children, _list, _ngrams, _occurrences, ngramsTermText, replace)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Types as GT
 import Gargantext.Utils ((?))
@@ -297,18 +298,23 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
             Nothing ->
               span ngramsStyle
 
+        termList :: GT.TermList
         termList    = ngramsElement ^. _NgramsElement <<< _list
+        ngramsStyle :: Array DOM.Props
         ngramsStyle = [termStyle termList ngramsOpacity]
         ngramsEdit { ngrams: n } = Just $ dispatch $ SetParentResetChildren (Just n) (ngramsChildren n)
+        tbl :: NgramsTable
         tbl = applyNgramsPatches { ngramsLocalPatch
                                  , ngramsStagePatch: mempty
                                  , ngramsValidPatch: mempty
                                  , ngramsVersion: 0 } ngramsTable
         getNgramsChildren' :: NgramsTerm -> Array NgramsTerm
         getNgramsChildren' n = A.fromFoldable $ ngramsChildren n
+        ngramsChildren :: NgramsTerm -> List NgramsTerm
         ngramsChildren n = tbl ^.. ix n <<< _NgramsRepoElement <<< _children <<< folded
-        ngramsClick =
-          Just <<< dispatch <<< CoreAction <<< cycleTermListItem <<< view _ngrams
+        ngramsClick :: { depth :: Int, ngrams :: NgramsTerm } -> Maybe (Effect Unit)
+        ngramsClick p = Just $ do
+          traverse_ (dispatch <<< CoreAction <<< cycleTermListItem) (A.cons p.ngrams $ getNgramsChildren' p.ngrams)
           -- ^ This is the old behavior it is nicer to use since one can
           --   rapidly change the ngram list without waiting for confirmation.
           --   However this might expose bugs. One of them can be reproduced
@@ -361,6 +367,7 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
           | ngramsTransient = 0.5
           | otherwise       = 1.0
 
+        cycleTermListItem :: NgramsTerm -> CoreAction
         cycleTermListItem n = setTermListA n (replace termList (nextTermList termList))
 
 
