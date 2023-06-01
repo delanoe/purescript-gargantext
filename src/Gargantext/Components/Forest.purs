@@ -84,7 +84,7 @@ plus :: R2.Leaf Plus
 plus = R2.leaf plusCpt
 plusCpt :: R.Component Plus
 plusCpt = here.component "plus" cpt where
-  cpt { boxes: { backend, showLogin, pinnedTreeId} } _ = do
+  cpt { boxes: { backend, showLogin, showSearch, pinnedTreeId} } _ = do
     -- Hooks
     { goToRoute } <- useLinkHandler
 
@@ -98,6 +98,7 @@ plusCpt = here.component "plus" cpt where
 
     -- Render
     pure $
+      R.fragment [
       H.div
       { className: "forest-layout__action" }
       [
@@ -153,6 +154,32 @@ plusCpt = here.component "plus" cpt where
               H.text $ "Log in/out"
             ]
         }
+      ]
+      ,
+      H.div
+      { className: "forest-layout__action" }
+      [
+        B.tooltipContainer
+        { delayShow: 600
+        , position: TooltipPosition Right
+        , tooltipSlot:
+          B.span_ "Search in tree"
+        , defaultSlot:
+          B.button
+          { className: "forest-layout__action__button"
+          , callback: \_ -> T.write_ true showSearch
+          , variant: ButtonVariant Light
+          }
+          [
+            B.icon
+            { name: "search"}
+          ,
+            B.wad_ [ "d-inline-block", "w-1" ]
+          ,
+            H.text $ "Search"
+          ]
+        }
+      ]
       ]
   --, H.div { "type": "", className: "fa fa-plus-circle fa-lg"} []
   --, H.div { "type": "", className: "fa fa-minus-circle fa-lg"} []
