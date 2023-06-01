@@ -181,7 +181,7 @@ useCachedAPILoaderEffect { boxes: { errors }
         -- TODO Parallelize?
         hr@(HashedResponse { hash }) <- GUC.cachedJson cache req
         eCacheReal <- cacheEndpoint path
-        handleRESTError errors eCacheReal $ \cacheReal -> do
+        handleRESTError here errors eCacheReal $ \cacheReal -> do
           val <- if hash == cacheReal then
             pure hr
           else do

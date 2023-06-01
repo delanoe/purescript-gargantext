@@ -315,78 +315,78 @@ doSearch task { boxes: { tasks }, tree: NTree (LNode {id}) _ } = liftEffect $ do
 
 updateNode params p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode {id}) _) } = do
   eTask <- updateRequest params session id
-  handleRESTError errors eTask $ \task -> liftEffect $ do
+  handleRESTError here errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
     here.log2 "[updateNode] UpdateNode task:" task
     closeBox p
 
 renameNode name p@{ boxes: { errors }, session, tree: (NTree (LNode {id}) _) } = do
   eTask <- rename session id $ RenameValue { text: name }
-  handleRESTError errors eTask $ \_task -> pure unit
+  handleRESTError here errors eTask $ \_task -> pure unit
   refreshTree p
 
 shareTeam username { boxes: { errors }, session, tree: (NTree (LNode {id}) _)} = do
   eTask <- Share.shareReq session id $ Share.ShareTeamParams { username }
-  handleRESTError errors eTask $ \_task -> pure unit
+  handleRESTError here errors eTask $ \_task -> pure unit
 
 sharePublic params p@{ boxes: { errors, forestOpen }, session } = traverse_ f params where
   f (SubTreeOut { in: inId, out }) = do
     eTask <- Share.shareReq session inId $ Share.SharePublicParams { node_id: out }
-    handleRESTError errors eTask $ \_task -> do
+    handleRESTError here errors eTask $ \_task -> do
       liftEffect $ T.modify_ (openNodesInsert (mkNodeId p.session out)) forestOpen
       refreshTree p
 
 addContact params { boxes: { errors }, session, tree: (NTree (LNode {id}) _) } = do
   eTask <- Contact.contactReq session id params
-  handleRESTError errors eTask $ \_task -> pure unit
+  handleRESTError here errors eTask $ \_task -> pure unit
 
 addNode' name nodeType p@{ boxes: { errors, forestOpen }, session, tree: (NTree (LNode { id }) _) } = do
   eId <- addNode session id $ AddNodeValue { name, nodeType }
-  handleRESTError errors eId $ \_id -> liftEffect $ do
+  handleRESTError here errors eId $ \_id -> liftEffect $ do
     liftEffect $ T.modify_ (openNodesInsert (mkNodeId session id)) forestOpen
     refreshTree p
 
 uploadFile' nodeType fileType fileFormat lang mName contents p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
   eTask <- uploadFile { contents, fileFormat, fileType, id, lang, mName, nodeType, selection, session }
-  handleRESTError errors eTask $ \task -> liftEffect $ do
+  handleRESTError here errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
     here.log2 "[uploadFile'] UploadFile, uploaded, task:" task
     closeBox p
 
 uploadArbitraryFile' fileFormat mName blob p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
   eTask <- uploadArbitraryFile session id { blob, fileFormat, mName } selection
-  handleRESTError errors eTask $ \task -> liftEffect $ do
+  handleRESTError here errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
     here.log2 "[uploadArbitraryFile'] UploadArbitraryFile, uploaded, task:" task
 
 uploadFrameCalc' lang p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
   eTask <- uploadFrameCalc session id lang selection
-  handleRESTError errors eTask $ \task -> liftEffect $ do
+  handleRESTError here errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
     here.log2 "[performAction] UploadFrameCalc, uploaded, task:" task
 
 moveNode params p@{ boxes: { errors, forestOpen }, session } = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     eTask <- moveNodeReq session in' out
-    handleRESTError errors eTask $ \_task -> pure unit
+    handleRESTError here errors eTask $ \_task -> pure unit
     liftEffect $ T.modify_ (openNodesInsert (mkNodeId session out)) forestOpen
     refreshTree p
 
 mergeNode params p@{ boxes: { errors }, session } = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     eTask <- mergeNodeReq session in' out
-    handleRESTError errors eTask $ \_task -> pure unit
+    handleRESTError here errors eTask $ \_task -> pure unit
     refreshTree p
 
 linkNode nodeType params p@{ boxes: { errors }, session } = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     eTask <- linkNodeReq session nodeType in' out
-    handleRESTError errors eTask $ \_task -> pure unit
+    handleRESTError here errors eTask $ \_task -> pure unit
     refreshTree p
 
 documentsFromWriteNodes params p@{ boxes: { errors, tasks }, session, tree: NTree (LNode { id }) _ } = do
   eTask <- documentsFromWriteNodesReq session params
-  handleRESTError errors eTask $ \task -> liftEffect $ do
+  handleRESTError here errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
     pure unit
   refreshTree p

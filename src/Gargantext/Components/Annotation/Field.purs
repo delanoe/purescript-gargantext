@@ -24,7 +24,7 @@ import Effect (Effect)
 import Gargantext.Components.Annotation.Menu (annotationMenu, AnnotationMenu)
 import Gargantext.Components.Annotation.Types (MenuType(..), ModeType(..), termClass)
 import Gargantext.Core.NgramsTable.Functions (findNgramTermList, highlightNgrams, normNgram)
-import Gargantext.Core.NgramsTable.Types (HighlightElement, NgramsTable, NgramsTerm(..))
+import Gargantext.Core.NgramsTable.Types (NgramsTable, NgramsTerm(..))
 import Gargantext.Types (CTabNgramType(..), TermList)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Selection as Sel
@@ -88,7 +88,7 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
     -- | Computed
     -- |
     let
-      wrap :: HighlightElement -> Record RunProps
+      wrap :: Tuple String (List (Tuple NgramsTerm TermList)) -> Record RunProps
       wrap (text /\ list)
         = { list
           , onSelect: onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList }
@@ -134,7 +134,7 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
 compile ::
      NgramsTable
   -> Maybe String
-  -> Array HighlightElement
+  -> Array (Tuple String (List (Tuple NgramsTerm TermList)))
 compile ngrams = maybe [] (highlightNgrams CTabTerms ngrams)
 
 -- Runs

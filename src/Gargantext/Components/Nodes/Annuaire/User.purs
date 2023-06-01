@@ -130,7 +130,7 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
         launchAff_ $ do
           let Session {userId} = session
           res <- saveUserInfo session userId ui
-          handleRESTError errors res $ \_ ->
+          handleRESTError here errors res $ \_ ->
             liftEffect $ T2.reload reload
 
 --saveContactHyperdata :: Session -> Int -> HyperdataUser -> AffRESTError Int
