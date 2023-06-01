@@ -23,6 +23,7 @@ data AppRoute
   | Home
   | Lists          SessionId Int
   | Login
+  | TreeFlat        SessionId Int String
   | PGraphExplorer  SessionId Int
   | PhyloExplorer   SessionId Int
   | RouteFile       SessionId Int
@@ -40,6 +41,7 @@ derive instance Eq AppRoute
 instance Show AppRoute where
   show Home                     = "Home"
   show Login                    = "Login"
+  show (TreeFlat    s i _)      = "treeflat"       <> show i <> " (" <> show s <> ")"
   show (ForgotPassword  u)      = "ForgotPassword" <> show u
   show (Folder        s i)      = "Folder"         <> show i <> " (" <> show s <> ")"
   show (FolderPrivate s i)      = "FolderPrivate"  <> show i <> " (" <> show s <> ")"
@@ -68,6 +70,7 @@ instance Show AppRoute where
 appPath :: AppRoute -> String
 appPath Home                     = ""
 appPath Login                    = "login"
+appPath (TreeFlat _ i q)           = "treeflat/"       <> show i <> "?query=" <> q
 appPath (ForgotPassword u)       = "forgotPassword/" <> show u
 appPath (Folder s i)             = "folder/"         <> show s <> "/" <> show i
 appPath (FolderPrivate s i)      = "folderPrivate/"  <> show s <> "/" <> show i
