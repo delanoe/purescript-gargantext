@@ -115,7 +115,7 @@ settingsBox FolderPrivate =
                                 , Folder
                                 , Annuaire
                                 , Notes
-                                , NodeFrameCalc
+                                , Calc
                                 -- , NodeFrameNotebook
                                 ]
                           ]
@@ -129,7 +129,7 @@ settingsBox Team =
                                 , Corpus
                                 , Folder
                                 , Annuaire
-                                , NodeFrameCalc
+                                , Calc
                                 -- , NodeFrameNotebook
                                 , Team
                                 , FolderShared
@@ -165,7 +165,7 @@ settingsBox Folder =
                                 , Folder
                                 , Annuaire
                                 , Notes
-                                , NodeFrameCalc
+                                , Calc
                                 -- , NodeFrameNotebook
                                 ]
                           , Move moveParameters
@@ -186,7 +186,7 @@ settingsBox Corpus =
                                 , Graph
                                 , Dashboard
                                 , Notes
-                                , NodeFrameCalc
+                                , Calc
                                 , Phylo
                                 -- , NodeFrameNotebook
                                 ]
@@ -319,7 +319,7 @@ settingsBox Notes =
               , edit : true
               , doc  : Documentation Notes
               , buttons : [ Add [ Notes
-                                , NodeFrameCalc
+                                , Calc
                                 , Folder
                                 , Corpus
                                 ]
@@ -329,12 +329,12 @@ settingsBox Notes =
               }
 
 
-settingsBox NodeFrameCalc =
+settingsBox Calc =
   SettingsBox { show : true
               , edit : true
-              , doc  : Documentation NodeFrameCalc
+              , doc  : Documentation Calc
               , buttons : [ Upload
-                          , Add [ NodeFrameCalc
+                          , Add [ Calc
                                 , Notes
                                 ]
                           , Move moveFrameParameters
@@ -346,7 +346,7 @@ settingsBox NodeFrameNotebook =
   SettingsBox { show : true
               , edit : true
               , doc  : Documentation NodeFrameNotebook
-              , buttons : [ Add [ NodeFrameCalc
+              , buttons : [ Add [ Calc
                                 , Notes
                                 -- , NodeFrameNotebook
                                 ]
@@ -362,7 +362,7 @@ settingsBox NodeFrameVisio =
               , doc  : Documentation NodeFrameVisio
               , buttons : [ Add [ NodeFrameVisio
                                 , Notes
-                                , NodeFrameCalc
+                                , Calc
                                 ]
                           , Delete
                           ]
@@ -415,7 +415,7 @@ moveFrameParameters = { subTreeParams : SubTreeParams
                                               , Folder
                                               , Corpus
                                               , Notes
-                                              , NodeFrameCalc
+                                              , Calc
                                               ]
                                  , valitypes: [ FolderPrivate
                                               , Team
@@ -423,7 +423,7 @@ moveFrameParameters = { subTreeParams : SubTreeParams
                                               , Folder
                                               , Corpus
                                               , Notes
-                                              , NodeFrameCalc
+                                              , Calc
                                               ]
                                  }
                   }
