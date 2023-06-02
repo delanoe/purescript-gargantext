@@ -164,7 +164,12 @@
   .text-justify  { text-align: justify; }
   .text-wrap     { white-space: normal; }
   .text-nowrap   { white-space: nowrap; }
-
+  .text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
   .text-left   { text-align: left;    }
   .text-right  { text-align: right;   }
   .text-center { text-align: center;  }
@@ -351,4 +356,32 @@
       content: "\200B";
     }
   }
+
+
+  .btn-seemore {
+    text-decoration: none;
+    font-size: x-small;
+    :hover {
+      text-decoration: underline;
+    }
+  }
+
+  .annotated-field-runs.collapse:not(.show) {
+    display: block;
+    max-height: 3.5rem;
+    overflow: hidden;
+  }
+  
+  .annotated-field-runs.collapsing {
+    height: 3rem;
+  }
+  
+  a.btn-seemore.collapsed::after {
+    content: '+ show more';
+  }
+  
+  a.btn-seemore:not(.collapsed)::after {
+    content: '- show less';
+  }
+
 }

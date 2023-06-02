@@ -7802,6 +7802,12 @@ a:focus {
 #portal .text-nowrap {
   white-space: nowrap;
 }
+#app .text-truncate,
+#portal .text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 #app .text-left,
 #portal .text-left {
   text-align: left;
@@ -8889,6 +8895,33 @@ a:focus {
 #app .virtual-space::after,
 #portal .virtual-space::after {
   content: "​";
+}
+#app .btn-seemore,
+#portal .btn-seemore {
+  text-decoration: none;
+  font-size: x-small;
+}
+#app .btn-seemore :hover,
+#portal .btn-seemore :hover {
+  text-decoration: underline;
+}
+#app .annotated-field-runs.collapse:not(.show),
+#portal .annotated-field-runs.collapse:not(.show) {
+  display: block;
+  max-height: 3.5rem;
+  overflow: hidden;
+}
+#app .annotated-field-runs.collapsing,
+#portal .annotated-field-runs.collapsing {
+  height: 3rem;
+}
+#app a.btn-seemore.collapsed::after,
+#portal a.btn-seemore.collapsed::after {
+  content: "+ show more";
+}
+#app a.btn-seemore:not(.collapsed)::after,
+#portal a.btn-seemore:not(.collapsed)::after {
+  content: "- show less";
 }
 
 .range-control {
