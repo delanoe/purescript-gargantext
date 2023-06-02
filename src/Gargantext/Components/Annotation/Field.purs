@@ -14,7 +14,9 @@ module Gargantext.Components.Annotation.Field where
 import Gargantext.Prelude
 
 import Data.Array as A
+import Data.FoldableWithIndex (foldlWithIndex, foldrWithIndex)
 import Data.List (List(..), (:))
+import Data.Map (Map)
 import Data.Maybe (Maybe(..), maybe)
 import Data.String.Common (joinWith)
 import Data.Tuple (Tuple(..), snd)
@@ -23,8 +25,8 @@ import DOM.Simple.Event as DE
 import Effect (Effect)
 import Gargantext.Components.Annotation.Menu (annotationMenu, AnnotationMenu)
 import Gargantext.Components.Annotation.Types (MenuType(..), ModeType(..), termClass)
-import Gargantext.Core.NgramsTable.Functions (findNgramTermList, highlightNgrams, normNgram)
-import Gargantext.Core.NgramsTable.Types (NgramsTable, NgramsTerm(..))
+import Gargantext.Core.NgramsTable.Functions (Cache, findNgramTermList, highlightNgrams, normNgram)
+import Gargantext.Core.NgramsTable.Types (HighlightElement, NgramsRepoElement(..), NgramsTable(..), NgramsTerm(..), parentMap)
 import Gargantext.Types (CTabNgramType(..), TermList)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Selection as Sel
@@ -43,6 +45,7 @@ type Props =
   , setTermList  :: NgramsTerm -> Maybe TermList -> TermList -> Effect Unit
   , text         :: Maybe String
   , mode         :: ModeType
+  , cache        :: Record Cache
   )
 type MouseEvent = E.SyntheticEvent DE.MouseEvent
 
@@ -78,6 +81,7 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
       , setTermList
       , text: fieldText
       , mode
+      , cache
       } _ = do
     -- | States
     -- |
@@ -110,7 +114,7 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
 
             H.div
             { className: "annotated-field-runs" }
-            ((\p -> annotateRun p) <$> wrap <$> compile ngrams fieldText)
+            ((\p -> annotateRun p) <$> wrap <$> compile cache ngrams fieldText)
 
 
           AdditionMode ->
@@ -132,10 +136,11 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
 -----------------------------------------------------------
 
 compile ::
-     NgramsTable
+     Record Cache
+  -> NgramsTable
   -> Maybe String
-  -> Array (Tuple String (List (Tuple NgramsTerm TermList)))
-compile ngrams = maybe [] (highlightNgrams CTabTerms ngrams)
+  -> Array HighlightElement
+compile cache ngrams = maybe [] (highlightNgrams CTabTerms ngrams cache)
 
 -- Runs
 
