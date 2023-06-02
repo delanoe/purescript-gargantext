@@ -325,7 +325,7 @@ renderRouteCpt = R.memo' $ here.component "renderRoute" cpt where
         GR.PGraphExplorer s g     -> graphExplorer (sessionNodeProps s g) []
         GR.PhyloExplorer s g      -> phyloExplorer (sessionNodeProps s g) []
         GR.RouteFile s n          -> routeFile (sessionNodeProps s n) []
-        GR.RouteFrameWrite s n    -> routeFrame (Record.merge { nodeType: NodeFrameWrite    } $ sessionNodeProps s n) []
+        GR.RouteFrameWrite s n    -> routeFrame (Record.merge { nodeType: Notes    } $ sessionNodeProps s n) []
         GR.RouteFrameCalc  s n    -> routeFrame (Record.merge { nodeType: NodeFrameCalc     } $ sessionNodeProps s n) []
         GR.RouteFrameCode  s n    -> routeFrame (Record.merge { nodeType: NodeFrameNotebook } $ sessionNodeProps s n) []
         GR.RouteFrameVisio s n    -> routeFrame (Record.merge { nodeType: NodeFrameVisio    } $ sessionNodeProps s n) []
