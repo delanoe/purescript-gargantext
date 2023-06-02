@@ -111,11 +111,11 @@ settingsBox FolderPrivate =
   SettingsBox { show : true
               , edit : false
               , doc  : Documentation FolderPrivate
-              , buttons : [ Add [ Corpus
+              , buttons : [ Add [ Notes
+                                , Corpus
+                                , Calc
                                 , Folder
                                 , Annuaire
-                                , Notes
-                                , Calc
                                 -- , NodeFrameNotebook
                                 ]
                           ]
@@ -127,11 +127,11 @@ settingsBox Team =
               , doc  : Documentation Team
               , buttons : [ Add [ Notes
                                 , Corpus
-                                , Folder
-                                , Annuaire
                                 , Calc
-                                -- , NodeFrameNotebook
+                                , Folder
                                 , Team
+                                , Annuaire
+                                -- , NodeFrameNotebook
                                 , FolderShared
                                 , NodeFrameVisio
                                 ]
@@ -161,11 +161,11 @@ settingsBox Folder =
   SettingsBox { show : true
               , edit : true
               , doc  : Documentation Folder
-              , buttons : [ Add [ Corpus
+              , buttons : [ Add [ Notes
+                                , Corpus
+                                , Calc
                                 , Folder
                                 , Annuaire
-                                , Notes
-                                , Calc
                                 -- , NodeFrameNotebook
                                 ]
                           , Move moveParameters
@@ -177,22 +177,21 @@ settingsBox Corpus =
   SettingsBox { show : true
               , edit : true
               , doc  : Documentation Corpus
-              , buttons : [ Upload
-                          , SearchBox
-                          , Download
-                            --, Clone
-                          , Add [ NodeTexts
+              , buttons : [ Add [ Graph
+                                , Notes
+                                , NodeTexts
                                 , NodeList
                                 , Graph
                                 , Dashboard
-                                , Notes
-                                , Calc
                                 , Phylo
                                 -- , NodeFrameNotebook
                                 ]
-                          , Link (linkParams Annuaire)
                           , Move moveParameters
+                          , Upload
+                          , SearchBox
                           , WriteNodesDocuments
+                          , Download
+                          , Link (linkParams Annuaire)
                           , Delete
                           ]
               }
