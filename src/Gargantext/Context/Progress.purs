@@ -31,6 +31,9 @@ type AsyncProps =
   , session   :: Session
   )
 
+here :: R2.Here
+here = R2.here "Gargantext.Context.Progress"
+
 asyncProgress :: R2.Component AsyncProps
 asyncProgress = R2.component component
 component :: R.Component AsyncProps
@@ -49,7 +52,7 @@ component = R.hooksComponent "asyncProgressContext" cpt where
         let rdata = (RX.pick props :: Record QueryProgressData)
 
         eAsyncProgress <- queryProgress rdata
-        handleRESTError errors eAsyncProgress onProgress
+        handleRESTError here errors eAsyncProgress onProgress
 
       onProgress :: AsyncProgress -> Aff Unit
       onProgress value = liftEffect do

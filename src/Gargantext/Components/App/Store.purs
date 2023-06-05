@@ -55,6 +55,7 @@ type Store =
   , showCorpus          :: T.Box Boolean
   , showLogin           :: T.Box Boolean
   , showTree            :: T.Box Boolean
+  , showSearch          :: T.Box Boolean
   , sidePanelLists      :: T.Box (Maybe (Record ListsT.SidePanel))
   , sidePanelTexts      :: T.Box (Maybe (Record TextsT.SidePanel))
   , sidePanelState      :: T.Box SidePanelState
@@ -82,6 +83,7 @@ type State =
   , showCorpus          :: Boolean
   , showLogin           :: Boolean
   , showTree            :: Boolean
+  , showSearch          :: Boolean
   , sidePanelLists      :: Maybe (Record ListsT.SidePanel)
   , sidePanelTexts      :: Maybe (Record TextsT.SidePanel)
   , sidePanelState      :: SidePanelState
@@ -110,6 +112,7 @@ options =
   , showCorpus          : false
   , showLogin           : false
   , showTree            : true
+  , showSearch          : false
   , sidePanelLists      : ListsT.initialSidePanel
   , sidePanelTexts      : TextsT.initialSidePanel
   , sidePanelState      : InitialClosed

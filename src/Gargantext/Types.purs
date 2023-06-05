@@ -155,9 +155,9 @@ data NodeType = Annuaire
               | Url_Document
               -- TODO Optional Nodes
               | NodeFile
-              | NodeFrameCalc
+              | Calc
               | NodeFrameNotebook
-              | NodeFrameWrite
+              | Notes
               | NodeFrameVisio
               | NodePublic NodeType
 derive instance Generic NodeType _
@@ -197,8 +197,8 @@ instance Show NodeType where
   show Team              = "NodeTeam"
   show NodeList          = "NodeList"
   show NodeTexts         = "NodeTexts"
-  show NodeFrameWrite    = "NodeFrameWrite"
-  show NodeFrameCalc     = "NodeFrameCalc"
+  show Notes             = "Notes"
+  show Calc     = "Calc"
   show NodeFrameNotebook = "NodeFrameNotebook"
   show NodeFrameVisio    = "NodeFrameVisio"
   show (NodePublic nt)   = "NodePublic" <> show nt
@@ -227,8 +227,8 @@ instance Read NodeType where
   read "NodeList"          = Just NodeList
   read "NodeTexts"         = Just NodeTexts
   read "Annuaire"          = Just Annuaire
-  read "NodeFrameWrite"    = Just NodeFrameWrite
-  read "NodeFrameCalc"     = Just NodeFrameCalc
+  read "Notes"    = Just Notes
+  read "Calc"     = Just Calc
   read "NodeFrameNotebook" = Just NodeFrameNotebook
   read "NodeFrameVisio"    = Just NodeFrameVisio
   read "NodeFile"          = Just NodeFile
@@ -267,9 +267,9 @@ translateFR = case _ of
   Url_Document        -> "Document URL"
   --
   NodeFile            -> "Fichier"
-  NodeFrameCalc       -> "Feuilles de calcul"
+  Calc       -> "Feuilles de calcul"
   NodeFrameNotebook   -> "Carnet de notes"
-  NodeFrameWrite      -> "Éditeur de texte"
+  Notes      -> "Éditeur de texte"
   NodeFrameVisio      -> "Visio"
   NodePublic n        -> translateFR n
 
@@ -298,9 +298,9 @@ translateEN = case _ of
   Url_Document        -> "URL document"
   --
   NodeFile            -> "File"
-  NodeFrameCalc       -> "Calc"
+  Calc       -> "Calc"
   NodeFrameNotebook   -> "Notebook"
-  NodeFrameWrite      -> "Write"
+  Notes               -> "Notes"
   NodeFrameVisio      -> "Visio"
   NodePublic n        -> translateEN n
 
@@ -343,11 +343,11 @@ getIcon Annuaire false = "address-card"
 getIcon NodeContact true  = "address-card-o"
 getIcon NodeContact false = "address-card"
 
-getIcon NodeFrameWrite true  = "file-text-o"
-getIcon NodeFrameWrite false = "file-text"
+getIcon Notes true  = "file-text-o"
+getIcon Notes false = "file-text"
 
-getIcon NodeFrameCalc true  = "calculator"
-getIcon NodeFrameCalc false = "calculator"
+getIcon Calc true  = "calculator"
+getIcon Calc false = "calculator"
 
 getIcon NodeFrameNotebook true  = "file-code-o"
 getIcon NodeFrameNotebook false = "code"
@@ -409,8 +409,8 @@ nodeTypePath Tree              = "tree"
 nodeTypePath NodeList          = "lists"
 nodeTypePath NodeTexts         = "texts"
 nodeTypePath Team              = "team"
-nodeTypePath NodeFrameWrite    = "write"
-nodeTypePath NodeFrameCalc     = "calc"
+nodeTypePath Notes    = "write"
+nodeTypePath Calc     = "calc"
 nodeTypePath NodeFrameNotebook = "code"
 nodeTypePath NodeFrameVisio    = "visio"
 nodeTypePath (NodePublic nt)   = nodeTypePath nt

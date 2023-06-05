@@ -28,9 +28,10 @@ joinQueryStrings :: Array String -> String
 joinQueryStrings qs =
   case uncons qs of
     Nothing -> ""
-    Just { head, tail } -> "?" <> head <> (joinQS tail)
+    Just { head, tail } -> "?" <> head <> (joinTail tail)
       where
-        joinQS ys =
+        joinTail :: Array String -> String
+        joinTail ys =
           case uncons ys of
             Nothing -> ""
-            Just { tail: ys } -> "&" <> (joinWith "&" ys)
+            Just { head: h, tail: ys } -> "&" <> h <> (joinTail ys)

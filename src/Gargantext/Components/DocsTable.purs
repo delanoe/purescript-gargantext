@@ -174,7 +174,7 @@ docViewCpt = here.component "docView" cpt where
 
       eTask <- DFC.create session nodeId fdata
 
-      handleRESTError boxes.errors eTask
+      handleRESTError here boxes.errors eTask
         \t -> liftEffect $ launchDocumentCreationProgress
                               boxes
                               session
@@ -264,7 +264,7 @@ scanDocumentCreationProgress boxes session nodeId currentTask cbk = do
 
   eTask <- DFC.createProgress session nodeId currentTask
 
-  handleRESTError boxes.errors eTask
+  handleRESTError here boxes.errors eTask
     \asyncProgress -> liftEffect do
       let
         GT.AsyncProgress { status } = asyncProgress
