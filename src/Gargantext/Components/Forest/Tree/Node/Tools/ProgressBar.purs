@@ -54,7 +54,7 @@ asyncProgressBarCpt = here.component "asyncProgressBar" cpt
           launchAff_ $ do
             let rdata = (RX.pick props :: Record QueryProgressData)
             eAsyncProgress <- queryProgress rdata
-            handleRESTError errors eAsyncProgress $ \asyncProgress -> liftEffect $ do
+            handleRESTError here errors eAsyncProgress $ \asyncProgress -> liftEffect $ do
               let GT.AsyncProgress { status } = asyncProgress
               T.write_ (min 100.0 $ GT.progressPercent asyncProgress) progress
               if (status == GT.IsFinished) || (status == GT.IsKilled) || (status == GT.IsFailure) then do

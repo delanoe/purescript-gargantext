@@ -19,7 +19,7 @@ import Gargantext.Components.Category (ratingSimpleLoader)
 import Gargantext.Components.Document.Types (DocPath, Document(..), LoadedData, initialState)
 import Gargantext.Components.NgramsTable.AutoSync (useAutoSync)
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Core.NgramsTable.Functions (addNewNgramA, applyNgramsPatches, coreDispatch, findNgramRoot, setTermListA)
+import Gargantext.Core.NgramsTable.Functions (addNewNgramA, applyNgramsPatches, coreDispatch, findNgramRoot, setTermListA, computeCache)
 import Gargantext.Core.NgramsTable.Types (CoreAction(..), Versioned(..), replace)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Utils ((?))
@@ -88,11 +88,14 @@ layoutCpt = here.component "layout" cpt where
 
       ngrams = applyNgramsPatches state' initTable
 
+      cache = computeCache ngrams
+
       annotate text = AnnotatedField.annotatedField
         { ngrams
         , setTermList
         , text
         , mode: mode'
+        , cache
         }
 
       setTermListOrAddA ngram Nothing        =

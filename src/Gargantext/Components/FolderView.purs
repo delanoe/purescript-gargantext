@@ -381,18 +381,18 @@ performAction = performAction' where
 
   updateNode params { boxes: { errors, tasks }, nodeId: id, session } = do
     eTask <- updateRequest params session id
-    handleRESTError errors eTask $ \task -> liftEffect $ do
+    handleRESTError here errors eTask $ \task -> liftEffect $ do
       GAT.insert id task tasks
       here.log2 "[performAction] UpdateNode task:" task
 
   shareTeam username { boxes: { errors }, nodeId: id, session } = do
     eTask <- Share.shareReq session id $ Share.ShareTeamParams { username }
-    handleRESTError errors eTask $ \_task -> pure unit
+    handleRESTError here errors eTask $ \_task -> pure unit
 
   sharePublic params p@{ boxes: { errors }, session } = traverse_ f params where
     f (SubTreeOut { in: inId, out }) = do
       eTask <- Share.shareReq session inId $ Share.SharePublicParams { node_id: out }
-      handleRESTError errors eTask $ \_task -> pure unit
+      handleRESTError here errors eTask $ \_task -> pure unit
       refreshFolders p
 
   addContact params { nodeId: id, session } =
@@ -400,40 +400,40 @@ performAction = performAction' where
 
   uploadFile' nodeType fileType fileFormat lang mName contents { boxes: { errors, tasks }, nodeId: id, session } selection = do
     eTask <- uploadFile { contents, fileType, fileFormat, lang, id, nodeType, mName, selection, session }
-    handleRESTError errors eTask $ \task -> liftEffect $ do
+    handleRESTError here errors eTask $ \task -> liftEffect $ do
       GAT.insert id task tasks
       here.log2 "[performAction] UploadFile, uploaded, task:" task
 
   uploadArbitraryFile' fileFormat mName blob { boxes: { errors, tasks }, nodeId: id, session } selection = do
     eTask <- uploadArbitraryFile session id { blob, fileFormat, mName } selection
-    handleRESTError errors eTask $ \task -> liftEffect $ do
+    handleRESTError here errors eTask $ \task -> liftEffect $ do
       GAT.insert id task tasks
       here.log2 "[performAction] UploadArbitraryFile, uploaded, task:" task
 
   moveNode params p@{ boxes: { errors }, session } = traverse_ f params where
     f (SubTreeOut { in: in', out }) = do
       eTask <- moveNodeReq session in' out
-      handleRESTError errors eTask $ \_task -> pure unit
+      handleRESTError here errors eTask $ \_task -> pure unit
       refreshFolders p
 
   mergeNode params p@{ boxes: { errors }, session } = traverse_ f params where
     f (SubTreeOut { in: in', out }) = do
       eTask <- mergeNodeReq session in' out
-      handleRESTError errors eTask $ \_task -> pure unit
+      handleRESTError here errors eTask $ \_task -> pure unit
       refreshFolders p
 
   linkNode nodeType params p@{ boxes: { errors }, session } = traverse_ f params where
     f (SubTreeOut { in: in', out }) = do
       eTask <- linkNodeReq session nodeType in' out
-      handleRESTError errors eTask $ \_task -> pure unit
+      handleRESTError here errors eTask $ \_task -> pure unit
       refreshFolders p
 
   renameNode name p@{ boxes: { errors }, nodeId: id, session } = do
     eTask <- rename session id $ RenameValue { text: name }
-    handleRESTError errors eTask $ \_task -> pure unit
+    handleRESTError here errors eTask $ \_task -> pure unit
     refreshFolders p
 
   addNode' name nodeType p@{ boxes: { errors }, nodeId: id, session } = do
     eTask <- addNode session id $ AddNodeValue {name, nodeType}
-    handleRESTError errors eTask $ \_task -> pure unit
+    handleRESTError here errors eTask $ \_task -> pure unit
     refreshFolders p

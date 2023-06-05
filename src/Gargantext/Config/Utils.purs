@@ -9,7 +9,7 @@ import Data.Maybe (fromMaybe)
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Gargantext.Config.REST (RESTError)
+import Gargantext.Config.REST (RESTError, logRESTError)
 import Gargantext.Types (AsyncEvent(..), AsyncProgress(..), AsyncTaskLog(..), AsyncTaskStatus(..), FrontendError(..))
 import Gargantext.Utils.Reactix as R2
 import Toestand as T
@@ -18,14 +18,16 @@ here :: R2.Here
 here = R2.here "Gargantext.Config.Utils"
 
 handleRESTError :: forall a.
-                   T.Box (Array FrontendError)
+                   R2.Here
+                -> T.Box (Array FrontendError)
                 -> Either RESTError a
                 -> (a -> Aff Unit)
                 -> Aff Unit
-handleRESTError errors (Left error) _ = liftEffect $ do
+handleRESTError here' errors (Left error) _ = liftEffect $ do
   T.modify_ (A.cons $ FRESTError { error }) errors
-  here.warn2 "[handleTaskError] RESTError" error
-handleRESTError _ (Right task) handler = handler task
+  logRESTError here' "[handleTaskError]" error
+  -- here.warn2 "[handleTaskError] RESTError" error
+handleRESTError _ _ (Right task) handler = handler task
 
 handleErrorInAsyncProgress :: T.Box (Array FrontendError)
                            -> AsyncProgress

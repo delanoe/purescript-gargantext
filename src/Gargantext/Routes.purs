@@ -25,6 +25,7 @@ data AppRoute
   | Lists          SessionId Int
   | Login
   | NodeTexts       SessionId Int
+  | TreeFlat        SessionId Int String
   | PGraphExplorer  SessionId Int
   | PhyloExplorer   SessionId Int
   | RouteFile       SessionId Int
@@ -35,37 +36,12 @@ data AppRoute
   | Team            SessionId Int
   | UserPage        SessionId Int
 
-
 derive instance Eq AppRoute
-
-data SessionRoute
-  = Tab TabType (Maybe Id)
-  | Children NodeType Offset Limit (Maybe OrderBy) (Maybe Id)
-  | GetNgrams NgramsGetOpts (Maybe Id)
-  | GetNgramsTableAll NgramsGetTableAllOpts (Maybe Id)
-  | GetNgramsTableVersion { listId :: ListId, tabType :: TabType } (Maybe Id)
-  | PutNgrams TabType (Maybe ListId) (Maybe TermList) (Maybe Id)
-  | PostNgramsChartsAsync (Maybe Id)
-  -- ^ This name is not good. In particular this URL is used both in PUT and POST.
-  | RecomputeNgrams   (TabSubType CTabNgramType) Id ListId
-  | RecomputeListChart ChartType  CTabNgramType  Id ListId
-  | NodeAPI       NodeType (Maybe Id) String
-  | TreeFirstLevel (Maybe Id) String
-  | GraphAPI      Id String
-  | ListsRoute    ListId
-  | ListDocument (Maybe ListId) (Maybe DocId)
-  | Search        SearchOpts (Maybe Id)
-  | CorpusMetrics CorpusMetricOpts  (Maybe Id)
-  | CorpusMetricsHash { listId :: ListId, tabType :: TabType }  (Maybe Id)
-  | Chart ChartOpts (Maybe Id)
-  | ChartHash { chartType :: ChartType, listId :: Maybe ListId, tabType :: TabType } (Maybe Id)
-  -- | AnnuaireContact AnnuaireId DocId
-  | PhyloAPI Id
-  | Members
 
 instance Show AppRoute where
   show Home                     = "Home"
   show Login                    = "Login"
+  show (TreeFlat    s i _)      = "treeflat"       <> show i <> " (" <> show s <> ")"
   show (ForgotPassword  u)      = "ForgotPassword" <> show u
   show (Folder        s i)      = "Folder"         <> show i <> " (" <> show s <> ")"
   show (FolderPrivate s i)      = "FolderPrivate"  <> show i <> " (" <> show s <> ")"
@@ -94,6 +70,7 @@ instance Show AppRoute where
 appPath :: AppRoute -> String
 appPath Home                     = ""
 appPath Login                    = "login"
+appPath (TreeFlat _ i q)           = "treeflat/"       <> show i <> "?query=" <> q
 appPath (ForgotPassword u)       = "forgotPassword/" <> show u
 appPath (Folder s i)             = "folder/"         <> show s <> "/" <> show i
 appPath (FolderPrivate s i)      = "folderPrivate/"  <> show s <> "/" <> show i
@@ -134,10 +111,36 @@ nodeTypeAppRoute GT.NodeList s i       = Just $ Lists s i
 nodeTypeAppRoute GT.NodeUser s i       = Just $ UserPage s i
 nodeTypeAppRoute GT.Team s i           = Just $ Team s i
 nodeTypeAppRoute GT.NodeTexts s i      = Just $ NodeTexts s i
-nodeTypeAppRoute GT.NodeFrameWrite s i = Just $ RouteFrameWrite s i
-nodeTypeAppRoute GT.NodeFrameCalc  s i = Just $ RouteFrameCalc  s i
+nodeTypeAppRoute GT.Notes s i = Just $ RouteFrameWrite s i
+nodeTypeAppRoute GT.Calc  s i = Just $ RouteFrameCalc  s i
 nodeTypeAppRoute GT.NodeFrameVisio s i = Just $ RouteFrameVisio s i
 nodeTypeAppRoute _ _ _                 = Nothing
+
+
+data SessionRoute
+  = Tab TabType (Maybe Id)
+  | Children NodeType Offset Limit (Maybe OrderBy) (Maybe Id)
+  | GetNgrams NgramsGetOpts (Maybe Id)
+  | GetNgramsTableAll NgramsGetTableAllOpts (Maybe Id)
+  | GetNgramsTableVersion { listId :: ListId, tabType :: TabType } (Maybe Id)
+  | PutNgrams TabType (Maybe ListId) (Maybe TermList) (Maybe Id)
+  | PostNgramsChartsAsync (Maybe Id)
+  -- ^ This name is not good. In particular this URL is used both in PUT and POST.
+  | RecomputeNgrams   (TabSubType CTabNgramType) Id ListId
+  | RecomputeListChart ChartType  CTabNgramType  Id ListId
+  | NodeAPI       NodeType (Maybe Id) String
+  | TreeFirstLevel (Maybe Id) String
+  | GraphAPI      Id String
+  | ListsRoute    ListId
+  | ListDocument (Maybe ListId) (Maybe DocId)
+  | Search        SearchOpts (Maybe Id)
+  | CorpusMetrics CorpusMetricOpts  (Maybe Id)
+  | CorpusMetricsHash { listId :: ListId, tabType :: TabType }  (Maybe Id)
+  | Chart ChartOpts (Maybe Id)
+  | ChartHash { chartType :: ChartType, listId :: Maybe ListId, tabType :: TabType } (Maybe Id)
+  -- | AnnuaireContact AnnuaireId DocId
+  | PhyloAPI Id
+  | Members
 
 
 ------------------------------------------------------

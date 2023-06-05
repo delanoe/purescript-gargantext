@@ -24,14 +24,15 @@ import Gargantext.Components.Nodes.Corpus.Code (corpusCodeLayout)
 import Gargantext.Components.Nodes.Corpus.Dashboard (dashboardLayout)
 import Gargantext.Components.Nodes.Corpus.Document as Document
 import Gargantext.Components.Nodes.Corpus.Phylo as Phylo
-import Gargantext.Components.Nodes.Graph as Graph
 import Gargantext.Components.Nodes.File (fileLayout)
 import Gargantext.Components.Nodes.Frame as Frame
+import Gargantext.Components.Nodes.Graph as Graph
 import Gargantext.Components.Nodes.Home (homeLayout)
 import Gargantext.Components.Nodes.Lists as Lists
 import Gargantext.Components.Nodes.Texts as Texts
 import Gargantext.Components.Tile (tileBlock)
 import Gargantext.Components.TopBar as TopBar
+import Gargantext.Components.TreeSearch (treeSearch)
 import Gargantext.Config (defaultFrontends, defaultBackends)
 import Gargantext.Context.Session as SessionContext
 import Gargantext.Ends (Backend)
@@ -100,6 +101,8 @@ routerCpt = here.component "router" cpt where
       { className: "router" }
       [
         login' boxes
+      ,
+        treeSearch' boxes
       ,
         TopBar.component
         {}
@@ -317,11 +320,12 @@ renderRouteCpt = R.memo' $ here.component "renderRoute" cpt where
         GR.Home                   -> home { boxes } []
         GR.Lists s n              -> lists (sessionNodeProps s n) []
         GR.Login                  -> login' boxes
+        GR.TreeFlat _ _ _         -> treeSearch' boxes
         GR.PGraphExplorer s g     -> graphExplorer (sessionNodeProps s g) []
         GR.PhyloExplorer s g      -> phyloExplorer (sessionNodeProps s g) []
         GR.RouteFile s n          -> routeFile (sessionNodeProps s n) []
-        GR.RouteFrameWrite s n    -> routeFrame (Record.merge { nodeType: NodeFrameWrite    } $ sessionNodeProps s n) []
-        GR.RouteFrameCalc  s n    -> routeFrame (Record.merge { nodeType: NodeFrameCalc     } $ sessionNodeProps s n) []
+        GR.RouteFrameWrite s n    -> routeFrame (Record.merge { nodeType: Notes    } $ sessionNodeProps s n) []
+        GR.RouteFrameCalc  s n    -> routeFrame (Record.merge { nodeType: Calc     } $ sessionNodeProps s n) []
         GR.RouteFrameCode  s n    -> routeFrame (Record.merge { nodeType: NodeFrameNotebook } $ sessionNodeProps s n) []
         GR.RouteFrameVisio s n    -> routeFrame (Record.merge { nodeType: NodeFrameVisio    } $ sessionNodeProps s n) []
         GR.Team s n               -> team (sessionNodeProps s n) []
@@ -598,6 +602,12 @@ login' { backend, sessions, showLogin: visible } =
   , sessions
   , visible
   }
+
+--------------------------------------------------------------
+
+treeSearch' :: Boxes -> R.Element
+treeSearch' { sessions, showSearch: visible } =
+  treeSearch { sessions, visible }
 
 --------------------------------------------------------------
 

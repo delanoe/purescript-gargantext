@@ -12085,4 +12085,10 @@ select.form-control {
   height: auto;
 }
 
+.search-modal__results {
+  height: 14em;
+  overflow-x: hidden;
+  overflow-y: scroll;
+}
+
 /*# sourceMappingURL=bootstrap-herbie.css.map */
