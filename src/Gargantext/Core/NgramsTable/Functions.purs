@@ -155,7 +155,7 @@ computeCache ngrams contextNgrams = { contextNgrams, pm, pats }
 
     pats :: Array NgramsTerm
     pats = A.fromFoldable $
-           foldrWithIndex (\term (NgramsRepoElement nre) acc -> Set.union acc $ Set.insert term nre.children) Set.empty contextRepoElements
+           foldlWithIndex (\term acc (NgramsRepoElement nre) -> Set.union acc $ Set.insert term nre.children) Set.empty contextRepoElements
 
     -- pats = A.fromFoldable $
     --        foldrWithIndex (\term (NgramsRepoElement nre) acc -> Set.union acc $ Set.insert term nre.children) Set.empty ngrams_repo_elements
