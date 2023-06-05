@@ -89,6 +89,7 @@ docFocusCpt = here.component "main" cpt where
               layout
               { loaded
               , path
+              , session
               , sideControlsSlot: Just $
                   H.div
                   { className: "graph-doc-focus__header" }

@@ -29,7 +29,6 @@ here = R2.here "Gargantext.Components.Nodes.Corpus.Document"
 
 node :: R2.Leaf ( key :: String | Props )
 node = R2.leaf nodeCpt
-
 nodeCpt :: R.Component ( key :: String | Props )
 nodeCpt = here.component "node" cpt where
   cpt { listId
@@ -86,5 +85,6 @@ nodeCpt = here.component "node" cpt where
             layout
             { loaded
             , path
+            , session
             }
       }
