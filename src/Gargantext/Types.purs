@@ -157,7 +157,7 @@ data NodeType = Annuaire
               | NodeFile
               | NodeFrameCalc
               | NodeFrameNotebook
-              | Notes
+              | NodeFrameWrite
               | NodeFrameVisio
               | NodePublic NodeType
 derive instance Generic NodeType _
@@ -197,7 +197,7 @@ instance Show NodeType where
   show Team              = "NodeTeam"
   show NodeList          = "NodeList"
   show NodeTexts         = "NodeTexts"
-  show Notes             = "Notes"
+  show NodeFrameWrite    = "NodeFrameWrite"
   show NodeFrameCalc     = "NodeFrameCalc"
   show NodeFrameNotebook = "NodeFrameNotebook"
   show NodeFrameVisio    = "NodeFrameVisio"
@@ -227,7 +227,7 @@ instance Read NodeType where
   read "NodeList"          = Just NodeList
   read "NodeTexts"         = Just NodeTexts
   read "Annuaire"          = Just Annuaire
-  read "Notes"    = Just Notes
+  read "NodeFrameWrite"    = Just NodeFrameWrite
   read "NodeFrameCalc"     = Just NodeFrameCalc
   read "NodeFrameNotebook" = Just NodeFrameNotebook
   read "NodeFrameVisio"    = Just NodeFrameVisio
@@ -269,7 +269,7 @@ translateFR = case _ of
   NodeFile            -> "Fichier"
   NodeFrameCalc       -> "Feuilles de calcul"
   NodeFrameNotebook   -> "Carnet de notes"
-  Notes      -> "Éditeur de texte"
+  NodeFrameWrite      -> "Éditeur de texte"
   NodeFrameVisio      -> "Visio"
   NodePublic n        -> translateFR n
 
@@ -300,7 +300,7 @@ translateEN = case _ of
   NodeFile            -> "File"
   NodeFrameCalc       -> "Calc"
   NodeFrameNotebook   -> "Notebook"
-  Notes               -> "Notes"
+  NodeFrameWrite      -> "Write"
   NodeFrameVisio      -> "Visio"
   NodePublic n        -> translateEN n
 
@@ -343,8 +343,8 @@ getIcon Annuaire false = "address-card"
 getIcon NodeContact true  = "address-card-o"
 getIcon NodeContact false = "address-card"
 
-getIcon Notes true  = "file-text-o"
-getIcon Notes false = "file-text"
+getIcon NodeFrameWrite true  = "file-text-o"
+getIcon NodeFrameWrite false = "file-text"
 
 getIcon NodeFrameCalc true  = "calculator"
 getIcon NodeFrameCalc false = "calculator"
@@ -409,7 +409,7 @@ nodeTypePath Tree              = "tree"
 nodeTypePath NodeList          = "lists"
 nodeTypePath NodeTexts         = "texts"
 nodeTypePath Team              = "team"
-nodeTypePath Notes    = "write"
+nodeTypePath NodeFrameWrite    = "write"
 nodeTypePath NodeFrameCalc     = "calc"
 nodeTypePath NodeFrameNotebook = "code"
 nodeTypePath NodeFrameVisio    = "visio"
