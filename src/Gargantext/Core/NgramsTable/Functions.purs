@@ -214,7 +214,8 @@ highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) cache@{ p
     goAcc i acc (pat /\ lpat) =
       case lookupRootListWithChildren pat table cache of
         Nothing ->
-          crashWith "highlightNgrams: pattern missing from table"
+          -- crashWith $ "highlightNgrams: pattern [" <> show pat <> "] missing from table: " <> show table
+          acc
         Just ne_list ->
           let
             (acc0 /\ acc1_2) = splitAcc i acc
