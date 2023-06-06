@@ -47,6 +47,7 @@ import Gargantext.Types (AsyncTask, AsyncTaskType(..), AsyncTaskWithType(..), CT
 import Gargantext.Utils.Either (eitherMap)
 --import Gargantext.Utils.KarpRabin (indicesOfAny)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.String as GS
 import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
 import Reactix as R
@@ -82,7 +83,9 @@ normNgramInternal :: CTabNgramType -> String -> String
 normNgramInternal CTabAuthors    = identity
 normNgramInternal CTabSources    = identity
 normNgramInternal CTabInstitutes = identity
-normNgramInternal CTabTerms      = S.toLower <<< R.replace wordBoundaryReg " "
+normNgramInternal CTabTerms      = GS.specialCharNormalize
+                               <<< S.toLower
+                               <<< R.replace wordBoundaryReg " "
 
 normNgramWithTrim :: CTabNgramType -> String -> String
 normNgramWithTrim nt = DSC.trim <<< normNgramInternal nt
