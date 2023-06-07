@@ -27,28 +27,28 @@ $node-popup-width: 544px
 
   @include right-handed
     &__node
-      margin-left: space-x(2)
+      margin-left: space-x(1.75)
     & > &__node
-      margin-right: space-x(2)
+      margin-right: space-x(1.75)
 
   @include left-handed
     &__node
-      margin-right: space-x(2)
+      margin-right: space-x(1.75)
     & > &__node
-      margin-left: space-x(2)
+      margin-left: space-x(1.75)
 
-  &--with-child > &__node > &::before
-    color: $gray-400
-    position: absolute
-    font-size: 11px
-    top: $caret-y-offset
-    // z-index macro-management due to "node__link::before" overlay
-    z-index: z-index("tree", "content")
+  // &--with-child > &__node > &::before
+  //   color: $gray-400
+  //   position: absolute
+  //   font-size: 11px
+  //   top: $caret-y-offset
+  //   // z-index macro-management due to "node__link::before" overlay
+  //   z-index: z-index("tree", "content")
 
-    @include right-handed
-      content: "└"
-    @include left-handed
-      content: "┘"
+  //   @include right-handed
+  //     content: "└"
+  //   @include left-handed
+  //     content: "┘"
 
   // for <Cloak> use cases
   animation: 15ms fade-in
@@ -85,7 +85,7 @@ $node-popup-width: 544px
   position: relative
 
   &:hover
-    background-color: $gray-100
+    background-color: $gray-300
 
   @include right-handed
     flex-direction: row
@@ -120,7 +120,7 @@ $node-popup-width: 544px
 
   &__node-icon
     position: relative
-    font-size: 16px
+    font-size: 14px
     // @XXX Glyphicon icons lack of homogeneous width
     //      (this also means that we can not align harmoniously the leaf
     //      content)
@@ -152,7 +152,7 @@ $node-popup-width: 544px
 
   &__version-badge
     // pin the icon on bottom-right of the "&__node-icon"
-    $offset-y: -8px
+    $offset-y: -1px
     $offset-x: -4px
 
     position: absolute
@@ -163,6 +163,7 @@ $node-popup-width: 544px
     bottom: $offset-y
     right: $offset-x
     z-index: z-index("tree", "badge")
+    height: 14px
 
     // (?) unknown regresion: empirical offset re-alignement
     .b-icon-button__inner
@@ -187,7 +188,7 @@ $node-popup-width: 544px
 
   &__node-link
     position: relative
-    font-size: 15px
+    font-size: 14px
     min-width: 0
 
     @include right-handed
@@ -584,12 +585,48 @@ $node-popup-width: 544px
   overflow-x: clip // due to resizing content
 
   @include right-handed
-    border-right: 2px solid $border-color
+    border-right: 1px solid $border-color
 
   @include left-handed
     border-left: 2px solid $border-color
 
   ///////////////
+
+  @mixin top-teaser()
+    background: linear-gradient(to top, mix-alpha($body-bg, 0%) 0%, mix-alpha($body-bg, 100%) 45%)
+
+  &__actions
+    z-index: 3
+    border-bottom: 1px solid $gray-300
+
+    // $teaser-height: 16px
+
+    // &::after 
+    //   @include top-teaser
+
+    //   content: ""
+    //   z-index: z-index("tile", "top-teaser")
+    //   pointer-events: none
+    //   position: sticky
+    //   top: 0
+    //   height: $teaser-height
+    //   width: 100%
+    //   display: block
+
+
+  &__top_action
+    & > span
+      display: flex
+    button
+      padding-top: 1px !important
+      padding-bottom: 1px !important
+      .b-button__inner
+        display: flex
+        @include right-handed
+          flex-direction: row
+        @include left-handed
+          flex-direction: row-reverse
+
 
   &__action
     display: flex
@@ -629,9 +666,9 @@ $node-popup-width: 544px
     // remove horizontal offset for first entry only (see ".maintree")
     & > .maintree > .maintree__node
       @include right-handed
-        margin-left: space-x(1.5)
+        margin-left: space-x(0.5)
       @include left-handed
-        margin-right: space-x(1.5)
+        margin-right: space-x(0.5)
 
 /////////////////////////////////////////
 

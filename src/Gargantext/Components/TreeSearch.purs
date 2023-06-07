@@ -69,21 +69,35 @@ treeSearchCpt = here.component "treeSearch" cpt where
     pure $ 
       B.baseModal
       { isVisibleBox: visible
-      , title: Just "Tree Search"
+      , title: Just "Search in tree"
       , size: MediumModalSize
       , modalClassName: ""
       }
-      [ inputWithEnter { className: "form-control"
+      [ 
+        H.div
+        { className: "input-group p-1" }
+        [
+          inputWithEnter { className: "form-control"
                        , autoFocus: true
                        , onEnter: submit inputRef query
                        , onValueChanged: R.setRef inputRef
                        , onBlur: R.setRef inputRef
                        , type: "value"
                        , defaultValue: ""
-                       , placeholder: "Search..."
                        , required: true
+                       , placeholder: "Search keys..."
                        }
-      , treeSearchState {visible, query, sessions: sessions'} ]
+        ,
+          H.div { className: "input-group-append"}
+          [
+            H.button { className: "input-group-text btn btn-light text-secondary"
+                    , on: { click: submit inputRef query }
+                    , type: "submit" }
+            [ H.span {className: "fa fa-search"} [] ]
+          ]
+        ]
+      , treeSearchState {visible, query, sessions: sessions'} 
+      ]
       where
         submit ref box _ = T.write_ (R.readRef ref) box
 
@@ -108,15 +122,17 @@ treeSearchWrapperCpt = here.component "treeSearchWrapper" cpt where
 
     case session' of
       Just s ->
-        pure $ R.fragment [
-          formSelect'
+        pure $ H.div {className: "search-modal__results-wrapper px-1"} 
+        [ formSelect'
             { callback: \v -> T.write_ (Just v) session
             , list: unSessions sessions
             , value: s
             } []
+        ,
+          H.hr {}
         , 
           if query' == "" then
-            H.div {className: "search-modal__results"} [B.span_ "Enter your search query..."]
+            H.div {className: "search-modal__results mb-1"} [B.span_ "Please enter your search query..."]
           else
             treeSearchContainer {query: query', visible, session: s}
         ]
@@ -158,7 +174,7 @@ treeSearchRenderCpt = here.component "treeSearchRenderCpt" cpt where
         results s = map searchResult s
           where
             searchResult sd = H.div 
-                                { className: "forest-layout__action"} 
+                                { className: "result mt-1"} 
                                 [ 
                                   B.tooltipContainer
                                   { delayShow: 600
@@ -166,7 +182,7 @@ treeSearchRenderCpt = here.component "treeSearchRenderCpt" cpt where
                                   , tooltipSlot: B.span_ $ show $ fromMaybe Home $ nodeTypeAppRoute sd.type (sessionId session) sd.id
                                   , defaultSlot:
                                     B.button 
-                                    { className: "forest-layout__action__button"
+                                    { className: "result__button"
                                     , callback: \_ -> do 
                                       T.write_ false visible
                                       goToRoute $ fromMaybe Home $ nodeTypeAppRoute sd.type (sessionId session) sd.id 
