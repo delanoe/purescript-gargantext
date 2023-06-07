@@ -9513,17 +9513,6 @@ input[type=range]:-moz-focusring {
 .graph-doc-focus::-webkit-scrollbar {
   display: none;
 }
-.graph-doc-focus::before {
-  background: linear-gradient(to top, rgba(255, 255, 255, 0) 0%, white 45%);
-  content: "";
-  z-index: 2;
-  pointer-events: none;
-  position: sticky;
-  top: 0;
-  height: 16px;
-  width: 100%;
-  display: block;
-}
 .graph-doc-focus::after {
   background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, white 45%);
   content: "";
@@ -9556,17 +9545,6 @@ input[type=range]:-moz-focusring {
 }
 .graph-sidebar::-webkit-scrollbar {
   display: none;
-}
-.graph-sidebar::before {
-  background: linear-gradient(to top, rgba(255, 255, 255, 0) 0%, white 45%);
-  content: "";
-  z-index: 2;
-  pointer-events: none;
-  position: sticky;
-  top: 0;
-  height: 16px;
-  width: 100%;
-  display: block;
 }
 .graph-sidebar::after {
   background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, white 45%);
@@ -9956,32 +9934,17 @@ input[type=range]:-moz-focusring {
   border-bottom: 1px dashed currentColor;
 }
 .right-handed .maintree__node {
-  margin-left: 16px;
+  margin-left: 14px;
 }
 .right-handed .maintree > .right-handed .maintree__node {
-  margin-right: 16px;
+  margin-right: 14px;
 }
 
 .left-handed .maintree__node {
-  margin-right: 16px;
+  margin-right: 14px;
 }
 .left-handed .maintree > .left-handed .maintree__node {
-  margin-left: 16px;
-}
-
-.maintree--with-child > .maintree__node > .maintree::before {
-  color: #CED4DA;
-  position: absolute;
-  font-size: 11px;
-  top: 2px;
-  z-index: 1;
-}
-.right-handed .maintree--with-child > .maintree__node > .maintree::before {
-  content: "└";
-}
-
-.left-handed .maintree--with-child > .maintree__node > .maintree::before {
-  content: "┘";
+  margin-left: 14px;
 }
 
 .maintree--blank {
@@ -10002,7 +9965,7 @@ input[type=range]:-moz-focusring {
   position: relative;
 }
 .mainleaf:hover {
-  background-color: #F8F9FA;
+  background-color: #DEE2E6;
 }
 .right-handed .mainleaf {
   flex-direction: row;
@@ -10034,7 +9997,7 @@ input[type=range]:-moz-focusring {
 
 .mainleaf__node-icon {
   position: relative;
-  font-size: 16px;
+  font-size: 14px;
   width: 14px;
 }
 .mainleaf__node-icon .fa-address-card-o,
@@ -10072,9 +10035,10 @@ input[type=range]:-moz-focusring {
   background-color: #FFFFFF;
   border: 1px solid #FFFFFF;
   border-radius: 50%;
-  bottom: -8px;
+  bottom: -1px;
   right: -4px;
   z-index: 2;
+  height: 14px;
 }
 .mainleaf__version-badge .b-icon-button__inner {
   top: -3px;
@@ -10088,7 +10052,7 @@ input[type=range]:-moz-focusring {
 }
 .mainleaf__node-link {
   position: relative;
-  font-size: 15px;
+  font-size: 14px;
   min-width: 0;
 }
 .right-handed .mainleaf__node-link {
@@ -10420,17 +10384,6 @@ input[type=range]:-moz-focusring {
 .forest-layout::-webkit-scrollbar {
   display: none;
 }
-.forest-layout::before {
-  background: linear-gradient(to top, rgba(255, 255, 255, 0) 0%, white 45%);
-  content: "";
-  z-index: 2;
-  pointer-events: none;
-  position: sticky;
-  top: 0;
-  height: 16px;
-  width: 100%;
-  display: block;
-}
 .forest-layout::after {
   background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, white 45%);
   content: "";
@@ -10442,11 +10395,33 @@ input[type=range]:-moz-focusring {
   display: block;
 }
 .right-handed .forest-layout {
-  border-right: 2px solid #dee2e6;
+  border-right: 1px solid #dee2e6;
 }
 
 .left-handed .forest-layout {
   border-left: 2px solid #dee2e6;
+}
+
+.forest-layout__actions {
+  z-index: 3;
+  border-bottom: 1px solid #DEE2E6;
+}
+.forest-layout__top_action > span {
+  display: flex;
+}
+.forest-layout__top_action button {
+  padding-top: 1px !important;
+  padding-bottom: 1px !important;
+}
+.forest-layout__top_action button .b-button__inner {
+  display: flex;
+}
+.right-handed .forest-layout__top_action button .b-button__inner {
+  flex-direction: row;
+}
+
+.left-handed .forest-layout__top_action button .b-button__inner {
+  flex-direction: row-reverse;
 }
 
 .forest-layout__action {
@@ -10481,11 +10456,11 @@ input[type=range]:-moz-focusring {
   content: none;
 }
 .right-handed .forest-layout__tree > .maintree > .maintree__node {
-  margin-left: 12px;
+  margin-left: 4px;
 }
 
 .left-handed .forest-layout__tree > .maintree > .maintree__node {
-  margin-right: 12px;
+  margin-right: 4px;
 }
 
 .ids-selector .tree .children {
@@ -11618,17 +11593,6 @@ select.form-control {
 .phylo-doc-focus::-webkit-scrollbar {
   display: none;
 }
-.phylo-doc-focus::before {
-  background: linear-gradient(to top, rgba(255, 255, 255, 0) 0%, white 45%);
-  content: "";
-  z-index: 2;
-  pointer-events: none;
-  position: sticky;
-  top: 0;
-  height: 16px;
-  width: 100%;
-  display: block;
-}
 .phylo-doc-focus::after {
   background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, white 45%);
   content: "";
@@ -11661,17 +11625,6 @@ select.form-control {
 }
 .phylo-sidebar::-webkit-scrollbar {
   display: none;
-}
-.phylo-sidebar::before {
-  background: linear-gradient(to top, rgba(255, 255, 255, 0) 0%, white 45%);
-  content: "";
-  z-index: 2;
-  pointer-events: none;
-  position: sticky;
-  top: 0;
-  height: 16px;
-  width: 100%;
-  display: block;
 }
 .phylo-sidebar::after {
   background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, white 45%);

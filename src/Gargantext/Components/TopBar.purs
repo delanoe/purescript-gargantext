@@ -50,7 +50,7 @@ componentCpt = here.component "main" cpt where
     pure $
 
       H.div
-      { className: "main-topbar navbar navbar-expand-lg navbar-dark bg-dark"
+      { className: "main-topbar navbar navbar-expand-lg navbar-dark bg-dark py-0"
       , id: "dafixedtop"
       , role: "navigation"
       }
@@ -129,12 +129,12 @@ onTreeToggleChange new = do
 logo :: R.Element
 logo =
   H.a { className, href: "#/" } [
-    H.img { src, title, width: "30", height: "28" }
+    H.img { src, title, width: "46", height: "auto" }
   ]
   where
     className = "main-topbar__logo navbar-brand logoSmall"
     src       = "images/logoSmall.png"
-    title     = "Back home."
+    title     = "Back to home"
 
 
 divDropdownLeft :: R2.Component ()
