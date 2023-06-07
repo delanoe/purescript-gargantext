@@ -32,7 +32,7 @@ selectionCpt :: R.Component Props
 selectionCpt = here.component "selection" cpt where
   cpt { selection, session } _ = do
     selection' <- R2.useLive' selection
-    pure $ H.div { className: "list-selection" }
+    pure $ H.div { className: "list-selection p-1" }
       [
         B.formSelect'
         { callback: flip T.write_ selection

@@ -250,7 +250,8 @@ itemEditingCpt = here.component "itemNotEditing" cpt where
                    here.log2 "[itemEditingCpt] value Changed: " v
                    T.write_ v valueBox
                , placeholder: defaultVal
-               , type: "text" }
+               , type: "text" 
+               , required: false }
              , H.div { className: "btn input-group-append", on: { click } }
                [ H.div { className: "input-group-text fa fa-floppy-o" } [] ]
              ]

@@ -6484,6 +6484,9 @@ a:hover {
   font-family: ForkAwesome, "Nunito";
 }
 
+.nav.nav-tabs .nav-link {
+  cursor: pointer;
+}
 .nav.nav-tabs .nav-tabs .nav-link.active, .nav.nav-tabs .nav-tabs .nav-item.show .nav-link, .nav.nav-tabs li a {
   color: #495057;
 }

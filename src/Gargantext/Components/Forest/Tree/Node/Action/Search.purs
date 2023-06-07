@@ -62,7 +62,7 @@ actionSearchWithLangsCpt = here.component "actionSearchWithLangs" cpt
     cpt { boxes: { errors }, dispatch, id, langs, session } _ = do
       search <- T.useBox $ defaultSearch { node_id = id }
       pure $ R.fragment
-        [ H.p { className: "action-search m-1" }
+        [ H.p { className: "action-search mx-2" }
           [ H.text $ "Search and create a private "
             <> "corpus with the search query as corpus name." ]
         , searchBar { errors

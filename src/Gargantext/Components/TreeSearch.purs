@@ -81,6 +81,7 @@ treeSearchCpt = here.component "treeSearch" cpt where
                        , type: "value"
                        , defaultValue: ""
                        , placeholder: "Search..."
+                       , required: true
                        }
       , treeSearchState {visible, query, sessions: sessions'} ]
       where

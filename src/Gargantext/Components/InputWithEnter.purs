@@ -20,13 +20,14 @@ type Props =
   , defaultValue   :: String
   , placeholder    :: String
   , type           :: String
+  , required       :: Boolean
   )
 
 inputWithEnterWithKey :: R2.Leaf ( key :: String | Props )
 inputWithEnterWithKey = R2.leaf inputWithEnterWithKeyCpt
 inputWithEnterWithKeyCpt :: R.Component ( key :: String | Props )
 inputWithEnterWithKeyCpt = here.component "inputWithEnterWithKey" cpt where
-  cpt { onBlur, onEnter, onValueChanged, autoFocus, className, defaultValue, placeholder, type: t } _ = do
+  cpt { onBlur, onEnter, onValueChanged, autoFocus, className, defaultValue, placeholder, type: t, required } _ = do
     pure $ inputWithEnter { onBlur
                           , onEnter
                           , onValueChanged
@@ -34,7 +35,8 @@ inputWithEnterWithKeyCpt = here.component "inputWithEnterWithKey" cpt where
                           , className
                           , defaultValue
                           , placeholder
-                          , type: t }
+                          , type: t 
+                          , required }
 
 inputWithEnter :: R2.Leaf Props
 inputWithEnter = R2.leaf inputWithEnterCpt

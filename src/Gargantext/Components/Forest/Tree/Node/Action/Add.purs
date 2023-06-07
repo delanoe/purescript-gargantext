@@ -115,6 +115,7 @@ addNodeViewCpt = here.component "addNodeView" cpt where
                           , placeholder: nodeName'  -- (prettyNodeType nt')
                           , type: "text"
                           , key: show nodeType'
+                          , required: false
                           }
                         else H.div {} []
                       ]
