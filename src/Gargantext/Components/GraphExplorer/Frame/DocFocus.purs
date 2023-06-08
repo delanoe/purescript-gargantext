@@ -89,12 +89,13 @@ docFocusCpt = here.component "main" cpt where
               layout
               { loaded
               , path
+              , session
               , sideControlsSlot: Just $
                   H.div
                   { className: "graph-doc-focus__header" }
                   [
                     B.iconButton
-                    { name: "trash"
+                    { name: "times"
                     , elevation: Level2
                     , callback: closeCallback
                     }

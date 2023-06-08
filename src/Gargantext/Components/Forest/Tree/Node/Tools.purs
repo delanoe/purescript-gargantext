@@ -83,6 +83,7 @@ textInputBoxCpt = here.component "textInputBox" cpt where
           , onValueChanged: R.setRef renameNodeNameRef
           , placeholder: (boxName <> " Node")
           , type: "text"
+          , required: false
           }
         ]
 
@@ -146,6 +147,7 @@ inviteInputBoxCpt = here.component "textInputBox" cpt where
           , onValueChanged: R.setRef renameNodeNameRef
           , placeholder: (boxName <> " Node")
           , type: "text"
+          , required: false
           }
         ]
 

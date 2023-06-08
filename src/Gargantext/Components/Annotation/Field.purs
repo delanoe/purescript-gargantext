@@ -14,7 +14,6 @@ module Gargantext.Components.Annotation.Field where
 import Gargantext.Prelude
 
 import Data.Array as A
-import Data.FoldableWithIndex (foldlWithIndex, foldrWithIndex)
 import Data.List (List(..), (:))
 import Data.Map (Map)
 import Data.Maybe (Maybe(..), maybe)

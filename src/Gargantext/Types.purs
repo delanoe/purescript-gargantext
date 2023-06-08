@@ -155,7 +155,7 @@ data NodeType = Annuaire
               | Url_Document
               -- TODO Optional Nodes
               | NodeFile
-              | Calc
+              | NodeFrameCalc
               | NodeFrameNotebook
               | Notes
               | NodeFrameVisio
@@ -198,7 +198,7 @@ instance Show NodeType where
   show NodeList          = "NodeList"
   show NodeTexts         = "NodeTexts"
   show Notes             = "Notes"
-  show Calc     = "Calc"
+  show NodeFrameCalc     = "NodeFrameCalc"
   show NodeFrameNotebook = "NodeFrameNotebook"
   show NodeFrameVisio    = "NodeFrameVisio"
   show (NodePublic nt)   = "NodePublic" <> show nt
@@ -228,7 +228,7 @@ instance Read NodeType where
   read "NodeTexts"         = Just NodeTexts
   read "Annuaire"          = Just Annuaire
   read "Notes"    = Just Notes
-  read "Calc"     = Just Calc
+  read "NodeFrameCalc"     = Just NodeFrameCalc
   read "NodeFrameNotebook" = Just NodeFrameNotebook
   read "NodeFrameVisio"    = Just NodeFrameVisio
   read "NodeFile"          = Just NodeFile
@@ -257,7 +257,7 @@ translateFR = case _ of
   Node                -> "Nœud"
   Context             -> "ConTexte"
   NodeContact         -> "Contact"
-  NodeList            -> "Liste"
+  NodeList            -> "Terms"
   NodeUser            -> "Utilisateur"
   Nodes               -> "Nœuds"
   Phylo               -> "Phylo"
@@ -267,7 +267,7 @@ translateFR = case _ of
   Url_Document        -> "Document URL"
   --
   NodeFile            -> "Fichier"
-  Calc       -> "Feuilles de calcul"
+  NodeFrameCalc       -> "Feuilles de calcul"
   NodeFrameNotebook   -> "Carnet de notes"
   Notes      -> "Éditeur de texte"
   NodeFrameVisio      -> "Visio"
@@ -288,7 +288,7 @@ translateEN = case _ of
   Node                -> "Node"
   Context             -> "Context"
   NodeContact         -> "Contact"
-  NodeList            -> "List"
+  NodeList            -> "Terms"
   NodeUser            -> "User"
   Nodes               -> "Nodes"
   Phylo               -> "Phylo"
@@ -298,7 +298,7 @@ translateEN = case _ of
   Url_Document        -> "URL document"
   --
   NodeFile            -> "File"
-  Calc       -> "Calc"
+  NodeFrameCalc       -> "Calc"
   NodeFrameNotebook   -> "Notebook"
   Notes               -> "Notes"
   NodeFrameVisio      -> "Visio"
@@ -346,8 +346,8 @@ getIcon NodeContact false = "address-card"
 getIcon Notes true  = "file-text-o"
 getIcon Notes false = "file-text"
 
-getIcon Calc true  = "calculator"
-getIcon Calc false = "calculator"
+getIcon NodeFrameCalc true  = "calculator"
+getIcon NodeFrameCalc false = "calculator"
 
 getIcon NodeFrameNotebook true  = "file-code-o"
 getIcon NodeFrameNotebook false = "code"
@@ -410,7 +410,7 @@ nodeTypePath NodeList          = "lists"
 nodeTypePath NodeTexts         = "texts"
 nodeTypePath Team              = "team"
 nodeTypePath Notes    = "write"
-nodeTypePath Calc     = "calc"
+nodeTypePath NodeFrameCalc     = "calc"
 nodeTypePath NodeFrameNotebook = "code"
 nodeTypePath NodeFrameVisio    = "visio"
 nodeTypePath (NodePublic nt)   = nodeTypePath nt

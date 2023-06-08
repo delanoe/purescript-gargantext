@@ -320,13 +320,18 @@ $input-disabled-bg: $gray-100;
 
 .forest-layout {
   border-right: 2px solid $dark-secondary !important;
-}
-
-.forest-layout__action {
-  .btn-light {
-    color: $light;
-    background-color: $dark;
-    border-color: $dark-secondary;
+  &.bg-light,
+  &__actions.bg-light {
+    background-color: $dark !important;
+  }
+  
+  &__action,
+  &__top_action {
+    .btn-light {
+      color: $light;
+      background-color: $dark;
+      border-color: $dark-secondary;
+    }
   }
 }
 

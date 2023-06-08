@@ -57,7 +57,7 @@ forestLayoutCpt = here.component "forest" cpt where
     pure $
 
       H.div
-      { className: "forest-layout" }
+      { className: "forest-layout bg-light" }
       (A.cons (plus { boxes }) (trees handed' pinnedTreeId' sessions'))
     where
       trees handed' pinnedTreeId' sessions' = (tree handed' pinnedTreeId') <$> unSessions sessions'
@@ -98,89 +98,196 @@ plusCpt = here.component "plus" cpt where
 
     -- Render
     pure $
-      R.fragment [
-      H.div
-      { className: "forest-layout__action" }
+      H.div { className: "forest-layout__actions position-sticky top-0 py-1 bg-light" } 
       [
-        B.tooltipContainer
-        { delayShow: 600
-        , position: TooltipPosition Right
-        , tooltipSlot:
-            B.span_ "Back to home"
-        , defaultSlot:
+        H.div
+        { className: "forest-layout__top_action" }
+        [
+          B.tooltipContainer
+          { delayShow: 600
+          , position: TooltipPosition Right
+          , tooltipSlot:
+            B.span_ "Search in trees"
+          , defaultSlot:
             B.button
-            { className: "forest-layout__action__button"
-            , callback: const $ goToRoute Home
+            { className: "w-100 text-small px-2"
+            , callback: \_ -> T.write_ true showSearch
             , variant: ButtonVariant Light
             }
             [
-              B.icon { name: "home" }
+              B.icon
+              { name: "search"}
+            ,
+              B.wad_ [ "d-inline-block", "w-1" ]
+            ,
+              B.span_ "Search"
             ]
-        }
-      ,
-        B.tooltipContainer
-        { delayShow: 600
-        , position: TooltipPosition Right
-        , tooltipSlot:
-          B.span_ "Reset pins"
-        , defaultSlot:
-          B.button
-          { className: "forest-layout__action__button"
-          , callback: \_ -> T.write_ empty pinnedTreeId
-          , variant: ButtonVariant Light
           }
-          [
-            B.icon { name: "thumb-tack-inclined-cancel" }
-          ]
-        }
+        ]
       ,
-        B.tooltipContainer
-        { delayShow: 600
-        , position: TooltipPosition Right
-        , tooltipSlot:
-            B.span_ "Add or remove connection to the server(s)"
-        , defaultSlot:
+      {-
+        H.div
+        { className: "forest-layout__top_action" }
+        [
+          B.tooltipContainer
+          { delayShow: 600
+          , position: TooltipPosition Right
+          , tooltipSlot:
+              B.span_ "Back to home"
+          , defaultSlot:
+              B.button
+              { className: "w-100 text-small px-2"
+              , callback: const $ goToRoute Home
+              , variant: ButtonVariant Light
+              }
+              [
+                B.icon { name: "home" }
+              ,
+                B.wad_ [ "d-inline-block", "w-1" ]
+              ,
+                B.span_ "Back to home"
+              ]
+          }
+        ]
+      ,
+      -}
+        H.div
+        { className: "forest-layout__top_action" }
+        [
+          B.tooltipContainer
+          { delayShow: 600
+          , position: TooltipPosition Right
+          , tooltipSlot:
+            B.span_ "Reset pins"
+          , defaultSlot:
             B.button
-            { className: "forest-layout__action__button"
+            { className: "w-100 text-small px-2"
+            , callback: \_ -> T.write_ empty pinnedTreeId
+            , variant: ButtonVariant Light
+            }
+            [
+              B.icon
+              { name: "thumb-tack-inclined-cancel"}
+            ,
+              B.wad_ [ "d-inline-block", "w-1" ]
+            ,
+              B.span_ "Reset pins"
+            ]
+          }
+        ]
+      ,
+        H.div
+        { className: "forest-layout__top_action" }
+        [
+          B.tooltipContainer
+          { delayShow: 600
+          , position: TooltipPosition Right
+          , tooltipSlot:
+            B.span_ "Explore the GarganText ecosystem | Add or remove connection to the different workspaces (servers)"
+          , defaultSlot:
+            B.button
+            { className: "w-100 text-small px-2"
             , callback: click
             , variant: ButtonVariant Light
             }
             [
               B.icon
-              { name: "universal-access" }
+              { name: "universal-access"}
             ,
               B.wad_ [ "d-inline-block", "w-1" ]
             ,
-              H.text $ "Log in/out"
+              B.span_ "Log in/out (workspaces)"
             ]
-        }
-      ]
-      ,
-      H.div
-      { className: "forest-layout__action" }
-      [
-        B.tooltipContainer
-        { delayShow: 600
-        , position: TooltipPosition Right
-        , tooltipSlot:
-          B.span_ "Search in tree"
-        , defaultSlot:
-          B.button
-          { className: "forest-layout__action__button"
-          , callback: \_ -> T.write_ true showSearch
-          , variant: ButtonVariant Light
           }
-          [
-            B.icon
-            { name: "search"}
-          ,
-            B.wad_ [ "d-inline-block", "w-1" ]
-          ,
-            H.text $ "Search"
-          ]
-        }
+        ]
+      
+      {-
+      ,
+        H.div
+        { className: "forest-layout__action" }
+        [
+          B.tooltipContainer
+          { delayShow: 600
+          , position: TooltipPosition Right
+          , tooltipSlot:
+              B.span_ "Back to home"
+          , defaultSlot:
+              B.button
+              { className: "forest-layout__action__button"
+              , callback: const $ goToRoute Home
+              , variant: ButtonVariant Light
+              }
+              [
+                B.icon { name: "home" }
+              ]
+          }
+        ,
+          B.tooltipContainer
+          { delayShow: 600
+          , position: TooltipPosition Right
+          , tooltipSlot:
+            B.span_ "Reset pins"
+          , defaultSlot:
+            B.button
+            { className: "forest-layout__action__button"
+            , callback: \_ -> T.write_ empty pinnedTreeId
+            , variant: ButtonVariant Light
+            }
+            [
+              B.icon { name: "thumb-tack-inclined-cancel" }
+            ]
+          }
+        ,
+          B.tooltipContainer
+          { delayShow: 600
+          , position: TooltipPosition Right
+          , tooltipSlot:
+              B.span_ "Add or remove connection to the server(s)"
+          , defaultSlot:
+              B.button
+              { className: "forest-layout__action__button"
+              , callback: click
+              , variant: ButtonVariant Light
+              }
+              [
+                B.icon
+                { name: "universal-access" }
+              ,
+                B.wad_ [ "d-inline-block", "w-1" ]
+              ,
+                H.text $ "Log in/out"
+              ]
+          }
+        ]
+        ,
+        H.div
+        { className: "forest-layout__action" }
+        [
+          B.tooltipContainer
+          { delayShow: 600
+          , position: TooltipPosition Right
+          , tooltipSlot:
+            B.span_ "Search in tree"
+          , defaultSlot:
+            B.button
+            { className: "forest-layout__action__button"
+            , callback: \_ -> T.write_ true showSearch
+            , variant: ButtonVariant Light
+            }
+            [
+              B.icon
+              { name: "search"}
+            ,
+              B.wad_ [ "d-inline-block", "w-1" ]
+            ,
+              H.text $ "Search"
+            ]
+          }
+        ]
+      -}
+
       ]
-      ]
+
   --, H.div { "type": "", className: "fa fa-plus-circle fa-lg"} []
   --, H.div { "type": "", className: "fa fa-minus-circle fa-lg"} []
   -- TODO same as the one in the Login Modal (same CSS)

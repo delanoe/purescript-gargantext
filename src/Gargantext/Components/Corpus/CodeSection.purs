@@ -197,6 +197,7 @@ fieldCodeEditorWrapperCpt = here.component "fieldCodeEditorWrapperCpt" cpt where
             , defaultValue: name
             , placeholder: "Enter file name"
             , type: "text"
+            , required: false
             }
           ]
         ,
@@ -301,6 +302,7 @@ renameableTextCpt = here.component "renameableTextCpt" cpt
                   , onValueChanged: \st -> T.write_ st state
                   , placeholder: ""
                   , type: "text"
+                  , required: false
                   }
                 , H.div { className: "btn input-group-append"
                         , on: { click: submit state' } }

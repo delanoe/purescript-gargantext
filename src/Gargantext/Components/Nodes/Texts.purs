@@ -595,6 +595,7 @@ sideTextCpt = here.component "sideText" cpt where
               layout
               { loaded
               , path
+              , session
               }
         }
       ]

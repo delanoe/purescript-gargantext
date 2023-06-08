@@ -430,14 +430,14 @@ folderIconCpt = here.component "folderIcon" cpt where
         ["mainleaf__folder-icon"
         , "mainleaf__folder-icon--leaf"
         ]
-    , name: "caret-right"
+    , name: "angle-right"
     }
 
   cpt { callback, isOpened } _ = pure $
 
     B.iconButton
     { className: "mainleaf__folder-icon"
-    , name: isOpened ? "caret-down" $ "caret-right"
+    , name: isOpened ? "angle-down" $ "angle-right"
     , overlay: false
     , callback
     }
@@ -542,7 +542,7 @@ blankNodeSpanCpt = here.component "__blank__" cpt where
 
     H.div { className: "mainleaf mainleaf--blank" }
     [
-      B.icon { className: "mainleaf__folder-icon", name: "caret-right"}
+      B.icon { className: "mainleaf__folder-icon", name: "angle-right"}
     ,
       H.span { className: "mainleaf__node-icon" }
       [
