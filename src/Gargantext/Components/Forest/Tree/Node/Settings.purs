@@ -113,7 +113,7 @@ settingsBox FolderPrivate =
               , doc  : Documentation FolderPrivate
               , buttons : [ Add [ Notes
                                 , Corpus
-                                , NodeFrameCalc
+                                , Calc
                                 , Folder
                                 , Annuaire
                                 -- , NodeFrameNotebook
@@ -127,9 +127,8 @@ settingsBox Team =
               , doc  : Documentation Team
               , buttons : [ Add [ Notes
                                 , Corpus
-                                , NodeFrameCalc
+                                , Calc
                                 , Folder
-                                , Annuaire
                                 , Team
                                 , Annuaire
                                 -- , NodeFrameNotebook
@@ -164,10 +163,9 @@ settingsBox Folder =
               , doc  : Documentation Folder
               , buttons : [ Add [ Notes
                                 , Corpus
+                                , Calc
                                 , Folder
                                 , Annuaire
-                                , Notes
-                                , NodeFrameCalc
                                 -- , NodeFrameNotebook
                                 ]
                           , Move moveParameters
@@ -185,7 +183,6 @@ settingsBox Corpus =
                                 , NodeList
                                 , Graph
                                 , Dashboard
-                                , NodeFrameCalc
                                 , Phylo
                                 -- , NodeFrameNotebook
                                 ]
@@ -321,7 +318,7 @@ settingsBox Notes =
               , edit : true
               , doc  : Documentation Notes
               , buttons : [ Add [ Notes
-                                , NodeFrameCalc
+                                , Calc
                                 , Folder
                                 , Corpus
                                 ]
@@ -331,12 +328,12 @@ settingsBox Notes =
               }
 
 
-settingsBox NodeFrameCalc =
+settingsBox Calc =
   SettingsBox { show : true
               , edit : true
-              , doc  : Documentation NodeFrameCalc
+              , doc  : Documentation Calc
               , buttons : [ Upload
-                          , Add [ NodeFrameCalc
+                          , Add [ Calc
                                 , Notes
                                 ]
                           , Move moveFrameParameters
@@ -348,7 +345,7 @@ settingsBox NodeFrameNotebook =
   SettingsBox { show : true
               , edit : true
               , doc  : Documentation NodeFrameNotebook
-              , buttons : [ Add [ NodeFrameCalc
+              , buttons : [ Add [ Calc
                                 , Notes
                                 -- , NodeFrameNotebook
                                 ]
@@ -364,7 +361,7 @@ settingsBox NodeFrameVisio =
               , doc  : Documentation NodeFrameVisio
               , buttons : [ Add [ NodeFrameVisio
                                 , Notes
-                                , NodeFrameCalc
+                                , Calc
                                 ]
                           , Delete
                           ]
@@ -417,7 +414,7 @@ moveFrameParameters = { subTreeParams : SubTreeParams
                                               , Folder
                                               , Corpus
                                               , Notes
-                                              , NodeFrameCalc
+                                              , Calc
                                               ]
                                  , valitypes: [ FolderPrivate
                                               , Team
@@ -425,7 +422,7 @@ moveFrameParameters = { subTreeParams : SubTreeParams
                                               , Folder
                                               , Corpus
                                               , Notes
-                                              , NodeFrameCalc
+                                              , Calc
                                               ]
                                  }
                   }
