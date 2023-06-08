@@ -49,14 +49,14 @@
 
   display: flex
   padding-top: $offset-top
-  
+
   &__action
     // @XXX Glyphicon icons lack of homogeneous width
     width: 14px
     margin-right: space-x(1)
 
 ///////////////////////////////////////////////////:
- 
+
 .loaded-ngrams-table-header
   display: flex
   margin-top: space-x(4)
@@ -317,3 +317,19 @@
     width: $icon-width
     font-size: 14px
     text-align: center
+
+.side-panel
+  z-index: 10
+  .ngrams-doc-list
+    .list-group
+      max-height: 40em
+      overflow-y: scroll
+      .context-item-title
+        line-height: 1.3
+        margin-bottom: 4px
+      .context-item-source
+        color: $gray-600
+        font-variant-caps: small-caps
+      .context-item-date
+        color: $gray-600
+        font-size: .85rem

@@ -24,9 +24,3 @@ instance Eq CacheState where
   eq = genericEq
 instance Show CacheState where
   show = genericShow
-
-type SidePanel :: forall k. Row k
-type SidePanel = ()
-
-initialSidePanel :: Maybe (Record SidePanel)
-initialSidePanel = Nothing

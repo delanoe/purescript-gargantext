@@ -218,7 +218,6 @@ mainPageCpt = here.component "mainPage" cpt where
 
 forest :: R2.Leaf Props
 forest = R2.leaf forestCpt
-
 forestCpt :: R.Memo Props
 forestCpt = R.memo' $ here.component "forest" cpt where
   cpt { boxes } _ = do
@@ -366,11 +365,11 @@ authedCpt = here.component "authed" cpt where
 
 openedSidePanel :: R2.Leaf Props
 openedSidePanel = R2.leaf openedSidePanelCpt
-
 openedSidePanelCpt :: R.Component Props
 openedSidePanelCpt = here.component "openedSidePanel" cpt where
   cpt { boxes:
         { route
+        , sidePanelLists
         , sidePanelState
         }
       } _ = do
@@ -380,10 +379,13 @@ openedSidePanelCpt = here.component "openedSidePanel" cpt where
 
     let wrapper = H.div { className: "side-panel shadow" }
 
+    selectedNgrams <- T.useBox Nothing
+
     case route' of
       GR.Lists _s _n -> do
         pure $ wrapper
           [ Lists.sidePanel { session
+                            , sidePanel: sidePanelLists
                             , sidePanelState } [] ]
       GR.NodeTexts _s _n ->
         pure $ wrapper [ Texts.textsSidePanel {} ]
@@ -548,7 +550,6 @@ graphExplorerCpt = here.component "graphExplorer" cpt where
 
 phyloExplorer :: R2.Component SessionNodeProps
 phyloExplorer = R.createElement phyloExplorerCpt
-
 phyloExplorerCpt :: R.Component SessionNodeProps
 phyloExplorerCpt = here.component "phylo" cpt where
   cpt props@{ nodeId } _ = do
@@ -588,7 +589,8 @@ listsCpt = here.component "lists" cpt where
                                    Lists.listsLayout { boxes
                                                      , nodeId
                                                      , session
-                                                     , sessionUpdate: \_ -> pure unit } [] } sessionProps) []
+                                                     , sessionUpdate: \_ -> pure unit
+                                                     , sidePanel: boxes.sidePanelLists } [] } sessionProps) []
 
 --------------------------------------------------------------
 
@@ -675,7 +677,6 @@ teamCpt = here.component "team" cpt where
 
 texts :: R2.Component SessionNodeProps
 texts = R.createElement textsCpt
-
 textsCpt :: R.Component SessionNodeProps
 textsCpt = here.component "texts" cpt where
   cpt props@{ nodeId } _ = do

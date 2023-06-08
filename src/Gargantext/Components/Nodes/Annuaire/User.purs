@@ -94,7 +94,8 @@ userLayoutWithKey :: R2.Leaf ( key :: String | LayoutProps )
 userLayoutWithKey = R2.leaf userLayoutWithKeyCpt
 userLayoutWithKeyCpt :: R.Component ( key :: String | LayoutProps )
 userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
-  cpt { boxes: boxes@{ sidePanelTexts }
+  cpt { boxes: boxes@{ sidePanelLists
+                     , sidePanelTexts }
       , frontends
       , nodeId
       , session } _ = do
@@ -120,6 +121,7 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
                        , nodeId
                        , session
                        , sidePanel: sidePanelTexts
+                       , sidePanelList: sidePanelLists
                        }
                     ]
               }

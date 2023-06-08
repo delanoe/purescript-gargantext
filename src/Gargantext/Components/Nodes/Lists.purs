@@ -2,17 +2,25 @@ module Gargantext.Components.Nodes.Lists where
 
 import Gargantext.Prelude
 
+import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Corpus.CodeSection (loadCorpusWithChild)
+import Gargantext.Components.GraphQL.Context as GQLCTX
+import Gargantext.Components.GraphQL.Endpoints (getContextsForNgrams)
 import Gargantext.Components.NgramsTable.Loader (clearCache)
 import Gargantext.Components.Node (NodePoly(..))
+import Gargantext.Components.Nodes.Lists.SidePanel (SidePanel)
 import Gargantext.Components.Nodes.Lists.Tabs as Tabs
 import Gargantext.Components.Nodes.Lists.Types (CacheState(..))
 import Gargantext.Components.Table as Table
-import Gargantext.Config.REST (logRESTError)
+import Gargantext.Config (defaultFrontends)
+import Gargantext.Config.REST (logRESTError, AffRESTError)
+import Gargantext.Core.NgramsTable.Types (NgramsTerm(..))
+import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Routes as Routes
 import Gargantext.Sessions (WithSession, WithSessionContext, Session, sessionId, getCacheState, setCacheState)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
@@ -29,6 +37,7 @@ type CommonPropsNoSession =
   ( boxes         :: Boxes
   , nodeId        :: Int
   , sessionUpdate :: Session -> Effect Unit
+  , sidePanel     :: T.Box (Maybe (Record SidePanel))
   )
 
 type Props = WithSession CommonPropsNoSession
@@ -52,7 +61,8 @@ listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
   cpt { boxes
       , nodeId
       , session
-      , sessionUpdate } _ = do
+      , sessionUpdate
+      , sidePanel } _ = do
     activeTab <- T.useBox 0
 
     let path = { nodeId, session }
@@ -87,6 +97,7 @@ listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
                               , corpusId
                               , key: "listsLayoutWithKey-tabs-" <> (show cacheState')
                               , session
+                              , sidePanel
                               }
                             ] }
     where
@@ -97,6 +108,7 @@ listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
 
 type SidePanelProps =
   ( session        :: Session
+  , sidePanel      :: T.Box (Maybe (Record SidePanel))
   , sidePanelState :: T.Box GT.SidePanelState
   )
 
@@ -106,6 +118,7 @@ sidePanelCpt :: R.Component SidePanelProps
 sidePanelCpt = here.component "sidePanel" cpt
   where
     cpt { session
+        , sidePanel
         , sidePanelState } _ = do
 
       sidePanelState' <- T.useLive T.unequal sidePanelState
@@ -123,15 +136,123 @@ sidePanelCpt = here.component "sidePanel" cpt
             H.span { className: "fa fa-times" } []
           ]
         ]
-      , sidePanelDocView { session } []
+      , sidePanelNgramsContextView { session
+                                   , sidePanel } []
       ]
 
-type SidePanelDocView = ( session :: Session )
+type SidePanelNgramsContextView =
+ ( session        :: Session
+ , sidePanel      :: T.Box (Maybe (Record SidePanel)) )
 
-sidePanelDocView :: R2.Component SidePanelDocView
-sidePanelDocView = R.createElement sidePanelDocViewCpt
-sidePanelDocViewCpt :: R.Component SidePanelDocView
-sidePanelDocViewCpt = here.component "sidePanelDocView" cpt where
-  cpt { } _ = do
-    -- pure $ H.h4 {} [ H.text txt ]
-    pure $ H.div {} [ H.text "Hello ngrams" ]
+sidePanelNgramsContextView :: R2.Component SidePanelNgramsContextView
+sidePanelNgramsContextView = R.createElement sidePanelNgramsContextViewCpt
+sidePanelNgramsContextViewCpt :: R.Component SidePanelNgramsContextView
+sidePanelNgramsContextViewCpt = here.component "sidePanelNgramsContextView" cpt where
+  cpt { session
+      , sidePanel } _ = do
+    mSidePanel' <- T.useLive T.unequal sidePanel
+
+    case mSidePanel' of
+      Nothing -> pure $ H.div {} []
+      Just sidePanel' -> do
+        let ngrams = maybe "" (\(NormNgramsTerm n) -> n) sidePanel'.mCurrentNgrams
+
+        pure $ H.div {} [ H.h3 {} [ H.text ngrams ]
+                        , ngramsDocList { mCorpusId: sidePanel'.mCorpusId
+                                        , mListId: sidePanel'.mListId
+                                        , mNgrams: sidePanel'.mCurrentNgrams
+                                        , session } [] ]
+
+type NgramsDocListProps =
+  ( mCorpusId :: Maybe GT.CorpusId
+  , mListId   :: Maybe GT.ListId
+  , mNgrams   :: Maybe NgramsTerm
+  , session   :: Session )
+
+ngramsDocList :: R2.Component NgramsDocListProps
+ngramsDocList = R.createElement ngramsDocListCpt
+ngramsDocListCpt :: R.Component NgramsDocListProps
+ngramsDocListCpt = here.component "ngramsDocList" cpt where
+  cpt { mCorpusId: Nothing } _ = do
+    pure $ H.div {} []
+  cpt { mListId: Nothing } _ = do
+    pure $ H.div {} []
+  cpt { mNgrams: Nothing } _ = do
+    pure $ H.div {} []
+  cpt { mCorpusId: Just corpusId
+      , mListId: Just listId
+      , mNgrams: Just ngrams
+      , session } _ = do
+    useLoader { errorHandler
+              , path: { corpusId, ngrams, session }
+              , loader: loaderNgramsDocList
+              , render: \ctx -> ngramsDocListLoaded { contexts: ctx
+                                                    , corpusId
+                                                    , listId
+                                                    , ngrams
+                                                    , session } []
+              }
+    where
+      errorHandler = logRESTError here "[ngramsDocList]"
+
+type NgramsDocLoadProps =
+  ( corpusId :: GT.CorpusId
+  , ngrams   :: NgramsTerm
+  , session  :: Session )
+
+loaderNgramsDocList :: Record NgramsDocLoadProps -> AffRESTError (Array GQLCTX.Context)
+loaderNgramsDocList { corpusId, ngrams: NormNgramsTerm ngrams, session } =
+  getContextsForNgrams session corpusId [ngrams]
+
+type NgramsDocListLoadedProps =
+  ( contexts :: Array GQLCTX.Context
+  , corpusId :: GT.CorpusId
+  , listId   :: GT.ListId
+  , ngrams   :: NgramsTerm
+  , session  :: Session )
+
+ngramsDocListLoaded :: R2.Component NgramsDocListLoadedProps
+ngramsDocListLoaded = R.createElement ngramsDocListLoadedCpt
+ngramsDocListLoadedCpt :: R.Component NgramsDocListLoadedProps
+ngramsDocListLoadedCpt = here.component "ngramsDocListLoaded" cpt where
+  cpt { contexts
+      , corpusId
+      , listId
+      , ngrams
+      , session } _ = do
+    pure $ H.div { className: "ngrams-doc-list" }
+      [ H.ul { className: "list-group" } ((\item -> contextItem { corpusId
+                                                                , item
+                                                                , listId
+                                                                , session } [] ) <$> contexts)
+      ]
+
+type ContextItemProps =
+  ( corpusId :: GT.CorpusId
+  , item     :: GQLCTX.Context
+  , listId   :: GT.ListId
+  , session  :: Session )
+
+contextItem :: R2.Component ContextItemProps
+contextItem = R.createElement contextItemCpt
+contextItemCpt :: R.Component ContextItemProps
+contextItemCpt = here.component "contextItem" cpt where
+  cpt { corpusId
+      , item
+      , listId
+      , session } _ = do
+
+    let route = Routes.CorpusDocument (sessionId session) corpusId listId item.c_id
+        href = url defaultFrontends route
+
+    pure $ H.a { className: "list-group-item text-decoration-none"
+               , href
+               , target: "_blank" }
+      [ H.div { className: "context-item-title" }
+          [ H.text $ maybe "" (_.hrd_title) item.c_hyperdata ]
+      , H.div { className: "context-item-source"}
+          [ H.text $ maybe "" (_.hrd_source) item.c_hyperdata ]
+      , H.div { className: "context-item-date"}
+          [ H.text $ (maybe "" (\h -> show h.hrd_publication_year) item.c_hyperdata) <>
+                     "-" <>
+                     (maybe "" (\h -> show h.hrd_publication_month) item.c_hyperdata) ] ]

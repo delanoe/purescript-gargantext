@@ -14,6 +14,7 @@ import Gargantext.Components.Nodes.Corpus.Chart.Pie (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils (mNgramsTypeFromTabType)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
+import Gargantext.Components.Nodes.Lists.SidePanel (SidePanel)
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table.Types (Params)
 import Gargantext.Core.NgramsTable.Types (PageParams)
@@ -37,6 +38,7 @@ type Props = (
   , corpusData :: CorpusData
   , corpusId   :: Int
   , session    :: Session
+  , sidePanel  :: T.Box (Maybe (Record SidePanel))
   )
 
 tabs :: Record ( key :: String | Props ) -> R.Element
@@ -60,7 +62,6 @@ type TabProps = ( mode :: Mode | Props )
 
 tab :: R2.Component TabProps
 tab = R.createElement tabCpt
-
 tabCpt :: R.Component TabProps
 tabCpt = here.component "tab" cpt where
   cpt props _ = do
@@ -78,7 +79,9 @@ tabCpt = here.component "tab" cpt where
                       }
 
 
-type NgramsViewProps = ( path :: T.Box PageParams | TabProps )
+type NgramsViewProps =
+  ( path :: T.Box PageParams
+  | TabProps )
 
 ngramsView :: R2.Component NgramsViewProps
 ngramsView = R.createElement ngramsViewCpt
@@ -89,7 +92,8 @@ ngramsViewCpt = here.component "ngramsView" cpt where
             , corpusData: { defaultListId }
             , mode
             , session
-            , path } _ = do
+            , path
+            , sidePanel } _ = do
       chartsReload <- T.useBox T2.newReload
       onCancelRef <- R.useRef Nothing
       onNgramsClickRef <- R.useRef Nothing
@@ -118,6 +122,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
           , defaultListId
           , path
           , session
+          , sidePanel
           , tabNgramType
           , tabType
           , treeEdit: { box: treeEditBox

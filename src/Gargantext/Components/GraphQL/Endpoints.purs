@@ -22,7 +22,7 @@ import Gargantext.Components.Lang (Lang)
 import Gargantext.Config.REST (RESTError(..), AffRESTError)
 import Gargantext.Core.NgramsTable.Types (NgramsTerm(..))
 import Gargantext.Sessions (Session(..))
-import Gargantext.Types (NodeType)
+import Gargantext.Types (CorpusId, NodeType)
 import Gargantext.Utils.Reactix as R2
 import GraphQL.Client.Args (onlyArgs)
 import GraphQL.Client.Query (mutation)
@@ -123,7 +123,7 @@ getNodeContext session context_id node_id = do
     Just context -> pure $ Right context -- TODO: error handling
 
 type ContextsForNgramsGQL = { contexts_for_ngrams :: Array GQLCTX.Context }
-getContextsForNgrams :: Session -> Int -> Array String -> AffRESTError (Array GQLCTX.Context)
+getContextsForNgrams :: Session -> CorpusId -> Array String -> AffRESTError (Array GQLCTX.Context)
 getContextsForNgrams session corpus_id ngrams_terms = do
   let query = GQLCTX.contextsForNgramsQuery `withVars` { corpus_id
                                                        , ngrams_terms: GQLCTX.NgramsTerms ngrams_terms }

@@ -12,6 +12,7 @@ import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.DocsTable.Types (Year)
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Core.NgramsTable.Functions as NTC
+import Gargantext.Components.Nodes.Lists.SidePanel as LSidePanel
 import Gargantext.Components.Nodes.Lists.Types as LTypes
 import Gargantext.Components.Nodes.Texts.Types as TTypes
 import Gargantext.Components.Tab as Tab
@@ -55,6 +56,7 @@ type TabsProps =
   , nodeId        :: Int
   , session       :: Session
   , sidePanel     :: T.Box (Maybe (Record TTypes.SidePanel))
+  , sidePanelList :: T.Box (Maybe (Record LSidePanel.SidePanel))
   )
 
 tabs :: R2.Leaf TabsProps
@@ -69,6 +71,7 @@ tabsCpt = here.component "tabs" cpt
         , nodeId
         , session
         , sidePanel
+        , sidePanelList
         } _ = do
       activeTab <- T.useBox 0
       yearFilter <- T.useBox (Nothing :: Maybe Year)
@@ -90,6 +93,7 @@ tabsCpt = here.component "tabs" cpt
                           , mode: Patents
                           , nodeId
                           , session
+                          , sidePanel: sidePanelList
                           }
             booksView   = { boxes
                           , cacheState
@@ -97,6 +101,7 @@ tabsCpt = here.component "tabs" cpt
                           , mode: Books
                           , nodeId
                           , session
+                          , sidePanel: sidePanelList
                           }
             commView    = { boxes
                           , cacheState
@@ -104,6 +109,7 @@ tabsCpt = here.component "tabs" cpt
                           , mode: Communication
                           , nodeId
                           , session
+                          , sidePanel: sidePanelList
                           }
             chart       = mempty
             totalRecords = 4736 -- TODO
@@ -132,6 +138,7 @@ type NgramsViewTabsProps = (
   , mode           :: Mode
   , nodeId         :: Int
   , session        :: Session
+  , sidePanel      :: T.Box (Maybe (Record LSidePanel.SidePanel))
   )
 
 ngramsView :: R2.Component NgramsViewTabsProps
@@ -144,7 +151,8 @@ ngramsViewCpt = here.component "ngramsView" cpt
         , defaultListId
         , mode
         , nodeId
-        , session } _ = do
+        , session
+        , sidePanel } _ = do
       path <- T.useBox $ NTC.initialPageParams session nodeId [defaultListId] (TabDocument TabDocs)
       onCancelRef <- R.useRef Nothing
       onNgramsClickRef <- R.useRef Nothing
@@ -158,6 +166,7 @@ ngramsViewCpt = here.component "ngramsView" cpt
         , defaultListId
         , path
         , session
+        , sidePanel
         , tabNgramType
         , tabType
         , treeEdit: { box: treeEditBox

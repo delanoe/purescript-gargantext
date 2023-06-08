@@ -41,6 +41,7 @@ import Gargantext.Components.NgramsTable.Search as NTS
 import Gargantext.Components.NgramsTable.SelectionCheckbox as NTSC
 import Gargantext.Components.NgramsTable.SyncResetButton (syncResetButtons)
 import Gargantext.Components.NgramsTable.Tree (renderNgramsItem, renderNgramsTree)
+import Gargantext.Components.Nodes.Lists.SidePanel (SidePanel)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table (changePage)
 import Gargantext.Components.Table as TT
@@ -415,6 +416,8 @@ type PropsNoReload =
   ( cacheState        :: NT.CacheState
   , mTotalRows        :: Maybe Int
   , path              :: T.Box PageParams
+  , session           :: Session
+  , sidePanel         :: T.Box (Maybe (Record SidePanel))
   , state             :: T.Box State
   , treeEdit          :: Record NgramsTreeEditProps
   , versioned         :: VersionedNgramsTable
@@ -486,11 +489,13 @@ loadedNgramsTableBody = R.createElement loadedNgramsTableBodyCpt
 loadedNgramsTableBodyCpt :: R.Component PropsNoReload
 loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
   cpt { afterSync
-      , boxes: { errors
-               , tasks }
+      , boxes: boxes@{ errors
+                     , tasks }
       , cacheState
       , mTotalRows
       , path
+      , session
+      , sidePanel
       , state
       , tabNgramType
       , treeEdit: treeEdit@{ getNgramsChildrenAff, getNgramsChildren }
@@ -557,15 +562,20 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
         filteredConvertedRows = convertRow <$> filteredRows
 
         convertRow ngramsElement =
-          { row: renderNgramsItem { dispatch: performAction
+          { row: renderNgramsItem { boxes
+                                  , corpusId: path'.nodeId
+                                  , dispatch: performAction
                                   , getNgramsChildrenAff
                                   , getNgramsChildren
                                   , isEditing
+                                  , mListId: A.head path'.listIds
                                   , ngrams: ngramsElement ^. _NgramsElement <<< _ngrams
                                   , ngramsElement
                                   , ngramsLocalPatch
                                   , ngramsSelection
-                                  , ngramsTable } []
+                                  , ngramsTable
+                                  , session: path'.session
+                                  , sidePanel } []
           , delete: false
           }
 
@@ -649,7 +659,7 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
           scoreType
       }
       where
-        colNames = TT.ColumnName <$> [ "Select", "Score", "Terms"] -- see convOrderBy
+        colNames = TT.ColumnName <$> [ "Show", "Select", "Score", "Terms"] -- see convOrderBy
 
 ngramsTableOrderWith :: Maybe (TT.OrderByDirection TT.ColumnName)
                      -> Seq.Seq NgramsElement
@@ -777,6 +787,7 @@ type MainNgramsTableProps = (
     -- ^ This node can be a corpus or contact.
   , path          :: T.Box PageParams
   , session       :: Session
+  , sidePanel     :: T.Box (Maybe (Record SidePanel))
   , tabType       :: TabType
   , treeEdit      :: Record NgramsTreeEditProps
   | CommonProps
@@ -1014,6 +1025,8 @@ mainNgramsTableCacheOnCpt = here.component "mainNgramsTableCacheOn" cpt where
       , boxes
       , defaultListId
       , path
+      , session
+      , sidePanel
       , state
       , tabNgramType
       , treeEdit
@@ -1026,6 +1039,8 @@ mainNgramsTableCacheOnCpt = here.component "mainNgramsTableCacheOn" cpt where
                                                 , boxes
                                                 , cacheState: NT.CacheOn
                                                 , path
+                                                , session
+                                                , sidePanel
                                                 , state
                                                 , tabNgramType
                                                 , treeEdit
@@ -1060,6 +1075,8 @@ mainNgramsTableCacheOffCpt = here.component "mainNgramsTableCacheOff" cpt where
   cpt { afterSync
       , boxes
       , path
+      , session
+      , sidePanel
       , state
       , tabNgramType
       , treeEdit
@@ -1068,6 +1085,8 @@ mainNgramsTableCacheOffCpt = here.component "mainNgramsTableCacheOff" cpt where
                                                                 , boxes
                                                                 , cacheState: NT.CacheOff
                                                                 , path
+                                                                , session
+                                                                , sidePanel
                                                                 , state
                                                                 , tabNgramType
                                                                 , treeEdit
@@ -1106,6 +1125,8 @@ mainNgramsTableCacheOffCpt = here.component "mainNgramsTableCacheOff" cpt where
 type MainNgramsTablePaintProps = (
     cacheState        :: NT.CacheState
   , path              :: T.Box PageParams
+  , session           :: Session
+  , sidePanel         :: T.Box (Maybe (Record SidePanel))
   , state             :: T.Box State
   , treeEdit          :: Record NgramsTreeEditProps
   , versioned         :: VersionedNgramsTable
@@ -1121,6 +1142,8 @@ mainNgramsTablePaintCpt = here.component "mainNgramsTablePaint" cpt
         , boxes
         , cacheState
         , path
+        , session
+        , sidePanel
         , state
         , tabNgramType
         , treeEdit
@@ -1137,6 +1160,8 @@ mainNgramsTablePaintCpt = here.component "mainNgramsTablePaint" cpt
         , cacheState
         , mTotalRows: Nothing
         , path
+        , session
+        , sidePanel
         , state
         , tabNgramType
         , treeEdit
@@ -1147,6 +1172,8 @@ mainNgramsTablePaintCpt = here.component "mainNgramsTablePaint" cpt
 type MainNgramsTablePaintNoCacheProps = (
     cacheState         :: NT.CacheState
   , path               :: T.Box PageParams
+  , session            :: Session
+  , sidePanel          :: T.Box (Maybe (Record SidePanel))
   , state              :: T.Box State
   , treeEdit           :: Record NgramsTreeEditProps
   , versionedWithCount :: VersionedWithCountNgramsTable
@@ -1162,6 +1189,8 @@ mainNgramsTablePaintNoCacheCpt = here.component "mainNgramsTablePaintNoCache" cp
         , boxes
         , cacheState
         , path
+        , session
+        , sidePanel
         , state
         , tabNgramType
         , treeEdit
@@ -1181,6 +1210,8 @@ mainNgramsTablePaintNoCacheCpt = here.component "mainNgramsTablePaintNoCache" cp
         , cacheState
         , mTotalRows: Just count
         , path
+        , session
+        , sidePanel
         , state
         , tabNgramType
         , treeEdit
