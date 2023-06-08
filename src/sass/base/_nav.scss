@@ -1,6 +1,9 @@
 .nav.nav-tabs {
 
-
+  .nav-link {
+    cursor: pointer;
+  }
+  
   .nav-tabs .nav-link.active, .nav-tabs .nav-item.show .nav-link, li a {
     color: $gray-700
   }

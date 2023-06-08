@@ -61,18 +61,18 @@ $overlay-radius: 5px;
   position: relative;
   z-index: 0;
 
-  &::before {
-    @include top-teaser;
+  // &::before {
+  //   @include top-teaser;
 
-    content: "";
-    z-index: z-index("tile", "top-teaser");
-    pointer-events: none;
-    position: sticky;
-    top: 0;
-    height: $teaser-height;
-    width: 100%;
-    display: block;
-  }
+  //   content: "";
+  //   z-index: z-index("tile", "top-teaser");
+  //   pointer-events: none;
+  //   position: sticky;
+  //   top: 0;
+  //   height: $teaser-height;
+  //   width: 100%;
+  //   display: block;
+  // }
 
   &::after {
     @include bottom-teaser;

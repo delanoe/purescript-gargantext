@@ -47,6 +47,7 @@ import Gargantext.Types (AsyncTask, AsyncTaskType(..), AsyncTaskWithType(..), CT
 import Gargantext.Utils.Either (eitherMap)
 --import Gargantext.Utils.KarpRabin (indicesOfAny)
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.String as GS
 import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
 import Reactix as R
@@ -82,7 +83,9 @@ normNgramInternal :: CTabNgramType -> String -> String
 normNgramInternal CTabAuthors    = identity
 normNgramInternal CTabSources    = identity
 normNgramInternal CTabInstitutes = identity
-normNgramInternal CTabTerms      = S.toLower <<< R.replace wordBoundaryReg " "
+normNgramInternal CTabTerms      = GS.specialCharNormalize
+                               <<< S.toLower
+                               <<< R.replace wordBoundaryReg " "
 
 normNgramWithTrim :: CTabNgramType -> String -> String
 normNgramWithTrim nt = DSC.trim <<< normNgramInternal nt
@@ -141,23 +144,29 @@ wordBoundaryReg2 = case R.regex ("(" <> wordBoundaryChars <> ")\\1") (R.global <
   Right r -> r
 
 type Cache =
-  ( pm :: Map NgramsTerm NgramsTerm
-  , pats :: Array NgramsTerm )
+  ( contextNgrams :: Set NgramsTerm
+  , pm            :: Map NgramsTerm NgramsTerm
+  , pats          :: Array NgramsTerm )
 
-computeCache :: NgramsTable -> Record Cache
-computeCache ngrams = { pm, pats }
+computeCache :: NgramsTable -> Set NgramsTerm -> Record Cache
+computeCache ngrams contextNgrams = { contextNgrams, pm, pats }
   where
     NgramsTable { ngrams_repo_elements } = ngrams
     pm = parentMap ngrams_repo_elements
 
+    contextRepoElements = Map.filterWithKey (\k _v -> Set.member k contextNgrams) ngrams_repo_elements
+
     pats :: Array NgramsTerm
     pats = A.fromFoldable $
-           foldrWithIndex (\term (NgramsRepoElement nre) acc -> Set.union acc $ Set.insert term nre.children) Set.empty ngrams_repo_elements
+           foldlWithIndex (\term acc (NgramsRepoElement nre) -> Set.union acc $ Set.insert term nre.children) Set.empty contextRepoElements
+
+    -- pats = A.fromFoldable $
+    --        foldrWithIndex (\term (NgramsRepoElement nre) acc -> Set.union acc $ Set.insert term nre.children) Set.empty ngrams_repo_elements
 
 -- TODO: while this function works well with word boundaries,
 --       it inserts too many spaces.
 highlightNgrams :: CTabNgramType -> NgramsTable -> Record Cache -> String -> Array HighlightElement
-highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) { pm, pats } input0 =
+highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) cache@{ pm, pats } input0 =
     -- trace {pats, input0, input, ixs} \_ ->
     A.fromFoldable ((\(s /\ ls)-> undb s /\ ls) <$> unsafePartial (foldl goFold ((input /\ Nil) : Nil) ixs))
   where
@@ -206,9 +215,10 @@ highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) { pm, pat
 
     goAcc :: Partial => Int -> HighlightAccumulator -> Tuple NgramsTerm Int -> HighlightAccumulator
     goAcc i acc (pat /\ lpat) =
-      case lookupRootListWithChildren pat table { pm, pats } of
+      case lookupRootListWithChildren pat table cache of
         Nothing ->
-          crashWith "highlightNgrams: pattern missing from table"
+          -- crashWith $ "highlightNgrams: pattern [" <> show pat <> "] missing from table: " <> show table
+          acc
         Just ne_list ->
           let
             (acc0 /\ acc1_2) = splitAcc i acc

@@ -207,6 +207,7 @@ editingCpt = here.component "editing" cpt where
           , onValueChanged: \s -> T.write_ s state
           , placeholder: ""
           , type: "text"
+          , required: false
           }
         ,
         -- @TODO make a "reset" CTA

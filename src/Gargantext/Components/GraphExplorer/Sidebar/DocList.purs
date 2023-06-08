@@ -234,7 +234,7 @@ docListCpt = here.component "main" cpt where
             B.caveat
             {}
             [
-              H.text "No document found in your corpus for your selected terms"
+              H.text "Searching relevant document(s)"
             ]
         ,
           R2.when (not $ eq results Seq.empty) $
