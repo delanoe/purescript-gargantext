@@ -111,12 +111,11 @@ settingsBox FolderPrivate =
   SettingsBox { show : true
               , edit : false
               , doc  : Documentation FolderPrivate
-              , buttons : [ Add [ NodeFrameWrite
+              , buttons : [ Add [ Notes
                                 , Corpus
                                 , NodeFrameCalc
                                 , Folder
                                 , Annuaire
-                                , NodeFrameCalc
                                 -- , NodeFrameNotebook
                                 ]
                           ]
@@ -126,16 +125,16 @@ settingsBox Team =
   SettingsBox { show : true
               , edit : true
               , doc  : Documentation Team
-              , buttons : [ Add [ NodeFrameWrite
+              , buttons : [ Add [ Notes
                                 , Corpus
                                 , NodeFrameCalc
                                 , Folder
                                 , Annuaire
                                 , Team
+                                , Annuaire
                                 -- , NodeFrameNotebook
                                 , FolderShared
                                 , NodeFrameVisio
-                                , Annuaire
                                 ]
                           , Share
                           , ManageTeam
@@ -163,10 +162,11 @@ settingsBox Folder =
   SettingsBox { show : true
               , edit : true
               , doc  : Documentation Folder
-              , buttons : [ Add [ NodeFrameWrite
+              , buttons : [ Add [ Notes
                                 , Corpus
                                 , Folder
                                 , Annuaire
+                                , Notes
                                 , NodeFrameCalc
                                 -- , NodeFrameNotebook
                                 ]
@@ -180,7 +180,7 @@ settingsBox Corpus =
               , edit : true
               , doc  : Documentation Corpus
               , buttons : [ Add [ Graph
-                                , NodeFrameWrite
+                                , Notes
                                 , NodeTexts
                                 , NodeList
                                 , Graph
@@ -316,11 +316,11 @@ settingsBox Annuaire =
               }
 
 
-settingsBox NodeFrameWrite =
+settingsBox Notes =
   SettingsBox { show : true
               , edit : true
-              , doc  : Documentation NodeFrameWrite
-              , buttons : [ Add [ NodeFrameWrite
+              , doc  : Documentation Notes
+              , buttons : [ Add [ Notes
                                 , NodeFrameCalc
                                 , Folder
                                 , Corpus
@@ -337,7 +337,7 @@ settingsBox NodeFrameCalc =
               , doc  : Documentation NodeFrameCalc
               , buttons : [ Upload
                           , Add [ NodeFrameCalc
-                                , NodeFrameWrite
+                                , Notes
                                 ]
                           , Move moveFrameParameters
                           , Delete
@@ -349,7 +349,7 @@ settingsBox NodeFrameNotebook =
               , edit : true
               , doc  : Documentation NodeFrameNotebook
               , buttons : [ Add [ NodeFrameCalc
-                                , NodeFrameWrite
+                                , Notes
                                 -- , NodeFrameNotebook
                                 ]
                           , Move moveFrameParameters
@@ -363,7 +363,7 @@ settingsBox NodeFrameVisio =
               , edit : true
               , doc  : Documentation NodeFrameVisio
               , buttons : [ Add [ NodeFrameVisio
-                                , NodeFrameWrite
+                                , Notes
                                 , NodeFrameCalc
                                 ]
                           , Delete
@@ -395,14 +395,14 @@ moveParameters = { subTreeParams : SubTreeParams
                                               , Team
                                               , FolderPublic
                                               , Folder
-                                              , NodeFrameWrite
+                                              , Notes
                                               , Corpus
                                               ]
                                  , valitypes: [ FolderPrivate
                                               , Team
                                               -- , FolderPublic
                                               , Folder
-                                              , NodeFrameWrite
+                                              , Notes
                                               , Corpus
                                               ]
                                  }
@@ -416,7 +416,7 @@ moveFrameParameters = { subTreeParams : SubTreeParams
                                               , FolderPublic
                                               , Folder
                                               , Corpus
-                                              , NodeFrameWrite
+                                              , Notes
                                               , NodeFrameCalc
                                               ]
                                  , valitypes: [ FolderPrivate
@@ -424,7 +424,7 @@ moveFrameParameters = { subTreeParams : SubTreeParams
                                               -- , FolderPublic
                                               , Folder
                                               , Corpus
-                                              , NodeFrameWrite
+                                              , Notes
                                               , NodeFrameCalc
                                               ]
                                  }
