@@ -8898,30 +8898,52 @@ a:focus {
 }
 #app .btn-seemore,
 #portal .btn-seemore {
+  align-self: end;
   text-decoration: none;
-  font-size: x-small;
+  font-size: 10px;
+  font-weight: normal;
 }
-#app .btn-seemore :hover,
-#portal .btn-seemore :hover {
-  text-decoration: underline;
+#app .btn-seemore:hover,
+#portal .btn-seemore:hover {
+  color: #2f3c48;
 }
-#app .annotated-field-runs.collapse:not(.show),
-#portal .annotated-field-runs.collapse:not(.show) {
+#app .btn-seemore.collapsed::after,
+#portal .btn-seemore.collapsed::after {
+  content: "...⯆";
+}
+#app .btn-seemore:not(.collapsed),
+#portal .btn-seemore:not(.collapsed) {
+  transform: rotate(180deg);
+}
+#app .btn-seemore:not(.collapsed)::after,
+#portal .btn-seemore:not(.collapsed)::after {
+  content: "⯆   ";
+}
+#app .annotated-field-expand,
+#portal .annotated-field-expand {
+  min-height: 2.5rem;
+}
+#app .annotated-field-expand.collapse:not(.show),
+#portal .annotated-field-expand.collapse:not(.show) {
   display: block;
-  max-height: 3.5rem;
   overflow: hidden;
+  max-height: 2.5rem;
 }
-#app .annotated-field-runs.collapsing,
-#portal .annotated-field-runs.collapsing {
-  height: 3rem;
+#app .annotated-field-expand.collapsing,
+#portal .annotated-field-expand.collapsing {
+  height: 2.5rem;
 }
-#app a.btn-seemore.collapsed::after,
-#portal a.btn-seemore.collapsed::after {
-  content: "+ show more";
+#app .annotated-field-expand.variant-collapse-higher,
+#portal .annotated-field-expand.variant-collapse-higher {
+  min-height: 5.5rem;
 }
-#app a.btn-seemore:not(.collapsed)::after,
-#portal a.btn-seemore:not(.collapsed)::after {
-  content: "- show less";
+#app .annotated-field-expand.variant-collapse-higher.collapse:not(.show),
+#portal .annotated-field-expand.variant-collapse-higher.collapse:not(.show) {
+  max-height: 5.5rem;
+}
+#app .annotated-field-expand.variant-collapse-higher.collapsing,
+#portal .annotated-field-expand.variant-collapse-higher.collapsing {
+  height: 5.5rem;
 }
 
 .range-control {

@@ -359,29 +359,57 @@
 
 
   .btn-seemore {
+    align-self: end;
     text-decoration: none;
-    font-size: x-small;
-    :hover {
-      text-decoration: underline;
+    font-size: 10px;
+    font-weight: normal;
+    &:hover {
+      color: $primary;
     }
+    &.collapsed {
+      // transform: rotate(180deg);
+      &::after {
+        content: '...⯆';
+        // content: "...⮟";
+      }
+    }
+    &:not(.collapsed) {
+      transform: rotate(180deg);
+      &::after {
+        // content: '\00a0\00a0\00a0⮝';
+        content: '⯆\00a0\00a0\00a0';
+      }
+    }
+
   }
 
-  .annotated-field-runs.collapse:not(.show) {
-    display: block;
-    max-height: 3.5rem;
-    overflow: hidden;
-  }
-  
-  .annotated-field-runs.collapsing {
-    height: 3rem;
-  }
-  
-  a.btn-seemore.collapsed::after {
-    content: '+ show more';
-  }
-  
-  a.btn-seemore:not(.collapsed)::after {
-    content: '- show less';
-  }
+  $heightDefault: 2.5rem;
+  $heightHigher: 5.5rem;
 
+  .annotated-field-expand {
+    min-height: $heightDefault;
+    &.collapse {
+      &:not(.show) {
+        display: block;
+        overflow: hidden;
+        max-height: $heightDefault;
+      }
+    }
+    &.collapsing {
+      height: $heightDefault;
+    }
+
+    &.variant-collapse-higher {
+      min-height: $heightHigher;
+      &.collapse {
+        &:not(.show) {
+          max-height: $heightHigher;
+        }
+      }
+      &.collapsing {
+        height: $heightHigher;
+      }
+      }
+  }
+    
 }
