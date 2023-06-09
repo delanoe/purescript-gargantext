@@ -101,8 +101,6 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
           , onSelect: onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList }
           , text
           }
-      
-      -- htmlId = "annotated-field-runs-" <> "0"
 
     -- | Render
     -- |
@@ -120,7 +118,6 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
             H.div
             { className: "annotated-field-runs"
             , aria: { expanded: false } 
-            -- , id: htmlId
             }
             ((\p -> annotateRun p) <$> wrap <$> compile cache ngrams fieldText)
 
@@ -138,15 +135,6 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
                 , onSelect: onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList }
                 }
               ]
-      -- ,
-      --   H.a { role: "button"
-      --       , className: "collapsed btn-seemore text-primary"
-      --       , data: { toggle: "collapse" }
-      --       , aria: { expanded: false, controls: htmlId }
-      --       , href: "#" <> htmlId
-      --       }
-      --       [ H.text "" ]
-
       ]
 
 -----------------------------------------------------------
