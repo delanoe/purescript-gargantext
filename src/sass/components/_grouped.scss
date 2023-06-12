@@ -463,7 +463,8 @@
   @include fit-positions();
 
   position: fixed;
-  z-index: z-index('main', 'floaty');
+  // z-index: z-index('main', 'floaty');
+  z-index: 10;
   background-color: transparent;
 
   &__inner {
