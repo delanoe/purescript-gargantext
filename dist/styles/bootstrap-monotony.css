@@ -6272,7 +6272,7 @@ h3 {
   bottom: 0;
   left: 0;
   position: fixed;
-  z-index: 4;
+  z-index: 10;
   background-color: transparent;
 }
 .b-context-menu__inner {
