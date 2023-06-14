@@ -9,7 +9,10 @@
 -- |
 -- | 1. We must only re-search the text when the ngrams change for performance
 -- | 2. We will need a more ambitious search algorithm for skipgrams.
-module Gargantext.Components.Annotation.Field where
+module Gargantext.Components.Annotation.Field
+  ( annotatedField
+  )
+  where
 
 import Gargantext.Prelude
 
@@ -51,6 +54,7 @@ type MouseEvent = E.SyntheticEvent DE.MouseEvent
 -- UNUSED
 -- defaultProps :: Record Props
 -- defaultProps = { ngrams: NgramsTable Map.empty, text: Nothing, setTermList: \_ _ _ -> pure unit }
+
 
 annotatedField :: R2.Leaf Props
 annotatedField = R2.leaf annotatedFieldCpt
@@ -112,7 +116,9 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
           EditionMode ->
 
             H.div
-            { className: "annotated-field-runs" }
+            { className: "annotated-field-runs"
+            , aria: { expanded: false } 
+            }
             ((\p -> annotateRun p) <$> wrap <$> compile cache ngrams fieldText)
 
 
@@ -129,7 +135,6 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
                 , onSelect: onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList }
                 }
               ]
-
       ]
 
 -----------------------------------------------------------
