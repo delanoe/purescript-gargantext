@@ -34,10 +34,9 @@
   ///////////////////////
 
   .doc-chooser
-    $offset-top: 3px // flex alignment won't work, hence empirical value
+    // $offset-top: 3px // flex alignment won't work, hence empirical value
 
-    padding-top: $offset-top
-    text-align: center
+    // padding-top: $offset-top
 
   ///////////////////////
 
@@ -45,10 +44,10 @@
 ///////////////////////////////////////////////////:
 
 .rating-group
-  $offset-top: 3px // flex alignment won't work, hence empirical value
+  // $offset-top: 3px // flex alignment won't work, hence empirical value
 
   display: flex
-  padding-top: $offset-top
+  // padding-top: $offset-top
 
   &__action
     // @XXX Glyphicon icons lack of homogeneous width
@@ -163,7 +162,7 @@
 
 
   &__table
-    $select-column-width: 100px
+    $select-column-width: 50px
     $score-column-width: 25%
     $score-column-min-width: 280px
 
@@ -173,18 +172,20 @@
     /// nth(3) → "Terms"
 
     // (header)
-    th:nth-child(1)
+    th:nth-child(1),
+    th:nth-child(2)
       width: $select-column-width
-      padding-left: space-x(4)
+      // padding-left: space-x(4)
       input
         @include clickable
-    th:nth-child(2)
+    th:nth-child(3)
       width: $score-column-width
       min-width: $score-column-min-width
 
     // (rows)
-    td:nth-child(1)
-      padding: initial
+    td:nth-child(1),
+    th:nth-child(2)
+      // padding: initial
 
       div
         $offset-y: 14px
@@ -192,12 +193,12 @@
         @include clickable
 
         height: 100%
-        padding-left: space-x(4)
-        padding-top: $offset-y
-    td:nth-child(2)
-      padding-left: space-x(4)
-      margin-left: space-x(1.5)
+        // padding-left: space-x(4)
+        // padding-top: $offset-y
     td:nth-child(3)
+      // padding-left: space-x(4)
+      // margin-left: space-x(1.5)
+    td:nth-child(4)
 
       .tree-loaded-plus
         $offset-y: 1px

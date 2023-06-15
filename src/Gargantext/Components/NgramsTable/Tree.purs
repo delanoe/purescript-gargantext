@@ -275,7 +275,8 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
           className = currentRowSelected ? "page-paint-raw page-paint-raw--selected" $ ""
 
       pure $ Tbl.makeRow' { className }
-        [
+        [ selected
+        , 
           ngramsContext { boxes
                         , corpusId
                         , mListId
@@ -283,10 +284,8 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
                         , session
                         , sidePanel } []
         ,
-          selected
-        ,
           B.wad'
-          [ "pl-3" ] $
+          [ "col-score" ] $
           show $ A.length $ A.fromFoldable (ngramsElement ^. _NgramsElement <<< _occurrences)
         ,
           H.div {}
@@ -466,7 +465,7 @@ ngramsContextCpt = here.component "ngramsContext" cpt where
                            , mCurrentNgrams: Just ngrams }) sidePanel
             T.write_ GT.Opened sidePanelState
 
-    pure $ H.div { className: "doc-chooser"}
+    pure $ H.div { className: "doc-chooser text-center" }
       [ B.iconButton
         { name: eyeClass
         , overlay: false

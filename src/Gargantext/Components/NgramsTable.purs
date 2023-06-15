@@ -285,7 +285,7 @@ tableContainerCpt { addCallback
           }
           [
             H.table
-            { className: "table able" }
+            { className: "table table-hover table-responsive able" }
             [
               H.thead
               {}
@@ -659,7 +659,7 @@ loadedNgramsTableBodyCpt = here.component "loadedNgramsTableBody" cpt where
           scoreType
       }
       where
-        colNames = TT.ColumnName <$> [ "Show", "Select", "Score", "Terms"] -- see convOrderBy
+        colNames = TT.ColumnName <$> [ "Select", "Show", "Score", "Terms"] -- see convOrderBy
 
 ngramsTableOrderWith :: Maybe (TT.OrderByDirection TT.ColumnName)
                      -> Seq.Seq NgramsElement
@@ -674,7 +674,7 @@ ngramsTableOrderWith orderBy =
 
 -- This is used to *decorate* the Select header with the checkbox.
 wrapColElts scProps _         (TT.ColumnName "Select") = const [NTSC.selectionCheckbox scProps]
-wrapColElts _       scoreType (TT.ColumnName "Score")  = (_ <> [H.text ("(" <> show scoreType <> ")")])
+wrapColElts _       scoreType (TT.ColumnName "Score")  = (_ <> [H.text (" (" <> show scoreType <> ")")])
 wrapColElts _       _         _                        = identity
 
 type MkDispatchProps =

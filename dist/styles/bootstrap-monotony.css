@@ -6095,8 +6095,10 @@ h3 {
 .router__aside .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
 .router__body .corpus-layout .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
 .router__body .corpus-layout .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
-.router__body .texts-layout .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
-.router__body .texts-layout .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
+.router__body .nodes-lists-layout-tabs .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
+.router__body .nodes-lists-layout-tabs .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
+.router__body .nodes-texts-layout-tabs .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
+.router__body .nodes-texts-layout-tabs .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
 .modal-dialog .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before,
 .modal-dialog .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):before {
   color: #222222;
@@ -6107,8 +6109,10 @@ h3 {
 .router__aside .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
 .router__body .corpus-layout .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
 .router__body .corpus-layout .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
-.router__body .texts-layout .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
-.router__body .texts-layout .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
+.router__body .nodes-lists-layout-tabs .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
+.router__body .nodes-lists-layout-tabs .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
+.router__body .nodes-texts-layout-tabs .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
+.router__body .nodes-texts-layout-tabs .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
 .modal-dialog .b-icon:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before,
 .modal-dialog .fa:not(.fa-check-circle):not(.fa-exclamation-circle):not(.fa-circle):not(.fa-times):hover:before {
   color: inherit;
@@ -11011,14 +11015,8 @@ select.form-control {
 .table .page-paint-row--trash {
   text-decoration: line-through;
 }
-.table .doc-chooser {
-  padding-top: 3px;
-  text-align: center;
-}
-
 .rating-group {
   display: flex;
-  padding-top: 3px;
 }
 .rating-group__action {
   width: 14px;
@@ -11109,43 +11107,38 @@ select.form-control {
   padding-left: 1.25rem;
   padding-right: 1.25rem;
 }
-.ngrams-table-container__table th:nth-child(1) {
-  width: 100px;
-  padding-left: 32px;
+.ngrams-table-container__table th:nth-child(1),
+.ngrams-table-container__table th:nth-child(2) {
+  width: 50px;
 }
-.ngrams-table-container__table th:nth-child(1) input {
+.ngrams-table-container__table th:nth-child(1) input,
+.ngrams-table-container__table th:nth-child(2) input {
   cursor: pointer;
 }
-.ngrams-table-container__table th:nth-child(1) input:focus {
+.ngrams-table-container__table th:nth-child(1) input:focus,
+.ngrams-table-container__table th:nth-child(2) input:focus {
   outline: 0;
 }
-.ngrams-table-container__table th:nth-child(2) {
+.ngrams-table-container__table th:nth-child(3) {
   width: 25%;
   min-width: 280px;
 }
-.ngrams-table-container__table td:nth-child(1) {
-  padding: initial;
-}
-.ngrams-table-container__table td:nth-child(1) div {
+.ngrams-table-container__table td:nth-child(1) div,
+.ngrams-table-container__table th:nth-child(2) div {
   cursor: pointer;
   height: 100%;
-  padding-left: 32px;
-  padding-top: 14px;
 }
-.ngrams-table-container__table td:nth-child(1) div:focus {
+.ngrams-table-container__table td:nth-child(1) div:focus,
+.ngrams-table-container__table th:nth-child(2) div:focus {
   outline: 0;
 }
-.ngrams-table-container__table td:nth-child(2) {
-  padding-left: 32px;
-  margin-left: 12px;
-}
-.ngrams-table-container__table td:nth-child(3) .tree-loaded-plus {
+.ngrams-table-container__table td:nth-child(4) .tree-loaded-plus {
   visibility: hidden;
   position: relative;
   top: 1px;
   margin-left: 8px;
 }
-.ngrams-table-container__table td:nth-child(3) .tree-loaded-plus .fa-plus-minus:before {
+.ngrams-table-container__table td:nth-child(4) .tree-loaded-plus .fa-plus-minus:before {
   font-size: 0.85rem;
   line-height: 0.85rem;
 }
