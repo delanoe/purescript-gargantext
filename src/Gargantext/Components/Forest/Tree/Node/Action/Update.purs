@@ -98,7 +98,7 @@ updateGraphCpt = here.component "updateGraph" cpt where
       callback = dispatch >=> \_ -> dispatch CloseBox
 
     pure $ panel [ H.text "Show subjects with Order1 or concepts with Order2 ?"
-                 , formChoiceSafe { items: [Order1, Order2]
+                 , formChoiceSafe { items: [Order1, Order2_A, Order2_B]
                                  , default: methodGraphMetric'
                                  , callback: \val -> T.write_ val methodGraphMetric
                                  , print: show } []
