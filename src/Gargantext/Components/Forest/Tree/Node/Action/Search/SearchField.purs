@@ -583,10 +583,13 @@ submitButtonComponent = here.component "submitButton" cpt
       pure $
         H.button { className: "btn btn-primary"
                  , "type"   : "submit"
-                 , on       : { click: doSearch onSearch errors session selection' search' }
                  , style    : { width: "100%" }
-                 }
-        [ H.text "Launch Search" ]
+               }
+               {-
+                 , on       : { click: doSearch onSearch errors session selection' search' }
+                 -}
+        -- [ H.text "Launch Search" ]
+        [ H.text "Function Back Soon if you just give your credit card number (False, we love public services for common good. True: we need a break for GarganFest.)." ]
 
     doSearch onSearch errors session selection search = \_ -> do
       log2 "[submitButton] searching" search
