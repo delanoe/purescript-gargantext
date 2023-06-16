@@ -5901,23 +5901,26 @@ h3 {
   position: relative;
   border: 1px solid rgba(0, 0, 0, 0.125);
   border-radius: 0.25rem;
-  padding-left: 16px;
-  padding-right: 16px;
-  padding-bottom: 16px;
-  padding-top: calc( 16px + 0.5rem );
+  padding-left: 12px;
+  padding-right: 12px;
+  padding-bottom: 4px;
+  padding-top: calc( 12px + 0.5rem );
   background-color: inherit;
 }
 .b-fieldset__legend {
   position: absolute;
   top: 0;
-  font-size: "Oswald";
+  font-size: 0.875rem;
   font-weight: 500;
   color: #6C757D;
   line-height: 1.2;
   margin: -0.5rem 0 0;
-  padding-left: 8px;
-  padding-right: 8px;
+  padding-left: 6px;
+  padding-right: 6px;
   background-color: inherit;
+}
+.b-fieldset__content {
+  align-self: center;
 }
 
 .phylo-config-form__row {
@@ -9277,11 +9280,15 @@ input[type=range]:-moz-focusring {
 }
 .graph-layout__toolbar .b-fieldset {
   background-color: #fff;
-  flex-grow: 1;
 }
-.graph-layout__toolbar .toolbar-atlas-button {
-  width: 40px;
+.right-handed .graph-layout__toolbar .b-fieldset button .b-icon {
+  margin-right: 0.4em;
 }
+
+.left-handed .graph-layout__toolbar .b-fieldset button .b-icon {
+  margin-left: 0.4em;
+}
+
 .graph-layout__content {
   width: 100%;
   height: 100%;
@@ -9573,7 +9580,7 @@ input[type=range]:-moz-focusring {
   display: inline-block;
 }
 .graph-toolbar__section {
-  margin: 8px;
+  margin: 4px;
 }
 .graph-toolbar__section--selection .b-fieldset__content {
   display: flex;
@@ -9593,6 +9600,10 @@ input[type=range]:-moz-focusring {
 .graph-toolbar__section--controls .range-control,
 .graph-toolbar__section--controls .range-simple {
   flex-basis: 100%;
+  min-width: 150px;
+}
+.graph-toolbar__region_advanced .btn-advanced.collapsed .b-icon {
+  transform: rotate(180);
 }
 
 .on-running-animation .b-icon {
