@@ -304,21 +304,21 @@
 ///-----------------------------------------------------------------------------
 
 .b-fieldset {
-  $margin: space-x(2);
+  $margin: space-x(1.5);
 
   position: relative;
   border: $card-border-width solid $card-border-color;
   border-radius: $card-border-radius;
   padding-left: $margin;
   padding-right: $margin;
-  padding-bottom: $margin;
+  padding-bottom: space-x(0.5);
   padding-top: calc( #{ $margin } + #{ $headings-margin-bottom } );
   background-color: inherit;
 
   &__legend {
     position: absolute;
     top: 0;
-    font-size: $headings-font-family;
+    font-size: $font-size-sm;
     font-weight: $headings-font-weight;
     color: $gray-600;
     line-height: $headings-line-height;
@@ -327,6 +327,11 @@
     padding-right: $margin / 2;
     background-color: inherit;
   }
+
+  &__content {
+    align-self: center;
+  }
+
 }
 
 /// PhyloExplorer.ConfigForm
