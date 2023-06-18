@@ -13,6 +13,7 @@ module Gargantext.Components.Annotation.Field where
 
 import Gargantext.Prelude
 
+import DOM.Simple.Event as DE
 import Data.Array as A
 import Data.List (List(..), (:))
 import Data.Map (Map)
@@ -20,7 +21,6 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.String.Common (joinWith)
 import Data.Tuple (Tuple(..), snd)
 import Data.Tuple.Nested ((/\))
-import DOM.Simple.Event as DE
 import Effect (Effect)
 import Gargantext.Components.Annotation.Menu (annotationMenu, AnnotationMenu)
 import Gargantext.Components.Annotation.Types (MenuType(..), ModeType(..), termClass)
@@ -29,6 +29,7 @@ import Gargantext.Core.NgramsTable.Types (HighlightElement, NgramsRepoElement(..
 import Gargantext.Types (CTabNgramType(..), TermList)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Selection as Sel
+import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Reactix.SyntheticEvent as E
@@ -59,14 +60,16 @@ annotatedFieldCpt = here.component "annotatedField" cpt where
   cpt props _ = do
     menuRef <- R.useRef (Nothing :: Maybe (Record AnnotationMenu))
     redrawMenu <- T.useBox false
+    reload <- T.useBox T2.newReload
 
-    pure $ annotatedFieldInner (Record.merge { menuRef, redrawMenu } props)
+    pure $ annotatedFieldInner (Record.merge { menuRef, redrawMenu, reload } props)
 
 -----------------------------------------------------------------
 
 type InnerProps =
   ( menuRef    :: R.Ref (Maybe (Record AnnotationMenu))
   , redrawMenu :: T.Box Boolean
+  , reload     :: T2.ReloadS
   | Props
   )
 
@@ -81,6 +84,7 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
       , text: fieldText
       , mode
       , cache
+      , reload
       } _ = do
     -- | States
     -- |
@@ -94,7 +98,7 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
       wrap :: Tuple String (List (Tuple NgramsTerm TermList)) -> Record RunProps
       wrap (text /\ list)
         = { list
-          , onSelect: onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList }
+          , onSelect: onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList, reload}
           , text
           }
 
@@ -126,7 +130,7 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
                 annotateRun
                 { list: mempty
                 , text: t
-                , onSelect: onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList }
+                , onSelect: onAnnotationSelect { menuRef, ngrams, redrawMenu, setTermList, reload }
                 }
               ]
 
@@ -149,12 +153,13 @@ onAnnotationSelect :: forall e.
      , ngrams       :: NgramsTable
      , redrawMenu   :: T.Box Boolean
      , setTermList  :: NgramsTerm -> Maybe TermList -> TermList -> Effect Unit
+     , reload       :: T2.ReloadS
      }
   -> Maybe (Tuple NgramsTerm TermList)
   -> E.SyntheticEvent e
   -> Effect Unit
 onAnnotationSelect
-  { menuRef, ngrams, redrawMenu, setTermList }
+  { menuRef, ngrams, redrawMenu, setTermList, reload}
   Nothing
   event
     = do
@@ -170,11 +175,12 @@ onAnnotationSelect
                      , menuType: NewNgram
                      , ngram: sel'  -- normNgram CTabTerms sel'
                      , redrawMenu
-                     , setTermList }
+                     , setTermList
+                     , reload }
       Nothing -> hideMenu { menuRef, redrawMenu }
 
 onAnnotationSelect
-  { menuRef, redrawMenu, setTermList }
+  { menuRef, redrawMenu, setTermList, reload }
   (Just (Tuple ngram list))
   event
     = showMenu
@@ -185,6 +191,7 @@ onAnnotationSelect
       , ngram
       , redrawMenu
       , setTermList
+      , reload
       }
 
 -- showMenu :: forall p e. DE.IsMouseEvent e => { event :: E.SyntheticEvent e | p } -> Effect Unit
@@ -197,10 +204,11 @@ showMenu :: forall e.
      , ngram       :: NgramsTerm
      , redrawMenu  :: T.Box Boolean
      , setTermList :: NgramsTerm -> Maybe TermList -> TermList -> Effect Unit
+     , reload      :: T2.ReloadS
      }
   -> Effect Unit
 showMenu
-  { event, getList, menuRef, menuType, ngram, redrawMenu, setTermList }
+  { event, getList, menuRef, menuType, ngram, redrawMenu, setTermList, reload }
     = do
     let x = E.clientX event
         y = E.clientY event
@@ -210,6 +218,7 @@ showMenu
         setList t = do
           setTermList ngram list t
           hideMenu { menuRef, redrawMenu }
+          T2.reload reload
     E.preventDefault event
     --range <- Sel.getRange sel 0
     --here.log2 "selection range" $ Sel.rangeToTuple range
