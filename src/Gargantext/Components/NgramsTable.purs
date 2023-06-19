@@ -986,7 +986,7 @@ ngramsTreeEditRealCpt = here.component "ngramsTreeEditReal" cpt where
           [
             H.p { className: "text-info text-small" }
             [
-              H.div { className: "font-weight-bold" } [ H.text "Note:" ]
+              H.span { className: "font-weight-bold" } [ H.text "Note:" ]
             , H.text "don't forget to save changes (sync) on the list page"
             ]
           ]

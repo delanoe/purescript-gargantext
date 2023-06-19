@@ -276,7 +276,7 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
 
       pure $ Tbl.makeRow' { className }
         [ selected
-        , 
+        ,
           ngramsContext { boxes
                         , corpusId
                         , mListId
