@@ -342,7 +342,12 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         ngramsChildren n = tbl ^.. ix n <<< _NgramsRepoElement <<< _children <<< folded
         ngramsClick :: { depth :: Int, ngrams :: NgramsTerm } -> Maybe (Effect Unit)
         ngramsClick p = Just $ do
-          traverse_ (dispatch <<< CoreAction <<< cycleTermListItem) (A.cons p.ngrams $ getNgramsChildren' p.ngrams)
+          -- here.log2 "[ngramsClick] p" p
+          if p.depth == 0 then
+            (dispatch <<< CoreAction <<< cycleTermListItem <<< view _ngrams) p
+            -- traverse_ (dispatch <<< CoreAction <<< cycleTermListItem) (A.cons p.ngrams $ getNgramsChildren' p.ngrams)
+          else
+            pure unit
           -- ^ This is the old behavior it is nicer to use since one can
           --   rapidly change the ngram list without waiting for confirmation.
           --   However this might expose bugs. One of them can be reproduced
