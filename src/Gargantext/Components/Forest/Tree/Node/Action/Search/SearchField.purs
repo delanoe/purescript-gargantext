@@ -417,8 +417,7 @@ pubmedInputCpt = here.component "pubmedInput" cpt where
         let mVal = case val of
               "" -> Nothing
               s  -> Just s
-        T.modify_ (\s ->
-                    s { datafield = Just (External (PubMed p { api_key = mVal })) }) search
+        T.modify_ (_ { datafield = Just (External (PubMed p { api_key = mVal })) }) search
 
 
 type OrgInputProps =
