@@ -540,7 +540,7 @@ searchInputCpt = here.component "searchInput" cpt
                          , className: "form-control"
                          , defaultValue: R.readRef valueRef
                          , placeholder: "Your query here"
-                         , type: "text" 
+                         , type: "text"
                          , required: true }
         ]
 
@@ -582,14 +582,14 @@ submitButtonComponent = here.component "submitButton" cpt
 
       pure $
         H.button { className: "btn btn-primary"
-                 , "type"   : "submit"
+                 -- , "type"   : "submit"
                  , on       : { click: doSearch onSearch errors session selection' search' }
                  , style    : { width: "100%" }
                  }
         [ H.text "Launch Search" ]
 
     doSearch onSearch errors session selection search = \_ -> do
-      log2 "[submitButton] searching" search
+      -- log2 "[submitButton] searching" search
       triggerSearch { onSearch, errors, session, selection, search }
       --case search.term of
       --  "" -> setSearch $ const defaultSearch
@@ -611,20 +611,20 @@ triggerSearch :: { onSearch :: (GT.AsyncTaskWithType -> Effect Unit)
               -> Effect Unit
 triggerSearch { onSearch, errors, session, selection, search } =
   launchAff_ $ do
-    liftEffect $ do
-      let here' = "[triggerSearch] Searching "
-      here.log2 (here' <> "databases: ") (show search.databases)
-      here.log2 (here' <> "datafield: ") (show search.datafield)
-      here.log2 (here' <> "term: ")            search.term
-      here.log2 (here' <> "lang: ")      (show search.lang)
+    -- liftEffect $ do
+      -- let here' = "[triggerSearch] Searching "
+      -- here.log2 (here' <> "databases: ") (show search.databases)
+      -- here.log2 (here' <> "datafield: ") (show search.datafield)
+      -- here.log2 (here' <> "term: ")            search.term
+      -- here.log2 (here' <> "lang: ")      (show search.lang)
 
     case search.node_id of
       Nothing -> liftEffect $ here.log "[triggerSearch] node_id is Nothing, don't know what to do"
       Just id -> do
-        liftEffect $ here.log2 "[triggerSearch] searchQuery" $ searchQuery selection search
+        -- liftEffect $ here.log2 "[triggerSearch] searchQuery" $ searchQuery selection search
         eTask <- performSearch session id $ searchQuery selection search
         handleRESTError here errors eTask $ \task -> liftEffect $ do
-          here.log2 "[triggerSearch] task" task
+          -- here.log2 "[triggerSearch] task" task
           onSearch task
 
     --liftEffect $ do
