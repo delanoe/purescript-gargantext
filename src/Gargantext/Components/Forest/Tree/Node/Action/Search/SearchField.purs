@@ -581,7 +581,7 @@ submitButtonComponent = here.component "submitButton" cpt
 
       pure $
         H.button { className: "btn btn-primary"
-                 -- , "type"   : "submit"
+                 , "type"   : "button"
                  , on       : { click: doSearch onSearch errors session selection' search' }
                  , style    : { width: "100%" }
                  }
