@@ -83,8 +83,8 @@ normNgramInternal :: CTabNgramType -> String -> String
 normNgramInternal CTabAuthors    = identity
 normNgramInternal CTabSources    = identity
 normNgramInternal CTabInstitutes = identity
-normNgramInternal CTabTerms      = GS.specialCharNormalize
-                               <<< S.toLower
+normNgramInternal CTabTerms      = {- GS.specialCharNormalize
+                                   <<< -} S.toLower
                                <<< R.replace wordBoundaryReg " "
 
 normNgramWithTrim :: CTabNgramType -> String -> String
