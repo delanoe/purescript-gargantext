@@ -6,6 +6,7 @@ module Gargantext.Context.Progress
 
 import Gargantext.Prelude
 
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
@@ -35,15 +36,17 @@ here :: R2.Here
 here = R2.here "Gargantext.Context.Progress"
 
 asyncProgress :: R2.Component AsyncProps
-asyncProgress = R2.component component
-component :: R.Component AsyncProps
-component = R.hooksComponent "asyncProgressContext" cpt where
+asyncProgress = R2.component asyncProgressCpt
+asyncProgressCpt :: R.Component AsyncProps
+asyncProgressCpt = R.hooksComponent "asyncProgress" cpt where
   cpt props@{ errors
             , onFinish
             } children = do
     -- States
     progress /\ progressBox <- R2.useBox' 0.0
     intervalIdRef <- R.useRef (Nothing :: Maybe IntervalId)
+    -- exponential backoff is used when errors are reported
+    interval <- T.useBox 1000
 
     -- Methods
     let
@@ -52,6 +55,13 @@ component = R.hooksComponent "asyncProgressContext" cpt where
         let rdata = (RX.pick props :: Record QueryProgressData)
 
         eAsyncProgress <- queryProgress rdata
+        -- exponential backoff in case of errors
+        liftEffect $ do
+          case eAsyncProgress of
+            Left _  -> T.modify_ (_ * 2) interval
+            Right _ -> T.write_ 1000 interval
+          interval' <- T.read interval
+          resetInterval intervalIdRef (Just interval') exec
         handleRESTError here errors eAsyncProgress onProgress
 
       onProgress :: AsyncProgress -> Aff Unit
@@ -64,9 +74,10 @@ component = R.hooksComponent "asyncProgressContext" cpt where
            (status == GT.IsKilled) ||
            (status == GT.IsFailure)
         then do
-          case R.readRef intervalIdRef of
-            Nothing  -> R.nothing
-            Just iid -> clearInterval iid
+          resetInterval intervalIdRef Nothing exec
+          -- case R.readRef intervalIdRef of
+          --   Nothing  -> R.nothing
+          --   Just iid -> clearInterval iid
           handleErrorInAsyncProgress errors value
           onFinish unit
         else
@@ -74,14 +85,31 @@ component = R.hooksComponent "asyncProgressContext" cpt where
 
     -- Hooks
     useFirstEffect' do
-      intervalId <- setInterval 1000 $ exec unit
-      R.setRef intervalIdRef $ Just intervalId
+      resetInterval intervalIdRef (Just 1000) exec
+      -- intervalId <- setInterval interval' $ exec unit
+      -- R.setRef intervalIdRef $ Just intervalId
 
     -- Render
     pure $
 
       R.provideContext asyncContext (progress)
       children
+
+resetInterval :: R.Ref (Maybe IntervalId) -> Maybe Int -> (Unit -> Effect Unit) -> Effect Unit
+resetInterval ref mInt exec = do
+  case R.readRef ref /\ mInt of
+    Nothing /\ Nothing  ->
+      pure unit
+    Nothing /\ Just interval' -> do
+      intervalId <- setInterval interval' $ exec unit
+      R.setRef ref $ Just intervalId
+    Just iid /\ Nothing -> do
+      clearInterval iid
+      R.setRef ref Nothing
+    Just iid /\ Just interval' -> do
+      clearInterval iid
+      intervalId <- setInterval interval' $ exec unit
+      R.setRef ref $ Just intervalId
 
 asyncContext :: R.Context (Number)
 asyncContext = R.createContext 0.0
