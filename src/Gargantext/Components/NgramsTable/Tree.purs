@@ -330,7 +330,13 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         termList    = ngramsElement ^. _NgramsElement <<< _list
         ngramsStyle :: Array DOM.Props
         ngramsStyle = [termStyle termList ngramsOpacity]
-        ngramsEdit { ngrams: n } = Just $ dispatch $ SetParentResetChildren (Just n) (ngramsChildren n)
+        ngramsEdit :: NgramsDepth -> Maybe (Effect Unit)
+        ngramsEdit { ngrams: n, depth: 0 } =
+          Just $ dispatch $ SetParentResetChildren (Just n) (ngramsChildren n)
+        -- NOTE: Currently we allow modifying children only for root
+        -- terms. I.e. we don't allow trees with depth greater than 1
+        -- See: https://gitlab.iscpif.fr/gargantext/purescript-gargantext/issues/565
+        ngramsEdit _ = Nothing
         tbl :: NgramsTable
         tbl = applyNgramsPatches { ngramsLocalPatch
                                  , ngramsStagePatch: mempty
