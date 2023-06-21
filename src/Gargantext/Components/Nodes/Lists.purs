@@ -6,6 +6,7 @@ import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Corpus.CodeSection (loadCorpusWithChild)
 import Gargantext.Components.GraphQL.Context as GQLCTX
 import Gargantext.Components.GraphQL.Endpoints (getContextsForNgrams)
@@ -130,14 +131,23 @@ sidePanelCpt = here.component "sidePanel" cpt
       let closeSidePanel _ = T.write_ GT.Closed sidePanelState
 
       pure $ H.div { style: mainStyle } [
-        H.div { className: "header" } [
-          H.span { className: "btn btn-danger"
-                 , on: { click: closeSidePanel } } [
-            H.span { className: "fa fa-times" } []
-          ]
+        H.div
+        { className: "lists-sidepanel__header" }
+        [
+          -- Close CTA
+          B.iconButton
+          { name: "times"
+          , callback: closeSidePanel
+          , className: "graph-sidebar__close"
+          }
         ]
-      , sidePanelNgramsContextView { session
+      , 
+        H.div
+        { className: "lists-sidepanel__body" }
+        [
+          sidePanelNgramsContextView { session
                                    , sidePanel } []
+        ]
       ]
 
 type SidePanelNgramsContextView =
@@ -157,11 +167,22 @@ sidePanelNgramsContextViewCpt = here.component "sidePanelNgramsContextView" cpt 
       Just sidePanel' -> do
         let ngrams = maybe "" (\(NormNgramsTerm n) -> n) sidePanel'.mCurrentNgrams
 
-        pure $ H.div {} [ H.h3 {} [ H.text ngrams ]
-                        , ngramsDocList { mCorpusId: sidePanel'.mCorpusId
+        pure $ H.div {} 
+          [
+            H.div { className: "list-group-item border-0" }
+            [
+              H.div 
+              { className: "graph-selected-nodes__badge badge badge-info" } 
+              [ 
+                H.text ngrams 
+              ]
+            ]
+          , 
+            ngramsDocList { mCorpusId: sidePanel'.mCorpusId
                                         , mListId: sidePanel'.mListId
                                         , mNgrams: sidePanel'.mCurrentNgrams
-                                        , session } [] ]
+                                        , session } [] 
+          ]
 
 type NgramsDocListProps =
   ( mCorpusId :: Maybe GT.CorpusId
@@ -220,7 +241,7 @@ ngramsDocListLoadedCpt = here.component "ngramsDocListLoaded" cpt where
       , listId
       , ngrams
       , session } _ = do
-    pure $ H.div { className: "ngrams-doc-list" }
+    pure $ H.div { className: "ngrams-doc-list p-2" }
       [ H.ul { className: "list-group" } ((\item -> contextItem { corpusId
                                                                 , item
                                                                 , listId
