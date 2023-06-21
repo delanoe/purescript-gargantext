@@ -545,7 +545,9 @@ type CoreDispatch = CoreAction -> Effect Unit
 type Dispatch = Action -> Effect Unit
 
 
-type NgramsDepth = { ngrams :: NgramsTerm, depth :: Int }
+type NgramsDepth = { ngrams :: NgramsTerm
+                   , depth  :: Int
+                   , parent :: Maybe NgramsTerm }
 type NgramsClick = NgramsDepth -> Maybe (Effect Unit)
 type NgramsActionRef = R.Ref (Maybe (Unit -> Effect Unit))
 

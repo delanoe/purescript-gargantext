@@ -902,7 +902,7 @@ ngramsTreeEditRealCpt = here.component "ngramsTreeEditReal" cpt where
     -- | Computed
     -- |
     let
-      ngramsDepth = { depth: 0, ngrams: ngramsParent' }
+      ngramsDepth = { depth: 0, ngrams: ngramsParent', parent: Nothing }
 
       ngramsChildrenPatched :: Set NgramsTerm
       ngramsChildrenPatched = applyPatchSet (patchSetFromMap ngramsChildrenDiff) $ Set.fromFoldable ngramsChildren

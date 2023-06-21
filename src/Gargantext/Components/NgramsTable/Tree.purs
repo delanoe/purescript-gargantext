@@ -225,7 +225,7 @@ treeLoadedCpt = here.component "treeLoaded" cpt where
         if depth > 10 then
           const $ H.text "ERROR DEPTH > 10"
         else
-          H.ul {} <<< map (\ngrams -> tree ((Record.delete (Proxy :: Proxy "ngramsChildren") params) { ngramsDepth = {depth, ngrams} })) <<< L.toUnfoldable
+          H.ul {} <<< map (\ngrams -> tree ((Record.delete (Proxy :: Proxy "ngramsChildren") params) { ngramsDepth = {depth, ngrams, parent: Just ngramsDepth.ngrams} })) <<< L.toUnfoldable
 
 type RenderNgramsItem =
   ( boxes             :: Boxes
@@ -318,7 +318,7 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
           )
       ]
       where
-        ngramsDepth = { ngrams, depth: 0 }
+        ngramsDepth = { ngrams, depth: 0, parent: Nothing }
         tag =
           case ngramsClick ngramsDepth of
             Just effect ->
@@ -346,14 +346,14 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         getNgramsChildren' n = A.fromFoldable $ ngramsChildren n
         ngramsChildren :: NgramsTerm -> List NgramsTerm
         ngramsChildren n = tbl ^.. ix n <<< _NgramsRepoElement <<< _children <<< folded
-        ngramsClick :: { depth :: Int, ngrams :: NgramsTerm } -> Maybe (Effect Unit)
-        ngramsClick p = Just $ do
-          -- here.log2 "[ngramsClick] p" p
-          if p.depth == 0 then
+        ngramsClick :: NgramsClick
+        ngramsClick p@{ depth: 0 } = Just $ do
             (dispatch <<< CoreAction <<< cycleTermListItem <<< view _ngrams) p
             -- traverse_ (dispatch <<< CoreAction <<< cycleTermListItem) (A.cons p.ngrams $ getNgramsChildren' p.ngrams)
-          else
-            pure unit
+        ngramsClick p@{ parent: Nothing } = Just $ do
+          here.log2 "[renderNgramsItem] unexpected empty parent for ngrams depth" p
+        ngramsClick p@{ parent: Just p' } = Just $ do
+          (dispatch <<< CoreAction <<< cycleTermListItem) p'
           -- ^ This is the old behavior it is nicer to use since one can
           --   rapidly change the ngram list without waiting for confirmation.
           --   However this might expose bugs. One of them can be reproduced
