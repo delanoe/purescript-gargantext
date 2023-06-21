@@ -2,7 +2,9 @@ module Gargantext.Components.Forest.Tree.Node.Action.Search.Types where
 
 import Gargantext.Prelude
 
+-- import Data.Bounded (class Bounded)
 import Data.Either (Either)
+-- import Data.Enum (class Enum, class BoundedEnum)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (class Newtype)
@@ -70,9 +72,10 @@ instance Doc DataField where
   doc Files        = "Zip files with formats.."
 derive instance Eq DataField
 instance JSON.WriteForeign DataField where
-  writeImpl (External db) = JSON.writeImpl { tag: "External"
-                                           , contents: JSON.writeImpl db }
-  writeImpl f = JSON.writeImpl $ JSON.writeImpl { tag: show f }
+  writeImpl (External db) = JSON.writeImpl { "External": JSON.writeImpl $ show db }
+  writeImpl Gargantext = JSON.writeImpl "Gargantext"
+  writeImpl Web = JSON.writeImpl "Web"
+  writeImpl Files = JSON.writeImpl "Files"
 
 ----------------------------------------
 data DataOriginApi = InternalOrigin { api :: Database }
@@ -97,22 +100,9 @@ datafield2database :: DataField -> Database
 datafield2database (External x) = x
 datafield2database _            = Empty
 
-allDatabases :: Array Database
-allDatabases = [ Empty
-               , PubMed { api_key: Nothing }
-               -- , Arxiv
-               , HAL Nothing
-               , IsTex
-               -- , IsTex_Advanced
-               -- , Isidore
-               --, Web
-               --, News
-               --, SocialNetworks
-               ]
-
 data Database = All_Databases
               | Empty
-              | PubMed { api_key :: Maybe String }
+              | PubMed
               | Arxiv
               | HAL (Maybe Org)
               | IsTex
@@ -121,9 +111,12 @@ data Database = All_Databases
 --              | News
 --              | SocialNetworks
 derive instance Generic Database _
+-- derive instance Enum Database
+-- derive instance Bounded Database
+-- derive instance BoundedEnum Database
 instance Show Database where
   show All_Databases  = "All Databases"
-  show (PubMed _)     = "PubMed"
+  show PubMed         = "PubMed"
   show Arxiv          = "Arxiv"
   show (HAL _)        = "HAL"
   show IsTex          = "IsTex"
@@ -135,7 +128,7 @@ instance Show Database where
 
 instance Doc Database where
   doc All_Databases  = "All databases"
-  doc (PubMed _)     = "All Medical publications"
+  doc PubMed         = "All Medical publications"
   doc Arxiv          = "Arxiv"
   doc (HAL _)        = "All open science (archives ouvertes)"
   doc IsTex          = "All Elsevier enriched by CNRS/INIST"
@@ -159,9 +152,26 @@ instance Doc Database where
 --   -- read "Social Networks" = Just SocialNetworks
 --   read _        = Nothing
 
+derive instance Eq Database
+instance JSON.WriteForeign Database where
+  writeImpl f = JSON.writeImpl $ show f
+
+allDatabases :: Array Database
+allDatabases = [ Empty
+               , PubMed
+                 -- , Arxiv
+               , HAL Nothing
+               , IsTex
+                 -- , IsTex_Advanced
+                 -- , Isidore
+                 --, Web
+                 --, News
+                 --, SocialNetworks
+               ]
+
 dbToInputValue :: Database -> String
 dbToInputValue All_Databases  = "all_databases"
-dbToInputValue (PubMed _)     = "pubmed"
+dbToInputValue PubMed         = "pubmed"
 dbToInputValue Arxiv          = "arxiv"
 dbToInputValue (HAL _)        = "hal"
 dbToInputValue IsTex          = "istex"
@@ -171,7 +181,7 @@ dbToInputValue Empty          = "empty"
 
 dbFromInputValue :: String -> Maybe Database
 dbFromInputValue "all_databases"  = Just All_Databases
-dbFromInputValue "pubmed"         = Just (PubMed { api_key: Nothing})
+dbFromInputValue "pubmed"         = Just PubMed
 dbFromInputValue "arxiv"          = Just Arxiv
 dbFromInputValue "hal"            = Just (HAL Nothing)
 dbFromInputValue "istex"          = Just IsTex
@@ -179,12 +189,6 @@ dbFromInputValue "istex_advanced" = Just IsTex_Advanced
 dbFromInputValue "isidore"        = Just Isidore
 dbFromInputValue "empty"          = Just Empty
 dbFromInputValue _                = Nothing
-
-derive instance Eq Database
-instance JSON.WriteForeign Database where
-  writeImpl (PubMed { api_key }) = JSON.writeImpl { tag: "PubMed"
-                                                  , _api_key: api_key }
-  writeImpl f = JSON.writeImpl { tag: show f }
 
 ------------------------------------------------------------------------
 -- | Organization specifications
