@@ -15,7 +15,7 @@ import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.GraphQL (getClient)
-import Gargantext.Components.GraphQL.Endpoints (getUserInfo)
+import Gargantext.Components.GraphQL.Endpoints (getUserInfo, getUser, updateUserPubmedAPIKey)
 import Gargantext.Components.GraphQL.User (UserInfo, _ui_cwCity, _ui_cwCountry, _ui_cwFirstName, _ui_cwLabTeamDeptsFirst, _ui_cwLastName, _ui_cwOffice, _ui_cwOrganizationFirst, _ui_cwRole, _ui_cwTouchMail, _ui_cwTouchPhone, _ui_cwDescription)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.Tabs as Tabs
@@ -26,7 +26,7 @@ import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (Session(..), WithSession, WithSessionContext, sessionId)
-import Gargantext.Types (FrontendError)
+import Gargantext.Types (CorpusId, FrontendError)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import GraphQL.Client.Args (IgnoreArg(..), OrArg(..), onlyArgs)
@@ -72,7 +72,7 @@ listElement = H.li { className: "list-group-item justify-content-between" }
 type LayoutNoSessionProps =
   ( boxes     :: Boxes
   , frontends :: Frontends
-  , nodeId    :: Int
+  , nodeId    :: CorpusId
   )
 
 type LayoutProps = WithSession LayoutNoSessionProps
@@ -112,7 +112,8 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
               , render: \userInfo@{ ui_username } ->
                   H.ul { className: "col-md-12 list-group" } [
                     display { title: fromMaybe "no name" (Just ui_username) }
-                    (contactInfos userInfo (onUpdateUserInfo boxes.errors reload))
+                      (contactInfos userInfo (onUpdateUserInfo boxes.errors reload))
+                    , pubmedSettings { boxes, nodeId, session }
                     , Tabs.tabs {
                          boxes
                        , cacheState
@@ -154,6 +155,68 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
 
 ------------------------------------------------------------
 
+type PubmedSettingsProps =
+  ( boxes   :: Boxes
+  , nodeId  :: CorpusId
+  , session :: Session )
+
+pubmedSettings :: R2.Leaf PubmedSettingsProps
+pubmedSettings = R2.leaf pubmedSettingsCpt
+pubmedSettingsCpt :: R.Component PubmedSettingsProps
+pubmedSettingsCpt = here.component "pubmedSettings" cpt where
+  cpt { boxes
+      , nodeId
+      , session } _ = do
+    useLoader { errorHandler
+              , loader: \_ -> getUser session nodeId
+              , path: unit
+              , render: \user -> pubmedSettingsLoaded { boxes
+                                                      , nodeId
+                                                      , mPubmedAPIKey: user.u_hyperdata.pubmed_api_key
+                                                      , session } }
+    where
+      errorHandler = logRESTError here "[pubmedSettings]"
+
+type PubmedSettingsLoadedProps =
+  ( mPubmedAPIKey :: Maybe String
+  | PubmedSettingsProps )
+
+pubmedSettingsLoaded :: R2.Leaf PubmedSettingsLoadedProps
+pubmedSettingsLoaded = R2.leaf pubmedSettingsLoadedCpt
+pubmedSettingsLoadedCpt :: R.Component PubmedSettingsLoadedProps
+pubmedSettingsLoadedCpt = here.component "pubmedSettingsLoaded" cpt where
+  cpt { boxes: { errors }
+      , nodeId
+      , mPubmedAPIKey
+      , session } _ = do
+    box <- T.useBox $ fromMaybe "" mPubmedAPIKey
+    isEditing <- T.useBox false
+
+    pure $ R2.row
+      [ R2.col 12
+        [ R2.col 12
+          [ R2.row
+            [ H.h2 {} [ H.text "PubMed settings" ] ]
+          , H.div { className: "form-group row"}
+            [ H.span { className: "col-sm-2 col-form-label" } [ H.text "API Key" ]
+            , H.div { className: "input-group col-sm-6"}
+              [ itemEditable { defaultVal: ""
+                             , isEditing
+                             , onUpdate: \s -> do
+                               here.log2 "[pubmedSettingsLoaded] new api key" s
+                               case s of
+                                 "" -> pure unit
+                                 _ -> do
+                                   launchAff_ $ do
+                                     res <- updateUserPubmedAPIKey session nodeId s
+                                     handleRESTError here errors res $ \_result ->
+                                       liftEffect $ here.log "[pubmedSettingsLoaded] api key updated"
+                             , valueBox: box }]
+            ]
+          ]
+        ]
+      ]
+
 -- | TODO format data in better design (UI) shape
 contactInfos :: UserInfo -> (UserInfo -> Effect Unit) -> Array R.Element
 contactInfos userInfo onUpdateUserInfo = item <$> contactInfoItems where
@@ -192,30 +255,46 @@ contactInfoItemCpt = here.component "contactInfoItem" cpt
   where
     cpt { defaultVal, label, lens, onUpdateUserInfo, userInfo } _ = do
       isEditing <- T.useBox false
-      isEditing' <- T.useLive T.unequal isEditing
 
       let value = (L.view cLens userInfo) :: String
+          cLens = L.cloneLens lens
 
       valueBox <- T.useBox value
+
+      let onUpdate val = do
+            let newUserInfo = (L.set cLens val userInfo) :: UserInfo
+            onUpdateUserInfo newUserInfo
+
       pure $
         H.div { className: "form-group row" }
           [ H.span { className: "col-sm-2 col-form-label" } [ H.text label ]
-          , if isEditing' then
-              itemEditing { defaultVal, isEditing, lens, onUpdateUserInfo, userInfo, valueBox }
-            else
-              itemNotEditing { defaultVal, isEditing, lens, onUpdateUserInfo, userInfo, valueBox }
+          , itemEditable { defaultVal, isEditing, onUpdate, valueBox }
           ]
-      where
-        cLens = L.cloneLens lens
 
 type ItemProps =
   ( defaultVal       :: String
   , isEditing        :: T.Box Boolean
-  , lens             :: UserInfoLens
-  , onUpdateUserInfo :: UserInfo -> Effect Unit
-  , userInfo         :: UserInfo
+  , onUpdate         :: String -> Effect Unit
+  -- , lens             :: UserInfoLens
+  -- , onUpdateUserInfo :: UserInfo -> Effect Unit
+  -- , userInfo         :: UserInfo
   , valueBox         :: T.Box String
   )
+
+itemEditable :: R2.Leaf ItemProps
+itemEditable = R2.leaf itemEditableCpt
+itemEditableCpt :: R.Component ItemProps
+itemEditableCpt = here.component "itemEditable" cpt where
+  cpt props@{ isEditing } _ = do
+    isEditing' <- T.useLive T.unequal isEditing
+
+    pure $ R.fragment
+      [ if isEditing' then
+          itemEditing props
+        else
+          itemNotEditing props
+      ]
+
 
 itemNotEditing :: R2.Leaf ItemProps
 itemNotEditing = R2.leaf itemNotEditingCpt
@@ -238,7 +317,8 @@ itemEditing :: R2.Leaf ItemProps
 itemEditing = R2.leaf itemEditingCpt
 itemEditingCpt :: R.Component ItemProps
 itemEditingCpt = here.component "itemNotEditing" cpt where
-  cpt { defaultVal, isEditing, lens, onUpdateUserInfo, userInfo, valueBox } _ = do
+  -- cpt { defaultVal, isEditing, lens, onUpdateUserInfo, userInfo, valueBox } _ = do
+  cpt { defaultVal, isEditing, onUpdate, valueBox } _ = do
     valueBox' <- T.useLive T.unequal valueBox
 
     pure $ H.div { className: "input-group col-sm-6" }
@@ -252,19 +332,17 @@ itemEditingCpt = here.component "itemNotEditing" cpt where
                    here.log2 "[itemEditingCpt] value Changed: " v
                    T.write_ v valueBox
                , placeholder: defaultVal
-               , type: "text" 
+               , type: "text"
                , required: false }
              , H.div { className: "btn input-group-append", on: { click } }
                [ H.div { className: "input-group-text fa fa-floppy-o" } [] ]
              ]
       where
-        cLens = L.cloneLens lens
         click _ = do
           T.write_ false isEditing
           value <- T.read valueBox
           here.log2 "[itemEditing] value" value
-          let newUserInfo = (L.set cLens value userInfo) :: UserInfo
-          onUpdateUserInfo newUserInfo
+          onUpdate value
 
 
 -- saveContactHyperdata :: Session -> Int -> HyperdataContact -> AffRESTError Int

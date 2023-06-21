@@ -18,7 +18,7 @@ import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Frame (searchIframes)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allOrgs, dataFields, defaultSearchQuery, doc, performSearch, datafield2database, Search, dbFromInputValue, dbToInputValue)
-import Gargantext.Components.GraphQL.Endpoints (getIMTSchools, getNodeCorpus)
+import Gargantext.Components.GraphQL.Endpoints (getIMTSchools)
 import Gargantext.Components.GraphQL.IMT as GQLIMT
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Lang (Lang(..))
@@ -221,7 +221,7 @@ isCNRS _ = false
 
 isPubmed :: Maybe DataField -> Boolean
 isPubmed ( Just
-           ( External ( PubMed _ ) )
+           ( External PubMed )
          ) = true
 isPubmed _ = false
 
@@ -359,22 +359,12 @@ databaseInputCpt = here.component "databaseInput" cpt
 
           change e = do
             let value = dbFromInputValue $ R.unsafeEventValue e
-            -- TODO Fetch pubmed api key
-            launchAff_ $ do
-              updatedValue <- case value of
-                Just (PubMed _) ->
-                  case search'.node_id of
-                       Just nodeId -> do
-                         eCorpus <- getNodeCorpus session nodeId
-                         case eCorpus of
-                           Left _err -> pure $ PubMed { api_key: Nothing }
-                           Right c   -> pure $ PubMed { api_key: c.pubmedAPIKey }
-                       Nothing -> pure $ PubMed { api_key: Nothing }
-                _ -> pure $ fromMaybe Empty value
 
-              liftEffect $ T.modify_ (_ { datafield = Just $ External updatedValue
-                                        , databases = updatedValue
-                                        }) search
+            let updatedValue = fromMaybe Empty value
+
+            T.modify_ (_ { datafield = Just $ External updatedValue
+                         , databases = updatedValue
+                         }) search
 
       pure $
         H.div { className: "form-group p-1 mb-0" }
@@ -387,38 +377,38 @@ databaseInputCpt = here.component "databaseInput" cpt
         ]
 
 
-type PubmedInputProps = (
-    search :: T.Box Search
-  , session :: Session
-  )
+-- type PubmedInputProps = (
+--     search :: T.Box Search
+--   , session :: Session
+--   )
 
-pubmedInput :: R2.Component PubmedInputProps
-pubmedInput = R.createElement pubmedInputCpt
-pubmedInputCpt :: R.Component PubmedInputProps
-pubmedInputCpt = here.component "pubmedInput" cpt where
-  cpt { search, session } _ = do
-    search' <- T.useLive T.unequal search
+-- pubmedInput :: R2.Component PubmedInputProps
+-- pubmedInput = R.createElement pubmedInputCpt
+-- pubmedInputCpt :: R.Component PubmedInputProps
+-- pubmedInputCpt = here.component "pubmedInput" cpt where
+--   cpt { search, session } _ = do
+--     search' <- T.useLive T.unequal search
 
-    case search'.datafield of
-      Just (External (PubMed p@{ api_key })) ->
-        -- TODO Fetch current API key
-        pure $
-          H.div { className: "form-group p-1 m-0" }
-            [ H.div { className: "text-primary center" } [ H.text "Pubmed API key" ]
-            , H.input { className: "form-control"
-                      , defaultValue: fromMaybe "" api_key
-                      , on: { blur: modifyPubmedAPIKey search p
-                            , change: modifyPubmedAPIKey search p
-                            , input: modifyPubmedAPIKey search p } } ]
-      _ -> pure $ H.div {} []
-    where
-      modifyPubmedAPIKey search p e = do
-        let val = R.unsafeEventValue e
-        let mVal = case val of
-              "" -> Nothing
-              s  -> Just s
-        T.modify_ (\s ->
-                    s { datafield = Just (External (PubMed p { api_key = mVal })) }) search
+--     case search'.datafield of
+--       Just (External (PubMed p@{ api_key })) ->
+--         -- TODO Fetch current API key
+--         pure $
+--           H.div { className: "form-group p-1 m-0" }
+--             [ H.div { className: "text-primary center" } [ H.text "Pubmed API key" ]
+--             , H.input { className: "form-control"
+--                       , defaultValue: fromMaybe "" api_key
+--                       , on: { blur: modifyPubmedAPIKey search p
+--                             , change: modifyPubmedAPIKey search p
+--                             , input: modifyPubmedAPIKey search p } } ]
+--       _ -> pure $ H.div {} []
+--     where
+--       modifyPubmedAPIKey search p e = do
+--         let val = R.unsafeEventValue e
+--         let mVal = case val of
+--               "" -> Nothing
+--               s  -> Just s
+--         T.modify_ (\s ->
+--                     s { datafield = Just (External (PubMed p { api_key = mVal })) }) search
 
 
 type OrgInputProps =
@@ -485,9 +475,9 @@ datafieldInputCpt = here.component "datafieldInput" cpt where
         then databaseInput { databases, search, session } []
         else H.div {} []
 
-      , if isPubmed search'.datafield
-        then pubmedInput { search, session } []
-        else H.div {} []
+      -- , if isPubmed search'.datafield
+      --   then pubmedInput { search, session } []
+      --   else H.div {} []
 
       , if isHAL search'.datafield
         then orgInput { orgs: allOrgs, search } []
@@ -540,7 +530,7 @@ searchInputCpt = here.component "searchInput" cpt
                          , className: "form-control"
                          , defaultValue: R.readRef valueRef
                          , placeholder: "Your query here"
-                         , type: "text" 
+                         , type: "text"
                          , required: true }
         ]
 
