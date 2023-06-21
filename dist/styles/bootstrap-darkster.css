@@ -10450,7 +10450,7 @@ input[type=range]:-moz-focusring {
   line-height: 1.4;
 }
 .mainleaf--selected {
-  background-color: #212529;
+  background-color: #495057;
 }
 .mainleaf--selected .mainleaf__node-link a {
   color: #33A2FF;
@@ -10477,7 +10477,6 @@ input[type=range]:-moz-focusring {
 
 .mainleaf-selection-indicator {
   height: fit-content;
-  padding: 2px 0;
   top: 0;
   right: 0;
   width: 3px;
@@ -11432,6 +11431,7 @@ select.form-control {
 .side-panel .ngrams-doc-list .list-group .context-item-source {
   color: #CED4DA;
   font-variant-caps: small-caps;
+  font-size: 15px;
 }
 .side-panel .ngrams-doc-list .list-group .context-item-date {
   color: #CED4DA;
