@@ -125,7 +125,7 @@ pkgs.mkShell {
     pkgs.minify
     pkgs.nodejs
     #pkgs.nodePackages.purescript-language-server
-    pkgs.python  # needed for msgpack etc
+    #pkgs.python  # needed for msgpack etc
     repl
     serve
     pkgs.pulp
