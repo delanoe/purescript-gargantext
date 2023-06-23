@@ -1,4 +1,4 @@
-module Gargantext.Utils.Spec where
+module Test.Gargantext.Utils.Spec where
 
 import Data.Argonaut as Argonaut
 import Data.Argonaut.Decode.Error (JsonDecodeError)

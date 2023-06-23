@@ -1,18 +1,18 @@
-module Gargantext.Components.NgramsTable.Spec where
+module Test.Gargantext.Components.NgramsTable.Spec where
 
 import Prelude
 import Data.List as L
 import Data.Maybe (Maybe(..))
 import Data.Map as Map
 import Data.Set as Set
-import Data.Tuple (Tuple(..))
+import Data.Tuple (Tuple(..), fst)
 import Test.Spec (Spec, describe, it)
 -- import Test.Spec.Assertions (shouldEqual)
 -- import Test.Spec.QuickCheck (quickCheck')
 
 import Test.Utils (shouldEqualArray)
 
-import Gargantext.Core.NgramsTable.Functions (highlightNgrams, normNgram)
+import Gargantext.Core.NgramsTable.Functions (highlightNgrams, normNgram, computeCache)
 import Gargantext.Core.NgramsTable.Types (HighlightElement, NgramsElement(..), NgramsRepoElement(..), NgramsTable(..), NgramsTerm)
 import Gargantext.Types (CTabNgramType(..), TermList(..))
 
@@ -61,13 +61,15 @@ spec = do
   describe "NgramsTable.highlightNgrams" do
     it "works on a simple example" do
       let ngramType = CTabSources
+      let tnres = [ tnre "which"     StopTerm ngramType
+                  , tnre "stops"     StopTerm ngramType
+                  , tnre "candidate" CandidateTerm ngramType
+                  ]
       let table = NgramsTable
-                   { ngrams_repo_elements: Map.fromFoldable [ tnre "which"     StopTerm ngramType
-                                                            , tnre "stops"     StopTerm ngramType
-                                                            , tnre "candidate" CandidateTerm ngramType
-                                                            ]
+                   { ngrams_repo_elements: Map.fromFoldable tnres
                    , ngrams_scores: Map.fromFoldable [] }
           input = "this is a graph about a biography which stops at every candidate"
+          cache = computeCache table $ Set.fromFoldable $ fst <$> tnres
           output = [ highlightNil " this is a graph about a biography "
                    , highlightSingleton " which" ngramType StopTerm
                    , highlightNil " "
@@ -76,17 +78,19 @@ spec = do
                    , highlightSingleton " candidate" ngramType CandidateTerm
                    , highlightNil " "
                    ]
-      highlightNgrams CTabTerms table input `shouldEqualArray` output
+      highlightNgrams cache CTabTerms table input `shouldEqualArray` output
 
     it "works when pattern overlaps" do
       let ngramType = CTabSources
+      let tnres = [ tnre "is"     StopTerm ngramType
+                  , tnre "a"      StopTerm ngramType
+                  , tnre "of"     StopTerm ngramType
+                  ]
       let table = NgramsTable
-                    { ngrams_repo_elements: Map.fromFoldable [ tnre "is"     StopTerm ngramType
-                                                             , tnre "a"      StopTerm ngramType
-                                                             , tnre "of"     StopTerm ngramType
-                                                             ]
+                    { ngrams_repo_elements: Map.fromFoldable tnres
                     , ngrams_scores: Map.fromFoldable [] }
           input = "This is a new state of the"
+          cache = computeCache table $ Set.fromFoldable $ fst <$> tnres
           output = [ highlightNil " This "
                    , highlightSingleton " is" ngramType StopTerm
                    , highlightNil " "
@@ -95,33 +99,37 @@ spec = do
                    , highlightSingleton " of" ngramType StopTerm
                    , highlightNil " the "
                    ]
-      highlightNgrams CTabTerms table input `shouldEqualArray` output
+      highlightNgrams cache CTabTerms table input `shouldEqualArray` output
 
     it "works when pattern overlaps 2" do
       let ngramType = CTabSources
+      let tnres = [ tnre "from"   CandidateTerm ngramType
+                  , tnre "i"      StopTerm ngramType
+                  , tnre "images" CandidateTerm ngramType
+                  ]
       let table = NgramsTable
-                    { ngrams_repo_elements: Map.fromFoldable [ tnre "from"   CandidateTerm ngramType
-                                                             , tnre "i"      StopTerm ngramType
-                                                             , tnre "images" CandidateTerm ngramType
-                                                             ]
+                    { ngrams_repo_elements: Map.fromFoldable tnres
                     , ngrams_scores: Map.fromFoldable [] }
           input = "This is from space images"
+          cache = computeCache table $ Set.fromFoldable $ fst <$> tnres
           output = [ highlightNil " This is "
                    , highlightSingleton " from" ngramType CandidateTerm
                    , highlightNil " space "
                    , highlightSingleton " images" ngramType CandidateTerm
                    , highlightNil " "
                    ]
-      highlightNgrams CTabTerms table input `shouldEqualArray` output
+      highlightNgrams cache CTabTerms table input `shouldEqualArray` output
 
     it "works when pattern overlaps 3" do
       let ngramType = CTabSources
+      let tnres = [ tnre "something"             CandidateTerm ngramType
+                  , tnre "something different"   MapTerm ngramType
+                  ]
       let table = NgramsTable
-                    { ngrams_repo_elements: Map.fromFoldable [ tnre "something"             CandidateTerm ngramType
-                                                             , tnre "something different"   MapTerm ngramType
-                                                             ]
+                    { ngrams_repo_elements: Map.fromFoldable tnres
                     , ngrams_scores: Map.fromFoldable [] }
           input = "and now for something different"
+          cache = computeCache table $ Set.fromFoldable $ fst <$> tnres
           output = [ highlightNil " and now for "
                    , Tuple " something" $ L.fromFoldable [
                          highlightTuple "something different" ngramType MapTerm
@@ -130,16 +138,18 @@ spec = do
                    , Tuple " different" $ L.singleton $ highlightTuple "something different" ngramType MapTerm
                    , highlightNil " "
                    ]
-      highlightNgrams CTabTerms table input `shouldEqualArray` output
+      highlightNgrams cache CTabTerms table input `shouldEqualArray` output
 
     it "works with punctuation" do
       let ngramType = CTabSources
+      let tnres = [ tnre "graph" CandidateTerm ngramType ]
       let table = NgramsTable
-                    { ngrams_repo_elements: Map.fromFoldable [ tnre "graph" CandidateTerm ngramType ]
+                    { ngrams_repo_elements: Map.fromFoldable tnres
                     , ngrams_scores: Map.fromFoldable [] }
           input = "before graph, after"
+          cache = computeCache table $ Set.fromFoldable $ fst <$> tnres
           output = [ highlightNil " before "
                    , highlightSingleton " graph" ngramType CandidateTerm
                    , highlightNil ", after "
                    ]
-      highlightNgrams CTabTerms table input `shouldEqualArray` output
+      highlightNgrams cache CTabTerms table input `shouldEqualArray` output

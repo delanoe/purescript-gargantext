@@ -1,4 +1,4 @@
-module Gargantext.Data.Spec where
+module Test.Gargantext.Data.Spec where
 
 import Prelude
 import Data.Array (index)
