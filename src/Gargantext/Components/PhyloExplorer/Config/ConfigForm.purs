@@ -100,7 +100,7 @@ component = R.hooksComponent "configForm" cpt where
                       { callback: \_ -> setter stateBox "defaultMode" $ show true
                       -- , variant: OutlinedButtonVariant Secondary
                       , variant: ButtonVariant Light
-                      , className: state.cliqueType == show false ?
+                      , className: state.defaultMode == show true ?
                           "active" $
                           ""
                       }
@@ -112,7 +112,7 @@ component = R.hooksComponent "configForm" cpt where
                       { callback: \_ -> setter stateBox "defaultMode" $ show false
                       -- , variant: OutlinedButtonVariant Secondary
                       , variant: ButtonVariant Light
-                      , className: state.cliqueType == show true ?
+                      , className: state.defaultMode == show false ?
                           "active" $
                           ""
                       }
