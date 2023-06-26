@@ -293,7 +293,7 @@ layoutWithContextNgramsCpt = here.component "layoutWithContextNgrams" cpt where
               { className: "document-layout__source__content w-100" <> collapsibleClasses
               , id: getIdName "sources" }
               source
-            , 
+            ,
               btnSeeMore "sources"
             ]
         ,

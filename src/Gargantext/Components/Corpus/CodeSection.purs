@@ -12,7 +12,7 @@ import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Show.Generic (genericShow)
 import Effect (Effect)
-import Effect.Aff (throwError)
+import Effect.Aff (Aff, throwError)
 import Effect.Exception (error)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Variant(..))
@@ -27,7 +27,7 @@ import Gargantext.Routes (SessionRoute(Children, NodeAPI))
 import Gargantext.Sessions (Session, get, put)
 import Gargantext.Types (AffETableResult, NodeType(..), ID)
 import Gargantext.Utils ((?))
-import Gargantext.Utils.Crypto as Crypto
+-- import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
@@ -112,8 +112,8 @@ fieldsCodeEditorCpt = here.component "fieldsCodeEditorCpt" cpt
     recomputeIndices :: FTFieldsWithIndex -> FTFieldsWithIndex
     recomputeIndices (FTFieldsWithIndex lst) = FTFieldsWithIndex $ mapWithIndex (\idx -> \{ ftField } -> { idx, ftField }) lst
 
-hash :: FTFieldWithIndex -> Hash
-hash { idx, ftField } = Crypto.hash $ "--idx--" <> (show idx) <> "--field--" <> (show ftField)
+-- hash :: FTFieldWithIndex -> Aff Hash
+-- hash { idx, ftField } = Crypto.hash $ "--idx--" <> (show idx) <> "--field--" <> (show ftField)
 
 type FieldCodeEditorProps =
   ( idx             :: Int

@@ -63,7 +63,8 @@
         "react-tooltip": "^4.2.8",
         "secp256k1": "^4.0.2",
         "sigma": "^2.4.0",
-        "twgl.js": "^5.0.4"
+        "twgl.js": "^5.0.4",
+        "uuid": "8.3.2"
     },
     "devDependencies": {
         "@babel/core": "^7.15.0",

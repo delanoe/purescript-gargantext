@@ -165,8 +165,8 @@ computeCache ngrams contextNgrams = { contextNgrams, pm, pats }
 
 -- TODO: while this function works well with word boundaries,
 --       it inserts too many spaces.
-highlightNgrams :: CTabNgramType -> NgramsTable -> Record Cache -> String -> Array HighlightElement
-highlightNgrams ntype table@(NgramsTable {ngrams_repo_elements: elts}) cache@{ pm, pats } input0 =
+highlightNgrams :: Record Cache -> CTabNgramType -> NgramsTable -> String -> Array HighlightElement
+highlightNgrams cache@{ pm, pats } ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
     -- trace {pats, input0, input, ixs} \_ ->
     A.fromFoldable ((\(s /\ ls)-> undb s /\ ls) <$> unsafePartial (foldl goFold ((input /\ Nil) : Nil) ixs))
   where

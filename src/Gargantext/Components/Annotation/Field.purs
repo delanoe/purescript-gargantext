@@ -148,7 +148,7 @@ compile ::
   -> NgramsTable
   -> Maybe String
   -> Array HighlightElement
-compile cache ngrams = maybe [] (highlightNgrams CTabTerms ngrams cache)
+compile cache ngrams = maybe [] (highlightNgrams cache CTabTerms ngrams)
 
 -- Runs
 

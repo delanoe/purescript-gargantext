@@ -119,19 +119,21 @@ spec =
       let text = "To hash with backend"
       let hashed = "8a69a94d164279af2b7d1443ce08da6184b3d7e815406076e148159c284b53c3"
                    -- ^ hash from backend with text above
-      Crypto.hash text `shouldEqual` hashed
+      h <- Crypto.hash text
+      h `shouldEqual` hashed
 
     it "Hash List with backend works" do
       let list = ["a","b"]
       let hashed = "ab19ec537f09499b26f0f62eed7aefad46ab9f498e06a7328ce8e8ef90da6d86"
                    -- ^ hash from backend with text above
-      Crypto.hash list `shouldEqual` hashed
+      h <- Crypto.hash list
+      h`shouldEqual` hashed
 
 ------------------------------------------------------------------------
 -- | TODO property based tests
     it "Hash works with any order of list" do
-      let hash1 = Crypto.hash ["a","b"]
-      let hash2 = Crypto.hash ["b","a"]
+      hash1 <- Crypto.hash ["a","b"]
+      hash2 <- Crypto.hash ["b","a"]
       hash1 `shouldEqual` hash2
 
 ------------------------------------------------------------------------
