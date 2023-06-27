@@ -239,23 +239,27 @@ docListCpt = here.component "main" cpt where
         ,
           R2.when (not $ eq results Seq.empty) $
 
-            H.ul
-            { className: intercalate " "
-                [ "graph-doc-list"
-                , "list-group"
-                ]
-            } $
-            Seq.toUnfoldable $ flip Seq.map results \r ->
+          H.div {}
+            [
+              H.h6 {} [ H.text $ show (Seq.length results) <> " related documents"]
+            , H.ul
+              { className: intercalate " "
+                  [ "graph-doc-list"
+                  , "list-group"
+                  ]
+              } $
+              Seq.toUnfoldable $ flip Seq.map results \r ->
 
-              item
-              { documentView: (r :: DocumentsView)
-              , callback: callback showDoc'
-              , isSelected: isSelected showDoc' (r :: DocumentsView)
-              , listId
-              , corpusId: nodeId
-              , session
-              , frontends
-              }
+                item
+                { documentView: (r :: DocumentsView)
+                , callback: callback showDoc'
+                , isSelected: isSelected showDoc' (r :: DocumentsView)
+                , listId
+                , corpusId: nodeId
+                , session
+                , frontends
+                }
+             ]
         ]
 
 
