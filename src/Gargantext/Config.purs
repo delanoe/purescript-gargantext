@@ -16,7 +16,7 @@ import Gargantext.Utils (href)
 
 defaultBackends :: NonEmpty Array Backend
 defaultBackends =   backend' "Demo"            "Public Show room"          "https://demo.gargantext.org"
-               :| [ backend' "Education"       "Class Rooms"               "https://formation.gargantext.org"
+               :| [ backend' "Education"       "Training/Formation"        "https://formation.gargantext.org"
                   , backend' "Organization"    "CNRS/ISCPIF Unit"          "https://cnrs.gargantext.org"
                   , backend' "Organization"    "Mines Telecom Institute"   "https://imt.sub.gargantext.org"
                   , backend' "Organization"    "Hello Word Company"        "https://helloword.gargantext.org"
