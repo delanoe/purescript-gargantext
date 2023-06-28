@@ -102,6 +102,7 @@ datafield2database _            = Empty
 
 data Database = All_Databases
               | Empty
+              | OpenAlex
               | PubMed
               | Arxiv
               | HAL (Maybe Org)
@@ -116,6 +117,7 @@ derive instance Generic Database _
 -- derive instance BoundedEnum Database
 instance Show Database where
   show All_Databases  = "All Databases"
+  show OpenAlex       = "OpenAlex"
   show PubMed         = "PubMed"
   show Arxiv          = "Arxiv"
   show (HAL _)        = "HAL"
@@ -128,6 +130,7 @@ instance Show Database where
 
 instance Doc Database where
   doc All_Databases  = "All databases"
+  doc OpenAlex       = "OpenAlex db"
   doc PubMed         = "All Medical publications"
   doc Arxiv          = "Arxiv"
   doc (HAL _)        = "All open science (archives ouvertes)"
@@ -158,6 +161,7 @@ instance JSON.WriteForeign Database where
 
 allDatabases :: Array Database
 allDatabases = [ Empty
+               , OpenAlex
                , PubMed
                  -- , Arxiv
                , HAL Nothing
@@ -171,6 +175,7 @@ allDatabases = [ Empty
 
 dbToInputValue :: Database -> String
 dbToInputValue All_Databases  = "all_databases"
+dbToInputValue OpenAlex       = "openalex"
 dbToInputValue PubMed         = "pubmed"
 dbToInputValue Arxiv          = "arxiv"
 dbToInputValue (HAL _)        = "hal"
@@ -181,6 +186,7 @@ dbToInputValue Empty          = "empty"
 
 dbFromInputValue :: String -> Maybe Database
 dbFromInputValue "all_databases"  = Just All_Databases
+dbFromInputValue "openalex"       = Just OpenAlex
 dbFromInputValue "pubmed"         = Just PubMed
 dbFromInputValue "arxiv"          = Just Arxiv
 dbFromInputValue "hal"            = Just (HAL Nothing)
