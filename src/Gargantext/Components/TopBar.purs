@@ -194,11 +194,11 @@ divDropdownLeftCpt = here.component "divDropdownLeft" cpt
               , icon  : "fa fa-clock-o"
               , text  : "Versions change"
               }
-      , LiNav { title : "Code documentation"
+      {-, LiNav { title : "Code documentation"
               , href  : "https://doc.gargantext.org"
               , icon  : "fa fa-book"
               , text  : "Source Code Documentation"
-              }
+              -}
       , LiNav { title : "API documentation"
               , href  : "https://cnrs.gargantext.org/swagger-ui"
               , icon  : "fa fa-code-fork"
