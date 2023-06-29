@@ -1,6 +1,6 @@
 {
     "name": "Gargantext",
-    "version": "0.0.6.9.9.6.9",
+    "version": "0.0.6.9.9.7",
     "scripts": {
         "generate-purs-packages-nix": "./nix/generate-purs-packages.nix",
         "generate-psc-packages-nix": "./nix/generate-packages-json.bash",
@@ -19,7 +19,7 @@
         "clean": "rm -Rf output node_modules",
         "clean-js": "rm -Rf node_modules",
         "clean-ps": "rm -Rf output",
-        "server": "serve -l 8000 dist",
+        "server": "serve -l 8008 dist",
         "server-ssl": "ssl-serve --ssl dist",
         "build": "spago bundle-app --main Main --to dist/bundle.js",
         "prod": "yarn prod:compile && yarn prod:dce && yarn prod:bundle && yarn prod:pack",

@@ -179,6 +179,7 @@ settingsBox Corpus =
               , doc  : Documentation Corpus
               , buttons : [ Add [ Graph
                                 , Notes
+                                , Calc
                                 , NodeTexts
                                 , NodeList
                                 , Graph

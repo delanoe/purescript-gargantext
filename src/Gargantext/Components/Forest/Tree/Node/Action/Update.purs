@@ -227,16 +227,18 @@ updateTexts = R.createElement updateTextsCpt
 updateTextsCpt :: R.Component UpdateProps
 updateTextsCpt = here.component "updateTexts" cpt where
   cpt { dispatch } _ = do
-    methodTexts <- T.useBox NewNgrams
-    methodTexts' <- T.useLive T.unequal methodTexts
+    -- methodTexts <- T.useBox NewNgrams
+    -- methodTexts' <- T.useLive T.unequal methodTexts
 
     pure $ panel [ -- H.text "Update with"
-                  formChoiceSafe { items: [NewNgrams, NewTexts, Both]
-                                 , default: methodTexts'
-                                 , callback: \val -> T.write_ val methodTexts
-                                 , print: show } []
+                  -- formChoiceSafe { items: [NewNgrams, NewTexts, Both]
+                  --                , default: methodTexts'
+                  --                , callback: \val -> T.write_ val methodTexts
+                  --                , print: show } []
                  ]
-                 (submitButton (UpdateNode $ UpdateNodeParamsTexts { methodTexts: methodTexts' }) dispatch)
+                --  (submitButton (UpdateNode $ UpdateNodeParamsTexts { methodTexts: methodTexts' }) dispatch)
+                 (submitButton (UpdateNode $ UpdateNodeParamsTexts { methodTexts: Both }) dispatch)
+
 
 updateOther :: R2.Component UpdateProps
 updateOther = R.createElement updateOtherCpt

@@ -10707,7 +10707,7 @@ input[type=range]:-moz-focusring {
 .side-panel {
   background-color: #fff;
   padding: 0.3em;
-  width: 28%;
+  width: 50vw;
   top: 3.7em;
   position: fixed;
   z-index: 1;
@@ -10717,21 +10717,21 @@ input[type=range]:-moz-focusring {
   width: 60px;
 }
 .right-handed .side-panel {
-  left: 70%;
+  right: 8px;
 }
 .right-handed .side-panel .header {
   float: right;
 }
 
 .left-handed .side-panel {
-  left: 2%;
+  left: 8px;
 }
 .left-handed .side-panel .header {
   float: left;
 }
 
 .side-panel .texts-sidepanel__header {
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem 1.25rem 0;
   font-size: 20px;
   text-align: right;
 }
@@ -10743,8 +10743,6 @@ input[type=range]:-moz-focusring {
   font-size: 21px;
 }
 .side-panel .texts-sidepanel__body .document-layout__abstract__content {
-  max-height: 200px;
-  overflow-y: scroll;
   font-size: 16px;
 }
 
@@ -11906,9 +11904,10 @@ select.form-control {
   animation: fade-in 200ms ease-in-out, fade-out 100ms ease-in-out 2000ms 1 normal forwards, pulse 200ms ease-in-out 0ms 1;
 }
 .document-layout__body {
-  max-width: 780px;
   padding: 1.25rem;
-  margin: 0 auto;
+  margin: 0;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 .document-layout__separator-label {
   font-weight: bold;

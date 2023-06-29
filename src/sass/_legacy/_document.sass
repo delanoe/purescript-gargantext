@@ -40,9 +40,11 @@ $document-container-width: 780px
       animation: fade-in 200ms ease-in-out, fade-out 100ms ease-in-out 2000ms 1 normal forwards, pulse 200ms ease-in-out 0ms 1
 
   &__body
-    max-width: $document-container-width
+    // max-width: $document-container-width
     padding: $card-spacer-x
-    margin: 0 auto
+    margin: 0
+    max-height: 70vh
+    overflow-y: auto
 
   &__separator-label
     font-weight: bold
