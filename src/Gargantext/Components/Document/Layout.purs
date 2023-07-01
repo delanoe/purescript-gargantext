@@ -5,6 +5,7 @@ module Gargantext.Components.Document.Layout
 import Gargantext.Prelude
 
 import Data.Array as A
+import Data.Lens ((^.))
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
 import Data.Ord (greaterThan)
@@ -32,6 +33,7 @@ import Gargantext.Sessions (Session)
 import Gargantext.Utils ((?))
 import Gargantext.Utils as U
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
@@ -44,6 +46,7 @@ import Toestand as T
 type Props =
   ( loaded   :: LoadedData
   , path     :: DocPath
+  , reload  :: T2.ReloadS
   , session  :: Session
   | Options
   )
@@ -66,14 +69,17 @@ layoutCpt :: R.Component Props
 layoutCpt = here.component "layout" cpt where
   cpt props@{ path: path@{ listIds
                          , nodeId }
+            , reload
             , session } _ = do
+    reload' <- T.useLive T.unequal reload
     case A.head listIds of
       Nothing -> pure $ H.div {} [ H.text "No list supplied!" ]
       Just listId ->
         useLoader { errorHandler
                   , loader: \p -> getContextNgrams session p.contextId p.listId
-                  , path: { contextId: nodeId, listId }
-                  , render: \contextNgrams -> layoutWithContextNgrams $ Record.merge props { contextNgrams } }
+                  , path: { contextId: nodeId, listId, reload: reload' }
+                  , render: \contextNgrams ->
+                      layoutWithContextNgrams $ Record.merge props { contextNgrams } }
     where
       errorHandler = logRESTError here "[layout]"
 
@@ -88,17 +94,16 @@ layoutWithContextNgramsCpt = here.component "layoutWithContextNgrams" cpt where
   -- Component
   cpt { contextNgrams
       , path
+      , reload
       , loaded:
-          loaded@{ ngramsTable: Versioned
-          { data: initTable }
-          , document: NodePoly
-            { hyperdata: Document doc
-            }
+          loaded@{ ngramsTable: Versioned { data: initTable }
+                 , document: NodePoly { hyperdata: Document doc }
           }
       , sideControlsSlot
       } _ = do
     -- | States
     -- |
+    reload' <- T.useLive T.unequal reload
 
     state'@{ ngramsLocalPatch } /\ state <-
       R2.useBox' $ initialState { loaded }
@@ -111,33 +116,44 @@ layoutWithContextNgramsCpt = here.component "layoutWithContextNgrams" cpt where
     onPending' <- R2.useLive' onPending
     result'    <- R2.useLive' result
 
+    ngrams <- T.useBox initTable
+    ngrams' <- T.useLive T.unequal ngrams
+
     -- | Computed
     -- |
     let
 
       withAutoUpdate = false
 
-      ngrams = applyNgramsPatches state' initTable
+      -- ngrams = applyNgramsPatches state' initTable
 
-      cache = computeCache ngrams $ Set.fromFoldable contextNgrams
-
-      annotate text = AnnotatedField.annotatedField
-        { ngrams
-        , setTermList
-        , text
-        , mode: mode'
-        , cache
-        }
+      cache = computeCache ngrams' $ Set.fromFoldable contextNgrams
 
       setTermListOrAddA ngram Nothing        =
         addNewNgramA ngram
       setTermListOrAddA ngram (Just oldList) =
         setTermListA ngram <<< replace oldList
 
-      setTermList ngram mOldList =
-        dispatch <<< setTermListOrAddA (findNgramRoot ngrams ngram) mOldList
+      setTermList ngram mOldList termList = do
+        let root = findNgramRoot ngrams' ngram
+        -- here.log2 "[setTermList] ngram" ngram
+        -- here.log2 "[setTermList] root" root
+        let patch = setTermListOrAddA root mOldList termList
+        -- here.log2 "[setTermList] patch" patch
+        dispatch patch
+        T.write_ (applyNgramsPatches state' initTable) ngrams
+        -- here.log2 "[setTermList] calling reload" reload'
+        T2.reload reload
 
       hasAbstract =  maybe false (not String.null) doc.abstract
+
+      annotate text = AnnotatedField.annotatedField
+                      { ngrams
+                      , setTermList
+                      , text
+                      , mode: mode'
+                      , cache
+                      }
 
     -- | Hooks
     -- |
@@ -152,6 +168,14 @@ layoutWithContextNgramsCpt = here.component "layoutWithContextNgrams" cpt where
     -- |
     let
       onModeChange = read >>> fromMaybe AFT.EditionMode >>> flip T.write_ mode
+
+    -- R.useEffect' $ do
+    --   here.log2 "[layoutWithContextNgrams] cache" cache
+    --   here.log2 "[layoutWithContextNgrams] ngramsLocalPatch" ngramsLocalPatch
+    --   let NgramsTable { ngrams_repo_elements: nre } = initTable
+    --   here.log2 "[layoutWithContextNgrams] ngrams_repo_elements" $ A.fromFoldable $ Map.keys nre
+    --   let NgramsTable { ngrams_repo_elements: nre' } = ngrams'
+    --   here.log2 "[layoutWithContextNgrams] ngrams (after apply patches)" $ A.fromFoldable $ Map.keys nre'
 
     -- | Render
     -- |

@@ -16,7 +16,9 @@ import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Types (CTabNgramType(..), ListId, NodeID, TabSubType(..), TabType(..))
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 import Reactix as R
+import Toestand as T
 
 type Props =
   ( listId    :: ListId
@@ -40,6 +42,8 @@ nodeCpt = here.component "node" cpt where
     session <- useSession
 
     state' /\ state <- R2.useBox' (Nothing :: Maybe LoadedData)
+    reload <- T.useBox T2.newReload
+    reload' <- T.useLive T.unequal reload
 
     -- | Computed
     -- |
@@ -85,6 +89,7 @@ nodeCpt = here.component "node" cpt where
             layout
             { loaded
             , path
+            , reload
             , session
             }
       }

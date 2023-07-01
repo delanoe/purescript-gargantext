@@ -20,6 +20,7 @@ import DOM.Simple.Event as DE
 import Data.Array as A
 import Data.List (List(..), (:))
 import Data.Map (Map)
+import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
 import Data.String.Common (joinWith)
 import Data.Tuple (Tuple(..), snd)
@@ -37,19 +38,22 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Reactix.SyntheticEvent as E
 import Record as Record
+import Record.Extra as RX
 import Toestand as T
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Annotation.Field"
 
 -- @NOTE #386: add parameter "type" ("Authors", "Terms")
-type Props =
-  ( ngrams       :: NgramsTable
-  , setTermList  :: NgramsTerm -> Maybe TermList -> TermList -> Effect Unit
+type CommonProps =
+  ( setTermList  :: NgramsTerm -> Maybe TermList -> TermList -> Effect Unit
   , text         :: Maybe String
   , mode         :: ModeType
   , cache        :: Record Cache
   )
+type AnnotatedFieldProps =
+  ( ngrams       :: T.Box NgramsTable
+  | CommonProps )
 type MouseEvent = E.SyntheticEvent DE.MouseEvent
 
 -- UNUSED
@@ -57,24 +61,33 @@ type MouseEvent = E.SyntheticEvent DE.MouseEvent
 -- defaultProps = { ngrams: NgramsTable Map.empty, text: Nothing, setTermList: \_ _ _ -> pure unit }
 
 
-annotatedField :: R2.Leaf Props
+annotatedField :: R2.Leaf AnnotatedFieldProps
 annotatedField = R2.leaf annotatedFieldCpt
-annotatedFieldCpt :: R.Component Props
+annotatedFieldCpt :: R.Component AnnotatedFieldProps
 annotatedFieldCpt = here.component "annotatedField" cpt where
   cpt props _ = do
+    ngrams' <- T.useLive T.unequal props.ngrams
+
     menuRef <- R.useRef (Nothing :: Maybe (Record AnnotationMenu))
     redrawMenu <- T.useBox false
     reload <- T.useBox T2.newReload
 
-    pure $ annotatedFieldInner (Record.merge { menuRef, redrawMenu, reload } props)
+    let commonProps = RX.pick props :: Record CommonProps
+
+    -- R.useEffect' $ do
+    --   let NgramsTable { ngrams_repo_elements: nre } = ngrams'
+    --   here.log2 "[annotatedField] ngrams' keys" $ A.fromFoldable $ Map.keys nre
+
+    pure $ annotatedFieldInner (Record.merge { menuRef, ngrams: ngrams', redrawMenu, reload } commonProps)
 
 -----------------------------------------------------------------
 
 type InnerProps =
-  ( menuRef    :: R.Ref (Maybe (Record AnnotationMenu))
+  ( ngrams     :: NgramsTable
+  , menuRef    :: R.Ref (Maybe (Record AnnotationMenu))
   , redrawMenu :: T.Box Boolean
   , reload     :: T2.ReloadS
-  | Props
+  | CommonProps
   )
 
 annotatedFieldInner :: R2.Leaf InnerProps
@@ -121,7 +134,7 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
 
             H.div
             { className: "annotated-field-runs"
-            , aria: { expanded: false } 
+            , aria: { expanded: false }
             }
             ((\p -> annotateRun p) <$> wrap <$> compile cache ngrams fieldText)
 
