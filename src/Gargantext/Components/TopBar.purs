@@ -151,26 +151,26 @@ divDropdownLeftCpt = here.component "divDropdownLeft" cpt
         ]
 
     menuElement = LiNav { title : "About Gargantext"
-                        , href  : "#"
+                        , href  : "https://iscpif.fr/gargantext/"
                         , icon  : "fa fa-info-circle"
                         , text  : "Info" }
 
     elements = [
       [
-        LiNav { title : "Quick start, tutorials and methodology"
-              , href  : "https://iscpif.fr/gargantext/your-first-map/"
+        LiNav { title : "Map Show Room and tutorials"
+              , href  : "https://iscpif.fr/gargantext/cartes/"
               , icon  : "fa fa-lightbulb-o"
-              , text  : "Tutorials"
+              , text  : "First maps"
               }
 
       , LiNav { title : "Learn with us!"
-              , href  : "https://iscpif.fr/projects/gargantext/"
+              , href  : "https://iscpif.fr/gargantext/formation/"
               , icon  : "fa fa-life-ring"
               , text  : "Subscribe to Garg Lessons"
               }
 
       , LiNav { title : "Report bug here"
-              , href  : "https://www.iscpif.fr/gargantext/feedback-and-bug-reports/"
+              , href  : "https://iscpif.fr/gargantext/faq-feedback/"
               , icon  : "fa fa-bullhorn"
               , text  : "Feedback"
               }
