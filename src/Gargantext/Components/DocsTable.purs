@@ -757,7 +757,7 @@ docChooserCpt = here.component "docChooser" cpt
 
       pure $
         H.div
-        { className: "doc-chooser" }
+        { className: "doc-chooser text-center" }
         [
           B.iconButton
           { name: eyeClass

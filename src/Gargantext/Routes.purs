@@ -20,21 +20,21 @@ data AppRoute
   | FolderPrivate  SessionId Int
   | FolderPublic   SessionId Int
   | FolderShared   SessionId Int
+  | ForgotPassword  (M.Map String String)
   | Home
   | Lists          SessionId Int
   | Login
+  | NodeTexts       SessionId Int
   | TreeFlat        SessionId Int String
   | PGraphExplorer  SessionId Int
   | PhyloExplorer   SessionId Int
   | RouteFile       SessionId Int
   | RouteFrameCalc  SessionId Int
   | RouteFrameCode  SessionId Int
-  | RouteFrameWrite SessionId Int
   | RouteFrameVisio SessionId Int
+  | RouteFrameWrite SessionId Int
   | Team            SessionId Int
-  | NodeTexts       SessionId Int
   | UserPage        SessionId Int
-  | ForgotPassword  (M.Map String String)
 
 derive instance Eq AppRoute
 
@@ -112,7 +112,7 @@ nodeTypeAppRoute GT.NodeUser s i       = Just $ UserPage s i
 nodeTypeAppRoute GT.Team s i           = Just $ Team s i
 nodeTypeAppRoute GT.NodeTexts s i      = Just $ NodeTexts s i
 nodeTypeAppRoute GT.Notes s i = Just $ RouteFrameWrite s i
-nodeTypeAppRoute GT.NodeFrameCalc  s i = Just $ RouteFrameCalc  s i
+nodeTypeAppRoute GT.Calc  s i = Just $ RouteFrameCalc  s i
 nodeTypeAppRoute GT.NodeFrameVisio s i = Just $ RouteFrameVisio s i
 nodeTypeAppRoute _ _ _                 = Nothing
 

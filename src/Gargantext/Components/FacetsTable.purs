@@ -263,7 +263,8 @@ initialPageGQL { corpusId, ngramsTerms, session } =
 
 loadPageGQL :: Record PageGQLParams -> AffRESTError Rows
 loadPageGQL { corpusId
-            , params: { limit, offset, orderBy }
+            -- NOTE: unused
+            -- , params: { limit, offset, orderBy }
             , ngramsTerms
             , session } = do
 

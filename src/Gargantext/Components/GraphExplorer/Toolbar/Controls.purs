@@ -158,7 +158,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
     pure $
 
       H.nav
-      { className: "graph-toolbar" }
+      { className: "graph-toolbar shadow" }
       [
         H.div
         { className: "flex-shrink-0" }
@@ -166,24 +166,62 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
           H.div
           { className: "d-flex" }
           [
-            -- Actions
+            -- Run spatialization
             B.fieldset
             { className: "graph-toolbar__section"
-            , titleSlot: H.text "Actions"
+            , titleSlot: H.text "Spatialization"
             }
             [
               -- resetForceAtlasButton { forceAtlasState, sigmaRef }
               pauseForceAtlasButton { 
                 state: forceAtlasState
-              , title: "Play/pause spatialization"  
-              }
-            , pauseNoverlapButton { 
-                state: noverlapState
-              , title: "No node overlap"
+              , title: "Play/pause map spatialization"
               }
             ,
               gap
+            , 
+              pauseNoverlapButton { 
+                state: noverlapState
+              , title: "No node overlap"
+              }
+            ]
+          ,
+            -- View Settings
+            B.fieldset
+            { className: "graph-toolbar__section"
+            , titleSlot: H.text "Adjust display"
+            }
+            [
+              centerButton { 
+                forceAtlasState
+              , sigmaRef
+              , title: "Recenter graph"
+              }
             ,
+              gap, gap
+            ,
+              labelSizeButton
+              { forceAtlasState
+              , graph
+              , sigmaRef
+              , state: labelSize
+              }
+            ,
+              gap, gap
+            ,
+              labelRenderedSizeThresholdButton
+              { forceAtlasState
+              , sigmaRef
+              , state: labelRenderedSizeThreshold
+              }
+            ]
+          ,
+            -- Run spatialization
+            B.fieldset
+            { className: "graph-toolbar__section"
+            , titleSlot: H.text "Snapshot"
+            }
+            [
               cameraButton
               { id: graphId'
               , forceAtlasState
@@ -194,117 +232,198 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
               , title: "Save this graph"
               }
             ]
-          ,
-            -- View Settings
-            B.fieldset
-            { className: "graph-toolbar__section"
-            , titleSlot: H.text "View settings"
-            }
-            [
-              centerButton { 
-                forceAtlasState
-              , sigmaRef
-              , title: "Recenter graph"
-              }
-            ,
-              gap
-            ,
-              edgesToggleButton
-              { state: showEdges
-              , stateAtlas: forceAtlasState
-              , title: "Show/hide node links"
-              }
-            ,
-              gap
-            ,
-              louvainButton { forceAtlasState
-                            , graph
-                            , sigmaRef
-                            , transformedGraph
-                            , title: "" }
-            ]
+
           ]
         ,
-          -- Selection Settings
-          B.fieldset
-          { className: intercalate " "
-              [ "graph-toolbar__section"
-              , "graph-toolbar__section--selection"
+          H.div 
+          { className: "graph-toolbar__region_advanced graph-toolbar__section my-0" } 
+          [ 
+            H.div { className: "d-flex" }
+            [
+              H.button 
+              { className: "btn-advanced btn btn-light btn-sm text-small w-100 p-0"
+              , data: { toggle: "collapse", target: "#graph-toolbar__advanced" }
+              , aria: { expanded: false, controls: "graph-toolbar__advanced" } }
+              [
+                H.text "Advanced"
+              ,
+                B.icon { name: "angle-down", className: "mx-1" }
               ]
-          , titleSlot: H.text "Nodes (terms) selection settings"
-          }
-          [
-            -- zoom: 0 -100 - calculate ratio
-            multiSelectEnabledButton { forceAtlasState
-                                     , state: multiSelectEnabled }
+            ]
           ,
-            gap
-          ,
-            -- toggle multi node selection
-            -- save button
-            mouseSelectorSizeSlider { forceAtlasState
-                                    , sigmaRef
-                                    , state: mouseSelectorSize }
+            H.div
+            { id: "graph-toolbar__advanced"
+            , className: "collapse" }
+            [
+              H.div { className: "d-flex pt-1" }
+              [
+                -- View Settings
+                B.fieldset
+                { className:  intercalate " " 
+                [ "graph-toolbar__section"
+                , "d-flex" ]
+                , titleSlot: H.text "View settings"
+                }
+                [
+                  
+                  edgesToggleButton
+                  { state: showEdges
+                  , stateAtlas: forceAtlasState
+                  , title: "Show/hide node links"
+                  }
+                ,
+                  gap
+                ,
+                  louvainButton { forceAtlasState
+                                , graph
+                                , sigmaRef
+                                , transformedGraph
+                                , title: "" }
+                ]
+              ,
+                -- Selection Settings
+                B.fieldset
+                { className: intercalate " "
+                    [ "graph-toolbar__section"
+                    , "graph-toolbar__section--selection"
+                    ]
+                , titleSlot: H.text "Terms selection settings"
+                }
+                [
+                  -- zoom: 0 -100 - calculate ratio
+                  multiSelectEnabledButton { forceAtlasState
+                                          , state: multiSelectEnabled }
+                ,
+                  gap
+                ,
+                  -- toggle multi node selection
+                  -- save button
+                  mouseSelectorSizeSlider { forceAtlasState
+                                          , sigmaRef
+                                          , state: mouseSelectorSize }
+                -- ,
+                --   H.code { className: "text-small" } [
+                --     H.text "(Shift + wheel)"
+                --   ]
+                ]
+              ,
+                -- Controls
+                B.fieldset
+                { className: intercalate " "
+                    [ "graph-toolbar__section"
+                    , "graph-toolbar__section--controls"
+                    , "flex-grow-1 flex-shrink-1"
+                    ]
+                , titleSlot: H.text "Controls"
+                }
+                [
+                  
+                  edgeConfluenceControl
+                  { forceAtlasState
+                  , range: edgeConfluenceRange'
+                  , state: edgeConfluence }
+                {- ,
+                  edgeWeightControl
+                  { forceAtlasState
+                  , range: edgeWeightRange
+                  , state: edgeWeight }
+                -}
+                ,
+                  gap, gap
+                ,
+                  nodeSizeControl
+                  { forceAtlasState
+                  , range: nodeSizeRange'
+                  , state: nodeSize
+                  }
+                  
+                  -- B.wad
+                  -- [ "d-flex",  "gap-6", "px-1" ]
+                  -- [
+                  --   B.wad
+                  --   [ "d-flex", "flex-column", "flex-grow-1", "pt-1", "gap-4" ]
+                  --   [
+                  --     edgeConfluenceControl
+                  --     { forceAtlasState
+                  --     , range: edgeConfluenceRange'
+                  --     , state: edgeConfluence }
+                  --   {- ,
+                  --     edgeWeightControl
+                  --     { forceAtlasState
+                  --     , range: edgeWeightRange
+                  --     , state: edgeWeight }
+                  --   -}
+                  --   ,
+                  --     nodeSizeControl
+                  --     { forceAtlasState
+                  --     , range: nodeSizeRange'
+                  --     , state: nodeSize
+                  --     }
+                  --   ]
+                  -- ]
+                ]
+              ]
+            ]
           ]
         ]
-      ,
-        -- Controls
-        B.fieldset
-        { className: intercalate " "
-            [ "graph-toolbar__section"
-            , "graph-toolbar__section--controls"
-            , "flex-grow-1 flex-shrink-1"
-            ]
-        , titleSlot: H.text "Controls"
-        }
-        [
-          B.wad
-          [ "d-flex",  "gap-6", "px-1" ]
-          [
-            B.wad
-            [ "d-flex", "flex-column", "flex-grow-1", "pt-1", "gap-4" ]
-            [
-              edgeConfluenceControl
-              { forceAtlasState
-              , range: edgeConfluenceRange'
-              , state: edgeConfluence }
-            {- ,
-              edgeWeightControl
-              { forceAtlasState
-              , range: edgeWeightRange
-              , state: edgeWeight }
-            -}
-            ,
-              nodeSizeControl
-              { forceAtlasState
-              , range: nodeSizeRange'
-              , state: nodeSize
-              }
-            ]
-          ,
-            B.wad
-            [ "d-flex", "flex-column", "flex-grow-1", "pt-1", "gap-4" ]
-            [
-              labelSizeButton
-              { forceAtlasState
-              , graph
-              , sigmaRef
-              , state: labelSize
-              }
-            ,
-              labelRenderedSizeThresholdButton
-              { forceAtlasState
-              , sigmaRef
-              , state: labelRenderedSizeThreshold
-              }
-              -- ,
-              --   nodeSizeControl
-              --   { range: nodeSizeRange
-              --   , state: nodeSize
-              --   }
-            ]
-          ]
-        ]
+      -- ,
+      --   -- Controls
+      --   B.fieldset
+      --   { className: intercalate " "
+      --       [ "graph-toolbar__section"
+      --       , "graph-toolbar__section--controls"
+      --       , "flex-grow-1 flex-shrink-1"
+      --       ]
+      --   , titleSlot: H.text "Controls"
+      --   }
+      --   [
+      --     B.wad
+      --     [ "d-flex",  "gap-6", "px-1" ]
+      --     [
+      --       B.wad
+      --       [ "d-flex", "flex-column", "flex-grow-1", "pt-1", "gap-4" ]
+      --       [
+      --         edgeConfluenceControl
+      --         { forceAtlasState
+      --         , range: edgeConfluenceRange'
+      --         , state: edgeConfluence }
+      --       {- ,
+      --         edgeWeightControl
+      --         { forceAtlasState
+      --         , range: edgeWeightRange
+      --         , state: edgeWeight }
+      --       -}
+      --       ,
+      --         nodeSizeControl
+      --         { forceAtlasState
+      --         , range: nodeSizeRange'
+      --         , state: nodeSize
+      --         }
+      --       ]
+      --     ,
+      --       B.wad
+      --       [ "d-flex", "flex-column", "flex-grow-1", "pt-1", "gap-4" ]
+      --       [
+      --         labelSizeButton
+      --         { forceAtlasState
+      --         , graph
+      --         , sigmaRef
+      --         , state: labelSize
+      --         }
+      --       ,
+      --         labelRenderedSizeThresholdButton
+      --         { forceAtlasState
+      --         , sigmaRef
+      --         , state: labelRenderedSizeThreshold
+      --         }
+      --         -- ,
+      --         --   nodeSizeControl
+      --         --   { range: nodeSizeRange
+      --         --   , state: nodeSize
+      --         --   }
+      --       ]
+      --     ]
+      --   ]
       ]
 
         --   H.ul {} [ -- change type button (?)

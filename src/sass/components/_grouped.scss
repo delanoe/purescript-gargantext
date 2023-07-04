@@ -252,8 +252,10 @@
 .router__aside .fa,
 .router__body .corpus-layout .b-icon,
 .router__body .corpus-layout .fa,
-.router__body .texts-layout .b-icon,
-.router__body .texts-layout .fa,
+.router__body .nodes-lists-layout-tabs .b-icon,
+.router__body .nodes-lists-layout-tabs .fa,
+.router__body .nodes-texts-layout-tabs .b-icon,
+.router__body .nodes-texts-layout-tabs .fa,
 .modal-dialog .b-icon, 
 .modal-dialog .fa
 {
@@ -302,21 +304,21 @@
 ///-----------------------------------------------------------------------------
 
 .b-fieldset {
-  $margin: space-x(2);
+  $margin: space-x(1.5);
 
   position: relative;
   border: $card-border-width solid $card-border-color;
   border-radius: $card-border-radius;
   padding-left: $margin;
   padding-right: $margin;
-  padding-bottom: $margin;
+  padding-bottom: space-x(0.5);
   padding-top: calc( #{ $margin } + #{ $headings-margin-bottom } );
   background-color: inherit;
 
   &__legend {
     position: absolute;
     top: 0;
-    font-size: $headings-font-family;
+    font-size: $font-size-sm;
     font-weight: $headings-font-weight;
     color: $gray-600;
     line-height: $headings-line-height;
@@ -325,6 +327,11 @@
     padding-right: $margin / 2;
     background-color: inherit;
   }
+
+  &__content {
+    align-self: center;
+  }
+
 }
 
 /// PhyloExplorer.ConfigForm
@@ -463,7 +470,8 @@
   @include fit-positions();
 
   position: fixed;
-  z-index: z-index('main', 'floaty');
+  // z-index: z-index('main', 'floaty');
+  z-index: 10;
   background-color: transparent;
 
   &__inner {

@@ -164,7 +164,12 @@
   .text-justify  { text-align: justify; }
   .text-wrap     { white-space: normal; }
   .text-nowrap   { white-space: nowrap; }
-
+  .text-truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
   .text-left   { text-align: left;    }
   .text-right  { text-align: right;   }
   .text-center { text-align: center;  }
@@ -351,4 +356,60 @@
       content: "\200B";
     }
   }
+
+
+  .btn-seemore {
+    align-self: end;
+    text-decoration: none;
+    font-size: 10px;
+    font-weight: normal;
+    &:hover {
+      color: $primary;
+    }
+    &.collapsed {
+      // transform: rotate(180deg);
+      &::after {
+        content: '...⯆';
+        // content: "...⮟";
+      }
+    }
+    &:not(.collapsed) {
+      transform: rotate(180deg);
+      &::after {
+        // content: '\00a0\00a0\00a0⮝';
+        content: '⯆\00a0\00a0\00a0';
+      }
+    }
+
+  }
+
+  $heightDefault: 2.5rem;
+  $heightHigher: 5.5rem;
+
+  .annotated-field-expand {
+    min-height: $heightDefault;
+    &.collapse {
+      &:not(.show) {
+        display: block;
+        overflow: hidden;
+        max-height: $heightDefault;
+      }
+    }
+    &.collapsing {
+      height: $heightDefault;
+    }
+
+    &.variant-collapse-higher {
+      min-height: $heightHigher;
+      &.collapse {
+        &:not(.show) {
+          max-height: $heightHigher;
+        }
+      }
+      &.collapsing {
+        height: $heightHigher;
+      }
+      }
+  }
+    
 }

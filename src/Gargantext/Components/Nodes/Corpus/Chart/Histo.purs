@@ -126,8 +126,10 @@ loadedCpt = here.component "loaded" cpt where
   cpt p@{ path
         , reload
         , session } _ = do
-    pure $ H.div {} [ U.reloadButton { reload }
-                    , U.chartUpdateButton { chartType: Histo, path, reload, session }
-                    , chart $ chartOptions p
+    pure $ H.div {} [ 
+                    -- U.reloadButton { reload }
+                    -- , U.chartUpdateButton { chartType: Histo, path, reload, session }
+                    -- , 
+                    chart $ chartOptions p
                     ]
   -- TODO: parametrize ngramsType above

@@ -64,13 +64,15 @@ instance Read Method where
   read _           = Nothing
 
 ----------------------------------------------------------------------
-data GraphMetric = Order1 | Order2
+data GraphMetric = Order1 | Order2 | Order2_A | Order2_B
 derive instance Generic GraphMetric _
 derive instance Eq GraphMetric
 instance Show GraphMetric where show = genericShow
 instance Read GraphMetric where
   read "Order1"    = Just Order1
-  read "Order2"    = Just Order2
+  read "Order2"    = Just Order2_B
+  read "Order2_A"  = Just Order2_A
+  read "Order2_B"  = Just Order2_B
   read _           = Nothing
 instance JSON.ReadForeign GraphMetric where readImpl = JSONG.enumSumRep
 instance JSON.WriteForeign GraphMetric where writeImpl = JSON.writeImpl <<< show

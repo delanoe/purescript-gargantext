@@ -60,14 +60,18 @@
 
     .b-fieldset
       background-color: $body-bg
-      flex-grow: 1
+      // flex-grow: 1
 
-    .toolbar-atlas-button
-      // @XXX Glyphicon icons lack of homogeneous width
-      //  ↳ empirically value matching every button icon width
-      $toolbar-atlas-button-width: 40px
+      button
+        .b-icon
+          $button-icon-margin: 0.4em
 
-      width: $toolbar-atlas-button-width
+          @include right-handed
+            margin-right: $button-icon-margin
+          @include left-handed
+            margin-left: $button-icon-margin
+
+
 
   &__content
     width: 100%
@@ -370,7 +374,7 @@
     display: inline-block
 
   &__section
-    margin: #{ $section-margin / 2 }
+    margin: #{ $section-margin / 4 }
 
     // Selection settings
     &--selection
@@ -397,6 +401,14 @@
       .range-simple
         // flex-basis: calc(50% - #{ $item-margin * 2 })
         flex-basis: 100%
+        min-width: 150px
+  
+  &__region_advanced
+    .btn-advanced.collapsed .b-icon
+      transform: rotate(180)
+      
+
+
 
 
 // Atlas button animation
