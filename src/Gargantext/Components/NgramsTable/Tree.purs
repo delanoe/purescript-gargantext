@@ -16,12 +16,15 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (Variant(..))
+import Gargantext.Components.Nodes.Lists.SidePanel (SidePanel)
 import Gargantext.Components.Table as Tbl
 import Gargantext.Core.NgramsTable.Functions (applyNgramsPatches, setTermListA, tablePatchHasNgrams)
 import Gargantext.Core.NgramsTable.Types (Action(..), CoreAction, NgramsClick, NgramsDepth, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm, _NgramsElement, _NgramsRepoElement, _children, _list, _ngrams, _occurrences, ngramsTermText, replace)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
+import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
 import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
@@ -222,18 +225,23 @@ treeLoadedCpt = here.component "treeLoaded" cpt where
         if depth > 10 then
           const $ H.text "ERROR DEPTH > 10"
         else
-          H.ul {} <<< map (\ngrams -> tree ((Record.delete (Proxy :: Proxy "ngramsChildren") params) { ngramsDepth = {depth, ngrams} })) <<< L.toUnfoldable
+          H.ul {} <<< map (\ngrams -> tree ((Record.delete (Proxy :: Proxy "ngramsChildren") params) { ngramsDepth = {depth, ngrams, parent: Just ngramsDepth.ngrams} })) <<< L.toUnfoldable
 
 type RenderNgramsItem =
-  ( dispatch             :: Action -> Effect Unit
+  ( boxes             :: Boxes
+  , corpusId          :: GT.CorpusId
+  , dispatch             :: Action -> Effect Unit
   , getNgramsChildrenAff :: Maybe (NgramsTerm -> Aff (Array NgramsTerm))
   , getNgramsChildren :: Maybe (NgramsTerm -> Array NgramsTerm)
   , isEditing         :: T.Box Boolean
+  , mListId           :: Maybe GT.ListId
   , ngrams            :: NgramsTerm
   , ngramsElement     :: NgramsElement
   , ngramsLocalPatch  :: NgramsTablePatch
   , ngramsSelection   :: Set NgramsTerm
   , ngramsTable       :: NgramsTable
+  , session           :: Session
+  , sidePanel         :: T.Box (Maybe (Record SidePanel))
   )
 
 renderNgramsItem :: R2.Component RenderNgramsItem
@@ -241,23 +249,43 @@ renderNgramsItem = R.createElement renderNgramsItemCpt
 renderNgramsItemCpt :: R.Component RenderNgramsItem
 renderNgramsItemCpt = here.component "renderNgramsItem" cpt
   where
-    cpt { dispatch
+    cpt { boxes
+        , corpusId
+        , dispatch
         --, getNgramsChildren
         , isEditing
+        , mListId
         , ngrams
         , ngramsElement
         , ngramsLocalPatch
         , ngramsSelection
         , ngramsTable
+        , session
+        , sidePanel
         } _ = do
       isEditing' <- T.useLive T.unequal isEditing
 
-      pure $ Tbl.makeRow
-        [
-          selected
+      mCurrentNgrams <-
+        T.useFocused
+        (maybe Nothing _.mCurrentNgrams)
+        (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentNgrams = val })) sidePanel
+      mCurrentNgrams' <- T.useLive T.unequal mCurrentNgrams
+
+      let currentRowSelected = mCurrentNgrams' == Just ngrams
+          className = currentRowSelected ? "page-paint-raw page-paint-raw--selected" $ ""
+
+      pure $ Tbl.makeRow' { className }
+        [ selected
+        ,
+          ngramsContext { boxes
+                        , corpusId
+                        , mListId
+                        , ngrams
+                        , session
+                        , sidePanel } []
         ,
           B.wad'
-          [ "pl-3" ] $
+          [ "col-score" ] $
           show $ A.length $ A.fromFoldable (ngramsElement ^. _NgramsElement <<< _occurrences)
         ,
           H.div {}
@@ -290,7 +318,7 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
           )
       ]
       where
-        ngramsDepth = { ngrams, depth: 0 }
+        ngramsDepth = { ngrams, depth: 0, parent: Nothing }
         tag =
           case ngramsClick ngramsDepth of
             Just effect ->
@@ -302,7 +330,13 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         termList    = ngramsElement ^. _NgramsElement <<< _list
         ngramsStyle :: Array DOM.Props
         ngramsStyle = [termStyle termList ngramsOpacity]
-        ngramsEdit { ngrams: n } = Just $ dispatch $ SetParentResetChildren (Just n) (ngramsChildren n)
+        ngramsEdit :: NgramsDepth -> Maybe (Effect Unit)
+        ngramsEdit { ngrams: n, depth: 0 } =
+          Just $ dispatch $ SetParentResetChildren (Just n) (ngramsChildren n)
+        -- NOTE: Currently we allow modifying children only for root
+        -- terms. I.e. we don't allow trees with depth greater than 1
+        -- See: https://gitlab.iscpif.fr/gargantext/purescript-gargantext/issues/565
+        ngramsEdit _ = Nothing
         tbl :: NgramsTable
         tbl = applyNgramsPatches { ngramsLocalPatch
                                  , ngramsStagePatch: mempty
@@ -312,9 +346,14 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         getNgramsChildren' n = A.fromFoldable $ ngramsChildren n
         ngramsChildren :: NgramsTerm -> List NgramsTerm
         ngramsChildren n = tbl ^.. ix n <<< _NgramsRepoElement <<< _children <<< folded
-        ngramsClick :: { depth :: Int, ngrams :: NgramsTerm } -> Maybe (Effect Unit)
-        ngramsClick p = Just $ do
-          traverse_ (dispatch <<< CoreAction <<< cycleTermListItem) (A.cons p.ngrams $ getNgramsChildren' p.ngrams)
+        ngramsClick :: NgramsClick
+        ngramsClick p@{ depth: 0 } = Just $ do
+            (dispatch <<< CoreAction <<< cycleTermListItem <<< view _ngrams) p
+            -- traverse_ (dispatch <<< CoreAction <<< cycleTermListItem) (A.cons p.ngrams $ getNgramsChildren' p.ngrams)
+        ngramsClick p@{ parent: Nothing } = Just $ do
+          here.log2 "[renderNgramsItem] unexpected empty parent for ngrams depth" p
+        ngramsClick p@{ parent: Just p' } = Just $ do
+          (dispatch <<< CoreAction <<< cycleTermListItem) p'
           -- ^ This is the old behavior it is nicer to use since one can
           --   rapidly change the ngram list without waiting for confirmation.
           --   However this might expose bugs. One of them can be reproduced
@@ -392,3 +431,55 @@ nextTermList :: GT.TermList -> GT.TermList
 nextTermList GT.MapTerm       = GT.StopTerm
 nextTermList GT.StopTerm      = GT.CandidateTerm
 nextTermList GT.CandidateTerm = GT.MapTerm
+
+
+type NgramsContextProps =
+  ( boxes     :: Boxes
+  , corpusId  :: GT.CorpusId
+  , mListId   :: Maybe GT.ListId
+  , ngrams    :: NgramsTerm
+  , session   :: Session
+  , sidePanel :: T.Box (Maybe (Record SidePanel)))
+
+ngramsContext :: R2.Component NgramsContextProps
+ngramsContext = R.createElement ngramsContextCpt
+ngramsContextCpt :: R.Component NgramsContextProps
+ngramsContextCpt = here.component "ngramsContext" cpt where
+  cpt { ngrams
+      , boxes: { sidePanelState }
+      , corpusId
+      , mListId
+      , session
+      , sidePanel } _ = do
+    mCurrentNgrams <-
+      T.useFocused
+      (maybe Nothing _.mCurrentNgrams)
+      (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentNgrams = val })) sidePanel
+    mCurrentNgrams' <- T.useLive T.unequal mCurrentNgrams
+
+    let selected = mCurrentNgrams' == Just ngrams
+        eyeClass = selected ? "eye" $ "eye-slash"
+        variant = selected ? Info $ Dark
+
+        onClick selected _ = do
+          -- here.log2 "[docChooser] onClick, listId" listId
+          -- here.log2 "[docChooser] onClick, corpusId" corpusId
+          -- here.log2 "[docChooser] onClick, nodeId" nodeId
+          -- R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
+          -- T2.reload tableReload
+          if selected then do
+            T.write_ Nothing sidePanel
+            T.write_ GT.Closed sidePanelState
+          else do
+            T.write_ (Just { mCorpusId: Just corpusId
+                           , mListId
+                           , mCurrentNgrams: Just ngrams }) sidePanel
+            T.write_ GT.Opened sidePanelState
+
+    pure $ H.div { className: "doc-chooser text-center" }
+      [ B.iconButton
+        { name: eyeClass
+        , overlay: false
+        , variant
+        , callback: onClick selected }
+      ]

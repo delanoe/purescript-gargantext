@@ -155,7 +155,7 @@ data NodeType = Annuaire
               | Url_Document
               -- TODO Optional Nodes
               | NodeFile
-              | NodeFrameCalc
+              | Calc
               | NodeFrameNotebook
               | Notes
               | NodeFrameVisio
@@ -198,7 +198,7 @@ instance Show NodeType where
   show NodeList          = "NodeList"
   show NodeTexts         = "NodeTexts"
   show Notes             = "Notes"
-  show NodeFrameCalc     = "NodeFrameCalc"
+  show Calc     = "Calc"
   show NodeFrameNotebook = "NodeFrameNotebook"
   show NodeFrameVisio    = "NodeFrameVisio"
   show (NodePublic nt)   = "NodePublic" <> show nt
@@ -228,7 +228,7 @@ instance Read NodeType where
   read "NodeTexts"         = Just NodeTexts
   read "Annuaire"          = Just Annuaire
   read "Notes"    = Just Notes
-  read "NodeFrameCalc"     = Just NodeFrameCalc
+  read "Calc"     = Just Calc
   read "NodeFrameNotebook" = Just NodeFrameNotebook
   read "NodeFrameVisio"    = Just NodeFrameVisio
   read "NodeFile"          = Just NodeFile
@@ -267,7 +267,7 @@ translateFR = case _ of
   Url_Document        -> "Document URL"
   --
   NodeFile            -> "Fichier"
-  NodeFrameCalc       -> "Feuilles de calcul"
+  Calc       -> "Feuilles de calcul"
   NodeFrameNotebook   -> "Carnet de notes"
   Notes      -> "Éditeur de texte"
   NodeFrameVisio      -> "Visio"
@@ -298,7 +298,7 @@ translateEN = case _ of
   Url_Document        -> "URL document"
   --
   NodeFile            -> "File"
-  NodeFrameCalc       -> "Calc"
+  Calc       -> "Calc"
   NodeFrameNotebook   -> "Notebook"
   Notes               -> "Notes"
   NodeFrameVisio      -> "Visio"
@@ -346,8 +346,8 @@ getIcon NodeContact false = "address-card"
 getIcon Notes true  = "file-text-o"
 getIcon Notes false = "file-text"
 
-getIcon NodeFrameCalc true  = "calculator"
-getIcon NodeFrameCalc false = "calculator"
+getIcon Calc true  = "calculator"
+getIcon Calc false = "calculator"
 
 getIcon NodeFrameNotebook true  = "file-code-o"
 getIcon NodeFrameNotebook false = "code"
@@ -410,7 +410,7 @@ nodeTypePath NodeList          = "lists"
 nodeTypePath NodeTexts         = "texts"
 nodeTypePath Team              = "team"
 nodeTypePath Notes    = "write"
-nodeTypePath NodeFrameCalc     = "calc"
+nodeTypePath Calc     = "calc"
 nodeTypePath NodeFrameNotebook = "code"
 nodeTypePath NodeFrameVisio    = "visio"
 nodeTypePath (NodePublic nt)   = nodeTypePath nt

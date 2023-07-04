@@ -19,6 +19,7 @@ import Data.Map as Map
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Lang as Lang
 import Gargantext.Components.Login.Types (TreeId)
+import Gargantext.Components.Nodes.Lists.SidePanel as ListsSP
 import Gargantext.Components.Nodes.Lists.Types as ListsT
 import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Themes as Themes
@@ -56,7 +57,7 @@ type Store =
   , showLogin           :: T.Box Boolean
   , showTree            :: T.Box Boolean
   , showSearch          :: T.Box Boolean
-  , sidePanelLists      :: T.Box (Maybe (Record ListsT.SidePanel))
+  , sidePanelLists      :: T.Box (Maybe (Record ListsSP.SidePanel))
   , sidePanelTexts      :: T.Box (Maybe (Record TextsT.SidePanel))
   , sidePanelState      :: T.Box SidePanelState
   , tasks               :: T.Box GAT.Storage
@@ -84,7 +85,7 @@ type State =
   , showLogin           :: Boolean
   , showTree            :: Boolean
   , showSearch          :: Boolean
-  , sidePanelLists      :: Maybe (Record ListsT.SidePanel)
+  , sidePanelLists      :: Maybe (Record ListsSP.SidePanel)
   , sidePanelTexts      :: Maybe (Record TextsT.SidePanel)
   , sidePanelState      :: SidePanelState
   , tasks               :: GAT.Storage
@@ -113,7 +114,7 @@ options =
   , showLogin           : false
   , showTree            : true
   , showSearch          : false
-  , sidePanelLists      : ListsT.initialSidePanel
+  , sidePanelLists      : ListsSP.initialSidePanel
   , sidePanelTexts      : TextsT.initialSidePanel
   , sidePanelState      : InitialClosed
   , tasks               : GAT.empty

@@ -13,7 +13,6 @@ type Corpus
   = { id           :: Int
     , name         :: String
     , parent_id    :: Int
-    , pubmedAPIKey :: Maybe String
     , type_id      :: Int }
 
 type Node
@@ -28,7 +27,6 @@ type NodesCorpusQuery =
              { id :: Unit
              , name :: Unit
              , parent_id :: Unit
-             , pubmedAPIKey :: Unit
              , type_id :: Unit } }
 
 type NodesQuery =

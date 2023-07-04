@@ -68,7 +68,8 @@ centerButtonCpt = here.component "centerButton" cpt
       forceAtlasState' <- R2.useLive' forceAtlasState
 
       pure $ B.button
-        { callback: \_ -> do
+        { className: "btn-sm"
+        , callback: \_ -> do
           Sigmax.dependOnSigma (R.readRef sigmaRef) "[centerButton] sigma: Nothing" $ \s ->
             Camera.updateCamera (Camera.camera s) Camera.defaultCamera
         , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState'
@@ -111,7 +112,8 @@ cameraButtonCpt = here.component "cameraButton" cpt
       forceAtlasState' <- R2.useLive' forceAtlasState
 
       pure $ B.button
-        { callback: \_ -> do
+        { className: "btn-sm"
+        , callback: \_ -> do
              filename <- screenshotFilename
              Sigmax.dependOnSigma (R.readRef sigmaRef) "[cameraButton] sigma: Nothing" $ \s -> do
                screen <- Sigma.takeScreenshot s
@@ -135,7 +137,13 @@ cameraButtonCpt = here.component "cameraButton" cpt
         , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState'
         , variant: OutlinedButtonVariant Secondary
         , title: title
-        } [ H.text "Snapshot" ]
+        } 
+        [ 
+          B.icon
+          { name: "camera-retro" }
+        ,
+          H.text "Snapshot"
+        ]
 
 ------------------------------------------------------
 
@@ -159,7 +167,8 @@ edgesToggleButtonCpt = here.component "edgesToggleButton" cpt
       pure $
         B.button
         { -- TODO: Move this to Graph.purs to the R.useEffect handler which renders nodes/edges
-          callback: \_ -> T.modify_ SigmaxTypes.toggleShowEdgesState state
+          className: "btn-sm"
+        , callback: \_ -> T.modify_ SigmaxTypes.toggleShowEdgesState state
         , status: SigmaxTypes.forceAtlasComponentStatus stateAtlas'
         , variant: state' == SigmaxTypes.EShow ?
             ButtonVariant Secondary $
@@ -189,7 +198,8 @@ louvainButtonCpt = here.component "louvainButton" cpt
 
       pure $
         B.button
-        { callback: \_ -> do
+        { className: "btn-sm"
+        , callback: \_ -> do
              Sigmax.dependOnSigma (R.readRef sigmaRef) "[graphView (louvainGraph)] no sigma" $ \sigma -> do
                newGraph <- Louvain.assignVisible (Sigma.graph sigma) {}
                let cluster = Louvain.cluster newGraph :: DLouvain.LouvainCluster
@@ -248,6 +258,7 @@ pauseForceAtlasButtonCpt = here.component "pauseForceAtlasButtonButton" cpt
         , className: intercalate " "
             [ cls state'
             , "toolbar-atlas-button"
+            , "btn-sm"
             ]
         , callback: \_ -> T.modify_ SigmaxTypes.toggleForceAtlasState state
         , title: title
@@ -255,6 +266,8 @@ pauseForceAtlasButtonCpt = here.component "pauseForceAtlasButtonButton" cpt
         [
           B.icon
           { name: icn state'}
+        ,
+          H.text "Play/pause"
         ]
 
 
@@ -288,6 +301,7 @@ pauseNoverlapButtonCpt = here.component "pauseNoverlapButton" cpt
         { variant: vrt state'
         , className: intercalate " "
             [ "toolbar-atlas-button"
+            , "btn-sm"
             ]
         , callback: \_ -> T.modify_ SigmaxTypes.toggleNoverlapState state
         , title: title
@@ -295,6 +309,8 @@ pauseNoverlapButtonCpt = here.component "pauseNoverlapButton" cpt
         [
           B.icon
           { name: icn state'}
+        ,
+          H.text "No overlap"
         ]
 
 
@@ -350,7 +366,8 @@ multiSelectEnabledButtonCpt = here.component "multiSelectEnabledButton" cpt
         }
         [
           B.button
-          { callback: \_ -> T.write_ false state
+          { className: "btn-sm"
+          , callback: \_ -> T.write_ false state
           , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState'
           , variant: state' ?
               OutlinedButtonVariant Secondary $
@@ -359,7 +376,8 @@ multiSelectEnabledButtonCpt = here.component "multiSelectEnabledButton" cpt
           [ H.text "Single" ]
         ,
           B.button
-          { callback: \_ -> T.write_ true state
+          { className: "btn-sm"
+          , callback: \_ -> T.write_ true state
           , status: SigmaxTypes.forceAtlasComponentStatus forceAtlasState'
           , variant: state' ?
               ButtonVariant Secondary $

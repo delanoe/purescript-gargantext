@@ -146,6 +146,6 @@ nodeFrameVisioCpt = here.component "nodeFrameVisio" cpt where
 
 hframeUrl :: NodeType -> Base -> FrameId -> String
 hframeUrl NodeFrameNotebook base frame_id = base <> "/" <> frame_id  -- Temp fix : frame_id is currently the whole url created
-hframeUrl NodeFrameCalc  base frame_id    = base <> "/" <> frame_id
+hframeUrl Calc  base frame_id    = base <> "/" <> frame_id
 hframeUrl NodeFrameVisio base frame_id    = base <> "/" <> frame_id
 hframeUrl _ base frame_id                 = base <> "/" <> frame_id <> "?view" -- "?both"

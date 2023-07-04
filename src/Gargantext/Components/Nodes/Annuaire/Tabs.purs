@@ -13,6 +13,7 @@ import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.DocsTable.Types (Year)
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Core.NgramsTable.Functions as NTC
+import Gargantext.Components.Nodes.Lists.SidePanel as LSidePanel
 import Gargantext.Components.Nodes.Lists.Types as LTypes
 import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Tab as Tab
@@ -57,6 +58,7 @@ type TabsProps =
   , nodeId        :: Int
   , session       :: Session
   , sidePanel     :: T.Box (Maybe (Record TextsT.SidePanel))
+  , sidePanelList :: T.Box (Maybe (Record LSidePanel.SidePanel))
   )
 
 tabs :: R2.Leaf TabsProps
@@ -81,7 +83,15 @@ tabsCpt = here.component "tabs" cpt where
     , "Communication" /\ ngramsView (viewProps Communication)
     , "Trash"         /\ docs -- TODO pass-in trash mode
     ] where
-      viewProps mode = Record.merge props { mode }
+      viewProps mode = { boxes         : props.boxes
+                       , cacheState    : props.cacheState
+                       , defaultListId : props.defaultListId
+                       , frontends     : props.frontends
+                       , mode
+                       , nodeId        : props.nodeId
+                       , session       : props.session
+                       , sidePanel     : props.sidePanel
+                       , sidePanelList : props.sidePanelList }
       totalRecords = 4736  -- TODO lol
       docs = DT.docViewLayout (Record.merge { boxes, chartReload, sidePanel } $ Record.merge dtCommon dtExtra)
       dtCommon = RX.pick props :: Record DTCommon
@@ -102,7 +112,6 @@ type DTCommon =
   , frontends         :: Frontends
   , nodeId            :: Int
   , session           :: Session
-  -- , sidePanel    :: T.Box (Record SidePanel)
   )
 
 type NgramsViewTabsProps =
@@ -113,7 +122,11 @@ ngramsView :: R2.Leaf NgramsViewTabsProps
 ngramsView = R2.leaf ngramsViewCpt
 ngramsViewCpt :: R.Component NgramsViewTabsProps
 ngramsViewCpt = here.component "ngramsView" cpt where
-  cpt props@{ defaultListId, mode, nodeId, session } _ = do
+  cpt props@{ defaultListId
+            , mode
+            , nodeId
+            , session
+            , sidePanelList } _ = do
     path <- T.useBox $
       NTC.initialPageParams session nodeId
       [ defaultListId ] (TabDocument TabDocs)
@@ -128,6 +141,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
           (Record.merge most
            { afterSync
            , path
+           , sidePanel: sidePanelList
            , tabType:        TabPairing (TabNgramType $ modeTabType mode)
            , tabNgramType:   modeTabType' mode
            , treeEdit: { box: treeEditBox

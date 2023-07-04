@@ -131,6 +131,9 @@ _ui_cwDescription = lens getter setter
     getter ({ui_cwDescription: val}) = fromMaybe "" val
     setter ui val = ui { ui_cwDescription = Just val }
 
+
+
+
 type User
   = { u_id        :: Int
     , u_hyperdata ::
@@ -144,11 +147,38 @@ type User
               , "where" :: Array
                 { organization :: Array String }
               }
+          , pubmed_api_key :: Maybe String
          }
     , u_username  :: String
     , u_email     :: String
     }
+
 showUser { u_id
          , u_username
          , u_email } = "[" <> show u_id <> "] " <> u_username <> " :: " <> u_email
 showMUser u = maybe "" showUser u
+
+
+userQuery = { users: { user_id: Var :: _ "id" Int } =>>
+              { u_id: unit
+              , u_hyperdata:
+                { shared:
+                  { title: unit
+                  , source: unit
+                  , who:
+                    { firstName: unit
+                    , lastName: unit
+                    }
+                  , "where": { organization: unit }
+                  }
+                , pubmed_api_key: unit
+                }
+              , u_username: unit
+              , u_email: unit
+              }
+            }
+
+
+type UserPubmedAPIKeyM =
+  { user_id :: Int
+  , api_key :: String }

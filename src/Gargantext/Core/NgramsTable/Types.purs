@@ -432,12 +432,12 @@ data Replace a
   | Replace { old :: a, new :: a }
 derive instance Generic (Replace a) _
 derive instance Eq a => Eq (Replace a)
-instance Eq a => Semigroup (Replace a) where
+instance (Eq a, Show a) => Semigroup (Replace a) where
   append Keep p = p
   append p Keep = p
-  append (Replace { old }) (Replace { new }) | old /= new = unsafeThrow "old != new"
+  append (Replace { old }) (Replace { new }) | old /= new = unsafeThrow $ "old != new: " <> show old <> " != " <> show new
   append (Replace { new }) (Replace { old }) = replace old new
-instance Eq a => Monoid (Replace a) where mempty = Keep
+instance (Eq a, Show a) => Monoid (Replace a) where mempty = Keep
 instance JSON.WriteForeign a => JSON.WriteForeign (Replace a) where
   writeImpl Keep = JSON.writeImpl { tag: "Keep" }
   writeImpl (Replace {old, new}) = JSON.writeImpl { old, new, tag: "Replace" }
@@ -545,7 +545,9 @@ type CoreDispatch = CoreAction -> Effect Unit
 type Dispatch = Action -> Effect Unit
 
 
-type NgramsDepth = { ngrams :: NgramsTerm, depth :: Int }
+type NgramsDepth = { ngrams :: NgramsTerm
+                   , depth  :: Int
+                   , parent :: Maybe NgramsTerm }
 type NgramsClick = NgramsDepth -> Maybe (Effect Unit)
 type NgramsActionRef = R.Ref (Maybe (Unit -> Effect Unit))
 

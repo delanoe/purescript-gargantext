@@ -8,7 +8,7 @@
 .side-panel
   background-color: #fff
   padding: 0.3em
-  width: 28%
+  width: 50vw
   top: 3.7em
   position: fixed
   z-index: 1
@@ -19,13 +19,13 @@
       width: 60px
 
   @include right-handed
-    left: 70%
+    right: space-x(1)
 
     .header
       float: right
 
   @include left-handed
-    left: 2%
+    left: space-x(1)
 
     .header
       float: left
@@ -34,7 +34,7 @@
   .texts-sidepanel
 
     &__header
-      padding: $card-spacer-y $card-spacer-x
+      padding: $card-spacer-y $card-spacer-x 0
       font-size: 20px
       text-align: right
 
@@ -46,8 +46,8 @@
         font-size: 21px
 
       .document-layout__abstract__content
-        max-height: 200px
-        overflow-y: scroll
+        // max-height: 200px
+        // overflow-y: scroll
         font-size: 16px
 
 

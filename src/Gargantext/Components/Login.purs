@@ -87,7 +87,7 @@ loginContainerCpt = here.component "container" cpt where
     -- | States
     -- |
     mBackend <- R2.useLive' props.backend
-    formType <- T.useBox Manager
+    formType <- T.useBox Login
     formType' <- T.useLive T.unequal formType
 
     -- | Render

@@ -793,7 +793,7 @@ defaultContainer props = R.fragment $ props.syncResetButton <> table_data
     table_data = [
                     controls
                   , R2.row [
-                      H.table {className: "col-md-12 table"}
+                      H.table {className: "table table-hover table-responsive"}
                       [ H.thead {className: ""} [ props.tableHead ]
                       , H.tbody {} props.tableBody
                       ]
@@ -817,7 +817,7 @@ defaultContainer props = R.fragment $ props.syncResetButton <> table_data
 graphContainer :: Record TableContainerProps -> R.Element
 graphContainer props =
   -- TODO title in tabs name (above)
-  H.table {className: "table"}
+  H.table {className: "table table-hover table-responsive"}
   [ H.thead {className: ""} [ props.tableHead ]
   , H.tbody {} props.tableBody
   ]
