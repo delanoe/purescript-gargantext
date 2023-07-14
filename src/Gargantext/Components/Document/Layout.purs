@@ -42,6 +42,9 @@ import Toestand as T
 -------------------------------------------------------------------------
 
 
+here :: R2.Here
+here = R2.here "Gargantext.Components.Document.Layout"
+
 
 type Props =
   ( loaded   :: LoadedData
@@ -59,9 +62,6 @@ options :: Record Options
 options =
   { sideControlsSlot: Nothing
   }
-
-here :: R2.Here
-here = R2.here "Gargantext.Components.Document.Layout"
 
 layout :: forall r. R2.OptLeaf Options Props r
 layout = R2.optLeaf layoutCpt options
