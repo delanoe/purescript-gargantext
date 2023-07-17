@@ -556,9 +556,6 @@ sideTextCpt = here.component "sideText" cpt where
     -- R.useEffect' $ do
     --   here.log2 "[sideText] state'" state'
 
-    reload <- T.useBox T2.newReload
-    reload' <- T.useLive T.unequal reload
-
     -- | Computed
     -- |
     let
@@ -585,11 +582,10 @@ sideTextCpt = here.component "sideText" cpt where
     --   }
 
     useLoader { errorHandler: logRESTError here "[sidePanelText]"
-              , loader: \{ path, reload'} -> loadData path
-              , path: { path, reload' }
+              , loader: \{ path } -> loadData path
+              , path: { path }
               , render: \loaded -> loadedSideText { loaded
                                                   , path
-                                                  , reload
                                                   , session }
               }
 
@@ -622,13 +618,12 @@ sideTextCpt = here.component "sideText" cpt where
 type LoadedSideTextProps =
   ( loaded :: LoadedData
   , path :: DocPath
-  , reload :: T2.ReloadS
   , session :: Session )
 
 loadedSideText :: R2.Leaf LoadedSideTextProps
 loadedSideText = R2.leaf loadedSideTextCpt
 loadedSideTextCpt :: R.Component LoadedSideTextProps
 loadedSideTextCpt = here.component "loadedSideText" cpt where
-  cpt { loaded, path, reload, session } _ = do
+  cpt { loaded, path, session } _ = do
     pure $ H.div { className: "graph-doc-focus" }
-      [ layout { loaded, path, reload, session } ]
+      [ layout { loaded, path, session } ]

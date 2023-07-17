@@ -45,9 +45,6 @@ docFocusCpt = here.component "main" cpt where
     -- |
     state' /\ state <- R2.useBox' (Nothing :: Maybe LoadedData)
 
-    reload <- T.useBox T2.newReload
-    reload' <- T.useLive T.unequal reload
-
     -- | Computed
     -- |
     let
@@ -93,7 +90,6 @@ docFocusCpt = here.component "main" cpt where
               layout
               { loaded
               , path
-              , reload
               , session
               , sideControlsSlot: Just $
                   H.div

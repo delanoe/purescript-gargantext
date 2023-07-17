@@ -42,8 +42,6 @@ nodeCpt = here.component "node" cpt where
     session <- useSession
 
     state' /\ state <- R2.useBox' (Nothing :: Maybe LoadedData)
-    reload <- T.useBox T2.newReload
-    reload' <- T.useLive T.unequal reload
 
     -- | Computed
     -- |
@@ -89,7 +87,6 @@ nodeCpt = here.component "node" cpt where
             layout
             { loaded
             , path
-            , reload
             , session
             }
       }

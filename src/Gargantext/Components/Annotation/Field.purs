@@ -52,7 +52,8 @@ type CommonProps =
   , cache        :: Record Cache
   )
 type AnnotatedFieldProps =
-  ( ngrams       :: T.Box NgramsTable
+  ( -- ngrams       :: T.Box NgramsTable
+  ngrams'  :: NgramsTable
   | CommonProps )
 type MouseEvent = E.SyntheticEvent DE.MouseEvent
 
@@ -65,8 +66,8 @@ annotatedField :: R2.Leaf AnnotatedFieldProps
 annotatedField = R2.leaf annotatedFieldCpt
 annotatedFieldCpt :: R.Component AnnotatedFieldProps
 annotatedFieldCpt = here.component "annotatedField" cpt where
-  cpt props _ = do
-    ngrams' <- T.useLive T.unequal props.ngrams
+  cpt props@{ ngrams' } _ = do
+    -- ngrams' <- T.useLive T.unequal props.ngrams
 
     menuRef <- R.useRef (Nothing :: Maybe (Record AnnotationMenu))
     redrawMenu <- T.useBox false
