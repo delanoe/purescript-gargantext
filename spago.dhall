@@ -74,7 +74,6 @@ to generate this file without the comments in this block.
   , "sequences"
   , "simple-json"
   , "simple-json-generics"
-  , "simplecrypto"
   , "string-search"
   , "strings"
   , "strings-extra"

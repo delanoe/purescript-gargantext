@@ -100,11 +100,16 @@ let
     #spago build
     #build-purs
     echo "Testing"
-    spago -x test.dhall test --main Test.Main
+    spago -v -x test.dhall test --main Test.Main
+    # spago -x test.dhall bundle-app --main Test.Main --to dist/test-bundle.js --platform node
     # pulp browserify --skip-compile -t dist/bundle.js --src-path output
     # pulp test --src-path output --test-path output
     #NODE_PATH=output node -e "require('Test.Main').main();"
   '';
+
+  # TODO: Remove this when nixpkgs is updated to newer version (23.05
+  # has nodejs 20.2.1 and we need >= 20.3.1 for crypto to work)
+  #nodejs_20_3_1 = pkgs.callPackage ./nix/nodejs-v20.nix {};
 in
 pkgs.mkShell {
   buildInputs = [
@@ -125,7 +130,8 @@ pkgs.mkShell {
     pkgs.minify
     pkgs.nodejs
     #pkgs.nodePackages.purescript-language-server
-    pkgs.python  # needed for msgpack etc
+    #pkgs.python  # needed for msgpack etc
+    #nodejs_20_3_1
     repl
     serve
     pkgs.pulp

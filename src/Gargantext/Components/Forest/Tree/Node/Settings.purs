@@ -191,7 +191,7 @@ settingsBox Corpus =
                           , Upload
                           , SearchBox
                           , WriteNodesDocuments
-                          , Download
+                          -- , Download
                           , Link (linkParams Annuaire)
                           , Delete
                           ]

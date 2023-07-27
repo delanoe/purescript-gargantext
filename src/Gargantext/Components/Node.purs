@@ -34,6 +34,15 @@ instance JSON.ReadForeign a => JSON.ReadForeign (NodePoly a) where
                     , name: inst.name
                     , date: inst.date
                     , hyperdata: inst.hyperdata }
+instance JSON.WriteForeign a => JSON.WriteForeign (NodePoly a) where
+  writeImpl (NodePoly np) = do
+    JSON.writeImpl { user_id   : np.userId
+                   , parent_id : np.parentId
+                   , id        : np.id
+                   , typename  : np.typename
+                   , name      : np.name
+                   , date      : np.date
+                   , hyperdata : np.hyperdata}
 
 newtype HyperdataList = HyperdataList { preferences :: Maybe String }
 derive instance Generic HyperdataList _
