@@ -163,9 +163,9 @@ allDatabases :: Array Database
 allDatabases = [ Empty
                -- , OpenAlex
                , PubMed
-               , Arxiv
+               -- , Arxiv
                , HAL Nothing
-               , IsTex
+               -- , IsTex
                  -- , IsTex_Advanced
                  -- , Isidore
                  --, Web
