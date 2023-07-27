@@ -5,6 +5,7 @@ module Gargantext.Components.Document.Layout
 import Gargantext.Prelude
 
 import Data.Array as A
+import Data.Lens ((^.))
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
 import Data.Ord (greaterThan)
@@ -12,7 +13,9 @@ import Data.Set (Set)
 import Data.Set as Set
 import Data.String (length)
 import Data.String as String
+import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
+import Effect.Class (liftEffect)
 import Gargantext.Components.Annotation.Field as AnnotatedField
 import Gargantext.Components.Annotation.Types as AFT
 import Gargantext.Components.AutoUpdate (autoUpdate)
@@ -25,13 +28,14 @@ import Gargantext.Components.NgramsTable.AutoSync (useAutoSync)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Config.REST (logRESTError)
 import Gargantext.Core.NgramsTable.Functions (addNewNgramA, applyNgramsPatches, coreDispatch, findNgramRoot, setTermListA, computeCache)
-import Gargantext.Core.NgramsTable.Types (CoreAction(..), NgramsTable(..), NgramsTerm, Versioned(..), replace)
+import Gargantext.Core.NgramsTable.Types (CoreAction(..), NgramsTable(..), NgramsTerm, State, Versioned(..), replace)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (Session)
 import Gargantext.Utils ((?))
 import Gargantext.Utils as U
 import Gargantext.Utils.Reactix as R2
+import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
@@ -39,6 +43,9 @@ import Toestand as T
 
 -------------------------------------------------------------------------
 
+
+here :: R2.Here
+here = R2.here "Gargantext.Components.Document.Layout"
 
 
 type Props =
@@ -57,9 +64,6 @@ options =
   { sideControlsSlot: Nothing
   }
 
-here :: R2.Here
-here = R2.here "Gargantext.Components.Document.Layout"
-
 layout :: forall r. R2.OptLeaf Options Props r
 layout = R2.optLeaf layoutCpt options
 layoutCpt :: R.Component Props
@@ -73,7 +77,8 @@ layoutCpt = here.component "layout" cpt where
         useLoader { errorHandler
                   , loader: \p -> getContextNgrams session p.contextId p.listId
                   , path: { contextId: nodeId, listId }
-                  , render: \contextNgrams -> layoutWithContextNgrams $ Record.merge props { contextNgrams } }
+                  , render: \contextNgrams ->
+                      layoutWithContextNgrams $ Record.merge props { contextNgrams } }
     where
       errorHandler = logRESTError here "[layout]"
 
@@ -87,21 +92,32 @@ layoutWithContextNgramsCpt :: R.Component WithContextNgramsProps
 layoutWithContextNgramsCpt = here.component "layoutWithContextNgrams" cpt where
   -- Component
   cpt { contextNgrams
-      , path
       , loaded:
-          loaded@{ ngramsTable: Versioned
-          { data: initTable }
-          , document: NodePoly
-            { hyperdata: Document doc
-            }
-          }
+        loaded@{ ngramsTable: Versioned { data: initTable }
+               , document: NodePoly { hyperdata: Document doc }
+               }
+      , path
       , sideControlsSlot
       } _ = do
     -- | States
     -- |
 
-    state'@{ ngramsLocalPatch } /\ state <-
-      R2.useBox' $ initialState { loaded }
+    contextNgramsS <- T.useBox contextNgrams
+    contextNgrams' <- T.useLive T.unequal contextNgramsS
+
+    -- ngrams <- T.useBox initTable
+    -- ngrams' <- T.useLive T.unequal ngrams
+    state <- T.useBox $ initialState { loaded }
+    state'@{ ngramsLocalPatch } <- T.useLive T.unequal state
+    let ngrams' = applyNgramsPatches state' initTable
+
+    -- R.useEffect' $ do
+    --   let (NgramsTable { ngrams_repo_elements: nre }) = ngrams'
+    --   let nre' = Map.mapMaybeWithKey (\k v -> Just { k, v }) nre
+    --   here.log2 "[layout] nre" $ A.fromFoldable nre'
+    --   here.log2 "[layout] contextNgrams" contextNgrams
+    --   here.log2 "[layout] contextNgrams'" contextNgrams'
+    --   here.log2 "[layout] state'" state'
 
     mode' /\ mode <- R2.useBox' AFT.EditionMode
 
@@ -117,27 +133,38 @@ layoutWithContextNgramsCpt = here.component "layoutWithContextNgrams" cpt where
 
       withAutoUpdate = false
 
-      ngrams = applyNgramsPatches state' initTable
+      -- ngrams = applyNgramsPatches state' initTable
 
-      cache = computeCache ngrams $ Set.fromFoldable contextNgrams
-
-      annotate text = AnnotatedField.annotatedField
-        { ngrams
-        , setTermList
-        , text
-        , mode: mode'
-        , cache
-        }
+      cache = computeCache ngrams' $ Set.fromFoldable contextNgrams'
 
       setTermListOrAddA ngram Nothing        =
         addNewNgramA ngram
       setTermListOrAddA ngram (Just oldList) =
         setTermListA ngram <<< replace oldList
 
-      setTermList ngram mOldList =
-        dispatch <<< setTermListOrAddA (findNgramRoot ngrams ngram) mOldList
+      setTermList ngram mOldList termList = do
+        let root = findNgramRoot ngrams' ngram
+        -- here.log2 "[setTermList] ngram" ngram
+        -- here.log2 "[setTermList] root" root
+        let patch = setTermListOrAddA root mOldList termList
+        -- here.log2 "[setTermList] patch" patch
+        dispatch patch
+        -- T.write_ (applyNgramsPatches state' initTable) ngrams
+        case mOldList of
+          Nothing -> T.write_ (contextNgrams' <> [ root ]) contextNgramsS
+          Just _ -> pure unit
+        -- here.log2 "[setTermList] calling reload" reload'
+        -- T2.reload reload
 
       hasAbstract =  maybe false (not String.null) doc.abstract
+
+      annotate text = AnnotatedField.annotatedField
+                      { ngrams'
+                      , setTermList
+                      , text
+                      , mode: mode'
+                      , cache
+                      }
 
     -- | Hooks
     -- |
@@ -152,6 +179,14 @@ layoutWithContextNgramsCpt = here.component "layoutWithContextNgrams" cpt where
     -- |
     let
       onModeChange = read >>> fromMaybe AFT.EditionMode >>> flip T.write_ mode
+
+    -- R.useEffect' $ do
+    --   here.log2 "[layoutWithContextNgrams] cache" cache
+    --   here.log2 "[layoutWithContextNgrams] ngramsLocalPatch" ngramsLocalPatch
+    --   let NgramsTable { ngrams_repo_elements: nre } = initTable
+    --   here.log2 "[layoutWithContextNgrams] ngrams_repo_elements" $ A.fromFoldable $ Map.keys nre
+    --   let NgramsTable { ngrams_repo_elements: nre' } = ngrams'
+    --   here.log2 "[layoutWithContextNgrams] ngrams (after apply patches)" $ A.fromFoldable $ Map.keys nre'
 
     -- | Render
     -- |
@@ -204,7 +239,8 @@ layoutWithContextNgramsCpt = here.component "layoutWithContextNgrams" cpt where
               autoUpdate
               { duration: 5000
               , effect: dispatch $ Synchronize
-                { afterSync: \_ -> pure unit
+                { afterSync: \_ -> do
+                                   liftEffect $ here.log "[autoSync] synchronize war run"
                 }
               }
           -- @NOTE #386: revert manual for automatic sync
@@ -293,7 +329,7 @@ layoutWithContextNgramsCpt = here.component "layoutWithContextNgrams" cpt where
               { className: "document-layout__source__content w-100" -- <> collapsibleClasses
               , id: getIdName "sources" }
               source
-            -- , 
+            -- ,
             --   btnSeeMore "sources"
             ]
         ,
@@ -346,7 +382,7 @@ publicationDate (Document {publication_year: Just py, publication_month: Just pm
 
 
 -- btnSeeMore :: String -> R.Element
--- btnSeeMore idStr = 
+-- btnSeeMore idStr =
 --   H.a { role: "button"
 --   , className: "collapsed btn-seemore text-primary"
 --   , data: { toggle: "collapse" }

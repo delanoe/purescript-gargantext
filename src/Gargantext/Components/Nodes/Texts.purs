@@ -41,6 +41,7 @@ import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Simple.JSON as JSON
 import Toestand as T
 
 here :: R2.Here
@@ -548,7 +549,12 @@ sideTextCpt = here.component "sideText" cpt where
       } _ = do
     -- | States
     -- |
-    state' /\ state <- R2.useBox' (Nothing :: Maybe LoadedData)
+    -- state' /\ state <- R2.useBox' (Nothing :: Maybe LoadedData)
+    -- state <- T.useBox (Nothing :: Maybe LoadedData)
+    -- state' <- T.useLive T.unequal state
+
+    -- R.useEffect' $ do
+    --   here.log2 "[sideText] state'" state'
 
     -- | Computed
     -- |
@@ -568,34 +574,56 @@ sideTextCpt = here.component "sideText" cpt where
 
     -- | Hooks
     -- |
-    useLoaderEffect
-      { errorHandler: logRESTError here "[sidePanelText]"
-      , loader: loadData
-      , path
-      , state
-      }
+    -- useLoaderEffect
+    --   { errorHandler: logRESTError here "[sidePanelText]"
+    --   , loader: loadData
+    --   , path
+    --   , state
+    --   }
 
-    -- | Render
-    -- |
-    pure $
-
-
-      H.div
-      { className: "graph-doc-focus" }
-      [
-        B.cloak
-        { isDisplayed: isJust state'
-        , idlingPhaseDuration: Just 150
-        , cloakSlot:
-            B.preloader
-            {}
-
-        , defaultSlot:
-            R2.fromMaybe state' \loaded ->
-              layout
-              { loaded
-              , path
-              , session
+    useLoader { errorHandler: logRESTError here "[sidePanelText]"
+              , loader: \{ path } -> loadData path
+              , path: { path }
+              , render: \loaded -> loadedSideText { loaded
+                                                  , path
+                                                  , session }
               }
-        }
-      ]
+
+    -- -- | Render
+    -- -- |
+    -- pure $
+
+
+    --   H.div
+    --   { className: "graph-doc-focus" }
+    --   [
+    --     B.cloak
+    --     { isDisplayed: isJust state'
+    --     , idlingPhaseDuration: Just 150
+    --     , cloakSlot:
+    --         B.preloader
+    --         {}
+
+    --     , defaultSlot:
+    --         R2.fromMaybe state' \loaded ->
+    --           layout
+    --           { loaded
+    --           , path
+    --           , session
+    --           , key: JSON.writeJSON loaded
+    --           }
+    --     }
+    --   ]
+
+type LoadedSideTextProps =
+  ( loaded :: LoadedData
+  , path :: DocPath
+  , session :: Session )
+
+loadedSideText :: R2.Leaf LoadedSideTextProps
+loadedSideText = R2.leaf loadedSideTextCpt
+loadedSideTextCpt :: R.Component LoadedSideTextProps
+loadedSideTextCpt = here.component "loadedSideText" cpt where
+  cpt { loaded, path, session } _ = do
+    pure $ H.div { className: "graph-doc-focus" }
+      [ layout { loaded, path, session } ]
