@@ -29,6 +29,7 @@ type Search = { databases    :: Database
               , url          :: String
               , lang         :: Maybe Lang
               , node_id      :: Maybe Int
+              , pubmedApiKey :: Maybe String
               , term         :: String
               , years        :: Array String
               }
