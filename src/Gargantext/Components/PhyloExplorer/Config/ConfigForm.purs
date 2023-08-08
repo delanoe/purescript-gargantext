@@ -64,28 +64,27 @@ component = R.hooksComponent "configForm" cpt where
 
 
     let modeChoice =
-          B.fieldset
-          { className: "phylo-config-form__group"
-          , titleSlot: H.text "Mode Choice"
-          }
+          H.div
+          { className: "phylo-config-form__group" }
           [
-            H.div
-            { className: "phylo-config-form__row" }
-            [
-              H.div
-              { className: "phylo-config-form__col" }
-              [
+            -- H.div
+            -- { className: "phylo-config-form__row" }
+            -- [
+            --   H.div
+            --   { className: "phylo-config-form__col" }
+            --   [
                 -- Clique type
                 H.div
                 { className: intercalate " "
                     [ "form-group"
+                    , "text-center"
                     ]
                 }
                 [
                   H.div
                   { className: "form-group__label" }
                   [
-                    H.label {} [ H.text "Easy or Advanced:" ]
+                    H.label {} [ H.text "Mode choice" ]
                   ]
                 ,
                   H.div
@@ -117,17 +116,581 @@ component = R.hooksComponent "configForm" cpt where
                           ""
                       }
                       [
-                        H.text "Expert"
+                        H.text "Advanced"
                       ]
                     ]
                   ]
                 ]
-              ]
-              ]
+              -- ]
+              -- ]
               ]
 
 
   -- Render
+
+    let
+      formAdvanced =
+        H.form
+        { className: "phylo-config-form" }
+        [
+          H.div
+          { className: "phylo-config-form__group" }
+          [
+            H.div
+            { className: "" }
+            [
+              H.div
+              { className: "" }
+              [
+                -- Time Unit
+                B.fieldset
+                { className: "phylo-config-form__group mx-0"
+                , titleSlot: H.text "Time unit"
+                }
+                [
+                --   H.div
+                --   { className: "phylo-config-form__row" }
+                --   [
+                --     H.div { className: "" } 
+                --     [
+                --     ]
+                --   ]
+                -- ,
+                  H.div
+                  { className: "phylo-config-form__row" }
+                  [
+                    H.div { className: "w-auto phylo-config-form__col text-nowrap" }
+                    [
+                      -- Granularity
+                      H.div
+                      { className: intercalate " "
+                          [ "form-group"
+                          ]
+                      }
+                      [
+                        H.div
+                        { className: "form-group__label" }
+                        [
+                          H.label {} [ H.text "Granularity" ]
+                        ]
+                      ,
+                        H.div
+                        { className: "form-group__field" }
+                        [
+                          B.formSelect
+                          (bindStateKey "granularity")
+                          [
+                            H.option
+                            { value: show Year_ }
+                            [ H.text "Year" ]
+                          ,
+                            H.option
+                            { value: show Month_ }
+                            [ H.text "Month" ]
+                          ,
+                            H.option
+                            { value: show Week_ }
+                            [ H.text "Week" ]
+                          ,
+                            H.option
+                            { value: show Day_ }
+                            [ H.text "Day" ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ,
+                    H.div
+                    { className: "w-10 ml-1" }
+                    [
+                      -- Period
+                      H.div
+                      { className: intercalate " "
+                          [ "form-group"
+                          , (fv.hasError' "period") ?
+                              "form-group--error" $
+                              mempty
+                          ]
+                      }
+                      [
+                        H.div
+                        { className: "form-group__label" }
+                        [
+                          H.label {} [ H.text "Period" ]
+                        ]
+                      ,
+                        H.div
+                        { className: "form-group__field" }
+                        [
+                          B.formInput $
+                          { type: "number"
+                          } `merge` bindStateKey "period"
+                        ,
+                          R2.when (fv.hasError' "period") $
+                            H.div
+                            { className: "form-group__error" }
+                            [
+                              H.text "Please enter an `Int` value (eg. 3)"
+                            ]
+                        ]
+                      ]
+                    ]
+                  ,
+                    H.div
+                    { className: "w-10 ml-1" }
+                    [
+                      -- Step
+                      H.div
+                      { className: intercalate " "
+                          [ "form-group"
+                          , (fv.hasError' "step") ?
+                              "form-group--error" $
+                              mempty
+                          ]
+                      }
+                      [
+                        H.div
+                        { className: "form-group__label" }
+                        [
+                          H.label {} [ H.text "Step" ]
+                        ]
+                      ,
+                        H.div
+                        { className: "form-group__field" }
+                        [
+                          B.formInput $
+                          { type: "number"
+                          } `merge` bindStateKey "step"
+                        ,
+                          R2.when (fv.hasError' "step") $
+                            H.div
+                            { className: "form-group__error" }
+                            [
+                              H.text "Please enter an `Int` value (eg. 3)"
+                            ]
+                        ]
+                      ]
+                    ]
+                  ,
+                    H.div
+                    { className: "w-10 ml-1 text-nowrap" }
+                    [
+                      -- Matching frame
+                      H.div
+                      { className: intercalate " "
+                          [ "form-group"
+                          , (fv.hasError' "matchingFrame") ?
+                              "form-group--error" $
+                              mempty
+                          ]
+                      }
+                      [
+                        H.div
+                        { className: "form-group__label" }
+                        [
+                          H.label {} [ H.text "Matching frame" ]
+                        ]
+                      ,
+                        H.div
+                        { className: "form-group__field" }
+                        [
+                          B.formInput $
+                          { type: "number"
+                          } `merge` bindStateKey "matchingFrame"
+                        ,
+                          R2.when (fv.hasError' "matchingFrame") $
+                            H.div
+                            { className: "form-group__error" }
+                            [
+                              H.text "Please enter an `Int` value (eg. 3)"
+                            ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ,
+                -- Quality
+                B.fieldset
+                { className: "phylo-config-form__group mx-0"
+                , titleSlot: H.text "Zoom"
+                }
+                [
+                  H.div
+                  { className: intercalate " "
+                      [ "form-group my-1 text-center"
+                      , (fv.hasError' "quality") ?
+                          "form-group--error" $
+                          mempty
+                      ]
+                  }
+                  [
+                    H.div
+                    { className: "form-group__label" }
+                    [
+                      H.label {} [ H.text "Level of observation" ]
+                    ]
+                  ,
+                    H.div
+                    { className: "form-group__field" }
+                    [
+                      H.div { className: "range-simple" } 
+                      [
+                        H.div { className: "range-simple__field d-flex" }
+                        [
+                          H.div { className: "col-9 p-0 mx-1 mt-1" } [
+                            B.formInput $
+                            { className: "range-simple__input p-0 h-auto border-0"
+                            , type: "range"
+                            , step: "0.1"
+                            , min: "0"
+                            , max: "1"
+                            } `merge` bindStateKey "quality"
+                          ]
+                        ,
+                          H.div { className: "col-3 p-0 mx-1" } [
+                            B.formInput $
+                            { className: "range-simple__witness text-small"
+                            , type: "number"
+                            , step: "0.1"
+                            , min: "0"
+                            , max: "1"
+                            , status: Disabled
+                            -- , readOnly: Disabled
+                            } `merge` bindStateKey "quality"
+                          ]
+                        ]
+                      ]
+                    ]
+                  
+                    -- ,
+
+                    --   B.formInput $
+                    --   { type: "number"
+                    --   , step: "0.1"
+                    --   , min: "0"
+                    --   , max: "1"
+                    --   } `merge` bindStateKey "quality"
+                  ]
+                ]
+              ,
+
+                B.fieldset
+                { className: "phylo-config-form__group"
+                , titleSlot: H.text "Clusterisation algorythm"
+                }
+                [
+                  -- Support
+                  H.div
+                  { className: intercalate " "
+                      [ "form-group"
+                      , (fv.hasError' "support") ?
+                          "form-group--error" $
+                          mempty
+                      ]
+                  }
+                  [
+                    H.div
+                    { className: "form-group__label" }
+                    [
+                      H.label {} [ H.text "Support" ]
+                    ]
+                  ,
+                    H.div
+                    { className: "form-group__field" }
+                    [
+                      B.formInput $
+                        bindStateKey "support"
+                    ,
+                      R2.when (fv.hasError' "support") $
+                        H.div
+                        { className: "form-group__error" }
+                        [
+                          H.text "Please enter an `Int` value (eg. 3)"
+                        ]
+                    ]
+                  ]
+                ,
+                  -- Size
+                  H.div
+                  { className: intercalate " "
+                      [ "form-group"
+                      , (fv.hasError' "size") ?
+                          "form-group--error" $
+                          mempty
+                      ]
+                  }
+                  [
+                    H.div
+                    { className: "form-group__label" }
+                    [
+                      H.label {} [ H.text "Size" ]
+                    ]
+                  ,
+                    H.div
+                    { className: "form-group__field" }
+                    [
+                      B.formInput $
+                        bindStateKey "size"
+                    ,
+                      R2.when (fv.hasError' "sjze") $
+                        H.div
+                        { className: "form-group__error" }
+                        [
+                          H.text "Please enter an `Int` value (eg. 3)"
+                        ]
+                    ]
+                  ]
+                ]
+              
+              ,
+                -- Clique
+                B.fieldset
+                { className: "phylo-config-form__group"
+                , titleSlot: H.text "Clique algorithm"
+                }
+                [
+                  H.div
+                  { className: "phylo-config-form__row" }
+                  [
+                    H.div
+                    { className: "phylo-config-form__col" }
+                    [
+                      -- Clique type
+                      H.div
+                      { className: intercalate " "
+                          [ "form-group"
+                          ]
+                      }
+                      [
+                        H.div
+                        { className: "form-group__label" }
+                        [
+                          H.label {} [ H.text "Type" ]
+                        ]
+                      ,
+                        H.div
+                        { className: "form-group__field" }
+                        [
+                          H.div
+                          { className: "btn-group"
+                          , role: "group"
+                          }
+                          [
+                            B.button
+                            { callback: \_ -> setter stateBox "cliqueType" $ show FIS_
+                            -- , variant: OutlinedButtonVariant Secondary
+                            , variant: ButtonVariant Light
+                            , className: state.cliqueType == show FIS_ ?
+                                "active" $
+                                ""
+                            }
+                            [
+                              H.text "FIS"
+                            ]
+                          ,
+                            B.button
+                            { callback: \_ -> setter stateBox "cliqueType" $ show MaxClique_
+                            -- , variant: OutlinedButtonVariant Secondary
+                            , variant: ButtonVariant Light
+                            , className: state.cliqueType == show MaxClique_ ?
+                                "active" $
+                                ""
+                            }
+                            [
+                              H.text "MaxClique"
+                            ]
+                          ]
+                        ]
+                      ]
+                    ]
+                  ,
+                    -- TYPE::FIS_
+                    R2.when (state.cliqueType == show FIS_) $
+
+                      H.div
+                      { className: "phylo-config-form__col" }
+                      [
+                        -- Support
+                        H.div
+                        { className: intercalate " "
+                            [ "form-group"
+                            , (fv.hasError' "support") ?
+                                "form-group--error" $
+                                mempty
+                            ]
+                        }
+                        [
+                          H.div
+                          { className: "form-group__label" }
+                          [
+                            H.label {} [ H.text "Support" ]
+                          ]
+                        ,
+                          H.div
+                          { className: "form-group__field" }
+                          [
+                            B.formInput $
+                              bindStateKey "support"
+                          ,
+                            R2.when (fv.hasError' "support") $
+                              H.div
+                              { className: "form-group__error" }
+                              [
+                                H.text "Please enter an `Int` value (eg. 3)"
+                              ]
+                          ]
+                        ]
+                      ,
+                        -- Size
+                        H.div
+                        { className: intercalate " "
+                            [ "form-group"
+                            , (fv.hasError' "size") ?
+                                "form-group--error" $
+                                mempty
+                            ]
+                        }
+                        [
+                          H.div
+                          { className: "form-group__label" }
+                          [
+                            H.label {} [ H.text "Size" ]
+                          ]
+                        ,
+                          H.div
+                          { className: "form-group__field" }
+                          [
+                            B.formInput $
+                              bindStateKey "size"
+                          ,
+                            R2.when (fv.hasError' "sjze") $
+                              H.div
+                              { className: "form-group__error" }
+                              [
+                                H.text "Please enter an `Int` value (eg. 3)"
+                              ]
+                          ]
+                        ]
+                      ]
+                  ,
+                    -- TYPE::MaxClique_
+                    R2.when (state.cliqueType == show MaxClique_) $
+
+                      H.div
+                      { className: "phylo-config-form__col" }
+                      [
+                        -- Size
+                        H.div
+                        { className: intercalate " "
+                            [ "form-group"
+                            , (fv.hasError' "size") ?
+                                "form-group--error" $
+                                mempty
+                            ]
+                        }
+                        [
+                          H.div
+                          { className: "form-group__label" }
+                          [
+                            H.label {} [ H.text "Size" ]
+                          ]
+                        ,
+                          H.div
+                          { className: "form-group__field" }
+                          [
+                            B.formInput $
+                            { type: "number"
+                            } `merge` bindStateKey "size"
+                          ,
+                            R2.when (fv.hasError' "size") $
+                              H.div
+                              { className: "form-group__error" }
+                              [
+                                H.text "Please enter an `Int` value (eg. 3)"
+                              ]
+                          ]
+                        ]
+                      ,
+                        -- Treshold
+                        H.div
+                        { className: intercalate " "
+                            [ "form-group"
+                            , (fv.hasError' "threshold") ?
+                                "form-group--error" $
+                                mempty
+                            ]
+                        }
+                        [
+                          H.div
+                          { className: "form-group__label" }
+                          [
+                            H.label {} [ H.text "Treshold" ]
+                          ]
+                        ,
+                          H.div
+                          { className: "form-group__field" }
+                          [
+                            B.formInput $
+                            { type: "number"
+                            } `merge` bindStateKey "threshold"
+                          ,
+                            R2.when (fv.hasError' "threshold") $
+                              H.div
+                              { className: "form-group__error" }
+                              [
+                                H.text "Please enter a `Double` value (eg. 0.5)"
+                              ]
+                          ]
+                        ]
+                      ,
+                        -- Clique filter
+                        H.div
+                        { className: intercalate " "
+                            [ "form-group"
+                            ]
+                        }
+                        [
+                          H.div
+                          { className: "form-group__label" }
+                          [
+                            H.label {} [ H.text "Filter type" ]
+                          ]
+                        ,
+                          H.div
+                          { className: "form-group__field" }
+                          [
+                            B.formSelect
+                            ( bindStateKey "cliqueFilter" )
+                            [
+                              H.option
+                              { value: show ByThreshold }
+                              [ H.text "By threshold" ]
+                            ,
+                              H.option
+                              { value: show ByNeighbours }
+                              [ H.text "By neighbours" ]
+                            ]
+                          ]
+                        ]
+                      ]
+                  ]
+                ]
+
+
+              ,
+                H.text "end new form"
+
+
+              ]
+            ]
+          ]
+        ]
+
+
+
+
+
     let
       form = 
         H.form
@@ -238,6 +801,9 @@ component = R.hooksComponent "configForm" cpt where
                   [
                     B.formInput $
                     { type: "number"
+                    , step: "0.1"
+                    , min: "0"
+                    , max: "1"
                     } `merge` bindStateKey "quality"
                   ,
                     R2.when (fv.hasError' "quality") $
@@ -685,15 +1251,16 @@ component = R.hooksComponent "configForm" cpt where
             , type: "submit"
             }
             [
-              B.icon { name: "refresh" }
+              B.icon { name: "cogs" }
             ,
               H.text $ nbsp 1
             ,
-              H.text "Update!"
+              H.text "Reconstruct the phylomemy!"
             ]
           ]
 
     pure $ H.div {} [ modeChoice
+                    , R2.when (state.defaultMode == show false) formAdvanced
                     , R2.when (state.defaultMode == show false) form
                     , submit
                     ]

@@ -6196,6 +6196,10 @@ h3 {
   text-align: center;
 }
 
+.range-simple__input:focus {
+  box-shadow: none;
+}
+
 .b-tabs .nav-item:first-child {
   margin-left: 16px;
 }
