@@ -16,6 +16,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
+import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Elevation(..), TooltipEffect(..), Variant(..))
@@ -35,7 +36,7 @@ import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Hooks.Version (Version, useVersion)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId)
-import Gargantext.Types (ID, Name)
+import Gargantext.Types (Handed(..), ID, Name)
 import Gargantext.Types as GT
 import Gargantext.Utils (nbsp, textEllipsisBreak, (?))
 import Gargantext.Utils.Reactix as R2
@@ -423,24 +424,53 @@ folderIcon :: R2.Leaf FolderIconProps
 folderIcon = R2.leaf folderIconCpt
 folderIconCpt :: R.Component FolderIconProps
 folderIconCpt = here.component "folderIcon" cpt where
-  cpt { isLeaf: true } _ = pure $
+  cpt { isLeaf: true } _ = do
+    -- | States
+    -- |
+    { handed
+    } <- AppStore.use
+    handed' <- R2.useLive' handed
+    -- | Computed
+    -- |
+    let
+      handedClassName :: Handed -> String
+      handedClassName = case _ of
+        LeftHanded  -> "angle-left"
+        RightHanded -> "angle-right"
+    
+    pure $
 
-    B.icon
-    { className: intercalate " "
-        ["mainleaf__folder-icon"
-        , "mainleaf__folder-icon--leaf"
-        ]
-    , name: "angle-right"
-    }
+      B.icon
+      { className: intercalate " "
+          ["mainleaf__folder-icon"
+          , "mainleaf__folder-icon--leaf"
+          ]
+      , name: handedClassName handed'
+      }
 
-  cpt { callback, isOpened } _ = pure $
+  cpt { callback, isOpened } _ = do
+    -- | States
+    -- |
+    { handed
+    } <- AppStore.use
+    handed' <- R2.useLive' handed
+    -- | Computed
+    -- |
+    let
+      handedClassName :: Handed -> String
+      handedClassName = case _ of
+        LeftHanded  -> "angle-left"
+        RightHanded -> "angle-right"
 
-    B.iconButton
-    { className: "mainleaf__folder-icon"
-    , name: isOpened ? "angle-down" $ "angle-right"
-    , overlay: false
-    , callback
-    }
+
+    pure $
+
+      B.iconButton
+      { className: "mainleaf__folder-icon"
+      , name: isOpened ? "angle-down" $ handedClassName handed'
+      , overlay: false
+      , callback
+      }
 
 -----------------------------------------------
 
