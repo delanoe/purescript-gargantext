@@ -420,6 +420,12 @@ type FolderIconProps =
   , isLeaf   :: Boolean
   )
 
+
+handedPartClassName :: Handed -> String
+handedPartClassName = case _ of
+  LeftHanded  -> "angle-left"
+  RightHanded -> "angle-right"
+
 folderIcon :: R2.Leaf FolderIconProps
 folderIcon = R2.leaf folderIconCpt
 folderIconCpt :: R.Component FolderIconProps
@@ -431,13 +437,7 @@ folderIconCpt = here.component "folderIcon" cpt where
     } <- AppStore.use
     handed' <- R2.useLive' handed
     -- | Computed
-    -- |
-    let
-      handedClassName :: Handed -> String
-      handedClassName = case _ of
-        LeftHanded  -> "angle-left"
-        RightHanded -> "angle-right"
-    
+    -- |    
     pure $
 
       B.icon
@@ -445,7 +445,7 @@ folderIconCpt = here.component "folderIcon" cpt where
           ["mainleaf__folder-icon"
           , "mainleaf__folder-icon--leaf"
           ]
-      , name: handedClassName handed'
+      , name: handedPartClassName handed'
       }
 
   cpt { callback, isOpened } _ = do
@@ -456,18 +456,11 @@ folderIconCpt = here.component "folderIcon" cpt where
     handed' <- R2.useLive' handed
     -- | Computed
     -- |
-    let
-      handedClassName :: Handed -> String
-      handedClassName = case _ of
-        LeftHanded  -> "angle-left"
-        RightHanded -> "angle-right"
-
-
     pure $
 
       B.iconButton
       { className: "mainleaf__folder-icon"
-      , name: isOpened ? "angle-down" $ handedClassName handed'
+      , name: isOpened ? "angle-down" $ handedPartClassName handed'
       , overlay: false
       , callback
       }
