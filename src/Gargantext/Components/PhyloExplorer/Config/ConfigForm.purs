@@ -1319,6 +1319,26 @@ component = R.hooksComponent "configForm" cpt where
     --       ]
     --     ]
 
+    let warningMessage =
+          H.div { className: "alert alert-info text-small mx-auto mt-1 w-min-content min-w-75" }
+          [
+            H.p
+            { className: "text-bold text-small" }
+            [
+              B.icon
+              { name: "warning"
+              , className: "mr-1"
+              }
+            ,
+              H.text "Warning!"
+            ]
+          ,
+            H.p { className: "text-small" }
+            [
+              H.text "Please note that the phylomemy reconstruction process consumes a lot of machine resources. If your corpus is < 2000 docs and if your list of terms is < 300 terms then the process will end quickly. If your corpus is < 5000 docs and if your list of terms is < 500 terms then the process will end in less than 30 minutes. If your corpus is > 5000 docs and if your list of terms is > 500 terms then the process can last hours."
+            ] 
+          ]
+
     let submit = 
           H.div { className: "phylo-config-form__submit" }
           [
@@ -1340,6 +1360,7 @@ component = R.hooksComponent "configForm" cpt where
     pure $ H.div {} [ modeChoice
                     , R2.when (state.defaultMode == show false) formAdvanced
                     -- , R2.when (state.defaultMode == show false) form
+                    , warningMessage
                     , submit
                     ]
 
