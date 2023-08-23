@@ -22,6 +22,9 @@ type Options =
   , type        :: String
   , placeholder :: String
   , size        :: Sizing
+  , step        :: String
+  , min         :: String
+  , max         :: String
   )
 
 options :: Record Options
@@ -31,6 +34,9 @@ options =
   , type        : "text"
   , placeholder : ""
   , size        : MediumSize
+  , step        : ""
+  , min         : ""
+  , max         : ""
   }
 
 -- | Structural Component for the Bootstrap input
@@ -73,6 +79,9 @@ component = R.hooksComponent componentName cpt where
       , readOnly: elem status [ Idled ]
       , placeholder: props.placeholder
       , type: props.type
+      , step: props.step
+      , min: props.min
+      , max: props.max
       , autoComplete: "off"
       , value: props.value
       }

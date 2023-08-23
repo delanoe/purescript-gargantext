@@ -61,6 +61,12 @@
   .w-10\/12	  { width: 83.333333%;  }
   .w-11\/12	  { width: 91.666667%;  }
 
+  .min-w-25   { min-width: 25%      }
+  .min-w-33   { min-width: 33%      }
+  .min-w-50   { min-width: 50%      }
+  .min-w-75   { min-width: 75%      }
+  .min-w-100  { min-width: 100%     }
+
   /// Height
   .h-auto     { height: auto;     }
   .h-fluid,
