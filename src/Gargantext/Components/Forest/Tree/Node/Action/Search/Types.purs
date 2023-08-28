@@ -162,10 +162,10 @@ instance JSON.WriteForeign Database where
 
 allDatabases :: Array Database
 allDatabases = [ Empty
-               -- , OpenAlex
                , PubMed
-               -- , Arxiv
                , HAL Nothing
+               , Arxiv
+               , OpenAlex
                -- , IsTex
                  -- , IsTex_Advanced
                  -- , Isidore
