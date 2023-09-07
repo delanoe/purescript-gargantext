@@ -1,9 +1,10 @@
 module Gargantext.Utils.Crypto where
 
 import Control.Promise (Promise, toAffE)
+import Data.Array as Array
 import Data.Set (Set)
 import Data.Set   as Set
-import Data.Array as Array
+import Data.String (joinWith)
 import Effect (Effect)
 import Effect.Aff (Aff)
 
@@ -39,7 +40,7 @@ instance IsHashable (Array String) where
   hash = hash <<< concat
     where
       concat :: Array Hash -> String
-      concat = Array.foldl (<>) ""
+      concat = joinWith "" <<< Array.sort
 
 
 instance IsHashable (Set String) where
