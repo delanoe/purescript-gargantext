@@ -93,7 +93,6 @@ initialState =
   { ngramsLocalPatch: mempty
   , ngramsSelection:  mempty
   , ngramsStagePatch: mempty
-  , ngramsValidPatch: mempty
   , ngramsVersion:    0
   }
 

@@ -340,7 +340,6 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         tbl :: NgramsTable
         tbl = applyNgramsPatches { ngramsLocalPatch
                                  , ngramsStagePatch: mempty
-                                 , ngramsValidPatch: mempty
                                  , ngramsVersion: 0 } ngramsTable
         getNgramsChildren' :: NgramsTerm -> Array NgramsTerm
         getNgramsChildren' n = A.fromFoldable $ ngramsChildren n

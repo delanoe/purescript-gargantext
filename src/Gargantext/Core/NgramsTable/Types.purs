@@ -507,8 +507,6 @@ type CoreState s =
   , ngramsStagePatch :: NgramsTablePatch
                      -- ^ These patches are staged (scheduled for synchronization).
                      --   Requests are being performed at the moment.
-  , ngramsValidPatch :: NgramsTablePatch
-                     -- ^ These patches have been synchronized with the server.
   , ngramsVersion    :: Version
   | s
   }
