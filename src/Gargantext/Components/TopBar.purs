@@ -158,9 +158,9 @@ divDropdownLeftCpt = here.component "divDropdownLeft" cpt
     elements = [
       [
         LiNav { title : "Map Show Room and tutorials"
-              , href  : "https://iscpif.fr/gargantext/cartes/"
+              , href  : "https://write.frame.gargantext.org/s/649a6d7e1db3b365d6d0b1430d9700cc0bb4fdb1348dd1040a94c95f98979abe"
               , icon  : "fa fa-lightbulb-o"
-              , text  : "First maps"
+              , text  : "User documentation"
               }
 
       , LiNav { title : "Learn with us!"
