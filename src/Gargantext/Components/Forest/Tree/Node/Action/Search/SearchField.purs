@@ -18,7 +18,7 @@ import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Frame (searchIframes)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.Types (DataField(..), Database(..), IMT_org(..), Org(..), SearchQuery(..), allOrgs, dataFields, defaultSearchQuery, doc, performSearch, datafield2database, Search, dbFromInputValue, dbToInputValue)
-import Gargantext.Components.GraphQL.Endpoints (getIMTSchools)
+import Gargantext.Components.GraphQL.Endpoints (getIMTSchools, getUser)
 import Gargantext.Components.GraphQL.IMT as GQLIMT
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Lang (Lang(..))
@@ -27,7 +27,7 @@ import Gargantext.Components.ListSelection.Types as ListSelection
 import Gargantext.Config.REST (logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Hooks.Loader (useLoader)
-import Gargantext.Sessions (Session)
+import Gargantext.Sessions (Session(..))
 import Gargantext.Types (FrontendError)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
@@ -42,6 +42,7 @@ defaultSearch :: Search
 defaultSearch = { databases    : Empty
                 , datafield    : Just (External Empty)
                 , node_id      : Nothing
+                , pubmedApiKey : Nothing
                 , lang         : Nothing
                 , term         : ""
                 , url          : ""
@@ -377,38 +378,57 @@ databaseInputCpt = here.component "databaseInput" cpt
         ]
 
 
--- type PubmedInputProps = (
---     search :: T.Box Search
---   , session :: Session
---   )
+type PubmedInputProps = (
+    search :: T.Box Search
+  , session :: Session
+  )
 
--- pubmedInput :: R2.Component PubmedInputProps
--- pubmedInput = R.createElement pubmedInputCpt
--- pubmedInputCpt :: R.Component PubmedInputProps
--- pubmedInputCpt = here.component "pubmedInput" cpt where
---   cpt { search, session } _ = do
---     search' <- T.useLive T.unequal search
+pubmedInput :: R2.Component PubmedInputProps
+pubmedInput = R.createElement pubmedInputCpt
+pubmedInputCpt :: R.Component PubmedInputProps
+pubmedInputCpt = here.component "pubmedInput" cpt where
+  cpt { search, session: session@(Session { treeId }) } _ = do
+    useLoader { errorHandler
+              , loader: \_ -> getUser session treeId
+              , path: unit
+              , render: \user -> pubmedInputLoaded { pubmedAPIKey: user.u_hyperdata.pubmed_api_key
+                                                   , search } [] }
+    where
+      errorHandler = logRESTError here "[componentIMT]"
 
---     case search'.datafield of
---       Just (External (PubMed p@{ api_key })) ->
---         -- TODO Fetch current API key
---         pure $
---           H.div { className: "form-group p-1 m-0" }
---             [ H.div { className: "text-primary center" } [ H.text "Pubmed API key" ]
---             , H.input { className: "form-control"
---                       , defaultValue: fromMaybe "" api_key
---                       , on: { blur: modifyPubmedAPIKey search p
---                             , change: modifyPubmedAPIKey search p
---                             , input: modifyPubmedAPIKey search p } } ]
---       _ -> pure $ H.div {} []
---     where
---       modifyPubmedAPIKey search p e = do
---         let val = R.unsafeEventValue e
---         let mVal = case val of
---               "" -> Nothing
---               s  -> Just s
---         T.modify_ (\s ->
---                     s { datafield = Just (External (PubMed p { api_key = mVal })) }) search
+
+type PubmedInputLoadedProps = (
+    pubmedAPIKey :: Maybe String
+  , search       :: T.Box Search
+  )
+
+pubmedInputLoaded :: R2.Component PubmedInputLoadedProps
+pubmedInputLoaded = R.createElement pubmedInputLoadedCpt
+pubmedInputLoadedCpt :: R.Component PubmedInputLoadedProps
+pubmedInputLoadedCpt = here.component "pubmedInputLoaded" cpt where
+  cpt { pubmedAPIKey, search } _ = do
+    search' <- T.useLive T.unequal search
+
+    R.useEffectOnce' $ do
+      when (search'.pubmedApiKey /= pubmedAPIKey) $ do
+        T.write_ (search' { pubmedApiKey = pubmedAPIKey }) search
+
+    pure $
+      H.div { className: "form-group p-1 m-0" }
+      [ H.div { className: "text-primary center" } [ H.text "Pubmed API key" ]
+      , H.input { className: "form-control"
+                , defaultValue: fromMaybe "" search'.pubmedApiKey
+                , on: { blur: modifyPubmedAPIKey search
+                      , change: modifyPubmedAPIKey search
+                      , input: modifyPubmedAPIKey search } } ]
+    where
+      modifyPubmedAPIKey search e = do
+        let val = R.unsafeEventValue e
+        let mVal = case val of
+              "" -> Nothing
+              s  -> Just s
+        T.modify_ (\s ->
+                    s { pubmedApiKey = mVal }) search
 
 
 type OrgInputProps =
@@ -475,9 +495,9 @@ datafieldInputCpt = here.component "datafieldInput" cpt where
         then databaseInput { databases, search, session } []
         else H.div {} []
 
-      -- , if isPubmed search'.datafield
-      --   then pubmedInput { search, session } []
-      --   else H.div {} []
+      , if isPubmed search'.datafield
+        then pubmedInput { search, session } []
+        else H.div {} []
 
       , if isHAL search'.datafield
         then orgInput { orgs: allOrgs, search } []
@@ -629,8 +649,8 @@ searchQuery selection { datafield: Nothing, term } =
 searchQuery selection { databases
                       , datafield: datafield@(Just (External (HAL Nothing)))
                       , lang
-                      , term
                       , node_id
+                      , term
                       , years } =
   over SearchQuery (_ { databases = databases
                       , datafield = datafield
@@ -643,8 +663,8 @@ searchQuery selection { databases
 searchQuery selection { databases
                       , datafield: datafield@(Just (External (HAL (Just (IMT imtOrgs)))))
                       , lang
-                      , term
                       , node_id
+                      , term
                       , years } =
   over SearchQuery (_ { databases = databases
                       , datafield = datafield
@@ -653,7 +673,21 @@ searchQuery selection { databases
                       , query     = queryHAL term (Just imtOrgs) lang years
                       , selection = selection
                       }) defaultSearchQuery
-
+searchQuery selection { databases
+                      , datafield: datafield@(Just (External PubMed))
+                      , lang
+                      , pubmedApiKey
+                      , node_id
+                      , term
+                      , years } =
+  over SearchQuery (_ { databases    = databases
+                      , datafield    = datafield
+                      , lang         = lang
+                      , node_id      = node_id
+                      , pubmedAPIKey = pubmedApiKey
+                      , query        = term
+                      , selection    = selection
+                      }) defaultSearchQuery
 searchQuery selection { databases, datafield, lang, term, node_id } =
   over SearchQuery (_ { databases = databases
                       , datafield = datafield
