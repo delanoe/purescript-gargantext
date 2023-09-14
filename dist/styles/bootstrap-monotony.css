@@ -6197,6 +6197,10 @@ h3 {
   text-align: center;
 }
 
+.range-simple__input:focus {
+  box-shadow: none;
+}
+
 .b-tabs .nav-item:first-child {
   margin-left: 16px;
 }
@@ -6899,6 +6903,26 @@ a:focus {
 #app .w-11\/12,
 #portal .w-11\/12 {
   width: 91.666667%;
+}
+#app .min-w-25,
+#portal .min-w-25 {
+  min-width: 25%;
+}
+#app .min-w-33,
+#portal .min-w-33 {
+  min-width: 33%;
+}
+#app .min-w-50,
+#portal .min-w-50 {
+  min-width: 50%;
+}
+#app .min-w-75,
+#portal .min-w-75 {
+  min-width: 75%;
+}
+#app .min-w-100,
+#portal .min-w-100 {
+  min-width: 100%;
 }
 #app .h-auto,
 #portal .h-auto {

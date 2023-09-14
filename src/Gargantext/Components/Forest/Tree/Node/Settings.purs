@@ -13,7 +13,7 @@ if user has access to node then he can do all his related actions
 ------------------------------------------------------------------------
 data NodeAction = Documentation NodeType
                 | SearchBox
-                | Download | Upload | Refresh | Config
+                | Download | Upload | Refresh | Config | Reconstruct
                 | Delete
                 | Share
                 | ManageTeam
@@ -43,6 +43,7 @@ instance Eq NodeAction where
   eq (Add  x) (Add  y)                       = x == y
   eq (Merge x) (Merge y)                     = x == y
   eq Config Config                           = true
+  eq Reconstruct Reconstruct                 = true
   eq (Publish x) (Publish y)                 = x == y
   eq AddingContact AddingContact             = true
   eq CloseNodePopover CloseNodePopover       = true
@@ -61,6 +62,7 @@ instance Show NodeAction where
   show Share               = "Share"
   show ManageTeam          = "Team"
   show Config              = "Config"
+  show Reconstruct         = "Reconstruct"
   show (Link _)            = "Link to " -- <> show x
   show (Add _)             = "Add Child" -- foldl (\a b -> a <> show b) "Add " xs
   show (Merge _)           = "Merge with subtree" -- <> show t
@@ -80,6 +82,7 @@ glyphiconNodeAction Download            = "download"
 glyphiconNodeAction (Merge _)           = "random"
 glyphiconNodeAction Refresh             = "refresh"
 glyphiconNodeAction Config              = "wrench"
+glyphiconNodeAction Reconstruct         = "cogs"
 glyphiconNodeAction Share               = "user-plus"
 glyphiconNodeAction ManageTeam          = "users"
 glyphiconNodeAction AddingContact       = "user-plus"
@@ -224,7 +227,7 @@ settingsBox Phylo =
   SettingsBox { show : true
               , edit : true
               , doc  : Documentation Phylo
-              , buttons : [ Refresh
+              , buttons : [ Reconstruct
                           , Delete
                           ]
               }

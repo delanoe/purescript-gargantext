@@ -11,6 +11,7 @@ hasStatus :: NodeType -> NodeAction -> Status
 hasStatus _ SearchBox         = Test
 hasStatus _ Refresh           = Dev
 hasStatus _ Config            = Dev
+hasStatus _ Reconstruct       = Dev
 hasStatus _ (Merge _)         = Dev
 hasStatus _ (Documentation _) = Dev
 hasStatus Annuaire  Upload    = Dev

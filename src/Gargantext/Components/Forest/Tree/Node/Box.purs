@@ -343,6 +343,7 @@ panelActionCpt = here.component "panelAction" cpt
     cpt { action: Config, nodeType } _ =
       pure $ fragmentPT $ "Config " <> show nodeType
     -- Functions using SubTree
+    cpt { action: Reconstruct , dispatch, nodeType } _ = pure $ update { dispatch, nodeType } []
     cpt { action: Merge {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
       pure $ mergeNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
     cpt { action: Move {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
