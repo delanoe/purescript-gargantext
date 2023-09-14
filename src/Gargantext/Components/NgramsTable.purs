@@ -93,7 +93,6 @@ initialState =
   { ngramsLocalPatch: mempty
   , ngramsSelection:  mempty
   , ngramsStagePatch: mempty
-  , ngramsValidPatch: mempty
   , ngramsVersion:    0
   }
 
@@ -824,6 +823,12 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
       -- onNgramsClickRef <- R.useRef Nothing
       -- onSaveRef   <- R.useRef Nothing
       state <- T.useBox initialState
+
+      -- https://gitlab.iscpif.fr/gargantext/purescript-gargantext/issues/594
+      -- Refreshing view when state.ngramsVersion changes.
+      ngramsVersion <- T.useFocused (_.ngramsVersion) (\a b -> b { ngramsVersion = a}) state
+      ngramsVersion' <- T.useLive T.unequal ngramsVersion
+
       -- ngramsLocalPatch <- T.useFocused (_.ngramsLocalPatch) (\a b -> b { ngramsLocalPatch = a }) state
 
       -- nodeId <- T.useFocused (_.nodeId) (\a b -> b { nodeId = a }) path
@@ -841,11 +846,11 @@ mainNgramsTableCpt = here.component "mainNgramsTable" cpt
       case cacheState' of
         NT.CacheOn  -> pure $ R.fragment
           [ loadedNgramsTableHeader { searchQuery, params }
-          , mainNgramsTableCacheOn (Record.merge props { state })
+          , mainNgramsTableCacheOn (Record.merge props { key: show ngramsVersion', state })
           ]
         NT.CacheOff -> pure $ R.fragment
-          [loadedNgramsTableHeader { searchQuery, params}
-          , mainNgramsTableCacheOff (Record.merge props { state })
+          [ loadedNgramsTableHeader { searchQuery, params }
+          , mainNgramsTableCacheOff (Record.merge props { key: show ngramsVersion', state })
           ]
 
 
@@ -1015,6 +1020,7 @@ ngramsTreeEditRealCpt = here.component "ngramsTreeEditReal" cpt where
 
 type MainNgramsTableCacheProps =
   ( state :: T.Box State
+  , key   :: String
   | MainNgramsTableProps )
 
 mainNgramsTableCacheOn :: R2.Leaf MainNgramsTableCacheProps

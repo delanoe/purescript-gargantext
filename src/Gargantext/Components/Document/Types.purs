@@ -35,7 +35,6 @@ initialState
 initialState {loaded: {ngramsTable: Versioned {version}}} =
   { ngramsLocalPatch: mempty
   , ngramsStagePatch: mempty
-  , ngramsValidPatch: mempty
   , ngramsSelection : mempty
   , ngramsVersion:    version
   }
