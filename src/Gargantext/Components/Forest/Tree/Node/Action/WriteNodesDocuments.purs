@@ -63,7 +63,7 @@ actionWriteNodesDocumentsWithLangsCpt = here.component "actionWriteNodesDocument
   cpt { dispatch, id, langs, session } _ = do
 
     lang' /\ langBox
-        <- R2.useBox' $ fromMaybe Universal $ A.head langs
+        <- R2.useBox' $ fromMaybe EN $ A.head langs
     selection' /\ selectionBox
         <- R2.useBox' ListSelection.MyListsFirst
     paragraphs' /\ paragraphBox
@@ -93,7 +93,7 @@ actionWriteNodesDocumentsWithLangsCpt = here.component "actionWriteNodesDocument
           B.formSelect'
           { callback: flip T.write_ langBox
           , value: lang'
-          , list: langs <> [ No_extraction, Universal ]
+          , list: langs <> [ No_extraction ]
           }
           []
         ]
