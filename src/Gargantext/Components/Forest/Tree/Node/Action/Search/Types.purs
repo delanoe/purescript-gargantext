@@ -166,9 +166,9 @@ allDatabases = [ Empty
                , HAL Nothing
                , Arxiv
                , OpenAlex
-               -- , IsTex
-                 -- , IsTex_Advanced
-                 -- , Isidore
+               , IsTex
+                 --, IsTex_Advanced
+                 --, Isidore
                  --, Web
                  --, News
                  --, SocialNetworks

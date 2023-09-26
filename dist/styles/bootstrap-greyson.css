@@ -11880,4 +11880,23 @@ select.form-control {
   overflow-x: hidden;
 }
 
+.breadcrumb-wrapper {
+  border-bottom: 1px solid #dee2e6;
+}
+.breadcrumb-wrapper .breadcrumb {
+  background-color: transparent;
+  padding: 4px 4px !important;
+  margin: 0 !important;
+}
+.breadcrumb-wrapper .breadcrumb-item {
+  color: #495057;
+}
+.breadcrumb-wrapper .breadcrumb-item .active-page {
+  font-weight: bold;
+  color: #2f3c48;
+}
+.breadcrumb-wrapper .breadcrumb-item .b-icon {
+  margin: 0 4px;
+}
+
 /*# sourceMappingURL=bootstrap-greyson.css.map */

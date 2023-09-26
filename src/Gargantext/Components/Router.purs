@@ -12,9 +12,12 @@ import Data.UUID (UUID)
 import Data.UUID as UUID
 import Effect (Effect)
 import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.ErrorsView as ErrorsView
 import Gargantext.Components.Forest (forestLayout)
+import Gargantext.Components.Forest.Breadcrumb as Breadcrumb
 import Gargantext.Components.ForgotPassword (forgotPasswordLayout)
+-- import Gargantext.Components.GraphQL.Node (Node)
 import Gargantext.Components.Login (login)
 import Gargantext.Components.Nodes.Annuaire (annuaireLayout)
 import Gargantext.Components.Nodes.Annuaire.User (userLayout)
@@ -34,6 +37,7 @@ import Gargantext.Components.Tile (tileBlock)
 import Gargantext.Components.TopBar as TopBar
 import Gargantext.Components.TreeSearch (treeSearch)
 import Gargantext.Config (defaultFrontends, defaultBackends)
+import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Context.Session as SessionContext
 import Gargantext.Ends (Backend)
 import Gargantext.Hooks.Resize (ResizeType(..), useResizeHandler)
@@ -63,6 +67,8 @@ type SessionProps = ( sessionId :: SessionId | Props )
 
 type SessionNodeProps = ( nodeId :: NodeID | SessionProps )
 type Props' = ( backend :: Backend, route' :: AppRoute | Props )
+
+type NodeProps = ( nodeId :: NodeID | Props )
 
 router :: R2.Leaf Props
 router = R2.leaf routerCpt
@@ -123,6 +129,25 @@ routerCpt = here.component "router" cpt where
 
 --------------------------------------------------------------
 
+-- breadcrumb :: R2.Leaf NodeProps
+-- breadcrumb = R2.leaf breadcrumbCpt
+-- breadcrumbCpt :: R.Component NodeProps
+-- breadcrumbCpt = here.component "breadcrumb" cpt where
+--   cpt props@{ nodeId } _ = do
+--     let
+--       sessionProps = RE.pick props :: Record SessionProps
+--       authedProps =
+--         -- Record.merge { content: \session -> breadcrumbLayout 
+--         --                                       { boxes
+--         --                                       , frontends: defaultFrontends
+--         --                                       , nodeId
+--         --                                       , session } } sessionProps
+--         Record.merge { content: \_ -> breadcrumbLayout { nodeId } } sessionProps
+    
+--     pure $ authed authedProps []
+--     -- pure $ breadcrumbLayout { nodeId }
+--------------------------------------------------------------
+
 mainPage :: R2.Leaf Props
 mainPage = R2.leaf mainPageCpt
 mainPageCpt :: R.Component Props
@@ -148,11 +173,15 @@ mainPageCpt = here.component "mainPage" cpt where
 
     let hasHorizontalTiles = not $ eq 0 $ length tileAxisXList
     let hasVerticalTiles = not $ eq 0 $ length tileAxisYList
+
     -- Render
     pure $
 
       H.div { className: "router__body main-page" }
       [
+        Breadcrumb.component
+        { boxes }
+      ,
         H.div
         { className: intercalate " "
           [ "main-page__main-row"

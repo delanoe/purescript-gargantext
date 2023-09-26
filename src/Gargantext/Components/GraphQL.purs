@@ -15,7 +15,7 @@ import Gargantext.Components.GraphQL.Context as GQLCTX
 import Gargantext.Components.GraphQL.IMT as GQLIMT
 import Gargantext.Components.GraphQL.NLP as GQLNLP
 import Gargantext.Components.GraphQL.Node as GQLNode
-import Gargantext.Components.GraphQL.Tree (TreeFirstLevel)
+import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, BreadcrumbInfo)
 import Gargantext.Components.GraphQL.User (User, UserInfo, UserInfoM, UserPubmedAPIKeyM)
 import Gargantext.Components.GraphQL.Team (Team, TeamDeleteM)
 import Gargantext.Ends (Backend(..))
@@ -86,6 +86,7 @@ type Schema
     , users :: { user_id :: Int } ==> Array User
     , team :: { team_node_id :: Int } ==> Team
     , tree :: { root_id :: Int } ==> TreeFirstLevel
+    , tree_branch :: { node_id :: Int } ==> BreadcrumbInfo
     }
 
 type Mutation
