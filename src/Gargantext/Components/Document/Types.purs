@@ -20,6 +20,13 @@ type DocPath = {
   , tabType   :: TabType
   }
 
+type NgramsPath = {
+    listIds   :: Array ListId
+  , nodeId    :: NodeID
+  , session   :: Session
+  , tabType   :: TabType
+  }
+
 type NodeDocument = NodePoly Document
 
 type LoadedData =
