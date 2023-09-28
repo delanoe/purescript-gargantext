@@ -362,8 +362,8 @@ applyNgramsTablePatch (NgramsTablePatch ngramsPatches) (NgramsTable m) =
                       applyPatchMap applyNgramsPatch ngramsPatches m.ngrams_repo_elements }
 
 applyNgramsPatches :: forall s. CoreState s -> NgramsTable -> NgramsTable
-applyNgramsPatches { ngramsLocalPatch, ngramsStagePatch } =
-  applyNgramsTablePatch ( ngramsLocalPatch <> ngramsStagePatch )
+applyNgramsPatches {ngramsLocalPatch, ngramsStagePatch, ngramsValidPatch} =
+  applyNgramsTablePatch (ngramsLocalPatch <> ngramsStagePatch <> ngramsValidPatch)
   -- First the valid patch, then the stage patch, and finally the local patch.
 
 {-
@@ -436,7 +436,9 @@ syncPatches props state callback = do
               s {
                   ngramsLocalPatch = fromNgramsPatches mempty
                 , ngramsStagePatch = fromNgramsPatches mempty
-                -- First the local patch, then the newly received newPatch.
+                , ngramsValidPatch = fromNgramsPatches mempty
+                -- , ngramsValidPatch = fromNgramsPatches newPatch <> ngramsLocalPatch <> s.ngramsValidPatch
+                -- First the already valid patch, then the local patch, then the newly received newPatch.
                 , ngramsVersion    = newVersion
                 }) state
             here.log2 "[syncPatches] ngramsVersion" newVersion
@@ -447,6 +449,7 @@ syncPatchesAsync :: forall p s. CoreParams p -> R.State (CoreState s) -> (Unit -
 syncPatchesAsync props@{ listIds, tabType }
                  ({ ngramsLocalPatch: ngramsLocalPatch@{ ngramsPatches }
                   , ngramsStagePatch
+                  , ngramsValidPatch
                   , ngramsVersion
                   } /\ setState) callback = do
   when (isEmptyNgramsTablePatch ngramsStagePatch) $ do
@@ -460,7 +463,8 @@ syncPatchesAsync props@{ listIds, tabType }
           s {
               ngramsLocalPatch = fromNgramsPatches mempty
             , ngramsStagePatch = fromNgramsPatches mempty
-            -- First the local patch, then the newly received newPatch.
+            , ngramsValidPatch = fromNgramsPatches newPatch <> ngramsLocalPatch <> s.ngramsValidPatch
+                              -- First the already valid patch, then the local patch, then the newly received newPatch.
             , ngramsVersion    = newVersion
             }
         here.log2 "[syncPatches] ngramsVersion" newVersion
@@ -522,6 +526,7 @@ coreDispatch _ state (CommitPatch pt) =
 coreDispatch _ state ResetPatches =
   T.modify_ (_ { ngramsLocalPatch = mempty :: NgramsTablePatch
                , ngramsSelection  = mempty :: Set NgramsTerm
+               -- , ngramsValidPatch = mempty :: NgramsTablePatch
                }) state
 
 isSingleNgramsTerm :: NgramsTerm -> Boolean
