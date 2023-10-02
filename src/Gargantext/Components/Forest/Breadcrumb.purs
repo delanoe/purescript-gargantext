@@ -18,7 +18,7 @@ import Gargantext.Context.Session as SessionContext
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.GraphQL.Endpoints (getBreadcrumb)
-import Gargantext.Components.GraphQL.Tree (BreadcrumbInfo)
+import Gargantext.Components.GraphQL.Tree (BreadcrumbInfo, TreeNode)
 import Gargantext.Components.Login.Types (TreeId, UserId)
 import Gargantext.Ends (Frontends, Backend(..))
 import Gargantext.Hooks.Session (useSession)
@@ -43,19 +43,23 @@ import Gargantext.Hooks.Loader (useLoader)
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Breadcrumb"
 
-type Props = ( boxes :: Boxes )
+type PropsBoxes = ( boxes :: Boxes )
+type Props =
+  ( nodeId     :: Int
+  , session    :: Maybe Session
+  )
 
-component :: R2.Leaf Props
+maybeToSession :: Maybe Session -> Session
+maybeToSession s = fromMaybe Nothing s
+
+
+component :: R2.Leaf PropsBoxes
 component = R2.leaf componentCpt
-componentCpt :: R.Component Props
+componentCpt :: R.Component PropsBoxes
 componentCpt = here.component "breadcrumb" cpt where
   cpt props@{ boxes: { session } } _ = do
     -- | States
     -- |
-    -- ref <- R.useRef $ R.createContext Nothing
-    -- context <- R.readRef ref
-    -- session <- useSession
-    -- session' :: Session
     session' <- T.useLive T.unequal session
     -- R.provideContext SessionContext.context session'
 
@@ -66,117 +70,109 @@ componentCpt = here.component "breadcrumb" cpt where
     -- | Behaviors
     -- |
     let
-      -- context = R.readRef ref
-      currentUrl = url
+      -- currentUrl = url
       -- fragment = Fragment.toString $ Fragment.fromString "http://localhost:8008/#/corpus/user1@localhost:8008/112"
       -- fragment = Fragment.toString $ Fragment.fromString url
-      currentNodeId = fromMaybe 0 $ fromString $ getLastUrlElement currentUrl
-      -- getBreadcrumbData = 
-      --     case session' of 
-      --       Nothing -> Nothing
-      --       Just _ -> getBreadcrumb $ fromMaybe Session { backend = ""
-      --                                                   , caches = Map.empty
-      --                                                   , token = ""
-      --                                                   , treeId = 0
-      --                                                   , userName = ""
-      --                                                   , userId = 0 } $ session' currentNodeId
+      currentNodeId = fromMaybe 0 $ fromString $ getLastUrlElement url
+
     
     case session' of 
       Nothing -> pure $ H.div {} []
       Just (session') -> do
-        -- let breadcrumbData = getBreadcrumb session' currentNodeId
+        
+        -- breadcrumbData <- R2.useLayoutEffect1' $ getBreadcrumb session' currentNodeId
+
         pure $
           -- breadcrumb layout
           H.div {}
           [
-          --   H.nav {} [
-          --     breadcrumbView { boxes }
-          --   ]
+            breadcrumbView { currentNodeId, session' }
           -- ,
-            H.nav 
-            { className: "breadcrumb-wrapper bg-light"
-            , "aria-label": "breadcrumb" }
-            [
-              H.ol { className: "breadcrumb text-small" }
-              [
-                H.li { className: "breadcrumb-item" }
-                [
-                  H.a { href: "/" } 
-                  [ H.span { className: "" }
-                    [ 
-                      B.icon { name: "home" }
-                    ]
-                  , H.text "Home" 
-                  ]
-                ]
-              , H.li { className: "breadcrum-item" }
-                [
-                  H.span {}
-                  [
-                    H.text $ show session' <> " - " <> show currentNodeId
-                    -- H.text $ show breadcrumbData
-                  ]
-                ]
-              , 
-                H.li { className: "breadcrumb-item" }
-                [
-                  H.a { href: "/" } 
-                  [ H.span { className: "" }
-                    [ 
-                      B.icon { name: "folder-open-o" } 
-                    ]
-                  , H.text "parent folder" 
-                  ]
-                ]
-              , 
-                H.li { className: "breadcrumb-item" }
-                [ H.span { className: "active-page" }
-                  [ H.span { className: "" }
-                    [ 
-                      B.icon { name: "book" } 
-                    ]
-                  , H.text "current node"
-                  ]
-                ]
-              ]
-            ]
+          --   H.nav 
+          --   { className: "breadcrumb-wrapper bg-light"
+          --   , "aria-label": "breadcrumb" }
+          --   [
+          --     H.ol { className: "breadcrumb text-small" }
+          --     [
+          --       H.li { className: "breadcrumb-item" }
+          --       [
+          --         H.a { href: "/" } 
+          --         [ H.span { className: "" }
+          --           [ 
+          --             B.icon { name: "home" }
+          --           ]
+          --         , H.text "Home" 
+          --         ]
+          --       ]
+          --     , H.li { className: "breadcrum-item" }
+          --       [
+          --         H.span {}
+          --         [
+          --           H.text $ show session' <> " - " <> show currentNodeId
+          --           -- H.text $ show breadcrumbData
+          --         ]
+          --       ]
+          --     , 
+          --       H.li { className: "breadcrumb-item" }
+          --       [
+          --         H.a { href: "/" } 
+          --         [ H.span { className: "" }
+          --           [ 
+          --             B.icon { name: "folder-open-o" } 
+          --           ]
+          --         , H.text "parent folder" 
+          --         ]
+          --       ]
+          --     , 
+          --       H.li { className: "breadcrumb-item" }
+          --       [ H.span { className: "active-page" }
+          --         [ H.span { className: "" }
+          --           [ 
+          --             B.icon { name: "book" } 
+          --           ]
+          --         , H.text "current node"
+          --         ]
+          --       ]
+          --     ]
+          --   ]
           ]
-        -- where
-        --   breadcrumbData = getBreadcrumbData
-
-
-
 
 
 breadcrumbView :: R2.Leaf Props
 breadcrumbView = R2.leaf breadcrumbViewCpt
 breadcrumbViewCpt :: R.Component Props
 breadcrumbViewCpt = here.component "breadcrumbViewCpt" cpt where
-  cpt props@{ boxes: { session } } _ = do
-    session' <- T.useLive T.unequal session
-    url <- R.unsafeHooksEffect GU.href
-    let nodeId = fromMaybe 0 $ fromString $ getLastUrlElement url
+  cpt { nodeId, session } _ = do
+    -- session' <- session
+    -- session' <- T.useLive T.unequal session
+    -- url <- R.unsafeHooksEffect GU.href
+    -- let nodeId = fromMaybe 0 $ fromString $ getLastUrlElement url
+    session' <- liftEffect $ maybeToSession session
 
     case session' of 
       Nothing -> pure $ H.div {} []
       Just (session') -> do
-        reload <- T.useBox T2.newReload
-        reload' <- T.useLive T.unequal reload
+        -- reload <- T.useBox T2.newReload
+        -- reload' <- T.useLive T.unequal reload
         useLoader { errorHandler
                   , loader: loadBreadcrumbData
-                  , path: { nodeId, session', reload: reload'}
-                  , render: \items -> breadcrumbViewMain { items
-                                                         , nodeId
-                                                         , reload
-                                                         , session'
-                                                         } [] }
-            where
+                  , path: { nodeId: nodeId
+                          , session: session'
+                          -- , reload: reload'
+                          }
+                  , render: \items -> breadcrumbViewMain { items: items
+                                                         , nodeId: nodeId
+                                                         , session: session'
+                                                        --  , reload: reload
+                                                         } [] 
+                  }
+        where
           errorHandler = logRESTError here "[breadcrumbView]"
 
 type BreadcrumbViewProps =
   ( items         :: BreadcrumbInfo
   , nodeId        :: Int
-  , reload        :: T.Box T2.Reload
+  -- , reload        :: T.Box T2.Reload
   , session       :: Session
   )
 
@@ -185,58 +181,71 @@ breadcrumbViewMain = R.createElement breadcrumbViewMainCpt
 breadcrumbViewMainCpt :: R.Component BreadcrumbViewProps
 breadcrumbViewMainCpt = here.component "breadcrumbViewMainCpt" cpt where
   cpt props@{ items: { parents } } _ = do
-    let breadcrumbItems = makeBreadcrumbItems parents
-    -- let breadcrumbItems = pure $ H.text "breadcrumb in devlopment"
+    let items = makeBreadcrumbElements parents props
 
-    pure $
+    pure $  
+      H.div { className: "breadcrumb-view" } $
+      items      
 
-      H.div
-      { className: "breadcrumb-view" } $
-      breadcrumbItems
 
-  makeBreadcrumbItems :: Array TreeNode -> Maybe TreeNode -> Record BreadcrumbViewProps -> Array R.Element
-  makeBreadcrumbItems root (Just parent) props =
-    [
-      breadcrumbItem
-      { name: parent.name
-      , parent_id: parent.parent_id
-      , node_type: parent.node_type
-      , id: parent.id
-      }
-    ]
-    -- where
-    --   disabled { node_type } = if node_type == GT.FolderShared then true else false
-  makeBreadcrumbItems _ Nothing _ = []
+  makeBreadcrumbElements :: Array TreeNode -> Record BreadcrumbViewProps -> Array R.Element
+  makeBreadcrumbElements items' props = makeBreadcrumbElementsMap <$> items' where
+    makeBreadcrumbElementsMap :: TreeNode -> R.Element
+    makeBreadcrumbElementsMap node = breadcrumbItem { nodeId: node.id
+                                                    , linkId: node.id
+                                                    , nodeType: node.node_type
+                                                    , linkNodeType: node.node_type
+                                                    , parentId: props.nodeId
+                                                    -- , reload: props.reload
+                                                    , session: props.session
+                                                    -- , style: FolderChild
+                                                    , text: node.name
+                                                    , disabled: false
+                                                    }
 
-type BreadcrumbItemProps = 
-  ( node_type       :: NodeType
-  , id              :: Int
-  , parent_id       :: Int
-  , name            :: String
+type BreadcrumbItemProps =
+  ( disabled      :: Boolean
+  , linkNodeType  :: NodeType
+  , linkId        :: Int
+  , nodeType      :: NodeType
+  , nodeId        :: Int
+  , parentId      :: Int
+  -- , reload        :: T.Box T2.Reload
+  , session       :: Session
+  -- , style         :: FolderStyle
+  , text          :: String
   )
 
 breadcrumbItem :: R2.Leaf BreadcrumbItemProps
 breadcrumbItem = R2.leaf breadcrumbItemCpt
 breadcrumbItemCpt :: R.Component BreadcrumbItemProps
 breadcrumbItemCpt = here.component "breadcrumbItemCpt" cpt where
-  cpt props@{ nodeType
-            , nodeId
+  cpt props@{ nodeId
+            , linkId
+            , nodeType
+            , linkNodeType
             , parentId
-            , reload
+            -- , reload
             , session
-            , style
+            -- , style
             , text
+            , disabled
             } _ = do
-    pure $ H.div {} []
+    pure $ 
+    
+      H.div { className: "bItem" } 
+      [
+        H.text props.text
+      ]
 
 getLastUrlElement :: String -> String
 getLastUrlElement str = fromMaybe "" $ A.last $ split (Pattern "/") str
 
 type LoadProps =
   (
-    session :: Session,
-    nodeId :: Int,
-    reload :: T2.Reload
+    session :: Session
+  , nodeId :: Int
+  -- , reload :: T.Box T2.Reload
   )
 
 loadBreadcrumbData :: Record LoadProps -> AffRESTError BreadcrumbInfo
