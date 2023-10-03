@@ -22,9 +22,11 @@ import Gargantext.Components.GraphQL.Tree (BreadcrumbInfo, TreeNode)
 import Gargantext.Components.Login.Types (TreeId, UserId)
 import Gargantext.Ends (Frontends, Backend(..))
 import Gargantext.Hooks.Session (useSession)
+import Gargantext.Routes (AppRoute(Home), appPath, nodeTypeAppRoute)
 import Gargantext.Sessions
 import Gargantext.Sessions.Types
 import Gargantext.Types (CorpusId, FrontendError, NodeID, NodeType, SessionId)
+import Gargantext.Types as GT
 import Gargantext.Utils as GU
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -44,13 +46,14 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Breadcrumb"
 
 type PropsBoxes = ( boxes :: Boxes )
+
 type Props =
   ( nodeId     :: Int
   , session    :: Maybe Session
   )
 
-maybeToSession :: Maybe Session -> Session
-maybeToSession s = fromMaybe Nothing s
+-- maybeToSession :: Maybe Session -> Session
+-- maybeToSession s = fromMaybe Nothing s
 
 
 component :: R2.Leaf PropsBoxes
@@ -65,28 +68,48 @@ componentCpt = here.component "breadcrumb" cpt where
 
     -- | Effects
     -- |
-    url <- R.unsafeHooksEffect GU.href
+    -- url <- R.unsafeHooksEffect GU.href
 
     -- | Behaviors
     -- |
-    let
+    -- let
       -- currentUrl = url
       -- fragment = Fragment.toString $ Fragment.fromString "http://localhost:8008/#/corpus/user1@localhost:8008/112"
       -- fragment = Fragment.toString $ Fragment.fromString url
-      currentNodeId = fromMaybe 0 $ fromString $ getLastUrlElement url
+      -- currentNodeId = fromMaybe 0 $ fromString $ getLastUrlElement url
 
     
     case session' of 
       Nothing -> pure $ H.div {} []
       Just (session') -> do
         
+        url <- R.unsafeHooksEffect GU.href
+        let nodeId = fromMaybe 0 $ fromString $ getLastUrlElement url
         -- breadcrumbData <- R2.useLayoutEffect1' $ getBreadcrumb session' currentNodeId
+        let session'' = Just session'
 
         pure $
           -- breadcrumb layout
-          H.div {}
+          H.nav { className: "breadcrumb-wrapper bg-light"
+                , "aria-label": "breadcrumb" }
           [
-            breadcrumbView { currentNodeId, session' }
+            H.ol { className: "breadcrumb text-small" }
+            [
+              H.li { className: "breadcrumb-item" }
+              [
+                H.a { href: "/" } 
+                [ H.span { className: "" }
+                  [ 
+                    B.icon { name: "home" }
+                  ]
+                , H.text "Home" 
+                ]
+              ]
+            ,
+              breadcrumbView { nodeId: nodeId
+                              , session: Just session' 
+                              }
+            ]
           -- ,
           --   H.nav 
           --   { className: "breadcrumb-wrapper bg-light"
@@ -143,17 +166,11 @@ breadcrumbView = R2.leaf breadcrumbViewCpt
 breadcrumbViewCpt :: R.Component Props
 breadcrumbViewCpt = here.component "breadcrumbViewCpt" cpt where
   cpt { nodeId, session } _ = do
-    -- session' <- session
-    -- session' <- T.useLive T.unequal session
-    -- url <- R.unsafeHooksEffect GU.href
-    -- let nodeId = fromMaybe 0 $ fromString $ getLastUrlElement url
-    session' <- liftEffect $ maybeToSession session
+    let session' = session
 
     case session' of 
       Nothing -> pure $ H.div {} []
       Just (session') -> do
-        -- reload <- T.useBox T2.newReload
-        -- reload' <- T.useLive T.unequal reload
         useLoader { errorHandler
                   , loader: loadBreadcrumbData
                   , path: { nodeId: nodeId
@@ -180,12 +197,17 @@ breadcrumbViewMain :: R2.Component BreadcrumbViewProps
 breadcrumbViewMain = R.createElement breadcrumbViewMainCpt
 breadcrumbViewMainCpt :: R.Component BreadcrumbViewProps
 breadcrumbViewMainCpt = here.component "breadcrumbViewMainCpt" cpt where
-  cpt props@{ items: { parents } } _ = do
+  cpt props@{ items: { parents }, session } _ = do
+    
+    -- session' <- T.useLive T.unequal session
     let items = makeBreadcrumbElements parents props
 
-    pure $  
-      H.div { className: "breadcrumb-view" } $
-      items      
+    -- case session of 
+    --   Nothing -> pure $ H.div {} []
+    --   Just (session) -> do
+
+    pure $ 
+      R.fragment items
 
 
   makeBreadcrumbElements :: Array TreeNode -> Record BreadcrumbViewProps -> Array R.Element
@@ -198,7 +220,7 @@ breadcrumbViewMainCpt = here.component "breadcrumbViewMainCpt" cpt where
                                                     , parentId: props.nodeId
                                                     -- , reload: props.reload
                                                     , session: props.session
-                                                    -- , style: FolderChild
+                                                    -- , style: FolderUp
                                                     , text: node.name
                                                     , disabled: false
                                                     }
@@ -231,12 +253,41 @@ breadcrumbItemCpt = here.component "breadcrumbItemCpt" cpt where
             , text
             , disabled
             } _ = do
+
+    let sid = sessionId session
+    let rootId = treeId session
+
     pure $ 
-    
-      H.div { className: "bItem" } 
+      H.li { className: "breadcrumb-item" }
       [
-        H.text props.text
+        H.a { className: ""
+            , href: "/#/" <> createNodeUrl linkId rootId linkNodeType sid 
+            } 
+        [ 
+          H.span { className: "" }
+          [ 
+            -- B.icon { name: "folder-open-o" } 
+            B.icon
+            { className: ""
+            , name: GT.getIcon nodeType true
+            }
+          ]
+        , 
+          H.text props.text 
+        ]
       ]
+
+  createNodeUrl :: Int -> Int -> NodeType -> SessionId -> String
+  createNodeUrl lId rootId nType sId
+    -- | rootId == lId  = appPath Home
+    | otherwise      = appPath $ getFolderPath nType sId lId
+  
+  getFolderPath :: GT.NodeType -> GT.SessionId -> Int -> AppRoute
+  getFolderPath nodeType sid nodeId = fromMaybe Home $ nodeTypeAppRoute nodeType sid nodeId
+
+
+treeId :: Session -> Int
+treeId (Session {treeId: tId}) = tId
 
 getLastUrlElement :: String -> String
 getLastUrlElement str = fromMaybe "" $ A.last $ split (Pattern "/") str

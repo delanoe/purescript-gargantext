@@ -12134,6 +12134,10 @@ select.form-control {
 .breadcrumb-wrapper .breadcrumb-item .b-icon {
   margin: 0 4px;
 }
+.breadcrumb-wrapper .fa-spinner {
+  font-size: 100%;
+  margin: auto 10px;
+}
 
 .btn-secondary,
 .btn-secondary:hover,
