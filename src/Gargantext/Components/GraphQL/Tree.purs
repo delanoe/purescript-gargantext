@@ -19,6 +19,10 @@ type TreeFirstLevel =
   , parent   :: Maybe TreeNode
   }
 
+type BreadcrumbInfo =
+  { parents   :: Array TreeNode }
+
+
 treeFirstLevelQuery = { tree: { root_id: Var :: _ "id" Int} =>>
   { root: { name: unit
           , node_type: unit
@@ -37,3 +41,13 @@ treeFirstLevelQuery = { tree: { root_id: Var :: _ "id" Int} =>>
             }
   }
  }
+
+breadcrumbQuery = { tree_branch: { node_id: Var :: _ "id" Int} =>>
+  { parents: 
+    { name: unit
+    , node_type: unit
+    , id: unit
+    , parent_id: unit
+    }
+  }
+}

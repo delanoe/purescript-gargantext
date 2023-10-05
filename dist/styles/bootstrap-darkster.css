@@ -12314,6 +12314,29 @@ select.form-control {
   overflow-x: hidden;
 }
 
+.breadcrumb-wrapper {
+  border-bottom: 1px solid #dee2e6;
+}
+.breadcrumb-wrapper .breadcrumb {
+  background-color: transparent;
+  padding: 4px 4px !important;
+  margin: 0 !important;
+}
+.breadcrumb-wrapper .breadcrumb-item {
+  color: #DEE2E6;
+}
+.breadcrumb-wrapper .breadcrumb-item .active-page {
+  font-weight: bold;
+  color: #33A2FF;
+}
+.breadcrumb-wrapper .breadcrumb-item .b-icon {
+  margin: 0 4px;
+}
+.breadcrumb-wrapper .fa-spinner {
+  font-size: 100%;
+  margin: auto 10px;
+}
+
 .dropdown-menu {
   background-color: #181A1B;
 }
