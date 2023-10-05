@@ -114,16 +114,16 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
                     display { title: fromMaybe "no name" (Just ui_username) }
                       (contactInfos userInfo (onUpdateUserInfo boxes.errors reload))
                     , pubmedSettings { boxes, nodeId, session }
-                    , Tabs.tabs {
-                         boxes
-                       , cacheState
-                       , defaultListId: 424242
-                       , frontends
-                       , nodeId
-                       , session
-                       , sidePanel: sidePanelTexts
-                       , sidePanelList: sidePanelLists
-                       }
+                    -- , Tabs.tabs {
+                    --      boxes
+                    --    , cacheState
+                    --    , defaultListId: 424242
+                    --    , frontends
+                    --    , nodeId
+                    --    , session
+                    --    , sidePanel: sidePanelTexts
+                    --    , sidePanelList: sidePanelLists
+                    --    }
                     ]
               }
     where
