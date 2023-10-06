@@ -155,6 +155,7 @@ uploadFileViewWithLangsCpt = here.component "uploadFileViewWithLangs" cpt
               [ H.div {className:"col-6 flex-space-around"}
                 [ formChoiceSafe { items: [ CSV
                                           , CSV_HAL
+                                          , Istex
                                           , WOS
                                           , JSON
                                           -- , Iramuteq
