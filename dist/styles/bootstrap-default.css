@@ -12116,6 +12116,29 @@ select.form-control {
   overflow-x: hidden;
 }
 
+.breadcrumb-wrapper {
+  border-bottom: 1px solid #dee2e6;
+}
+.breadcrumb-wrapper .breadcrumb {
+  background-color: transparent;
+  padding: 4px 4px !important;
+  margin: 0 !important;
+}
+.breadcrumb-wrapper .breadcrumb-item {
+  color: #495057;
+}
+.breadcrumb-wrapper .breadcrumb-item .active-page {
+  font-weight: bold;
+  color: #005a9a;
+}
+.breadcrumb-wrapper .breadcrumb-item .b-icon {
+  margin: 0 4px;
+}
+.breadcrumb-wrapper .fa-spinner {
+  font-size: 100%;
+  margin: auto 10px;
+}
+
 .btn-secondary,
 .btn-secondary:hover,
 .btn-outline-secondary:not(:disabled):not(.disabled):hover,
