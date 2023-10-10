@@ -186,7 +186,7 @@ settingsBox Corpus =
                                 , NodeTexts
                                 , NodeList
                                 , Graph
-                                , Dashboard
+                                -- , Dashboard
                                 , Phylo
                                 -- , NodeFrameNotebook
                                 ]
