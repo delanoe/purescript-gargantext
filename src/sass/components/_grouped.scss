@@ -268,7 +268,9 @@
     }
   }
 }
-.mainleaf__folder-icon:not(.b-icon-button--enabled) {
+.mainleaf__folder-icon:not(.b-icon-button--enabled),
+.main-topbar__tree-switcher.btn-light .fa,
+.main-topbar__tree-switcher.btn-outline-light .fa {
   &::before {
     color: inherit !important;
   }
@@ -278,7 +280,8 @@
 .popup-container .card-footer .btn-primary,
 .popup-container .search-bar .btn.fa,
 .login-modal-form .btn .fa,
-.corpus-layout__code-section .b-button .fa {
+.corpus-layout__code-section .b-button .fa,
+.main-topbar__tree-switcher.btn-outline-light:not(:hover) .fa {
   color: $light !important;
   &:before {
     color: $light !important;
