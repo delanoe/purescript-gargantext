@@ -692,7 +692,7 @@ tableRowCpt = here.component "tableRow" cpt where
           ]
         ]
       , H.div { className: tClassName } [ H.text $ showSource r.source ]
-      , H.div {} [ H.text $ maybe "-" show r.ngramCount ]
+      , H.div {} [ H.text $ maybe "-" show r.score ]
       ]
 
 
