@@ -611,6 +611,7 @@ glyphiconToCharCode = _toString <<< case _ of
   "shopping-basket" -> 0xf291
   "shopping-cart" -> 0xf07a
   "shower" -> 0xf2cc
+  "sidebar" -> 0xe905
   "sign-in" -> 0xf090
   "sign-language" -> 0xf2a7
   "sign-out" -> 0xf08b
