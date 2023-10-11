@@ -135,7 +135,7 @@ settingsBox Team =
                                 , Team
                                 , Annuaire
                                 -- , NodeFrameNotebook
-                                , FolderShared
+                                -- , FolderShared
                                 , NodeFrameVisio
                                 ]
                           , Share
