@@ -106,7 +106,7 @@ component = here.component "main" cpt where
       ,
         -- Search (wrapped in its form for the "enter" keyboard event submit)
         H.form
-        { className: "phylo-topbar__autocomplete graph-node-search"
+        { className: "phylo-topbar__autocomplete"
         }
         [
           inputWithAutocomplete
