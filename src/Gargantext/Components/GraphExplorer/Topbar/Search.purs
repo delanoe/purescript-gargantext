@@ -79,8 +79,8 @@ nodeSearchControlCpt = here.component "nodeSearchControl" cpt
           ]
         ]
 
-autocompleteSearch :: SigmaxT.SGraph -> String -> Array String
-autocompleteSearch graph s = Seq.toUnfoldable $ (_.label) <$> searchNodes s nodes
+autocompleteSearch :: SigmaxT.SGraph -> String -> Effect (Array String)
+autocompleteSearch graph s = pure $ Seq.toUnfoldable $ (_.label) <$> searchNodes s nodes
   where
     nodes = SigmaxT.graphNodes graph
 

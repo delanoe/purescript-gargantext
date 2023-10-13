@@ -5,6 +5,7 @@ module Gargantext.Components.PhyloExplorer.Layout
 import Gargantext.Prelude
 
 import DOM.Simple (document, querySelector, window)
+import Data.Array as A
 import Data.Either (Either(..))
 import Data.Foldable (for_, intercalate)
 import Data.Int as Int
@@ -20,7 +21,7 @@ import Gargantext.Components.PhyloExplorer.SideBar (sideBar)
 import Gargantext.Components.PhyloExplorer.Store as PhyloStore
 import Gargantext.Components.PhyloExplorer.ToolBar (toolBar)
 import Gargantext.Components.PhyloExplorer.TopBar (topBar)
-import Gargantext.Components.PhyloExplorer.Types (DisplayView, ExtractedCount, FrameDoc, PhyloData(..), TabView(..), Term, sortSources)
+import Gargantext.Components.PhyloExplorer.Types (DisplayView, ExtractedCount, FrameDoc, PhyloData(..), TabView(..), sortSources)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.UpdateEffect (useUpdateEffect1', useUpdateEffect3')
@@ -49,8 +50,6 @@ layoutCpt = here.component "layout" cpt where
     , sources
     , terms
     , toolBarDisplayed
-    , search
-    , result
     , displayView
     , isIsolineDisplayed
     , sideBarDisplayed
@@ -125,16 +124,16 @@ layoutCpt = here.component "layout" cpt where
         T.write_ mLabel selectedSource
         RS.selectSource window mSource
 
-      searchCallback :: String -> Effect Unit
-      searchCallback =
-            flip T.write search
-        >=> RS.autocompleteSearch terms'
-        >=> flip T.write_ result
+      searchCallback :: String -> Effect (Array String)
+      searchCallback s = do
+            cs <- RS.autocompleteSearchMulti terms' s
+            pure $ (getter _.label) <$> cs
 
-      resultCallback :: Maybe Term -> Effect Unit
-      resultCallback mTerm =
-            resetSelection unit
-        *> RS.autocompleteSubmit displayView mTerm
+      autocompleteClickCallback :: String -> Effect Unit
+      autocompleteClickCallback s = do
+        -- find exact element
+        let fTerms = A.filter (\t -> getter _.label t == s) terms'
+        RS.autocompleteSubmit displayView $ A.head fTerms
 
       unselectCallback :: Unit -> Effect Unit
       unselectCallback _ =
@@ -251,9 +250,9 @@ layoutCpt = here.component "layout" cpt where
           [
             R2.when (isBuilt') $
               topBar
-              { sourceCallback
+              { autocompleteClickCallback
+              , sourceCallback
               , searchCallback
-              , resultCallback
               }
           ]
         ]
