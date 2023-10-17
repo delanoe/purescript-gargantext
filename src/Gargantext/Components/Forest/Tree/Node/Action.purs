@@ -37,7 +37,7 @@ icon :: Action -> String
 icon (AddNode    _ _)               = glyphiconNodeAction (Add [])
 icon (DeleteNode _)                 = glyphiconNodeAction Delete
 icon (RenameNode _)                 = glyphiconNodeAction Config
-icon (UpdateNode _)                 = glyphiconNodeAction Refresh
+icon (UpdateNode _)                 = glyphiconNodeAction ReloadWithSettings
 icon (ShareTeam   _)                = glyphiconNodeAction Share
 icon (AddContact  _)                = glyphiconNodeAction Share
 icon (SharePublic _ )               = glyphiconNodeAction (Publish { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
