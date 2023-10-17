@@ -277,8 +277,8 @@ settingsBox NodeList =
               , doc  : Documentation NodeList
               , buttons : [ Refresh
                           , Config
-                          , Download
                           , Upload
+                          , Download
                           , Merge {subTreeParams : SubTreeParams { showtypes: [ FolderPrivate
                                                                 , FolderShared
                                                                 , Team
