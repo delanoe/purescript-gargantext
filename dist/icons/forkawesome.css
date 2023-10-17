@@ -2736,6 +2736,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 .fa-sidebar:before {
   content: "\e905";
 }
+.fa-reload-with-settings:before {
+  content: "\e906";
+}
 
 .sr-only {
   position: absolute;

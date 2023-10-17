@@ -340,6 +340,7 @@ panelActionCpt = here.component "panelAction" cpt
     cpt { action: Add xs, dispatch, id, name, nodeType} _ =
       pure $ addNodeView {dispatch, id, name, nodeType, nodeTypes: xs} []
     cpt { action: Refresh , dispatch, nodeType } _ = pure $ update { dispatch, nodeType } []
+    cpt { action: ReloadWithSettings , dispatch, nodeType } _ = pure $ update { dispatch, nodeType } []
     cpt { action: Config, nodeType } _ =
       pure $ fragmentPT $ "Config " <> show nodeType
     -- Functions using SubTree

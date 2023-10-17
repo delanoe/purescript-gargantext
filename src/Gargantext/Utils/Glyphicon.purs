@@ -575,6 +575,7 @@ glyphiconToCharCode = _toString <<< case _ of
   "reddit-square" -> 0xf1a2
   "refresh" -> 0xf021
   "registered" -> 0xf25d
+  "reload-with-settings" -> 0xe906
   "renren" -> 0xf18b
   "repeat" -> 0xf01e
   "reply" -> 0xf112
