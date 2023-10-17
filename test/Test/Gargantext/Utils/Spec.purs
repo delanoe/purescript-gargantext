@@ -124,7 +124,7 @@ spec =
 
     it "Hash List with backend works" do
       let list = ["a","b"]
-      let hashed = "ab19ec537f09499b26f0f62eed7aefad46ab9f498e06a7328ce8e8ef90da6d86"
+      let hashed = "fb8e20fc2e4c3f248c60c39bd652f3c1347298bb977b8b4d5903b85055620603"
                    -- ^ hash from backend with text above
       h <- Crypto.hash list
       h`shouldEqual` hashed

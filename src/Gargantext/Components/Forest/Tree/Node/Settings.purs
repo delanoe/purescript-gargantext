@@ -135,7 +135,7 @@ settingsBox Team =
                                 , Team
                                 , Annuaire
                                 -- , NodeFrameNotebook
-                                , FolderShared
+                                -- , FolderShared
                                 , NodeFrameVisio
                                 ]
                           , Share
@@ -186,7 +186,7 @@ settingsBox Corpus =
                                 , NodeTexts
                                 , NodeList
                                 , Graph
-                                , Dashboard
+                                -- , Dashboard
                                 , Phylo
                                 -- , NodeFrameNotebook
                                 ]

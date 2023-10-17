@@ -16,10 +16,10 @@ import Gargantext.Components.GraphQL.IMT as GQLIMT
 import Gargantext.Components.GraphQL.NLP as GQLNLP
 import Gargantext.Components.GraphQL.Node (Corpus, Node, nodeParentQuery, nodesQuery, nodesCorpusQuery)
 import Gargantext.Components.GraphQL.Team (Team, teamQuery)
-import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, treeFirstLevelQuery)
+import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, treeFirstLevelQuery, BreadcrumbInfo, breadcrumbQuery)
 import Gargantext.Components.GraphQL.User (UserInfo, userInfoQuery, User, userQuery)
 import Gargantext.Components.Lang (Lang)
-import Gargantext.Config.REST (RESTError(..), AffRESTError)
+import Gargantext.Config.REST (RESTError(..), AffRESTError, logRESTError)
 import Gargantext.Core.NgramsTable.Types (NgramsTerm(..))
 import Gargantext.Sessions (Session(..))
 import Gargantext.Types (CorpusId, NodeType)
@@ -178,3 +178,9 @@ getContextNgrams session context_id list_id = do
   let query = GQLCTX.contextNgramsQuery `withVars` { context_id, list_id }
   { context_ngrams } <- queryGql session "get context ngrams" query
   pure $ Right $ NormNgramsTerm <$> context_ngrams
+
+getBreadcrumb :: Session -> Int -> AffRESTError BreadcrumbInfo
+getBreadcrumb session id = do
+  { tree_branch } <- queryGql session "get breadcrumb branch" $ breadcrumbQuery `withVars` { id }
+  liftEffect $ here.log2 "[getBreadcrumb] breadcrumb" tree_branch
+  pure $ Right tree_branch

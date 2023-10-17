@@ -6114,7 +6114,9 @@ h3 {
   color: inherit;
 }
 
-.mainleaf__folder-icon:not(.b-icon-button--enabled)::before {
+.mainleaf__folder-icon:not(.b-icon-button--enabled)::before,
+.main-topbar__tree-switcher.btn-light .fa::before,
+.main-topbar__tree-switcher.btn-outline-light .fa::before {
   color: inherit !important;
 }
 
@@ -6122,14 +6124,16 @@ h3 {
 .popup-container .card-footer .btn-primary,
 .popup-container .search-bar .btn.fa,
 .login-modal-form .btn .fa,
-.corpus-layout__code-section .b-button .fa {
+.corpus-layout__code-section .b-button .fa,
+.main-topbar__tree-switcher.btn-outline-light:not(:hover) .fa {
   color: #f8f9fa !important;
 }
 .main-topbar .nav-item > a .fa:before,
 .popup-container .card-footer .btn-primary:before,
 .popup-container .search-bar .btn.fa:before,
 .login-modal-form .btn .fa:before,
-.corpus-layout__code-section .b-button .fa:before {
+.corpus-layout__code-section .b-button .fa:before,
+.main-topbar__tree-switcher.btn-outline-light:not(:hover) .fa:before {
   color: #f8f9fa !important;
 }
 
@@ -9373,9 +9377,6 @@ input[type=range]:-moz-focusring {
 .main-topbar__theme-switcher, .main-topbar__lang-switcher, .main-topbar__tree-switcher {
   margin-right: 8px;
 }
-.main-topbar__tree-switcher {
-  width: 136px;
-}
 .main-topbar.navbar-dark .navbar-text:hover {
   color: rgba(255, 255, 255, 0.75);
 }
@@ -12114,6 +12115,29 @@ select.form-control {
 .search-modal__results {
   height: 14em;
   overflow-x: hidden;
+}
+
+.breadcrumb-wrapper {
+  border-bottom: 1px solid #dee2e6;
+}
+.breadcrumb-wrapper .breadcrumb {
+  background-color: transparent;
+  padding: 4px 4px !important;
+  margin: 0 !important;
+}
+.breadcrumb-wrapper .breadcrumb-item {
+  color: #495057;
+}
+.breadcrumb-wrapper .breadcrumb-item .active-page {
+  font-weight: bold;
+  color: #005a9a;
+}
+.breadcrumb-wrapper .breadcrumb-item .b-icon {
+  margin: 0 4px;
+}
+.breadcrumb-wrapper .fa-spinner {
+  font-size: 100%;
+  margin: auto 10px;
 }
 
 .btn-secondary,
