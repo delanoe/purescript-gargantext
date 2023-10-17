@@ -260,10 +260,10 @@ breadcrumbItemCpt = here.component "breadcrumbItemCpt" cpt where
     pure $ 
       H.li { className: "breadcrumb-item" }
       [
-        H.a { className: ""
-            , href: "/#/" <> createNodeUrl linkId rootId linkNodeType sid 
-            } 
-        [ 
+        -- H.a { className: ""
+        --     , href: "/#/" <> createNodeUrl linkId rootId linkNodeType sid 
+        --     } 
+        -- [ 
           H.span { className: "" }
           [ 
             -- B.icon { name: "folder-open-o" } 
@@ -274,7 +274,7 @@ breadcrumbItemCpt = here.component "breadcrumbItemCpt" cpt where
           ]
         , 
           H.text props.text 
-        ]
+        -- ]
       ]
 
   createNodeUrl :: Int -> Int -> NodeType -> SessionId -> String

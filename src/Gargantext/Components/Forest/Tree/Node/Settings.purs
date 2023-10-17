@@ -13,7 +13,12 @@ if user has access to node then he can do all his related actions
 ------------------------------------------------------------------------
 data NodeAction = Documentation NodeType
                 | SearchBox
-                | Download | Upload | Refresh | Config | Reconstruct
+                | Download 
+                | Upload 
+                | Refresh 
+                | ReloadWithSettings
+                | Config 
+                | Reconstruct
                 | Delete
                 | Share
                 | ManageTeam
@@ -34,6 +39,7 @@ instance Eq NodeAction where
   eq Download Download                       = true
   eq Upload Upload                           = true
   eq Refresh Refresh                         = true
+  eq ReloadWithSettings ReloadWithSettings   = true
   eq (Move x) (Move y)                       = x == y
   eq Clone Clone                             = true
   eq Delete Delete                           = true
@@ -56,6 +62,7 @@ instance Show NodeAction where
   show Download            = "Download"
   show Upload              = "Upload"
   show Refresh             = "Refresh"
+  show ReloadWithSettings  = "Reload (with settings)"
   show (Move _)            = "Move with subtree params" -- <> show t
   show Clone               = "Clone"
   show Delete              = "Delete"
@@ -81,6 +88,7 @@ glyphiconNodeAction (Link _)            = "arrows-h"
 glyphiconNodeAction Download            = "download"
 glyphiconNodeAction (Merge _)           = "random"
 glyphiconNodeAction Refresh             = "refresh"
+glyphiconNodeAction ReloadWithSettings  = "reload-with-settings"
 glyphiconNodeAction Config              = "wrench"
 glyphiconNodeAction Reconstruct         = "cogs"
 glyphiconNodeAction Share               = "user-plus"
@@ -204,7 +212,7 @@ settingsBox NodeTexts =
   SettingsBox { show : true
               , edit : true
               , doc  : Documentation NodeTexts
-              , buttons : [ Refresh
+              , buttons : [ ReloadWithSettings
                           , Upload
                           , Download
                           , Delete
@@ -215,7 +223,7 @@ settingsBox Graph =
   SettingsBox { show : true
               , edit : true
               , doc  : Documentation Graph
-              , buttons : [ Refresh
+              , buttons : [ ReloadWithSettings
                           , Config
                           , Download -- TODO as GEXF or JSON
                           -- , Publish publishParams
@@ -275,10 +283,10 @@ settingsBox NodeList =
   SettingsBox { show : true
               , edit : true
               , doc  : Documentation NodeList
-              , buttons : [ Refresh
+              , buttons : [ ReloadWithSettings
                           , Config
-                          , Download
                           , Upload
+                          , Download
                           , Merge {subTreeParams : SubTreeParams { showtypes: [ FolderPrivate
                                                                 , FolderShared
                                                                 , Team
@@ -298,7 +306,7 @@ settingsBox Dashboard =
   SettingsBox { show : true
               , edit : false
               , doc  : Documentation Dashboard
-              , buttons : [ Refresh
+              , buttons : [ ReloadWithSettings
                           , Publish publishParams
                           , Delete
                           ]

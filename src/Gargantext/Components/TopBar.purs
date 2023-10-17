@@ -182,12 +182,17 @@ divDropdownLeftCpt = here.component "divDropdownLeft" cpt
                         , text  : "Info" }
 
     elements = [
-      [
-        LiNav { title : "Map Show Room and tutorials"
+      [ LiNav { title : "Map Show Room and tutorials"
               , href  : "https://write.frame.gargantext.org/s/649a6d7e1db3b365d6d0b1430d9700cc0bb4fdb1348dd1040a94c95f98979abe"
               , icon  : "fa fa-lightbulb-o"
               , text  : "User documentation"
               }
+      , LiNav { title : "GargTools"
+              , href  : "https://gargtools.iscpif.fr/"
+              , icon  : "fa fa-gears"
+              , text  : "Format your data with Garg Tools!"
+              }
+
 
       , LiNav { title : "Learn with us!"
               , href  : "https://iscpif.fr/gargantext/formation/"

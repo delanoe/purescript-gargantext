@@ -26,12 +26,12 @@ type Completions = Array String
 
 type Props =
   (
-    autocompleteSearch  :: String -> Completions
+    autocompleteSearch  :: String -> Effect Completions
   , classes             :: String
   , onAutocompleteClick :: String -> Effect Unit
   , onEnterPress        :: String -> Effect Unit
-  , state               :: T.Box String
   , placeholder         :: String
+  , state               :: T.Box String
   )
 
 inputWithAutocomplete :: R2.Leaf Props
@@ -43,13 +43,17 @@ inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
         , classes
         , onAutocompleteClick
         , onEnterPress
-        , state
-        , placeholder } _ = do
+        , placeholder
+        , state } _ = do
       -- States
       state'        <- T.useLive T.unequal state
       containerRef  <- R.useRef null
       inputRef      <- R.useRef null
-      completions   <- T.useBox $ autocompleteSearch state'
+      completions  <- T.useBox []
+
+      R.useEffectOnce' $ do
+        cs <- autocompleteSearch state'
+        T.write_ cs completions
 
       -- Render
       pure $
@@ -64,7 +68,7 @@ inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
                   , ref: inputRef
                   , className: "form-control"
                   , value: state'
-                  , placeholder: placeholder
+                  , placeholder
                   , on: { focus: onFocus completions state'
                         , input: onInput completions
                         , change: onInput completions
@@ -104,13 +108,16 @@ inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
 
 
         onFocus :: forall event. T.Box Completions -> String -> event -> Effect Unit
-        onFocus completions st _ = T.write_ (autocompleteSearch st) completions
+        onFocus completions st _ = do
+          cs <- autocompleteSearch st
+          T.write_ cs completions
 
         onInput :: forall event. T.Box Completions -> event -> Effect Unit
         onInput completions e = do
           let val = R.unsafeEventValue e
           T.write_ val state
-          T.write_ (autocompleteSearch val) completions
+          cs <- autocompleteSearch val
+          T.write_ cs completions
 
         onInputKeyUp :: R.Ref (Nullable DOM.Element) -> DE.KeyboardEvent -> Effect Boolean
         onInputKeyUp inputRef e = do
@@ -131,7 +138,7 @@ inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
 
 type Props' =
   (
-    autocompleteSearch  :: String -> Completions
+    autocompleteSearch  :: String -> Effect Completions
   , classes             :: String
   , onAutocompleteClick :: String -> Effect Unit
   , dispatch            :: Action -> Aff Unit
@@ -158,7 +165,11 @@ inputWithAutocompleteCpt' = here.component "inputWithAutocomplete" cpt
       state'        <- T.useLive T.unequal state
       containerRef  <- R.useRef null
       inputRef      <- R.useRef null
-      completions   <- T.useBox $ autocompleteSearch state'
+      completions   <- T.useBox []
+
+      R.useEffectOnce' $ do
+        cs <- autocompleteSearch state'
+        T.write_ cs completions
 
       -- Render
       pure $
@@ -173,7 +184,7 @@ inputWithAutocompleteCpt' = here.component "inputWithAutocomplete" cpt
                   , ref: inputRef
                   , className: "form-control"
                   , value: state'
-                  , placeholder: placeholder
+                  , placeholder
                   , on: { focus: onFocus completions state'
                         , input: onInput completions
                         , change: onInput completions
@@ -219,13 +230,16 @@ inputWithAutocompleteCpt' = here.component "inputWithAutocomplete" cpt
 
 
         onFocus :: forall event. T.Box Completions -> String -> event -> Effect Unit
-        onFocus completions st _ = T.write_ (autocompleteSearch st) completions
+        onFocus completions st _ = do
+          cs <- autocompleteSearch st
+          T.write_ cs completions
 
         onInput :: forall event. T.Box Completions -> event -> Effect Unit
         onInput completions e = do
           let val = R.unsafeEventValue e
           T.write_ val state
-          T.write_ (autocompleteSearch val) completions
+          cs <- autocompleteSearch val
+          T.write_ cs completions
 
         onInputKeyUp :: R.Ref (Nullable DOM.Element) -> DE.KeyboardEvent -> Effect Boolean
         onInputKeyUp inputRef e = do

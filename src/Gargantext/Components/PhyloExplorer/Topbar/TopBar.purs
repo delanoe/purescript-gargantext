@@ -4,24 +4,25 @@ module Gargantext.Components.PhyloExplorer.TopBar
 
 import Gargantext.Prelude
 
+import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), ComponentStatus(..), Variant(..))
+import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
+import Gargantext.Components.InputWithAutocomplete (inputWithAutocomplete)
 import Gargantext.Components.PhyloExplorer.Store as PhyloStore
-import Gargantext.Components.PhyloExplorer.Types (Term(..), Source(..))
+import Gargantext.Components.PhyloExplorer.Types (Source(..))
 import Gargantext.Types (SidePanelState(..), toggleSidePanelState)
 import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
-import Reactix (nothing)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
 type Props =
-  ( sourceCallback      :: String -> Effect Unit
-  , searchCallback      :: String -> Effect Unit
-  , resultCallback      :: Maybe Term -> Effect Unit
+  ( autocompleteClickCallback :: String -> Effect Unit
+  , sourceCallback            :: String -> Effect Unit
+  , searchCallback            :: String -> Effect (Array String)
   )
 
 here :: R2.Here
@@ -32,9 +33,9 @@ topBar = R2.leaf component
 
 component :: R.Component Props
 component = here.component "main" cpt where
-  cpt { sourceCallback
+  cpt { autocompleteClickCallback
+      , sourceCallback
       , searchCallback
-      , resultCallback
       } _ = do
     -- | States
     -- |
@@ -48,8 +49,8 @@ component = here.component "main" cpt where
 
     source    <- R2.useLive' store.source
     sources   <- R2.useLive' store.sources
-    search    <- R2.useLive' store.search
-    result    <- R2.useLive' store.result
+
+    searchState <- T.useBox ""
 
     -- | Render
     --
@@ -108,28 +109,19 @@ component = here.component "main" cpt where
         { className: "phylo-topbar__autocomplete"
         }
         [
-          B.formInput
-          { className: "phylo-topbar__suggestion"
-          , status: Idled
-          , value: case result of
-              Nothing               -> ""
-              Just (Term { label }) -> label
-          -- (?) noop: see below button
-          , callback: const nothing
-          }
-        ,
-          B.formInput
-          { className: "phylo-topbar__search"
-          , value: search
-          , callback: searchCallback
+          inputWithAutocomplete
+          { autocompleteSearch: searchCallback
+          , onAutocompleteClick: autocompleteClickCallback
+          , onEnterPress: \s -> do
+                  cs <- searchCallback s
+                  case A.head cs of
+                    Nothing -> pure unit
+                    Just h -> autocompleteClickCallback h
+          , classes: "filter-results-completions"
           , placeholder: "Find a term"
+          , state: searchState
           }
-        ,
-          B.button
-          { callback: \_ -> resultCallback result
-          , type: "submit"
-          , className: "phylo-topbar__submit"
-          }
-          [ H.text "" ]
         ]
       ]
+
+

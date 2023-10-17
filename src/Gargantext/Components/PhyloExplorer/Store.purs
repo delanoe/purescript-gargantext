@@ -42,8 +42,6 @@ type Store =
   , source              :: T.Box String
   , sources             :: T.Box (Array Source)
   , terms               :: T.Box (Array Term)
-  , search              :: T.Box String
-  , result              :: T.Box (Maybe Term)
   -- Sidebar
   , extractedTerms      :: T.Box (Array ExtractedTerm)
   , selectedTerm        :: T.Box (Maybe String)
@@ -73,8 +71,6 @@ type State =
   , source              :: String
   , sources             :: Array Source
   , terms               :: Array Term
-  , search              :: String
-  , result              :: Maybe Term
   -- Sidebar
   , extractedTerms      :: Array ExtractedTerm
   , selectedTerm        :: Maybe String
@@ -99,8 +95,6 @@ options ::
   , source              :: String
   , sources             :: Array Source
   , terms               :: Array Term
-  , search              :: String
-  , result              :: Maybe Term
   -- Sidebar
   , extractedTerms      :: Array ExtractedTerm
   , selectedTerm        :: Maybe String
@@ -125,8 +119,6 @@ options =
   , source              : ""
   , sources             : mempty
   , terms               : mempty
-  , search              : ""
-  , result              : Nothing
   -- Sidebar
   , extractedTerms      : mempty
   , selectedTerm        : Nothing
