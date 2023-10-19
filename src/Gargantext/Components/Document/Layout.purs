@@ -35,7 +35,6 @@ import Gargantext.Sessions (Session)
 import Gargantext.Utils ((?))
 import Gargantext.Utils as U
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
@@ -93,9 +92,9 @@ layoutWithContextNgramsCpt = here.component "layoutWithContextNgrams" cpt where
   -- Component
   cpt { contextNgrams
       , loaded:
-        loaded@{ ngramsTable: Versioned { data: initTable }
-               , document: NodePoly { hyperdata: Document doc }
-               }
+          loaded@{ ngramsTable: Versioned { data: initTable }
+                 , document: NodePoly { hyperdata: Document doc }
+                 }
       , path
       , sideControlsSlot
       } _ = do
@@ -118,6 +117,7 @@ layoutWithContextNgramsCpt = here.component "layoutWithContextNgrams" cpt where
     --   here.log2 "[layout] contextNgrams" contextNgrams
     --   here.log2 "[layout] contextNgrams'" contextNgrams'
     --   here.log2 "[layout] state'" state'
+    --   here.log2 "[layout] ngrams'" ngrams'
 
     mode' /\ mode <- R2.useBox' AFT.EditionMode
 

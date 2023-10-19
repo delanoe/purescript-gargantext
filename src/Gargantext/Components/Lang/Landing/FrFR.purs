@@ -17,9 +17,9 @@ blockTexts = [ BlockText { title : "Phrases aléatoires issues de l'oeuvre de Fr
                          , icon  : "fa fa-random"
                          , titleText : "Historique"
                          , text  : "Chapitre 1"
-                         , docButton : Button { title : "Your first map in less than 5 minutes"
+                         , docButton : Button { title : "Documentation utilisateur"
                                               , text  : " Documentation"
-                                              , href  : "https://iscpif.fr/gargantext/your-first-map/"
+                                              , href  : "https://write.frame.gargantext.org/s/649a6d7e1db3b365d6d0b1430d9700cc0bb4fdb1348dd1040a94c95f98979abe"
                                               }
                                     }
              , BlockText { title : "Mots aléatoires."
@@ -27,9 +27,9 @@ blockTexts = [ BlockText { title : "Phrases aléatoires issues de l'oeuvre de Fr
                          , icon  : "fa fa-random"
                          , titleText : "Presentation"
                          , text  : "Autem nascetur iaculis, sedfusce enimsed cursus posuere consectetuer eu justo aliquammauris. Phasellus vero nisi porttitor elit quod, leo feliscras ultricies non tempor sagittis. Liberoduis facilisinam erat dapibusnam, lacus dui duis tristique volutpatut quis vestibulum magna. Nobis faucibusvestibulum dolores minim. Bibendumin malesuada adipiscing ante, mattis fames nequeetiam lorem. No diam id. Litora quisaenean commodo lobortisetiam neque, libero mollis scelerisque inceptos ullamcorper sea congue delenit possim."
-                         , docButton : Button { title : "Your first map in less than 5 minutes"
+                         , docButton : Button { title : "Documentation utilisateur"
                                               , text  : " Documentation"
-                                              , href  : "https://iscpif.fr/gargantext/your-first-map/"
+                                              , href  : "https://write.frame.gargantext.org/s/649a6d7e1db3b365d6d0b1430d9700cc0bb4fdb1348dd1040a94c95f98979abe"
                                               }
                                     }
              , BlockText { title : "Lettres alétaoires, expérience"
@@ -37,9 +37,9 @@ blockTexts = [ BlockText { title : "Phrases aléatoires issues de l'oeuvre de Fr
                          , icon  : "fa fa-random"
                          , titleText : "Tutoreil"
                          , text  : "Il paraît que l'rdore des lettres dans un mot n'a pas d'imtraopnce. La première et la dernière lettre doeivnt être à la bonne place. Le reste peut être dans un désordre total et on peut touojurs lire sans prolèbme. On ne lit donc pas chaque lettre en ellêem-me, mais le mot comme un tout. Un chaegmnent de référentiel et nous tranpossons ce résultat au texte luimê-me: l'rdore des mots est failbement important copamré au contexte du texte qui, lui, est copmté: comptexter avec Gargantext."
-                         , docButton : Button { title : "Your first map in less than 5 minutes"
+                         , docButton : Button { title : "Documentation utilisateur"
                                               , text  : " Documentation"
-                                              , href  : "https://iscpif.fr/gargantext/your-first-map/"
+                                              , href  : "https://write.frame.gargantext.org/s/649a6d7e1db3b365d6d0b1430d9700cc0bb4fdb1348dd1040a94c95f98979abe"
                                               }
                                     }
               ]

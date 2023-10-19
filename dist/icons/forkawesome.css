@@ -2733,6 +2733,9 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 .fa-thumb-tack-cancel:before {
   content: "\e904";
 }
+.fa-sidebar:before {
+  content: "\e905";
+}
 
 .sr-only {
   position: absolute;

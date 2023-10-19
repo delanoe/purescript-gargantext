@@ -436,8 +436,9 @@ syncPatches props state callback = do
               s {
                   ngramsLocalPatch = fromNgramsPatches mempty
                 , ngramsStagePatch = fromNgramsPatches mempty
+                -- , ngramsValidPatch = fromNgramsPatches mempty
                 , ngramsValidPatch = fromNgramsPatches newPatch <> ngramsLocalPatch <> s.ngramsValidPatch
-                              -- First the already valid patch, then the local patch, then the newly received newPatch.
+                -- First the already valid patch, then the local patch, then the newly received newPatch.
                 , ngramsVersion    = newVersion
                 }) state
             here.log2 "[syncPatches] ngramsVersion" newVersion
@@ -525,6 +526,7 @@ coreDispatch _ state (CommitPatch pt) =
 coreDispatch _ state ResetPatches =
   T.modify_ (_ { ngramsLocalPatch = mempty :: NgramsTablePatch
                , ngramsSelection  = mempty :: Set NgramsTerm
+               , ngramsValidPatch = mempty :: NgramsTablePatch
                }) state
 
 isSingleNgramsTerm :: NgramsTerm -> Boolean

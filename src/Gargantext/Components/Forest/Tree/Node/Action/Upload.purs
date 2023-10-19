@@ -155,6 +155,7 @@ uploadFileViewWithLangsCpt = here.component "uploadFileViewWithLangs" cpt
               [ H.div {className:"col-6 flex-space-around"}
                 [ formChoiceSafe { items: [ CSV
                                           , CSV_HAL
+                                          , Istex
                                           , WOS
                                           , JSON
                                           -- , Iramuteq
@@ -752,7 +753,7 @@ uploadFrameCalcViewWithLangsCpt = here.component "uploadFrameCalcViewWithLangs" 
   where
     cpt { dispatch, langs, session } _ = do
       lang' /\ langBox
-        <- R2.useBox' $ fromMaybe Universal $ A.head langs
+        <- R2.useBox' $ fromMaybe EN $ A.head langs
       selection' /\ selectionBox
         <- R2.useBox' ListSelection.MyListsFirst
 

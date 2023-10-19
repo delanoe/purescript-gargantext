@@ -10,7 +10,7 @@ import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
 import Gargantext.Components.Lang (langSwitcher, allFeLangs)
 import Gargantext.Components.Themes (themeSwitcher, allThemes)
 import Gargantext.Types (Handed(..), defaultCacheParams)
-import Gargantext.Utils (setter, (?))
+import Gargantext.Utils (setter, (?), nbsp)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -85,6 +85,32 @@ componentCpt = here.component "main" cpt where
           ]
         ]
       ,
+        H.li { className: "nav-item" }
+        [
+          B.button
+          { variant: showTree' ?
+              ButtonVariant Light $
+              OutlinedButtonVariant Light
+          , callback: onTreeToggleClick
+          , className: "main-topbar__tree-switcher"
+          , title: 
+              if showTree' 
+              then"Hide Tree" 
+              else "Show Tree"
+          }
+          [
+            B.icon
+            { name: "sidebar"
+            , className: "" }
+          -- , 
+          --   if showTree'
+          --   then H.text $ nbsp 1 <> "Hide Tree"
+          --   else H.text $ nbsp 1 <> "Show Tree"
+ 
+          ]
+
+        ]
+      ,
         H.li
         { className: "nav-item main-topbar__theme-switcher" }
         [
@@ -101,7 +127,7 @@ componentCpt = here.component "main" cpt where
             , langs: allFeLangs
             } []
           ]-}
-        , B.button
+{-        , B.button
           { variant: showTree' ?
               ButtonVariant Light $
               OutlinedButtonVariant Light
@@ -112,7 +138,7 @@ componentCpt = here.component "main" cpt where
             if showTree'
             then H.text "Hide Tree"
             else H.text "Show Tree"
-          ]
+          ]-}
         , H.div { id: "portal-topbar" } []
       ]
 
@@ -156,12 +182,17 @@ divDropdownLeftCpt = here.component "divDropdownLeft" cpt
                         , text  : "Info" }
 
     elements = [
-      [
-        LiNav { title : "Map Show Room and tutorials"
-              , href  : "https://iscpif.fr/gargantext/cartes/"
+      [ LiNav { title : "Map Show Room and tutorials"
+              , href  : "https://write.frame.gargantext.org/s/649a6d7e1db3b365d6d0b1430d9700cc0bb4fdb1348dd1040a94c95f98979abe"
               , icon  : "fa fa-lightbulb-o"
-              , text  : "First maps"
+              , text  : "User documentation"
               }
+      , LiNav { title : "GargTools"
+              , href  : "https://gargtools.iscpif.fr/"
+              , icon  : "fa fa-gears"
+              , text  : "Format your data with Garg Tools!"
+              }
+
 
       , LiNav { title : "Learn with us!"
               , href  : "https://iscpif.fr/gargantext/formation/"

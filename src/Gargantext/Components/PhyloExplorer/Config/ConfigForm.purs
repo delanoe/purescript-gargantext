@@ -7,7 +7,10 @@ import Gargantext.Prelude
 
 import DOM.Simple.Console (log3)
 import Data.Either (Either(..))
+import Data.Generic.Rep (class Generic)
 import Data.Foldable (foldl, intercalate)
+import Data.Maybe (Maybe(..))
+import Data.Show.Generic (genericShow)
 import Effect (Effect)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), ComponentStatus(..), Variant(..))
@@ -32,6 +35,21 @@ type Props =
   )
 
 type Options = ( | FormData )
+
+data ReflexiveClusterAlgoMode
+  = Basic_
+  | Expert_
+
+derive instance Generic ReflexiveClusterAlgoMode _
+derive instance Eq ReflexiveClusterAlgoMode
+instance Show ReflexiveClusterAlgoMode where show = genericShow
+instance Read ReflexiveClusterAlgoMode where
+  read :: String -> Maybe ReflexiveClusterAlgoMode
+  read = case _ of
+    "Basic_"  -> Just Basic_
+    "Expert_" -> Just Expert_
+    _         -> Nothing
+
 
 options :: Record Options
 options = Record.merge {} defaultData
@@ -101,7 +119,7 @@ component = R.hooksComponent "configForm" cpt where
                       , variant: ButtonVariant Light
                       , className: state.defaultMode == show true ?
                           "active" $
-                          ""
+                          "border-gray-300"
                       }
                       [
                         H.text "Automatic"
@@ -113,7 +131,7 @@ component = R.hooksComponent "configForm" cpt where
                       , variant: ButtonVariant Light
                       , className: state.defaultMode == show false ?
                           "active" $
-                          ""
+                          "border-gray-300"
                       }
                       [
                         H.text "Advanced"
@@ -347,9 +365,9 @@ component = R.hooksComponent "configForm" cpt where
                         [
                           H.div { className: "col-9 p-0 mx-1 mt-1" } [
                             B.formInput $
-                            { className: "range-simple__input p-0 h-auto border-0"
+                            { className: "range-simple__input p-0 h-auto border-0 p-0 text-center"
                             , type: "range"
-                            , step: "0.1"
+                            , step: "0.01"
                             , min: "0"
                             , max: "1"
                             } `merge` bindStateKey "quality"
@@ -411,24 +429,24 @@ component = R.hooksComponent "configForm" cpt where
                       }
                       [
                         B.button
-                        { callback: \_ -> setter stateBox "cliqueType" $ show FIS_
+                        { callback: \_ -> setter stateBox "clusterAlgoMode" $ show Basic_
                         -- , variant: OutlinedButtonVariant Secondary
                         , variant: ButtonVariant Light
-                        , className: state.cliqueType == show FIS_ ?
+                        , className: state.clusterAlgoMode == show Basic_ ?
                             "active" $
-                            ""
+                            "border-gray-300"
                         }
                         [
                           H.text "Basic"
                         ]
                       ,
                         B.button
-                        { callback: \_ -> setter stateBox "cliqueType" $ show MaxClique_
+                        { callback: \_ -> setter stateBox "clusterAlgoMode" $ show Expert_
                         -- , variant: OutlinedButtonVariant Secondary
                         , variant: ButtonVariant Light
-                        , className: state.cliqueType == show MaxClique_ ?
+                        , className: state.clusterAlgoMode == show Expert_ ?
                             "active" $
-                            ""
+                            "border-gray-300"
                         }
                         [
                           H.text "Expert"
@@ -440,8 +458,8 @@ component = R.hooksComponent "configForm" cpt where
                   H.div
                   { className: "" }
                   [
-                    -- Mode Basic / TYPE::FIS_
-                    R2.when (state.cliqueType == show FIS_) $
+                    -- Mode Basic / Basic_
+                    R2.when (state.clusterAlgoMode == show Basic_) $
 
                       H.div { className: "clustrisation-algorythm-basic form-group" }
                       [
@@ -476,7 +494,8 @@ component = R.hooksComponent "configForm" cpt where
                             { className: "form-group__field" }
                             [
                               B.formInput $ 
-                              { type: "number" 
+                              { type: "number"
+                              , min: "1"
                               } `merge` bindStateKey "support"
                             ,
                               R2.when (fv.hasError' "support") $
@@ -526,122 +545,257 @@ component = R.hooksComponent "configForm" cpt where
                   H.div
                   { className: "" }
                   [
-                    -- Mode Expert (part 1) / TYPE::MaxClique_
-                    R2.when (state.cliqueType == show MaxClique_) $
+                    -- Mode Expert / Expert_
+                    R2.when (state.clusterAlgoMode == show Expert_) $
 
-                      H.div { className: "clustrisation-algorythm-expert form-group" }
+                      H.div { className: "text-center" }
                       [
-                        -- Title MaxClique
                         H.div
-                        { className: "form-group__label text-center" }
+                        { className: "form-group__field" }
                         [
-                          H.label {} [ H.text "MaxClique" ]
+                          H.div
+                          { className: "btn-group"
+                          , role: "group"
+                          }
+                          [
+                            B.button
+                            { callback: \_ -> setter stateBox "cliqueType" $ show FIS_
+                            -- , variant: OutlinedButtonVariant Secondary
+                            , variant: ButtonVariant Light
+                            , className: state.cliqueType == show FIS_ ?
+                                "active" $
+                                ""
+                            }
+                            [
+                              H.text "FIS"
+                            ]
+                          ,
+                            B.button
+                            { callback: \_ -> setter stateBox "cliqueType" $ show MaxClique_
+                            -- , variant: OutlinedButtonVariant Secondary
+                            , variant: ButtonVariant Light
+                            , className: state.cliqueType == show MaxClique_ ?
+                                "active" $
+                                ""
+                            }
+                            [
+                              H.text "MaxClique"
+                            ]
+                          ]
+                        ]
+                      
+                      ,
+                        H.div {} 
+                        [
+                        
+                        R2.when (state.cliqueType == show FIS_) $
+
+                          H.div { className: "clustrisation-algorythm-basic form-group" }
+                          [
+                            -- Title FIS
+                            H.div
+                            { className: "form-group__label text-center" }
+                            [
+                              H.label {} [ H.text "FIS" ]
+                            ]
+                          ,
+                            H.div
+                            { className: "phylo-config-form__row justify-content-center" }
+                            [
+                            
+                              -- Support
+                              H.div
+                              { className: intercalate " "
+                                  [ "form-group col-4 w-10 text-center mb-0"
+                                  , (fv.hasError' "support") ?
+                                      "form-group--error" $
+                                      mempty
+                                  ]
+                              }
+                              [
+                                H.div
+                                { className: "" }
+                                [
+                                  H.label {} [ H.text "Support" ]
+                                ]
+                              ,
+                                H.div
+                                { className: "form-group__field" }
+                                [
+                                  B.formInput $ 
+                                  { type: "number"
+                                  , min: "1"
+                                  } `merge` bindStateKey "support"
+                                ,
+                                  R2.when (fv.hasError' "support") $
+                                    H.div
+                                    { className: "form-group__error" }
+                                    [
+                                      H.text "Please enter an `Int` value (eg. 3)"
+                                    ]
+                                ]
+                              ]
+                            ,
+                              -- Size
+                              H.div
+                              { className: intercalate " "
+                                  [ "form-group col-4 w-10 text-center mb-0"
+                                  , (fv.hasError' "size") ?
+                                      "form-group--error" $
+                                      mempty
+                                  ]
+                              }
+                              [
+                                H.div
+                                { className: "" }
+                                [
+                                  H.label {} [ H.text "Size" ]
+                                ]
+                              ,
+                                H.div
+                                { className: "form-group__field" }
+                                [
+                                  B.formInput $ 
+                                  { type: "number" 
+                                  } `merge` bindStateKey "size"
+                                ,
+                                  R2.when (fv.hasError' "size") $
+                                    H.div
+                                    { className: "form-group__error" }
+                                    [
+                                      H.text "Please enter an `Int` value (eg. 3)"
+                                    ]
+                                ]
+                              ]
+                            ]
+                          ]
+
                         ]
                       ,
-                        H.div
-                        { className: "phylo-config-form__row justify-content-center" }
+                        H.div {}
                         [
-                          -- Size
-                          H.div
-                          { className: intercalate " "
-                              [ "form-group col-3 w-10 text-center mb-0"
-                              , (fv.hasError' "size") ?
-                                  "form-group--error" $
-                                  mempty
-                              ]
-                          }
+
+                        R2.when (state.cliqueType == show MaxClique_) $
+
+                          H.div { className: "clustrisation-algorythm-expert form-group pt-1" }
                           [
+                            -- Title MaxClique
                             H.div
-                            { className: "" }
+                            { className: "form-group__label text-center" }
                             [
-                              H.label {} [ H.text "Size" ]
+                              H.label {} [ H.text "MaxClique" ]
                             ]
                           ,
                             H.div
-                            { className: "form-group__field" }
+                            { className: "phylo-config-form__row justify-content-center" }
                             [
-                              B.formInput $
-                              { type: "number"
-                              , step: "1"
-                              , min: "0"
-                              , max: "10"
-                              } `merge` bindStateKey "size"
-                            ,
-                              R2.when (fv.hasError' "size") $
-                                H.div
-                                { className: "form-group__error" }
-                                [
-                                  H.text "Please enter an `Int` value (eg. 3)"
-                                ]
-                            ]
-                          ]
-                        ,
-                          -- Treshold
-                          H.div
-                          { className: intercalate " "
-                              [ "form-group col-4 w-10 text-center mb-0"
-                              , (fv.hasError' "threshold") ?
-                                  "form-group--error" $
-                                  mempty
-                              ]
-                          }
-                          [
-                            H.div
-                            { className: "" }
-                            [
-                              H.label {} [ H.text "Treshold" ]
-                            ]
-                          ,
-                            H.div
-                            { className: "form-group__field" }
-                            [
-                              B.formInput $
-                              { type: "number"
-                              , step: "0.0001"
-                              , min: "0.0001"
-                              , max: "1"
-                              } `merge` bindStateKey "threshold"
-                            ,
-                              R2.when (fv.hasError' "threshold") $
-                                H.div
-                                { className: "form-group__error" }
-                                [
-                                  H.text "Please enter a `Double` value (eg. 0.5)"
-                                ]
-                            ]
-                          ]
-                        ,
-                          -- Clique filter
-                          H.div
-                          { className: intercalate " "
-                              [ "form-group col-5 w-10 text-center mb-0 text-nowrap"
-                              ]
-                          }
-                          [
-                            H.div
-                            { className: "" }
-                            [
-                              H.label {} [ H.text "Filter type" ]
-                            ]
-                          ,
-                            H.div
-                            { className: "form-group__field" }
-                            [
-                              B.formSelect
-                              ( bindStateKey "cliqueFilter" )
+                              -- Size
+                              H.div
+                              { className: intercalate " "
+                                  [ "form-group col-3 w-10 text-center mb-0"
+                                  , (fv.hasError' "size") ?
+                                      "form-group--error" $
+                                      mempty
+                                  ]
+                              }
                               [
-                                H.option
-                                { value: show ByThreshold }
-                                [ H.text "By threshold" ]
+                                H.div
+                                { className: "" }
+                                [
+                                  H.label {} [ H.text "Size" ]
+                                ]
                               ,
-                                H.option
-                                { value: show ByNeighbours }
-                                [ H.text "By neighbours" ]
+                                H.div
+                                { className: "form-group__field" }
+                                [
+                                  B.formInput $
+                                  { type: "number"
+                                  , step: "1"
+                                  , min: "0"
+                                  , max: "10"
+                                  } `merge` bindStateKey "size"
+                                ,
+                                  R2.when (fv.hasError' "size") $
+                                    H.div
+                                    { className: "form-group__error" }
+                                    [
+                                      H.text "Please enter an `Int` value (eg. 3)"
+                                    ]
+                                ]
+                              ]
+                            ,
+                              -- Treshold
+                              H.div
+                              { className: intercalate " "
+                                  [ "form-group col-4 w-10 text-center mb-0"
+                                  , (fv.hasError' "threshold") ?
+                                      "form-group--error" $
+                                      mempty
+                                  ]
+                              }
+                              [
+                                H.div
+                                { className: "" }
+                                [
+                                  H.label {} [ H.text "Treshold" ]
+                                ]
+                              ,
+                                H.div
+                                { className: "form-group__field" }
+                                [
+                                  B.formInput $
+                                  { type: "number"
+                                  , step: "0.0001"
+                                  , min: "0.0001"
+                                  , max: "1"
+                                  } `merge` bindStateKey "threshold"
+                                ,
+                                  R2.when (fv.hasError' "threshold") $
+                                    H.div
+                                    { className: "form-group__error" }
+                                    [
+                                      H.text "Please enter a `Double` value (eg. 0.5)"
+                                    ]
+                                ]
+                              ]
+                            ,
+                              -- Clique filter
+                              H.div
+                              { className: intercalate " "
+                                  [ "form-group col-5 w-10 text-center mb-0 text-nowrap"
+                                  ]
+                              }
+                              [
+                                H.div
+                                { className: "" }
+                                [
+                                  H.label {} [ H.text "Filter type" ]
+                                ]
+                              ,
+                                H.div
+                                { className: "form-group__field" }
+                                [
+                                  B.formSelect
+                                  ( bindStateKey "cliqueFilter" )
+                                  [
+                                    H.option
+                                    { value: show ByThreshold }
+                                    [ H.text "By threshold" ]
+                                  ,
+                                    H.option
+                                    { value: show ByNeighbours }
+                                    [ H.text "By neighbours" ]
+                                  ]
+                                ]
                               ]
                             ]
                           ]
+
                         ]
+
                       ]
+
+                    
                   ]
                 ]
 
@@ -650,8 +804,8 @@ component = R.hooksComponent "configForm" cpt where
                 H.div 
                 { className: "" }
                 [
-                  -- Mode Expert (part 2) / TYPE::MaxClique_
-                  R2.when (state.cliqueType == show MaxClique_) $
+                  -- -- Mode Expert (part 2) / TYPE::MaxClique_
+                  -- R2.when (state.cliqueType == show MaxClique_) $
 
                     H.div
                     { className: "phylo-config-form__row" }
@@ -1365,40 +1519,42 @@ component = R.hooksComponent "configForm" cpt where
                     ]
 
 type FormData =
-  ( defaultMode   :: String
-  , proximity     :: String
-  , synchrony     :: String
-  , quality       :: String
-  , exportFilter  :: String
+  ( defaultMode       :: String
+  , proximity         :: String
+  , synchrony         :: String
+  , quality           :: String
+  , exportFilter      :: String
   -- TimeUnit
-  , granularity   :: String
-  , period        :: String
-  , step          :: String
-  , matchingFrame :: String
+  , granularity       :: String
+  , period            :: String
+  , step              :: String
+  , matchingFrame     :: String
   -- Clique
-  , cliqueType    :: String
-  , support       :: String
-  , size          :: String
-  , threshold     :: String
-  , cliqueFilter  :: String
+  , clusterAlgoMode   :: String
+  , cliqueType        :: String
+  , support           :: String
+  , size              :: String
+  , threshold         :: String
+  , cliqueFilter      :: String
   )
 
 defaultData :: Record FormData
 defaultData =
-  { defaultMode   : show true
-  , proximity     : "1.0"
-  , synchrony     : "1.0"
-  , quality       : "1.0"
-  , exportFilter  : "3.0"
-  , granularity   : show Year_
-  , period        : "1"
-  , step          : "1"
-  , matchingFrame : "1"
-  , cliqueType    : show FIS_
-  , support       : "1"
-  , size          : "1"
-  , threshold     : "1"
-  , cliqueFilter  : show ByThreshold
+  { defaultMode     : show true
+  , proximity       : "1.0"
+  , synchrony       : "1.0"
+  , quality         : "1.0"
+  , exportFilter    : "3.0"
+  , granularity     : show Year_
+  , period          : "1"
+  , step            : "1"
+  , matchingFrame   : "1"
+  , clusterAlgoMode : show Basic_
+  , cliqueType      : show FIS_
+  , support         : "2"
+  , size            : "1"
+  , threshold       : "1"
+  , cliqueFilter    : show ByThreshold
   }
 
 formValidation :: Record FormData -> Effect VForm
@@ -1412,6 +1568,19 @@ formValidation r = foldl append mempty rules
          , FV.int "matchingFrame" r.matchingFrame
          ]
          -- Clique
+      <> if (r.clusterAlgoMode == show Basic_)
+         then
+            -- Basic_ (Basic mode)
+            [ 
+            --   FV.int "support" r.support
+            -- , FV.int "size" r.size
+            ]
+          else
+            -- Expert_ (Expert mode)
+            [ 
+            --   FV.int "size" r.size
+            -- , FV.number "threshold" r.threshold
+            ]
       <> if (r.cliqueType == show FIS_)
          then
             -- FIS_ (Basic mode)
@@ -1422,7 +1591,9 @@ formValidation r = foldl append mempty rules
             -- MaxClique_ (Expert mode)
             [ FV.int "size" r.size
             , FV.number "threshold" r.threshold
-            , FV.number "proximity" r.proximity
-            , FV.number "synchrony" r.synchrony
-            , FV.number "exportFilter" r.exportFilter
             ]
+      <>
+         [ FV.number "proximity" r.proximity
+         , FV.number "synchrony" r.synchrony
+         , FV.number "exportFilter" r.exportFilter
+         ]
