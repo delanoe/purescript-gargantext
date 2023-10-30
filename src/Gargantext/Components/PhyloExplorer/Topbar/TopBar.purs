@@ -61,7 +61,7 @@ component = here.component "main" cpt where
       [
         -- Toolbar toggle
         B.button
-        { className: "phylo-topbar__toolbar"
+        { className: "phylo-topbar__toolbar rounded-circle-2"
         , callback: \_ -> T.modify_ (not) toolBarDisplayed
         , variant: toolBar' ?
             ButtonVariant Light $
@@ -71,7 +71,7 @@ component = here.component "main" cpt where
       ,
         -- Sidebar toggle
         B.button
-        { className: "phylo-topbar__sidebar"
+        { className: "phylo-topbar__sidebar rounded-circle-2"
         , callback: \_ -> T.modify_ (toggleSidePanelState) sideBarDisplayed
         , variant: sideBar' == Opened ?
             ButtonVariant Light $
