@@ -38,10 +38,10 @@ component = here.component "topBar" cpt where
     pure $
 
       H.div
-      { className: "graph-topbar bg-primary h-100" }
+      { className: "node-topbar graph-topbar bg-primary h-100" }
       [
         H.div
-        { className: "graph-topbar__title align-self-center px-1 text-light" }
+        { className: "node-topbar__title graph-topbar__title align-self-center px-1 text-light" }
         [
           B.icon { name: "hubzilla" }
         ,

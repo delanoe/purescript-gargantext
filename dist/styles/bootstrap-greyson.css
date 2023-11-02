@@ -5872,8 +5872,8 @@ h3 {
 .mainleaf__folder-icon:not(.b-icon-button--enabled):before,
 .main-topbar__tree-switcher.btn-light .fa:before,
 .main-topbar__tree-switcher.btn-outline-light .fa:before,
-#portal-topbar .graph-topbar .btn-light:hover .fa:before,
-#portal-topbar .graph-topbar .btn-outline-light .fa:before {
+#portal-topbar .node-topbar .btn-light:hover .fa:before,
+#portal-topbar .node-topbar .btn-outline-light .fa:before {
   color: inherit !important;
 }
 
@@ -5883,7 +5883,7 @@ h3 {
 .login-modal-form .btn .fa,
 .corpus-layout__code-section .b-button .fa,
 .main-topbar__tree-switcher.btn-outline-light:not(:hover) .fa,
-#portal-topbar .graph-topbar__title .fa {
+#portal-topbar .node-topbar__title .fa {
   color: #eceeec !important;
 }
 .main-topbar .nav-item > a .fa:before,
@@ -5892,7 +5892,7 @@ h3 {
 .login-modal-form .btn .fa:before,
 .corpus-layout__code-section .b-button .fa:before,
 .main-topbar__tree-switcher.btn-outline-light:not(:hover) .fa:before,
-#portal-topbar .graph-topbar__title .fa:before {
+#portal-topbar .node-topbar__title .fa:before {
   color: #eceeec !important;
 }
 
@@ -9145,8 +9145,7 @@ input[type=range]:-moz-focusring {
   z-index: 2;
   height: 40px;
 }
-.main-topbar__theme-switcher select {
-  margin: 4px 0;
+.main-topbar select {
   padding-top: 0;
   padding-bottom: 0;
   height: 2rem;
@@ -11438,12 +11437,17 @@ select.form-control {
 }
 
 .phylo-topbar__toolbar, .phylo-topbar__sidebar {
-  width: 136px;
+  margin-top: 4px;
+  margin-bottom: 4px;
   margin-left: 4px;
   margin-right: 4px;
+  padding-left: 4px;
+  padding-right: 4px;
 }
 .phylo-topbar__source {
   width: 304px;
+  margin-top: 4px;
+  margin-bottom: 4px;
   margin-left: 4px;
   margin-right: 4px;
 }
@@ -11451,8 +11455,15 @@ select.form-control {
   display: flex;
   width: 304px;
   position: relative;
+  margin-top: 4px;
+  margin-bottom: 4px;
   margin-left: 4px;
   margin-right: 4px;
+}
+.phylo-topbar__autocomplete .form-control {
+  height: 2rem;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 .phylo-topbar__suggestion {
   pointer-events: none;
