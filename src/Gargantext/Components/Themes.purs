@@ -87,7 +87,7 @@ themeSwitcherCpt = here.component "themeSwitcher" cpt
 
       R.useEffectOnce' $ markThemeToDOMTree currentTheme
 
-      pure $ R2.select { className: "form-control"
+      pure $ R2.select { className: "form-control rounded-circle-2"
                        , defaultValue: themeName currentTheme
                        , on: { change: onChange theme } } options
       where

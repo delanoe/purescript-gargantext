@@ -6118,9 +6118,11 @@ h3 {
   color: inherit;
 }
 
-.mainleaf__folder-icon:not(.b-icon-button--enabled)::before,
-.main-topbar__tree-switcher.btn-light .fa::before,
-.main-topbar__tree-switcher.btn-outline-light .fa::before {
+.mainleaf__folder-icon:not(.b-icon-button--enabled):before,
+.main-topbar__tree-switcher.btn-light .fa:before,
+.main-topbar__tree-switcher.btn-outline-light .fa:before,
+#portal-topbar .node-topbar .btn-light:hover .fa:before,
+#portal-topbar .node-topbar .btn-outline-light .fa:before {
   color: inherit !important;
 }
 
@@ -6129,7 +6131,8 @@ h3 {
 .popup-container .search-bar .btn.fa,
 .login-modal-form .btn .fa,
 .corpus-layout__code-section .b-button .fa,
-.main-topbar__tree-switcher.btn-outline-light:not(:hover) .fa {
+.main-topbar__tree-switcher.btn-outline-light:not(:hover) .fa,
+#portal-topbar .node-topbar__title .fa {
   color: #eceeec !important;
 }
 .main-topbar .nav-item > a .fa:before,
@@ -6137,7 +6140,8 @@ h3 {
 .popup-container .search-bar .btn.fa:before,
 .login-modal-form .btn .fa:before,
 .corpus-layout__code-section .b-button .fa:before,
-.main-topbar__tree-switcher.btn-outline-light:not(:hover) .fa:before {
+.main-topbar__tree-switcher.btn-outline-light:not(:hover) .fa:before,
+#portal-topbar .node-topbar__title .fa:before {
   color: #eceeec !important;
 }
 
@@ -6334,6 +6338,13 @@ h3 {
 
 .border-grey {
   border: 1px solid #CED4DA;
+}
+
+.rounded-circle-2 {
+  border-radius: 50px;
+}
+.rounded-circle-2 .form-control {
+  border-radius: 50px;
 }
 
 .echarts-for-react {
@@ -9381,9 +9392,18 @@ input[type=range]:-moz-focusring {
   position: sticky;
   top: 0;
   z-index: 2;
+  height: 40px;
+}
+.main-topbar select {
+  padding-top: 0;
+  padding-bottom: 0;
+  height: 2rem;
 }
 .main-topbar__theme-switcher, .main-topbar__lang-switcher, .main-topbar__tree-switcher {
   margin-right: 8px;
+}
+.main-topbar__tree-switcher {
+  padding: 0.15rem 0.5rem;
 }
 .main-topbar.navbar-dark .navbar-text:hover {
   color: rgba(255, 255, 255, 0.75);
@@ -9394,6 +9414,9 @@ input[type=range]:-moz-focusring {
 }
 .main-topbar__logo {
   margin-right: initial;
+}
+.main-topbar__logo img {
+  max-width: none;
 }
 .right-handed .main-topbar {
   flex-direction: row;
@@ -9549,7 +9572,6 @@ input[type=range]:-moz-focusring {
   position: absolute;
   z-index: 1;
   background-color: #fff;
-  width: 100%;
   border-bottom: 1px solid #dee2e6;
 }
 .graph-layout__toolbar .b-fieldset {
@@ -9572,8 +9594,6 @@ input[type=range]:-moz-focusring {
   padding: 0 8px;
   height: 100%;
   display: flex;
-  padding-left: 4px;
-  padding-right: 4px;
 }
 .right-handed .graph-topbar {
   border-left: 1px solid rgba(255, 255, 255, 0.05);
@@ -9584,17 +9604,27 @@ input[type=range]:-moz-focusring {
 }
 
 .graph-topbar__toolbar, .graph-topbar__sidebar {
-  width: 136px;
+  margin-top: 4px;
+  margin-bottom: 4px;
   margin-left: 4px;
   margin-right: 4px;
+  padding-left: 4px;
+  padding-right: 4px;
 }
 .graph-topbar__search {
   width: 304px;
+  margin-top: 4px;
+  margin-bottom: 4px;
   margin-left: 4px;
   margin-right: 4px;
 }
 .graph-topbar__search [type=submit] {
   display: none;
+}
+.graph-topbar__search .form-control {
+  height: 2rem;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 .graph-doc-focus {
@@ -9848,6 +9878,7 @@ input[type=range]:-moz-focusring {
 .graph-toolbar {
   display: flex;
   padding: 8px;
+  padding-top: 16px;
 }
 .graph-toolbar__gap {
   width: 8px;
@@ -11655,12 +11686,17 @@ select.form-control {
 }
 
 .phylo-topbar__toolbar, .phylo-topbar__sidebar {
-  width: 136px;
+  margin-top: 4px;
+  margin-bottom: 4px;
   margin-left: 4px;
   margin-right: 4px;
+  padding-left: 4px;
+  padding-right: 4px;
 }
 .phylo-topbar__source {
   width: 304px;
+  margin-top: 4px;
+  margin-bottom: 4px;
   margin-left: 4px;
   margin-right: 4px;
 }
@@ -11668,8 +11704,15 @@ select.form-control {
   display: flex;
   width: 304px;
   position: relative;
+  margin-top: 4px;
+  margin-bottom: 4px;
   margin-left: 4px;
   margin-right: 4px;
+}
+.phylo-topbar__autocomplete .form-control {
+  height: 2rem;
+  padding-top: 0;
+  padding-bottom: 0;
 }
 .phylo-topbar__suggestion {
   pointer-events: none;
