@@ -56,13 +56,13 @@ instance JSON.ReadForeign Session where
   readImpl f = do
     r <- JSON.readImpl f
     let objTuple = Object.toUnfoldable r.caches :: Array (Tuple String NT.CacheState)
-    let rUp = r { caches = Map.fromFoldable (GUT.mapFst (fromMaybe 0 <<< Int.fromString) <$> objTuple) }
+    let rUp = r { caches = Map.fromFoldable (GUT.first (fromMaybe 0 <<< Int.fromString) <$> objTuple) }
     pure $ Session rUp
 instance JSON.WriteForeign Session where
   writeImpl (Session { backend, caches, token, treeId, username, userId}) =
       JSON.writeImpl { backend, caches: caches', token, treeId, username, userId }
     where
-      caches' = JSON.writeImpl $ Object.fromFoldable (GUT.mapFst show <$> Map.toUnfoldable caches :: Array (Tuple String NT.CacheState))
+      caches' = JSON.writeImpl $ Object.fromFoldable (GUT.first show <$> Map.toUnfoldable caches :: Array (Tuple String NT.CacheState))
 
 instance Eq Session where eq = genericEq
 

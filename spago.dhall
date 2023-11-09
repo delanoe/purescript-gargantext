@@ -29,6 +29,7 @@ to generate this file without the comments in this block.
   , "css"
   , "d3"
   , "datetime"
+  , "debug"
   , "dom-filereader"
   , "dom-simple"
   , "effect"
