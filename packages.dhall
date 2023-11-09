@@ -141,6 +141,7 @@ let additions =
           [ "arrays"
           , "enums"
           , "foldable-traversable"
+          , "int64"
           , "integers"
           , "lists"
           , "maybe"
@@ -151,8 +152,9 @@ let additions =
           , "tuples"
           , "uint"
           ]
-        , repo = "https://git.sr.ht/~cgenie/purescript-string-search"
-        , version = "v0.1.3"
+        , repo =
+            "https://gitlab.iscpif.fr/gargantext/purescript-string-search.git"
+        , version = "v0.1.6"
         }
       , dom-filereader =
         { dependencies = [ "aff", "arraybuffer-types", "web-file", "web-html" ]

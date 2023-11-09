@@ -32,6 +32,7 @@ import Data.Traversable (for, traverse_, traverse)
 import Data.TraversableWithIndex (traverseWithIndex)
 import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
+-- import Debug (trace)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
@@ -48,6 +49,7 @@ import Gargantext.Utils.Either (eitherMap)
 --import Gargantext.Utils.KarpRabin (indicesOfAny)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.String as GS
+import Gargantext.Utils.Tuple as GUT
 import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
 import Reactix as R
@@ -168,11 +170,17 @@ computeCache ngrams contextNgrams = { contextNgrams, pm, pats }
 highlightNgrams :: Record Cache -> CTabNgramType -> NgramsTable -> String -> Array HighlightElement
 highlightNgrams cache@{ pm, pats } ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
     -- trace {pats, input0, input, ixs} \_ ->
-    A.fromFoldable ((\(s /\ ls)-> undb s /\ ls) <$> unsafePartial (foldl goFold ((input /\ Nil) : Nil) ixs))
+    -- trace ("[highlightNgrams] " <> show { input0
+    --                                     , ixs
+    --                                     , normInput: normNgramInternal ntype input
+    --                                     , hashStructPats: hashStruct.pats }) \_ ->
+    A.fromFoldable (GUT.first undb <$> unsafePartial (foldl goFold ((input /\ Nil) : Nil) ixs))
   where
     spR x = " " <> R.replace wordBoundaryReg "$1$1" x <> " "
     -- reR = R.replace wordBoundaryReg " "
     db = S.replaceAll (S.Pattern " ") (S.Replacement "  ")
+    -- | We need to add spaces around terms to avoid matching on
+    -- | substrings, i.e. term "cat" shouldn't match "category"
     sp x = " " <> db x <> " "
     undb = R.replace wordBoundaryReg2 "$1"
     input = spR input0
@@ -183,6 +191,12 @@ highlightNgrams cache@{ pm, pats } ntype table@(NgramsTable {ngrams_repo_element
                                                                 -- n) Set.empty elts
              -- foldlWithIndex (\term acc (NgramsRepoElement nre) -> Set.union acc $ Set.insert term nre.children) Set.empty elts
     hashStruct = SSKR.hashStruct (sp <<< ngramsTermText <$> pats)
+    -- | 'ixs' structure is a list of patterns matched by
+    -- | Karp-Rabin. First element of tuple is the position in string,
+    -- | second element is a list of matching patterns. Note that
+    -- | Karp-Rabin matches by hash, so hash collision is possible, we
+    -- | need to compare strings later.
+    ixs :: Array (Tuple Int (Array Int))
     ixs = SSKR.indicesOfAnyHashStruct hashStruct (normNgramInternal ntype input)
 
     splitAcc :: Partial => Int -> HighlightAccumulator
@@ -215,6 +229,7 @@ highlightNgrams cache@{ pm, pats } ntype table@(NgramsTable {ngrams_repo_element
 
     goAcc :: Partial => Int -> HighlightAccumulator -> Tuple NgramsTerm Int -> HighlightAccumulator
     goAcc i acc (pat /\ lpat) =
+      -- let _ = trace ("[goAcc] acc: " <> show acc <> ", pat: " <> show pat <> ", lpat: " <> show lpat) \_ -> 0 in
       case lookupRootListWithChildren pat table cache of
         Nothing ->
           -- crashWith $ "highlightNgrams: pattern [" <> show pat <> "] missing from table: " <> show table
@@ -223,17 +238,28 @@ highlightNgrams cache@{ pm, pats } ntype table@(NgramsTable {ngrams_repo_element
           let
             (acc0 /\ acc1_2) = splitAcc i acc
             (acc1 /\ acc2) = splitAcc (lpat + 1) acc1_2
+            -- _ = trace ("Split acc0: " <> show acc0) \_ -> acc0
+            -- _ = trace ("Split acc1_2: " <> show acc1_2) \_ -> acc1_2
+            -- _ = trace ("Split acc1: " <> show acc1) \_ -> acc1
+            -- _ = trace ("Split acc2: " <> show acc2) \_ -> acc2
             text = extractInputTextMatch i lpat input
             ng = normNgram ntype text
           in
             acc0 <> (addNgramElt ng ne_list <$> acc1) <> acc2
 
+    -- | Basic iteration function to check a single pattern matched by
+    -- | Karp-Rabin. 'i' corresponds to index of the first character
+    -- | in string, 'pis' is the list of indices of potentially
+    -- | matching patterns.
     goFold :: Partial => HighlightAccumulator -> Tuple Int (Array Int) -> HighlightAccumulator
-    goFold acc (Tuple i pis) = foldl (goAcc i) acc $
-                           --  A.sortWith snd $
-                               map (\pat -> pat /\ S.length (db (ngramsTermText pat))) $
-                               fromMaybe' (\_ -> crashWith "highlightNgrams: out of bounds pattern") $
-                               traverse (A.index pats) pis
+    goFold acc (Tuple i pis) =
+      foldl (goAcc i) acc $
+      --  A.sortWith snd $
+      map (\pat -> pat /\ S.length (db (ngramsTermText pat))) $
+      -- we can't have non-matching index
+      fromMaybe' (\_ -> crashWith "highlightNgrams: out of bounds pattern") $
+      -- convert pattern indices into 'Maybe NgramsTerm'
+      traverse (A.index pats) pis
 
 --applyNgramsTablePatchToSingleTerm :: NgramsTerm -> NgramsTablePatch -> Set NgramsTerm -> Set NgramsTerm
 --applyNgramsTablePatchToSingleTerm ngram patch s =

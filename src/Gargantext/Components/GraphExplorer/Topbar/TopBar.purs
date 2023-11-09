@@ -7,7 +7,7 @@ import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Topbar.Search (nodeSearchControl)
 import Gargantext.Types as GT
-import Gargantext.Utils ((?))
+import Gargantext.Utils (nbsp, (?))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -38,33 +38,60 @@ component = here.component "topBar" cpt where
     pure $
 
       H.div
-      { className: "graph-topbar" }
+      { className: "node-topbar graph-topbar bg-primary h-100" }
       [
+        H.div
+        { className: "node-topbar__title graph-topbar__title align-self-center px-1 text-light" }
+        [
+          B.icon { name: "hubzilla" }
+        ,
+          H.text $ nbsp 1
+        ,
+          H.text "Graph"
+        ]
+      ,
         -- Toolbar toggle
         B.button
-        { className: "graph-topbar__toolbar"
+        { className: "graph-topbar__toolbar rounded-circle-2 py-0 px-2 mr-1"
         , callback: \_ -> T.modify_ (not) showControls
         , variant: showControls' ?
             ButtonVariant Light $
             OutlinedButtonVariant Light
+        , title: showControls' ?
+            "Hide toolbar" $
+            "Show toolbar"
         }
         [
-          H.text $ showControls' ? "Hide toolbar" $ "Show toolbar"
+          B.icon { name: "sliders" }
+        ,
+          H.text $ nbsp 1
+        ,
+          H.text "Toolbar"
+        -- ,
+        --   H.text $ showControls' ? "Hide toolbar" $ "Show toolbar"
         ]
       ,
         -- Sidebar toggle
         B.button
-        { className: "graph-topbar__sidebar"
+        { className: "graph-topbar__sidebar rounded-circle-2 py-0 px-2 mr-1"
         , callback: \_ -> T.modify_ GT.toggleSidePanelState showSidebar
-
         , variant: showSidebar' == GT.Opened ?
             ButtonVariant Light $
             OutlinedButtonVariant Light
-        }
-        [
-          H.text $ showSidebar' == GT.Opened ?
+        , title: showSidebar' == GT.Opened ?
             "Hide sidebar" $
             "Show sidebar"
+        }
+        [
+          B.icon { name: "columns" }
+        ,
+          H.text $ nbsp 1
+        ,
+          H.text "Sidebar"
+        -- ,
+        --   H.text $ showSidebar' == GT.Opened ?
+        --     "Hide sidebar" $
+        --     "Show sidebar"
         ]
       ,
         -- Search

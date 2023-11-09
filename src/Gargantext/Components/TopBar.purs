@@ -50,7 +50,7 @@ componentCpt = here.component "main" cpt where
     pure $
 
       H.div
-      { className: "main-topbar navbar navbar-expand-lg navbar-dark bg-dark py-0"
+      { className: "main-topbar navbar navbar-expand-lg navbar-dark bg-dark py-0 pr-0"
       , id: "dafixedtop"
       , role: "navigation"
       }
@@ -71,7 +71,7 @@ componentCpt = here.component "main" cpt where
         ]
       ,
         H.li
-        { title: "Hello! Looking for the tree ?\n"
+        { title: "Hello! Looking for the tree?\n"
               <> "Just watch on the other side!\n"
               <> "Click on the hand again to see it back."
         , className : "nav-item main-topbar__help-button"
@@ -92,7 +92,7 @@ componentCpt = here.component "main" cpt where
               ButtonVariant Light $
               OutlinedButtonVariant Light
           , callback: onTreeToggleClick
-          , className: "main-topbar__tree-switcher"
+          , className: "main-topbar__tree-switcher rounded-circle-2"
           , title: 
               if showTree' 
               then"Hide Tree" 
@@ -106,7 +106,6 @@ componentCpt = here.component "main" cpt where
           --   if showTree'
           --   then H.text $ nbsp 1 <> "Hide Tree"
           --   else H.text $ nbsp 1 <> "Show Tree"
- 
           ]
 
         ]
@@ -139,7 +138,8 @@ componentCpt = here.component "main" cpt where
             then H.text "Hide Tree"
             else H.text "Show Tree"
           ]-}
-        , H.div { id: "portal-topbar" } []
+        , H.div { id: "portal-topbar"
+                , className: "ml-1 w-100 h-100"} []
       ]
 
       -- SB.searchBar {session, databases: allDatabases}
@@ -155,7 +155,7 @@ onTreeToggleChange new = do
 logo :: R.Element
 logo =
   H.a { className, href: "#/" } [
-    H.img { src, title, width: "46", height: "auto" }
+    H.img { src, title, width: "auto", height: "30" }
   ]
   where
     className = "main-topbar__logo navbar-brand logoSmall"

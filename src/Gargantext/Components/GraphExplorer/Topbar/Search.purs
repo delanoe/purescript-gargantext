@@ -64,9 +64,9 @@ nodeSearchControlCpt = here.component "nodeSearchControl" cpt
           { autocompleteSearch: autocompleteSearch graph
           , onAutocompleteClick: doSearch
           , onEnterPress: doSearch
-          , classes: "filter-results-completions"
+          , classes: "filter-results-completions rounded-circle-2 text-small py-0"
           , state: search
-          , placeholder: "filter and select terms here..."
+          , placeholder: "find and select a term here..."
           }
         ,
           B.button
