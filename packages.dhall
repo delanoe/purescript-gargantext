@@ -153,7 +153,7 @@ let additions =
           , "uint"
           ]
         , repo = "https://git.sr.ht/~cgenie/purescript-string-search"
-        , version = "v0.1.4"
+        , version = "v0.1.6"
         }
       , dom-filereader =
         { dependencies = [ "aff", "arraybuffer-types", "web-file", "web-html" ]
