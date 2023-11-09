@@ -152,7 +152,8 @@ let additions =
           , "tuples"
           , "uint"
           ]
-        , repo = "https://git.sr.ht/~cgenie/purescript-string-search"
+        , repo =
+            "https://gitlab.iscpif.fr/gargantext/purescript-string-search.git"
         , version = "v0.1.6"
         }
       , dom-filereader =
