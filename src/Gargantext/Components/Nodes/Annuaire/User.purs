@@ -15,7 +15,7 @@ import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.GraphQL (getClient)
-import Gargantext.Components.GraphQL.Endpoints (getUserInfo, getUser, updateUserPubmedAPIKey)
+import Gargantext.Components.GraphQL.Endpoints (getUserInfo, getUser, updateUserPubmedAPIKey, updateUserEPOAPIUser, updateUserEPOAPIToken)
 import Gargantext.Components.GraphQL.User (UserInfo, _ui_cwCity, _ui_cwCountry, _ui_cwFirstName, _ui_cwLabTeamDeptsFirst, _ui_cwLastName, _ui_cwOffice, _ui_cwOrganizationFirst, _ui_cwRole, _ui_cwTouchMail, _ui_cwTouchPhone, _ui_cwDescription)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.Tabs as Tabs
@@ -114,6 +114,7 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
                     display { title: fromMaybe "no name" (Just ui_username) }
                       (contactInfos userInfo (onUpdateUserInfo boxes.errors reload))
                     , pubmedSettings { boxes, nodeId, session }
+                    , epoSettings { boxes, nodeId, session }
                     -- , Tabs.tabs {
                     --      boxes
                     --    , cacheState
@@ -185,7 +186,7 @@ pubmedSettingsLoaded :: R2.Leaf PubmedSettingsLoadedProps
 pubmedSettingsLoaded = R2.leaf pubmedSettingsLoadedCpt
 pubmedSettingsLoadedCpt :: R.Component PubmedSettingsLoadedProps
 pubmedSettingsLoadedCpt = here.component "pubmedSettingsLoaded" cpt where
-  cpt { boxes: { errors }
+  cpt { boxes
       , nodeId
       , mPubmedAPIKey
       , session } _ = do
@@ -197,25 +198,109 @@ pubmedSettingsLoadedCpt = here.component "pubmedSettingsLoaded" cpt where
         [ R2.col 12
           [ R2.row
             [ H.h2 {} [ H.text "PubMed settings" ] ]
-          , H.div { className: "form-group row"}
-            [ H.span { className: "col-sm-2 col-form-label" } [ H.text "API Key" ]
-            , H.div { className: "input-group col-sm-6"}
-              [ itemEditable { defaultVal: ""
-                             , isEditing
-                             , onUpdate: \s -> do
-                               here.log2 "[pubmedSettingsLoaded] new api key" s
-                               case s of
-                                 "" -> pure unit
-                                 _ -> do
-                                   launchAff_ $ do
-                                     res <- updateUserPubmedAPIKey session nodeId s
-                                     handleRESTError here errors res $ \_result ->
-                                       liftEffect $ here.log "[pubmedSettingsLoaded] api key updated"
-                             , valueBox: box }]
-            ]
+          , editableUserField { boxes
+                              , callback: updateUserPubmedAPIKey session nodeId
+                              , description: "API Key"
+                              , mValue: mPubmedAPIKey }
           ]
         ]
       ]
+
+------------------------------------------------------------
+
+type EPOSettingsProps =
+  ( boxes   :: Boxes
+  , nodeId  :: CorpusId
+  , session :: Session )
+
+epoSettings :: R2.Leaf EPOSettingsProps
+epoSettings = R2.leaf epoSettingsCpt
+epoSettingsCpt :: R.Component EPOSettingsProps
+epoSettingsCpt = here.component "epoSettings" cpt where
+  cpt { boxes
+      , nodeId
+      , session } _ = do
+    useLoader { errorHandler
+              , loader: \_ -> getUser session nodeId
+              , path: unit
+              , render: \user -> epoSettingsLoaded { boxes
+                                                   , nodeId
+                                                   , mEPOAPIUser: user.u_hyperdata.epo_api_user
+                                                   , mEPOAPIToken: user.u_hyperdata.epo_api_token
+                                                   , session } }
+    where
+      errorHandler = logRESTError here "[epoSettings]"
+
+type EPOSettingsLoadedProps =
+  ( mEPOAPIUser  :: Maybe String
+  , mEPOAPIToken :: Maybe String
+  | EPOSettingsProps )
+
+epoSettingsLoaded :: R2.Leaf EPOSettingsLoadedProps
+epoSettingsLoaded = R2.leaf epoSettingsLoadedCpt
+epoSettingsLoadedCpt :: R.Component EPOSettingsLoadedProps
+epoSettingsLoadedCpt = here.component "epoSettingsLoaded" cpt where
+  cpt { boxes
+      , nodeId
+      , mEPOAPIUser
+      , mEPOAPIToken
+      , session } _ = do
+
+    pure $ R2.row
+      [ R2.col 12
+        [ R2.col 12
+          [ R2.row
+            [ H.h2 {} [ H.text "EPO settings" ] ]
+          , editableUserField { boxes
+                              , callback: updateUserEPOAPIUser session nodeId 
+                              , description: "API User"
+                              , mValue: mEPOAPIUser }
+          , editableUserField { boxes
+                              , callback: updateUserEPOAPIToken session nodeId 
+                              , description: "API Token"
+                              , mValue: mEPOAPIToken }
+          ]
+        ]
+      ]
+
+------------------------------------------------------------
+
+type EditableUserField =
+  ( boxes       :: Boxes
+  , callback    :: String -> AffRESTError Unit
+  , description :: String
+  , mValue      :: Maybe String )
+
+editableUserField :: R2.Leaf EditableUserField
+editableUserField = R2.leaf editableUserFieldCpt
+editableUserFieldCpt :: R.Component EditableUserField
+editableUserFieldCpt = here.component "editableUserField" cpt where
+  cpt { boxes: { errors }
+      , callback
+      , description
+      , mValue } _ = do
+    box <- T.useBox $ fromMaybe "" mValue
+    isEditing <- T.useBox false
+
+    pure $ H.div { className: "form-group row"}
+      [ H.span { className: "col-sm-2 col-form-label" } [ H.text description ]
+      , H.div { className: "input-group col-sm-6"}
+        [ itemEditable { defaultVal: ""
+                       , isEditing
+                       , onUpdate: \s -> do
+                           here.log2 ("[editableUserField] " <> description) s
+                           case s of
+                             "" -> pure unit
+                             _ -> do
+                               launchAff_ $ do
+                                 res <- callback s
+                                 handleRESTError here errors res $ \_result ->
+                                   liftEffect $ here.log ("[editableUserField] " <> description <> " updated")
+                       , valueBox: box }]
+      ]
+
+
+------------------------------------------------------------
 
 -- | TODO format data in better design (UI) shape
 contactInfos :: UserInfo -> (UserInfo -> Effect Unit) -> Array R.Element

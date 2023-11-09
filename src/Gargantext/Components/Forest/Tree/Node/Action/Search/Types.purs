@@ -29,6 +29,8 @@ type Search = { databases    :: Database
               , url          :: String
               , lang         :: Maybe Lang
               , node_id      :: Maybe Int
+              , epoApiUser   :: Maybe String
+              , epoApiToken  :: Maybe String
               , pubmedApiKey :: Maybe String
               , term         :: String
               , years        :: Array String
@@ -140,7 +142,7 @@ instance Doc Database where
   doc IsTex          = "All Elsevier enriched by CNRS/INIST"
   doc IsTex_Advanced = "IsTex advanced search"
   doc Isidore        = "All (French) Social Sciences"
-  doc EPO            = "European Patent Office)"
+  doc EPO            = "European Patent Office"
   doc Empty          = "Empty"
 --  doc News        = "Web filtered by News"
 --  doc SocialNetworks = "Web filtered by MicroBlogs"
@@ -280,6 +282,8 @@ newtype SearchQuery = SearchQuery
   , node_id      :: Maybe Int
   , offset       :: Maybe Int
   , order        :: Maybe SearchOrder
+  , epoAPIUser   :: Maybe String
+  , epoAPIToken  :: Maybe String
   , pubmedAPIKey :: Maybe String
   , selection    :: ListSelection.Selection
   }
@@ -298,13 +302,23 @@ instance GT.ToQuery SearchQuery where
           pair k = maybe [] $ \v ->
             [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
 instance JSON.WriteForeign SearchQuery where
-  writeImpl (SearchQuery { databases, datafield, lang, node_id, pubmedAPIKey, query, selection }) =
+  writeImpl (SearchQuery { databases
+                         , datafield
+                         , lang
+                         , node_id
+                         , epoAPIUser
+                         , epoAPIToken
+                         , pubmedAPIKey
+                         , query
+                         , selection }) =
     JSON.writeImpl { query: query -- String.replace (String.Pattern "\"") (String.Replacement "\\\"") query
                    , databases
                    , datafield
                    , lang: maybe "EN" show lang
                    , node_id: fromMaybe 0 node_id
                    , flowListWith: selection
+                   , epoAPIUser
+                   , epoAPIToken
                    , pubmedAPIKey
                    }
 
@@ -319,6 +333,8 @@ defaultSearchQuery = SearchQuery
   , node_id      : Nothing
   , offset       : Nothing
   , order        : Nothing
+  , epoAPIUser   : Nothing
+  , epoAPIToken  : Nothing
   , pubmedAPIKey : Nothing
   , selection    : ListSelection.NoList -- MyListsFirst
   }

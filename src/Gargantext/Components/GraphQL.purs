@@ -16,7 +16,7 @@ import Gargantext.Components.GraphQL.IMT as GQLIMT
 import Gargantext.Components.GraphQL.NLP as GQLNLP
 import Gargantext.Components.GraphQL.Node as GQLNode
 import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, BreadcrumbInfo)
-import Gargantext.Components.GraphQL.User (User, UserInfo, UserInfoM, UserPubmedAPIKeyM)
+import Gargantext.Components.GraphQL.User (User, UserInfo, UserInfoM, UserPubmedAPIKeyM, UserEPOAPIUserM, UserEPOAPITokenM)
 import Gargantext.Components.GraphQL.Team (Team, TeamDeleteM)
 import Gargantext.Ends (Backend(..))
 import Gargantext.Sessions (Session(..))
@@ -92,5 +92,7 @@ type Schema
 type Mutation
   = { update_user_info :: UserInfoM ==> Int
     , update_user_pubmed_api_key :: UserPubmedAPIKeyM ==> Int
+    , update_user_epo_api_user :: UserEPOAPIUserM ==> Int
+    , update_user_epo_api_token :: UserEPOAPITokenM ==> Int
     , delete_team_membership :: TeamDeleteM ==> Array Int
     , update_node_context_category :: GQLCTX.NodeContextCategoryM ==> Array Int }

@@ -81,6 +81,26 @@ updateUserPubmedAPIKey session user_id api_key = do
                                     { update_user_pubmed_api_key: onlyArgs { user_id
                                                                            , api_key } }
   pure $ Right unit
+  
+updateUserEPOAPIUser :: Session -> Int -> String -> AffRESTError Unit
+updateUserEPOAPIUser session user_id api_user = do
+  client <- liftEffect $ getClient session
+  { update_user_epo_api_user } <- mutation
+                                  client
+                                  "update_user_epo_api_user"
+                                  { update_user_epo_api_user: onlyArgs { user_id
+                                                                         , api_user } }
+  pure $ Right unit
+  
+updateUserEPOAPIToken :: Session -> Int -> String -> AffRESTError Unit
+updateUserEPOAPIToken session user_id api_token = do
+  client <- liftEffect $ getClient session
+  { update_user_epo_api_token } <- mutation
+                                   client
+                                   "update_user_epo_api_token"
+                                   { update_user_epo_api_token: onlyArgs { user_id
+                                                                         , api_token } }
+  pure $ Right unit
 
 getUserInfo :: Session -> Int -> AffRESTError UserInfo
 getUserInfo session id = do
