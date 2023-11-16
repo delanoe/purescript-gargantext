@@ -133,7 +133,7 @@ lookupRootListWithChildren ngram table@(NgramsTable {ngrams_repo_elements: elts}
         Just (NgramsRepoElement {list}) -> Just list -- assert root == Nothing
 
 wordBoundaryChars :: String
-wordBoundaryChars = "[ .,;:!?'\\{}()]"
+wordBoundaryChars = """[ .,;:!?’'«»"\\/\|{}()\[\]\-_—\+\*=~#@...]"""
 
 wordBoundaryReg :: R.Regex
 wordBoundaryReg = case R.regex ("(" <> wordBoundaryChars <> ")") (R.global <> R.multiline) of
