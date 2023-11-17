@@ -121,10 +121,10 @@ docListCpt = here.component "main" cpt where
   -- | Helpers
   -- |
   errorHandler err = do
-    here.warn2 "[pageLayout] RESTError" err
+    here.warn2 "[docList] RESTError" err
     case err of
       ReadJSONError err' ->
-        here.warn2 "[pageLayout] ReadJSONError" $ show err'
+        here.warn2 "[docList] ReadJSONError" $ show err'
       _ -> pure unit
   -- | Component
   -- |
