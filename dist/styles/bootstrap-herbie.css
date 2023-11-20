@@ -11275,6 +11275,11 @@ select.form-control {
   font-size: 0.85rem;
 }
 
+.tree-expanded {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
 .annotation-run {
   cursor: pointer;
 }
