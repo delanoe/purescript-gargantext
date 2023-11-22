@@ -176,7 +176,7 @@ highlightNgrams cache@{ pm, pats } ntype table@(NgramsTable {ngrams_repo_element
     --                                     , hashStructPats: hashStruct.pats }) \_ ->
     A.fromFoldable (GUT.first undb <$> unsafePartial (foldl goFold ((input /\ Nil) : Nil) ixs))
   where
-    spR x = " " <> R.replace wordBoundaryReg "$1$1" x <> " "
+    spR x = " " <> R.replace wordBoundaryReg "$1 " x <> " "
     -- reR = R.replace wordBoundaryReg " "
     db = S.replaceAll (S.Pattern " ") (S.Replacement "  ")
     -- | We need to add spaces around terms to avoid matching on
