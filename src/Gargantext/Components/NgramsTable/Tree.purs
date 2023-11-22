@@ -2,6 +2,7 @@ module Gargantext.Components.NgramsTable.Tree where
 
 import Gargantext.Prelude
 
+import Data.Array (length)
 import Data.Array as A
 import Data.Lens ((^..), (^.), view)
 import Data.Lens.Fold (folded)
@@ -291,18 +292,33 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
           H.div {}
           ( if isEditing'
             then
-              [
-                B.iconButton
-                { name: "plus"
-                , className: "mr-1 align-bottom"
-                , overlay: false
-                , variant: Primary
-                , callback: const $ dispatch $ ToggleChild true ngrams
-                }
-              ,
-                R2.buff $
-                tag [ text $ " " <> ngramsTermText ngramsDepth.ngrams ]
-              ]
+              if (length $ getNgramsChildren' ngrams) > 0
+                then
+                  [ H.div {className: "tree-expanded"} [
+                    B.iconButton
+                    { name: "plus"
+                    , className: "mr-1 align-bottom"
+                    , overlay: false
+                    , variant: Primary
+                    , callback: const $ dispatch $ ToggleChild true ngrams
+                    }
+                  ,
+                    R2.buff $
+                    tag [ text $ " " <> ngramsTermText ngramsDepth.ngrams ]
+                  ] ]
+                else
+                  [
+                    B.iconButton
+                    { name: "plus"
+                    , className: "mr-1 align-bottom"
+                    , overlay: false
+                    , variant: Primary
+                    , callback: const $ dispatch $ ToggleChild true ngrams
+                    }
+                  ,
+                    R2.buff $
+                    tag [ text $ " " <> ngramsTermText ngramsDepth.ngrams ]
+                  ]
             else
               [
                 renderNgramsTree
