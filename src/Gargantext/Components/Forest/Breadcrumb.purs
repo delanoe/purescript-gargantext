@@ -6,6 +6,7 @@ import Control.Monad.Trans.Class
 import Data.String (Pattern(..), split)
 import Data.Array as A
 import Data.Int (fromString)
+import Data.List (head)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -254,6 +255,8 @@ breadcrumbItemCpt = here.component "breadcrumbItemCpt" cpt where
             , disabled
             } _ = do
 
+    url <- R.unsafeHooksEffect GU.href
+
     let sid = sessionId session
     let rootId = treeId session
 
@@ -275,7 +278,21 @@ breadcrumbItemCpt = here.component "breadcrumbItemCpt" cpt where
               }
             ]
           , 
-            H.text props.text
+            if show nodeType == "NodeUser"
+            then
+              H.text $ getUserText url 
+            else
+              H.text props.text
+          
+          , H.span { className: "text-small" }
+            [ 
+            if show nodeType == "NodeUser"
+            then
+              H.text $ " (" <> getInstanceText url <> ")"
+            else
+              H.text ""
+            ]
+        
           ]
 
         else
@@ -311,6 +328,16 @@ treeId (Session {treeId: tId}) = tId
 getLastUrlElement :: String -> String
 getLastUrlElement str = fromMaybe "" $ A.last $ split (Pattern "/") str
 
+getFirstUrlElement :: String -> String
+getFirstUrlElement str = fromMaybe "" $ A.head $ split (Pattern "/") str
+
+getInstanceText :: String -> String
+getInstanceText str = getFirstUrlElement $ fromMaybe "" $ A.last $ split (Pattern "@") str
+
+getUserText :: String -> String
+getUserText str = getLastUrlElement $ fromMaybe "" $ A.head $ split (Pattern "@") str
+
+
 type LoadProps =
   (
     session :: Session
@@ -320,65 +347,3 @@ type LoadProps =
 
 loadBreadcrumbData :: Record LoadProps -> AffRESTError BreadcrumbInfo
 loadBreadcrumbData {nodeId, session} = getBreadcrumb session nodeId
-
-
-
-
--- type BreadcrumbProps = ( nodeId  :: NodeID )
-
-
--- breadcrumbLayout :: R2.Leaf BreadcrumbProps
--- breadcrumbLayout = R2.leaf breadcrumbLayoutCpt
--- breadcrumbLayoutCpt :: R.Component BreadcrumbProps
--- breadcrumbLayoutCpt = here.component "breadcrumbLayout" cpt where
---   cpt props@{ nodeId } _ = do
-
---     session <- useSession
-
---     let
---       breadcrumbData = getBreadcrumb session nodeId
-
---     pure $ 
---       -- breadcrumb layout
---       H.div {}
---       [
---         H.nav 
---         { className: "breadcrumb-wrapper bg-light"
---         , "aria-label": "breadcrumb" }
---         [
---           H.ol { className: "breadcrumb text-small" }
---           [
---             H.li { className: "breadcrumb-item" }
---             [
---               H.a { href: "/" } 
---               [ H.span { className: "" }
---                 [ 
---                   B.icon { name: "home" } 
---                 ]
---               , H.text "Home" 
---               ]
---             ]
---           , 
---             H.li { className: "breadcrumb-item" }
---             [
---               H.a { href: "/" } 
---               [ H.span { className: "" }
---                 [ 
---                   B.icon { name: "folder-open-o" } 
---                 ]
---               , H.text "parent folder" 
---               ]
---             ]
---           , 
---             H.li { className: "breadcrumb-item" }
---             [ H.span { className: "active-page" }
---               [ H.span { className: "" }
---                 [ 
---                   B.icon { name: "book" } 
---                 ]
---               , H.text "current node"
---               ]
---             ]
---           ]
---         ]
---       ]
