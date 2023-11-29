@@ -29,6 +29,8 @@ type Search = { databases    :: Database
               , url          :: String
               , lang         :: Maybe Lang
               , node_id      :: Maybe Int
+              , epoApiUser   :: Maybe String
+              , epoApiToken  :: Maybe String
               , pubmedApiKey :: Maybe String
               , term         :: String
               , years        :: Array String
@@ -110,6 +112,7 @@ data Database = All_Databases
               | IsTex
               | IsTex_Advanced
               | Isidore
+              | EPO
 --              | News
 --              | SocialNetworks
 derive instance Generic Database _
@@ -125,6 +128,7 @@ instance Show Database where
   show IsTex          = "IsTex"
   show IsTex_Advanced = "IsTex_Advanced"
   show Isidore        = "Isidore"
+  show EPO            = "EPO"
   show Empty          = "Empty"
 --  show News   = "News"
 --  show SocialNetworks = "Social Networks"
@@ -138,6 +142,7 @@ instance Doc Database where
   doc IsTex          = "All Elsevier enriched by CNRS/INIST"
   doc IsTex_Advanced = "IsTex advanced search"
   doc Isidore        = "All (French) Social Sciences"
+  doc EPO            = "European Patent Office"
   doc Empty          = "Empty"
 --  doc News        = "Web filtered by News"
 --  doc SocialNetworks = "Web filtered by MicroBlogs"
@@ -167,6 +172,7 @@ allDatabases = [ Empty
                , Arxiv
                , OpenAlex
                , IsTex
+               , EPO
                  --, IsTex_Advanced
                  --, Isidore
                  --, Web
@@ -183,6 +189,7 @@ dbToInputValue (HAL _)        = "hal"
 dbToInputValue IsTex          = "istex"
 dbToInputValue IsTex_Advanced = "istex_advanced"
 dbToInputValue Isidore        = "isidore"
+dbToInputValue EPO            = "epo"
 dbToInputValue Empty          = "empty"
 
 dbFromInputValue :: String -> Maybe Database
@@ -194,6 +201,7 @@ dbFromInputValue "hal"            = Just (HAL Nothing)
 dbFromInputValue "istex"          = Just IsTex
 dbFromInputValue "istex_advanced" = Just IsTex_Advanced
 dbFromInputValue "isidore"        = Just Isidore
+dbFromInputValue "epo"            = Just EPO
 dbFromInputValue "empty"          = Just Empty
 dbFromInputValue _                = Nothing
 
@@ -274,6 +282,8 @@ newtype SearchQuery = SearchQuery
   , node_id      :: Maybe Int
   , offset       :: Maybe Int
   , order        :: Maybe SearchOrder
+  , epoAPIUser   :: Maybe String
+  , epoAPIToken  :: Maybe String
   , pubmedAPIKey :: Maybe String
   , selection    :: ListSelection.Selection
   }
@@ -292,13 +302,23 @@ instance GT.ToQuery SearchQuery where
           pair k = maybe [] $ \v ->
             [ QP.keyFromString k /\ Just (QP.valueFromString $ show v) ]
 instance JSON.WriteForeign SearchQuery where
-  writeImpl (SearchQuery { databases, datafield, lang, node_id, pubmedAPIKey, query, selection }) =
+  writeImpl (SearchQuery { databases
+                         , datafield
+                         , lang
+                         , node_id
+                         , epoAPIUser
+                         , epoAPIToken
+                         , pubmedAPIKey
+                         , query
+                         , selection }) =
     JSON.writeImpl { query: query -- String.replace (String.Pattern "\"") (String.Replacement "\\\"") query
                    , databases
                    , datafield
                    , lang: maybe "EN" show lang
                    , node_id: fromMaybe 0 node_id
                    , flowListWith: selection
+                   , epoAPIUser
+                   , epoAPIToken
                    , pubmedAPIKey
                    }
 
@@ -313,6 +333,8 @@ defaultSearchQuery = SearchQuery
   , node_id      : Nothing
   , offset       : Nothing
   , order        : Nothing
+  , epoAPIUser   : Nothing
+  , epoAPIToken  : Nothing
   , pubmedAPIKey : Nothing
   , selection    : ListSelection.NoList -- MyListsFirst
   }
