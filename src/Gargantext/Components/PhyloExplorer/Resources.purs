@@ -3,7 +3,8 @@ module Gargantext.Components.PhyloExplorer.Resources
   , drawPhylo
   , selectSource
   , findSourceById
-  , autocompleteSearch, autocompleteSubmit
+  , autocompleteSearch, autocompleteSearchMulti
+  , autocompleteSubmit
   , setGlobalDependencies, setGlobalD3Reference
   , resetView
   , changeDisplayView
@@ -363,6 +364,21 @@ autocompleteSearch terms query =
     else Nothing
 
 
+autocompleteSearchMulti ::
+     Array Term
+  -> String
+  -> Effect (Array Term)
+autocompleteSearchMulti terms query =
+  let
+    hasMinLen = String.length >>> (_ > 0)
+
+  in pure
+
+    if hasMinLen query
+    then findTermsByPrefix terms query
+    else []
+
+
 autocompleteSubmit :: T.Box DisplayView -> Maybe Term -> Effect Unit
 autocompleteSubmit displayView = case _ of
   Nothing                    -> pure unit
@@ -372,8 +388,8 @@ autocompleteSubmit displayView = case _ of
     termClick label fdt 0 "search"
 
 
-findTermByPrefix :: Array Term -> String -> Maybe Term
-findTermByPrefix terms prefix =
+findTermsByPrefix :: Array Term -> String -> Array Term
+findTermsByPrefix terms prefix =
   let
     needle = String.toLower prefix
     fn s
@@ -383,7 +399,11 @@ findTermByPrefix terms prefix =
       >>> isJust
 
   in
-    Array.find (fn needle) terms
+    Array.filter (fn needle) terms
+
+
+findTermByPrefix :: Array Term -> String -> Maybe Term
+findTermByPrefix terms prefix = Array.head $ findTermsByPrefix terms prefix
 
 
 changeDisplayView :: DisplayView -> Effect Unit

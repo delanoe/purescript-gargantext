@@ -270,8 +270,10 @@
 }
 .mainleaf__folder-icon:not(.b-icon-button--enabled),
 .main-topbar__tree-switcher.btn-light .fa,
-.main-topbar__tree-switcher.btn-outline-light .fa {
-  &::before {
+.main-topbar__tree-switcher.btn-outline-light .fa,
+#portal-topbar .node-topbar .btn-light:hover .fa,
+#portal-topbar .node-topbar .btn-outline-light .fa {
+  &:before {
     color: inherit !important;
   }
 }
@@ -281,7 +283,8 @@
 .popup-container .search-bar .btn.fa,
 .login-modal-form .btn .fa,
 .corpus-layout__code-section .b-button .fa,
-.main-topbar__tree-switcher.btn-outline-light:not(:hover) .fa {
+.main-topbar__tree-switcher.btn-outline-light:not(:hover) .fa,
+#portal-topbar .node-topbar__title .fa {
   color: $light !important;
   &:before {
     color: $light !important;
@@ -540,10 +543,18 @@
 /// Buttons global
 ///-----------------------------------------------------------------------------
 
+
 .btn.disabled, .btn:disabled {
   opacity: .45;
 }
 
 .border-grey {
   border: 1px solid $gray-400;
+}
+
+.rounded-circle-2 {
+  border-radius: 50px;
+  .form-control {
+    border-radius: 50px;
+  }
 }

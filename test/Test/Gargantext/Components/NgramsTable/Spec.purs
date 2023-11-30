@@ -1,20 +1,18 @@
 module Test.Gargantext.Components.NgramsTable.Spec where
 
-import Prelude
+-- import Test.Spec.QuickCheck (quickCheck')
 import Data.List as L
-import Data.Maybe (Maybe(..))
 import Data.Map as Map
+import Data.Maybe (Maybe(..), isJust)
 import Data.Set as Set
 import Data.Tuple (Tuple(..), fst)
-import Test.Spec (Spec, describe, it)
--- import Test.Spec.Assertions (shouldEqual)
--- import Test.Spec.QuickCheck (quickCheck')
-
-import Test.Utils (shouldEqualArray)
-
-import Gargantext.Core.NgramsTable.Functions (highlightNgrams, normNgram, computeCache)
+import Gargantext.Core.NgramsTable.Functions (highlightNgrams, normNgram, computeCache, lookupRootListWithChildren)
 import Gargantext.Core.NgramsTable.Types (HighlightElement, NgramsElement(..), NgramsRepoElement(..), NgramsTable(..), NgramsTerm)
 import Gargantext.Types (CTabNgramType(..), TermList(..))
+import Prelude
+import Test.Spec (Spec, describe, it)
+import Test.Spec.Assertions (shouldContain, shouldNotContain, shouldSatisfy)
+import Test.Utils (shouldEqualArray)
 
 
 ne :: String -> TermList -> CTabNgramType -> NgramsElement
@@ -153,3 +151,29 @@ spec = do
                    , highlightNil ", after "
                    ]
       highlightNgrams cache CTabTerms table input `shouldEqualArray` output
+
+    it "works for #598" do
+      let input = "Passant d’une conception quasi solipsiste ou monadique de la sensation, présente dans l’Essai sur les données immédiates de la conscience, à l’idée d’une sensibilité universelle mais impersonnelle dans Matière et mémoire, Bergson se heurte à plusieurs difficultés, dont celle d’une dissolution de la notion de Sujet. Dans L’évolution créatrice puis dans Les deux sources de la morale et de la religion, son approche évolutionniste lui permet d’envisager la perspective d’une sensibilité indéfiniment extensible, inséparable désormais de celle d’un Vivant par définition métastable qui va de l’amibe jusqu’à Dieu."
+      let startInput = " Passant d’une "
+      let middleInput = " quasi solipsiste ou monadique de la sensation, présente dans l’Essai sur les données immédiates de la conscience, à l’idée d’une sensibilité universelle mais impersonnelle dans Matière et mémoire, Bergson se heurte à plusieurs difficultés, dont celle d’une dissolution de la "
+      let endInput = " de Sujet. Dans L’évolution créatrice puis dans Les deux sources de la morale et de la religion, son approche évolutionniste lui permet d’envisager la perspective d’une sensibilité indéfiniment extensible, inséparable désormais de celle d’un Vivant par définition métastable qui va de l’amibe jusqu’à Dieu. "
+      let ngramType = CTabSources
+      -- let termsS = ["arbre","article","automate","automates","calcul","cas","classe","concept","conception","construction","difficultés","données","décidabilité","effet","ensemble","extension","familles","fois","graphes","généralisons","intérêt","langage","langages","logique","longueur inférieure","monadique","mots","notion","opérations","pensée","perception","perspective","point","premier ordre","problème","produit","produits","rendre compte","second ordre","structure","structures","thèse","théorie","théorème","travail","travaux","travers","univers","variétés","vue","étude","évaluation"]
+      -- let contextNgramsS = ["concept","conception","difficultés","données","extension","monadique","Nothing"
+      --                      ,"notion","perspective"]
+      let termsS = ["conception", "notion"]
+      let contextNgramsS = ["conception", "notion"]
+      let tnres = (\t -> tnre t MapTerm ngramType) <$> termsS
+      let table = NgramsTable { ngrams_repo_elements: Map.fromFoldable tnres
+                              , ngrams_scores: Map.fromFoldable [] }
+      let cache = computeCache table $ Set.fromFoldable $ normNgram ngramType <$> contextNgramsS
+
+      lookupRootListWithChildren (normNgram ngramType "conception") table cache `shouldSatisfy` isJust
+      lookupRootListWithChildren (normNgram ngramType "notion") table cache `shouldSatisfy` isJust
+
+      highlightNgrams cache CTabTerms table input `shouldEqualArray`
+        [ highlightNil startInput
+        , highlightSingleton " conception" ngramType MapTerm
+        , highlightNil middleInput
+        , highlightSingleton " notion" ngramType MapTerm
+        , highlightNil endInput ]

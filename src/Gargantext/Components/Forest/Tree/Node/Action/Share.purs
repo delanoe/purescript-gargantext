@@ -102,7 +102,7 @@ shareNodeInnerCpt = here.component "shareNodeInner" cpt
                                          , placeholder: "username or email"}
                 ] (H.div {} [H.text text'])
       where
-        autocompleteSearch input = nub $ filter (contains (Pattern input)) completions
+        autocompleteSearch input = pure $ nub $ filter (contains (Pattern input)) completions
         onAutocompleteClick _ = pure unit
 ------------------------------------------------------------------------
 publishNode :: R2.Component SubTreeParamsIn

@@ -260,21 +260,40 @@ breadcrumbItemCpt = here.component "breadcrumbItemCpt" cpt where
     pure $ 
       H.li { className: "breadcrumb-item" }
       [
-        H.a { className: ""
-            , href: "/#/" <> createNodeUrl linkId rootId linkNodeType sid 
-            } 
-        [ 
+        if show nodeType == "NodeFolderPrivate" 
+        || show nodeType == "NodeFolderPublic" 
+        || show nodeType == "NodeFolderShared" 
+        || show nodeType == "NodeUser" 
+        then
           H.span { className: "" }
-          [ 
-            -- B.icon { name: "folder-open-o" } 
-            B.icon
-            { className: ""
-            , name: GT.getIcon nodeType true
-            }
+          [
+            H.span { className: "" }
+            [ 
+              B.icon
+              { className: ""
+              , name: GT.getIcon nodeType true
+              }
+            ]
+          , 
+            H.text props.text
           ]
-        , 
-          H.text props.text 
-        ]
+
+        else
+          H.a { className: ""
+              , href: "/#/" <> createNodeUrl linkId rootId linkNodeType sid 
+              } 
+          [ 
+            H.span { className: "" }
+            [ 
+              -- B.icon { name: "folder-open-o" } 
+              B.icon
+              { className: ""
+              , name: GT.getIcon nodeType true
+              }
+            ]
+          , 
+            H.text props.text 
+          ]
       ]
 
   createNodeUrl :: Int -> Int -> NodeType -> SessionId -> String

@@ -2,12 +2,20 @@
   position: sticky
   top: 0
   z-index: z-index('main', 'topbar')
+  height: 40px
+
+  select
+    padding-top: 0
+    padding-bottom: 0
+    height: 2rem
 
   &__theme-switcher,
   &__lang-switcher,
   &__tree-switcher
     margin-right: space-x(1)
 
+  &__tree-switcher
+    padding: 0.15rem 0.5rem
 
   // add hovering effect
   &.navbar-dark .navbar-text:hover
@@ -20,6 +28,8 @@
     padding-right: initial
   &__logo
     margin-right: initial
+    img
+      max-width: none
 
   @include right-handed
     flex-direction: row

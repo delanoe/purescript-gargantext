@@ -28,7 +28,7 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Gargantext.Components.Annotation.Menu (annotationMenu, AnnotationMenu)
 import Gargantext.Components.Annotation.Types (MenuType(..), ModeType(..), termClass)
-import Gargantext.Core.NgramsTable.Functions (Cache, findNgramTermList, highlightNgrams, normNgram)
+import Gargantext.Core.NgramsTable.Functions (Cache, computeCache, findNgramTermList, highlightNgrams, normNgram)
 import Gargantext.Core.NgramsTable.Types (HighlightElement, NgramsRepoElement(..), NgramsTable(..), NgramsTerm(..), parentMap)
 import Gargantext.Types (CTabNgramType(..), TermList)
 import Gargantext.Utils.Reactix as R2
@@ -137,7 +137,7 @@ annotatedFieldInnerCpt = here.component "annotatedFieldInner" cpt where
             { className: "annotated-field-runs"
             , aria: { expanded: false }
             }
-            ((\p -> annotateRun p) <$> wrap <$> compile cache ngrams fieldText)
+            (annotateRun <$> wrap <$> compile cache ngrams fieldText)
 
 
           AdditionMode ->

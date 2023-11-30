@@ -64,9 +64,9 @@ nodeSearchControlCpt = here.component "nodeSearchControl" cpt
           { autocompleteSearch: autocompleteSearch graph
           , onAutocompleteClick: doSearch
           , onEnterPress: doSearch
-          , classes: "filter-results-completions"
+          , classes: "filter-results-completions rounded-circle-2 text-small py-0"
           , state: search
-          , placeholder: "filter and select terms here..."
+          , placeholder: "find and select a term here..."
           }
         ,
           B.button
@@ -79,8 +79,8 @@ nodeSearchControlCpt = here.component "nodeSearchControl" cpt
           ]
         ]
 
-autocompleteSearch :: SigmaxT.SGraph -> String -> Array String
-autocompleteSearch graph s = Seq.toUnfoldable $ (_.label) <$> searchNodes s nodes
+autocompleteSearch :: SigmaxT.SGraph -> String -> Effect (Array String)
+autocompleteSearch graph s = pure $ Seq.toUnfoldable $ (_.label) <$> searchNodes s nodes
   where
     nodes = SigmaxT.graphNodes graph
 

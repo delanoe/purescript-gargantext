@@ -4,24 +4,25 @@ module Gargantext.Components.PhyloExplorer.TopBar
 
 import Gargantext.Prelude
 
+import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), ComponentStatus(..), Variant(..))
+import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
+import Gargantext.Components.InputWithAutocomplete (inputWithAutocomplete)
 import Gargantext.Components.PhyloExplorer.Store as PhyloStore
-import Gargantext.Components.PhyloExplorer.Types (Term(..), Source(..))
+import Gargantext.Components.PhyloExplorer.Types (Source(..))
 import Gargantext.Types (SidePanelState(..), toggleSidePanelState)
-import Gargantext.Utils ((?))
+import Gargantext.Utils (nbsp, (?))
 import Gargantext.Utils.Reactix as R2
-import Reactix (nothing)
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
 type Props =
-  ( sourceCallback      :: String -> Effect Unit
-  , searchCallback      :: String -> Effect Unit
-  , resultCallback      :: Maybe Term -> Effect Unit
+  ( autocompleteClickCallback :: String -> Effect Unit
+  , sourceCallback            :: String -> Effect Unit
+  , searchCallback            :: String -> Effect (Array String)
   )
 
 here :: R2.Here
@@ -32,9 +33,9 @@ topBar = R2.leaf component
 
 component :: R.Component Props
 component = here.component "main" cpt where
-  cpt { sourceCallback
+  cpt { autocompleteClickCallback
+      , sourceCallback
       , searchCallback
-      , resultCallback
       } _ = do
     -- | States
     -- |
@@ -48,35 +49,63 @@ component = here.component "main" cpt where
 
     source    <- R2.useLive' store.source
     sources   <- R2.useLive' store.sources
-    search    <- R2.useLive' store.search
-    result    <- R2.useLive' store.result
+
+    searchState <- T.useBox ""
 
     -- | Render
     --
     pure $
 
       H.div
-      { className: "phylo-topbar" }
+      { className: "node-topbar phylo-topbar bg-primary h-100" }
       [
+        H.div
+        { className: "node-topbar__title phylo-topbar__title align-self-center px-1 text-light" }
+        [
+          B.icon { name: "code-fork" }
+        ,
+          H.text $ nbsp 1
+        ,
+          H.text "Phylo"
+        ]
+      ,
         -- Toolbar toggle
         B.button
-        { className: "phylo-topbar__toolbar"
+        { className: "phylo-topbar__toolbar rounded-circle-2 py-0 px-2 mr-1"
         , callback: \_ -> T.modify_ (not) toolBarDisplayed
         , variant: toolBar' ?
             ButtonVariant Light $
             OutlinedButtonVariant Light
+        , title: toolBar' ?
+            "Hide toolbar" $
+            "Show toolbar"
         }
-        [ H.text $ toolBar' ? "Hide toolbar" $ "Show toolbar" ]
+        [ 
+          B.icon { name: "sliders" }
+        ,
+          H.text $ nbsp 1
+        ,
+          H.text "Toolbar"
+        ]
       ,
         -- Sidebar toggle
         B.button
-        { className: "phylo-topbar__sidebar"
+        { className: "phylo-topbar__sidebar rounded-circle-2 py-0 px-2 mr-1"
         , callback: \_ -> T.modify_ (toggleSidePanelState) sideBarDisplayed
         , variant: sideBar' == Opened ?
             ButtonVariant Light $
             OutlinedButtonVariant Light
+        , title: sideBar' == Opened ?
+            "Hide sidebar" $
+            "Show sidebar"
         }
-        [ H.text $ sideBar' == Opened ? "Hide sidebar" $ "Show sidebar" ]
+        [ 
+          B.icon { name: "columns" }
+        ,
+          H.text $ nbsp 1
+        ,
+          H.text "Sidebar"
+        ]
       ,
         -- Source
         H.div
@@ -85,6 +114,7 @@ component = here.component "main" cpt where
           B.formSelect
           { value: source
           , callback: sourceCallback
+          , className: "rounded-circle-2"
           } $
           [
             H.option
@@ -108,28 +138,19 @@ component = here.component "main" cpt where
         { className: "phylo-topbar__autocomplete"
         }
         [
-          B.formInput
-          { className: "phylo-topbar__suggestion"
-          , status: Idled
-          , value: case result of
-              Nothing               -> ""
-              Just (Term { label }) -> label
-          -- (?) noop: see below button
-          , callback: const nothing
+          inputWithAutocomplete
+          { autocompleteSearch: searchCallback
+          , onAutocompleteClick: autocompleteClickCallback
+          , onEnterPress: \s -> do
+                  cs <- searchCallback s
+                  case A.head cs of
+                    Nothing -> pure unit
+                    Just h -> autocompleteClickCallback h
+          , classes: "filter-results-completions rounded-circle-2 text-small py-0"
+          , placeholder: "find and select a term here..."
+          , state: searchState
           }
-        ,
-          B.formInput
-          { className: "phylo-topbar__search"
-          , value: search
-          , callback: searchCallback
-          , placeholder: "Find a term"
-          }
-        ,
-          B.button
-          { callback: \_ -> resultCallback result
-          , type: "submit"
-          , className: "phylo-topbar__submit"
-          }
-          [ H.text "" ]
         ]
       ]
+
+
