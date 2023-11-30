@@ -55,7 +55,7 @@
     position: absolute
     z-index: z-index('graph', 'toolbar')
     background-color: $body-bg
-    width: 100%
+    // width: 100%
     border-bottom: 1px solid $border-color
 
     .b-fieldset
@@ -84,22 +84,32 @@
   @include aside-topbar
 
   display: flex
-  padding-left: $topbar-item-margin
-  padding-right: $topbar-item-margin
+  // padding: $grah-topbar-item-margin $topbar-item-margin $grah-topbar-item-margin 0
 
   &__toolbar,
   &__sidebar
-    width: $topbar-fixed-button-width
+    // width: $topbar-fixed-button-width
+    margin-top: $topbar-item-margin
+    margin-bottom: $topbar-item-margin
     margin-left: $topbar-item-margin
     margin-right: $topbar-item-margin
+    padding-left: $topbar-item-margin
+    padding-right: $topbar-item-margin
 
   &__search
     width: $topbar-input-width
+    margin-top: $topbar-item-margin
+    margin-bottom: $topbar-item-margin
     margin-left: $topbar-item-margin
     margin-right: $topbar-item-margin
 
     [type="submit"]
       display: none
+    
+    .form-control
+      height: 2rem
+      padding-top: 0
+      padding-bottom: 0
 
 /////////////////////////////////////////////
 
@@ -368,6 +378,7 @@
 
   display: flex
   padding: #{ $section-margin / 2 }
+  padding-top: $section-margin
 
   &__gap
     width: $item-margin

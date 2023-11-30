@@ -13,7 +13,7 @@ import Gargantext.Components.InputWithAutocomplete (inputWithAutocomplete)
 import Gargantext.Components.PhyloExplorer.Store as PhyloStore
 import Gargantext.Components.PhyloExplorer.Types (Source(..))
 import Gargantext.Types (SidePanelState(..), toggleSidePanelState)
-import Gargantext.Utils ((?))
+import Gargantext.Utils (nbsp, (?))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -57,27 +57,55 @@ component = here.component "main" cpt where
     pure $
 
       H.div
-      { className: "phylo-topbar" }
+      { className: "node-topbar phylo-topbar bg-primary h-100" }
       [
+        H.div
+        { className: "node-topbar__title phylo-topbar__title align-self-center px-1 text-light" }
+        [
+          B.icon { name: "code-fork" }
+        ,
+          H.text $ nbsp 1
+        ,
+          H.text "Phylo"
+        ]
+      ,
         -- Toolbar toggle
         B.button
-        { className: "phylo-topbar__toolbar"
+        { className: "phylo-topbar__toolbar rounded-circle-2 py-0 px-2 mr-1"
         , callback: \_ -> T.modify_ (not) toolBarDisplayed
         , variant: toolBar' ?
             ButtonVariant Light $
             OutlinedButtonVariant Light
+        , title: toolBar' ?
+            "Hide toolbar" $
+            "Show toolbar"
         }
-        [ H.text $ toolBar' ? "Hide toolbar" $ "Show toolbar" ]
+        [ 
+          B.icon { name: "sliders" }
+        ,
+          H.text $ nbsp 1
+        ,
+          H.text "Toolbar"
+        ]
       ,
         -- Sidebar toggle
         B.button
-        { className: "phylo-topbar__sidebar"
+        { className: "phylo-topbar__sidebar rounded-circle-2 py-0 px-2 mr-1"
         , callback: \_ -> T.modify_ (toggleSidePanelState) sideBarDisplayed
         , variant: sideBar' == Opened ?
             ButtonVariant Light $
             OutlinedButtonVariant Light
+        , title: sideBar' == Opened ?
+            "Hide sidebar" $
+            "Show sidebar"
         }
-        [ H.text $ sideBar' == Opened ? "Hide sidebar" $ "Show sidebar" ]
+        [ 
+          B.icon { name: "columns" }
+        ,
+          H.text $ nbsp 1
+        ,
+          H.text "Sidebar"
+        ]
       ,
         -- Source
         H.div
@@ -86,6 +114,7 @@ component = here.component "main" cpt where
           B.formSelect
           { value: source
           , callback: sourceCallback
+          , className: "rounded-circle-2"
           } $
           [
             H.option
@@ -117,8 +146,8 @@ component = here.component "main" cpt where
                   case A.head cs of
                     Nothing -> pure unit
                     Just h -> autocompleteClickCallback h
-          , classes: "filter-results-completions"
-          , placeholder: "Find a term"
+          , classes: "filter-results-completions rounded-circle-2 text-small py-0"
+          , placeholder: "find and select a term here..."
           , state: searchState
           }
         ]

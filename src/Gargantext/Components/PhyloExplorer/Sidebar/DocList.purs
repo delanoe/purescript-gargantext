@@ -4,7 +4,7 @@ module Gargantext.Components.PhyloExplorer.Sidebar.DocList
 
 import Gargantext.Prelude
 
-import Data.Array (concat)
+import Data.Array as A
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
 import Data.Sequence as Seq
@@ -12,10 +12,9 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (Variant(..))
-import Gargantext.Components.FacetsTable (DocumentsView(..), Rows(..), initialPagePath, loadPage, publicationDate)
+import Gargantext.Components.FacetsTable (DocumentsView(..), Rows(..), publicationDate, initialPageGQL, loadPageGQL)
 import Gargantext.Components.PhyloExplorer.Store as PhyloStore
 import Gargantext.Components.PhyloExplorer.Types (CorpusId, DocId, FrameDoc(..), ListId)
-import Gargantext.Components.RandomText (words)
 import Gargantext.Components.Search (SearchQuery(..), SearchType(..))
 import Gargantext.Config (defaultFrontends)
 import Gargantext.Config.REST (RESTError(..))
@@ -25,7 +24,7 @@ import Gargantext.Hooks.Session (useSession)
 import Gargantext.Hooks.UpdateEffect (useUpdateEffect1')
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId)
-import Gargantext.Utils (getter, (?))
+import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
 import React.SyntheticEvent as SE
 import Reactix as R
@@ -51,22 +50,23 @@ docListWrapperCpt = here.component "wrapper" cpt where
     extractedTerms <- R2.useLive' store.extractedTerms
     corpusId       <- R2.useLive' store.corpusId
     listId         <- R2.useLive' store.listId
-
+    selectedTerm   <- R2.useLive' store.selectedTerm
+    
     query' /\ query <- R2.useBox' Nothing
 
     -- | Helpers
     -- |
     let
 
-      toSearchQuery items = SearchQuery
+      toSearchQuery t = SearchQuery
         { expected: SearchDoc
-        , query: concat $ words <$> (getter _.label) <$> items
+        , query: A.catMaybes [t]
         }
 
     -- | Hooks
     -- |
-    R.useEffect1' extractedTerms $
-      T.write_ (extractedTerms # toSearchQuery >>> Just) query
+    R.useEffect1' selectedTerm $
+      T.write_ (selectedTerm # toSearchQuery >>> Just) query
 
     -- | Render
     -- |
@@ -113,14 +113,14 @@ docListCpt = here.component "main" cpt where
   -- | Helpers
   -- |
   errorHandler err = do
-    here.warn2 "[pageLayout] RESTError" err
+    here.warn2 "[docList] RESTError" err
     case err of
       ReadJSONError err' ->
-        here.warn2 "[pageLayout] ReadJSONError" $ show err'
+        here.warn2 "[docList] ReadJSONError" $ show err'
       _ -> pure unit
   -- | Component
   -- |
-  cpt { query
+  cpt { query: query@(SearchQuery { query: q' })
       , session
       , corpusId: nodeId
       , listId
@@ -130,8 +130,10 @@ docListCpt = here.component "main" cpt where
     -- | States
     -- |
 
-    path' /\ path
-      <- R2.useBox' $ initialPagePath { nodeId, listId, query, session }
+
+    path' /\ path <- R2.useBox' $ initialPageGQL { corpusId: nodeId
+                                                 , ngramsTerms: q'
+                                                 , session }
 
     state' /\ state <-
       R2.useBox' Nothing
@@ -148,7 +150,7 @@ docListCpt = here.component "main" cpt where
     useLoaderEffect
       { errorHandler
       , state
-      , loader: loadPage
+      , loader: loadPageGQL
       , path: path'
       }
 
@@ -157,10 +159,13 @@ docListCpt = here.component "main" cpt where
 
     -- (on query change, reload fetched docs)
     useUpdateEffect1' query $
-      flip T.write_ path $ initialPagePath { nodeId, listId, query, session }
+      T.write_ (initialPageGQL { corpusId: nodeId
+                               , ngramsTerms: q'
+                               , session }) path
 
     -- (on fetch success, extract existing docs)
     useUpdateEffect1' state' case state' of
+
       Nothing -> T.write_ (Just Seq.empty) rows
       Just r -> case r of
         Docs { docs } -> T.write_ (Just docs) rows
@@ -217,15 +222,18 @@ docListCpt = here.component "main" cpt where
             ]
         ,
           R2.when (not $ eq results Seq.empty) $
-
+          H.div {}
+          [
+            H.h6 {} [ H.text $ show (Seq.length results) <> " related documents"]
+            ,
             H.ul
-            { className: intercalate " "
+              { className: intercalate " "
                 [ "phylo-doc-list"
                 , "list-group"
                 ]
-            } $
-            Seq.toUnfoldable $ flip Seq.map results \r ->
-
+              } $
+              Seq.toUnfoldable $ flip Seq.map results \r ->
+              
               item
               { documentView: (r :: DocumentsView)
               , callback: callback frameDoc'
@@ -235,6 +243,7 @@ docListCpt = here.component "main" cpt where
               , session
               , frontends
               }
+            ]
         ]
 
 

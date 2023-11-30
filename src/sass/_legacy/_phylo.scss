@@ -470,8 +470,6 @@ $decreasing-color: #11638F;
 ////////////////////////////////////////////////////////////////
 
 .phylo-topbar {
-  $fixed-button-width: 136px;
-
   @include aside-topbar();
 
   padding-left: $topbar-item-margin;
@@ -480,13 +478,19 @@ $decreasing-color: #11638F;
 
   &__toolbar,
   &__sidebar {
-    width: $topbar-fixed-button-width;
+    // width: $topbar-fixed-button-width
+    margin-top: $topbar-item-margin;
+    margin-bottom: $topbar-item-margin;
     margin-left: $topbar-item-margin;
     margin-right: $topbar-item-margin;
+    padding-left: $topbar-item-margin;
+    padding-right: $topbar-item-margin;
   }
 
   &__source {
     width: $topbar-input-width;
+    margin-top: $topbar-item-margin;
+    margin-bottom: $topbar-item-margin;
     margin-left: $topbar-item-margin;
     margin-right: $topbar-item-margin;
   }
@@ -495,8 +499,16 @@ $decreasing-color: #11638F;
     display: flex;
     width: $topbar-input-width;
     position: relative;
+    margin-top: $topbar-item-margin;
+    margin-bottom: $topbar-item-margin;
     margin-left: $topbar-item-margin;
     margin-right: $topbar-item-margin;
+    
+    .form-control {
+      height: 2rem;
+      padding-top: 0;
+      padding-bottom: 0;
+      }
   }
 
   &__suggestion {
