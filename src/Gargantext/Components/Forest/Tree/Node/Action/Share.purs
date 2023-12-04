@@ -99,6 +99,8 @@ shareNodeInnerCpt = here.component "shareNodeInner" cpt
                                          , autocompleteSearch
                                          , onAutocompleteClick
                                          , text 
+                                         , pattern: "^\\S+$" -- pattern doesn't allow space characters
+                                         , title: "Enter a username or an email address (space characters are not allowed)"
                                          , placeholder: "username or email"}
                 ] (H.div {} [H.text text'])
       where
