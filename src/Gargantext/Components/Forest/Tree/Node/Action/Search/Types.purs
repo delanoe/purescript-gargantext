@@ -172,7 +172,7 @@ allDatabases = [ Empty
                , Arxiv
                , OpenAlex
                , IsTex
-               , EPO
+               -- , EPO
                  --, IsTex_Advanced
                  --, Isidore
                  --, Web
