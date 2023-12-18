@@ -6,7 +6,7 @@ import Data.Array (filter, nub)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
-import Data.String (Pattern(..), contains)
+import Data.String (Pattern(..), contains, trim)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
@@ -40,7 +40,7 @@ getCompletionsReq { session }  =
   get session GR.Members
 
 shareAction :: String -> Action
-shareAction username = Action.ShareTeam username
+shareAction username = Action.ShareTeam (trim username)
 
 
 ------------------------------------------------------------------------
