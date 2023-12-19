@@ -7,6 +7,7 @@ import DOM.Simple as DOM
 import DOM.Simple.Event as DE
 import Data.Maybe (Maybe(..), maybe)
 import Data.Nullable (Nullable, null, toMaybe)
+import Data.String as S
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import FFI.Simple ((..))
@@ -31,6 +32,8 @@ type Props =
   , onAutocompleteClick :: String -> Effect Unit
   , onEnterPress        :: String -> Effect Unit
   , placeholder         :: String
+  , pattern             :: String
+  , title               :: String
   , state               :: T.Box String
   )
 
@@ -44,6 +47,8 @@ inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
         , onAutocompleteClick
         , onEnterPress
         , placeholder
+        , pattern
+        , title
         , state } _ = do
       -- States
       state'        <- T.useLive T.unequal state
@@ -68,6 +73,8 @@ inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
                   , ref: inputRef
                   , className: "form-control"
                   , value: state'
+                  , pattern: pattern
+                  , title: title
                   , placeholder
                   , on: { focus: onFocus completions state'
                         , input: onInput completions
@@ -114,7 +121,7 @@ inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
 
         onInput :: forall event. T.Box Completions -> event -> Effect Unit
         onInput completions e = do
-          let val = R.unsafeEventValue e
+          let val = S.trim $ R.unsafeEventValue e
           T.write_ val state
           cs <- autocompleteSearch val
           T.write_ cs completions
@@ -145,6 +152,8 @@ type Props' =
   , boxAction           :: String -> Action
   , state               :: T.Box String
   , text                :: T.Box String
+  , pattern             :: String
+  , title               :: String
   , placeholder         :: String
   )
 
@@ -160,6 +169,8 @@ inputWithAutocompleteCpt' = here.component "inputWithAutocomplete" cpt
         , boxAction
         , state
         , text
+        , pattern
+        , title
         , placeholder } _ = do
       -- States
       state'        <- T.useLive T.unequal state
@@ -184,6 +195,8 @@ inputWithAutocompleteCpt' = here.component "inputWithAutocomplete" cpt
                   , ref: inputRef
                   , className: "form-control"
                   , value: state'
+                  , pattern: pattern
+                  , title: title
                   , placeholder
                   , on: { focus: onFocus completions state'
                         , input: onInput completions
@@ -246,7 +259,7 @@ inputWithAutocompleteCpt' = here.component "inputWithAutocomplete" cpt
           if DE.key e == "Enter" then do
             R2.preventDefault e
             R2.stopPropagation e
-            let val = R.unsafeEventValue e
+            let val = S.trim $ R.unsafeEventValue e
             let mInput = toMaybe $ R.readRef inputRef
             T.write_ val state
             launchAff_ $ dispatch (boxAction val)
@@ -260,7 +273,7 @@ inputWithAutocompleteCpt' = here.component "inputWithAutocomplete" cpt
             pure $ false
 
         submit val _ = do
-          T.write_ ("Invited " <> val <> " to the team") text
+          T.write_ ("Invited " <> S.trim val <> " to the team") text
           launchAff_ $ dispatch (boxAction val)
 
 ---------------------------------------------------------

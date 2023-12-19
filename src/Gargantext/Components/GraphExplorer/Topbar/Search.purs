@@ -66,6 +66,8 @@ nodeSearchControlCpt = here.component "nodeSearchControl" cpt
           , onEnterPress: doSearch
           , classes: "filter-results-completions rounded-circle-2 text-small py-0"
           , state: search
+          , pattern: ".*"
+          , title: ""
           , placeholder: "find and select a term here..."
           }
         ,
