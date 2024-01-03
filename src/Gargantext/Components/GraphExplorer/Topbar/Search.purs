@@ -69,7 +69,7 @@ nodeSearchControlCpt = here.component "nodeSearchControl" cpt
           , pattern: ".*"
           , title: ""
           , placeholder: "find and select a term here..."
-          }
+          } []
         ,
           B.button
           { callback: \_ -> doSearch search'

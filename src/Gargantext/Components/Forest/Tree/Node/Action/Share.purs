@@ -8,12 +8,14 @@ import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.String (Pattern(..), contains, trim)
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff)
+import Effect.Aff (Aff, launchAff_)
+import Gargantext.Components.Bootstrap as B
+import Gargantext.Components.Bootstrap.Types (Elevation(Level1))
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
 import Gargantext.Components.Forest.Tree.Node.Action.Types as Action
 import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
-import Gargantext.Components.InputWithAutocomplete (inputWithAutocomplete')
+import Gargantext.Components.InputWithAutocomplete (inputWithAutocomplete)
 import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR
@@ -88,24 +90,30 @@ shareNodeInnerCpt :: R.Component ShareNodeInner
 shareNodeInnerCpt = here.component "shareNodeInner" cpt
   where
     cpt { dispatch, completions } _ = do
-      state <- T.useBox ""
+      state' /\ state <- R2.useBox' ""
       text' /\ text <- R2.useBox' ""
 
       pure $ Tools.panel
-                [ inputWithAutocomplete' { boxAction: shareAction
-                                         , dispatch
-                                         , state
-                                         , classes: "share-users-completions d-flex align-items-center"
-                                         , autocompleteSearch
-                                         , onAutocompleteClick
-                                         , text 
-                                         , pattern: "^\\S+$" -- pattern doesn't allow space characters
-                                         , title: "Enter a username or an email address (space characters are not allowed)"
-                                         , placeholder: "username or email"}
-                ] (H.div {} [H.text text'])
+        [ inputWithAutocomplete { autocompleteSearch
+                                , classes: "share-users-completions d-flex align-items-center"
+                                , onAutocompleteClick
+                                , onEnterPress: onEnterPress text
+                                , placeholder: "username or email"
+                                , pattern: "^\\S+$"  -- pattern doesn't allow space characters
+                                , title: "Enter a username or an email address (space characters are not allowed)"
+                                , state }
+          [ B.iconButton { callback: submit state' text
+                         , elevation: Level1
+                         , name: "send"
+                         , title: "Submit" } ]
+        ] (H.div {} [ H.text text' ])
       where
         autocompleteSearch input = pure $ nub $ filter (contains (Pattern input)) completions
         onAutocompleteClick _ = pure unit
+        onEnterPress text val = T.write_ ("Invited " <> val <> " to the team") text
+        submit val text _ = do
+          onEnterPress text val
+          launchAff_ $ dispatch (shareAction val)
 ------------------------------------------------------------------------
 publishNode :: R2.Component SubTreeParamsIn
 publishNode = R.createElement publishNodeCpt

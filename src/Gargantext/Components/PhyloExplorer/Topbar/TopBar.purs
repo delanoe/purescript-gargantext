@@ -151,7 +151,7 @@ component = here.component "main" cpt where
           , title: ""
           , placeholder: "find and select a term here..."
           , state: searchState
-          }
+          } []
         ]
       ]
 
