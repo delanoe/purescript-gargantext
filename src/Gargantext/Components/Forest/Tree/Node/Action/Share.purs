@@ -73,7 +73,7 @@ shareNodeCpt = here.component "shareNode" cpt
       useLoader {
         loader: getCompletionsReq
       , path: { session }
-      , render: \completions -> shareNodeInner {completions, dispatch} []
+      , render: \completions -> shareNodeInner { completions, dispatch } []
       , errorHandler
       }
       where
@@ -94,15 +94,16 @@ shareNodeInnerCpt = here.component "shareNodeInner" cpt
       text' /\ text <- R2.useBox' ""
 
       pure $ Tools.panel
-        [ inputWithAutocomplete { autocompleteSearch
+        [ inputWithAutocomplete { autoFocus: true
+                                , autocompleteSearch
                                 , classes: "share-users-completions d-flex align-items-center"
                                 , onAutocompleteClick
                                 , onEnterPress: onEnterPress text
                                 , placeholder: "username or email"
                                 , pattern: "^\\S+$"  -- pattern doesn't allow space characters
-                                , title: "Enter a username or an email address (space characters are not allowed)"
+                                , title
                                 , state }
-          [ B.iconButton { callback: submit state' text
+          [ B.iconButton { callback: \_ -> onEnterPress text state'
                          , elevation: Level1
                          , name: "send"
                          , title: "Submit" } ]
@@ -110,10 +111,10 @@ shareNodeInnerCpt = here.component "shareNodeInner" cpt
       where
         autocompleteSearch input = pure $ nub $ filter (contains (Pattern input)) completions
         onAutocompleteClick _ = pure unit
-        onEnterPress text val = T.write_ ("Invited " <> val <> " to the team") text
-        submit val text _ = do
-          onEnterPress text val
+        onEnterPress text val = do
           launchAff_ $ dispatch (shareAction val)
+          T.write_ ("Invited " <> val <> " to the team") text
+        title = "Enter a username or an email address (space characters are not allowed)"
 ------------------------------------------------------------------------
 publishNode :: R2.Component SubTreeParamsIn
 publishNode = R.createElement publishNodeCpt

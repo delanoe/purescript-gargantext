@@ -325,7 +325,7 @@ renameNode name p@{ boxes: { errors }, session, tree: (NTree (LNode {id}) _) } =
   handleRESTError here errors eTask $ \_task -> pure unit
   refreshTree p
 
-shareTeam username { boxes: { errors }, session, tree: (NTree (LNode {id}) _)} = do
+shareTeam username { boxes: { errors }, session, tree: (NTree (LNode {id}) _) } = do
   eTask <- Share.shareReq session id $ Share.ShareTeamParams { username }
   handleRESTError here errors eTask $ \_task -> pure unit
 

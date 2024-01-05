@@ -27,7 +27,8 @@ type Completions = Array String
 
 type Props =
   (
-    autocompleteSearch  :: String -> Effect Completions
+    autoFocus           :: Boolean
+  , autocompleteSearch  :: String -> Effect Completions
   , classes             :: String
   , onAutocompleteClick :: String -> Effect Unit
   , onEnterPress        :: String -> Effect Unit
@@ -42,7 +43,8 @@ inputWithAutocomplete = R2.component inputWithAutocompleteCpt
 inputWithAutocompleteCpt :: R.Component Props
 inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
   where
-    cpt { autocompleteSearch
+    cpt { autoFocus
+        , autocompleteSearch
         , classes
         , onAutocompleteClick
         , onEnterPress
@@ -71,10 +73,11 @@ inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
           completionsCpt { completions, onAutocompleteClick, state } []
         , H.input { type: "text"
                   , ref: inputRef
+                  , autoFocus
                   , className: "form-control"
                   , value: state'
-                  , pattern: pattern
-                  , title: title
+                  , pattern
+                  , title
                   , placeholder
                   , on: { focus: onFocus completions state'
                         , input: onInput completions

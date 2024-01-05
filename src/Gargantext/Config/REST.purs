@@ -5,6 +5,7 @@ import Affjax as Affjax
 import Affjax.RequestBody (formData, formURLEncoded, string)
 import Affjax.RequestHeader as ARH
 import Affjax.ResponseFormat as ResponseFormat
+import Affjax.StatusCode (StatusCode(..))
 import Data.Argonaut.Core as AC
 import Data.Either (Either(..))
 import Data.Foldable (foldMap)
@@ -23,29 +24,36 @@ import Gargantext.Utils.Reactix as R2
 import Simple.JSON as JSON
 import Web.XHR.FormData as XHRFormData
 
+here :: R2.Here
+here = R2.here "Gargantext.Config.REST"
+
 type Token = String
 
 data RESTError =
-    SendResponseError Affjax.Error
-  | ReadJSONError     Foreign.MultipleErrors
-  | CustomError       String
+    CustomError        String
+  | ReadJSONError      Foreign.MultipleErrors
+  | SendResponseError  Affjax.Error
+  | ServerError        String
+  | UnknownServerError String
 derive instance Generic RESTError _
 instance Show RESTError where
+  show (CustomError       s) = "CustomError " <> s
+  show (ReadJSONError     e) = "ReadJSONError " <> show e
   show (SendResponseError e) = "SendResponseError " <> showError e
     where
-      showError (RequestContentError e')  = "(RequestContentError " <> show e' <> ")"
       showError (ResponseBodyError fe _) = "(ResponseBodyError " <> show fe <> " (rf)"  -- <> show rf <> ")"
-      showError (TimeoutError)            = "(TimeoutError)"
-      showError (RequestFailedError)      = "(RequestFailedError)"
-      showError (XHROtherError e')        = "(XHROtherError " <> show e' <> ")"
-  show (ReadJSONError     e)              = "ReadJSONError " <> show e
-  show (CustomError       s)              = "CustomError " <> s
+      showError (RequestContentError e') = "(RequestContentError " <> show e' <> ")"
+      showError (RequestFailedError)     = "(RequestFailedError)"
+      showError (TimeoutError)           = "(TimeoutError)"
+      showError (XHROtherError e')       = "(XHROtherError " <> show e' <> ")"
+  show (ServerError        e) = "ServerError: " <> e
+  show (UnknownServerError e) = "UnknownServerError: " <> e
 instance Eq RESTError where
   -- this is crude but we need it only because of useLoader
   eq _ _ = false
 
 logRESTError :: R2.Here -> String -> RESTError -> Effect Unit
-logRESTError here prefix e = here.warn2 (prefix <> " " <> show e) e
+logRESTError here' prefix e = here'.warn2 (prefix <> " " <> show e) e
 -- logRESTError here prefix (SendResponseError e) = here.warn2 (prefix <> " SendResponseError ") e  -- TODO: No show
 -- logRESTError here prefix (ReadJSONError e) = here.warn2 (prefix <> " ReadJSONError ") $ show e
 -- logRESTError here prefix (CustomError e) = here.warn2 (prefix <> " CustomError ") $ e
@@ -53,11 +61,9 @@ logRESTError here prefix e = here.warn2 (prefix <> " " <> show e) e
 type AffRESTError a = Aff (Either RESTError a)
 
 
-readJSON :: forall a b. JSON.ReadForeign a =>
-            Either Affjax.Error
-            { body :: AC.Json
-            | b
-            } -> Either RESTError a
+readJSON :: forall a. JSON.ReadForeign a =>
+            Either Affjax.Error (Affjax.Response AC.Json)
+         -> Either RESTError a
 readJSON affResp =
   case affResp of
     Left err -> do
@@ -68,9 +74,15 @@ readJSON affResp =
       --_ <-  liftEffect $ log json.status
       --_ <-  liftEffect $ log json.headers
       --_ <-  liftEffect $ log json.body
-      case (JSON.readJSON $ AC.stringify resp.body) of
-        Left err -> Left $ ReadJSONError err
-        Right r -> Right r
+      case resp.status of
+        StatusCode 500 ->
+          case (JSON.readJSON $ AC.stringify resp.body :: JSON.E { error :: String }) of
+            Right ({ error }) -> Left $ ServerError error
+            Left _            -> Left $ UnknownServerError $ AC.stringify resp.body
+        _ ->
+          case (JSON.readJSON $ AC.stringify resp.body) of
+            Left err -> Left $ ReadJSONError err
+            Right r -> Right r
 
 -- TODO too much duplicate code in `postWwwUrlencoded`
 send :: forall body res. JSON.WriteForeign body => JSON.ReadForeign res =>
@@ -94,6 +106,7 @@ send m mtoken url reqbody = do
       let cookie = "JWT-Cookie=" <> token <> "; Path=/;" --" HttpOnly; Secure; SameSite=Lax"
       R2.setCookie cookie
   affResp <- request req
+  liftEffect $ here.log2 "[send] affResp" affResp
   pure $ readJSON affResp
 
 noReqBody :: Maybe String
