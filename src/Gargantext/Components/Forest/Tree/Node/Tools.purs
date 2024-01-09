@@ -2,10 +2,12 @@ module Gargantext.Components.Forest.Tree.Node.Tools where
 
 import Gargantext.Prelude
 
-import Data.Maybe (fromMaybe)
+import Data.Array as A
+import Data.Maybe (fromMaybe, Maybe(..))
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as S
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_)
 import Gargantext.Components.Bootstrap as B
@@ -19,6 +21,7 @@ import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Show as GUS
 import Reactix as R
 import Reactix.DOM.HTML as H
+import Record.Extra as RX
 import Toestand as T
 
 here :: R2.Here
@@ -27,20 +30,52 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools"
 fragmentPT :: String -> R.Element
 fragmentPT text = H.div { style: { margin: "10px" }} [ H.text text ]
 
-type Body    = Array R.Element
 
-type Footer  = R.Element
+type PanelProps = ()
 
-panel :: Body -> Footer -> R.Element
-panel bodies submit =
-  R.fragment
-  [ H.div { className: "card-body" }
-    [ H.div { className: "row" }
-        -- TODO add type for text or form here [ H.form {className: "form-horizontal"} bodies ]
-      [ H.div { className: "col-12" } bodies ]]
-  , H.div {className: "card-footer"}
-    [ H.div { className: "row" }
-      [ H.div { className: "mx-auto"} [ submit ] ]]]
+-- | Last element of panel's children goes to footer, all others go to body
+panel :: R2.Component PanelProps
+panel = R.createElement panelCpt
+panelCpt :: R.Component PanelProps
+panelCpt = here.component "panel" cpt where
+  cpt {} children =
+    pure $ R.fragment
+      [ H.div { className: "card-body" }
+        [ H.div { className: "row" }
+          -- TODO add type for text or form here [ H.form {className: "form-horizontal"} bodies ]
+          [ H.div { className: "col-12" } bodies ]]
+      , H.div {className: "card-footer"}
+        [ H.div { className: "row" }
+          [ H.div { className: "mx-auto"} [ footer ] ]]]
+    where
+      bodies /\ footer =
+        case A.unsnoc children of
+          Nothing -> [] /\ (H.div {} [])
+          Just { init, last } -> init /\ last
+
+panelNoFooter :: R2.Component PanelProps
+panelNoFooter = R.createElement panelNoFooterCpt
+panelNoFooterCpt :: R.Component PanelProps
+panelNoFooterCpt = here.component "panelNoFooter" cpt where
+  cpt props children =
+    pure $ panel props (children <> [ H.div {} [] ])
+
+
+type PanelWithSubmitButtonProps =
+  ( action   :: Action
+  , dispatch :: Action -> Aff Unit
+  | PanelProps )
+
+panelWithSubmitButton :: R2.Component PanelWithSubmitButtonProps
+panelWithSubmitButton = R.createElement panelWithSubmitButtonCpt
+panelWithSubmitButtonCpt :: R.Component PanelWithSubmitButtonProps
+panelWithSubmitButtonCpt = here.component "panelWithSubmitButton" cpt where
+  cpt props@{ action, dispatch } children = do
+    let pProps = (RX.pick props :: Record PanelProps)
+    pure $ panel pProps (children
+                         -- footer
+                         <> [ submitButton { action, dispatch } ])
+
 
 type TextInputBoxProps =
   ( id       :: GT.ID
@@ -252,15 +287,23 @@ formButtonCpt = here.component "formButton" cpt where
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------
 
-submitButton :: Action -> (Action -> Aff Unit) -> R.Element
-submitButton action dispatch =
-  H.button { className : "btn btn-primary fa fa-" <> icon action
-           , type: "button"
-           , id: S.toLower $ show action
-           , title: show action
-           , on: {click: \_ -> launchAff $ dispatch action}
-           }
-  [ H.span {className: "font-family-theme mx-1"} [ H.text $ " " <> text action] ]
+type SubmitButtonProps =
+  ( action :: Action
+  , dispatch :: Action -> Aff Unit )
+
+submitButton :: R2.Leaf SubmitButtonProps
+submitButton = R2.leaf submitButtonCpt
+submitButtonCpt :: R.Component SubmitButtonProps
+submitButtonCpt = here.component "submitButton" cpt where
+ cpt { action
+     , dispatch } _ = do
+   pure $ H.button { className : "btn btn-primary fa fa-" <> icon action
+                   , type: "button"
+                   , id: S.toLower $ show action
+                   , title: show action
+                   , on: {click: \_ -> launchAff $ dispatch action}
+                   }
+    [ H.span {className: "font-family-theme mx-1"} [ H.text $ " " <> text action] ]
 
 type Href  = String
 

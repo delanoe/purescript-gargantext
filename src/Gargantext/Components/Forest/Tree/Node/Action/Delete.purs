@@ -6,7 +6,7 @@ import Gargantext.Prelude
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
+import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, delete, put_)
@@ -53,21 +53,25 @@ actionDeleteUser = R.createElement actionDeleteUserCpt
 actionDeleteUserCpt :: R.Component Delete
 actionDeleteUserCpt = here.component "actionDeleteUser" cpt where
   cpt _  _ = do
-    pure $ panel [ H.div { style: {margin: "10px"}}
-                    [ H.text $ "Yes, we are RGPD compliant!"
-                    <> " But you can not delete User Node yet."
-                    <> " We are still on development."
-                    <> " Thanks for your comprehensin."
-                    ]
-            ] (H.div {} [])
+    pure $
+      Tools.panelNoFooter {}
+        [ H.div { style: {margin: "10px"}}
+          [ H.text $ "Yes, we are RGPD compliant!"
+            <> " But you can not delete User Node yet."
+            <> " We are still on development."
+            <> " Thanks for your comprehensin."
+          ]
+        ]
 
 actionDeleteOther :: R2.Component Delete
 actionDeleteOther = R.createElement actionDeleteOtherCpt
 actionDeleteOtherCpt :: R.Component Delete
 actionDeleteOtherCpt = here.component "actionDeleteOther" cpt where
   cpt { dispatch, nodeType } _ = do
-    pure $ panel (map (\t -> H.p {} [H.text t])
-                       [ "Are your sure you want to delete it ?"
-                       , "If yes, click again below."
-                       ]
-                  ) (submitButton (DeleteNode nodeType) dispatch)
+    pure $
+      Tools.panelWithSubmitButton { action: DeleteNode nodeType
+                                  , dispatch }
+        (map (\t -> H.p {} [H.text t])
+         [ "Are your sure you want to delete it ?"
+         , "If yes, click again below."
+         ])

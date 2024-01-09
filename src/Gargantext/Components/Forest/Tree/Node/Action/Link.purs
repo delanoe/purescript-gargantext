@@ -6,7 +6,7 @@ import Data.Either (Either)
 import Data.Maybe (Maybe(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (LinkNodeReq(..), UpdateNodeParams(..))
-import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
+import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..))
 import Gargantext.Config.REST (AffRESTError, RESTError)
@@ -70,22 +70,25 @@ linkNodeCpt' = here.component "__clone__" cpt
 
         button = case action' of
           LinkNode { params } -> case params of
-            Just (SubTreeOut { in: inId }) -> submitButton
-              (toParams nodeType inId)
-              dispatch
+            Just (SubTreeOut { in: inId }) ->
+              Tools.submitButton { action: toParams nodeType inId
+                                 , dispatch }
             Nothing -> mempty
           _         -> mempty
 
-      pure $ panel [
-          subTreeView { action
-                      , boxes
-                      , dispatch
-                      , id
-                      , nodeType
-                      , session
-                      , subTreeParams
-                      } []
-              ] button
+      pure $
+        Tools.panel {}
+          [ subTreeView { action
+                        , boxes
+                        , dispatch
+                        , id
+                        , nodeType
+                        , session
+                        , subTreeParams
+                        } []
+
+          -- footer
+          , button ]
 
 toParams :: GT.NodeType -> GT.ID -> Action
 toParams nodeType id

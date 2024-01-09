@@ -4,11 +4,13 @@ import Gargantext.Prelude
 
 import Data.Array (filter, nub)
 import Data.Generic.Rep (class Generic)
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.String (Pattern(..), contains, trim)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff, launchAff_)
+import Effect.Class (liftEffect)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (Elevation(Level1))
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
@@ -62,26 +64,27 @@ instance Show ShareNodeParams where show = genericShow
 type ShareNode =
   ( id :: ID
   , dispatch :: Action -> Aff Unit 
-  , session :: Session)
+  , session :: Session )
 
 shareNode :: R2.Component ShareNode
 shareNode = R.createElement shareNodeCpt
 shareNodeCpt :: R.Component ShareNode
 shareNodeCpt = here.component "shareNode" cpt
   where
-    cpt {session, dispatch} _ = do
+    cpt { dispatch, id, session } _ = do
       useLoader {
         loader: getCompletionsReq
       , path: { session }
-      , render: \completions -> shareNodeInner { completions, dispatch } []
+      , render: \completions -> shareNodeInner { completions, id, session } []
       , errorHandler
       }
       where
         errorHandler = logRESTError here "[shareNode]"
 
 type ShareNodeInner =
-  ( dispatch :: Action -> Aff Unit
-  , completions :: Array String
+  ( completions :: Array String
+  , id :: ID
+  , session :: Session
   )
 
 shareNodeInner :: R2.Component ShareNodeInner
@@ -89,11 +92,11 @@ shareNodeInner = R.createElement shareNodeInnerCpt
 shareNodeInnerCpt :: R.Component ShareNodeInner
 shareNodeInnerCpt = here.component "shareNodeInner" cpt
   where
-    cpt { dispatch, completions } _ = do
+    cpt { completions, id, session } _ = do
       state' /\ state <- R2.useBox' ""
       text' /\ text <- R2.useBox' ""
 
-      pure $ Tools.panel
+      pure $ Tools.panel {}
         [ inputWithAutocomplete { autoFocus: true
                                 , autocompleteSearch
                                 , classes: "share-users-completions d-flex align-items-center"
@@ -107,13 +110,19 @@ shareNodeInnerCpt = here.component "shareNodeInner" cpt
                          , elevation: Level1
                          , name: "send"
                          , title: "Submit" } ]
-        ] (H.div {} [ H.text text' ])
+
+        -- footer
+        , H.div {} [ H.text text' ] ]
       where
         autocompleteSearch input = pure $ nub $ filter (contains (Pattern input)) completions
         onAutocompleteClick _ = pure unit
         onEnterPress text val = do
-          launchAff_ $ dispatch (shareAction val)
-          T.write_ ("Invited " <> val <> " to the team") text
+          -- launchAff_ $ dispatch (shareAction val)
+          launchAff_ do
+            eRes <- shareReq session id $ ShareTeamParams { username: val }
+            liftEffect $ case eRes of
+              Left err -> T.write_ (show err) text
+              Right _ -> T.write_ ("Invited " <> val <> " to the team") text
         title = "Enter a username or an email address (space characters are not allowed)"
 ------------------------------------------------------------------------
 publishNode :: R2.Component SubTreeParamsIn
@@ -127,11 +136,12 @@ publishNodeCpt = here.component "publishNode" cpt
 
       let button = case action' of
               Action.SharePublic { params } -> case params of
-                Just val -> Tools.submitButton (Action.SharePublic {params: Just val}) dispatch
+                Just val -> Tools.submitButton { action: Action.SharePublic {params: Just val}
+                                               , dispatch }
                 Nothing -> H.div {} []
               _   -> H.div {} []
 
-      pure $ Tools.panel
+      pure $ Tools.panel {}
         [ subTreeView { action
                       , boxes
                       , dispatch
@@ -140,4 +150,6 @@ publishNodeCpt = here.component "publishNode" cpt
                       , session
                       , subTreeParams
                       } []
-        ] button
+
+        -- footer
+        , button ]

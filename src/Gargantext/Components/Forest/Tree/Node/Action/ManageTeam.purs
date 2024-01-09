@@ -80,10 +80,13 @@ teamLayoutRowsCpt :: R.Component TeamRowProps
 teamLayoutRowsCpt = here.component "teamLayoutRows" cpt where
   cpt { team, nodeId, session, error, team', error', team_owner_username} _ = do
 
-    case null team' of
-         true  -> pure $ H.div { style: {margin: "10px"}}
-                        [ H.h4 {} [H.text "Your team is empty, you can send some invitations."]]
-         false -> pure $ Tools.panel (makeLeader team_owner_username : (map makeTeam team')) (H.div {} [H.text error'])
+    pure $
+      if null team' then
+        H.div { style: {margin: "10px"}}
+          [ H.h4 {} [H.text "Your team is empty, you can send some invitations."]]
+      else
+        Tools.panel {}
+          ((makeLeader team_owner_username : (map makeTeam team')) <> [ H.div {} [H.text error'] ])
 
     where
       makeTeam :: TeamMember -> R.Element

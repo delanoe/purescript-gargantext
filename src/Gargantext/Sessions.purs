@@ -115,12 +115,9 @@ postAuthRequest :: Backend -> AuthRequest -> Aff (Either String Session)
 postAuthRequest backend ar@(AuthRequest {username}) =
   decode <$> REST.post Nothing (toUrl backend "auth") ar
   where
-    decode (Left err) = Left $ "Error when sending REST.post: " <> show err
-    decode (Right (AuthResponse ar2))
-      | {inval: Just (AuthInvalid {message})}     <- ar2 = Left message
-      | {valid: Just (AuthData {token, tree_id, user_id})} <- ar2 =
-          Right $ Session { backend, caches: Map.empty, token, treeId: tree_id, username, userId: user_id }
-      | otherwise = Left "Invalid response from server"
+    decode (Left err) = Left $ show err
+    decode (Right (AuthData { token, tree_id, user_id })) =
+      Right $ Session { backend, caches: Map.empty, token, treeId: tree_id, username, userId: user_id }
 
 postForgotPasswordRequest :: Backend -> String -> Aff (Either String { status :: String })
 postForgotPasswordRequest backend email =

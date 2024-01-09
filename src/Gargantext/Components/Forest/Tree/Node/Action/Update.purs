@@ -11,7 +11,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, submitButton, panel)
+import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.PhyloExplorer.API as Phylo
 import Gargantext.Components.PhyloExplorer.Config.ConfigForm as PhyloForm
 import Gargantext.Components.PhyloExplorer.ConfigFormParser as PhyloHook
@@ -62,13 +62,15 @@ updateDashboardCpt = here.component "updateDashboard" cpt where
     methodBoard <- T.useBox All
     methodBoard' <- T.useLive T.unequal methodBoard
 
-    pure $ panel [ -- H.text "Update with"
-                  formChoiceSafe { items: [All, Sources, Authors, Institutes, Ngrams]
-                                 , default: methodBoard'
-                                 , callback: \val -> T.write_ val methodBoard
-                                 , print: show } []
-                 ]
-                 (submitButton (UpdateNode $ UpdateNodeParamsBoard { methodBoard: methodBoard' }) dispatch)
+    pure $
+      Tools.panelWithSubmitButton { action: UpdateNode $ UpdateNodeParamsBoard { methodBoard: methodBoard' }
+                                  , dispatch }
+        [ -- H.text "Update with"
+          Tools.formChoiceSafe { items: [All, Sources, Authors, Institutes, Ngrams]
+                               , default: methodBoard'
+                               , callback: \val -> T.write_ val methodBoard
+                               , print: show } []
+        ]
 
 updateGraph :: R2.Component UpdateProps
 updateGraph = R.createElement updateGraphCpt
@@ -97,12 +99,22 @@ updateGraphCpt = here.component "updateGraph" cpt where
       callback :: Action -> Aff Unit
       callback = dispatch >=> \_ -> dispatch CloseBox
 
-    pure $ panel [ H.text "Show subjects with Order1 or concepts with Order2 ?"
-                 , formChoiceSafe { items: [Order1, Order2_A, Order2_B]
-                                 , default: methodGraphMetric'
-                                 , callback: \val -> T.write_ val methodGraphMetric
-                                 , print: show } []
-
+    let action = UpdateNode $ UpdateNodeParamsGraph { methodGraphMetric: methodGraphMetric'
+                                                    , methodGraphClustering: methodGraphClustering'
+                                                    , methodGraphBridgeness: methodGraphBridgeness'
+                                                    , methodGraphEdgesStrength : methodGraphEdgesStrength'
+                                                    , methodGraphNodeType1 : methodGraphNodeType1'
+                                                    , methodGraphNodeType2 : methodGraphNodeType2'
+                                                    }
+                     
+    pure $
+      Tools.panelWithSubmitButton { action, dispatch: callback }
+        [ H.text "Show subjects with Order1 or concepts with Order2 ?"
+        , Tools.formChoiceSafe { items: [Order1, Order2_A, Order2_B]
+                               , default: methodGraphMetric'
+                               , callback: \val -> T.write_ val methodGraphMetric
+                               , print: show } []
+        ]
 
 {-
 
@@ -138,16 +150,6 @@ updateGraphCpt = here.component "updateGraph" cpt where
                                  , callback: \val -> T.write_ val methodGraphClustering
                                  , print: show } []
 -}
-                 ]
-                 (submitButton (UpdateNode $ UpdateNodeParamsGraph { methodGraphMetric: methodGraphMetric'
-                                                                   , methodGraphClustering: methodGraphClustering'
-                                                                   , methodGraphBridgeness: methodGraphBridgeness'
-                                                                   , methodGraphEdgesStrength : methodGraphEdgesStrength'
-                                                                   , methodGraphNodeType1 : methodGraphNodeType1'
-                                                                   , methodGraphNodeType2 : methodGraphNodeType2'
-                                                                   }
-                               ) callback
-                  )
 
 
 
@@ -214,13 +216,15 @@ updateNodeListCpt = here.component "updateNodeList" cpt where
     methodList <- T.useBox Basic
     methodList' <- T.useLive T.unequal methodList
 
-    pure $ panel [ -- H.text "Update with"
-                  formChoiceSafe { items: [Basic, Advanced, WithModel]
-                                 , default: methodList'
-                                 , callback: \val -> T.write_ val methodList
-                                 , print: show } []
-                 ]
-                 (submitButton (UpdateNode $ UpdateNodeParamsList { methodList: methodList' }) dispatch)
+    pure $
+      Tools.panelWithSubmitButton { action: UpdateNode $ UpdateNodeParamsList { methodList: methodList' }
+                                  , dispatch }
+        [ -- H.text "Update with"
+          Tools.formChoiceSafe { items: [Basic, Advanced, WithModel]
+                               , default: methodList'
+                               , callback: \val -> T.write_ val methodList
+                               , print: show } []
+        ]
 
 updateTexts :: R2.Component UpdateProps
 updateTexts = R.createElement updateTextsCpt
@@ -230,14 +234,15 @@ updateTextsCpt = here.component "updateTexts" cpt where
     -- methodTexts <- T.useBox NewNgrams
     -- methodTexts' <- T.useLive T.unequal methodTexts
 
-    pure $ panel [ -- H.text "Update with"
-                  -- formChoiceSafe { items: [NewNgrams, NewTexts, Both]
-                  --                , default: methodTexts'
-                  --                , callback: \val -> T.write_ val methodTexts
-                  --                , print: show } []
-                 ]
-                --  (submitButton (UpdateNode $ UpdateNodeParamsTexts { methodTexts: methodTexts' }) dispatch)
-                 (submitButton (UpdateNode $ UpdateNodeParamsTexts { methodTexts: Both }) dispatch)
+    pure $
+      Tools.panelWithSubmitButton { action: UpdateNode $ UpdateNodeParamsTexts { methodTexts: Both }
+                                  , dispatch }
+        [] -- H.text "Update with"
+        -- formChoiceSafe { items: [NewNgrams, NewTexts, Both]
+        --                , default: methodTexts'
+        --                , callback: \val -> T.write_ val methodTexts
+        --                , print: show } []
+      --  (submitButton (UpdateNode $ UpdateNodeParamsTexts { methodTexts: methodTexts' }) dispatch)
 
 
 updateOther :: R2.Component UpdateProps

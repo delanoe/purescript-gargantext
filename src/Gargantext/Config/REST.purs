@@ -14,6 +14,7 @@ import Data.Generic.Rep (class Generic)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.MediaType.Common (applicationFormURLEncoded, applicationJSON, multipartFormData)
+import Data.Show.Generic (genericShow)
 import Data.Tuple (Tuple)
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -31,6 +32,7 @@ type Token = String
 
 data RESTError =
     CustomError        String
+  | FE                 FrontendError
   | ReadJSONError      Foreign.MultipleErrors
   | SendResponseError  Affjax.Error
   | ServerError        String
@@ -38,6 +40,7 @@ data RESTError =
 derive instance Generic RESTError _
 instance Show RESTError where
   show (CustomError       s) = "CustomError " <> s
+  show (FE                e) = show e
   show (ReadJSONError     e) = "ReadJSONError " <> show e
   show (SendResponseError e) = "SendResponseError " <> showError e
     where
@@ -52,6 +55,87 @@ instance Eq RESTError where
   -- this is crude but we need it only because of useLoader
   eq _ _ = false
 
+
+data FrontendError =
+    EC_400__node_creation_failed_insert_node { user_id :: Int
+                                             , parent_id :: Int }
+  | EC_400__node_creation_failed_no_parent { user_id :: Int }
+  | EC_400__node_creation_failed_parent_exists { parent_id :: Int
+                                               , user_id :: Int }
+  | EC_400__node_creation_failed_user_negative_id { user_id :: Int }
+  | EC_400__node_lookup_failed_user_too_many_roots { user_id :: Int
+                                                   , roots :: Array Int }
+  | EC_400__node_needs_configuration
+  | EC_403__login_failed_error { node_id :: Int
+                               , user_id :: Int }
+  | EC_403__login_failed_invalid_username_or_password
+  | EC_404__node_context_not_found { context_id :: Int }
+  | EC_404__node_lookup_failed_not_found { node_id :: Int }
+  | EC_404__node_lookup_failed_parent_not_found { node_id :: Int }
+  | EC_404__node_lookup_failed_username_not_found { username :: String }
+  | EC_404__node_list_not_found { list_id :: Int }
+  | EC_404__node_root_not_found
+  | EC_500__node_generic_exception { error :: String }
+  | EC_500__node_not_implemented_yet
+derive instance Generic FrontendError _
+instance Show FrontendError where
+  show EC_403__login_failed_invalid_username_or_password = "Invalid username or password"
+  show (EC_404__node_lookup_failed_username_not_found { username }) = "User '" <> username <> "' not found"
+  show a = genericShow a
+instance JSON.ReadForeign FrontendError where
+  readImpl f = do
+    { type: type_ } <- JSON.readImpl f :: Foreign.F { type :: String }
+    case type_ of
+      "EC_400__node_creation_failed_insert_node" -> do
+        { data: { parent_id, user_id } } <- JSON.readImpl f :: Foreign.F { data :: { parent_id :: Int
+                                                                                   , user_id :: Int } }
+        pure $ EC_400__node_creation_failed_insert_node { parent_id, user_id }
+      "EC_400__node_creation_failed_no_parent" -> do
+        { data: { user_id } } <- JSON.readImpl f :: Foreign.F { data :: { user_id :: Int } }
+        pure $ EC_400__node_creation_failed_no_parent { user_id }
+      "EC_400__node_creation_failed_parent_exists" -> do
+        { data: { parent_id, user_id } } <- JSON.readImpl f :: Foreign.F { data :: { parent_id :: Int
+                                                                                   , user_id :: Int } }
+        pure $ EC_400__node_creation_failed_parent_exists { parent_id, user_id }
+      "EC_400__node_creation_failed_user_negative_id" -> do
+        { data: { user_id } } <- JSON.readImpl f :: Foreign.F { data :: { user_id :: Int } }
+        pure $ EC_400__node_creation_failed_user_negative_id { user_id }
+      "EC_400__node_lookup_failed_user_too_many_roots" -> do
+        { data: { user_id, roots } } <- JSON.readImpl f :: Foreign.F { data :: { user_id :: Int
+                                                                               , roots :: Array Int } }
+        pure $ EC_400__node_lookup_failed_user_too_many_roots { user_id, roots }
+      "EC_400__node_needs_configuration" -> do
+        pure $ EC_400__node_needs_configuration
+      "EC_403__login_failed_error" -> do
+        { data: { node_id, user_id } } <- JSON.readImpl f :: Foreign.F { data :: { node_id :: Int
+                                                                                 , user_id :: Int } }
+        pure $ EC_403__login_failed_error { node_id, user_id }
+      "EC_403__login_failed_invalid_username_or_password" -> do
+        pure $ EC_403__login_failed_invalid_username_or_password
+      "EC_404__node_context_not_found" -> do
+        { data: { context_id } } <- JSON.readImpl f :: Foreign.F { data :: { context_id :: Int } }
+        pure $ EC_404__node_context_not_found { context_id }
+      "EC_404__node_lookup_failed_not_found" -> do
+        { data: { node_id } } <- JSON.readImpl f :: Foreign.F { data :: { node_id :: Int } }
+        pure $ EC_404__node_lookup_failed_not_found { node_id }
+      "EC_404__node_lookup_failed_parent_not_found" -> do
+        { data: { node_id } } <- JSON.readImpl f :: Foreign.F { data :: { node_id :: Int } }
+        pure $ EC_404__node_lookup_failed_parent_not_found { node_id }
+      "EC_404__node_lookup_failed_username_not_found" -> do
+        { data: { username } } <- JSON.readImpl f :: Foreign.F { data :: { username :: String } }
+        pure $ EC_404__node_lookup_failed_username_not_found { username }
+      "EC_404__node_list_not_found" -> do
+        { data: { list_id } } <- JSON.readImpl f :: Foreign.F { data :: { list_id :: Int } }
+        pure $ EC_404__node_list_not_found { list_id }
+      "EC_404__node_root_not_found" -> do
+        pure $ EC_404__node_root_not_found
+      "EC_500__node_generic_exception" -> do
+        { data: { error } } <- JSON.readImpl f :: Foreign.F { data :: { error :: String } }
+        pure $ EC_500__node_generic_exception { error }
+      "EC_500__node_not_implemented_yet" -> do
+        pure $ EC_500__node_not_implemented_yet
+      _ -> Foreign.fail $ Foreign.ForeignError $ "deserialization for '" <> type_ <> "' not implemented"
+
 logRESTError :: R2.Here -> String -> RESTError -> Effect Unit
 logRESTError here' prefix e = here'.warn2 (prefix <> " " <> show e) e
 -- logRESTError here prefix (SendResponseError e) = here.warn2 (prefix <> " SendResponseError ") e  -- TODO: No show
@@ -61,8 +145,8 @@ logRESTError here' prefix e = here'.warn2 (prefix <> " " <> show e) e
 type AffRESTError a = Aff (Either RESTError a)
 
 
-readJSON :: forall a. JSON.ReadForeign a =>
-            Either Affjax.Error (Affjax.Response AC.Json)
+readJSON :: forall a. JSON.ReadForeign a
+         => Either Affjax.Error (Affjax.Response AC.Json)
          -> Either RESTError a
 readJSON affResp =
   case affResp of
@@ -74,15 +158,27 @@ readJSON affResp =
       --_ <-  liftEffect $ log json.status
       --_ <-  liftEffect $ log json.headers
       --_ <-  liftEffect $ log json.body
+      
       case resp.status of
-        StatusCode 500 ->
-          case (JSON.readJSON $ AC.stringify resp.body :: JSON.E { error :: String }) of
-            Right ({ error }) -> Left $ ServerError error
-            Left _            -> Left $ UnknownServerError $ AC.stringify resp.body
-        _ ->
+        StatusCode 200 -> 
           case (JSON.readJSON $ AC.stringify resp.body) of
             Left err -> Left $ ReadJSONError err
             Right r -> Right r
+        _ -> case (JSON.readJSON $ AC.stringify resp.body :: JSON.E FrontendError) of
+          Right err -> Left $ FE err
+          Left _    -> Left $ UnknownServerError $ AC.stringify resp.body
+        -- _ -> Left $ parseServerError resp
+
+parseServerError :: Affjax.Response AC.Json -> RESTError
+parseServerError { body } =
+  case (JSON.readJSON $ AC.stringify body :: JSON.E { type :: String }) of
+    Right { type: "EC_404__node_lookup_failed_username_not_found" } ->
+      ServerError "username not found"
+    -- TODO Add more errors for the frontend
+    Right { type: type_ } ->
+      UnknownServerError $ "Server error of type '" <> type_ <> "' not supported"
+    Left _ -> UnknownServerError $ AC.stringify body
+
 
 -- TODO too much duplicate code in `postWwwUrlencoded`
 send :: forall body res. JSON.WriteForeign body => JSON.ReadForeign res =>
@@ -94,6 +190,7 @@ send m mtoken url reqbody = do
          , method = Left m
          , headers =  [ ARH.ContentType applicationJSON
                       , ARH.Accept applicationJSON
+                      , ARH.RequestHeader "X-Garg-Error-Scheme" $ "new" 
                       ] <>
                       foldMap (\token ->
                         [ARH.RequestHeader "Authorization" $  "Bearer " <> token]
@@ -106,7 +203,7 @@ send m mtoken url reqbody = do
       let cookie = "JWT-Cookie=" <> token <> "; Path=/;" --" HttpOnly; Secure; SameSite=Lax"
       R2.setCookie cookie
   affResp <- request req
-  liftEffect $ here.log2 "[send] affResp" affResp
+  -- liftEffect $ here.log2 "[send] affResp" affResp
   pure $ readJSON affResp
 
 noReqBody :: Maybe String

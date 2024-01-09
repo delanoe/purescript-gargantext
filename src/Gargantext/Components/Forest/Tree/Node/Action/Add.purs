@@ -13,7 +13,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
-import Gargantext.Components.Forest.Tree.Node.Tools (formChoice, panel, submitButton)
+import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.InputWithEnter (inputWithEnterWithKey)
 import Gargantext.Components.Lang (Lang(..), translate)
 import Gargantext.Config.REST (RESTError, AffRESTError)
@@ -92,10 +92,10 @@ addNodeViewCpt = here.component "addNodeView" cpt where
           T.write_ (GT.prettyNodeType nt) nodeName
           T.write_ nt nodeType
         (maybeChoose /\ nt') = if length nodeTypes > 1
-                         then ([ formChoice { items: nodeTypes
-                                            , default: nodeType'
-                                            , callback: setNodeType'
-                                            , print: print hasChromeAgent' } [] ] /\ nodeType')
+                         then ([ Tools.formChoice { items: nodeTypes
+                                                  , default: nodeType'
+                                                  , callback: setNodeType'
+                                                  , print: print hasChromeAgent' } [] ] /\ nodeType')
                          else ([H.div {} [H.text $ "Creating a node of type "
                                                 <> show defaultNt
                                                 <> " with name:"
@@ -120,7 +120,8 @@ addNodeViewCpt = here.component "addNodeView" cpt where
                         else H.div {} []
                       ]
 
-    pure $ panel (maybeChoose <> maybeEdit) (submitButton (AddNode nodeName' nt') dispatch)
+    pure $ Tools.panelWithSubmitButton { action: AddNode nodeName' nt'
+                                       , dispatch } (maybeChoose <> maybeEdit)
 
 -- END Create Node
 

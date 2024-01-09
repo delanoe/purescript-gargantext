@@ -11,7 +11,7 @@ import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Utils (loadLanguages)
-import Gargantext.Components.Forest.Tree.Node.Tools (panel, submitButton)
+import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Components.ListSelection as ListSelection
 import Gargantext.Components.ListSelection.Types as ListSelection
@@ -71,80 +71,84 @@ actionWriteNodesDocumentsWithLangsCpt = here.component "actionWriteNodesDocument
     paragraphs' /\ paragraphBox
         <- R2.useBox' "7"
 
-    let bodies = [
-      H.div
-      { className: "col-12 flex-space-around" }
-      [ H.h4 {}
-        [ H.text "Will traverse all Write Nodes and insert them as documents into current corpus." ]
-      ]
-    ,
-      -- lang
-      H.div
-      { className: "form-group" }
-      [
-        H.div
-        { className: "form-group__label" }
+    pure $
+      Tools.panelWithSubmitButton { action: DocumentsFromWriteNodes { id
+                                                                    , lang: lang'
+                                                                    , selection: selection'
+                                                                    , paragraphs: paragraphs' }
+                                  , dispatch }
         [
-          B.label_ $
-          "File lang"
+          H.div
+          { className: "col-12 flex-space-around" }
+          [ H.h4 {}
+            [ H.text "Will traverse all Write Nodes and insert them as documents into current corpus." ]
+          ]
+        ,
+          -- lang
+          H.div
+          { className: "form-group" }
+          [
+            H.div
+            { className: "form-group__label" }
+            [
+              B.label_ $
+              "File lang"
+            ]
+          ,
+            H.div
+            { className: "form-group__field" }
+            [
+              B.formSelect'
+              { callback: flip T.write_ langBox
+              , value: lang'
+              , list: langs <> [ No_extraction ]
+              }
+              []
+            ]
+          ]
+        ,
+          -- paragraph
+          H.div
+          { className: "form-group "}
+          [
+            H.div
+            { className: "form-group__label" }
+            [
+              B.label_ $
+              "Paragraph size (sentences)"
+            ]
+          ,
+            H.div
+            { className: "form-group__field" }
+            [
+              B.formInput
+              { callback: flip T.write_ paragraphBox
+              , value: paragraphs'
+              }
+            ]
+          ]
+        ,
+          --selection
+          H.div
+          { className: "form-group" }
+          [
+            H.div
+            { className: "form-group__label" }
+            [
+              B.label_ $
+              "List selection"
+            ]
+          ,
+            H.div
+            { className: "form-group__field" }
+            [
+              ListSelection.selection
+              { selection: selectionBox
+              , session
+              } []
+            ]
+          ]
         ]
-      ,
-        H.div
-        { className: "form-group__field" }
-        [
-          B.formSelect'
-          { callback: flip T.write_ langBox
-          , value: lang'
-          , list: langs <> [ No_extraction ]
-          }
-          []
-        ]
-      ]
-    ,
-      -- paragraph
-      H.div
-      { className: "form-group "}
-      [
-        H.div
-        { className: "form-group__label" }
-        [
-          B.label_ $
-          "Paragraph size (sentences)"
-        ]
-      ,
-        H.div
-        { className: "form-group__field" }
-        [
-          B.formInput
-          { callback: flip T.write_ paragraphBox
-          , value: paragraphs'
-          }
-        ]
-      ]
-    ,
-      --selection
-      H.div
-      { className: "form-group" }
-      [
-        H.div
-        { className: "form-group__label" }
-        [
-          B.label_ $
-            "List selection"
-        ]
-      ,
-        H.div
-        { className: "form-group__field" }
-        [
-          ListSelection.selection
-          { selection: selectionBox
-          , session
-          } []
-        ]
-      ]
-    ]
-
-    pure $ panel bodies (submitButton (DocumentsFromWriteNodes { id, lang: lang', selection: selection', paragraphs: paragraphs' }) dispatch)
 
 
 type Params =

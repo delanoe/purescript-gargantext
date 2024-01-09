@@ -7,7 +7,7 @@ import Gargantext.Prelude
 
 import Data.Maybe (Maybe(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
+import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (SubTreeParamsIn, subTreeView)
 import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Routes (SessionRoute(..))
@@ -59,15 +59,16 @@ moveNodeCpt' = here.component "__clone__" cpt where
     action' <- T.useLive T.unequal action
 
     let button = case action' of
-            MoveNode { params } -> case params of
-              Just val -> submitButton (MoveNode {params: Just val}) dispatch
-              Nothing -> H.div {} []
-            _                   -> H.div {} []
+          MoveNode { params } -> case params of
+            Just val -> Tools.submitButton { action: MoveNode {params: Just val}
+                                           , dispatch }
+            Nothing -> H.div {} []
+          _                   -> H.div {} []
 
     pure $
 
-      panel
-      [ subTreeView { action
+      Tools.panel {}
+        [ subTreeView { action
                       , boxes
                       , dispatch
                       , id
@@ -75,4 +76,6 @@ moveNodeCpt' = here.component "__clone__" cpt where
                       , session
                       , subTreeParams
                       } []
-      ] button
+
+        -- footer
+        , button ]

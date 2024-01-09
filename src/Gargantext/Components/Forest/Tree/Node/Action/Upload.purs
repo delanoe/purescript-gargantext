@@ -194,7 +194,7 @@ uploadFileViewWithLangsCpt = here.component "uploadFileViewWithLangs" cpt
                                            , selection
                                            } []
                             ]
-      pure $ panel bodies footer
+      pure $ panel {} (bodies <> [ footer ])
 
 
 onChangeContents :: forall e. T.Box (Maybe UploadFile) -> E.SyntheticEvent_ e -> Effect Unit
@@ -318,7 +318,7 @@ uploadListViewCpt = here.component "uploadListView" cpt where
   -- Render
     pure $
 
-      panel
+      panel {}
       -- Body
       [
         -- Upload
@@ -423,9 +423,9 @@ uploadListViewCpt = here.component "uploadListView" cpt where
             } []
           ]
         ]
-      ]
+      
       -- Footer
-      (
+      ,
         H.div
         {}
         [
@@ -439,7 +439,7 @@ uploadListViewCpt = here.component "uploadListView" cpt where
           , nodeType: GT.Annuaire
           } []
         ]
-      )
+      ]
 
 -- START File Type View
 type FileTypeProps =
@@ -663,12 +663,12 @@ uploadTermListViewCpt = here.component "uploadTermListView" cpt
                                                }
                             ]
 
-      pure $ panel
+      pure $ panel {}
         [ H.form {}
           [ R2.row [ R2.col 12 [ input ] ]
           , R2.row [ R2.col 12 [ uploadTypeHtml ] ]
         ]
-      ] footer
+        , footer ]
 
     onChangeContents :: forall e. T.Box (Maybe UploadFile)
                      -> E.SyntheticEvent_ e
@@ -815,7 +815,7 @@ uploadFrameCalcViewWithLangsCpt = here.component "uploadFrameCalcViewWithLangs" 
                      [ H.text "Upload!" ]
                    ]
 
-      pure $ panel bodies footer
+      pure $ panel {} (bodies <> [ footer ])
 
       where
         onClick lang' selection' _ = do

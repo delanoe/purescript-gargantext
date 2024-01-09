@@ -41,8 +41,10 @@ actionDownloadCorpus = R.createElement actionDownloadCorpusCpt
 actionDownloadCorpusCpt :: R.Component ActionDownload
 actionDownloadCorpusCpt = here.component "actionDownloadCorpus" cpt where
   cpt { id, session } _ = do
-    pure $ panel [H.div {} [H.text info]]
-      (submitButtonHref DownloadNode href)
+    pure $ panel {} [ H.div {} [H.text info]
+
+                    -- footer
+                    , submitButtonHref DownloadNode href ]
     where
       href  = url session $ Routes.NodeAPI GT.Corpus (Just id) "export"
       info  = "Download as JSON"
@@ -52,8 +54,10 @@ actionDownloadGraph = R.createElement actionDownloadGraphCpt
 actionDownloadGraphCpt :: R.Component ActionDownload
 actionDownloadGraphCpt = here.component "actionDownloadGraph" cpt where
   cpt { id, session } _ = do
-    pure $ panel [H.div {} [H.text info]]
-      (submitButtonHref DownloadNode href)
+    pure $ panel {} [ H.div {} [H.text info]
+
+                    -- footer
+                    , submitButtonHref DownloadNode href ]
     where
       href  = url session $ Routes.NodeAPI GT.Graph (Just id) "gexf"
       info  = "Info about the Graph as GEXF format"
@@ -79,15 +83,16 @@ actionDownloadNodeListCpt = here.component "actionDownloadNodeList" cpt where
     downloadFormat <- T.useBox NL_JSON
     downloadFormat' <- T.useLive T.unequal downloadFormat
 
-    pure $ panel
+    pure $ panel {}
       [ R2.select { className: "form-control"
                   , defaultValue: show downloadFormat'
                   , on: { change: onChange downloadFormat } }
         [ opt NL_CSV downloadFormat
         , opt NL_JSON downloadFormat ]
       , H.div {} [ H.text $ info downloadFormat' ]
-      ]
-      (submitButtonHref DownloadNode $ href downloadFormat')
+
+      -- footer
+      , submitButtonHref DownloadNode $ href downloadFormat' ]
     where
       opt t downloadFormat = H.option { value: show t } [ H.text $ show t ]
         where
@@ -122,15 +127,16 @@ actionDownloadNodeTextsCpt = here.component "actionDownloadNodeTexts" cpt where
     downloadFormat <- T.useBox NT_JSON
     downloadFormat' <- T.useLive T.unequal downloadFormat
 
-    pure $ panel
+    pure $ panel {}
       [ R2.select { className: "form-control"
                   , defaultValue: show downloadFormat'
                   , on: { change: onChange downloadFormat } }
         [ opt NT_CSV downloadFormat
         , opt NT_JSON downloadFormat ]
       , H.div {} [ H.text $ info downloadFormat' ]
-      ]
-      (submitButtonHref DownloadNode $ href downloadFormat')
+
+      -- footer
+      , submitButtonHref DownloadNode $ href downloadFormat' ]
     where
       opt t downloadFormat = H.option { value: show t } [ H.text $ show t ]
         where
