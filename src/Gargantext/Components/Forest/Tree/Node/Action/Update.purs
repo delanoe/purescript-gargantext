@@ -64,7 +64,8 @@ updateDashboardCpt = here.component "updateDashboard" cpt where
 
     pure $
       Tools.panelWithSubmitButton { action: UpdateNode $ UpdateNodeParamsBoard { methodBoard: methodBoard' }
-                                  , dispatch }
+                                  , dispatch
+                                  , mError: Nothing }
         [ -- H.text "Update with"
           Tools.formChoiceSafe { items: [All, Sources, Authors, Institutes, Ngrams]
                                , default: methodBoard'
@@ -108,7 +109,9 @@ updateGraphCpt = here.component "updateGraph" cpt where
                                                     }
                      
     pure $
-      Tools.panelWithSubmitButton { action, dispatch: callback }
+      Tools.panelWithSubmitButton { action
+                                  , dispatch: callback
+                                  , mError: Nothing }
         [ H.text "Show subjects with Order1 or concepts with Order2 ?"
         , Tools.formChoiceSafe { items: [Order1, Order2_A, Order2_B]
                                , default: methodGraphMetric'
@@ -218,7 +221,8 @@ updateNodeListCpt = here.component "updateNodeList" cpt where
 
     pure $
       Tools.panelWithSubmitButton { action: UpdateNode $ UpdateNodeParamsList { methodList: methodList' }
-                                  , dispatch }
+                                  , dispatch
+                                  , mError: Nothing }
         [ -- H.text "Update with"
           Tools.formChoiceSafe { items: [Basic, Advanced, WithModel]
                                , default: methodList'
@@ -236,7 +240,8 @@ updateTextsCpt = here.component "updateTexts" cpt where
 
     pure $
       Tools.panelWithSubmitButton { action: UpdateNode $ UpdateNodeParamsTexts { methodTexts: Both }
-                                  , dispatch }
+                                  , dispatch
+                                  , mError: Nothing }
         [] -- H.text "Update with"
         -- formChoiceSafe { items: [NewNgrams, NewTexts, Both]
         --                , default: methodTexts'

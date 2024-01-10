@@ -1,14 +1,13 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Documentation where
 
-import Reactix as R
-import Reactix.DOM.HTML as H
-
-import Gargantext.Prelude (map, pure, show, ($), (<>))
-
+import Data.Maybe (Maybe(..))
 import Gargantext.Components.Forest.Tree.Node.Tools as Tools
+import Gargantext.Prelude (map, pure, show, ($), (<>))
 import Gargantext.Types (NodeType)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import Reactix as R
+import Reactix.DOM.HTML as H
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Documentation"
@@ -23,9 +22,9 @@ actionDocCpt :: R.Component ActionDoc
 actionDocCpt = here.component "actionDoc" cpt where
   cpt { nodeType } _ = do
     pure $
-      Tools.panelNoFooter {}
+      Tools.panelNoFooter { mError: Nothing }
         ([ infoTitle nodeType ]
-         <> (map (\info -> H.p {} [H.text info]) $ docOf nodeType))
+         <> (map (\info -> H.p {} [ H.text info ]) $ docOf nodeType))
     where
       infoTitle :: NodeType -> R.Element
       infoTitle nt = H.div { style: {margin: "10px"}}

@@ -36,13 +36,13 @@ mergeNodeCpt = here.component "mergeNode" cpt
       options <- T.useBox (Set.singleton GT.MapTerm)
 
       let button = case action' of
-            MergeNode {params} -> case params of
-              Just val -> Tools.submitButton { action: MergeNode {params: Just val}
-                                             , dispatch }
-              Nothing -> H.div {} []
+            MergeNode { params } ->
+              R2.fromMaybe params $
+                \val -> Tools.submitButton { action: MergeNode {params: Just val }
+                                           , dispatch }
             _                   -> H.div {} []
 
-      pure $ Tools.panel {}
+      pure $ Tools.panel { mError: Nothing }
         [ subTreeView { action
                       , boxes
                       , dispatch
@@ -52,12 +52,12 @@ mergeNodeCpt = here.component "mergeNode" cpt
                       , subTreeParams
                       } []
         , H.ul { className:"merge mx-auto list-group"}
-          ([ H.li { className: "list-group-item" }
-             [ H.h5 { className: "mb-1" } [ H.text "Merge which list?" ]
-             , Tools.checkboxesListGroup { groups: [ GT.MapTerm, GT.CandidateTerm, GT.StopTerm ]
-                                         , options } []
-             ]
-           ])
+          [ H.li { className: "list-group-item" }
+            [ H.h5 { className: "mb-1" } [ H.text "Merge which list?" ]
+            , Tools.checkboxesListGroup { groups: [ GT.MapTerm, GT.CandidateTerm, GT.StopTerm ]
+                                        , options } []
+            ]
+          ]
         , H.ul { className:"merge mx-auto list-group"}
           [ H.li { className: "list-group-item" }
             [ H.h5 { className: "mb-1" } [ H.text "Title" ]

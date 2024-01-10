@@ -5,7 +5,7 @@ import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.String.Common (toLower)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(DownloadNode))
-import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, panel, submitButtonHref)
+import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Ends (url)
 import Gargantext.Prelude
 import Gargantext.Routes as Routes
@@ -41,10 +41,11 @@ actionDownloadCorpus = R.createElement actionDownloadCorpusCpt
 actionDownloadCorpusCpt :: R.Component ActionDownload
 actionDownloadCorpusCpt = here.component "actionDownloadCorpus" cpt where
   cpt { id, session } _ = do
-    pure $ panel {} [ H.div {} [H.text info]
-
-                    -- footer
-                    , submitButtonHref DownloadNode href ]
+    pure $
+      Tools.panelWithSubmitButtonHref { action: DownloadNode
+                                      , href
+                                      , mError: Nothing }
+        [ H.div {} [H.text info] ]
     where
       href  = url session $ Routes.NodeAPI GT.Corpus (Just id) "export"
       info  = "Download as JSON"
@@ -54,10 +55,11 @@ actionDownloadGraph = R.createElement actionDownloadGraphCpt
 actionDownloadGraphCpt :: R.Component ActionDownload
 actionDownloadGraphCpt = here.component "actionDownloadGraph" cpt where
   cpt { id, session } _ = do
-    pure $ panel {} [ H.div {} [H.text info]
-
-                    -- footer
-                    , submitButtonHref DownloadNode href ]
+    pure $
+      Tools.panelWithSubmitButtonHref { action: DownloadNode
+                                      , href
+                                      , mError: Nothing }
+        [ H.div {} [H.text info] ]
     where
       href  = url session $ Routes.NodeAPI GT.Graph (Just id) "gexf"
       info  = "Info about the Graph as GEXF format"
@@ -83,16 +85,17 @@ actionDownloadNodeListCpt = here.component "actionDownloadNodeList" cpt where
     downloadFormat <- T.useBox NL_JSON
     downloadFormat' <- T.useLive T.unequal downloadFormat
 
-    pure $ panel {}
-      [ R2.select { className: "form-control"
-                  , defaultValue: show downloadFormat'
-                  , on: { change: onChange downloadFormat } }
-        [ opt NL_CSV downloadFormat
-        , opt NL_JSON downloadFormat ]
-      , H.div {} [ H.text $ info downloadFormat' ]
-
-      -- footer
-      , submitButtonHref DownloadNode $ href downloadFormat' ]
+    pure $
+      Tools.panelWithSubmitButtonHref { action: DownloadNode
+                                      , href: href downloadFormat'
+                                      , mError: Nothing }
+        [ R2.select { className: "form-control"
+                    , defaultValue: show downloadFormat'
+                    , on: { change: onChange downloadFormat } }
+          [ opt NL_CSV downloadFormat
+          , opt NL_JSON downloadFormat ]
+        , H.div {} [ H.text $ info downloadFormat' ]
+        ]
     where
       opt t downloadFormat = H.option { value: show t } [ H.text $ show t ]
         where
@@ -127,16 +130,16 @@ actionDownloadNodeTextsCpt = here.component "actionDownloadNodeTexts" cpt where
     downloadFormat <- T.useBox NT_JSON
     downloadFormat' <- T.useLive T.unequal downloadFormat
 
-    pure $ panel {}
+    pure $ Tools.panelWithSubmitButtonHref { action: DownloadNode
+                                           , href: href downloadFormat'
+                                           , mError: Nothing }
       [ R2.select { className: "form-control"
                   , defaultValue: show downloadFormat'
                   , on: { change: onChange downloadFormat } }
         [ opt NT_CSV downloadFormat
         , opt NT_JSON downloadFormat ]
       , H.div {} [ H.text $ info downloadFormat' ]
-
-      -- footer
-      , submitButtonHref DownloadNode $ href downloadFormat' ]
+      ]
     where
       opt t downloadFormat = H.option { value: show t } [ H.text $ show t ]
         where
@@ -160,4 +163,4 @@ actionDownloadOther = R.createElement actionDownloadOtherCpt
 actionDownloadOtherCpt :: R.Component ActionDownload
 actionDownloadOtherCpt = here.component "actionDownloadOther" cpt where
   cpt _ _ = do
-    pure $ fragmentPT $ "Soon, you will be able to download your file here "
+    pure $ Tools.fragmentPT $ "Soon, you will be able to download your file here "

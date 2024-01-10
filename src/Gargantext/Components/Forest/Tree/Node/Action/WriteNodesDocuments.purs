@@ -76,7 +76,8 @@ actionWriteNodesDocumentsWithLangsCpt = here.component "actionWriteNodesDocument
                                                                     , lang: lang'
                                                                     , selection: selection'
                                                                     , paragraphs: paragraphs' }
-                                  , dispatch }
+                                  , dispatch
+                                  , mError: Nothing }
         [
           H.div
           { className: "col-12 flex-space-around" }

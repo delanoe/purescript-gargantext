@@ -104,24 +104,24 @@ addNodeViewCpt = here.component "addNodeView" cpt where
                                )
                             where
                               defaultNt = (fromMaybe Error $ head nodeTypes)
-        maybeEdit   = [ if edit
-                        then inputWithEnterWithKey {
-                            onBlur: \val -> T.write_ val nodeName
-                          , onEnter: \_ -> launchAff_ $ dispatch (AddNode nodeName' nt')
-                          , onValueChanged: \val -> T.write_ val nodeName
-                          , autoFocus: true
-                          , className: "form-control"
-                          , defaultValue: nodeName' -- (prettyNodeType nt')
-                          , placeholder: nodeName'  -- (prettyNodeType nt')
-                          , type: "text"
-                          , key: show nodeType'
-                          , required: false
-                          }
-                        else H.div {} []
-                      ]
+        maybeEdit   = if edit then
+                        [ inputWithEnterWithKey {
+                               onBlur: \val -> T.write_ val nodeName
+                             , onEnter: \_ -> launchAff_ $ dispatch (AddNode nodeName' nt')
+                             , onValueChanged: \val -> T.write_ val nodeName
+                             , autoFocus: true
+                             , className: "form-control"
+                             , defaultValue: nodeName' -- (prettyNodeType nt')
+                             , placeholder: nodeName'  -- (prettyNodeType nt')
+                             , type: "text"
+                             , key: show nodeType'
+                             , required: false
+                             } ]
+                      else []
 
     pure $ Tools.panelWithSubmitButton { action: AddNode nodeName' nt'
-                                       , dispatch } (maybeChoose <> maybeEdit)
+                                       , dispatch
+                                       , mError: Nothing } (maybeChoose <> maybeEdit)
 
 -- END Create Node
 

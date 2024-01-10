@@ -69,15 +69,15 @@ linkNodeCpt' = here.component "__clone__" cpt
       let
 
         button = case action' of
-          LinkNode { params } -> case params of
-            Just (SubTreeOut { in: inId }) ->
-              Tools.submitButton { action: toParams nodeType inId
-                                 , dispatch }
-            Nothing -> mempty
+          LinkNode { params } ->
+            R2.fromMaybe params $
+              \(SubTreeOut { in: inId }) ->
+                  Tools.submitButton { action: toParams nodeType inId
+                                     , dispatch }
           _         -> mempty
 
       pure $
-        Tools.panel {}
+        Tools.panel { mError: Nothing }
           [ subTreeView { action
                         , boxes
                         , dispatch

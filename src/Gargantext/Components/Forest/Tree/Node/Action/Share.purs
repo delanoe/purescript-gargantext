@@ -43,9 +43,6 @@ getCompletionsReq :: { session :: Session } -> AffRESTError (Array String)
 getCompletionsReq { session }  =
   get session GR.Members
 
-shareAction :: String -> Action
-shareAction username = Action.ShareTeam (trim username)
-
 
 ------------------------------------------------------------------------
 data ShareNodeParams = ShareTeamParams   { username :: String }
@@ -63,7 +60,6 @@ instance Show ShareNodeParams where show = genericShow
 ------------------------------------------------------------------------
 type ShareNode =
   ( id :: ID
-  , dispatch :: Action -> Aff Unit 
   , session :: Session )
 
 shareNode :: R2.Component ShareNode
@@ -71,7 +67,7 @@ shareNode = R.createElement shareNodeCpt
 shareNodeCpt :: R.Component ShareNode
 shareNodeCpt = here.component "shareNode" cpt
   where
-    cpt { dispatch, id, session } _ = do
+    cpt { id, session } _ = do
       useLoader {
         loader: getCompletionsReq
       , path: { session }
@@ -83,8 +79,7 @@ shareNodeCpt = here.component "shareNode" cpt
 
 type ShareNodeInner =
   ( completions :: Array String
-  , id :: ID
-  , session :: Session
+  | ShareNode
   )
 
 shareNodeInner :: R2.Component ShareNodeInner
@@ -95,18 +90,19 @@ shareNodeInnerCpt = here.component "shareNodeInner" cpt
     cpt { completions, id, session } _ = do
       state' /\ state <- R2.useBox' ""
       text' /\ text <- R2.useBox' ""
+      mError' /\ mError <- R2.useBox' Nothing
 
-      pure $ Tools.panel {}
+      pure $ Tools.panel { mError: mError' }
         [ inputWithAutocomplete { autoFocus: true
                                 , autocompleteSearch
                                 , classes: "share-users-completions d-flex align-items-center"
                                 , onAutocompleteClick
-                                , onEnterPress: onEnterPress text
-                                , placeholder: "username or email"
+                                , onEnterPress: onEnterPress text mError
                                 , pattern: "^\\S+$"  -- pattern doesn't allow space characters
-                                , title
-                                , state }
-          [ B.iconButton { callback: \_ -> onEnterPress text state'
+                                , placeholder: "username or email"
+                                , state
+                                , title }
+          [ B.iconButton { callback: \_ -> onEnterPress text mError state'
                          , elevation: Level1
                          , name: "send"
                          , title: "Submit" } ]
@@ -116,13 +112,16 @@ shareNodeInnerCpt = here.component "shareNodeInner" cpt
       where
         autocompleteSearch input = pure $ nub $ filter (contains (Pattern input)) completions
         onAutocompleteClick _ = pure unit
-        onEnterPress text val = do
-          -- launchAff_ $ dispatch (shareAction val)
+        onEnterPress text mError val = do
+          T.write_ Nothing mError
           launchAff_ do
             eRes <- shareReq session id $ ShareTeamParams { username: val }
             liftEffect $ case eRes of
-              Left err -> T.write_ (show err) text
-              Right _ -> T.write_ ("Invited " <> val <> " to the team") text
+              Left err -> do
+                T.write_ (Just $ show err) mError
+              Right _ -> do
+                T.write_ ("Invited " <> val <> " to the team") text
+                T.write_ Nothing mError
         title = "Enter a username or an email address (space characters are not allowed)"
 ------------------------------------------------------------------------
 publishNode :: R2.Component SubTreeParamsIn
@@ -135,13 +134,13 @@ publishNodeCpt = here.component "publishNode" cpt
       action' <- T.useLive T.unequal action
 
       let button = case action' of
-              Action.SharePublic { params } -> case params of
-                Just val -> Tools.submitButton { action: Action.SharePublic {params: Just val}
-                                               , dispatch }
-                Nothing -> H.div {} []
+              Action.SharePublic { params } ->
+                R2.fromMaybe params $
+                  \val -> Tools.submitButton { action: Action.SharePublic {params: Just val}
+                                             , dispatch }
               _   -> H.div {} []
 
-      pure $ Tools.panel {}
+      pure $ Tools.panel { mError: Nothing }
         [ subTreeView { action
                       , boxes
                       , dispatch

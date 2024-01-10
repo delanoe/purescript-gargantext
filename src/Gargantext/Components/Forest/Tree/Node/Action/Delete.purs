@@ -54,7 +54,7 @@ actionDeleteUserCpt :: R.Component Delete
 actionDeleteUserCpt = here.component "actionDeleteUser" cpt where
   cpt _  _ = do
     pure $
-      Tools.panelNoFooter {}
+      Tools.panelNoFooter { mError: Nothing }
         [ H.div { style: {margin: "10px"}}
           [ H.text $ "Yes, we are RGPD compliant!"
             <> " But you can not delete User Node yet."
@@ -70,7 +70,8 @@ actionDeleteOtherCpt = here.component "actionDeleteOther" cpt where
   cpt { dispatch, nodeType } _ = do
     pure $
       Tools.panelWithSubmitButton { action: DeleteNode nodeType
-                                  , dispatch }
+                                  , dispatch
+                                  , mError: Nothing }
         (map (\t -> H.p {} [H.text t])
          [ "Are your sure you want to delete it ?"
          , "If yes, click again below."

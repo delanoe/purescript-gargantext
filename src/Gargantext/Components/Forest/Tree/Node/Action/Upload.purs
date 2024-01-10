@@ -23,7 +23,7 @@ import Gargantext.Components.Forest.Tree.Node.Action (Props)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileFormat(..), FileType(..), UploadFileBlob(..), readUFBAsBase64, readUFBAsText)
 import Gargantext.Components.Forest.Tree.Node.Action.Utils (loadLanguages)
-import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe, panel)
+import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.Lang (Lang(..), langReader)
 import Gargantext.Components.ListSelection as ListSelection
 import Gargantext.Components.ListSelection.Types (Selection(..))
@@ -83,7 +83,7 @@ actionUploadOther = R.createElement actionUploadOtherCpt
 actionUploadOtherCpt :: R.Component ActionUpload
 actionUploadOtherCpt = here.component "actionUploadOther" cpt where
   cpt _ _ = do
-    pure $ fragmentPT $ "Soon, upload for this NodeType."
+    pure $ Tools.fragmentPT $ "Soon, upload for this NodeType."
 
 
 -- file upload types
@@ -153,30 +153,30 @@ uploadFileViewWithLangsCpt = here.component "uploadFileViewWithLangs" cpt
               ]
             , R2.row
               [ H.div {className:"col-6 flex-space-around"}
-                [ formChoiceSafe { items: [ CSV
-                                          , CSV_HAL
-                                          , Istex
-                                          , WOS
-                                          , JSON
-                                          -- , Iramuteq
-                                          ]
+                [ Tools.formChoiceSafe { items: [ CSV
+                                                , CSV_HAL
+                                                , Istex
+                                                , WOS
+                                                , JSON
+                                                  -- , Iramuteq
+                                                ]
                                  , default: CSV
                                  , callback: setFileType'
                                  , print: show } []
-                , formChoiceSafe { items: [ Plain
-                                          , ZIP ]
-                                 , default: Plain
-                                 , callback: setFileFormat'
-                                 , print: show } []
+                , Tools.formChoiceSafe { items: [ Plain
+                                                , ZIP ]
+                                       , default: Plain
+                                       , callback: setFileFormat'
+                                       , print: show } []
                 ]
               ]
             , R2.row
               [ H.div {className:"col-6 flex-space-around"}
-                [ formChoiceSafe { items: langs <> [No_extraction]
-                                 , default: EN
-                                 , callback: setLang'
-                                 , print: show
-                                 } []
+                [ Tools.formChoiceSafe { items: langs <> [No_extraction]
+                                       , default: EN
+                                       , callback: setLang'
+                                       , print: show
+                                       } []
                 ]
               ]
             , R2.row
@@ -194,7 +194,7 @@ uploadFileViewWithLangsCpt = here.component "uploadFileViewWithLangs" cpt
                                            , selection
                                            } []
                             ]
-      pure $ panel {} (bodies <> [ footer ])
+      pure $ Tools.panel { mError: Nothing } (bodies <> [ footer ])
 
 
 onChangeContents :: forall e. T.Box (Maybe UploadFile) -> E.SyntheticEvent_ e -> Effect Unit
@@ -318,7 +318,7 @@ uploadListViewCpt = here.component "uploadListView" cpt where
   -- Render
     pure $
 
-      panel {}
+      Tools.panel { mError: Nothing }
       -- Body
       [
         -- Upload
@@ -663,7 +663,7 @@ uploadTermListViewCpt = here.component "uploadTermListView" cpt
                                                }
                             ]
 
-      pure $ panel {}
+      pure $ Tools.panel { mError: Nothing }
         [ H.form {}
           [ R2.row [ R2.col 12 [ input ] ]
           , R2.row [ R2.col 12 [ uploadTypeHtml ] ]
@@ -815,7 +815,7 @@ uploadFrameCalcViewWithLangsCpt = here.component "uploadFrameCalcViewWithLangs" 
                      [ H.text "Upload!" ]
                    ]
 
-      pure $ panel {} (bodies <> [ footer ])
+      pure $ Tools.panel { mError: Nothing } (bodies <> [ footer ])
 
       where
         onClick lang' selection' _ = do

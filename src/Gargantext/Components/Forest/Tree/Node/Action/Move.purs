@@ -59,15 +59,15 @@ moveNodeCpt' = here.component "__clone__" cpt where
     action' <- T.useLive T.unequal action
 
     let button = case action' of
-          MoveNode { params } -> case params of
-            Just val -> Tools.submitButton { action: MoveNode {params: Just val}
-                                           , dispatch }
-            Nothing -> H.div {} []
+          MoveNode { params } ->
+            R2.fromMaybe params $
+              \val -> Tools.submitButton { action: MoveNode {params: Just val}
+                                         , dispatch }
           _                   -> H.div {} []
 
     pure $
 
-      Tools.panel {}
+      Tools.panel { mError: Nothing }
         [ subTreeView { action
                       , boxes
                       , dispatch

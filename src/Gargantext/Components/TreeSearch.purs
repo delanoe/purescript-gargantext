@@ -78,15 +78,15 @@ treeSearchCpt = here.component "treeSearch" cpt where
         { className: "input-group p-1" }
         [
           inputWithEnter { className: "form-control"
-                       , autoFocus: true
-                       , onEnter: submit inputRef query
-                       , onValueChanged: R.setRef inputRef
-                       , onBlur: R.setRef inputRef
-                       , type: "value"
-                       , defaultValue: ""
-                       , required: true
-                       , placeholder: "Search keys..."
-                       }
+                         , autoFocus: true
+                         , onEnter: submit inputRef query
+                         , onValueChanged: R.setRef inputRef
+                         , onBlur: R.setRef inputRef
+                         , type: "value"
+                         , defaultValue: ""
+                         , required: true
+                         , placeholder: "Search keys..."
+                         }
         ,
           H.div { className: "input-group-append"}
           [

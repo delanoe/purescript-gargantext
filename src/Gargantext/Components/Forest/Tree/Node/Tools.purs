@@ -31,28 +31,45 @@ fragmentPT :: String -> R.Element
 fragmentPT text = H.div { style: { margin: "10px" }} [ H.text text ]
 
 
-type PanelProps = ()
+type PanelProps =
+  ( mError :: Maybe String )
 
 -- | Last element of panel's children goes to footer, all others go to body
 panel :: R2.Component PanelProps
 panel = R.createElement panelCpt
 panelCpt :: R.Component PanelProps
 panelCpt = here.component "panel" cpt where
-  cpt {} children =
+  cpt { mError } children = do
+    let errorCpt =
+          R2.fromMaybe mError $
+            \err ->
+              R2.row
+                [ R2.col 12
+                  [ H.div { className: "alert alert-danger" } [ H.text err ]
+                  ]
+                ]
+    
     pure $ R.fragment
       [ H.div { className: "card-body" }
-        [ H.div { className: "row" }
-          -- TODO add type for text or form here [ H.form {className: "form-horizontal"} bodies ]
-          [ H.div { className: "col-12" } bodies ]]
+          [ H.div { className: "card-text" }
+            [ R2.row
+              -- TODO add type for text or form here [ H.form {className: "form-horizontal"} bodies ]
+              [ R2.col 12 bodies ]
+            , errorCpt
+            ]
+          ]
       , H.div {className: "card-footer"}
-        [ H.div { className: "row" }
-          [ H.div { className: "mx-auto"} [ footer ] ]]]
+        [ R2.row
+          [ H.div { className: "mx-auto"} [ footer ] ]
+        ]
+      ]
     where
       bodies /\ footer =
         case A.unsnoc children of
           Nothing -> [] /\ (H.div {} [])
           Just { init, last } -> init /\ last
 
+-- | A panel without a footer
 panelNoFooter :: R2.Component PanelProps
 panelNoFooter = R.createElement panelNoFooterCpt
 panelNoFooterCpt :: R.Component PanelProps
@@ -66,6 +83,7 @@ type PanelWithSubmitButtonProps =
   , dispatch :: Action -> Aff Unit
   | PanelProps )
 
+-- | A panel with 'submitButton { action, dispatch }'
 panelWithSubmitButton :: R2.Component PanelWithSubmitButtonProps
 panelWithSubmitButton = R.createElement panelWithSubmitButtonCpt
 panelWithSubmitButtonCpt :: R.Component PanelWithSubmitButtonProps
@@ -75,6 +93,22 @@ panelWithSubmitButtonCpt = here.component "panelWithSubmitButton" cpt where
     pure $ panel pProps (children
                          -- footer
                          <> [ submitButton { action, dispatch } ])
+
+type PanelWithSubmitButtonHrefProps =
+  ( action   :: Action
+  , href     :: String
+  | PanelProps )
+
+-- | A panel with 'submitButtonHref { action, href }'
+panelWithSubmitButtonHref :: R2.Component PanelWithSubmitButtonHrefProps
+panelWithSubmitButtonHref = R.createElement panelWithSubmitButtonHrefCpt
+panelWithSubmitButtonHrefCpt :: R.Component PanelWithSubmitButtonHrefProps
+panelWithSubmitButtonHrefCpt = here.component "panelWithSubmitButtonHref" cpt where
+  cpt props@{ action, href } children = do
+    let pProps = (RX.pick props :: Record PanelProps)
+    pure $ panel pProps (children
+                         -- footer
+                         <> [ submitButtonHref { action, href } ])
 
 
 type TextInputBoxProps =
@@ -198,15 +232,15 @@ inviteInputBoxCpt = here.component "textInputBox" cpt where
         T.write_ ("Invited " <> R.readRef ref <> " to the team") username
         launchAff_ $ dispatch (boxAction $ R.readRef ref)
 
-type DefaultText = String
+-- type DefaultText = String
 
-formEdit :: forall prev next
-          . DefaultText -> ((prev -> String) -> Effect next) -> R.Element
-formEdit defaultValue setter =
-  H.div { className: "form-group" }
-  [ H.input { defaultValue, type: "text", on: { input }
-            , placeholder: defaultValue, className: "form-control" }
-  ] where input = setter <<< const <<< R.unsafeEventValue
+-- formEdit :: forall prev next
+--           . DefaultText -> ((prev -> String) -> Effect next) -> R.Element
+-- formEdit defaultValue setter =
+--   H.div { className: "form-group" }
+--   [ H.input { defaultValue, type: "text", on: { input }
+--             , placeholder: defaultValue, className: "form-control" }
+--   ] where input = setter <<< const <<< R.unsafeEventValue
 
 type FormChoiceSafeProps item m =
   ( items    :: Array item
@@ -305,14 +339,23 @@ submitButtonCpt = here.component "submitButton" cpt where
                    }
     [ H.span {className: "font-family-theme mx-1"} [ H.text $ " " <> text action] ]
 
+
 type Href  = String
 
-submitButtonHref :: Action -> Href -> R.Element
-submitButtonHref action href =
-  H.a { className, href, target: "_blank" }
-  [ H.span {className: "font-family-theme mx-1"} [ H.text $ " " <> text action ] ]
-  where
-    className = "btn btn-primary fa fa-" <> icon action
+type SubmitButtonHrefProps =
+  ( action :: Action
+  , href   :: Href )
+
+submitButtonHref :: R2.Leaf SubmitButtonHrefProps
+submitButtonHref = R2.leaf submitButtonHrefCpt
+submitButtonHrefCpt :: R.Component SubmitButtonHrefProps
+submitButtonHrefCpt = here.component "submitButtonHref" cpt where
+  cpt { action, href } _ = do
+    pure $
+      H.a { className, href, target: "_blank" }
+        [ H.span {className: "font-family-theme mx-1"} [ H.text $ " " <> text action ] ]
+    where
+      className = "btn btn-primary fa fa-" <> icon action
 
 ------------------------------------------------------------------------
 -- | CheckBox tools
