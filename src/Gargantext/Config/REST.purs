@@ -79,9 +79,35 @@ data FrontendError =
   | EC_500__node_not_implemented_yet
 derive instance Generic FrontendError _
 instance Show FrontendError where
-  show EC_403__login_failed_invalid_username_or_password = "Invalid username or password"
-  show (EC_404__node_lookup_failed_username_not_found { username }) = "User '" <> username <> "' not found"
-  show a = genericShow a
+  show (EC_400__node_creation_failed_insert_node { user_id, parent_id }) =
+    "Failed to insert node for user " <> show user_id <> ", parent " <> show parent_id
+  show (EC_400__node_creation_failed_no_parent { user_id }) =
+    "Failed to insert node for user " <> show user_id <> ": no parent"
+  show (EC_400__node_creation_failed_parent_exists { user_id, parent_id }) =
+    "Failed to insert node for user " <> show user_id <> ", parent " <> show parent_id <> " exists"
+  show (EC_400__node_creation_failed_user_negative_id { user_id }) =
+    "Failed to insert node for use " <> show user_id <> " (negative user_id)"
+  show (EC_400__node_lookup_failed_user_too_many_roots { user_id, roots }) =
+    "Failed to lookup node for user " <> show user_id <> ": too many roots (" <> show roots <> ")"
+  show EC_400__node_needs_configuration = "Node needs configuration"
+  show (EC_403__login_failed_error { node_id, user_id }) =
+    "Login failed for node_id " <> show node_id <> ", user id " <> show user_id
+  show EC_403__login_failed_invalid_username_or_password =
+    "Invalid username or password"
+  show (EC_404__node_context_not_found { context_id }) =
+    "Context not found with id " <> show context_id
+  show (EC_404__node_lookup_failed_not_found { node_id }) =
+    "Node not found with id " <> show node_id
+  show (EC_404__node_lookup_failed_parent_not_found { node_id }) =
+    "Node parent not found for id " <> show node_id
+  show (EC_404__node_lookup_failed_username_not_found { username }) =
+    "User '" <> username <> "' not found"
+  show (EC_404__node_list_not_found { list_id }) =
+    "Node list not found for id " <> show list_id
+  show EC_404__node_root_not_found = "Node root not found"
+  show (EC_500__node_generic_exception { error }) =
+    "Node exception: " <> error
+  show EC_500__node_not_implemented_yet = "Node not implemented yet"
 instance JSON.ReadForeign FrontendError where
   readImpl f = do
     { type: type_ } <- JSON.readImpl f :: Foreign.F { type :: String }
@@ -167,17 +193,6 @@ readJSON affResp =
         _ -> case (JSON.readJSON $ AC.stringify resp.body :: JSON.E FrontendError) of
           Right err -> Left $ FE err
           Left _    -> Left $ UnknownServerError $ AC.stringify resp.body
-        -- _ -> Left $ parseServerError resp
-
-parseServerError :: Affjax.Response AC.Json -> RESTError
-parseServerError { body } =
-  case (JSON.readJSON $ AC.stringify body :: JSON.E { type :: String }) of
-    Right { type: "EC_404__node_lookup_failed_username_not_found" } ->
-      ServerError "username not found"
-    -- TODO Add more errors for the frontend
-    Right { type: type_ } ->
-      UnknownServerError $ "Server error of type '" <> type_ <> "' not supported"
-    Left _ -> UnknownServerError $ AC.stringify body
 
 
 -- TODO too much duplicate code in `postWwwUrlencoded`

@@ -28,6 +28,7 @@ to generate this file without the comments in this block.
   , "convertable-options"
   , "css"
   , "d3"
+  , "data-default"
   , "datetime"
   , "debug"
   , "dom-filereader"
