@@ -61,7 +61,8 @@ nodeSearchControlCpt = here.component "nodeSearchControl" cpt
         }
         [
           inputWithAutocomplete
-          { autocompleteSearch: autocompleteSearch graph
+          { autoFocus: true
+          , autocompleteSearch: autocompleteSearch graph
           , onAutocompleteClick: doSearch
           , onEnterPress: doSearch
           , classes: "filter-results-completions rounded-circle-2 text-small py-0"
@@ -69,7 +70,7 @@ nodeSearchControlCpt = here.component "nodeSearchControl" cpt
           , pattern: ".*"
           , title: ""
           , placeholder: "find and select a term here..."
-          }
+          } []
         ,
           B.button
           { callback: \_ -> doSearch search'

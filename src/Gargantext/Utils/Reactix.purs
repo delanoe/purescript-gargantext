@@ -147,7 +147,7 @@ newtype Point = Point { x :: Number, y :: Number }
 -- a reducer function living in effector, for useReductor
 type Actor s a = (a -> s -> Effect s)
 
--- | Turns a ReactElement into aReactix Element
+-- | Turns a ReactElement into a Reactix Element
 -- | buff (v.) to polish
 buff :: ReactElement -> R.Element
 buff = unsafeCoerce

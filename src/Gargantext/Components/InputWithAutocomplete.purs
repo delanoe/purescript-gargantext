@@ -27,7 +27,8 @@ type Completions = Array String
 
 type Props =
   (
-    autocompleteSearch  :: String -> Effect Completions
+    autoFocus           :: Boolean
+  , autocompleteSearch  :: String -> Effect Completions
   , classes             :: String
   , onAutocompleteClick :: String -> Effect Unit
   , onEnterPress        :: String -> Effect Unit
@@ -37,19 +38,20 @@ type Props =
   , state               :: T.Box String
   )
 
-inputWithAutocomplete :: R2.Leaf Props
-inputWithAutocomplete = R2.leaf inputWithAutocompleteCpt
+inputWithAutocomplete :: R2.Component Props
+inputWithAutocomplete = R2.component inputWithAutocompleteCpt
 inputWithAutocompleteCpt :: R.Component Props
 inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
   where
-    cpt { autocompleteSearch
+    cpt { autoFocus
+        , autocompleteSearch
         , classes
         , onAutocompleteClick
         , onEnterPress
         , placeholder
         , pattern
         , title
-        , state } _ = do
+        , state } children = do
       -- States
       state'        <- T.useLive T.unequal state
       containerRef  <- R.useRef null
@@ -67,14 +69,15 @@ inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
         { className: "input-with-autocomplete " <> classes
         , ref: containerRef
         }
-        [
+        ([
           completionsCpt { completions, onAutocompleteClick, state } []
         , H.input { type: "text"
                   , ref: inputRef
+                  , autoFocus
                   , className: "form-control"
                   , value: state'
-                  , pattern: pattern
-                  , title: title
+                  , pattern
+                  , title
                   , placeholder
                   , on: { focus: onFocus completions state'
                         , input: onInput completions
@@ -83,7 +86,7 @@ inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
                         , blur: onBlur completions containerRef
                         }
                   }
-        ]
+        ] <> children)
 
       -- Helpers
       where
@@ -142,139 +145,6 @@ inputWithAutocompleteCpt = here.component "inputWithAutocomplete" cpt
                 pure false
           else
             pure $ false
-
-type Props' =
-  (
-    autocompleteSearch  :: String -> Effect Completions
-  , classes             :: String
-  , onAutocompleteClick :: String -> Effect Unit
-  , dispatch            :: Action -> Aff Unit
-  , boxAction           :: String -> Action
-  , state               :: T.Box String
-  , text                :: T.Box String
-  , pattern             :: String
-  , title               :: String
-  , placeholder         :: String
-  )
-
-inputWithAutocomplete' :: R2.Leaf Props'
-inputWithAutocomplete' = R2.leaf inputWithAutocompleteCpt'
-inputWithAutocompleteCpt' :: R.Component Props'
-inputWithAutocompleteCpt' = here.component "inputWithAutocomplete" cpt
-  where
-    cpt { autocompleteSearch
-        , classes
-        , onAutocompleteClick
-        , dispatch
-        , boxAction
-        , state
-        , text
-        , pattern
-        , title
-        , placeholder } _ = do
-      -- States
-      state'        <- T.useLive T.unequal state
-      containerRef  <- R.useRef null
-      inputRef      <- R.useRef null
-      completions   <- T.useBox []
-
-      R.useEffectOnce' $ do
-        cs <- autocompleteSearch state'
-        T.write_ cs completions
-
-      -- Render
-      pure $
-
-        H.div
-        { className: "input-with-autocomplete " <> classes
-        , ref: containerRef
-        }
-        [
-          completionsCpt { completions, onAutocompleteClick, state } []
-        , H.input { type: "text"
-                  , ref: inputRef
-                  , className: "form-control"
-                  , value: state'
-                  , pattern: pattern
-                  , title: title
-                  , placeholder
-                  , on: { focus: onFocus completions state'
-                        , input: onInput completions
-                        , change: onInput completions
-                        , keyUp: onInputKeyUp inputRef
-                        , blur: onBlur completions containerRef
-                        }
-                  }
-        , B.iconButton
-            { callback: submit state'
-            , title: "Submit"
-            , name: "send"
-            , elevation: Level1
-            }
-        ]
-
-      -- Helpers
-      where
-        -- (!) `onBlur` DOM.Event is triggered before any `onClick` DOM.Event
-        --     So when a completion is being clicked, the UX will be broken
-        --
-        --        ↳ As a solution we chose to check if the click is made from
-        --          the autocompletion list
-        onBlur :: forall event.
-             T.Box Completions
-          -> R.Ref (Nullable DOM.Element)
-          -> event
-          -> Effect Unit
-        onBlur completions containerRef event =
-
-          if isInnerEvent
-          then
-            pure $ (event .. "preventDefault")
-          else
-            T.write_ [] completions
-
-          where
-            mContains = do
-              a <- toMaybe $ R.readRef containerRef
-              b <- toMaybe (event .. "relatedTarget")
-              Just (contains a b)
-
-            isInnerEvent = maybe false identity mContains
-
-
-        onFocus :: forall event. T.Box Completions -> String -> event -> Effect Unit
-        onFocus completions st _ = do
-          cs <- autocompleteSearch st
-          T.write_ cs completions
-
-        onInput :: forall event. T.Box Completions -> event -> Effect Unit
-        onInput completions e = do
-          let val = R.unsafeEventValue e
-          T.write_ val state
-          cs <- autocompleteSearch val
-          T.write_ cs completions
-
-        onInputKeyUp :: R.Ref (Nullable DOM.Element) -> DE.KeyboardEvent -> Effect Boolean
-        onInputKeyUp inputRef e = do
-          if DE.key e == "Enter" then do
-            R2.preventDefault e
-            R2.stopPropagation e
-            let val = S.trim $ R.unsafeEventValue e
-            let mInput = toMaybe $ R.readRef inputRef
-            T.write_ val state
-            launchAff_ $ dispatch (boxAction val)
-            T.write_ ("Invited " <> val <> " to the team") text
-            case mInput of
-              Nothing -> pure false
-              Just input -> do
-                R2.blur input
-                pure false
-          else
-            pure $ false
-
-        submit val _ = do
-          T.write_ ("Invited " <> S.trim val <> " to the team") text
-          launchAff_ $ dispatch (boxAction val)
 
 ---------------------------------------------------------
 

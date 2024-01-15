@@ -325,10 +325,6 @@ renameNode name p@{ boxes: { errors }, session, tree: (NTree (LNode {id}) _) } =
   handleRESTError here errors eTask $ \_task -> pure unit
   refreshTree p
 
-shareTeam username { boxes: { errors }, session, tree: (NTree (LNode {id}) _)} = do
-  eTask <- Share.shareReq session id $ Share.ShareTeamParams { username }
-  handleRESTError here errors eTask $ \_task -> pure unit
-
 sharePublic params p@{ boxes: { errors, forestOpen }, session } = traverse_ f params where
   f (SubTreeOut { in: inId, out }) = do
     eTask <- Share.shareReq session inId $ Share.SharePublicParams { node_id: out }
@@ -398,7 +394,6 @@ performAction (DeleteNode nt) p                               = deleteNode' nt p
 performAction (DoSearch task) p                               = doSearch task p
 performAction (UpdateNode params) p                           = updateNode params p
 performAction (RenameNode name) p                             = renameNode name p
-performAction (ShareTeam username) p                          = shareTeam username p
 performAction (SharePublic { params }) p                      = sharePublic params p
 performAction (AddContact params) p                           = addContact params p
 performAction (AddNode name nodeType) p                       = addNode' name nodeType p
@@ -407,7 +402,6 @@ performAction (UploadFile nodeType fileType fileFormat lang mName contents selec
   uploadFile' nodeType fileType fileFormat lang mName contents p selection
 performAction (UploadArbitraryFile fileFormat mName blob selection) p              =
   uploadArbitraryFile' fileFormat mName blob p selection
-performAction DownloadNode _                                  = liftEffect $ here.log "[performAction] DownloadNode"
 performAction (MoveNode {params}) p                           = moveNode params p
 performAction (MergeNode {params}) p                          = mergeNode params p
 performAction (LinkNode { nodeType, params }) p               = linkNode nodeType params p
@@ -415,3 +409,5 @@ performAction RefreshTree p                                   = refreshTree p
 performAction CloseBox p                                      = closeBox p
 performAction (DocumentsFromWriteNodes params) p              = documentsFromWriteNodes params p
 performAction NoAction _                                      = liftEffect $ here.log "[performAction] NoAction"
+performAction DownloadNode _                                  = liftEffect $ here.log "[performAction] DownloadNode"
+performAction (ShareTeam _) _                                 = liftEffect $ here.log "[performAction] ShareTeam not used as action, see Node/Action/Share instead"

@@ -330,7 +330,6 @@ performAction = performAction' where
   performAction' (DoSearch task) p = doSearch task p
   performAction' (UpdateNode params) p = updateNode params p
   performAction' (RenameNode name) p = renameNode name p
-  performAction' (ShareTeam username) p = shareTeam username p
   performAction' (SharePublic { params }) p = sharePublic params p
   performAction' (AddContact params) p = addContact params p
   performAction' (AddNode name nodeType) p = addNode' name nodeType p
@@ -384,10 +383,6 @@ performAction = performAction' where
     handleRESTError here errors eTask $ \task -> liftEffect $ do
       GAT.insert id task tasks
       here.log2 "[performAction] UpdateNode task:" task
-
-  shareTeam username { boxes: { errors }, nodeId: id, session } = do
-    eTask <- Share.shareReq session id $ Share.ShareTeamParams { username }
-    handleRESTError here errors eTask $ \_task -> pure unit
 
   sharePublic params p@{ boxes: { errors }, session } = traverse_ f params where
     f (SubTreeOut { in: inId, out }) = do
