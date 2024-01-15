@@ -147,6 +147,8 @@ component = here.component "main" cpt where
                     Nothing -> pure unit
                     Just h -> autocompleteClickCallback h
           , classes: "filter-results-completions rounded-circle-2 text-small py-0"
+          , pattern: ".*"
+          , title: ""
           , placeholder: "find and select a term here..."
           , state: searchState
           }
