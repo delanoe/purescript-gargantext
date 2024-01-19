@@ -9,7 +9,7 @@ import Data.Map as Map
 import Data.Tuple (Tuple(..))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Gargantext.Components.GraphQL (getClient, queryGql)
+import Gargantext.Components.GraphQL (E, getClient, queryGql)
 import Gargantext.Components.GraphQL.Contact (AnnuaireContact, annuaireContactQuery)
 import Gargantext.Components.GraphQL.Context as GQLCTX
 import Gargantext.Components.GraphQL.IMT as GQLIMT

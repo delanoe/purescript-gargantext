@@ -45,10 +45,9 @@ actionDownloadCorpusCpt = here.component "actionDownloadCorpus" cpt where
       Tools.panelWithSubmitButtonHref { action: DownloadNode
                                       , href
                                       , mError: Nothing }
-        [ H.div {} [H.text info] ]
+        [ H.div {} [H.text "Download as JSON" ] ]
     where
       href  = url session $ Routes.NodeAPI GT.Corpus (Just id) "export"
-      info  = "Download as JSON"
 
 actionDownloadGraph :: R2.Component ActionDownload
 actionDownloadGraph = R.createElement actionDownloadGraphCpt
@@ -59,10 +58,9 @@ actionDownloadGraphCpt = here.component "actionDownloadGraph" cpt where
       Tools.panelWithSubmitButtonHref { action: DownloadNode
                                       , href
                                       , mError: Nothing }
-        [ H.div {} [H.text info] ]
+        [ H.div {} [H.text "Info about the Graph as GEXF format" ] ]
     where
       href  = url session $ Routes.NodeAPI GT.Graph (Just id) "gexf"
-      info  = "Info about the Graph as GEXF format"
 
 data NodeListDownloadFormat = NL_CSV | NL_JSON
 derive instance Eq NodeListDownloadFormat

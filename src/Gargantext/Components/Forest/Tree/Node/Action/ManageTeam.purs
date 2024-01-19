@@ -10,7 +10,7 @@ import Effect.Class (liftEffect)
 import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.GraphQL.Endpoints (deleteTeamMembership, getTeam)
 import Gargantext.Components.GraphQL.Team (Team, TeamMember)
-import Gargantext.Config.REST (AffRESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError, logRESTError, FrontendError(EC_403__user_not_authorized))
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (ID, NodeType)
@@ -106,9 +106,10 @@ teamLayoutRowsCpt = here.component "teamLayoutRows" cpt where
 
       callback res =
         case res of
-          Left _ -> do
-            _ <- liftEffect $ T.write (Just "Only the Team owner can remove users") error
-            pure unit
+          -- Left (EC_403__user_not_authorized { msg }) -> do
+          --   liftEffect $ T.write_ (Just msg) error
+          Left err -> do
+            liftEffect $ T.write_ (Just $ show err) error
           Right val ->
             case val of
               Left _ -> do

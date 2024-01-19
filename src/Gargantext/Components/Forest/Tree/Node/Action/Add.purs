@@ -76,7 +76,7 @@ addNodeViewCpt :: R.Component CreateNodeProps
 addNodeViewCpt = here.component "addNodeView" cpt where
   cpt { dispatch
       , nodeTypes } _ = do
-    let defaultNodeType = fromMaybe Folder $ head nodeTypes
+    let defaultNodeType = fromMaybe Error $ head nodeTypes
     nodeName <- T.useBox $ GT.prettyNodeType defaultNodeType
     nodeName' <- T.useLive T.unequal nodeName
     nodeType <- T.useBox defaultNodeType
@@ -85,43 +85,42 @@ addNodeViewCpt = here.component "addNodeView" cpt where
     hasChromeAgent' <- R.unsafeHooksEffect hasChromeAgent
 
     let
+        action = AddNode nodeName' nodeType'
         SettingsBox {edit} = settingsBox nodeType'
         setNodeType' nt = do
           T.write_ (GT.prettyNodeType nt) nodeName
           T.write_ nt nodeType
-        (maybeChoose /\ nt') =
+        maybeChoose =
           if length nodeTypes > 1 then
             [ Tools.formChoice { items: nodeTypes
                                , default: nodeType'
                                , callback: setNodeType'
                                , print: print hasChromeAgent' } []
-            ] /\ nodeType'
+            ]
           else
             [ H.div {}
               [H.text $ "Creating a node of type "
-               <> show defaultNt
+               <> show defaultNodeType
                <> " with name:"
               ]
-            ] /\ defaultNt
-          where
-            defaultNt = fromMaybe Error $ head nodeTypes
+            ]
         maybeEdit =
           if edit then
             [ inputWithEnterWithKey {
-                 onBlur: \val -> T.write_ val nodeName
-                 , onEnter: \_ -> launchAff_ $ dispatch (AddNode nodeName' nt')
-                 , onValueChanged: \val -> T.write_ val nodeName
-                 , autoFocus: true
+                   autoFocus: true
                  , className: "form-control"
                  , defaultValue: nodeName' -- (prettyNodeType nt')
-                 , placeholder: nodeName'  -- (prettyNodeType nt')
-                 , type: "text"
                  , key: show nodeType'
+                 , onBlur: \val -> T.write_ val nodeName
+                 , onEnter: \_ -> launchAff_ $ dispatch action
+                 , onValueChanged: \val -> T.write_ val nodeName
+                 , placeholder: nodeName'  -- (prettyNodeType nt')
                  , required: false
+                 , type: "text"
                  } ]
           else []
 
-    pure $ Tools.panelWithSubmitButton { action: AddNode nodeName' nt'
+    pure $ Tools.panelWithSubmitButton { action
                                        , dispatch
                                        , mError: Nothing } (maybeChoose <> maybeEdit)
 
