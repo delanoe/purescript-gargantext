@@ -6,12 +6,15 @@ import Affjax.RequestHeader as ARH
 import Control.Monad.Error.Class as Errors
 import Data.Argonaut.Core as AC
 import Data.Argonaut.Decode (JsonDecodeError)
+import Data.Array as A
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.List.Types (NonEmptyList)
+import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (Aff, throwError, error)
 import Effect.Class (liftEffect)
+import FFI.Simple ((.?))
 import Foreign as Foreign
 import Gargantext.Components.GraphQL.Contact (AnnuaireContact)
 import Gargantext.Components.GraphQL.Context as GQLCTX
@@ -28,7 +31,7 @@ import Gargantext.Sessions (Session(..))
 import Gargantext.Utils.Reactix as R2
 import GraphQL.Client.Args (type (==>))
 import GraphQL.Client.BaseClients.Urql (UrqlClient, createClient)
-import GraphQL.Client.Query (queryFullRes, queryWithDecoder, decodeGqlRes, queryFullRes)
+import GraphQL.Client.Query (queryFullRes, queryWithDecoder, decodeGqlRes, getFullRes, queryFullRes)
 import GraphQL.Client.SafeQueryName (safeQueryName)
 import GraphQL.Client.ToGqlString (toGqlQueryString)
 import GraphQL.Client.Types (class GqlQuery, GqlRes, Client(..), class QueryClient, clientQuery, defQueryOpts)
@@ -58,56 +61,34 @@ gqlQuery ::
   (Client client schema a b) ->
   String ->
   query ->
-  Aff returns
-  -- REST.AffRESTError returns
--- TODO Send this by hand, parse errors if any
---   GQL API returns status != 200 for errors.
--- gqlQuery = queryWithDecoder  (Foreign.unsafeToForeign >>> JSON.read >>> lmap toJsonError)
+  REST.AffRESTError returns
 gqlQuery c@(Client client) queryNameUnsafe q = do
-  -- res@{ data_ } <-
-  --   queryFullRes (Foreign.unsafeToForeign >>> JSON.read >>> lmap toJsonError) (const $ defQueryOpts client) c queryNameUnsafe q :: Aff (GqlRes returns)
-  -- liftEffect $ here.log2 "[gqlQuery] res" res
-  -- case data_ of
-  --   Left err -> do
-  --     liftEffect $ here.log2 "[gqlQuery] err" err
-  --     throwError $ error "Error!"
-  --   Right res -> pure res
-
   let opts = defQueryOpts client
-      decodeFn = Foreign.unsafeToForeign >>> JSON.read >>> lmap toJsonError
-      handleError err = do
-        liftEffect $ here.log2 "[gqlQuery] error" err
-        pure $ AC.fromString ""
-  liftEffect $ here.log2 "[gqlQuery] calling query" q
-  json <- Errors.catchError (clientQuery opts client queryName (getVarsTypeNames q <> toGqlQueryString q) (getVarsJson q)) handleError
-  -- json <- clientQuery opts client queryName (getVarsTypeNames q <> toGqlQueryString q) (getVarsJson q)
-  -- NOTE 'json' contains interesting data, in particular the gql operation, error, etc
-  liftEffect $ here.log2 "[gqlQuery] json" json
-  -- pure $ REST.readJSON json
-  -- pure $ decodeJSONOrError $ Foreign.unsafeToForeign json
-  -- pure $ lmap foreignToRESTError $ JSON.read $ Foreign.unsafeToForeign json
-  
-  -- case (JSON.read $ Foreign.unsafeToForeign json) of
-  --   Right a -> pure a
-  --   Left err -> throwError $ error $ show err
 
-  -- what 'decodeGqlRes' does is take 'json.data' and decode it using our custom decode function
-  case (decodeGqlRes decodeFn json) of
-    Left err -> throwError $ error $ show err
-    Right a -> pure a
+  json <- clientQuery opts client queryName (getVarsTypeNames q <> toGqlQueryString q) (getVarsJson q)
+
+  pure $ parseGQLJson json
   where
     queryName = safeQueryName queryNameUnsafe
-    
 
--- decodeJSONOrError :: forall a. JSON.ReadForeign a => Foreign.Foreign -> Either RESTError a
--- decodeJSONOrError f =
---   lmap parseJSONError (JSON.read f :: JSON.E a)
---   where
---     parseJSONError :: Foreign.Foreign -> RESTError
---     parseJSONError f =
---       case (JSON.read f :: JSON.E FrontendError) of
---         Right err -> FE err
---         Left
+parseGQLJson json =
+  -- NOTE 'json' contains interesting data, in particular the gql operation, error, etc
+  case json .? "error" of
+    -- what 'decodeGqlRes' does is take 'json.data' and decode it using our custom decode function
+    Nothing -> lmap (REST.ReadJSONError <<< unsafeCoerce) (decodeGqlRes decodeFn json)
+    Just err ->
+      -- Surely, an error must be returned, but which one?
+      Left $ case err .? "graphQLErrors" of
+        Nothing -> REST.CustomError "[gqlQuery] no 'graphQLErrors'"
+        Just gqlErrors -> case A.head gqlErrors of
+          Nothing -> REST.CustomError "[gqlQuery] empty 'graphQLErrors'"
+          Just gqlErr -> case gqlErr .? "extensions" of
+            Nothing -> REST.CustomError "[gqlQuery] graphQLError no 'extensions'"
+            Just ext -> case (Foreign.unsafeToForeign >>> JSON.read >>> lmap toJsonError $ ext) of
+              Left err'  -> REST.CustomError $ "[gqlQuery] error reading 'extensions': " <> show err'
+              Right err' -> REST.FE err'
+  where
+    decodeFn = Foreign.unsafeToForeign >>> JSON.read >>> lmap toJsonError
 
 toJsonError :: Foreign.MultipleErrors -> JsonDecodeError
 toJsonError = unsafeCoerce  -- map ForeignErrors to JsonDecodeError as you wish
@@ -125,7 +106,7 @@ queryGql ::
      Session
   -> String
   -> query
-  -> Aff returns
+  -> REST.AffRESTError returns
 queryGql session name q = do
   --query client name q
   client <- liftEffect $ getClient session

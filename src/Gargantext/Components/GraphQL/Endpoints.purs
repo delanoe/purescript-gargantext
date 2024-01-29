@@ -3,6 +3,7 @@ module Gargantext.Components.GraphQL.Endpoints where
 import Gargantext.Prelude
 
 import Data.Array as A
+import Data.Bifunctor (rmap)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Map as Map
@@ -33,45 +34,54 @@ here = R2.here "Gargantext.Components.GraphQL.Endpoints"
 
 getIMTSchools :: Session -> AffRESTError (Array GQLIMT.School)
 getIMTSchools session = do
-  { imt_schools } <- queryGql session "get imt schools" $
-                         GQLIMT.schoolsQuery
-  liftEffect $ here.log2 "[getIMTSchools] imt_schools" imt_schools
-  pure $ Right imt_schools
+  eRes <- queryGql session "get imt schools" $ GQLIMT.schoolsQuery
+  pure $ rmap _.imt_schools eRes
+  -- liftEffect $ here.log2 "[getIMTSchools] imt_schools" imt_schools
+  -- pure $ Right imt_schools
 
 getNode :: Session -> Int -> AffRESTError Node
 getNode session nodeId = do
-  { nodes } <- queryGql session "get nodes" $
-              nodesQuery `withVars` { id: nodeId }
-  liftEffect $ here.log2 "[getNode] node" nodes
-  pure $ case A.head nodes of
-    Nothing -> Left (CustomError $ "node with id" <> show nodeId <>" not found")
-    Just node -> Right node
+  eRes <- queryGql session "get nodes" $ nodesQuery `withVars` { id: nodeId }
+  case eRes of
+    Left err -> pure $ Left err
+    Right { nodes } -> do
+      liftEffect $ here.log2 "[getNode] node" nodes
+      pure $ case A.head nodes of
+        Nothing -> Left (CustomError $ "node with id" <> show nodeId <>" not found")
+        Just node -> Right node
 
 getNodeCorpus :: Session -> Int -> AffRESTError Corpus
 getNodeCorpus session corpusId = do
-  { nodes_corpus } <- queryGql session "get nodes corpus" $
-                      nodesCorpusQuery `withVars` { id: corpusId }
-  liftEffect $ here.log2 "[getNodesCorpus] nodes_corpus" nodes_corpus
-  pure $ case A.head nodes_corpus of
-    Nothing -> Left (CustomError $ "corpus with id" <> show corpusId <>" not found")
-    Just corpus -> Right corpus
+  eRes <- queryGql session "get nodes corpus" $
+              nodesCorpusQuery `withVars` { id: corpusId }                      
+  case eRes of
+    Left err -> pure $ Left err
+    Right { nodes_corpus } -> do
+      liftEffect $ here.log2 "[getNodesCorpus] nodes_corpus" nodes_corpus
+      pure $ case A.head nodes_corpus of
+        Nothing -> Left (CustomError $ "corpus with id" <> show corpusId <>" not found")
+        Just corpus -> Right corpus
 
-getNodeParent :: Session -> Int -> NodeType -> Aff (Array Node)
+getNodeParent :: Session -> Int -> NodeType -> AffRESTError (Array Node)
 getNodeParent session nodeId parentType = do
-  { node_parent } <- queryGql session "get node parent" $
+  eRes <- queryGql session "get node parent" $
                      nodeParentQuery `withVars` { id: nodeId
                                                 , parent_type: show parentType }  -- TODO: remove "show"
-  liftEffect $ here.log2 "[getNodeParent] node_parent" node_parent
-  pure node_parent
+  -- liftEffect $ here.log2 "[getNodeParent] node_parent" node_parent
+  --pure node_parent
+  pure $ rmap _.node_parent eRes
 
 getUser :: Session -> Int -> AffRESTError User
 getUser session id = do
-  { users } <- queryGql session "get user" $ userQuery `withVars` { id }
-  liftEffect $ here.log2 "[getUser] users" users
-  pure $ case A.head users of
-    Nothing -> Left (CustomError $ "user with id " <> show id <> " not found")
-    Just u -> Right u
-
+  eRes <- queryGql session "get user" $ userQuery `withVars` { id }
+  case eRes of
+    Left err -> pure $ Left err
+    Right { users } -> do
+      liftEffect $ here.log2 "[getUser] users" users
+      pure $ case A.head users of
+        Nothing -> Left (CustomError $ "user with id " <> show id <> " not found")
+        Just u -> Right u
+    
 updateUserPubmedAPIKey :: Session -> Int -> String -> AffRESTError Unit
 updateUserPubmedAPIKey session user_id api_key = do
   client <- liftEffect $ getClient session
@@ -104,33 +114,45 @@ updateUserEPOAPIToken session user_id api_token = do
 
 getUserInfo :: Session -> Int -> AffRESTError UserInfo
 getUserInfo session id = do
-  { user_infos } <- queryGql session "get user infos" $ userInfoQuery `withVars` { id }
-  liftEffect $ here.log2 "[getUserInfo] user infos" user_infos
-  pure $ case A.head user_infos of
-    Nothing -> Left (CustomError $ "user with id " <> show id <> " not found")
-    -- NOTE Contact is at G.C.N.A.U.C.Types
-    Just ui -> Right ui
-
+  eRes <- queryGql session "get user infos" $ userInfoQuery `withVars` { id }
+  case eRes of
+    Left err -> pure $ Left err
+    Right { user_infos } -> do
+      liftEffect $ here.log2 "[getUserInfo] user infos" user_infos
+      pure $ case A.head user_infos of
+        Nothing -> Left (CustomError $ "user with id " <> show id <> " not found")
+        -- NOTE Contact is at G.C.N.A.U.C.Types
+        Just ui -> Right ui
+    
 getAnnuaireContact :: Session -> Int -> AffRESTError AnnuaireContact
 getAnnuaireContact session id = do
-  { annuaire_contacts } <- queryGql session "get annuaire contact" $
+  eRes <- queryGql session "get annuaire contact" $
     annuaireContactQuery `withVars` { id }
-  liftEffect $ here.log2 "[getAnnuaireContact] data" annuaire_contacts
-  pure $ case A.head annuaire_contacts of
-    Nothing -> Left (CustomError $ "contact id=" <> show id <> " not found")
-    Just r  -> Right r
+  case eRes of
+    Left err -> pure $ Left err
+    Right { annuaire_contacts } -> do
+      liftEffect $ here.log2 "[getAnnuaireContact] data" annuaire_contacts
+      pure $ case A.head annuaire_contacts of
+        Nothing -> Left (CustomError $ "contact id=" <> show id <> " not found")
+        Just r  -> Right r
 
 getTreeFirstLevel :: Session -> Int -> AffRESTError TreeFirstLevel
 getTreeFirstLevel session id = do
-  { tree } <- queryGql session "get tree first level" $ treeFirstLevelQuery `withVars` { id }
-  liftEffect $ here.log2 "[getTreeFirstLevel] tree first level" tree
-  pure $ Right tree -- TODO: error handling
-
+  eRes <- queryGql session "get tree first level" $ treeFirstLevelQuery `withVars` { id }
+  case eRes of
+    Left err -> pure $ Left err
+    Right { tree } -> do
+      liftEffect $ here.log2 "[getTreeFirstLevel] tree first level" tree
+      pure $ Right tree -- TODO: error handling
+    
 getTeam :: Session -> Int -> AffRESTError Team
 getTeam session id = do
-  { team } <- queryGql session "get team" $ teamQuery `withVars` { id }
-  liftEffect $ here.log2 "[getTree] data" team
-  pure $ Right team
+  eRes <- queryGql session "get team" $ teamQuery `withVars` { id }
+  case eRes of
+    Left err -> pure $ Left err
+    Right { team } -> do
+      liftEffect $ here.log2 "[getTree] data" team
+      pure $ Right team
 
 type SharedFolderId = Int
 type TeamNodeId = Int
@@ -154,21 +176,22 @@ deleteTeamMembership session sharedFolderId teamNodeId = do
 getNodeContext :: Session -> Int -> Int -> AffRESTError GQLCTX.NodeContext
 getNodeContext session context_id node_id = do
   let query = GQLCTX.nodeContextQuery `withVars` { context_id, node_id }
-  { contexts } <- queryGql session "get node context" query
-  --liftEffect $ here.log2 "[getNodeContext] node context" contexts
-  case A.head contexts of
-    Nothing -> pure $ Left $ CustomError "no node context found"
-    Just context -> pure $ Right context -- TODO: error handling
-
+  eRes <- queryGql session "get node context" query
+  case eRes of
+    Left err -> pure $ Left err
+    Right { contexts } -> do
+      --liftEffect $ here.log2 "[getNodeContext] node context" contexts
+      case A.head contexts of
+        Nothing -> pure $ Left $ CustomError "no node context found"
+        Just context -> pure $ Right context -- TODO: error handling
+    
 type ContextsForNgramsGQL = { contexts_for_ngrams :: Array GQLCTX.Context }
 getContextsForNgrams :: Session -> CorpusId -> Array String -> AffRESTError (Array GQLCTX.Context)
 getContextsForNgrams session corpus_id ngrams_terms = do
   let query = GQLCTX.contextsForNgramsQuery `withVars` { corpus_id
                                                        , ngrams_terms: GQLCTX.NgramsTerms ngrams_terms }
-  { contexts_for_ngrams } <- queryGql session "get contexts for ngrams" query
-
-  pure $ Right contexts_for_ngrams
-  --pure $ Right contexts_for_ngrams
+  eRes <- queryGql session "get contexts for ngrams" query
+  pure $ rmap _.contexts_for_ngrams eRes
 
 updateNodeContextCategory :: Session -> Int -> Int -> Int -> AffRESTError Int
 updateNodeContextCategory session context_id node_id category = do
@@ -186,21 +209,23 @@ updateNodeContextCategory session context_id node_id category = do
 getLanguages :: Session -> AffRESTError (Map.Map Lang GQLNLP.LanguageProperties)
 getLanguages session = do
   let query = GQLNLP.nlpQuery
-  { languages } <- queryGql session "get languages" query
-
-  liftEffect $ here.log2 "[getLanguages] languages" languages
-
-  pure $ Right $ Map.fromFoldable $ (\{ key, value } -> Tuple key value) <$> languages
+  eRes <- queryGql session "get languages" query
+  case eRes of
+    Left err -> pure $ Left err
+    Right { languages } -> do    
+      liftEffect $ here.log2 "[getLanguages] languages" languages
+    
+      pure $ Right $ Map.fromFoldable $ (\{ key, value } -> Tuple key value) <$> languages
 
 getContextNgrams :: Session -> Int -> Int -> AffRESTError (Array NgramsTerm)
 getContextNgrams session context_id list_id = do
   client <- liftEffect $ getClient session
   let query = GQLCTX.contextNgramsQuery `withVars` { context_id, list_id }
-  { context_ngrams } <- queryGql session "get context ngrams" query
-  pure $ Right $ NormNgramsTerm <$> context_ngrams
+  eRes <- queryGql session "get context ngrams" query
+  pure $ rmap (\{ context_ngrams } -> NormNgramsTerm <$> context_ngrams) eRes
 
 getBreadcrumb :: Session -> Int -> AffRESTError BreadcrumbInfo
 getBreadcrumb session id = do
-  { tree_branch } <- queryGql session "get breadcrumb branch" $ breadcrumbQuery `withVars` { id }
-  liftEffect $ here.log2 "[getBreadcrumb] breadcrumb" tree_branch
-  pure $ Right tree_branch
+  eRes <- queryGql session "get breadcrumb branch" $ breadcrumbQuery `withVars` { id }
+  -- liftEffect $ here.log2 "[getBreadcrumb] breadcrumb" tree_branch
+  pure $ rmap _.tree_branch eRes

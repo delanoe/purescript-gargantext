@@ -2,18 +2,19 @@ module Gargantext.Components.Forest.Tree.Node.Action.ManageTeam where
 
 import Gargantext.Prelude
 
-import Data.Array (filter, null, (:))
+import Data.Array (cons, filter, null, (:))
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (runAff_)
 import Effect.Class (liftEffect)
+import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.GraphQL.Endpoints (deleteTeamMembership, getTeam)
 import Gargantext.Components.GraphQL.Team (Team, TeamMember)
 import Gargantext.Config.REST (AffRESTError, logRESTError, FrontendError(EC_403__user_not_authorized))
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (Session)
-import Gargantext.Types (ID, NodeType)
+import Gargantext.Types (ID, FrontendError(FRESTError), NodeType)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
@@ -23,18 +24,18 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.ManageTeam"
 
 type ActionManageTeam = (
-  id       :: ID
-, nodeType :: NodeType
-, session  :: Session
+    boxes    :: Boxes
+  , id       :: ID
+  , nodeType :: NodeType
+  , session  :: Session
 )
 
 actionManageTeam :: R2.Component ActionManageTeam
 actionManageTeam = R.createElement actionManageTeamCpt
-
 actionManageTeamCpt :: R.Component ActionManageTeam
 actionManageTeamCpt = here.component "actionManageTeam" cpt where
-  cpt {id, session} _ = do
-    useLoader { errorHandler
+  cpt { boxes: { errors }, id, session } _ = do
+    useLoader { errorHandler: errorHandler errors
               , loader: loadTeam
               , path: { nodeId: id, session }
               , render: \team -> teamLayoutWrapper { team
@@ -43,7 +44,11 @@ actionManageTeamCpt = here.component "actionManageTeam" cpt where
                                                    } []
               }
     where
-      errorHandler = logRESTError here "teamLayout"
+      errorHandler errors error = do
+        logRESTError here "teamLayout" error
+        T.modify_ (cons $ FRESTError { error }) errors
+        
+        -- T.write_ (Just $ show error) errorS
 
 type TeamProps =
   ( nodeId  :: ID
@@ -55,18 +60,18 @@ teamLayoutWrapper :: R2.Component TeamProps
 teamLayoutWrapper = R.createElement teamLayoutWrapperCpt
 teamLayoutWrapperCpt :: R.Component TeamProps
 teamLayoutWrapperCpt = here.component "teamLayoutWrapper" cpt where
-  cpt {nodeId, session, team: {team_owner_username, team_members}} _ = do
+  cpt { nodeId, session, team: { team_owner_username, team_members } } _ = do
+    error <- T.useBox Nothing    
     team_members <- T.useBox team_members
-    error <- T.useBox Nothing
 
     pure $ teamLayoutRows {nodeId, session, team_members, error, team_owner_username}
 
 type TeamRowProps =
-  ( nodeId               :: ID
+  ( error   :: T.Box (Maybe String)
+  , nodeId               :: ID
   , session              :: Session
   , team_members         :: T.Box (Array TeamMember)
-  , error                :: T.Box (Maybe String)
-  , team_owner_username :: String
+  , team_owner_username  :: String
   )
 
 teamLayoutRows :: R2.Leaf TeamRowProps
