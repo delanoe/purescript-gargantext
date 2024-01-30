@@ -78,14 +78,14 @@ teamLayoutRows :: R2.Leaf TeamRowProps
 teamLayoutRows = R2.leaf teamLayoutRowsCpt
 teamLayoutRowsCpt :: R.Component TeamRowProps
 teamLayoutRowsCpt = here.component "teamLayoutRows" cpt where
-  cpt { team_members, nodeId, session, error, team_owner_username } _ = do
+  cpt { error, nodeId, session, team_members, team_owner_username } _ = do
     team_members' <- T.useLive T.unequal team_members
     error' <- T.useLive T.unequal error
     
     pure $
       if null team_members' then
-        H.div { style: {margin: "10px"}}
-          [ H.h4 {} [H.text "Your team is empty, you can send some invitations."]]
+        H.div { style: {margin: "10px"} }
+          [ H.h4 {} [H.text "Your team is empty, you can send some invitations."] ]
       else
         Tools.panelNoFooter { mError: error' }
           (makeLeader team_owner_username : (map makeTeam team_members'))
@@ -109,16 +109,18 @@ teamLayoutRowsCpt = here.component "teamLayoutRows" cpt where
       submit sharedFolderId _ = do
         runAff_ callback $ saveDeleteTeam { session, nodeId, sharedFolderId }
 
-      callback res =
+      callback res = do
         case res of
-          -- Left (EC_403__user_not_authorized { msg }) -> do
-          --   liftEffect $ T.write_ (Just msg) error
           Left err -> do
-            liftEffect $ T.write_ (Just $ show err) error
-          Right val ->
+            here.log2 "[callback] error forking runAff" err
+            T.write_ (Just "Error forking 'runAff_'") error
+          Right val -> do
+            here.log2 "[callback] val" val
             case val of
-              Left _ -> do
-                pure unit
+              -- Left (EC_403__user_not_authorized { msg }) -> do
+              --   liftEffect $ T.write_ (Just msg) error
+              Left err -> do
+                T.write_ (Just $ show err) error
               Right r -> do
                 T.modify_ (filter (\tm -> tm.shared_folder_id /= r)) team_members
                 T.write_ Nothing error

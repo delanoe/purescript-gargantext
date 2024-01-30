@@ -31,12 +31,14 @@ import Gargantext.Sessions (Session(..))
 import Gargantext.Utils.Reactix as R2
 import GraphQL.Client.Args (type (==>))
 import GraphQL.Client.BaseClients.Urql (UrqlClient, createClient)
-import GraphQL.Client.Query (queryFullRes, queryWithDecoder, decodeGqlRes, getFullRes, queryFullRes)
+-- import GraphQL.Client.Operation (OpMutation)
+import GraphQL.Client.Query (queryFullRes, queryWithDecoder, decodeGqlRes, getFullRes, queryFullRes) --, mutationJson)
 import GraphQL.Client.SafeQueryName (safeQueryName)
 import GraphQL.Client.ToGqlString (toGqlQueryString)
-import GraphQL.Client.Types (class GqlQuery, GqlRes, Client(..), class QueryClient, clientQuery, defQueryOpts)
+import GraphQL.Client.Types (class GqlQuery, GqlRes, Client(..), class QueryClient, clientQuery, defQueryOpts,  clientMutation, defMutationOpts)
 import GraphQL.Client.Variables (class VarsTypeChecked, getVarsJson, getVarsTypeNames)
 import Simple.JSON as JSON
+import Type.Proxy (Proxy(..))
 import Unsafe.Coerce (unsafeCoerce)
 
 
@@ -47,25 +49,43 @@ here = R2.here "Gargantext.Components.GraphQL"
 -- TODO Rewrite this to REST.RESTError
 type E a = Either JsonDecodeError a
 
---client :: Client AffjaxClient Schema Void Void
---client = Client $ AffjaxClient "http://localhost:8008/gql" []
-
--- | Run a graphQL query with a custom decoder and custom options
+-- | Run a graphQL query with a custom decoder
 gqlQuery ::
-  forall client schema query returns a b queryOpts mutationOpts.
-  QueryClient client queryOpts mutationOpts =>
-  GqlQuery schema query returns =>
+  forall client schema query returns a b queryOpts mutationOpts
+   . QueryClient client queryOpts mutationOpts
+  => GqlQuery schema query returns
   -- VarsTypeChecked query =>
-  JSON.ReadForeign returns =>
+  => JSON.ReadForeign returns
   --(queryOpts -> queryOpts) ->
-  (Client client schema a b) ->
-  String ->
-  query ->
-  REST.AffRESTError returns
+  => Client client schema a b
+  -> String
+  -> query
+  -> REST.AffRESTError returns
 gqlQuery c@(Client client) queryNameUnsafe q = do
   let opts = defQueryOpts client
-
   json <- clientQuery opts client queryName (getVarsTypeNames q <> toGqlQueryString q) (getVarsJson q)
+
+  pure $ parseGQLJson json
+  where
+    queryName = safeQueryName queryNameUnsafe
+
+-- | Run a graphQL mutation with a custom decoder
+gqlMutation ::
+  forall client schema query returns qOpts mOpts a b
+   . QueryClient client qOpts mOpts
+  => GqlQuery schema query returns
+  => VarsTypeChecked query
+  => JSON.ReadForeign returns
+  => Client client a schema b
+  -> Proxy schema
+  -> String
+  -> query
+  -> REST.AffRESTError returns
+gqlMutation c@(Client client) _ queryNameUnsafe q = do
+  let opts = defMutationOpts client
+  json <- clientMutation opts client queryName (getVarsTypeNames q <> toGqlQueryString q) (getVarsJson q)
+
+  liftEffect $ here.log2 "[gqlMutation] json" json
 
   pure $ parseGQLJson json
   where
@@ -100,19 +120,29 @@ getClient (Session { token, backend: Backend b }) = createClient { headers, url:
               , ARH.RequestHeader "X-Garg-Error-Scheme" $ "new" ]
 
 queryGql ::
-  forall query returns.
-  GqlQuery Schema query returns =>
-  JSON.ReadForeign returns =>
-     Session
+  forall query returns
+   . GqlQuery Schema query returns
+  => JSON.ReadForeign returns
+  => Session
   -> String
   -> query
   -> REST.AffRESTError returns
 queryGql session name q = do
-  --query client name q
   client <- liftEffect $ getClient session
   gqlQuery (client :: Client UrqlClient Schema Mutation Void) name q
 
-  --query_ "http://localhost:8008/gql" (Proxy :: Proxy Schema)
+mutationGql ::
+  forall query returns
+   . GqlQuery Mutation query returns
+  => JSON.ReadForeign returns
+  => Session
+  -> String
+  -> query
+  -> REST.AffRESTError returns
+mutationGql session name q = do
+  client <- liftEffect $ getClient session
+  gqlMutation (client :: Client UrqlClient Schema Mutation Void) (Proxy :: Proxy Mutation) name q
+  -- mutationJson (defQueryOpts client) (client :: Client UrqlClient Schema Mutation Void) name q
 
 -- Schema
 type Schema
