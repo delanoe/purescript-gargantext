@@ -41,15 +41,14 @@ linkNodeCpt = here.component "linkNode" cpt
       action <- T.useBox (LinkNode { nodeType: Nothing, params: Nothing})
 
       pure $
-
           linkNode' { action
-                      , boxes
-                      , dispatch
-                      , id
-                      , nodeType
-                      , session
-                      , subTreeParams
-                      } []
+                    , boxes
+                    , dispatch
+                    , id
+                    , nodeType
+                    , session
+                    , subTreeParams
+                    } []
 
 type Props =
   ( action :: T.Box Action

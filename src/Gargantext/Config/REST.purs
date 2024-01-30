@@ -56,6 +56,9 @@ instance Eq RESTError where
   eq _ _ = false
 
 
+type AffRESTError a = Aff (Either RESTError a)
+
+
 data FrontendError =
     EC_400__node_creation_failed_insert_node { user_id :: Int
                                              , parent_id :: Int }
@@ -69,6 +72,8 @@ data FrontendError =
   | EC_403__login_failed_error { node_id :: Int
                                , user_id :: Int }
   | EC_403__login_failed_invalid_username_or_password
+  | EC_403__user_not_authorized { user_id :: Int
+                                , msg     :: String }
   | EC_404__node_context_not_found { context_id :: Int }
   | EC_404__node_lookup_failed_not_found { node_id :: Int }
   | EC_404__node_lookup_failed_parent_not_found { node_id :: Int }
@@ -94,6 +99,8 @@ instance Show FrontendError where
     "Login failed for node_id " <> show node_id <> ", user id " <> show user_id
   show EC_403__login_failed_invalid_username_or_password =
     "Invalid username or password"
+  show (EC_403__user_not_authorized { user_id, msg }) =
+    "User not authorized to perform action: " <> show user_id <> ". " <> msg
   show (EC_404__node_context_not_found { context_id }) =
     "Context not found with id " <> show context_id
   show (EC_404__node_lookup_failed_not_found { node_id }) =
@@ -138,6 +145,10 @@ instance JSON.ReadForeign FrontendError where
         pure $ EC_403__login_failed_error { node_id, user_id }
       "EC_403__login_failed_invalid_username_or_password" -> do
         pure $ EC_403__login_failed_invalid_username_or_password
+      "EC_403__user_not_authorized" -> do
+        { data: { user_id, msg } } <- JSON.readImpl f :: Foreign.F { data :: { user_id :: Int
+                                                                             , msg :: String } }
+        pure $ EC_403__user_not_authorized { user_id, msg }
       "EC_404__node_context_not_found" -> do
         { data: { context_id } } <- JSON.readImpl f :: Foreign.F { data :: { context_id :: Int } }
         pure $ EC_404__node_context_not_found { context_id }
@@ -167,8 +178,6 @@ logRESTError here' prefix e = here'.warn2 (prefix <> " " <> show e) e
 -- logRESTError here prefix (SendResponseError e) = here.warn2 (prefix <> " SendResponseError ") e  -- TODO: No show
 -- logRESTError here prefix (ReadJSONError e) = here.warn2 (prefix <> " ReadJSONError ") $ show e
 -- logRESTError here prefix (CustomError e) = here.warn2 (prefix <> " CustomError ") $ e
-
-type AffRESTError a = Aff (Either RESTError a)
 
 
 readJSON :: forall a. JSON.ReadForeign a

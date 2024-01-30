@@ -346,8 +346,8 @@ panelActionCpt = here.component "panelAction" cpt
       pure $ actionDownload { id, nodeType, session } []
     cpt { action: Link {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
       pure $ linkNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
-    cpt { action: ManageTeam, nodeType, id, session} _ =
-      pure $ actionManageTeam { id, nodeType, session } []
+    cpt { action: ManageTeam, boxes, nodeType, id, session} _ =
+      pure $ actionManageTeam { boxes, id, nodeType, session } []
     cpt { action: Merge {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
       pure $ mergeNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
     cpt { action: Move {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =

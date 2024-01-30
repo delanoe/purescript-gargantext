@@ -38,7 +38,7 @@ actionAddContactCpt = here.component "actionAddContact" cpt where
     pure $
       Tools.panelNoFooter { mError: Nothing }
         [ textInputBox
-          { boxAction: \p -> AddContact p
+          { boxAction: AddContact
           , dispatch
           , id
           , params: { firstname: "", lastname: "" } }
@@ -56,7 +56,8 @@ textInputBox :: R2.Leaf TextInputBoxProps
 textInputBox = R2.leaf textInputBoxCpt
 textInputBoxCpt :: R.Component TextInputBoxProps
 textInputBoxCpt = here.component "textInputBox" cpt where
-  cpt { boxAction, dispatch
+  cpt { boxAction
+      , dispatch
       , params: { firstname, lastname } } _ = do
     
     firstName <- T.useBox firstname
@@ -102,4 +103,3 @@ textInputBoxCpt = here.component "textInputBox" cpt where
             , on: { click: \_ -> submitF unit }
             , title:"Submit"
             } []
-

@@ -23,17 +23,15 @@ actionDocCpt = here.component "actionDoc" cpt where
   cpt { nodeType } _ = do
     pure $
       Tools.panelNoFooter { mError: Nothing }
-        ([ infoTitle nodeType ]
+        ([ H.div { style: {margin: "10px"}}
+           [ H.h3 {} [H.text "Documentation about " ]
+           , H.h3 {className: GT.fldr nodeType true} 
+             [ H.span {className: "font-family-theme mx-1"} 
+               [ H.text $ show nodeType ] 
+             ]
+           ]
+         ]
          <> (map (\info -> H.p {} [ H.text info ]) $ docOf nodeType))
-    where
-      infoTitle :: NodeType -> R.Element
-      infoTitle nt = H.div { style: {margin: "10px"}}
-                        [ H.h3 {} [H.text "Documentation about " ]
-                        , H.h3 {className: GT.fldr nt true} 
-                          [ H.span {className: "font-family-theme mx-1"} 
-                            [ H.text $ show nt ] 
-                          ]
-                        ]
 
 -- | TODO add documentation of all NodeType
 docOf :: NodeType -> Array String
