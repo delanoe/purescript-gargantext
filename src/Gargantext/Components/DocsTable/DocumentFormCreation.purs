@@ -175,9 +175,9 @@ component = R.hooksComponent "documentFormCreation" cpt where
               H.option
               { value: "Nothing" }
               [ H.text "Nothing"]
-            -- , H.option
-            --   { value: "All" }
-            --   [ H.text "All"]
+            , H.option
+              { value: "All" }
+              [ H.text "All"]
             ]
           ]
         ]
