@@ -38,16 +38,18 @@ actionSearch :: R2.Component Props
 actionSearch = R.createElement actionSearchCpt
 actionSearchCpt :: R.Component Props
 actionSearchCpt = here.component "actionSearch" cpt where
-  cpt props@({ session }) _ = do
-    useLoader { errorHandler
+  cpt props@({ boxes: { errors }, session }) _ = do
+    useLoader { errorHandler: errorHandler errors
               , loader: loadLanguages
               , path: { session }
               , render: \langs ->
                  actionSearchWithLangs (Record.merge props { langs }) [] }
     where
-      errorHandler err = case err of
-        ReadJSONError err' -> here.warn2 "[actionSearch] ReadJSONError" $ show err'
-        _                  -> here.warn2 "[actionSearch] RESTError" err
+      errorHandler errors error = do
+        T.modify_ (A.cons $ GT.FRESTError { error }) errors
+        case error of
+          ReadJSONError err' -> here.warn2 "[actionSearch] ReadJSONError" $ show err'
+          _                  -> here.warn2 "[actionSearch] RESTError" error
 
 type PropsWithLangs =
   ( langs :: Array Lang

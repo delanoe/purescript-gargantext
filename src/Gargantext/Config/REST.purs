@@ -171,7 +171,8 @@ instance JSON.ReadForeign FrontendError where
         pure $ EC_500__node_generic_exception { error }
       "EC_500__node_not_implemented_yet" -> do
         pure $ EC_500__node_not_implemented_yet
-      _ -> Foreign.fail $ Foreign.ForeignError $ "deserialization for '" <> type_ <> "' not implemented"
+      _ -> do
+        Foreign.fail $ Foreign.ForeignError $ "deserialization for '" <> type_ <> "' not implemented"
 
 logRESTError :: R2.Here -> String -> RESTError -> Effect Unit
 logRESTError here' prefix e = here'.warn2 (prefix <> " " <> show e) e
