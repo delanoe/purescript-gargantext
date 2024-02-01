@@ -215,7 +215,7 @@ getLanguages session = do
     Right { languages } -> do    
       liftEffect $ here.log2 "[getLanguages] languages" languages
     
-      pure $ Right $ Map.fromFoldable $ (\{ key, value } -> Tuple key value) <$> languages
+      pure $ Right $ Map.fromFoldable $ (\{ lt_lang, lt_server } -> Tuple lt_lang lt_server) <$> languages
 
 getContextNgrams :: Session -> Int -> Int -> AffRESTError (Array NgramsTerm)
 getContextNgrams session context_id list_id = do
