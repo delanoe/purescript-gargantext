@@ -37,11 +37,11 @@ type Props =
 actionSearch :: R2.Component Props
 actionSearch = R.createElement actionSearchCpt
 actionSearchCpt :: R.Component Props
-actionSearchCpt = here.component "actionSearch" cpt where
-  cpt props@({ session }) _ = do
+actionSearchCpt = R2.hereComponent here "actionSearch" hCpt where
+  hCpt hp props@({ session }) _ = do
     { errors } <- Store.use
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[actionSearch]"
+              , herePrefix: hp
               , loader: loadLanguages
               , path: { session }
               , render: \langs ->

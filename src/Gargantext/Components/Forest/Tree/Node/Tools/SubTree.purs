@@ -41,33 +41,32 @@ type SubTreeParamsProps =
 subTreeView :: R2.Component SubTreeParamsProps
 subTreeView = R.createElement $ R.memo' subTreeViewCpt
 subTreeViewCpt :: R.Component SubTreeParamsProps
-subTreeViewCpt = here.component "subTreeView" cpt
-  where
-    cpt { action
-        , dispatch
-        , id
-        , nodeType
-        , session
-        , subTreeParams
-        } _ = do
-      let
-        SubTreeParams {showtypes} = subTreeParams
-      --  (valAction /\ setAction)  = action
-      -- _ <- pure $ setAction (const $ setTreeOut valAction Nothing)
+subTreeViewCpt = R2.hereComponent here "subTreeView" hCpt where
+  hCpt hp { action
+          , dispatch
+          , id
+          , nodeType
+          , session
+          , subTreeParams
+          } _ = do
+    let
+      SubTreeParams {showtypes} = subTreeParams
+    --  (valAction /\ setAction)  = action
+    -- _ <- pure $ setAction (const $ setTreeOut valAction Nothing)
 
-      useLoader { errorHandler: Nothing
-                , herePrefix: R2.herePrefix here "[subTreeView]"
-                , loader: loadSubTree showtypes
-                , path: session
-                , render: \tree ->
-                    subTreeViewLoaded { action
-                                      , dispatch
-                                      , id
-                                      , nodeType
-                                      , session
-                                      , subTreeParams
-                                      , tree
-                                      } []  }
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
+              , loader: loadSubTree showtypes
+              , path: session
+              , render: \tree ->
+                  subTreeViewLoaded { action
+                                    , dispatch
+                                    , id
+                                    , nodeType
+                                    , session
+                                    , subTreeParams
+                                    , tree
+                                    } []  }
 
 loadSubTree :: Array GT.NodeType -> Session -> AffRESTError FTree
 loadSubTree nodetypes session = getSubTree session treeId nodetypes

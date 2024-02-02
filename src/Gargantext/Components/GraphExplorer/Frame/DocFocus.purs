@@ -36,11 +36,11 @@ type Props =
 docFocus :: R2.Leaf ( key :: String | Props )
 docFocus = R2.leaf docFocusCpt
 docFocusCpt :: R.Component ( key :: String | Props )
-docFocusCpt = here.component "main" cpt where
-  cpt { graphSideDoc: GraphSideDoc { docId, listId, corpusId }
-      , session
-      , closeCallback
-      } _ = do
+docFocusCpt = R2.hereComponent here "main" hCpt where
+  hCpt hp { graphSideDoc: GraphSideDoc { docId, listId, corpusId }
+          , session
+          , closeCallback
+          } _ = do
     -- | States
     -- |
     state' /\ state <- R2.useBox' (Nothing :: Maybe LoadedData)
@@ -64,7 +64,7 @@ docFocusCpt = here.component "main" cpt where
     -- | Hooks
     -- |
     useLoaderEffect
-      { errorHandler: logRESTError (R2.herePrefix here "[docFocus]")
+      { errorHandler: logRESTError hp
       , loader: loadData
       , path
       , state

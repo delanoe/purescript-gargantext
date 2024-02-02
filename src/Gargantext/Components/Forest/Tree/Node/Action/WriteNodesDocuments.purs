@@ -39,11 +39,11 @@ type ActionWriteNodesDocuments =
 actionWriteNodesDocuments :: R2.Component ActionWriteNodesDocuments
 actionWriteNodesDocuments = R.createElement actionWriteNodesDocumentsCpt
 actionWriteNodesDocumentsCpt :: R.Component ActionWriteNodesDocuments
-actionWriteNodesDocumentsCpt = here.component "actionWriteNodesDocuments" cpt where
-  cpt props@({ session }) _ = do
+actionWriteNodesDocumentsCpt = R2.hereComponent here "actionWriteNodesDocuments" hCpt where
+  hCpt hp props@({ session }) _ = do
     { errors } <- Store.use
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[actionWriteNodesDocuments]"
+              , herePrefix: hp
               , loader: loadLanguages
               , path: { session }
               , render: \langs ->

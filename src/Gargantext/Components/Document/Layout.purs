@@ -26,7 +26,6 @@ import Gargantext.Components.Document.Types (DocPath, Document(..), LoadedData, 
 import Gargantext.Components.GraphQL.Endpoints (getContextNgrams)
 import Gargantext.Components.NgramsTable.AutoSync (useAutoSync)
 import Gargantext.Components.Node (NodePoly(..))
-import Gargantext.Config.REST (logRESTError)
 import Gargantext.Core.NgramsTable.Functions (addNewNgramA, applyNgramsPatches, coreDispatch, findNgramRoot, setTermListA, computeCache)
 import Gargantext.Core.NgramsTable.Types (CoreAction(..), NgramsTable(..), NgramsTerm, State, Versioned(..), replace)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
@@ -66,15 +65,15 @@ options =
 layout :: forall r. R2.OptLeaf Options Props r
 layout = R2.optLeaf layoutCpt options
 layoutCpt :: R.Component Props
-layoutCpt = here.component "layout" cpt where
-  cpt props@{ path: path@{ listIds
-                         , nodeId }
-            , session } _ = do
+layoutCpt = R2.hereComponent here "layout" hCpt where
+  hCpt hp props@{ path: path@{ listIds
+                             , nodeId }
+                , session } _ = do
     case A.head listIds of
       Nothing -> pure $ H.div {} [ H.text "No list supplied!" ]
       Just listId ->
         useLoader { errorHandler: Nothing
-                  , herePrefix: R2.herePrefix here "[layout]"
+                  , herePrefix: hp
                   , loader: \p -> getContextNgrams session p.contextId p.listId
                   , path: { contextId: nodeId, listId }
                   , render: \contextNgrams ->

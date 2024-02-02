@@ -50,10 +50,10 @@ type FileLayoutProps = ( nodeId :: NodeID, session :: Session )
 fileLayout :: R2.Leaf FileLayoutProps
 fileLayout = R2.leaf fileLayoutCpt
 fileLayoutCpt :: R.Component FileLayoutProps
-fileLayoutCpt = here.component "fileLayout" cpt where
-  cpt { nodeId, session } _ = do
+fileLayoutCpt = R2.hereComponent here "fileLayout" hCpt where
+  hCpt hp { nodeId, session } _ = do
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[fileLayout]"
+              , herePrefix: hp
               , loader: loadFile session
               , path: nodeId
               , render: onLoad }

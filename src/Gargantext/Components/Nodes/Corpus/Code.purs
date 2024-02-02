@@ -47,12 +47,12 @@ type ViewProps =
 corpusCodeLayout :: R2.Leaf Props
 corpusCodeLayout = R2.leaf corpusCodeLayoutCpt
 corpusCodeLayoutCpt :: R.Component Props
-corpusCodeLayoutCpt = here.component "corpusCodeLayout" cpt where
-  cpt { nodeId, session, boxes } _ = do
+corpusCodeLayoutCpt = R2.hereComponent here "corpusCodeLayout" hCpt where
+  hCpt hp { nodeId, session, boxes } _ = do
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[corpusCodeLayout]"
+              , herePrefix: hp
               , loader: loadCorpusWithReload
               , path: { nodeId, reload: reload', session }
               , render: \corpus -> corpusCodeView { corpus, nodeId, reload, session, boxes } }

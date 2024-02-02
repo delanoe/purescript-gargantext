@@ -9,7 +9,7 @@ import Gargantext.Components.Bootstrap (formSelect')
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), ModalSizing(..), Position(..), TooltipPosition(..), Variant(..))
 import Gargantext.Components.InputWithEnter (inputWithEnter)
-import Gargantext.Config.REST (AffRESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Hooks.LinkHandler (useLinkHandler)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (AppRoute(..), appPath, nodeTypeAppRoute)
@@ -142,11 +142,11 @@ treeSearchContainer :: R2.Leaf ContainerProps
 treeSearchContainer = R2.leaf treeSearchContainerCpt
 
 treeSearchContainerCpt :: R.Component ContainerProps
-treeSearchContainerCpt = here.component "treeSearchContainerCpt" cpt where
-  cpt {query, visible, session } _ = do
+treeSearchContainerCpt = R2.hereComponent here "treeSearchContainerCpt" hCpt where
+  hCpt hp {query, visible, session } _ = do
 
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[treeSearchContainer]"
+              , herePrefix: hp
               , path: { session, query }
               , loader: loadSearch
               , render: \searchData -> treeSearchRenderContainer { visible, session, searchData }

@@ -37,7 +37,7 @@ import Gargantext.Components.Tile (tileBlock)
 import Gargantext.Components.TopBar as TopBar
 import Gargantext.Components.TreeSearch (treeSearch)
 import Gargantext.Config (defaultFrontends, defaultBackends)
-import Gargantext.Config.REST (AffRESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Context.Session as SessionContext
 import Gargantext.Ends (Backend)
 import Gargantext.Hooks.Resize (ResizeType(..), useResizeHandler)

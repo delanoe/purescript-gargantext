@@ -17,10 +17,10 @@ type ForgotPasswordProps = ( server :: String, uuid :: String )
 forgotPasswordLayout :: R2.Component ForgotPasswordProps
 forgotPasswordLayout = R.createElement forgotPasswordLayoutCpt
 forgotPasswordLayoutCpt :: R.Component ForgotPasswordProps
-forgotPasswordLayoutCpt = here.component "forgotPasswordLayout" cpt where
-  cpt { server, uuid } _ = do
+forgotPasswordLayoutCpt = R2.hereComponent here "forgotPasswordLayout" hCpt where
+  hCpt hp { server, uuid } _ = do
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[forgotPasswordLayout]"
+              , herePrefix: hp
               , loader: loadPassword
               , path: { server, uuid }
               , render: \{ password } ->

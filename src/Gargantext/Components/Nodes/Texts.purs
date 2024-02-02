@@ -29,7 +29,6 @@ import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Reload (textsReloadContext)
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table
-import Gargantext.Config.REST (logRESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader, useLoaderEffect)
 import Gargantext.Hooks.Session (useSession)
@@ -75,10 +74,10 @@ textsLayoutCpt = here.component "textsLayout" cpt where
 textsLayoutWithKey :: R2.Leaf ( key :: String | Props )
 textsLayoutWithKey = R2.leaf textsLayoutWithKeyCpt
 textsLayoutWithKeyCpt :: R.Component ( key :: String | Props )
-textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt where
-  cpt { frontends
-      , nodeId
-      } _ = do
+textsLayoutWithKeyCpt = R2.hereComponent here "textsLayoutWithKey" hCpt where
+  hCpt hp { frontends
+          , nodeId
+          } _ = do
     session <- useSession
 
     cacheState <- T.useBox $ getCacheState LT.CacheOff session nodeId
@@ -92,7 +91,7 @@ textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt where
       T.listen (\{ new } -> afterCacheStateChange new) cacheState
 
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[textsLayoutWithKey]"
+              , herePrefix: hp
               , loader: loadCorpusWithChild
               , path: { nodeId, session }
               , render: \corpusData@{ corpusId, corpusNode } ->
@@ -508,10 +507,10 @@ type SideText =
 sideText :: R2.Leaf ( key :: String | SideText )
 sideText = R2.leaf sideTextCpt
 sideTextCpt :: R.Component ( key :: String | SideText )
-sideTextCpt = here.component "sideText" cpt where
-  cpt { sidePanelText: { corpusId, listId, nodeId }
-      , session
-      } _ = do
+sideTextCpt = R2.hereComponent here "sideText" hCpt where
+  hCpt hp { sidePanelText: { corpusId, listId, nodeId }
+          , session
+          } _ = do
     -- | States
     -- |
     -- state' /\ state <- R2.useBox' (Nothing :: Maybe LoadedData)
@@ -547,7 +546,7 @@ sideTextCpt = here.component "sideText" cpt where
     --   }
 
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[sideText]"
+              , herePrefix: hp
               , loader: \{ path } -> loadData path
               , path: { path }
               , render: \loaded -> loadedSideText { loaded

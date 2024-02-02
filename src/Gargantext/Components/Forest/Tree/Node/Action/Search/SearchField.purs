@@ -128,10 +128,10 @@ type ComponentIMTProps =
 componentIMT :: R2.Component ComponentIMTProps
 componentIMT = R.createElement componentIMTCpt
 componentIMTCpt :: R.Component ComponentIMTProps
-componentIMTCpt = here.component "componentIMT" cpt where
-  cpt { search, session } _  = do
+componentIMTCpt = R2.hereComponent here "componentIMT" hCpt where
+  hCpt hp { search, session } _  = do
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[componentIMT]"
+              , herePrefix: hp
               , loader: \_ -> getIMTSchools session
               , path: unit
               , render: \schools -> componentWithIMTOrgs { schools, search } [] }
@@ -392,10 +392,10 @@ type PubmedInputProps = (
 pubmedInput :: R2.Component PubmedInputProps
 pubmedInput = R.createElement pubmedInputCpt
 pubmedInputCpt :: R.Component PubmedInputProps
-pubmedInputCpt = here.component "pubmedInput" cpt where
-  cpt { search, session: session@(Session { treeId }) } _ = do
+pubmedInputCpt = R2.hereComponent here "pubmedInput" hCpt where
+  hCpt hp { search, session: session@(Session { treeId }) } _ = do
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[pubmedInput]"
+              , herePrefix: hp
               , loader: \_ -> getUser session treeId
               , path: unit
               , render: \user -> pubmedInputLoaded { pubmedAPIKey: user.u_hyperdata.pubmed_api_key
@@ -444,10 +444,10 @@ type EPOInputProps = (
 epoInput :: R2.Component EPOInputProps
 epoInput = R.createElement epoInputCpt
 epoInputCpt :: R.Component EPOInputProps
-epoInputCpt = here.component "epoInput" cpt where
-  cpt { search, session: session@(Session { treeId }) } _ = do
+epoInputCpt = R2.hereComponent here "epoInput" hCpt where
+  hCpt hp { search, session: session@(Session { treeId }) } _ = do
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[epoInput]"
+              , herePrefix: hp
               , loader: \_ -> getUser session treeId
               , path: unit
               , render: \user -> epoInputLoaded { epoAPIUser: user.u_hyperdata.epo_api_user

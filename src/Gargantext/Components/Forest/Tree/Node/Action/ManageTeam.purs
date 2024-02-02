@@ -31,10 +31,10 @@ type ActionManageTeam = (
 actionManageTeam :: R2.Component ActionManageTeam
 actionManageTeam = R.createElement actionManageTeamCpt
 actionManageTeamCpt :: R.Component ActionManageTeam
-actionManageTeamCpt = here.component "actionManageTeam" cpt where
-  cpt { id, session } _ = do
+actionManageTeamCpt = R2.hereComponent here "actionManageTeam" hCpt where
+  hCpt hp { id, session } _ = do
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[actionManageTeam]"
+              , herePrefix: hp
               , loader: loadTeam
               , path: { nodeId: id, session }
               , render: \team -> teamLayoutWrapper { team

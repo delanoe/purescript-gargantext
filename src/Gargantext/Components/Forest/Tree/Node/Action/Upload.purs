@@ -106,10 +106,10 @@ type UploadFile =
 uploadFileView :: R2.Leaf Props
 uploadFileView = R2.leaf uploadFileViewCpt
 uploadFileViewCpt :: R.Component Props
-uploadFileViewCpt = here.component "uploadFileView" cpt where
-  cpt props@({ session }) _ = do
+uploadFileViewCpt = R2.hereComponent here "uploadFileView" hCpt where
+  hCpt hp props@({ session }) _ = do
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[uploadFileView]"
+              , herePrefix: hp
               , loader: loadLanguages
               , path: { session }
               , render: \langs ->
@@ -731,10 +731,10 @@ uploadTermButtonCpt = here.component "uploadTermButton" cpt
 uploadFrameCalcView :: R2.Component Props
 uploadFrameCalcView = R.createElement uploadFrameCalcViewCpt
 uploadFrameCalcViewCpt :: R.Component Props
-uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt where
-  cpt props@({ session }) _ = do
+uploadFrameCalcViewCpt = R2.hereComponent here "uploadFrameCalcView" hCpt where
+  hCpt hp props@({ session }) _ = do
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[uploadFrameCalcView]"
+              , herePrefix: hp
               , loader: loadLanguages
               , path: { session }
               , render: \langs ->

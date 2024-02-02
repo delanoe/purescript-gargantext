@@ -114,13 +114,13 @@ type RatingSimpleLoaderProps =
 ratingSimpleLoader :: R2.Component RatingSimpleLoaderProps
 ratingSimpleLoader = R.createElement ratingSimpleLoaderCpt
 ratingSimpleLoaderCpt :: R.Component RatingSimpleLoaderProps
-ratingSimpleLoaderCpt = here.component "ratingSimpleLoader" cpt where
-  cpt { docId
-      , corpusId
-      , session
-      } _ = do
+ratingSimpleLoaderCpt = R2.hereComponent here "ratingSimpleLoader" hCpt where
+  hCpt hp { docId
+          , corpusId
+          , session
+          } _ = do
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[ratingSimpleLoader]"
+              , herePrefix: hp
               , loader: loadDocumentContext session
               , path: { docId, corpusId }
               , render: \{ nc_category } -> do

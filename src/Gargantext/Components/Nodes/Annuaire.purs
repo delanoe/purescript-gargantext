@@ -70,13 +70,13 @@ type KeyLayoutProps =
 annuaireLayoutWithKey :: R2.Leaf KeyLayoutProps
 annuaireLayoutWithKey = R2.leaf annuaireLayoutWithKeyCpt
 annuaireLayoutWithKeyCpt :: R.Component KeyLayoutProps
-annuaireLayoutWithKeyCpt = here.component "annuaireLayoutWithKey" cpt where
-  cpt { frontends, nodeId, session } _ = do
+annuaireLayoutWithKeyCpt = R2.hereComponent here "annuaireLayoutWithKey" hCpt where
+  hCpt hp { frontends, nodeId, session } _ = do
     path <- T.useBox nodeId
     path' <- T.useLive T.unequal path
 
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[annuaireLayoutWithKey]"
+              , herePrefix: hp
               , loader: getAnnuaireInfo session
               , path: path'
               , render: \info -> annuaire { frontends, info, path, session } }
@@ -135,16 +135,15 @@ type PageLayoutProps =
 pageLayout :: Record PageLayoutProps -> R.Element
 pageLayout props = R.createElement pageLayoutCpt props []
 pageLayoutCpt :: R.Component PageLayoutProps
-pageLayoutCpt = here.component "pageLayout" cpt
-  where
-    cpt { frontends, pagePath, session } _ = do
-      pagePath' <- T.useLive T.unequal pagePath
+pageLayoutCpt = R2.hereComponent here "pageLayout" hCpt where
+  hCpt hp { frontends, pagePath, session } _ = do
+    pagePath' <- T.useLive T.unequal pagePath
 
-      useLoader { errorHandler: Nothing
-                , herePrefix: R2.herePrefix here "[pageLayout]"
-                , loader: loadPage session
-                , path: pagePath'
-                , render: \table -> page { session, table, frontends, pagePath } }
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
+              , loader: loadPage session
+              , path: pagePath'
+              , render: \table -> page { session, table, frontends, pagePath } }
 
 type PageProps =
   ( frontends :: Frontends

@@ -36,7 +36,7 @@ import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Reload (textsReloadContext)
 import Gargantext.Components.Table as TT
 import Gargantext.Components.Table.Types as TT
-import Gargantext.Config.REST (AffRESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
@@ -121,23 +121,23 @@ type Props = (
 docView :: R2.Component Props
 docView = R.createElement docViewCpt
 docViewCpt :: R.Component Props
-docViewCpt = here.component "docView" cpt where
-  cpt { layout: { cacheState
-                , chart
-                , chartReload
-                , frontends
-                , listId
-                , mCorpusId
-                , nodeId
-                , session
-                , showSearch
-                , tabType
-                , totalRecords
-                , yearFilter
-                }
-      , params
-      , query
-      } _ = do
+docViewCpt = R2.hereComponent here "docView" hCpt where
+  hCpt hp { layout: { cacheState
+                    , chart
+                    , chartReload
+                    , frontends
+                    , listId
+                    , mCorpusId
+                    , nodeId
+                    , session
+                    , showSearch
+                    , tabType
+                    , totalRecords
+                    , yearFilter
+                    }
+          , params
+          , query
+          } _ = do
     -- State
     { errors } <- Store.use
     cacheState' <- T.useLive T.unequal cacheState
@@ -155,7 +155,7 @@ docViewCpt = here.component "docView" cpt where
 
     -- @onCreateDocumentEnd <AsyncProgress>
     onCreateDocumentEnd <- pure $ \asyncProgress -> do
-      here.log2 "[DocsTables] NodeDocument task:" asyncProgress
+      R2.hpLog2 hp "NodeDocument task:" asyncProgress
       T.write_ false onDocumentCreationPendingBox
       toggleModal unit
 
@@ -171,7 +171,7 @@ docViewCpt = here.component "docView" cpt where
 
       eTask <- DFC.create session nodeId fdata
 
-      handleRESTError (R2.herePrefix here "[docView]") errors eTask
+      handleRESTError hp errors eTask
         \t -> liftEffect $ launchDocumentCreationProgress
                               errors
                               session
@@ -390,17 +390,17 @@ filterDocsByYear year docs = A.filter filterFunc docs
 pageLayout :: R2.Component ( key :: String | PageLayoutProps )
 pageLayout = R.createElement pageLayoutCpt
 pageLayoutCpt :: R.Component ( key :: String | PageLayoutProps )
-pageLayoutCpt = here.component "pageLayout" cpt where
-  cpt props@{ cacheState
-            , listId
-            , mCorpusId
-            , nodeId
-            , params
-            , query
-            , session
-            , tabType
-            , yearFilter
-            } _ = do
+pageLayoutCpt = R2.hereComponent here "pageLayout" hCpt where
+  hCpt hp props@{ cacheState
+                , listId
+                , mCorpusId
+                , nodeId
+                , params
+                , query
+                , session
+                , tabType
+                , yearFilter
+                } _ = do
     cacheState' <- T.useLive T.unequal cacheState
     yearFilter' <- T.useLive T.unequal yearFilter
 
@@ -459,7 +459,7 @@ pageLayoutCpt = here.component "pageLayout" cpt where
                                                           , localCategories
                                                           , params: paramsS } []
         useLoader { errorHandler: Nothing
-                  , herePrefix: R2.herePrefix here "[pageLayout]"
+                  , herePrefix: hp
                   , path: path { params = paramsS' }
                   , loader
                   , render }

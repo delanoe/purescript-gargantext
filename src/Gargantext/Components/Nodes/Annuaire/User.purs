@@ -21,7 +21,7 @@ import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Nodes.Annuaire.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
 import Gargantext.Components.Nodes.Lists.Types as LT
-import Gargantext.Config.REST (AffRESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
@@ -92,10 +92,11 @@ userLayoutCpt = here.component "userLayout" cpt
 userLayoutWithKey :: R2.Leaf ( key :: String | LayoutProps )
 userLayoutWithKey = R2.leaf userLayoutWithKeyCpt
 userLayoutWithKeyCpt :: R.Component ( key :: String | LayoutProps )
-userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
-  cpt { frontends
-      , nodeId
-      , session } _ = do
+-- userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
+userLayoutWithKeyCpt = R2.hereComponent here "userLayoutWithKey" hCpt where
+  hCpt hp { frontends
+          , nodeId
+          , session } _ = do
     { errors, sidePanelLists, sidePanelTexts } <- AppStore.use
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
@@ -105,7 +106,7 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
     cacheState <- T.useBox LT.CacheOn
 
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[userLayoutWithKey]"
+              , herePrefix: hp
               , loader: getUserInfoWithReload
               , path: { nodeId: userId, reload: reload', session }
               , render: \userInfo@{ ui_username } ->
@@ -132,7 +133,7 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
         launchAff_ $ do
           let Session {userId} = session
           res <- saveUserInfo session userId ui
-          handleRESTError (R2.herePrefix here "[userLayoutWithKey]") errors res $ \_ ->
+          handleRESTError hp errors res $ \_ ->
             liftEffect $ T2.reload reload
 
 --saveContactHyperdata :: Session -> Int -> HyperdataUser -> AffRESTError Int
@@ -161,11 +162,11 @@ type PubmedSettingsProps =
 pubmedSettings :: R2.Leaf PubmedSettingsProps
 pubmedSettings = R2.leaf pubmedSettingsCpt
 pubmedSettingsCpt :: R.Component PubmedSettingsProps
-pubmedSettingsCpt = here.component "pubmedSettings" cpt where
-  cpt { nodeId
-      , session } _ = do
+pubmedSettingsCpt = R2.hereComponent here "pubmedSettings" hCpt where
+  hCpt hp { nodeId
+          , session } _ = do
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[pubmedSettings]"
+              , herePrefix: hp
               , loader: \_ -> getUser session nodeId
               , path: unit
               , render: \user -> pubmedSettingsLoaded { nodeId
@@ -207,11 +208,11 @@ type EPOSettingsProps =
 epoSettings :: R2.Leaf EPOSettingsProps
 epoSettings = R2.leaf epoSettingsCpt
 epoSettingsCpt :: R.Component EPOSettingsProps
-epoSettingsCpt = here.component "epoSettings" cpt where
-  cpt { nodeId
-      , session } _ = do
+epoSettingsCpt = R2.hereComponent here "epoSettings" hCpt where
+  hCpt hp { nodeId
+          , session } _ = do
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[epoSettings]"
+              , herePrefix: hp
               , loader: \_ -> getUser session nodeId
               , path: unit
               , render: \user -> epoSettingsLoaded { nodeId
@@ -258,10 +259,10 @@ type EditableUserField =
 editableUserField :: R2.Leaf EditableUserField
 editableUserField = R2.leaf editableUserFieldCpt
 editableUserFieldCpt :: R.Component EditableUserField
-editableUserFieldCpt = here.component "editableUserField" cpt where
-  cpt { callback
-      , description
-      , mValue } _ = do
+editableUserFieldCpt = R2.hereComponent here "editableUserField" hCpt where
+  hCpt hp { callback
+          , description
+          , mValue } _ = do
     { errors } <- AppStore.use
     
     box <- T.useBox $ fromMaybe "" mValue
@@ -278,14 +279,12 @@ editableUserFieldCpt = here.component "editableUserField" cpt where
 
     where
       onUpdate errors s = do
-        here.log2 ("[editableUserField] " <> description) s
         case s of
           "" -> pure unit
           _ -> do
             launchAff_ $ do
               res <- callback s
-              handleRESTError (R2.herePrefix here "[editableUserField]") errors res $ \_result ->
-                liftEffect $ here.log ("[editableUserField] " <> description <> " updated")
+              handleRESTError hp errors res (const $ pure unit)
 
 
 ------------------------------------------------------------

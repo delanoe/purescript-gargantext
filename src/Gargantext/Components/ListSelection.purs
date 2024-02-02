@@ -117,10 +117,10 @@ type ListTreeChildrenProps =
 listTreeChildren :: R2.Component ListTreeChildrenProps
 listTreeChildren = R.createElement listTreeChildrenCpt
 listTreeChildrenCpt :: R.Component ListTreeChildrenProps
-listTreeChildrenCpt = here.component "listTreeChildren" cpt where
-  cpt { render, root, selection, session } _ = do
+listTreeChildrenCpt = R2.hereComponent here "listTreeChildren" hCpt where
+  hCpt hp { render, root, selection, session } _ = do
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[listTreeChildren]"
+              , herePrefix: hp
               , loader: loadTreeChildren
               , path: { root, session }
               , render: \loaded ->

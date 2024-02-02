@@ -62,10 +62,10 @@ tab :: R2.Component TabProps
 tab = R.createElement tabCpt
 -- | A tab only shows its contents if it is currently selected
 tabCpt :: R.Component TabProps
-tabCpt = here.component "tab" cpt
-  where
-    cpt { selected, index } children = pure $ H.div { className } children'
-      where
-        same = selected == index
-        className = "tab-pane" <> (if same then "show active" else "fade")
-        children' = if same then children else []
+tabCpt = here.component "tab" cpt where
+  cpt { selected, index } children = do
+    pure $ H.div { className } children'
+    where
+      same = selected == index
+      className = "tab-pane" <> (if same then "show active" else "fade")
+      children' = if same then children else []

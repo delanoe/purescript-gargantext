@@ -30,7 +30,6 @@ import Gargantext.Components.Forest.Tree.Node.Tools.Sync (nodeActionsGraph, node
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (Lang(EN))
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
-import Gargantext.Config.REST (logRESTError)
 import Gargantext.Context.Progress (asyncContext, asyncProgress)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader, useLoaderEffect)
@@ -604,12 +603,12 @@ nodeActionsCpt = here.component "nodeActions" cpt where
 graphNodeActions :: R2.Leaf NodeActionsCommon
 graphNodeActions = R2.leaf graphNodeActionsCpt
 graphNodeActionsCpt :: R.Component NodeActionsCommon
-graphNodeActionsCpt = here.component "graphNodeActions" cpt where
-  cpt { id, refresh, session } _ = do
+graphNodeActionsCpt = R2.hereComponent here "graphNodeActions" hCpt where
+  hCpt hp { id, refresh, session } _ = do
     -- Hooks
     useLoader
       { errorHandler: Nothing
-      , herePrefix: R2.herePrefix here "[graphNodeActions]"
+      , herePrefix: hp
       , loader: graphVersions session
       , path: id
       , render: \gv -> graphNodeActionsLoaded { gv, id, refresh, session }
@@ -636,12 +635,12 @@ graphNodeActionsLoadedCpt = here.component "graphNodeActionsLoaded" cpt where
 listNodeActions :: R2.Leaf NodeActionsCommon
 listNodeActions = R2.leaf listNodeActionsCpt
 listNodeActionsCpt :: R.Component NodeActionsCommon
-listNodeActionsCpt = here.component "listNodeActions" cpt where
-  cpt { id, refresh, session } _ = do
+listNodeActionsCpt = R2.hereComponent here "listNodeActions" hCpt where
+  hCpt hp { id, refresh, session } _ = do
     -- Hooks
     useLoader
       { errorHandler: Nothing
-      , herePrefix: R2.herePrefix here "[listNodeActions]"
+      , herePrefix: hp
       , loader: loadCorpusWithChild
       , path: { nodeId: id, session }
       , render: \corpusData -> listNodeActionsLoaded { corpusData, id, refresh, session }

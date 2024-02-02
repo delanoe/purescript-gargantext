@@ -343,16 +343,15 @@ type PageProps = ( rowsLoaded :: Rows | PageLayoutProps )
 pageLayout :: R2.Component PageLayoutProps
 pageLayout = R.createElement pageLayoutCpt
 pageLayoutCpt :: R.Component PageLayoutProps
-pageLayoutCpt = here.component "pageLayout" cpt
-  where
-    cpt { container, deletions, frontends, path, session, totalRecords } _ = do
-      path' <- T.useLive T.unequal path
+pageLayoutCpt = R2.hereComponent here "pageLayout" hCpt where
+  hCpt hp { container, deletions, frontends, path, session, totalRecords } _ = do
+    path' <- T.useLive T.unequal path
 
-      useLoader { errorHandler: Nothing
-                , herePrefix: R2.herePrefix here "[pageLayout]"
-                , loader: loadPage
-                , path: path'
-                , render: \rowsLoaded -> page { container, deletions, frontends, path, rowsLoaded, session, totalRecords } [] }
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
+              , loader: loadPage
+              , path: path'
+              , render: \rowsLoaded -> page { container, deletions, frontends, path, rowsLoaded, session, totalRecords } [] }
 
 page :: R2.Component PageProps
 page = R.createElement pageCpt

@@ -65,15 +65,14 @@ type ShareNode =
 shareNode :: R2.Component ShareNode
 shareNode = R.createElement shareNodeCpt
 shareNodeCpt :: R.Component ShareNode
-shareNodeCpt = here.component "shareNode" cpt
-  where
-    cpt { id, session } _ = do
-      useLoader { errorHandler: Nothing
-                , herePrefix: R2.herePrefix here "[shareNode]"
-                , loader: getCompletionsReq
-                , path: { session }
-                , render: \completions -> shareNodeInner { completions, id, session } []
-                }
+shareNodeCpt = R2.hereComponent here "shareNode" hCpt where
+  hCpt hp { id, session } _ = do
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
+              , loader: getCompletionsReq
+              , path: { session }
+              , render: \completions -> shareNodeInner { completions, id, session } []
+              }
 
 type ShareNodeInner =
   ( completions :: Array String

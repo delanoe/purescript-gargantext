@@ -30,7 +30,7 @@ import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..
 import Gargantext.Components.GraphQL.Endpoints (getNode, getTreeFirstLevel)
 import Gargantext.Components.GraphQL.Node (Node)
 import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, TreeNode)
-import Gargantext.Config.REST (AffRESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Hooks.LinkHandler (useLinkHandler)
 import Gargantext.Hooks.Loader (useLoader)
@@ -57,12 +57,12 @@ data FolderStyle = FolderUp | FolderChild
 folderView :: R2.Leaf Props
 folderView = R2.leaf folderViewCpt
 folderViewCpt :: R.Component Props
-folderViewCpt = here.component "folderViewCpt" cpt where
-  cpt { nodeId, session } _ = do
+folderViewCpt = R2.hereComponent here "folderViewCpt" hCpt where
+  hCpt hp { nodeId, session } _ = do
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[folderView]"
+              , herePrefix: hp
               , loader: loadFolders
               , path: { nodeId, session, reload: reload'}
               , render: \folders -> folderViewMain { folders
@@ -264,12 +264,12 @@ backButtonCpt = here.component "backButton" cpt where
 backButtonSmart :: R2.Component (nodeId :: Int, session :: Session)
 backButtonSmart = R.createElement backButtonSmartCpt
 backButtonSmartCpt :: R.Component (nodeId :: Int, session :: Session)
-backButtonSmartCpt = here.component "backButtonSmart" cpt where
-  cpt {nodeId, session} _ = do
+backButtonSmartCpt = R2.hereComponent here "backButtonSmart" hCpt where
+  hCpt hp { nodeId, session } _ = do
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
     useLoader { errorHandler: Nothing
-              , herePrefix: R2.herePrefix here "[backButtonSmart]"
+              , herePrefix: hp
               , loader: loadNode
               , path: { nodeId, session, reload: reload' }
               , render: \node -> backButtonSmartMain { node, session } []

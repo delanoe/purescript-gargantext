@@ -1021,15 +1021,15 @@ type MainNgramsTableCacheProps =
 mainNgramsTableCacheOn :: R2.Leaf MainNgramsTableCacheProps
 mainNgramsTableCacheOn = R2.leaf mainNgramsTableCacheOnCpt
 mainNgramsTableCacheOnCpt :: R.Component MainNgramsTableCacheProps
-mainNgramsTableCacheOnCpt = here.component "mainNgramsTableCacheOn" cpt where
-  cpt { afterSync
-      , defaultListId
-      , path
-      , session
-      , state
-      , tabNgramType
-      , treeEdit
-      , withAutoUpdate } _ = do
+mainNgramsTableCacheOnCpt = R2.hereComponent here "mainNgramsTableCacheOn" hCpt where
+  hCpt hp { afterSync
+          , defaultListId
+          , path
+          , session
+          , state
+          , tabNgramType
+          , treeEdit
+          , withAutoUpdate } _ = do
 
     -- let path = initialPageParams session nodeId [defaultListId] tabType
 
@@ -1052,8 +1052,9 @@ mainNgramsTableCacheOnCpt = here.component "mainNgramsTableCacheOn" cpt where
       , renderer: render
       , spinnerClass: Nothing
       }
+    where
+      errorHandler = logRESTError hp
   versionEndpoint { defaultListId, path: { nodeId, tabType, session } } _ = get session $ Routes.GetNgramsTableVersion { listId: defaultListId, tabType } (Just nodeId)
-  errorHandler = logRESTError (R2.herePrefix here "[mainNgramsTableCacheOn]")
   mkRequest :: PageParams -> GUC.Request
   mkRequest path@{ session } = GUC.makeGetRequest session $ url path
     where
@@ -1068,14 +1069,14 @@ mainNgramsTableCacheOnCpt = here.component "mainNgramsTableCacheOn" cpt where
 mainNgramsTableCacheOff :: R2.Leaf MainNgramsTableCacheProps
 mainNgramsTableCacheOff = R2.leaf mainNgramsTableCacheOffCpt
 mainNgramsTableCacheOffCpt :: R.Component MainNgramsTableCacheProps
-mainNgramsTableCacheOffCpt = here.component "mainNgramsTableCacheOff" cpt where
-  cpt { afterSync
-      , path
-      , session
-      , state
-      , tabNgramType
-      , treeEdit
-      , withAutoUpdate } _ = do
+mainNgramsTableCacheOffCpt = R2.hereComponent here "mainNgramsTableCacheOff" hCpt where
+  hCpt hp { afterSync
+          , path
+          , session
+          , state
+          , tabNgramType
+          , treeEdit
+          , withAutoUpdate } _ = do
     let render versionedWithCount = mainNgramsTablePaintNoCache { afterSync
                                                                 , cacheState: NT.CacheOff
                                                                 , path
@@ -1086,7 +1087,7 @@ mainNgramsTableCacheOffCpt = here.component "mainNgramsTableCacheOff" cpt where
                                                                 , versionedWithCount
                                                                 , withAutoUpdate } []
     useLoaderBox { errorHandler: Nothing
-                 , herePrefix: R2.herePrefix here "[mainNgramsTableCacheOff]"
+                 , herePrefix: hp
                  , loader
                  , path
                  , render }

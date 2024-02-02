@@ -41,8 +41,8 @@ here = R2.here "Gargantext.Components.Nodes.Graph"
 node :: R2.Leaf ( key :: String | Props )
 node = R2.leaf nodeCpt
 nodeCpt :: R.Component ( key :: String | Props )
-nodeCpt = here.component "node" cpt where
-  cpt { graphId } _ = do
+nodeCpt = R2.hereComponent here "node" hCpt where
+  hCpt hp { graphId } _ = do
     -- | States
     -- |
     { graphVersion
@@ -56,7 +56,7 @@ nodeCpt = here.component "node" cpt where
 
     -- | Computed
     -- |
-    let errorHandler = logRESTError (R2.herePrefix here "[node]")
+    let errorHandler = logRESTError hp
 
     -- | Hooks
     -- |

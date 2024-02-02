@@ -110,11 +110,11 @@ treeLoader :: R2.Leaf ( key :: String | LoaderProps )
 treeLoader = R2.leaf treeLoaderCpt
 
 treeLoaderCpt :: R.Component ( key :: String | LoaderProps )
-treeLoaderCpt = here.component "treeLoader" cpt where
+treeLoaderCpt = R2.hereComponent here "treeLoader" hCpt where
 -- treeLoaderCpt :: R.Memo LoaderProps
 -- treeLoaderCpt = R.memo (here.component "treeLoader" cpt) memoCmp where
 --   memoCmp ({ root: t1 }) ({ root: t2 }) = t1 == t2
-  cpt p@{ root, session } _ = do
+  hCpt hp p@{ root, session } _ = do
     -- States
     -- app     <- T.useLive T.unequal p.reloadRoot
     state /\ stateBox <- R2.useBox' Nothing
@@ -144,7 +144,7 @@ treeLoaderCpt = here.component "treeLoader" cpt where
           props = Record.merge common extra where
             common = RecordE.pick p :: Record Common
             extra = { reloadTree: p.reload, root, session, tree: tree' }
-        errorHandler = logRESTError (R2.herePrefix here "[treeLoader]")
+        errorHandler = logRESTError hp
 
 getNodeTree :: Session -> ID -> AffRESTError FTree
 getNodeTree session nodeId = get session $ GR.NodeAPI GT.Tree (Just nodeId) ""
@@ -255,10 +255,10 @@ renderTreeChildrenCpt = here.component "renderTreeChildren" cpt where
 childLoader :: R2.Component ChildLoaderProps
 childLoader = R.createElement childLoaderCpt
 childLoaderCpt :: R.Component ChildLoaderProps
-childLoaderCpt = here.component "childLoader" cpt where
-  cpt p@{ reloadTree
-        , render
-        , root } _ = do
+childLoaderCpt = R2.hereComponent here "childLoader" hCpt where
+  hCpt hp p@{ reloadTree
+            , render
+            , root } _ = do
     -- States
     { reloadRoot } <- Store.use
     reload <- T.useBox T2.newReload
@@ -287,7 +287,7 @@ childLoaderCpt = here.component "childLoader" cpt where
       }
 
     where
-      errorHandler = logRESTError (R2.herePrefix here "[childLoader]")
+      errorHandler = logRESTError hp
       fetch _ = getNodeTreeFirstLevel p.session p.id
       paint reload tree' = render (Record.merge base extra) where
         base = nodeProps { reload = reload }

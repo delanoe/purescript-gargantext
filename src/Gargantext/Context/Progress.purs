@@ -38,9 +38,8 @@ here = R2.here "Gargantext.Context.Progress"
 asyncProgress :: R2.Component AsyncProps
 asyncProgress = R2.component asyncProgressCpt
 asyncProgressCpt :: R.Component AsyncProps
-asyncProgressCpt = R.hooksComponent "asyncProgress" cpt where
-  cpt props@{ onFinish
-            } children = do
+asyncProgressCpt = R2.hereComponent here "asyncProgress" hCpt where
+  hCpt hp props@{ onFinish } children = do
     { errors } <- AppStore.use
     
     -- States
@@ -63,7 +62,7 @@ asyncProgressCpt = R.hooksComponent "asyncProgress" cpt where
             Right _ -> T.write_ 1000 interval
           interval' <- T.read interval
           resetInterval intervalIdRef (Just interval') exec
-        handleRESTError (R2.herePrefix here "[asyncProgress]") errors eAsyncProgress onProgress
+        handleRESTError hp errors eAsyncProgress onProgress
 
       onProgress :: AsyncProgress -> Aff Unit
       onProgress value = liftEffect do

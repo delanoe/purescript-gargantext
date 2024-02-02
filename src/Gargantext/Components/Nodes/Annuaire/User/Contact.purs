@@ -31,10 +31,9 @@ type Props =
 contactLayout :: R2.Leaf ( key :: String | Props )
 contactLayout = R2.leaf contactLayoutCpt
 contactLayoutCpt :: R.Component ( key :: String | Props )
-contactLayoutCpt = here.component "layout" cpt where
+contactLayoutCpt = R2.hereComponent here "layout" hCpt where
   -- Component
-  cpt { nodeId
-      } _ = do
+  hCpt hp { nodeId } _ = do
 
     session <- useSession
 
@@ -42,7 +41,7 @@ contactLayoutCpt = here.component "layout" cpt where
 
     useLoader
       { errorHandler: Nothing
-      , herePrefix: R2.herePrefix here "[contactLayout]"
+      , herePrefix: hp
       , loader: getAnnuaireContact session
       , path: nodeId
       , render:

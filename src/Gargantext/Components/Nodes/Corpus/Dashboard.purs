@@ -47,38 +47,37 @@ type KeyProps =
 dashboardLayoutWithKey :: R2.Component KeyProps
 dashboardLayoutWithKey = R.createElement dashboardLayoutWithKeyCpt
 dashboardLayoutWithKeyCpt :: R.Component KeyProps
-dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
-  where
-    cpt { nodeId, session } _ = do
-      reload <- T.useBox T2.newReload
-      reload' <- T.useLive T.unequal reload
+dashboardLayoutWithKeyCpt = R2.hereComponent here "dashboardLayoutWithKey" hCpt where
+  hCpt hp { nodeId, session } _ = do
+    reload <- T.useBox T2.newReload
+    reload' <- T.useLive T.unequal reload
 
-      useLoader { errorHandler: Nothing
-                , herePrefix: R2.herePrefix here "[dashboardLayoutWithKey]"
-                , loader: DT.loadDashboardWithReload
-                , path: { nodeId, reload: reload', session }
-                , render: \(DT.DashboardData { hyperdata: DT.Hyperdata h, parentId }) -> do
-                      let { charts, fields } = h
-                      dashboardLayoutLoaded { charts
-                                            , corpusId: parentId
-                                            , defaultListId: 0
-                                            , fields
-                                            , nodeId
-                                            , onChange: onChange nodeId reload (DT.Hyperdata h)
-                                            , session } [] }
-      where
-        onChange :: NodeID -> T2.ReloadS -> DT.Hyperdata -> { charts :: Array P.PredefinedChart
-                                                            , fields :: FTFieldList } -> Effect Unit
-        onChange nodeId' reload (DT.Hyperdata h) { charts, fields } = do
-          launchAff_ do
-            res <- DT.saveDashboard { hyperdata: DT.Hyperdata $ h { charts = charts, fields = fields }
-                                    , nodeId:nodeId'
-                                    , session }
-            liftEffect $ do
-              _ <- case res of
-                Left err -> here.warn2 "[dashboardLayoutWithKey] onChange RESTError" err
-                _ -> pure unit
-              T2.reload reload
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
+              , loader: DT.loadDashboardWithReload
+              , path: { nodeId, reload: reload', session }
+              , render: \(DT.DashboardData { hyperdata: DT.Hyperdata h, parentId }) -> do
+                    let { charts, fields } = h
+                    dashboardLayoutLoaded { charts
+                                          , corpusId: parentId
+                                          , defaultListId: 0
+                                          , fields
+                                          , nodeId
+                                          , onChange: onChange nodeId reload (DT.Hyperdata h)
+                                          , session } [] }
+    where
+      onChange :: NodeID -> T2.ReloadS -> DT.Hyperdata -> { charts :: Array P.PredefinedChart
+                                                          , fields :: FTFieldList } -> Effect Unit
+      onChange nodeId' reload (DT.Hyperdata h) { charts, fields } = do
+        launchAff_ do
+          res <- DT.saveDashboard { hyperdata: DT.Hyperdata $ h { charts = charts, fields = fields }
+                                  , nodeId:nodeId'
+                                  , session }
+          liftEffect $ do
+            _ <- case res of
+              Left err -> R2.hpWarn2 hp "onChange RESTError" err
+              _ -> pure unit
+            T2.reload reload
 
 type LoadedProps =
   ( charts        :: Array P.PredefinedChart

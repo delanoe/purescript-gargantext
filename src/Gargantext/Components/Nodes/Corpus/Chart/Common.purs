@@ -33,23 +33,22 @@ cacheName = "metrics"
 metricsLoadView :: forall a. Eq a => Record (MetricsLoadViewProps a) -> R.Element
 metricsLoadView p = R.createElement metricsLoadViewCpt p []
 metricsLoadViewCpt :: forall a. Eq a => R.Component (MetricsLoadViewProps a)
-metricsLoadViewCpt = here.component "metricsLoadView" cpt
-  where
-    cpt { getMetrics
-        , loaded
-        , onClick
-        , onInit
-        , path
-        , reload
-        , session } _ = do
-      { errors } <- Store.use
-      reload' <- T.useLive T.unequal reload
+metricsLoadViewCpt = R2.hereComponent here "metricsLoadView" hCpt where
+  hCpt hp { getMetrics
+          , loaded
+          , onClick
+          , onInit
+          , path
+          , reload
+          , session } _ = do
+    { errors } <- Store.use
+    reload' <- T.useLive T.unequal reload
 
-      useLoader { errorHandler: Nothing
-                , herePrefix: R2.herePrefix here "[metricsLoadView]"
-                , loader: getMetrics session
-                , path: reload' /\ path
-                , render: \l -> loaded { path, reload, session, onClick, onInit } l }
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
+              , loader: getMetrics session
+              , path: reload' /\ path
+              , render: \l -> loaded { path, reload, session, onClick, onInit } l }
 
 type MetricsWithCacheLoadViewProps res ret =
   ( getMetricsHash :: Session -> ReloadPath -> AffRESTError Hash
