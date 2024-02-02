@@ -172,7 +172,8 @@ breadcrumbViewCpt = here.component "breadcrumbViewCpt" cpt where
     case session' of 
       Nothing -> pure $ H.div {} []
       Just (session') -> do
-        useLoader { errorHandler
+        useLoader { errorHandler: Nothing
+                  , herePrefix: R2.herePrefix here "[breadcrumbView]"
                   , loader: loadBreadcrumbData
                   , path: { nodeId: nodeId
                           , session: session'
@@ -184,8 +185,6 @@ breadcrumbViewCpt = here.component "breadcrumbViewCpt" cpt where
                                                         --  , reload: reload
                                                          } [] 
                   }
-        where
-          errorHandler = logRESTError here "[breadcrumbView]"
 
 type BreadcrumbViewProps =
   ( items         :: BreadcrumbInfo

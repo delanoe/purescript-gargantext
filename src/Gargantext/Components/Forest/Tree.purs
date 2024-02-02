@@ -10,7 +10,7 @@ import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
-import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.App.Store as Store
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Forest.Tree.Node (blankNodeSpan, nodeSpan)
 import Gargantext.Components.Forest.Tree.Node.Action.Add (AddNodeValue(..), addNode)
@@ -50,8 +50,7 @@ here = R2.here "Gargantext.Components.Forest.Tree"
 
 -- Shared by every component here
 type Common =
-  ( boxes     :: Boxes
-  , frontends :: Frontends
+  ( frontends :: Frontends
   , handed    :: Handed
   , reload    :: T2.ReloadS
   )
@@ -79,8 +78,7 @@ type ChildrenTreeProps =
 
 --- The properties tree shares in common with performAction
 type PACommon =
-  ( boxes      :: Boxes
-  , reloadTree :: T2.ReloadS
+  ( reloadTree :: T2.ReloadS
   , session    :: Session
   , tree       :: FTree
   )
@@ -102,7 +100,8 @@ type ChildLoaderProps =
   )
 
 type PerformActionProps =
-  ( isBoxVisible :: T.Box Boolean
+  ( boxes        :: Store.Boxes
+  , isBoxVisible :: T.Box Boolean
   | PACommon
   )
 
@@ -145,7 +144,7 @@ treeLoaderCpt = here.component "treeLoader" cpt where
           props = Record.merge common extra where
             common = RecordE.pick p :: Record Common
             extra = { reloadTree: p.reload, root, session, tree: tree' }
-        errorHandler = logRESTError here "[treeLoader]"
+        errorHandler = logRESTError (R2.herePrefix here "[treeLoader]")
 
 getNodeTree :: Session -> ID -> AffRESTError FTree
 getNodeTree session nodeId = get session $ GR.NodeAPI GT.Tree (Just nodeId) ""
@@ -157,12 +156,12 @@ tree :: R2.Leaf TreeProps
 tree props = R.createElement treeCpt props []
 treeCpt :: R.Component TreeProps
 treeCpt = here.component "tree" cpt where
-  cpt p@{ boxes: boxes@{ forestOpen }
-        , frontends
+  cpt p@{ frontends
         , reload
         , root
         , session
         , tree: NTree (LNode { id, name, nodeType }) children } _ = do
+    boxes@{ forestOpen } <- Store.use
 
     isBoxVisible  <- T.useBox false
     folderOpen    <- useOpenNodesMemberBox nodeId forestOpen
@@ -183,18 +182,17 @@ treeCpt = here.component "tree" cpt where
         { className: "maintree__node" }
         [
           nodeSpan
-          { boxes
-          , dispatch: dispatch' isBoxVisible
+          { dispatch: dispatch' boxes isBoxVisible
           , folderOpen
           , frontends
           , id
+          , isBoxVisible
           , isLeaf
           , name
           , nodeType
           , reload
           , root
           , session
-          , isBoxVisible
           }
         <>
           R2.when (folderOpen')
@@ -214,9 +212,9 @@ treeCpt = here.component "tree" cpt where
       nodeId = mkNodeId session id
       children' = A.sortWith fTreeID pubChildren
       pubChildren = if isPublic nodeType then map (map pub) children else children
-      dispatch' isBoxVisible a = performAction a (Record.merge common' extra) where
+      dispatch' boxes isBoxVisible a = performAction a (Record.merge common' extra) where
         common' = RecordE.pick p :: Record PACommon
-        extra = { isBoxVisible }
+        extra = { boxes, isBoxVisible }
   pub (LNode n@{ nodeType: t }) = LNode (n { nodeType = publicize t })
 
 
@@ -258,11 +256,11 @@ childLoader :: R2.Component ChildLoaderProps
 childLoader = R.createElement childLoaderCpt
 childLoaderCpt :: R.Component ChildLoaderProps
 childLoaderCpt = here.component "childLoader" cpt where
-  cpt p@{ boxes: { reloadRoot }
-        , reloadTree
+  cpt p@{ reloadTree
         , render
         , root } _ = do
     -- States
+    { reloadRoot } <- Store.use
     reload <- T.useBox T2.newReload
     state /\ stateBox <- R2.useBox' Nothing
     let reloads = [ reload, reloadRoot, reloadTree ]
@@ -289,7 +287,7 @@ childLoaderCpt = here.component "childLoader" cpt where
       }
 
     where
-      errorHandler = logRESTError here "[childLoader]"
+      errorHandler = logRESTError (R2.herePrefix here "[childLoader]")
       fetch _ = getNodeTreeFirstLevel p.session p.id
       paint reload tree' = render (Record.merge base extra) where
         base = nodeProps { reload = reload }
@@ -311,78 +309,74 @@ deleteNode' nt p@{ boxes: { forestOpen }, session, tree: (NTree (LNode {id, pare
 
 doSearch task { boxes: { tasks }, tree: NTree (LNode {id}) _ } = liftEffect $ do
   GAT.insert id task tasks
-  here.log2 "[doSearch] DoSearch task:" task
 
 updateNode params p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode {id}) _) } = do
   eTask <- updateRequest params session id
-  handleRESTError here errors eTask $ \task -> liftEffect $ do
+  handleRESTError (R2.herePrefix here "[updateNode]") errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
-    here.log2 "[updateNode] UpdateNode task:" task
     closeBox p
 
 renameNode name p@{ boxes: { errors }, session, tree: (NTree (LNode {id}) _) } = do
   eTask <- rename session id $ RenameValue { text: name }
-  handleRESTError here errors eTask $ \_task -> pure unit
+  handleRESTError (R2.herePrefix here "[renameNode]") errors eTask $ \_task -> pure unit
   refreshTree p
 
 sharePublic params p@{ boxes: { errors, forestOpen }, session } = traverse_ f params where
   f (SubTreeOut { in: inId, out }) = do
     eTask <- Share.shareReq session inId $ Share.SharePublicParams { node_id: out }
-    handleRESTError here errors eTask $ \_task -> do
+    handleRESTError (R2.herePrefix here "[sharePublic]") errors eTask $ \_task -> do
       liftEffect $ T.modify_ (openNodesInsert (mkNodeId p.session out)) forestOpen
       refreshTree p
 
 addContact params { boxes: { errors }, session, tree: (NTree (LNode {id}) _) } = do
   eTask <- Contact.contactReq session id params
-  handleRESTError here errors eTask $ \_task -> pure unit
+  handleRESTError (R2.herePrefix here "[addContact]") errors eTask $ \_task -> pure unit
 
 addNode' name nodeType p@{ boxes: { errors, forestOpen }, session, tree: (NTree (LNode { id }) _) } = do
   eId <- addNode session id $ AddNodeValue { name, nodeType }
-  handleRESTError here errors eId $ \_id -> liftEffect $ do
+  handleRESTError (R2.herePrefix here "[addNode']") errors eId $ \_id -> liftEffect $ do
     liftEffect $ T.modify_ (openNodesInsert (mkNodeId session id)) forestOpen
     refreshTree p
 
 uploadFile' nodeType fileType fileFormat lang mName contents p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
   eTask <- uploadFile { contents, fileFormat, fileType, id, lang, mName, nodeType, selection, session }
-  handleRESTError here errors eTask $ \task -> liftEffect $ do
+  handleRESTError (R2.herePrefix here "[uploadFile']") errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
     here.log2 "[uploadFile'] UploadFile, uploaded, task:" task
     closeBox p
 
 uploadArbitraryFile' fileFormat mName blob p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
   eTask <- uploadArbitraryFile session id { blob, fileFormat, mName } selection
-  handleRESTError here errors eTask $ \task -> liftEffect $ do
+  handleRESTError (R2.herePrefix here "[uploadArbitraryFile']") errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
-    here.log2 "[uploadArbitraryFile'] UploadArbitraryFile, uploaded, task:" task
 
 uploadFrameCalc' lang p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
   eTask <- uploadFrameCalc session id lang selection
-  handleRESTError here errors eTask $ \task -> liftEffect $ do
+  handleRESTError (R2.herePrefix here "[uploadFrameCalc']") errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
-    here.log2 "[performAction] UploadFrameCalc, uploaded, task:" task
 
 moveNode params p@{ boxes: { errors, forestOpen }, session } = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     eTask <- moveNodeReq session in' out
-    handleRESTError here errors eTask $ \_task -> pure unit
+    handleRESTError (R2.herePrefix here "[moveNode]") errors eTask $ \_task -> pure unit
     liftEffect $ T.modify_ (openNodesInsert (mkNodeId session out)) forestOpen
     refreshTree p
 
 mergeNode params p@{ boxes: { errors }, session } = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     eTask <- mergeNodeReq session in' out
-    handleRESTError here errors eTask $ \_task -> pure unit
+    handleRESTError (R2.herePrefix here "[mergeNode]") errors eTask $ \_task -> pure unit
     refreshTree p
 
 linkNode nodeType params p@{ boxes: { errors }, session } = traverse_ f params where
   f (SubTreeOut { in: in', out }) = do
     eTask <- linkNodeReq session nodeType in' out
-    handleRESTError here errors eTask $ \_task -> pure unit
+    handleRESTError (R2.herePrefix here "[linkNode]") errors eTask $ \_task -> pure unit
     refreshTree p
 
 documentsFromWriteNodes params p@{ boxes: { errors, tasks }, session, tree: NTree (LNode { id }) _ } = do
   eTask <- documentsFromWriteNodesReq session params
-  handleRESTError here errors eTask $ \task -> liftEffect $ do
+  handleRESTError (R2.herePrefix here "[documentsFromWriteNodes]") errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
     pure unit
   refreshTree p

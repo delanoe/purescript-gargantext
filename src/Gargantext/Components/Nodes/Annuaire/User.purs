@@ -13,7 +13,7 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.GraphQL (getClient)
 import Gargantext.Components.GraphQL.Endpoints (getUserInfo, getUser, updateUserPubmedAPIKey, updateUserEPOAPIUser, updateUserEPOAPIToken)
 import Gargantext.Components.GraphQL.User (UserInfo, _ui_cwCity, _ui_cwCountry, _ui_cwFirstName, _ui_cwLabTeamDeptsFirst, _ui_cwLastName, _ui_cwOffice, _ui_cwOrganizationFirst, _ui_cwRole, _ui_cwTouchMail, _ui_cwTouchPhone, _ui_cwDescription)
@@ -70,8 +70,7 @@ listElement = H.li { className: "list-group-item justify-content-between" }
 -}
 
 type LayoutNoSessionProps =
-  ( boxes     :: Boxes
-  , frontends :: Frontends
+  ( frontends :: Frontends
   , nodeId    :: CorpusId
   )
 
@@ -94,11 +93,10 @@ userLayoutWithKey :: R2.Leaf ( key :: String | LayoutProps )
 userLayoutWithKey = R2.leaf userLayoutWithKeyCpt
 userLayoutWithKeyCpt :: R.Component ( key :: String | LayoutProps )
 userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
-  cpt { boxes: boxes@{ sidePanelLists
-                     , sidePanelTexts }
-      , frontends
+  cpt { frontends
       , nodeId
       , session } _ = do
+    { errors, sidePanelLists, sidePanelTexts } <- AppStore.use
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
 
@@ -106,15 +104,16 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
 
     cacheState <- T.useBox LT.CacheOn
 
-    useLoader { errorHandler
+    useLoader { errorHandler: Nothing
+              , herePrefix: R2.herePrefix here "[userLayoutWithKey]"
               , loader: getUserInfoWithReload
               , path: { nodeId: userId, reload: reload', session }
               , render: \userInfo@{ ui_username } ->
                   H.ul { className: "col-md-12 list-group" } [
                     display { title: fromMaybe "no name" (Just ui_username) }
-                      (contactInfos userInfo (onUpdateUserInfo boxes.errors reload))
-                    , pubmedSettings { boxes, nodeId, session }
-                    , epoSettings { boxes, nodeId, session }
+                      (contactInfos userInfo (onUpdateUserInfo errors reload))
+                    , pubmedSettings { nodeId, session }
+                    , epoSettings { nodeId, session }
                     -- , Tabs.tabs {
                     --      boxes
                     --    , cacheState
@@ -128,13 +127,12 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
                     ]
               }
     where
-      errorHandler = logRESTError here "[userLayoutWithKey]"
       onUpdateUserInfo :: T.Box (Array FrontendError) -> T2.ReloadS -> UserInfo -> Effect Unit
       onUpdateUserInfo errors reload ui = do
         launchAff_ $ do
           let Session {userId} = session
           res <- saveUserInfo session userId ui
-          handleRESTError here errors res $ \_ ->
+          handleRESTError (R2.herePrefix here "[userLayoutWithKey]") errors res $ \_ ->
             liftEffect $ T2.reload reload
 
 --saveContactHyperdata :: Session -> Int -> HyperdataUser -> AffRESTError Int
@@ -157,26 +155,22 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
 ------------------------------------------------------------
 
 type PubmedSettingsProps =
-  ( boxes   :: Boxes
-  , nodeId  :: CorpusId
+  ( nodeId  :: CorpusId
   , session :: Session )
 
 pubmedSettings :: R2.Leaf PubmedSettingsProps
 pubmedSettings = R2.leaf pubmedSettingsCpt
 pubmedSettingsCpt :: R.Component PubmedSettingsProps
 pubmedSettingsCpt = here.component "pubmedSettings" cpt where
-  cpt { boxes
-      , nodeId
+  cpt { nodeId
       , session } _ = do
-    useLoader { errorHandler
+    useLoader { errorHandler: Nothing
+              , herePrefix: R2.herePrefix here "[pubmedSettings]"
               , loader: \_ -> getUser session nodeId
               , path: unit
-              , render: \user -> pubmedSettingsLoaded { boxes
-                                                      , nodeId
+              , render: \user -> pubmedSettingsLoaded { nodeId
                                                       , mPubmedAPIKey: user.u_hyperdata.pubmed_api_key
                                                       , session } }
-    where
-      errorHandler = logRESTError here "[pubmedSettings]"
 
 type PubmedSettingsLoadedProps =
   ( mPubmedAPIKey :: Maybe String
@@ -186,8 +180,7 @@ pubmedSettingsLoaded :: R2.Leaf PubmedSettingsLoadedProps
 pubmedSettingsLoaded = R2.leaf pubmedSettingsLoadedCpt
 pubmedSettingsLoadedCpt :: R.Component PubmedSettingsLoadedProps
 pubmedSettingsLoadedCpt = here.component "pubmedSettingsLoaded" cpt where
-  cpt { boxes
-      , nodeId
+  cpt { nodeId
       , mPubmedAPIKey
       , session } _ = do
     box <- T.useBox $ fromMaybe "" mPubmedAPIKey
@@ -198,8 +191,7 @@ pubmedSettingsLoadedCpt = here.component "pubmedSettingsLoaded" cpt where
         [ R2.col 12
           [ R2.row
             [ H.h2 {} [ H.text "PubMed settings" ] ]
-          , editableUserField { boxes
-                              , callback: updateUserPubmedAPIKey session nodeId
+          , editableUserField { callback: updateUserPubmedAPIKey session nodeId
                               , description: "API Key"
                               , mValue: mPubmedAPIKey }
           ]
@@ -209,27 +201,23 @@ pubmedSettingsLoadedCpt = here.component "pubmedSettingsLoaded" cpt where
 ------------------------------------------------------------
 
 type EPOSettingsProps =
-  ( boxes   :: Boxes
-  , nodeId  :: CorpusId
+  ( nodeId  :: CorpusId
   , session :: Session )
 
 epoSettings :: R2.Leaf EPOSettingsProps
 epoSettings = R2.leaf epoSettingsCpt
 epoSettingsCpt :: R.Component EPOSettingsProps
 epoSettingsCpt = here.component "epoSettings" cpt where
-  cpt { boxes
-      , nodeId
+  cpt { nodeId
       , session } _ = do
-    useLoader { errorHandler
+    useLoader { errorHandler: Nothing
+              , herePrefix: R2.herePrefix here "[epoSettings]"
               , loader: \_ -> getUser session nodeId
               , path: unit
-              , render: \user -> epoSettingsLoaded { boxes
-                                                   , nodeId
+              , render: \user -> epoSettingsLoaded { nodeId
                                                    , mEPOAPIUser: user.u_hyperdata.epo_api_user
                                                    , mEPOAPIToken: user.u_hyperdata.epo_api_token
                                                    , session } }
-    where
-      errorHandler = logRESTError here "[epoSettings]"
 
 type EPOSettingsLoadedProps =
   ( mEPOAPIUser  :: Maybe String
@@ -240,8 +228,7 @@ epoSettingsLoaded :: R2.Leaf EPOSettingsLoadedProps
 epoSettingsLoaded = R2.leaf epoSettingsLoadedCpt
 epoSettingsLoadedCpt :: R.Component EPOSettingsLoadedProps
 epoSettingsLoadedCpt = here.component "epoSettingsLoaded" cpt where
-  cpt { boxes
-      , nodeId
+  cpt { nodeId
       , mEPOAPIUser
       , mEPOAPIToken
       , session } _ = do
@@ -251,12 +238,10 @@ epoSettingsLoadedCpt = here.component "epoSettingsLoaded" cpt where
         [ R2.col 12
           [ R2.row
             [ H.h2 {} [ H.text "EPO settings" ] ]
-          , editableUserField { boxes
-                              , callback: updateUserEPOAPIUser session nodeId 
+          , editableUserField { callback: updateUserEPOAPIUser session nodeId 
                               , description: "API User"
                               , mValue: mEPOAPIUser }
-          , editableUserField { boxes
-                              , callback: updateUserEPOAPIToken session nodeId 
+          , editableUserField { callback: updateUserEPOAPIToken session nodeId 
                               , description: "API Token"
                               , mValue: mEPOAPIToken }
           ]
@@ -266,8 +251,7 @@ epoSettingsLoadedCpt = here.component "epoSettingsLoaded" cpt where
 ------------------------------------------------------------
 
 type EditableUserField =
-  ( boxes       :: Boxes
-  , callback    :: String -> AffRESTError Unit
+  ( callback    :: String -> AffRESTError Unit
   , description :: String
   , mValue      :: Maybe String )
 
@@ -275,10 +259,11 @@ editableUserField :: R2.Leaf EditableUserField
 editableUserField = R2.leaf editableUserFieldCpt
 editableUserFieldCpt :: R.Component EditableUserField
 editableUserFieldCpt = here.component "editableUserField" cpt where
-  cpt { boxes: { errors }
-      , callback
+  cpt { callback
       , description
       , mValue } _ = do
+    { errors } <- AppStore.use
+    
     box <- T.useBox $ fromMaybe "" mValue
     isEditing <- T.useBox false
 
@@ -287,17 +272,20 @@ editableUserFieldCpt = here.component "editableUserField" cpt where
       , H.div { className: "input-group col-sm-6"}
         [ itemEditable { defaultVal: ""
                        , isEditing
-                       , onUpdate: \s -> do
-                           here.log2 ("[editableUserField] " <> description) s
-                           case s of
-                             "" -> pure unit
-                             _ -> do
-                               launchAff_ $ do
-                                 res <- callback s
-                                 handleRESTError here errors res $ \_result ->
-                                   liftEffect $ here.log ("[editableUserField] " <> description <> " updated")
-                       , valueBox: box }]
+                       , onUpdate: onUpdate errors
+                       , valueBox: box } ]
       ]
+
+    where
+      onUpdate errors s = do
+        here.log2 ("[editableUserField] " <> description) s
+        case s of
+          "" -> pure unit
+          _ -> do
+            launchAff_ $ do
+              res <- callback s
+              handleRESTError (R2.herePrefix here "[editableUserField]") errors res $ \_result ->
+                liftEffect $ here.log ("[editableUserField] " <> description <> " updated")
 
 
 ------------------------------------------------------------

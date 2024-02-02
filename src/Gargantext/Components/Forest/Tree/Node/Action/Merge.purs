@@ -28,7 +28,7 @@ mergeNode = R.createElement mergeNodeCpt
 mergeNodeCpt :: R.Component SubTreeParamsIn
 mergeNodeCpt = here.component "mergeNode" cpt
   where
-    cpt { boxes, dispatch, id, nodeType, session, subTreeParams } _ = do
+    cpt { dispatch, id, nodeType, session, subTreeParams } _ = do
       action <- T.useBox (MergeNode { params: Nothing })
       action' <- T.useLive T.unequal action
 
@@ -44,7 +44,6 @@ mergeNodeCpt = here.component "mergeNode" cpt
 
       pure $ Tools.panel { mError: Nothing }
         [ subTreeView { action
-                      , boxes
                       , dispatch
                       , id
                       , nodeType

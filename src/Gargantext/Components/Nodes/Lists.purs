@@ -17,7 +17,7 @@ import Gargantext.Components.Nodes.Lists.Tabs as Tabs
 import Gargantext.Components.Nodes.Lists.Types (CacheState(..))
 import Gargantext.Components.Table as Table
 import Gargantext.Config (defaultFrontends)
-import Gargantext.Config.REST (logRESTError, AffRESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Core.NgramsTable.Types (NgramsTerm(..))
 import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
@@ -74,7 +74,8 @@ listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
     R.useEffectOnce' $ do
       T.listen (\{ new } -> afterCacheStateChange new) cacheState
 
-    useLoader { errorHandler
+    useLoader { errorHandler: Nothing
+              , herePrefix: R2.herePrefix here "[listsLayoutWithKey]"
               , path
               , loader: loadCorpusWithChild
               , render: \corpusData@{ corpusId, corpusNode: NodePoly poly } ->
@@ -92,17 +93,14 @@ listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
                                 }
                             , Tabs.tabs {
                                 activeTab
-                              , boxes
                               , cacheState
                               , corpusData
                               , corpusId
                               , key: "listsLayoutWithKey-tabs-" <> (show cacheState')
                               , session
-                              , sidePanel
                               }
                             ] }
     where
-      errorHandler = logRESTError here "[listsLayoutWithKey]"
       afterCacheStateChange cacheState = do
         launchAff_ $ clearCache unit
         sessionUpdate $ setCacheState session nodeId cacheState
@@ -204,7 +202,8 @@ ngramsDocListCpt = here.component "ngramsDocList" cpt where
       , mListId: Just listId
       , mNgrams: Just ngrams
       , session } _ = do
-    useLoader { errorHandler
+    useLoader { errorHandler: Nothing
+              , herePrefix: R2.herePrefix here "[ngramsDocList]"
               , path: { corpusId, ngrams, session }
               , loader: loaderNgramsDocList
               , render: \ctx -> ngramsDocListLoaded { contexts: ctx
@@ -213,8 +212,6 @@ ngramsDocListCpt = here.component "ngramsDocList" cpt where
                                                     , ngrams
                                                     , session } []
               }
-    where
-      errorHandler = logRESTError here "[ngramsDocList]"
 
 type NgramsDocLoadProps =
   ( corpusId :: GT.CorpusId

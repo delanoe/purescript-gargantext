@@ -63,7 +63,7 @@ drawGraphCpt = here.component "drawGraph" cpt where
       , forceAtlas2Settings: fa2Settings
       } _ = do
 
-    boxes <- AppStore.use
+    { theme } <- AppStore.use
 
     { edgeConfluence
     , edgeWeight
@@ -116,12 +116,12 @@ drawGraphCpt = here.component "drawGraph" cpt where
 
         case Sigmax.readSigma rSigma of
           Nothing -> do
-            theme <- T.read boxes.theme
+            theme' <- T.read theme
             eSigma <- case R.readNullableRef elRef of
               Nothing -> do
                 _ <- ECC.error "elRef is empty"
                 pure $ Left "elRef is empty"
-              Just el -> Sigma.sigma el { settings: sigmaSettings theme }
+              Just el -> Sigma.sigma el { settings: sigmaSettings theme' }
             case eSigma of
               Left err -> here.warn2 "[drawGraph] error creating sigma" err
               Right sig -> do

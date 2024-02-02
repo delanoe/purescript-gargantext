@@ -344,27 +344,27 @@ panelActionCpt = here.component "panelAction" cpt
       pure $ actionDoc { nodeType } []
     cpt { action: Download, id, nodeType, session} _ =
       pure $ actionDownload { id, nodeType, session } []
-    cpt { action: Link {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
-      pure $ linkNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
-    cpt { action: ManageTeam, boxes, nodeType, id, session} _ =
-      pure $ actionManageTeam { boxes, id, nodeType, session } []
-    cpt { action: Merge {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
-      pure $ mergeNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
+    cpt { action: Link {subTreeParams}, dispatch, id, nodeType, session } _ =
+      pure $ linkNode { dispatch, id, nodeType, session, subTreeParams } []
+    cpt { action: ManageTeam, nodeType, id, session} _ =
+      pure $ actionManageTeam { id, nodeType, session } []
+    cpt { action: Merge {subTreeParams}, dispatch, id, nodeType, session } _ =
+      pure $ mergeNode { dispatch, id, nodeType, session, subTreeParams } []
     cpt { action: Move {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
-      pure $ moveNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
-    cpt { action : Publish {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
-      pure $ Share.publishNode { boxes, dispatch, id, nodeType, session, subTreeParams } []
+      pure $ moveNode { dispatch, id, nodeType, session, subTreeParams } []
+    cpt { action : Publish {subTreeParams}, dispatch, id, nodeType, session } _ =
+      pure $ Share.publishNode { dispatch, id, nodeType, session, subTreeParams } []
     cpt { action: Reconstruct , dispatch, nodeType } _ =
       pure $ update { dispatch, nodeType } []
     cpt { action: Refresh , dispatch, nodeType } _ =
       pure $ update { dispatch, nodeType } []
     cpt { action: ReloadWithSettings , dispatch, nodeType } _ =
       pure $ update { dispatch, nodeType } []
-    cpt { action: SearchBox, boxes, dispatch, id, session } _ =
-      pure $ actionSearch { boxes, dispatch, id: Just id, session } []
+    cpt { action: SearchBox, dispatch, id, session } _ =
+      pure $ actionSearch { dispatch, id: Just id, session } []
     cpt { action : Share, id, session } _ = pure $ Share.shareNode { id, session } []
     cpt { action: Upload, dispatch, id, nodeType, session} _ =
       pure $ actionUpload { dispatch, id, nodeType, session } []
-    cpt { action: WriteNodesDocuments, boxes, dispatch, id, session } _ =
-      pure $ actionWriteNodesDocuments { boxes, dispatch, id, session } []
+    cpt { action: WriteNodesDocuments, dispatch, id, session } _ =
+      pure $ actionWriteNodesDocuments { dispatch, id, session } []
     cpt _ _ = pure $ H.div {} []

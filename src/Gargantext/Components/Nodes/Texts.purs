@@ -7,7 +7,6 @@ import Data.Maybe (Maybe(..), isJust)
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (launchAff_)
-import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (Elevation(..))
@@ -75,15 +74,12 @@ textsLayoutCpt = here.component "textsLayout" cpt where
 
 textsLayoutWithKey :: R2.Leaf ( key :: String | Props )
 textsLayoutWithKey = R2.leaf textsLayoutWithKeyCpt
-
 textsLayoutWithKeyCpt :: R.Component ( key :: String | Props )
 textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt where
   cpt { frontends
       , nodeId
       } _ = do
     session <- useSession
-
-    boxes@{ sidePanelTexts } <- AppStore.use
 
     cacheState <- T.useBox $ getCacheState LT.CacheOff session nodeId
     cacheState' <- T.useLive T.unequal cacheState
@@ -95,7 +91,8 @@ textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt where
     R.useEffectOnce' $ do
       T.listen (\{ new } -> afterCacheStateChange new) cacheState
 
-    useLoader { errorHandler
+    useLoader { errorHandler: Nothing
+              , herePrefix: R2.herePrefix here "[textsLayoutWithKey]"
               , loader: loadCorpusWithChild
               , path: { nodeId, session }
               , render: \corpusData@{ corpusId, corpusNode } ->
@@ -117,20 +114,17 @@ textsLayoutWithKeyCpt = here.component "textsLayoutWithKey" cpt where
                       }
                     ,
                       tabs
-                      { boxes
-                      , cacheState
+                      { cacheState
                       , corpusData
                       , corpusId
                       , eChartsInstance
                       , frontends
                       , session
-                      , sidePanel: sidePanelTexts
                       , yearFilter
                       }
                     ]
               }
     where
-      errorHandler = logRESTError here "[textsLayoutWithKey]"
       afterCacheStateChange _cacheState = do
         launchAff_ $ clearCache unit
         -- TODO
@@ -153,14 +147,12 @@ modeTabType MoreLikeFav    = CTabAuthors  -- TODO
 modeTabType MoreLikeTrash  = CTabSources  -- TODO
 
 type TabsProps =
-  ( boxes           :: Boxes
-  , cacheState      :: T.Box LT.CacheState
+  ( cacheState      :: T.Box LT.CacheState
   , corpusData      :: CorpusData
   , corpusId        :: NodeID
   , eChartsInstance :: T.Box (Maybe EChartsInstance)
   , frontends       :: Frontends
   , session         :: Session
-  , sidePanel       :: T.Box (Maybe (Record TT.SidePanel))
   , yearFilter      :: T.Box (Maybe Year)
   )
 
@@ -169,14 +161,12 @@ tabs props = R.createElement tabsCpt props []
 tabsCpt :: R.Component TabsProps
 tabsCpt = here.component "tabs" cpt
   where
-    cpt { boxes
-        , cacheState
+    cpt { cacheState
         , corpusId
         , corpusData
         , eChartsInstance
         , frontends
         , session
-        , sidePanel
         , yearFilter } _ = do
 
       let
@@ -215,7 +205,7 @@ tabsCpt = here.component "tabs" cpt
         , activeTab
         , tabs: [
             "Documents"       /\ R.fragment [
-                histoRender { boxes, path, onClick, onInit, reload: chartReload, session } []
+                histoRender { path, onClick, onInit, reload: chartReload, session } []
               , docView' path chartReload TabDocs
               ]
           , "Trash"           /\ docView' path chartReload TabTrash
@@ -229,8 +219,7 @@ tabsCpt = here.component "tabs" cpt
                       , listId: corpusData.defaultListId
                       , limit: Nothing
                       , tabType: TabCorpus TabDocs }
-        docView' path chartReload tabType = docView { boxes
-                                                    , cacheState
+        docView' path chartReload tabType = docView { cacheState
                                                     , chartReload
                                                     , corpusData
                                                     , corpusId
@@ -239,7 +228,6 @@ tabsCpt = here.component "tabs" cpt
                                                       -- , path
                                                     , session
                                                     , tabType
-                                                    , sidePanel
                                                     , yearFilter
                                                     } []
 
@@ -252,14 +240,13 @@ histoRender :: R2.Component HistoProps
 histoRender = R.createElement histoRenderCpt
 histoRenderCpt :: R.Component HistoProps
 histoRenderCpt = here.component "histoRender" cpt where
-  cpt { boxes, path, onClick, onInit, reload, session } _ = do
+  cpt { path, onClick, onInit, reload, session } _ = do
     _ <- T.useLive T.unequal reload
 
-    pure $ histo { boxes, path, onClick, onInit, session }
+    pure $ histo { path, onClick, onInit, session }
 
 type DocViewProps a =
-  ( boxes       :: Boxes
-  , cacheState  :: T.Box LT.CacheState
+  ( cacheState  :: T.Box LT.CacheState
   , chartReload :: T2.ReloadS
   , corpusData  :: CorpusData
   , corpusId    :: NodeID
@@ -268,7 +255,6 @@ type DocViewProps a =
   -- , path     :: Record DT.Path
   , session     :: Session
   , tabType     :: TabSubType a
-  , sidePanel   :: T.Box (Maybe (Record TT.SidePanel))
   , yearFilter  :: T.Box (Maybe Year)
   )
 
@@ -281,19 +267,16 @@ docViewCpt = here.component "docView" cpt
       pure $ DT.docViewLayout $ docViewLayoutRec props
 
 -- docViewLayoutRec :: forall a. DocViewProps a -> Record DT.LayoutProps
-docViewLayoutRec { boxes
-                 , cacheState
+docViewLayoutRec { cacheState
                  , chartReload
                  , corpusId
                  , frontends
                  , listId
                  , session
                  , tabType: TabDocs
-                 , sidePanel
                  , yearFilter
                  } =
-  { boxes
-  , cacheState
+  { cacheState
   , chart  : H.div {} []
   , chartReload
   , frontends
@@ -303,24 +286,20 @@ docViewLayoutRec { boxes
     -- ^ TODO merge nodeId and corpusId in DT
   , session
   , showSearch: true
-  , sidePanel
   , tabType: TabCorpus TabDocs
   , totalRecords: 4737
   , yearFilter
   }
-docViewLayoutRec { boxes
-                 , cacheState
+docViewLayoutRec { cacheState
                  , chartReload
                  , corpusId
                  , frontends
                  , listId
                  , session
                  , tabType: TabMoreLikeFav
-                 , sidePanel
                  , yearFilter
                  } =
-  { boxes
-  , cacheState
+  { cacheState
   , chart  : H.div {} []
   , chartReload
   , frontends
@@ -330,24 +309,20 @@ docViewLayoutRec { boxes
     -- ^ TODO merge nodeId and corpusId in DT
   , session
   , showSearch: false
-  , sidePanel
   , tabType: TabCorpus TabMoreLikeFav
   , totalRecords: 4737
   , yearFilter
   }
-docViewLayoutRec { boxes
-                 , cacheState
+docViewLayoutRec { cacheState
                  , chartReload
                  , corpusId
                  , frontends
                  , listId
                  , session
                  , tabType: TabMoreLikeTrash
-                 , sidePanel
                  , yearFilter
                  } =
-  { boxes
-  , cacheState
+  { cacheState
   , chart  : H.div {} []
   , chartReload
   , frontends
@@ -357,24 +332,20 @@ docViewLayoutRec { boxes
   -- ^ TODO merge nodeId and corpusId in DT
   , session
   , showSearch: false
-  , sidePanel
   , tabType: TabCorpus TabMoreLikeTrash
   , totalRecords: 4737
   , yearFilter
   }
-docViewLayoutRec { boxes
-                 , cacheState
+docViewLayoutRec { cacheState
                  , chartReload
                  , corpusId
                  , frontends
                  , listId
                  , session
                  , tabType: TabTrash
-                 , sidePanel
                  , yearFilter
                  } =
-  { boxes
-  , cacheState
+  { cacheState
   , chart  : H.div {} []
   , chartReload
   , frontends
@@ -384,25 +355,21 @@ docViewLayoutRec { boxes
   -- ^ TODO merge nodeId and corpusId in DT
   , session
   , showSearch: true
-  , sidePanel
   , tabType: TabCorpus TabTrash
   , totalRecords: 4737
   , yearFilter
   }
 -- DUMMY
-docViewLayoutRec { boxes
-                 , cacheState
+docViewLayoutRec { cacheState
                  , chartReload
                  , corpusId
                  , frontends
                  , listId
                  , session
-                 , sidePanel
                  , tabType
                  , yearFilter
                  } =
-  { boxes
-  , cacheState
+  { cacheState
   , chart  : H.div {} []
   , chartReload
   , frontends
@@ -412,7 +379,6 @@ docViewLayoutRec { boxes
   -- ^ TODO merge nodeId and corpusId in DT
   , session
   , showSearch: true
-  , sidePanel
   , tabType: TabCorpus TabTrash
   , totalRecords: 4737
   , yearFilter
@@ -423,9 +389,8 @@ docViewLayoutRec { boxes
 
 textsSidePanel :: R2.Leaf ()
 textsSidePanel = R2.leaf textsSidePanelCpt
-
 textsSidePanelCpt :: R.Component ()
-textsSidePanelCpt = here.component "sidePanel" cpt where
+textsSidePanelCpt = here.component "textsSidePanel" cpt where
   cpt _ _ = do
 
     { sidePanelState
@@ -581,7 +546,8 @@ sideTextCpt = here.component "sideText" cpt where
     --   , state
     --   }
 
-    useLoader { errorHandler: logRESTError here "[sidePanelText]"
+    useLoader { errorHandler: Nothing
+              , herePrefix: R2.herePrefix here "[sideText]"
               , loader: \{ path } -> loadData path
               , path: { path }
               , render: \loaded -> loadedSideText { loaded

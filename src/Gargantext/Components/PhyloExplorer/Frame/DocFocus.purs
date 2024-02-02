@@ -64,7 +64,7 @@ docFocusCpt = here.component "main" cpt where
     -- | Hooks
     -- |
     useLoaderEffect
-      { errorHandler: logRESTError here "[docFocus]"
+      { errorHandler: logRESTError (R2.herePrefix here "[docFocus]")
       , loader: loadData
       , path
       , state

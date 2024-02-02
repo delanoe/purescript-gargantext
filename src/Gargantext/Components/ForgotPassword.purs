@@ -3,7 +3,7 @@ module Gargantext.Components.ForgotPassword where
 import Gargantext.Prelude
 
 import Data.Maybe (Maybe(..))
-import Gargantext.Config.REST (AffRESTError, logRESTError, get)
+import Gargantext.Config.REST (AffRESTError, get)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -16,11 +16,11 @@ type ForgotPasswordProps = ( server :: String, uuid :: String )
 
 forgotPasswordLayout :: R2.Component ForgotPasswordProps
 forgotPasswordLayout = R.createElement forgotPasswordLayoutCpt
-
 forgotPasswordLayoutCpt :: R.Component ForgotPasswordProps
 forgotPasswordLayoutCpt = here.component "forgotPasswordLayout" cpt where
   cpt { server, uuid } _ = do
-    useLoader { errorHandler
+    useLoader { errorHandler: Nothing
+              , herePrefix: R2.herePrefix here "[forgotPasswordLayout]"
               , loader: loadPassword
               , path: { server, uuid }
               , render: \{ password } ->
@@ -28,8 +28,6 @@ forgotPasswordLayoutCpt = here.component "forgotPasswordLayout" cpt where
                   H.div {className: "row"} [ H.div {className: "mx-auto"} [ H.img { src: "images/logo.png" } ] ]
                 , H.div {className: "row"} [ H.div {className: "col"} [ H.text ("Your new password is: " <> password) ] ]
                   ]}
-    where
-      errorHandler = logRESTError here "[forgotPasswordLayout]"
 
 ------------------------------------
 

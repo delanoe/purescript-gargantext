@@ -37,12 +37,11 @@ linkNode = R.createElement linkNodeCpt
 linkNodeCpt :: R.Component SubTreeParamsIn
 linkNodeCpt = here.component "linkNode" cpt
   where
-    cpt { boxes, dispatch, id, nodeType, session, subTreeParams } _ = do
+    cpt { dispatch, id, nodeType, session, subTreeParams } _ = do
       action <- T.useBox (LinkNode { nodeType: Nothing, params: Nothing})
 
       pure $
           linkNode' { action
-                    , boxes
                     , dispatch
                     , id
                     , nodeType
@@ -61,7 +60,7 @@ linkNode' = R.createElement linkNodeCpt'
 linkNodeCpt' :: R.Component Props
 linkNodeCpt' = here.component "__clone__" cpt
   where
-    cpt { boxes, dispatch, id, nodeType, session, subTreeParams, action } _ = do
+    cpt { dispatch, id, nodeType, session, subTreeParams, action } _ = do
 
       action' <- T.useLive T.unequal action
 
@@ -78,7 +77,6 @@ linkNodeCpt' = here.component "__clone__" cpt
       pure $
         Tools.panel { mError: Nothing }
           [ subTreeView { action
-                        , boxes
                         , dispatch
                         , id
                         , nodeType

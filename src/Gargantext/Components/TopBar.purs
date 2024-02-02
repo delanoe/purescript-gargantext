@@ -333,8 +333,7 @@ handedChooserCpt = here.component "handedChooser" cpt where
   cpt _ _ = do
     -- | States
     -- |
-    { handed
-    } <- AppStore.use
+    { handed } <- AppStore.use
 
     handed' <- R2.useLive' handed
 

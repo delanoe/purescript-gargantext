@@ -119,7 +119,8 @@ ratingSimpleLoaderCpt = here.component "ratingSimpleLoader" cpt where
       , corpusId
       , session
       } _ = do
-    useLoader { errorHandler
+    useLoader { errorHandler: Nothing
+              , herePrefix: R2.herePrefix here "[ratingSimpleLoader]"
               , loader: loadDocumentContext session
               , path: { docId, corpusId }
               , render: \{ nc_category } -> do
@@ -128,12 +129,6 @@ ratingSimpleLoaderCpt = here.component "ratingSimpleLoader" cpt where
                                      , corpusId
                                      , category
                                      , session } [] }
-    where
-      errorHandler err = do
-        here.warn2 "[pageLayout] RESTError" err
-        case err of
-          ReadJSONError err' -> here.warn2 "[pageLayout] ReadJSONError" $ show err'
-          _ -> pure unit
 
 type ContextParams =
   ( docId    :: NodeID

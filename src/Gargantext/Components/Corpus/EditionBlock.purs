@@ -42,7 +42,7 @@ editionBlockCpt = here.component "main" cpt where
     -- | Computed
     -- |
     let
-      errorHandler = logRESTError here "[corpusLayout]"
+      errorHandler = logRESTError (R2.herePrefix here "[corpusLayout]")
 
     -- | Hooks
     -- |

@@ -109,12 +109,11 @@ pie = R2.leaf pieCpt
 pieCpt :: R.Component Props
 pieCpt = here.component "pie" cpt
   where
-    cpt { boxes, path, session, onClick, onInit } _ = do
+    cpt { path, session, onClick, onInit } _ = do
       reload <- T.useBox T2.newReload
 
       pure $ metricsWithCacheLoadView
-        { boxes
-        , getMetricsHash
+        { getMetricsHash
         , handleResponse
         , loaded: loadedPie
         , mkRequest: mkRequest session
@@ -144,12 +143,11 @@ bar props = R.createElement barCpt props []
 barCpt :: R.Component Props
 barCpt = here.component "bar" cpt
   where
-    cpt { boxes, path, session, onClick, onInit} _ = do
+    cpt { path, session, onClick, onInit} _ = do
       reload <- T.useBox T2.newReload
 
       pure $ metricsWithCacheLoadView {
-           boxes
-         , getMetricsHash
+           getMetricsHash
          , handleResponse
          , loaded: loadedBar
          , mkRequest: mkRequest session

@@ -348,15 +348,11 @@ pageLayoutCpt = here.component "pageLayout" cpt
     cpt { container, deletions, frontends, path, session, totalRecords } _ = do
       path' <- T.useLive T.unequal path
 
-      useLoader { errorHandler
+      useLoader { errorHandler: Nothing
+                , herePrefix: R2.herePrefix here "[pageLayout]"
                 , loader: loadPage
                 , path: path'
                 , render: \rowsLoaded -> page { container, deletions, frontends, path, rowsLoaded, session, totalRecords } [] }
-    errorHandler err = do
-      here.warn2 "[pageLayout] RESTError" err
-      case err of
-        ReadJSONError err' -> here.warn2 "[pageLayout] ReadJSONError" $ show err'
-        _ -> pure unit
 
 page :: R2.Component PageProps
 page = R.createElement pageCpt

@@ -55,7 +55,7 @@ nodeCpt = here.component "node" cpt where
     -- | Hooks
     -- |
     useLoaderEffect
-      { errorHandler: logRESTError here "[documentLayoutWithKey]"
+      { errorHandler: logRESTError (R2.herePrefix here "[documentLayoutWithKey]")
       , loader: loadData
       , path
       , state

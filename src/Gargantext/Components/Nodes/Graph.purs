@@ -56,7 +56,7 @@ nodeCpt = here.component "node" cpt where
 
     -- | Computed
     -- |
-    let errorHandler = logRESTError here "[node]"
+    let errorHandler = logRESTError (R2.herePrefix here "[node]")
 
     -- | Hooks
     -- |

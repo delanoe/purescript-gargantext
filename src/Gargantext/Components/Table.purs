@@ -104,7 +104,6 @@ tableHeaderWithRenameLayoutCpt = here.component "tableHeaderWithRenameLayoutCpt"
 
 tableHeaderWithRenameBoxedLayout :: R2.Component TableHeaderWithRenameBoxedLayoutProps
 tableHeaderWithRenameBoxedLayout = R.createElement tableHeaderWithRenameBoxedLayoutCpt
-
 tableHeaderWithRenameBoxedLayoutCpt :: R.Component TableHeaderWithRenameBoxedLayoutProps
 tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxedLayoutCpt" cpt
   where
@@ -120,8 +119,7 @@ tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxed
       cacheState' <- T.useLive T.unequal cacheState
       CorpusInfo {title, desc, query, authors} <- T.read corpusInfoS
 
-      { expandTableEdition
-      } <- AppStore.use
+      { expandTableEdition } <- AppStore.use
 
       expandTableEdition' <- R2.useLive' expandTableEdition
 

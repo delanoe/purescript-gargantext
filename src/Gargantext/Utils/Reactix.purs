@@ -111,6 +111,13 @@ here mod =
   , info3       : Console.print3  Console.Main mod Console.Info
   }
 
+type Prefix = String
+newtype HerePrefix = HerePrefix { here   :: Here
+                                , prefix :: Prefix }
+
+herePrefix :: Here -> Prefix -> HerePrefix
+herePrefix here prefix = HerePrefix { here, prefix }
+
 -- newtypes
 type NTHooksComponent props = props -> Array R.Element -> R.Hooks R.Element
 newtype NTComponent p = NTComponent (EffectFn1 p R.Element)

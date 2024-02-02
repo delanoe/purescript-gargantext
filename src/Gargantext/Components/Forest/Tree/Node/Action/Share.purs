@@ -18,7 +18,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Types as Action
 import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
 import Gargantext.Components.InputWithAutocomplete (inputWithAutocomplete)
-import Gargantext.Config.REST (AffRESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, get, post)
@@ -68,14 +68,12 @@ shareNodeCpt :: R.Component ShareNode
 shareNodeCpt = here.component "shareNode" cpt
   where
     cpt { id, session } _ = do
-      useLoader {
-        loader: getCompletionsReq
-      , path: { session }
-      , render: \completions -> shareNodeInner { completions, id, session } []
-      , errorHandler
-      }
-      where
-        errorHandler = logRESTError here "[shareNode]"
+      useLoader { errorHandler: Nothing
+                , herePrefix: R2.herePrefix here "[shareNode]"
+                , loader: getCompletionsReq
+                , path: { session }
+                , render: \completions -> shareNodeInner { completions, id, session } []
+                }
 
 type ShareNodeInner =
   ( completions :: Array String
@@ -129,7 +127,7 @@ publishNode = R.createElement publishNodeCpt
 publishNodeCpt :: R.Component SubTreeParamsIn
 publishNodeCpt = here.component "publishNode" cpt
   where
-    cpt { boxes, dispatch, id, nodeType, session, subTreeParams } _ = do
+    cpt { dispatch, id, nodeType, session, subTreeParams } _ = do
       action <- T.useBox (Action.SharePublic { params: Nothing })
       action' <- T.useLive T.unequal action
 
@@ -142,7 +140,6 @@ publishNodeCpt = here.component "publishNode" cpt
 
       pure $ Tools.panel { mError: Nothing }
         [ subTreeView { action
-                      , boxes
                       , dispatch
                       , id
                       , nodeType

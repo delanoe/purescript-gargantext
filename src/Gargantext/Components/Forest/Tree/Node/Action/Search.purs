@@ -3,10 +3,11 @@ module Gargantext.Components.Forest.Tree.Node.Action.Search where
 import Gargantext.Prelude
 
 import Data.Array as A
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.App.Store as Store
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar (searchBar)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (defaultSearch)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
@@ -28,8 +29,7 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Search"
 
 
 type Props =
-  ( boxes     :: Boxes
-  , dispatch  :: Action -> Aff Unit
+  ( dispatch  :: Action -> Aff Unit
   , id        :: Maybe ID
   , session   :: Session )
 
@@ -38,18 +38,14 @@ actionSearch :: R2.Component Props
 actionSearch = R.createElement actionSearchCpt
 actionSearchCpt :: R.Component Props
 actionSearchCpt = here.component "actionSearch" cpt where
-  cpt props@({ boxes: { errors }, session }) _ = do
-    useLoader { errorHandler: errorHandler errors
+  cpt props@({ session }) _ = do
+    { errors } <- Store.use
+    useLoader { errorHandler: Nothing
+              , herePrefix: R2.herePrefix here "[actionSearch]"
               , loader: loadLanguages
               , path: { session }
               , render: \langs ->
                  actionSearchWithLangs (Record.merge props { langs }) [] }
-    where
-      errorHandler errors error = do
-        T.modify_ (A.cons $ GT.FRESTError { error }) errors
-        case error of
-          ReadJSONError err' -> here.warn2 "[actionSearch] ReadJSONError" $ show err'
-          _                  -> here.warn2 "[actionSearch] RESTError" error
 
 type PropsWithLangs =
   ( langs :: Array Lang
@@ -61,7 +57,8 @@ actionSearchWithLangs = R.createElement actionSearchWithLangsCpt
 actionSearchWithLangsCpt :: R.Component PropsWithLangs
 actionSearchWithLangsCpt = here.component "actionSearchWithLangs" cpt
   where
-    cpt { boxes: { errors }, dispatch, id, langs, session } _ = do
+    cpt { dispatch, id, langs, session } _ = do
+      { errors } <- Store.use
       search <- T.useBox $ defaultSearch { node_id = id }
       pure $ R.fragment
         [ H.p { className: "action-search mx-2" }

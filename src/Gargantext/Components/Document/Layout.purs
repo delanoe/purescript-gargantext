@@ -73,13 +73,12 @@ layoutCpt = here.component "layout" cpt where
     case A.head listIds of
       Nothing -> pure $ H.div {} [ H.text "No list supplied!" ]
       Just listId ->
-        useLoader { errorHandler
+        useLoader { errorHandler: Nothing
+                  , herePrefix: R2.herePrefix here "[layout]"
                   , loader: \p -> getContextNgrams session p.contextId p.listId
                   , path: { contextId: nodeId, listId }
                   , render: \contextNgrams ->
                       layoutWithContextNgrams $ Record.merge props { contextNgrams } }
-    where
-      errorHandler = logRESTError here "[layout]"
 
 type WithContextNgramsProps =
   ( contextNgrams :: Array NgramsTerm

@@ -145,13 +145,12 @@ treeSearchContainerCpt :: R.Component ContainerProps
 treeSearchContainerCpt = here.component "treeSearchContainerCpt" cpt where
   cpt {query, visible, session } _ = do
 
-    useLoader { errorHandler
+    useLoader { errorHandler: Nothing
+              , herePrefix: R2.herePrefix here "[treeSearchContainer]"
               , path: { session, query }
               , loader: loadSearch
               , render: \searchData -> treeSearchRenderContainer { visible, session, searchData }
     }
-    where
-      errorHandler = logRESTError here "[treeSearchContainer]"
 
 treeSearchRenderContainer :: R2.Leaf RenderContainerProps
 treeSearchRenderContainer = R2.leaf treeSearchRenderContainerCpt

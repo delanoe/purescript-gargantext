@@ -6,11 +6,11 @@ module Gargantext.Components.Nodes.Annuaire.User.Contact
 import Gargantext.Prelude
 
 import Data.Lens (view)
+import Data.Maybe (Maybe(..))
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..))
 import Gargantext.Components.GraphQL.Endpoints (getAnnuaireContact)
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (ContactData', HyperdataContact(..))
-import Gargantext.Config.REST (logRESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Types (NodeID)
@@ -30,12 +30,8 @@ type Props =
 
 contactLayout :: R2.Leaf ( key :: String | Props )
 contactLayout = R2.leaf contactLayoutCpt
-
 contactLayoutCpt :: R.Component ( key :: String | Props )
 contactLayoutCpt = here.component "layout" cpt where
-  -- Helpers
-  errorHandler = logRESTError here "[contactLayoutWithKey]"
-
   -- Component
   cpt { nodeId
       } _ = do
@@ -45,7 +41,8 @@ contactLayoutCpt = here.component "layout" cpt where
     -- _ /\ reload <- R2.useBox' T2.newReload
 
     useLoader
-      { errorHandler
+      { errorHandler: Nothing
+      , herePrefix: R2.herePrefix here "[contactLayout]"
       , loader: getAnnuaireContact session
       , path: nodeId
       , render:

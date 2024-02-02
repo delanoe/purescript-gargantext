@@ -24,7 +24,6 @@ import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Components.ListSelection as ListSelection
 import Gargantext.Components.ListSelection.Types as ListSelection
-import Gargantext.Config.REST (logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (Session(..))
@@ -131,12 +130,11 @@ componentIMT = R.createElement componentIMTCpt
 componentIMTCpt :: R.Component ComponentIMTProps
 componentIMTCpt = here.component "componentIMT" cpt where
   cpt { search, session } _  = do
-    useLoader { errorHandler
+    useLoader { errorHandler: Nothing
+              , herePrefix: R2.herePrefix here "[componentIMT]"
               , loader: \_ -> getIMTSchools session
               , path: unit
               , render: \schools -> componentWithIMTOrgs { schools, search } [] }
-    where
-      errorHandler = logRESTError here "[componentIMT]"
 
 type ComponentWithIMTOrgsProps =
   ( schools :: Array GQLIMT.School
@@ -396,13 +394,12 @@ pubmedInput = R.createElement pubmedInputCpt
 pubmedInputCpt :: R.Component PubmedInputProps
 pubmedInputCpt = here.component "pubmedInput" cpt where
   cpt { search, session: session@(Session { treeId }) } _ = do
-    useLoader { errorHandler
+    useLoader { errorHandler: Nothing
+              , herePrefix: R2.herePrefix here "[pubmedInput]"
               , loader: \_ -> getUser session treeId
               , path: unit
               , render: \user -> pubmedInputLoaded { pubmedAPIKey: user.u_hyperdata.pubmed_api_key
                                                    , search } [] }
-    where
-      errorHandler = logRESTError here "[pubmedInput]"
 
 
 type PubmedInputLoadedProps = (
@@ -449,14 +446,13 @@ epoInput = R.createElement epoInputCpt
 epoInputCpt :: R.Component EPOInputProps
 epoInputCpt = here.component "epoInput" cpt where
   cpt { search, session: session@(Session { treeId }) } _ = do
-    useLoader { errorHandler
+    useLoader { errorHandler: Nothing
+              , herePrefix: R2.herePrefix here "[epoInput]"
               , loader: \_ -> getUser session treeId
               , path: unit
               , render: \user -> epoInputLoaded { epoAPIUser: user.u_hyperdata.epo_api_user
                                                 , epoAPIToken: user.u_hyperdata.epo_api_token
                                                 , search } [] }
-    where
-      errorHandler = logRESTError here "[epoInput]"
 
 
 type EPOInputLoadedProps = (
@@ -713,9 +709,10 @@ triggerSearch { onSearch, errors, session, selection, search } =
       Just id -> do
         -- liftEffect $ here.log2 "[triggerSearch] searchQuery" $ searchQuery selection search
         eTask <- performSearch session id $ searchQuery selection search
-        handleRESTError here errors eTask $ \task -> liftEffect $ do
-          -- here.log2 "[triggerSearch] task" task
-          onSearch task
+        handleRESTError (R2.herePrefix here "[triggerSearch]") errors eTask $
+          \task -> liftEffect $ do
+            -- here.log2 "[triggerSearch] task" task
+            onSearch task
 
     --liftEffect $ do
     --  log2 "Return:" r
