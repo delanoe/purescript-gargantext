@@ -37,7 +37,7 @@ import Gargantext.Components.Tile (tileBlock)
 import Gargantext.Components.TopBar as TopBar
 import Gargantext.Components.TreeSearch (treeSearch)
 import Gargantext.Config (defaultFrontends, defaultBackends)
-import Gargantext.Config.REST (AffRESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Context.Session as SessionContext
 import Gargantext.Ends (Backend)
 import Gargantext.Hooks.Resize (ResizeType(..), useResizeHandler)
@@ -279,8 +279,7 @@ forestCpt = R.memo' $ here.component "forest" cpt where
         { className: "router__aside__inner" }
         [
           forestLayout
-          { boxes
-          , frontends: defaultFrontends
+          { frontends: defaultFrontends
           }
         ]
       ,
@@ -518,7 +517,7 @@ dashboardCpt = here.component "dashboard" cpt
     cpt props@{ boxes, nodeId } _ = do
       let sessionProps = RE.pick props :: Record SessionProps
       pure $ authed (Record.merge { content: \session ->
-                                     dashboardLayout { boxes, nodeId, session } [] } sessionProps) []
+                                     dashboardLayout { nodeId, session } [] } sessionProps) []
 
 --------------------------------------------------------------
 
@@ -730,12 +729,10 @@ user :: R2.Component SessionNodeProps
 user = R.createElement userCpt
 userCpt :: R.Component SessionNodeProps
 userCpt = here.component "user" cpt where
-  cpt props@{ boxes
-            , nodeId } _ = do
+  cpt props@{ nodeId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
-                                   userLayout { boxes
-                                              , frontends: defaultFrontends
+                                   userLayout { frontends: defaultFrontends
                                               , nodeId
                                               , session } [] } sessionProps) []
 

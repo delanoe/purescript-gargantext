@@ -106,17 +106,14 @@ type UploadFile =
 uploadFileView :: R2.Leaf Props
 uploadFileView = R2.leaf uploadFileViewCpt
 uploadFileViewCpt :: R.Component Props
-uploadFileViewCpt = here.component "uploadFileView" cpt where
-  cpt props@({ session }) _ = do
-    useLoader { errorHandler
+uploadFileViewCpt = R2.hereComponent here "uploadFileView" hCpt where
+  hCpt hp props@({ session }) _ = do
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , loader: loadLanguages
               , path: { session }
               , render: \langs ->
               uploadFileViewWithLangs (Record.merge props { langs }) }
-    where
-      errorHandler err = case err of
-        ReadJSONError err' -> here.warn2 "[uploadFileView] ReadJSONError" $ show err'
-        _                  -> here.warn2 "[uploadFileView] RESTError" err
 
 type PropsWithLangs =
   ( langs :: Array Lang
@@ -734,17 +731,14 @@ uploadTermButtonCpt = here.component "uploadTermButton" cpt
 uploadFrameCalcView :: R2.Component Props
 uploadFrameCalcView = R.createElement uploadFrameCalcViewCpt
 uploadFrameCalcViewCpt :: R.Component Props
-uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt where
-  cpt props@({ session }) _ = do
-    useLoader { errorHandler
+uploadFrameCalcViewCpt = R2.hereComponent here "uploadFrameCalcView" hCpt where
+  hCpt hp props@({ session }) _ = do
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , loader: loadLanguages
               , path: { session }
               , render: \langs ->
               uploadFileViewWithLangs (Record.merge props { langs }) }
-    where
-      errorHandler err = case err of
-        ReadJSONError err' -> here.warn2 "[uploadFileView] ReadJSONError" $ show err'
-        _                  -> here.warn2 "[uploadFileView] RESTError" err
 
 uploadFrameCalcViewWithLangs :: R2.Component PropsWithLangs
 uploadFrameCalcViewWithLangs = R.createElement uploadFrameCalcViewWithLangsCpt

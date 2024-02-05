@@ -5,6 +5,7 @@ import Gargantext.Prelude
 import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
+import Gargantext.Components.App.Store as Store
 import Gargantext.Components.Nodes.Corpus.Chart.Types (MetricsProps, ReloadPath)
 import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Hooks.Loader (HashedResponse, useLoader, useLoaderWithCacheAPI)
@@ -32,26 +33,22 @@ cacheName = "metrics"
 metricsLoadView :: forall a. Eq a => Record (MetricsLoadViewProps a) -> R.Element
 metricsLoadView p = R.createElement metricsLoadViewCpt p []
 metricsLoadViewCpt :: forall a. Eq a => R.Component (MetricsLoadViewProps a)
-metricsLoadViewCpt = here.component "metricsLoadView" cpt
-  where
-    cpt { boxes: boxes@{ errors }
-        , getMetrics
-        , loaded
-        , onClick
-        , onInit
-        , path
-        , reload
-        , session } _ = do
-      reload' <- T.useLive T.unequal reload
+metricsLoadViewCpt = R2.hereComponent here "metricsLoadView" hCpt where
+  hCpt hp { getMetrics
+          , loaded
+          , onClick
+          , onInit
+          , path
+          , reload
+          , session } _ = do
+    { errors } <- Store.use
+    reload' <- T.useLive T.unequal reload
 
-      useLoader { errorHandler
-                , loader: getMetrics session
-                , path: reload' /\ path
-                , render: \l -> loaded { boxes, path, reload, session, onClick, onInit } l }
-      where
-        errorHandler error = do
-          T.modify_ (A.cons $ FRESTError { error }) errors
-          here.warn2 "RESTError" error
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
+              , loader: getMetrics session
+              , path: reload' /\ path
+              , render: \l -> loaded { path, reload, session, onClick, onInit } l }
 
 type MetricsWithCacheLoadViewProps res ret =
   ( getMetricsHash :: Session -> ReloadPath -> AffRESTError Hash
@@ -71,8 +68,7 @@ metricsWithCacheLoadViewCpt :: forall res ret.
                                R.Component (MetricsWithCacheLoadViewProps res ret)
 metricsWithCacheLoadViewCpt = here.component "metricsWithCacheLoadView" cpt
   where
-    cpt { boxes
-        , getMetricsHash
+    cpt { getMetricsHash
         , handleResponse
         , loaded
         , mkRequest
@@ -83,10 +79,9 @@ metricsWithCacheLoadViewCpt = here.component "metricsWithCacheLoadView" cpt
         , onInit } _ = do
       reload' <- T.useLive T.unequal reload
 
-      useLoaderWithCacheAPI { boxes
-                            , cacheEndpoint: (getMetricsHash session)
+      useLoaderWithCacheAPI { cacheEndpoint: (getMetricsHash session)
                             , handleResponse
                             , mkRequest
                             , path: (reload' /\ path)
-                            , renderer: \metrics -> loaded { boxes, path, reload, session, onClick, onInit, metrics }
+                            , renderer: \metrics -> loaded { path, reload, session, onClick, onInit, metrics }
                             , spinnerClass: Just "echarts-for-react-spinner" }

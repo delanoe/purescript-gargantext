@@ -7,12 +7,12 @@ import Data.Array as A
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
-import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.App.Store as Store
 import Gargantext.Components.Forest.Tree.Node.Action (Props, subTreeOut, setTreeOut)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..), SubTreeOut(..))
-import Gargantext.Config.REST (AffRESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
@@ -28,8 +28,7 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools.SubTree"
 
 type SubTreeParamsIn =
-  ( boxes         :: Boxes
-  , subTreeParams :: SubTreeParams
+  ( subTreeParams :: SubTreeParams
   | Props
   )
 
@@ -42,36 +41,32 @@ type SubTreeParamsProps =
 subTreeView :: R2.Component SubTreeParamsProps
 subTreeView = R.createElement $ R.memo' subTreeViewCpt
 subTreeViewCpt :: R.Component SubTreeParamsProps
-subTreeViewCpt = here.component "subTreeView" cpt
-  where
-    cpt { action
-        , boxes
-        , dispatch
-        , id
-        , nodeType
-        , session
-        , subTreeParams
-        } _ = do
-      let
-        SubTreeParams {showtypes} = subTreeParams
-      --  (valAction /\ setAction)  = action
-      -- _ <- pure $ setAction (const $ setTreeOut valAction Nothing)
+subTreeViewCpt = R2.hereComponent here "subTreeView" hCpt where
+  hCpt hp { action
+          , dispatch
+          , id
+          , nodeType
+          , session
+          , subTreeParams
+          } _ = do
+    let
+      SubTreeParams {showtypes} = subTreeParams
+    --  (valAction /\ setAction)  = action
+    -- _ <- pure $ setAction (const $ setTreeOut valAction Nothing)
 
-      useLoader { errorHandler
-                , loader: loadSubTree showtypes
-                , path: session
-                , render: \tree ->
-                    subTreeViewLoaded { action
-                                      , boxes
-                                      , dispatch
-                                      , id
-                                      , nodeType
-                                      , session
-                                      , subTreeParams
-                                      , tree
-                                      } []  }
-      where
-        errorHandler = logRESTError here "[subTreeView]"
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
+              , loader: loadSubTree showtypes
+              , path: session
+              , render: \tree ->
+                  subTreeViewLoaded { action
+                                    , dispatch
+                                    , id
+                                    , nodeType
+                                    , session
+                                    , subTreeParams
+                                    , tree
+                                    } []  }
 
 loadSubTree :: Array GT.NodeType -> Session -> AffRESTError FTree
 loadSubTree nodetypes session = getSubTree session treeId nodetypes

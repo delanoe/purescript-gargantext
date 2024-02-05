@@ -104,8 +104,13 @@ parseGQLJson json =
           Nothing -> REST.CustomError "[gqlQuery] empty 'graphQLErrors'"
           Just gqlErr -> case gqlErr .? "extensions" of
             Nothing -> REST.CustomError "[gqlQuery] graphQLError no 'extensions'"
-            Just ext -> case (Foreign.unsafeToForeign >>> JSON.read >>> lmap toJsonError $ ext) of
-              Left err'  -> REST.CustomError $ "[gqlQuery] error reading 'extensions': " <> show err'
+            Just ext -> case (Foreign.unsafeToForeign >>> JSON.read $ ext) of
+              Left _err  -> do
+                -- OK so maybe we don't have "type" in error, try to parse the message only
+                case (Foreign.unsafeToForeign >>> JSON.read $ gqlErr :: Either Foreign.MultipleErrors { message :: String }) of
+                  Left err' ->
+                    REST.CustomError $ "[gqlQuery] don't know how to parse error: " <> show err'
+                  Right { message } -> REST.CustomError message
               Right err' -> REST.FE err'
   where
     decodeFn = Foreign.unsafeToForeign >>> JSON.read >>> lmap toJsonError

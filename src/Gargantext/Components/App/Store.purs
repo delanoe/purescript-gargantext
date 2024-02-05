@@ -47,6 +47,7 @@ type Store =
   , graphVersion        :: T2.ReloadS
   , handed              :: T.Box Handed
   , lang                :: T.Box Lang.LandingLang
+  , pinnedTreeId        :: T.Box (Map String Int)
   , reloadForest        :: T2.ReloadS
   , reloadMainPage      :: T2.ReloadS
   , reloadRoot          :: T2.ReloadS
@@ -64,7 +65,6 @@ type Store =
   , theme               :: T.Box Themes.Theme
   , tileAxisXList       :: T.Box (Array (Record Tile))
   , tileAxisYList       :: T.Box (Array (Record Tile))
-  , pinnedTreeId        :: T.Box (Map String Int)
   )
 
 type State =
@@ -75,6 +75,7 @@ type State =
   , graphVersion        :: T2.Reload
   , handed              :: Handed
   , lang                :: Lang.LandingLang
+  , pinnedTreeId        :: Map String Int
   , reloadForest        :: T2.Reload
   , reloadMainPage      :: T2.Reload
   , reloadRoot          :: T2.Reload
@@ -92,7 +93,6 @@ type State =
   , theme               :: Themes.Theme
   , tileAxisXList       :: Array (Record Tile)
   , tileAxisYList       :: Array (Record Tile)
-  , pinnedTreeId        :: Map String Int
   )
 
 options :: Record State
@@ -104,6 +104,7 @@ options =
   , graphVersion        : T2.newReload
   , handed              : RightHanded
   , lang                : Lang.LL_EN
+  , pinnedTreeId        : Map.empty
   , reloadForest        : T2.newReload
   , reloadMainPage      : T2.newReload
   , reloadRoot          : T2.newReload
@@ -121,7 +122,6 @@ options =
   , theme               : Themes.defaultTheme
   , tileAxisXList       : mempty
   , tileAxisYList       : mempty
-  , pinnedTreeId        : Map.empty
   }
 
 context :: R.Context (Record Store)

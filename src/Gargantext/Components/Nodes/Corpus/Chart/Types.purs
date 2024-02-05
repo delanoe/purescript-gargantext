@@ -18,8 +18,7 @@ type Path = (
   )
 
 type Props = (
-    boxes   :: Boxes
-  , path    :: Record Path
+    path    :: Record Path
   , session :: Session
   , onClick :: Maybe (MouseEvent -> Effect Unit)
   , onInit  :: Maybe (EChartsInstance -> Effect Unit)

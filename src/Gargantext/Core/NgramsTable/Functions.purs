@@ -450,7 +450,7 @@ syncPatches props state callback = do
     launchAff_ $ do
       ePatches <- putNgramsPatches props pt
       case ePatches of
-        Left err -> liftEffect $ logRESTError here "[syncPatches]" err
+        Left err -> liftEffect $ logRESTError (R2.herePrefix here "[syncPatches]") err
         Right (Versioned { data: newPatch, version: newVersion }) -> do
           callback unit
           liftEffect $ do
@@ -585,8 +585,7 @@ chartsAfterSync :: forall props discard.
   -> Aff Unit
 chartsAfterSync path'@{ nodeId } errors tasks _ = do
   eTask <- postNgramsChartsAsync path'
-  handleRESTError here errors eTask $ \task -> liftEffect $ do
-    here.log2 "[chartsAfterSync] Synchronize task" task
+  handleRESTError (R2.herePrefix here "[chartsAfterSync]") errors eTask $ \task -> liftEffect $ do
     GAT.insert nodeId task tasks
 
 postNgramsChartsAsync :: forall s. CoreParams s -> AffRESTError AsyncTaskWithType

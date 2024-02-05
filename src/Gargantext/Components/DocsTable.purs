@@ -23,7 +23,7 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Timer (setTimeout)
-import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.App.Store as Store
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), ModalSizing(..), Variant(..))
 import Gargantext.Components.Category (rating, ratingSimple)
@@ -36,7 +36,7 @@ import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Reload (textsReloadContext)
 import Gargantext.Components.Table as TT
 import Gargantext.Components.Table.Types as TT
-import Gargantext.Config.REST (AffRESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Ends (Frontends, url)
 import Gargantext.Hooks.Loader (useLoader, useLoaderWithCacheAPI, HashedResponse(..))
@@ -72,15 +72,13 @@ type Path a =
   )
 
 type CommonProps =
-  ( boxes          :: Boxes
-  , cacheState     :: T.Box NT.CacheState
+  ( cacheState     :: T.Box NT.CacheState
   , chartReload :: T2.ReloadS
   , frontends      :: Frontends
   , listId         :: Int
   , mCorpusId      :: Maybe Int
   , nodeId         :: Int
   , session        :: Session
-  , sidePanel      :: T.Box (Maybe (Record TextsT.SidePanel))
   , tabType        :: TabType
   -- ^ tabType is not ideal here since it is too much entangled with tabs and
   -- ngramtable. Let's see how this evolves.  )
@@ -123,26 +121,25 @@ type Props = (
 docView :: R2.Component Props
 docView = R.createElement docViewCpt
 docViewCpt :: R.Component Props
-docViewCpt = here.component "docView" cpt where
-  cpt { layout: { boxes
-                , cacheState
-                , chart
-                , chartReload
-                , frontends
-                , listId
-                , mCorpusId
-                , nodeId
-                , session
-                , showSearch
-                , sidePanel
-                , tabType
-                , totalRecords
-                , yearFilter
-                }
-      , params
-      , query
-      } _ = do
+docViewCpt = R2.hereComponent here "docView" hCpt where
+  hCpt hp { layout: { cacheState
+                    , chart
+                    , chartReload
+                    , frontends
+                    , listId
+                    , mCorpusId
+                    , nodeId
+                    , session
+                    , showSearch
+                    , tabType
+                    , totalRecords
+                    , yearFilter
+                    }
+          , params
+          , query
+          } _ = do
     -- State
+    { errors } <- Store.use
     cacheState' <- T.useLive T.unequal cacheState
     query' <- T.useLive T.unequal query
     isDocumentModalVisibleBox <- T.useBox false
@@ -158,7 +155,7 @@ docViewCpt = here.component "docView" cpt where
 
     -- @onCreateDocumentEnd <AsyncProgress>
     onCreateDocumentEnd <- pure $ \asyncProgress -> do
-      here.log2 "[DocsTables] NodeDocument task:" asyncProgress
+      R2.hpLog2 hp "NodeDocument task:" asyncProgress
       T.write_ false onDocumentCreationPendingBox
       toggleModal unit
 
@@ -174,9 +171,9 @@ docViewCpt = here.component "docView" cpt where
 
       eTask <- DFC.create session nodeId fdata
 
-      handleRESTError here boxes.errors eTask
+      handleRESTError hp errors eTask
         \t -> liftEffect $ launchDocumentCreationProgress
-                              boxes
+                              errors
                               session
                               nodeId
                               t
@@ -207,8 +204,7 @@ docViewCpt = here.component "docView" cpt where
 
         , R2.row
           [ H.div {className: "col-md-12"}
-            [ pageLayout { boxes
-                         , cacheState
+            [ pageLayout { cacheState
                          , chartReload
                          , frontends
                          , key: "docView-" <> (show cacheState')
@@ -218,7 +214,6 @@ docViewCpt = here.component "docView" cpt where
                          , params
                          , query: query'
                          , session
-                         , sidePanel
                          , tabType
                          , totalRecords
                          , yearFilter
@@ -243,28 +238,28 @@ docViewCpt = here.component "docView" cpt where
       ]
 
 launchDocumentCreationProgress ::
-     Boxes
+     T.Box (Array GT.FrontendError)
   -> Session
   -> GT.ID
   -> GT.AsyncTaskWithType
   -> (GT.AsyncProgress -> Effect Unit)
   -> Effect Unit
-launchDocumentCreationProgress boxes session nodeId currentTask cbk
+launchDocumentCreationProgress errors session nodeId currentTask cbk
   = void $ setTimeout 1000 $ launchAff_ $
-      scanDocumentCreationProgress boxes session nodeId currentTask cbk
+      scanDocumentCreationProgress errors session nodeId currentTask cbk
 
 scanDocumentCreationProgress ::
-     Boxes
+     T.Box (Array GT.FrontendError)
   -> Session
   -> GT.ID
   -> GT.AsyncTaskWithType
   -> (GT.AsyncProgress -> Effect Unit)
   -> Aff Unit
-scanDocumentCreationProgress boxes session nodeId currentTask cbk = do
+scanDocumentCreationProgress errors session nodeId currentTask cbk = do
 
   eTask <- DFC.createProgress session nodeId currentTask
 
-  handleRESTError here boxes.errors eTask
+  handleRESTError (R2.herePrefix here "[scanDocumentCreationProgress]") errors eTask
     \asyncProgress -> liftEffect do
       let
         GT.AsyncProgress { status } = asyncProgress
@@ -279,7 +274,7 @@ scanDocumentCreationProgress boxes session nodeId currentTask cbk = do
       then
         cbk asyncProgress
       else
-        launchDocumentCreationProgress boxes session nodeId currentTask cbk
+        launchDocumentCreationProgress errors session nodeId currentTask cbk
 
 ---------------------------------------------------
 
@@ -395,18 +390,17 @@ filterDocsByYear year docs = A.filter filterFunc docs
 pageLayout :: R2.Component ( key :: String | PageLayoutProps )
 pageLayout = R.createElement pageLayoutCpt
 pageLayoutCpt :: R.Component ( key :: String | PageLayoutProps )
-pageLayoutCpt = here.component "pageLayout" cpt where
-  cpt props@{ boxes
-            , cacheState
-            , listId
-            , mCorpusId
-            , nodeId
-            , params
-            , query
-            , session
-            , tabType
-            , yearFilter
-            } _ = do
+pageLayoutCpt = R2.hereComponent here "pageLayout" hCpt where
+  hCpt hp props@{ cacheState
+                , listId
+                , mCorpusId
+                , nodeId
+                , params
+                , query
+                , session
+                , tabType
+                , yearFilter
+                } _ = do
     cacheState' <- T.useLive T.unequal cacheState
     yearFilter' <- T.useLive T.unequal yearFilter
 
@@ -434,16 +428,14 @@ pageLayoutCpt = here.component "pageLayout" cpt where
 
     case cacheState' of
       NT.CacheOn -> do
-        let paint (Tuple count docs) = page { boxes
-                                            , documents: docs
+        let paint (Tuple count docs) = page { documents: docs
                                             , layout: props' { totalRecords = count }
                                             , params } []
             mkRequest :: PageParams -> GUC.Request
             mkRequest p = GUC.makeGetRequest session $ tableRoute p
 
         useLoaderWithCacheAPI
-          { boxes
-          , cacheEndpoint: getPageHash session
+          { cacheEndpoint: getPageHash session
           , handleResponse
           , mkRequest
           , path
@@ -466,15 +458,14 @@ pageLayoutCpt = here.component "pageLayout" cpt where
                                                                            , totalRecords = count }
                                                           , localCategories
                                                           , params: paramsS } []
-        let errorHandler = logRESTError here "[pageLayout]"
-        useLoader { errorHandler
+        useLoader { errorHandler: Nothing
+                  , herePrefix: hp
                   , path: path { params = paramsS' }
                   , loader
                   , render }
 
 type PageProps =
-  ( boxes     :: Boxes
-  , documents :: Array DocumentsView
+  ( documents :: Array DocumentsView
   , layout    :: Record PageLayoutProps
   , params    :: TT.Params
   )
@@ -532,20 +523,19 @@ pagePaintRaw = R.createElement pagePaintRawCpt
 pagePaintRawCpt :: R.Component PagePaintRawProps
 pagePaintRawCpt = here.component "pagePaintRaw" cpt where
   cpt { documents
-      , layout: { boxes
-                , chartReload
+      , layout: { chartReload
                 , frontends
                 , listId
                 , mCorpusId
                 , nodeId
                 , session
-                , sidePanel
                 , totalRecords }
       , localCategories
       , params } _ = do
+    { sidePanelTexts } <- Store.use
     mCurrentDocId <- T.useFocused
           (maybe Nothing _.mCurrentDocId)
-          (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentDocId = val })) sidePanel
+          (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentDocId = val })) sidePanelTexts
     mCurrentDocId' <- T.useLive T.unequal mCurrentDocId
 
     reload <- T.useBox GUT.newReload
@@ -558,8 +548,7 @@ pagePaintRawCpt = here.component "pagePaintRaw" cpt where
       { colNames
       , container: TT.defaultContainer
       , params
-      , rows: rows { boxes
-                   , reload
+      , rows: rows { reload
                    , chartReload
                    , frontends
                    , listId
@@ -567,8 +556,7 @@ pagePaintRawCpt = here.component "pagePaintRaw" cpt where
                    , mCorpusId
                    , mCurrentDocId
                    , nodeId
-                   , session
-                   , sidePanel }
+                   , session }
       , syncResetButton : [ H.div {} [] ]
       , totalRecords
       , wrapColElts
@@ -576,8 +564,7 @@ pagePaintRawCpt = here.component "pagePaintRaw" cpt where
       where
         colNames = TT.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source", "Score" ]
         wrapColElts = const identity
-        rows { boxes
-             , chartReload
+        rows { chartReload
              , frontends
              , listId
              , localCategories
@@ -585,10 +572,8 @@ pagePaintRawCpt = here.component "pagePaintRaw" cpt where
              , mCurrentDocId
              , nodeId
              , reload
-             , session
-             , sidePanel } =
-          (\documentsView -> { row: tableRow { boxes
-                                             , chartReload
+             , session } =
+          (\documentsView -> { row: tableRow { chartReload
                                              , documentsView
                                              , frontends
                                              , listId
@@ -596,8 +581,7 @@ pagePaintRawCpt = here.component "pagePaintRaw" cpt where
                                              , mCorpusId
                                              , mCurrentDocId
                                              , nodeId
-                                             , session
-                                             , sidePanel } []
+                                             , session } []
                               , delete: true } ) <$> A.toUnfoldable documents
 
 trashClassName :: Category -> Boolean -> String
@@ -606,8 +590,7 @@ trashClassName _ true  = "page-paint-row page-paint-row--active"
 trashClassName _ false = ""
 
 type TableRowProps =
-  ( boxes           :: Boxes
-  , chartReload     :: T2.ReloadS
+  ( chartReload     :: T2.ReloadS
   , documentsView   :: DocumentsView
   , frontends       :: Frontends
   , listId          :: Int
@@ -615,15 +598,13 @@ type TableRowProps =
   , mCorpusId       :: Maybe Int
   , mCurrentDocId   :: T.Box (Maybe Int)
   , nodeId          :: Int
-  , session         :: Session
-  , sidePanel       :: T.Box (Maybe (Record TextsT.SidePanel)) )
+  , session         :: Session )
 
 tableRow :: R2.Component TableRowProps
 tableRow = R.createElement tableRowCpt
 tableRowCpt :: R.Component TableRowProps
 tableRowCpt = here.component "tableRow" cpt where
-  cpt { boxes
-      , chartReload
+  cpt { chartReload
       , documentsView: dv@(DocumentsView r@{ _id, category })
       , frontends
       , listId
@@ -631,8 +612,7 @@ tableRowCpt = here.component "tableRow" cpt where
       , mCorpusId
       , mCurrentDocId
       , nodeId
-      , session
-      , sidePanel } _ = do
+      , session } _ = do
     mCurrentDocId' <- T.useLive T.unequal mCurrentDocId
 
     let cat :: Category
@@ -656,14 +636,12 @@ tableRowCpt = here.component "tableRow" cpt where
                        }
       [ -- H.div {} [ H.a { className, style, on: {click: click Favorite} } [] ]
         H.div { className: "" }
-        [ docChooser { boxes
-                     , category: categoryS
+        [ docChooser { category: categoryS
                      , docId: r._id
                      , listId
                      , mCorpusId
                      , nodeId: r._id
-                     , session
-                     , sidePanel } []
+                     , session } []
         ]
         --, H.div { className: "column-tag flex" } [ caroussel { category: cat, nodeId, row: dv, session, setLocalCategories } [] ]
       , H.div { className: "column-tag flex" }
@@ -697,14 +675,12 @@ tableRowCpt = here.component "tableRow" cpt where
 
 
 type DocChooser = (
-    boxes     :: Boxes
-  , category  :: T.Box Category
+    category  :: T.Box Category
   , docId     :: Int
   , listId    :: ListId
   , mCorpusId :: Maybe NodeID
   , nodeId    :: NodeID
   , session   :: Session
-  , sidePanel :: T.Box (Maybe (Record TextsT.SidePanel))
   )
 
 docChooser :: R2.Component DocChooser
@@ -715,17 +691,16 @@ docChooserCpt = here.component "docChooser" cpt
     cpt { mCorpusId: Nothing } _ = do
       pure $ H.div {} []
 
-    cpt { boxes: { sidePanelState }
-        , category
+    cpt { category
         , docId
         , listId
         , mCorpusId: Just corpusId
         , nodeId
-        , session
-        , sidePanel } _ = do
+        , session } _ = do
+      { sidePanelState, sidePanelTexts } <- Store.use
       mCurrentDocId <- T.useFocused
             (maybe Nothing _.mCurrentDocId)
-            (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentDocId = val })) sidePanel
+            (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentDocId = val })) sidePanelTexts
       mCurrentDocId' <- T.useLive T.unequal mCurrentDocId
       category' <- T.useLive T.unequal category
 
@@ -740,13 +715,13 @@ docChooserCpt = here.component "docChooser" cpt
             -- R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
             -- T2.reload tableReload
             if selected then do
-              T.write_ Nothing sidePanel
+              T.write_ Nothing sidePanelTexts
               T.write_ Closed sidePanelState
             else do
               T.write_ (Just { corpusId: corpusId
                              , listId: listId
                              , mCurrentDocId: Just nodeId
-                             , nodeId: nodeId }) sidePanel
+                             , nodeId: nodeId }) sidePanelTexts
               T.write_ Opened sidePanelState
               let categoryMarked = markCategoryChecked category'
               launchAff_ $ do

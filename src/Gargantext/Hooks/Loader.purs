@@ -11,9 +11,9 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_, throwError)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
-import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.App.Store as Store
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
-import Gargantext.Config.REST (RESTError, AffRESTError)
+import Gargantext.Config.REST (RESTError, AffRESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Types (FrontendError(..))
 import Gargantext.Utils.CacheAPI as GUC
@@ -33,7 +33,8 @@ clearCache :: Unit -> Aff Unit
 clearCache _ = GUC.delete $ GUC.CacheName cacheName
 
 type UseLoader path state =
-  ( errorHandler :: RESTError -> Effect Unit
+  ( errorHandler :: Maybe (RESTError -> Effect Unit)
+  , herePrefix   :: R2.HerePrefix
   , loader       :: path -> AffRESTError state
   , path         :: path
   , render       :: state -> R.Element
@@ -42,7 +43,39 @@ type UseLoader path state =
 useLoader :: forall path st. Eq path => Eq st
           => Record (UseLoader path st)
           -> R.Hooks R.Element
-useLoader { errorHandler, loader: loader', path, render } = do
+useLoader props@{ errorHandler
+                , herePrefix
+                , loader
+                , path
+                , render } = do
+  { errors } <- Store.use
+  state <- T.useBox Nothing
+
+  useLoader' { errorHandler: errorHandler' errors
+             , loader
+             , path
+             , render }
+  where
+    errorHandler' errors error = do
+      T.modify_ (A.cons $ FRESTError { error }) errors
+      -- default error handler
+      case errorHandler of
+        Nothing -> logRESTError herePrefix error
+        Just eh -> eh error
+
+
+-- | Version that doesn't use boxes for errors, prefer unticked one
+type UseLoader' path state =
+  ( errorHandler :: RESTError -> Effect Unit
+  , loader       :: path -> AffRESTError state
+  , path         :: path
+  , render       :: state -> R.Element
+  )
+
+useLoader' :: forall path st. Eq path => Eq st
+           => Record (UseLoader' path st)
+           -> R.Hooks R.Element
+useLoader' { errorHandler, loader: loader', path, render } = do
   state <- T.useBox Nothing
 
   useLoaderEffect { errorHandler, loader: loader', path, state: state }
@@ -93,7 +126,8 @@ useLoaderEffect { errorHandler, loader: loader', path, state } = do
 
 
 type UseLoaderBox path state =
-  ( errorHandler :: RESTError -> Effect Unit
+  ( errorHandler :: Maybe (RESTError -> Effect Unit)
+  , herePrefix   :: R2.HerePrefix
   , loader       :: path -> AffRESTError state
   , path         :: T.Box path
   , render       :: state -> R.Element
@@ -102,10 +136,14 @@ type UseLoaderBox path state =
 useLoaderBox :: forall path st. Eq path => Eq st
           => Record (UseLoaderBox path st)
           -> R.Hooks R.Element
-useLoaderBox { errorHandler, loader: loader', path, render } = do
+useLoaderBox { errorHandler, herePrefix, loader: loader', path, render } = do
   path' <- T.useLive T.unequal path
 
-  useLoader { errorHandler, loader: loader', path: path', render }
+  useLoader { errorHandler
+            , herePrefix
+            , loader: loader'
+            , path: path'
+            , render }
 
 
 newtype HashedResponse a = HashedResponse { hash  :: Hash, value :: a }
@@ -115,8 +153,7 @@ derive newtype instance JSON.ReadForeign a => JSON.ReadForeign (HashedResponse a
 derive newtype instance JSON.WriteForeign a => JSON.WriteForeign (HashedResponse a)
 
 type LoaderWithCacheAPIProps path res ret =
-  ( boxes          :: Boxes
-  , cacheEndpoint  :: path -> AffRESTError Hash
+  ( cacheEndpoint  :: path -> AffRESTError Hash
   , handleResponse :: HashedResponse res -> ret
   , mkRequest      :: path -> GUC.Request
   , path           :: path
@@ -128,8 +165,7 @@ useLoaderWithCacheAPI :: forall path res ret.
                          Eq ret => Eq path => JSON.ReadForeign res =>
                          Record (LoaderWithCacheAPIProps path res ret)
                       -> R.Hooks R.Element
-useLoaderWithCacheAPI { boxes
-                      , cacheEndpoint
+useLoaderWithCacheAPI { cacheEndpoint
                       , handleResponse
                       , mkRequest
                       , path
@@ -138,8 +174,7 @@ useLoaderWithCacheAPI { boxes
   state <- T.useBox Nothing
   state' <- T.useLive T.unequal state
 
-  useCachedAPILoaderEffect { boxes
-                           , cacheEndpoint
+  useCachedAPILoaderEffect { cacheEndpoint
                            , handleResponse
                            , mkRequest
                            , path
@@ -147,8 +182,7 @@ useLoaderWithCacheAPI { boxes
   pure $ maybe (loadingSpinner { additionalClass: spinnerClass }) renderer state'
 
 type LoaderWithCacheAPIEffectProps path res ret = (
-    boxes          :: Boxes
-  , cacheEndpoint  :: path -> AffRESTError Hash
+    cacheEndpoint  :: path -> AffRESTError Hash
   , handleResponse :: HashedResponse res -> ret
   , mkRequest      :: path -> GUC.Request
   , path           :: path
@@ -159,12 +193,12 @@ useCachedAPILoaderEffect :: forall path res ret.
                             Eq ret => Eq path => JSON.ReadForeign res =>
                             Record (LoaderWithCacheAPIEffectProps path res ret)
                          -> R.Hooks Unit
-useCachedAPILoaderEffect { boxes: { errors }
-                         , cacheEndpoint
+useCachedAPILoaderEffect { cacheEndpoint
                          , handleResponse
                          , mkRequest
                          , path
                          , state } = do
+  { errors } <- Store.use
   state' <- T.useLive T.unequal state
   oPath <- R.useRef path
 
@@ -181,7 +215,7 @@ useCachedAPILoaderEffect { boxes: { errors }
         -- TODO Parallelize?
         hr@(HashedResponse { hash }) <- GUC.cachedJson cache req
         eCacheReal <- cacheEndpoint path
-        handleRESTError here errors eCacheReal $ \cacheReal -> do
+        handleRESTError (R2.herePrefix here "[useCachedAPILoaderEffect]") errors eCacheReal $ \cacheReal -> do
           val <- if hash == cacheReal then
             pure hr
           else do

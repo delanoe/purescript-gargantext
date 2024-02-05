@@ -79,12 +79,11 @@ tree props = R.createElement treeCpt props []
 treeCpt :: R.Component Props
 treeCpt = here.component "tree" cpt
   where
-    cpt { boxes, path, session, onClick, onInit } _ = do
+    cpt { path, session, onClick, onInit } _ = do
       reload <- T.useBox T2.newReload
 
       pure $ metricsWithCacheLoadView
-        { boxes
-        , getMetricsHash
+        { getMetricsHash
         , handleResponse
         , loaded
         , mkRequest: mkRequest session
@@ -107,3 +106,4 @@ loadedCpt = here.component "loaded" cpt where
   , U.chartUpdateButton { chartType: ChartTree, path, reload, session }
   , -} chart $ scatterOptions p
        ]
+

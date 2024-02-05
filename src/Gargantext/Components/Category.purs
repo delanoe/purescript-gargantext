@@ -114,12 +114,13 @@ type RatingSimpleLoaderProps =
 ratingSimpleLoader :: R2.Component RatingSimpleLoaderProps
 ratingSimpleLoader = R.createElement ratingSimpleLoaderCpt
 ratingSimpleLoaderCpt :: R.Component RatingSimpleLoaderProps
-ratingSimpleLoaderCpt = here.component "ratingSimpleLoader" cpt where
-  cpt { docId
-      , corpusId
-      , session
-      } _ = do
-    useLoader { errorHandler
+ratingSimpleLoaderCpt = R2.hereComponent here "ratingSimpleLoader" hCpt where
+  hCpt hp { docId
+          , corpusId
+          , session
+          } _ = do
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , loader: loadDocumentContext session
               , path: { docId, corpusId }
               , render: \{ nc_category } -> do
@@ -128,12 +129,6 @@ ratingSimpleLoaderCpt = here.component "ratingSimpleLoader" cpt where
                                      , corpusId
                                      , category
                                      , session } [] }
-    where
-      errorHandler err = do
-        here.warn2 "[pageLayout] RESTError" err
-        case err of
-          ReadJSONError err' -> here.warn2 "[pageLayout] ReadJSONError" $ show err'
-          _ -> pure unit
 
 type ContextParams =
   ( docId    :: NodeID

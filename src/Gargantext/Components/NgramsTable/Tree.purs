@@ -17,10 +17,9 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
-import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.App.Store as Store
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (Variant(..))
-import Gargantext.Components.Nodes.Lists.SidePanel (SidePanel)
 import Gargantext.Components.Table as Tbl
 import Gargantext.Core.NgramsTable.Functions (applyNgramsPatches, setTermListA, tablePatchHasNgrams)
 import Gargantext.Core.NgramsTable.Types (Action(..), CoreAction, NgramsClick, NgramsDepth, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm, _NgramsElement, _NgramsRepoElement, _children, _list, _ngrams, _occurrences, ngramsTermText, replace)
@@ -229,8 +228,7 @@ treeLoadedCpt = here.component "treeLoaded" cpt where
           H.ul {} <<< map (\ngrams -> tree ((Record.delete (Proxy :: Proxy "ngramsChildren") params) { ngramsDepth = {depth, ngrams, parent: Just ngramsDepth.ngrams} })) <<< L.toUnfoldable
 
 type RenderNgramsItem =
-  ( boxes             :: Boxes
-  , corpusId          :: GT.CorpusId
+  ( corpusId          :: GT.CorpusId
   , dispatch             :: Action -> Effect Unit
   , getNgramsChildrenAff :: Maybe (NgramsTerm -> Aff (Array NgramsTerm))
   , getNgramsChildren :: Maybe (NgramsTerm -> Array NgramsTerm)
@@ -242,7 +240,6 @@ type RenderNgramsItem =
   , ngramsSelection   :: Set NgramsTerm
   , ngramsTable       :: NgramsTable
   , session           :: Session
-  , sidePanel         :: T.Box (Maybe (Record SidePanel))
   )
 
 renderNgramsItem :: R2.Component RenderNgramsItem
@@ -250,8 +247,7 @@ renderNgramsItem = R.createElement renderNgramsItemCpt
 renderNgramsItemCpt :: R.Component RenderNgramsItem
 renderNgramsItemCpt = here.component "renderNgramsItem" cpt
   where
-    cpt { boxes
-        , corpusId
+    cpt { corpusId
         , dispatch
         --, getNgramsChildren
         , isEditing
@@ -262,14 +258,14 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         , ngramsSelection
         , ngramsTable
         , session
-        , sidePanel
         } _ = do
+      { sidePanelLists } <- Store.use
       isEditing' <- T.useLive T.unequal isEditing
 
       mCurrentNgrams <-
         T.useFocused
         (maybe Nothing _.mCurrentNgrams)
-        (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentNgrams = val })) sidePanel
+        (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentNgrams = val })) sidePanelLists
       mCurrentNgrams' <- T.useLive T.unequal mCurrentNgrams
 
       let currentRowSelected = mCurrentNgrams' == Just ngrams
@@ -278,12 +274,10 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
       pure $ Tbl.makeRow' { className }
         [ selected
         ,
-          ngramsContext { boxes
-                        , corpusId
+          ngramsContext { corpusId
                         , mListId
                         , ngrams
-                        , session
-                        , sidePanel } []
+                        , session } []
         ,
           B.wad'
           [ "col-score" ] $
@@ -450,27 +444,25 @@ nextTermList GT.CandidateTerm = GT.MapTerm
 
 
 type NgramsContextProps =
-  ( boxes     :: Boxes
-  , corpusId  :: GT.CorpusId
+  ( corpusId  :: GT.CorpusId
   , mListId   :: Maybe GT.ListId
   , ngrams    :: NgramsTerm
   , session   :: Session
-  , sidePanel :: T.Box (Maybe (Record SidePanel)))
+  )
 
 ngramsContext :: R2.Component NgramsContextProps
 ngramsContext = R.createElement ngramsContextCpt
 ngramsContextCpt :: R.Component NgramsContextProps
 ngramsContextCpt = here.component "ngramsContext" cpt where
   cpt { ngrams
-      , boxes: { sidePanelState }
       , corpusId
       , mListId
-      , session
-      , sidePanel } _ = do
+      , session } _ = do
+    { sidePanelLists, sidePanelState } <- Store.use
     mCurrentNgrams <-
       T.useFocused
       (maybe Nothing _.mCurrentNgrams)
-      (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentNgrams = val })) sidePanel
+      (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentNgrams = val })) sidePanelLists
     mCurrentNgrams' <- T.useLive T.unequal mCurrentNgrams
 
     let selected = mCurrentNgrams' == Just ngrams
@@ -484,12 +476,12 @@ ngramsContextCpt = here.component "ngramsContext" cpt where
           -- R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
           -- T2.reload tableReload
           if selected then do
-            T.write_ Nothing sidePanel
+            T.write_ Nothing sidePanelLists
             T.write_ GT.Closed sidePanelState
           else do
             T.write_ (Just { mCorpusId: Just corpusId
                            , mListId
-                           , mCurrentNgrams: Just ngrams }) sidePanel
+                           , mCurrentNgrams: Just ngrams }) sidePanelLists
             T.write_ GT.Opened sidePanelState
 
     pure $ H.div { className: "doc-chooser text-center" }

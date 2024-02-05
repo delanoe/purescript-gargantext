@@ -14,13 +14,13 @@ type LanguageProperties
     }
 
 type Language
-  = { key   :: Lang
-    , value :: LanguageProperties }
+  = { lt_lang   :: Lang
+    , lt_server :: LanguageProperties }
 
 type NLPQuery =
   { languages ::
-       { key :: Unit
-       , value :: {
+       { lt_lang :: Unit
+       , lt_server :: {
            url :: Unit
          , server :: Unit }
        }
@@ -28,8 +28,8 @@ type NLPQuery =
 
 nlpQuery :: NLPQuery
 nlpQuery = { languages:
-             { key   : unit
-             , value : {
+             { lt_lang   : unit
+             , lt_server : {
                  url : unit
                , server: unit }
              }

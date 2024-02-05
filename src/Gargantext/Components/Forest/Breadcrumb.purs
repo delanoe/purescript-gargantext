@@ -37,7 +37,7 @@ import URI.Fragment as Fragment
 import Effect (Effect)
 import Effect.Console (log)
 import Toestand as T
-import Gargantext.Config.REST (AffRESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Utils.Toestand as T2
 import Gargantext.Hooks.Loader (useLoader)
 
@@ -165,14 +165,15 @@ componentCpt = here.component "breadcrumb" cpt where
 breadcrumbView :: R2.Leaf Props
 breadcrumbView = R2.leaf breadcrumbViewCpt
 breadcrumbViewCpt :: R.Component Props
-breadcrumbViewCpt = here.component "breadcrumbViewCpt" cpt where
-  cpt { nodeId, session } _ = do
+breadcrumbViewCpt = R2.hereComponent here "breadcrumbViewCpt" hCpt where
+  hCpt hp { nodeId, session } _ = do
     let session' = session
 
     case session' of 
       Nothing -> pure $ H.div {} []
       Just (session') -> do
-        useLoader { errorHandler
+        useLoader { errorHandler: Nothing
+                  , herePrefix: hp
                   , loader: loadBreadcrumbData
                   , path: { nodeId: nodeId
                           , session: session'
@@ -184,8 +185,6 @@ breadcrumbViewCpt = here.component "breadcrumbViewCpt" cpt where
                                                         --  , reload: reload
                                                          } [] 
                   }
-        where
-          errorHandler = logRESTError here "[breadcrumbView]"
 
 type BreadcrumbViewProps =
   ( items         :: BreadcrumbInfo

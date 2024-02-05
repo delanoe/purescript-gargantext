@@ -32,10 +32,10 @@ node :: R2.Leaf ( key :: String | Props )
 node = R2.leaf nodeCpt
 
 nodeCpt :: R.Component ( key :: String | Props )
-nodeCpt = here.component "node" cpt where
-  cpt { nodeId
-      , nodeType
-      } _ = do
+nodeCpt = R2.hereComponent here "node" hCpt where
+  hCpt hp { nodeId
+          , nodeType
+          } _ = do
     -- | States
     -- |
     session <- useSession
@@ -46,7 +46,7 @@ nodeCpt = here.component "node" cpt where
     -- | Hooks
     -- |
     useLoaderEffect
-      { errorHandler: logRESTError here "[frameLayout]"
+      { errorHandler: logRESTError hp
       , loader: loadframeWithReload
       , path:
           { nodeId

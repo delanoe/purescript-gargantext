@@ -7,11 +7,10 @@ import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (runAff_)
 import Effect.Class (liftEffect)
-import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.GraphQL.Endpoints (deleteTeamMembership, getTeam)
 import Gargantext.Components.GraphQL.Team (Team, TeamMember)
-import Gargantext.Config.REST (AffRESTError, logRESTError, FrontendError(EC_403__user_not_authorized))
+import Gargantext.Config.REST (AffRESTError, FrontendError(EC_403__user_not_authorized))
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (ID, FrontendError(FRESTError), NodeType)
@@ -24,8 +23,7 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.ManageTeam"
 
 type ActionManageTeam = (
-    boxes    :: Boxes
-  , id       :: ID
+    id       :: ID
   , nodeType :: NodeType
   , session  :: Session
 )
@@ -33,9 +31,10 @@ type ActionManageTeam = (
 actionManageTeam :: R2.Component ActionManageTeam
 actionManageTeam = R.createElement actionManageTeamCpt
 actionManageTeamCpt :: R.Component ActionManageTeam
-actionManageTeamCpt = here.component "actionManageTeam" cpt where
-  cpt { boxes: { errors }, id, session } _ = do
-    useLoader { errorHandler: errorHandler errors
+actionManageTeamCpt = R2.hereComponent here "actionManageTeam" hCpt where
+  hCpt hp { id, session } _ = do
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , loader: loadTeam
               , path: { nodeId: id, session }
               , render: \team -> teamLayoutWrapper { team
@@ -43,12 +42,6 @@ actionManageTeamCpt = here.component "actionManageTeam" cpt where
                                                    , session
                                                    } []
               }
-    where
-      errorHandler errors error = do
-        logRESTError here "teamLayout" error
-        T.modify_ (cons $ FRESTError { error }) errors
-        
-        -- T.write_ (Just $ show error) errorS
 
 type TeamProps =
   ( nodeId  :: ID

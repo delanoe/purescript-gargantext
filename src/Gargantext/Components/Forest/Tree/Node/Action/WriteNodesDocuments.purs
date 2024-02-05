@@ -7,7 +7,7 @@ import Data.Either (Either)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.App.Store as Store
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Utils (loadLanguages)
@@ -32,25 +32,22 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.WriteNodesDocument
 
 -- | Action : WriteNodesDocuments
 type ActionWriteNodesDocuments =
-  ( boxes    :: Boxes
-  , dispatch :: Action -> Aff Unit
+  ( dispatch :: Action -> Aff Unit
   , id       :: GT.ID
   , session  :: Session )
 
 actionWriteNodesDocuments :: R2.Component ActionWriteNodesDocuments
 actionWriteNodesDocuments = R.createElement actionWriteNodesDocumentsCpt
 actionWriteNodesDocumentsCpt :: R.Component ActionWriteNodesDocuments
-actionWriteNodesDocumentsCpt = here.component "actionWriteNodesDocuments" cpt where
-  cpt props@({ session }) _ = do
-    useLoader { errorHandler
+actionWriteNodesDocumentsCpt = R2.hereComponent here "actionWriteNodesDocuments" hCpt where
+  hCpt hp props@({ session }) _ = do
+    { errors } <- Store.use
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , loader: loadLanguages
               , path: { session }
               , render: \langs ->
               actionWriteNodesDocumentsWithLangs (Record.merge props { langs }) [] }
-    where
-      errorHandler err = case err of
-        ReadJSONError err' -> here.warn2 "[actionSearch] ReadJSONError" $ show err'
-        _                  -> here.warn2 "[actionSearch] RESTError" err
 
 type ActionWriteNodesDocumentsWithLangs =
   ( langs :: Array Lang

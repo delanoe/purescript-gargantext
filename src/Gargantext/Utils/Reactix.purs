@@ -111,6 +111,25 @@ here mod =
   , info3       : Console.print3  Console.Main mod Console.Info
   }
 
+type Prefix = String
+newtype HerePrefix = HerePrefix { here   :: Here
+                                , prefix :: Prefix }
+
+hpLog2 :: forall a b. HerePrefix -> a -> b -> Effect Unit
+hpLog2 (HerePrefix { here: h, prefix }) = h.log3 prefix
+
+hpWarn2 :: forall a b. HerePrefix -> a -> b -> Effect Unit
+hpWarn2 (HerePrefix { here: h, prefix }) = h.warn3 prefix
+
+herePrefix :: Here -> Prefix -> HerePrefix
+herePrefix here prefix = HerePrefix { here, prefix }
+
+hereComponent :: forall p. Here -> Prefix -> (HerePrefix -> R.HooksComponent p) -> R.Component p
+hereComponent here' prefix hpComponent = here'.component  prefix (hpComponent hp)
+  where
+    hp :: HerePrefix
+    hp = herePrefix here' prefix
+
 -- newtypes
 type NTHooksComponent props = props -> Array R.Element -> R.Hooks R.Element
 newtype NTComponent p = NTComponent (EffectFn1 p R.Element)

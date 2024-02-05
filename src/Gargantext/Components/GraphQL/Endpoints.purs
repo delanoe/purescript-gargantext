@@ -20,7 +20,7 @@ import Gargantext.Components.GraphQL.Team (Team, teamQuery)
 import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, treeFirstLevelQuery, BreadcrumbInfo, breadcrumbQuery)
 import Gargantext.Components.GraphQL.User (UserInfo, userInfoQuery, User, userQuery)
 import Gargantext.Components.Lang (Lang)
-import Gargantext.Config.REST (RESTError(..), AffRESTError, logRESTError)
+import Gargantext.Config.REST (RESTError(..), AffRESTError)
 import Gargantext.Core.NgramsTable.Types (NgramsTerm(..))
 import Gargantext.Sessions (Session(..))
 import Gargantext.Types (CorpusId, NodeType)
@@ -215,7 +215,7 @@ getLanguages session = do
     Right { languages } -> do    
       liftEffect $ here.log2 "[getLanguages] languages" languages
     
-      pure $ Right $ Map.fromFoldable $ (\{ key, value } -> Tuple key value) <$> languages
+      pure $ Right $ Map.fromFoldable $ (\{ lt_lang, lt_server } -> Tuple lt_lang lt_server) <$> languages
 
 getContextNgrams :: Session -> Int -> Int -> AffRESTError (Array NgramsTerm)
 getContextNgrams session context_id list_id = do

@@ -18,14 +18,14 @@ here :: R2.Here
 here = R2.here "Gargantext.Config.Utils"
 
 handleRESTError :: forall a.
-                   R2.Here
+                   R2.HerePrefix
                 -> T.Box (Array FrontendError)
                 -> Either RESTError a
                 -> (a -> Aff Unit)
                 -> Aff Unit
-handleRESTError here' errors (Left error) _ = liftEffect $ do
+handleRESTError herePrefix errors (Left error) _ = liftEffect $ do
   T.modify_ (A.cons $ FRESTError { error }) errors
-  logRESTError here' "[handleTaskError]" error
+  logRESTError herePrefix error
   -- here.warn2 "[handleTaskError] RESTError" error
 handleRESTError _ _ (Right task) handler = handler task
 

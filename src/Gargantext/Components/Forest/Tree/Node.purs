@@ -29,10 +29,10 @@ import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), setting
 import Gargantext.Components.Forest.Tree.Node.Tools.Sync (nodeActionsGraph, nodeActionsNodeList)
 import Gargantext.Components.GraphExplorer.API as GraphAPI
 import Gargantext.Components.Lang (Lang(EN))
-import Gargantext.Config.REST (logRESTError)
+import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
 import Gargantext.Context.Progress (asyncContext, asyncProgress)
 import Gargantext.Ends (Frontends, url)
-import Gargantext.Hooks.Loader (useLoaderEffect)
+import Gargantext.Hooks.Loader (useLoader, useLoaderEffect)
 import Gargantext.Hooks.Version (Version, useVersion)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId)
@@ -56,18 +56,17 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node"
 
 -- Main Node
 type NodeSpanProps =
-  ( boxes         :: Boxes
-  , dispatch      :: Action -> Aff Unit
+  ( dispatch      :: Action -> Aff Unit
   , folderOpen    :: T.Box Boolean
   , frontends     :: Frontends
   , id            :: ID
+  , isBoxVisible  :: T.Box Boolean
   , isLeaf        :: IsLeaf
   , name          :: Name
   , nodeType      :: GT.NodeType
   , reload        :: T2.ReloadS
   , root          :: ID
   , session       :: Session
-  , isBoxVisible  :: T.Box Boolean
   )
 
 type IsLeaf = Boolean
@@ -78,8 +77,7 @@ nodeSpan = R2.leaf nodeSpanCpt
 nodeSpanCpt :: R.Component NodeSpanProps
 nodeSpanCpt = here.component "nodeSpan" cpt
   where
-    cpt props@{ boxes
-              , dispatch
+    cpt props@{ dispatch
               , folderOpen
               , frontends
               , id
@@ -90,6 +88,7 @@ nodeSpanCpt = here.component "nodeSpan" cpt
               , isBoxVisible
               } _ = do
     -- States
+      boxes <- AppStore.use
 
       route' <- T.useLive T.unequal boxes.route
       -- only 1 popup at a time is allowed to be opened
@@ -331,7 +330,6 @@ nodeSpanCpt = here.component "nodeSpan" cpt
 
               asyncProgress
               { asyncTask: task
-              , errors: boxes.errors
               , nodeId: id
               , onFinish: onTaskFinish id task
               , session
@@ -605,59 +603,66 @@ nodeActionsCpt = here.component "nodeActions" cpt where
 graphNodeActions :: R2.Leaf NodeActionsCommon
 graphNodeActions = R2.leaf graphNodeActionsCpt
 graphNodeActionsCpt :: R.Component NodeActionsCommon
-graphNodeActionsCpt = here.component "graphNodeActions" cpt where
-  cpt { id, session, refresh } _ = do
-    -- States
-    state /\ stateBox <- R2.useBox' Nothing
-
+graphNodeActionsCpt = R2.hereComponent here "graphNodeActions" hCpt where
+  hCpt hp { id, refresh, session } _ = do
     -- Hooks
-    useLoaderEffect
-      { errorHandler
+    useLoader
+      { errorHandler: Nothing
+      , herePrefix: hp
       , loader: graphVersions session
       , path: id
-      , state: stateBox
+      , render: \gv -> graphNodeActionsLoaded { gv, id, refresh, session }
       }
+    where
+      graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
 
+type NodeActionsGraphLoaded =
+  ( gv :: Record GraphAPI.GraphVersions
+  | NodeActionsCommon )
+
+graphNodeActionsLoaded :: R2.Leaf NodeActionsGraphLoaded
+graphNodeActionsLoaded = R2.leaf graphNodeActionsLoadedCpt
+graphNodeActionsLoadedCpt :: R.Component NodeActionsGraphLoaded
+graphNodeActionsLoadedCpt = here.component "graphNodeActionsLoaded" cpt where
+  cpt { gv, id, refresh, session } _ = do
     -- Render
-    pure $ R2.fromMaybe state \gv ->
-
-      nodeActionsGraph
-      { graphVersions: gv, session, id, refresh }
-      []
-
-  graphVersions session graphId = GraphAPI.graphVersions { graphId, session }
-  errorHandler = logRESTError here "[graphNodeActions]"
+    pure $ nodeActionsGraph { graphVersions: gv
+                            , id
+                            , refresh
+                            , session } []
 
 
 listNodeActions :: R2.Leaf NodeActionsCommon
 listNodeActions = R2.leaf listNodeActionsCpt
 listNodeActionsCpt :: R.Component NodeActionsCommon
-listNodeActionsCpt = here.component "listNodeActions" cpt where
-  cpt { id, session, refresh } _ = do
-    -- States
-    state /\ stateBox <- R2.useBox' Nothing
-
+listNodeActionsCpt = R2.hereComponent here "listNodeActions" hCpt where
+  hCpt hp { id, refresh, session } _ = do
     -- Hooks
-    useLoaderEffect
-      { errorHandler
+    useLoader
+      { errorHandler: Nothing
+      , herePrefix: hp
       , loader: loadCorpusWithChild
       , path: { nodeId: id, session }
-      , state: stateBox
+      , render: \corpusData -> listNodeActionsLoaded { corpusData, id, refresh, session }
       }
+
+type NodeActionsListLoaded =
+  ( corpusData :: CorpusData
+  | NodeActionsCommon )
+
+listNodeActionsLoaded :: R2.Leaf NodeActionsListLoaded
+listNodeActionsLoaded = R2.leaf listNodeActionsLoadedCpt
+listNodeActionsLoadedCpt :: R.Component NodeActionsListLoaded
+listNodeActionsLoadedCpt = here.component "listNodeActionsLoaded" cpt where
+  cpt { corpusData: { corpusId }, id, refresh, session } _ = do
 
     -- Render
-    pure $ R2.fromMaybe state \{ corpusId } ->
-
-      nodeActionsNodeList
-      { listId: id
-      , nodeId: corpusId
-      , session
-      , refresh: refresh
-      , nodeType: GT.TabNgramType GT.CTabTerms
-      }
-
-    where
-      errorHandler = logRESTError here "[listNodeActions]"
+    pure $ nodeActionsNodeList { listId: id
+                               , nodeId: corpusId
+                               , nodeType: GT.TabNgramType GT.CTabTerms
+                               , refresh
+                               , session
+                               }
 
 -----------------------------------------------
 

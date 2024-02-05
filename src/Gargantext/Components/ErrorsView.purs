@@ -23,8 +23,7 @@ componentCpt = here.component "main" cpt where
   cpt _ _ = do
     -- | States
     -- |
-    { errors
-    } <- AppStore.use
+    { errors } <- AppStore.use
 
     errors' <- R2.useLive' errors
 

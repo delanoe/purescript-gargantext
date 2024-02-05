@@ -16,6 +16,7 @@ import Data.Maybe (Maybe(..))
 import Data.MediaType.Common (applicationFormURLEncoded, applicationJSON, multipartFormData)
 import Data.Show.Generic (genericShow)
 import Data.Tuple (Tuple)
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
@@ -171,10 +172,12 @@ instance JSON.ReadForeign FrontendError where
         pure $ EC_500__node_generic_exception { error }
       "EC_500__node_not_implemented_yet" -> do
         pure $ EC_500__node_not_implemented_yet
-      _ -> Foreign.fail $ Foreign.ForeignError $ "deserialization for '" <> type_ <> "' not implemented"
+      _ -> do
+        Foreign.fail $ Foreign.ForeignError $ "deserialization for '" <> type_ <> "' not implemented"
 
-logRESTError :: R2.Here -> String -> RESTError -> Effect Unit
-logRESTError here' prefix e = here'.warn2 (prefix <> " " <> show e) e
+
+logRESTError :: R2.HerePrefix -> RESTError -> Effect Unit
+logRESTError (R2.HerePrefix { here: here', prefix }) e = here'.warn2 (prefix <> " " <> show e) e
 -- logRESTError here prefix (SendResponseError e) = here.warn2 (prefix <> " SendResponseError ") e  -- TODO: No show
 -- logRESTError here prefix (ReadJSONError e) = here.warn2 (prefix <> " ReadJSONError ") $ show e
 -- logRESTError here prefix (CustomError e) = here.warn2 (prefix <> " CustomError ") $ e

@@ -75,29 +75,27 @@ type ThemeSwitcherProps = (
 
 themeSwitcher :: R2.Component ThemeSwitcherProps
 themeSwitcher = R.createElement themeSwitcherCpt
-
 themeSwitcherCpt :: R.Component ThemeSwitcherProps
-themeSwitcherCpt = here.component "themeSwitcher" cpt
-  where
-    cpt { theme, themes } _ = do
-      currentTheme <- T.useLive T.unequal theme
+themeSwitcherCpt = here.component "themeSwitcher" cpt where
+  cpt { theme, themes } _ = do
+    currentTheme <- T.useLive T.unequal theme
 
-      let option (Theme { name }) = H.option { value: name } [ H.text name ]
-      let options = map option themes
+    let option (Theme { name }) = H.option { value: name } [ H.text name ]
+    let options = map option themes
 
-      R.useEffectOnce' $ markThemeToDOMTree currentTheme
+    R.useEffectOnce' $ markThemeToDOMTree currentTheme
 
-      pure $ R2.select { className: "form-control rounded-circle-2"
-                       , defaultValue: themeName currentTheme
-                       , on: { change: onChange theme } } options
-      where
-        onChange box e = do
-          let value = R.unsafeEventValue e
-          let mTheme = A.head $ A.filter (\(Theme { name }) -> value == name) themes
+    pure $ R2.select { className: "form-control rounded-circle-2"
+                     , defaultValue: themeName currentTheme
+                     , on: { change: onChange theme } } options
+    where
+      onChange box e = do
+        let value = R.unsafeEventValue e
+        let mTheme = A.head $ A.filter (\(Theme { name }) -> value == name) themes
 
-          case mTheme of
-            Nothing -> pure unit
-            Just t  -> do
-              switchTheme t
-              markThemeToDOMTree t
-              T.write_ t box
+        case mTheme of
+          Nothing -> pure unit
+          Just t  -> do
+            switchTheme t
+            markThemeToDOMTree t
+            T.write_ t box

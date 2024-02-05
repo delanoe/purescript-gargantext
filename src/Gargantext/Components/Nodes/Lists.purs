@@ -17,7 +17,7 @@ import Gargantext.Components.Nodes.Lists.Tabs as Tabs
 import Gargantext.Components.Nodes.Lists.Types (CacheState(..))
 import Gargantext.Components.Table as Table
 import Gargantext.Config (defaultFrontends)
-import Gargantext.Config.REST (logRESTError, AffRESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Core.NgramsTable.Types (NgramsTerm(..))
 import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
@@ -58,12 +58,12 @@ listsLayoutCpt = here.component "listsLayout" cpt where
 listsLayoutWithKey :: R2.Component ( key :: String | Props )
 listsLayoutWithKey = R.createElement listsLayoutWithKeyCpt
 listsLayoutWithKeyCpt :: R.Component ( key :: String | Props )
-listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
-  cpt { boxes
-      , nodeId
-      , session
-      , sessionUpdate
-      , sidePanel } _ = do
+listsLayoutWithKeyCpt = R2.hereComponent here "listsLayoutWithKey" hCpt where
+  hCpt hp { boxes
+          , nodeId
+          , session
+          , sessionUpdate
+          , sidePanel } _ = do
     activeTab <- T.useBox 0
 
     let path = { nodeId, session }
@@ -74,7 +74,8 @@ listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
     R.useEffectOnce' $ do
       T.listen (\{ new } -> afterCacheStateChange new) cacheState
 
-    useLoader { errorHandler
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , path
               , loader: loadCorpusWithChild
               , render: \corpusData@{ corpusId, corpusNode: NodePoly poly } ->
@@ -92,17 +93,14 @@ listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
                                 }
                             , Tabs.tabs {
                                 activeTab
-                              , boxes
                               , cacheState
                               , corpusData
                               , corpusId
                               , key: "listsLayoutWithKey-tabs-" <> (show cacheState')
                               , session
-                              , sidePanel
                               }
                             ] }
     where
-      errorHandler = logRESTError here "[listsLayoutWithKey]"
       afterCacheStateChange cacheState = do
         launchAff_ $ clearCache unit
         sessionUpdate $ setCacheState session nodeId cacheState
@@ -193,18 +191,19 @@ type NgramsDocListProps =
 ngramsDocList :: R2.Component NgramsDocListProps
 ngramsDocList = R.createElement ngramsDocListCpt
 ngramsDocListCpt :: R.Component NgramsDocListProps
-ngramsDocListCpt = here.component "ngramsDocList" cpt where
-  cpt { mCorpusId: Nothing } _ = do
+ngramsDocListCpt = R2.hereComponent here "ngramsDocList" hCpt where
+  hCpt hp { mCorpusId: Nothing } _ = do
     pure $ H.div {} []
-  cpt { mListId: Nothing } _ = do
+  hCpt hp { mListId: Nothing } _ = do
     pure $ H.div {} []
-  cpt { mNgrams: Nothing } _ = do
+  hCpt hp { mNgrams: Nothing } _ = do
     pure $ H.div {} []
-  cpt { mCorpusId: Just corpusId
-      , mListId: Just listId
-      , mNgrams: Just ngrams
-      , session } _ = do
-    useLoader { errorHandler
+  hCpt hp { mCorpusId: Just corpusId
+          , mListId: Just listId
+          , mNgrams: Just ngrams
+          , session } _ = do
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , path: { corpusId, ngrams, session }
               , loader: loaderNgramsDocList
               , render: \ctx -> ngramsDocListLoaded { contexts: ctx
@@ -213,8 +212,6 @@ ngramsDocListCpt = here.component "ngramsDocList" cpt where
                                                     , ngrams
                                                     , session } []
               }
-    where
-      errorHandler = logRESTError here "[ngramsDocList]"
 
 type NgramsDocLoadProps =
   ( corpusId :: GT.CorpusId

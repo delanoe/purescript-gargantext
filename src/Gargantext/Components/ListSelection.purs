@@ -117,9 +117,10 @@ type ListTreeChildrenProps =
 listTreeChildren :: R2.Component ListTreeChildrenProps
 listTreeChildren = R.createElement listTreeChildrenCpt
 listTreeChildrenCpt :: R.Component ListTreeChildrenProps
-listTreeChildrenCpt = here.component "listTreeChildren" cpt where
-  cpt { render, root, selection, session } _ = do
-    useLoader { errorHandler
+listTreeChildrenCpt = R2.hereComponent here "listTreeChildren" hCpt where
+  hCpt hp { render, root, selection, session } _ = do
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , loader: loadTreeChildren
               , path: { root, session }
               , render: \loaded ->
@@ -128,10 +129,6 @@ listTreeChildrenCpt = here.component "listTreeChildren" cpt where
                                          , root
                                          , selection
                                          , session } [] }
-    where
-      errorHandler err = case err of
-        ReadJSONError err' -> here.warn2 "[listTreeChildren] ReadJSONError" $ show err'
-        _                  -> here.warn2 "[listTreeChildren] RESTError" err
 
 type ListTreeChildrenLoadedProps =
   ( loaded    :: Array NodeSimple

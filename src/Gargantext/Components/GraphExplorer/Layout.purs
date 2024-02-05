@@ -62,8 +62,7 @@ layoutCpt = here.component "layout" cpt where
       } _ = do
     -- | States
     -- |
-    { reloadForest
-    } <- AppStore.use
+    { reloadForest } <- AppStore.use
 
     { showSidebar
     , showDoc
