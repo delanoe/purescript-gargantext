@@ -54,7 +54,7 @@ derive instance Generic Lang _
 derive instance Ord Lang
 
 instance Show Lang where
-  show Universal     = "All"
+  -- show Universal     = "All"
   show No_extraction = "Nothing"
   show s             = genericShow s
 
