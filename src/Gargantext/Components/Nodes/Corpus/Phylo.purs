@@ -92,13 +92,14 @@ nodeCpt = here.component "node" cpt where
             ]
           ]
       , defaultSlot:
-          R2.fromMaybe state' \(PhyloSet { corpusId, listId, phyloData }) ->
+          R2.fromMaybe state' \(PhyloSet { corpusId, listId, phyloData, phyloConfig}) ->
 
             let
               state_ :: Record PhyloStore.State
               state_ =
                 -- Data
                 { phyloData
+                , phyloConfig
                 , corpusId
                 , listId
                 , phyloId: nodeId
