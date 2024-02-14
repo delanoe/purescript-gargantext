@@ -113,7 +113,7 @@ updateGraphCpt = here.component "updateGraph" cpt where
                                   , dispatch: callback
                                   , mError: Nothing }
         [ H.text "Show subjects with Order1 or concepts with Order2 ?"
-        , Tools.formChoiceSafe { items: [Order1, Order2_A, Order2_B]
+        , Tools.formChoiceSafe { items: [Order1, Order2]
                                , default: methodGraphMetric'
                                , callback: \val -> T.write_ val methodGraphMetric
                                , print: show } []
