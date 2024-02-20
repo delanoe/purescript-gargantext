@@ -6,23 +6,20 @@ module Gargantext.Components.GraphExplorer.Utils
   , takeGreatestNodeByCluster, countNodeByCluster
   ) where
 
-import Gargantext.Prelude
-
 import Data.Array as A
 import Data.Foldable (maximum, minimum)
 import Data.Lens (Lens', lens, over, traversed, (^.))
-import Data.Int (floor, toNumber)
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Newtype (wrap)
 import Data.Number as DN
-import Data.Sequence as Seq
 import Data.Traversable (class Traversable)
 import Gargantext.Components.GraphExplorer.GraphTypes as GEGT
 import Gargantext.Components.GraphExplorer.Types as GET
 import Gargantext.Hooks.Sigmax.Types as ST
+import Gargantext.Prelude
 import Gargantext.Utils (getter)
 import Gargantext.Utils.Lens as GUL
-import Gargantext.Utils.Seq as GUS
+
 
 stEdgeToGET :: Record ST.Edge -> GEGT.Edge
 stEdgeToGET { _original: GEGT.Edge original, hidden } = GEGT.Edge $ original { hidden = Just hidden }

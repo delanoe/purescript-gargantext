@@ -1,13 +1,12 @@
 module Gargantext.Components.DocsTable.Types where
 
-import Gargantext.Prelude
-
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple (Tuple(..))
-import Gargantext.Components.Category.Types (Category(..), Star(..), decodeCategory)
+import Gargantext.Components.Category.Types (Category(..), Star, decodeCategory)
+import Gargantext.Prelude
 import Simple.JSON as JSON
 
 data Action

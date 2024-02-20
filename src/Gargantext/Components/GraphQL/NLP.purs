@@ -1,12 +1,8 @@
 module Gargantext.Components.GraphQL.NLP where
 
 import Gargantext.Prelude
+import Gargantext.Components.Lang (Lang, ServerType)
 
-import GraphQL.Client.Args (Args, NotNull, (=>>))
-import GraphQL.Client.Variable (Var(..))
-import Gargantext.Components.Lang (Lang(..), ServerType)
-import Gargantext.Utils.GraphQL as GGQL
-import Type.Proxy (Proxy(..))
 
 type LanguageProperties
   = { url    :: String

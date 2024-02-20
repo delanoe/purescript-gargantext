@@ -1,20 +1,16 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Search where
 
-import Gargantext.Prelude
-
-import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
-import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.App.Store as Store
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar (searchBar)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (defaultSearch)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Utils (loadLanguages)
-import Gargantext.Components.Lang (allLangs, Lang)
-import Gargantext.Config.REST (RESTError(..), AffRESTError)
+import Gargantext.Components.Lang (Lang)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude
 import Gargantext.Sessions (Session)
 import Gargantext.Types (ID)
 import Gargantext.Types as GT
@@ -39,7 +35,6 @@ actionSearch = R.createElement actionSearchCpt
 actionSearchCpt :: R.Component Props
 actionSearchCpt = R2.hereComponent here "actionSearch" hCpt where
   hCpt hp props@({ session }) _ = do
-    { errors } <- Store.use
     useLoader { errorHandler: Nothing
               , herePrefix: hp
               , loader: loadLanguages

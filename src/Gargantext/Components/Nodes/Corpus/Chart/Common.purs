@@ -1,22 +1,19 @@
 module Gargantext.Components.Nodes.Corpus.Chart.Common where
 
-import Gargantext.Prelude
-
-import Data.Array as A
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
-import Gargantext.Components.App.Store as Store
 import Gargantext.Components.Nodes.Corpus.Chart.Types (MetricsProps, ReloadPath)
 import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Hooks.Loader (HashedResponse, useLoader, useLoaderWithCacheAPI)
+import Gargantext.Prelude
 import Gargantext.Sessions (Session)
-import Gargantext.Types (FrontendError(..))
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Crypto (Hash)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Simple.JSON as JSON
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Common"
@@ -41,7 +38,6 @@ metricsLoadViewCpt = R2.hereComponent here "metricsLoadView" hCpt where
           , path
           , reload
           , session } _ = do
-    { errors } <- Store.use
     reload' <- T.useLive T.unequal reload
 
     useLoader { errorHandler: Nothing

@@ -34,47 +34,46 @@ setTreeOut a   _             = a
 
 -----------------------------------------------------------------------
 icon :: Action -> String
-icon (AddNode    _ _)               = glyphiconNodeAction (Add [])
-icon (DeleteNode _)                 = glyphiconNodeAction Delete
-icon (RenameNode _)                 = glyphiconNodeAction Config
-icon (UpdateNode _)                 = glyphiconNodeAction ReloadWithSettings
-icon (ShareTeam   _)                = glyphiconNodeAction Share
-icon (AddContact  _)                = glyphiconNodeAction Share
-icon (SharePublic _ )               = glyphiconNodeAction (Publish { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
-icon (DoSearch   _)                 = glyphiconNodeAction SearchBox
-icon (UploadFile _ _ _ _ _ _ _)     = glyphiconNodeAction Upload
-icon (UploadArbitraryFile _ _ _ _ ) = glyphiconNodeAction Upload
-icon (UploadFrameCalc _ _)          = glyphiconNodeAction Upload
-icon  RefreshTree                   = glyphiconNodeAction Refresh
-icon  CloseBox                      = glyphiconNodeAction CloseNodePopover
-icon  DownloadNode                  = glyphiconNodeAction Download
-icon (MoveNode _ )                  = glyphiconNodeAction (Move  { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
-icon (MergeNode _ )                 = glyphiconNodeAction (Merge { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
-icon (LinkNode _  )                 = glyphiconNodeAction (Link  { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
-icon (DocumentsFromWriteNodes _)    = glyphiconNodeAction (WriteNodesDocuments)
-
-icon NoAction                       = "hand-o-right"
+icon (AddNode    _ _)            = glyphiconNodeAction (Add [])
+icon (DeleteNode _)              = glyphiconNodeAction Delete
+icon (RenameNode _)              = glyphiconNodeAction Config
+icon (UpdateNode _)              = glyphiconNodeAction ReloadWithSettings
+icon (ShareTeam   _)             = glyphiconNodeAction Share
+icon (AddContact  _)             = glyphiconNodeAction Share
+icon (SharePublic _ )            = glyphiconNodeAction (Publish { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
+icon (DoSearch   _)              = glyphiconNodeAction SearchBox
+icon (UploadFile _ _ _ _ _ _ _)  = glyphiconNodeAction Upload
+icon (UploadArbitraryFile _ _ _) = glyphiconNodeAction Upload
+icon (UploadFrameCalc _ _)       = glyphiconNodeAction Upload
+icon  RefreshTree                = glyphiconNodeAction Refresh
+icon  CloseBox                   = glyphiconNodeAction CloseNodePopover
+icon  DownloadNode               = glyphiconNodeAction Download
+icon (MoveNode _ )               = glyphiconNodeAction (Move  { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
+icon (MergeNode _ )              = glyphiconNodeAction (Merge { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
+icon (LinkNode _  )              = glyphiconNodeAction (Link  { subTreeParams : SubTreeParams {showtypes:[], valitypes:[] }})
+icon (DocumentsFromWriteNodes _) = glyphiconNodeAction (WriteNodesDocuments)
+icon NoAction                    = "hand-o-right"
 
 -- icon _             = "hand-o-right"
 
 text :: Action -> String
-text (AddNode     _ _    )          = "Add!"
-text (DeleteNode _       )          = "Delete!"
-text (RenameNode  _      )          = "Rename!"
-text (UpdateNode  _      )          = "Update!"
-text (ShareTeam   _      )          = "Share with team!"
-text (AddContact  _      )          = "Add contact!"
-text (SharePublic _      )          = "Publish!"
-text (DoSearch    _      )          = "Launch search!"
-text (UploadFile _ _ _ _ _ _ _)     = "Upload File!"
-text (UploadArbitraryFile _ _  _ _) = "Upload arbitrary file!"
-text (UploadFrameCalc _ _)          = "Upload frame calc"
-text  RefreshTree                   = "Refresh Tree!"
-text  CloseBox                      = "Close Box!"
-text DownloadNode                   = "Download!"
-text (MoveNode  _ )                 = "Move!"
-text (MergeNode _ )                 = "Merge!"
-text (LinkNode  _ )                 = "Link!"
-text (DocumentsFromWriteNodes _ )   = "Documents from Write Nodes!"
-text NoAction                       = "No Action"
+text (AddNode     _ _    )        = "Add!"
+text (DeleteNode _       )        = "Delete!"
+text (RenameNode  _      )        = "Rename!"
+text (UpdateNode  _      )        = "Update!"
+text (ShareTeam   _      )        = "Share with team!"
+text (AddContact  _      )        = "Add contact!"
+text (SharePublic _      )        = "Publish!"
+text (DoSearch    _      )        = "Launch search!"
+text (UploadFile _ _ _ _ _ _ _)   = "Upload File!"
+text (UploadArbitraryFile _ _ _)  = "Upload arbitrary file!"
+text (UploadFrameCalc _ _)        = "Upload frame calc"
+text  RefreshTree                 = "Refresh Tree!"
+text  CloseBox                    = "Close Box!"
+text DownloadNode                 = "Download!"
+text (MoveNode  _ )               = "Move!"
+text (MergeNode _ )               = "Merge!"
+text (LinkNode  _ )               = "Link!"
+text (DocumentsFromWriteNodes _ ) = "Documents from Write Nodes!"
+text NoAction                     = "No Action"
 -----------------------------------------------------------------------

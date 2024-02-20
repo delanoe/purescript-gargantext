@@ -10,20 +10,17 @@ module Gargantext.Components.App.Store
   ) where
 
 
-import Gargantext.Prelude
-
-import Data.Maybe (Maybe(..))
-import Data.Set as Set
 import Data.Map (Map)
 import Data.Map as Map
+import Data.Maybe (Maybe(..))
+import Data.Set as Set
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.Lang as Lang
-import Gargantext.Components.Login.Types (TreeId)
 import Gargantext.Components.Nodes.Lists.SidePanel as ListsSP
-import Gargantext.Components.Nodes.Lists.Types as ListsT
 import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Themes as Themes
 import Gargantext.Ends (Backend)
+import Gargantext.Prelude
 import Gargantext.Routes (AppRoute(Home), Tile)
 import Gargantext.Sessions (Session, Sessions)
 import Gargantext.Sessions as Sessions
@@ -35,6 +32,7 @@ import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Toestand as T
 import Unsafe.Coerce (unsafeCoerce)
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.App.Store"

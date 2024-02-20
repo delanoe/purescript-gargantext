@@ -11,13 +11,11 @@ import Data.Foldable (intercalate)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
 import Data.String.Regex as Regex
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
 import Effect.Class (liftEffect)
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Store as AppStore
-import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Elevation(..), TooltipEffect(..), Variant(..))
 import Gargantext.Components.Corpus.CodeSection (loadCorpusWithChild)
@@ -32,13 +30,13 @@ import Gargantext.Components.Lang (Lang(EN))
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
 import Gargantext.Context.Progress (asyncContext, asyncProgress)
 import Gargantext.Ends (Frontends, url)
-import Gargantext.Hooks.Loader (useLoader, useLoaderEffect)
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Hooks.Version (Version, useVersion)
 import Gargantext.Routes as Routes
 import Gargantext.Sessions (Session, sessionId)
 import Gargantext.Types (Handed(..), ID, Name)
 import Gargantext.Types as GT
-import Gargantext.Utils (nbsp, textEllipsisBreak, (?))
+import Gargantext.Utils (nbsp, (?))
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import React.SyntheticEvent as SE

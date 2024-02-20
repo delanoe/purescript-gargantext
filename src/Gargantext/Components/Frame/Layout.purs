@@ -2,21 +2,15 @@ module Gargantext.Components.Frame.Layout
   ( layout
   ) where
 
-import Gargantext.Prelude
-
 import DOM.Simple (document, querySelector)
-import DOM.Simple as DOM
 import Data.Maybe (Maybe(..), maybe)
-import Data.Nullable (Nullable, null, toMaybe)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (Variant(..))
-import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Frame.Types (Base, Hyperdata(..), FrameId)
 import Gargantext.Components.Node (NodePoly(..))
+import Gargantext.Prelude
 import Gargantext.Types (NodeType(..))
-import Gargantext.Utils.JitsiMeet as JM
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Web.URL as WURL
@@ -26,20 +20,15 @@ here = R2.here "Gargantext.Components.Frame.Layout"
 
 type Props =
   ( frame    :: NodePoly Hyperdata
-  , reload   :: T2.ReloadS
-  , nodeId   :: Int
   , nodeType :: NodeType
   )
 
 layout :: R2.Leaf Props
 layout = R2.leaf layoutCpt
-
 layoutCpt :: R.Component Props
 layoutCpt = here.component "main" cpt where
-  cpt { frame: NodePoly { hyperdata: h@(Hyperdata { base, frame_id }) }
-      , nodeId
+  cpt { frame: NodePoly { hyperdata: Hyperdata { base, frame_id } }
       , nodeType
-      , reload
       } _ = case nodeType of
 
     -- Visio Node
@@ -57,7 +46,7 @@ layoutCpt = here.component "main" cpt where
               H.text $ "Wrong base url: " <> base
             ]
 
-        Just url ->
+        Just _url ->
 
           -- pure $ nodeFrameVisio' { frame_id, reload, url }
           pure $
@@ -112,35 +101,34 @@ layoutCpt = here.component "main" cpt where
 
 --------------------------------------------------------------
 
-type NodeFrameVisioProps =
-  ( frame_id  :: String
-  , reload    :: T2.ReloadS
-  , url       :: WURL.URL
-  )
+-- type NodeFrameVisioProps =
+--   ( frame_id  :: String
+--   , reload    :: T2.ReloadS
+--   , url       :: WURL.URL
+--   )
 
-nodeFrameVisio :: R2.Leaf NodeFrameVisioProps
-nodeFrameVisio = R2.leaf nodeFrameVisioCpt
+-- nodeFrameVisio :: R2.Leaf NodeFrameVisioProps
+-- nodeFrameVisio = R2.leaf nodeFrameVisioCpt
+-- nodeFrameVisioCpt :: R.Component NodeFrameVisioProps
+-- nodeFrameVisioCpt = here.component "nodeFrameVisio" cpt where
+--   cpt { frame_id
+--       , url
+--       } _  = do
+--     ref <- R.useRef (null :: Nullable DOM.Element)
 
-nodeFrameVisioCpt :: R.Component NodeFrameVisioProps
-nodeFrameVisioCpt = here.component "nodeFrameVisio" cpt where
-  cpt { frame_id
-      , url
-      } _  = do
-    ref <- R.useRef (null :: Nullable DOM.Element)
+--     R.useEffect' $ do
+--       here.log2 "[nodeFrameVisio] ref" $ R.readRef ref
+--       here.log2 "[nodeFrameVisio] JM.api" JM._api
+--       case toMaybe (R.readRef ref) of
+--         Nothing -> pure unit
+--         Just r  -> do
+--           api <- JM.jitsiMeetAPI (WURL.host url) { parentNode: r
+--                                                   , roomName: frame_id
+--                                                   , width: "100%"
+--                                                   , height: "100%" }
+--           here.log2 "[nodeFrameVisio] api" api
 
-    R.useEffect' $ do
-      here.log2 "[nodeFrameVisio] ref" $ R.readRef ref
-      here.log2 "[nodeFrameVisio] JM.api" JM._api
-      case toMaybe (R.readRef ref) of
-        Nothing -> pure unit
-        Just r  -> do
-          api <- JM.jitsiMeetAPI (WURL.host url) { parentNode: r
-                                                  , roomName: frame_id
-                                                  , width: "100%"
-                                                  , height: "100%" }
-          here.log2 "[nodeFrameVisio] api" api
-
-    pure $ H.div { ref, className: "jitsi-iframe" } [ ]
+--     pure $ H.div { ref, className: "jitsi-iframe" } [ ]
 
 --------------------------------------------------------------
 

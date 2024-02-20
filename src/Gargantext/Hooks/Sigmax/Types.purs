@@ -2,26 +2,25 @@ module Gargantext.Hooks.Sigmax.Types where
 
 import DOM.Simple.Types (Element)
 import Data.Array as A
-import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
+import Data.Generic.Rep (class Generic)
 import Data.Hashable (class Hashable, hash)
-import Data.Show.Generic (genericShow)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromJust)
 import Data.Sequence as Seq
 import Data.Set as Set
+import Data.Show.Generic (genericShow)
 import Data.Traversable (class Traversable)
 import Data.Tuple (Tuple(..))
-import Effect (Effect)
-import Partial.Unsafe (unsafePartial)
-import Prelude (class Eq, class Show, map, ($), (&&), (==), (||), (<$>), (<), mod, not, pure, (<=))
-import Record.Unsafe (unsafeGet, unsafeSet)
-
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..))
 import Gargantext.Components.GraphExplorer.GraphTypes as GEGT
 import Gargantext.Data.Louvain as Louvain
 import Gargantext.Types as GT
 import Gargantext.Utils.Range as Range
+import Partial.Unsafe (unsafePartial)
+import Prelude (class Eq, class Show, ($), (&&), (==), (||), (<$>), mod, not, (<=))
+import Record.Unsafe (unsafeGet, unsafeSet)
+
 
 newtype Graph n e = Graph { edges :: Seq.Seq {|e}, nodes :: Seq.Seq {|n} }
 
@@ -32,8 +31,9 @@ instance ( Eq (Record n)
          , GT.Optional HashableNodeFields n
          , GT.Optional HashableEdgeFields e) => Eq (Graph n e) where
   --eq = genericEq
-  eq g1@(Graph { edges: e1, nodes: n1 }) g2@(Graph { edges: e2, nodes: n2 }) =
+  -- eq g1@(Graph { edges: e1, nodes: n1 }) g2@(Graph { edges: e2, nodes: n2 }) =
     -- (Seq.length e1 == Seq.length e2) && (Seq.length n1 == Seq.length n2)
+  eq g1 g2 =
     compareGraphEdges g1 g2 &&
     compareGraphNodes g1 g2
 
@@ -324,8 +324,7 @@ louvainGraph :: SGraph -> Louvain.LouvainCluster -> SGraph
 louvainGraph g cluster = Graph {nodes: newNodes, edges: graphEdges g}
   where
     newNodes = (nodeClusterColor cluster) <$> (graphNodes g)
-    nm = nodesMap newNodes
-    newEdges = (edgeClusterColor cluster nm) <$> (graphEdges g)
+    -- newEdges = (edgeClusterColor cluster nm) <$> (graphEdges g)
 
 --edgeClusterColor _cluster nm e = e { color = sourceNode.color, sourceNode = sourceNode, targetNode = targetNode }
 edgeClusterColor _cluster nm e = e { color = sourceNode.color }
@@ -333,9 +332,9 @@ edgeClusterColor _cluster nm e = e { color = sourceNode.color }
     sourceNode = case Map.lookup e.source nm of
       Just sn -> sn
       Nothing -> e.sourceNode
-    targetNode = case Map.lookup e.target nm of
-      Just tn -> tn
-      Nothing -> e.targetNode
+    -- targetNode = case Map.lookup e.target nm of
+    --   Just tn -> tn
+    --   Nothing -> e.targetNode
 
 nodeClusterColor cluster n = n { color = newColor }
   where

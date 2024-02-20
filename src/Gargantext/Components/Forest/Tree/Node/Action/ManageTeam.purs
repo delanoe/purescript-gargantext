@@ -1,23 +1,22 @@
 module Gargantext.Components.Forest.Tree.Node.Action.ManageTeam where
 
-import Gargantext.Prelude
-
-import Data.Array (cons, filter, null, (:))
+import Data.Array (filter, null, (:))
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Effect.Aff (runAff_)
-import Effect.Class (liftEffect)
 import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.GraphQL.Endpoints (deleteTeamMembership, getTeam)
 import Gargantext.Components.GraphQL.Team (Team, TeamMember)
-import Gargantext.Config.REST (AffRESTError, FrontendError(EC_403__user_not_authorized))
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude
 import Gargantext.Sessions (Session)
-import Gargantext.Types (ID, FrontendError(FRESTError), NodeType)
+import Gargantext.Types (ID, NodeType)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.ManageTeam"

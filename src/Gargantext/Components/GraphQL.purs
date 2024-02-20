@@ -1,18 +1,12 @@
 module Gargantext.Components.GraphQL where
 
-import Gargantext.Prelude
-
 import Affjax.RequestHeader as ARH
-import Control.Monad.Error.Class as Errors
-import Data.Argonaut.Core as AC
 import Data.Argonaut.Decode (JsonDecodeError)
 import Data.Array as A
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
-import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
-import Effect.Aff (Aff, throwError, error)
 import Effect.Class (liftEffect)
 import FFI.Simple ((.?))
 import Foreign as Foreign
@@ -21,21 +15,20 @@ import Gargantext.Components.GraphQL.Context as GQLCTX
 import Gargantext.Components.GraphQL.IMT as GQLIMT
 import Gargantext.Components.GraphQL.NLP as GQLNLP
 import Gargantext.Components.GraphQL.Node as GQLNode
+import Gargantext.Components.GraphQL.Team (Team, TeamDeleteM)
 import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, BreadcrumbInfo)
 import Gargantext.Components.GraphQL.User (User, UserInfo, UserInfoM, UserPubmedAPIKeyM, UserEPOAPIUserM, UserEPOAPITokenM)
-import Gargantext.Components.GraphQL.Team (Team, TeamDeleteM)
--- import Gargantext.Config.REST (AffRESTError, FrontendError, RESTError(..))
 import Gargantext.Config.REST as REST
 import Gargantext.Ends (Backend(..))
+import Gargantext.Prelude
 import Gargantext.Sessions (Session(..))
 import Gargantext.Utils.Reactix as R2
 import GraphQL.Client.Args (type (==>))
 import GraphQL.Client.BaseClients.Urql (UrqlClient, createClient)
--- import GraphQL.Client.Operation (OpMutation)
-import GraphQL.Client.Query (queryFullRes, queryWithDecoder, decodeGqlRes, getFullRes, queryFullRes) --, mutationJson)
+import GraphQL.Client.Query (decodeGqlRes) --, mutationJson)
 import GraphQL.Client.SafeQueryName (safeQueryName)
 import GraphQL.Client.ToGqlString (toGqlQueryString)
-import GraphQL.Client.Types (class GqlQuery, GqlRes, Client(..), class QueryClient, clientQuery, defQueryOpts,  clientMutation, defMutationOpts)
+import GraphQL.Client.Types (class GqlQuery, Client(..), class QueryClient, clientQuery, defQueryOpts,  clientMutation, defMutationOpts)
 import GraphQL.Client.Variables (class VarsTypeChecked, getVarsJson, getVarsTypeNames)
 import Simple.JSON as JSON
 import Type.Proxy (Proxy(..))
@@ -61,7 +54,7 @@ gqlQuery ::
   -> String
   -> query
   -> REST.AffRESTError returns
-gqlQuery c@(Client client) queryNameUnsafe q = do
+gqlQuery (Client client) queryNameUnsafe q = do
   let opts = defQueryOpts client
   json <- clientQuery opts client queryName (getVarsTypeNames q <> toGqlQueryString q) (getVarsJson q)
 
@@ -81,7 +74,7 @@ gqlMutation ::
   -> String
   -> query
   -> REST.AffRESTError returns
-gqlMutation c@(Client client) _ queryNameUnsafe q = do
+gqlMutation (Client client) _ queryNameUnsafe q = do
   let opts = defMutationOpts client
   json <- clientMutation opts client queryName (getVarsTypeNames q <> toGqlQueryString q) (getVarsJson q)
 

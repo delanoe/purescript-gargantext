@@ -1,7 +1,5 @@
 module Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar where
 
-import Gargantext.Prelude
-
 import Data.Int (floor)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
@@ -11,15 +9,16 @@ import Effect.Timer (clearInterval, setInterval)
 import Gargantext.Components.App.Store as AppStore
 import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Config.Utils (handleErrorInAsyncProgress, handleRESTError)
+import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, get)
-import Gargantext.Types (FrontendError)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record.Extra as RX
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar"
@@ -88,7 +87,7 @@ progressIndicator p = R.createElement progressIndicatorCpt p []
 progressIndicatorCpt :: R.Component ProgressIndicatorProps
 progressIndicatorCpt = here.component "progressIndicator" cpt
   where
-    cpt { barType, label, progress } _ = do
+    cpt { barType, progress } _ = do
       progress' <- T.useLive T.unequal progress
       let progressInt = floor progress'
 

@@ -1,8 +1,5 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
-import Gargantext.Prelude
-
-import Affjax.RequestBody (blob)
 import Data.Array as A
 import Data.Either (Either, fromRight')
 import Data.Eq.Generic (genericEq)
@@ -28,8 +25,9 @@ import Gargantext.Components.Lang (Lang(..), langReader)
 import Gargantext.Components.ListSelection as ListSelection
 import Gargantext.Components.ListSelection.Types (Selection(..))
 import Gargantext.Components.ListSelection.Types as ListSelection
-import Gargantext.Config.REST (AffRESTError, RESTError(..))
+import Gargantext.Config.REST (AffRESTError, RESTError)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, postWwwUrlencoded, post)
 import Gargantext.Types (ID, NodeType(..))
@@ -43,6 +41,7 @@ import Record as Record
 import Toestand as T
 import URI.Extra.QueryPairs as QP
 import Web.File.FileReader.Aff (readAsDataURL)
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Upload"
@@ -68,7 +67,7 @@ actionUploadCpt = here.component "actionUpload" cpt where
 
   cpt props@{ nodeType: Calc } _ = pure $ uploadFrameCalcView props []
 
-  cpt props@{ nodeType: Annuaire, dispatch, id, session } _ =
+  cpt { nodeType: Annuaire, dispatch, id, session } _ =
     pure $ uploadListView { dispatch, id, nodeType: GT.Annuaire, session }
 
   cpt props@{ nodeType: _ } _ = pure $ actionUploadOther props []
@@ -124,7 +123,7 @@ uploadFileViewWithLangs = R2.leaf uploadFileViewWithLangsCpt
 uploadFileViewWithLangsCpt :: R.Component PropsWithLangs
 uploadFileViewWithLangsCpt = here.component "uploadFileViewWithLangs" cpt
   where
-    cpt { dispatch, id, langs, nodeType, session } _ = do
+    cpt { dispatch, langs, nodeType, session } _ = do
       -- mFile    :: R.State (Maybe UploadFile) <- R.useState' Nothing
       mFile       <- T.useBox (Nothing :: Maybe UploadFile)
       fileType    <- T.useBox CSV
@@ -274,14 +273,14 @@ uploadButtonCpt = here.component "uploadButton" cpt
 
 
       where
-        onClick fileFormat' fileType' mFile' lang' selection' onPendingBox e = do
+        onClick fileFormat' fileType' mFile' lang' selection' onPendingBox _e = do
           let { blob, name } = unsafePartial $ fromJust mFile'
           T.write_ true onPendingBox
           here.log2 "[uploadButton] fileType" fileType'
           void $ launchAff do
             case fileType' of
               Arbitrary ->
-                dispatch $ UploadArbitraryFile fileFormat' (Just name) blob selection'
+                dispatch $ UploadArbitraryFile fileFormat' (Just name) blob
               _ -> do
                 contents <- case fileFormat' of
                   Plain -> readUFBAsText blob
@@ -604,9 +603,8 @@ uploadFile { contents, fileFormat, lang, fileType, id, nodeType, mName, selectio
 uploadArbitraryFile :: Session
                     -> ID
                     -> {blob :: UploadFileBlob, fileFormat :: FileFormat, mName :: Maybe String}
-                    -> ListSelection.Selection
                     -> AffRESTError GT.AsyncTaskWithType
-uploadArbitraryFile session id { fileFormat, mName, blob: UploadFileBlob blob } selection = do
+uploadArbitraryFile session id { fileFormat, mName, blob: UploadFileBlob blob } = do
     contents <- readAsDataURL blob
     uploadArbitraryData session id fileFormat mName contents
 

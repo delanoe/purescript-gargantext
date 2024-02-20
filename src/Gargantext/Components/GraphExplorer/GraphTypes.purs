@@ -1,14 +1,10 @@
 module Gargantext.Components.GraphExplorer.GraphTypes where
 
-import Gargantext.Prelude
-
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
-import Data.Maybe (Maybe(..), fromJust)
+import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype)
-import Data.Ord.Generic (genericCompare)
-import Data.Show.Generic (genericShow)
-import Partial.Unsafe (unsafePartial)
+import Gargantext.Prelude
 import Record as Record
 import Simple.JSON as JSON
 import Type.Proxy (Proxy(..))

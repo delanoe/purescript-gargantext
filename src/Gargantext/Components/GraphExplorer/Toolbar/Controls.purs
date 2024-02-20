@@ -9,7 +9,6 @@ import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Effect.Timer (setTimeout)
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.GraphExplorer.Resources as Graph
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Toolbar.Buttons (cameraButton, centerButton, edgesToggleButton, louvainButton, pauseForceAtlasButton, pauseNoverlapButton, multiSelectEnabledButton)
 import Gargantext.Components.GraphExplorer.Toolbar.RangeControl (edgeConfluenceControl, nodeSizeControl)
@@ -101,7 +100,7 @@ controlsCpt = R.memo' $ here.component "controls" cpt where
         _          -> pure unit
 
     -- Handle case when FA is paused from outside events, eg. the automatic timer.
-    R.useEffect' $ Sigmax.handleForceAtlas2Pause fa2Ref forceAtlasState mFAPauseRef Graph.forceAtlas2Settings
+    R.useEffect' $ Sigmax.handleForceAtlas2Pause fa2Ref forceAtlasState mFAPauseRef
 
     R.useEffect' do
       -- here.log2 "[controls] noverlapState'" noverlapState'

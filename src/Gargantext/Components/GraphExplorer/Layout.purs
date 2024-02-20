@@ -234,17 +234,6 @@ graphViewCpt = R.memo' $ here.component "graphView" cpt where
       , noverlapRef
       , sigmaRef
       } _ = do
-    -- | States
-    -- |
-    { edgeConfluence
-    , edgeWeight
-    , graph
-    , nodeSize
-    , removedNodeIds
-    , selectedNodeIds
-    , showEdges
-    , transformedGraph
-    } <- GraphStore.use
 
     -- edgeConfluence'     <- R2.useLive' edgeConfluence
     -- edgeWeight'         <- R2.useLive' edgeWeight

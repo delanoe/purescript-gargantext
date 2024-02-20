@@ -105,15 +105,13 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
                                         , session: props.session
                                         , style: FolderChild
                                         , text: node.name
-                                        , disabled: false
                                         }
 
   makeParentFolder :: TreeNode -> Maybe TreeNode -> Record FolderViewProps -> Array R.Element
   makeParentFolder root (Just parent) props =
     [
       folder
-      { disabled: disabled parent
-      , linkId: parent.id
+      { linkId: parent.id
       , linkNodeType: parent.node_type
       , nodeId: root.id
       , nodeType: root.node_type
@@ -124,16 +122,13 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
       , text: "..."
       }
     ]
-    where
-      disabled { node_type } = if node_type == GT.FolderShared then true else false
   makeParentFolder _ Nothing _ = []
 
   sortFolders :: TreeNode-> TreeNode -> Ordering
   sortFolders a b = compare a.id b.id
 
 type FolderProps =
-  ( disabled      :: Boolean
-  , linkNodeType  :: GT.NodeType
+  ( linkNodeType  :: GT.NodeType
   , linkId        :: Int
   , nodeType      :: GT.NodeType
   , nodeId        :: Int
@@ -148,8 +143,7 @@ folder :: R2.Leaf FolderProps
 folder = R2.leaf folderCpt
 folderCpt :: R.Component FolderProps
 folderCpt = here.component "folderCpt" cpt where
-  cpt props@{ disabled
-            , linkId
+  cpt props@{ linkId
             , linkNodeType
             , nodeId
             , nodeType
@@ -332,8 +326,8 @@ performAction = performAction' where
   performAction' (AddNode name nodeType) p = addNode' name nodeType p
   performAction' (UploadFile nodeType fileType fileFormat lang mName contents selection) p =
     uploadFile' nodeType fileType fileFormat lang mName contents p selection
-  performAction' (UploadArbitraryFile fileFormat mName blob selection) p =
-    uploadArbitraryFile' fileFormat mName blob p selection
+  performAction' (UploadArbitraryFile fileFormat mName blob) p =
+    uploadArbitraryFile' fileFormat mName blob p
   performAction' DownloadNode _ = liftEffect $ here.log "[performAction] DownloadNode"
   performAction' (MoveNode {params}) p = moveNode params p
   performAction' (MergeNode {params}) p = mergeNode params p
@@ -394,8 +388,8 @@ performAction = performAction' where
     handleRESTError (R2.herePrefix here "[uploadFile']") errors eTask $ \task -> liftEffect $ do
       GAT.insert id task tasks
 
-  uploadArbitraryFile' fileFormat mName blob { boxes: { errors, tasks }, nodeId: id, session } selection = do
-    eTask <- uploadArbitraryFile session id { blob, fileFormat, mName } selection
+  uploadArbitraryFile' fileFormat mName blob { boxes: { errors, tasks }, nodeId: id, session } = do
+    eTask <- uploadArbitraryFile session id { blob, fileFormat, mName }
     handleRESTError (R2.herePrefix here "[uploadArbitraryFile']") errors eTask $ \task -> liftEffect $ do
       GAT.insert id task tasks
 

@@ -1,45 +1,25 @@
 module Gargantext.Components.Forest.Breadcrumb (component) where
 
-import Prelude
-
-import Control.Monad.Trans.Class
-import Data.String (Pattern(..), split)
 import Data.Array as A
 import Data.Int (fromString)
-import Data.List (head)
-import Data.Map (Map)
-import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe)
-import Effect (Effect)
-import Effect.Aff (Aff, launchAff_, throwError)
-import Effect.Class (class MonadEffect, liftEffect)
-import Effect.Exception (error)
-import Gargantext.Prelude
-import Gargantext.Context.Session as SessionContext
+import Data.String (Pattern(..), split)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.GraphQL.Endpoints (getBreadcrumb)
 import Gargantext.Components.GraphQL.Tree (BreadcrumbInfo, TreeNode)
-import Gargantext.Components.Login.Types (TreeId, UserId)
-import Gargantext.Ends (Frontends, Backend(..))
-import Gargantext.Hooks.Session (useSession)
+import Gargantext.Config.REST (AffRESTError)
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (AppRoute(Home), appPath, nodeTypeAppRoute)
-import Gargantext.Sessions
 import Gargantext.Sessions.Types
-import Gargantext.Types (CorpusId, FrontendError, NodeID, NodeType, SessionId)
+import Gargantext.Types (NodeType, SessionId)
 import Gargantext.Types as GT
 import Gargantext.Utils as GU
 import Gargantext.Utils.Reactix as R2
+import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as H
-import URI.Query as Query
-import URI.Fragment as Fragment
-import Effect (Effect)
-import Effect.Console (log)
 import Toestand as T
-import Gargantext.Config.REST (AffRESTError)
-import Gargantext.Utils.Toestand as T2
-import Gargantext.Hooks.Loader (useLoader)
 
 
 
@@ -61,7 +41,7 @@ component :: R2.Leaf PropsBoxes
 component = R2.leaf componentCpt
 componentCpt :: R.Component PropsBoxes
 componentCpt = here.component "breadcrumb" cpt where
-  cpt props@{ boxes: { session } } _ = do
+  cpt { boxes: { session } } _ = do
     -- | States
     -- |
     session' <- T.useLive T.unequal session
@@ -82,12 +62,11 @@ componentCpt = here.component "breadcrumb" cpt where
     
     case session' of 
       Nothing -> pure $ H.div {} []
-      Just (session') -> do
+      Just _session'' -> do
         
         url <- R.unsafeHooksEffect GU.href
         let nodeId = fromMaybe 0 $ fromString $ getLastUrlElement url
         -- breadcrumbData <- R2.useLayoutEffect1' $ getBreadcrumb session' currentNodeId
-        let session'' = Just session'
 
         pure $
           -- breadcrumb layout
@@ -108,7 +87,7 @@ componentCpt = here.component "breadcrumb" cpt where
               ]
             ,
               breadcrumbView { nodeId: nodeId
-                              , session: Just session' 
+                              , session: session'
                               }
             ]
           -- ,
@@ -167,11 +146,10 @@ breadcrumbView = R2.leaf breadcrumbViewCpt
 breadcrumbViewCpt :: R.Component Props
 breadcrumbViewCpt = R2.hereComponent here "breadcrumbViewCpt" hCpt where
   hCpt hp { nodeId, session } _ = do
-    let session' = session
 
-    case session' of 
+    case session of 
       Nothing -> pure $ H.div {} []
-      Just (session') -> do
+      Just session' -> do
         useLoader { errorHandler: Nothing
                   , herePrefix: hp
                   , loader: loadBreadcrumbData
@@ -180,7 +158,6 @@ breadcrumbViewCpt = R2.hereComponent here "breadcrumbViewCpt" hCpt where
                           -- , reload: reload'
                           }
                   , render: \items -> breadcrumbViewMain { items: items
-                                                         , nodeId: nodeId
                                                          , session: session'
                                                         --  , reload: reload
                                                          } [] 
@@ -188,19 +165,18 @@ breadcrumbViewCpt = R2.hereComponent here "breadcrumbViewCpt" hCpt where
 
 type BreadcrumbViewProps =
   ( items         :: BreadcrumbInfo
-  , nodeId        :: Int
-  -- , reload        :: T.Box T2.Reload
   , session       :: Session
+  -- , reload        :: T.Box T2.Reload
   )
 
 breadcrumbViewMain :: R2.Component BreadcrumbViewProps
 breadcrumbViewMain = R.createElement breadcrumbViewMainCpt
 breadcrumbViewMainCpt :: R.Component BreadcrumbViewProps
 breadcrumbViewMainCpt = here.component "breadcrumbViewMainCpt" cpt where
-  cpt props@{ items: { parents }, session } _ = do
+  cpt { items: { parents }, session } _ = do
     
     -- session' <- T.useLive T.unequal session
-    let items = makeBreadcrumbElements parents props
+    let items = makeBreadcrumbElements parents session
 
     -- case session of 
     --   Nothing -> pure $ H.div {} []
@@ -210,28 +186,22 @@ breadcrumbViewMainCpt = here.component "breadcrumbViewMainCpt" cpt where
       R.fragment items
 
 
-  makeBreadcrumbElements :: Array TreeNode -> Record BreadcrumbViewProps -> Array R.Element
-  makeBreadcrumbElements items' props = makeBreadcrumbElementsMap <$> items' where
+  makeBreadcrumbElements :: Array TreeNode -> Session -> Array R.Element
+  makeBreadcrumbElements items' session = makeBreadcrumbElementsMap <$> items' where
     makeBreadcrumbElementsMap :: TreeNode -> R.Element
-    makeBreadcrumbElementsMap node = breadcrumbItem { nodeId: node.id
-                                                    , linkId: node.id
-                                                    , nodeType: node.node_type
+    makeBreadcrumbElementsMap node = breadcrumbItem { linkId: node.id
                                                     , linkNodeType: node.node_type
-                                                    , parentId: props.nodeId
-                                                    -- , reload: props.reload
-                                                    , session: props.session
-                                                    -- , style: FolderUp
+                                                    , nodeType: node.node_type
+                                                    , session
                                                     , text: node.name
-                                                    , disabled: false
+                                                    -- , reload: props.reload
+                                                    -- , style: FolderUp
                                                     }
 
 type BreadcrumbItemProps =
-  ( disabled      :: Boolean
-  , linkNodeType  :: NodeType
+  ( linkNodeType  :: NodeType
   , linkId        :: Int
   , nodeType      :: NodeType
-  , nodeId        :: Int
-  , parentId      :: Int
   -- , reload        :: T.Box T2.Reload
   , session       :: Session
   -- , style         :: FolderStyle
@@ -242,17 +212,14 @@ breadcrumbItem :: R2.Leaf BreadcrumbItemProps
 breadcrumbItem = R2.leaf breadcrumbItemCpt
 breadcrumbItemCpt :: R.Component BreadcrumbItemProps
 breadcrumbItemCpt = here.component "breadcrumbItemCpt" cpt where
-  cpt props@{ nodeId
-            , linkId
-            , nodeType
-            , linkNodeType
-            , parentId
-            -- , reload
-            , session
-            -- , style
-            , text
-            , disabled
-            } _ = do
+  cpt { linkId
+      , linkNodeType
+      , nodeType
+      , session
+      , text
+        -- , reload
+        -- , style
+      } _ = do
 
     url <- R.unsafeHooksEffect GU.href
 
@@ -281,7 +248,7 @@ breadcrumbItemCpt = here.component "breadcrumbItemCpt" cpt where
             then
               H.text $ getUserText url 
             else
-              H.text props.text
+              H.text text
           
           , H.span { className: "text-small" }
             [ 
@@ -308,12 +275,12 @@ breadcrumbItemCpt = here.component "breadcrumbItemCpt" cpt where
               }
             ]
           , 
-            H.text props.text 
+            H.text text 
           ]
       ]
 
   createNodeUrl :: Int -> Int -> NodeType -> SessionId -> String
-  createNodeUrl lId rootId nType sId
+  createNodeUrl lId _rootId nType sId
     -- | rootId == lId  = appPath Home
     | otherwise      = appPath $ getFolderPath nType sId lId
   

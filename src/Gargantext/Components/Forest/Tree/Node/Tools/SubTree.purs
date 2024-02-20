@@ -1,28 +1,27 @@
 module Gargantext.Components.Forest.Tree.Node.Tools.SubTree where
 
-import Gargantext.Prelude
-
 import Data.Array (length)
 import Data.Array as A
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
-import Gargantext.Components.App.Store as Store
 import Gargantext.Components.Forest.Tree.Node.Action (Props, subTreeOut, setTreeOut)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
 import Gargantext.Components.Forest.Tree.Node.Tools.FTree (FTree, LNode(..), NTree(..))
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..), SubTreeOut(..))
 import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session(..), get)
 import Gargantext.Types as GT
-import Gargantext.Utils (textEllipsisBreak, (?))
+import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Tools.SubTree"

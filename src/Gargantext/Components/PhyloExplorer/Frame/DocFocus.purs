@@ -18,10 +18,8 @@ import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Sessions (Session)
 import Gargantext.Types (CTabNgramType(..), TabSubType(..), TabType(..))
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Toestand as T
 
 
 here :: R2.Here

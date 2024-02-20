@@ -1,25 +1,23 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Share where
 
-import Gargantext.Prelude
-
 import Data.Array (filter, nub)
-import Data.Generic.Rep (class Generic)
 import Data.Either (Either(..))
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
-import Data.String (Pattern(..), contains, trim)
+import Data.String (Pattern(..), contains)
 import Data.Tuple.Nested ((/\))
-import Effect.Aff (Aff, launchAff_)
+import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (Elevation(Level1))
-import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
 import Gargantext.Components.Forest.Tree.Node.Action.Types as Action
 import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
 import Gargantext.Components.InputWithAutocomplete (inputWithAutocomplete)
 import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, get, post)
 import Gargantext.Types (ID)
@@ -30,6 +28,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Share"

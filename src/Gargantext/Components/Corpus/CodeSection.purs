@@ -1,7 +1,5 @@
 module Gargantext.Components.Corpus.CodeSection where
 
-import Gargantext.Prelude
-
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
@@ -12,7 +10,7 @@ import Data.List as List
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Show.Generic (genericShow)
 import Effect (Effect)
-import Effect.Aff (Aff, throwError)
+import Effect.Aff (throwError)
 import Effect.Exception (error)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Variant(..))
@@ -20,20 +18,21 @@ import Gargantext.Components.CodeEditor as CE
 import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Node (HyperdataList, NodePoly(..))
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData, Hyperdata)
-import Gargantext.Components.Nodes.Types (FTField, FTFieldWithIndex, FTFieldsWithIndex(..), Field(..), FieldType(..), Hash, Index, defaultHaskell', defaultJSON', defaultMarkdown', defaultPython')
+import Gargantext.Components.Nodes.Types (FTField, FTFieldsWithIndex(..), Field(..), FieldType(..), Index, defaultHaskell', defaultJSON', defaultMarkdown', defaultPython')
 import Gargantext.Config.REST (AffRESTError, RESTError(..))
 import Gargantext.Data.Array as GDA
+import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(Children, NodeAPI))
 import Gargantext.Sessions (Session, get, put)
 import Gargantext.Types (AffETableResult, NodeType(..), ID)
 import Gargantext.Utils ((?))
--- import Gargantext.Utils.Crypto as Crypto
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Corpus.CodeSection"

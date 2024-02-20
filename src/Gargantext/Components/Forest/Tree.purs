@@ -345,12 +345,12 @@ uploadFile' nodeType fileType fileFormat lang mName contents p@{ boxes: { errors
     here.log2 "[uploadFile'] UploadFile, uploaded, task:" task
     closeBox p
 
-uploadArbitraryFile' fileFormat mName blob p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
-  eTask <- uploadArbitraryFile session id { blob, fileFormat, mName } selection
+uploadArbitraryFile' fileFormat mName blob { boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } = do
+  eTask <- uploadArbitraryFile session id { blob, fileFormat, mName }
   handleRESTError (R2.herePrefix here "[uploadArbitraryFile']") errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
 
-uploadFrameCalc' lang p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
+uploadFrameCalc' lang { boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
   eTask <- uploadFrameCalc session id lang selection
   handleRESTError (R2.herePrefix here "[uploadFrameCalc']") errors eTask $ \task -> liftEffect $ do
     GAT.insert id task tasks
@@ -394,8 +394,8 @@ performAction (AddNode name nodeType) p                       = addNode' name no
 performAction (UploadFrameCalc lang selection) p              = uploadFrameCalc' lang p selection
 performAction (UploadFile nodeType fileType fileFormat lang mName contents selection) p =
   uploadFile' nodeType fileType fileFormat lang mName contents p selection
-performAction (UploadArbitraryFile fileFormat mName blob selection) p              =
-  uploadArbitraryFile' fileFormat mName blob p selection
+performAction (UploadArbitraryFile fileFormat mName blob) p              =
+  uploadArbitraryFile' fileFormat mName blob p
 performAction (MoveNode {params}) p                           = moveNode params p
 performAction (MergeNode {params}) p                          = mergeNode params p
 performAction (LinkNode { nodeType, params }) p               = linkNode nodeType params p

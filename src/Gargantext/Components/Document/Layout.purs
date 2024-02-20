@@ -5,15 +5,9 @@ module Gargantext.Components.Document.Layout
 import Gargantext.Prelude
 
 import Data.Array as A
-import Data.Lens ((^.))
-import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
-import Data.Ord (greaterThan)
-import Data.Set (Set)
 import Data.Set as Set
-import Data.String (length)
 import Data.String as String
-import Data.Tuple (Tuple(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Class (liftEffect)
 import Gargantext.Components.Annotation.Field as AnnotatedField
@@ -27,11 +21,9 @@ import Gargantext.Components.GraphQL.Endpoints (getContextNgrams)
 import Gargantext.Components.NgramsTable.AutoSync (useAutoSync)
 import Gargantext.Components.Node (NodePoly(..))
 import Gargantext.Core.NgramsTable.Functions (addNewNgramA, applyNgramsPatches, coreDispatch, findNgramRoot, setTermListA, computeCache)
-import Gargantext.Core.NgramsTable.Types (CoreAction(..), NgramsTable(..), NgramsTerm, State, Versioned(..), replace)
-import Gargantext.Hooks.FirstEffect (useFirstEffect')
+import Gargantext.Core.NgramsTable.Types (CoreAction(..), NgramsTerm, Versioned(..), replace)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (Session)
-import Gargantext.Utils ((?))
 import Gargantext.Utils as U
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -66,8 +58,8 @@ layout :: forall r. R2.OptLeaf Options Props r
 layout = R2.optLeaf layoutCpt options
 layoutCpt :: R.Component Props
 layoutCpt = R2.hereComponent here "layout" hCpt where
-  hCpt hp props@{ path: path@{ listIds
-                             , nodeId }
+  hCpt hp props@{ path: { listIds
+                        , nodeId }
                 , session } _ = do
     case A.head listIds of
       Nothing -> pure $ H.div {} [ H.text "No list supplied!" ]
@@ -105,7 +97,7 @@ layoutWithContextNgramsCpt = here.component "layoutWithContextNgrams" cpt where
     -- ngrams <- T.useBox initTable
     -- ngrams' <- T.useLive T.unequal ngrams
     state <- T.useBox $ initialState { loaded }
-    state'@{ ngramsLocalPatch } <- T.useLive T.unequal state
+    state' <- T.useLive T.unequal state
     let ngrams' = applyNgramsPatches state' initTable
 
     -- R.useEffect' $ do

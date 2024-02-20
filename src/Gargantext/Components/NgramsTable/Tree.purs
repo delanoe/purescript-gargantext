@@ -12,7 +12,6 @@ import Data.List as L
 import Data.Maybe (Maybe(..), maybe)
 import Data.Set (Set)
 import Data.Set as Set
-import Data.Traversable (traverse_)
 import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
@@ -24,7 +23,6 @@ import Gargantext.Components.Table as Tbl
 import Gargantext.Core.NgramsTable.Functions (applyNgramsPatches, setTermListA, tablePatchHasNgrams)
 import Gargantext.Core.NgramsTable.Types (Action(..), CoreAction, NgramsClick, NgramsDepth, NgramsElement, NgramsTable, NgramsTablePatch, NgramsTerm, _NgramsElement, _NgramsRepoElement, _children, _list, _ngrams, _occurrences, ngramsTermText, replace)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
-import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
 import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
@@ -213,10 +211,10 @@ treeLoadedCpt = here.component "treeLoaded" cpt where
           , title: "Combine and separate"
           }
         ]
-      leaf = L.null ngramsChildren
-      className = "fa fa-chevron-" <> if open then "down" else "right"
-      style = if leaf then {color: "#adb5bd"} else {color: ""}
-      open = not leaf || false {- TODO -}
+      -- leaf = L.null ngramsChildren
+      -- className = "fa fa-chevron-" <> if open then "down" else "right"
+      -- style = if leaf then {color: "#adb5bd"} else {color: ""}
+      -- open = not leaf || false {- TODO -}
       --cs   = ngramsTable ^.. ix ngramsDepth.ngrams <<< _NgramsRepoElement <<< _children <<< folded
       -- cs has a list is ok, the length is the number of direct children of an ngram which is generally < 10.
 
@@ -239,7 +237,6 @@ type RenderNgramsItem =
   , ngramsLocalPatch  :: NgramsTablePatch
   , ngramsSelection   :: Set NgramsTerm
   , ngramsTable       :: NgramsTable
-  , session           :: Session
   )
 
 renderNgramsItem :: R2.Component RenderNgramsItem
@@ -257,7 +254,6 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         , ngramsLocalPatch
         , ngramsSelection
         , ngramsTable
-        , session
         } _ = do
       { sidePanelLists } <- Store.use
       isEditing' <- T.useLive T.unequal isEditing
@@ -276,8 +272,7 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
         ,
           ngramsContext { corpusId
                         , mListId
-                        , ngrams
-                        , session } []
+                        , ngrams } []
         ,
           B.wad'
           [ "col-score" ] $
@@ -362,7 +357,7 @@ renderNgramsItemCpt = here.component "renderNgramsItem" cpt
             -- traverse_ (dispatch <<< CoreAction <<< cycleTermListItem) (A.cons p.ngrams $ getNgramsChildren' p.ngrams)
         ngramsClick p@{ parent: Nothing } = Just $ do
           here.log2 "[renderNgramsItem] unexpected empty parent for ngrams depth" p
-        ngramsClick p@{ parent: Just p' } = Just $ do
+        ngramsClick { parent: Just p' } = Just $ do
           (dispatch <<< CoreAction <<< cycleTermListItem) p'
           -- ^ This is the old behavior it is nicer to use since one can
           --   rapidly change the ngram list without waiting for confirmation.
@@ -447,7 +442,6 @@ type NgramsContextProps =
   ( corpusId  :: GT.CorpusId
   , mListId   :: Maybe GT.ListId
   , ngrams    :: NgramsTerm
-  , session   :: Session
   )
 
 ngramsContext :: R2.Component NgramsContextProps
@@ -456,8 +450,7 @@ ngramsContextCpt :: R.Component NgramsContextProps
 ngramsContextCpt = here.component "ngramsContext" cpt where
   cpt { ngrams
       , corpusId
-      , mListId
-      , session } _ = do
+      , mListId } _ = do
     { sidePanelLists, sidePanelState } <- Store.use
     mCurrentNgrams <-
       T.useFocused
@@ -469,13 +462,13 @@ ngramsContextCpt = here.component "ngramsContext" cpt where
         eyeClass = selected ? "eye" $ "eye-slash"
         variant = selected ? Info $ Dark
 
-        onClick selected _ = do
+        onClick sel _ = do
           -- here.log2 "[docChooser] onClick, listId" listId
           -- here.log2 "[docChooser] onClick, corpusId" corpusId
           -- here.log2 "[docChooser] onClick, nodeId" nodeId
           -- R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
           -- T2.reload tableReload
-          if selected then do
+          if sel then do
             T.write_ Nothing sidePanelLists
             T.write_ GT.Closed sidePanelState
           else do

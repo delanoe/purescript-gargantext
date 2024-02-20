@@ -109,7 +109,7 @@ data FieldType =
 derive instance Generic FieldType _
 instance JSON.WriteForeign FieldType where
   writeImpl (Haskell { haskell }) = JSON.writeImpl { haskell, tag: "HaskellField" }
-  writeImpl (JSON { authors, desc, query, tag, title }) = JSON.writeImpl { authors, desc, query, tag: "JsonField", title }
+  writeImpl (JSON { authors, desc, query, title }) = JSON.writeImpl { authors, desc, query, tag: "JsonField", title }
   writeImpl (Markdown { text }) = JSON.writeImpl { tag: "MarkdownField", text }
   writeImpl (Python { python }) = JSON.writeImpl { python, tag: "PythonField" }
 instance Eq FieldType where eq = genericEq

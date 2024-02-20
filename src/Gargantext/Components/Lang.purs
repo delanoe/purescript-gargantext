@@ -1,15 +1,11 @@
 module Gargantext.Components.Lang where
 
-import Gargantext.Prelude
-
-import Data.Argonaut (class EncodeJson, encodeJson)
 import Data.Array as A
 import Data.Generic.Rep (class Generic)
-import Data.Lens.Lens.Product (_1)
 import Data.Maybe (Maybe(..))
-import Data.Newtype (class Newtype)
 import Data.Show.Generic (genericShow)
 import Foreign as F
+import Gargantext.Prelude
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Show as GUS
 import Gargantext.Utils.SimpleJSON as GJSON

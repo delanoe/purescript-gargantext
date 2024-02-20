@@ -3,7 +3,7 @@ module Gargantext.Components.Nodes.Texts where
 import Gargantext.Prelude
 
 import Data.Generic.Rep (class Generic)
-import Data.Maybe (Maybe(..), isJust)
+import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (launchAff_)
@@ -24,13 +24,12 @@ import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
 import Gargantext.Components.Nodes.Corpus.Chart.Types as CTypes
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
 import Gargantext.Components.Nodes.Lists.Types as LT
-import Gargantext.Components.Nodes.Texts.Types as TT
 import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Reload (textsReloadContext)
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table as Table
 import Gargantext.Ends (Frontends)
-import Gargantext.Hooks.Loader (useLoader, useLoaderEffect)
+import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Sessions (Session, getCacheState)
 import Gargantext.Types (CTabNgramType(..), ListId, NodeID, SidePanelState(..), TabSubType(..), TabType(..))
@@ -39,7 +38,6 @@ import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Simple.JSON as JSON
 import Toestand as T
 
 here :: R2.Here
@@ -103,13 +101,12 @@ textsLayoutWithKeyCpt = R2.hereComponent here "textsLayoutWithKey" hCpt where
                     { className: "texts-layout" }
                     [
                       Table.tableHeaderWithRenameLayout
-                      { cacheState
-                      , name
-                      , date
+                      { date
                       , hyperdata
+                      , key: "textsLayoutWithKey-" <> (show cacheState')
+                      , name
                       , nodeId: corpusId
                       , session
-                      , key: "textsLayoutWithKey-" <> (show cacheState')
                       }
                     ,
                       tabs
@@ -365,7 +362,6 @@ docViewLayoutRec { cacheState
                  , frontends
                  , listId
                  , session
-                 , tabType
                  , yearFilter
                  } =
   { cacheState
@@ -547,7 +543,7 @@ sideTextCpt = R2.hereComponent here "sideText" hCpt where
 
     useLoader { errorHandler: Nothing
               , herePrefix: hp
-              , loader: \{ path } -> loadData path
+              , loader: \{ path: p } -> loadData p
               , path: { path }
               , render: \loaded -> loadedSideText { loaded
                                                   , path

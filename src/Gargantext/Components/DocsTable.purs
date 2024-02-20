@@ -26,13 +26,12 @@ import Effect.Timer (setTimeout)
 import Gargantext.Components.App.Store as Store
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), ModalSizing(..), Variant(..))
-import Gargantext.Components.Category (rating, ratingSimple)
-import Gargantext.Components.Category.Types (Category(..), Star(..), cat2score, markCategoryChecked)
+import Gargantext.Components.Category (ratingSimple)
+import Gargantext.Components.Category.Types (Category(..), cat2score, markCategoryChecked)
 import Gargantext.Components.DocsTable.DocumentFormCreation as DFC
 import Gargantext.Components.DocsTable.Types (DocumentsView(..), Hyperdata(..), LocalCategories, Query, Response(..), Year, sampleData, showSource)
 import Gargantext.Components.GraphQL.Endpoints (updateNodeContextCategory)
 import Gargantext.Components.Nodes.Lists.Types as NT
-import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Reload (textsReloadContext)
 import Gargantext.Components.Table as TT
 import Gargantext.Components.Table.Types as TT
@@ -47,7 +46,7 @@ import Gargantext.Types (ListId, NodeID, NodeType(..), OrderBy(..), SidePanelSta
 import Gargantext.Types as GT
 import Gargantext.Utils (sortWith, (?))
 import Gargantext.Utils.CacheAPI as GUC
-import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParam, mQueryParamS, mQueryParamS', queryParam, queryParamS)
+import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParamS, mQueryParamS', queryParam, queryParamS)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as GUT
 import Gargantext.Utils.Toestand as T2
@@ -523,8 +522,7 @@ pagePaintRaw = R.createElement pagePaintRawCpt
 pagePaintRawCpt :: R.Component PagePaintRawProps
 pagePaintRawCpt = here.component "pagePaintRaw" cpt where
   cpt { documents
-      , layout: { chartReload
-                , frontends
+      , layout: { frontends
                 , listId
                 , mCorpusId
                 , nodeId
@@ -536,20 +534,15 @@ pagePaintRawCpt = here.component "pagePaintRaw" cpt where
     mCurrentDocId <- T.useFocused
           (maybe Nothing _.mCurrentDocId)
           (\val -> maybe Nothing (\sp -> Just $ sp { mCurrentDocId = val })) sidePanelTexts
-    mCurrentDocId' <- T.useLive T.unequal mCurrentDocId
 
     reload <- T.useBox GUT.newReload
     localCategories' <- T.useLive T.unequal localCategories
-
-    let
-      selected = mCurrentDocId' == Just nodeId
 
     pure $ TT.table
       { colNames
       , container: TT.defaultContainer
       , params
       , rows: rows { reload
-                   , chartReload
                    , frontends
                    , listId
                    , localCategories: localCategories'
@@ -564,17 +557,14 @@ pagePaintRawCpt = here.component "pagePaintRaw" cpt where
       where
         colNames = TT.ColumnName <$> [ "Show", "Tag", "Date", "Title", "Source", "Score" ]
         wrapColElts = const identity
-        rows { chartReload
-             , frontends
+        rows { frontends
              , listId
              , localCategories
              , mCorpusId
              , mCurrentDocId
              , nodeId
-             , reload
              , session } =
-          (\documentsView -> { row: tableRow { chartReload
-                                             , documentsView
+          (\documentsView -> { row: tableRow { documentsView
                                              , frontends
                                              , listId
                                              , localCategories
@@ -590,8 +580,7 @@ trashClassName _ true  = "page-paint-row page-paint-row--active"
 trashClassName _ false = ""
 
 type TableRowProps =
-  ( chartReload     :: T2.ReloadS
-  , documentsView   :: DocumentsView
+  ( documentsView   :: DocumentsView
   , frontends       :: Frontends
   , listId          :: Int
   , localCategories :: LocalCategories
@@ -604,8 +593,7 @@ tableRow :: R2.Component TableRowProps
 tableRow = R.createElement tableRowCpt
 tableRowCpt :: R.Component TableRowProps
 tableRowCpt = here.component "tableRow" cpt where
-  cpt { chartReload
-      , documentsView: dv@(DocumentsView r@{ _id, category })
+  cpt { documentsView: DocumentsView r@{ _id, category }
       , frontends
       , listId
       , localCategories
@@ -708,13 +696,13 @@ docChooserCpt = here.component "docChooser" cpt
           eyeClass = selected ? "eye" $ "eye-slash"
           variant = selected ? Info $ Dark
 
-          onClick selected _ = do
+          onClick sel _ = do
             -- here.log2 "[docChooser] onClick, listId" listId
             -- here.log2 "[docChooser] onClick, corpusId" corpusId
             -- here.log2 "[docChooser] onClick, nodeId" nodeId
             -- R2.callTrigger triggerAnnotatedDocIdChange { corpusId, listId, nodeId }
             -- T2.reload tableReload
-            if selected then do
+            if sel then do
               T.write_ Nothing sidePanelTexts
               T.write_ Closed sidePanelState
             else do

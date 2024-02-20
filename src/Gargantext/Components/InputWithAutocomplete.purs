@@ -1,7 +1,5 @@
 module Gargantext.Components.InputWithAutocomplete where
 
-import Prelude
-
 import DOM.Simple (contains)
 import DOM.Simple as DOM
 import DOM.Simple.Event as DE
@@ -9,15 +7,13 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Nullable (Nullable, null, toMaybe)
 import Data.String as S
 import Effect (Effect)
-import Effect.Aff (Aff, launchAff_)
 import FFI.Simple ((..))
-import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Types (Elevation(..))
-import Gargantext.Components.Forest.Tree.Node.Action.Types (Action)
 import Gargantext.Utils.Reactix as R2
+import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.InputWithAutocomplete"

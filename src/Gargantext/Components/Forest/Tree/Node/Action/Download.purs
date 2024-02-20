@@ -2,7 +2,6 @@ module Gargantext.Components.Forest.Tree.Node.Action.Download where
 
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
-import Data.Show.Generic (genericShow)
 import Data.String.Common (toLower)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(DownloadNode))
 import Gargantext.Components.Forest.Tree.Node.Tools as Tools
@@ -16,6 +15,7 @@ import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Download"
@@ -90,14 +90,12 @@ actionDownloadNodeListCpt = here.component "actionDownloadNodeList" cpt where
         [ R2.select { className: "form-control"
                     , defaultValue: show downloadFormat'
                     , on: { change: onChange downloadFormat } }
-          [ opt NL_CSV downloadFormat
-          , opt NL_JSON downloadFormat ]
+          [ opt NL_CSV
+          , opt NL_JSON ]
         , H.div {} [ H.text $ info downloadFormat' ]
         ]
     where
-      opt t downloadFormat = H.option { value: show t } [ H.text $ show t ]
-        where
-          onClick _ = T.write_ t downloadFormat
+      opt t = H.option { value: show t } [ H.text $ show t ]
       onChange downloadFormat e = T.write_ (readNodeListDownloadFormat $ R.unsafeEventValue e) downloadFormat
       href :: NodeListDownloadFormat -> String
       href t = url session $ Routes.NodeAPI GT.NodeList (Just id) (toLower $ show t)
@@ -134,14 +132,12 @@ actionDownloadNodeTextsCpt = here.component "actionDownloadNodeTexts" cpt where
       [ R2.select { className: "form-control"
                   , defaultValue: show downloadFormat'
                   , on: { change: onChange downloadFormat } }
-        [ opt NT_CSV downloadFormat
-        , opt NT_JSON downloadFormat ]
+        [ opt NT_CSV
+        , opt NT_JSON ]
       , H.div {} [ H.text $ info downloadFormat' ]
       ]
     where
-      opt t downloadFormat = H.option { value: show t } [ H.text $ show t ]
-        where
-          onClick _ = T.write_ t downloadFormat
+      opt t = H.option { value: show t } [ H.text $ show t ]
       onChange downloadFormat e = T.write_ (readNodeTextsDownloadFormat $ R.unsafeEventValue e) downloadFormat
       href :: NodeTextsDownloadFormat -> String
       href t  = url session $ Routes.NodeAPI GT.NodeTexts (Just id) ("export/" <> urlNodeTextsDownloadFormat t)

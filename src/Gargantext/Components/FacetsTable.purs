@@ -26,7 +26,7 @@ import Gargantext.Components.GraphQL.Endpoints as GQLE
 import Gargantext.Components.Search (Contact(..), Document(..), HyperdataRowContact(..), HyperdataRowDocument(..), SearchQuery, SearchResult(..), SearchResultTypes(..))
 import Gargantext.Components.Table as T
 import Gargantext.Components.Table.Types as T
-import Gargantext.Config.REST (RESTError(..), AffRESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(Search, NodeAPI))

@@ -350,7 +350,7 @@ panelActionCpt = here.component "panelAction" cpt
       pure $ actionManageTeam { id, nodeType, session } []
     cpt { action: Merge {subTreeParams}, dispatch, id, nodeType, session } _ =
       pure $ mergeNode { dispatch, id, nodeType, session, subTreeParams } []
-    cpt { action: Move {subTreeParams}, boxes, dispatch, id, nodeType, session } _ =
+    cpt { action: Move {subTreeParams}, dispatch, id, nodeType, session } _ =
       pure $ moveNode { dispatch, id, nodeType, session, subTreeParams } []
     cpt { action : Publish {subTreeParams}, dispatch, id, nodeType, session } _ =
       pure $ Share.publishNode { dispatch, id, nodeType, session, subTreeParams } []

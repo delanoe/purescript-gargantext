@@ -1,12 +1,11 @@
 module Gargantext.Components.LoadingSpinner where
 
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe, fromMaybe)
+import Gargantext.Prelude
+import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-import Gargantext.Prelude
-
-import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.LoadingSpinner"

@@ -4,17 +4,15 @@ module Gargantext.Ends
   where
 
 import Data.Array (filter)
-import Data.Foldable (foldMap)
-import Data.Generic.Rep (class Generic)
 import Data.Eq.Generic (genericEq)
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Newtype (class Newtype)
-import Prelude (class Eq, class Show,  show, ($), (/=), (<<<), (<>), (==), (<$>))
-import Simple.JSON as JSON
-
 import Gargantext.Routes as R
 import Gargantext.Types (ApiVersion, ChartType(..), Limit, NodePath, NodeType(..), Offset, TabType(..), TermSize(..), nodePath, nodeTypePath, showTabType', TermList(MapTerm))
 import Gargantext.Utils.QueryString (joinQueryStrings, mQueryParam, queryParam, queryParamS)
+import Prelude (class Eq, class Show,  show, ($), (/=), (<<<), (<>), (==), (<$>))
+import Simple.JSON as JSON
 
 -- | A means of generating a url to visit, a destination
 class ToUrl conf p where
@@ -203,7 +201,7 @@ sessionPath (R.CorpusMetricsHash { listId, tabType} i) =
     qs = joinQueryStrings [ queryParam "ngrams" listId
                           , queryParamS "ngramsType" $ showTabType' tabType ]
 -- TODO fix this url path
-sessionPath (R.Chart {chartType, limit, listId, tabType} i) =
+sessionPath (R.Chart {chartType, listId, tabType} i) =
   sessionPath $ R.NodeAPI Corpus i $ show chartType <> qs
     where
       qs = joinQueryStrings [ queryParamS "ngramsType" $ showTabType' tabType

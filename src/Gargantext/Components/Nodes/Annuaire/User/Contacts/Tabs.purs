@@ -7,14 +7,11 @@ import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
-import Gargantext.Components.App.Store as Store
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.DocsTable.Types (Year)
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Core.NgramsTable.Functions as NTC
-import Gargantext.Components.Nodes.Lists.SidePanel as LSidePanel
 import Gargantext.Components.Nodes.Lists.Types as LTypes
-import Gargantext.Components.Nodes.Texts.Types as TTypes
 import Gargantext.Components.Tab as Tab
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
@@ -54,7 +51,6 @@ type TabsProps =
   , frontends     :: Frontends
   , nodeId        :: Int
   , session       :: Session
-  , sidePanel     :: T.Box (Maybe (Record TTypes.SidePanel))
   )
 
 tabs :: R2.Leaf TabsProps
@@ -67,7 +63,6 @@ tabsCpt = here.component "tabs" cpt
         , frontends
         , nodeId
         , session
-        , sidePanel
         } _ = do
       activeTab <- T.useBox 0
       yearFilter <- T.useBox (Nothing :: Maybe Year)

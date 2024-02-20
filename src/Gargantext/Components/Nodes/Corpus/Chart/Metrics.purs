@@ -30,6 +30,7 @@ import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
 import Toestand as T
 
+
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Metrics"
 
@@ -132,9 +133,7 @@ loaded :: R2.Leaf LoadedProps
 loaded = R2.leaf loadedCpt
 loadedCpt :: R.Component LoadedProps
 loadedCpt = here.component "loaded" cpt where
-  cpt p@{ path
-        , reload
-        , session } _ = do
+  cpt p _ = do
     pure $ H.div {} [
       {-  U.reloadButton reload
       , U.chartUpdateButton { chartType: Scatter, path, reload, session }

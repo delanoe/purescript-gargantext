@@ -8,14 +8,11 @@ import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Gargantext.Components.App.Store as Store
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.DocsTable.Types (Year)
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Core.NgramsTable.Functions as NTC
-import Gargantext.Components.Nodes.Lists.SidePanel as LSidePanel
 import Gargantext.Components.Nodes.Lists.Types as LTypes
-import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Tab as Tab
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)

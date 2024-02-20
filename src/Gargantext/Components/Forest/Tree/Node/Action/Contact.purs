@@ -1,10 +1,7 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Contact where
 
-import Prelude
-
 import Data.Maybe (Maybe(..))
 import Effect.Aff (Aff, launchAff_)
-import Formula as F
 import Gargantext.Components.Forest.Tree.Node.Action.Contact.Types (AddContactParams(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Tools as Tools
@@ -15,9 +12,11 @@ import Gargantext.Sessions (Session, post)
 import Gargantext.Types (ID)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
+import Prelude
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Contact"
@@ -63,7 +62,7 @@ textInputBoxCpt = here.component "textInputBox" cpt where
     firstName <- T.useBox firstname
     lastName <- T.useBox lastname
 
-    let submitF unit = do
+    let submitF _unit = do
           f <- T.read firstName
           l <- T.read lastName
           launchAff_ $

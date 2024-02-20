@@ -3,8 +3,6 @@ module Gargantext.Components.Forest
   , Props
   ) where
 
-import Gargantext.Prelude
-
 import Data.Array as A
 import Data.Map (empty)
 import Data.Map as Map
@@ -14,13 +12,13 @@ import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Position(..), TooltipPosition(..), Variant(..))
 import Gargantext.Components.Forest.Tree (treeLoader)
 import Gargantext.Ends (Frontends)
-import Gargantext.Hooks.LinkHandler (useLinkHandler)
-import Gargantext.Routes (AppRoute(..))
+import Gargantext.Prelude
 import Gargantext.Sessions (Session(..), unSessions)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest"
@@ -83,9 +81,6 @@ plusCpt = here.component "plus" cpt where
   cpt { } _ = do
     { backend, pinnedTreeId, showLogin, showSearch } <- Store.use
     
-    -- Hooks
-    { goToRoute } <- useLinkHandler
-
     -- Behaviors
     let
       click _ = do

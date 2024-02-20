@@ -1,7 +1,5 @@
 module Gargantext.Components.GraphExplorer.Types where
 
-import Gargantext.Prelude
-
 import Data.Array ((!!), length)
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
@@ -9,12 +7,13 @@ import Data.Maybe (Maybe(..), fromJust)
 import Data.Newtype (class Newtype)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
+import Gargantext.Components.GraphExplorer.GraphTypes
+import Gargantext.Hooks.Sigmax.Camera (Camera)
+import Gargantext.Prelude
 import Partial.Unsafe (unsafePartial)
 import Record as Record
 import Simple.JSON as JSON
-import Gargantext.Components.GraphExplorer.GraphTypes
-import Gargantext.Hooks.Sigmax.Camera (Camera(..))
-import Type.Proxy (Proxy(..))
+
 
 type GraphId = Int
 

@@ -1,7 +1,5 @@
 module Gargantext.Components.Table where
 
-import Gargantext.Prelude
-
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Foldable (intercalate)
@@ -23,6 +21,7 @@ import Gargantext.Components.Nodes.Types (FTFieldList)
 import Gargantext.Components.Search (SearchType(..))
 import Gargantext.Components.Table.Types (ColumnName(..), OrderBy, OrderByDirection(..), Params, Props, TableContainerProps, columnName)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
+import Gargantext.Prelude
 import Gargantext.Sessions.Types (Session)
 import Gargantext.Types (NodeID, defaultCacheParams)
 import Gargantext.Utils (setter, (?))
@@ -31,6 +30,7 @@ import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Table"
@@ -67,23 +67,21 @@ type TableHeaderLayoutProps = (
   )
 
 type TableHeaderWithRenameLayoutProps = (
-    cacheState  :: T.Box NT.CacheState
-  , session     :: Session
+    date        :: String
   , hyperdata   :: Hyperdata
-  , nodeId      :: NodeID
-  , name        :: String
-  , date        :: String
   , key         :: String
+  , name        :: String
+  , nodeId      :: NodeID
+  , session     :: Session
 )
 
 type TableHeaderWithRenameBoxedLayoutProps = (
-    cacheState  :: T.Box NT.CacheState
-  , session     :: Session
-  , hyperdata   :: Hyperdata
-  , nodeId      :: NodeID
-  , name        :: String
+    corpusInfoS :: T.Box CorpusInfo
   , date        :: String
-  , corpusInfoS :: T.Box CorpusInfo
+  , hyperdata   :: Hyperdata
+  , name        :: String
+  , nodeId      :: NodeID
+  , session     :: Session
 )
 
 initialParams :: Params
@@ -92,15 +90,20 @@ initialParams = stateParams {page: 1, pageSize: PS10, orderBy: Just (DESC (Colum
 
 tableHeaderWithRenameLayout :: R2.Leaf TableHeaderWithRenameLayoutProps
 tableHeaderWithRenameLayout = R2.leaf tableHeaderWithRenameLayoutCpt
-
 tableHeaderWithRenameLayoutCpt :: R.Component TableHeaderWithRenameLayoutProps
 tableHeaderWithRenameLayoutCpt = here.component "tableHeaderWithRenameLayoutCpt" cpt
   where
-    cpt { hyperdata: Hyperdata h, nodeId, session, cacheState, name, date } _ = do
+    cpt { date, hyperdata: Hyperdata h, name, nodeId, session } _ = do
       let corpusInfo = getCorpusInfo h.fields
       corpusInfoS <- T.useBox corpusInfo
 
-      pure $ tableHeaderWithRenameBoxedLayout {hyperdata: Hyperdata h, nodeId, session, cacheState, name, date, corpusInfoS} []
+      pure $
+        tableHeaderWithRenameBoxedLayout { corpusInfoS
+                                         , date
+                                         , hyperdata: Hyperdata h
+                                         , name
+                                         , nodeId
+                                         , session } []
 
 tableHeaderWithRenameBoxedLayout :: R2.Component TableHeaderWithRenameBoxedLayoutProps
 tableHeaderWithRenameBoxedLayout = R.createElement tableHeaderWithRenameBoxedLayoutCpt
@@ -109,26 +112,17 @@ tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxed
   where
     cpt p@{ nodeId
           , session
-          , cacheState
           , name
           , date
           , corpusInfoS
           } _ = do
       -- | States
       -- |
-      cacheState' <- T.useLive T.unequal cacheState
       CorpusInfo {title, desc, query, authors} <- T.read corpusInfoS
 
       { expandTableEdition } <- AppStore.use
 
       expandTableEdition' <- R2.useLive' expandTableEdition
-
-      -- | Hooks
-      -- |
-
-      topBarPortalKey <- pure $ "portal-topbar::" <> show nodeId
-
-      mTopBarHost <- R.unsafeHooksEffect $ R2.getElementById "portal-topbar"
 
       -- | Effects
       -- |
@@ -208,13 +202,13 @@ tableHeaderWithRenameBoxedLayoutCpt = here.component "tableHeaderWithRenameBoxed
           }
         ]
 
-    cacheText NT.CacheOn = "Cache On"
-    cacheText NT.CacheOff = "Cache Off"
+    -- cacheText NT.CacheOn = "Cache On"
+    -- cacheText NT.CacheOff = "Cache Off"
 
 --    cacheClick cacheState _ = T.modify_ cacheStateToggle cacheState
 
-    cacheStateToggle NT.CacheOn = NT.CacheOff
-    cacheStateToggle NT.CacheOff = NT.CacheOn
+    -- cacheStateToggle NT.CacheOn = NT.CacheOff
+    -- cacheStateToggle NT.CacheOff = NT.CacheOn
 
 onExpandTableEditionChange :: T.Change Boolean -> Effect Unit
 onExpandTableEditionChange { new } = do

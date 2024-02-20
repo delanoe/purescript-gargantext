@@ -3,14 +3,11 @@ module Gargantext.Components.Bootstrap.FormSelect
   , formSelect'
   ) where
 
-import Gargantext.Prelude
-
 import Data.Foldable (elem, intercalate)
-import Data.Map as Map
 import Data.Maybe (Maybe(..))
-import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Sizing(..))
+import Gargantext.Prelude
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Show as GUS
 import Reactix as R

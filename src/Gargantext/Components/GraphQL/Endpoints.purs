@@ -1,16 +1,13 @@
 module Gargantext.Components.GraphQL.Endpoints where
 
-import Gargantext.Prelude
-
 import Data.Array as A
 import Data.Bifunctor (rmap)
 import Data.Either (Either(..))
-import Data.Maybe (Maybe(..))
 import Data.Map as Map
+import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
-import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Gargantext.Components.GraphQL (E, getClient, queryGql, mutationGql)
+import Gargantext.Components.GraphQL (queryGql, mutationGql)
 import Gargantext.Components.GraphQL.Contact (AnnuaireContact, annuaireContactQuery)
 import Gargantext.Components.GraphQL.Context as GQLCTX
 import Gargantext.Components.GraphQL.IMT as GQLIMT
@@ -22,11 +19,13 @@ import Gargantext.Components.GraphQL.User (UserInfo, userInfoQuery, User, userQu
 import Gargantext.Components.Lang (Lang)
 import Gargantext.Config.REST (RESTError(..), AffRESTError)
 import Gargantext.Core.NgramsTable.Types (NgramsTerm(..))
+import Gargantext.Prelude
 import Gargantext.Sessions (Session(..))
 import Gargantext.Types (CorpusId, NodeType)
 import Gargantext.Utils.Reactix as R2
 import GraphQL.Client.Args (onlyArgs)
 import GraphQL.Client.Variables (withVars)
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphQL.Endpoints"
@@ -83,7 +82,6 @@ getUser session id = do
     
 updateUserPubmedAPIKey :: Session -> Int -> String -> AffRESTError Unit
 updateUserPubmedAPIKey session user_id api_key = do
-  client <- liftEffect $ getClient session
   eRes <- mutationGql session
                       "update_user_pubmed_api_key"
                       { update_user_pubmed_api_key: onlyArgs { user_id
@@ -93,7 +91,6 @@ updateUserPubmedAPIKey session user_id api_key = do
   
 updateUserEPOAPIUser :: Session -> Int -> String -> AffRESTError Unit
 updateUserEPOAPIUser session user_id api_user = do
-  client <- liftEffect $ getClient session
   eRes <- mutationGql session
                       "update_user_epo_api_user"
                       { update_user_epo_api_user: onlyArgs { user_id
@@ -102,7 +99,6 @@ updateUserEPOAPIUser session user_id api_user = do
   
 updateUserEPOAPIToken :: Session -> Int -> String -> AffRESTError Unit
 updateUserEPOAPIToken session user_id api_token = do
-  client <- liftEffect $ getClient session
   eRes <- mutationGql session
                       "update_user_epo_api_token"
                       { update_user_epo_api_token: onlyArgs { user_id
@@ -157,7 +153,6 @@ type TeamNodeId = Int
 deleteTeamMembership :: Session -> SharedFolderId -> TeamNodeId -> AffRESTError Int
 deleteTeamMembership session sharedFolderId teamNodeId = do
   let token = getToken session
-  client <- liftEffect $ getClient session
   eRes <- mutationGql session
                       "delete_team_membership"
                       { delete_team_membership: onlyArgs { token: token
@@ -194,7 +189,6 @@ getContextsForNgrams session corpus_id ngrams_terms = do
 
 updateNodeContextCategory :: Session -> Int -> Int -> Int -> AffRESTError Int
 updateNodeContextCategory session context_id node_id category = do
-  client <- liftEffect $ getClient session
   eRes <- mutationGql session
                       "update_node_context_category"
                       { update_node_context_category: onlyArgs { context_id
@@ -219,7 +213,6 @@ getLanguages session = do
 
 getContextNgrams :: Session -> Int -> Int -> AffRESTError (Array NgramsTerm)
 getContextNgrams session context_id list_id = do
-  client <- liftEffect $ getClient session
   let query = GQLCTX.contextNgramsQuery `withVars` { context_id, list_id }
   eRes <- queryGql session "get context ngrams" query
   pure $ rmap (\{ context_ngrams } -> NormNgramsTerm <$> context_ngrams) eRes

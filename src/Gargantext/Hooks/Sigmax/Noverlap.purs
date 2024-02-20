@@ -2,19 +2,12 @@ module Gargantext.Hooks.Sigmax.Noverlap where
 
 -- FFI for noverlap: https://graphology.github.io/standard-library/layout-noverlap.html
 
+import Effect (Effect)
+import Effect.Uncurried (EffectFn1, EffectFn2, runEffectFn1, runEffectFn2)
+import FFI.Simple ((..))
+import Gargantext.Hooks.Sigmax.Graphology as Graphology
 import Prelude
 
-import Data.Array as A
-import Data.Sequence as Seq
-import Data.Set as Set
-import Data.Traversable (traverse)
-import Effect (Effect)
-import Effect.Timer (setTimeout)
-import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, EffectFn4, runEffectFn1, runEffectFn2, runEffectFn3, runEffectFn4)
-import FFI.Simple ((..), (...), (.=))
-import Gargantext.Hooks.Sigmax.Graphology as Graphology
-import Gargantext.Hooks.Sigmax.Types as Types
-import Record as Record
 
 -- | Type representing the web worker.
 foreign import data NoverlapLayout :: Type

@@ -1,15 +1,12 @@
 module Gargantext.Utils where
 
-import Prelude
-
 import Data.Array as A
 import Data.Char (fromCharCode)
 import Data.Either (Either(..))
-import Data.Foldable (class Foldable, foldr)
+import Data.Foldable (class Foldable)
 import Data.Lens (Lens', lens)
-import Data.Maybe (Maybe(..), fromJust)
+import Data.Maybe (fromJust)
 import Data.Newtype (class Newtype, unwrap, wrap)
---import Data.Sequence.Ordered as OSeq
 import Data.Set (Set)
 import Data.Set as Set
 import Data.String as S
@@ -17,6 +14,7 @@ import Data.String.CodeUnits (singleton, slice)
 import Data.Unfoldable (class Unfoldable)
 import Effect (Effect)
 import Partial.Unsafe (unsafePartial)
+import Prelude
 import Web.HTML as WHTML
 import Web.HTML.Location as WHL
 import Web.HTML.Window (location)

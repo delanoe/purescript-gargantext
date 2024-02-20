@@ -1,14 +1,11 @@
 -- TODO: this module should be replaced by FacetsTable
 module Gargantext.Components.Category where
 
-import Gargantext.Prelude
-
 import Data.Array as A
 import Data.Enum (fromEnum)
 import Data.Generic.Rep (class Generic)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.Tuple.Nested ((/\))
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
 import Gargantext.Components.Bootstrap as B
@@ -17,25 +14,25 @@ import Gargantext.Components.Category.Types (Category(..), Star(..), cat2score, 
 import Gargantext.Components.DocsTable.Types (DocumentsView(..), LocalCategories)
 import Gargantext.Components.GraphQL.Context (NodeContext)
 import Gargantext.Components.GraphQL.Endpoints (getNodeContext, updateNodeContextCategory)
-import Gargantext.Config.REST (AffRESTError, RESTError(..))
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, put)
 import Gargantext.Types (NodeID, NodeType(..))
 import Gargantext.Utils ((?))
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
 import Toestand as T
 
+
 here :: R2.Here
 here = R2.here "Gargantext.Components.Category"
 
 type RatingProps =
-  ( chartReload        :: T2.ReloadS
-  , nodeId             :: NodeID
+  ( nodeId             :: NodeID
   , row                :: DocumentsView
   , score              :: Category
   , session            :: Session
@@ -46,8 +43,7 @@ rating :: R2.Component RatingProps
 rating = R.createElement ratingCpt
 ratingCpt :: R.Component RatingProps
 ratingCpt = here.component "rating" cpt where
-  cpt { chartReload
-      , nodeId
+  cpt { nodeId
       , row: DocumentsView r
       , score
       , session

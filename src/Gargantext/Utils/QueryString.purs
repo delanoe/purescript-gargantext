@@ -2,8 +2,6 @@ module Gargantext.Utils.QueryString where
 
 import Data.Array
 import Data.Maybe
-import Data.String.Common (joinWith)
-
 import Gargantext.Prelude
 
 queryParam :: forall a. Show a => String -> a -> String

@@ -1,14 +1,11 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Add where
 
-import Gargantext.Prelude
-
 import Data.Array (head, length)
-import Data.Either (Either(..))
+import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Newtype (class Newtype)
 import Data.String (Pattern(..), indexOf)
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
@@ -17,6 +14,7 @@ import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.InputWithEnter (inputWithEnterWithKey)
 import Gargantext.Components.Lang (Lang(..), translate)
 import Gargantext.Config.REST (RESTError, AffRESTError)
+import Gargantext.Prelude
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types (NodeType(..), charCodeIcon)
@@ -30,6 +28,7 @@ import Toestand as T
 import Web.HTML (window)
 import Web.HTML.Navigator (userAgent)
 import Web.HTML.Window (navigator)
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Add"

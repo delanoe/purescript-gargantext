@@ -16,9 +16,7 @@ import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Hooks.Session (useSession)
 import Gargantext.Types (CTabNgramType(..), ListId, NodeID, TabSubType(..), TabType(..))
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.Toestand as T2
 import Reactix as R
-import Toestand as T
 
 type Props =
   ( listId    :: ListId

@@ -5,8 +5,6 @@ module Gargantext.Components.Nodes.Annuaire.User
   where
 
 
-import Gargantext.Prelude
-
 import Data.Either (Either(..))
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe)
@@ -18,13 +16,11 @@ import Gargantext.Components.GraphQL (getClient)
 import Gargantext.Components.GraphQL.Endpoints (getUserInfo, getUser, updateUserPubmedAPIKey, updateUserEPOAPIUser, updateUserEPOAPIToken)
 import Gargantext.Components.GraphQL.User (UserInfo, _ui_cwCity, _ui_cwCountry, _ui_cwFirstName, _ui_cwLabTeamDeptsFirst, _ui_cwLastName, _ui_cwOffice, _ui_cwOrganizationFirst, _ui_cwRole, _ui_cwTouchMail, _ui_cwTouchPhone, _ui_cwDescription)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
-import Gargantext.Components.Nodes.Annuaire.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
-import Gargantext.Components.Nodes.Lists.Types as LT
 import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Config.Utils (handleRESTError)
-import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude
 import Gargantext.Sessions (Session(..), WithSession, WithSessionContext, sessionId)
 import Gargantext.Types (CorpusId, FrontendError)
 import Gargantext.Utils.Reactix as R2
@@ -35,6 +31,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Annuaire.User"
@@ -70,8 +67,7 @@ listElement = H.li { className: "list-group-item justify-content-between" }
 -}
 
 type LayoutNoSessionProps =
-  ( frontends :: Frontends
-  , nodeId    :: CorpusId
+  ( nodeId    :: CorpusId
   )
 
 type LayoutProps = WithSession LayoutNoSessionProps
@@ -94,16 +90,13 @@ userLayoutWithKey = R2.leaf userLayoutWithKeyCpt
 userLayoutWithKeyCpt :: R.Component ( key :: String | LayoutProps )
 -- userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
 userLayoutWithKeyCpt = R2.hereComponent here "userLayoutWithKey" hCpt where
-  hCpt hp { frontends
-          , nodeId
+  hCpt hp { nodeId
           , session } _ = do
-    { errors, sidePanelLists, sidePanelTexts } <- AppStore.use
+    { errors } <- AppStore.use
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
 
     let Session {userId} = session
-
-    cacheState <- T.useBox LT.CacheOn
 
     useLoader { errorHandler: Nothing
               , herePrefix: hp
@@ -184,8 +177,6 @@ pubmedSettingsLoadedCpt = here.component "pubmedSettingsLoaded" cpt where
   cpt { nodeId
       , mPubmedAPIKey
       , session } _ = do
-    box <- T.useBox $ fromMaybe "" mPubmedAPIKey
-    isEditing <- T.useBox false
 
     pure $ R2.row
       [ R2.col 12

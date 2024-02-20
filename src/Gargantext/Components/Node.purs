@@ -1,13 +1,13 @@
 module Gargantext.Components.Node
   where
 
-import Gargantext.Prelude
-
 import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype)
+import Gargantext.Prelude
 import Simple.JSON as JSON
+
 
 type NodePolyCommon a =
   ( id :: Int

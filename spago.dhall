@@ -43,7 +43,6 @@ to generate this file without the comments in this block.
   , "foreign-object"
   , "form-urlencoded"
   , "formatters"
-  , "formula"
   , "functions"
   , "graphql-client"
   , "heterogeneous"

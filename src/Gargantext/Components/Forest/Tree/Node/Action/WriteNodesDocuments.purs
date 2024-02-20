@@ -1,13 +1,9 @@
 module Gargantext.Components.Forest.Tree.Node.Action.WriteNodesDocuments where
 
-import Gargantext.Prelude
-
-import Data.Array as A
 import Data.Either (Either)
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Gargantext.Components.App.Store as Store
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Utils (loadLanguages)
@@ -15,8 +11,9 @@ import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Components.ListSelection as ListSelection
 import Gargantext.Components.ListSelection.Types as ListSelection
-import Gargantext.Config.REST (AffRESTError, RESTError(..))
+import Gargantext.Config.REST (AffRESTError, RESTError)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types as GT
@@ -41,7 +38,6 @@ actionWriteNodesDocuments = R.createElement actionWriteNodesDocumentsCpt
 actionWriteNodesDocumentsCpt :: R.Component ActionWriteNodesDocuments
 actionWriteNodesDocumentsCpt = R2.hereComponent here "actionWriteNodesDocuments" hCpt where
   hCpt hp props@({ session }) _ = do
-    { errors } <- Store.use
     useLoader { errorHandler: Nothing
               , herePrefix: hp
               , loader: loadLanguages

@@ -4,8 +4,6 @@ module Gargantext.Context.Progress
   , asyncContext
   ) where
 
-import Gargantext.Prelude
-
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
@@ -17,13 +15,15 @@ import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar (QueryProgressData, queryProgress)
 import Gargantext.Config.Utils (handleErrorInAsyncProgress, handleRESTError)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
+import Gargantext.Prelude
 import Gargantext.Sessions (Session)
-import Gargantext.Types (AsyncProgress, FrontendError)
+import Gargantext.Types (AsyncProgress)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Record.Extra as RX
 import Toestand as T
+
 
 type AsyncProps =
   ( asyncTask :: GT.AsyncTaskWithType

@@ -1,7 +1,5 @@
 module Gargantext.Hooks.Loader where
 
-import Gargantext.Prelude
-
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
@@ -15,6 +13,7 @@ import Gargantext.Components.App.Store as Store
 import Gargantext.Components.LoadingSpinner (loadingSpinner)
 import Gargantext.Config.REST (RESTError, AffRESTError, logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
+import Gargantext.Prelude
 import Gargantext.Types (FrontendError(..))
 import Gargantext.Utils.CacheAPI as GUC
 import Gargantext.Utils.Crypto (Hash)
@@ -22,6 +21,7 @@ import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Simple.JSON as JSON
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Hooks.Loader"
@@ -43,13 +43,12 @@ type UseLoader path state =
 useLoader :: forall path st. Eq path => Eq st
           => Record (UseLoader path st)
           -> R.Hooks R.Element
-useLoader props@{ errorHandler
-                , herePrefix
-                , loader
-                , path
-                , render } = do
+useLoader { errorHandler
+          , herePrefix
+          , loader
+          , path
+          , render } = do
   { errors } <- Store.use
-  state <- T.useBox Nothing
 
   useLoader' { errorHandler: errorHandler' errors
              , loader

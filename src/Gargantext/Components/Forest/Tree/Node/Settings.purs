@@ -2,11 +2,9 @@ module Gargantext.Components.Forest.Tree.Node.Settings where
 
 import Data.Default (class Default, def)
 import Data.Lens (Lens', lens, (.~))
-import Data.Lens.Record (prop)
 import Gargantext.Prelude (class Eq, class Show, show, (&&), (<>), (==), ($), (<<<))
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..))
 import Gargantext.Types
-import Type.Proxy (Proxy(..))
 
 ------------------------------------------------------------------------
 ------------------------------------------------------------------------

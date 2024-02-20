@@ -2,10 +2,9 @@ module Gargantext.Components.Nodes.Lists where
 
 import Gargantext.Prelude
 
-import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Maybe (Maybe(..), maybe)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
-import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Corpus.CodeSection (loadCorpusWithChild)
 import Gargantext.Components.GraphQL.Context as GQLCTX
@@ -35,10 +34,8 @@ here = R2.here "Gargantext.Components.Nodes.Lists"
 --------------------------------------------------------
 
 type CommonPropsNoSession =
-  ( boxes         :: Boxes
-  , nodeId        :: Int
+  ( nodeId        :: Int
   , sessionUpdate :: Session -> Effect Unit
-  , sidePanel     :: T.Box (Maybe (Record SidePanel))
   )
 
 type Props = WithSession CommonPropsNoSession
@@ -59,11 +56,9 @@ listsLayoutWithKey :: R2.Component ( key :: String | Props )
 listsLayoutWithKey = R.createElement listsLayoutWithKeyCpt
 listsLayoutWithKeyCpt :: R.Component ( key :: String | Props )
 listsLayoutWithKeyCpt = R2.hereComponent here "listsLayoutWithKey" hCpt where
-  hCpt hp { boxes
-          , nodeId
+  hCpt hp { nodeId
           , session
-          , sessionUpdate
-          , sidePanel } _ = do
+          , sessionUpdate } _ = do
     activeTab <- T.useBox 0
 
     let path = { nodeId, session }
@@ -83,13 +78,12 @@ listsLayoutWithKeyCpt = R2.hereComponent here "listsLayoutWithKey" hCpt where
                           in
                             R.fragment [
                               Table.tableHeaderWithRenameLayout {
-                                cacheState
-                              , name
-                              , date
+                                date
                               , hyperdata
+                              , key: "listsLayoutWithKey-header-" <> (show cacheState')
+                              , name
                               , nodeId: corpusId
                               , session
-                              , key: "listsLayoutWithKey-header-" <> (show cacheState')
                                 }
                             , Tabs.tabs {
                                 activeTab
@@ -117,7 +111,7 @@ sidePanelCpt :: R.Component SidePanelProps
 sidePanelCpt = here.component "sidePanel" cpt
   where
     cpt { session
-        , sidePanel
+        , sidePanel: sp
         , sidePanelState } _ = do
 
       sidePanelState' <- T.useLive T.unequal sidePanelState
@@ -144,7 +138,7 @@ sidePanelCpt = here.component "sidePanel" cpt
         { className: "lists-sidepanel__body" }
         [
           sidePanelNgramsContextView { session
-                                   , sidePanel } []
+                                     , sidePanel: sp } []
         ]
       ]
 
@@ -157,8 +151,8 @@ sidePanelNgramsContextView = R.createElement sidePanelNgramsContextViewCpt
 sidePanelNgramsContextViewCpt :: R.Component SidePanelNgramsContextView
 sidePanelNgramsContextViewCpt = here.component "sidePanelNgramsContextView" cpt where
   cpt { session
-      , sidePanel } _ = do
-    mSidePanel' <- T.useLive T.unequal sidePanel
+      , sidePanel: sp } _ = do
+    mSidePanel' <- T.useLive T.unequal sp
 
     case mSidePanel' of
       Nothing -> pure $ H.div {} []
@@ -177,9 +171,9 @@ sidePanelNgramsContextViewCpt = here.component "sidePanelNgramsContextView" cpt 
             ]
           , 
             ngramsDocList { mCorpusId: sidePanel'.mCorpusId
-                                        , mListId: sidePanel'.mListId
-                                        , mNgrams: sidePanel'.mCurrentNgrams
-                                        , session } [] 
+                          , mListId: sidePanel'.mListId
+                          , mNgrams: sidePanel'.mCurrentNgrams
+                          , session } [] 
           ]
 
 type NgramsDocListProps =
@@ -192,11 +186,11 @@ ngramsDocList :: R2.Component NgramsDocListProps
 ngramsDocList = R.createElement ngramsDocListCpt
 ngramsDocListCpt :: R.Component NgramsDocListProps
 ngramsDocListCpt = R2.hereComponent here "ngramsDocList" hCpt where
-  hCpt hp { mCorpusId: Nothing } _ = do
+  hCpt _hp { mCorpusId: Nothing } _ = do
     pure $ H.div {} []
-  hCpt hp { mListId: Nothing } _ = do
+  hCpt _hp { mListId: Nothing } _ = do
     pure $ H.div {} []
-  hCpt hp { mNgrams: Nothing } _ = do
+  hCpt _hp { mNgrams: Nothing } _ = do
     pure $ H.div {} []
   hCpt hp { mCorpusId: Just corpusId
           , mListId: Just listId
@@ -209,7 +203,6 @@ ngramsDocListCpt = R2.hereComponent here "ngramsDocList" hCpt where
               , render: \ctx -> ngramsDocListLoaded { contexts: ctx
                                                     , corpusId
                                                     , listId
-                                                    , ngrams
                                                     , session } []
               }
 
@@ -226,7 +219,6 @@ type NgramsDocListLoadedProps =
   ( contexts :: Array GQLCTX.Context
   , corpusId :: GT.CorpusId
   , listId   :: GT.ListId
-  , ngrams   :: NgramsTerm
   , session  :: Session )
 
 ngramsDocListLoaded :: R2.Component NgramsDocListLoadedProps
@@ -236,7 +228,6 @@ ngramsDocListLoadedCpt = here.component "ngramsDocListLoaded" cpt where
   cpt { contexts
       , corpusId
       , listId
-      , ngrams
       , session } _ = do
     pure $ H.div { className: "ngrams-doc-list p-2" }
       [ H.ul { className: "list-group" } ((\item -> contextItem { corpusId

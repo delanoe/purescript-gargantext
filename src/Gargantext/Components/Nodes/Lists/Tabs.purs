@@ -6,7 +6,6 @@ import Data.Array as A
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
 import Effect.Class (liftEffect)
-import Gargantext.Components.App.Store as Store
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Core.NgramsTable.Functions as NTC
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
@@ -14,7 +13,6 @@ import Gargantext.Components.Nodes.Corpus.Chart.Pie (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils (mNgramsTypeFromTabType)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
-import Gargantext.Components.Nodes.Lists.SidePanel (SidePanel)
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table.Types (Params)
 import Gargantext.Core.NgramsTable.Types (PageParams)

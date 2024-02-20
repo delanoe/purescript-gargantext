@@ -30,6 +30,7 @@ import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
 import Toestand as T
 
+
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Pie"
 
@@ -128,9 +129,7 @@ loadedPie :: R2.Leaf LoadedProps
 loadedPie = R2.leaf loadedPieCpt
 loadedPieCpt :: R.Component LoadedProps
 loadedPieCpt = here.component "loadedPie" cpt where
-  cpt p@{ path
-        , reload
-        , session } _ = do
+  cpt p _ = do
     pure $ H.div {} [
       {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: ChartPie, path, reload, session }
@@ -162,9 +161,7 @@ loadedBar :: R2.Leaf LoadedProps
 loadedBar = R2.leaf loadedBarCpt
 loadedBarCpt :: R.Component LoadedProps
 loadedBarCpt = here.component "loadedBar" cpt where
-  cpt p@{ path
-        , reload
-        , session } _ = do
+  cpt p _ = do
     pure $ H.div {} [
       {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: ChartBar, path, reload, session }
