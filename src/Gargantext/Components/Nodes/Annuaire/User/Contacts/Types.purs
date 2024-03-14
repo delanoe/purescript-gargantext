@@ -189,8 +189,6 @@ type HyperdataContactT =
   , lastValidation :: Maybe String
   , source         :: Maybe String
   , title          :: Maybe String
-  , uniqId         :: Maybe String
-  , uniqIdBdd      :: Maybe String
   , who            :: Maybe ContactWho
   )
 newtype HyperdataContact =
@@ -209,8 +207,6 @@ instance JSON.ReadForeign HyperdataContact where
                             , ou: fromMaybe [] inst.where
                             , source: inst.source
                             , title: inst.title
-                            , uniqId: inst.uniqId
-                            , uniqIdBdd: inst.uniqIdBdd
                             , who: inst.who }
 instance JSON.WriteForeign HyperdataContact
   where
@@ -219,8 +215,6 @@ instance JSON.WriteForeign HyperdataContact
                                                      , where: hc.ou
                                                      , source: hc.source
                                                      , title: hc.title
-                                                     , uniqId: hc.uniqId
-                                                     , uniqIdBdd: hc.uniqIdBdd
                                                      , who: hc.who }
 
 defaultHyperdataContact :: HyperdataContact
@@ -231,8 +225,6 @@ defaultHyperdataContact =
                    , title: Nothing
                    , source: Nothing
                    , lastValidation: Nothing
-                   , uniqId: Nothing
-                   , uniqIdBdd: Nothing
                    }
 
 newtype HyperdataUser =

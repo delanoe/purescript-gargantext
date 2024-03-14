@@ -54,9 +54,8 @@ type Hyperdata_
     , hrd_source             :: String
     , hrd_title              :: String
     , hrd_url                :: String
-    , hrd_uniqId             :: String
-    , hrd_uniqIdBdd          :: String )
-
+    )
+      
 type Hyperdata = Record Hyperdata_
 
 type NodeContext_
@@ -118,8 +117,7 @@ type ContextsForNgramsQuery
            , hrd_source             :: Unit
            , hrd_title              :: Unit
            , hrd_url                :: Unit
-           , hrd_uniqId             :: Unit
-           , hrd_uniqIdBdd          :: Unit }
+           }
       }
     }
 contextsForNgramsQuery :: ContextsForNgramsQuery
