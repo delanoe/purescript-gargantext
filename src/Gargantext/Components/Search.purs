@@ -95,8 +95,6 @@ newtype HyperdataRowDocument =
                        , source             :: Maybe String
                        , title              :: Maybe String
                        , url                :: Maybe String
-                       , uniqId             :: Maybe String
-                       , uniqIdBdd          :: Maybe String
                        }
 
 derive instance Generic HyperdataRowDocument _
@@ -141,8 +139,6 @@ newtype HyperdataContact =
                    , title          :: Maybe String
                    , source         :: Maybe String
                    , lastValidation :: Maybe String
-                   , uniqIdBdd      :: Maybe String
-                   , uniqId         :: Maybe String
                    }
 derive instance Generic HyperdataContact _
 instance Eq HyperdataContact where eq = genericEq
