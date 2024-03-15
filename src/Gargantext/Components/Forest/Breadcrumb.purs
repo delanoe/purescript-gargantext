@@ -1,4 +1,8 @@
-module Gargantext.Components.Forest.Breadcrumb (component) where
+module Gargantext.Components.Forest.Breadcrumb
+  ( breadcrumbView
+  , component
+  )
+  where
 
 import Data.Array as A
 import Data.Int (fromString)
@@ -31,6 +35,7 @@ type PropsBoxes = ( boxes :: Boxes )
 type Props =
   ( nodeId     :: Int
   , session    :: Maybe Session
+  , format     :: String
   )
 
 -- maybeToSession :: Maybe Session -> Session
@@ -88,6 +93,7 @@ componentCpt = here.component "breadcrumb" cpt where
             ,
               breadcrumbView { nodeId: nodeId
                               , session: session'
+                              , format: "default"
                               }
             ]
           -- ,
@@ -145,7 +151,7 @@ breadcrumbView :: R2.Leaf Props
 breadcrumbView = R2.leaf breadcrumbViewCpt
 breadcrumbViewCpt :: R.Component Props
 breadcrumbViewCpt = R2.hereComponent here "breadcrumbViewCpt" hCpt where
-  hCpt hp { nodeId, session } _ = do
+  hCpt hp { nodeId, session, format } _ = do
 
     case session of 
       Nothing -> pure $ H.div {} []
@@ -160,6 +166,7 @@ breadcrumbViewCpt = R2.hereComponent here "breadcrumbViewCpt" hCpt where
                   , render: \items -> breadcrumbViewMain { items: items
                                                          , session: session'
                                                         --  , reload: reload
+                                                         , format: format
                                                          } [] 
                   }
 
@@ -167,16 +174,17 @@ type BreadcrumbViewProps =
   ( items         :: BreadcrumbInfo
   , session       :: Session
   -- , reload        :: T.Box T2.Reload
+  , format        :: String
   )
 
 breadcrumbViewMain :: R2.Component BreadcrumbViewProps
 breadcrumbViewMain = R.createElement breadcrumbViewMainCpt
 breadcrumbViewMainCpt :: R.Component BreadcrumbViewProps
 breadcrumbViewMainCpt = here.component "breadcrumbViewMainCpt" cpt where
-  cpt { items: { parents }, session } _ = do
+  cpt { items: { parents }, session, format } _ = do
     
     -- session' <- T.useLive T.unequal session
-    let items = makeBreadcrumbElements parents session
+    let items = makeBreadcrumbElements parents session format
 
     -- case session of 
     --   Nothing -> pure $ H.div {} []
@@ -186,8 +194,8 @@ breadcrumbViewMainCpt = here.component "breadcrumbViewMainCpt" cpt where
       R.fragment items
 
 
-  makeBreadcrumbElements :: Array TreeNode -> Session -> Array R.Element
-  makeBreadcrumbElements items' session = makeBreadcrumbElementsMap <$> items' where
+  makeBreadcrumbElements :: Array TreeNode -> Session -> String -> Array R.Element
+  makeBreadcrumbElements items' session format = makeBreadcrumbElementsMap <$> items' where
     makeBreadcrumbElementsMap :: TreeNode -> R.Element
     makeBreadcrumbElementsMap node = breadcrumbItem { linkId: node.id
                                                     , linkNodeType: node.node_type
@@ -196,6 +204,7 @@ breadcrumbViewMainCpt = here.component "breadcrumbViewMainCpt" cpt where
                                                     , text: node.name
                                                     -- , reload: props.reload
                                                     -- , style: FolderUp
+                                                    , format: format
                                                     }
 
 type BreadcrumbItemProps =
@@ -206,6 +215,7 @@ type BreadcrumbItemProps =
   , session       :: Session
   -- , style         :: FolderStyle
   , text          :: String
+  , format        :: String
   )
 
 breadcrumbItem :: R2.Leaf BreadcrumbItemProps
@@ -219,6 +229,7 @@ breadcrumbItemCpt = here.component "breadcrumbItemCpt" cpt where
       , text
         -- , reload
         -- , style
+      , format
       } _ = do
 
     url <- R.unsafeHooksEffect GU.href
@@ -227,57 +238,71 @@ breadcrumbItemCpt = here.component "breadcrumbItemCpt" cpt where
     let rootId = treeId session
 
     pure $ 
-      H.li { className: "breadcrumb-item" }
-      [
-        if show nodeType == "NodeFolderPrivate" 
-        || show nodeType == "NodeFolderPublic" 
-        || show nodeType == "NodeFolderShared" 
-        || show nodeType == "NodeUser" 
-        then
-          H.span { className: "" }
-          [
-            H.span { className: "" }
-            [ 
-              B.icon
-              { className: ""
-              , name: GT.getIcon nodeType true
-              }
-            ]
-          , 
-            if show nodeType == "NodeUser"
-            then
-              H.text $ getUserText url 
-            else
-              H.text text
-          
-          , H.span { className: "text-small" }
-            [ 
-            if show nodeType == "NodeUser"
-            then
-              H.text $ " (" <> getInstanceText url <> ")"
-            else
-              H.text ""
-            ]
-        
-          ]
+      if format == "text"
+      then
+                
+        H.span { className: "node-path-item" }
+        [
+          if show nodeType == "NodeUser" 
+          then
+            H.text ""
+          else
+            H.text $ " / " <> text <> ""
+        ]
 
-        else
-          H.a { className: ""
-              , href: "/#/" <> createNodeUrl linkId rootId linkNodeType sid 
-              } 
-          [ 
+      else
+      
+        H.li { className: "breadcrumb-item" }
+        [
+          if show nodeType == "NodeFolderPrivate" 
+          || show nodeType == "NodeFolderPublic" 
+          || show nodeType == "NodeFolderShared" 
+          || show nodeType == "NodeUser" 
+          then
             H.span { className: "" }
-            [ 
-              -- B.icon { name: "folder-open-o" } 
-              B.icon
-              { className: ""
-              , name: GT.getIcon nodeType true
-              }
+            [
+              H.span { className: "" }
+              [ 
+                B.icon
+                { className: ""
+                , name: GT.getIcon nodeType true
+                }
+              ]
+            , 
+              if show nodeType == "NodeUser"
+              then
+                H.text $ getUserText url 
+              else
+                H.text text
+            
+            , H.span { className: "text-small" }
+              [ 
+              if show nodeType == "NodeUser"
+              then
+                H.text $ " (" <> getInstanceText url <> ")"
+              else
+                H.text ""
+              ]
+          
             ]
-          , 
-            H.text text 
-          ]
-      ]
+
+          else
+            H.a { className: ""
+                , href: "/#/" <> createNodeUrl linkId rootId linkNodeType sid 
+                } 
+            [ 
+              H.span { className: "" }
+              [ 
+                -- B.icon { name: "folder-open-o" } 
+                B.icon
+                { className: ""
+                , name: GT.getIcon nodeType true
+                }
+              ]
+            , 
+              H.text text 
+            ]
+        ]
 
   createNodeUrl :: Int -> Int -> NodeType -> SessionId -> String
   createNodeUrl lId _rootId nType sId

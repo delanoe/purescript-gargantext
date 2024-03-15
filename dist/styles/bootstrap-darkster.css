@@ -12359,8 +12359,15 @@ select.form-control {
 }
 
 .search-modal__results {
-  height: 14em;
+  height: auto;
   overflow-x: hidden;
+}
+.search-modal__results .result {
+  border-bottom: 1px solid #495057;
+  position: relative;
+}
+.search-modal__results .result .node-path {
+  color: #CED4DA;
 }
 
 .breadcrumb-wrapper {
