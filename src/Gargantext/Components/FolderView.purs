@@ -30,7 +30,7 @@ import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut(..
 import Gargantext.Components.GraphQL.Endpoints (getNode, getTreeFirstLevel)
 import Gargantext.Components.GraphQL.Node (Node)
 import Gargantext.Components.GraphQL.Tree (TreeFirstLevel, TreeNode)
-import Gargantext.Config.REST (AffRESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Hooks.LinkHandler (useLinkHandler)
 import Gargantext.Hooks.Loader (useLoader)
@@ -57,11 +57,12 @@ data FolderStyle = FolderUp | FolderChild
 folderView :: R2.Leaf Props
 folderView = R2.leaf folderViewCpt
 folderViewCpt :: R.Component Props
-folderViewCpt = here.component "folderViewCpt" cpt where
-  cpt { nodeId, session } _ = do
+folderViewCpt = R2.hereComponent here "folderViewCpt" hCpt where
+  hCpt hp { nodeId, session } _ = do
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
-    useLoader { errorHandler
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , loader: loadFolders
               , path: { nodeId, session, reload: reload'}
               , render: \folders -> folderViewMain { folders
@@ -69,8 +70,6 @@ folderViewCpt = here.component "folderViewCpt" cpt where
                                                    , reload
                                                    , session
                                                    } [] }
-    where
-      errorHandler = logRESTError here "[folderView]"
 
 type FolderViewProps =
   ( folders       :: TreeFirstLevel
@@ -106,15 +105,13 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
                                         , session: props.session
                                         , style: FolderChild
                                         , text: node.name
-                                        , disabled: false
                                         }
 
   makeParentFolder :: TreeNode -> Maybe TreeNode -> Record FolderViewProps -> Array R.Element
   makeParentFolder root (Just parent) props =
     [
       folder
-      { disabled: disabled parent
-      , linkId: parent.id
+      { linkId: parent.id
       , linkNodeType: parent.node_type
       , nodeId: root.id
       , nodeType: root.node_type
@@ -125,16 +122,13 @@ folderViewMainCpt = here.component "folderViewMainCpt" cpt where
       , text: "..."
       }
     ]
-    where
-      disabled { node_type } = if node_type == GT.FolderShared then true else false
   makeParentFolder _ Nothing _ = []
 
   sortFolders :: TreeNode-> TreeNode -> Ordering
   sortFolders a b = compare a.id b.id
 
 type FolderProps =
-  ( disabled      :: Boolean
-  , linkNodeType  :: GT.NodeType
+  ( linkNodeType  :: GT.NodeType
   , linkId        :: Int
   , nodeType      :: GT.NodeType
   , nodeId        :: Int
@@ -149,8 +143,7 @@ folder :: R2.Leaf FolderProps
 folder = R2.leaf folderCpt
 folderCpt :: R.Component FolderProps
 folderCpt = here.component "folderCpt" cpt where
-  cpt props@{ disabled
-            , linkId
+  cpt props@{ linkId
             , linkNodeType
             , nodeId
             , nodeType
@@ -264,19 +257,17 @@ backButtonCpt = here.component "backButton" cpt where
 
 backButtonSmart :: R2.Component (nodeId :: Int, session :: Session)
 backButtonSmart = R.createElement backButtonSmartCpt
-
 backButtonSmartCpt :: R.Component (nodeId :: Int, session :: Session)
-backButtonSmartCpt = here.component "backButtonSmart" cpt where
-  cpt {nodeId, session} _ = do
+backButtonSmartCpt = R2.hereComponent here "backButtonSmart" hCpt where
+  hCpt hp { nodeId, session } _ = do
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
-    useLoader { errorHandler
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , loader: loadNode
               , path: { nodeId, session, reload: reload' }
               , render: \node -> backButtonSmartMain { node, session } []
     }
-    where
-      errorHandler = logRESTError here "[folderView]"
 
 backButtonSmartMain :: R2.Component (node :: Node, session :: Session)
 backButtonSmartMain = R.createElement backButtonSmartMainCpt
@@ -330,14 +321,13 @@ performAction = performAction' where
   performAction' (DoSearch task) p = doSearch task p
   performAction' (UpdateNode params) p = updateNode params p
   performAction' (RenameNode name) p = renameNode name p
-  performAction' (ShareTeam username) p = shareTeam username p
   performAction' (SharePublic { params }) p = sharePublic params p
   performAction' (AddContact params) p = addContact params p
   performAction' (AddNode name nodeType) p = addNode' name nodeType p
   performAction' (UploadFile nodeType fileType fileFormat lang mName contents selection) p =
     uploadFile' nodeType fileType fileFormat lang mName contents p selection
-  performAction' (UploadArbitraryFile fileFormat mName blob selection) p =
-    uploadArbitraryFile' fileFormat mName blob p selection
+  performAction' (UploadArbitraryFile fileFormat mName blob) p =
+    uploadArbitraryFile' fileFormat mName blob p
   performAction' DownloadNode _ = liftEffect $ here.log "[performAction] DownloadNode"
   performAction' (MoveNode {params}) p = moveNode params p
   performAction' (MergeNode {params}) p = mergeNode params p
@@ -381,18 +371,13 @@ performAction = performAction' where
 
   updateNode params { boxes: { errors, tasks }, nodeId: id, session } = do
     eTask <- updateRequest params session id
-    handleRESTError here errors eTask $ \task -> liftEffect $ do
+    handleRESTError (R2.herePrefix here "[updateNode]") errors eTask $ \task -> liftEffect $ do
       GAT.insert id task tasks
-      here.log2 "[performAction] UpdateNode task:" task
-
-  shareTeam username { boxes: { errors }, nodeId: id, session } = do
-    eTask <- Share.shareReq session id $ Share.ShareTeamParams { username }
-    handleRESTError here errors eTask $ \_task -> pure unit
 
   sharePublic params p@{ boxes: { errors }, session } = traverse_ f params where
     f (SubTreeOut { in: inId, out }) = do
       eTask <- Share.shareReq session inId $ Share.SharePublicParams { node_id: out }
-      handleRESTError here errors eTask $ \_task -> pure unit
+      handleRESTError (R2.herePrefix here "[sharePublic]") errors eTask $ \_task -> pure unit
       refreshFolders p
 
   addContact params { nodeId: id, session } =
@@ -400,40 +385,38 @@ performAction = performAction' where
 
   uploadFile' nodeType fileType fileFormat lang mName contents { boxes: { errors, tasks }, nodeId: id, session } selection = do
     eTask <- uploadFile { contents, fileType, fileFormat, lang, id, nodeType, mName, selection, session }
-    handleRESTError here errors eTask $ \task -> liftEffect $ do
+    handleRESTError (R2.herePrefix here "[uploadFile']") errors eTask $ \task -> liftEffect $ do
       GAT.insert id task tasks
-      here.log2 "[performAction] UploadFile, uploaded, task:" task
 
-  uploadArbitraryFile' fileFormat mName blob { boxes: { errors, tasks }, nodeId: id, session } selection = do
-    eTask <- uploadArbitraryFile session id { blob, fileFormat, mName } selection
-    handleRESTError here errors eTask $ \task -> liftEffect $ do
+  uploadArbitraryFile' fileFormat mName blob { boxes: { errors, tasks }, nodeId: id, session } = do
+    eTask <- uploadArbitraryFile session id { blob, fileFormat, mName }
+    handleRESTError (R2.herePrefix here "[uploadArbitraryFile']") errors eTask $ \task -> liftEffect $ do
       GAT.insert id task tasks
-      here.log2 "[performAction] UploadArbitraryFile, uploaded, task:" task
 
   moveNode params p@{ boxes: { errors }, session } = traverse_ f params where
     f (SubTreeOut { in: in', out }) = do
       eTask <- moveNodeReq session in' out
-      handleRESTError here errors eTask $ \_task -> pure unit
+      handleRESTError (R2.herePrefix here "[moveNode]") errors eTask $ \_task -> pure unit
       refreshFolders p
 
   mergeNode params p@{ boxes: { errors }, session } = traverse_ f params where
     f (SubTreeOut { in: in', out }) = do
       eTask <- mergeNodeReq session in' out
-      handleRESTError here errors eTask $ \_task -> pure unit
+      handleRESTError (R2.herePrefix here "[mergeNode]") errors eTask $ \_task -> pure unit
       refreshFolders p
 
   linkNode nodeType params p@{ boxes: { errors }, session } = traverse_ f params where
     f (SubTreeOut { in: in', out }) = do
       eTask <- linkNodeReq session nodeType in' out
-      handleRESTError here errors eTask $ \_task -> pure unit
+      handleRESTError (R2.herePrefix here "[linkNode]") errors eTask $ \_task -> pure unit
       refreshFolders p
 
   renameNode name p@{ boxes: { errors }, nodeId: id, session } = do
     eTask <- rename session id $ RenameValue { text: name }
-    handleRESTError here errors eTask $ \_task -> pure unit
+    handleRESTError (R2.herePrefix here "[renameNode]") errors eTask $ \_task -> pure unit
     refreshFolders p
 
   addNode' name nodeType p@{ boxes: { errors }, nodeId: id, session } = do
     eTask <- addNode session id $ AddNodeValue {name, nodeType}
-    handleRESTError here errors eTask $ \_task -> pure unit
+    handleRESTError (R2.herePrefix here "[addNode']") errors eTask $ \_task -> pure unit
     refreshFolders p

@@ -1,12 +1,8 @@
 module Gargantext.Components.GraphQL.NLP where
 
 import Gargantext.Prelude
+import Gargantext.Components.Lang (Lang, ServerType)
 
-import GraphQL.Client.Args (Args, NotNull, (=>>))
-import GraphQL.Client.Variable (Var(..))
-import Gargantext.Components.Lang (Lang(..), ServerType)
-import Gargantext.Utils.GraphQL as GGQL
-import Type.Proxy (Proxy(..))
 
 type LanguageProperties
   = { url    :: String
@@ -14,13 +10,13 @@ type LanguageProperties
     }
 
 type Language
-  = { key   :: Lang
-    , value :: LanguageProperties }
+  = { lt_lang   :: Lang
+    , lt_server :: LanguageProperties }
 
 type NLPQuery =
   { languages ::
-       { key :: Unit
-       , value :: {
+       { lt_lang :: Unit
+       , lt_server :: {
            url :: Unit
          , server :: Unit }
        }
@@ -28,8 +24,8 @@ type NLPQuery =
 
 nlpQuery :: NLPQuery
 nlpQuery = { languages:
-             { key   : unit
-             , value : {
+             { lt_lang   : unit
+             , lt_server : {
                  url : unit
                , server: unit }
              }

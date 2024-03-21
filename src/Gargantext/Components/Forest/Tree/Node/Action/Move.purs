@@ -7,7 +7,7 @@ import Gargantext.Prelude
 
 import Data.Maybe (Maybe(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel)
+import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (SubTreeParamsIn, subTreeView)
 import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Routes (SessionRoute(..))
@@ -30,19 +30,18 @@ moveNode = R.createElement moveNodeCpt
 moveNodeCpt :: R.Component SubTreeParamsIn
 moveNodeCpt = here.component "moveNode" cpt
   where
-    cpt { boxes, dispatch, id, nodeType, session, subTreeParams } _ = do
+    cpt { dispatch, id, nodeType, session, subTreeParams } _ = do
       action :: T.Box Action <- T.useBox (MoveNode {params: Nothing})
 
       pure $
 
         moveNode' { action
-            , boxes
-            , dispatch
-            , id
-            , nodeType
-            , session
-            , subTreeParams
-            } []
+                  , dispatch
+                  , id
+                  , nodeType
+                  , session
+                  , subTreeParams
+                  } []
 
 type Props =
   ( action :: T.Box Action
@@ -54,25 +53,27 @@ moveNode' :: R2.Component Props
 moveNode' = R.createElement moveNodeCpt'
 moveNodeCpt' :: R.Component Props
 moveNodeCpt' = here.component "__clone__" cpt where
-  cpt { boxes, dispatch, id, nodeType, session, subTreeParams, action } _ = do
+  cpt { dispatch, id, nodeType, session, subTreeParams, action } _ = do
 
     action' <- T.useLive T.unequal action
 
     let button = case action' of
-            MoveNode { params } -> case params of
-              Just val -> submitButton (MoveNode {params: Just val}) dispatch
-              Nothing -> H.div {} []
-            _                   -> H.div {} []
+          MoveNode { params } ->
+            R2.fromMaybe params $
+              \val -> Tools.submitButton { action: MoveNode {params: Just val}
+                                         , dispatch }
+          _                   -> H.div {} []
 
     pure $
 
-      panel
-      [ subTreeView { action
-                      , boxes
+      Tools.panel { mError: Nothing }
+        [ subTreeView { action
                       , dispatch
                       , id
                       , nodeType
                       , session
                       , subTreeParams
                       } []
-      ] button
+
+        -- footer
+        , button ]

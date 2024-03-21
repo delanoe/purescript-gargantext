@@ -26,7 +26,7 @@ import Gargantext.Components.GraphQL.Endpoints as GQLE
 import Gargantext.Components.Search (Contact(..), Document(..), HyperdataRowContact(..), HyperdataRowDocument(..), SearchQuery, SearchResult(..), SearchResultTypes(..))
 import Gargantext.Components.Table as T
 import Gargantext.Components.Table.Types as T
-import Gargantext.Config.REST (RESTError(..), AffRESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(Search, NodeAPI))
@@ -343,20 +343,15 @@ type PageProps = ( rowsLoaded :: Rows | PageLayoutProps )
 pageLayout :: R2.Component PageLayoutProps
 pageLayout = R.createElement pageLayoutCpt
 pageLayoutCpt :: R.Component PageLayoutProps
-pageLayoutCpt = here.component "pageLayout" cpt
-  where
-    cpt { container, deletions, frontends, path, session, totalRecords } _ = do
-      path' <- T.useLive T.unequal path
+pageLayoutCpt = R2.hereComponent here "pageLayout" hCpt where
+  hCpt hp { container, deletions, frontends, path, session, totalRecords } _ = do
+    path' <- T.useLive T.unequal path
 
-      useLoader { errorHandler
-                , loader: loadPage
-                , path: path'
-                , render: \rowsLoaded -> page { container, deletions, frontends, path, rowsLoaded, session, totalRecords } [] }
-    errorHandler err = do
-      here.warn2 "[pageLayout] RESTError" err
-      case err of
-        ReadJSONError err' -> here.warn2 "[pageLayout] ReadJSONError" $ show err'
-        _ -> pure unit
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
+              , loader: loadPage
+              , path: path'
+              , render: \rowsLoaded -> page { container, deletions, frontends, path, rowsLoaded, session, totalRecords } [] }
 
 page :: R2.Component PageProps
 page = R.createElement pageCpt

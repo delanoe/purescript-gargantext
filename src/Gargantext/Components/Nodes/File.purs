@@ -6,7 +6,7 @@ import Data.Eq.Generic (genericEq)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
-import Gargantext.Config.REST (AffRESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Ends (toUrl)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
@@ -50,14 +50,14 @@ type FileLayoutProps = ( nodeId :: NodeID, session :: Session )
 fileLayout :: R2.Leaf FileLayoutProps
 fileLayout = R2.leaf fileLayoutCpt
 fileLayoutCpt :: R.Component FileLayoutProps
-fileLayoutCpt = here.component "fileLayout" cpt where
-  cpt { nodeId, session } _ = do
-    useLoader { errorHandler
+fileLayoutCpt = R2.hereComponent here "fileLayout" hCpt where
+  hCpt hp { nodeId, session } _ = do
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , loader: loadFile session
               , path: nodeId
               , render: onLoad }
       where
-        errorHandler = logRESTError here "[fileLayout]"
         onLoad loaded = fileLayoutLoaded { loaded, nodeId, session }
 
 loadFile :: Session -> NodeID -> AffRESTError File

@@ -1,11 +1,9 @@
 module Gargantext.Utils.Lens where
 
-import Gargantext.Prelude
-
-import Data.Foldable (maximum, minimum)
-import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.Lens
+import Data.Maybe (fromMaybe, maybe)
 import Data.Traversable
+import Gargantext.Prelude
 
 -- | Given a Traversable of entities and a lens for them, normalize
 -- | over lens getter so that the value of lens setter is in range [0,

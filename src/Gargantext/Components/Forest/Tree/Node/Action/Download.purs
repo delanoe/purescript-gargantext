@@ -2,10 +2,9 @@ module Gargantext.Components.Forest.Tree.Node.Action.Download where
 
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
-import Data.Show.Generic (genericShow)
 import Data.String.Common (toLower)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(DownloadNode))
-import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, panel, submitButtonHref)
+import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Ends (url)
 import Gargantext.Prelude
 import Gargantext.Routes as Routes
@@ -16,6 +15,7 @@ import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Download"
@@ -41,34 +41,45 @@ actionDownloadCorpus = R.createElement actionDownloadCorpusCpt
 actionDownloadCorpusCpt :: R.Component ActionDownload
 actionDownloadCorpusCpt = here.component "actionDownloadCorpus" cpt where
   cpt { id, session } _ = do
-    pure $ panel [H.div {} [H.text info]]
-      (submitButtonHref DownloadNode href)
+    pure $
+      Tools.panelWithSubmitButtonHref { action: DownloadNode
+                                      , href
+                                      , mError: Nothing }
+        [ H.div {} [H.text "Download as JSON" ] ]
     where
       href  = url session $ Routes.NodeAPI GT.Corpus (Just id) "export"
-      info  = "Download as JSON"
 
 actionDownloadGraph :: R2.Component ActionDownload
 actionDownloadGraph = R.createElement actionDownloadGraphCpt
 actionDownloadGraphCpt :: R.Component ActionDownload
 actionDownloadGraphCpt = here.component "actionDownloadGraph" cpt where
   cpt { id, session } _ = do
-    pure $ panel [H.div {} [H.text info]]
-      (submitButtonHref DownloadNode href)
+    pure $
+      Tools.panelWithSubmitButtonHref { action: DownloadNode
+                                      , href
+                                      , mError: Nothing }
+        [ H.div {} [H.text "Info about the Graph as GEXF format" ] ]
     where
       href  = url session $ Routes.NodeAPI GT.Graph (Just id) "gexf"
-      info  = "Info about the Graph as GEXF format"
 
-data NodeListDownloadFormat = NL_CSV | NL_JSON
+data NodeListDownloadFormat = NL_CSV | NL_JSON | NL_JSON_ZIP
 derive instance Eq NodeListDownloadFormat
 derive instance Generic NodeListDownloadFormat _
 instance Show NodeListDownloadFormat
   where
     show NL_CSV = "CSV"
     show NL_JSON = "JSON"
+    show NL_JSON_ZIP = "JSON (zipped)"
+
+urlNodeListDownloadFormat :: NodeListDownloadFormat -> String
+urlNodeListDownloadFormat NL_CSV = "csv"
+urlNodeListDownloadFormat NL_JSON = "json"
+urlNodeListDownloadFormat NL_JSON_ZIP = "json.zip"
 
 readNodeListDownloadFormat :: String -> NodeListDownloadFormat
 readNodeListDownloadFormat "CSV" = NL_CSV
 readNodeListDownloadFormat "JSON" = NL_JSON
+readNodeListDownloadFormat "JSON (zipped)" = NL_JSON_ZIP
 readNodeListDownloadFormat _ = NL_JSON
 
 actionDownloadNodeList :: R2.Component ActionDownload
@@ -76,65 +87,69 @@ actionDownloadNodeList = R.createElement actionDownloadNodeListCpt
 actionDownloadNodeListCpt :: R.Component ActionDownload
 actionDownloadNodeListCpt = here.component "actionDownloadNodeList" cpt where
   cpt { id, session } _ = do
-    downloadFormat <- T.useBox NL_JSON
+    downloadFormat <- T.useBox NL_JSON_ZIP
     downloadFormat' <- T.useLive T.unequal downloadFormat
 
-    pure $ panel
-      [ R2.select { className: "form-control"
-                  , defaultValue: show downloadFormat'
-                  , on: { change: onChange downloadFormat } }
-        [ opt NL_CSV downloadFormat
-        , opt NL_JSON downloadFormat ]
-      , H.div {} [ H.text $ info downloadFormat' ]
-      ]
-      (submitButtonHref DownloadNode $ href downloadFormat')
+    pure $
+      Tools.panelWithSubmitButtonHref { action: DownloadNode
+                                      , href: href downloadFormat'
+                                      , mError: Nothing }
+        [ R2.select { className: "form-control"
+                    , defaultValue: show downloadFormat'
+                    , on: { change: onChange downloadFormat } }
+          [ opt NL_CSV
+          , opt NL_JSON
+          , opt NL_JSON_ZIP ]
+        , H.div {} [ H.text $ info downloadFormat' ]
+        ]
     where
-      opt t downloadFormat = H.option { value: show t } [ H.text $ show t ]
-        where
-          onClick _ = T.write_ t downloadFormat
+      opt t = H.option { value: show t } [ H.text $ show t ]
       onChange downloadFormat e = T.write_ (readNodeListDownloadFormat $ R.unsafeEventValue e) downloadFormat
       href :: NodeListDownloadFormat -> String
-      href t = url session $ Routes.NodeAPI GT.NodeList (Just id) (toLower $ show t)
+      href t = url session $ Routes.NodeAPI GT.NodeList (Just id) (urlNodeListDownloadFormat t)
       info :: NodeListDownloadFormat -> String
       info t = "Info about the Documents as " <> show t <> " format"
 
-data NodeTextsDownloadFormat = NT_CSV | NT_JSON
+data NodeTextsDownloadFormat = NT_CSV | NT_JSON | NT_JSON_ZIP
 derive instance Eq NodeTextsDownloadFormat
 derive instance Generic NodeTextsDownloadFormat _
 instance Show NodeTextsDownloadFormat where
  show NT_CSV = "CSV"
  show NT_JSON = "JSON"
+ show NT_JSON_ZIP = "JSON (zipped)"
 
 urlNodeTextsDownloadFormat :: NodeTextsDownloadFormat -> String
 urlNodeTextsDownloadFormat NT_CSV = "csv"
 urlNodeTextsDownloadFormat NT_JSON = "json"
+urlNodeTextsDownloadFormat NT_JSON_ZIP = "json.zip"
 
 readNodeTextsDownloadFormat :: String -> NodeTextsDownloadFormat
 readNodeTextsDownloadFormat "CSV" = NT_CSV
 readNodeTextsDownloadFormat "JSON" = NT_JSON
-readNodeTextsDownloadFormat _ = NT_JSON
+readNodeTextsDownloadFormat "JSON (zippped)" = NT_JSON_ZIP
+readNodeTextsDownloadFormat _ = NT_JSON_ZIP
 
 actionDownloadNodeTexts :: R2.Component ActionDownload
 actionDownloadNodeTexts = R.createElement actionDownloadNodeTextsCpt
 actionDownloadNodeTextsCpt :: R.Component ActionDownload
 actionDownloadNodeTextsCpt = here.component "actionDownloadNodeTexts" cpt where
   cpt { id, session } _ = do
-    downloadFormat <- T.useBox NT_JSON
+    downloadFormat <- T.useBox NT_JSON_ZIP
     downloadFormat' <- T.useLive T.unequal downloadFormat
 
-    pure $ panel
+    pure $ Tools.panelWithSubmitButtonHref { action: DownloadNode
+                                           , href: href downloadFormat'
+                                           , mError: Nothing }
       [ R2.select { className: "form-control"
                   , defaultValue: show downloadFormat'
                   , on: { change: onChange downloadFormat } }
-        [ opt NT_CSV downloadFormat
-        , opt NT_JSON downloadFormat ]
+        [ opt NT_CSV
+        , opt NT_JSON
+        , opt NT_JSON_ZIP ]
       , H.div {} [ H.text $ info downloadFormat' ]
       ]
-      (submitButtonHref DownloadNode $ href downloadFormat')
     where
-      opt t downloadFormat = H.option { value: show t } [ H.text $ show t ]
-        where
-          onClick _ = T.write_ t downloadFormat
+      opt t = H.option { value: show t } [ H.text $ show t ]
       onChange downloadFormat e = T.write_ (readNodeTextsDownloadFormat $ R.unsafeEventValue e) downloadFormat
       href :: NodeTextsDownloadFormat -> String
       href t  = url session $ Routes.NodeAPI GT.NodeTexts (Just id) ("export/" <> urlNodeTextsDownloadFormat t)
@@ -154,4 +169,4 @@ actionDownloadOther = R.createElement actionDownloadOtherCpt
 actionDownloadOtherCpt :: R.Component ActionDownload
 actionDownloadOtherCpt = here.component "actionDownloadOther" cpt where
   cpt _ _ = do
-    pure $ fragmentPT $ "Soon, you will be able to download your file here "
+    pure $ Tools.fragmentPT $ "Soon, you will be able to download your file here "

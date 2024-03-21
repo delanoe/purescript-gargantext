@@ -139,7 +139,8 @@ component = here.component "main" cpt where
         }
         [
           inputWithAutocomplete
-          { autocompleteSearch: searchCallback
+          { autoFocus: true
+          , autocompleteSearch: searchCallback
           , onAutocompleteClick: autocompleteClickCallback
           , onEnterPress: \s -> do
                   cs <- searchCallback s
@@ -151,7 +152,7 @@ component = here.component "main" cpt where
           , title: ""
           , placeholder: "find and select a term here..."
           , state: searchState
-          }
+          } []
         ]
       ]
 

@@ -8,8 +8,9 @@ import Effect (Effect)
 import FFI.Simple ((...))
 import Gargantext.Components.App as App
 import Gargantext.Utils.Reactix as R2
-import Prelude (Unit, ($), bind)
+import Prelude (Unit, ($))
 import Reactix as R
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Main"

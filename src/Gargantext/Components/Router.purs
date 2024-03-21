@@ -12,7 +12,6 @@ import Data.UUID (UUID)
 import Data.UUID as UUID
 import Effect (Effect)
 import Gargantext.Components.App.Store (Boxes)
-import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.ErrorsView as ErrorsView
 import Gargantext.Components.Forest (forestLayout)
 import Gargantext.Components.Forest.Breadcrumb as Breadcrumb
@@ -37,7 +36,6 @@ import Gargantext.Components.Tile (tileBlock)
 import Gargantext.Components.TopBar as TopBar
 import Gargantext.Components.TreeSearch (treeSearch)
 import Gargantext.Config (defaultFrontends, defaultBackends)
-import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Context.Session as SessionContext
 import Gargantext.Ends (Backend)
 import Gargantext.Hooks.Resize (ResizeType(..), useResizeHandler)
@@ -279,8 +277,7 @@ forestCpt = R.memo' $ here.component "forest" cpt where
         { className: "router__aside__inner" }
         [
           forestLayout
-          { boxes
-          , frontends: defaultFrontends
+          { frontends: defaultFrontends
           }
         ]
       ,
@@ -408,8 +405,6 @@ openedSidePanelCpt = here.component "openedSidePanel" cpt where
 
     let wrapper = H.div { className: "side-panel shadow" }
 
-    selectedNgrams <- T.useBox Nothing
-
     case route' of
       GR.Lists _s _n -> do
         pure $ wrapper
@@ -515,10 +510,10 @@ dashboard = R.createElement dashboardCpt
 dashboardCpt :: R.Component SessionNodeProps
 dashboardCpt = here.component "dashboard" cpt
   where
-    cpt props@{ boxes, nodeId } _ = do
+    cpt props@{ nodeId } _ = do
       let sessionProps = RE.pick props :: Record SessionProps
       pure $ authed (Record.merge { content: \session ->
-                                     dashboardLayout { boxes, nodeId, session } [] } sessionProps) []
+                                     dashboardLayout { nodeId, session } [] } sessionProps) []
 
 --------------------------------------------------------------
 
@@ -611,15 +606,12 @@ lists :: R2.Component SessionNodeProps
 lists = R.createElement listsCpt
 listsCpt :: R.Component SessionNodeProps
 listsCpt = here.component "lists" cpt where
-  cpt props@{ boxes
-            , nodeId } _ = do
+  cpt props@{ nodeId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
-                                   Lists.listsLayout { boxes
-                                                     , nodeId
+                                   Lists.listsLayout { nodeId
                                                      , session
-                                                     , sessionUpdate: \_ -> pure unit
-                                                     , sidePanel: boxes.sidePanelLists } [] } sessionProps) []
+                                                     , sessionUpdate: \_ -> pure unit } [] } sessionProps) []
 
 --------------------------------------------------------------
 
@@ -730,13 +722,10 @@ user :: R2.Component SessionNodeProps
 user = R.createElement userCpt
 userCpt :: R.Component SessionNodeProps
 userCpt = here.component "user" cpt where
-  cpt props@{ boxes
-            , nodeId } _ = do
+  cpt props@{ nodeId } _ = do
     let sessionProps = RE.pick props :: Record SessionProps
     pure $ authed (Record.merge { content: \session ->
-                                   userLayout { boxes
-                                              , frontends: defaultFrontends
-                                              , nodeId
+                                   userLayout { nodeId
                                               , session } [] } sessionProps) []
 
 --------------------------------------------------------------

@@ -1,21 +1,16 @@
 module Gargantext.Hooks.Sigmax.Sigma where
 
-import Prelude
-
 import DOM.Simple.Types (Element, Window)
 import Data.Array as A
 import Data.Either (Either(..))
-import Data.Function.Uncurried (Fn1, runFn1)
 import Data.Maybe (Maybe)
-import Data.Traversable (traverse_)
 import Effect (Effect)
 import Effect.Exception as EEx
-import Effect.Timer (setTimeout)
 import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, EffectFn4, mkEffectFn1, runEffectFn1, runEffectFn2, runEffectFn3, runEffectFn4)
 import FFI.Simple ((..), (...), (.=))
-import Foreign.Object as Object
 import Gargantext.Hooks.Sigmax.Graphology as Graphology
 import Gargantext.Hooks.Sigmax.Types as Types
+import Prelude
 import Type.Row (class Union)
 
 -- | Type representing a sigmajs instance

@@ -2,16 +2,16 @@ module Gargantext.Components.AutoUpdate where
 
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse_)
-import React as React
-import React (ReactClass, ReactElement, Children)
-import React.DOM (div')
 import Effect (Effect)
-import Effect.Timer (IntervalId, TimeoutId, setInterval, clearInterval, setTimeout, clearTimeout)
+import Effect.Timer (IntervalId, setInterval, clearInterval)
+import Gargantext.Prelude
+import Gargantext.Utils.Reactix as R2
+import React (ReactClass, ReactElement, Children)
+import React as React
+import React.DOM (div')
 import Reactix as R
 import Reactix.DOM.HTML as H
 
-import Gargantext.Prelude
-import Gargantext.Utils.Reactix as R2
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.AutoUpdate"

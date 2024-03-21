@@ -4,7 +4,7 @@ module Gargantext.Components.GraphExplorer.Sidebar.DocList
 
 import Gargantext.Prelude
 
-import Data.Array (catMaybes, concat, head)
+import Data.Array (catMaybes, head)
 import Data.Array as A
 import Data.Foldable (intercalate)
 import Data.Map as Map
@@ -15,12 +15,10 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (Variant(..))
-import Gargantext.Components.FacetsTable (DocumentsView(..), Rows(..), initialPagePath, initialPageGQL, loadPage, loadPageGQL, publicationDate)
+import Gargantext.Components.FacetsTable (DocumentsView(..), Rows(..), initialPageGQL, loadPageGQL, publicationDate)
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types (CorpusId, DocId, GraphSideDoc(..), ListId)
 import Gargantext.Components.GraphExplorer.Types as GET
-import Gargantext.Components.RandomText (words)
-import Gargantext.Components.Search (SearchQuery(..), SearchType(..))
 import Gargantext.Config (defaultFrontends)
 import Gargantext.Config.REST (RESTError(..))
 import Gargantext.Ends (Frontends, url)

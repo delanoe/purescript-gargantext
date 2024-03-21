@@ -2,6 +2,7 @@ module Gargantext.Components.PhyloExplorer.Types
   ( PhyloSet(..), parseToPhyloSet
   , CorpusId, ListId, DocId
   , PhyloData(..)
+  , PhyloConfig(..)
   , Branch(..), Period(..), Group(..)
   , Link(..), AncestorLink(..), BranchLink(..)
   , Term(..)
@@ -19,8 +20,8 @@ import Gargantext.Prelude
 
 import Data.Array as Array
 import Data.Date as Date
-import Data.Generic.Rep (class Generic)
 import Data.FunctorWithIndex (mapWithIndex)
+import Data.Generic.Rep (class Generic)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (class Newtype)
@@ -30,7 +31,7 @@ import Data.String as String
 import Data.String.Extra (camelCase)
 import Data.Tuple as Tuple
 import Data.Tuple.Nested ((/\))
-import Gargantext.Components.PhyloExplorer.JSON (PhyloJSON(..), RawEdge(..), RawObject(..))
+import Gargantext.Components.PhyloExplorer.JSON (Cluster, PhyloJSON(..), PhyloSimilarity(..), Quality(..), RawEdge(..), RawObject(..), Synchrony(..), TimeUnit)
 import Simple.JSON as JSON
 
 -- @NOTE #219: PureScript Date or stick to JavaScript foreign?
@@ -45,9 +46,10 @@ type DocId    = Int
 ------------------------------------------------------------------
 
 data PhyloSet = PhyloSet
-  { corpusId  :: CorpusId
-  , listId    :: ListId
-  , phyloData :: PhyloData
+  { corpusId    :: CorpusId
+  , listId      :: ListId
+  , phyloData   :: PhyloData
+  , phyloConfig :: PhyloConfig
   }
 
 derive instance Generic PhyloSet _
@@ -78,11 +80,20 @@ parseToPhyloSet (PhyloJSON o) = PhyloSet
       , timeScale     : p.phyloTimeScale
       , weighted      : getGlobalWeightedValue groups
       }
+    , phyloConfig : PhyloConfig
+      { clique: c.clique
+      , timeUnit: c.timeUnit
+      , synchrony: parseSynchrony c.phyloSynchrony
+      , proximity: parseSimilarity c.similarity
+      , minBranch: parseQualityToMinBranch c.phyloQuality
+      , levelOfObservation: parseQualityToLevelOfObservation c.phyloQuality
+      }
   }
 
   where
     p             = o.pd_data
-
+    c             = o.pd_config
+  
     epochTS       = p.phyloTimeScale == "epoch"
 
     ancestorLinks = parseAncestorLinks p.edges
@@ -117,6 +128,36 @@ data PhyloData = PhyloData
 derive instance Generic PhyloData _
 derive instance Eq PhyloData
 instance Show PhyloData where show = genericShow
+
+-----------------------------------------------------------
+
+data PhyloConfig = PhyloConfig
+  { clique :: Cluster
+  , timeUnit :: TimeUnit
+  , synchrony :: Number
+  , proximity :: Number
+  , minBranch :: Int
+  , levelOfObservation :: Number
+  }
+
+derive instance Generic PhyloConfig _  
+derive instance Eq PhyloConfig
+instance Show PhyloConfig where show = genericShow
+
+parseSynchrony :: Synchrony -> Number
+parseSynchrony (ByProximityThreshold { _bpt_threshold }) =  _bpt_threshold
+parseSynchrony (ByProximityDistribution { _bpd_sensibility }) = _bpd_sensibility
+
+parseSimilarity :: PhyloSimilarity -> Number
+parseSimilarity (WeightedLogJaccard { _wlj_sensibility }) = _wlj_sensibility
+parseSimilarity (WeightedLogSim { _wls_sensibility }) = _wls_sensibility
+parseSimilarity (Hamming { _hmg_sensibility }) = _hmg_sensibility
+
+parseQualityToMinBranch :: Quality -> Int
+parseQualityToMinBranch (Quality { _qua_minBranch }) = _qua_minBranch
+
+parseQualityToLevelOfObservation :: Quality -> Number
+parseQualityToLevelOfObservation (Quality { _qua_granularity }) = _qua_granularity
 
 -----------------------------------------------------------
 

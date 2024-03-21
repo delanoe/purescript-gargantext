@@ -15,19 +15,18 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
 import Effect.Aff (Aff)
+import Gargantext.Components.Login.Types (AuthData(..), AuthRequest(..))
+import Gargantext.Components.Nodes.Lists.Types as NT
+import Gargantext.Config.REST as REST
+import Gargantext.Ends (class ToUrl, Backend, toUrl)
+import Gargantext.Prelude
+import Gargantext.Sessions.Types (Session(..), Sessions(..), OpenNodes, NodeId, mkNodeId, sessionUrl, sessionId, empty, null, unSessions, lookup, cons, tryCons, update, remove, tryRemove)
+import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Simple.JSON as JSON
 import Toestand as T
 import Web.Storage.Storage (getItem, removeItem, setItem)
 
-import Gargantext.Prelude
-
-import Gargantext.Components.Login.Types (AuthData(..), AuthInvalid(..), AuthRequest(..), AuthResponse(..))
-import Gargantext.Components.Nodes.Lists.Types as NT
-import Gargantext.Config.REST as REST
-import Gargantext.Ends (class ToUrl, Backend, toUrl)
-import Gargantext.Sessions.Types (Session(..), Sessions(..), OpenNodes, NodeId, mkNodeId, sessionUrl, sessionId, empty, null, unSessions, lookup, cons, tryCons, update, remove, tryRemove)
-import Gargantext.Utils.Reactix as R2
 
 type WithSession c =
   ( session :: Session
@@ -62,7 +61,7 @@ act ss (Login s) =
   case tryCons s ss of
     Right new -> pure new
     _ -> pure ss <* log2 "Cannot overwrite existing session: " (sessionId s)
-act old@(Sessions ss) (Logout s) =
+act old (Logout s) =
   case tryRemove (sessionId s) old of
     Right new -> pure $ new
     _ -> pure old <* log2 "Logged out of stale session:" (sessionId s)
@@ -115,12 +114,9 @@ postAuthRequest :: Backend -> AuthRequest -> Aff (Either String Session)
 postAuthRequest backend ar@(AuthRequest {username}) =
   decode <$> REST.post Nothing (toUrl backend "auth") ar
   where
-    decode (Left err) = Left $ "Error when sending REST.post: " <> show err
-    decode (Right (AuthResponse ar2))
-      | {inval: Just (AuthInvalid {message})}     <- ar2 = Left message
-      | {valid: Just (AuthData {token, tree_id, user_id})} <- ar2 =
-          Right $ Session { backend, caches: Map.empty, token, treeId: tree_id, username, userId: user_id }
-      | otherwise = Left "Invalid response from server"
+    decode (Left err) = Left $ show err
+    decode (Right (AuthData { token, tree_id, user_id })) =
+      Right $ Session { backend, caches: Map.empty, token, treeId: tree_id, username, userId: user_id }
 
 postForgotPasswordRequest :: Backend -> String -> Aff (Either String { status :: String })
 postForgotPasswordRequest backend email =

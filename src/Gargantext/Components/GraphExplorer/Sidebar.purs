@@ -637,7 +637,6 @@ type UpdateTermButtonProps =
 
 updateTermButton :: R2.Component UpdateTermButtonProps
 updateTermButton = R2.component updateTermButtonCpt
-
 updateTermButtonCpt :: R.Component UpdateTermButtonProps
 updateTermButtonCpt = here.component "updateTermButton" cpt where
   cpt { variant

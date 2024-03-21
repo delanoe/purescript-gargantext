@@ -1,12 +1,12 @@
 module Gargantext.Core.NgramsTable.Types where
 
-import Control.Monad.State (class MonadState, execState)
+import Control.Monad.State (class MonadState)
 import Data.Bifunctor (lmap)
 import Data.Eq.Generic (genericEq)
 import Data.Foldable (class Foldable, foldMap, foldl, foldr)
 import Data.FoldableWithIndex (class FoldableWithIndex, foldMapWithIndex, foldlWithIndex, foldrWithIndex)
 import Data.Generic.Rep (class Generic)
-import Data.Lens (Iso', Lens', use, view, (%=), (%~), (.~), (?=), (^?))
+import Data.Lens (Iso', Lens', (%~))
 import Data.Lens.At (class At, at)
 import Data.Lens.Common (_Just)
 import Data.Lens.Index (class Index, ix)
@@ -14,16 +14,14 @@ import Data.Lens.Iso.Newtype (_Newtype)
 import Data.Lens.Record (prop)
 import Data.List (List)
 import Data.List as List
-import Data.List.Types (NonEmptyList(..))
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Maybe (Maybe(..), fromJust, isJust)
+import Data.Maybe (Maybe(..), isJust)
 import Data.Newtype (class Newtype)
 import Data.Ord.Generic (genericCompare)
-import Data.Show.Generic (genericShow)
 import Data.Set (Set)
 import Data.Set as Set
-import Data.String.Regex (Regex, regex, replace) as R
+import Data.Show.Generic (genericShow)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Effect.Aff (Aff)
@@ -35,9 +33,10 @@ import Gargantext.Prelude
 import Gargantext.Sessions (Session)
 import Gargantext.Types as GT
 import Gargantext.Utils.SimpleJSON as USJ
-import Simple.JSON as JSON
 import Reactix as R
+import Simple.JSON as JSON
 import Type.Proxy (Proxy(..))
+
 
 type Endo a = a -> a
 

@@ -1,8 +1,5 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Upload where
 
-import Gargantext.Prelude
-
-import Affjax.RequestBody (blob)
 import Data.Array as A
 import Data.Either (Either, fromRight')
 import Data.Eq.Generic (genericEq)
@@ -23,13 +20,14 @@ import Gargantext.Components.Forest.Tree.Node.Action (Props)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileFormat(..), FileType(..), UploadFileBlob(..), readUFBAsBase64, readUFBAsText)
 import Gargantext.Components.Forest.Tree.Node.Action.Utils (loadLanguages)
-import Gargantext.Components.Forest.Tree.Node.Tools (fragmentPT, formChoiceSafe, panel)
+import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.Lang (Lang(..), langReader)
 import Gargantext.Components.ListSelection as ListSelection
 import Gargantext.Components.ListSelection.Types (Selection(..))
 import Gargantext.Components.ListSelection.Types as ListSelection
-import Gargantext.Config.REST (AffRESTError, RESTError(..))
+import Gargantext.Config.REST (AffRESTError, RESTError)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, postWwwUrlencoded, post)
 import Gargantext.Types (ID, NodeType(..))
@@ -43,6 +41,7 @@ import Record as Record
 import Toestand as T
 import URI.Extra.QueryPairs as QP
 import Web.File.FileReader.Aff (readAsDataURL)
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Upload"
@@ -68,7 +67,7 @@ actionUploadCpt = here.component "actionUpload" cpt where
 
   cpt props@{ nodeType: Calc } _ = pure $ uploadFrameCalcView props []
 
-  cpt props@{ nodeType: Annuaire, dispatch, id, session } _ =
+  cpt { nodeType: Annuaire, dispatch, id, session } _ =
     pure $ uploadListView { dispatch, id, nodeType: GT.Annuaire, session }
 
   cpt props@{ nodeType: _ } _ = pure $ actionUploadOther props []
@@ -83,7 +82,7 @@ actionUploadOther = R.createElement actionUploadOtherCpt
 actionUploadOtherCpt :: R.Component ActionUpload
 actionUploadOtherCpt = here.component "actionUploadOther" cpt where
   cpt _ _ = do
-    pure $ fragmentPT $ "Soon, upload for this NodeType."
+    pure $ Tools.fragmentPT $ "Soon, upload for this NodeType."
 
 
 -- file upload types
@@ -106,17 +105,14 @@ type UploadFile =
 uploadFileView :: R2.Leaf Props
 uploadFileView = R2.leaf uploadFileViewCpt
 uploadFileViewCpt :: R.Component Props
-uploadFileViewCpt = here.component "uploadFileView" cpt where
-  cpt props@({ session }) _ = do
-    useLoader { errorHandler
+uploadFileViewCpt = R2.hereComponent here "uploadFileView" hCpt where
+  hCpt hp props@({ session }) _ = do
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , loader: loadLanguages
               , path: { session }
               , render: \langs ->
               uploadFileViewWithLangs (Record.merge props { langs }) }
-    where
-      errorHandler err = case err of
-        ReadJSONError err' -> here.warn2 "[uploadFileView] ReadJSONError" $ show err'
-        _                  -> here.warn2 "[uploadFileView] RESTError" err
 
 type PropsWithLangs =
   ( langs :: Array Lang
@@ -127,7 +123,7 @@ uploadFileViewWithLangs = R2.leaf uploadFileViewWithLangsCpt
 uploadFileViewWithLangsCpt :: R.Component PropsWithLangs
 uploadFileViewWithLangsCpt = here.component "uploadFileViewWithLangs" cpt
   where
-    cpt { dispatch, id, langs, nodeType, session } _ = do
+    cpt { dispatch, langs, nodeType, session } _ = do
       -- mFile    :: R.State (Maybe UploadFile) <- R.useState' Nothing
       mFile       <- T.useBox (Nothing :: Maybe UploadFile)
       fileType    <- T.useBox CSV
@@ -153,30 +149,30 @@ uploadFileViewWithLangsCpt = here.component "uploadFileViewWithLangs" cpt
               ]
             , R2.row
               [ H.div {className:"col-6 flex-space-around"}
-                [ formChoiceSafe { items: [ CSV
-                                          , CSV_HAL
-                                          , Istex
-                                          , WOS
-                                          , JSON
-                                          -- , Iramuteq
-                                          ]
+                [ Tools.formChoiceSafe { items: [ CSV
+                                                , CSV_HAL
+                                                , Istex
+                                                , WOS
+                                                , JSON
+                                                  -- , Iramuteq
+                                                ]
                                  , default: CSV
                                  , callback: setFileType'
                                  , print: show } []
-                , formChoiceSafe { items: [ Plain
-                                          , ZIP ]
-                                 , default: Plain
-                                 , callback: setFileFormat'
-                                 , print: show } []
+                , Tools.formChoiceSafe { items: [ Plain
+                                                , ZIP ]
+                                       , default: Plain
+                                       , callback: setFileFormat'
+                                       , print: show } []
                 ]
               ]
             , R2.row
               [ H.div {className:"col-6 flex-space-around"}
-                [ formChoiceSafe { items: langs <> [No_extraction]
-                                 , default: EN
-                                 , callback: setLang'
-                                 , print: show
-                                 } []
+                [ Tools.formChoiceSafe { items: langs <> [No_extraction]
+                                       , default: EN
+                                       , callback: setLang'
+                                       , print: show
+                                       } []
                 ]
               ]
             , R2.row
@@ -194,7 +190,7 @@ uploadFileViewWithLangsCpt = here.component "uploadFileViewWithLangs" cpt
                                            , selection
                                            } []
                             ]
-      pure $ panel bodies footer
+      pure $ Tools.panel { mError: Nothing } (bodies <> [ footer ])
 
 
 onChangeContents :: forall e. T.Box (Maybe UploadFile) -> E.SyntheticEvent_ e -> Effect Unit
@@ -277,14 +273,14 @@ uploadButtonCpt = here.component "uploadButton" cpt
 
 
       where
-        onClick fileFormat' fileType' mFile' lang' selection' onPendingBox e = do
+        onClick fileFormat' fileType' mFile' lang' selection' onPendingBox _e = do
           let { blob, name } = unsafePartial $ fromJust mFile'
           T.write_ true onPendingBox
           here.log2 "[uploadButton] fileType" fileType'
           void $ launchAff do
             case fileType' of
               Arbitrary ->
-                dispatch $ UploadArbitraryFile fileFormat' (Just name) blob selection'
+                dispatch $ UploadArbitraryFile fileFormat' (Just name) blob
               _ -> do
                 contents <- case fileFormat' of
                   Plain -> readUFBAsText blob
@@ -318,7 +314,7 @@ uploadListViewCpt = here.component "uploadListView" cpt where
   -- Render
     pure $
 
-      panel
+      Tools.panel { mError: Nothing }
       -- Body
       [
         -- Upload
@@ -423,9 +419,9 @@ uploadListViewCpt = here.component "uploadListView" cpt where
             } []
           ]
         ]
-      ]
+      
       -- Footer
-      (
+      ,
         H.div
         {}
         [
@@ -439,7 +435,7 @@ uploadListViewCpt = here.component "uploadListView" cpt where
           , nodeType: GT.Annuaire
           } []
         ]
-      )
+      ]
 
 -- START File Type View
 type FileTypeProps =
@@ -607,9 +603,8 @@ uploadFile { contents, fileFormat, lang, fileType, id, nodeType, mName, selectio
 uploadArbitraryFile :: Session
                     -> ID
                     -> {blob :: UploadFileBlob, fileFormat :: FileFormat, mName :: Maybe String}
-                    -> ListSelection.Selection
                     -> AffRESTError GT.AsyncTaskWithType
-uploadArbitraryFile session id { fileFormat, mName, blob: UploadFileBlob blob } selection = do
+uploadArbitraryFile session id { fileFormat, mName, blob: UploadFileBlob blob } = do
     contents <- readAsDataURL blob
     uploadArbitraryData session id fileFormat mName contents
 
@@ -663,12 +658,12 @@ uploadTermListViewCpt = here.component "uploadTermListView" cpt
                                                }
                             ]
 
-      pure $ panel
+      pure $ Tools.panel { mError: Nothing }
         [ H.form {}
           [ R2.row [ R2.col 12 [ input ] ]
           , R2.row [ R2.col 12 [ uploadTypeHtml ] ]
         ]
-      ] footer
+        , footer ]
 
     onChangeContents :: forall e. T.Box (Maybe UploadFile)
                      -> E.SyntheticEvent_ e
@@ -734,17 +729,14 @@ uploadTermButtonCpt = here.component "uploadTermButton" cpt
 uploadFrameCalcView :: R2.Component Props
 uploadFrameCalcView = R.createElement uploadFrameCalcViewCpt
 uploadFrameCalcViewCpt :: R.Component Props
-uploadFrameCalcViewCpt = here.component "uploadFrameCalcView" cpt where
-  cpt props@({ session }) _ = do
-    useLoader { errorHandler
+uploadFrameCalcViewCpt = R2.hereComponent here "uploadFrameCalcView" hCpt where
+  hCpt hp props@({ session }) _ = do
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , loader: loadLanguages
               , path: { session }
               , render: \langs ->
               uploadFileViewWithLangs (Record.merge props { langs }) }
-    where
-      errorHandler err = case err of
-        ReadJSONError err' -> here.warn2 "[uploadFileView] ReadJSONError" $ show err'
-        _                  -> here.warn2 "[uploadFileView] RESTError" err
 
 uploadFrameCalcViewWithLangs :: R2.Component PropsWithLangs
 uploadFrameCalcViewWithLangs = R.createElement uploadFrameCalcViewWithLangsCpt
@@ -815,7 +807,7 @@ uploadFrameCalcViewWithLangsCpt = here.component "uploadFrameCalcViewWithLangs" 
                      [ H.text "Upload!" ]
                    ]
 
-      pure $ panel bodies footer
+      pure $ Tools.panel { mError: Nothing } (bodies <> [ footer ])
 
       where
         onClick lang' selection' _ = do

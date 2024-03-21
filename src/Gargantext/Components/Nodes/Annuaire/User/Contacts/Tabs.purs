@@ -7,14 +7,11 @@ import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
-import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.DocsTable.Types (Year)
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Core.NgramsTable.Functions as NTC
-import Gargantext.Components.Nodes.Lists.SidePanel as LSidePanel
 import Gargantext.Components.Nodes.Lists.Types as LTypes
-import Gargantext.Components.Nodes.Texts.Types as TTypes
 import Gargantext.Components.Tab as Tab
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
@@ -49,14 +46,11 @@ modeTabType' Books = CTabAuthors
 modeTabType' Communication = CTabAuthors
 
 type TabsProps =
-  ( boxes         :: Boxes
-  , cacheState    :: T.Box LTypes.CacheState
+  ( cacheState    :: T.Box LTypes.CacheState
   , defaultListId :: Int
   , frontends     :: Frontends
   , nodeId        :: Int
   , session       :: Session
-  , sidePanel     :: T.Box (Maybe (Record TTypes.SidePanel))
-  , sidePanelList :: T.Box (Maybe (Record LSidePanel.SidePanel))
   )
 
 tabs :: R2.Leaf TabsProps
@@ -64,14 +58,11 @@ tabs = R2.leaf tabsCpt
 tabsCpt :: R.Component TabsProps
 tabsCpt = here.component "tabs" cpt
   where
-    cpt { boxes
-        , cacheState
+    cpt { cacheState
         , defaultListId
         , frontends
         , nodeId
         , session
-        , sidePanel
-        , sidePanelList
         } _ = do
       activeTab <- T.useBox 0
       yearFilter <- T.useBox (Nothing :: Maybe Year)
@@ -87,35 +78,28 @@ tabsCpt = here.component "tabs" cpt
           , "Trash"         /\ docs -- TODO pass-in trash mode
           ]
           where
-            patentsView = { boxes
-                          , cacheState
+            patentsView = { cacheState
                           , defaultListId
                           , mode: Patents
                           , nodeId
                           , session
-                          , sidePanel: sidePanelList
                           }
-            booksView   = { boxes
-                          , cacheState
+            booksView   = { cacheState
                           , defaultListId
                           , mode: Books
                           , nodeId
                           , session
-                          , sidePanel: sidePanelList
                           }
-            commView    = { boxes
-                          , cacheState
+            commView    = { cacheState
                           , defaultListId
                           , mode: Communication
                           , nodeId
                           , session
-                          , sidePanel: sidePanelList
                           }
             chart       = mempty
             totalRecords = 4736 -- TODO
             docs = DT.docViewLayout
-              { boxes
-              , cacheState
+              { cacheState
               , chart
               , chartReload
               , frontends
@@ -124,7 +108,6 @@ tabsCpt = here.component "tabs" cpt
               , nodeId
               , session
               , showSearch: true
-              , sidePanel
               , tabType: TabPairing TabDocs
               , totalRecords
               , yearFilter
@@ -132,13 +115,11 @@ tabsCpt = here.component "tabs" cpt
 
 
 type NgramsViewTabsProps = (
-    boxes          :: Boxes
-  , cacheState     :: T.Box LTypes.CacheState
+    cacheState     :: T.Box LTypes.CacheState
   , defaultListId  :: Int
   , mode           :: Mode
   , nodeId         :: Int
   , session        :: Session
-  , sidePanel      :: T.Box (Maybe (Record LSidePanel.SidePanel))
   )
 
 ngramsView :: R2.Component NgramsViewTabsProps
@@ -146,13 +127,11 @@ ngramsView = R.createElement ngramsViewCpt
 ngramsViewCpt :: R.Component NgramsViewTabsProps
 ngramsViewCpt = here.component "ngramsView" cpt
   where
-    cpt { boxes
-        , cacheState
+    cpt { cacheState
         , defaultListId
         , mode
         , nodeId
-        , session
-        , sidePanel } _ = do
+        , session } _ = do
       path <- T.useBox $ NTC.initialPageParams session nodeId [defaultListId] (TabDocument TabDocs)
       onCancelRef <- R.useRef Nothing
       onNgramsClickRef <- R.useRef Nothing
@@ -161,12 +140,10 @@ ngramsViewCpt = here.component "ngramsView" cpt
 
       pure $ NT.mainNgramsTable {
           afterSync: \_ -> pure unit
-        , boxes
         , cacheState
         , defaultListId
         , path
         , session
-        , sidePanel
         , tabNgramType
         , tabType
         , treeEdit: { box: treeEditBox

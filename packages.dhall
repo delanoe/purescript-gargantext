@@ -104,7 +104,23 @@ let overrides =
       }
 
 let additions =
-      { sequences =
+      { convertable-options =
+        { dependencies = [ "console", "effect", "maybe", "record" ]
+        , repo = "https://github.com/natefaubion/purescript-convertable-options"
+        , version = "v1.0.0"
+        }
+      , data-default =
+        { dependencies =
+          [ "assert", "lists", "maybe", "record", "effect", "prelude" ]
+        , repo = "https://github.com/thought2/purescript-data-default"
+        , version = "350e600a5a022c9599865a2dd14196b442f59bcc"
+        }
+      , dom-filereader =
+        { dependencies = [ "aff", "arraybuffer-types", "web-file", "web-html" ]
+        , repo = "https://github.com/nwolverson/purescript-dom-filereader"
+        , version = "v5.0.0"
+        }
+      , sequences =
         { dependencies =
           [ "arrays"
           , "assert"
@@ -125,6 +141,28 @@ let additions =
           ]
         , repo = "https://github.com/garganscript/purescript-sequences.git"
         , version = "recursion-fix"
+        }
+      , read =
+        { dependencies = [ "prelude", "maybe", "strings" ]
+        , repo = "https://github.com/truqu/purescript-read"
+        , version = "v1.0.1"
+        }
+      , simple-json-generics =
+        { dependencies =
+          [ "assert"
+          , "control"
+          , "effect"
+          , "either"
+          , "foreign"
+          , "partial"
+          , "prelude"
+          , "simple-json"
+          , "transformers"
+          , "typelevel-prelude"
+          ]
+        , repo =
+            "https://github.com/garganscript/purescript-simple-json-generics"
+        , version = "master"
         }
       , spec-discovery =
         { dependencies = [ "prelude", "effect", "arrays", "spec", "node-fs" ]
@@ -156,28 +194,6 @@ let additions =
             "https://gitlab.iscpif.fr/gargantext/purescript-string-search.git"
         , version = "v0.1.6"
         }
-      , dom-filereader =
-        { dependencies = [ "aff", "arraybuffer-types", "web-file", "web-html" ]
-        , repo = "https://github.com/nwolverson/purescript-dom-filereader"
-        , version = "v5.0.0"
-        }
-      , simple-json-generics =
-        { dependencies =
-          [ "assert"
-          , "control"
-          , "effect"
-          , "either"
-          , "foreign"
-          , "partial"
-          , "prelude"
-          , "simple-json"
-          , "transformers"
-          , "typelevel-prelude"
-          ]
-        , repo =
-            "https://github.com/garganscript/purescript-simple-json-generics"
-        , version = "master"
-        }
       , tuples-native =
         { dependencies =
           [ "console"
@@ -191,11 +207,6 @@ let additions =
         , repo = "https://github.com/garganscript/purescript-tuples-native"
         , version = "v2.3.0"
         }
-      , read =
-        { dependencies = [ "prelude", "maybe", "strings" ]
-        , repo = "https://github.com/truqu/purescript-read"
-        , version = "v1.0.1"
-        }
       , versions =
         { dependencies = [ "prelude" ]
         , repo = "https://github.com/hdgarrood/purescript-versions.git"
@@ -205,11 +216,6 @@ let additions =
         { dependencies = [ "prelude" ]
         , repo = "https://github.com/mjepronk/purescript-web-url"
         , version = "v2.0.0"
-        }
-      , convertable-options =
-        { dependencies = [ "console", "effect", "maybe", "record" ]
-        , repo = "https://github.com/natefaubion/purescript-convertable-options"
-        , version = "v1.0.0"
         }
       }
 

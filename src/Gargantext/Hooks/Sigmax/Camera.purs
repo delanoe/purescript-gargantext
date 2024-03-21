@@ -50,4 +50,4 @@ toCamera c = Camera { angle, ratio, x, y }
 updateCamera :: CameraInstance -> Camera -> Effect Unit
 updateCamera cam (Camera { angle, ratio, x, y }) = runEffectFn2 _setState cam { angle, ratio, x, y }
 
-foreign import _setState :: forall e. EffectFn2 CameraInstance {|CameraRow} Unit
+foreign import _setState :: EffectFn2 CameraInstance {|CameraRow} Unit

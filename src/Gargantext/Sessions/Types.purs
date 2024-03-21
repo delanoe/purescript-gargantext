@@ -6,8 +6,6 @@ module Gargantext.Sessions.Types
   , cleanBackendUrl
   ) where
 
-import Gargantext.Prelude
-
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Eq.Generic (genericEq)
@@ -28,6 +26,7 @@ import Foreign.Object as Object
 import Gargantext.Components.Login.Types (TreeId, UserId)
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Ends (class ToUrl, Backend(..), backendUrl, sessionPath)
+import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute)
 import Gargantext.Types (NodePath, SessionId(..), nodePath)
 import Gargantext.Utils.JSON as GJSON
@@ -135,7 +134,7 @@ remove sid (Sessions {sessions:ss}) = Sessions {sessions: Seq.filter f ss} where
   f s = sid /= sessionId s
 
 tryRemove :: SessionId -> Sessions -> Either Unit Sessions
-tryRemove sid old@(Sessions ss) = ret where
+tryRemove sid old = ret where
   new = remove sid old
   ret
     | new == old = Left unit

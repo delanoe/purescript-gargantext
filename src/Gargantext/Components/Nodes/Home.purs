@@ -36,14 +36,14 @@ import Data.Newtype (class Newtype)
 import Effect (Effect)
 import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Bootstrap.Types (ComponentStatus(..), Elevation(..), ModalSizing(..), Position(..), TooltipPosition(..), Variant(..))
+import Gargantext.Components.Bootstrap.Types (Elevation(..), Position(..), TooltipPosition(..))
 import Gargantext.Components.Data.Landing (BlockText(..), BlockTexts(..), Button(..), LandingData(..))
 import Gargantext.Components.FolderView as FV
 import Gargantext.Components.Lang (LandingLang(..))
 import Gargantext.Components.Lang.Landing.EnUS as En
 import Gargantext.Components.Lang.Landing.FrFR as Fr
 import Gargantext.Config as Config
-import Gargantext.Sessions (Session(..), Sessions, Action(Logout), unSessions)
+import Gargantext.Sessions (Sessions, Action(Logout))
 import Gargantext.Sessions as Sessions
 import Gargantext.Sessions.Types (Session(..), cleanBackendUrl)
 import Gargantext.Utils.Reactix as R2
@@ -51,8 +51,6 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Routing.Hash (setHash)
 import Toestand as T
-
-import Effect.Console (log)
 
 
 here :: R2.Here

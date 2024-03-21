@@ -63,79 +63,78 @@ data RangeUpdate = SetMin Number | SetMax Number
 rangeSlider :: Record Props -> R.Element
 rangeSlider props = R.createElement rangeSliderCpt props []
 rangeSliderCpt :: R.Component Props
-rangeSliderCpt = here.component "rangeSlider" cpt
-  where
-    cpt props _ = do
-      -- rounding precision (i.e. how many decimal digits are in epsilon)
-      let (Range.Closed { min: minR, max: maxR }) = props.initialValue
-      let decPrecision num =
-            -- int digits
-            (fromMaybe 0 $ fromNumber $ DN.ceil $ (DN.log num) / DN.ln10)
-            -- float digits
-            + (fromMaybe 0 $ fromNumber $ DN.ceil $ -(DN.log (num - (DN.floor num))) / DN.ln10)
-      let epsilonPrecision = decPrecision props.epsilon
-      let minPrecision = decPrecision minR
-      let maxPrecision = decPrecision maxR
-      --let precision = fromMaybe 0 $ fromNumber $ max 0.0 epsilonPrecision
-      let precision = fromMaybe 0 $ maximum [0, epsilonPrecision, minPrecision, maxPrecision]
+rangeSliderCpt = here.component "rangeSlider" cpt where
+  cpt props _ = do
+    -- rounding precision (i.e. how many decimal digits are in epsilon)
+    let (Range.Closed { min: minR, max: maxR }) = props.initialValue
+    let decPrecision num =
+          -- int digits
+          (fromMaybe 0 $ fromNumber $ DN.ceil $ (DN.log num) / DN.ln10)
+          -- float digits
+          + (fromMaybe 0 $ fromNumber $ DN.ceil $ -(DN.log (num - (DN.floor num))) / DN.ln10)
+    let epsilonPrecision = decPrecision props.epsilon
+    let minPrecision = decPrecision minR
+    let maxPrecision = decPrecision maxR
+    --let precision = fromMaybe 0 $ fromNumber $ max 0.0 epsilonPrecision
+    let precision = fromMaybe 0 $ maximum [0, epsilonPrecision, minPrecision, maxPrecision]
 
-      -- scale bar
-      scaleElem <- (R.useRef null) :: R.Hooks (R.Ref (Nullable DOM.Element)) -- dom ref
-      -- scale sel bar
-      scaleSelElem <- (R.useRef null) :: R.Hooks (R.Ref (Nullable DOM.Element)) -- dom ref
-      -- low knob
-      lowElem <- (R.useRef null) :: R.Hooks (R.Ref (Nullable DOM.Element)) -- a dom ref to the low knob
-      -- high knob
-      highElem <- (R.useRef null) :: R.Hooks (R.Ref (Nullable DOM.Element)) -- a dom ref to the high knob
-      -- The value of the user's selection
-      value <- T.useBox $ initialValue props
-      value' <- T.useLive T.unequal value
+    -- scale bar
+    scaleElem <- (R.useRef null) :: R.Hooks (R.Ref (Nullable DOM.Element)) -- dom ref
+    -- scale sel bar
+    scaleSelElem <- (R.useRef null) :: R.Hooks (R.Ref (Nullable DOM.Element)) -- dom ref
+    -- low knob
+    lowElem <- (R.useRef null) :: R.Hooks (R.Ref (Nullable DOM.Element)) -- a dom ref to the low knob
+    -- high knob
+    highElem <- (R.useRef null) :: R.Hooks (R.Ref (Nullable DOM.Element)) -- a dom ref to the high knob
+    -- The value of the user's selection
+    value <- T.useBox $ initialValue props
+    value' <- T.useLive T.unequal value
 
-      -- the knob we are currently in a drag for. set by mousedown on a knob
-      dragKnob <- T.useBox (Nothing :: Maybe Knob)
-      dragKnob' <- T.useLive T.unequal dragKnob
+    -- the knob we are currently in a drag for. set by mousedown on a knob
+    dragKnob <- T.useBox (Nothing :: Maybe Knob)
+    dragKnob' <- T.useLive T.unequal dragKnob
 
-      -- the handler functions for trapping mouse events, so they can be removed
-      mouseMoveHandler <- (R.useRef $ Nothing) :: R.Hooks (R.Ref (Maybe (EL.Callback Event.MouseEvent)))
-      mouseUpHandler <- (R.useRef $ Nothing) :: R.Hooks (R.Ref (Maybe (EL.Callback Event.MouseEvent)))
-      let destroy = \_ -> do
-            destroyEventHandler "mousemove" mouseMoveHandler
-            destroyEventHandler "mouseup" mouseUpHandler
-            R.setRef mouseMoveHandler $ Nothing
-            R.setRef mouseUpHandler $ Nothing
+    -- the handler functions for trapping mouse events, so they can be removed
+    mouseMoveHandler <- (R.useRef $ Nothing) :: R.Hooks (R.Ref (Maybe (EL.Callback Event.MouseEvent)))
+    mouseUpHandler <- (R.useRef $ Nothing) :: R.Hooks (R.Ref (Maybe (EL.Callback Event.MouseEvent)))
+    let destroy = \_ -> do
+          destroyEventHandler "mousemove" mouseMoveHandler
+          destroyEventHandler "mouseup" mouseUpHandler
+          R.setRef mouseMoveHandler $ Nothing
+          R.setRef mouseUpHandler $ Nothing
 
-      R2.useLayoutEffect1' dragKnob' $ \_ -> do
-        let scalePos = R2.readPositionRef scaleElem
-        let lowPos = R2.readPositionRef lowElem
-        let highPos = R2.readPositionRef highElem
+    R2.useLayoutEffect1' dragKnob' $ \_ -> do
+      let scalePos = R2.readPositionRef scaleElem
+      let lowPos = R2.readPositionRef lowElem
+      let highPos = R2.readPositionRef highElem
 
-        case dragKnob' of
-          Just knob -> do
-            let drag = (getDragScale knob scalePos lowPos highPos) :: Maybe Range.NumberRange
+      case dragKnob' of
+        Just knob -> do
+          let drag = (getDragScale knob scalePos lowPos highPos) :: Maybe Range.NumberRange
 
-            let onMouseMove = EL.callback $ \(event :: Event.MouseEvent) -> do
-                  case reproject drag scalePos props.bounds props.epsilon (R2.domMousePosition event) of
-                    Just val -> do
-                      setKnob knob value value' val
-                      props.onChange $ knobSetter knob value' val
-                    Nothing -> destroy unit
-            let onMouseUp = EL.callback $ \(_event :: Event.MouseEvent) -> do
-                  --props.onChange $ knobSetter knob value val
-                  T.write_ Nothing dragKnob
-                  destroy unit
-            EL.addEventListener document "mousemove" onMouseMove
-            EL.addEventListener document "mouseup" onMouseUp
-            R.setRef mouseMoveHandler $ Just onMouseMove
-            R.setRef mouseUpHandler $ Just onMouseUp
-          Nothing -> destroy unit
-      pure $ H.div { className, aria }
-        [ renderScale scaleElem props value'
-        , renderScaleSel scaleSelElem props value'
-        , renderKnob MinKnob lowElem  value' props.bounds dragKnob precision props.status
-        , renderKnob MaxKnob highElem value' props.bounds dragKnob precision props.status
-        ]
-    className = "range-slider"
-    aria = { label: "Range Slider Control. Expresses filtering data by a minimum and maximum value range through two slider knobs. Knobs can be adjusted with the arrow keys." }
+          let onMouseMove = EL.callback $ \(event :: Event.MouseEvent) -> do
+                case reproject drag scalePos props.bounds props.epsilon (R2.domMousePosition event) of
+                  Just val -> do
+                    setKnob knob value value' val
+                    props.onChange $ knobSetter knob value' val
+                  Nothing -> destroy unit
+          let onMouseUp = EL.callback $ \(_event :: Event.MouseEvent) -> do
+                --props.onChange $ knobSetter knob value val
+                T.write_ Nothing dragKnob
+                destroy unit
+          EL.addEventListener document "mousemove" onMouseMove
+          EL.addEventListener document "mouseup" onMouseUp
+          R.setRef mouseMoveHandler $ Just onMouseMove
+          R.setRef mouseUpHandler $ Just onMouseUp
+        Nothing -> destroy unit
+    pure $ H.div { className, aria }
+      [ renderScale scaleElem props value'
+      , renderScaleSel scaleSelElem props value'
+      , renderKnob MinKnob lowElem  value' props.bounds dragKnob precision props.status
+      , renderKnob MaxKnob highElem value' props.bounds dragKnob precision props.status
+      ]
+  className = "range-slider"
+  aria = { label: "Range Slider Control. Expresses filtering data by a minimum and maximum value range through two slider knobs. Knobs can be adjusted with the arrow keys." }
 
 destroyEventHandler
   :: forall e

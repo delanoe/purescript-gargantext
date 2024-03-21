@@ -34,8 +34,8 @@ node :: R2.Leaf MainProps
 node = R2.leaf nodeCpt
 
 nodeCpt :: R.Component MainProps
-nodeCpt = here.component "node" cpt where
-  cpt { nodeId } _ = do
+nodeCpt = R2.hereComponent here "node" hCpt where
+  hCpt hp { nodeId } _ = do
     -- | States
     -- |
     session <- useSession
@@ -45,7 +45,7 @@ nodeCpt = here.component "node" cpt where
 
     -- | Computed
     -- |
-    let errorHandler = logRESTError here "[phylo]"
+    let errorHandler = logRESTError hp
 
     -- | Hooks
     -- |
@@ -92,13 +92,14 @@ nodeCpt = here.component "node" cpt where
             ]
           ]
       , defaultSlot:
-          R2.fromMaybe state' \(PhyloSet { corpusId, listId, phyloData }) ->
+          R2.fromMaybe state' \(PhyloSet { corpusId, listId, phyloData, phyloConfig}) ->
 
             let
               state_ :: Record PhyloStore.State
               state_ =
                 -- Data
                 { phyloData
+                , phyloConfig
                 , corpusId
                 , listId
                 , phyloId: nodeId

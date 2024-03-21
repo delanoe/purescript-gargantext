@@ -29,6 +29,26 @@ let
     spago bundle-app --main Main --to dist/bundle.js
   '';
 
+    build-suggestions = pkgs.writeShellScriptBin "build-suggestions" ''
+    #!/usr/bin/env bash
+    set -e
+
+    echo "Installing JS Dependencies"
+    yarn
+
+    rm -rf ./output
+
+    echo "Compiling"
+    #build-purs
+    #spago build
+    #echo "Bundling"
+    #pulp browserify --skip-compile -t dist/bundle.js --src-path output
+    #browserify
+
+    # 0.15
+    spago bundle-app --main Main --to dist/bundle.js --purs-args "--json-errors" | jq -r '.warnings | map(select(.errorCode | test("UnusedDctorExplicitImport|UnusedDctorImport|UnusedDeclaration|UnusedExplicitImport|UnusedImport|UnusedName|UnusedTypeVar"))) | map(select(.filename | test("^.spago") | not)) | map("[\(.filename)::\(.position.startLine)] \(.message)\n \(.suggestion)") | join("\n----------\n")'
+  '';
+
 
   build-css = pkgs.writeShellScriptBin "build-css" ''
     #!/usr/bin/env bash
@@ -121,9 +141,12 @@ pkgs.mkShell {
     browserify-zephyr
     build-css
     build-purs
+    build-suggestions
     build-watch
     build-zephyr
     build
+    pkgs.ijq
+    pkgs.jq
     minify-bundle
     #pkgs.closurecompiler
     pkgs.esbuild

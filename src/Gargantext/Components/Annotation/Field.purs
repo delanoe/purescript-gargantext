@@ -19,8 +19,6 @@ import Gargantext.Prelude
 import DOM.Simple.Event as DE
 import Data.Array as A
 import Data.List (List(..), (:))
-import Data.Map (Map)
-import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
 import Data.String.Common (joinWith)
 import Data.Tuple (Tuple(..), snd)
@@ -28,8 +26,8 @@ import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Gargantext.Components.Annotation.Menu (annotationMenu, AnnotationMenu)
 import Gargantext.Components.Annotation.Types (MenuType(..), ModeType(..), termClass)
-import Gargantext.Core.NgramsTable.Functions (Cache, computeCache, findNgramTermList, highlightNgrams, normNgram)
-import Gargantext.Core.NgramsTable.Types (HighlightElement, NgramsRepoElement(..), NgramsTable(..), NgramsTerm(..), parentMap)
+import Gargantext.Core.NgramsTable.Functions (Cache, findNgramTermList, highlightNgrams, normNgram)
+import Gargantext.Core.NgramsTable.Types (HighlightElement, NgramsTable, NgramsTerm(..))
 import Gargantext.Types (CTabNgramType(..), TermList)
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Selection as Sel

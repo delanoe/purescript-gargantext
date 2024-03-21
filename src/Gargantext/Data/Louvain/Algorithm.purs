@@ -71,15 +71,15 @@ getNeighboursOfNode g n = Seq.fromFoldable $ Set.union sources targets
 
 -- TODO algorithm
 initStatus :: Graph -> Status -> Maybe Dendrogram -> Status
-initStatus g s Nothing = Status {totalWeight}
+initStatus g _s Nothing = Status {totalWeight}
   where
     totalWeight = getGraphSize g
-initStatus g s (Just d) = Status {totalWeight}
+initStatus g _s (Just _d) = Status {totalWeight}
   where
     totalWeight = getGraphSize g
 
 generateDendrogram :: Graph -> Dendrogram -> Dendrogram
-generateDendrogram g partInit =
+generateDendrogram g _partInit =
   if Seq.null (gEdges g) then
     Dendrogram $ Map.fromFoldable $ Seq.map (\n@(Node ns) -> Tuple n (Cluster ns)) (gNodes g)
   else
