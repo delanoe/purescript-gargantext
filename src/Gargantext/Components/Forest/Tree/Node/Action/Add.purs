@@ -1,22 +1,20 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Add where
 
-import Gargantext.Prelude
-
 import Data.Array (head, length)
-import Data.Either (Either(..))
+import Data.Either (Either)
 import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.Newtype (class Newtype)
 import Data.String (Pattern(..), indexOf)
-import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Settings (SettingsBox(..), settingsBox)
-import Gargantext.Components.Forest.Tree.Node.Tools (formChoice, panel, submitButton)
+import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.InputWithEnter (inputWithEnterWithKey)
 import Gargantext.Components.Lang (Lang(..), translate)
 import Gargantext.Config.REST (RESTError, AffRESTError)
+import Gargantext.Prelude
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, post)
 import Gargantext.Types (NodeType(..), charCodeIcon)
@@ -31,6 +29,7 @@ import Web.HTML (window)
 import Web.HTML.Navigator (userAgent)
 import Web.HTML.Window (navigator)
 
+
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Add"
 
@@ -43,9 +42,7 @@ addNodeAsync :: Session
              -> AffRESTError GT.AsyncTaskWithType
 addNodeAsync session parentId q = do
   eTask :: Either RESTError GT.AsyncTask <- post session p q
-  case eTask of
-    Left err -> pure $ Left err
-    Right task -> pure $ Right $ GT.AsyncTaskWithType { task, typ: GT.AddNode }
+  pure $ (\task -> GT.AsyncTaskWithType { task, typ: GT.AddNode }) <$> eTask
   where
     p = GR.NodeAPI GT.Node (Just parentId) (GT.asyncTaskTypePath GT.AddNode)
 
@@ -78,7 +75,7 @@ addNodeViewCpt :: R.Component CreateNodeProps
 addNodeViewCpt = here.component "addNodeView" cpt where
   cpt { dispatch
       , nodeTypes } _ = do
-    let defaultNodeType = fromMaybe Folder $ head nodeTypes
+    let defaultNodeType = fromMaybe Error $ head nodeTypes
     nodeName <- T.useBox $ GT.prettyNodeType defaultNodeType
     nodeName' <- T.useLive T.unequal nodeName
     nodeType <- T.useBox defaultNodeType
@@ -87,40 +84,44 @@ addNodeViewCpt = here.component "addNodeView" cpt where
     hasChromeAgent' <- R.unsafeHooksEffect hasChromeAgent
 
     let
+        action = AddNode nodeName' nodeType'
         SettingsBox {edit} = settingsBox nodeType'
         setNodeType' nt = do
           T.write_ (GT.prettyNodeType nt) nodeName
           T.write_ nt nodeType
-        (maybeChoose /\ nt') = if length nodeTypes > 1
-                         then ([ formChoice { items: nodeTypes
-                                            , default: nodeType'
-                                            , callback: setNodeType'
-                                            , print: print hasChromeAgent' } [] ] /\ nodeType')
-                         else ([H.div {} [H.text $ "Creating a node of type "
-                                                <> show defaultNt
-                                                <> " with name:"
-                                         ]
-                                ] /\ defaultNt
-                               )
-                            where
-                              defaultNt = (fromMaybe Error $ head nodeTypes)
-        maybeEdit   = [ if edit
-                        then inputWithEnterWithKey {
-                            onBlur: \val -> T.write_ val nodeName
-                          , onEnter: \_ -> launchAff_ $ dispatch (AddNode nodeName' nt')
-                          , onValueChanged: \val -> T.write_ val nodeName
-                          , autoFocus: true
-                          , className: "form-control"
-                          , defaultValue: nodeName' -- (prettyNodeType nt')
-                          , placeholder: nodeName'  -- (prettyNodeType nt')
-                          , type: "text"
-                          , key: show nodeType'
-                          , required: false
-                          }
-                        else H.div {} []
-                      ]
+        maybeChoose =
+          if length nodeTypes > 1 then
+            [ Tools.formChoice { items: nodeTypes
+                               , default: nodeType'
+                               , callback: setNodeType'
+                               , print: print hasChromeAgent' } []
+            ]
+          else
+            [ H.div {}
+              [H.text $ "Creating a node of type "
+               <> show defaultNodeType
+               <> " with name:"
+              ]
+            ]
+        maybeEdit =
+          if edit then
+            [ inputWithEnterWithKey {
+                   autoFocus: true
+                 , className: "form-control"
+                 , defaultValue: nodeName' -- (prettyNodeType nt')
+                 , key: show nodeType'
+                 , onBlur: \val -> T.write_ val nodeName
+                 , onEnter: \_ -> launchAff_ $ dispatch action
+                 , onValueChanged: \val -> T.write_ val nodeName
+                 , placeholder: nodeName'  -- (prettyNodeType nt')
+                 , required: false
+                 , type: "text"
+                 } ]
+          else []
 
-    pure $ panel (maybeChoose <> maybeEdit) (submitButton (AddNode nodeName' nt') dispatch)
+    pure $ Tools.panelWithSubmitButton { action
+                                       , dispatch
+                                       , mError: Nothing } (maybeChoose <> maybeEdit)
 
 -- END Create Node
 

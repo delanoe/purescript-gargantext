@@ -6,7 +6,6 @@ import Data.Array as A
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Tuple.Nested ((/\))
 import Effect.Class (liftEffect)
-import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Core.NgramsTable.Functions as NTC
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
@@ -14,7 +13,6 @@ import Gargantext.Components.Nodes.Corpus.Chart.Pie (pie, bar)
 import Gargantext.Components.Nodes.Corpus.Chart.Tree (tree)
 import Gargantext.Components.Nodes.Corpus.Chart.Utils (mNgramsTypeFromTabType)
 import Gargantext.Components.Nodes.Corpus.Types (CorpusData)
-import Gargantext.Components.Nodes.Lists.SidePanel (SidePanel)
 import Gargantext.Components.Tab as Tab
 import Gargantext.Components.Table.Types (Params)
 import Gargantext.Core.NgramsTable.Types (PageParams)
@@ -33,12 +31,10 @@ here = R2.here "Gargantext.Components.Nodes.Lists.Tabs"
 
 type Props = (
     activeTab  :: T.Box Int
-  , boxes      :: Boxes
   , cacheState :: T.Box CacheState
   , corpusData :: CorpusData
   , corpusId   :: Int
   , session    :: Session
-  , sidePanel  :: T.Box (Maybe (Record SidePanel))
   )
 
 tabs :: Record ( key :: String | Props ) -> R.Element
@@ -87,13 +83,11 @@ ngramsView :: R2.Component NgramsViewProps
 ngramsView = R.createElement ngramsViewCpt
 ngramsViewCpt :: R.Component NgramsViewProps
 ngramsViewCpt = here.component "ngramsView" cpt where
-  cpt props@{ boxes
-            , cacheState
+  cpt props@{ cacheState
             , corpusData: { defaultListId }
             , mode
             , session
-            , path
-            , sidePanel } _ = do
+            , path } _ = do
       chartsReload <- T.useBox T2.newReload
       onCancelRef <- R.useRef Nothing
       onNgramsClickRef <- R.useRef Nothing
@@ -106,8 +100,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
         R.fragment
         [
           ngramsView'
-          { boxes
-          , corpusData: props.corpusData
+          { corpusData: props.corpusData
           , listIds
           , mode
           , nodeId
@@ -117,12 +110,10 @@ ngramsViewCpt = here.component "ngramsView" cpt where
         ,
           NT.mainNgramsTable
           { afterSync: afterSync chartsReload
-          , boxes
           , cacheState
           , defaultListId
           , path
           , session
-          , sidePanel
           , tabNgramType
           , tabType
           , treeEdit: { box: treeEditBox
@@ -156,8 +147,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
 
 -- @XXX re-render issue -> clone component
 type NgramsViewProps' =
-  ( boxes         :: Boxes
-  , corpusData    :: CorpusData
+  ( corpusData    :: CorpusData
   , listIds       :: Array Int
   , mode          :: Mode
   , nodeId        :: Int
@@ -171,8 +161,7 @@ ngramsView' = R.createElement ngramsViewCpt'
 --ngramsViewCpt' = R.memo' $ here.component "ngramsView_clone" cpt where
 ngramsViewCpt' :: R.Component NgramsViewProps'
 ngramsViewCpt' = here.component "ngramsView_clone" cpt where
-  cpt { boxes
-      , corpusData: { defaultListId }
+  cpt { corpusData: { defaultListId }
       , listIds
       , mode
       , nodeId
@@ -232,10 +221,10 @@ ngramsViewCpt' = here.component "ngramsView_clone" cpt where
       ]
       charts params' _        = [ chart params' mode ]
 
-      chart path Authors    = pie     { boxes, path, session, onClick: Nothing, onInit: Nothing }
-      chart path Institutes = tree    { boxes, path, session, onClick: Nothing, onInit: Nothing }
-      chart path Sources    = bar     { boxes, path, session, onClick: Nothing, onInit: Nothing }
-      chart path Terms      = metrics { boxes, path, session, onClick: Nothing, onInit: Nothing }
+      chart path Authors    = pie     { path, session, onClick: Nothing, onInit: Nothing }
+      chart path Institutes = tree    { path, session, onClick: Nothing, onInit: Nothing }
+      chart path Sources    = bar     { path, session, onClick: Nothing, onInit: Nothing }
+      chart path Terms      = metrics { path, session, onClick: Nothing, onInit: Nothing }
 
       tabType      = TabCorpus (TabNgramType tabNgramType)
 

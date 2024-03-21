@@ -47,7 +47,6 @@ docListWrapperCpt = here.component "wrapper" cpt where
 
     store <- PhyloStore.use
 
-    extractedTerms <- R2.useLive' store.extractedTerms
     corpusId       <- R2.useLive' store.corpusId
     listId         <- R2.useLive' store.listId
     selectedTerm   <- R2.useLive' store.selectedTerm

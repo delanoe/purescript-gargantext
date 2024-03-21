@@ -35,7 +35,7 @@ nodeCpt = here.component "node" cpt where
     -- | Computed
     -- |
     let
-      errorHandler = logRESTError here "[corpusLayout]"
+      errorHandler = logRESTError (R2.herePrefix here "[corpusLayout]")
 
       loader { nodeId: nodeId_, session: session_ } = getNode session_ nodeId_
 

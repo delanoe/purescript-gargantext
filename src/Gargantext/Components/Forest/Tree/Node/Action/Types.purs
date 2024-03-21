@@ -6,7 +6,7 @@ import Gargantext.Components.Forest.Tree.Node.Action.Contact.Types (AddContactPa
 import Gargantext.Components.Forest.Tree.Node.Action.Update.Types (UpdateNodeParams)
 import Gargantext.Components.Forest.Tree.Node.Action.Upload.Types (FileFormat, FileType, UploadFileBlob)
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeOut)
-import Gargantext.Components.Lang (Lang(..))
+import Gargantext.Components.Lang (Lang)
 import Gargantext.Components.ListSelection.Types (Selection)
 import Gargantext.Prelude
 import Gargantext.Types as GT
@@ -17,7 +17,7 @@ data Action = AddNode     String GT.NodeType
             | UpdateNode  UpdateNodeParams
             | DoSearch    GT.AsyncTaskWithType
             | UploadFile  GT.NodeType FileType FileFormat Lang (Maybe String) String Selection
-            | UploadArbitraryFile FileFormat (Maybe String) UploadFileBlob Selection
+            | UploadArbitraryFile FileFormat (Maybe String) UploadFileBlob
             | UploadFrameCalc Lang Selection
             | DownloadNode
             | RefreshTree
@@ -44,7 +44,7 @@ instance Eq Action where
   eq (DoSearch at1) (DoSearch at2) = eq at1 at2
   eq (UploadFile nt1 ft1 ff1 l1 s1 _ _) (UploadFile nt2 ft2 ff2 l2 s2 _ _) =
     (eq nt1 nt2) && (eq ft1 ft2) && (eq ff1 ff2) && (eq l1 l2) && (eq s1 s2)
-  eq (UploadArbitraryFile ff1 s1 _ _) (UploadArbitraryFile ff2 s2 _ _) = (eq ff1 ff2) && (eq s1 s2)
+  eq (UploadArbitraryFile ff1 s1 _) (UploadArbitraryFile ff2 s2 _) = (eq ff1 ff2) && (eq s1 s2)
   eq (UploadFrameCalc l1 s1) (UploadFrameCalc l2 s2) = (eq l1 l2) && (eq s1 s2)
   eq DownloadNode DownloadNode = true
   eq RefreshTree RefreshTree = true
@@ -69,7 +69,7 @@ instance Show Action where
   show (SharePublic _      )         = "SharePublic"
   show (DoSearch    _      )         = "SearchQuery"
   show (UploadFile _ _ _ _ _ _ _)      = "UploadFile"
-  show (UploadArbitraryFile _ _ _ _) = "UploadArbitraryFile"
+  show (UploadArbitraryFile _ _ _) = "UploadArbitraryFile"
   show (UploadFrameCalc _ _ )        = "UploadFrameCalc"
   show  RefreshTree                  = "RefreshTree"
   show  CloseBox                     = "CloseBox"

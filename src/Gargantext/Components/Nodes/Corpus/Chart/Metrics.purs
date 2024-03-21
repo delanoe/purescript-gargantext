@@ -30,6 +30,7 @@ import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
 import Toestand as T
 
+
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Metrics"
 
@@ -112,12 +113,11 @@ metrics props = R.createElement metricsCpt props []
 metricsCpt :: R.Component Props
 metricsCpt = here.component "etrics" cpt
   where
-    cpt { boxes, onClick, onInit, path, session } _ = do
+    cpt { onClick, onInit, path, session } _ = do
       reload <- T.useBox T2.newReload
 
       pure $ metricsWithCacheLoadView {
-          boxes
-        , getMetricsHash
+          getMetricsHash
         , handleResponse
         , loaded
         , mkRequest: mkRequest session
@@ -133,9 +133,7 @@ loaded :: R2.Leaf LoadedProps
 loaded = R2.leaf loadedCpt
 loadedCpt :: R.Component LoadedProps
 loadedCpt = here.component "loaded" cpt where
-  cpt p@{ path
-        , reload
-        , session } _ = do
+  cpt p _ = do
     pure $ H.div {} [
       {-  U.reloadButton reload
       , U.chartUpdateButton { chartType: Scatter, path, reload, session }

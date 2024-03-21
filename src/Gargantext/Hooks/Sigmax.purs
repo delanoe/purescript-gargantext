@@ -1,7 +1,7 @@
 module Gargantext.Hooks.Sigmax
   where
 
-import Data.Array as A
+import DOM.Simple.Types (Element)
 import Data.Either (either)
 import Data.Foldable (sequence_, foldl)
 import Data.Map as Map
@@ -12,12 +12,8 @@ import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Traversable (traverse_)
 import Data.Tuple (Tuple(..))
-import Data.Tuple.Nested ((/\))
-import DOM.Simple.Types (Element)
 import Effect (Effect)
-import Effect.Class.Console (error)
 import Effect.Timer (TimeoutId, clearTimeout, setTimeout)
-import FFI.Simple ((.=))
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
 import Gargantext.Hooks.Sigmax.Graphology as Graphology
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
@@ -26,7 +22,7 @@ import Gargantext.Utils.Console as C
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Seq as GSeq
 import Gargantext.Utils.Set as GSet
-import Prelude (Unit, bind, discard, flip, map, not, pure, unit, ($), (&&), (*>), (<<<), (<>), (>>=), (+), (>), negate, (/=), (==), (<$>))
+import Prelude (Unit, bind, discard, flip, not, pure, unit, ($), (*>), (<<<), (<>), (>>=), (+), (>), negate, (==), (<$>))
 import Reactix as R
 import Toestand as T
 
@@ -118,12 +114,11 @@ dependOnContainer container notFoundMsg f = do
 -- | Effect for handling pausing FA via state changes.  We need this because
 -- | pausing can be done not only via buttons but also from the initial
 -- | setTimer.
-handleForceAtlas2Pause :: forall settings. R.Ref (Maybe ForceAtlas.FA2Layout)
+handleForceAtlas2Pause :: R.Ref (Maybe ForceAtlas.FA2Layout)
                           -> T.Box ST.ForceAtlasState
                           -> R.Ref (Maybe TimeoutId)
-                          -> settings
                           -> Effect Unit
-handleForceAtlas2Pause fa2Ref forceAtlasState mFAPauseRef settings = do
+handleForceAtlas2Pause fa2Ref forceAtlasState mFAPauseRef = do
   let fa2_ = R.readRef fa2Ref
   toggled <- T.read forceAtlasState
   case fa2_ of
@@ -286,16 +281,10 @@ sigmaDiff sigmaGraph gControls = { add, remove, update }
 
     commonNodeIds = Set.intersection sigmaNodeIds $ Set.fromFoldable gcNodeIds
     commonNodes = Seq.filter (\n -> Set.member n.id commonNodeIds) sigmaNodes
-    commonEdgeIds = Set.intersection sigmaEdgeIds $ Set.fromFoldable gcEdgeIds
-    commonEdges = Seq.filter (\e -> Set.member e.id commonEdgeIds) sigmaEdges
     sigmaNodeIdsMap = Map.fromFoldable $ Seq.map (\n -> Tuple n.id n) commonNodes --sigmaNodes
-    sigmaEdgeIdsMap = Map.fromFoldable $ Seq.map (\e -> Tuple e.id e) commonEdges --sigmaEdges
-    -- updateEdges = Seq.filter (\e -> Just e /= Map.lookup e.id sigmaEdgeIdsMap) gcEdges
     updateEdges = Seq.empty
     -- Find nodes for which `ST.compareNodes` returns `false`, i.e. nodes differ
     updateNodes = Seq.filter (\n -> (ST.compareNodes n <$> (Map.lookup n.id sigmaNodeIdsMap)) == Just false) gcNodes
-    -- updateEdges = Seq.empty
-    -- updateNodes = Seq.empty
 
 
 -- DEPRECATED

@@ -7,7 +7,6 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Data.Ord.Generic (genericCompare)
 import Data.Show.Generic (genericShow)
 import Effect (Effect)
-import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Charts.Options.Type (EChartsInstance, MouseEvent)
 import Gargantext.Components.Nodes.Corpus.Chart.Histo (histo)
 import Gargantext.Components.Nodes.Corpus.Chart.Metrics (metrics)
@@ -55,8 +54,7 @@ allPredefinedCharts =
 
 
 type Params =
-  ( boxes    :: Boxes
-  , corpusId :: NodeID
+  ( corpusId :: NodeID
   -- optinal params
   , limit    :: Maybe Int
   , listId   :: Maybe Int
@@ -66,40 +64,40 @@ type Params =
   )
 
 render :: PredefinedChart -> Record Params -> R.Element
-render CDocsHistogram { boxes, corpusId, listId, session, onClick, onInit } =
-  histo { boxes, path, session, onClick, onInit }
+render CDocsHistogram { corpusId, listId, session, onClick, onInit } =
+  histo { path, session, onClick, onInit }
   where
     path = { corpusId
            , listId: fromMaybe 0 listId
            , limit: Nothing
            , tabType: TabCorpus TabDocs
            }
-render CAuthorsPie { boxes, corpusId, listId, session, onClick, onInit } =
-  pie { boxes, path, session, onClick, onInit }
+render CAuthorsPie { corpusId, listId, session, onClick, onInit } =
+  pie { path, session, onClick, onInit }
   where
     path = { corpusId
            , listId: fromMaybe 0 listId
            , limit: Nothing
            , tabType: TabCorpus (TabNgramType $ modeTabType Authors)
            }
-render CInstitutesTree { boxes, corpusId, limit, listId, session, onClick, onInit } =
-  tree { boxes, path, session, onClick, onInit }
+render CInstitutesTree { corpusId, limit, listId, session, onClick, onInit } =
+  tree { path, session, onClick, onInit }
   where
     path = { corpusId
            , limit
            , listId: fromMaybe 0 listId
            , tabType: TabCorpus (TabNgramType $ modeTabType Institutes)
            }
-render CTermsMetrics { boxes, corpusId, limit, listId, session, onClick, onInit } =
-  metrics { boxes, path, session, onClick, onInit }
+render CTermsMetrics { corpusId, limit, listId, session, onClick, onInit } =
+  metrics { path, session, onClick, onInit }
   where
     path = { corpusId
            , limit
            , listId: fromMaybe 0 listId
            , tabType: TabCorpus (TabNgramType $ modeTabType Terms)
            }
-render CSourcesBar { boxes, corpusId, limit, listId, session, onClick, onInit } =
-  bar { boxes, path, session, onClick, onInit }
+render CSourcesBar { corpusId, limit, listId, session, onClick, onInit } =
+  bar { path, session, onClick, onInit }
   where
     path = { corpusId
            , limit

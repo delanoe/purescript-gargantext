@@ -2,22 +2,21 @@ module Gargantext.Components.GraphQL.AffjaxSimpleJSONClient
   (AffjaxClient(..))
   where
 
-import Prelude
-
-import Affjax.Web (Error(..), Response, URL, defaultRequest, printError, request)
-import Affjax.RequestBody as RequestBody
-import Affjax.RequestHeader (RequestHeader(..))
-import Affjax.ResponseFormat as ResponseFormat
-import Data.Argonaut.Core (Json)
-import Data.Either (Either(..))
-import Data.HTTP.Method as Method
-import Data.List.NonEmpty as DLN
-import Data.Maybe (Maybe(..))
-import Data.MediaType.Common (applicationJSON)
-import Effect.Aff (Aff, error, throwError)
-import Foreign (unsafeToForeign)
-import GraphQL.Client.Types (class QueryClient)
-import Simple.JSON as JSON
+import Affjax.Web (URL)
+-- import Affjax.RequestBody as RequestBody
+import Affjax.RequestHeader (RequestHeader)
+-- import Affjax.ResponseFormat as ResponseFormat
+-- import Data.Argonaut.Core (Json)
+-- import Data.Either (Either(..))
+-- import Data.HTTP.Method as Method
+-- import Data.List.NonEmpty as DLN
+-- import Data.Maybe (Maybe(..))
+-- import Data.MediaType.Common (applicationJSON)
+-- import Effect.Aff (Aff, error, throwError)
+-- import Foreign (unsafeToForeign)
+-- import GraphQL.Client.Types (class QueryClient)
+-- import Prelude
+-- import Simple.JSON as JSON
 
 data AffjaxClient
   = AffjaxClient URL (Array RequestHeader)

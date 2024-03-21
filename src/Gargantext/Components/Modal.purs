@@ -23,20 +23,18 @@ type Props = ( setVisible :: R.Setter Boolean )
 
 modal :: R2.Component Props
 modal = R.createElement modalCpt
-
 modalCpt :: R.Component Props
-modalCpt = here.component "modal" cpt
-  where
-    cpt {setVisible} children = do
-      host <- R2.getPortalHost
-      root <- R.useRef null -- used to close when user clicks outside
-      R2.useLayoutEffectOnce $ modalEffect root setVisible
-      pure $ R.createPortal
-        [ H.div { ref: root, className: "modal", data: {toggle: "popover", placement: "right"}}
-          [ H.div { className: "popover-content" }
-            [ H.div { className: "card" }
-              [ H.ul { className: "list-group" } children ]]]]
-        host
+modalCpt = R2.hereComponent here "modal" hCpt where
+  hCpt _hp {setVisible} children = do
+    host <- R2.getPortalHost
+    root <- R.useRef null -- used to close when user clicks outside
+    R2.useLayoutEffectOnce $ modalEffect root setVisible
+    pure $ R.createPortal
+      [ H.div { ref: root, className: "modal", data: {toggle: "popover", placement: "right"}}
+        [ H.div { className: "popover-content" }
+          [ H.div { className: "card" }
+            [ H.ul { className: "list-group" } children ]]]]
+      host
 
 modalEffect
   :: R.Ref (Nullable DOM.Element)

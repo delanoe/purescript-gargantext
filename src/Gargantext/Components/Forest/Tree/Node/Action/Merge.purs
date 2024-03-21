@@ -5,7 +5,7 @@ import Gargantext.Prelude
 import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
-import Gargantext.Components.Forest.Tree.Node.Tools (submitButton, panel, checkbox, checkboxesListGroup)
+import Gargantext.Components.Forest.Tree.Node.Tools as Tools
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree (subTreeView, SubTreeParamsIn)
 import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Routes (SessionRoute(..))
@@ -28,7 +28,7 @@ mergeNode = R.createElement mergeNodeCpt
 mergeNodeCpt :: R.Component SubTreeParamsIn
 mergeNodeCpt = here.component "mergeNode" cpt
   where
-    cpt { boxes, dispatch, id, nodeType, session, subTreeParams } _ = do
+    cpt { dispatch, id, nodeType, session, subTreeParams } _ = do
       action <- T.useBox (MergeNode { params: Nothing })
       action' <- T.useLive T.unequal action
 
@@ -36,37 +36,38 @@ mergeNodeCpt = here.component "mergeNode" cpt
       options <- T.useBox (Set.singleton GT.MapTerm)
 
       let button = case action' of
-            MergeNode {params} -> case params of
-              Just val -> submitButton (MergeNode {params: Just val}) dispatch
-              Nothing -> H.div {} []
+            MergeNode { params } ->
+              R2.fromMaybe params $
+                \val -> Tools.submitButton { action: MergeNode {params: Just val }
+                                           , dispatch }
             _                   -> H.div {} []
 
-      pure $ panel
+      pure $ Tools.panel { mError: Nothing }
         [ subTreeView { action
-                      , boxes
                       , dispatch
                       , id
                       , nodeType
                       , session
                       , subTreeParams
                       } []
-                  , H.ul { className:"merge mx-auto list-group"}
-                     ([ H.li { className: "list-group-item" }
-                       [ H.h5 { className: "mb-1" } [ H.text "Merge which list?" ]
-                       , checkboxesListGroup { groups: [ GT.MapTerm, GT.CandidateTerm, GT.StopTerm ]
-                                             , options } []
-                       ]
-                     ])
-                  , H.ul { className:"merge mx-auto list-group"}
-                     [ H.li { className: "list-group-item" }
-                       [ H.h5 { className: "mb-1" } [ H.text "Title" ]
-                       ]
-                     , H.li { className: "list-group-item" }
-                       [ H.div { className: " form-check" }
-                         [ checkbox { value: merge }
-                         , H.label { className: "form-check-label" } [ H.text "Merge data?" ]
-                         ]
-                       ]
-                     ]
-                  ]
-                  button
+        , H.ul { className:"merge mx-auto list-group"}
+          [ H.li { className: "list-group-item" }
+            [ H.h5 { className: "mb-1" } [ H.text "Merge which list?" ]
+            , Tools.checkboxesListGroup { groups: [ GT.MapTerm, GT.CandidateTerm, GT.StopTerm ]
+                                        , options } []
+            ]
+          ]
+        , H.ul { className:"merge mx-auto list-group"}
+          [ H.li { className: "list-group-item" }
+            [ H.h5 { className: "mb-1" } [ H.text "Title" ]
+            ]
+          , H.li { className: "list-group-item" }
+            [ H.div { className: " form-check" }
+              [ Tools.checkbox { value: merge }
+              , H.label { className: "form-check-label" } [ H.text "Merge data?" ]
+              ]
+            ]
+          ]
+          
+          -- footer
+        , button ]

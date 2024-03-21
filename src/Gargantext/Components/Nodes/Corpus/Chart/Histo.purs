@@ -12,7 +12,6 @@ import Gargantext.Components.Charts.Options.Font (itemStyle, mkTooltip, template
 import Gargantext.Components.Charts.Options.Series (seriesBarD1)
 import Gargantext.Components.Nodes.Corpus.Chart.Common (metricsWithCacheLoadView)
 import Gargantext.Components.Nodes.Corpus.Chart.Types (MetricsProps, Path, Props, ReloadPath)
-import Gargantext.Components.Nodes.Corpus.Chart.Utils as U
 import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Hooks.Loader (HashedResponse(..))
 import Gargantext.Prelude (class Eq, bind, map, pure, ($), (==))
@@ -24,9 +23,9 @@ import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
 import Reactix.DOM.HTML as H
-import Record.Extra as RX
 import Simple.JSON as JSON
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Histo"
@@ -103,12 +102,11 @@ histo props = R.createElement histoCpt props []
 histoCpt :: R.Component Props
 histoCpt = here.component "histo" cpt
   where
-    cpt { boxes, path, session, onClick, onInit } _ = do
+    cpt { path, session, onClick, onInit } _ = do
       reload <- T.useBox T2.newReload
 
       pure $ metricsWithCacheLoadView
-        { boxes
-        , getMetricsHash
+        { getMetricsHash
         , handleResponse
         , loaded
         , mkRequest: mkRequest session
@@ -123,9 +121,7 @@ loaded :: R2.Leaf LoadedProps
 loaded = R2.leaf loadedCpt
 loadedCpt :: R.Component LoadedProps
 loadedCpt = here.component "loaded" cpt where
-  cpt p@{ path
-        , reload
-        , session } _ = do
+  cpt p _ = do
     pure $ H.div {} [ 
                     -- U.reloadButton { reload }
                     -- , U.chartUpdateButton { chartType: Histo, path, reload, session }

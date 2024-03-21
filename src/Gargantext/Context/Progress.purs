@@ -4,8 +4,6 @@ module Gargantext.Context.Progress
   , asyncContext
   ) where
 
-import Gargantext.Prelude
-
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
@@ -13,20 +11,22 @@ import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Class (liftEffect)
 import Effect.Timer (IntervalId, clearInterval, setInterval)
+import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Forest.Tree.Node.Tools.ProgressBar (QueryProgressData, queryProgress)
 import Gargantext.Config.Utils (handleErrorInAsyncProgress, handleRESTError)
 import Gargantext.Hooks.FirstEffect (useFirstEffect')
+import Gargantext.Prelude
 import Gargantext.Sessions (Session)
-import Gargantext.Types (AsyncProgress, FrontendError)
+import Gargantext.Types (AsyncProgress)
 import Gargantext.Types as GT
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Record.Extra as RX
 import Toestand as T
 
+
 type AsyncProps =
   ( asyncTask :: GT.AsyncTaskWithType
-  , errors    :: T.Box (Array FrontendError)
   , nodeId    :: GT.ID
   , onFinish  :: Unit -> Effect Unit
   , session   :: Session
@@ -38,10 +38,10 @@ here = R2.here "Gargantext.Context.Progress"
 asyncProgress :: R2.Component AsyncProps
 asyncProgress = R2.component asyncProgressCpt
 asyncProgressCpt :: R.Component AsyncProps
-asyncProgressCpt = R.hooksComponent "asyncProgress" cpt where
-  cpt props@{ errors
-            , onFinish
-            } children = do
+asyncProgressCpt = R2.hereComponent here "asyncProgress" hCpt where
+  hCpt hp props@{ onFinish } children = do
+    { errors } <- AppStore.use
+    
     -- States
     progress /\ progressBox <- R2.useBox' 0.0
     intervalIdRef <- R.useRef (Nothing :: Maybe IntervalId)
@@ -62,7 +62,7 @@ asyncProgressCpt = R.hooksComponent "asyncProgress" cpt where
             Right _ -> T.write_ 1000 interval
           interval' <- T.read interval
           resetInterval intervalIdRef (Just interval') exec
-        handleRESTError here errors eAsyncProgress onProgress
+        handleRESTError hp errors eAsyncProgress onProgress
 
       onProgress :: AsyncProgress -> Aff Unit
       onProgress value = liftEffect do

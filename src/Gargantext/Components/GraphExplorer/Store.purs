@@ -7,13 +7,11 @@ module Gargantext.Components.GraphExplorer.Store
   , use
   ) where
 
-import Gargantext.Prelude
-
 import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Gargantext.Components.GraphExplorer.Types as GET
-import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas
 import Gargantext.Hooks.Sigmax.Types as SigmaxT
+import Gargantext.Prelude
 import Gargantext.Types as GT
 import Gargantext.Utils (getter)
 import Gargantext.Utils.Range as Range
@@ -22,6 +20,7 @@ import Gargantext.Utils.Stores as Stores
 import Reactix as R
 import Toestand as T
 import Unsafe.Coerce (unsafeCoerce)
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.Store"

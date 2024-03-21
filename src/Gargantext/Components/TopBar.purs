@@ -1,20 +1,19 @@
 module Gargantext.Components.TopBar (component) where
 
-import Gargantext.Prelude
-
 import Data.Foldable (intercalate)
 import Effect (Effect)
 import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Variant(..))
-import Gargantext.Components.Lang (langSwitcher, allFeLangs)
 import Gargantext.Components.Themes (themeSwitcher, allThemes)
+import Gargantext.Prelude
 import Gargantext.Types (Handed(..), defaultCacheParams)
-import Gargantext.Utils (setter, (?), nbsp)
+import Gargantext.Utils (setter, (?))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.TopBar"
@@ -26,8 +25,7 @@ componentCpt = here.component "main" cpt where
   cpt _ _ = do
     -- | States
     -- |
-    { lang
-    , showTree
+    { showTree
     , theme
     } <- AppStore.use
 
@@ -333,8 +331,7 @@ handedChooserCpt = here.component "handedChooser" cpt where
   cpt _ _ = do
     -- | States
     -- |
-    { handed
-    } <- AppStore.use
+    { handed } <- AppStore.use
 
     handed' <- R2.useLive' handed
 

@@ -83,8 +83,8 @@ randomWheel :: forall b. RandomWheel b -> Effect (RandomWheel b)
 randomWheel (RandomWheel {before:[], during:d, after:a}) =
     pure   (RandomWheel {before:[], during:d, after:a})
 
-randomWheel (RandomWheel {before:b, during:d, after:a}) = do
-    RandomWheel {before:b', during:d', after:a'} <- randomArray b
+randomWheel (RandomWheel {before:b, during: _d, after:a}) = do
+    RandomWheel {before:b', during: d', after: _a'} <- randomArray b
     randomWheel $ RandomWheel {before:b', during:d', after:(a <> [d'])}
 
 
@@ -105,8 +105,8 @@ randomArray array = unsafePartial $ do
 
 
 remove :: forall a. Int -> Array a -> Array a
-remove n [] = []
-remove n xs = unsafePartial $ case n of
+remove _n [] = []
+remove n  xs = unsafePartial $ case n of
                    0 -> fromJust $ tail xs
                    _ -> (take n xs) <> (drop (n+1) xs)
 

@@ -139,7 +139,8 @@ component = here.component "main" cpt where
         }
         [
           inputWithAutocomplete
-          { autocompleteSearch: searchCallback
+          { autoFocus: true
+          , autocompleteSearch: searchCallback
           , onAutocompleteClick: autocompleteClickCallback
           , onEnterPress: \s -> do
                   cs <- searchCallback s
@@ -147,9 +148,11 @@ component = here.component "main" cpt where
                     Nothing -> pure unit
                     Just h -> autocompleteClickCallback h
           , classes: "filter-results-completions rounded-circle-2 text-small py-0"
+          , pattern: ".*"
+          , title: ""
           , placeholder: "find and select a term here..."
           , state: searchState
-          }
+          } []
         ]
       ]
 

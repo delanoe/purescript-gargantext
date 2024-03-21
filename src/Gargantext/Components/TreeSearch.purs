@@ -3,23 +3,29 @@ module Gargantext.Components.TreeSearch where
 import Gargantext.Prelude
 
 import Data.Array (head)
+import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
+import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.Bootstrap (formSelect')
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), ModalSizing(..), Position(..), TooltipPosition(..), Variant(..))
+import Gargantext.Components.Forest.Breadcrumb (breadcrumbView)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
-import Gargantext.Config.REST (AffRESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError)
+import Gargantext.Ends (class ToUrl, Backend(..), backendUrl, sessionPath)
 import Gargantext.Hooks.LinkHandler (useLinkHandler)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (AppRoute(..), appPath, nodeTypeAppRoute)
 import Gargantext.Sessions (Session(..), Sessions, get, sessionId, unSessions)
 import Gargantext.Sessions.Types (Session)
-import Gargantext.Types (NodeID, NodeType, getIcon)
+import Gargantext.Types (ApiVersion(..), NodeID, NodeType, getIcon)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.TreeSearch"
@@ -71,22 +77,22 @@ treeSearchCpt = here.component "treeSearch" cpt where
       { isVisibleBox: visible
       , title: Just "Search in tree"
       , size: MediumModalSize
-      , modalClassName: ""
+      , modalClassName: "modal-lg"
       }
       [ 
         H.div
         { className: "input-group p-1" }
         [
           inputWithEnter { className: "form-control"
-                       , autoFocus: true
-                       , onEnter: submit inputRef query
-                       , onValueChanged: R.setRef inputRef
-                       , onBlur: R.setRef inputRef
-                       , type: "value"
-                       , defaultValue: ""
-                       , required: true
-                       , placeholder: "Search keys..."
-                       }
+                         , autoFocus: true
+                         , onEnter: submit inputRef query
+                         , onValueChanged: R.setRef inputRef
+                         , onBlur: R.setRef inputRef
+                         , type: "value"
+                         , defaultValue: ""
+                         , required: true
+                         , placeholder: "Search keys..."
+                         }
         ,
           H.div { className: "input-group-append"}
           [
@@ -142,16 +148,15 @@ treeSearchContainer :: R2.Leaf ContainerProps
 treeSearchContainer = R2.leaf treeSearchContainerCpt
 
 treeSearchContainerCpt :: R.Component ContainerProps
-treeSearchContainerCpt = here.component "treeSearchContainerCpt" cpt where
-  cpt {query, visible, session } _ = do
+treeSearchContainerCpt = R2.hereComponent here "treeSearchContainerCpt" hCpt where
+  hCpt hp {query, visible, session } _ = do
 
-    useLoader { errorHandler
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , path: { session, query }
               , loader: loadSearch
               , render: \searchData -> treeSearchRenderContainer { visible, session, searchData }
     }
-    where
-      errorHandler = logRESTError here "[treeSearchContainer]"
 
 treeSearchRenderContainer :: R2.Leaf RenderContainerProps
 treeSearchRenderContainer = R2.leaf treeSearchRenderContainerCpt
@@ -174,26 +179,51 @@ treeSearchRenderCpt = here.component "treeSearchRenderCpt" cpt where
         results s = map searchResult s
           where
             searchResult sd = H.div 
-                                { className: "result mt-1"} 
-                                [ 
-                                  B.tooltipContainer
-                                  { delayShow: 600
-                                  , position: TooltipPosition Right
-                                  , tooltipSlot: B.span_ $ show $ fromMaybe Home $ nodeTypeAppRoute sd.type (sessionId session) sd.id
-                                  , defaultSlot:
-                                    B.button 
-                                    { className: "result__button"
-                                    , callback: \_ -> do 
-                                      T.write_ false visible
-                                      goToRoute $ fromMaybe Home $ nodeTypeAppRoute sd.type (sessionId session) sd.id 
-                                    , variant: ButtonVariant Light }
-                                    [
-                                      B.icon {name: getIcon sd.type true}
-                                    , B.wad_ [ "d-inline-block", "w-1" ] 
-                                    , H.text sd.name
-                                    ]
-                                  }
+                              { className: "result py-1"} 
+                              [ 
+                                B.tooltipContainer
+                                { delayShow: 600
+                                , position: TooltipPosition Right
+                                -- , tooltipSlot: B.span_ $ show $ fromMaybe Home $ nodeTypeAppRoute sd.type (sessionId session) sd.id
+                                , tooltipSlot: H.div {} 
+                                               [
+                                                 H.div {} 
+                                                 [
+                                                   H.text $ "Type: " <> show sd.type
+                                                 , H.text $ " | Id: " <> show sd.id
+                                                 ]
+                                               , H.div {}
+                                                 [
+                                                   H.text " Path: "
+                                                 , breadcrumbView { nodeId: sd.id
+                                                                  , session: Just session
+                                                                  , format: "text"
+                                                                  }
+                                                 ]
+                                               ]
+                                , defaultSlot:
+                                  B.button 
+                                  { className: "result__button"
+                                  , callback: \_ -> do 
+                                    T.write_ false visible
+                                    goToRoute $ fromMaybe Home $ nodeTypeAppRoute sd.type (sessionId session) sd.id 
+                                  , variant: ButtonVariant Light }
+                                  [
+                                    B.icon {name: getIcon sd.type true}
+                                  , B.wad_ [ "d-inline-block", "w-1" ] 
+                                  , H.text sd.name
+                                  ]
+                                }
+                              ,
+                                H.span { className: "node-path small" }
+                                [
+                                  H.text " — "
+                                , breadcrumbView { nodeId: sd.id
+                                                  , session: Just session
+                                                  , format: "text"
+                                                  }
                                 ]
+                              ]
 
 type LoadProps = ( session :: Session, query :: String )
 

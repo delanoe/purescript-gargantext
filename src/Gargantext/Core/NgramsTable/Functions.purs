@@ -8,7 +8,7 @@ import Data.Array (head)
 import Data.Array as A
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
-import Data.FoldableWithIndex (foldlWithIndex, foldrWithIndex)
+import Data.FoldableWithIndex (foldlWithIndex)
 import Data.Lens (use, view, (^?), (^.), (?=), (%~), (%=), (.~))
 import Data.Lens.At (at)
 import Data.Lens.Common (_Just)
@@ -48,11 +48,9 @@ import Gargantext.Types (AsyncTask, AsyncTaskType(..), AsyncTaskWithType(..), CT
 import Gargantext.Utils.Either (eitherMap)
 --import Gargantext.Utils.KarpRabin (indicesOfAny)
 import Gargantext.Utils.Reactix as R2
-import Gargantext.Utils.String as GS
 import Gargantext.Utils.Tuple as GUT
 import Partial (crashWith)
 import Partial.Unsafe (unsafePartial)
-import Reactix as R
 import Toestand as T
 
 here :: R2.Here
@@ -120,7 +118,7 @@ lookupRootList ngram (NgramsTable {ngrams_repo_elements: elts}) =
         Just (NgramsRepoElement {list}) -> Just list -- assert root == Nothing
 
 lookupRootListWithChildren :: NgramsTerm -> NgramsTable -> Record Cache -> Maybe TermList
-lookupRootListWithChildren ngram table@(NgramsTable {ngrams_repo_elements: elts}) { pm, pats } =
+lookupRootListWithChildren ngram table@(NgramsTable {ngrams_repo_elements: elts}) { pm } =
   case Map.lookup ngram elts of
     Nothing -> -- try to find in children
       case Map.lookup ngram pm of
@@ -168,7 +166,7 @@ computeCache ngrams contextNgrams = { contextNgrams, pm, pats }
 -- TODO: while this function works well with word boundaries,
 --       it inserts too many spaces.
 highlightNgrams :: Record Cache -> CTabNgramType -> NgramsTable -> String -> Array HighlightElement
-highlightNgrams cache@{ pm, pats } ntype table@(NgramsTable {ngrams_repo_elements: elts}) input0 =
+highlightNgrams cache@{ pats } ntype table input0 =
     -- trace {pats, input0, input, ixs} \_ ->
     -- trace ("[highlightNgrams] " <> show { input0
     --                                     , ixs
@@ -220,7 +218,7 @@ highlightNgrams cache@{ pm, pats } ntype table@(NgramsTable {ngrams_repo_element
 
 
     extractInputTextMatch :: Int -> Int -> String -> String
-    extractInputTextMatch i len input = undb $ S.take len $ S.drop (i + 1) input
+    extractInputTextMatch i len input' = undb $ S.take len $ S.drop (i + 1) input'
 
     addNgramElt ng ne_list (elt /\ elt_lists) = (elt /\ ((ng /\ ne_list) : elt_lists))
 
@@ -450,7 +448,7 @@ syncPatches props state callback = do
     launchAff_ $ do
       ePatches <- putNgramsPatches props pt
       case ePatches of
-        Left err -> liftEffect $ logRESTError here "[syncPatches]" err
+        Left err -> liftEffect $ logRESTError (R2.herePrefix here "[syncPatches]") err
         Right (Versioned { data: newPatch, version: newVersion }) -> do
           callback unit
           liftEffect $ do
@@ -544,7 +542,7 @@ convOrderBy (T.DESC (T.ColumnName "Score")) = ScoreDesc
 convOrderBy (T.ASC  _) = TermAsc
 convOrderBy (T.DESC _) = TermDesc
 
-coreDispatch :: forall p s. CoreParams p -> T.Box State -> CoreDispatch
+coreDispatch :: forall p. CoreParams p -> T.Box State -> CoreDispatch
 coreDispatch path state (Synchronize { afterSync }) =
   syncPatches path state afterSync
 coreDispatch _ state (CommitPatch pt) =
@@ -585,8 +583,7 @@ chartsAfterSync :: forall props discard.
   -> Aff Unit
 chartsAfterSync path'@{ nodeId } errors tasks _ = do
   eTask <- postNgramsChartsAsync path'
-  handleRESTError here errors eTask $ \task -> liftEffect $ do
-    here.log2 "[chartsAfterSync] Synchronize task" task
+  handleRESTError (R2.herePrefix here "[chartsAfterSync]") errors eTask $ \task -> liftEffect $ do
     GAT.insert nodeId task tasks
 
 postNgramsChartsAsync :: forall s. CoreParams s -> AffRESTError AsyncTaskWithType

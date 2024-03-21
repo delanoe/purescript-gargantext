@@ -2,10 +2,9 @@ module Gargantext.Components.Nodes.Lists where
 
 import Gargantext.Prelude
 
-import Data.Maybe (Maybe(..), fromMaybe, maybe)
+import Data.Maybe (Maybe(..), maybe)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
-import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Corpus.CodeSection (loadCorpusWithChild)
 import Gargantext.Components.GraphQL.Context as GQLCTX
@@ -17,7 +16,7 @@ import Gargantext.Components.Nodes.Lists.Tabs as Tabs
 import Gargantext.Components.Nodes.Lists.Types (CacheState(..))
 import Gargantext.Components.Table as Table
 import Gargantext.Config (defaultFrontends)
-import Gargantext.Config.REST (logRESTError, AffRESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Core.NgramsTable.Types (NgramsTerm(..))
 import Gargantext.Ends (url)
 import Gargantext.Hooks.Loader (useLoader)
@@ -35,10 +34,8 @@ here = R2.here "Gargantext.Components.Nodes.Lists"
 --------------------------------------------------------
 
 type CommonPropsNoSession =
-  ( boxes         :: Boxes
-  , nodeId        :: Int
+  ( nodeId        :: Int
   , sessionUpdate :: Session -> Effect Unit
-  , sidePanel     :: T.Box (Maybe (Record SidePanel))
   )
 
 type Props = WithSession CommonPropsNoSession
@@ -58,12 +55,10 @@ listsLayoutCpt = here.component "listsLayout" cpt where
 listsLayoutWithKey :: R2.Component ( key :: String | Props )
 listsLayoutWithKey = R.createElement listsLayoutWithKeyCpt
 listsLayoutWithKeyCpt :: R.Component ( key :: String | Props )
-listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
-  cpt { boxes
-      , nodeId
-      , session
-      , sessionUpdate
-      , sidePanel } _ = do
+listsLayoutWithKeyCpt = R2.hereComponent here "listsLayoutWithKey" hCpt where
+  hCpt hp { nodeId
+          , session
+          , sessionUpdate } _ = do
     activeTab <- T.useBox 0
 
     let path = { nodeId, session }
@@ -74,7 +69,8 @@ listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
     R.useEffectOnce' $ do
       T.listen (\{ new } -> afterCacheStateChange new) cacheState
 
-    useLoader { errorHandler
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , path
               , loader: loadCorpusWithChild
               , render: \corpusData@{ corpusId, corpusNode: NodePoly poly } ->
@@ -82,27 +78,23 @@ listsLayoutWithKeyCpt = here.component "listsLayoutWithKey" cpt where
                           in
                             R.fragment [
                               Table.tableHeaderWithRenameLayout {
-                                cacheState
-                              , name
-                              , date
+                                date
                               , hyperdata
+                              , key: "listsLayoutWithKey-header-" <> (show cacheState')
+                              , name
                               , nodeId: corpusId
                               , session
-                              , key: "listsLayoutWithKey-header-" <> (show cacheState')
                                 }
                             , Tabs.tabs {
                                 activeTab
-                              , boxes
                               , cacheState
                               , corpusData
                               , corpusId
                               , key: "listsLayoutWithKey-tabs-" <> (show cacheState')
                               , session
-                              , sidePanel
                               }
                             ] }
     where
-      errorHandler = logRESTError here "[listsLayoutWithKey]"
       afterCacheStateChange cacheState = do
         launchAff_ $ clearCache unit
         sessionUpdate $ setCacheState session nodeId cacheState
@@ -119,7 +111,7 @@ sidePanelCpt :: R.Component SidePanelProps
 sidePanelCpt = here.component "sidePanel" cpt
   where
     cpt { session
-        , sidePanel
+        , sidePanel: sp
         , sidePanelState } _ = do
 
       sidePanelState' <- T.useLive T.unequal sidePanelState
@@ -146,7 +138,7 @@ sidePanelCpt = here.component "sidePanel" cpt
         { className: "lists-sidepanel__body" }
         [
           sidePanelNgramsContextView { session
-                                   , sidePanel } []
+                                     , sidePanel: sp } []
         ]
       ]
 
@@ -159,8 +151,8 @@ sidePanelNgramsContextView = R.createElement sidePanelNgramsContextViewCpt
 sidePanelNgramsContextViewCpt :: R.Component SidePanelNgramsContextView
 sidePanelNgramsContextViewCpt = here.component "sidePanelNgramsContextView" cpt where
   cpt { session
-      , sidePanel } _ = do
-    mSidePanel' <- T.useLive T.unequal sidePanel
+      , sidePanel: sp } _ = do
+    mSidePanel' <- T.useLive T.unequal sp
 
     case mSidePanel' of
       Nothing -> pure $ H.div {} []
@@ -179,9 +171,9 @@ sidePanelNgramsContextViewCpt = here.component "sidePanelNgramsContextView" cpt 
             ]
           , 
             ngramsDocList { mCorpusId: sidePanel'.mCorpusId
-                                        , mListId: sidePanel'.mListId
-                                        , mNgrams: sidePanel'.mCurrentNgrams
-                                        , session } [] 
+                          , mListId: sidePanel'.mListId
+                          , mNgrams: sidePanel'.mCurrentNgrams
+                          , session } [] 
           ]
 
 type NgramsDocListProps =
@@ -193,28 +185,26 @@ type NgramsDocListProps =
 ngramsDocList :: R2.Component NgramsDocListProps
 ngramsDocList = R.createElement ngramsDocListCpt
 ngramsDocListCpt :: R.Component NgramsDocListProps
-ngramsDocListCpt = here.component "ngramsDocList" cpt where
-  cpt { mCorpusId: Nothing } _ = do
+ngramsDocListCpt = R2.hereComponent here "ngramsDocList" hCpt where
+  hCpt _hp { mCorpusId: Nothing } _ = do
     pure $ H.div {} []
-  cpt { mListId: Nothing } _ = do
+  hCpt _hp { mListId: Nothing } _ = do
     pure $ H.div {} []
-  cpt { mNgrams: Nothing } _ = do
+  hCpt _hp { mNgrams: Nothing } _ = do
     pure $ H.div {} []
-  cpt { mCorpusId: Just corpusId
-      , mListId: Just listId
-      , mNgrams: Just ngrams
-      , session } _ = do
-    useLoader { errorHandler
+  hCpt hp { mCorpusId: Just corpusId
+          , mListId: Just listId
+          , mNgrams: Just ngrams
+          , session } _ = do
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , path: { corpusId, ngrams, session }
               , loader: loaderNgramsDocList
               , render: \ctx -> ngramsDocListLoaded { contexts: ctx
                                                     , corpusId
                                                     , listId
-                                                    , ngrams
                                                     , session } []
               }
-    where
-      errorHandler = logRESTError here "[ngramsDocList]"
 
 type NgramsDocLoadProps =
   ( corpusId :: GT.CorpusId
@@ -229,7 +219,6 @@ type NgramsDocListLoadedProps =
   ( contexts :: Array GQLCTX.Context
   , corpusId :: GT.CorpusId
   , listId   :: GT.ListId
-  , ngrams   :: NgramsTerm
   , session  :: Session )
 
 ngramsDocListLoaded :: R2.Component NgramsDocListLoadedProps
@@ -239,7 +228,6 @@ ngramsDocListLoadedCpt = here.component "ngramsDocListLoaded" cpt where
   cpt { contexts
       , corpusId
       , listId
-      , ngrams
       , session } _ = do
     pure $ H.div { className: "ngrams-doc-list p-2" }
       [ H.ul { className: "list-group" } ((\item -> contextItem { corpusId

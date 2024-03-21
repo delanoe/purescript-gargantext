@@ -1,10 +1,7 @@
 module Gargantext.Utils.Set where
 
-import Data.Array as A
-import Data.Hashable (class Hashable, hash)
 import Data.Ord (class Ord)
 import Data.Set as Set
-import Prelude (($))
 
 
 -- instance (Hashable a, Ord a) => Hashable (Set.Set a) where

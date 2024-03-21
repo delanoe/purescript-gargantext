@@ -4,15 +4,12 @@ module Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField
 import Gargantext.Prelude
 
 import Data.Array as A
-import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), maybe, fromMaybe)
 import Data.Newtype (over)
 import Data.Nullable (null)
 import Data.Set as Set
-import Data.String.Common (joinWith, replaceAll)
-import Data.String.Pattern (Pattern(..), Replacement(..))
+import Data.String.Common (joinWith)
 import Data.Tuple (Tuple(..))
-import DOM.Simple.Console (log, log2)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
@@ -24,7 +21,6 @@ import Gargantext.Components.InputWithEnter (inputWithEnter)
 import Gargantext.Components.Lang (Lang(..))
 import Gargantext.Components.ListSelection as ListSelection
 import Gargantext.Components.ListSelection.Types as ListSelection
-import Gargantext.Config.REST (logRESTError)
 import Gargantext.Config.Utils (handleRESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Sessions (Session(..))
@@ -42,6 +38,8 @@ defaultSearch :: Search
 defaultSearch = { databases    : Empty
                 , datafield    : Just (External Empty)
                 , node_id      : Nothing
+                , epoApiUser   : Nothing
+                , epoApiToken  : Nothing
                 , pubmedApiKey : Nothing
                 , lang         : Nothing
                 , term         : ""
@@ -93,28 +91,28 @@ componentYearsCpt = here.component "componentYears" cpt where
     let yearsZ = A.zip (A.range 0 (A.length years)) years
     newYear <- T.useBox ""
     pure $ H.div {}
-      ((yearCpt search <$> yearsZ) <>
+      ((yearCpt <$> yearsZ) <>
       [ H.div {}
         [ H.input { on: { blur: modify newYear
                         , change: modify newYear
                         , input: modify newYear } }
         , H.span { className: "btn btn-primary fa fa-check"
-                 , on: { click: clickAdd newYear search }} []
+                 , on: { click: clickAdd newYear }} []
         ]
       ])
       where
-        clickAdd newYear search _ = do
+        clickAdd newYear _ = do
           newYear' <- T.read newYear
           T.modify_ (\s@{ years } -> s { years = A.snoc years newYear' }) search
-        clickRemove idx search _ =
+        clickRemove idx _ =
           T.modify_ (\s@{ years } -> s { years = left idx years <> right (A.length years - idx) years }) search
           where
-            left 0 years = []
-            left idx years = A.take idx years
-            right 0 years = []
+            left 0 _years = []
+            left idx' years = A.take idx' years
+            right 0 _years = []
             right len years = A.takeEnd (len - 1) years
         modify newYear e = T.write_ (R.unsafeEventValue e) newYear
-        yearCpt search (Tuple idx year) =
+        yearCpt (Tuple idx year) =
           H.div {}
             [ H.span {} [ H.text year ]
             , H.span { className: "btn btn-danger fa fa-times"
@@ -127,14 +125,13 @@ type ComponentIMTProps =
 componentIMT :: R2.Component ComponentIMTProps
 componentIMT = R.createElement componentIMTCpt
 componentIMTCpt :: R.Component ComponentIMTProps
-componentIMTCpt = here.component "componentIMT" cpt where
-  cpt { search, session } _  = do
-    useLoader { errorHandler
+componentIMTCpt = R2.hereComponent here "componentIMT" hCpt where
+  hCpt hp { search, session } _  = do
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , loader: \_ -> getIMTSchools session
               , path: unit
               , render: \schools -> componentWithIMTOrgs { schools, search } [] }
-    where
-      errorHandler = logRESTError here "[componentIMT]"
 
 type ComponentWithIMTOrgsProps =
   ( schools :: Array GQLIMT.School
@@ -225,6 +222,12 @@ isPubmed ( Just
            ( External PubMed )
          ) = true
 isPubmed _ = false
+
+isEPO :: Maybe DataField -> Boolean
+isEPO ( Just
+           ( External EPO )
+         ) = true
+isEPO _ = false
 
 needsLang :: Maybe DataField -> Boolean
 needsLang (Just Gargantext) = true
@@ -335,7 +338,6 @@ dataFieldNavCpt = here.component "dataFieldNav" cpt
 type DatabaseInputProps = (
     databases :: Array Database
   , search    :: T.Box Search
-  , session   :: Session
   )
 
 databaseInput :: R2.Component DatabaseInputProps
@@ -344,8 +346,7 @@ databaseInputCpt :: R.Component DatabaseInputProps
 databaseInputCpt = here.component "databaseInput" cpt
   where
     cpt { databases
-        , search
-        , session } _ = do
+        , search } _ = do
       search' <- T.useLive T.unequal search
 
       let db = case search'.datafield of
@@ -386,15 +387,14 @@ type PubmedInputProps = (
 pubmedInput :: R2.Component PubmedInputProps
 pubmedInput = R.createElement pubmedInputCpt
 pubmedInputCpt :: R.Component PubmedInputProps
-pubmedInputCpt = here.component "pubmedInput" cpt where
-  cpt { search, session: session@(Session { treeId }) } _ = do
-    useLoader { errorHandler
+pubmedInputCpt = R2.hereComponent here "pubmedInput" hCpt where
+  hCpt hp { search, session: session@(Session { treeId }) } _ = do
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , loader: \_ -> getUser session treeId
               , path: unit
               , render: \user -> pubmedInputLoaded { pubmedAPIKey: user.u_hyperdata.pubmed_api_key
                                                    , search } [] }
-    where
-      errorHandler = logRESTError here "[componentIMT]"
 
 
 type PubmedInputLoadedProps = (
@@ -422,13 +422,80 @@ pubmedInputLoadedCpt = here.component "pubmedInputLoaded" cpt where
                       , change: modifyPubmedAPIKey search
                       , input: modifyPubmedAPIKey search } } ]
     where
-      modifyPubmedAPIKey search e = do
+      modifyPubmedAPIKey searchS e = do
         let val = R.unsafeEventValue e
         let mVal = case val of
               "" -> Nothing
               s  -> Just s
         T.modify_ (\s ->
-                    s { pubmedApiKey = mVal }) search
+                    s { pubmedApiKey = mVal }) searchS
+
+
+type EPOInputProps = (
+    search :: T.Box Search
+  , session :: Session
+  )
+
+epoInput :: R2.Component EPOInputProps
+epoInput = R.createElement epoInputCpt
+epoInputCpt :: R.Component EPOInputProps
+epoInputCpt = R2.hereComponent here "epoInput" hCpt where
+  hCpt hp { search, session: session@(Session { treeId }) } _ = do
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
+              , loader: \_ -> getUser session treeId
+              , path: unit
+              , render: \user -> epoInputLoaded { epoAPIUser: user.u_hyperdata.epo_api_user
+                                                , epoAPIToken: user.u_hyperdata.epo_api_token
+                                                , search } [] }
+
+
+type EPOInputLoadedProps = (
+    epoAPIUser  :: Maybe String
+  , epoAPIToken :: Maybe String
+  , search      :: T.Box Search
+  )
+
+epoInputLoaded :: R2.Component EPOInputLoadedProps
+epoInputLoaded = R.createElement epoInputLoadedCpt
+epoInputLoadedCpt :: R.Component EPOInputLoadedProps
+epoInputLoadedCpt = here.component "epoInputLoaded" cpt where
+  cpt { epoAPIUser, epoAPIToken, search } _ = do
+    search' <- T.useLive T.unequal search
+
+    R.useEffectOnce' $ do
+      when (search'.epoApiUser /= epoAPIUser || search'.epoApiToken /= epoAPIToken) $ do
+        T.write_ (search' { epoApiUser = epoAPIUser
+                          , epoApiToken = epoAPIToken }) search
+
+    pure $
+      H.div { className: "form-group p-1 m-0" }
+      [ H.div { className: "text-primary center" } [ H.text "EPO API User" ]
+      , H.input { className: "form-control"
+                , defaultValue: fromMaybe "" search'.epoApiUser
+                , on: { blur: modifyEPOAPIUser search
+                      , change: modifyEPOAPIUser search
+                      , input: modifyEPOAPIUser search } }
+      , H.div { className: "text-primary center" } [ H.text "EPO API Token" ]
+      , H.input { className: "form-control"
+                , defaultValue: fromMaybe "" search'.epoApiToken
+                , on: { blur: modifyEPOAPIToken search
+                      , change: modifyEPOAPIToken search
+                      , input: modifyEPOAPIToken search } } ]
+    where
+      modifyEPOAPIUser searchS e = do
+        let val = R.unsafeEventValue e
+        let mVal = case val of
+              "" -> Nothing
+              s  -> Just s
+        T.modify_ (\s -> s { epoApiUser = mVal }) searchS
+
+      modifyEPOAPIToken searchS e = do
+        let val = R.unsafeEventValue e
+        let mVal = case val of
+              "" -> Nothing
+              s  -> Just s
+        T.modify_ (\s -> s { epoApiToken = mVal }) searchS
 
 
 type OrgInputProps =
@@ -485,20 +552,23 @@ datafieldInputCpt :: R.Component DatafieldInputProps
 datafieldInputCpt = here.component "datafieldInput" cpt where
   cpt { databases, langs, search, session } _ = do
     search' <- T.useLive T.unequal search
-    datafield <- T.useFocused (_.datafield) (\a b -> b { datafield = a }) search
     iframeRef <- R.useRef null
 
     pure $ H.div {}
       [ dataFieldNav { search } []
 
       , if isExternal search'.datafield
-        then databaseInput { databases, search, session } []
+        then databaseInput { databases, search } []
         else H.div {} []
 
       , if isPubmed search'.datafield
         then pubmedInput { search, session } []
         else H.div {} []
 
+      , if isEPO search'.datafield
+        then epoInput { search, session } []
+        else H.div {} []
+             
       , if isHAL search'.datafield
         then orgInput { orgs: allOrgs, search } []
         else H.div {} []
@@ -633,9 +703,10 @@ triggerSearch { onSearch, errors, session, selection, search } =
       Just id -> do
         -- liftEffect $ here.log2 "[triggerSearch] searchQuery" $ searchQuery selection search
         eTask <- performSearch session id $ searchQuery selection search
-        handleRESTError here errors eTask $ \task -> liftEffect $ do
-          -- here.log2 "[triggerSearch] task" task
-          onSearch task
+        handleRESTError (R2.herePrefix here "[triggerSearch]") errors eTask $
+          \task -> liftEffect $ do
+            -- here.log2 "[triggerSearch] task" task
+            onSearch task
 
     --liftEffect $ do
     --  log2 "Return:" r
@@ -674,12 +745,27 @@ searchQuery selection { databases
                       , selection = selection
                       }) defaultSearchQuery
 searchQuery selection { databases
+                      , datafield: datafield@(Just (External EPO))
+                      , lang
+                      , epoApiUser
+                      , epoApiToken
+                      , node_id
+                      , term } =
+  over SearchQuery (_ { databases    = databases
+                      , datafield    = datafield
+                      , lang         = lang
+                      , node_id      = node_id
+                      , epoAPIUser   = epoApiUser
+                      , epoAPIToken  = epoApiToken
+                      , query        = term
+                      , selection    = selection
+                      }) defaultSearchQuery
+searchQuery selection { databases
                       , datafield: datafield@(Just (External PubMed))
                       , lang
                       , pubmedApiKey
                       , node_id
-                      , term
-                      , years } =
+                      , term } =
   over SearchQuery (_ { databases    = databases
                       , datafield    = datafield
                       , lang         = lang
@@ -714,7 +800,7 @@ queryHAL term mIMTOrgs lang years =
       _       -> "en"
     -- TODO: Escape double quotes
     --termEscaped = "\"" <> (replaceAll (Pattern "\"") (Replacement "\\\"") term) <> "\""
-    termEscaped = "\"" <> term <> "\""
+    -- termEscaped = "\"" <> term <> "\""
     termMulti = "(" <> term <> ")"
     structQuery = case mIMTOrgs of
       Nothing -> ""

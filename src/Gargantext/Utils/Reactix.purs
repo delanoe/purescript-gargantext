@@ -1,31 +1,30 @@
 module Gargantext.Utils.Reactix where
 
-import Prelude
-
 import ConvertableOptions as CO
-import Data.Array as A
-import Data.Either (hush)
-import Data.Function.Uncurried (Fn1, runFn1, Fn2, runFn2)
-import Data.Maybe (Maybe(..), fromJust, fromMaybe)
-import Data.Maybe as Maybe
-import Data.Nullable (Nullable, notNull, null, toMaybe)
-import Data.Tuple (Tuple)
-import Data.Tuple.Nested ((/\))
 import DOM.Simple as DOM
 import DOM.Simple.Console (log2)
 import DOM.Simple.Document (document)
 import DOM.Simple.Element as Element
 import DOM.Simple.Event as DE
 import DOM.Simple.Types (class IsNode, class IsElement, DOMRect)
+import Data.Array as A
+import Data.Either (hush)
+import Data.Function.Uncurried (Fn1, runFn1, Fn2, runFn2)
+import Data.Maybe (Maybe(..), fromJust)
+import Data.Maybe as Maybe
+import Data.Nullable (Nullable, null, toMaybe)
+import Data.Tuple (Tuple)
+import Data.Tuple.Nested ((/\))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff, launchAff_, killFiber)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, mkEffectFn1, mkEffectFn2, runEffectFn1, runEffectFn2, runEffectFn3)
-import FFI.Simple (applyTo, args2, args3, defineProperty, delay, getProperty, (..), (...), (.=))
+import FFI.Simple (applyTo, args3, defineProperty, delay, getProperty, (..), (...), (.=))
 import Gargantext.Utils.Console (RowConsole)
 import Gargantext.Utils.Console as Console
 import Partial.Unsafe (unsafePartial)
+import Prelude
 import React (class ReactPropFields, Children, ReactClass, ReactElement)
 import React as React
 import React.SyntheticEvent as SE
@@ -44,6 +43,7 @@ import Web.File.FileList (FileList, item)
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (Storage, getItem, setItem)
+
 
 -- | UI Component type with only required props and children
 type Component p = Record p -> Array R.Element -> R.Element
@@ -111,6 +111,25 @@ here mod =
   , info3       : Console.print3  Console.Main mod Console.Info
   }
 
+type Prefix = String
+newtype HerePrefix = HerePrefix { here   :: Here
+                                , prefix :: Prefix }
+
+hpLog2 :: forall a b. HerePrefix -> a -> b -> Effect Unit
+hpLog2 (HerePrefix { here: h, prefix }) = h.log3 prefix
+
+hpWarn2 :: forall a b. HerePrefix -> a -> b -> Effect Unit
+hpWarn2 (HerePrefix { here: h, prefix }) = h.warn3 prefix
+
+herePrefix :: Here -> Prefix -> HerePrefix
+herePrefix here prefix = HerePrefix { here, prefix }
+
+hereComponent :: forall p. Here -> Prefix -> (HerePrefix -> R.HooksComponent p) -> R.Component p
+hereComponent here' prefix hpComponent = here'.component  prefix (hpComponent hp)
+  where
+    hp :: HerePrefix
+    hp = herePrefix here' prefix
+
 -- newtypes
 type NTHooksComponent props = props -> Array R.Element -> R.Hooks R.Element
 newtype NTComponent p = NTComponent (EffectFn1 p R.Element)
@@ -147,7 +166,7 @@ newtype Point = Point { x :: Number, y :: Number }
 -- a reducer function living in effector, for useReductor
 type Actor s a = (a -> s -> Effect s)
 
--- | Turns a ReactElement into aReactix Element
+-- | Turns a ReactElement into a Reactix Element
 -- | buff (v.) to polish
 buff :: ReactElement -> R.Element
 buff = unsafeCoerce
@@ -424,7 +443,7 @@ loadLocalStorageState' key default = do
   pure $ Maybe.fromMaybe default parsed
 
 listenLocalStorageState :: forall s. JSON.WriteForeign s => LocalStorageKey -> T.Change s -> Effect Unit
-listenLocalStorageState key { old, new } = do
+listenLocalStorageState key { old: _old, new } = do
   --let json = Json.stringify $ Argonaut.encodeJson new
   let json = JSON.writeJSON new
   storage <- getls

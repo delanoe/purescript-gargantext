@@ -16,7 +16,7 @@ import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types as CT
 import Gargantext.Components.Nodes.Lists.Types as NT
 import Gargantext.Components.Table (defaultContainer, initialParams, makeRow, table, tableHeaderLayout) as TT
 import Gargantext.Components.Table.Types (ColumnName(..), Params) as TT
-import Gargantext.Config.REST (AffRESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Ends (url, Frontends)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Routes (SessionRoute(..))
@@ -69,19 +69,17 @@ type KeyLayoutProps =
 
 annuaireLayoutWithKey :: R2.Leaf KeyLayoutProps
 annuaireLayoutWithKey = R2.leaf annuaireLayoutWithKeyCpt
-
 annuaireLayoutWithKeyCpt :: R.Component KeyLayoutProps
-annuaireLayoutWithKeyCpt = here.component "annuaireLayoutWithKey" cpt where
-  cpt { frontends, nodeId, session } _ = do
+annuaireLayoutWithKeyCpt = R2.hereComponent here "annuaireLayoutWithKey" hCpt where
+  hCpt hp { frontends, nodeId, session } _ = do
     path <- T.useBox nodeId
     path' <- T.useLive T.unequal path
 
-    useLoader { errorHandler
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , loader: getAnnuaireInfo session
               , path: path'
               , render: \info -> annuaire { frontends, info, path, session } }
-    where
-      errorHandler = logRESTError here "[annuaireLayoutWithKey]"
 
 type AnnuaireProps =
   ( session   :: Session
@@ -136,19 +134,16 @@ type PageLayoutProps =
 
 pageLayout :: Record PageLayoutProps -> R.Element
 pageLayout props = R.createElement pageLayoutCpt props []
-
 pageLayoutCpt :: R.Component PageLayoutProps
-pageLayoutCpt = here.component "pageLayout" cpt
-  where
-    cpt { frontends, pagePath, session } _ = do
-      pagePath' <- T.useLive T.unequal pagePath
+pageLayoutCpt = R2.hereComponent here "pageLayout" hCpt where
+  hCpt hp { frontends, pagePath, session } _ = do
+    pagePath' <- T.useLive T.unequal pagePath
 
-      useLoader { errorHandler
-                , loader: loadPage session
-                , path: pagePath'
-                , render: \table -> page { session, table, frontends, pagePath } }
-      where
-        errorHandler = logRESTError here "[pageLayout]"
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
+              , loader: loadPage session
+              , path: pagePath'
+              , render: \table -> page { session, table, frontends, pagePath } }
 
 type PageProps =
   ( frontends :: Frontends

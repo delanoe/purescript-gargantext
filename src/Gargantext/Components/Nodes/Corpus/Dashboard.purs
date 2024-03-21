@@ -8,12 +8,10 @@ import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.Corpus.CodeSection (fieldsCodeEditor)
 import Gargantext.Components.Nodes.Corpus.Chart.Predefined as P
 import Gargantext.Components.Nodes.Dashboard.Types as DT
 import Gargantext.Components.Nodes.Types (FTFieldList(..), FTFieldsWithIndex(..), defaultField)
-import Gargantext.Config.REST (logRESTError)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Prelude (Unit, bind, discard, pure, read, show, unit, ($), (<$>), (<>), (==))
 import Gargantext.Sessions (Session, sessionId)
@@ -29,8 +27,7 @@ here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Dashboard"
 
 type Props =
-  ( boxes   :: Boxes
-  , nodeId  :: NodeID
+  ( nodeId  :: NodeID
   , session :: Session )
 
 dashboardLayout :: R2.Component Props
@@ -50,43 +47,40 @@ type KeyProps =
 dashboardLayoutWithKey :: R2.Component KeyProps
 dashboardLayoutWithKey = R.createElement dashboardLayoutWithKeyCpt
 dashboardLayoutWithKeyCpt :: R.Component KeyProps
-dashboardLayoutWithKeyCpt = here.component "dashboardLayoutWithKey" cpt
-  where
-    cpt { boxes, nodeId, session } _ = do
-      reload <- T.useBox T2.newReload
-      reload' <- T.useLive T.unequal reload
+dashboardLayoutWithKeyCpt = R2.hereComponent here "dashboardLayoutWithKey" hCpt where
+  hCpt hp { nodeId, session } _ = do
+    reload <- T.useBox T2.newReload
+    reload' <- T.useLive T.unequal reload
 
-      useLoader { errorHandler
-                , loader: DT.loadDashboardWithReload
-                , path: { nodeId, reload: reload', session }
-                , render: \(DT.DashboardData { hyperdata: DT.Hyperdata h, parentId }) -> do
-                      let { charts, fields } = h
-                      dashboardLayoutLoaded { boxes
-                                            , charts
-                                            , corpusId: parentId
-                                            , defaultListId: 0
-                                            , fields
-                                            , nodeId
-                                            , onChange: onChange nodeId reload (DT.Hyperdata h)
-                                            , session } [] }
-      where
-        errorHandler = logRESTError here "[dashboardLayoutWithKey]"
-        onChange :: NodeID -> T2.ReloadS -> DT.Hyperdata -> { charts :: Array P.PredefinedChart
-                                                            , fields :: FTFieldList } -> Effect Unit
-        onChange nodeId' reload (DT.Hyperdata h) { charts, fields } = do
-          launchAff_ do
-            res <- DT.saveDashboard { hyperdata: DT.Hyperdata $ h { charts = charts, fields = fields }
-                                    , nodeId:nodeId'
-                                    , session }
-            liftEffect $ do
-              _ <- case res of
-                Left err -> here.warn2 "[dashboardLayoutWithKey] onChange RESTError" err
-                _ -> pure unit
-              T2.reload reload
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
+              , loader: DT.loadDashboardWithReload
+              , path: { nodeId, reload: reload', session }
+              , render: \(DT.DashboardData { hyperdata: DT.Hyperdata h, parentId }) -> do
+                    let { charts, fields } = h
+                    dashboardLayoutLoaded { charts
+                                          , corpusId: parentId
+                                          , defaultListId: 0
+                                          , fields
+                                          , nodeId
+                                          , onChange: onChange nodeId reload (DT.Hyperdata h)
+                                          , session } [] }
+    where
+      onChange :: NodeID -> T2.ReloadS -> DT.Hyperdata -> { charts :: Array P.PredefinedChart
+                                                          , fields :: FTFieldList } -> Effect Unit
+      onChange nodeId' reload (DT.Hyperdata h) { charts, fields } = do
+        launchAff_ do
+          res <- DT.saveDashboard { hyperdata: DT.Hyperdata $ h { charts = charts, fields = fields }
+                                  , nodeId:nodeId'
+                                  , session }
+          liftEffect $ do
+            _ <- case res of
+              Left err -> R2.hpWarn2 hp "onChange RESTError" err
+              _ -> pure unit
+            T2.reload reload
 
 type LoadedProps =
-  ( boxes         :: Boxes
-  , charts        :: Array P.PredefinedChart
+  ( charts        :: Array P.PredefinedChart
   , corpusId      :: NodeID
   , defaultListId :: Int
   , fields        :: FTFieldList
@@ -101,8 +95,7 @@ dashboardLayoutLoaded = R.createElement dashboardLayoutLoadedCpt
 dashboardLayoutLoadedCpt :: R.Component LoadedProps
 dashboardLayoutLoadedCpt = here.component "dashboardLayoutLoaded" cpt
   where
-    cpt { boxes
-        , charts
+    cpt { charts
         , corpusId
         , defaultListId
         , fields
@@ -132,8 +125,7 @@ dashboardLayoutLoadedCpt = here.component "dashboardLayoutLoaded" cpt
                                          , fields }
         chartsEls = mapWithIndex chartIdx charts
         chartIdx idx chart =
-          renderChart { boxes
-                      , chart
+          renderChart { chart
                       , corpusId
                       , defaultListId
                       , onChange: onChangeChart
@@ -209,8 +201,7 @@ dashboardCodeEditorCpt = here.component "dashboardCodeEditor" cpt
             List.snoc fs $ { idx: List.length fs, ftField: defaultField }) fieldsS
 
 type PredefinedChartProps =
-  ( boxes         :: Boxes
-  , chart         :: P.PredefinedChart
+  ( chart         :: P.PredefinedChart
   , corpusId      :: NodeID
   , defaultListId :: Int
   , onChange      :: P.PredefinedChart -> Effect Unit
@@ -223,8 +214,7 @@ renderChart = R.createElement renderChartCpt
 renderChartCpt :: R.Component PredefinedChartProps
 renderChartCpt = here.component "renderChart" cpt
   where
-    cpt { boxes
-        , chart
+    cpt { chart
         , corpusId
         , defaultListId
         , onChange
@@ -259,8 +249,7 @@ renderChartCpt = here.component "renderChart" cpt
           where
             value = R.unsafeEventValue e
         onRemoveClick _ = onRemove unit
-        params = { boxes
-                 , corpusId
+        params = { corpusId
                  , limit: Just 1000
                  , listId: Just defaultListId
                  , onClick: Nothing

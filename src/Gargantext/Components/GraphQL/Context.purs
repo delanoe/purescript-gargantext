@@ -12,18 +12,15 @@ module Gargantext.Components.GraphQL.Context
   , NgramsTerms(..)
   ) where
 
-import Gargantext.Prelude
-
 import Data.Argonaut (class EncodeJson, encodeJson)
-import Data.Lens (Lens', lens)
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe)
+import Gargantext.Prelude
+import Gargantext.Utils.GraphQL as GGQL
 import GraphQL.Client.Args (Args, NotNull, (=>>), class ArgGql)
 import GraphQL.Client.Variable (Var(..))
-import GraphQL.Client.Variables.TypeName (class VarTypeName, varTypeName)
-import Gargantext.Utils.GraphQL as GGQL
+import GraphQL.Client.Variables.TypeName (class VarTypeName)
 import Type.Proxy (Proxy(..))
 
-import Data.Array as A
 
 type Context_
   = ( c_id        :: Int
@@ -57,9 +54,8 @@ type Hyperdata_
     , hrd_source             :: String
     , hrd_title              :: String
     , hrd_url                :: String
-    , hrd_uniqId             :: String
-    , hrd_uniqIdBdd          :: String )
-
+    )
+      
 type Hyperdata = Record Hyperdata_
 
 type NodeContext_
@@ -121,8 +117,7 @@ type ContextsForNgramsQuery
            , hrd_source             :: Unit
            , hrd_title              :: Unit
            , hrd_url                :: Unit
-           , hrd_uniqId             :: Unit
-           , hrd_uniqIdBdd          :: Unit }
+           }
       }
     }
 contextsForNgramsQuery :: ContextsForNgramsQuery

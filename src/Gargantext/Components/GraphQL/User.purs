@@ -148,6 +148,8 @@ type User
                 { organization :: Array String }
               }
           , pubmed_api_key :: Maybe String
+          , epo_api_user :: Maybe String
+          , epo_api_token :: Maybe String
          }
     , u_username  :: String
     , u_email     :: String
@@ -172,6 +174,8 @@ userQuery = { users: { user_id: Var :: _ "id" Int } =>>
                   , "where": { organization: unit }
                   }
                 , pubmed_api_key: unit
+                , epo_api_user: unit
+                , epo_api_token: unit
                 }
               , u_username: unit
               , u_email: unit
@@ -182,3 +186,11 @@ userQuery = { users: { user_id: Var :: _ "id" Int } =>>
 type UserPubmedAPIKeyM =
   { user_id :: Int
   , api_key :: String }
+
+type UserEPOAPIUserM =
+  { user_id  :: Int
+  , api_user :: String }
+
+type UserEPOAPITokenM =
+  { user_id   :: Int
+  , api_token :: String }

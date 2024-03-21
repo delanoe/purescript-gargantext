@@ -1,6 +1,5 @@
 module Gargantext.Utils.JitsiMeet where
 
-import Data.Function.Uncurried (Fn2, runFn2)
 import DOM.Simple as DOM
 import Effect (Effect)
 import Effect.Uncurried (EffectFn2, runEffectFn2)

@@ -30,9 +30,8 @@ here = R2.here "Gargantext.Components.Corpus.EditionBlock"
 editionBlock :: R2.Leaf Props
 editionBlock = R2.leaf editionBlockCpt
 editionBlockCpt :: R.Component Props
-editionBlockCpt = here.component "main" cpt where
-  cpt { nodeId
-      } _ = do
+editionBlockCpt = R2.hereComponent here "editionBlock" hCpt where
+  hCpt hp { nodeId } _ = do
     -- | States
     -- |
     session <- useSession
@@ -42,7 +41,7 @@ editionBlockCpt = here.component "main" cpt where
     -- | Computed
     -- |
     let
-      errorHandler = logRESTError here "[corpusLayout]"
+      errorHandler = logRESTError hp
 
     -- | Hooks
     -- |
@@ -94,7 +93,7 @@ type Props_ =
 editionBlock_ :: R2.Leaf Props_
 editionBlock_ = R2.leaf editionBlockCpt_
 editionBlockCpt_ :: R.Component Props_
-editionBlockCpt_ = here.component "main_" cpt where
+editionBlockCpt_ = here.component "editionBlock_" cpt where
   cpt { nodeId
       , hyperdata
       } _ = do

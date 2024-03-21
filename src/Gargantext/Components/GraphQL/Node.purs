@@ -1,11 +1,9 @@
 module Gargantext.Components.GraphQL.Node where
 
 import Gargantext.Prelude
-
-import Data.Maybe (Maybe)
+import Gargantext.Utils.GraphQL as GGQL
 import GraphQL.Client.Args (Args, (=>>))
 import GraphQL.Client.Variable (Var(..))
-import Gargantext.Utils.GraphQL as GGQL
 import Type.Proxy (Proxy(..))
 
 

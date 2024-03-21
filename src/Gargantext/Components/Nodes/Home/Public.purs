@@ -7,7 +7,7 @@ import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.String (take)
 import Gargantext.Config (publicBackend)
-import Gargantext.Config.REST (AffRESTError, get, logRESTError)
+import Gargantext.Config.REST (AffRESTError, get)
 import Gargantext.Ends (backendUrl)
 import Gargantext.Hooks.Loader (useLoader)
 import Gargantext.Utils.Reactix as R2
@@ -68,15 +68,15 @@ loadPublicData _l = do
 renderPublic :: R2.Leaf ()
 renderPublic = R2.leaf renderPublicCpt
 renderPublicCpt :: R.Component ()
-renderPublicCpt = here.component "renderPublic" cpt where
-  cpt _ _ = do
-    useLoader { errorHandler
+renderPublicCpt = R2.hereComponent here "renderPublic" hCpt where
+  hCpt hp _ _ = do
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , loader: loadPublicData
               , path: { reload: 0 }
               , render:  loaded }
       where
         loaded publicData = publicLayout { publicData }
-        errorHandler = logRESTError here "[renderPublic]"
 
 publicLayout :: Record PublicDataProps -> R.Element
 publicLayout props = R.createElement publicLayoutCpt props []

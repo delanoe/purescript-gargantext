@@ -5,26 +5,22 @@ module Gargantext.Components.Nodes.Annuaire.User
   where
 
 
-import Gargantext.Prelude
-
 import Data.Either (Either(..))
 import Data.Lens as L
 import Data.Maybe (Maybe(..), fromMaybe)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (liftEffect)
-import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.GraphQL (getClient)
-import Gargantext.Components.GraphQL.Endpoints (getUserInfo, getUser, updateUserPubmedAPIKey)
+import Gargantext.Components.GraphQL.Endpoints (getUserInfo, getUser, updateUserPubmedAPIKey, updateUserEPOAPIUser, updateUserEPOAPIToken)
 import Gargantext.Components.GraphQL.User (UserInfo, _ui_cwCity, _ui_cwCountry, _ui_cwFirstName, _ui_cwLabTeamDeptsFirst, _ui_cwLastName, _ui_cwOffice, _ui_cwOrganizationFirst, _ui_cwRole, _ui_cwTouchMail, _ui_cwTouchPhone, _ui_cwDescription)
 import Gargantext.Components.InputWithEnter (inputWithEnter)
-import Gargantext.Components.Nodes.Annuaire.Tabs as Tabs
 import Gargantext.Components.Nodes.Annuaire.User.Contacts.Types (Contact(..), ContactData, ContactTouch(..), ContactWhere(..), ContactWho(..), HyperdataContact(..), HyperdataUser(..), _city, _country, _firstName, _labTeamDeptsJoinComma, _lastName, _mail, _office, _organizationJoinComma, _ouFirst, _phone, _role, _shared, _touch, _who, defaultContactTouch, defaultContactWhere, defaultContactWho, defaultHyperdataContact, defaultHyperdataUser)
-import Gargantext.Components.Nodes.Lists.Types as LT
-import Gargantext.Config.REST (AffRESTError, logRESTError)
+import Gargantext.Config.REST (AffRESTError)
 import Gargantext.Config.Utils (handleRESTError)
-import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude
 import Gargantext.Sessions (Session(..), WithSession, WithSessionContext, sessionId)
 import Gargantext.Types (CorpusId, FrontendError)
 import Gargantext.Utils.Reactix as R2
@@ -35,6 +31,7 @@ import Reactix as R
 import Reactix.DOM.HTML as H
 import Record as Record
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Annuaire.User"
@@ -70,9 +67,7 @@ listElement = H.li { className: "list-group-item justify-content-between" }
 -}
 
 type LayoutNoSessionProps =
-  ( boxes     :: Boxes
-  , frontends :: Frontends
-  , nodeId    :: CorpusId
+  ( nodeId    :: CorpusId
   )
 
 type LayoutProps = WithSession LayoutNoSessionProps
@@ -93,27 +88,26 @@ userLayoutCpt = here.component "userLayout" cpt
 userLayoutWithKey :: R2.Leaf ( key :: String | LayoutProps )
 userLayoutWithKey = R2.leaf userLayoutWithKeyCpt
 userLayoutWithKeyCpt :: R.Component ( key :: String | LayoutProps )
-userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
-  cpt { boxes: boxes@{ sidePanelLists
-                     , sidePanelTexts }
-      , frontends
-      , nodeId
-      , session } _ = do
+-- userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
+userLayoutWithKeyCpt = R2.hereComponent here "userLayoutWithKey" hCpt where
+  hCpt hp { nodeId
+          , session } _ = do
+    { errors } <- AppStore.use
     reload <- T.useBox T2.newReload
     reload' <- T.useLive T.unequal reload
 
     let Session {userId} = session
 
-    cacheState <- T.useBox LT.CacheOn
-
-    useLoader { errorHandler
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , loader: getUserInfoWithReload
               , path: { nodeId: userId, reload: reload', session }
               , render: \userInfo@{ ui_username } ->
                   H.ul { className: "col-md-12 list-group" } [
                     display { title: fromMaybe "no name" (Just ui_username) }
-                      (contactInfos userInfo (onUpdateUserInfo boxes.errors reload))
-                    , pubmedSettings { boxes, nodeId, session }
+                      (contactInfos userInfo (onUpdateUserInfo errors reload))
+                    , pubmedSettings { nodeId, session }
+                    , epoSettings { nodeId, session }
                     -- , Tabs.tabs {
                     --      boxes
                     --    , cacheState
@@ -127,13 +121,12 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
                     ]
               }
     where
-      errorHandler = logRESTError here "[userLayoutWithKey]"
       onUpdateUserInfo :: T.Box (Array FrontendError) -> T2.ReloadS -> UserInfo -> Effect Unit
       onUpdateUserInfo errors reload ui = do
         launchAff_ $ do
           let Session {userId} = session
           res <- saveUserInfo session userId ui
-          handleRESTError here errors res $ \_ ->
+          handleRESTError hp errors res $ \_ ->
             liftEffect $ T2.reload reload
 
 --saveContactHyperdata :: Session -> Int -> HyperdataUser -> AffRESTError Int
@@ -156,26 +149,22 @@ userLayoutWithKeyCpt = here.component "userLayoutWithKey" cpt where
 ------------------------------------------------------------
 
 type PubmedSettingsProps =
-  ( boxes   :: Boxes
-  , nodeId  :: CorpusId
+  ( nodeId  :: CorpusId
   , session :: Session )
 
 pubmedSettings :: R2.Leaf PubmedSettingsProps
 pubmedSettings = R2.leaf pubmedSettingsCpt
 pubmedSettingsCpt :: R.Component PubmedSettingsProps
-pubmedSettingsCpt = here.component "pubmedSettings" cpt where
-  cpt { boxes
-      , nodeId
-      , session } _ = do
-    useLoader { errorHandler
+pubmedSettingsCpt = R2.hereComponent here "pubmedSettings" hCpt where
+  hCpt hp { nodeId
+          , session } _ = do
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , loader: \_ -> getUser session nodeId
               , path: unit
-              , render: \user -> pubmedSettingsLoaded { boxes
-                                                      , nodeId
+              , render: \user -> pubmedSettingsLoaded { nodeId
                                                       , mPubmedAPIKey: user.u_hyperdata.pubmed_api_key
                                                       , session } }
-    where
-      errorHandler = logRESTError here "[pubmedSettings]"
 
 type PubmedSettingsLoadedProps =
   ( mPubmedAPIKey :: Maybe String
@@ -185,37 +174,111 @@ pubmedSettingsLoaded :: R2.Leaf PubmedSettingsLoadedProps
 pubmedSettingsLoaded = R2.leaf pubmedSettingsLoadedCpt
 pubmedSettingsLoadedCpt :: R.Component PubmedSettingsLoadedProps
 pubmedSettingsLoadedCpt = here.component "pubmedSettingsLoaded" cpt where
-  cpt { boxes: { errors }
-      , nodeId
+  cpt { nodeId
       , mPubmedAPIKey
       , session } _ = do
-    box <- T.useBox $ fromMaybe "" mPubmedAPIKey
-    isEditing <- T.useBox false
 
     pure $ R2.row
       [ R2.col 12
         [ R2.col 12
           [ R2.row
             [ H.h2 {} [ H.text "PubMed settings" ] ]
-          , H.div { className: "form-group row"}
-            [ H.span { className: "col-sm-2 col-form-label" } [ H.text "API Key" ]
-            , H.div { className: "input-group col-sm-6"}
-              [ itemEditable { defaultVal: ""
-                             , isEditing
-                             , onUpdate: \s -> do
-                               here.log2 "[pubmedSettingsLoaded] new api key" s
-                               case s of
-                                 "" -> pure unit
-                                 _ -> do
-                                   launchAff_ $ do
-                                     res <- updateUserPubmedAPIKey session nodeId s
-                                     handleRESTError here errors res $ \_result ->
-                                       liftEffect $ here.log "[pubmedSettingsLoaded] api key updated"
-                             , valueBox: box }]
-            ]
+          , editableUserField { callback: updateUserPubmedAPIKey session nodeId
+                              , description: "API Key"
+                              , mValue: mPubmedAPIKey }
           ]
         ]
       ]
+
+------------------------------------------------------------
+
+type EPOSettingsProps =
+  ( nodeId  :: CorpusId
+  , session :: Session )
+
+epoSettings :: R2.Leaf EPOSettingsProps
+epoSettings = R2.leaf epoSettingsCpt
+epoSettingsCpt :: R.Component EPOSettingsProps
+epoSettingsCpt = R2.hereComponent here "epoSettings" hCpt where
+  hCpt hp { nodeId
+          , session } _ = do
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
+              , loader: \_ -> getUser session nodeId
+              , path: unit
+              , render: \user -> epoSettingsLoaded { nodeId
+                                                   , mEPOAPIUser: user.u_hyperdata.epo_api_user
+                                                   , mEPOAPIToken: user.u_hyperdata.epo_api_token
+                                                   , session } }
+
+type EPOSettingsLoadedProps =
+  ( mEPOAPIUser  :: Maybe String
+  , mEPOAPIToken :: Maybe String
+  | EPOSettingsProps )
+
+epoSettingsLoaded :: R2.Leaf EPOSettingsLoadedProps
+epoSettingsLoaded = R2.leaf epoSettingsLoadedCpt
+epoSettingsLoadedCpt :: R.Component EPOSettingsLoadedProps
+epoSettingsLoadedCpt = here.component "epoSettingsLoaded" cpt where
+  cpt { nodeId
+      , mEPOAPIUser
+      , mEPOAPIToken
+      , session } _ = do
+
+    pure $ R2.row
+      [ R2.col 12
+        [ R2.col 12
+          [ R2.row
+            [ H.h2 {} [ H.text "EPO settings" ] ]
+          , editableUserField { callback: updateUserEPOAPIUser session nodeId 
+                              , description: "API User"
+                              , mValue: mEPOAPIUser }
+          , editableUserField { callback: updateUserEPOAPIToken session nodeId 
+                              , description: "API Token"
+                              , mValue: mEPOAPIToken }
+          ]
+        ]
+      ]
+
+------------------------------------------------------------
+
+type EditableUserField =
+  ( callback    :: String -> AffRESTError Unit
+  , description :: String
+  , mValue      :: Maybe String )
+
+editableUserField :: R2.Leaf EditableUserField
+editableUserField = R2.leaf editableUserFieldCpt
+editableUserFieldCpt :: R.Component EditableUserField
+editableUserFieldCpt = R2.hereComponent here "editableUserField" hCpt where
+  hCpt hp { callback
+          , description
+          , mValue } _ = do
+    { errors } <- AppStore.use
+    
+    box <- T.useBox $ fromMaybe "" mValue
+    isEditing <- T.useBox false
+
+    pure $ H.div { className: "form-group row"}
+      [ H.span { className: "col-sm-2 col-form-label" } [ H.text description ]
+      , H.div { className: "input-group col-sm-6"}
+        [ itemEditable { defaultVal: ""
+                       , isEditing
+                       , onUpdate: onUpdate errors
+                       , valueBox: box } ]
+      ]
+
+    where
+      onUpdate errors s = do
+        case s of
+          "" -> pure unit
+          _ -> do
+            launchAff_ $ do
+              res <- callback s
+              handleRESTError hp errors res (const $ pure unit)
+
+
+------------------------------------------------------------
 
 -- | TODO format data in better design (UI) shape
 contactInfos :: UserInfo -> (UserInfo -> Effect Unit) -> Array R.Element

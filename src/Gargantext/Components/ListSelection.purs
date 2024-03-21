@@ -1,15 +1,13 @@
 module Gargantext.Components.ListSelection where
 
-import Gargantext.Prelude
-
 import Data.Array as A
 import Data.Either (Either)
 import Data.Maybe (Maybe(..))
 import Gargantext.Components.Bootstrap as B
-import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe)
 import Gargantext.Components.ListSelection.Types (NodeSimple(..), Selection(..), selectedListIds)
-import Gargantext.Config.REST (RESTError(..), AffRESTError)
+import Gargantext.Config.REST (RESTError, AffRESTError)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(..))
 import Gargantext.Sessions (Session(..), get)
 import Gargantext.Types (ID, NodeType(..), fldr)
@@ -17,6 +15,7 @@ import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.ListSelection"
@@ -55,7 +54,7 @@ selectedIdsCpt = here.component "selectedIds" cpt where
     selection' <- T.useLive T.unequal selection
 
     pure $ case selection' of
-      SelectedLists ids -> H.div {} [ idsSelector { selection, session } [] ]
+      SelectedLists _ids -> H.div {} [ idsSelector { selection, session } [] ]
       _ -> H.div {} []
 
 type IdsSelectorProps =
@@ -117,26 +116,21 @@ type ListTreeChildrenProps =
 listTreeChildren :: R2.Component ListTreeChildrenProps
 listTreeChildren = R.createElement listTreeChildrenCpt
 listTreeChildrenCpt :: R.Component ListTreeChildrenProps
-listTreeChildrenCpt = here.component "listTreeChildren" cpt where
-  cpt { render, root, selection, session } _ = do
-    useLoader { errorHandler
+listTreeChildrenCpt = R2.hereComponent here "listTreeChildren" hCpt where
+  hCpt hp { render, root, selection, session } _ = do
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , loader: loadTreeChildren
               , path: { root, session }
               , render: \loaded ->
                   listTreeChildrenLoaded { loaded
                                          , render
-                                         , root
                                          , selection
                                          , session } [] }
-    where
-      errorHandler err = case err of
-        ReadJSONError err' -> here.warn2 "[listTreeChildren] ReadJSONError" $ show err'
-        _                  -> here.warn2 "[listTreeChildren] RESTError" err
 
 type ListTreeChildrenLoadedProps =
   ( loaded    :: Array NodeSimple
   , render    :: Render
-  , root      :: ID
   , selection :: T.Box Selection
   , session   :: Session )
 
@@ -144,7 +138,7 @@ listTreeChildrenLoaded :: R2.Component ListTreeChildrenLoadedProps
 listTreeChildrenLoaded = R.createElement listTreeChildrenLoadedCpt
 listTreeChildrenLoadedCpt :: R.Component ListTreeChildrenLoadedProps
 listTreeChildrenLoadedCpt = here.component "listTreeChildrenLoaded" cpt where
-  cpt { loaded, render, root, selection, session } _  = do
+  cpt { loaded, render, selection, session } _  = do
     pure $ H.div { className: "children" } (element <$> loaded)
     where
       element (NodeSimple { id, name, nodeType: nodeType@Corpus }) =

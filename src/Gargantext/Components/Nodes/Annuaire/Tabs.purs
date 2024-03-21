@@ -8,14 +8,11 @@ import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
-import Gargantext.Components.App.Store (Boxes)
 import Gargantext.Components.DocsTable as DT
 import Gargantext.Components.DocsTable.Types (Year)
 import Gargantext.Components.NgramsTable as NT
 import Gargantext.Core.NgramsTable.Functions as NTC
-import Gargantext.Components.Nodes.Lists.SidePanel as LSidePanel
 import Gargantext.Components.Nodes.Lists.Types as LTypes
-import Gargantext.Components.Nodes.Texts.Types as TextsT
 import Gargantext.Components.Tab as Tab
 import Gargantext.Ends (Frontends)
 import Gargantext.Sessions (Session)
@@ -51,14 +48,11 @@ modeTabType' Books = CTabAuthors
 modeTabType' Communication = CTabAuthors
 
 type TabsProps =
-  ( boxes         :: Boxes
-  , cacheState    :: T.Box LTypes.CacheState
+  ( cacheState    :: T.Box LTypes.CacheState
   , defaultListId :: Int
   , frontends     :: Frontends
   , nodeId        :: Int
   , session       :: Session
-  , sidePanel     :: T.Box (Maybe (Record TextsT.SidePanel))
-  , sidePanelList :: T.Box (Maybe (Record LSidePanel.SidePanel))
   )
 
 tabs :: R2.Leaf TabsProps
@@ -76,24 +70,21 @@ tabsCpt = here.component "tabs" cpt where
       , tabs: tabs' yearFilter chartReload props
       , className: "nodes-annuaire-layout-tabs"
       }
-  tabs' yearFilter chartReload props@{ boxes, defaultListId, sidePanel } =
+  tabs' yearFilter chartReload props@{ defaultListId } =
     [ "Documents"     /\ docs
     , "Patents"       /\ ngramsView (viewProps Patents)
     , "Books"         /\ ngramsView (viewProps Books)
     , "Communication" /\ ngramsView (viewProps Communication)
     , "Trash"         /\ docs -- TODO pass-in trash mode
     ] where
-      viewProps mode = { boxes         : props.boxes
-                       , cacheState    : props.cacheState
+      viewProps mode = { cacheState    : props.cacheState
                        , defaultListId : props.defaultListId
                        , frontends     : props.frontends
                        , mode
                        , nodeId        : props.nodeId
-                       , session       : props.session
-                       , sidePanel     : props.sidePanel
-                       , sidePanelList : props.sidePanelList }
+                       , session       : props.session }
       totalRecords = 4736  -- TODO lol
-      docs = DT.docViewLayout (Record.merge { boxes, chartReload, sidePanel } $ Record.merge dtCommon dtExtra)
+      docs = DT.docViewLayout (Record.merge { chartReload } $ Record.merge dtCommon dtExtra)
       dtCommon = RX.pick props :: Record DTCommon
       dtExtra =
         { chart: mempty
@@ -125,8 +116,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
   cpt props@{ defaultListId
             , mode
             , nodeId
-            , session
-            , sidePanelList } _ = do
+            , session } _ = do
     path <- T.useBox $
       NTC.initialPageParams session nodeId
       [ defaultListId ] (TabDocument TabDocs)
@@ -141,7 +131,6 @@ ngramsViewCpt = here.component "ngramsView" cpt where
           (Record.merge most
            { afterSync
            , path
-           , sidePanel: sidePanelList
            , tabType:        TabPairing (TabNgramType $ modeTabType mode)
            , tabNgramType:   modeTabType' mode
            , treeEdit: { box: treeEditBox
@@ -158,8 +147,7 @@ ngramsViewCpt = here.component "ngramsView" cpt where
     pure $ NT.mainNgramsTable props' []
 
 type NTCommon =
-  ( boxes         :: Boxes
-  , cacheState    :: T.Box LTypes.CacheState
+  ( cacheState    :: T.Box LTypes.CacheState
   , defaultListId :: Int
   , session       :: Session
   )

@@ -1,19 +1,16 @@
 module Gargantext.Components.Forest.Tree.Node.Action.Search where
 
-import Gargantext.Prelude
-
-import Data.Array as A
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff)
-import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.App.Store as Store
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchBar (searchBar)
 import Gargantext.Components.Forest.Tree.Node.Action.Search.SearchField (defaultSearch)
 import Gargantext.Components.Forest.Tree.Node.Action.Types (Action(..))
 import Gargantext.Components.Forest.Tree.Node.Action.Utils (loadLanguages)
-import Gargantext.Components.Lang (allLangs, Lang)
-import Gargantext.Config.REST (RESTError(..), AffRESTError)
+import Gargantext.Components.Lang (Lang)
 import Gargantext.Hooks.Loader (useLoader)
+import Gargantext.Prelude
 import Gargantext.Sessions (Session)
 import Gargantext.Types (ID)
 import Gargantext.Types as GT
@@ -28,8 +25,7 @@ here = R2.here "Gargantext.Components.Forest.Tree.Node.Action.Search"
 
 
 type Props =
-  ( boxes     :: Boxes
-  , dispatch  :: Action -> Aff Unit
+  ( dispatch  :: Action -> Aff Unit
   , id        :: Maybe ID
   , session   :: Session )
 
@@ -37,17 +33,14 @@ type Props =
 actionSearch :: R2.Component Props
 actionSearch = R.createElement actionSearchCpt
 actionSearchCpt :: R.Component Props
-actionSearchCpt = here.component "actionSearch" cpt where
-  cpt props@({ session }) _ = do
-    useLoader { errorHandler
+actionSearchCpt = R2.hereComponent here "actionSearch" hCpt where
+  hCpt hp props@({ session }) _ = do
+    useLoader { errorHandler: Nothing
+              , herePrefix: hp
               , loader: loadLanguages
               , path: { session }
               , render: \langs ->
                  actionSearchWithLangs (Record.merge props { langs }) [] }
-    where
-      errorHandler err = case err of
-        ReadJSONError err' -> here.warn2 "[actionSearch] ReadJSONError" $ show err'
-        _                  -> here.warn2 "[actionSearch] RESTError" err
 
 type PropsWithLangs =
   ( langs :: Array Lang
@@ -59,7 +52,8 @@ actionSearchWithLangs = R.createElement actionSearchWithLangsCpt
 actionSearchWithLangsCpt :: R.Component PropsWithLangs
 actionSearchWithLangsCpt = here.component "actionSearchWithLangs" cpt
   where
-    cpt { boxes: { errors }, dispatch, id, langs, session } _ = do
+    cpt { dispatch, id, langs, session } _ = do
+      { errors } <- Store.use
       search <- T.useBox $ defaultSearch { node_id = id }
       pure $ R.fragment
         [ H.p { className: "action-search mx-2" }

@@ -1,9 +1,9 @@
 module Data.SequenceArr where
 
-import Prelude
 import Data.Array as A
 import Data.Functor as Functor
 import Data.Tuple (Tuple(..))
+
 
 type Seq = Array
 

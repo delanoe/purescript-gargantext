@@ -2,8 +2,6 @@ module Gargantext.Components.Nodes.Frame
   ( node
   ) where
 
-import Gargantext.Prelude
-
 import Data.Maybe (Maybe(..), isJust)
 import Data.Tuple.Nested ((/\))
 import Gargantext.Components.Bootstrap as B
@@ -13,6 +11,7 @@ import Gargantext.Components.Node (NodePoly)
 import Gargantext.Config.REST (AffRESTError, logRESTError)
 import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Hooks.Session (useSession)
+import Gargantext.Prelude
 import Gargantext.Routes (SessionRoute(NodeAPI))
 import Gargantext.Sessions (Session, get)
 import Gargantext.Types (NodeType(..))
@@ -30,27 +29,26 @@ here = R2.here "Gargantext.Components.Nodes.Frame"
 
 node :: R2.Leaf ( key :: String | Props )
 node = R2.leaf nodeCpt
-
 nodeCpt :: R.Component ( key :: String | Props )
-nodeCpt = here.component "node" cpt where
-  cpt { nodeId
-      , nodeType
-      } _ = do
+nodeCpt = R2.hereComponent here "node" hCpt where
+  hCpt hp { nodeId
+          , nodeType
+          } _ = do
     -- | States
     -- |
     session <- useSession
 
     state'  /\ state  <- R2.useBox' Nothing
-    reload' /\ reload <- R2.useBox' T2.newReload
+    -- reload' /\ _reload <- R2.useBox' T2.newReload
 
     -- | Hooks
     -- |
     useLoaderEffect
-      { errorHandler: logRESTError here "[frameLayout]"
-      , loader: loadframeWithReload
+      { errorHandler: logRESTError hp
+      , loader: loadframe
       , path:
           { nodeId
-          , reload: reload'
+          -- , reload: reload'
           , session
           }
       , state
@@ -71,8 +69,6 @@ nodeCpt = here.component "node" cpt where
           R2.fromMaybe state' \frame ->
             layout
             { frame
-            , nodeId
-            , reload
             , nodeType
             }
       }
@@ -92,8 +88,8 @@ type ReloadProps =
   )
 
 -- Just to make reloading effective
-loadframeWithReload :: Record ReloadProps -> AffRESTError (NodePoly Hyperdata)
-loadframeWithReload { nodeId, session } = loadframe { nodeId, session }
+-- loadframeWithReload :: Record ReloadProps -> AffRESTError (NodePoly Hyperdata)
+-- loadframeWithReload { nodeId, session } = loadframe { nodeId, session }
 
 loadframe :: Record LoadProps -> AffRESTError (NodePoly Hyperdata)
 loadframe { nodeId, session } = get session $ NodeAPI Node (Just nodeId) ""

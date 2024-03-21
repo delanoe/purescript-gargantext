@@ -5,18 +5,16 @@ module Gargantext.Hooks.Sigmax.Graphology where
 -- serialized graph: https://graphology.github.io/serialization#format
 -- to use with: Graph.from(data)
 
-import Prelude
-
-import Data.Array as A
 import Data.Function.Uncurried (Fn2, runFn2)
 import Data.Sequence as Seq
 import Data.Set as Set
 import Data.Traversable (traverse, traverse_)
 import Effect (Effect)
 import Effect.Uncurried (EffectFn1, EffectFn2, EffectFn3, EffectFn4, runEffectFn1, runEffectFn2, runEffectFn3, runEffectFn4)
-import FFI.Simple ((..), (...), (.=))
+import FFI.Simple ((...))
 import Gargantext.Hooks.Sigmax.Types as Types
-import Record as Record
+import Prelude
+
 
 -- | Type representing `graphology.graph`
 foreign import data Graph :: Type
@@ -56,7 +54,7 @@ removeNode :: Graph -> String -> Effect Unit
 removeNode g nId = pure $ g ... "dropNode" $ [nId]
 updateNode :: Graph -> Record Types.Node -> Effect Unit
 -- | See Types.compareNodes
-updateNode g node@{ id, borderColor, color, equilateral, hidden, highlighted, type: t } =
+updateNode g { id, borderColor, color, equilateral, hidden, highlighted } =
   runEffectFn3 _updateNode g id (\n -> n { borderColor = borderColor
                                          , color = color
                                          , equilateral = equilateral

@@ -1,6 +1,8 @@
 module Gargantext.Components.Forest.Tree.Node.Settings where
 
-import Gargantext.Prelude (class Eq, class Show, show, (&&), (<>), (==))
+import Data.Default (class Default, def)
+import Data.Lens (Lens', lens, (.~))
+import Gargantext.Prelude (class Eq, class Show, show, (&&), (<>), (==), ($), (<<<))
 import Gargantext.Components.Forest.Tree.Node.Tools.SubTree.Types (SubTreeParams(..))
 import Gargantext.Types
 
@@ -11,92 +13,89 @@ import Gargantext.Types
 if user has access to node then he can do all his related actions
 -}
 ------------------------------------------------------------------------
-data NodeAction = Documentation NodeType
-                | SearchBox
-                | Download 
-                | Upload 
-                | Refresh 
-                | ReloadWithSettings
-                | Config 
-                | Reconstruct
-                | Delete
-                | Share
-                | ManageTeam
-                | Publish { subTreeParams :: SubTreeParams }
-                | Add    (Array NodeType)
-                | Merge { subTreeParams :: SubTreeParams }
-                | Move  { subTreeParams :: SubTreeParams }
-                | Link  { subTreeParams :: SubTreeParams }
-                | Clone
+data NodeAction = Add    (Array NodeType)
                 | AddingContact
                 | CloseNodePopover
+                | Config 
+                | Delete
+                | Documentation NodeType
+                | Download 
+                | Link  { subTreeParams :: SubTreeParams }
+                | ManageTeam
+                | Merge { subTreeParams :: SubTreeParams }
+                | Move  { subTreeParams :: SubTreeParams }
+                | Publish { subTreeParams :: SubTreeParams }
+                | Refresh 
+                | ReloadWithSettings
+                | Reconstruct
+                | SearchBox
+                | Share
+                | Upload 
                 | WriteNodesDocuments  -- https://gitlab.iscpif.fr/gargantext/purescript-gargantext/issues/331
 
 ------------------------------------------------------------------------
 instance Eq NodeAction where
-  eq (Documentation x) (Documentation y)     = true && (x == y)
-  eq SearchBox SearchBox                     = true
-  eq Download Download                       = true
-  eq Upload Upload                           = true
-  eq Refresh Refresh                         = true
-  eq ReloadWithSettings ReloadWithSettings   = true
-  eq (Move x) (Move y)                       = x == y
-  eq Clone Clone                             = true
-  eq Delete Delete                           = true
-  eq Share Share                             = true
-  eq ManageTeam ManageTeam                   = true
-  eq (Link x) (Link y)                       = x == y
   eq (Add  x) (Add  y)                       = x == y
-  eq (Merge x) (Merge y)                     = x == y
-  eq Config Config                           = true
-  eq Reconstruct Reconstruct                 = true
-  eq (Publish x) (Publish y)                 = x == y
   eq AddingContact AddingContact             = true
   eq CloseNodePopover CloseNodePopover       = true
+  eq Config Config                           = true
+  eq Delete Delete                           = true
+  eq (Documentation x) (Documentation y)     = true && (x == y)
+  eq Download Download                       = true
+  eq (Link x) (Link y)                       = x == y
+  eq ManageTeam ManageTeam                   = true
+  eq (Merge x) (Merge y)                     = x == y
+  eq (Move x) (Move y)                       = x == y
+  eq (Publish x) (Publish y)                 = x == y
+  eq Reconstruct Reconstruct                 = true
+  eq Refresh Refresh                         = true
+  eq ReloadWithSettings ReloadWithSettings   = true
+  eq SearchBox SearchBox                     = true
+  eq Share Share                             = true
+  eq Upload Upload                           = true
   eq WriteNodesDocuments WriteNodesDocuments = true
   eq _ _                                     = false
 
 instance Show NodeAction where
-  show (Documentation x)   = "Documentation of " <> show x
-  show SearchBox           = "SearchBox"
-  show Download            = "Download"
-  show Upload              = "Upload"
-  show Refresh             = "Refresh"
-  show ReloadWithSettings  = "Reload (with settings)"
-  show (Move _)            = "Move with subtree params" -- <> show t
-  show Clone               = "Clone"
-  show Delete              = "Delete"
-  show Share               = "Share"
-  show ManageTeam          = "Team"
-  show Config              = "Config"
-  show Reconstruct         = "Reconstruct"
-  show (Link _)            = "Link to " -- <> show x
   show (Add _)             = "Add Child" -- foldl (\a b -> a <> show b) "Add " xs
-  show (Merge _)           = "Merge with subtree" -- <> show t
-  show (Publish _)         = "Publish" -- <> show x
   show AddingContact       = "AddingContact"
   show CloseNodePopover    = "CloseNodePopover"
+  show Config              = "Config"
+  show Delete              = "Delete"
+  show (Documentation x)   = "Documentation of " <> show x
+  show Download            = "Download"
+  show (Link _)            = "Link to " -- <> show x
+  show ManageTeam          = "Team"
+  show (Merge _)           = "Merge with subtree" -- <> show t
+  show (Move _)            = "Move with subtree params" -- <> show t
+  show (Publish _)         = "Publish" -- <> show x
+  show Reconstruct         = "Reconstruct"
+  show Refresh             = "Refresh"
+  show ReloadWithSettings  = "Reload (with settings)"
+  show SearchBox           = "SearchBox"
+  show Share               = "Share"
+  show Upload              = "Upload"
   show WriteNodesDocuments = "WriteNodesDocuments"
 
 glyphiconNodeAction :: NodeAction -> String
-glyphiconNodeAction (Documentation _)   = "question-circle"
-glyphiconNodeAction Delete              = "trash"
 glyphiconNodeAction (Add _)             = "plus"
-glyphiconNodeAction SearchBox           = "search"
-glyphiconNodeAction Upload              = "upload"
-glyphiconNodeAction (Link _)            = "arrows-h"
-glyphiconNodeAction Download            = "download"
-glyphiconNodeAction (Merge _)           = "random"
-glyphiconNodeAction Refresh             = "refresh"
-glyphiconNodeAction ReloadWithSettings  = "reload-with-settings"
-glyphiconNodeAction Config              = "wrench"
-glyphiconNodeAction Reconstruct         = "cogs"
-glyphiconNodeAction Share               = "user-plus"
-glyphiconNodeAction ManageTeam          = "users"
 glyphiconNodeAction AddingContact       = "user-plus"
+glyphiconNodeAction CloseNodePopover    = "close"
+glyphiconNodeAction Config              = "wrench"
+glyphiconNodeAction Delete              = "trash"
+glyphiconNodeAction (Documentation _)   = "question-circle"
+glyphiconNodeAction Download            = "download"
+glyphiconNodeAction (Link _)            = "arrows-h"
+glyphiconNodeAction ManageTeam          = "users"
+glyphiconNodeAction (Merge _)           = "random"
 glyphiconNodeAction (Move _)            = "share-square-o"
 glyphiconNodeAction (Publish _)         = fldr FolderPublic true
-glyphiconNodeAction CloseNodePopover    = "close"
+glyphiconNodeAction Reconstruct         = "cogs"
+glyphiconNodeAction Refresh             = "refresh"
+glyphiconNodeAction ReloadWithSettings  = "reload-with-settings"
+glyphiconNodeAction SearchBox           = "search"
+glyphiconNodeAction Share               = "user-plus"
+glyphiconNodeAction Upload              = "upload"
 glyphiconNodeAction WriteNodesDocuments = "bars"
 glyphiconNodeAction _                   = ""
 
@@ -107,294 +106,197 @@ data SettingsBox =
               , doc     :: NodeAction
               , buttons :: Array NodeAction
               }
+instance Default SettingsBox where
+  def = SettingsBox { show: true
+                    , edit: true
+                    , doc: Documentation Annuaire
+                    , buttons: []
+                    }
+
+defNt :: NodeType -> SettingsBox
+defNt nt = (_doc .~ Documentation nt) def
+        
+_show :: Lens' SettingsBox Boolean
+_show = lens (\(SettingsBox { show }) -> show) (\(SettingsBox sb) val -> SettingsBox (sb { show = val }))
+
+_edit :: Lens' SettingsBox Boolean
+_edit = lens (\(SettingsBox { edit }) -> edit) (\(SettingsBox sb) val -> SettingsBox (sb { edit = val }))
+
+_doc :: Lens' SettingsBox NodeAction
+_doc = lens (\(SettingsBox { doc }) -> doc) (\(SettingsBox sb) val -> SettingsBox (sb { doc = val }))
+
+_buttons :: Lens' SettingsBox (Array NodeAction)
+_buttons = lens (\(SettingsBox { buttons }) -> buttons)
+           (\(SettingsBox sb) val -> SettingsBox (sb { buttons = val }))
 ------------------------------------------------------------------------
-
+  
 settingsBox :: NodeType -> SettingsBox
-settingsBox NodeUser =
-  SettingsBox { show : true
-              , edit : false
-              , doc  : Documentation NodeUser
-              , buttons : [ Delete
-                          ]
-              }
+settingsBox p = (settingsBoxLens p) $ defNt p
 
-settingsBox FolderPrivate =
-  SettingsBox { show : true
-              , edit : false
-              , doc  : Documentation FolderPrivate
-              , buttons : [ Add [ Notes
-                                , Corpus
-                                , Calc
-                                , Folder
-                                , Annuaire
-                                -- , NodeFrameNotebook
-                                ]
-                          ]
-              }
+settingsBoxLens :: NodeType -> (SettingsBox -> SettingsBox)
+settingsBoxLens Annuaire =
+  _buttons .~ [ Upload
+              , AddingContact
+              , Move moveParameters
+              , Link (linkParams Corpus)
+              , Delete ]
+settingsBoxLens Calc =
+  _buttons .~ [ Upload
+              , Add [ Calc
+                    , Notes ]
+              , Move moveFrameParameters
+              , Delete ]
+settingsBoxLens Corpus =
+  _buttons .~ [ Add [ Graph
+                    , Notes
+                    , Calc
+                    , NodeTexts
+                    , NodeList
+                    , Graph
+                      -- , Dashboard
+                    , Phylo
+                      -- , NodeFrameNotebook
+                    ]
+              , Move moveParameters
+              , Upload
+              , SearchBox
+              , WriteNodesDocuments
+                -- , Download
+              , Link (linkParams Annuaire)
+              , Delete
+              ]
+settingsBoxLens Dashboard =
+    (_edit .~ false) <<<
+    (_buttons .~ [ ReloadWithSettings
+                 , Publish publishParams
+                 , Delete
+                 ])
+settingsBoxLens Folder =
+  _buttons .~ [ Add [ Notes
+                    , Corpus
+                    , Calc
+                    , Folder
+                    , Annuaire
+                      -- , NodeFrameNotebook
+                    ]
+              , Move moveParameters
+              , Delete
+              ]
+settingsBoxLens FolderPrivate =
+  (_edit .~ false) <<<
+  (_buttons .~ [ Add [ Notes
+                     , Corpus
+                     , Calc
+                     , Folder
+                     , Annuaire
+                       -- , NodeFrameNotebook
+                     ]
+               ])
+settingsBoxLens FolderPublic =
+  _buttons .~ [ Add [ FolderPublic ]
+              ]
+settingsBoxLens FolderShared =
+  _buttons .~ [ Add [Team, FolderShared]
+              ]
+settingsBoxLens Graph =
+  _buttons .~ [ ReloadWithSettings
+              , Config
+              , Download -- TODO as GEXF or JSON
+                -- , Publish publishParams
+              , Delete
+              ]
+settingsBoxLens NodeFile =
+  _buttons .~ [ Publish publishParams
+              , Delete ]
+settingsBoxLens NodeFrameNotebook =
+  _buttons .~ [ Add [ Calc
+                    , Notes
+                      -- , NodeFrameNotebook
+                    ]
+              , Move moveFrameParameters
+              , Delete
+              ]
+settingsBoxLens NodeFrameVisio =
+  _buttons .~ [ Add [ NodeFrameVisio
+                    , Notes
+                    , Calc
+                    ]
+              , Delete
+              ]
+settingsBoxLens NodeList =
+  _buttons .~ [ ReloadWithSettings
+              , Config
+              , Upload
+              , Download
+              , Merge {subTreeParams : SubTreeParams { showtypes: [ FolderPrivate
+                                                                  , FolderShared
+                                                                  , Team
+                                                                  , FolderPublic
+                                                                  , Folder
+                                                                  , Corpus
+                                                                  , NodeList
+                                                                  ]
+                                                     , valitypes: [ NodeList ]
+                                                     }
+                      }
+              , Delete
+              ]
+settingsBoxLens (NodePublic Dashboard) =
+  _buttons .~ [ Delete
+              ]
+settingsBoxLens (NodePublic FolderPublic) =
+  _buttons .~ [ Add [FolderPublic]
+              , Delete
+              ]
+settingsBoxLens (NodePublic Graph) =
+  _buttons .~ [ Download -- TODO as GEXF or JSON
+              , Delete
+              ]
+settingsBoxLens (NodePublic NodeFile) =
+  _buttons .~ [ Delete
+              ]
+settingsBoxLens NodeTexts =
+  _buttons .~ [ ReloadWithSettings
+              , Upload
+              , Download
+              , Delete
+              ]
+settingsBoxLens NodeUser =
+  (_edit .~ false) <<<
+  (_buttons .~ [ Delete
+               ])
+settingsBoxLens Notes =
+  _buttons .~ [ Add [ Notes
+                    , Calc
+                    , Folder
+                    , Corpus
+                    ]
+              , Move moveFrameParameters
+              , Delete
+              ]
+settingsBoxLens Phylo =
+  _buttons .~ [ Reconstruct
+              , Delete
+              ]
+settingsBoxLens Team =
+  _buttons .~ [ Add [ Notes
+                    , Corpus
+                    , Calc
+                    , Folder
+                    , Team
+                    , Annuaire
+                      -- , NodeFrameNotebook
+                      -- , FolderShared
+                    , NodeFrameVisio
+                    ]
+              , Share
+              , ManageTeam
+              , Delete
+              ]
+settingsBoxLens _ =
+  (_show .~ false) <<<
+  (_edit .~ false)
 
-settingsBox Team =
-  SettingsBox { show : true
-              , edit : true
-              , doc  : Documentation Team
-              , buttons : [ Add [ Notes
-                                , Corpus
-                                , Calc
-                                , Folder
-                                , Team
-                                , Annuaire
-                                -- , NodeFrameNotebook
-                                -- , FolderShared
-                                , NodeFrameVisio
-                                ]
-                          , Share
-                          , ManageTeam
-                          , Delete
-                          ]
-              }
-
-settingsBox FolderShared =
-  SettingsBox { show : true
-              , edit : true
-              , doc  : Documentation FolderShared
-              , buttons : [ Add [Team, FolderShared]
-                          ]
-              }
-
-settingsBox FolderPublic =
-  SettingsBox { show : true
-              , edit : true
-              , doc  : Documentation FolderPublic
-              , buttons : [ Add [ FolderPublic ]
-                          ]
-              }
-
-settingsBox Folder =
-  SettingsBox { show : true
-              , edit : true
-              , doc  : Documentation Folder
-              , buttons : [ Add [ Notes
-                                , Corpus
-                                , Calc
-                                , Folder
-                                , Annuaire
-                                -- , NodeFrameNotebook
-                                ]
-                          , Move moveParameters
-                          , Delete
-                          ]
-              }
-
-settingsBox Corpus =
-  SettingsBox { show : true
-              , edit : true
-              , doc  : Documentation Corpus
-              , buttons : [ Add [ Graph
-                                , Notes
-                                , Calc
-                                , NodeTexts
-                                , NodeList
-                                , Graph
-                                -- , Dashboard
-                                , Phylo
-                                -- , NodeFrameNotebook
-                                ]
-                          , Move moveParameters
-                          , Upload
-                          , SearchBox
-                          , WriteNodesDocuments
-                          -- , Download
-                          , Link (linkParams Annuaire)
-                          , Delete
-                          ]
-              }
-
-settingsBox NodeTexts =
-  SettingsBox { show : true
-              , edit : true
-              , doc  : Documentation NodeTexts
-              , buttons : [ ReloadWithSettings
-                          , Upload
-                          , Download
-                          , Delete
-                          ]
-              }
-
-settingsBox Graph =
-  SettingsBox { show : true
-              , edit : true
-              , doc  : Documentation Graph
-              , buttons : [ ReloadWithSettings
-                          , Config
-                          , Download -- TODO as GEXF or JSON
-                          -- , Publish publishParams
-                          , Delete
-                          ]
-              }
-
-settingsBox Phylo =
-  SettingsBox { show : true
-              , edit : true
-              , doc  : Documentation Phylo
-              , buttons : [ Reconstruct
-                          , Delete
-                          ]
-              }
-
-
-
-settingsBox (NodePublic Graph) =
-  SettingsBox { show : true
-              , edit : true
-              , doc  : Documentation Graph
-              , buttons : [ Download -- TODO as GEXF or JSON
-                          , Delete
-                          ]
-              }
-
-settingsBox (NodePublic Dashboard) =
-  SettingsBox { show : true
-              , edit : true
-              , doc  : Documentation Dashboard
-              , buttons : [ Delete
-                          ]
-              }
-
-settingsBox (NodePublic NodeFile) =
-  SettingsBox { show : true
-              , edit : true
-              , doc  : Documentation NodeFile
-              , buttons : [ Delete
-                          ]
-              }
-
-
-
-settingsBox (NodePublic FolderPublic) =
-  SettingsBox { show : true
-              , edit : true
-              , doc  : Documentation FolderPublic
-              , buttons : [ Add [FolderPublic]
-                          , Delete
-                          ]
-              }
-
-
-settingsBox NodeList =
-  SettingsBox { show : true
-              , edit : true
-              , doc  : Documentation NodeList
-              , buttons : [ ReloadWithSettings
-                          , Config
-                          , Upload
-                          , Download
-                          , Merge {subTreeParams : SubTreeParams { showtypes: [ FolderPrivate
-                                                                , FolderShared
-                                                                , Team
-                                                                , FolderPublic
-                                                                , Folder
-                                                                , Corpus
-                                                                , NodeList
-                                                                ]
-                                                    , valitypes: [ NodeList ]
-                                                    }
-                                   }
-                          , Delete
-                          ]
-              }
-
-settingsBox Dashboard =
-  SettingsBox { show : true
-              , edit : false
-              , doc  : Documentation Dashboard
-              , buttons : [ ReloadWithSettings
-                          , Publish publishParams
-                          , Delete
-                          ]
-              }
-
-settingsBox Annuaire =
-  SettingsBox { show : true
-              , edit : true
-              , doc  : Documentation Annuaire
-              , buttons : [ Upload
-                          , AddingContact
-                          , Move moveParameters
-                          , Link (linkParams Corpus)
-                          , Delete
-                          ]
-              }
-
-
-settingsBox Notes =
-  SettingsBox { show : true
-              , edit : true
-              , doc  : Documentation Notes
-              , buttons : [ Add [ Notes
-                                , Calc
-                                , Folder
-                                , Corpus
-                                ]
-                          , Move moveFrameParameters
-                          , Delete
-                          ]
-              }
-
-
-settingsBox Calc =
-  SettingsBox { show : true
-              , edit : true
-              , doc  : Documentation Calc
-              , buttons : [ Upload
-                          , Add [ Calc
-                                , Notes
-                                ]
-                          , Move moveFrameParameters
-                          , Delete
-                          ]
-              }
-
-settingsBox NodeFrameNotebook =
-  SettingsBox { show : true
-              , edit : true
-              , doc  : Documentation NodeFrameNotebook
-              , buttons : [ Add [ Calc
-                                , Notes
-                                -- , NodeFrameNotebook
-                                ]
-                          , Move moveFrameParameters
-                          , Delete
-                          ]
-              }
-
-
-settingsBox NodeFrameVisio =
-  SettingsBox { show : true
-              , edit : true
-              , doc  : Documentation NodeFrameVisio
-              , buttons : [ Add [ NodeFrameVisio
-                                , Notes
-                                , Calc
-                                ]
-                          , Delete
-                          ]
-              }
-
-
-settingsBox NodeFile =
-  SettingsBox { show: true
-              , edit: true
-              , doc: Documentation NodeFile
-              , buttons: [ Publish publishParams
-                         , Delete ]
-              }
-
-
-settingsBox _ =
-  SettingsBox { show : false
-              , edit : false
-              , doc  : Documentation NodeUser
-              , buttons : []
-              }
 
 -- | SubTree Parameters
 

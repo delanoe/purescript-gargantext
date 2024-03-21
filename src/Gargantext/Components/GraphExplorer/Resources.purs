@@ -5,36 +5,29 @@ module Gargantext.Components.GraphExplorer.Resources
   )
   where
 
-import Gargantext.Prelude
-
+import DOM.Simple.Types (Element)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Nullable (Nullable)
-import Data.Sequence as Seq
-import Data.Set as Set
-import Data.Traversable (traverse_)
-import Data.Tuple (Tuple(..), fst, snd)
-import DOM.Simple (window)
-import DOM.Simple.Types (Element)
+import Data.Tuple (Tuple(..))
 import Effect.Class.Console as ECC
 import Effect.Timer (setTimeout)
 import Gargantext.Components.App.Store as AppStore
 import Gargantext.Components.GraphExplorer.Store as GraphStore
 import Gargantext.Components.GraphExplorer.Types as GET
-import Gargantext.Components.Themes (darksterTheme)
 import Gargantext.Components.Themes as Themes
 import Gargantext.Hooks.Sigmax as Sigmax
 import Gargantext.Hooks.Sigmax.Camera as Camera
-import Gargantext.Hooks.Sigmax.Graphology as Graphology
 import Gargantext.Hooks.Sigmax.ForceAtlas2 as ForceAtlas2
 import Gargantext.Hooks.Sigmax.Noverlap as Noverlap
 import Gargantext.Hooks.Sigmax.Sigma as Sigma
 import Gargantext.Hooks.Sigmax.Types as SigmaxTypes
+import Gargantext.Prelude
 import Gargantext.Utils (getter)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
-import Record (merge)
 import Toestand as T
+
 
 here :: R2.Here
 here = R2.here "Gargantext.Components.GraphExplorer.Resources"
@@ -63,7 +56,7 @@ drawGraphCpt = here.component "drawGraph" cpt where
       , forceAtlas2Settings: fa2Settings
       } _ = do
 
-    boxes <- AppStore.use
+    { theme } <- AppStore.use
 
     { edgeConfluence
     , edgeWeight
@@ -72,7 +65,6 @@ drawGraphCpt = here.component "drawGraph" cpt where
     , hyperdataGraph
     , mouseSelectorSize
     , multiSelectEnabled
-    , nodeSize
     , selectedNodeIds
     , showEdges
     , startForceAtlas
@@ -83,7 +75,6 @@ drawGraphCpt = here.component "drawGraph" cpt where
     edgeWeight'       <- R2.useLive' edgeWeight
     forceAtlasState'  <- R2.useLive' forceAtlasState
     graphStage'       <- R2.useLive' graphStage
-    nodeSize'         <- R2.useLive' nodeSize
     showEdges'        <- R2.useLive' showEdges
     startForceAtlas'  <- R2.useLive' startForceAtlas
     transformedGraph' <- R2.useLive' transformedGraph
@@ -116,12 +107,12 @@ drawGraphCpt = here.component "drawGraph" cpt where
 
         case Sigmax.readSigma rSigma of
           Nothing -> do
-            theme <- T.read boxes.theme
+            theme' <- T.read theme
             eSigma <- case R.readNullableRef elRef of
               Nothing -> do
                 _ <- ECC.error "elRef is empty"
                 pure $ Left "elRef is empty"
-              Just el -> Sigma.sigma el { settings: sigmaSettings theme }
+              Just el -> Sigma.sigma el { settings: sigmaSettings theme' }
             case eSigma of
               Left err -> here.warn2 "[drawGraph] error creating sigma" err
               Right sig -> do
@@ -207,16 +198,11 @@ drawGraphCpt = here.component "drawGraph" cpt where
     --       etc) // drawback: don't forget to modify the effect white-list
     R.useEffect' $ do
       let updateGraph = do
-              let tEdgesMap = SigmaxTypes.edgesGraphMap transformedGraph'
-              let tNodesMap = SigmaxTypes.nodesGraphMap transformedGraph'
-
               let updateSigma _ = do
                     Sigmax.dependOnSigma (R.readRef sigmaRef) "[drawGraph (Ready)] no sigma" $ \sigma -> do
                       Sigmax.performDiff sigma transformedGraph'
                       -- Sigmax.updateEdges sigma tEdgesMap
                       -- Sigmax.updateNodes sigma tNodesMap
-                      let edgesState = not $ SigmaxTypes.edgeStateHidden showEdges'
-                      -- here.log2 "[graphCpt] edgesState" edgesState
                       Sigmax.setSigmaEdgesVisibility sigma { edgeConfluence: edgeConfluence'
                                                            , edgeWeight: edgeWeight'
                                                            , showEdges: showEdges' }
@@ -345,7 +331,7 @@ type SigmaSettings =
   -- not selected <=> (1-greyness)
   -- selected nodes <=> special label
 sigmaSettings :: Themes.Theme -> {|SigmaSettings}
-sigmaSettings theme =
+sigmaSettings _theme =
   { -- animationsTime : 30000.0
   -- , autoRescale : true
   --, autoResize : true

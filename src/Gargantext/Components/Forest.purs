@@ -3,44 +3,38 @@ module Gargantext.Components.Forest
   , Props
   ) where
 
-import Gargantext.Prelude
-
 import Data.Array as A
 import Data.Map (empty)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe)
-import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.App.Store as Store
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), Position(..), TooltipPosition(..), Variant(..))
 import Gargantext.Components.Forest.Tree (treeLoader)
 import Gargantext.Ends (Frontends)
-import Gargantext.Hooks.LinkHandler (useLinkHandler)
-import Gargantext.Routes (AppRoute(..))
+import Gargantext.Prelude
 import Gargantext.Sessions (Session(..), unSessions)
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
 import Reactix.DOM.HTML as H
 import Toestand as T
 
+
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest"
 
 -- Shared by components here with Tree
 type Props =
-  ( boxes     :: Boxes
-  , frontends :: Frontends
+  ( frontends :: Frontends
   )
 
 forestLayout :: R2.Leaf Props
 forestLayout = R2.leaf forestLayoutCpt
-
 forestLayoutCpt :: R.Component Props
 forestLayoutCpt = here.component "forest" cpt where
-  cpt { boxes: boxes@{ handed
-                     , reloadForest
-                     , sessions
-                     , pinnedTreeId }
-      , frontends } _ = do
+  cpt { frontends } _ = do
+    { handed, reloadForest, sessions, pinnedTreeId } <- Store.use
+    
     -- TODO Fix this. I think tasks shouldn't be a Box but only a Reductor
     -- tasks'        <- GAT.useTasks reloadRoot reloadForest
     -- R.useEffect' $ do
@@ -58,16 +52,16 @@ forestLayoutCpt = here.component "forest" cpt where
 
       H.div
       { className: "forest-layout bg-light" }
-      (A.cons (plus { boxes }) (trees handed' pinnedTreeId' sessions'))
+      (A.cons (plus {}) (trees handed' pinnedTreeId' sessions' reloadForest))
     where
-      trees handed' pinnedTreeId' sessions' = (tree handed' pinnedTreeId') <$> unSessions sessions'
-      tree handed' pinnedTreeId' s@(Session { treeId }) =
+      trees handed' pinnedTreeId' sessions' reloadForest =
+        (tree handed' pinnedTreeId' reloadForest) <$> unSessions sessions'
+      tree handed' pinnedTreeId' reloadForest s@(Session { treeId }) =
         H.div
         { className: "forest-layout__tree" }
         [
           treeLoader
-          { boxes
-          , frontends
+          { frontends
           , handed: handed'
           , reload: reloadForest
           , root: r
@@ -78,16 +72,15 @@ forestLayoutCpt = here.component "forest" cpt where
         where
           r = fromMaybe treeId (Map.lookup (show s) pinnedTreeId')
 
-type Plus = ( boxes :: Boxes )
+type Plus = ( )
 
 plus :: R2.Leaf Plus
 plus = R2.leaf plusCpt
 plusCpt :: R.Component Plus
 plusCpt = here.component "plus" cpt where
-  cpt { boxes: { backend, showLogin, showSearch, pinnedTreeId} } _ = do
-    -- Hooks
-    { goToRoute } <- useLinkHandler
-
+  cpt { } _ = do
+    { backend, pinnedTreeId, showLogin, showSearch } <- Store.use
+    
     -- Behaviors
     let
       click _ = do

@@ -134,7 +134,6 @@ newtype Document =
     , source             :: Maybe String
     , institutes         :: Maybe String
     , title              :: Maybe String
-    , uniqId             :: Maybe String
     --, url                :: Maybe String
     --, text               :: Maybe String
     }
@@ -176,7 +175,6 @@ defaultDocument =
            , source             : Nothing
            , institutes         : Nothing
            , title              : Nothing
-           , uniqId             : Nothing
            --, url                : Nothing
            --, text               : Nothing
            }

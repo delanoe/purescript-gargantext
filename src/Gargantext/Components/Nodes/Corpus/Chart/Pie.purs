@@ -30,6 +30,7 @@ import Reactix.DOM.HTML as H
 import Simple.JSON as JSON
 import Toestand as T
 
+
 here :: R2.Here
 here = R2.here "Gargantext.Components.Nodes.Corpus.Chart.Pie"
 
@@ -109,12 +110,11 @@ pie = R2.leaf pieCpt
 pieCpt :: R.Component Props
 pieCpt = here.component "pie" cpt
   where
-    cpt { boxes, path, session, onClick, onInit } _ = do
+    cpt { path, session, onClick, onInit } _ = do
       reload <- T.useBox T2.newReload
 
       pure $ metricsWithCacheLoadView
-        { boxes
-        , getMetricsHash
+        { getMetricsHash
         , handleResponse
         , loaded: loadedPie
         , mkRequest: mkRequest session
@@ -129,9 +129,7 @@ loadedPie :: R2.Leaf LoadedProps
 loadedPie = R2.leaf loadedPieCpt
 loadedPieCpt :: R.Component LoadedProps
 loadedPieCpt = here.component "loadedPie" cpt where
-  cpt p@{ path
-        , reload
-        , session } _ = do
+  cpt p _ = do
     pure $ H.div {} [
       {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: ChartPie, path, reload, session }
@@ -144,12 +142,11 @@ bar props = R.createElement barCpt props []
 barCpt :: R.Component Props
 barCpt = here.component "bar" cpt
   where
-    cpt { boxes, path, session, onClick, onInit} _ = do
+    cpt { path, session, onClick, onInit} _ = do
       reload <- T.useBox T2.newReload
 
       pure $ metricsWithCacheLoadView {
-           boxes
-         , getMetricsHash
+           getMetricsHash
          , handleResponse
          , loaded: loadedBar
          , mkRequest: mkRequest session
@@ -164,9 +161,7 @@ loadedBar :: R2.Leaf LoadedProps
 loadedBar = R2.leaf loadedBarCpt
 loadedBarCpt :: R.Component LoadedProps
 loadedBarCpt = here.component "loadedBar" cpt where
-  cpt p@{ path
-        , reload
-        , session } _ = do
+  cpt p _ = do
     pure $ H.div {} [
       {-  U.reloadButton reload
   , U.chartUpdateButton { chartType: ChartBar, path, reload, session }

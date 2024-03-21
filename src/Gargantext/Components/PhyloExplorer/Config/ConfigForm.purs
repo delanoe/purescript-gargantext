@@ -3,12 +3,10 @@ module Gargantext.Components.PhyloExplorer.Config.ConfigForm
   , FormData
   ) where
 
-import Gargantext.Prelude
-
 import DOM.Simple.Console (log3)
 import Data.Either (Either(..))
-import Data.Generic.Rep (class Generic)
 import Data.Foldable (foldl, intercalate)
+import Data.Generic.Rep (class Generic)
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Effect (Effect)
@@ -16,10 +14,10 @@ import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.Bootstrap.Types (ButtonVariant(..), ComponentStatus(..), Variant(..))
 import Gargantext.Components.PhyloExplorer.API (CliqueFilter(..), ReflexiveClique(..), ReflexiveTimeUnit(..))
 import Gargantext.Hooks.FormValidation (VForm, useFormValidation)
-import Gargantext.Components.Forest.Tree.Node.Tools (formChoiceSafe, panel)
 import Gargantext.Hooks.FormValidation.Unboxed as FV
 import Gargantext.Hooks.StateRecord (useStateRecord)
 import Gargantext.Hooks.StateRecord.Behaviors (setter)
+import Gargantext.Prelude
 import Gargantext.Utils (nbsp, (?))
 import Gargantext.Utils.Reactix as R2
 import Reactix as R
@@ -27,6 +25,7 @@ import Reactix.DOM.HTML as H
 import Record (merge)
 import Record as Record
 import Record.Extra (pick)
+
 
 type Props =
   ( callback  :: Record FormData -> Effect Unit
