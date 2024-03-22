@@ -4,11 +4,14 @@ import Gargantext.Prelude
 
 import Data.Array as A
 import Data.Array as Array
-import Data.Maybe (Maybe(..), isJust)
+import Data.Int (fromString)
+import Data.Maybe (fromMaybe, Maybe(..), isJust)
+import Data.String (Pattern(..), split)
 import Data.Traversable (intercalate, traverse, traverse_)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
+import Effect.Console as Console
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Store as Store
 import Gargantext.Components.Bootstrap as B
@@ -33,10 +36,11 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, get, mkNodeId)
-import Gargantext.Sessions.Types (useOpenNodesMemberBox, openNodesInsert, openNodesDelete)
+import Gargantext.Sessions.Types (OpenNodes, useOpenNodesMemberBox, openNodesInsert, openNodesDelete)
 import Gargantext.Types (Handed, ID, isPublic, publicize)
 import Gargantext.Types as GT
 import Gargantext.Utils ((?))
+import Gargantext.Utils as GU
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
@@ -163,10 +167,24 @@ treeCpt = here.component "tree" cpt where
         , tree: NTree (LNode { id, name, nodeType }) children } _ = do
     boxes@{ forestOpen } <- Store.use
 
+    url <- R.unsafeHooksEffect GU.href
+    let nodeIdFromUrl = fromMaybe 0 $ fromString $ getLastUrlElement url
+    let currentNodeIdFromUrl = mkNodeId session nodeIdFromUrl
+    -- R.unsafeHooksEffect $ Console.log $ "id: " <> show id
+    -- R.unsafeHooksEffect $ Console.log $ "nodeIdFromUrl: " <> show nodeIdFromUrl
+
+    -- R.unsafeHooksEffect $ Console.log $ "forestOpen avant modification: " <> show forestOpen
+    R.unsafeHooksEffect $ T.modify_ (openNodesInsert (currentNodeIdFromUrl)) forestOpen
+    -- R.unsafeHooksEffect $ T.modify_ (openNodesInsert (mkNodeId session 2)) forestOpen
+
+    -- folderOpen    <- useOpenNodesMemberBox currentNodeIdFromUrl forestOpen
+
+    -- let currentNodeId = if id == nodeIdFromUrl then currentNodeIdFromUrl else nodeId
+
     isBoxVisible  <- T.useBox false
     folderOpen    <- useOpenNodesMemberBox nodeId forestOpen
     folderOpen'   <- T.useLive T.unequal folderOpen
-
+    
     pure $
 
       H.div
@@ -216,6 +234,10 @@ treeCpt = here.component "tree" cpt where
         common' = RecordE.pick p :: Record PACommon
         extra = { boxes, isBoxVisible }
   pub (LNode n@{ nodeType: t }) = LNode (n { nodeType = publicize t })
+
+
+getLastUrlElement :: String -> String
+getLastUrlElement str = fromMaybe "" $ A.last $ split (Pattern "/") str
 
 
 
@@ -334,8 +356,10 @@ addContact params { boxes: { errors }, session, tree: (NTree (LNode {id}) _) } =
 
 addNode' name nodeType p@{ boxes: { errors, forestOpen }, session, tree: (NTree (LNode { id }) _) } = do
   eId <- addNode session id $ AddNodeValue { name, nodeType }
+  -- here.log2 "id added: " $ show id
   handleRESTError (R2.herePrefix here "[addNode']") errors eId $ \_id -> liftEffect $ do
     liftEffect $ T.modify_ (openNodesInsert (mkNodeId session id)) forestOpen
+    liftEffect $ Console.log $ "id added: " <> show id
     refreshTree p
 
 uploadFile' nodeType fileType fileFormat lang mName contents p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
