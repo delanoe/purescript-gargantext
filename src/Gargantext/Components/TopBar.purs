@@ -234,7 +234,7 @@ divDropdownLeftCpt = here.component "divDropdownLeft" cpt
               , text  : "API documentation"
               }
       , LiNav { title : "Source code"
-              , href  : "https://gitlab.iscpif.fr/gargantext/haskell-gargantext"
+              , href  : "https://gitlab.iscpif.fr/gargantext/main"
               , icon  : "fa fa-code"
               , text  : "Source Code"
               }
