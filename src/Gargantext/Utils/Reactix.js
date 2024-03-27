@@ -53,3 +53,8 @@ export function _keyCode(e) {
     // https://www.w3schools.com/jsref/event_key_keycode.asp
     return e.which || e.keyCode;
 }
+
+export function _scrollIntoView(el) {
+    return el.scrollIntoView();
+}
+   

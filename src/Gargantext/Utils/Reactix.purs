@@ -281,6 +281,11 @@ getElementById = (flip delay) h
   where
     h id = pure $ toMaybe $ document ... "getElementById" $ [id]
 
+querySelector :: String -> Effect (Maybe DOM.Element)
+querySelector = (flip delay) h
+  where
+    h selector = pure $ toMaybe $ document ... "querySelector" $ [selector]
+
 -- We just assume it works, so make sure it's in the html
 getPortalHost :: R.Hooks DOM.Element
 getPortalHost = R.unsafeHooksEffect $ delay unit $ \_ -> pure $ document ... "getElementById" $ ["portal"]
@@ -486,6 +491,12 @@ focus :: Nullable R.Element -> Effect Unit
 focus nEl = case toMaybe nEl of
   Nothing -> pure unit
   Just el -> el ... "focus" $ []
+
+foreign import _scrollIntoView :: EffectFn1 DOM.Element Unit
+
+scrollIntoView :: DOM.Element -> Effect Unit
+scrollIntoView el = runEffectFn1 _scrollIntoView el
+
 
 setIndeterminateCheckbox :: R.Element -> Boolean -> Effect R.Element
 setIndeterminateCheckbox el val = pure $ (el .= "indeterminate") val

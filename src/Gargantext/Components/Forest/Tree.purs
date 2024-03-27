@@ -158,6 +158,7 @@ getNodeTreeFirstLevel session nodeId = get session $ GR.TreeFirstLevel (Just nod
 
 tree :: R2.Leaf TreeProps
 tree props = R.createElement treeCpt props []
+
 treeCpt :: R.Component TreeProps
 treeCpt = here.component "tree" cpt where
   cpt p@{ frontends
@@ -167,24 +168,16 @@ treeCpt = here.component "tree" cpt where
         , tree: NTree (LNode { id, name, nodeType }) children } _ = do
     boxes@{ forestOpen } <- Store.use
 
-    url <- R.unsafeHooksEffect GU.href
-    let nodeIdFromUrl = fromMaybe 0 $ fromString $ getLastUrlElement url
-    let currentNodeIdFromUrl = mkNodeId session nodeIdFromUrl
-    -- R.unsafeHooksEffect $ Console.log $ "id: " <> show id
-    -- R.unsafeHooksEffect $ Console.log $ "nodeIdFromUrl: " <> show nodeIdFromUrl
-
-    -- R.unsafeHooksEffect $ Console.log $ "forestOpen avant modification: " <> show forestOpen
-    R.unsafeHooksEffect $ T.modify_ (openNodesInsert (currentNodeIdFromUrl)) forestOpen
-    -- R.unsafeHooksEffect $ T.modify_ (openNodesInsert (mkNodeId session 2)) forestOpen
-
-    -- folderOpen    <- useOpenNodesMemberBox currentNodeIdFromUrl forestOpen
-
-    -- let currentNodeId = if id == nodeIdFromUrl then currentNodeIdFromUrl else nodeId
-
     isBoxVisible  <- T.useBox false
     folderOpen    <- useOpenNodesMemberBox nodeId forestOpen
     folderOpen'   <- T.useLive T.unequal folderOpen
-    
+
+    R.useEffect' do
+      selectedLeaf <- R2.querySelector ".mainleaf--selected"
+      case selectedLeaf of
+          Nothing -> pure unit
+          Just el -> R2.scrollIntoView el
+
     pure $
 
       H.div
