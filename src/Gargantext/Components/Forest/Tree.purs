@@ -11,7 +11,6 @@ import Data.Traversable (intercalate, traverse, traverse_)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
 import Effect.Class (liftEffect)
-import Effect.Console as Console
 import Gargantext.AsyncTasks as GAT
 import Gargantext.Components.App.Store as Store
 import Gargantext.Components.Bootstrap as B
@@ -349,10 +348,8 @@ addContact params { boxes: { errors }, session, tree: (NTree (LNode {id}) _) } =
 
 addNode' name nodeType p@{ boxes: { errors, forestOpen }, session, tree: (NTree (LNode { id }) _) } = do
   eId <- addNode session id $ AddNodeValue { name, nodeType }
-  -- here.log2 "id added: " $ show id
   handleRESTError (R2.herePrefix here "[addNode']") errors eId $ \_id -> liftEffect $ do
     liftEffect $ T.modify_ (openNodesInsert (mkNodeId session id)) forestOpen
-    liftEffect $ Console.log $ "id added: " <> show id
     refreshTree p
 
 uploadFile' nodeType fileType fileFormat lang mName contents p@{ boxes: { errors, tasks }, session, tree: (NTree (LNode { id }) _) } selection = do
