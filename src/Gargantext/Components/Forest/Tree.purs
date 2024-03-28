@@ -4,7 +4,6 @@ import Gargantext.Prelude
 
 import Data.Array as A
 import Data.Array as Array
-import Data.Int (fromString)
 import Data.Maybe (fromMaybe, Maybe(..), isJust)
 import Data.String (Pattern(..), split)
 import Data.Traversable (intercalate, traverse, traverse_)
@@ -35,11 +34,10 @@ import Gargantext.Ends (Frontends)
 import Gargantext.Hooks.Loader (useLoaderEffect)
 import Gargantext.Routes as GR
 import Gargantext.Sessions (Session, get, mkNodeId)
-import Gargantext.Sessions.Types (OpenNodes, useOpenNodesMemberBox, openNodesInsert, openNodesDelete)
+import Gargantext.Sessions.Types (useOpenNodesMemberBox, openNodesInsert, openNodesDelete)
 import Gargantext.Types (Handed, ID, isPublic, publicize)
 import Gargantext.Types as GT
 import Gargantext.Utils ((?))
-import Gargantext.Utils as GU
 import Gargantext.Utils.Reactix as R2
 import Gargantext.Utils.Toestand as T2
 import Reactix as R
@@ -226,11 +224,6 @@ treeCpt = here.component "tree" cpt where
         common' = RecordE.pick p :: Record PACommon
         extra = { boxes, isBoxVisible }
   pub (LNode n@{ nodeType: t }) = LNode (n { nodeType = publicize t })
-
-
-getLastUrlElement :: String -> String
-getLastUrlElement str = fromMaybe "" $ A.last $ split (Pattern "/") str
-
 
 
 blankTree :: R2.Leaf ()
