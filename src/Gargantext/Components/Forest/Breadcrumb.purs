@@ -8,7 +8,7 @@ import Data.Array as A
 import Data.Int (fromString)
 import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String (Pattern(..), split)
-import Gargantext.Components.App.Store (Boxes)
+import Gargantext.Components.App.Store as Store
 import Gargantext.Components.Bootstrap as B
 import Gargantext.Components.GraphQL.Endpoints (getBreadcrumb)
 import Gargantext.Components.GraphQL.Tree (BreadcrumbInfo, TreeNode)
@@ -30,7 +30,7 @@ import Toestand as T
 here :: R2.Here
 here = R2.here "Gargantext.Components.Forest.Breadcrumb"
 
-type PropsBoxes = ( boxes :: Boxes )
+type PropsBoxes = ( boxes :: Store.Boxes )
 
 type Props =
   ( nodeId     :: Int
@@ -232,10 +232,16 @@ breadcrumbItemCpt = here.component "breadcrumbItemCpt" cpt where
       , format
       } _ = do
 
+    boxes@{ forestOpen } <- Store.use
+
     url <- R.unsafeHooksEffect GU.href
 
     let sid = sessionId session
     let rootId = treeId session
+    
+    let currentNodeIdFromUrl = mkNodeId session linkId
+    R.unsafeHooksEffect $ T.modify_ (openNodesInsert (currentNodeIdFromUrl)) forestOpen
+
 
     pure $ 
       if format == "text"

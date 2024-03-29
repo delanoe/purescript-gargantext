@@ -4,7 +4,8 @@ import Gargantext.Prelude
 
 import Data.Array as A
 import Data.Array as Array
-import Data.Maybe (Maybe(..), isJust)
+import Data.Maybe (fromMaybe, Maybe(..), isJust)
+import Data.String (Pattern(..), split)
 import Data.Traversable (intercalate, traverse, traverse_)
 import Data.Tuple.Nested ((/\))
 import Effect.Aff (Aff)
@@ -154,6 +155,7 @@ getNodeTreeFirstLevel session nodeId = get session $ GR.TreeFirstLevel (Just nod
 
 tree :: R2.Leaf TreeProps
 tree props = R.createElement treeCpt props []
+
 treeCpt :: R.Component TreeProps
 treeCpt = here.component "tree" cpt where
   cpt p@{ frontends
@@ -166,6 +168,12 @@ treeCpt = here.component "tree" cpt where
     isBoxVisible  <- T.useBox false
     folderOpen    <- useOpenNodesMemberBox nodeId forestOpen
     folderOpen'   <- T.useLive T.unequal folderOpen
+
+    R.useEffect' do
+      selectedLeaf <- R2.querySelector ".mainleaf--selected"
+      case selectedLeaf of
+          Nothing -> pure unit
+          Just el -> R2.scrollIntoView el
 
     pure $
 
@@ -216,7 +224,6 @@ treeCpt = here.component "tree" cpt where
         common' = RecordE.pick p :: Record PACommon
         extra = { boxes, isBoxVisible }
   pub (LNode n@{ nodeType: t }) = LNode (n { nodeType = publicize t })
-
 
 
 blankTree :: R2.Leaf ()
